@@ -1,0 +1,17 @@
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+node_modules/
+
+*.js.map
+build/
+typings/contracts/*Factory.ts
+
+.DS_Store
+.vscode
+.idea/
+*.iml
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*

@@ -1,0 +1,22 @@
+{
+  "name": "arcadeum.js",
+  "version": "1.0.0",
+  "description": "Javascript SDK library for the arcadeum meta-relayer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arcadeum/arcadeum.js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arcadeum/arcadeum.js/issues"
+  },
+  "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
+  "devDependencies": {
+    "ethers": "^4.0.40"
+  }
+}
