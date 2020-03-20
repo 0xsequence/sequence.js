@@ -24,3 +24,16 @@ export type Opts = {
   gasReceipt?: GasReceipt | null,
   extra: Uint8Array | null;
 }
+
+export type BuyTokensObj = {
+  recipient: string;
+  ids: number[] | string[] | BigNumber[];
+  amounts: number[] | string[] | BigNumber[];
+  deadline: number | string | BigNumber;
+}
+
+export type SellTokensObj = {
+  recipient: string;
+  minBaseTokens: number | string | BigNumber;
+  deadline: number | string | BigNumber;
+}
