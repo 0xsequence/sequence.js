@@ -1,9 +1,8 @@
 
 import { promises as fs } from "fs";
-import Contract from '../src/contracts'
+import Contract from '../src'
 import { Wallet } from 'ethers'
 import { expect } from 'chai';
-import { exec } from 'child_process';
 
 let abi;
 let signer = Wallet.fromMnemonic("dose weasel clever culture letter volume endorse used harvest ripple circle install")
