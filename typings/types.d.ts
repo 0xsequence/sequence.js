@@ -5,7 +5,18 @@ export type GasReceipt = {
   gasFee: number | string | BigNumber;
   gasLimitCallback: number | string | BigNumber;
   feeRecipient: string;
-  feeTokenData: string | Uint8Array;
+  feeTokenData: FeeTokenData;
+};
+
+export enum FeeTokenType {
+  FeeTokenERC1155 = 0,
+  FeeTokenERC20,
+}
+
+export type FeeTokenData = {
+  type: FeeTokenType,
+  address: string
+  id: number | BigNumber;
 };
 
 export type Opts = {

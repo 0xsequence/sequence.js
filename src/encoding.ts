@@ -8,16 +8,23 @@ import {
     GasReceipt,
 } from 'typings/types'
 
-export const GasReceiptType = `tuple(
+const GasReceiptType = `tuple(
     uint256 gasFee,
     uint256 gasLimitCallback,
     address feeRecipient,
     bytes feeTokenData
 )`
 
-export function encodeGasReceipt(g: GasReceipt) { 
-    return defaultAbiCoder.encode([GasReceiptType], [g])
-}
+const erc20TokenDataType = `tuple(
+  address token,
+  uint8 type
+)`
+
+const erc1155TokenDataType = `tuple(
+  address token,
+  uint256 id,
+  uint8 type
+)`
 
 async function ethSignTypedData(
     wallet: ethers.Wallet, 
@@ -39,9 +46,10 @@ async function ethSignTypedData(
     return ethsigNoType_nonce + '02' // signed data type 2
   }
 
-async function encodeData(signerWallet: Wallet, opts: Opts, domainHash: string) 
-{
-  const META_BATCH_TX_TYPEHASH = '0xa3d4926e8cf8fe8e020cd29f514c256bc2eec62aa2337e415f1a33a4828af5a0';
+export async function encodeData(signerWallet: Wallet, sigData: string, opts: Opts, domainHash: string) {
+  if (opts.extra == undefined) {
+    opts.extra = null
+  }
 
   /** Three encoding scenario
    *  1. Gas receipt and transfer data:
@@ -57,43 +65,39 @@ async function encodeData(signerWallet: Wallet, opts: Opts, domainHash: string)
    *   txData: ((bytes32 r, bytes32 s, uint8 v, SignatureType sigType))
    */  
 
-  let sigData;     // Data to sign
   let txDataTypes; // Types of data to encode
   let sig;         // Signature
-
-  // Struct Data type
-  const sigArgTypes = [
-    'bytes32', // META_TX_TYPEHASH
-    'uint256', // _from: uint256(address)
-    'uint256', // _to: uint256(address)
-    'bytes32', // keccak256(_ids)
-    'bytes32', // keccak256(_amounts)
-    'uint256', // _isGasFee: uint256(bool)
-    'uint256', // nonce
-    // 'bytes32', // hash of transfer data (added below, if any)
-    ];
-  
-  let is_gas_Fee_hex = opts.gasReceipt ? '0x1' : '0x0'
-
-  // Packed encoding of transfer signature message
-  sigData = ethers.utils.solidityPack(sigArgTypes, [
-    META_BATCH_TX_TYPEHASH,
-    signer,
-    s.receiver,
-    ethers.utils.keccak256(ethers.utils.solidityPack(['uint256[]'], [s.ids])),
-    ethers.utils.keccak256(ethers.utils.solidityPack(['uint256[]'], [s.amounts])),
-    is_gas_Fee_hex,
-    opts.nonce,
-  ])
 
   txDataTypes = ['bytes', 'bytes']; // (sig, (gasReceipt, transferData))
 
   // When gas receipt is included
   if (opts.gasReceipt && opts.gasReceipt !== null) {
 
+    // encode gas receipt and the transfer data
+    const receipt = {
+      gasFee: opts.gasReceipt.gasFee,
+      gasLimitCallback: opts.gasReceipt.gasLimitCallback,
+      feeRecipient: opts.gasReceipt.feeRecipient,
+      feeTokenData: "",
+    }
+
+    const feeTokenData = opts.gasReceipt.feeTokenData;
+    switch (feeTokenData.type) {
+      case 0:
+        // erc1155
+        receipt.feeTokenData = defaultAbiCoder.encode([erc1155TokenDataType], [{"token": feeTokenData.address, "id": feeTokenData.id, "type": 0}])
+        break
+      case 1:
+        // erc20
+        receipt.feeTokenData = defaultAbiCoder.encode([erc20TokenDataType], [{"token": feeTokenData.address, "type": 1}])
+        break
+      default:
+        throw Error("")
+    }
+
     // 1. 
     if (opts.extra !== null) {
-      let gasAndTransferData = defaultAbiCoder.encode([GasReceiptType, 'bytes'], [opts.gasReceipt, opts.extra])   
+      let gasAndTransferData = defaultAbiCoder.encode([GasReceiptType, 'bytes'], [receipt, opts.extra])   
       sigData = ethers.utils.keccak256(ethers.utils.solidityPack(
         ['bytes', 'bytes32'], 
         [sigData, ethers.utils.keccak256(gasAndTransferData)] //Hash of _data
@@ -103,13 +107,13 @@ async function encodeData(signerWallet: Wallet, opts: Opts, domainHash: string)
 
     // 2.
     } else {
-      let gasAndTransferData = defaultAbiCoder.encode([GasReceiptType, 'bytes'], [opts.gasReceipt, toUtf8Bytes('')])
+      let gasAndTransferData = defaultAbiCoder.encode([GasReceiptType, 'bytes'], [receipt, toUtf8Bytes('')])
       sigData = ethers.utils.keccak256(ethers.utils.solidityPack(
         ['bytes', 'bytes32'], 
         [sigData, ethers.utils.keccak256(gasAndTransferData)] //Hash of _data
       ))
       sig = await ethSignTypedData(signerWallet, domainHash,  sigData, opts.nonce)
-      return  defaultAbiCoder.encode(txDataTypes, [sig, gasAndTransferData])
+      return defaultAbiCoder.encode(txDataTypes, [sig, gasAndTransferData])
     }
 
   } else { 

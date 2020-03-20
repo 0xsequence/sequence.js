@@ -35,7 +35,7 @@
     },
   
     "include": [
-      "typings","src"
+      "typings","src", "tests"
     ],
     
     "exclude": [
