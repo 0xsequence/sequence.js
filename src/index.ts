@@ -1,108 +1,115 @@
-
 import { utils, Wallet } from 'ethers'
 import * as ethers from 'ethers'
 
 import { BigNumber, toUtf8Bytes, defaultAbiCoder } from 'ethers/utils'
 
-import {
-    Opts,
-} from 'typings/types'
+import { Opts } from 'typings/types'
 
-const DOMAIN_SEPARATOR_TYPEHASH = '0x035aff83d86937d35b32e04f0ddc6ff469290eef2f1b692d8a815c89404d4749'
+const DOMAIN_SEPARATOR_TYPEHASH =
+  '0x035aff83d86937d35b32e04f0ddc6ff469290eef2f1b692d8a815c89404d4749'
 
 class Contract {
-    abi: utils.Interface
-    address: string
+  abi: utils.Interface
+  address: string
 
-    constructor(abiStr: string, address: string) {
-        this.abi = new utils.Interface(abiStr);
-        this.address = address
+  constructor(abiStr: string, address: string) {
+    this.abi = new utils.Interface(abiStr)
+    this.address = address
+  }
+
+  domainHash(): string {
+    return ethers.utils.keccak256(
+      ethers.utils.solidityPack(
+        ['bytes32', 'uint256'],
+        [DOMAIN_SEPARATOR_TYPEHASH, this.address]
+      )
+    )
+  }
+
+  async call(
+    opts: Opts,
+    signer: Wallet,
+    methodName: string,
+    params: any[]
+  ): Promise<string> {
+    const method = this.abi.functions[methodName]
+    if (method == undefined) {
+      throw Error('method not found')
     }
 
-    domainHash(): string {
-        return ethers.utils.keccak256(ethers.utils.solidityPack(
-            ['bytes32', 'uint256'], 
-            [DOMAIN_SEPARATOR_TYPEHASH, this.address]
-        ))
+    const domainHash = this.domainHash()
+
+    const sigData = this.encodeMembers(method, params, opts)
+
+    // last field of the method
+    const data = await encodeData(signer, sigData, opts, domainHash)
+
+    // fill the rest of the params of the method
+    params.push(opts.gasReceipt ? true : false)
+    params.push(data)
+
+    return method.encode(params)
+  }
+
+  encodeMembers(method, params: any[], opts: Opts) {
+    if (method.inputs.length != params.length + 2) {
+      throw Error()
     }
 
-    async call(opts: Opts, signer: Wallet, methodName: string, params: any[]): Promise<string> {
-        const method = this.abi.functions[methodName]
-        if (method == undefined) {
-            throw Error("method not found")
-        }
+    const typehash = utils.keccak256(utils.toUtf8Bytes(method.signature))
 
-        const domainHash = this.domainHash()
-
-        const sigData = this.encodeMembers(method, params, opts)
-
-        // last field of the method
-        const data = await encodeData(signer, sigData, opts, domainHash)
-
-        // fill the rest of the params of the method
-        params.push(opts.gasReceipt ? true : false)
-        params.push(data)
-
-        return method.encode(params)
+    let res = ''
+    const append = function (data: string) {
+      res += data.substring(2)
     }
 
-    encodeMembers(method, params: any[], opts: Opts) {
-        if (method.inputs.length != params.length+2) {
-            throw Error()
-        }
-        
-        const typehash = utils.keccak256(utils.toUtf8Bytes(method.signature))
+    // encode typehash
+    append(ethers.utils.solidityPack(['uint256'], [typehash]))
 
-        let res = ""
-        const append = function(data: string) {
-            res += data.substring(2)
-        }
-
-        // encode typehash
-        append(ethers.utils.solidityPack(['uint256'], [typehash]))
-
-        // encode inputs
-        for (var indx in params) {
-            append(encodeMember(method.inputs[indx], params[indx]))
-        }
-        
-        // encode isGasFee
-        append(ethers.utils.solidityPack(['uint256'], [opts.gasReceipt ? '0x1' : '0x0']))
-
-        // encode nonce
-        append(ethers.utils.solidityPack(['uint256'], [opts.nonce]))
-
-        return "0x" + res
+    // encode inputs
+    for (const indx in params) {
+      append(encodeMember(method.inputs[indx], params[indx]))
     }
+
+    // encode isGasFee
+    append(
+      ethers.utils.solidityPack(['uint256'], [opts.gasReceipt ? '0x1' : '0x0'])
+    )
+
+    // encode nonce
+    append(ethers.utils.solidityPack(['uint256'], [opts.nonce]))
+
+    return '0x' + res
+  }
 }
 
-function encodeMember(type, param): string{
-    let encType = type.internalType
-    switch (type.internalType) {
-        case 'address':
-        case 'bool':
-            // address and bool are encoded as uint256 of 32 bytes
-            encType = 'uint256'
+function encodeMember(type, param): string {
+  let encType = type.internalType
+  switch (type.internalType) {
+    case 'address':
+    case 'bool':
+      // address and bool are encoded as uint256 of 32 bytes
+      encType = 'uint256'
 
-            // booleans need to be converted to ints
-            if (type.internalType == "bool") {
-                if (param == true) {
-                    param = 1
-                } else if (param == false) {
-                    param = 0
-                } else {
-                    throw Error("")
-                }
-            }
-    }
+      // booleans need to be converted to ints
+      if (type.internalType == 'bool') {
+        if (param == true) {
+          param = 1
+        } else if (param == false) {
+          param = 0
+        } else {
+          throw Error('')
+        }
+      }
+  }
 
-    let data = ethers.utils.solidityPack([encType], [param])
+  let data = ethers.utils.solidityPack([encType], [param])
 
-    // if the input is an slice we need to hash it
-    if (encType.endsWith('[]')) {
-        data = ethers.utils.keccak256(data)
-    }
-    return data
+  // if the input is an slice we need to hash it
+  if (encType.endsWith('[]')) {
+    data = ethers.utils.keccak256(data)
+  }
+  return data
 }
 
 const GasReceiptType = `tuple(
@@ -124,26 +131,33 @@ const erc1155TokenDataType = `tuple(
 )`
 
 async function ethSignTypedData(
-    wallet: ethers.Signer, 
-    domainHash: string,  
-    hashStruct: string | Uint8Array, 
-    nonce: BigNumber) 
-  {
-    const EIP191_HEADER = "0x1901"
-    const preHash = ethers.utils.solidityPack(['bytes', 'bytes32'], [EIP191_HEADER, domainHash])
-    const hash = ethers.utils.keccak256(ethers.utils.solidityPack(
-        ['bytes', 'bytes32'], 
-        [preHash, hashStruct]
-      ))
-  
-    const hashArray = ethers.utils.arrayify(hash) 
-    const ethsigNoType = await wallet.signMessage(hashArray)
-    const paddedNonce = ethers.utils.solidityPack(['uint256'], [nonce])
-    const ethsigNoType_nonce = ethsigNoType + paddedNonce.slice(2) // encode packed the nonce
-    return ethsigNoType_nonce + '02' // signed data type 2
-  }
+  wallet: ethers.Wallet,
+  domainHash: string,
+  hashStruct: string | Uint8Array,
+  nonce: BigNumber
+) {
+  const EIP191_HEADER = '0x1901'
+  const preHash = ethers.utils.solidityPack(
+    ['bytes', 'bytes32'],
+    [EIP191_HEADER, domainHash]
+  )
+  const hash = ethers.utils.keccak256(
+    ethers.utils.solidityPack(['bytes', 'bytes32'], [preHash, hashStruct])
+  )
 
-export async function encodeData(signerWallet: Wallet, sigData: string, opts: Opts, domainHash: string) {
+  const hashArray = ethers.utils.arrayify(hash)
+  const ethsigNoType = await wallet.signMessage(hashArray)
+  const paddedNonce = ethers.utils.solidityPack(['uint256'], [nonce])
+  const ethsigNoType_nonce = ethsigNoType + paddedNonce.slice(2) // encode packed the nonce
+  return ethsigNoType_nonce + '02' // signed data type 2
+}
+
+export async function encodeData(
+  signerWallet: Wallet,
+  sigData: string,
+  opts: Opts,
+  domainHash: string
+) {
   if (opts.extra == undefined) {
     opts.extra = null
   }
@@ -151,88 +165,128 @@ export async function encodeData(signerWallet: Wallet, sigData: string, opts: Op
   /** Three encoding scenario
    *  1. Gas receipt and transfer data:
    *   txData: ((bytes32 r, bytes32 s, uint8 v, SignatureType sigType), (GasReceipt g, bytes transferData))
-   * 
+   *
    *  2. Gas receipt without transfer data:
    *   txData: ((bytes32 r, bytes32 s, uint8 v, SignatureType sigType), (GasReceipt g))
-   * 
-   *  3. No gasReceipt with transferData 
+   *
+   *  3. No gasReceipt with transferData
    *   txData: ((bytes32 r, bytes32 s, uint8 v, SignatureType sigType), (bytes transferData))
-   * 
+   *
    *  4. No gasReceipt without transferData
    *   txData: ((bytes32 r, bytes32 s, uint8 v, SignatureType sigType))
-   */  
+   */
 
-  let txDataTypes; // Types of data to encode
-  let sig;         // Signature
+  let txDataTypes // Types of data to encode
+  let sig // Signature
 
-  txDataTypes = ['bytes', 'bytes']; // (sig, (gasReceipt, transferData))
+  txDataTypes = ['bytes', 'bytes'] // (sig, (gasReceipt, transferData))
 
   // When gas receipt is included
   if (opts.gasReceipt && opts.gasReceipt !== null) {
-
     // encode gas receipt and the transfer data
     const receipt = {
       gasFee: opts.gasReceipt.gasFee,
       gasLimitCallback: opts.gasReceipt.gasLimitCallback,
       feeRecipient: opts.gasReceipt.feeRecipient,
-      feeTokenData: "",
+      feeTokenData: ''
     }
 
-    const feeTokenData = opts.gasReceipt.feeTokenData;
+    const feeTokenData = opts.gasReceipt.feeTokenData
     switch (feeTokenData.type) {
       case 0:
         // erc1155
-        receipt.feeTokenData = defaultAbiCoder.encode([erc1155TokenDataType], [{"token": feeTokenData.address, "id": feeTokenData.id, "type": 0}])
+        receipt.feeTokenData = defaultAbiCoder.encode(
+          [erc1155TokenDataType],
+          [{ token: feeTokenData.address, id: feeTokenData.id, type: 0 }]
+        )
         break
       case 1:
         // erc20
-        receipt.feeTokenData = defaultAbiCoder.encode([erc20TokenDataType], [{"token": feeTokenData.address, "type": 1}])
+        receipt.feeTokenData = defaultAbiCoder.encode(
+          [erc20TokenDataType],
+          [{ token: feeTokenData.address, type: 1 }]
+        )
         break
       default:
-        throw Error("")
+        throw Error('')
     }
 
-    // 1. 
+    // 1.
     if (opts.extra !== null) {
-      let gasAndTransferData = defaultAbiCoder.encode([GasReceiptType, 'bytes'], [receipt, opts.extra])   
-      sigData = ethers.utils.keccak256(ethers.utils.solidityPack(
-        ['bytes', 'bytes32'], 
-        [sigData, ethers.utils.keccak256(gasAndTransferData)] //Hash of _data
-      ))
-      sig = await ethSignTypedData(signerWallet, domainHash,  sigData, opts.nonce)
+      const gasAndTransferData = defaultAbiCoder.encode(
+        [GasReceiptType, 'bytes'],
+        [receipt, opts.extra]
+      )
+      sigData = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['bytes', 'bytes32'],
+          [sigData, ethers.utils.keccak256(gasAndTransferData)] // Hash of _data
+        )
+      )
+      sig = await ethSignTypedData(
+        signerWallet,
+        domainHash,
+        sigData,
+        opts.nonce
+      )
       return defaultAbiCoder.encode(txDataTypes, [sig, gasAndTransferData])
 
-    // 2.
+      // 2.
     } else {
-      let gasAndTransferData = defaultAbiCoder.encode([GasReceiptType, 'bytes'], [receipt, toUtf8Bytes('')])
-      sigData = ethers.utils.keccak256(ethers.utils.solidityPack(
-        ['bytes', 'bytes32'], 
-        [sigData, ethers.utils.keccak256(gasAndTransferData)] //Hash of _data
-      ))
-      sig = await ethSignTypedData(signerWallet, domainHash,  sigData, opts.nonce)
+      const gasAndTransferData = defaultAbiCoder.encode(
+        [GasReceiptType, 'bytes'],
+        [receipt, toUtf8Bytes('')]
+      )
+      sigData = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['bytes', 'bytes32'],
+          [sigData, ethers.utils.keccak256(gasAndTransferData)] // Hash of _data
+        )
+      )
+      sig = await ethSignTypedData(
+        signerWallet,
+        domainHash,
+        sigData,
+        opts.nonce
+      )
       return defaultAbiCoder.encode(txDataTypes, [sig, gasAndTransferData])
     }
-
-  } else { 
-
+  } else {
     // 3.
     if (opts.extra !== null) {
-      sigData = ethers.utils.keccak256(ethers.utils.solidityPack(
-        ['bytes', 'bytes32'], 
-        [sigData, ethers.utils.keccak256(opts.extra)] //Hash of _data
-      ))
-      sig = await ethSignTypedData(signerWallet, domainHash,  sigData, opts.nonce)
-      return  defaultAbiCoder.encode(txDataTypes, [sig, opts.extra])
+      sigData = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['bytes', 'bytes32'],
+          [sigData, ethers.utils.keccak256(opts.extra)] // Hash of _data
+        )
+      )
+      sig = await ethSignTypedData(
+        signerWallet,
+        domainHash,
+        sigData,
+        opts.nonce
+      )
+      return defaultAbiCoder.encode(txDataTypes, [sig, opts.extra])
 
-    // 4.
-    } else { 
-      let emptyTransferData = defaultAbiCoder.encode(['bytes'], [toUtf8Bytes('')])
-      sigData = ethers.utils.keccak256(ethers.utils.solidityPack(
-        ['bytes', 'bytes32'], 
-        [sigData, ethers.utils.keccak256(emptyTransferData)] //Hash of _data
-      ))
-      sig = await ethSignTypedData(signerWallet, domainHash,  sigData, opts.nonce)
-      return  defaultAbiCoder.encode(txDataTypes, [sig, emptyTransferData])
+      // 4.
+    } else {
+      const emptyTransferData = defaultAbiCoder.encode(
+        ['bytes'],
+        [toUtf8Bytes('')]
+      )
+      sigData = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['bytes', 'bytes32'],
+          [sigData, ethers.utils.keccak256(emptyTransferData)] // Hash of _data
+        )
+      )
+      sig = await ethSignTypedData(
+        signerWallet,
+        domainHash,
+        sigData,
+        opts.nonce
+      )
+      return defaultAbiCoder.encode(txDataTypes, [sig, emptyTransferData])
     }
   }
 }

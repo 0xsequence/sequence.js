@@ -4,7 +4,11 @@
   "description": "Javascript SDK library for the arcadeum meta-relayer",
   "main": "index.js",
   "scripts": {
-    "test": "tsc -b && mocha build/tests/*.js"
+    "test": "tsc -b && mocha build/tests/*.js",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json",
+    "lint:fixtslint": "tslint --project ./tsconfig.json --fix"
   },
   "repository": {
     "type": "git",
@@ -25,7 +29,10 @@
     "@types/node": "^13.9.1",
     "chai": "^4.2.0",
     "mocha": "^7.1.1",
+    "prettier": "^2.0.1",
     "tslib": "^1.11.1",
+    "tslint": "^6.1.0",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.8.3"
   }
 }
