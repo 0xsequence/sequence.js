@@ -1,7 +1,6 @@
 import { promises as fs } from 'fs'
 import Contract from '../src'
 import { Wallet } from 'ethers'
-import { expect } from 'chai'
 
 let abi
 const signer = Wallet.fromMnemonic(
@@ -12,7 +11,7 @@ async function readFixturesFile(path: string): Promise<string> {
   return (await fs.readFile('./tests/fixtures/' + path)).toString()
 }
 
-before(async () => {
+beforeAll(async () => {
   abi = await readFixturesFile('meta_erc1155.json')
 })
 
@@ -42,6 +41,6 @@ async function execTest(function_name: string) {
     const contract = new Contract(JSON.stringify(metaErc1155ABI), test.contract)
     const result = await contract.call(test.opts, signer, function_name, params)
 
-    expect(result).to.equal(test.result)
+    expect(result).toEqual(test.result)
   }
 }

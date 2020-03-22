@@ -1,4 +1,3 @@
-import { expect } from 'chai'
 import { niftyGetBuyTokenData, niftyGetSellTokenData } from '../src/nifty_swap'
 import { promises as fs } from 'fs'
 
@@ -22,6 +21,6 @@ async function execNiftyTest(path: string, func) {
   for (const name in data) {
     const test = data[name]
     const result = func(test.obj)
-    expect(result).to.equal(test.result)
+    expect(result).toEqual(test.result)
   }
 }
