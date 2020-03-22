@@ -1,26 +1,20 @@
 import { niftyGetBuyTokenData, niftyGetSellTokenData } from '../src/nifty_swap'
-import { promises as fs } from 'fs'
-
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-async function readFixturesFile(path: string): Promise<string> {
-  return (await fs.readFile('./tests/fixtures/' + path)).toString()
-}
+import nifty_buyOrders from './fixtures/nifty_buyOrders.json'
+import nifty_sellOrders from './fixtures/nifty_sellOrders.json'
 
 describe('Nifty', () => {
   it('buyOrders', () => {
-    execNiftyTest('nifty_buyOrders.json', niftyGetBuyTokenData)
+    for (const name in nifty_buyOrders) {
+      const test = nifty_buyOrders[name]
+      const result = niftyGetBuyTokenData(test.obj)
+      expect(result).toEqual(test.result)
+    }
   })
   it('sellOrders', () => {
-    execNiftyTest('nifty_sellOrders.json', niftyGetSellTokenData)
+    for (const name in nifty_sellOrders) {
+      const test = nifty_sellOrders[name]
+      const result = niftyGetSellTokenData(test.obj)
+      expect(result).toEqual(test.result)
+    }
   })
 })
-
-async function execNiftyTest(path: string, func) {
-  const data = JSON.parse(await readFixturesFile(path))
-  for (const name in data) {
-    const test = data[name]
-    const result = func(test.obj)
-    expect(result).toEqual(test.result)
-  }
-}

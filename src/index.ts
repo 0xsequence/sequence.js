@@ -12,7 +12,10 @@ class Contract {
   abi: utils.Interface
   address: string
 
-  constructor(abiStr: string, address: string) {
+  constructor(
+    abiStr: ConstructorParameters<typeof utils.Interface>[0],
+    address: string
+  ) {
     this.abi = new utils.Interface(abiStr)
     this.address = address
   }
@@ -59,7 +62,7 @@ class Contract {
     const typehash = utils.keccak256(utils.toUtf8Bytes(method.signature))
 
     let res = ''
-    const append = function (data: string) {
+    const append = function(data: string) {
       res += data.substring(2)
     }
 

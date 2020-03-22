@@ -1,19 +1,10 @@
-import { promises as fs } from 'fs'
 import Contract from '../src'
 import { Wallet } from 'ethers'
+import meta_erc1155 from './fixtures/meta_erc1155.json'
 
-let abi
 const signer = Wallet.fromMnemonic(
   'dose weasel clever culture letter volume endorse used harvest ripple circle install'
 )
-
-async function readFixturesFile(path: string): Promise<string> {
-  return (await fs.readFile('./tests/fixtures/' + path)).toString()
-}
-
-beforeAll(async () => {
-  abi = await readFixturesFile('meta_erc1155.json')
-})
 
 describe('MetaTransactions', () => {
   it('metaSafeBatchTransferFrom', async () => {
@@ -28,17 +19,16 @@ describe('MetaTransactions', () => {
 })
 
 async function execTest(function_name: string) {
-  const data = JSON.parse(await readFixturesFile(function_name + '.json'))
+  const { default: data } = await import(`./fixtures/${function_name}.json`)
 
-  for (const name in data) {
+  for (const name of Object.keys(data)) {
     const test = data[name]
 
     // the first param of the meta-transaction is always the account
     // that signs the transaction.
-    const params = test.params
-    params.unshift(signer.address)
+    const params = [signer.address, ...test.params]
 
-    const contract = new Contract(JSON.stringify(metaErc1155ABI), test.contract)
+    const contract = new Contract(meta_erc1155, test.contract)
     const result = await contract.call(test.opts, signer, function_name, params)
 
     expect(result).toEqual(test.result)
