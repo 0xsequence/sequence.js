@@ -8,7 +8,7 @@ import { Opts } from './types'
 const DOMAIN_SEPARATOR_TYPEHASH =
   '0x035aff83d86937d35b32e04f0ddc6ff469290eef2f1b692d8a815c89404d4749'
 
-class Contract {
+export class Contract {
   abi: utils.Interface
   address: string
 
@@ -36,7 +36,7 @@ class Contract {
     params: any[]
   ): Promise<string> {
     const method = this.abi.functions[methodName]
-    if (method == undefined) {
+    if (!method) {
       throw Error('method not found')
     }
 
@@ -55,14 +55,14 @@ class Contract {
   }
 
   encodeMembers(method, params: any[], opts: Opts) {
-    if (method.inputs.length != params.length + 2) {
+    if (method.inputs.length !== params.length + 2) {
       throw Error()
     }
 
     const typehash = utils.keccak256(utils.toUtf8Bytes(method.signature))
 
     let res = ''
-    const append = function(data: string) {
+    const append = (data: string) => {
       res += data.substring(2)
     }
 
@@ -95,14 +95,8 @@ function encodeMember(type, param): string {
       encType = 'uint256'
 
       // booleans need to be converted to ints
-      if (type.internalType == 'bool') {
-        if (param == true) {
-          param = 1
-        } else if (param == false) {
-          param = 0
-        } else {
-          throw Error('')
-        }
+      if (type.internalType === 'bool') {
+        param = param ? 1 : 0
       }
   }
 
@@ -151,8 +145,8 @@ async function ethSignTypedData(
   const hashArray = ethers.utils.arrayify(hash)
   const ethsigNoType = await wallet.signMessage(hashArray)
   const paddedNonce = ethers.utils.solidityPack(['uint256'], [nonce])
-  const ethsigNoType_nonce = ethsigNoType + paddedNonce.slice(2) // encode packed the nonce
-  return ethsigNoType_nonce + '02' // signed data type 2
+  const ethsigNoTypeNonce = ethsigNoType + paddedNonce.slice(2) // encode packed the nonce
+  return ethsigNoTypeNonce + '02' // signed data type 2
 }
 
 export async function encodeData(
@@ -161,7 +155,7 @@ export async function encodeData(
   opts: Opts,
   domainHash: string
 ) {
-  if (opts.extra == undefined) {
+  if (!opts.extra) {
     opts.extra = null
   }
 
@@ -179,10 +173,9 @@ export async function encodeData(
    *   txData: ((bytes32 r, bytes32 s, uint8 v, SignatureType sigType))
    */
 
-  let txDataTypes // Types of data to encode
   let sig // Signature
 
-  txDataTypes = ['bytes', 'bytes'] // (sig, (gasReceipt, transferData))
+  const txDataTypes = ['bytes', 'bytes'] // (sig, (gasReceipt, transferData))
 
   // When gas receipt is included
   if (opts.gasReceipt && opts.gasReceipt !== null) {
@@ -293,5 +286,3 @@ export async function encodeData(
     }
   }
 }
-
-export default Contract

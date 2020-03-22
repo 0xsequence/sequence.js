@@ -1,4 +1,4 @@
-import Contract from '../src'
+import { Contract } from '../src'
 import { Wallet } from 'ethers'
 import meta_erc1155 from './fixtures/meta_erc1155.json'
 
