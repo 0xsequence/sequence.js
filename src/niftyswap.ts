@@ -1,7 +1,5 @@
 import * as ethers from 'ethers'
-import { BigNumber } from 'ethers/utils'
-
-import { BuyTokensObj, SellTokensObj } from 'typings/types'
+import { BuyTokensObj, SellTokensObj } from './types'
 
 const methodsSignature = {
   BUYTOKENS: '0xb2d81047',

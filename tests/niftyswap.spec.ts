@@ -1,4 +1,4 @@
-import { niftyGetBuyTokenData, niftyGetSellTokenData } from '../src/nifty_swap'
+import { niftyGetBuyTokenData, niftyGetSellTokenData } from '../src/niftyswap'
 import nifty_buyOrders from './fixtures/nifty_buyOrders.json'
 import nifty_sellOrders from './fixtures/nifty_sellOrders.json'
 
