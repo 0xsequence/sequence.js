@@ -124,7 +124,7 @@ const erc1155TokenDataType = `tuple(
 )`
 
 async function ethSignTypedData(
-    wallet: ethers.Wallet, 
+    wallet: ethers.Signer, 
     domainHash: string,  
     hashStruct: string | Uint8Array, 
     nonce: BigNumber) 
@@ -137,9 +137,9 @@ async function ethSignTypedData(
       ))
   
     const hashArray = ethers.utils.arrayify(hash) 
-    let ethsigNoType = await wallet.signMessage(hashArray)
-    let paddedNonce = ethers.utils.solidityPack(['uint256'], [nonce])
-    let ethsigNoType_nonce = ethsigNoType + paddedNonce.slice(2) // encode packed the nonce
+    const ethsigNoType = await wallet.signMessage(hashArray)
+    const paddedNonce = ethers.utils.solidityPack(['uint256'], [nonce])
+    const ethsigNoType_nonce = ethsigNoType + paddedNonce.slice(2) // encode packed the nonce
     return ethsigNoType_nonce + '02' // signed data type 2
   }
 
