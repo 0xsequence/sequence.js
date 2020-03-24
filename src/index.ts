@@ -1,7 +1,6 @@
-import { utils, Wallet } from 'ethers'
 import * as ethers from 'ethers'
 
-import { BigNumber, toUtf8Bytes, defaultAbiCoder } from 'ethers/utils'
+import { utils } from 'ethers'
 
 import { Opts, MethodTypes } from './types'
 
@@ -11,11 +10,11 @@ const DOMAIN_SEPARATOR_TYPEHASH =
   '0x035aff83d86937d35b32e04f0ddc6ff469290eef2f1b692d8a815c89404d4749'
 
 export class ERC1155MetaEncoder {
-  abi: utils.Interface
+  abi: ethers.utils.Interface
   address: string
 
   constructor(contractAddress: string) {
-    this.abi = new utils.Interface(meta_erc1155)
+    this.abi = new ethers.utils.Interface(meta_erc1155)
     this.address = contractAddress
   }
 
@@ -58,7 +57,9 @@ export class ERC1155MetaEncoder {
       throw Error()
     }
 
-    const typehash = utils.keccak256(utils.toUtf8Bytes(method.signature))
+    const typehash = ethers.utils.keccak256(
+      ethers.utils.toUtf8Bytes(method.signature)
+    )
 
     let res = ''
     const append = (data: string) => {
@@ -130,7 +131,7 @@ async function ethSignTypedData(
   wallet: ethers.Signer,
   domainHash: string,
   hashStruct: string | Uint8Array,
-  nonce: BigNumber
+  nonce: utils.BigNumber
 ) {
   const EIP191_HEADER = '0x1901'
   const preHash = ethers.utils.solidityPack(
@@ -190,14 +191,14 @@ export async function encodeData(
     switch (feeTokenData.type) {
       case 0:
         // erc1155
-        receipt.feeTokenData = defaultAbiCoder.encode(
+        receipt.feeTokenData = utils.defaultAbiCoder.encode(
           [erc1155TokenDataType],
           [{ token: feeTokenData.address, id: feeTokenData.id, type: 0 }]
         )
         break
       case 1:
         // erc20
-        receipt.feeTokenData = defaultAbiCoder.encode(
+        receipt.feeTokenData = utils.defaultAbiCoder.encode(
           [erc20TokenDataType],
           [{ token: feeTokenData.address, type: 1 }]
         )
@@ -208,7 +209,7 @@ export async function encodeData(
 
     // 1.
     if (opts.extra !== null) {
-      const gasAndTransferData = defaultAbiCoder.encode(
+      const gasAndTransferData = utils.defaultAbiCoder.encode(
         [GasReceiptType, 'bytes'],
         [receipt, opts.extra]
       )
@@ -224,13 +225,16 @@ export async function encodeData(
         sigData,
         opts.nonce
       )
-      return defaultAbiCoder.encode(txDataTypes, [sig, gasAndTransferData])
+      return utils.defaultAbiCoder.encode(txDataTypes, [
+        sig,
+        gasAndTransferData
+      ])
 
       // 2.
     } else {
-      const gasAndTransferData = defaultAbiCoder.encode(
+      const gasAndTransferData = utils.defaultAbiCoder.encode(
         [GasReceiptType, 'bytes'],
-        [receipt, toUtf8Bytes('')]
+        [receipt, utils.toUtf8Bytes('')]
       )
       sigData = ethers.utils.keccak256(
         ethers.utils.solidityPack(
@@ -244,7 +248,10 @@ export async function encodeData(
         sigData,
         opts.nonce
       )
-      return defaultAbiCoder.encode(txDataTypes, [sig, gasAndTransferData])
+      return utils.defaultAbiCoder.encode(txDataTypes, [
+        sig,
+        gasAndTransferData
+      ])
     }
   } else {
     // 3.
@@ -261,13 +268,13 @@ export async function encodeData(
         sigData,
         opts.nonce
       )
-      return defaultAbiCoder.encode(txDataTypes, [sig, opts.extra])
+      return utils.defaultAbiCoder.encode(txDataTypes, [sig, opts.extra])
 
       // 4.
     } else {
-      const emptyTransferData = defaultAbiCoder.encode(
+      const emptyTransferData = utils.defaultAbiCoder.encode(
         ['bytes'],
-        [toUtf8Bytes('')]
+        [utils.toUtf8Bytes('')]
       )
       sigData = ethers.utils.keccak256(
         ethers.utils.solidityPack(
@@ -281,7 +288,7 @@ export async function encodeData(
         sigData,
         opts.nonce
       )
-      return defaultAbiCoder.encode(txDataTypes, [sig, emptyTransferData])
+      return utils.defaultAbiCoder.encode(txDataTypes, [sig, emptyTransferData])
     }
   }
 }

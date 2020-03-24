@@ -1,4 +1,4 @@
-import { BigNumber, Arrayish } from 'ethers/utils'
+import { utils } from 'ethers'
 
 export type MethodTypes =
   | 'metaSafeBatchTransferFrom'
@@ -6,8 +6,8 @@ export type MethodTypes =
   | 'metaSetApprovalForAll'
 
 export type GasReceipt = {
-  gasFee: number | string | BigNumber
-  gasLimitCallback: number | string | BigNumber
+  gasFee: number | string | utils.BigNumber
+  gasLimitCallback: number | string | utils.BigNumber
   feeRecipient: string
   feeTokenData: FeeTokenData
 }
@@ -20,24 +20,24 @@ export enum FeeTokenType {
 export type FeeTokenData = {
   type: FeeTokenType
   address: string
-  id: number | BigNumber
+  id: number | utils.BigNumber
 }
 
 export type Opts = {
-  nonce: BigNumber
+  nonce: utils.BigNumber
   gasReceipt?: GasReceipt | null
-  extra?: Arrayish | null
+  extra?: utils.Arrayish | null
 }
 
 export type BuyTokensObj = {
   recipient: string
-  ids: number[] | string[] | BigNumber[]
-  amounts: number[] | string[] | BigNumber[]
-  deadline: number | string | BigNumber
+  ids: number[] | string[] | utils.BigNumber[]
+  amounts: number[] | string[] | utils.BigNumber[]
+  deadline: number | string | utils.BigNumber
 }
 
 export type SellTokensObj = {
   recipient: string
-  minBaseTokens: number | string | BigNumber
-  deadline: number | string | BigNumber
+  minBaseTokens: number | string | utils.BigNumber
+  deadline: number | string | utils.BigNumber
 }
