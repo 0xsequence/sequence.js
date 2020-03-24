@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers/utils'
+import { BigNumber, Arrayish } from 'ethers/utils'
 
 export type MethodTypes =
   | 'metaSafeBatchTransferFrom'
@@ -26,7 +26,7 @@ export type FeeTokenData = {
 export type Opts = {
   nonce: BigNumber
   gasReceipt?: GasReceipt | null
-  extra?: Uint8Array | null
+  extra?: Arrayish | null
 }
 
 export type BuyTokensObj = {

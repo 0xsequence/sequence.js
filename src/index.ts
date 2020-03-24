@@ -30,7 +30,7 @@ export class ERC1155MetaEncoder {
 
   async encode(
     methodName: MethodTypes,
-    signer: Wallet,
+    signer: ethers.Signer,
     opts: Opts,
     params: any[]
   ): Promise<string> {
@@ -127,7 +127,7 @@ const erc1155TokenDataType = `tuple(
 )`
 
 async function ethSignTypedData(
-  wallet: ethers.Wallet,
+  wallet: ethers.Signer,
   domainHash: string,
   hashStruct: string | Uint8Array,
   nonce: BigNumber
@@ -149,7 +149,7 @@ async function ethSignTypedData(
 }
 
 export async function encodeData(
-  signerWallet: Wallet,
+  signerWallet: ethers.Signer,
   sigData: string,
   opts: Opts,
   domainHash: string
