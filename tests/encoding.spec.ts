@@ -1,6 +1,6 @@
-import { Contract } from '../src'
+import { ERC1155MetaEncoder } from '../src'
 import { Wallet } from 'ethers'
-import meta_erc1155 from './fixtures/meta_erc1155.json'
+import { MethodTypes } from '../src/types'
 
 const signer = Wallet.fromMnemonic(
   'dose weasel clever culture letter volume endorse used harvest ripple circle install'
@@ -18,7 +18,7 @@ describe('MetaTransactions', () => {
   })
 })
 
-async function execTest(function_name: string) {
+const execTest = async (function_name: MethodTypes) => {
   const { default: data } = await import(`./fixtures/${function_name}.json`)
 
   for (const name of Object.keys(data)) {
@@ -28,8 +28,13 @@ async function execTest(function_name: string) {
     // that signs the transaction.
     const params = [signer.address, ...test.params]
 
-    const contract = new Contract(meta_erc1155, test.contract)
-    const result = await contract.call(test.opts, signer, function_name, params)
+    const encoder = new ERC1155MetaEncoder(test.contract)
+    const result = await encoder.encode(
+      function_name,
+      signer,
+      test.opts,
+      params
+    )
 
     expect(result).toEqual(test.result)
   }

@@ -1,5 +1,10 @@
 import { BigNumber } from 'ethers/utils'
 
+export type MethodTypes =
+  | 'metaSafeBatchTransferFrom'
+  | 'metaSafeTransferFrom'
+  | 'metaSetApprovalForAll'
+
 export type GasReceipt = {
   gasFee: number | string | BigNumber
   gasLimitCallback: number | string | BigNumber
@@ -21,7 +26,7 @@ export type FeeTokenData = {
 export type Opts = {
   nonce: BigNumber
   gasReceipt?: GasReceipt | null
-  extra: Uint8Array | null
+  extra?: Uint8Array | null
 }
 
 export type BuyTokensObj = {

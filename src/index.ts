@@ -3,21 +3,20 @@ import * as ethers from 'ethers'
 
 import { BigNumber, toUtf8Bytes, defaultAbiCoder } from 'ethers/utils'
 
-import { Opts } from './types'
+import { Opts, MethodTypes } from './types'
+
+import meta_erc1155 from './ABI/meta_erc1155.json'
 
 const DOMAIN_SEPARATOR_TYPEHASH =
   '0x035aff83d86937d35b32e04f0ddc6ff469290eef2f1b692d8a815c89404d4749'
 
-export class Contract {
+export class ERC1155MetaEncoder {
   abi: utils.Interface
   address: string
 
-  constructor(
-    abiStr: ConstructorParameters<typeof utils.Interface>[0],
-    address: string
-  ) {
-    this.abi = new utils.Interface(abiStr)
-    this.address = address
+  constructor(contractAddress: string) {
+    this.abi = new utils.Interface(meta_erc1155)
+    this.address = contractAddress
   }
 
   domainHash(): string {
@@ -29,10 +28,10 @@ export class Contract {
     )
   }
 
-  async call(
-    opts: Opts,
+  async encode(
+    methodName: MethodTypes,
     signer: Wallet,
-    methodName: string,
+    opts: Opts,
     params: any[]
   ): Promise<string> {
     const method = this.abi.functions[methodName]
@@ -48,7 +47,7 @@ export class Contract {
     const data = await encodeData(signer, sigData, opts, domainHash)
 
     // fill the rest of the params of the method
-    params.push(opts.gasReceipt ? true : false)
+    params.push(!!opts.gasReceipt)
     params.push(data)
 
     return method.encode(params)
