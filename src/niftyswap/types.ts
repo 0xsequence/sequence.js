@@ -116,7 +116,7 @@ export const getAddLiquidityData = (
 ) => {
   const addLiquidityObj = {
     maxBaseTokens: baseAmountsToAdd,
-    deadline: deadline
+    deadline
   } as AddLiquidityObj
 
   return ethers.utils.defaultAbiCoder.encode(
@@ -131,9 +131,9 @@ export const getRemoveLiquidityData = (
   deadline: number
 ) => {
   const removeLiquidityObj = {
-    minBaseTokens: minBaseTokens,
-    minTokens: minTokens,
-    deadline: deadline
+    minBaseTokens,
+    minTokens,
+    deadline
   } as RemoveLiquidityObj
 
   return ethers.utils.defaultAbiCoder.encode(

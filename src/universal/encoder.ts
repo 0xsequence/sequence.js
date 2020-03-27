@@ -20,7 +20,7 @@ export class Contract {
   ): Promise<string> {
     const method = this.abi.functions[methodName]
 
-    if (method == undefined) {
+    if (!method) {
       throw Error('method not found')
     }
 

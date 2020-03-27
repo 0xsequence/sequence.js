@@ -47,7 +47,7 @@ export class NiftyswapEncoder {
           deadline: method.deadline
         })
       default:
-        //TODO: addliquidity, remove liquidity
+        // TODO: addliquidity, remove liquidity
         return ''
     }
   }
@@ -79,7 +79,7 @@ export class NiftyswapEncoder {
           }
         )
       default:
-        //TODO: addliquidity, remove liquidity
+        // TODO: addliquidity, remove liquidity
         return undefined
     }
   }
