@@ -4,7 +4,7 @@ Javascript &amp; Typescript Client for Arcadeum Transaction Relayer
 
 ## Usage
 
-```
+```typescript
 import Contract from './src'
 
 // ethers.js wallet that signs the meta-transaction
@@ -28,4 +28,8 @@ const input = await encoder.encode(
     signer,
     opts,
     [...params])
+
+const input = await encoder.encode({
+    
+})
 ```

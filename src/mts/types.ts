@@ -29,15 +29,22 @@ export type Opts = {
   extra?: utils.Arrayish | null
 }
 
-export type BuyTokensObj = {
-  recipient: string
-  ids: number[] | string[] | utils.BigNumber[]
-  amounts: number[] | string[] | utils.BigNumber[]
-  deadline: number | string | utils.BigNumber
+export interface MetaSafeBatchTransferFrom {
+  type: 'metaSafeBatchTransferFrom'
+  params: [string, utils.BigNumberish[], utils.BigNumberish[]]
 }
 
-export type SellTokensObj = {
-  recipient: string
-  minBaseTokens: number | string | utils.BigNumber
-  deadline: number | string | utils.BigNumber
+export interface MetaSafeTransferFrom {
+  type: 'metaSafeTransferFrom'
+  params: [string, utils.BigNumberish, utils.BigNumberish]
 }
+
+export interface MetaSetApprovalForAll {
+  type: 'metaSetApprovalForAll'
+  params: [string, boolean]
+}
+
+export type MetaTxMethods =
+  | MetaSafeBatchTransferFrom
+  | MetaSafeTransferFrom
+  | MetaSetApprovalForAll

@@ -1,6 +1,6 @@
-import { ERC1155MetaEncoder } from '../src'
+import { MTSEncoder } from '../src/mts/encoder'
 import { Wallet } from 'ethers'
-import { MethodTypes } from '../src/types'
+import { MethodTypes } from '../src/mts/types'
 
 const signer = Wallet.fromMnemonic(
   'dose weasel clever culture letter volume endorse used harvest ripple circle install'
@@ -24,16 +24,14 @@ const execTest = async (function_name: MethodTypes) => {
   for (const name of Object.keys(data)) {
     const test = data[name]
 
-    // the first param of the meta-transaction is always the account
-    // that signs the transaction.
-    const params = [signer.address, ...test.params]
+    const encoder = new MTSEncoder(test.contract, signer)
 
-    const encoder = new ERC1155MetaEncoder(test.contract)
     const result = await encoder.encode(
-      function_name,
-      signer,
-      test.opts,
-      params
+      {
+        type: function_name,
+        params: test.params
+      },
+      test.opts
     )
 
     expect(result).toEqual(test.result)

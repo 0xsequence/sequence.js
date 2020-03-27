@@ -28,7 +28,8 @@
   },
   "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
   "dependencies": {
-    "ethers": "^4.0.40"
+    "ethers": "^4.0.40",
+    "multi-token-standard": "^0.8.13"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
