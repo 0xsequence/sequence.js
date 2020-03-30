@@ -3,7 +3,7 @@
 node_modules/
 
 *.js.map
-build/
+lib/
 typings/contracts/*Factory.ts
 
 .DS_Store
