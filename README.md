@@ -6,7 +6,7 @@ Javascript &amp; Typescript Encoding Client for Arcadeum Meta-Transaction Relaye
 
 ## multi-token-standard (MTS) encoder
 
-NOTE: encoding only works for implementations of ERC-1155 token standard that conforms to the multi-token-standard [specification](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#meta-transactions)
+⚠️ encoding only works for implementations of ERC-1155 that conforms to the MTS [specification](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#meta-transactions)
 
 Meta-transactions nonces are used to protect users against replay attacks, MTS implementation keeps next available nonce contract side ([reference](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#nonce))
 
@@ -46,7 +46,7 @@ await relayer.sendMetaTxn({
 
 [Niftyswap Specification](https://github.com/arcadeum/niftyswap/blob/master/SPECIFICATIONS.md)
 
-NOTE: encoding only works for token pairs that uses implementations of ERC-1155 token standard that conforms to the multi-token-standard
+⚠️ encoding only works for token pairs that uses implementations of ERC-1155 that conforms to the MTS
 [specification](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#meta-transactions)
 
 ```typescript
@@ -93,3 +93,11 @@ await relayer.sendMetaTxn({
 ## Universal encoder
 
 TODO: universal txn-relayer and encoding that works with generic contracts without native meta-tx support
+
+
+--------------
+
+## License
+ [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Copyright (c) 2020 Horizon Blockchain Games Inc.

@@ -1,7 +1,8 @@
 {
   "name": "arcadeum.js",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Javascript SDK library for the arcadeum meta-relayer",
+  "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -21,8 +22,6 @@
     "type": "git",
     "url": "git+https://github.com/arcadeum/arcadeum.js.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/arcadeum/arcadeum.js/issues"
   },
