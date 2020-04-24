@@ -1,68 +1,101 @@
+import { deployArcadeum } from "./utils/arcadeum_config"
+import { ethers } from "ethers"
+import * as Ganache from "ganache-cli"
 
-import { expect } from 'chai';
+import { CallReceiverMock } from "arcadeum-wallet/typings/contracts/CallReceiverMock"
 
 import * as arcadeum from '../src'
+import { LocalRelayer } from "../src"
+import { expect } from "chai"
+import { ArcadeumContext } from "../src/types"
+
+var Web3 = require('web3');
+
+
+const CallReceiverMockArtifact = require("arcadeum-wallet/build/contracts/CallReceiverMock.json")
 
 describe('Arcadeum wallet', function() {
-  describe('wallet creation', () => {
-    it('Should return wallet address', () => {
-      const walletConfig = {
-        threshold: 1,
-        signers: [{
-          weight: 1,
-          address: '0xd63A09C47FDc03e2Cff620446b37f205A7D0679D'
-        }],
-        context: {
-          factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
-        }
-      }
+  let webprovider
 
-      const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
-      const wallet = new arcadeum.Wallet(walletConfig, pk)
+  let ethsigner
+  let ethprovider
 
-      const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
-      expect(wallet.address).to.be.equal(expected)
+  let relayer
+  let callReceiver
+
+  let context: ArcadeumContext
+  let wallet: arcadeum.Wallet
+
+  before(async () => {
+    // Deploy Ganache test env
+    webprovider = Ganache.provider()
+    ethprovider = new ethers.providers.Web3Provider(webprovider)
+    ethsigner = (ethprovider as any).getSigner()
+
+    // Deploy Arcadeum env
+    const [factory, mainModule] = await deployArcadeum(ethprovider)
+
+    // Create fixed context obj
+    context = {
+      factory: factory.address,
+      mainModule: mainModule.address
+    }
+
+    // Deploy call receiver mock
+    callReceiver = await new ethers.ContractFactory(
+      CallReceiverMockArtifact.abi,
+      CallReceiverMockArtifact.bytecode,
+      ethsigner
+    ).deploy() as CallReceiverMock
+
+    // Deploy local relayer
+    relayer = new LocalRelayer(ethsigner)
+  })
+
+  beforeEach(async () => {
+    // Create wallet
+    const pk = ethers.utils.randomBytes(32)
+    wallet = await arcadeum.Wallet.singleOwner(context, pk)
+    wallet = wallet.connect(ethprovider, relayer)
+  })
+
+  describe('with ethers js', () => {
+    it('Should call contract method', async () => {
+      const contractWithSigner = callReceiver.connect(wallet) as CallReceiverMock
+
+      await contractWithSigner.testCall(412313, "0x11222334")
+      expect(await contractWithSigner.lastValB()).to.equal("0x11222334")
     })
 
-    it('Should throw if signers is not part of the configuration', () => {
-      const walletConfig = {
-        threshold: 1,
-        signers: [{
-          weight: 1,
-          address: '0xd63A09C47FDc03e2Cff620446b37f205A7D0679D'
-        }],
-        context: {
-          factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
-        }
-      }
-
-      const pk = '0x10b1e03fb6f898f99733daca5829139dee87812b1f0eaf72dd4e6148f85e706f'
-      expect(() => new arcadeum.Wallet(walletConfig, pk)).to.throw('Signer not found in configuration')
+    it('Should deploy contract', async () => {
+      await new ethers.ContractFactory(
+        CallReceiverMockArtifact.abi,
+        CallReceiverMockArtifact.bytecode,
+        wallet
+      ).deploy() as CallReceiverMock
     })
   })
-  describe('signing', () => {
-    it('Should sign a message', async () => {
-      const message = '0x1901f0ba65550f2d1dccf4b131b774844dc3d801d886bbd4edcf660f395f21fe94792f7c1da94638270a049646e541004312b3ec1ac5'
+  describe('with web3', () => {
+    let w3
 
-      const walletConfig = {
-        threshold: 1,
-        signers: [{
-          weight: 1,
-          address: '0xd63A09C47FDc03e2Cff620446b37f205A7D0679D'
-        }],
-        context: {
-          factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
-        }
-      }
+    beforeEach(async () => {
+      const provider = new arcadeum.ArcadeumProvider(relayer, webprovider, wallet)
+      w3 = new Web3(provider)
+    })
 
-      const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
-      const wallet = new arcadeum.Wallet(walletConfig, pk)
+    it('Should call contract method', async () => {
+      const contractWithSigner = new w3.eth.Contract(
+        CallReceiverMockArtifact.abi,
+        callReceiver.address
+      )
 
-      const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
-      expect(await wallet.signMessage(message)).to.equal(expected)
+      await contractWithSigner.methods.testCall(412313, "0x11222334").send({ from: wallet.address })
+      expect(await contractWithSigner.methods.lastValB().call()).to.equal("0x11222334")
+    })
+
+    it('Should deploy contract', async () => {
+      const contractWithSigner = new w3.eth.Contract(CallReceiverMockArtifact.abi)
+      await contractWithSigner.deploy({ data: CallReceiverMockArtifact.bytecode })
     })
   })
 })

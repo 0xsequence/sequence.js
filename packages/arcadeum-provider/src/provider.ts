@@ -1,58 +1,59 @@
-import { Subprovider } from "./commons/subprovider";
-import { JSONRPCRequestPayload } from "ethereum-types";
-import { Callback, ErrorCallback } from "./types";
 import { Wallet } from "./wallet";
+import { AsyncSendable } from "ethers/providers";
+import { Relayer } from "./relayer/relayer";
+import { Web3Payload, Web3Response } from "./types";
 
-class Provider extends Subprovider {
-  private readonly _wallet: Wallet
+export class ArcadeumProvider implements AsyncSendable {
+  private readonly _wallet?: Wallet
+  private readonly _relayer: Relayer
+  private readonly _provider: AsyncSendable
 
-  constructor(wallet: Wallet) {
-    super()
+  constructor(
+    relayer: Relayer,
+    provider: AsyncSendable,
+    wallet: Wallet
+  ) {
     this._wallet = wallet
+    this._relayer = relayer
+    this._provider = provider
   }
 
-  public async handleRequest(
-    payload: JSONRPCRequestPayload,
-    next: Callback,
-    end: ErrorCallback
-  ): Promise<void> {
-    let address: string
+  public readonly isMetaMask = false
 
-    switch(payload.method) {
-      case 'eth_coinbase':
-        end(null, this._wallet.address)
-        return
+  get host(): string {
+    return this._provider.host
+  }
 
-      case 'eth_accounts':
-        end(null, [this._wallet.address])
+  sendAsync(payload: Web3Payload, callback: (error: any, response: Web3Response) => void) {
+    switch (payload.method) {
+      case 'eth_sign':
+        const signer = payload.params[0]
+        const message = payload.params[1]
+
+        if (signer && signer !== this._wallet.address) throw Error('Wrong signed')
+
+        this._wallet.signMessage(message).then((signature) => {
+          callback(undefined, {
+            id: payload.id,
+            jsonrpc: "2.0",
+            result: signature
+          })
+        })
+
         return
 
       case 'eth_sendTransaction':
-        // TODO Implement
-        end(Error('Not implemented'))
-        return
+        this._wallet.sendTransaction(payload.params[0]).then((tr) => {
+          callback(undefined, {
+            id: payload.id,
+            jsonrpc: "2.0",
+            result: tr.hash
+          })
+        })
 
-      case 'eth_signTransaction':
-        // TODO Implement
-        // Return tx signed by relayer?
-        end(Error('Not implemented'))
-        return
-
-      case 'eth_sign':
-      case 'personal_sign':
-        const data = payload.method === 'eth_sign' ? payload.params[1] : payload.params[0];
-        address = payload.method === 'eth_sign' ? payload.params[0] : payload.params[1];
-
-        if (address === this._wallet.address) {
-          end(null, this._wallet.signMessage(data))
-        } else {
-          end(Error('Invalid signer'))
-        }
-
-      case 'eth_signTypedData':
-        // TODO Implement
-        end(Error('Not implemented'))
         return
     }
+
+    return this._provider.sendAsync(payload, callback)
   }
 }

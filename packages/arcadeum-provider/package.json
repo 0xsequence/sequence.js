@@ -14,16 +14,18 @@
     "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
+    "express": "^4.17.1",
+    "ganache-cli": "^6.9.1",
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
     "ts-node": "^8.8.2",
     "tsc": "^1.20150623.0",
-    "typescript": "^3.8.3"
+    "typescript": "^3.8.3",
+    "web3": "^1.2.6",
+    "web3-typescript-typings": "^0.10.2"
   },
   "dependencies": {
-    "@0x/utils": "^5.4.1",
-    "ethereum-types": "^3.1.0",
-    "ethers": "^4.0.46",
-    "web3-provider-engine": "^15.0.7"
+    "arcadeum-wallet": "https://github.com/arcadeum/arcadeum-wallet.git",
+    "ethers": "^4.0.46"
   }
 }

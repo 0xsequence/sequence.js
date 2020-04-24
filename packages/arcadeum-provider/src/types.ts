@@ -1,6 +1,5 @@
 
-import { JSONRPCRequestPayload } from 'ethereum-types';
-import { Address } from '@0x/utils/lib/src/abi_encoder';
+import { BigNumberish, Arrayish } from 'ethers/utils';
 
 export interface LedgerCommunicationClient {
   close: () => Promise<void>;
@@ -93,10 +92,6 @@ export type Callback = () => void;
 export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => void;
 export type NextCallback = (callback?: OnNextCompleted) => void;
 
-export interface JSONRPCRequestPayloadWithMethod extends JSONRPCRequestPayload {
-  method: string;
-}
-
 export interface TrezorSubproviderConfig {
   accountFetchingConfigs: AccountFetchingConfigs;
   trezorConnectClientApi: any;
@@ -142,11 +137,50 @@ export interface ArcadeumWalletConfig {
   signers: {
     weight: number,
     address: string
-  }[],
-  context: ArcadeumContext
+  }[]
 }
 
 export interface ArcadeumContext {
   factory: string;
   mainModule: string;
+}
+
+export interface ArcadeumDecodedSignature {
+  threshold: number;
+  signers: (ArcadeumDecodedSigner | ArcadeumDecodedOwner)[];
+}
+
+export interface ArcadeumDecodedOwner {
+  weight: number;
+  address: string;
+}
+
+export interface ArcadeumDecodedSigner {
+  r: string;
+  s: string;
+  v: number;
+  t: number;
+  weight: number;
+}
+
+export interface ArcadeumTransaction {
+  delegateCall: boolean;
+  revertOnError: boolean;
+  gasLimit: BigNumberish;
+  target: string;
+  value: BigNumberish;
+  data: Arrayish;
+}
+
+export declare interface Web3Payload {
+  method: string,
+  params: any[],
+  id: number,
+  jsonrpc: string
+}
+
+export declare interface Web3Response {
+  id: number,
+  jsonrpc: string,
+  result: Arrayish
 }

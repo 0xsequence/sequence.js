@@ -1,0 +1,16 @@
+
+on: [push]
+
+name: Yarn actions
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: yarn install --network-concurrency 1
+      - run: yarn test
