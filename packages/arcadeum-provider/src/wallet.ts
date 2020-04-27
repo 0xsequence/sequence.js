@@ -3,16 +3,18 @@ import { ethers } from 'ethers'
 import { addressOf, sortConfig, hashMetaTransactionsData, toArcadeumTransaction } from './utils'
 import { BigNumberish, Arrayish } from "ethers/utils"
 import { Signer as AbstractSigner } from "ethers"
-import { TransactionRequest, TransactionResponse, BlockTag, Provider, JsonRpcProvider } from "ethers/providers"
+import { TransactionRequest, TransactionResponse, BlockTag, Provider, JsonRpcProvider, AsyncSendable, Web3Provider } from "ethers/providers"
 import { Relayer } from "./relayer/relayer"
-import { InvalidSigner } from "./errors"
+import { abi as mainModuleAbi } from "./abi/mainModule"
 
 export class Wallet extends AbstractSigner {
   private readonly _signers: AbstractSigner[]
   private readonly _config: ArcadeumWalletConfig
   private readonly _context: ArcadeumContext
 
+  w3provider: AsyncSendable
   provider: Provider
+
   relayer: Relayer
 
   constructor(
@@ -27,16 +29,21 @@ export class Wallet extends AbstractSigner {
     this._context = context
   }
 
-  get address() {
+  get address(): string {
     return addressOf(this._config, this._context)
+  }
+
+  get connected(): boolean {
+    return this.w3provider !== undefined
   }
 
   async getAddress(): Promise<string> {
     return this.address
   }
 
-  setProvider(provider: (Provider | string)): Wallet {
-    this.provider = typeof(provider) === 'string' ? new JsonRpcProvider(provider) : provider
+  setProvider(w3provider: (AsyncSendable | string)): Wallet {
+    this.w3provider = typeof(w3provider) === 'string' ? new JsonRpcProvider(w3provider) : w3provider
+    this.provider = new Web3Provider(this.w3provider)
     return this
   }
 
@@ -45,15 +52,24 @@ export class Wallet extends AbstractSigner {
     return this
   }
 
-  connect(provider: (Provider | string), relayer: Relayer): Wallet {
+  connect(provider: (AsyncSendable | string), relayer: Relayer): Wallet {
     return new Wallet(this._config, this._context, ...this._signers)
       .setProvider(provider)
       .setRelayer(relayer)
   }
 
+  async getNonce(blockTag?: BlockTag): Promise<number> {
+    if (await this.provider.getCode(this.address) === '0x') {
+      return 0
+    }
+
+    const module = new ethers.ContractFactory(mainModuleAbi, [], this).attach(this.address)
+
+    return (await module.nonce({ blockTag: blockTag})).toNumber()
+  }
+
   async getTransactionCount(blockTag?: BlockTag): Promise<number> {
-    if (!this.provider) { throw new Error('missing provider') }
-    return 0 // TODO Lookup real nonce of contract wallet
+    return this.getNonce(blockTag)
   }
 
   async sendTransaction(transaction: TransactionRequest): Promise<TransactionResponse> {
@@ -63,8 +79,11 @@ export class Wallet extends AbstractSigner {
     let nonce: BigNumberish
     if (transaction.nonce) {
       nonce = await transaction.nonce
+      if (nonce === await this.getNonce()) {
+        nonce += 99
+      }
     } else {
-      nonce = await this.getTransactionCount(undefined)
+      nonce = await this.getNonce() + 99
     }
 
     const arctx = await toArcadeumTransaction(this, transaction)

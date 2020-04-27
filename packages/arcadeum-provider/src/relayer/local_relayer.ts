@@ -5,8 +5,8 @@ import { TransactionResponse } from "ethers/providers"
 import { addressOf, imageHash } from "../utils"
 import { Signer, ethers } from "ethers"
 
-const FactoryArtifact = require("arcadeum-wallet/build/contracts/Factory.json")
-const MainModuleArtifact = require("arcadeum-wallet/build/contracts/MainModule.json")
+import { abi as factoryAbi } from "../abi/factory"
+import { abi as mainModuleAbi } from "../abi/mainModule"
 
 export class LocalRelayer  {
   private readonly signer: Signer
@@ -24,16 +24,15 @@ export class LocalRelayer  {
   ): Promise<TransactionResponse> {
     const wallet = addressOf(config, context)
 
-    const factory = new ethers.ContractFactory(FactoryArtifact.abi, [], this.signer)
-    const mainModule = new ethers.ContractFactory(MainModuleArtifact.abi, [], this.signer)
-
     if (await this.signer.provider.getCode(wallet) === '0x') {
+      const factory = new ethers.ContractFactory(factoryAbi, [], this.signer)
       await factory
         .attach(context.factory)
         .connect(this.signer)
         .deploy(context.mainModule, imageHash(config))
     }
 
+    const mainModule = new ethers.ContractFactory(mainModuleAbi, [], this.signer)
     const walletModule = mainModule
       .attach(wallet)
       .connect(this.signer)

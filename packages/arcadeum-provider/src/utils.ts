@@ -4,9 +4,7 @@ import * as WalletContract from "./commons/wallet_contract"
 import { BigNumberish, Arrayish, Interface } from "ethers/utils"
 import { TransactionRequest } from "ethers/providers"
 import { Wallet } from "./wallet"
-
-const ModuleCreator = require("arcadeum-wallet/build/contracts/ModuleCreator.json")
-
+import { abi as mainModuleAbi } from "./abi/mainModule"
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
@@ -212,7 +210,7 @@ export async function toArcadeumTransaction(
       data: await tx.data
     }
   } else {
-    const walletInterface = new Interface(ModuleCreator.abi)
+    const walletInterface = new Interface(mainModuleAbi)
     const data = walletInterface.functions.createContract.encode([tx.data])
     return {
       delegateCall: false,

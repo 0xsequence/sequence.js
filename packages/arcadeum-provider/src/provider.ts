@@ -1,30 +1,32 @@
 import { Wallet } from "./wallet"
 import { AsyncSendable } from "ethers/providers"
-import { Relayer } from "./relayer/relayer"
 import { Web3Payload, Web3Response } from "./types"
+import { ethers } from "ethers"
 
-export class ArcadeumProvider implements AsyncSendable {
+export class Provider implements AsyncSendable {
   private readonly _wallet?: Wallet
-  private readonly _relayer: Relayer
-  private readonly _provider: AsyncSendable
 
   constructor(
-    relayer: Relayer,
-    provider: AsyncSendable,
     wallet: Wallet
   ) {
     this._wallet = wallet
-    this._relayer = relayer
-    this._provider = provider
   }
 
   public readonly isMetaMask = false
 
   get host(): string {
-    return this._provider.host
+    return this.provider.host
   }
 
-  sendAsync(payload: Web3Payload, callback: (error: any, response: Web3Response) => void) {
+  get provider(): AsyncSendable {
+    if (!this._wallet.connected) {
+      throw Error('Wallet not connected')
+    }
+
+    return this._wallet.w3provider
+  }
+
+  sendAsync(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
     switch (payload.method) {
       case 'eth_sign':
         const signer = payload.params[0]
@@ -38,7 +40,7 @@ export class ArcadeumProvider implements AsyncSendable {
             jsonrpc: "2.0",
             result: signature
           })
-        })
+        }).catch((e) => callback(e))
 
         return
 
@@ -49,11 +51,27 @@ export class ArcadeumProvider implements AsyncSendable {
             jsonrpc: "2.0",
             result: tr.hash
           })
-        })
+        }).catch((e) => callback(e))
 
         return
+
+      case 'eth_getTransactionCount':
+        const address = payload.params[0].toLowerCase()
+        if (address === this._wallet.address.toLowerCase()) {
+          this._wallet.getTransactionCount(payload.params[1]).then((count) => {
+            callback(undefined, {
+              id: payload.id,
+              jsonrpc: "2.0",
+              result: ethers.utils.bigNumberify(count).toHexString()
+            })
+          }).catch((e) => callback(e))
+
+          return
+        }
+
+        break
     }
 
-    return this._provider.sendAsync(payload, callback)
+    return this.provider.sendAsync(payload, callback)
   }
 }
