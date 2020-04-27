@@ -170,7 +170,7 @@ export function aggregate(...signatures: string[]) {
   return signatures.reduce((p, c) => aggregateTwo(p, c))
 }
 
-function aggregateTwo(a: string, b: string): string{
+function aggregateTwo(a: string, b: string): string {
   const da = decodeSignature(a)
   const db = decodeSignature(b)
 

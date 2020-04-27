@@ -1,7 +1,7 @@
-import { Wallet } from "./wallet";
-import { AsyncSendable } from "ethers/providers";
-import { Relayer } from "./relayer/relayer";
-import { Web3Payload, Web3Response } from "./types";
+import { Wallet } from "./wallet"
+import { AsyncSendable } from "ethers/providers"
+import { Relayer } from "./relayer/relayer"
+import { Web3Payload, Web3Response } from "./types"
 
 export class ArcadeumProvider implements AsyncSendable {
   private readonly _wallet?: Wallet

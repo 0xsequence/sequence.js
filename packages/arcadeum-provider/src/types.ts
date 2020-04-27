@@ -1,14 +1,14 @@
 
-import { BigNumberish, Arrayish } from 'ethers/utils';
+import { BigNumberish, Arrayish } from 'ethers/utils'
 
 export interface LedgerCommunicationClient {
-  close: () => Promise<void>;
+  close: () => Promise<void>
 }
 
 export interface ECSignatureString {
-  v: string;
-  r: string;
-  s: string;
+  v: string
+  r: string
+  s: string
 }
 
 /**
@@ -18,9 +18,9 @@ export interface ECSignatureString {
  *                   before fetching their addresses
  */
 export interface AccountFetchingConfigs {
-  addressSearchLimit?: number;
-  numAddressesToReturn?: number;
-  shouldAskForOnDeviceConfirmation?: boolean;
+  addressSearchLimit?: number
+  numAddressesToReturn?: number
+  shouldAskForOnDeviceConfirmation?: boolean
 }
 
 /**
@@ -29,44 +29,44 @@ export interface AccountFetchingConfigs {
  * baseDerivationPath: The base derivation path (e.g 44'/60'/0'/0)
  */
 export interface MnemonicWalletSubproviderConfigs {
-  mnemonic: string;
-  addressSearchLimit?: number;
-  baseDerivationPath?: string;
+  mnemonic: string
+  addressSearchLimit?: number
+  baseDerivationPath?: string
 }
 
 export interface SignatureData {
-  hash: string;
-  r: string;
-  s: string;
-  v: number;
+  hash: string
+  r: string
+  s: string
+  v: number
 }
 
 export interface LedgerGetAddressResult {
-  address: string;
-  publicKey: string;
-  chainCode: string;
+  address: string
+  publicKey: string
+  chainCode: string
 }
 
 export interface PartialTxParams {
-  nonce: string;
-  gasPrice?: string;
-  gas: string;
-  to: string;
-  from: string;
-  value?: string;
-  data?: string;
-  chainId: number; // EIP 155 chainId - mainnet: 1, ropsten: 3
+  nonce: string
+  gasPrice?: string
+  gas: string
+  to: string
+  from: string
+  value?: string
+  data?: string
+  chainId: number // EIP 155 chainId - mainnet: 1, ropsten: 3
 }
 
-export type DoneCallback = (err?: Error) => void;
+export type DoneCallback = (err?: Error) => void
 
 export interface LedgerCommunication {
-  close_async: () => Promise<void>;
+  close_async: () => Promise<void>
 }
 
 export interface ResponseWithTxParams {
-  raw: string;
-  tx: PartialTxParams;
+  raw: string
+  tx: PartialTxParams
 }
 
 export enum WalletSubproviderErrors {
@@ -75,65 +75,65 @@ export enum WalletSubproviderErrors {
   DataMissingForSignTypedData = 'DATA_MISSING_FOR_SIGN_TYPED_DATA',
   SenderInvalidOrNotSupplied = 'SENDER_INVALID_OR_NOT_SUPPLIED',
   FromAddressMissingOrInvalid = 'FROM_ADDRESS_MISSING_OR_INVALID',
-  MethodNotSupported = 'METHOD_NOT_SUPPORTED',
+  MethodNotSupported = 'METHOD_NOT_SUPPORTED'
 }
 export enum LedgerSubproviderErrors {
   TooOldLedgerFirmware = 'TOO_OLD_LEDGER_FIRMWARE',
-  MultipleOpenConnectionsDisallowed = 'MULTIPLE_OPEN_CONNECTIONS_DISALLOWED',
+  MultipleOpenConnectionsDisallowed = 'MULTIPLE_OPEN_CONNECTIONS_DISALLOWED'
 }
 
 export enum NonceSubproviderErrors {
   EmptyParametersFound = 'EMPTY_PARAMETERS_FOUND',
-  CannotDetermineAddressFromPayload = 'CANNOT_DETERMINE_ADDRESS_FROM_PAYLOAD',
+  CannotDetermineAddressFromPayload = 'CANNOT_DETERMINE_ADDRESS_FROM_PAYLOAD'
 }
 
-export type ErrorCallback = (err: Error | null, data?: any) => void;
-export type Callback = () => void;
-export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => void;
-export type NextCallback = (callback?: OnNextCompleted) => void;
+export type ErrorCallback = (err: Error | null, data?: any) => void
+export type Callback = () => void
+export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => void
+export type NextCallback = (callback?: OnNextCompleted) => void
 
 export interface TrezorSubproviderConfig {
-  accountFetchingConfigs: AccountFetchingConfigs;
-  trezorConnectClientApi: any;
-  networkId: number;
+  accountFetchingConfigs: AccountFetchingConfigs
+  trezorConnectClientApi: any
+  networkId: number
 }
 
 export interface TrezorGetPublicKeyResponsePayload {
   path: {
     [index: number]: number;
-  };
-  serializedPath: string;
-  childNumb: number;
-  xpub: string;
-  chainCode: string;
-  publicKey: string;
-  fingerprint: number;
-  depth: number;
+  }
+  serializedPath: string
+  childNumb: number
+  xpub: string
+  chainCode: string
+  publicKey: string
+  fingerprint: number
+  depth: number
 }
 
 export interface TrezorSignTxResponsePayload {
-  v: string;
-  r: string;
-  s: string;
+  v: string
+  r: string
+  s: string
 }
 
 export interface TrezorSignMsgResponsePayload {
-  address: string;
-  signature: string;
+  address: string
+  signature: string
 }
 
 export interface TrezorResponseErrorPayload {
-  error: string;
+  error: string
 }
 
 export interface TrezorConnectResponse {
-  payload: any;
-  id: number;
-  success: boolean;
+  payload: any
+  id: number
+  success: boolean
 }
 
 export interface ArcadeumWalletConfig {
-  threshold: number;
+  threshold: number
   signers: {
     weight: number,
     address: string
@@ -141,35 +141,35 @@ export interface ArcadeumWalletConfig {
 }
 
 export interface ArcadeumContext {
-  factory: string;
-  mainModule: string;
+  factory: string
+  mainModule: string
 }
 
 export interface ArcadeumDecodedSignature {
-  threshold: number;
-  signers: (ArcadeumDecodedSigner | ArcadeumDecodedOwner)[];
+  threshold: number
+  signers: (ArcadeumDecodedSigner | ArcadeumDecodedOwner)[]
 }
 
 export interface ArcadeumDecodedOwner {
-  weight: number;
-  address: string;
+  weight: number
+  address: string
 }
 
 export interface ArcadeumDecodedSigner {
-  r: string;
-  s: string;
-  v: number;
-  t: number;
-  weight: number;
+  r: string
+  s: string
+  v: number
+  t: number
+  weight: number
 }
 
 export interface ArcadeumTransaction {
-  delegateCall: boolean;
-  revertOnError: boolean;
-  gasLimit: BigNumberish;
-  target: string;
-  value: BigNumberish;
-  data: Arrayish;
+  delegateCall: boolean
+  revertOnError: boolean
+  gasLimit: BigNumberish
+  target: string
+  value: BigNumberish
+  data: Arrayish
 }
 
 export declare interface Web3Payload {

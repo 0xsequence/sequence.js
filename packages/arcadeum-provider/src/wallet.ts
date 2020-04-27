@@ -1,11 +1,11 @@
-import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction } from "./types";
+import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction } from "./types"
 import { ethers } from 'ethers'
 import { addressOf, sortConfig, hashMetaTransactionsData, toArcadeumTransaction } from './utils'
 import { BigNumberish, Arrayish } from "ethers/utils"
 import { Signer as AbstractSigner } from "ethers"
-import { TransactionRequest, TransactionResponse, BlockTag, Provider, JsonRpcProvider } from "ethers/providers";
-import { Relayer } from "./relayer/relayer";
-import { InvalidSigner } from "./errors";
+import { TransactionRequest, TransactionResponse, BlockTag, Provider, JsonRpcProvider } from "ethers/providers"
+import { Relayer } from "./relayer/relayer"
+import { InvalidSigner } from "./errors"
 
 export class Wallet extends AbstractSigner {
   private readonly _signers: AbstractSigner[]
@@ -52,7 +52,7 @@ export class Wallet extends AbstractSigner {
   }
 
   async getTransactionCount(blockTag?: BlockTag): Promise<number> {
-    if (!this.provider) { throw new Error('missing provider'); }
+    if (!this.provider) { throw new Error('missing provider') }
     return 0 // TODO Lookup real nonce of contract wallet
   }
 

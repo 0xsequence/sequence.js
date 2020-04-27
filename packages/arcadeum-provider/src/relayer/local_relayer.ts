@@ -1,9 +1,9 @@
-import { BigNumberish } from "ethers/utils";
-import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from "../types";
+import { BigNumberish } from "ethers/utils"
+import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from "../types"
 import { TransactionResponse } from "ethers/providers"
 
-import { addressOf, imageHash } from "../utils";
-import { Signer, ethers } from "ethers";
+import { addressOf, imageHash } from "../utils"
+import { Signer, ethers } from "ethers"
 
 const FactoryArtifact = require("arcadeum-wallet/build/contracts/Factory.json")
 const MainModuleArtifact = require("arcadeum-wallet/build/contracts/MainModule.json")
