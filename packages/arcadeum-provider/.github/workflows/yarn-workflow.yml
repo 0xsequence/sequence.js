@@ -16,9 +16,7 @@ jobs:
         id: yarn-cache
         with:
           path: node_modules/
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn install --network-concurrency 1
 
   lint:
@@ -34,9 +32,7 @@ jobs:
         id: yarn-cache
         with:
           path: node_modules/
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn lint
  
   test:
@@ -52,7 +48,25 @@ jobs:
         id: yarn-cache
         with:
           path: node_modules/
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn test
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - uses: actions/cache@v1
+        id: yarn-cache
+        with:
+          path: node_modules/
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/package.json', '**/yarn.lock') }}
+      - run: yarn coverage
+      - uses: actions/upload-artifact@v1
+        with:
+          name: coverage-report
+          path: coverage

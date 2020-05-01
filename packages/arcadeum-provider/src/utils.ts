@@ -5,6 +5,7 @@ import { BigNumberish, Arrayish, Interface } from "ethers/utils"
 import { TransactionRequest } from "ethers/providers"
 import { Wallet } from "./wallet"
 import { abi as mainModuleAbi } from "./abi/mainModule"
+import { AsyncSendable } from "ethers/providers"
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
@@ -81,9 +82,16 @@ export function hashMetaTransactionsData(
     [nonce, txs]
   )
 
+  return encodeMessageData(wallet, transactions)
+}
+
+export function encodeMessageData(
+  wallet: string,
+  data: string
+): string {
   return ethers.utils.solidityPack(
     ['string', 'address', 'bytes'],
-    ['\x19\x01', wallet, ethers.utils.keccak256(transactions)]
+    ['\x19\x01', wallet, ethers.utils.keccak256(data)]
   )
 }
 
@@ -120,14 +128,14 @@ export function decodeSignature(signature: string): ArcadeumDecodedSignature {
   const signers = []
 
   for (let rindex = 4; rindex < auxsig.length;) {
-    const isAddr = auxsig.slice(rindex, rindex + 2) === '00'
+    const isAddr = auxsig.slice(rindex, rindex + 2) !== '00'
     rindex += 2
 
-    const weight = ethers.utils.bigNumberify(auxsig.slice(rindex, rindex + 2)).toNumber()
+    const weight = ethers.utils.bigNumberify(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
     rindex += 2
 
     if (isAddr) {
-      const addr = ethers.utils.hexZeroPad(auxsig.slice(rindex, rindex + 40), 32)
+      const addr = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
       rindex += 40
 
       signers.push({
@@ -135,16 +143,16 @@ export function decodeSignature(signature: string): ArcadeumDecodedSignature {
         address: addr
       })
     } else {
-      const r = auxsig.slice(rindex, rindex + 64)
+      const r = `0x${auxsig.slice(rindex, rindex + 64)}`
       rindex += 64
 
-      const s = auxsig.slice(rindex, rindex + 64)
+      const s = `0x${auxsig.slice(rindex, rindex + 64)}`
       rindex += 64
 
-      const v = ethers.utils.bigNumberify(auxsig.slice(rindex, rindex + 2)).toNumber()
+      const v = ethers.utils.bigNumberify(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
       rindex += 2
 
-      const t = ethers.utils.bigNumberify(auxsig.slice(rindex, rindex + 2)).toNumber()
+      const t = ethers.utils.bigNumberify(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
       rindex += 2
 
       signers.push({
@@ -172,24 +180,25 @@ function aggregateTwo(a: string, b: string): string {
   const da = decodeSignature(a)
   const db = decodeSignature(b)
 
-  const signers = da.signers.map((s, i) => (<ArcadeumDecodedSigner>s).r ? s : db[i])
+  const signers = da.signers.map((s, i) => (<ArcadeumDecodedSigner>s).r ? s : db.signers[i])
 
   const accountBytes = signers.map((s) => {
-    if (<ArcadeumDecodedSigner>s.r) {
+    if ((<ArcadeumDecodedSigner>s).r) {
+      const sig = s as ArcadeumDecodedSigner
       return ethers.utils.solidityPack(
         ['bool', 'uint8', 'bytes32', 'bytes32', 'uint8', 'uint8'],
-        [false, s.weight, s.r, s.s, s.v, s.t]
+        [false, s.weight, sig.r, sig.s, sig.v, sig.t]
       )
     } else {
       return ethers.utils.solidityPack(
         ['bool', 'uint8', 'address'],
-        [true, s.weight, s.address]
+        [true, s.weight, ethers.utils.getAddress((<ArcadeumDecodedOwner>s).address)]
       )
     }
   })
 
   return ethers.utils.solidityPack(
-    ['uint16', ...Array(this._config.signers.length).fill('bytes')],
+    ['uint16', ...Array(accountBytes.length).fill('bytes')],
     [da.threshold, ...accountBytes]
   )
 }
@@ -221,4 +230,8 @@ export async function toArcadeumTransaction(
       data: data
     }
   }
+}
+
+export function isAsyncSendable(target: any) {
+  return target.send || target.sendAsync
 }

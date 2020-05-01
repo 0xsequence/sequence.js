@@ -182,5 +182,5 @@ export declare interface Web3Payload {
 export declare interface Web3Response {
   id: number,
   jsonrpc: string,
-  result: Arrayish
+  result: any
 }

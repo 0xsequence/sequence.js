@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "prepare": "yarn build",
     "test": "mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" npm run test",
     "lint": "tslint -c tslint.json -p .",
@@ -20,9 +21,11 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
+    "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^7.0.2",
-    "arcadeum-wallet": "https://github.com/arcadeum/arcadeum-wallet.git",
+    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts.git",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "express": "^4.17.1",
     "ganache-cli": "^6.9.1",
     "husky": "^4.2.5",

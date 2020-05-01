@@ -1,16 +1,19 @@
 import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction } from "./types"
 import { ethers } from 'ethers'
-import { addressOf, sortConfig, hashMetaTransactionsData, toArcadeumTransaction } from './utils'
+import { addressOf, sortConfig, hashMetaTransactionsData, toArcadeumTransaction, encodeMessageData, isAsyncSendable } from './utils'
 import { BigNumberish, Arrayish } from "ethers/utils"
 import { Signer as AbstractSigner } from "ethers"
 import { TransactionRequest, TransactionResponse, BlockTag, Provider, JsonRpcProvider, AsyncSendable, Web3Provider } from "ethers/providers"
 import { Relayer } from "./relayer/relayer"
 import { abi as mainModuleAbi } from "./abi/mainModule"
+import { JsonRpcAsyncSendable } from "./providers/async-provider"
+import { ConnectionInfo } from "ethers/utils/web"
 
 export class Wallet extends AbstractSigner {
   private readonly _signers: AbstractSigner[]
-  private readonly _config: ArcadeumWalletConfig
-  private readonly _context: ArcadeumContext
+
+  readonly context: ArcadeumContext
+  readonly config: ArcadeumWalletConfig
 
   w3provider: AsyncSendable
   provider: Provider
@@ -25,12 +28,12 @@ export class Wallet extends AbstractSigner {
     super()
 
     this._signers = signers.map((s) => AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s))
-    this._config = sortConfig(config)
-    this._context = context
+    this.config = sortConfig(config)
+    this.context = context
   }
 
   get address(): string {
-    return addressOf(this._config, this._context)
+    return addressOf(this.config, this.context)
   }
 
   get connected(): boolean {
@@ -41,9 +44,15 @@ export class Wallet extends AbstractSigner {
     return this.address
   }
 
-  setProvider(w3provider: (AsyncSendable | string)): Wallet {
-    this.w3provider = typeof(w3provider) === 'string' ? new JsonRpcProvider(w3provider) : w3provider
-    this.provider = new Web3Provider(this.w3provider)
+  setProvider(provider: (AsyncSendable | ConnectionInfo | string)): Wallet {
+    if (isAsyncSendable(provider)) {
+      this.w3provider = <AsyncSendable>provider
+      this.provider = new Web3Provider(this.w3provider)
+    } else {
+      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider)
+      this.provider = jsonProvider
+      this.w3provider = new JsonRpcAsyncSendable(jsonProvider)
+    }
     return this
   }
 
@@ -52,8 +61,8 @@ export class Wallet extends AbstractSigner {
     return this
   }
 
-  connect(provider: (AsyncSendable | string), relayer: Relayer): Wallet {
-    return new Wallet(this._config, this._context, ...this._signers)
+  connect(provider: (AsyncSendable | ConnectionInfo | string), relayer: Relayer): Wallet {
+    return new Wallet(this.config, this.context, ...this._signers)
       .setProvider(provider)
       .setRelayer(relayer)
   }
@@ -76,20 +85,12 @@ export class Wallet extends AbstractSigner {
     if (!this.provider) { throw new Error('missing provider') }
     if (!this.relayer) { throw new Error('missing relayer') }
 
-    let nonce: BigNumberish
-    if (transaction.nonce) {
-      nonce = await transaction.nonce
-      if (nonce === await this.getNonce()) {
-        nonce += 99
-      }
-    } else {
-      nonce = await this.getNonce() + 99
-    }
+    let nonce = transaction.nonce ? transaction.nonce : this.getNonce()
 
     const arctx = await toArcadeumTransaction(this, transaction)
-    const signature = this.signTransactions(nonce, arctx)
+    const signature = this.signTransactions(await nonce, arctx)
 
-    return this.relayer.relay(nonce, this._config, this._context, signature, arctx)
+    return this.relayer.relay(nonce, this.config, this.context, signature, arctx)
   }
 
   async signTransactions(
@@ -97,15 +98,30 @@ export class Wallet extends AbstractSigner {
     ...txs: ArcadeumTransaction[]
   ): Promise<string> {
     const hash = hashMetaTransactionsData(this.address, nonce, ...txs)
-    return this.signMessage(hash)
+    const digest = ethers.utils.keccak256(hash)
+    return this.sign(digest)
   }
 
   async signMessage(message: string): Promise<string> {
-    const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    return this.sign(
+      ethers.utils.keccak256(
+        encodeMessageData(
+          this.address,
+          ethers.utils.hashMessage(
+            ethers.utils.arrayify(message)
+          )
+        )
+      )
+    )
+  }
 
+  async sign(raw: Arrayish): Promise<string> {
+    const digest = ethers.utils.arrayify(raw)
+    const signersAddr = Promise.all(this._signers.map((s) => s.getAddress()))
     const accountBytes = await Promise.all(
-      this._config.signers.map(async (a) => {
-        const signer = this._signers.find(async (s) => await s.getAddress() === a.address)
+      this.config.signers.map(async (a) => {
+        const signerIndex = (await signersAddr).indexOf(a.address)
+        const signer = this._signers[signerIndex]
         if (signer) {
           return ethers.utils.solidityPack(
             ['bool', 'uint8', 'bytes'],
@@ -121,8 +137,8 @@ export class Wallet extends AbstractSigner {
     )
 
     return ethers.utils.solidityPack(
-      ['uint16', ...Array(this._config.signers.length).fill('bytes')],
-      [this._config.threshold, ...accountBytes]
+      ['uint16', ...Array(this.config.signers.length).fill('bytes')],
+      [this.config.threshold, ...accountBytes]
     )
   }
 

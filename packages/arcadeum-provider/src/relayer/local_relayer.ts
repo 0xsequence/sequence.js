@@ -15,6 +15,17 @@ export class LocalRelayer  {
     this.signer = signer
   }
 
+  async deploy(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext
+  ): Promise<TransactionResponse> {
+    const factory = new ethers.ContractFactory(factoryAbi, [], this.signer)
+    return factory
+      .attach(context.factory)
+      .connect(this.signer)
+      .deploy(context.mainModule, imageHash(config), { gasLimit: 100000 })
+  }
+
   async relay(
     nonce: BigNumberish,
     config: ArcadeumWalletConfig,
@@ -25,11 +36,7 @@ export class LocalRelayer  {
     const wallet = addressOf(config, context)
 
     if (await this.signer.provider.getCode(wallet) === '0x') {
-      const factory = new ethers.ContractFactory(factoryAbi, [], this.signer)
-      await factory
-        .attach(context.factory)
-        .connect(this.signer)
-        .deploy(context.mainModule, imageHash(config))
+      await this.deploy(config, context)
     }
 
     const mainModule = new ethers.ContractFactory(mainModuleAbi, [], this.signer)

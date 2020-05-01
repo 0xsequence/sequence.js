@@ -5,7 +5,7 @@ import { ethers } from "ethers"
 import * as arcadeum from '../src'
 
 describe('Arcadeum utils', function() {
-  it('should generate image hash', () => {
+  it('Should generate image hash', () => {
     const config = {
       threshold: 1,
       signers: [{
@@ -18,7 +18,7 @@ describe('Arcadeum utils', function() {
     expect(arcadeum.utils.imageHash(config)).to.be.equal(expected)
   })
 
-  it('should generate wallet address', () => {
+  it('Should generate wallet address', () => {
     const config = {
       threshold: 1,
       signers: [{

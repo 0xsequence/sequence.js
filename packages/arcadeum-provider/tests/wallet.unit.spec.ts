@@ -2,6 +2,7 @@
 import { expect } from 'chai';
 
 import * as arcadeum from '../src'
+import { ethers } from 'ethers';
 
 describe('Arcadeum wallet', function() {
   describe('wallet creation', () => {
@@ -29,6 +30,7 @@ describe('Arcadeum wallet', function() {
   describe('signing', () => {
     it('Should sign a message', async () => {
       const message = '0x1901f0ba65550f2d1dccf4b131b774844dc3d801d886bbd4edcf660f395f21fe94792f7c1da94638270a049646e541004312b3ec1ac5'
+      const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
 
       const config = {
         threshold: 1,
@@ -51,7 +53,7 @@ describe('Arcadeum wallet', function() {
       const wallet = new arcadeum.Wallet(config, context, pk)
 
       const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
-      expect(await wallet.signMessage(message)).to.equal(expected)
+      expect(await wallet.sign(digest)).to.equal(expected)
     })
   })
 })
