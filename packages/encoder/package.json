@@ -1,5 +1,5 @@
 {
-  "name": "arcadeum.js",
+  "name": "@arcadeum/encoder",
   "version": "0.1.0",
   "description": "Javascript SDK library for the arcadeum meta-relayer",
   "license": "MIT",
