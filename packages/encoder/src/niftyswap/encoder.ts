@@ -21,7 +21,9 @@ export class NiftyswapEncoder {
     this.asset = new TokenEncoder(_assetContractAddress, _signer)
   }
 
-  private getTargetEncoder = (method: NiftyswapMethods): TokenEncoder | null => {
+  private getTargetEncoder = (
+    method: NiftyswapMethods
+  ): TokenEncoder | null => {
     switch (method.type) {
       case 'buy':
         return this.baseCurrency
