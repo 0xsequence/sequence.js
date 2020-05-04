@@ -1,4 +1,4 @@
-# arcadeum.js
+# @arcadeum/encoder
 
 Encoding tools for Arcadeum Meta-Transaction Relayer
 
