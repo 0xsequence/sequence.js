@@ -1,6 +1,6 @@
 # arcadeum.js
 
-Javascript &amp; Typescript Encoding Client for Arcadeum Meta-Transaction Relayer
+Encoding tools for Arcadeum Meta-Transaction Relayer
 
 ## Usage
 
@@ -11,8 +11,11 @@ Javascript &amp; Typescript Encoding Client for Arcadeum Meta-Transaction Relaye
 Meta-transactions nonces are used to protect users against replay attacks, MTS implementation keeps next available nonce contract side ([reference](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#nonce))
 
 ```typescript
-import { TokenEncoder } from 'arcadeum.js'
-import { MetaSafeBatchTransferFrom, Opts } from 'arcadeum.js/lib/mts/types'
+import {
+  TokenEncoder,
+  MetaSafeBatchTransferFrom,
+  MetaTxnOpts
+} from 'arcadeum.js'
 
 const encoder = new TokenEncoder(
   CONTRACT_ADDRESS, //'0x123...0'
@@ -25,7 +28,7 @@ const call: MetaSafeBatchTransferFrom = {
   params: [receiver, ids, amounts]
 }
 
-const options: Opts = {
+const options: MetaTxnOpts = {
   nonce: 1,
   gasReceipt: null,
   extra: null
@@ -94,10 +97,10 @@ await relayer.sendMetaTxn({
 
 TODO: universal txn-relayer and encoding that works with generic contracts without native meta-tx support
 
-
---------------
+---
 
 ## License
- [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Copyright (c) 2018-present Horizon Blockchain Games Inc.
