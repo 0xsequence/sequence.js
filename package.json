@@ -1,12 +1,21 @@
 {
   "name": "arcadeum",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/@types/jest",
+      "**/@types/mocha",
+      "**/@types/chai*"
+    ]
+  },
   "scripts": {
     "lerna": "lerna",
-    "bootstrap": "lerna bootstrap"
+    "test": "lerna run test --stream",
+    "bootstrap": "yarn clean && yarn install",
+    "clean": "lerna clean --yes; rm -rf ./node_modules"
   },
   "devDependencies": {
     "lerna": "^3.20.2"
