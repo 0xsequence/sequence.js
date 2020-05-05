@@ -18,6 +18,9 @@
     "clean": "lerna clean --yes; rm -rf ./node_modules"
   },
   "devDependencies": {
-    "lerna": "^3.20.2"
+    "lerna": "^3.20.2",
+    "rollup": "^2.7.6",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "typescript": "^3.8.3"
   }
 }

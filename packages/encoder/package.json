@@ -38,13 +38,10 @@
     "@types/node": "^13.9.1",
     "jest": "^25.1.0",
     "prettier": "^2.0.1",
-    "rollup": "^2.7.6",
-    "rollup-plugin-typescript2": "^0.27.0",
     "ts-jest": "^25.2.1",
     "tslib": "^1.11.1",
     "tslint": "^6.1.0",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.8.3"
+    "tslint-config-prettier": "^1.18.0"
   },
   "jest": {
     "setupFiles": [],

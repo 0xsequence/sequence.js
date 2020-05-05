@@ -5,13 +5,14 @@
   "author": "Michael Yu <1619025+acrylix@users.noreply.github.com>",
   "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
   "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "prepare": "yarn build",
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
-    "build": "rm -rf ./lib && tsc -b .",
+    "build": "rm -rf ./lib && rollup -c",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
     "lint:fixtslint": "tslint --project ./tsconfig.json --fix"

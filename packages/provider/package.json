@@ -2,17 +2,22 @@
   "name": "@arcadeum/provider",
   "version": "0.1.0",
   "main": "dist/index.js",
+  "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
   "author": "Agustin Aguilar",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf ./dist && rollup -c",
+    "prepublishOnly": "yarn test && yarn lint",
     "prepare": "yarn build",
     "test": "mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" yarn run test",
     "lint": "tslint -c tslint.json -p .",
     "lint:fix": "tslint -c tslint.json -p . --fix"
   },
+  "files": [
+    "dist"
+  ],
   "husky": {
     "hooks": {
       "pre-commit": "yarn lint",
@@ -33,7 +38,6 @@
     "nyc": "^15.0.1",
     "ts-node": "^8.8.2",
     "tslint": "^6.1.2",
-    "typescript": "^3.8.3",
     "web3": "^1.2.6",
     "web3-typescript-typings": "^0.10.2"
   },
