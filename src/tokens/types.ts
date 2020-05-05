@@ -23,7 +23,7 @@ export type FeeTokenData = {
   id: number | utils.BigNumber
 }
 
-export type Opts = {
+export type MetaTxnOpts = {
   nonce: utils.BigNumber
   gasReceipt?: GasReceipt | null
   extra?: utils.Arrayish | null

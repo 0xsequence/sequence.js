@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "commonjs",
+    "module": "es6",
     "moduleResolution": "node",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
@@ -26,7 +26,7 @@
     "checkJs": false,
 
     "baseUrl": ".",
-    "outDir": "lib",
+    "outDir": "dist",
     "lib": ["es2017", "dom"],
 
     "typeRoots": ["./node_modules/@types"]

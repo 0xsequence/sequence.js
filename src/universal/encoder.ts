@@ -1,9 +1,10 @@
 import { utils, Wallet } from 'ethers'
-import { Opts } from '../mts/types'
+
+import { MetaTxnOpts } from '../tokens/types'
 
 // TODO: impement universal txn-relayer and encoding that can work with generic contracts
 
-export class Contract {
+export class UniversalEncoder {
   abi: utils.Interface
   address: string
 
@@ -13,7 +14,7 @@ export class Contract {
   }
 
   async call(
-    opts: Opts,
+    opts: MetaTxnOpts,
     signer: Wallet,
     methodName: string,
     params: any[]
