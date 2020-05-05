@@ -1,13 +1,13 @@
 import { ethers } from 'ethers'
 
-import { MTSEncoder } from '../mts/encoder'
-import { GasReceipt } from '../mts/types'
+import { TokenEncoder } from '../tokens/encoder'
+import { GasReceipt } from '../tokens/types'
 
 import { getBuyTokenData, getSellTokenData, NiftyswapMethods } from './types'
 
 export class NiftyswapEncoder {
-  baseCurrency: MTSEncoder
-  asset: MTSEncoder
+  baseCurrency: TokenEncoder
+  asset: TokenEncoder
 
   signer: ethers.Signer
   constructor(
@@ -17,11 +17,11 @@ export class NiftyswapEncoder {
     _signer: ethers.Signer
   ) {
     this.signer = _signer
-    this.baseCurrency = new MTSEncoder(_baseCurrencyContractAddress, _signer)
-    this.asset = new MTSEncoder(_assetContractAddress, _signer)
+    this.baseCurrency = new TokenEncoder(_baseCurrencyContractAddress, _signer)
+    this.asset = new TokenEncoder(_assetContractAddress, _signer)
   }
 
-  private getTargetEncoder = (method: NiftyswapMethods): MTSEncoder | null => {
+  private getTargetEncoder = (method: NiftyswapMethods): TokenEncoder | null => {
     switch (method.type) {
       case 'buy':
         return this.baseCurrency

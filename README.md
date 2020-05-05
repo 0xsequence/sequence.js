@@ -4,17 +4,17 @@ Javascript &amp; Typescript Encoding Client for Arcadeum Meta-Transaction Relaye
 
 ## Usage
 
-## multi-token-standard (MTS) encoder
+## Token encoder
 
-⚠️ encoding only works for implementations of ERC-1155 that conforms to the MTS [specification](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#meta-transactions)
+⚠️ encoding only works for implementations of ERC-1155 that conforms to the multi-token-standard (MTS) [specification](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#meta-transactions)
 
 Meta-transactions nonces are used to protect users against replay attacks, MTS implementation keeps next available nonce contract side ([reference](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#nonce))
 
 ```typescript
-import { MTSEncoder } from 'arcadeum.js'
+import { TokenEncoder } from 'arcadeum.js'
 import { MetaSafeBatchTransferFrom, Opts } from 'arcadeum.js/lib/mts/types'
 
-const encoder = new MTSEncoder(
+const encoder = new TokenEncoder(
   CONTRACT_ADDRESS, //'0x123...0'
   WALLET_OR_SIGNER //ethers.Signer
 )
@@ -46,7 +46,7 @@ await relayer.sendMetaTxn({
 
 [Niftyswap Specification](https://github.com/arcadeum/niftyswap/blob/master/SPECIFICATIONS.md)
 
-⚠️ encoding only works for token pairs that uses implementations of ERC-1155 that conforms to the MTS
+⚠️ encoding only works for token pairs that uses implementations of ERC-1155 that conforms to the multi-token-standard (MTS)
 [specification](https://github.com/arcadeum/multi-token-standard/blob/master/SPECIFICATIONS.md#meta-transactions)
 
 ```typescript
@@ -100,4 +100,4 @@ TODO: universal txn-relayer and encoding that works with generic contracts witho
 ## License
  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2020 Horizon Blockchain Games Inc.
+Copyright (c) 2018-present Horizon Blockchain Games Inc.

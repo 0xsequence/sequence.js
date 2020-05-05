@@ -3,11 +3,11 @@ import { utils } from 'ethers'
 import meta_erc1155 from 'multi-token-standard/build/contracts/ERC1155Meta.json'
 import { ERC1155MetaInterface } from 'multi-token-standard/typings/contracts/ERC1155Meta'
 
-import { MetaTxMethods, Opts } from './types'
+import { MetaTxMethods, MetaTxnOpts } from './types'
 const DOMAIN_SEPARATOR_TYPEHASH =
   '0x035aff83d86937d35b32e04f0ddc6ff469290eef2f1b692d8a815c89404d4749'
 
-export class MTSEncoder {
+export class TokenEncoder {
   signer: ethers.Signer
   abi: ethers.utils.Interface
   domainHash: string
@@ -27,7 +27,10 @@ export class MTSEncoder {
     )
   }
 
-  async encode({ type, params }: MetaTxMethods, opts: Opts): Promise<string> {
+  async encode(
+    { type, params }: MetaTxMethods,
+    opts: MetaTxnOpts
+  ): Promise<string> {
     const method = this.abi.functions[type]
 
     if (!method) {
@@ -47,7 +50,7 @@ export class MTSEncoder {
     return method.encode([signerAddress, ...params, isGasFee, data])
   }
 
-  encodeMembers(method, params: any[], opts: Opts) {
+  encodeMembers(method, params: any[], opts: MetaTxnOpts) {
     if (method.inputs.length !== params.length + 2) {
       throw Error()
     }
@@ -147,7 +150,7 @@ async function ethSignTypedData(
 export async function encodeData(
   signerWallet: ethers.Signer,
   sigData: string,
-  opts: Opts,
+  opts: MetaTxnOpts,
   domainHash: string
 ) {
   if (!opts.extra) {

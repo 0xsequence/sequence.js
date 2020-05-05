@@ -1,6 +1,6 @@
-import { MTSEncoder } from '../src/mts/encoder'
+import { TokenEncoder } from '../src/tokens/encoder'
 import { Wallet } from 'ethers'
-import { MethodTypes } from '../src/mts/types'
+import { MethodTypes } from '../src/tokens/types'
 
 const signer = Wallet.fromMnemonic(
   'dose weasel clever culture letter volume endorse used harvest ripple circle install'
@@ -24,7 +24,7 @@ const execTest = async (function_name: MethodTypes) => {
   for (const name of Object.keys(data)) {
     const test = data[name]
 
-    const encoder = new MTSEncoder(test.contract, signer)
+    const encoder = new TokenEncoder(test.contract, signer)
 
     const result = await encoder.encode(
       {
