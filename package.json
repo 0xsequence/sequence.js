@@ -12,9 +12,10 @@
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
     "build": "rm -rf ./dist && rollup -c",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json",
-    "lint:fixtslint": "tslint --project ./tsconfig.json --fix"
+    "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
+    "lint:fixtslint": "tslint --project ./tsconfig.json --fix",
+    "lint:fixprettier": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json"
   },
   "files": [
     "dist"

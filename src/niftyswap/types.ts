@@ -3,20 +3,20 @@ import { utils } from 'ethers'
 
 type BigNumber = utils.BigNumber
 
-interface transferBase {
+interface TransferBase {
   recipient: string
   transferIds: string[]
   transferAmounts: string[]
 }
 
-export interface NiftyswapBuy extends transferBase {
+export interface NiftyswapBuy extends TransferBase {
   type: 'buy'
   tokenIdsToBuy: number[] | ethers.utils.BigNumber[]
   tokensAmountsToBuy: ethers.utils.BigNumber[]
   deadline: number
 }
 
-export interface NiftyswapSell extends transferBase {
+export interface NiftyswapSell extends TransferBase {
   type: 'sell'
   cost: BigNumber
   deadline: number

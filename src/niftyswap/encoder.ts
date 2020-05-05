@@ -1,7 +1,9 @@
 import { ethers } from 'ethers'
+
 import { MTSEncoder } from '../mts/encoder'
-import { NiftyswapMethods, getBuyTokenData, getSellTokenData } from './types'
 import { GasReceipt } from '../mts/types'
+
+import { getBuyTokenData, getSellTokenData, NiftyswapMethods } from './types'
 
 export class NiftyswapEncoder {
   baseCurrency: MTSEncoder
