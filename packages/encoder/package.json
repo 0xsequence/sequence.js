@@ -3,20 +3,22 @@
   "version": "0.1.0",
   "description": "Javascript SDK library for the arcadeum meta-relayer",
   "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest --ci --runInBand",
     "prepare": "yarn build",
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
-    "build": "rm -rf ./lib && tsc -b .",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json",
-    "lint:fixtslint": "tslint --project ./tsconfig.json --fix"
+    "build": "rm -rf ./dist && rollup -c",
+    "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
+    "lint:fixtslint": "tslint --project ./tsconfig.json --fix",
+    "lint:fixprettier": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json"
   },
   "files": [
-    "lib/**/*"
+    "dist"
   ],
   "repository": {
     "type": "git",
@@ -31,10 +33,13 @@
     "multi-token-standard": "^0.8.13"
   },
   "devDependencies": {
+    "@rollup/plugin-json": "^4.0.3",
     "@types/jest": "^25.1.4",
     "@types/node": "^13.9.1",
     "jest": "^25.1.0",
     "prettier": "^2.0.1",
+    "rollup": "^2.7.6",
+    "rollup-plugin-typescript2": "^0.27.0",
     "ts-jest": "^25.2.1",
     "tslib": "^1.11.1",
     "tslint": "^6.1.0",
