@@ -20,6 +20,7 @@ jobs:
             */*/node_modules
           key: ${{ runner.os }}-lerna-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn install --network-concurrency 1
+        if: ${{ steps.yarn-cache.outputs.cache-hit != 'true' }}
 
   arcadeum-lint:
     name: arcadeum/lint
