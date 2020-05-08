@@ -1,11 +1,9 @@
-import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumDecodedSignature, ArcadeumDecodedOwner, ArcadeumDecodedSigner, ArcadeumTransaction } from "./types"
-import { ethers } from "ethers"
+import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumDecodedSignature, ArcadeumDecodedOwner, ArcadeumDecodedSigner, ArcadeumTransaction, ArcadeumTransactionEncoded, AuxTransactionRequest, Transactionish } from "./types"
+import { ethers, Signer } from "ethers"
 import * as WalletContract from "./commons/wallet_contract"
 import { BigNumberish, Arrayish, Interface } from "ethers/utils"
 import { TransactionRequest } from "ethers/providers"
-import { Wallet } from "./wallet"
 import { abi as mainModuleAbi } from "./abi/mainModule"
-import { AsyncSendable } from "ethers/providers"
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
@@ -74,24 +72,26 @@ export const MetaTransactionsType = `tuple(
 
 export function hashMetaTransactionsData(
   wallet: string,
-  nonce: BigNumberish,
+  networkId: BigNumberish,
   ...txs: ArcadeumTransaction[]
 ): string {
+  const nonce = readArcadeumNonce(...txs)
   const transactions = ethers.utils.defaultAbiCoder.encode(
     ['uint256', MetaTransactionsType],
-    [nonce, txs]
+    [nonce, arcadeumTxAbiEncode(txs)]
   )
 
-  return encodeMessageData(wallet, transactions)
+  return encodeMessageData(wallet, networkId, transactions)
 }
 
 export function encodeMessageData(
   wallet: string,
+  networkId: BigNumberish,
   data: string
 ): string {
   return ethers.utils.solidityPack(
-    ['string', 'address', 'bytes'],
-    ['\x19\x01', wallet, ethers.utils.keccak256(data)]
+    ['string', 'uint256', 'address', 'bytes'],
+    ['\x19\x01', networkId, wallet, ethers.utils.keccak256(data)]
   )
 }
 
@@ -203,35 +203,111 @@ function aggregateTwo(a: string, b: string): string {
   )
 }
 
-export async function toArcadeumTransaction(
-  wallet: Wallet,
-  tx: TransactionRequest, 
+export async function toArcadeumTransactions(
+  wallet: (Signer | string),
+  txs: (ArcadeumTransaction | AuxTransactionRequest)[],
   revertOnError: boolean = false,
   gasLimit: BigNumberish = 10000000
+): Promise<ArcadeumTransaction[]> {
+  // Bundles all transactions, including the auxiliary ones
+  const allTxs = flattenAuxTransactions(txs)
+
+  // Uses the lowest nonce found on TransactionRequest
+  // if there are no nonces, it leaves an undefined nonce
+  const nonces = (await Promise.all(txs.map((t) => t.nonce)))
+    .filter((n) => n !== undefined)
+    .map((n) => ethers.utils.bigNumberify(n))
+  const nonce = nonces.length !== 0  ? nonces.reduce((p, c) => p.lt(c) ? p : c) : undefined
+
+  // Maps all transactions into ArcadeumTransactions
+  return Promise.all(allTxs.map(tx => toArcadeumTransaction(wallet, tx, revertOnError, gasLimit, nonce)))
+}
+
+export function flattenAuxTransactions(txs: (Transactionish | Transactionish)[]): (TransactionRequest | ArcadeumTransaction)[] {
+  if (!Array.isArray(txs)) return flattenAuxTransactions([txs])
+  return txs.reduce(function(p: Transactionish[], c: Transactionish) {
+    if (Array.isArray(c)) {
+      return p.concat(flattenAuxTransactions(c))
+    }
+
+    if ((<AuxTransactionRequest>c).auxiliary) {
+      return p.concat([c, ...flattenAuxTransactions((<AuxTransactionRequest>c).auxiliary)])
+    }
+
+    return p.concat(c)
+  }, []) as (TransactionRequest | ArcadeumTransaction)[]
+}
+
+export async function toArcadeumTransaction(
+  wallet: (Signer | string),
+  tx: TransactionRequest | ArcadeumTransaction,
+  revertOnError: boolean = false,
+  gasLimit: BigNumberish = 10000000,
+  nonce: BigNumberish = undefined
 ): Promise<ArcadeumTransaction> {
+  if (isArcadeumTransaction(tx)) {
+    return tx as ArcadeumTransaction
+  }
+
   if (tx.to) {
     return {
       delegateCall: false,
       revertOnError: revertOnError,
       gasLimit: tx.gasLimit ? await tx.gasLimit : gasLimit,
-      target: await tx.to,
+      to: await tx.to,
       value: tx.value ? await tx.value : 0,
-      data: await tx.data
+      data: await tx.data,
+      nonce: nonce ? nonce : await tx.nonce
     }
   } else {
     const walletInterface = new Interface(mainModuleAbi)
     const data = walletInterface.functions.createContract.encode([tx.data])
+    const address = typeof(wallet) === 'string' ? wallet : wallet.getAddress()
+
     return {
       delegateCall: false,
       revertOnError: revertOnError,
       gasLimit: tx.gasLimit ? await tx.gasLimit : gasLimit,
-      target: wallet.address,
+      to: await address,
       value: tx.value ? await tx.value : 0,
-      data: data
+      data: data,
+      nonce: nonce ? nonce : await tx.nonce
     }
   }
 }
 
 export function isAsyncSendable(target: any) {
   return target.send || target.sendAsync
+}
+
+export function isArcadeumTransaction(tx: any) {
+  return tx.delegateCall !== undefined || tx.revertOnError !== undefined
+}
+
+export function hasArcadeumTransactions(txs: any[]) {
+  return txs.find((t) => isArcadeumTransaction(t)) !== undefined
+}
+
+export function readArcadeumNonce(...txs: ArcadeumTransaction[]): BigNumberish {
+  const sample = txs.find((t) => t.nonce !== undefined)
+  if (txs.find((t) => t.nonce !== undefined && t.nonce !== sample.nonce)) {
+    throw Error('Mixed nonces on Arcadeum transactions')
+  }
+
+  return sample ? sample.nonce : undefined
+}
+
+export function arcadeumTxAbiEncode(txs: ArcadeumTransaction[]): ArcadeumTransactionEncoded[] {
+  return txs.map((t) => ({
+    delegateCall: t.delegateCall,
+    revertOnError: t.revertOnError,
+    gasLimit: t.gasLimit,
+    target: t.to,
+    value: t.value,
+    data: t.data
+  }))
+}
+
+export function appendNonce(txs: ArcadeumTransaction[], nonce: BigNumberish): ArcadeumTransaction[] {
+  return txs.map((t: ArcadeumTransaction) => ({ ...t, nonce }))
 }

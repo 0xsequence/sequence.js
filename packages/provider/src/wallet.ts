@@ -1,6 +1,6 @@
-import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction } from "./types"
+import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish } from "./types"
 import { ethers } from 'ethers'
-import { addressOf, sortConfig, hashMetaTransactionsData, toArcadeumTransaction, encodeMessageData, isAsyncSendable } from './utils'
+import { addressOf, sortConfig, hashMetaTransactionsData, toArcadeumTransaction, encodeMessageData, isAsyncSendable, isArcadeumTransaction, readArcadeumNonce, appendNonce, hasArcadeumTransactions, toArcadeumTransactions } from './utils'
 import { BigNumberish, Arrayish } from "ethers/utils"
 import { Signer as AbstractSigner } from "ethers"
 import { TransactionRequest, TransactionResponse, BlockTag, Provider, JsonRpcProvider, AsyncSendable, Web3Provider } from "ethers/providers"
@@ -44,6 +44,10 @@ export class Wallet extends AbstractSigner {
     return this.address
   }
 
+  async chainId(): Promise<BigNumberish> {
+    return (await this.provider.getNetwork()).chainId
+  }
+
   setProvider(provider: (AsyncSendable | ConnectionInfo | string)): Wallet {
     if (isAsyncSendable(provider)) {
       this.w3provider = <AsyncSendable>provider
@@ -81,23 +85,43 @@ export class Wallet extends AbstractSigner {
     return this.getNonce(blockTag)
   }
 
-  async sendTransaction(transaction: TransactionRequest): Promise<TransactionResponse> {
+  async sendTransaction(
+    transaction: Transactionish
+  ): Promise<TransactionResponse> {
     if (!this.provider) { throw new Error('missing provider') }
     if (!this.relayer) { throw new Error('missing relayer') }
 
-    let nonce = transaction.nonce ? transaction.nonce : this.getNonce()
+    let arctx: ArcadeumTransaction[] = []
 
-    const arctx = await toArcadeumTransaction(this, transaction)
-    const signature = this.signTransactions(await nonce, arctx)
+    if (Array.isArray(transaction)) {
+      if (hasArcadeumTransactions(transaction)) {
+        arctx = transaction as ArcadeumTransaction[]
+      } else {
+        arctx = await toArcadeumTransactions(this, transaction)
+      }
+    } else if (isArcadeumTransaction(transaction)) {
+      arctx = [transaction as ArcadeumTransaction]
+    } else {
+      arctx = await toArcadeumTransactions(this, [transaction])
+    }
 
-    return this.relayer.relay(nonce, this.config, this.context, signature, arctx)
+    const providedNonce = readArcadeumNonce(...arctx)
+    const nonce = providedNonce ? providedNonce : await this.getNonce()
+    arctx = appendNonce(arctx, nonce)
+
+    const signature = this.signTransactions(...arctx)
+    return this.relayer.relay(this.config, this.context, signature, ...arctx)
   }
 
   async signTransactions(
-    nonce: BigNumberish,
     ...txs: ArcadeumTransaction[]
   ): Promise<string> {
-    const hash = hashMetaTransactionsData(this.address, nonce, ...txs)
+    const hash = hashMetaTransactionsData(
+      this.address,
+      await this.chainId(),
+      ...txs
+    )
+
     const digest = ethers.utils.keccak256(hash)
     return this.sign(digest)
   }
@@ -107,6 +131,7 @@ export class Wallet extends AbstractSigner {
       ethers.utils.keccak256(
         encodeMessageData(
           this.address,
+          await this.chainId(),
           ethers.utils.hashMessage(
             ethers.utils.arrayify(message)
           )
