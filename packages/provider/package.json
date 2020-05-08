@@ -9,7 +9,6 @@
   "scripts": {
     "build": "rm -rf ./dist && rollup -c",
     "prepublishOnly": "yarn test && yarn lint",
-    "prepare": "yarn build",
     "test": "TS_NODE_PROJECT=tsconfig.test.json mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" yarn run test",
     "lint": "tslint -c tslint.json -p .",
