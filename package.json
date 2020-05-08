@@ -14,6 +14,14 @@
   "scripts": {
     "lerna": "lerna",
     "test": "lerna run test --stream",
+    "test:arcadeum": "lerna run test --scope arcadeum --stream",
+    "test:encoder": "lerna run test --scope @arcadeum/encoder --stream",
+    "test:provider": "lerna run test --scope @arcadeum/provider --stream",
+    "lint": "lerna run lint --stream",
+    "lint:arcadeum": "lerna run lint --scope arcadeum --stream",
+    "lint:encoder": "lerna run lint --scope @arcadeum/encoder --stream",
+    "lint:provider": "lerna run lint --scope @arcadeum/provider --stream",
+    "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream",
     "bootstrap": "yarn clean && yarn install",
     "clean": "lerna clean --yes; rm -rf ./node_modules"
   },
