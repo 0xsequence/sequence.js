@@ -1,5 +1,6 @@
 
 import { BigNumberish, Arrayish } from 'ethers/utils'
+import { TransactionRequest } from 'ethers/providers'
 
 export interface LedgerCommunicationClient {
   close: () => Promise<void>
@@ -167,9 +168,10 @@ export interface ArcadeumTransaction {
   delegateCall: boolean
   revertOnError: boolean
   gasLimit: BigNumberish
-  target: string
+  to: string
   value: BigNumberish
   data: Arrayish
+  nonce?: BigNumberish
 }
 
 export declare interface Web3Payload {
@@ -184,3 +186,18 @@ export declare interface Web3Response {
   jsonrpc: string,
   result: any
 }
+
+export interface ArcadeumTransactionEncoded {
+  delegateCall: boolean
+  revertOnError: boolean
+  gasLimit: BigNumberish
+  target: string
+  value: BigNumberish
+  data: Arrayish
+}
+
+export type AuxTransactionRequest = TransactionRequest & {
+  auxiliary?: Transactionish[]
+}
+
+export declare type Transactionish = (AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[])

@@ -1,8 +1,8 @@
 import { Wallet } from "./wallet"
-import { AsyncSendable } from "ethers/providers"
+import { AsyncSendable, TransactionResponse } from "ethers/providers"
 import { Web3Payload, Web3Response, ArcadeumTransaction } from "./types"
 import { ethers } from "ethers"
-import { toArcadeumTransaction } from "./utils"
+import { isArcadeumTransaction, toArcadeumTransactions, readArcadeumNonce, appendNonce, flattenAuxTransactions } from "./utils"
 
 export class Provider implements AsyncSendable {
   private readonly _wallet?: Wallet
@@ -58,14 +58,19 @@ export class Provider implements AsyncSendable {
     const signature = payload.params[0].raw
     const transaction = payload.params[0].tx
 
-    if (transaction.delegateCall !== undefined) {
-      const tx = this._wallet.relayer.relay(
-        transaction.nonce,
+    let tx: Promise<TransactionResponse>
+
+    if (isArcadeumTransaction(transaction)) {
+      const arctx = flattenAuxTransactions(transaction)
+      tx = this._wallet.relayer.relay(
         this._wallet.config,
         this._wallet.context,
         signature,
-        transaction as ArcadeumTransaction
+        ...(arctx as ArcadeumTransaction[])
       )
+    }
+
+    if (tx) {
       try {
         callback(undefined, {
           id: payload.id,
@@ -99,23 +104,21 @@ export class Provider implements AsyncSendable {
     const sender = transaction.from.toLowerCase()
 
     if (sender === this._wallet.address.toLowerCase()) {
-      const nonce = transaction.nonce ? transaction.nonce : this._wallet.getNonce()
-      const arctx = toArcadeumTransaction(this._wallet, transaction, false, transaction.gas)
+      let arctxs = await toArcadeumTransactions(this._wallet, [transaction])
+      if (readArcadeumNonce(...arctxs) === undefined) {
+        arctxs = appendNonce(arctxs, await this._wallet.getNonce())
+      }
 
       try {
-        const signature = await this._wallet.signTransactions(await nonce, await arctx)
+        const signature = this._wallet.signTransactions(...arctxs)
         callback(undefined, {
           id: payload.id,
           jsonrpc: "2.0",
           result: {
-            raw: signature,
-            tx: {
-              nonce: ethers.utils.bigNumberify(await nonce).toHexString(),
-              gas: ethers.utils.bigNumberify((await arctx).gasLimit).toHexString(),
-              to: (await arctx).target,
-              value: ethers.utils.bigNumberify((await arctx).value).toHexString(),
-              input: (await arctx).data,
-              ...(await arctx)
+            raw: await signature,
+            tx: arctxs.length === 1 ? arctxs[0] : {
+              ...arctxs[0],
+              auxiliary: arctxs.slice(1)
             }
           }
         })

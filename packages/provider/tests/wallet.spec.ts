@@ -1,5 +1,5 @@
 import { deployArcadeum } from "./utils/arcadeum_config"
-import { ethers, Signer } from "ethers"
+import { ethers, Signer, Wallet } from "ethers"
 import * as Ganache from "ganache-cli"
 
 import { CallReceiverMock } from "arcadeum-wallet/typings/contracts/CallReceiverMock"
@@ -41,7 +41,7 @@ describe('Arcadeum wallet integration', function() {
 
   before(async () => {
     // Deploy Ganache test env
-    ganache.server = Ganache.server()
+    ganache.server = Ganache.server({ network_id: 1 })
     await ganache.server.listen(GANACHE_PORT)
     ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
     ganache.provider = new ethers.providers.JsonRpcProvider(ganache.serverUri)
@@ -124,7 +124,7 @@ describe('Arcadeum wallet integration', function() {
           await contractWithSigner.testCall(412313, "0x11222334")
           expect(await contractWithSigner.lastValB()).to.equal("0x11222334")
         })
-    
+
         it('Should deploy contract', async () => {
           await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
@@ -169,6 +169,211 @@ describe('Arcadeum wallet integration', function() {
             await expect(call).to.be.fulfilled
           })
         })
+      })
+      describe('batch transactions', async () => {
+        it('Should send two transactions at once', async () => {
+          const callReceiver1 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const callReceiver2 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, "0x112233"]),
+            auxiliary: [
+              {
+                gas: '121000',
+                to: callReceiver2.address,
+                value: 0,
+                data: callReceiver.interface.functions.testCall.encode([2, "0x445566"])
+              }
+            ]
+          }
+  
+          await wallet.sendTransaction(transaction)
+  
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+        })
+        it('Should send three transactions at once', async () => {
+          const callReceiver1 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const callReceiver2 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const callReceiver3 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, "0x112233"]),
+            auxiliary: [
+              {
+                gas: '100000',
+                to: callReceiver2.address,
+                value: 0,
+                data: callReceiver.interface.functions.testCall.encode([2, "0x445566"])
+              }, {
+                gas: '70000',
+                to: callReceiver3.address,
+                value: 0,
+                data: callReceiver.interface.functions.testCall.encode([2, "0x778899"])
+              }
+            ]
+          }
+  
+          await wallet.sendTransaction(transaction)
+  
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+          expect(await callReceiver3.lastValB()).to.equal('0x778899')
+        })
+        it('Should send nested transactions', async () => {
+          const callReceiver1 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const callReceiver2 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const callReceiver3 = await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy() as CallReceiverMock
+  
+          const transaction = {
+            from: wallet.address,
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, "0x112233"]),
+            auxiliary: [
+              {
+                gas: '100000',
+                to: callReceiver2.address,
+                value: 0,
+                data: callReceiver.interface.functions.testCall.encode([2, "0x445566"]),
+                auxiliary: [
+                  {
+                    gas: '70000',
+                    to: callReceiver3.address,
+                    value: 0,
+                    data: callReceiver.interface.functions.testCall.encode([2, "0x778899"])
+                  }
+                ]
+              }
+            ]
+          }
+  
+          await wallet.sendTransaction(transaction)
+  
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+          expect(await callReceiver3.lastValB()).to.equal('0x778899')
+        })
+      })
+    })
+    describe('wallet batch transactions', async () => {
+      it('Should send two transactions at once', async () => {
+        const callReceiver1 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver2 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const transaction = [{
+          gasPrice: '20000000000',
+          gas: '121000',
+          to: callReceiver1.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([1, "0x112233"])
+        }, {
+          gasPrice: '20000000000',
+          gas: '121000',
+          to: callReceiver2.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([2, "0x445566"])
+        }]
+
+        await wallet.sendTransaction(transaction)
+
+        expect(await callReceiver1.lastValB()).to.equal('0x112233')
+        expect(await callReceiver2.lastValB()).to.equal('0x445566')
+      })
+      it('Should send three transactions at once', async () => {
+        const callReceiver1 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver2 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver3 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const transaction = [{
+          gas: '121000',
+          to: callReceiver1.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([1, "0x112233"])
+        }, {
+          gas: '100000',
+          to: callReceiver2.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([2, "0x445566"])
+        }, {
+          gas: '70000',
+          to: callReceiver3.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([2, "0x778899"])
+        }]
+
+        await wallet.sendTransaction(transaction)
+
+        expect(await callReceiver1.lastValB()).to.equal('0x112233')
+        expect(await callReceiver2.lastValB()).to.equal('0x445566')
+        expect(await callReceiver3.lastValB()).to.equal('0x778899')
       })
     })
   })
@@ -235,19 +440,17 @@ describe('Arcadeum wallet integration', function() {
         const signed = await w3.eth.signTransaction({
           from: wallet.address,
           gasPrice: '20000000000',
-          gas: '121000',
+          gasLimit: '121000',
           to: '0x3535353535353535353535353535353535353535',
           value: '1000000000000000000',
           data: '0x9988776655'
         })
   
         expect(signed.raw).to.be.a('string')
-        expect(signed.tx.gas).to.equal('0x1d8a8')
+        expect(signed.tx.gasLimit).to.equal('121000')
         expect(signed.tx.to).to.equal('0x3535353535353535353535353535353535353535')
         expect(signed.tx.value).to.equal('0xde0b6b3a7640000')
-        expect(signed.tx.input).to.equal('0x9988776655')
-        expect(signed.tx.data).to.equal(signed.tx.input)
-        expect(signed.tx.target).to.equal(signed.tx.to)
+        expect(signed.tx.data).to.equal('0x9988776655')
         expect(signed.tx.delegateCall).to.equal(false)
         expect(signed.tx.revertOnError).to.equal(false)
       })
@@ -333,6 +536,140 @@ describe('Arcadeum wallet integration', function() {
         expect(tx.transactionHash).to.be.a('string')
 
         expect(await callReceiver.lastValB()).to.equal('0x445566')
+      })
+    })
+    describe('batch transactions', async () => {
+      it('Should send two transactions at once', async () => {
+        const callReceiver1 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver2 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const transaction = {
+          from: wallet.address,
+          gas: '121000',
+          to: callReceiver1.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([1, "0x112233"]),
+          auxiliary: [
+            {
+              gas: '121000',
+              to: callReceiver2.address,
+              value: 0,
+              data: callReceiver.interface.functions.testCall.encode([2, "0x445566"])
+            }
+          ]
+        }
+
+        const signed = await w3.eth.signTransaction(transaction)
+        await w3.eth.sendSignedTransaction(signed)
+
+        expect(await callReceiver1.lastValB()).to.equal('0x112233')
+        expect(await callReceiver2.lastValB()).to.equal('0x445566')
+      })
+      it('Should send three transactions at once', async () => {
+        const callReceiver1 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver2 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver3 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const transaction = {
+          from: wallet.address,
+          gas: '121000',
+          to: callReceiver1.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([1, "0x112233"]),
+          auxiliary: [
+            {
+              gas: '100000',
+              to: callReceiver2.address,
+              value: 0,
+              data: callReceiver.interface.functions.testCall.encode([2, "0x445566"])
+            }, {
+              gas: '70000',
+              to: callReceiver3.address,
+              value: 0,
+              data: callReceiver.interface.functions.testCall.encode([2, "0x778899"])
+            }
+          ]
+        }
+
+        const signed = await w3.eth.signTransaction(transaction)
+        await w3.eth.sendSignedTransaction(signed)
+
+        expect(await callReceiver1.lastValB()).to.equal('0x112233')
+        expect(await callReceiver2.lastValB()).to.equal('0x445566')
+        expect(await callReceiver3.lastValB()).to.equal('0x778899')
+      })
+      it('Should send nested transactions', async () => {
+        const callReceiver1 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver2 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const callReceiver3 = await new ethers.ContractFactory(
+          CallReceiverMockArtifact.abi,
+          CallReceiverMockArtifact.bytecode,
+          ganache.signer
+        ).deploy() as CallReceiverMock
+
+        const transaction = {
+          from: wallet.address,
+          gas: '121000',
+          to: callReceiver1.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([1, "0x112233"]),
+          auxiliary: [
+            {
+              gas: '100000',
+              to: callReceiver2.address,
+              value: 0,
+              data: callReceiver.interface.functions.testCall.encode([2, "0x445566"]),
+              auxiliary: [
+                {
+                  gas: '70000',
+                  to: callReceiver3.address,
+                  value: 0,
+                  data: callReceiver.interface.functions.testCall.encode([2, "0x778899"])
+                }
+              ]
+            }
+          ]
+        }
+
+        const signed = await w3.eth.signTransaction(transaction)
+        await w3.eth.sendSignedTransaction(signed)
+
+        expect(await callReceiver1.lastValB()).to.equal('0x112233')
+        expect(await callReceiver2.lastValB()).to.equal('0x445566')
+        expect(await callReceiver3.lastValB()).to.equal('0x778899')
       })
     })
   })

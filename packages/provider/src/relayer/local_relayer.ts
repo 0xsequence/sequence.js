@@ -1,8 +1,7 @@
-import { BigNumberish } from "ethers/utils"
 import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from "../types"
 import { TransactionResponse } from "ethers/providers"
 
-import { addressOf, imageHash } from "../utils"
+import { addressOf, imageHash, readArcadeumNonce, arcadeumTxAbiEncode } from "../utils"
 import { Signer, ethers } from "ethers"
 
 import { abi as factoryAbi } from "../abi/factory"
@@ -27,10 +26,9 @@ export class LocalRelayer  {
   }
 
   async relay(
-    nonce: BigNumberish,
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
-    signature: string,
+    signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
   ): Promise<TransactionResponse> {
     const wallet = addressOf(config, context)
@@ -44,6 +42,7 @@ export class LocalRelayer  {
       .attach(wallet)
       .connect(this.signer)
 
-    return walletModule.execute(transactions, nonce, signature)
+    const nonce = readArcadeumNonce(...transactions)
+    return walletModule.execute(arcadeumTxAbiEncode(transactions), nonce, signature)
   }
 }

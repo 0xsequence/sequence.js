@@ -10,7 +10,7 @@
     "build": "rm -rf ./dist && rollup -c",
     "prepublishOnly": "yarn test && yarn lint",
     "prepare": "yarn build",
-    "test": "mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
+    "test": "TS_NODE_PROJECT=tsconfig.test.json mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" yarn run test",
     "lint": "tslint -c tslint.json -p .",
     "lint:fix": "tslint -c tslint.json -p . --fix"
@@ -42,6 +42,7 @@
     "web3-typescript-typings": "^0.10.2"
   },
   "dependencies": {
-    "ethers": "^4.0.46"
+    "ethers": "^4.0.46",
+    "macaron-cli": "^6.4.1"
   }
 }
