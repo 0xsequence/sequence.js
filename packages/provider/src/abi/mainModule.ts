@@ -1,4 +1,3 @@
-
 export const abi = [
   {
     type: 'function',
@@ -23,19 +22,24 @@ export const abi = [
           {
             type: 'bool',
             name: 'delegateCall'
-          }, {
+          },
+          {
             type: 'bool',
             name: 'revertOnError'
-          }, {
+          },
+          {
             type: 'uint256',
             name: 'gasLimit'
-          }, {
+          },
+          {
             type: 'address',
             name: 'target'
-          }, {
+          },
+          {
             type: 'uint256',
             name: 'value'
-          }, {
+          },
+          {
             type: 'bytes',
             name: 'data'
           }
@@ -44,7 +48,8 @@ export const abi = [
       },
       {
         type: 'uint256'
-      }, {
+      },
+      {
         type: 'bytes'
       }
     ],

@@ -21,9 +21,7 @@ export class NiftyswapEncoder {
     this.asset = new TokenEncoder(_assetContractAddress, _signer)
   }
 
-  private getTargetEncoder = (
-    method: NiftyswapMethods
-  ): TokenEncoder | null => {
+  private getTargetEncoder = (method: NiftyswapMethods): TokenEncoder | null => {
     switch (method.type) {
       case 'buy':
         return this.baseCurrency
@@ -56,11 +54,7 @@ export class NiftyswapEncoder {
     }
   }
 
-  async encode(
-    method: NiftyswapMethods,
-    nonce: ethers.utils.BigNumber,
-    gasReceipt?: GasReceipt
-  ): Promise<string | undefined> {
+  async encode(method: NiftyswapMethods, nonce: ethers.utils.BigNumber, gasReceipt?: GasReceipt): Promise<string | undefined> {
     const encoder = this.getTargetEncoder(method)
     const orderData = this.encodeMethod(method)
 
@@ -70,11 +64,7 @@ export class NiftyswapEncoder {
         return encoder?.encode(
           {
             type: 'metaSafeBatchTransferFrom',
-            params: [
-              this.niftyswapExchangeAddress,
-              method.transferIds,
-              method.transferAmounts
-            ]
+            params: [this.niftyswapExchangeAddress, method.transferIds, method.transferAmounts]
           },
           {
             nonce,

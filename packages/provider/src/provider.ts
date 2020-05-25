@@ -1,15 +1,13 @@
-import { Wallet } from "./wallet"
-import { AsyncSendable, TransactionResponse } from "ethers/providers"
-import { Web3Payload, Web3Response, ArcadeumTransaction } from "./types"
-import { ethers } from "ethers"
-import { isArcadeumTransaction, toArcadeumTransactions, readArcadeumNonce, appendNonce, flattenAuxTransactions } from "./utils"
+import { Wallet } from './wallet'
+import { AsyncSendable, TransactionResponse } from 'ethers/providers'
+import { Web3Payload, Web3Response, ArcadeumTransaction } from './types'
+import { ethers } from 'ethers'
+import { isArcadeumTransaction, toArcadeumTransactions, readArcadeumNonce, appendNonce, flattenAuxTransactions } from './utils'
 
 export class Provider implements AsyncSendable {
   private readonly _wallet?: Wallet
 
-  constructor(
-    wallet: Wallet
-  ) {
+  constructor(wallet: Wallet) {
     this._wallet = wallet
   }
 
@@ -62,19 +60,14 @@ export class Provider implements AsyncSendable {
 
     if (isArcadeumTransaction(transaction)) {
       const arctx = flattenAuxTransactions(transaction)
-      tx = this._wallet.relayer.relay(
-        this._wallet.config,
-        this._wallet.context,
-        signature,
-        ...(arctx as ArcadeumTransaction[])
-      )
+      tx = this._wallet.relayer.relay(this._wallet.config, this._wallet.context, signature, ...(arctx as ArcadeumTransaction[]))
     }
 
     if (tx) {
       try {
         callback(undefined, {
           id: payload.id,
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           result: (await tx).hash
         })
       } catch (e) {
@@ -86,10 +79,10 @@ export class Provider implements AsyncSendable {
   }
 
   private async accounts(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    try {
+    try {
       callback(undefined, {
         id: payload.id,
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         result: [this._wallet.address]
       })
     } catch (e) {
@@ -113,13 +106,16 @@ export class Provider implements AsyncSendable {
         const signature = this._wallet.signTransactions(...arctxs)
         callback(undefined, {
           id: payload.id,
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           result: {
             raw: await signature,
-            tx: arctxs.length === 1 ? arctxs[0] : {
-              ...arctxs[0],
-              auxiliary: arctxs.slice(1)
-            }
+            tx:
+              arctxs.length === 1
+                ? arctxs[0]
+                : {
+                    ...arctxs[0],
+                    auxiliary: arctxs.slice(1)
+                  }
           }
         })
       } catch (e) {
@@ -139,7 +135,7 @@ export class Provider implements AsyncSendable {
       try {
         callback(undefined, {
           id: payload.id,
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           result: await signature
         })
       } catch (e) {
@@ -156,7 +152,7 @@ export class Provider implements AsyncSendable {
     try {
       callback(undefined, {
         id: payload.id,
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         result: (await transaction).hash
       })
     } catch (e) {
@@ -173,7 +169,7 @@ export class Provider implements AsyncSendable {
       try {
         callback(undefined, {
           id: payload.id,
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           result: ethers.utils.bigNumberify(await count).toHexString()
         })
       } catch (e) {

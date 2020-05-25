@@ -1,4 +1,3 @@
-
 export const abi = [
   {
     type: 'function',
@@ -7,7 +6,8 @@ export const abi = [
     inputs: [
       {
         type: 'address'
-      }, {
+      },
+      {
         type: 'bytes32'
       }
     ],

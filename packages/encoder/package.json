@@ -14,7 +14,8 @@
     "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
     "lint:fixtslint": "tslint --project ./tsconfig.json --fix",
     "lint:fixprettier": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
   },
   "files": [
     "dist"

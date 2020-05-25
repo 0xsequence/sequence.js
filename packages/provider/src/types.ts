@@ -1,4 +1,3 @@
-
 import { BigNumberish, Arrayish } from 'ethers/utils'
 import { TransactionRequest } from 'ethers/providers'
 
@@ -101,7 +100,7 @@ export interface TrezorSubproviderConfig {
 
 export interface TrezorGetPublicKeyResponsePayload {
   path: {
-    [index: number]: number;
+    [index: number]: number
   }
   serializedPath: string
   childNumb: number
@@ -136,7 +135,7 @@ export interface TrezorConnectResponse {
 export interface ArcadeumWalletConfig {
   threshold: number
   signers: {
-    weight: number,
+    weight: number
     address: string
   }[]
 }
@@ -175,15 +174,15 @@ export interface ArcadeumTransaction {
 }
 
 export declare interface Web3Payload {
-  method: string,
-  params: any[],
-  id: number,
+  method: string
+  params: any[]
+  id: number
   jsonrpc: string
 }
 
 export declare interface Web3Response {
-  id: number,
-  jsonrpc: string,
+  id: number
+  jsonrpc: string
   result: any
 }
 
@@ -200,4 +199,4 @@ export type AuxTransactionRequest = TransactionRequest & {
   auxiliary?: Transactionish[]
 }
 
-export declare type Transactionish = (AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[])
+export declare type Transactionish = AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[]

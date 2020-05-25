@@ -1,17 +1,18 @@
-
-import { expect } from 'chai';
-import { ethers } from "ethers"
+import { expect } from 'chai'
+import { ethers } from 'ethers'
 
 import * as arcadeum from '../src'
 
-describe('Arcadeum utils', function() {
+describe('Arcadeum utils', function () {
   it('Should generate image hash', () => {
     const config = {
       threshold: 1,
-      signers: [{
-        weight: 1,
-        address: ethers.constants.AddressZero
-      }]
+      signers: [
+        {
+          weight: 1,
+          address: ethers.constants.AddressZero
+        }
+      ]
     }
 
     const expected = '0xd5eb26a4673c3bf5bb325d407fe1544f0325b97d4b68afa6a28851b6dbbbd29f'
@@ -21,10 +22,12 @@ describe('Arcadeum utils', function() {
   it('Should generate wallet address', () => {
     const config = {
       threshold: 1,
-      signers: [{
-        weight: 1,
-        address: '0xd63A09C47FDc03e2Cff620446b37f205A7D0679D'
-      }]
+      signers: [
+        {
+          weight: 1,
+          address: '0xd63A09C47FDc03e2Cff620446b37f205A7D0679D'
+        }
+      ]
     }
 
     const context = {

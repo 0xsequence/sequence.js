@@ -1,9 +1,6 @@
 import { utils } from 'ethers'
 
-export type MethodTypes =
-  | 'metaSafeBatchTransferFrom'
-  | 'metaSafeTransferFrom'
-  | 'metaSetApprovalForAll'
+export type MethodTypes = 'metaSafeBatchTransferFrom' | 'metaSafeTransferFrom' | 'metaSetApprovalForAll'
 
 export type GasReceipt = {
   gasFee: number | string | utils.BigNumber
@@ -44,7 +41,4 @@ export interface MetaSetApprovalForAll {
   params: [string, boolean]
 }
 
-export type MetaTxMethods =
-  | MetaSafeBatchTransferFrom
-  | MetaSafeTransferFrom
-  | MetaSetApprovalForAll
+export type MetaTxMethods = MetaSafeBatchTransferFrom | MetaSafeTransferFrom | MetaSetApprovalForAll

@@ -35,11 +35,7 @@ export interface NiftyswapRemoveLiquidity {
   deadline: number
 }
 
-export type NiftyswapMethods =
-  | NiftyswapBuy
-  | NiftyswapSell
-  | NiftyswapAddLiquidity
-  | NiftyswapRemoveLiquidity
+export type NiftyswapMethods = NiftyswapBuy | NiftyswapSell | NiftyswapAddLiquidity | NiftyswapRemoveLiquidity
 
 const methodsSignature = {
   BUYTOKENS: '0xb2d81047',
@@ -97,32 +93,20 @@ export type RemoveLiquidityObj = {
 }
 
 export function getBuyTokenData(obj: BuyTokensObj) {
-  return ethers.utils.defaultAbiCoder.encode(
-    ['bytes4', BuyTokensType],
-    [methodsSignature.BUYTOKENS, obj]
-  )
+  return ethers.utils.defaultAbiCoder.encode(['bytes4', BuyTokensType], [methodsSignature.BUYTOKENS, obj])
 }
 
 export function getSellTokenData(obj: SellTokensObj) {
-  return ethers.utils.defaultAbiCoder.encode(
-    ['bytes4', SellTokensType],
-    [methodsSignature.SELLTOKENS, obj]
-  )
+  return ethers.utils.defaultAbiCoder.encode(['bytes4', SellTokensType], [methodsSignature.SELLTOKENS, obj])
 }
 
-export const getAddLiquidityData = (
-  baseAmountsToAdd: ethers.utils.BigNumber[],
-  deadline: number
-) => {
+export const getAddLiquidityData = (baseAmountsToAdd: ethers.utils.BigNumber[], deadline: number) => {
   const addLiquidityObj = {
     maxBaseTokens: baseAmountsToAdd,
     deadline
   } as AddLiquidityObj
 
-  return ethers.utils.defaultAbiCoder.encode(
-    ['bytes4', AddLiquidityType],
-    [methodsSignature.ADDLIQUIDITY, addLiquidityObj]
-  )
+  return ethers.utils.defaultAbiCoder.encode(['bytes4', AddLiquidityType], [methodsSignature.ADDLIQUIDITY, addLiquidityObj])
 }
 
 export const getRemoveLiquidityData = (

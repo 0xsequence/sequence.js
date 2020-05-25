@@ -20,10 +20,12 @@
     "lint:arcadeum": "lerna run lint --scope arcadeum --stream",
     "lint:encoder": "lerna run lint --scope @arcadeum/encoder --stream",
     "lint:provider": "lerna run lint --scope @arcadeum/provider --stream",
-    "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream"
+    "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream",
+    "format": "lerna run format --stream"
   },
   "devDependencies": {
     "lerna": "^3.22.0",
+    "prettier": "^2.0.5",
     "rollup": "^2.10.9",
     "rollup-plugin-typescript2": "^0.27.1",
     "typescript": "^3.9.3"

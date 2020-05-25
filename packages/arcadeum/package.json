@@ -12,7 +12,7 @@
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
     "build": "rm -rf ./lib && rollup -c",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
     "lint:fixtslint": "tslint --project ./tsconfig.json --fix"
   },
