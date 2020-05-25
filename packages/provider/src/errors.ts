@@ -1,2 +1,1 @@
-
-export class InvalidSigner extends Error { }
+export class InvalidSigner extends Error {}

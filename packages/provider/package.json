@@ -12,16 +12,14 @@
     "test": "TS_NODE_PROJECT=tsconfig.test.json mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" yarn run test",
     "lint": "tslint -c tslint.json -p .",
-    "lint:fix": "tslint -c tslint.json -p . --fix"
+    "lint:fix": "tslint -c tslint.json -p . --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
   },
   "files": [
     "dist"
   ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn lint",
-      "pre-push": "yarn lint && yarn test"
-    }
+  "dependencies": {
+    "ethers": "^4.0.46"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
@@ -32,16 +30,11 @@
     "chai-as-promised": "^7.1.1",
     "express": "^4.17.1",
     "ganache-cli": "^6.9.1",
-    "husky": "^4.2.5",
-    "mocha": "^7.1.1",
+    "mocha": "^7.2.0",
     "nyc": "^15.0.1",
     "ts-node": "^8.8.2",
     "tslint": "^6.1.2",
-    "web3": "^1.2.6",
+    "web3": "^1.2.8",
     "web3-typescript-typings": "^0.10.2"
-  },
-  "dependencies": {
-    "ethers": "^4.0.46",
-    "macaron-cli": "^6.4.1"
   }
 }

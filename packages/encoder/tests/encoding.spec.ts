@@ -2,9 +2,7 @@ import { TokenEncoder } from '../src/tokens/encoder'
 import { Wallet } from 'ethers'
 import { MethodTypes } from '../src/tokens/types'
 
-const signer = Wallet.fromMnemonic(
-  'dose weasel clever culture letter volume endorse used harvest ripple circle install'
-)
+const signer = Wallet.fromMnemonic('dose weasel clever culture letter volume endorse used harvest ripple circle install')
 
 describe('MetaTransactions', () => {
   it('metaSafeBatchTransferFrom', async () => {

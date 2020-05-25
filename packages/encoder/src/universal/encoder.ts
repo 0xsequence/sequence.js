@@ -13,12 +13,7 @@ export class UniversalEncoder {
     this.address = address
   }
 
-  async call(
-    opts: MetaTxnOpts,
-    signer: Wallet,
-    methodName: string,
-    params: any[]
-  ): Promise<string> {
+  async call(opts: MetaTxnOpts, signer: Wallet, methodName: string, params: any[]): Promise<string> {
     const method = this.abi.functions[methodName]
 
     if (!method) {
