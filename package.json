@@ -6,13 +6,12 @@
       "packages/*"
     ],
     "nohoist": [
-      "**/@types/jest",
-      "**/@types/mocha",
-      "**/@types/chai*"
     ]
   },
   "scripts": {
-    "lerna": "lerna",
+    "bootstrap": "yarn clean && yarn install",
+    "clean": "lerna clean --yes; rm -rf ./node_modules",
+    "build": "lerna run build --stream",
     "test": "lerna run test --stream",
     "test:arcadeum": "lerna run test --scope arcadeum --stream",
     "test:encoder": "lerna run test --scope @arcadeum/encoder --stream",
@@ -21,14 +20,12 @@
     "lint:arcadeum": "lerna run lint --scope arcadeum --stream",
     "lint:encoder": "lerna run lint --scope @arcadeum/encoder --stream",
     "lint:provider": "lerna run lint --scope @arcadeum/provider --stream",
-    "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream",
-    "bootstrap": "yarn clean && yarn install",
-    "clean": "lerna clean --yes; rm -rf ./node_modules"
+    "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream"
   },
   "devDependencies": {
-    "lerna": "^3.20.2",
-    "rollup": "^2.7.6",
-    "rollup-plugin-typescript2": "^0.27.0",
-    "typescript": "^3.8.3"
+    "lerna": "^3.22.0",
+    "rollup": "^2.10.9",
+    "rollup-plugin-typescript2": "^0.27.1",
+    "typescript": "^3.9.3"
   }
 }
