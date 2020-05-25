@@ -11,6 +11,7 @@ export class Provider implements AsyncSendable {
     this._wallet = wallet
   }
 
+  // TODO: rename to isExternalWallet ?
   public readonly isMetaMask = false
 
   get host(): string {

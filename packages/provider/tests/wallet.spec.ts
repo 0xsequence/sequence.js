@@ -85,7 +85,7 @@ describe('Arcadeum wallet integration', function () {
     ganache.server.close()
   })
 
-  describe('with ethers js', () => {
+  describe('with ethers.js', () => {
     let w3provider: AsyncSendable
     let provider: Web3Provider
 
@@ -171,6 +171,7 @@ describe('Arcadeum wallet integration', function () {
           })
         })
       })
+
       describe('batch transactions', async () => {
         it('Should send two transactions at once', async () => {
           const callReceiver1 = (await new ethers.ContractFactory(
@@ -205,6 +206,7 @@ describe('Arcadeum wallet integration', function () {
           expect(await callReceiver1.lastValB()).to.equal('0x112233')
           expect(await callReceiver2.lastValB()).to.equal('0x445566')
         })
+
         it('Should send three transactions at once', async () => {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
@@ -251,6 +253,7 @@ describe('Arcadeum wallet integration', function () {
           expect(await callReceiver2.lastValB()).to.equal('0x445566')
           expect(await callReceiver3.lastValB()).to.equal('0x778899')
         })
+
         it('Should send nested transactions', async () => {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
@@ -302,6 +305,7 @@ describe('Arcadeum wallet integration', function () {
         })
       })
     })
+
     describe('wallet batch transactions', async () => {
       it('Should send two transactions at once', async () => {
         const callReceiver1 = (await new ethers.ContractFactory(
@@ -338,6 +342,7 @@ describe('Arcadeum wallet integration', function () {
         expect(await callReceiver1.lastValB()).to.equal('0x112233')
         expect(await callReceiver2.lastValB()).to.equal('0x445566')
       })
+
       it('Should send three transactions at once', async () => {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
@@ -386,6 +391,7 @@ describe('Arcadeum wallet integration', function () {
       })
     })
   })
+
   describe('with web3', () => {
     let w3provider: AsyncSendable
     let w3: any
@@ -544,6 +550,7 @@ describe('Arcadeum wallet integration', function () {
         expect(await callReceiver.lastValB()).to.equal('0x445566')
       })
     })
+
     describe('batch transactions', async () => {
       it('Should send two transactions at once', async () => {
         const callReceiver1 = (await new ethers.ContractFactory(
@@ -580,6 +587,7 @@ describe('Arcadeum wallet integration', function () {
         expect(await callReceiver1.lastValB()).to.equal('0x112233')
         expect(await callReceiver2.lastValB()).to.equal('0x445566')
       })
+
       it('Should send three transactions at once', async () => {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
@@ -628,6 +636,7 @@ describe('Arcadeum wallet integration', function () {
         expect(await callReceiver2.lastValB()).to.equal('0x445566')
         expect(await callReceiver3.lastValB()).to.equal('0x778899')
       })
+      
       it('Should send nested transactions', async () => {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
