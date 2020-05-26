@@ -136,10 +136,14 @@ export class Wallet extends AbstractSigner {
     return this.sign(digest)
   }
 
-  async signMessage(message: string): Promise<string> {
+  async signMessage(message: string, chainId?: number): Promise<string> {
     return this.sign(
       ethers.utils.keccak256(
-        encodeMessageData(this.address, await this.chainId(), ethers.utils.hashMessage(ethers.utils.arrayify(message)))
+        encodeMessageData(
+          this.address,
+          chainId ? chainId : await this.chainId(),
+          ethers.utils.hashMessage(ethers.utils.arrayify(message))
+        )
       )
     )
   }

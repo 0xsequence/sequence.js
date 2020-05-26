@@ -83,20 +83,44 @@ export function encodeMessageData(wallet: string, networkId: BigNumberish, data:
   )
 }
 
+const SIG_TYPE_EIP712 = 1
+const SIG_TYPE_ETH_SIGN = 2
+
+function recoverSigner(digest: Arrayish, sig: ArcadeumDecodedSigner) {
+  switch (sig.t) {
+    case SIG_TYPE_EIP712:
+      return ethers.utils.recoverAddress(digest, {
+        r: sig.r,
+        s: sig.s,
+        v: sig.v
+      })
+    case SIG_TYPE_ETH_SIGN:
+      const subDigest = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['string', 'bytes32'],
+          ['\x19Ethereum Signed Message:\n32', digest]
+        )
+      )
+
+      return ethers.utils.recoverAddress(subDigest, {
+        r: sig.r,
+        s: sig.s,
+        v: sig.v
+      })
+    default:
+      throw new Error('Unknown signature')
+  }
+}
+
 export function recoverConfig(message: Arrayish, signature: string): ArcadeumWalletConfig {
   const decoded = decodeSignature(signature)
-  const digest = ethers.utils.keccak256(message)
+  const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
 
   const signers = decoded.signers.map(s => {
     if ((<ArcadeumDecodedSigner>s).r) {
-      const sig = <ArcadeumDecodedSigner>s
       return {
-        weight: sig.weight,
-        address: ethers.utils.recoverAddress(digest, {
-          r: sig.r,
-          s: sig.s,
-          v: sig.v
-        })
+        weight: s.weight,
+        address: recoverSigner(digest, s as ArcadeumDecodedSigner)
       }
     } else {
       return {
