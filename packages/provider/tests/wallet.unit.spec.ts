@@ -2,7 +2,7 @@
 import { expect } from 'chai';
 
 import * as arcadeum from '../src'
-import { ethers } from 'ethers';
+import { ethers, Signer } from 'ethers';
 import { encodeMessageData, recoverConfig } from '../src/utils';
 
 describe('Arcadeum wallet', function() {
@@ -94,10 +94,8 @@ describe('Arcadeum wallet', function() {
 
       expect(recovered.threshold).to.equal(3)
       expect(recovered.signers.length).to.equal(2)
-      expect(recovered.signers[0].weight).to.equal(2)
-      expect(recovered.signers[0].address).to.equal(singer1.address)
-      expect(recovered.signers[1].weight).to.equal(5)
-      expect(recovered.signers[1].address).to.equal(singer2.address)
+      expect(recovered.signers.find((s) => s.address === singer1.address).weight).to.equal(2)
+      expect(recovered.signers.find((s) => s.address === singer2.address).weight).to.equal(5)
     })
   })
 })
