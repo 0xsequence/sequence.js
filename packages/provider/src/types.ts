@@ -1,9 +1,21 @@
 import { BigNumberish, Arrayish } from 'ethers/utils'
 import { TransactionRequest } from 'ethers/providers'
 
-export interface LedgerCommunicationClient {
-  close: () => Promise<void>
+export interface JsonRpcRequest {
+  jsonrpc: string
+  id: number
+  method: string
+  params: any[]
 }
+
+export interface JsonRpcResponse {
+  jsonrpc: string
+  id: number
+  result: any
+  error?: any
+}
+
+export type JsonRpcResponseCallback = (error: any, response?: JsonRpcResponse) => void
 
 export interface ECSignatureString {
   v: string
@@ -41,12 +53,6 @@ export interface SignatureData {
   v: number
 }
 
-export interface LedgerGetAddressResult {
-  address: string
-  publicKey: string
-  chainCode: string
-}
-
 export interface PartialTxParams {
   nonce: string
   gasPrice?: string
@@ -59,10 +65,6 @@ export interface PartialTxParams {
 }
 
 export type DoneCallback = (err?: Error) => void
-
-export interface LedgerCommunication {
-  close_async: () => Promise<void>
-}
 
 export interface ResponseWithTxParams {
   raw: string
@@ -77,10 +79,6 @@ export enum WalletSubproviderErrors {
   FromAddressMissingOrInvalid = 'FROM_ADDRESS_MISSING_OR_INVALID',
   MethodNotSupported = 'METHOD_NOT_SUPPORTED'
 }
-export enum LedgerSubproviderErrors {
-  TooOldLedgerFirmware = 'TOO_OLD_LEDGER_FIRMWARE',
-  MultipleOpenConnectionsDisallowed = 'MULTIPLE_OPEN_CONNECTIONS_DISALLOWED'
-}
 
 export enum NonceSubproviderErrors {
   EmptyParametersFound = 'EMPTY_PARAMETERS_FOUND',
@@ -91,46 +89,6 @@ export type ErrorCallback = (err: Error | null, data?: any) => void
 export type Callback = () => void
 export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => void
 export type NextCallback = (callback?: OnNextCompleted) => void
-
-export interface TrezorSubproviderConfig {
-  accountFetchingConfigs: AccountFetchingConfigs
-  trezorConnectClientApi: any
-  networkId: number
-}
-
-export interface TrezorGetPublicKeyResponsePayload {
-  path: {
-    [index: number]: number
-  }
-  serializedPath: string
-  childNumb: number
-  xpub: string
-  chainCode: string
-  publicKey: string
-  fingerprint: number
-  depth: number
-}
-
-export interface TrezorSignTxResponsePayload {
-  v: string
-  r: string
-  s: string
-}
-
-export interface TrezorSignMsgResponsePayload {
-  address: string
-  signature: string
-}
-
-export interface TrezorResponseErrorPayload {
-  error: string
-}
-
-export interface TrezorConnectResponse {
-  payload: any
-  id: number
-  success: boolean
-}
 
 export interface ArcadeumWalletConfig {
   threshold: number
@@ -171,19 +129,6 @@ export interface ArcadeumTransaction {
   value: BigNumberish
   data: Arrayish
   nonce?: BigNumberish
-}
-
-export declare interface Web3Payload {
-  method: string
-  params: any[]
-  id: number
-  jsonrpc: string
-}
-
-export declare interface Web3Response {
-  id: number
-  jsonrpc: string
-  result: any
 }
 
 export interface ArcadeumTransactionEncoded {

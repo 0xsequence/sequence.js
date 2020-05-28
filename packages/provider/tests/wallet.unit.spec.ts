@@ -5,7 +5,7 @@ import * as arcadeum from '../src'
 import { ethers, Signer } from 'ethers';
 import { encodeMessageData, recoverConfig } from '../src/utils';
 
-describe('Arcadeum wallet', function() {
+describe('Arcadeum wallet units', function() {
   const context = {
     factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
     mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'

@@ -91,11 +91,11 @@ describe('Arcadeum wallet integration', function () {
 
     let options = [
       {
-        name: 'wallet',
+        name: 'arcadeum-wallet',
         signer: () => wallet
       },
       {
-        name: 'provider',
+        name: 'ethers-signer',
         signer: () => provider.getSigner()
       }
     ]
@@ -636,7 +636,7 @@ describe('Arcadeum wallet integration', function () {
         expect(await callReceiver2.lastValB()).to.equal('0x445566')
         expect(await callReceiver3.lastValB()).to.equal('0x778899')
       })
-      
+
       it('Should send nested transactions', async () => {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,

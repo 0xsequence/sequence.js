@@ -1,6 +1,6 @@
 import { Wallet } from './wallet'
 import { AsyncSendable, TransactionResponse } from 'ethers/providers'
-import { Web3Payload, Web3Response, ArcadeumTransaction } from './types'
+import { JsonRpcRequest, JsonRpcResponse, ArcadeumTransaction } from './types'
 import { ethers } from 'ethers'
 import { isArcadeumTransaction, toArcadeumTransactions, readArcadeumNonce, appendNonce, flattenAuxTransactions } from './utils'
 
@@ -11,8 +11,8 @@ export class Provider implements AsyncSendable {
     this._wallet = wallet
   }
 
-  // TODO: rename to isExternalWallet ?
   public readonly isMetaMask = false
+  public readonly isExternalWallet = false
 
   get host(): string {
     return this.provider.host
@@ -26,36 +26,36 @@ export class Provider implements AsyncSendable {
     return this._wallet.w3provider
   }
 
-  sendAsync(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    if (!this.handle(payload, callback)) {
+  sendAsync(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    if (!this.handle(request, callback)) {
       if (this.provider.sendAsync) {
-        this.provider.sendAsync(payload, callback)
+        this.provider.sendAsync(request, callback)
       } else {
-        this.provider.send(payload, callback)
+        this.provider.send(request, callback)
       }
     }
   }
 
-  private handle(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    switch (payload.method) {
+  private handle(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    switch (request.method) {
       case 'eth_accounts':
-        return this.accounts(payload, callback)
+        return this.accounts(request, callback)
       case 'eth_sendRawTransaction':
-        return this.sendRawTransaction(payload, callback)
+        return this.sendRawTransaction(request, callback)
       case 'eth_signTransaction':
-        return this.signTransaction(payload, callback)
+        return this.signTransaction(request, callback)
       case 'eth_sign':
-        return this.sign(payload, callback)
+        return this.sign(request, callback)
       case 'eth_sendTransaction':
-        return this.sendTransaction(payload, callback)
+        return this.sendTransaction(request, callback)
       case 'eth_getTransactionCount':
-        return this.getTransactionCount(payload, callback)
+        return this.getTransactionCount(request, callback)
     }
   }
 
-  private async sendRawTransaction(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    const signature = payload.params[0].raw
-    const transaction = payload.params[0].tx
+  private async sendRawTransaction(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    const signature = request.params[0].raw
+    const transaction = request.params[0].tx
 
     let tx: Promise<TransactionResponse>
 
@@ -67,7 +67,7 @@ export class Provider implements AsyncSendable {
     if (tx) {
       try {
         callback(undefined, {
-          id: payload.id,
+          id: request.id,
           jsonrpc: '2.0',
           result: (await tx).hash
         })
@@ -79,10 +79,10 @@ export class Provider implements AsyncSendable {
     }
   }
 
-  private async accounts(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
+  private async accounts(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
     try {
       callback(undefined, {
-        id: payload.id,
+        id: request.id,
         jsonrpc: '2.0',
         result: [this._wallet.address]
       })
@@ -93,8 +93,8 @@ export class Provider implements AsyncSendable {
     return true
   }
 
-  private async signTransaction(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    const transaction = payload.params[0]
+  private async signTransaction(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    const transaction = request.params[0]
     const sender = transaction.from.toLowerCase()
 
     if (sender === this._wallet.address.toLowerCase()) {
@@ -106,7 +106,7 @@ export class Provider implements AsyncSendable {
       try {
         const signature = this._wallet.signTransactions(...arctxs)
         callback(undefined, {
-          id: payload.id,
+          id: request.id,
           jsonrpc: '2.0',
           result: {
             raw: await signature,
@@ -127,15 +127,15 @@ export class Provider implements AsyncSendable {
     }
   }
 
-  private async sign(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    const signer = payload.params[0]
-    const message = payload.params[1]
+  private async sign(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    const signer = request.params[0]
+    const message = request.params[1]
 
     if (signer === this._wallet.address.toLowerCase()) {
       const signature = this._wallet.signMessage(message)
       try {
         callback(undefined, {
-          id: payload.id,
+          id: request.id,
           jsonrpc: '2.0',
           result: await signature
         })
@@ -148,11 +148,11 @@ export class Provider implements AsyncSendable {
     }
   }
 
-  private async sendTransaction(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    const transaction = this._wallet.sendTransaction(payload.params[0])
+  private async sendTransaction(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    const transaction = this._wallet.sendTransaction(request.params[0])
     try {
       callback(undefined, {
-        id: payload.id,
+        id: request.id,
         jsonrpc: '2.0',
         result: (await transaction).hash
       })
@@ -162,14 +162,14 @@ export class Provider implements AsyncSendable {
     return true
   }
 
-  private async getTransactionCount(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
-    const address = payload.params[0].toLowerCase()
+  private async getTransactionCount(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
+    const address = request.params[0].toLowerCase()
 
     if (address === this._wallet.address.toLowerCase()) {
-      const count = this._wallet.getTransactionCount(payload.params[1])
+      const count = this._wallet.getTransactionCount(request.params[1])
       try {
         callback(undefined, {
-          id: payload.id,
+          id: request.id,
           jsonrpc: '2.0',
           result: ethers.utils.bigNumberify(await count).toHexString()
         })

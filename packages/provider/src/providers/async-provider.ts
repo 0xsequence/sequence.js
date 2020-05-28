@@ -1,5 +1,5 @@
 import { JsonRpcProvider, AsyncSendable } from 'ethers/providers'
-import { Web3Response, Web3Payload } from '../types'
+import { JsonRpcRequest, JsonRpcResponseCallback } from '../types'
 
 export class JsonRpcAsyncSendable implements AsyncSendable {
   provider: JsonRpcProvider
@@ -8,13 +8,15 @@ export class JsonRpcAsyncSendable implements AsyncSendable {
     this.provider = p
   }
 
-  sendAsync(payload: Web3Payload, callback: (error: any, response?: Web3Response) => void) {
+  send = this.sendAsync
+
+  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback) {
     this.provider
-      .send(payload.method, payload.params)
+      .send(request.method, request.params)
       .then(r => {
         callback(undefined, {
-          id: payload.id,
           jsonrpc: '2.0',
+          id: request.id,
           result: r
         })
       })

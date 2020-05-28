@@ -4,8 +4,6 @@
   "workspaces": {
     "packages": [
       "packages/*"
-    ],
-    "nohoist": [
     ]
   },
   "scripts": {
