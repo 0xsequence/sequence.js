@@ -9,11 +9,16 @@ export {
   Transactionish,
   AuxTransactionRequest,
   ArcadeumTransactionEncoded,
-  Web3Response,
-  Web3Payload,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  JsonRpcResponseCallback,
   ArcadeumTransaction,
   ArcadeumDecodedSigner,
   ArcadeumDecodedOwner,
   ArcadeumDecodedSignature,
   ArcadeumWalletConfig
 } from './types'
+
+export { JsonRpcAsyncSendable } from './providers/async-provider'
+
+export { ExternalWindowProvider } from './providers/external-window-provider'
