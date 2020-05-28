@@ -38,6 +38,6 @@ export class LocalRelayer {
     const walletModule = mainModule.attach(wallet).connect(this.signer)
 
     const nonce = readArcadeumNonce(...transactions)
-    return walletModule.execute(arcadeumTxAbiEncode(transactions), nonce, signature)
+    return walletModule.execute(arcadeumTxAbiEncode(transactions), nonce, (await signature).slice(0, -2))
   }
 }

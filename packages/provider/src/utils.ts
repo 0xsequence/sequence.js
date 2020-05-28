@@ -9,11 +9,13 @@ import {
   AuxTransactionRequest,
   Transactionish
 } from './types'
+
 import { ethers, Signer } from 'ethers'
 import * as WalletContract from './commons/wallet_contract'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
-import { TransactionRequest } from 'ethers/providers'
+import { TransactionRequest, Provider } from 'ethers/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
+import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
@@ -83,18 +85,29 @@ export function encodeMessageData(wallet: string, networkId: BigNumberish, data:
   )
 }
 
-const SIG_TYPE_EIP712 = 1
-const SIG_TYPE_ETH_SIGN = 2
+const SignatureType1271 = {
+  invalid: 0,
+  eip712: 1,
+  ethSign: 2
+}
+
+const SignatureType2126 = {
+  illegal: 0,
+  invalid: 1,
+  eip712: 2,
+  ethSign: 3,
+  wallet: 4
+}
 
 function recoverSigner(digest: Arrayish, sig: ArcadeumDecodedSigner) {
   switch (sig.t) {
-    case SIG_TYPE_EIP712:
+    case SignatureType1271.eip712:
       return ethers.utils.recoverAddress(digest, {
         r: sig.r,
         s: sig.s,
         v: sig.v
       })
-    case SIG_TYPE_ETH_SIGN:
+    case SignatureType1271.ethSign:
       const subDigest = ethers.utils.keccak256(
         ethers.utils.solidityPack(
           ['string', 'bytes32'],
@@ -109,6 +122,59 @@ function recoverSigner(digest: Arrayish, sig: ArcadeumDecodedSigner) {
       })
     default:
       throw new Error('Unknown signature')
+  }
+}
+
+function decodeEOASig(sig: Buffer): { r: string, s: string, v: number} {
+  const v = ethers.utils.bigNumberify(sig.slice(0, 1)).toNumber()
+  const r = ethers.utils.hexlify(sig.slice(1, 33))
+  const s = ethers.utils.hexlify(sig.slice(33, 65))
+  return { r: r, s: s, v: v}
+}
+
+function addressCompare(a: string, b: string) {
+  const an = ethers.utils.bigNumberify(a)
+  const bn = ethers.utils.bigNumberify(b)
+  return an.eq(bn)
+}
+
+export async function isValidSignature(
+  address: string,
+  digest: Arrayish,
+  sig: Buffer,
+  provider?: Provider,
+  arcadeumContext?: ArcadeumContext
+) {
+  const type = ethers.utils.bigNumberify(sig.slice(-2)).toNumber()
+  switch (type) {
+    case SignatureType2126.illegal:
+      throw new Error('Invalid signature type')
+
+    case SignatureType2126.invalid:
+      return false
+
+    case SignatureType2126.eip712:
+      return addressCompare(ethers.utils.recoverAddress(digest, decodeEOASig(sig)), address)
+
+    case SignatureType2126.ethSign:
+      const ethSignDigest = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['string', 'bytes32'],
+          ['\x19Ethereum Signed Message:\n32', digest]
+        )
+      )
+      return addressCompare(ethers.utils.recoverAddress(ethSignDigest, decodeEOASig(sig)), address)
+
+    case SignatureType2126.wallet:
+      if (!provider) throw new Error('Wallet signatures require RPC Provider')
+
+      if ((await provider.getCode(address)) === '0x') {
+        if (!arcadeumContext) new Error('Presumed non-deployed arcadeum wallet, but no context provided')
+      } else {
+        const wallet = new ethers.Contract(address, erc1271Abi, provider)
+        const response = await wallet.isValidSignature(digest, sig.slice(0, -2))
+        return erc1271returns.isValidSignatureBytes32 === response
+      }
   }
 }
 
@@ -137,7 +203,7 @@ export function recoverConfig(message: Arrayish, signature: string): ArcadeumWal
 }
 
 export function decodeSignature(signature: string): ArcadeumDecodedSignature {
-  const auxsig = signature.replace('0x', '')
+  const auxsig = signature.replace('0x', '').slice(0, -2)
 
   const threshold = ethers.utils.bigNumberify(auxsig.slice(0, 4)).toNumber()
 
@@ -212,7 +278,10 @@ function aggregateTwo(a: string, b: string): string {
     }
   })
 
-  return ethers.utils.solidityPack(['uint16', ...Array(accountBytes.length).fill('bytes')], [da.threshold, ...accountBytes])
+  return ethers.utils.solidityPack(
+    ['uint16', ...Array(accountBytes.length).fill('bytes')],
+    [da.threshold, ...accountBytes]
+  ) + '04'
 }
 
 export async function toArcadeumTransactions(

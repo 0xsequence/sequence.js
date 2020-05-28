@@ -48,7 +48,7 @@ describe('Arcadeum wallet', function() {
       const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
       const wallet = new arcadeum.Wallet(config, context, pk)
 
-      const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
+      const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b0204'
       expect(await wallet.sign(digest)).to.equal(expected)
     })
     it('Should sign and recover the configuration of a single signer', async () => {
@@ -59,6 +59,7 @@ describe('Arcadeum wallet', function() {
       const chainId = 3
 
       const sig = await wallet.signMessage(message, chainId)
+
       const digest = encodeMessageData(wallet.address, chainId, ethers.utils.hashMessage(ethers.utils.arrayify(message)))
       const recovered = recoverConfig(digest, sig)
 

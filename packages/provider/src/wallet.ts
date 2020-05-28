@@ -169,7 +169,7 @@ export class Wallet extends AbstractSigner {
     return ethers.utils.solidityPack(
       ['uint16', ...Array(this.config.signers.length).fill('bytes')],
       [this.config.threshold, ...accountBytes]
-    )
+    ) + '04'
   }
 
   static async singleOwner(context: ArcadeumContext, owner: Arrayish | AbstractSigner): Promise<Wallet> {

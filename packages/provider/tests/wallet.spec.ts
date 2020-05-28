@@ -166,7 +166,7 @@ describe('Arcadeum wallet integration', function () {
             await relayer.deploy(wallet.config, context)
 
             const digest = ethers.utils.hashMessage(message)
-            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, digest, signature)
+            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, digest, signature.slice(0, -2))
             await expect(call).to.be.fulfilled
           })
         })
@@ -472,7 +472,7 @@ describe('Arcadeum wallet integration', function () {
         await relayer.deploy(wallet.config, context)
 
         const digest = ethers.utils.hashMessage(ethers.utils.toUtf8Bytes(message))
-        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, digest, signature)
+        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, digest, signature.slice(0, -2))
         await expect(call).to.be.fulfilled
       })
 
