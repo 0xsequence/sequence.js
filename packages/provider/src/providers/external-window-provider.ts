@@ -79,12 +79,13 @@ export class ExternalWindowProvider implements AsyncSendable {
   }
 
   // handle incoming message from external window..
-  private handleMessage = (ev: MessageEvent) => {
-    if (typeof ev.data === 'string' && !ev.data) {
+  private handleMessage = (event: MessageEvent) => {
+    // Security check, ensure message is coming from wallet origin url
+    if (event.origin !== this.walletURL.origin) {
       return
     }
 
-    const response: SendResponse = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data
+    const response: SendResponse = JSON.parse(event.data)
 
     // Handle CONNECT_RESPONSE
     //
