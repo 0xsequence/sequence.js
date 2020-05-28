@@ -84,8 +84,6 @@ export class ExternalWindowProvider implements AsyncSendable {
       return
     }
 
-    console.log('received event..', ev)
-
     const response: SendResponse = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data
 
     // Handle CONNECT_RESPONSE
@@ -158,7 +156,7 @@ export class ExternalWindowProvider implements AsyncSendable {
 
     const interval = setInterval(() => {
       if (popup && popup.closed) {
-        console.log('popup is closed..')
+        // console.log('popup is closed..')
         this.walletOpened = false
         this.connected = false // TODO: specify connected false?
         clearInterval(interval)
