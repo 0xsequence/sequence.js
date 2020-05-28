@@ -55,11 +55,11 @@ describe('Arcadeum wallet', function() {
       const pk = ethers.utils.randomBytes(32)
       const wallet = await arcadeum.Wallet.singleOwner(context, pk)
 
-      const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Hi! this is a test message'))
+      const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
       const chainId = 3
 
       const sig = await wallet.signMessage(message, chainId)
-      const digest = encodeMessageData(wallet.address, chainId, ethers.utils.hashMessage(ethers.utils.arrayify(message)))
+      const digest = encodeMessageData(wallet.address, chainId, ethers.utils.keccak256(message))
       const recovered = recoverConfig(digest, sig)
 
       expect(recovered.threshold).to.equal(1)
@@ -85,11 +85,11 @@ describe('Arcadeum wallet', function() {
         singer1
       )
 
-      const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Hi! this is a test message'))
+      const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
       const chainId = 3
 
       const sig = await wallet.signMessage(message, chainId)
-      const digest = encodeMessageData(wallet.address, chainId, ethers.utils.hashMessage(ethers.utils.arrayify(message)))
+      const digest = encodeMessageData(wallet.address, chainId, ethers.utils.keccak256(message))
       const recovered = recoverConfig(digest, sig)
 
       expect(recovered.threshold).to.equal(3)
