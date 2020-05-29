@@ -121,18 +121,29 @@ export async function isValidSignature(
   arcadeumContext?: ArcadeumContext,
   chainId?: number
 ) {
-  return (
+  if (
     isValidEIP721Signature(address, digest, sig) ||
-    isValidEthSignSignature(address, digest, sig) ||
-    (await isValidWalletSignature(address, digest, sig, provider)) ||
-    (await isValidArcadeumWalletSignature(address, digest, sig, provider)) ||
-    // Arcadeum fixed signatures must be validated after wallet signatures
-    // in case the Arcadeum wallet has been updated and has new owners
-    (await isValidArcadeumFixedSignature(address, digest, sig, arcadeumContext, provider, chainId))
-  )
+    isValidEthSignSignature(address, digest, sig)
+  ) return true
+
+  const wallets = await Promise.all([
+    isValidWalletSignature(address, digest, sig, provider),
+    isValidArcadeumWalletSignature(address, digest, sig, provider)
+  ])
+
+  // If validity of wallet signature can't be determined
+  // it could be a signature of a non-deployed arcadeum wallet
+  if (wallets[0] === undefined && wallets[1] === undefined) {
+    return isValidArcadeumFixedSignature(address, digest, sig, arcadeumContext, provider, chainId)
+  }
+
+  return wallets[0] || wallets[1]
 }
 
-export function isValidEIP721Signature(address: string, digest: Uint8Array, sig: string) {
+export function isValidEIP721Signature(  address: string,
+  digest: Uint8Array,
+  sig: string
+): boolean {
   try {
     return compareAddr(
       ethers.utils.recoverAddress(
@@ -146,7 +157,11 @@ export function isValidEIP721Signature(address: string, digest: Uint8Array, sig:
   }
 }
 
-export function isValidEthSignSignature(address: string, digest: Uint8Array, sig: string) {
+export function isValidEthSignSignature(
+  address: string,
+  digest: Uint8Array,
+  sig: string
+): boolean {
   try {
     const subDigest = ethers.utils.keccak256(
       ethers.utils.solidityPack(
@@ -172,10 +187,11 @@ export async function isValidWalletSignature(
   sig: string,
   provider?: Provider
 ) {
-  if (!provider) throw new Error('Wallet signatures require RPC Provider')
+  if (!provider) return undefined
   try {
     if ((await provider.getCode(address)) === '0x') {
-      return false
+      // Signature validity can't be determined
+      return undefined
     }
 
     const wallet = new ethers.Contract(address, erc1271Abi, provider)
@@ -192,7 +208,7 @@ export async function isValidArcadeumWalletSignature(
   sig: string,
   provider?: Provider
 ) {
-  if (!provider) throw new Error('Arcadeum wallet signatures require RPC Provider')
+  if (!provider) return undefined // Signature validity can't be determined
   try {
     const chainId = (await provider.getNetwork()).chainId
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, chainId, digest)))
@@ -210,8 +226,8 @@ export async function isValidArcadeumFixedSignature(
   provider?: Provider,
   chainId?: number
 ) {
-  if (!provider && !chainId) throw new Error('Arcadeum wallet signatures require RPC Provider')
-  if (!arcadeumContext) throw new Error('Arcadeum wallet signatures require arcadeumContext')
+  if (!provider && !chainId) return undefined // Signature validity can't be determined
+  if (!arcadeumContext) return undefined // Signature validity can't be determined
 
   try{
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
