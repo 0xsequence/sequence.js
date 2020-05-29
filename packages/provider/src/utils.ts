@@ -16,8 +16,6 @@ import { TransactionRequest, Provider } from 'ethers/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
 
-export const LIMIT_UINT_248 = ethers.constants.Two.pow(248)
-
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
   const bigB = ethers.utils.bigNumberify(b)

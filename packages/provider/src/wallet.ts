@@ -12,7 +12,6 @@ import {
   hasArcadeumTransactions,
   toArcadeumTransactions,
   compareAddr,
-  LIMIT_UINT_248,
   imageHash
 } from './utils'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
@@ -93,21 +92,25 @@ export class Wallet extends AbstractSigner {
 
     const walletInterface = new Interface(mainModuleAbi)
 
+    // 131072 gas, enough for all calls
+    // and a power of two to keep the gas cost of data low
+    const gasLimit = ethers.constants.Two.pow(17)
+
     const preTransaction = isUpgradable ? [] : [{
       delegateCall: false,
       revertOnError: true,
-      gasLimit: LIMIT_UINT_248,
+      gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
       data: walletInterface.functions.updateImplementation.encode(
         [this.context.mainModuleUpgradable]
       )
     }]
-    
+
     const transactions = [...preTransaction, {
       delegateCall: false,
       revertOnError: true,
-      gasLimit: LIMIT_UINT_248,
+      gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
       data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
@@ -118,7 +121,7 @@ export class Wallet extends AbstractSigner {
     return [{
       delegateCall: false,
       revertOnError: false,
-      gasLimit: LIMIT_UINT_248,
+      gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
       data: walletInterface.functions.selfExecute.encode(transactions)
