@@ -926,5 +926,47 @@ describe('Arcadeum wallet integration', function () {
         expect(tx).to.be.rejected
       })
     })
+    it('Should reject a non-usable configuration', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const newConfig = {
+        threshold: 3,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
+
+      const prom = wallet.buildUpdateConfig(newConfig)
+      await expect(prom).to.be.rejected
+    })
+    it('Should accept a non-usable configuration in non-strict mode', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const newConfig = {
+        threshold: 3,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
+
+      const prom = wallet.buildUpdateConfig(newConfig, false)
+      await expect(prom).to.be.not.rejected
+    })
   })
 })

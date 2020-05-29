@@ -13,7 +13,8 @@ import {
   toArcadeumTransactions,
   compareAddr,
   imageHash,
-  arcadeumTxAbiEncode
+  arcadeumTxAbiEncode,
+  isUsableConfig
 } from './utils'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
@@ -87,7 +88,12 @@ export class Wallet extends AbstractSigner {
     return new Wallet(this.config, this.context, ...this._signers).setProvider(provider).setRelayer(relayer)
   }
 
-  async buildUpdateConfig(config: ArcadeumWalletConfig): Promise<ArcadeumTransaction[]> {
+  async buildUpdateConfig(
+    config: ArcadeumWalletConfig,
+    strict: boolean = true
+  ): Promise<ArcadeumTransaction[]> {
+    if (strict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
+
     const implementation = await this.provider.getStorageAt(this.address, this.address)
     const isUpgradable = compareAddr(implementation, this.context.mainModuleUpgradable) === 0
 
@@ -129,9 +135,13 @@ export class Wallet extends AbstractSigner {
     }]
   }
 
-  async updateConfig(config: ArcadeumWalletConfig, nonce?: number): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
+  async updateConfig(
+    config: ArcadeumWalletConfig,
+    nonce?: number,
+    strict: boolean = true
+  ): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
     const [txs, n] = await Promise.all([
-      this.buildUpdateConfig(config),
+      this.buildUpdateConfig(config, strict),
       nonce ? nonce : await this.getNonce()]
     )
 

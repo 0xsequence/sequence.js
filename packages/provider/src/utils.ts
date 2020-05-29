@@ -34,6 +34,11 @@ export function sortConfig(config: ArcadeumWalletConfig): ArcadeumWalletConfig {
   return config
 }
 
+export function isUsableConfig(config: ArcadeumWalletConfig): boolean {
+  const sum = config.signers.reduce((p, c) => ethers.utils.bigNumberify(c.weight).add(p), ethers.constants.Zero)
+  return sum.gte(ethers.utils.bigNumberify(config.threshold))
+}
+
 export function imageHash(config: ArcadeumWalletConfig): string {
   let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
 
