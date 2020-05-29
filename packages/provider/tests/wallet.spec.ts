@@ -13,7 +13,7 @@ import { Signer as AbstractSigner } from 'ethers'
 
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumWalletSignature, isValidArcadeumFixedSignature } from '../src/utils'
+import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature } from '../src/utils'
 
 const CallReceiverMockArtifact = require('arcadeum-wallet/build/contracts/CallReceiverMock.json')
 const HookCallerMockArtifact = require('arcadeum-wallet/build/contracts/HookCallerMock.json')
@@ -722,7 +722,7 @@ describe('Arcadeum wallet integration', function () {
       it('Should validate arcadeum wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, 1)
         await relayer.deploy(wallet.config, context)
-        expect(await isValidArcadeumWalletSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
+        expect(await isValidArcadeumDeployedWalletSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
       })
       it('Should reject arcadeum wallet invalid signature', async () => {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
@@ -741,7 +741,7 @@ describe('Arcadeum wallet integration', function () {
       })
       it('Should validate arcadeum wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, 1)
-        expect(await isValidArcadeumFixedSignature(wallet.address, digest, signature, context, ganache.provider)).to.be.true
+        expect(await isValidArcadeumUndeployedWalletSignature(wallet.address, digest, signature, context, ganache.provider)).to.be.true
       })
       it('Should reject arcadeum wallet invalid signature', async () => {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))

@@ -128,19 +128,20 @@ export async function isValidSignature(
 
   const wallets = await Promise.all([
     isValidWalletSignature(address, digest, sig, provider),
-    isValidArcadeumWalletSignature(address, digest, sig, provider, chainId)
+    isValidArcadeumDeployedWalletSignature(address, digest, sig, provider, chainId)
   ])
 
   // If validity of wallet signature can't be determined
   // it could be a signature of a non-deployed arcadeum wallet
   if (wallets[0] === undefined && wallets[1] === undefined) {
-    return isValidArcadeumFixedSignature(address, digest, sig, arcadeumContext, provider, chainId)
+    return isValidArcadeumUndeployedWalletSignature(address, digest, sig, arcadeumContext, provider, chainId)
   }
 
   return wallets[0] || wallets[1]
 }
 
-export function isValidEIP721Signature(  address: string,
+export function isValidEIP721Signature(
+  address: string,
   digest: Uint8Array,
   sig: string
 ): boolean {
@@ -202,7 +203,7 @@ export async function isValidWalletSignature(
   }
 }
 
-export async function isValidArcadeumWalletSignature(
+export async function isValidArcadeumDeployedWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
@@ -219,7 +220,7 @@ export async function isValidArcadeumWalletSignature(
   }
 }
 
-export async function isValidArcadeumFixedSignature(
+export async function isValidArcadeumUndeployedWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
