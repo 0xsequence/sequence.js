@@ -5,9 +5,9 @@ import { MainModule } from 'arcadeum-wallet/typings/contracts/MainModule'
 import { MainModuleUpgradable } from 'arcadeum-wallet/typings/contracts/MainModuleUpgradable'
 import { Factory } from 'arcadeum-wallet/typings/contracts/Factory'
 
-const FactoryArtifact = require('arcadeum-wallet/build/contracts/Factory.json')
-const MainModuleArtifact = require('arcadeum-wallet/build/contracts/MainModule.json')
-const MainModuleUpgradableArtifact = require('arcadeum-wallet/build/contracts/MainModuleUpgradable.json')
+const FactoryArtifact = require('arcadeum-wallet/artifacts/Factory.json')
+const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
+const MainModuleUpgradableArtifact = require('arcadeum-wallet/artifacts/MainModuleUpgradable.json')
 
 ethers.errors.setLogLevel('error')
 

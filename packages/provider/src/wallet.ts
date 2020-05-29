@@ -12,7 +12,8 @@ import {
   hasArcadeumTransactions,
   toArcadeumTransactions,
   compareAddr,
-  imageHash
+  imageHash,
+  arcadeumTxAbiEncode
 } from './utils'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
@@ -114,7 +115,7 @@ export class Wallet extends AbstractSigner {
       to: this.address,
       value: ethers.constants.Zero,
       data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
-        [imageHash(config)]
+        [imageHash(sortConfig(config))]
       )
     }]
 
@@ -124,13 +125,20 @@ export class Wallet extends AbstractSigner {
       gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
-      data: walletInterface.functions.selfExecute.encode(transactions)
+      data: walletInterface.functions.selfExecute.encode([arcadeumTxAbiEncode(transactions)])
     }]
   }
 
-  async updateConfig(config: ArcadeumWalletConfig, nonce?: number): Promise<TransactionResponse> {
-    const txs = await this.buildUpdateConfig(config)
-    return this.sendTransaction(appendNonce(txs, nonce ? nonce : await this.getNonce()))
+  async updateConfig(config: ArcadeumWalletConfig, nonce?: number): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
+    const [txs, n] = await Promise.all([
+      this.buildUpdateConfig(config),
+      nonce ? nonce : await this.getNonce()]
+    )
+
+    return [
+      { address: this.address, ...config},
+      await this.sendTransaction(appendNonce(txs, n))
+    ]
   }
 
   async getNonce(blockTag?: BlockTag): Promise<number> {

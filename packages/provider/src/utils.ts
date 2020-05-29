@@ -48,6 +48,8 @@ export function imageHash(config: ArcadeumWalletConfig): string {
 }
 
 export function addressOf(config: ArcadeumWalletConfig, context: ArcadeumContext): string {
+  if (config.address) return config.address
+
   const salt = imageHash(config)
 
   const codeHash = ethers.utils.keccak256(

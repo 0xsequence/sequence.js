@@ -13,10 +13,10 @@ import { Signer as AbstractSigner } from 'ethers'
 
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature } from '../src/utils'
+import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf } from '../src/utils'
 
-const CallReceiverMockArtifact = require('arcadeum-wallet/build/contracts/CallReceiverMock.json')
-const HookCallerMockArtifact = require('arcadeum-wallet/build/contracts/HookCallerMock.json')
+const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
+const HookCallerMockArtifact = require('arcadeum-wallet/artifacts/HookCallerMock.json')
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
@@ -772,6 +772,158 @@ describe('Arcadeum wallet integration', function () {
         const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(wallet.address, 1, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider, context)).to.be.false
+      })
+    })
+  })
+  describe('Update wallet configuration', () => {
+    let transaction: arcadeum.Transactionish
+    beforeEach(async () => {
+      transaction = {
+        from: wallet.address,
+        gasPrice: '20000000000',
+        to: callReceiver.address,
+        value: 0,
+        data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+      }
+    })
+    it('Should migrate and update to a new single owner configuration', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const newConfig = {
+        threshold: 1,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          }
+        ]
+      }
+
+      const [config, tx] = await wallet.updateConfig(newConfig)
+      await tx.wait()
+
+      const updatedWallet = new arcadeum.Wallet(config, context, s1).connect(ganache.serverUri, relayer)
+
+      expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
+        .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+
+      expect(updatedWallet.address).to.be.equal(wallet.address)
+      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+
+      await updatedWallet.sendTransaction(transaction)
+    })
+    it('Should migrate and update to a new multiple owner configuration', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const newConfig = {
+        threshold: 2,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
+
+      const [config, tx] = await wallet.updateConfig(newConfig)
+      const txr = await tx.wait()
+
+      const updatedWallet = new arcadeum.Wallet(config, context, s1, s2).connect(ganache.serverUri, relayer)
+
+      expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
+        .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+
+      expect(updatedWallet.address).to.be.equal(wallet.address)
+      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+
+      await updatedWallet.sendTransaction(transaction)
+    })
+    describe('after migrating and updating', () => {
+      let wallet2: arcadeum.Wallet
+
+      beforeEach(async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const newConfig = {
+          threshold: 1,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            }
+          ]
+        }
+  
+        const [config, tx] = await wallet.updateConfig(newConfig)
+        await tx.wait()
+
+        wallet2 = new arcadeum.Wallet(config, context, s1).connect(ganache.serverUri, relayer)
+      })
+      it('Should update to a new single owner configuration', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const newConfig = {
+          threshold: 1,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            }
+          ]
+        }
+  
+        const [config, tx] = await wallet2.updateConfig(newConfig)
+        await tx.wait()
+  
+        const updatedWallet = new arcadeum.Wallet(config, context, s1).connect(ganache.serverUri, relayer)
+  
+        expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
+          .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+  
+        expect(updatedWallet.address).to.be.equal(wallet2.address)
+        expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+  
+        await updatedWallet.sendTransaction(transaction)
+      })
+      it('Should update to a new multiple owner configuration', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+  
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            }
+          ]
+        }
+  
+        const [config, tx] = await wallet2.updateConfig(newConfig)
+        await tx.wait()
+  
+        const updatedWallet = new arcadeum.Wallet(config, context, s1, s2).connect(ganache.serverUri, relayer)
+  
+        expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
+          .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+  
+        expect(updatedWallet.address).to.be.equal(wallet2.address)
+        expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+  
+        await updatedWallet.sendTransaction(transaction)
+      })
+      it('Should reject transaction of previous owner', async () => {
+        const tx = wallet.sendTransaction(transaction)
+        expect(tx).to.be.rejected
       })
     })
   })

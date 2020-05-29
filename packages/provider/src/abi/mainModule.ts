@@ -58,12 +58,6 @@ export const abi = [
           }
         ],
         type: 'tuple[]'
-      },
-      {
-        type: 'uint256'
-      },
-      {
-        type: 'bytes'
       }
     ],
     outputs: [],

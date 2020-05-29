@@ -1846,7 +1846,7 @@ aproba@^2.0.0:
 
 "arcadeum-wallet@https://github.com/arcadeum/wallet-contracts.git":
   version "0.1.0"
-  resolved "https://github.com/arcadeum/wallet-contracts.git#739972be1c20c563776d256209c54308bf9d43ec"
+  resolved "https://github.com/arcadeum/wallet-contracts.git#47033ddab73dc89b9ebca3e930e979553b7a65de"
 
 archy@^1.0.0:
   version "1.0.0"
