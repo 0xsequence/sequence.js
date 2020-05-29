@@ -28,6 +28,40 @@ describe('Arcadeum wallet units', function() {
       const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
       expect(wallet.address).to.be.equal(expected)
     })
+    it('Should reject non-usable config', () => {
+      const config = {
+        threshold: 4,
+        signers: [
+          {
+            address: '0x173C645E3a784612bC3132cA8ae47AFE4Ef405c4',
+            weight: 1
+          },
+          {
+            address: '0xEc5526D3C399f9810a70D44c90a680Dce93b7bEc',
+            weight: 1
+          }
+        ]
+      }
+
+      expect(() => new arcadeum.Wallet(config, context)).to.throw(Error)
+    })
+    it('Should accept non-usable config on non-strict mode', () => {
+      const config = {
+        threshold: 4,
+        signers: [
+          {
+            address: '0x173C645E3a784612bC3132cA8ae47AFE4Ef405c4',
+            weight: 1
+          },
+          {
+            address: '0xEc5526D3C399f9810a70D44c90a680Dce93b7bEc',
+            weight: 1
+          }
+        ]
+      }
+
+      expect(() => new arcadeum.Wallet(config, { nonStrict: true, ...context })).to.not.throw(Error)
+    })
   })
   describe('signing', () => {
     it('Should sign a message', async () => {

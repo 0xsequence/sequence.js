@@ -46,6 +46,8 @@ export class Wallet extends AbstractSigner {
   constructor(config: ArcadeumWalletConfig, context: ArcadeumContext, ...signers: (Arrayish | AbstractSigner)[]) {
     super()
 
+    if (!context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable configuration in strict mode')
+
     this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
     this.config = sortConfig(config)
     this.context = context
@@ -89,10 +91,9 @@ export class Wallet extends AbstractSigner {
   }
 
   async buildUpdateConfig(
-    config: ArcadeumWalletConfig,
-    strict: boolean = true
+    config: ArcadeumWalletConfig
   ): Promise<ArcadeumTransaction[]> {
-    if (strict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
+    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
 
     const implementation = await this.provider.getStorageAt(this.address, this.address)
     const isUpgradable = compareAddr(implementation, this.context.mainModuleUpgradable) === 0
@@ -137,11 +138,10 @@ export class Wallet extends AbstractSigner {
 
   async updateConfig(
     config: ArcadeumWalletConfig,
-    nonce?: number,
-    strict: boolean = true
+    nonce?: number
   ): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
     const [txs, n] = await Promise.all([
-      this.buildUpdateConfig(config, strict),
+      this.buildUpdateConfig(config),
       nonce ? nonce : await this.getNonce()]
     )
 

@@ -948,6 +948,11 @@ describe('Arcadeum wallet integration', function () {
       await expect(prom).to.be.rejected
     })
     it('Should accept a non-usable configuration in non-strict mode', async () => {
+      const wallet = (await arcadeum.Wallet.singleOwner(
+        { nonStrict: true, ...context},
+        new ethers.Wallet(ethers.utils.randomBytes(32))
+      )).connect(ganache.serverUri, relayer)
+
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
@@ -965,7 +970,7 @@ describe('Arcadeum wallet integration', function () {
         ]
       }
 
-      const prom = wallet.buildUpdateConfig(newConfig, false)
+      const prom = wallet.buildUpdateConfig(newConfig)
       await expect(prom).to.be.not.rejected
     })
   })
