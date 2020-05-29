@@ -128,7 +128,7 @@ export async function isValidSignature(
 
   const wallets = await Promise.all([
     isValidWalletSignature(address, digest, sig, provider),
-    isValidArcadeumWalletSignature(address, digest, sig, provider)
+    isValidArcadeumWalletSignature(address, digest, sig, provider, chainId)
   ])
 
   // If validity of wallet signature can't be determined
@@ -206,12 +206,13 @@ export async function isValidArcadeumWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider?: Provider
+  provider?: Provider,
+  chainId?: number
 ) {
   if (!provider) return undefined // Signature validity can't be determined
   try {
-    const chainId = (await provider.getNetwork()).chainId
-    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, chainId, digest)))
+    const cid = chainId ? chainId : (await provider.getNetwork()).chainId
+    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
     return isValidWalletSignature(address, subDigest, sig, provider)
   } catch {
     return false
