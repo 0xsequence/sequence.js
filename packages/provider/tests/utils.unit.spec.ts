@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { ethers } from 'ethers'
 
 import * as arcadeum from '../src'
+import { isValidSignature, isValidEthSignSignature } from '../src/utils'
 
 describe('Arcadeum utils', function () {
   it('Should generate image hash', () => {

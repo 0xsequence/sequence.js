@@ -12,8 +12,9 @@ import {
 import { ethers, Signer } from 'ethers'
 import * as WalletContract from './commons/wallet_contract'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
-import { TransactionRequest } from 'ethers/providers'
+import { TransactionRequest, Provider } from 'ethers/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
+import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
@@ -73,13 +74,13 @@ export function hashMetaTransactionsData(wallet: string, networkId: BigNumberish
   const nonce = readArcadeumNonce(...txs)
   const transactions = ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, arcadeumTxAbiEncode(txs)])
 
-  return encodeMessageData(wallet, networkId, transactions)
+  return encodeMessageData(wallet, networkId, ethers.utils.keccak256(transactions))
 }
 
-export function encodeMessageData(wallet: string, networkId: BigNumberish, data: string): string {
+export function encodeMessageData(wallet: string, networkId: BigNumberish, digest: Arrayish): string {
   return ethers.utils.solidityPack(
-    ['string', 'uint256', 'address', 'bytes'],
-    ['\x19\x01', networkId, wallet, ethers.utils.keccak256(data)]
+    ['string', 'uint256', 'address', 'bytes32'],
+    ['\x19\x01', networkId, wallet, digest]
   )
 }
 
@@ -112,10 +113,141 @@ function recoverSigner(digest: Arrayish, sig: ArcadeumDecodedSigner) {
   }
 }
 
-export function recoverConfig(message: Arrayish, signature: string): ArcadeumWalletConfig {
-  const decoded = decodeSignature(signature)
-  const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+export async function isValidSignature(
+  address: string,
+  digest: Uint8Array,
+  sig: string,
+  provider?: Provider,
+  arcadeumContext?: ArcadeumContext,
+  chainId?: number
+) {
+  if (
+    isValidEIP721Signature(address, digest, sig) ||
+    isValidEthSignSignature(address, digest, sig)
+  ) return true
 
+  const wallets = await Promise.all([
+    isValidWalletSignature(address, digest, sig, provider),
+    isValidArcadeumDeployedWalletSignature(address, digest, sig, provider, chainId)
+  ])
+
+  // If validity of wallet signature can't be determined
+  // it could be a signature of a non-deployed arcadeum wallet
+  if (wallets[0] === undefined && wallets[1] === undefined) {
+    return isValidArcadeumUndeployedWalletSignature(address, digest, sig, arcadeumContext, provider, chainId)
+  }
+
+  return wallets[0] || wallets[1]
+}
+
+export function isValidEIP721Signature(
+  address: string,
+  digest: Uint8Array,
+  sig: string
+): boolean {
+  try {
+    return compareAddr(
+      ethers.utils.recoverAddress(
+        digest,
+        ethers.utils.splitSignature(sig)
+      ),
+      address
+    ) === 0
+  } catch {
+    return false
+  }
+}
+
+export function isValidEthSignSignature(
+  address: string,
+  digest: Uint8Array,
+  sig: string
+): boolean {
+  try {
+    const subDigest = ethers.utils.keccak256(
+      ethers.utils.solidityPack(
+        ['string', 'bytes32'],
+        ['\x19Ethereum Signed Message:\n32', digest]
+      )
+    )
+    return compareAddr(
+      ethers.utils.recoverAddress(
+        subDigest,
+        ethers.utils.splitSignature(sig)
+      ),
+      address
+    ) === 0
+  } catch {
+    return false
+  }
+}
+
+export async function isValidWalletSignature(
+  address: string,
+  digest: Uint8Array,
+  sig: string,
+  provider?: Provider
+) {
+  if (!provider) return undefined
+  try {
+    if ((await provider.getCode(address)) === '0x') {
+      // Signature validity can't be determined
+      return undefined
+    }
+
+    const wallet = new ethers.Contract(address, erc1271Abi, provider)
+    const response = await wallet.isValidSignature(digest, sig)
+    return erc1271returns.isValidSignatureBytes32 === response
+  } catch {
+    return false
+  }
+}
+
+export async function isValidArcadeumDeployedWalletSignature(
+  address: string,
+  digest: Uint8Array,
+  sig: string,
+  provider?: Provider,
+  chainId?: number
+) {
+  if (!provider) return undefined // Signature validity can't be determined
+  try {
+    const cid = chainId ? chainId : (await provider.getNetwork()).chainId
+    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
+    return isValidWalletSignature(address, subDigest, sig, provider)
+  } catch {
+    return false
+  }
+}
+
+export async function isValidArcadeumUndeployedWalletSignature(
+  address: string,
+  digest: Uint8Array,
+  sig: string,
+  arcadeumContext?: ArcadeumContext,
+  provider?: Provider,
+  chainId?: number
+) {
+  if (!provider && !chainId) return undefined // Signature validity can't be determined
+  if (!arcadeumContext) return undefined // Signature validity can't be determined
+
+  try{
+    const cid = chainId ? chainId : (await provider.getNetwork()).chainId
+    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
+    const config = recoverConfigFromDigest(subDigest, sig)
+    return compareAddr(addressOf(config, arcadeumContext), address) === 0
+  } catch {
+    return false
+  }
+}
+
+export function recoverConfig(message: Arrayish, signature: string): ArcadeumWalletConfig {
+  const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+  return recoverConfigFromDigest(digest, signature)
+}
+
+export function recoverConfigFromDigest(digest: Arrayish, signature: string): ArcadeumWalletConfig {
+  const decoded = decodeSignature(signature)
   const signers = decoded.signers.map(s => {
     if ((<ArcadeumDecodedSigner>s).r) {
       return {
