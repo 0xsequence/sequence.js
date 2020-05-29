@@ -49,12 +49,13 @@ describe('Arcadeum wallet integration', function () {
     ganache.signer = ganache.provider.getSigner()
 
     // Deploy Arcadeum env
-    const [factory, mainModule] = await deployArcadeum(ganache.provider)
+    const [factory, mainModule, mainModuleUpgradable] = await deployArcadeum(ganache.provider)
 
     // Create fixed context obj
     context = {
       factory: factory.address,
-      mainModule: mainModule.address
+      mainModule: mainModule.address,
+      mainModuleUpgradable: mainModuleUpgradable.address
     }
 
     // Deploy call receiver mock

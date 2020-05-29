@@ -100,7 +100,8 @@ export interface ArcadeumWalletConfig {
 
 export interface ArcadeumContext {
   factory: string
-  mainModule: string
+  mainModule: string,
+  mainModuleUpgradable: string
 }
 
 export interface ArcadeumDecodedSignature {

@@ -8,7 +8,8 @@ import { encodeMessageData, recoverConfig } from '../src/utils';
 describe('Arcadeum wallet units', function() {
   const context = {
     factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-    mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
+    mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
+    mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
   }
 
   describe('wallet creation', () => {
@@ -41,7 +42,8 @@ describe('Arcadeum wallet units', function() {
         }],
         context: {
           factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
+          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
+          mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
         }
       }
 

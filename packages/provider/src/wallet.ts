@@ -4,19 +4,20 @@ import {
   addressOf,
   sortConfig,
   hashMetaTransactionsData,
-  toArcadeumTransaction,
   encodeMessageData,
   isAsyncSendable,
   isArcadeumTransaction,
   readArcadeumNonce,
   appendNonce,
   hasArcadeumTransactions,
-  toArcadeumTransactions
+  toArcadeumTransactions,
+  compareAddr,
+  LIMIT_UINT_248,
+  imageHash
 } from './utils'
-import { BigNumberish, Arrayish } from 'ethers/utils'
+import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
 import {
-  TransactionRequest,
   TransactionResponse,
   BlockTag,
   Provider,
@@ -26,6 +27,7 @@ import {
 } from 'ethers/providers'
 import { Relayer } from './relayer/relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
+import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { JsonRpcAsyncSendable } from './providers/async-provider'
 import { ConnectionInfo } from 'ethers/utils/web'
 
@@ -83,6 +85,49 @@ export class Wallet extends AbstractSigner {
 
   connect(provider: AsyncSendable | ConnectionInfo | string, relayer: Relayer): Wallet {
     return new Wallet(this.config, this.context, ...this._signers).setProvider(provider).setRelayer(relayer)
+  }
+
+  async buildUpdateConfig(config: ArcadeumWalletConfig): Promise<ArcadeumTransaction[]> {
+    const implementation = await this.provider.getStorageAt(this.address, this.address)
+    const isUpgradable = compareAddr(implementation, this.context.mainModuleUpgradable) === 0
+
+    const walletInterface = new Interface(mainModuleAbi)
+
+    const preTransaction = isUpgradable ? [] : [{
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: LIMIT_UINT_248,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: walletInterface.functions.updateImplementation.encode(
+        [this.context.mainModuleUpgradable]
+      )
+    }]
+    
+    const transactions = [...preTransaction, {
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: LIMIT_UINT_248,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
+        [imageHash(config)]
+      )
+    }]
+
+    return [{
+      delegateCall: false,
+      revertOnError: false,
+      gasLimit: LIMIT_UINT_248,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: walletInterface.functions.selfExecute.encode(transactions)
+    }]
+  }
+
+  async updateConfig(config: ArcadeumWalletConfig, nonce?: number): Promise<TransactionResponse> {
+    const txs = await this.buildUpdateConfig(config)
+    return this.sendTransaction(appendNonce(txs, nonce ? nonce : await this.getNonce()))
   }
 
   async getNonce(blockTag?: BlockTag): Promise<number> {
