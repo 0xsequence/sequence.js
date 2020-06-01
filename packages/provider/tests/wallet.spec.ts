@@ -732,7 +732,39 @@ describe('Arcadeum wallet integration', function () {
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
       })
       describe('After updating the owners', () => {
-        // TODO: Test signature should be invalidated if owners change
+        let wallet2: arcadeum.Wallet
+
+        beforeEach(async () => {
+          const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+          const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+          const newConfig = {
+            threshold: 2,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: s2.address,
+                weight: 1
+              }
+            ]
+          }
+
+          const [config, tx] = await wallet.updateConfig(newConfig)
+          await tx.wait()
+
+          wallet2 = new arcadeum.Wallet(config, context, s1, s2).connect(ganache.serverUri, relayer)
+        })
+        it('Should reject previus wallet configuration signature', async () => {
+          const signature = await wallet.signMessage(message, 1)
+          expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
+        })
+        it('Should validate new wallet configuration signature', async () => {
+          const signature = await wallet2.signMessage(message, 1)
+          expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.true
+        })
       })
     })
     describe('non-deployed arcadeum wallet sign', async () => {
@@ -748,9 +780,6 @@ describe('Arcadeum wallet integration', function () {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
         const signature = await wallet2.signMessage(message, 1)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
-      })
-      describe('After updating the owners', () => {
-        // TODO: Test signature should be invalidated if owners change
       })
     })
     describe('deployed wallet sign', () => {
