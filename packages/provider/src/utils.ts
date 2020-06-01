@@ -34,6 +34,8 @@ export function sortConfig(config: ArcadeumWalletConfig): ArcadeumWalletConfig {
   return config
 }
 
+// isUsableConfig checks if a the sum of the owners in the configuration meets the necessary threshold to sign a transaction
+// a wallet that has a non-usable configuration is not able to perform any transactions, and can be considered as destroyed
 export function isUsableConfig(config: ArcadeumWalletConfig): boolean {
   const sum = config.signers.reduce((p, c) => ethers.utils.bigNumberify(c.weight).add(p), ethers.constants.Zero)
   return sum.gte(ethers.utils.bigNumberify(config.threshold))
