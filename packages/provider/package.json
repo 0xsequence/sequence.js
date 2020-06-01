@@ -7,7 +7,7 @@
   "author": "Agustin Aguilar",
   "license": "MIT",
   "scripts": {
-    "build": "rm -rf ./dist && rollup -c",
+    "build": "rimraf ./dist && rollup -c",
     "prepublishOnly": "yarn test && yarn lint",
     "test": "TS_NODE_PROJECT=tsconfig.test.json mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" yarn run test",
@@ -33,6 +33,7 @@
     "ganache-cli": "^6.9.1",
     "mocha": "^7.2.0",
     "nyc": "^15.0.1",
+    "rimraf": "^3.0.2",
     "ts-node": "^8.8.2",
     "tslint": "^6.1.2",
     "web3": "^1.2.8",

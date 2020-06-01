@@ -10,7 +10,7 @@
     "test": "jest --ci --runInBand",
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
-    "build": "rm -rf ./dist && rollup -c",
+    "build": "rimraf ./dist && rollup -c",
     "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
     "lint:fixtslint": "tslint --project ./tsconfig.json --fix",
     "lint:fixprettier": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
@@ -38,6 +38,7 @@
     "@types/node": "^14.0.5",
     "jest": "^26.0.1",
     "prettier": "^2.0.1",
+    "rimraf": "^3.0.2",
     "ts-jest": "^26.0.0",
     "tslint": "^6.1.0",
     "tslint-config-prettier": "^1.18.0"
