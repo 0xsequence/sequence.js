@@ -15,8 +15,8 @@ import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature } from '../src/utils'
 
-const CallReceiverMockArtifact = require('arcadeum-wallet/build/contracts/CallReceiverMock.json')
-const HookCallerMockArtifact = require('arcadeum-wallet/build/contracts/HookCallerMock.json')
+const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
+const HookCallerMockArtifact = require('arcadeum-wallet/artifacts/HookCallerMock.json')
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)

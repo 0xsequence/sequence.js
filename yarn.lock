@@ -1844,8 +1844,9 @@ aproba@^2.0.0:
   resolved "https://registry.yarnpkg.com/aproba/-/aproba-2.0.0.tgz#52520b8ae5b569215b354efc0caa3fe1e45a8adc"
   integrity sha512-lYe4Gx7QT+MKGbDsA+Z+he/Wtef0BiwDOlK/XkBrdfsh9J/jPPXbX0tE9x9cl27Tmu5gg3QUbUrQYa/y+KOHPQ==
 
-arcadeum-wallet@../wallet-contracts:
+"arcadeum-wallet@https://github.com/arcadeum/wallet-contracts.git":
   version "0.1.0"
+  resolved "https://github.com/arcadeum/wallet-contracts.git#6e3d04bad361631301be704b3def6d8c378e3500"
 
 archy@^1.0.0:
   version "1.0.0"
