@@ -4,8 +4,8 @@ import { ethers } from 'ethers'
 import { MainModule } from 'arcadeum-wallet/typings/contracts/MainModule'
 import { Factory } from 'arcadeum-wallet/typings/contracts/Factory'
 
-const FactoryArtifact = require('arcadeum-wallet/build/contracts/Factory.json')
-const MainModuleArtifact = require('arcadeum-wallet/build/contracts/MainModule.json')
+const FactoryArtifact = require('arcadeum-wallet/artifacts/Factory.json')
+const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 
 ethers.errors.setLogLevel('error')
 
