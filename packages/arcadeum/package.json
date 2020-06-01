@@ -11,7 +11,7 @@
   "scripts": {
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
-    "build": "rm -rf ./lib && rollup -c",
+    "build": "rimraf ./lib && rollup -c",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
     "lint:fixtslint": "tslint --project ./tsconfig.json --fix"
@@ -29,5 +29,8 @@
   "dependencies": {
     "@arcadeum/encoder": "^0.1.0",
     "@arcadeum/provider": "^0.1.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2"
   }
 }
