@@ -4,19 +4,21 @@ import {
   addressOf,
   sortConfig,
   hashMetaTransactionsData,
-  toArcadeumTransaction,
   encodeMessageData,
   isAsyncSendable,
   isArcadeumTransaction,
   readArcadeumNonce,
   appendNonce,
   hasArcadeumTransactions,
-  toArcadeumTransactions
+  toArcadeumTransactions,
+  compareAddr,
+  imageHash,
+  arcadeumTxAbiEncode,
+  isUsableConfig
 } from './utils'
-import { BigNumberish, Arrayish } from 'ethers/utils'
+import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
 import {
-  TransactionRequest,
   TransactionResponse,
   BlockTag,
   Provider,
@@ -26,6 +28,7 @@ import {
 } from 'ethers/providers'
 import { Relayer } from './relayer/relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
+import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { JsonRpcAsyncSendable } from './providers/async-provider'
 import { ConnectionInfo } from 'ethers/utils/web'
 
@@ -42,6 +45,8 @@ export class Wallet extends AbstractSigner {
 
   constructor(config: ArcadeumWalletConfig, context: ArcadeumContext, ...signers: (Arrayish | AbstractSigner)[]) {
     super()
+
+    if (!context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable configuration in strict mode')
 
     this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
     this.config = sortConfig(config)
@@ -83,6 +88,67 @@ export class Wallet extends AbstractSigner {
 
   connect(provider: AsyncSendable | ConnectionInfo | string, relayer: Relayer): Wallet {
     return new Wallet(this.config, this.context, ...this._signers).setProvider(provider).setRelayer(relayer)
+  }
+
+  async buildUpdateConfig(
+    config: ArcadeumWalletConfig
+  ): Promise<ArcadeumTransaction[]> {
+    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
+
+    const implementation = await this.provider.getStorageAt(this.address, this.address)
+    const isUpgradable = compareAddr(implementation, this.context.mainModuleUpgradable) === 0
+
+    const walletInterface = new Interface(mainModuleAbi)
+
+    // 131072 gas, enough for all calls
+    // and a power of two to keep the gas cost of data low
+    const gasLimit = ethers.constants.Two.pow(17)
+
+    const preTransaction = isUpgradable ? [] : [{
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: gasLimit,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: walletInterface.functions.updateImplementation.encode(
+        [this.context.mainModuleUpgradable]
+      )
+    }]
+
+    const transactions = [...preTransaction, {
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: gasLimit,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
+        [imageHash(sortConfig(config))]
+      )
+    }]
+
+    return [{
+      delegateCall: false,
+      revertOnError: false,
+      gasLimit: gasLimit,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: walletInterface.functions.selfExecute.encode([arcadeumTxAbiEncode(transactions)])
+    }]
+  }
+
+  async updateConfig(
+    config: ArcadeumWalletConfig,
+    nonce?: number
+  ): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
+    const [txs, n] = await Promise.all([
+      this.buildUpdateConfig(config),
+      nonce ? nonce : await this.getNonce()]
+    )
+
+    return [
+      { address: this.address, ...config},
+      await this.sendTransaction(appendNonce(txs, n))
+    ]
   }
 
   async getNonce(blockTag?: BlockTag): Promise<number> {

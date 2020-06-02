@@ -91,6 +91,7 @@ export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => 
 export type NextCallback = (callback?: OnNextCompleted) => void
 
 export interface ArcadeumWalletConfig {
+  address?: string,
   threshold: number
   signers: {
     weight: number
@@ -100,7 +101,9 @@ export interface ArcadeumWalletConfig {
 
 export interface ArcadeumContext {
   factory: string
-  mainModule: string
+  mainModule: string,
+  mainModuleUpgradable: string,
+  nonStrict?: boolean
 }
 
 export interface ArcadeumDecodedSignature {

@@ -8,7 +8,8 @@ import { encodeMessageData, recoverConfig } from '../src/utils';
 describe('Arcadeum wallet units', function() {
   const context = {
     factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-    mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
+    mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
+    mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
   }
 
   describe('wallet creation', () => {
@@ -27,6 +28,40 @@ describe('Arcadeum wallet units', function() {
       const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
       expect(wallet.address).to.be.equal(expected)
     })
+    it('Should reject non-usable config', () => {
+      const config = {
+        threshold: 4,
+        signers: [
+          {
+            address: '0x173C645E3a784612bC3132cA8ae47AFE4Ef405c4',
+            weight: 1
+          },
+          {
+            address: '0xEc5526D3C399f9810a70D44c90a680Dce93b7bEc',
+            weight: 1
+          }
+        ]
+      }
+
+      expect(() => new arcadeum.Wallet(config, context)).to.throw(Error)
+    })
+    it('Should accept non-usable config on non-strict mode', () => {
+      const config = {
+        threshold: 4,
+        signers: [
+          {
+            address: '0x173C645E3a784612bC3132cA8ae47AFE4Ef405c4',
+            weight: 1
+          },
+          {
+            address: '0xEc5526D3C399f9810a70D44c90a680Dce93b7bEc',
+            weight: 1
+          }
+        ]
+      }
+
+      expect(() => new arcadeum.Wallet(config, { nonStrict: true, ...context })).to.not.throw(Error)
+    })
   })
   describe('signing', () => {
     it('Should sign a message', async () => {
@@ -41,7 +76,8 @@ describe('Arcadeum wallet units', function() {
         }],
         context: {
           factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf'
+          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
+          mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
         }
       }
 
