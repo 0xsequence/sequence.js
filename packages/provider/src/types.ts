@@ -103,6 +103,7 @@ export interface ArcadeumContext {
   factory: string
   mainModule: string,
   mainModuleUpgradable: string,
+  guestModule?: string,
   nonStrict?: boolean
 }
 

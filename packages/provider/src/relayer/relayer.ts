@@ -1,4 +1,3 @@
-import { BigNumberish } from 'ethers/utils'
 import { ArcadeumTransaction, ArcadeumContext, ArcadeumWalletConfig } from '../types'
 import { TransactionResponse } from 'ethers/providers'
 
