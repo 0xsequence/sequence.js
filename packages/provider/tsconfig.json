@@ -4,6 +4,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "declaration": true,
+    "allowSyntheticDefaultImports": true,
     "outDir": "./dist"
   },
   "include": [
