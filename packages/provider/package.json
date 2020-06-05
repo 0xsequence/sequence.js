@@ -38,5 +38,8 @@
     "tslint": "^6.1.2",
     "web3": "^1.2.8",
     "web3-typescript-typings": "^0.10.2"
+  },
+  "dependencies": {
+    "eventemitter3": "^4.0.4"
   }
 }
