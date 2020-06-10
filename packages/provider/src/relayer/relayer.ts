@@ -1,8 +1,16 @@
 import { ArcadeumTransaction, ArcadeumContext, ArcadeumWalletConfig } from '../types'
-import { TransactionResponse } from 'ethers/providers'
+import { TransactionResponse, BlockTag } from 'ethers/providers'
 
 export declare abstract class Relayer {
   constructor()
+
+  abstract getNonce(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    space?: number,
+    blockTag?: BlockTag
+  ): Promise<number>
+
   abstract relay(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,

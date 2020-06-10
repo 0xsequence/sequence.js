@@ -10,7 +10,7 @@ import { ethers } from "ethers"
 
 export class BaseRelayer {
   private readonly bundleCreation: boolean
-  private readonly provider: Provider
+  readonly provider: Provider
 
   constructor(bundleCreation: boolean, provider?: Provider) {
     this.bundleCreation = bundleCreation

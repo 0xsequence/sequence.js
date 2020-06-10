@@ -1,5 +1,5 @@
 import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from '../types'
-import { TransactionResponse, Provider } from 'ethers/providers'
+import { TransactionResponse, Provider, BlockTag } from 'ethers/providers'
 
 import { ChaindService } from './gen/chaind.gen'
 import { BaseRelayer } from './base-relayer'
@@ -58,6 +58,17 @@ export class RpcRelayer extends BaseRelayer {
     return result
   }
 
+  async getNonce(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    space?: number,
+    blockTag?: BlockTag
+  ): Promise<number> {
+    const addr = addressOf(config, context)
+    const resp = await this.chaindApp.getMetaTxnNonce({ walletContractAddress: addr })
+    return ethers.utils.bigNumberify(resp.nonce).toNumber()
+  }
+
   async relay(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
@@ -81,7 +92,7 @@ export class RpcRelayer extends BaseRelayer {
       confirmations: 1,
       from: addressOf(config, context),
       raw: receipt.txnReceipt,
-      wait: async () => Error('Not implemented') as unknown // TODO Implement
+      wait: async () => this.provider.waitForTransaction(txReceipt.transactionHash)
     } as TransactionResponse)
   }
 }

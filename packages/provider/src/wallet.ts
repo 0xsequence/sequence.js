@@ -152,13 +152,7 @@ export class Wallet extends AbstractSigner {
   }
 
   async getNonce(blockTag?: BlockTag): Promise<number> {
-    if ((await this.provider.getCode(this.address)) === '0x') {
-      return 0
-    }
-
-    const module = new ethers.ContractFactory(mainModuleAbi, [], this).attach(this.address)
-
-    return (await module.nonce({ blockTag: blockTag })).toNumber()
+    return this.relayer.getNonce(this.config, this.context, 0, blockTag)
   }
 
   async getTransactionCount(blockTag?: BlockTag): Promise<number> {
