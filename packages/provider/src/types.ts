@@ -148,3 +148,10 @@ export type AuxTransactionRequest = TransactionRequest & {
 }
 
 export declare type Transactionish = AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[]
+
+export interface NetworkConfig {
+  name: string
+  chainId: number
+  rpcUrl: string
+  ensAddress?: string
+}

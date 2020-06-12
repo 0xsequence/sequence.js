@@ -1,7 +1,7 @@
 import { JsonRpcProvider, AsyncSendable } from 'ethers/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '../types'
 
-export class JsonRpcAsyncSendable implements AsyncSendable {
+export class JsonRpcAsyncSender implements AsyncSendable {
   provider: JsonRpcProvider
 
   constructor(p: JsonRpcProvider) {

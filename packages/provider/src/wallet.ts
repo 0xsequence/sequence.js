@@ -29,7 +29,7 @@ import {
 import { Relayer } from './relayer/relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
-import { JsonRpcAsyncSendable } from './providers/async-provider'
+import { JsonRpcAsyncSender } from './providers/async-sender'
 import { ConnectionInfo } from 'ethers/utils/web'
 
 export class Wallet extends AbstractSigner {
@@ -39,7 +39,7 @@ export class Wallet extends AbstractSigner {
   readonly config: ArcadeumWalletConfig
 
   w3provider: AsyncSendable
-  provider: Provider
+  provider: JsonRpcProvider
 
   relayer: Relayer
 
@@ -76,7 +76,7 @@ export class Wallet extends AbstractSigner {
     } else {
       const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider)
       this.provider = jsonProvider
-      this.w3provider = new JsonRpcAsyncSendable(jsonProvider)
+      this.w3provider = new JsonRpcAsyncSender(jsonProvider)
     }
     return this
   }

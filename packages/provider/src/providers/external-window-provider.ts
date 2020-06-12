@@ -1,25 +1,24 @@
-import { AsyncSendable, JsonRpcProvider } from 'ethers/providers'
-import { JsonRpcRequest, JsonRpcResponseCallback } from '../types'
-import { EventEmitter } from 'eventemitter3'
+import { AsyncSendable } from 'ethers/providers'
+import { JsonRpcRequest, JsonRpcResponseCallback, NetworkConfig } from '../types'
+import EventEmitter from 'eventemitter3'
+import { WalletSession } from './wallet-provider'
 
-let eventIdx = 0
+let requestIdx = 0
 
 export class ExternalWindowProvider implements AsyncSendable {
-
-  // TODO: include .host, .path, etc.. for AsyncSendable
 
   private walletURL: URL
   private walletWindow: Window
   private walletOpened: boolean
 
-  private pendingSendQueue: PendingSendRequest[] = []
-  private callbacks = new Map<number, SendCallbackData>()
+  private pendingMessageQueue: PendingMessageRequest[] = []
+  private callbacks = new Map<number, MessageCallbackData>()
 
   private connected = false
-  private loggedIn: boolean = false
   private confirmationOnly: boolean = false
-
-  private events = new EventEmitter()
+  private loginPayload?: string
+  private networkPayload?: NetworkConfig
+  private events: EventEmitter<EventType, any> = new EventEmitter()
 
   constructor(walletAppURL: string) {
     this.walletURL = new URL(walletAppURL)
@@ -40,8 +39,14 @@ export class ExternalWindowProvider implements AsyncSendable {
 
     // Open popup window
     const windowFeatures = 'toolbar=0,location=0,menubar=0,scrollbars=yes,status=yes,width=450,height=700'
-
     const popup = window.open(this.walletURL.href, '_blank', windowFeatures)
+
+    setTimeout(() => {
+      if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+        // popup is definitely blocked if we reach here.
+        throw new Error('popup is blocked')
+      }
+    }, 1000)
 
     const popupBlocked = popup === null || popup === undefined
     if (popupBlocked) {
@@ -54,9 +59,9 @@ export class ExternalWindowProvider implements AsyncSendable {
 
     // Send connection request and wait for confirmation
     if (!this.connected) {
-      const initRequest: SendRequest = {
-        type: EventType.CONNECT_REQUEST,
-        id: ++eventIdx
+      const initRequest: MessageRequest = {
+        type: MessageType.CONNECT_REQUEST,
+        id: ++requestIdx
       }
 
       const postMessageUntilConnected = () => {
@@ -76,6 +81,7 @@ export class ExternalWindowProvider implements AsyncSendable {
         clearInterval(interval)
         this.walletOpened = false
         this.connected = false
+        this.loginPayload = undefined // TODO: ok?
         this.events.emit('disconnected')
       }
     }, 1000)
@@ -84,21 +90,29 @@ export class ExternalWindowProvider implements AsyncSendable {
   closeWallet = () => {
     if (this.walletWindow) {
       this.walletWindow.close()
+      this.walletWindow = null
     }
   }
 
+  isConnected(): boolean {
+    return this.connected
+  }
+
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+    if (!this.walletOpened) {
+      await this.openWallet()
+    }
     if (!this.walletOpened) {
       throw new Error('wallet is not opened.')
     }
 
     // Handle request via external provider
-    this.sendRequest(EventType.SEND_REQUEST, request, callback)
+    this.sendRequest(MessageType.SEND_REQUEST, request, callback)
   }
 
-  private sendRequest(type: EventType, payload: SendPayload, callback?: JsonRpcResponseCallback) {
+  private sendRequest(type: MessageType, payload: MessagePayload, callback?: JsonRpcResponseCallback) {
     if (!this.connected) {
-      this.pendingSendQueue.push({
+      this.pendingMessageQueue.push({
         type,
         payload,
         callback
@@ -106,9 +120,9 @@ export class ExternalWindowProvider implements AsyncSendable {
       return
     }
 
-    const sendRequest: SendRequest = {
+    const sendRequest: MessageRequest = {
       type,
-      id: ++eventIdx,
+      id: ++requestIdx,
       payload: payload
     }
 
@@ -129,10 +143,10 @@ export class ExternalWindowProvider implements AsyncSendable {
       return
     }
   
-    // console.log('RECEIVED MSG:', event)
+    console.log('RECEIVED MSG:', event)
 
     // Handle response payload
-    const response: SendResponse = JSON.parse(event.data)
+    const response: MessageResponse = JSON.parse(event.data)
     const requestId = response.id
     const result = response.payload
     const callbackData = this.callbacks.get(requestId)
@@ -144,29 +158,30 @@ export class ExternalWindowProvider implements AsyncSendable {
     // CONNECT_RESPONSE
     //
     // Flip connected flag, and flush the pending queue 
-    if (response.type === EventType.CONNECT_RESPONSE && !this.connected) {
+    if (response.type === MessageType.CONNECT_RESPONSE && !this.connected) {
       this.connected = true
 
-      if (this.pendingSendQueue.length !== 0) {
-        const pendingSendRequests = this.pendingSendQueue.splice(0, this.pendingSendQueue.length)
+      if (this.pendingMessageQueue.length !== 0) {
+        const pendingMessageRequests = this.pendingMessageQueue.splice(0, this.pendingMessageQueue.length)
 
-        pendingSendRequests.forEach(pendingSendRequest => {
-          const { type, payload, callback } = pendingSendRequest
+        pendingMessageRequests.forEach(pendingMessageRequest => {
+          const { type, payload, callback } = pendingMessageRequest
           this.sendRequest(type, payload, callback)
         })
       }
 
       this.events.emit('connected')
+      return
     }
 
 
     // SEND_RESPONSE
-    if (response.type === EventType.SEND_RESPONSE) {
+    if (response.type === MessageType.SEND_RESPONSE) {
 
       // Require user confirmation, bring up wallet to prompt for input then close
       if (this.confirmationOnly) {
         if (this.callbacks.size === 0) {
-          // TODO: close at appropriate time..
+          // TODO: close at appropriate time......
           // this.closeWallet()
         }
       }
@@ -199,12 +214,25 @@ export class ExternalWindowProvider implements AsyncSendable {
       }
     }
 
-    // NOTIFY
-    if (response.type === EventType.NOTIFY) {
-      if (response.payload.loggedIn) {
-        this.loggedIn = true
-        this.events.emit('loggedIn')
-      }
+    // NOTIFY LOGIN -- when a user authenticates / logs in
+    if (response.type === MessageType.NOTIFY_LOGIN) {
+      this.loginPayload = response.payload
+      this.events.emit('login', this.loginPayload)
+      return
+    }
+
+    // NOTIFY LOGOUT -- when a user logs out
+    if (response.type === MessageType.NOTIFY_LOGOUT) {
+      this.loginPayload = undefined
+      this.events.emit('logout')
+      return
+    }
+
+    // NOTIFY NETWORK -- when a user sets or changes their ethereum network
+    if (response.type === MessageType.NOTIFY_NETWORK) {
+      this.networkPayload = response.payload
+      this.events.emit('network', this.networkPayload)
+      return
     }
   }
 
@@ -213,80 +241,95 @@ export class ExternalWindowProvider implements AsyncSendable {
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)
   }
 
+  on = (event: EventType, fn: (...args: any[]) => void) => {
+    this.events.on(event, fn)
+  }
+
+  once = (event: EventType, fn: (...args: any[]) => void) => {
+    this.events.once(event, fn)
+  }
+
   waitUntilConnected = (): Promise<boolean> => {
     // TODO: handle popup blockers, perhaps emit connected:false, or call reject()
-
     return new Promise((resolve) => {
       if (this.isConnected()) {
         resolve(true)
         return
       }
-
       this.events.once('connected', () => {
         resolve(true)
-        return
       })
     })
   }
 
-  waitUntilLoggedIn = async (): Promise<boolean> => {
+  waitUntilLoggedIn = async (): Promise<WalletSession> => {
     await this.waitUntilConnected()
 
-    return new Promise(resolve => {
-      if (this.loggedIn) {
-        resolve(true)
-        return
-      }
-
-      this.events.once('loggedIn', () => {
-        resolve(true)
-        return
+    return Promise.all([
+      new Promise<string>(resolve => {
+        if (this.loginPayload) {
+          resolve(this.loginPayload)
+          return
+        }
+        this.events.once('login', (payload) => {
+          resolve(payload)
+        })
+      }),
+      new Promise<NetworkConfig>(resolve => {
+        if (this.networkPayload) {
+          resolve(this.networkPayload)
+          return
+        }
+        this.events.once('network', (payload) => {
+          resolve(payload)
+        })
       })
+    ]).then(values => {
+      const [ accountAddress, network ] = values
+      return { accountAddress, network }
     })
-  }
-
-  isConnected(): boolean {
-    return this.connected
   }
 }
 
-export enum EventType {
+type EventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
+
+export enum MessageType {
   CONNECT_RESPONSE = 'CONNECT_RESPONSE',
   CONNECT_REQUEST = 'CONNECT_REQUEST',
 
   SEND_REQUEST = 'SEND_REQUEST',
   SEND_RESPONSE = 'SEND_RESPONSE',
 
-  NOTIFY = 'NOTIFY',
+  NOTIFY_LOGIN = 'NOTIFY_LOGIN',
+  NOTIFY_LOGOUT = 'NOTIFY_LOGOUT',
+  NOTIFY_NETWORK = 'NOTIFY_NETWORK',
 
   DEBUG_LOG = 'DEBUG_LOG'
 }
 
-export type SendRequest = {
-  type: EventType
+export type MessageRequest = {
+  type: MessageType
   id: number
-  payload?: {
-    [key: string]: any
-  }
+  payload?: {[key: string]: any}
 }
 
-export type SendResponse = {
-  type: EventType
+export type MessageResponse = {
+  type: MessageType
   id: number
-  payload: { [key: string]: any }
+  payload: any
 }
 
-export type SendPayload = any
+export type MessagePayload = any
 
-export type SendCallback = (error: any, response?: any) => void
+export type MessageCallback = (error: any, response?: any) => void
 
-export type SendCallbackData = {
+export type MessageCallbackData = {
   id: number
-  callback: SendCallback
+  callback: MessageCallback
 }
 
-export type PendingSendRequest = {
-  type: EventType
-  payload: SendPayload
-  callback?: SendCallback
+export type PendingMessageRequest = {
+  type: MessageType
+  payload: MessagePayload
+  callback?: MessageCallback
 }

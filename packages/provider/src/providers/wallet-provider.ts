@@ -1,10 +1,8 @@
-import { ethers } from 'ethers'
-import { JsonRpcProvider, JsonRpcSigner, AsyncSendable } from 'ethers/providers'
-import { Network } from 'ethers/utils'
-import { ArcadeumWalletConfig, ArcadeumContext } from '../types'
+import { JsonRpcProvider, JsonRpcSigner, AsyncSendable, Web3Provider } from 'ethers/providers'
+import { ArcadeumWalletConfig, ArcadeumContext, NetworkConfig } from '../types'
 import { ExternalWindowProvider } from './external-window-provider'
-import { ProviderProxy, loggingProviderMiddleware, publicProviderMiddleware, ProviderCache } from './provider-proxy'
-
+import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider } from './provider-engine'
+import { WalletContext } from '../context'
 
 export interface IWalletProvider {
   login(): Promise<boolean>
@@ -12,14 +10,13 @@ export interface IWalletProvider {
   
   isConnected(): boolean
   isLoggedIn(): boolean
-  getSession(): Promise<WalletSession | null>
+  getSession(): WalletSession | undefined
   getAccountAddress(): Promise<string>
-
-  getNetwork(): Network
-  getChainId(): number
-  setNetwork(networkName?: string): Promise<Network>
+  getNetwork(): Promise<string>
+  getChainId(): Promise<number>
 
   openWallet(path?: string): Promise<boolean>
+  closeWallet(): void
 
   getProvider(): JsonRpcProvider
   getSigner(): JsonRpcSigner
@@ -34,20 +31,19 @@ export class WalletProvider implements IWalletProvider {
   private config: WalletProviderConfig
   private walletConfig: ArcadeumWalletConfig
 
-  private provider: JsonRpcProvider
   private session: WalletSession | null
 
+  private provider: JsonRpcProvider
+  private providerEngine?: ProviderEngine
+  private cachedProvider?: CachedProvider
+  private publicProvider?: PublicProvider
   private externalWindowProvider?: ExternalWindowProvider
 
-  private providerProxy?: ProviderProxy
-  private providerCache?: ProviderCache
-
-  constructor(networkName: string, config?: WalletProviderConfig) {
+  constructor(config?: WalletProviderConfig) {
     this.config = config
     if (!this.config) {
       this.config = { ...DefaultWalletProviderConfig }
     }
-    this.config.networkName = networkName
     this.init()
   }
 
@@ -57,21 +53,43 @@ export class WalletProvider implements IWalletProvider {
     // Setup provider
     switch (config.type) {
       case 'ExternalWindow': {
-        // TODO: pass a networkURL to the EWP? which we can get from a session.. and it would update, and we could fetch it too..
-        this.externalWindowProvider = new ExternalWindowProvider(this.config.externalWindowProvider.walletAppURL)
+
+        // .....
+        const allowProvider = allowProviderMiddleware((): boolean => {
+          const isLoggedIn = this.isLoggedIn()
+          if (!isLoggedIn) {
+            throw new Error('not logged in')
+          }
+          return isLoggedIn
+        })
 
         // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
-        this.providerCache = new ProviderCache()
+        this.cachedProvider = new CachedProvider()
 
-        this.providerProxy = new ProviderProxy(this.externalWindowProvider, [
+        // ..
+        this.publicProvider = new PublicProvider()
+
+        // ..
+        this.externalWindowProvider = new ExternalWindowProvider(this.config.externalWindowProvider.walletAppURL)
+
+        this.providerEngine = new ProviderEngine(this.externalWindowProvider, [
           loggingProviderMiddleware,
-          this.providerCache,
-
-          // TODO: specify our own jsonrpc provider url.... with our own network list, in the config..
-          publicProviderMiddleware(new JsonRpcProvider('https://rinkeby.infura.io/v3/da65ffd4d3c046b3bf08a30cbe521b2e'))
+          allowProvider,
+          this.cachedProvider,
+          this.publicProvider
         ])
 
-        this.provider = new ethers.providers.Web3Provider(this.providerProxy, config.networkName)
+        // TODO: use our own Web3Provider with swappable network
+        this.provider = new Web3Provider(this.providerEngine, 1)
+
+        this.externalWindowProvider.on('network', network => {
+          this.useNetwork(network)
+          this.saveSession(this.session)
+        })
+        this.externalWindowProvider.on('logout', () => {
+          this.logout()
+        })
+
         break
       }
       default: {
@@ -82,30 +100,29 @@ export class WalletProvider implements IWalletProvider {
     // Load existing session from localStorage
     const session = this.loadSession()
     if (session) {
-      this.session = session
+      this.useSession(session)
     }
   }
 
   login = async (): Promise<boolean> => {
-    // reset the session before hand
-    this.logout()
+    if (this.isLoggedIn()) {
+      return true
+    }
 
     // authenticate
-    let loggedIn = false
     const config = this.config
 
     switch (config.type) {
       case 'ExternalWindow': {
-        await this.openWallet('/auth')
-        await this.externalWindowProvider.waitUntilLoggedIn()
-        
-        const session = await this.getSession()
-        if (session) {
-          this.saveSession(session)
-          loggedIn = true
-          // TODO: close the window..
-          // this.externalWindowProvider.closeWallet()
-        }
+        await this.openWallet('/')
+        const sessionPayload = await this.externalWindowProvider.waitUntilLoggedIn()
+        this.useSession(sessionPayload)
+        this.saveSession(sessionPayload)
+
+        setTimeout(() => {
+          this.externalWindowProvider.closeWallet()
+        }, 500)
+
         break
       }
 
@@ -118,12 +135,12 @@ export class WalletProvider implements IWalletProvider {
     }
 
 
-    return loggedIn
+    return this.isLoggedIn()
   }
 
   logout(): void {
     this.session = null
-    this.providerCache?.resetCache()
+    this.cachedProvider?.resetCache()
     window.localStorage.removeItem('_arcadeum.session')
   }
 
@@ -136,44 +153,37 @@ export class WalletProvider implements IWalletProvider {
   }
 
   isLoggedIn(): boolean {
-    return this.session !== undefined && this.session !== null
+    return this.session !== undefined && this.session !== null &&
+      this.session.network !== undefined && this.session.network !== null &&
+      this.session.accountAddress.startsWith('0x')
   }
 
-  getSession = async (): Promise<WalletSession | null> => {
-    if (this.session) {
-      return this.session
+  getSession = (): WalletSession | undefined => {
+    if (!this.isLoggedIn()) {
+      throw new Error('login first')
     }
-
-    const session: WalletSession = { accountAddress: '' }
-    session.accountAddress = await this.getSigner().getAddress()
-
-    return session
+    return this.session
   }
 
   getAccountAddress = async (): Promise<string> => {
-    if (this.isLoggedIn()) {
-      throw new Error('login first')
+    const session = this.getSession()
+    return session.accountAddress
+  }
+
+  getNetwork = async (): Promise<string> => {
+    const session = this.getSession()
+    if (!session.network || session.network.name === '') {
+      throw new Error('network has not been set by session. login first.')
     }
+    return session.network.name
+  }
 
-    if (this.session && this.session.accountAddress !== '') {
-      return this.session.accountAddress
+  getChainId = async (): Promise<number> => {
+    const session = this.getSession()
+    if (!session.network || !(session.network.chainId > 0)) {
+      throw new Error('network has not been set by session. login first.')
     }
-
-    this.session.accountAddress = await this.getSigner().getAddress()
-    return this.session.accountAddress
-  }
-
-  // TODO: this info should be based on what has been connected..
-  getNetwork(): Network {
-    return ethers.utils.getNetwork(this.config.networkName)
-  }
-
-  getChainId(): number {
-    return this.getNetwork().chainId
-  }
-
-  setNetwork(networkName?: string): Promise<Network> {
-    return null
+    return session.network.chainId
   }
 
   openWallet = async (path?: string): Promise<boolean> => {
@@ -186,6 +196,12 @@ export class WalletProvider implements IWalletProvider {
       return true
     }
     return false
+  }
+
+  closeWallet = (): void => {
+    if (this.externalWindowProvider) {
+      this.externalWindowProvider.closeWallet()
+    }
   }
 
   getProvider(): JsonRpcProvider {
@@ -208,37 +224,77 @@ export class WalletProvider implements IWalletProvider {
     return this.config
   }
 
-  private saveSession = (updatedSession?: WalletSession) => {
-    if (updatedSession) {
-      this.session = updatedSession
-    }
-    this.session.providerCache = this.providerCache.getCache()
-    const data = JSON.stringify(this.session)
-    window.localStorage.setItem('_arcadeum.session', data)
-  }
-
   private loadSession = (): WalletSession | null => {
     const data = window.localStorage.getItem('_arcadeum.session')
     if (!data || data === '') {
       return null
     }
     const session = JSON.parse(data) as WalletSession
-    this.providerCache.setCache(session.providerCache)
     return session
+  }
+
+  private saveSession = (session: WalletSession) => {
+    const data = JSON.stringify(session)
+    window.localStorage.setItem('_arcadeum.session', data)
+  }
+
+  private useSession = async (session: WalletSession) => {
+    if (!session.accountAddress || session.accountAddress === '') {
+      throw new Error('session error, accountAddress is invalid')
+    }
+
+    // set active session
+    this.session = session
+
+    // setup provider cache
+    if (!session.providerCache) {
+      session.providerCache = {}
+    }
+    this.cachedProvider.setCache(session.providerCache)
+    this.cachedProvider.onUpdate(() => {
+      this.session.providerCache = this.cachedProvider.getCache()
+      this.saveSession(this.session)
+    })
+
+    // set network
+    this.useNetwork(session.network)
+
+    // confirm the session address matches the one with the signer
+    const accountAddress = await this.getSigner().getAddress()
+    if (session.accountAddress.toLowerCase() !== accountAddress.toLowerCase()) {
+      throw new Error('wallet account address does not match the session')
+    }
+  }
+
+  private useNetwork = (network: NetworkConfig) => {
+    if (!this.session) {
+      this.session = {}
+    }
+
+    // TODO: update this.provider, web3 provider to network chainId + rpc
+
+    // ..
+    this.publicProvider.setRpcUrl(network.rpcUrl)
+
+    // refresh our provider cache when the network changes
+    if (this.session.network && this.session.network.chainId !== network.chainId) {
+      this.cachedProvider.resetCache()
+      this.provider.send('eth_accounts', [])
+      this.provider.send('net_version', [])
+    }
+
+    // update network in session
+    this.session.network = network
   }
 }
 
 
 export interface WalletSession {
   // Account address of the wallet
-  accountAddress: string
+  accountAddress?: string
 
   // Network in use for the session
-  network?: {
-    name: string
-    chainId: number
-    url: string
-  }
+  network?: NetworkConfig
 
   // Caching provider responses for things such as account and chainId
   providerCache?: {[key: string]: any}
@@ -246,13 +302,6 @@ export interface WalletSession {
 
 export interface WalletProviderConfig {
   type: WalletProviderType
-
-  // Ethereum network id
-  networkName?: string // ie. mainnet, rinkeby, ..
-  chainId?: number
-
-  // Custom Ethereum JSON-RPC network endpoint
-  networkJsonRpcURL?: string
 
   // Global web3 provider (optional)
   web3Provider?: AsyncSendable
@@ -263,14 +312,14 @@ export interface WalletProviderConfig {
     // default is https://wallet.arcadeum.net/
     walletAppURL?: string
 
-    // timeout?: number
-
     // redirect to the walletAppURL instead of opening up as a popup
     // redirectMode?: boolean
+
+    // ..
+    // timeout?: number
   }
 
-  networks?: object
-
+  // ..
   walletContext: ArcadeumContext
 }
 
@@ -283,11 +332,5 @@ export const DefaultWalletProviderConfig: WalletProviderConfig = {
     walletAppURL: 'http://localhost:3000'
   },
 
-  // TODO: should be in a single file we maintain + import,
-  // but, can be overriden via the config, however, we should import it to set it
-  walletContext: {
-    factory: '0x52f0F4258c69415567b21dfF085C3fd5505D5155',
-    mainModule: '0x621821390a694d4cBfc5892C52145B8D93ACcdEE',
-    mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
-  }
+  walletContext: WalletContext
 }
