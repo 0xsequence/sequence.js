@@ -1,4 +1,4 @@
-import { JsonRpcProvider, JsonRpcSigner, AsyncSendable, Web3Provider } from 'ethers/providers'
+import { JsonRpcProvider, JsonRpcSigner, AsyncSendable } from 'ethers/providers'
 import { ArcadeumWalletConfig, ArcadeumContext, NetworkConfig } from '../types'
 import { ExternalWindowProvider } from './external-window-provider'
 import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider } from './provider-engine'
@@ -79,8 +79,7 @@ export class WalletProvider implements IWalletProvider {
           this.publicProvider
         ])
 
-        // TODO: use our own Web3Provider with swappable network
-        this.provider = new Web3Provider(this.providerEngine, 1)
+        this.provider = this.providerEngine.createJsonRpcProvider()
 
         this.externalWindowProvider.on('network', network => {
           this.useNetwork(network)
