@@ -360,7 +360,7 @@ export async function toArcadeumTransactions(
   wallet: Signer | string,
   txs: (ArcadeumTransaction | AuxTransactionRequest)[],
   revertOnError: boolean = false,
-  gasLimit: BigNumberish = 10000000
+  gasLimit: BigNumberish = ethers.constants.Zero
 ): Promise<ArcadeumTransaction[]> {
   // Bundles all transactions, including the auxiliary ones
   const allTxs = flattenAuxTransactions(txs)
@@ -393,7 +393,7 @@ export async function toArcadeumTransaction(
   wallet: Signer | string,
   tx: TransactionRequest | ArcadeumTransaction,
   revertOnError: boolean = false,
-  gasLimit: BigNumberish = 10000000,
+  gasLimit: BigNumberish = ethers.constants.Zero,
   nonce: BigNumberish = undefined
 ): Promise<ArcadeumTransaction> {
   if (isArcadeumTransaction(tx)) {
