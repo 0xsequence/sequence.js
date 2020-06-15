@@ -289,8 +289,6 @@ export class WalletProvider implements IWalletProvider {
       this.session = {}
     }
 
-    console.log('network changed!!', network)
-
     // TODO: with ethers v5, we can set network to 'any', then set network = null
     // anytime the network changes, and call detectNetwork(). We can reuse
     // that object instance instead of creating a new one as below.
