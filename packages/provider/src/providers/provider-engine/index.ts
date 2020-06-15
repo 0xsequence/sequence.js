@@ -19,6 +19,9 @@ export class ProviderEngine implements AsyncSendable {
   sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback) {
     this.handler(request, callback)
   }
+
+  // createJsonRpcProvider(): JsonRpcProvider {
+  // }
 }
 
 export type JsonRpcHandler = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => void
@@ -47,7 +50,6 @@ export const createJsonRpcMiddlewareStack = (middlewares: Array<JsonRpcMiddlewar
   }
   return chain
 }
-
 
 export { loggingProviderMiddleware } from './logging-provider'
 export { allowProviderMiddleware } from './allow-provider'

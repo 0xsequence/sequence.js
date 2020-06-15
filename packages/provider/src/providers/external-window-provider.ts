@@ -1,7 +1,7 @@
 import { AsyncSendable } from 'ethers/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback, NetworkConfig } from '../types'
 import EventEmitter from 'eventemitter3'
-import { WalletSession } from './wallet-provider'
+import { WalletSession, WalletProviderEventType } from './wallet-provider'
 
 let requestIdx = 0
 
@@ -81,13 +81,14 @@ export class ExternalWindowProvider implements AsyncSendable {
         clearInterval(interval)
         this.walletOpened = false
         this.connected = false
-        this.loginPayload = undefined // TODO: ok?
+        this.loginPayload = undefined
         this.events.emit('disconnected')
       }
     }, 1000)
   }
 
   closeWallet = () => {
+    this.confirmationOnly = false
     if (this.walletWindow) {
       this.walletWindow.close()
       this.walletWindow = null
@@ -99,14 +100,22 @@ export class ExternalWindowProvider implements AsyncSendable {
   }
 
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+    // automatically open the wallet when a provider request makes it here
     if (!this.walletOpened) {
+      // toggle the wallet to auto-close once user submits input. ie.
+      // prompting to sign a message or transaction
+      this.confirmationOnly = true
+
+      // open the wallet
       await this.openWallet()
     }
+
+    // double check, in case wallet failed to open
     if (!this.walletOpened) {
       throw new Error('wallet is not opened.')
     }
 
-    // Handle request via external provider
+    // Send request to the wallet window
     this.sendRequest(MessageType.SEND_REQUEST, request, callback)
   }
 
@@ -181,8 +190,7 @@ export class ExternalWindowProvider implements AsyncSendable {
       // Require user confirmation, bring up wallet to prompt for input then close
       if (this.confirmationOnly) {
         if (this.callbacks.size === 0) {
-          // TODO: close at appropriate time......
-          // this.closeWallet()
+          this.closeWallet()
         }
       }
 
@@ -291,7 +299,7 @@ export class ExternalWindowProvider implements AsyncSendable {
   }
 }
 
-type EventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
+type EventType = WalletProviderEventType
 
 export enum MessageType {
   CONNECT_RESPONSE = 'CONNECT_RESPONSE',
