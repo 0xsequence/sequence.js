@@ -1,4 +1,4 @@
-import { JsonRpcProvider, JsonRpcSigner, AsyncSendable } from 'ethers/providers'
+import { JsonRpcProvider, JsonRpcSigner, AsyncSendable, Web3Provider } from 'ethers/providers'
 import { ArcadeumWalletConfig, ArcadeumContext, NetworkConfig } from '../types'
 import { ExternalWindowProvider } from './external-window-provider'
 import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider } from './provider-engine'
@@ -23,9 +23,13 @@ export interface IWalletProvider {
 
   getWalletConfig(): ArcadeumWalletConfig
   getWalletContext(): ArcadeumContext
-
   getWalletProviderConfig(): WalletProviderConfig
+
+  on(event: WalletProviderEventType, fn: (...args: any[]) => void)
+  once(event: WalletProviderEventType, fn: (...args: any[]) => void)
 }
+
+export type WalletProviderEventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
 
 export class WalletProvider implements IWalletProvider {
   private config: WalletProviderConfig
@@ -79,7 +83,8 @@ export class WalletProvider implements IWalletProvider {
           this.publicProvider
         ])
 
-        this.provider = this.providerEngine.createJsonRpcProvider()
+        // this.provider = this.providerEngine.createJsonRpcProvider()
+        this.provider = new Web3Provider(this.providerEngine, 'unspecified')
 
         this.externalWindowProvider.on('network', network => {
           this.useNetwork(network)
@@ -223,6 +228,20 @@ export class WalletProvider implements IWalletProvider {
     return this.config
   }
 
+  on(event: WalletProviderEventType, fn: (...args: any[]) => void) {
+    if (!this.externalWindowProvider) {
+      return
+    }
+    this.externalWindowProvider.on(event, fn)
+  }
+
+  once(event: WalletProviderEventType, fn: (...args: any[]) => void) {
+    if (!this.externalWindowProvider) {
+      return
+    }
+    this.externalWindowProvider.once(event, fn)
+  }
+
   private loadSession = (): WalletSession | null => {
     const data = window.localStorage.getItem('_arcadeum.session')
     if (!data || data === '') {
@@ -270,7 +289,12 @@ export class WalletProvider implements IWalletProvider {
       this.session = {}
     }
 
-    // TODO: update this.provider, web3 provider to network chainId + rpc
+    console.log('network changed!!', network)
+
+    // TODO: with ethers v5, we can set network to 'any', then set network = null
+    // anytime the network changes, and call detectNetwork(). We can reuse
+    // that object instance instead of creating a new one as below.
+    this.provider = new Web3Provider(this.providerEngine, network.name)
 
     // ..
     this.publicProvider.setRpcUrl(network.rpcUrl)

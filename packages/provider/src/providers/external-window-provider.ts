@@ -1,7 +1,7 @@
 import { AsyncSendable } from 'ethers/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback, NetworkConfig } from '../types'
 import EventEmitter from 'eventemitter3'
-import { WalletSession } from './wallet-provider'
+import { WalletSession, WalletProviderEventType } from './wallet-provider'
 
 let requestIdx = 0
 
@@ -102,7 +102,6 @@ export class ExternalWindowProvider implements AsyncSendable {
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
     // automatically open the wallet when a provider request makes it here
     if (!this.walletOpened) {
-      
       // toggle the wallet to auto-close once user submits input. ie.
       // prompting to sign a message or transaction
       this.confirmationOnly = true
@@ -300,7 +299,7 @@ export class ExternalWindowProvider implements AsyncSendable {
   }
 }
 
-type EventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
+type EventType = WalletProviderEventType
 
 export enum MessageType {
   CONNECT_RESPONSE = 'CONNECT_RESPONSE',
