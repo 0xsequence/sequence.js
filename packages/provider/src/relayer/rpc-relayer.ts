@@ -8,6 +8,8 @@ import * as pony from 'fetch-ponyfill'
 import { ethers } from 'ethers'
 import { addressOf } from '../utils'
 
+import { IRelayer } from '.'
+
 type RelayerTxReceipt = {
   blockHash: string;
   blockNumber: string;
@@ -32,7 +34,7 @@ type RelayerTxReceipt = {
   transactionIndex: string;
 }
 
-export class RpcRelayer extends BaseRelayer {
+export class RpcRelayer extends BaseRelayer implements IRelayer {
   private readonly chaindApp: ChaindService
 
   constructor(

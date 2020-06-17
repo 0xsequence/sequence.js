@@ -1,20 +1,21 @@
 import { ArcadeumTransaction, ArcadeumContext, ArcadeumWalletConfig } from '../types'
 import { TransactionResponse, BlockTag } from 'ethers/providers'
 
-export declare abstract class Relayer {
-  constructor()
-
-  abstract getNonce(
+export interface IRelayer {
+  getNonce(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
     space?: number,
     blockTag?: BlockTag
   ): Promise<number>
 
-  abstract relay(
+  relay(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
   ): Promise<TransactionResponse>
 }
+
+export { LocalRelayer } from './local-relayer'
+export { RpcRelayer } from './rpc-relayer'

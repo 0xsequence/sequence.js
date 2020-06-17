@@ -26,7 +26,7 @@ import {
   AsyncSendable,
   Web3Provider
 } from 'ethers/providers'
-import { Relayer } from './relayer/relayer'
+import { IRelayer } from './relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { JsonRpcAsyncSender } from './providers/async-sender'
@@ -41,7 +41,7 @@ export class Wallet extends AbstractSigner {
   w3provider: AsyncSendable
   provider: JsonRpcProvider
 
-  relayer: Relayer
+  relayer: IRelayer
 
   constructor(config: ArcadeumWalletConfig, context: ArcadeumContext, ...signers: (Arrayish | AbstractSigner)[]) {
     super()
@@ -81,12 +81,12 @@ export class Wallet extends AbstractSigner {
     return this
   }
 
-  setRelayer(relayer: Relayer): Wallet {
+  setRelayer(relayer: IRelayer): Wallet {
     this.relayer = relayer
     return this
   }
 
-  connect(provider: AsyncSendable | ConnectionInfo | string, relayer: Relayer): Wallet {
+  connect(provider: AsyncSendable | ConnectionInfo | string, relayer: IRelayer): Wallet {
     return new Wallet(this.config, this.context, ...this._signers).setProvider(provider).setRelayer(relayer)
   }
 

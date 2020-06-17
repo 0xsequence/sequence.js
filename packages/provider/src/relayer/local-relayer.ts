@@ -7,7 +7,9 @@ import { Signer, ethers } from 'ethers'
 import { BaseRelayer } from './base-relayer'
 import { addressOf } from '../utils'
 
-export class LocalRelayer extends BaseRelayer{
+import { IRelayer } from '.'
+
+export class LocalRelayer extends BaseRelayer implements IRelayer {
   private readonly signer: Signer
 
   constructor(signer: Signer) {
