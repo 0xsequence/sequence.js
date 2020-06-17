@@ -40,6 +40,7 @@
     "web3-typescript-typings": "^0.10.2"
   },
   "dependencies": {
-    "eventemitter3": "^4.0.4"
+    "eventemitter3": "^4.0.4",
+    "fetch-ponyfill": "^6.1.1"
   }
 }
