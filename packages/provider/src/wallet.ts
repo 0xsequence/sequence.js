@@ -100,14 +100,14 @@ export class Wallet extends AbstractSigner {
 
     const walletInterface = new Interface(mainModuleAbi)
 
-    // 131072 gas, enough for all calls
+    // 131072 gas, enough for both calls
     // and a power of two to keep the gas cost of data low
     const gasLimit = ethers.constants.Two.pow(17)
 
     const preTransaction = isUpgradable ? [] : [{
       delegateCall: false,
       revertOnError: true,
-      gasLimit: gasLimit,
+      gasLimit: ethers.constants.Zero,
       to: this.address,
       value: ethers.constants.Zero,
       data: walletInterface.functions.updateImplementation.encode(
@@ -118,7 +118,7 @@ export class Wallet extends AbstractSigner {
     const transactions = [...preTransaction, {
       delegateCall: false,
       revertOnError: true,
-      gasLimit: gasLimit,
+      gasLimit: ethers.constants.Zero,
       to: this.address,
       value: ethers.constants.Zero,
       data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
