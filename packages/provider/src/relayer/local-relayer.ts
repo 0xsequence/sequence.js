@@ -19,7 +19,7 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
 
   async deploy(config: ArcadeumWalletConfig, context: ArcadeumContext): Promise<TransactionResponse> {
     return this.signer.sendTransaction(
-      this.prepareDeploy(config, context)
+      this.prepareWalletDeploy(config, context)
     )
   }
 
@@ -44,6 +44,10 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
   ): Promise<TransactionResponse> {
+    if (!context.guestModule || context.guestModule.length != 42) {
+      throw new Error('LocalRelayer requires the context.guestModule address')
+    }
+
     return this.signer.sendTransaction(
       await this.prepare(config, context, signature, ...transactions)
     )

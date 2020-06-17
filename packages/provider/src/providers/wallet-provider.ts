@@ -29,6 +29,19 @@ export interface IWalletProvider {
   once(event: WalletProviderEventType, fn: (...args: any[]) => void)
 }
 
+interface ProviderUtils {
+  sendETH()
+  sendToken()
+  callContract()
+  signMessage()
+  recoverSignature()
+
+  history()
+  getReceipt()
+  getLogs()
+  // ..
+}
+
 export type WalletProviderEventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
 
 export class WalletProvider implements IWalletProvider {

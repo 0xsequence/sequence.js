@@ -17,12 +17,12 @@ export class BaseRelayer {
     this.provider = provider
   }
 
-  async isDeployed(wallet: string) {
+  async isWalletDeployed(walletAddress: string) {
     if (!this.provider) throw Error('Bundled creation provider not found')
-    return (await this.provider.getCode(wallet)) !== '0x'
+    return (await this.provider.getCode(walletAddress)) !== '0x'
   }
 
-  prepareDeploy(
+  prepareWalletDeploy(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext
   ): { to: string, data: string} {
@@ -40,15 +40,15 @@ export class BaseRelayer {
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
   ): Promise<{ to: string, data: string}> {
-    const wallet = addressOf(config, context)
+    const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(mainModuleAbi)
 
-    if (this.bundleCreation && !(await this.isDeployed(wallet))) {
+    if (this.bundleCreation && !(await this.isWalletDeployed(walletAddress))) {
       return {
         to: context.guestModule,
         data: walletInterface.functions.execute.encode([
           arcadeumTxAbiEncode([{
-            ...this.prepareDeploy(config, context),
+            ...this.prepareWalletDeploy(config, context),
             delegateCall: false,
             revertOnError: false,
             gasLimit: ethers.constants.Two.pow(17),
@@ -57,7 +57,7 @@ export class BaseRelayer {
             delegateCall: false,
             revertOnError: true,
             gasLimit: ethers.constants.Zero,
-            to: wallet,
+            to: walletAddress,
             value: ethers.constants.Zero,
             data: walletInterface.functions.execute.encode(
               [
@@ -71,7 +71,7 @@ export class BaseRelayer {
       }
     } else {
       return {
-        to: wallet,
+        to: walletAddress,
         data: walletInterface.functions.execute.encode(
           [
             arcadeumTxAbiEncode(transactions),
