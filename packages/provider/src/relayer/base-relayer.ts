@@ -55,8 +55,8 @@ export class BaseRelayer {
             value: ethers.constants.Zero,
           }, {
             delegateCall: false,
-            revertOnError: false,
-            gasLimit: ethers.constants.Two.pow(64),
+            revertOnError: true,
+            gasLimit: ethers.constants.Zero,
             to: wallet,
             value: ethers.constants.Zero,
             data: walletInterface.functions.execute.encode(
