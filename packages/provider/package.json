@@ -25,7 +25,7 @@
     "@types/chai": "^4.2.11",
     "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^7.0.2",
-    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts.git#allow-ignore-gas",
+    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts.git#tmp-pre-release",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "ethers": "^4.0.46",
@@ -40,6 +40,7 @@
     "web3-typescript-typings": "^0.10.2"
   },
   "dependencies": {
-    "eventemitter3": "^4.0.4"
+    "eventemitter3": "^4.0.4",
+    "fetch-ponyfill": "^6.1.1"
   }
 }

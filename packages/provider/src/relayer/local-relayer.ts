@@ -1,25 +1,41 @@
 import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from '../types'
-import { TransactionResponse } from 'ethers/providers'
-
-import { addressOf, imageHash, readArcadeumNonce, arcadeumTxAbiEncode } from '../utils'
-import { Signer, ethers } from 'ethers'
-
-import { abi as factoryAbi } from '../abi/factory'
+import { TransactionResponse, BlockTag } from 'ethers/providers'
 import { abi as mainModuleAbi } from '../abi/mainModule'
 
-export class LocalRelayer {
+import { Signer, ethers } from 'ethers'
+
+import { BaseRelayer } from './base-relayer'
+import { addressOf } from '../utils'
+
+import { IRelayer } from '.'
+
+export class LocalRelayer extends BaseRelayer implements IRelayer {
   private readonly signer: Signer
 
   constructor(signer: Signer) {
+    super(true, signer.provider)
     this.signer = signer
   }
 
   async deploy(config: ArcadeumWalletConfig, context: ArcadeumContext): Promise<TransactionResponse> {
-    const factory = new ethers.ContractFactory(factoryAbi, [], this.signer)
-    return factory
-      .attach(context.factory)
-      .connect(this.signer)
-      .deploy(context.mainModule, imageHash(config), { gasLimit: 100000 })
+    return this.signer.sendTransaction(
+      this.prepareDeploy(config, context)
+    )
+  }
+
+  async getNonce(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    space?: number,
+    blockTag?: BlockTag
+  ): Promise<number> {
+    const addr = addressOf(config, context)
+    if ((await this.provider.getCode(addr)) === '0x') {
+      return 0
+    }
+
+    const module = new ethers.Contract(addr, mainModuleAbi, this.signer.provider)
+    return (await module.nonce({ blockTag: blockTag })).toNumber()
   }
 
   async relay(
@@ -28,16 +44,8 @@ export class LocalRelayer {
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
   ): Promise<TransactionResponse> {
-    const wallet = addressOf(config, context)
-
-    if ((await this.signer.provider.getCode(wallet)) === '0x') {
-      await this.deploy(config, context)
-    }
-
-    const mainModule = new ethers.ContractFactory(mainModuleAbi, [], this.signer)
-    const walletModule = mainModule.attach(wallet).connect(this.signer)
-
-    const nonce = readArcadeumNonce(...transactions)
-    return walletModule.execute(arcadeumTxAbiEncode(transactions), nonce, signature)
+    return this.signer.sendTransaction(
+      await this.prepare(config, context, signature, ...transactions)
+    )
   }
 }
