@@ -27,14 +27,14 @@ export class ExternalWindowProvider implements AsyncSendable {
     window.addEventListener('message', this.handleMessage)
   }
 
-  openWallet = (pathname?: string) => {
+  openWallet = (path?: string, state?: object) => {
     if (this.walletOpened === true) {
       this.walletWindow.focus()
       return
     }
 
-    if (pathname) {
-      this.walletURL.pathname = pathname
+    if (path) {
+      this.walletURL.pathname = path
     }
 
     // Open popup window
@@ -61,7 +61,10 @@ export class ExternalWindowProvider implements AsyncSendable {
     if (!this.connected) {
       const initRequest: MessageRequest = {
         type: MessageType.CONNECT_REQUEST,
-        id: ++requestIdx
+        id: ++requestIdx,
+        payload: {
+          state: state
+        }
       }
 
       const postMessageUntilConnected = () => {

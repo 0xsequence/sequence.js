@@ -40,6 +40,9 @@ interface ProviderUtils {
   getReceipt()
   getLogs()
   // ..
+
+  isWalletDeployed()
+  deployWallet()
 }
 
 export type WalletProviderEventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
@@ -131,14 +134,14 @@ export class WalletProvider implements IWalletProvider {
 
     switch (config.type) {
       case 'ExternalWindow': {
-        await this.openWallet('/')
+        await this.openWallet('/', { login: true })
         const sessionPayload = await this.externalWindowProvider.waitUntilLoggedIn()
         this.useSession(sessionPayload)
         this.saveSession(sessionPayload)
 
         setTimeout(() => {
           this.externalWindowProvider.closeWallet()
-        }, 500)
+        }, 2000)
 
         break
       }
@@ -203,9 +206,9 @@ export class WalletProvider implements IWalletProvider {
     return session.network.chainId
   }
 
-  openWallet = async (path?: string): Promise<boolean> => {
+  openWallet = async (path?: string, state?: object): Promise<boolean> => {
     if (this.externalWindowProvider) {
-      this.externalWindowProvider.openWallet()
+      this.externalWindowProvider.openWallet(path, state)
 
       // TODO: handle case when popup is blocked, should return false, or throw exception
       await this.externalWindowProvider.waitUntilConnected()
@@ -363,7 +366,7 @@ export const DefaultWalletProviderConfig: WalletProviderConfig = {
   type: 'ExternalWindow',
 
   externalWindowProvider: {
-    walletAppURL: 'http://localhost:3000'
+    walletAppURL: 'http://localhost:3333'
   },
 
   walletContext: WalletContext
