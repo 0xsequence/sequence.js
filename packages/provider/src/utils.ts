@@ -400,11 +400,13 @@ export async function toArcadeumTransaction(
     return tx as ArcadeumTransaction
   }
 
+  const txGas = tx.gasLimit === undefined ? (<any>tx).gas : tx.gasLimit
+
   if (tx.to) {
     return {
       delegateCall: false,
       revertOnError: revertOnError,
-      gasLimit: tx.gasLimit ? await tx.gasLimit : gasLimit,
+      gasLimit: txGas ? await txGas : gasLimit,
       to: await tx.to,
       value: tx.value ? await tx.value : 0,
       data: await tx.data,
@@ -418,7 +420,7 @@ export async function toArcadeumTransaction(
     return {
       delegateCall: false,
       revertOnError: revertOnError,
-      gasLimit: tx.gasLimit ? await tx.gasLimit : gasLimit,
+      gasLimit: txGas ? await txGas : gasLimit,
       to: await address,
       value: tx.value ? await tx.value : 0,
       data: data,

@@ -177,6 +177,27 @@ describe('Arcadeum wallet integration', function () {
             await expect(call).to.be.fulfilled
           })
         })
+        describe('Gas limits', async () => {
+          it('Should send custom gas-limit', async () => {
+            const callReceiver1 = (await new ethers.ContractFactory(
+              CallReceiverMockArtifact.abi,
+              CallReceiverMockArtifact.bytecode,
+              ganache.signer
+            ).deploy()) as CallReceiverMock
+  
+            const receiver = new ethers.Contract(
+              callReceiver1.address,
+              CallReceiverMockArtifact.abi,
+              signer
+            )
+
+            const tx = await receiver.functions.testCall(2, "0x030233", {
+              gasLimit: ethers.utils.bigNumberify(1048575)
+            })
+
+            expect(tx.data).to.contain("00fffff")
+          })
+        })
       })
 
       describe('batch transactions', async () => {
