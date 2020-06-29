@@ -2,6 +2,12 @@ import { ArcadeumTransaction, ArcadeumContext, ArcadeumWalletConfig } from '../t
 import { TransactionResponse, BlockTag } from 'ethers/providers'
 
 export interface IRelayer {
+  estimateGasLimits(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[]>
+
   getNonce(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,

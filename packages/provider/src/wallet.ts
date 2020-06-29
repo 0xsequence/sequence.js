@@ -181,6 +181,12 @@ export class Wallet extends AbstractSigner {
       arctx = await toArcadeumTransactions(this, [transaction])
     }
 
+    // If all transactions have 0 gasLimit
+    // estimate gasLimits for each transaction
+    if (!arctx.find((a) => !a.revertOnError && !ethers.utils.bigNumberify(a.gasLimit).eq(ethers.constants.Zero))) {
+      arctx = await this.relayer.estimateGasLimits(this.config, this.context, ...arctx)
+    }
+
     const providedNonce = readArcadeumNonce(...arctx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     arctx = appendNonce(arctx, nonce)

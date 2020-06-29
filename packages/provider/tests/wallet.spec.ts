@@ -13,8 +13,9 @@ import { Signer as AbstractSigner } from 'ethers'
 
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf } from '../src/utils'
+import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf, toArcadeumTransaction, toArcadeumTransactions } from '../src/utils'
 
+const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
 const HookCallerMockArtifact = require('arcadeum-wallet/artifacts/HookCallerMock.json')
 
@@ -196,6 +197,13 @@ describe('Arcadeum wallet integration', function () {
             })
 
             expect(tx.data).to.contain("00fffff")
+          })
+          it('Should estimate gas for transaction with 0 gasLimit and revertOnError false', async () => {
+            await new ethers.ContractFactory(
+              MainModuleArtifact.abi,
+              MainModuleArtifact.bytecode,
+              signer
+            ).deploy(wallet.address)
           })
         })
       })
@@ -575,6 +583,65 @@ describe('Arcadeum wallet integration', function () {
         expect(tx.transactionHash).to.be.a('string')
 
         expect(await callReceiver.lastValB()).to.equal('0x445566')
+      })
+    })
+
+    describe('estimate gas', async () => {
+      it('Should estimate gas for a single meta-tx', async () => {
+        const transaction = {
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+        }
+
+        const arctx = await toArcadeumTransaction(wallet, transaction)
+        const estimated = await relayer.estimateGasLimits(wallet.config, context, arctx)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(60000)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(100000)
+      })
+      it('Should estimate gas for a single big meta-tx', async () => {
+        const data = ethers.utils.randomBytes(512)
+        const transaction = {
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, data])
+        }
+
+        const arctx = await toArcadeumTransaction(wallet, transaction)
+        const estimated = await relayer.estimateGasLimits(wallet.config, context, arctx)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
+      })
+      it('Should estimate gas for a batch of meta-txs', async () => {
+        const data = ethers.utils.randomBytes(512)
+        const transactions = [{
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, data])
+        }, {
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+        }]
+
+        const arctxs = await toArcadeumTransactions(wallet, transactions)
+        const estimated = await relayer.estimateGasLimits(wallet.config, context, ...arctxs)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
+        expect((<any>estimated[1].gasLimit).toNumber()).to.be.above(60000)
+        expect((<any>estimated[1].gasLimit).toNumber()).to.be.below(100000)
       })
     })
 

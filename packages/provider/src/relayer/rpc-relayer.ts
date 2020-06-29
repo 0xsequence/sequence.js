@@ -60,6 +60,14 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     return result
   }
 
+  async estimateGasLimits(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[]> {
+    throw new Error("Not implemented")
+  }
+
   async getNonce(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
