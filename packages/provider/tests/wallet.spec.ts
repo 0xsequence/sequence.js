@@ -588,6 +588,8 @@ describe('Arcadeum wallet integration', function () {
 
     describe('estimate gas', async () => {
       it('Should estimate gas for a single meta-tx', async () => {
+        await callReceiver.testCall(0, '0x')
+
         const transaction = {
           from: wallet.address,
           gasPrice: '20000000000',
@@ -603,6 +605,8 @@ describe('Arcadeum wallet integration', function () {
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(100000)
       })
       it('Should estimate gas for a single big meta-tx', async () => {
+        await callReceiver.testCall(0, '0x')
+
         const data = ethers.utils.randomBytes(512)
         const transaction = {
           from: wallet.address,
@@ -619,6 +623,8 @@ describe('Arcadeum wallet integration', function () {
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
       })
       it('Should estimate gas for a batch of meta-txs', async () => {
+        await callReceiver.testCall(0, '0x')
+
         const data = ethers.utils.randomBytes(512)
         const transactions = [{
           from: wallet.address,
