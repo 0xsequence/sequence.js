@@ -9,7 +9,7 @@ import { addressOf } from '../utils'
 
 import { IRelayer } from '.'
 
-const DEFAULT_FEE = ethers.utils.bigNumberify(800000)
+const DEFAULT_GAS_LIMIT = ethers.utils.bigNumberify(800000)
 
 export class LocalRelayer extends BaseRelayer implements IRelayer {
   private readonly signer: Signer
@@ -35,12 +35,12 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
     const gasCosts = await Promise.all(transactions.map(async (t) => {
       // Fee can't be estimated locally for delegateCalls
       if (t.delegateCall) {
-        return DEFAULT_FEE
+        return DEFAULT_GAS_LIMIT
       }
 
       // Fee can't be estimated for self-called if wallet hasn't been deployed
       if (t.to === walletAddr && !(await this.isWalletDeployed(walletAddr))) {
-        return DEFAULT_FEE
+        return DEFAULT_GAS_LIMIT
       }
 
       // TODO: If the wallet address has been deployed, gas limits can be
