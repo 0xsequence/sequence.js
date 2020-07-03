@@ -9,6 +9,8 @@ import { addressOf } from '../utils'
 
 import { IRelayer } from '.'
 
+const DEFAULT_GAS_LIMIT = ethers.utils.bigNumberify(800000)
+
 export class LocalRelayer extends BaseRelayer implements IRelayer {
   private readonly signer: Signer
 
@@ -21,6 +23,40 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
     return this.signer.sendTransaction(
       this.prepareWalletDeploy(config, context)
     )
+  }
+
+  async estimateGasLimits(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[]> {
+    const walletAddr = addressOf(config, context)
+
+    const gasCosts = await Promise.all(transactions.map(async (t) => {
+      // Fee can't be estimated locally for delegateCalls
+      if (t.delegateCall) {
+        return DEFAULT_GAS_LIMIT
+      }
+
+      // Fee can't be estimated for self-called if wallet hasn't been deployed
+      if (t.to === walletAddr && !(await this.isWalletDeployed(walletAddr))) {
+        return DEFAULT_GAS_LIMIT
+      }
+
+      // TODO: If the wallet address has been deployed, gas limits can be
+      // estimated with more accuracy by using self-calls with the batch transactions one by one
+      return this.signer.provider.estimateGas({
+        from: walletAddr,
+        to: t.to,
+        data: t.data,
+        value: t.value
+      })
+    }))
+
+    return transactions.map((t, i) => {
+      t.gasLimit = gasCosts[i]
+      return t
+    })
   }
 
   async getNonce(
