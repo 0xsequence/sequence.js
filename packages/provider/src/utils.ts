@@ -131,7 +131,7 @@ export async function isValidSignature(
   chainId?: number
 ) {
   if (
-    isValidEIP721Signature(address, digest, sig) ||
+    isValidEIP712Signature(address, digest, sig) ||
     isValidEthSignSignature(address, digest, sig)
   ) return true
 
@@ -149,7 +149,7 @@ export async function isValidSignature(
   return wallets[0] || wallets[1]
 }
 
-export function isValidEIP721Signature(
+export function isValidEIP712Signature(
   address: string,
   digest: Uint8Array,
   sig: string
