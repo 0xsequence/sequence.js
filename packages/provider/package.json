@@ -10,6 +10,7 @@
     "build": "rimraf ./dist && rollup -c",
     "prepublishOnly": "yarn test && yarn lint",
     "test": "TS_NODE_PROJECT=tsconfig.test.json mocha -r ts-node/register tests/**/*.spec.ts --timeout 30000",
+    "test:e2e": "ONLY_E2E=true yarn test",
     "coverage": "nyc -r lcov -e .ts -x \"*.spec.ts\" yarn run test",
     "lint": "tslint -c tslint.json -p .",
     "lint:fix": "tslint -c tslint.json -p . --fix",
