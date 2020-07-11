@@ -21,8 +21,6 @@ import { Signer as AbstractSigner } from 'ethers'
 import {
   TransactionResponse,
   BlockTag,
-  Provider,
-  JsonRpcProvider,
   AsyncSendable,
   Web3Provider
 } from 'ethers/providers'
@@ -39,7 +37,7 @@ export class Wallet extends AbstractSigner {
   readonly config: ArcadeumWalletConfig
 
   w3provider: AsyncSendable
-  provider: JsonRpcProvider
+  provider: ethers.providers.JsonRpcProvider
 
   relayer: IRelayer
 
@@ -74,7 +72,7 @@ export class Wallet extends AbstractSigner {
       this.w3provider = <AsyncSendable>provider
       this.provider = new Web3Provider(this.w3provider)
     } else {
-      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider)
+      const jsonProvider = new ethers.providers.JsonRpcProvider(<ConnectionInfo | string>provider)
       this.provider = jsonProvider
       this.w3provider = new JsonRpcAsyncSender(jsonProvider)
     }
