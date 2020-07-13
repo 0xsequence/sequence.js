@@ -242,23 +242,31 @@ export async function isValidArcadeumUndeployedWalletSignature(
 
   try{
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
+    const signature = decodeSignature(sig)
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
-    const config = recoverConfigFromDigest(subDigest, sig)
-    return compareAddr(addressOf(config, arcadeumContext), address) === 0
+    const config = recoverConfigFromDigest(subDigest, signature)
+    const weight = signature.signers.reduce((v, s) => isSigner(s) ? ++v : v, 0)
+    return compareAddr(addressOf(config, arcadeumContext), address) === 0 && weight >= signature.threshold
   } catch {
     return false
   }
 }
 
-export function recoverConfig(message: Arrayish, signature: string): ArcadeumWalletConfig {
+export function recoverConfig(message: Arrayish, signature: string | ArcadeumDecodedSignature): ArcadeumWalletConfig {
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
   return recoverConfigFromDigest(digest, signature)
 }
 
-export function recoverConfigFromDigest(digest: Arrayish, signature: string): ArcadeumWalletConfig {
-  const decoded = decodeSignature(signature)
+export function isSigner(obj: ArcadeumDecodedSigner | ArcadeumDecodedOwner): boolean {
+  const cast = obj as ArcadeumDecodedSigner
+  return cast.r !== undefined && cast.s != undefined
+}
+
+export function recoverConfigFromDigest(digest: Arrayish, signature: string | ArcadeumDecodedSignature): ArcadeumWalletConfig {
+  const decoded = (<ArcadeumDecodedSignature>signature).threshold !== undefined ? <ArcadeumDecodedSignature>signature : decodeSignature(signature as string)
+
   const signers = decoded.signers.map(s => {
-    if ((<ArcadeumDecodedSigner>s).r) {
+    if (isSigner(s)) {
       return {
         weight: s.weight,
         address: recoverSigner(digest, s as ArcadeumDecodedSigner)
