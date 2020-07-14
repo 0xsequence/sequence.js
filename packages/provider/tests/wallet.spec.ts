@@ -872,6 +872,28 @@ describe('Arcadeum wallet integration', function () {
         const signature = await wallet.signMessage(message, 1)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.true
       })
+      it('Should valdiate arcadeum wallet multi-signature', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            }
+          ]
+        }
+
+        const wallet2 = new arcadeum.Wallet(newConfig, context, s1, s2).connect(ganache.serverUri, relayer)
+        const signature = await wallet2.signMessage(message, 1)
+        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.true
+      })
       it('Should validate arcadeum wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, 1)
         expect(await isValidArcadeumUndeployedWalletSignature(wallet.address, digest, signature, context, ganache.provider)).to.be.true
@@ -880,6 +902,28 @@ describe('Arcadeum wallet integration', function () {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
         const signature = await wallet2.signMessage(message, 1)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
+      })
+      it('Should reject signature with not enough weigth', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            }
+          ]
+        }
+
+        const wallet2 = new arcadeum.Wallet(newConfig, context, s1).connect(ganache.serverUri, relayer)
+        const signature = await wallet2.signMessage(message, 1)
+        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
       })
     })
     describe('deployed wallet sign', () => {
