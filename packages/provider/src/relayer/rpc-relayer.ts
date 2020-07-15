@@ -6,7 +6,7 @@ import { BaseRelayer } from './base-relayer'
 
 import * as pony from 'fetch-ponyfill'
 import { ethers } from 'ethers'
-import { addressOf } from '../utils'
+import { addressOf, readArcadeumNonce, appendNonce, MetaTransactionsType, arcadeumTxAbiEncode } from '../utils'
 
 import { IRelayer } from '.'
 
@@ -65,7 +65,28 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     context: ArcadeumContext,
     ...transactions: ArcadeumTransaction[]
   ): Promise<ArcadeumTransaction[]> {
-    throw new Error("Not implemented")
+    if (transactions.length == 0) {
+      return []
+    }
+
+    const addr = addressOf(config, context)
+    if (readArcadeumNonce(...transactions) === undefined) {
+      transactions = appendNonce(transactions, 0)
+    }
+
+    const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [arcadeumTxAbiEncode(transactions)])
+
+    const res = await this.chaindApp.estimateMetaTxnGasReceipt({
+      feeToken: ethers.constants.AddressZero,
+      call: {
+        contract: addr,
+        payload: encoded,
+        signers: config.signers.length
+      }
+    })
+
+    const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
+    return transactions.map((t, i) => ({ ...t, gasLimit: decoded[i].gasLimit}))
   }
 
   async getNonce(

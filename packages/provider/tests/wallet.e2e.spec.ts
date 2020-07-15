@@ -8,7 +8,7 @@ import { RpcRelayer } from '../src'
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 import { IRelayer } from '../src/relayer'
-import { toArcadeumTransaction } from '../src/utils'
+import { toArcadeumTransaction, toArcadeumTransactions } from '../src/utils'
 
 const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
 
@@ -52,9 +52,99 @@ if (process.env.ONLY_E2E) {
         CallReceiverMockArtifact.bytecode,
         signer
       ).deploy()) as CallReceiverMock
-      await callReceiver.deployTransaction.wait()
+      await callReceiver.deployTransaction.wait(2)
     })
+    describe('Estimate gas limit', () => {
+      it('Should estimate gasLimit for a single transaction', async () => {
+        await callReceiver.testCall(0, '0x')
 
+        const transactions = [{
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, "0x445566"])
+        }]
+
+        const arctx = await toArcadeumTransactions(wallet, transactions)
+        const estimated = await relayer.estimateGasLimits(wallet.config, ARCADEUM_CONTEXT, ...arctx)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(60000)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(100000)
+      })
+      it('Should estimate gas for a single big meta-tx', async () => {
+        await callReceiver.testCall(0, '0x')
+
+        const data = ethers.utils.randomBytes(512)
+        const transaction = {
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, data])
+        }
+
+        const arctx = await toArcadeumTransaction(wallet, transaction)
+        const estimated = await relayer.estimateGasLimits(wallet.config, ARCADEUM_CONTEXT, arctx)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
+      })
+      it('Should estimate gasLimit for multiple transactions', async () => {
+        await callReceiver.testCall(0, '0x')
+
+        const data = ethers.utils.randomBytes(512)
+        const transactions = [{
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, data])
+        }, {
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+        }]
+
+        const arctxs = await toArcadeumTransactions(wallet, transactions)
+        const estimated = await relayer.estimateGasLimits(wallet.config, ARCADEUM_CONTEXT, ...arctxs)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
+        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
+        expect((<any>estimated[1].gasLimit).toNumber()).to.be.above(60000)
+        expect((<any>estimated[1].gasLimit).toNumber()).to.be.below(100000)
+      })
+      it('Should send meta-txs with estimate gasLimits', async () => {
+        await callReceiver.testCall(0, '0x')
+
+        const data = ethers.utils.randomBytes(512)
+        const transactions = [{
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, data])
+        }, {
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([7435, '0x445566'])
+        }]
+
+        const arctxs = await toArcadeumTransactions(wallet, transactions, true)
+        const estimated = await relayer.estimateGasLimits(wallet.config, ARCADEUM_CONTEXT, ...arctxs)
+        const tx = await wallet.sendTransaction(estimated)
+        await tx.wait(2)
+
+        expect(await callReceiver.lastValA()).to.equal("7435")
+      })
+    })
     describe('Send transactions', () => {
       it('Should wait for transaction receipt', async () => {
         const data = ethers.utils.randomBytes(512)
