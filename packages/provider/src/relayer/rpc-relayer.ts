@@ -105,6 +105,9 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       return []
     }
 
+    // chaind requires tokenFee, even for only estimating gasLimits
+    const tokenFee = this.chaindApp.tokenFee()
+
     const addr = addressOf(config, context)
     const prevNonce = readArcadeumNonce(...transactions)
 
@@ -115,7 +118,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
 
     const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [arcadeumTxAbiEncode(transactions)])
     const res = await this.chaindApp.estimateMetaTxnGasReceipt({
-      feeToken: ethers.constants.AddressZero,
+      feeToken: (await tokenFee).fee,
       call: {
         contract: addr,
         payload: encoded,
@@ -124,7 +127,10 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     })
 
     const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
-    const modTxns = transactions.map((t, i) => ({ ...t, gasLimit: decoded[i].gasLimit}))
+    const modTxns = transactions.map((t, i) => ({
+      ...t,
+      gasLimit: decoded[i].gasLimit
+    }))
 
     // Remove placeholder nonce if previously defined
     return prevNonce === undefined ? appendNonce(modTxns, prevNonce) : modTxns
