@@ -54,6 +54,24 @@ if (process.env.ONLY_E2E) {
       ).deploy()) as CallReceiverMock
       await callReceiver.deployTransaction.wait(2)
     })
+    describe('Append gas refund options', () => {
+      it('Should get gas refund options', async () => {
+        await callReceiver.testCall(0, '0x')
+
+        const transactions = [{
+          from: wallet.address,
+          gasPrice: '20000000000',
+          gasLimit: 0,
+          to: callReceiver.address,
+          value: 0,
+          data: callReceiver.interface.functions.testCall.encode([123, "0x445566"])
+        }]
+
+        const arctx = await toArcadeumTransactions(wallet, transactions)
+        const estimated = await relayer.gasRefundOptions(wallet.config, ARCADEUM_CONTEXT, ...arctx)
+        expect(estimated[0].length).to.be.above(transactions.length)
+      })
+    })
     describe('Estimate gas limit', () => {
       it('Should estimate gasLimit for a single transaction', async () => {
         await callReceiver.testCall(0, '0x')

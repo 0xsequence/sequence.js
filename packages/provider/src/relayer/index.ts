@@ -8,6 +8,12 @@ export interface IRelayer {
     ...transactions: ArcadeumTransaction[]
   ): Promise<ArcadeumTransaction[]>
 
+  gasRefundOptions(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[][]>
+
   getNonce(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,

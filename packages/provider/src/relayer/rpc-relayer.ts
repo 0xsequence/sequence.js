@@ -60,6 +60,42 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     return result
   }
 
+  async gasRefundOptions(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[][]> {
+    // chaind only supports refunds on a single token
+    // TODO: Add compatiblity for different refund options
+    const tokenFee = (await this.chaindApp.tokenFee()).fee
+
+    // No gas refund required, return transactions as-is
+    if (tokenFee === ethers.constants.AddressZero) {
+      return [transactions]
+    }
+
+    const addr = addressOf(config, context)
+    const prevNonce = readArcadeumNonce(...transactions)
+
+    // Set temporal nonce to simulate meta-txn
+    if (prevNonce === undefined) {
+      transactions = appendNonce(transactions, await this.getNonce(config, context))
+    }
+
+    const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [arcadeumTxAbiEncode(transactions)])
+    const res = await this.chaindApp.estimateMetaTxnGasReceipt({
+      feeToken: tokenFee,
+      call: {
+        contract: addr,
+        payload: encoded,
+        signers: config.signers.length
+      }
+    })
+
+    const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
+    return prevNonce === undefined ? [appendNonce(decoded, prevNonce)] : [decoded]
+  }
+
   async estimateGasLimits(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
@@ -70,12 +106,14 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     }
 
     const addr = addressOf(config, context)
-    if (readArcadeumNonce(...transactions) === undefined) {
-      transactions = appendNonce(transactions, 0)
+    const prevNonce = readArcadeumNonce(...transactions)
+
+    // Set temporal nonce to simulate meta-txn
+    if (prevNonce === undefined) {
+      transactions = appendNonce(transactions, await this.getNonce(config, context))
     }
 
     const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [arcadeumTxAbiEncode(transactions)])
-
     const res = await this.chaindApp.estimateMetaTxnGasReceipt({
       feeToken: ethers.constants.AddressZero,
       call: {
@@ -86,7 +124,10 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     })
 
     const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
-    return transactions.map((t, i) => ({ ...t, gasLimit: decoded[i].gasLimit}))
+    const modTxns = transactions.map((t, i) => ({ ...t, gasLimit: decoded[i].gasLimit}))
+
+    // Remove placeholder nonce if previously defined
+    return prevNonce === undefined ? appendNonce(modTxns, prevNonce) : modTxns
   }
 
   async getNonce(

@@ -25,6 +25,14 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
     )
   }
 
+  async gasRefundOptions(
+    _config: ArcadeumWalletConfig,
+    _context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[][]> {
+    return [transactions]
+  }
+
   async estimateGasLimits(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
