@@ -925,6 +925,33 @@ describe('Arcadeum wallet integration', function () {
         const signature = await wallet2.signMessage(message, 1)
         expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
       })
+      it('Should reject signature with not enough weigth but enough signers', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 0
+            },
+            {
+              address: s2.address,
+              weight: 0
+            },
+            {
+              address: s3.address,
+              weight: 1
+            }
+          ]
+        }
+
+        const wallet2 = new arcadeum.Wallet(newConfig, { ...context, nonStrict: true }, s1, s2).connect(ganache.serverUri, relayer)
+        const signature = await wallet2.signMessage(message, 1)
+        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
+      })
     })
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {
