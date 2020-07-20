@@ -245,7 +245,7 @@ export async function isValidArcadeumUndeployedWalletSignature(
     const signature = decodeSignature(sig)
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
     const config = recoverConfigFromDigest(subDigest, signature)
-    const weight = signature.signers.reduce((v, s) => isSigner(s) ? ++v : v, 0)
+    const weight = signature.signers.reduce((v, s) => isSigner(s) ? v + s.weight : v, 0)
     return compareAddr(addressOf(config, arcadeumContext), address) === 0 && weight >= signature.threshold
   } catch {
     return false
