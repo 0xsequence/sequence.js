@@ -6,7 +6,7 @@ import { BaseRelayer } from './base-relayer'
 
 import * as pony from 'fetch-ponyfill'
 import { ethers } from 'ethers'
-import { addressOf } from '../utils'
+import { addressOf, readArcadeumNonce, appendNonce, MetaTransactionsType, arcadeumTxAbiEncode } from '../utils'
 
 import { IRelayer } from '.'
 
@@ -60,12 +60,80 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     return result
   }
 
+  async gasRefundOptions(
+    config: ArcadeumWalletConfig,
+    context: ArcadeumContext,
+    ...transactions: ArcadeumTransaction[]
+  ): Promise<ArcadeumTransaction[][]> {
+    // chaind only supports refunds on a single token
+    // TODO: Add compatiblity for different refund options
+    const tokenFee = (await this.chaindApp.tokenFee()).fee
+
+    // No gas refund required, return transactions as-is
+    if (tokenFee === ethers.constants.AddressZero) {
+      return [transactions]
+    }
+
+    const addr = addressOf(config, context)
+    const prevNonce = readArcadeumNonce(...transactions)
+
+    // Set temporal nonce to simulate meta-txn
+    if (prevNonce === undefined) {
+      transactions = appendNonce(transactions, await this.getNonce(config, context))
+    }
+
+    const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [arcadeumTxAbiEncode(transactions)])
+    const res = await this.chaindApp.estimateMetaTxnGasReceipt({
+      feeToken: tokenFee,
+      call: {
+        contract: addr,
+        payload: encoded,
+        signers: config.signers.length
+      }
+    })
+
+    const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
+    return prevNonce === undefined ? [appendNonce(decoded, prevNonce)] : [decoded]
+  }
+
   async estimateGasLimits(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
     ...transactions: ArcadeumTransaction[]
   ): Promise<ArcadeumTransaction[]> {
-    throw new Error("Not implemented")
+    if (transactions.length == 0) {
+      return []
+    }
+
+    // chaind requires tokenFee, even for only estimating gasLimits
+    const tokenFee = this.chaindApp.tokenFee()
+
+    const addr = addressOf(config, context)
+    const prevNonce = readArcadeumNonce(...transactions)
+
+    // Set temporal nonce to simulate meta-txn
+    if (prevNonce === undefined) {
+      transactions = appendNonce(transactions, await this.getNonce(config, context))
+    }
+
+    const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [arcadeumTxAbiEncode(transactions)])
+    const res = await this.chaindApp.estimateMetaTxnGasReceipt({
+      feeToken: (await tokenFee).fee,
+      call: {
+        contract: addr,
+        payload: encoded,
+        signers: config.signers.length
+      }
+    })
+
+    const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
+    const modTxns = transactions.map((t, i) => ({
+      ...t,
+      gasLimit: decoded[i].gasLimit
+    }))
+
+    // Remove placeholder nonce if previously defined
+    return prevNonce === undefined ? appendNonce(modTxns, prevNonce) : modTxns
   }
 
   async getNonce(
