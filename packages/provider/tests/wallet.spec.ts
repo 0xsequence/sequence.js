@@ -54,7 +54,8 @@ describe('Arcadeum wallet integration', function () {
       factory,
       mainModule,
       mainModuleUpgradable,
-      guestModule
+      guestModule,
+      requireUtils
     ] = await deployArcadeum(ganache.provider)
 
     // Create fixed context obj
@@ -62,7 +63,8 @@ describe('Arcadeum wallet integration', function () {
       factory: factory.address,
       mainModule: mainModule.address,
       mainModuleUpgradable: mainModuleUpgradable.address,
-      guestModule: guestModule.address
+      guestModule: guestModule.address,
+      requireUtils: requireUtils.address
     }
 
     // Deploy call receiver mock
@@ -243,6 +245,24 @@ describe('Arcadeum wallet integration', function () {
           expect(await callReceiver2.lastValB()).to.equal('0x445566')
         })
 
+        it('Should send a single transaction with sendTransaction', async () => {
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015361'])
+          }
+
+          await wallet.sendTransaction(transaction)
+          expect(await callReceiver1.lastValB()).to.equal('0x015361')
+        })
+
         it('Should send three transactions at once', async () => {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
@@ -338,6 +358,75 @@ describe('Arcadeum wallet integration', function () {
           expect(await callReceiver1.lastValB()).to.equal('0x112233')
           expect(await callReceiver2.lastValB()).to.equal('0x445566')
           expect(await callReceiver3.lastValB()).to.equal('0x778899')
+        })
+      })
+
+      describe('expirable transactions', async () => {
+        it('Should generate and send a non-expired transaction', async () => {
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) + (86400 * 90)
+          }
+
+          await wallet.sendTransaction(transaction)
+          expect(await callReceiver1.lastValB()).to.equal('0x015561')
+        })
+        it('Should generate and fail to send a expired transaction', async () => {
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) - (86400 * 90)
+          }
+
+          const tx = wallet.sendTransaction(transaction)
+          await expect(tx).to.be.rejected
+
+          expect(await callReceiver1.lastValB()).to.equal('0x')
+        })
+        it('Should fail to generate a expired transaction without requireUtils', async () => {
+          // Create wallet
+          const pk = ethers.utils.randomBytes(32)
+
+          const context1 = { ...context }
+          context1.requireUtils = undefined
+
+          var wallet1 = await arcadeum.Wallet.singleOwner(context1, pk)
+          wallet1 = wallet1.connect(ganache.serverUri, relayer)
+
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) + (86400 * 90)
+          }
+
+          const tx = wallet1.sendTransaction(transaction)
+          await expect(tx).to.be.rejected
+          expect(await callReceiver1.lastValB()).to.equal('0x')
         })
       })
     })
