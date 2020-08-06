@@ -1,4 +1,4 @@
-import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish, AuxTransactionRequest } from './types'
+import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish, AuxTransactionRequest, NonceDependency } from './types'
 import { ethers } from 'ethers'
 import {
   addressOf,
@@ -15,7 +15,8 @@ import {
   imageHash,
   arcadeumTxAbiEncode,
   isUsableConfig,
-  makeExpirable
+  makeExpirable,
+  makeAfterNonce
 } from './utils'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
@@ -184,6 +185,22 @@ export class Wallet extends AbstractSigner {
     // append expirable require
     if ((<AuxTransactionRequest>transaction).expiration) {
       arctx = makeExpirable(this.context, arctx, (<AuxTransactionRequest>transaction).expiration)
+    }
+
+    // If transaction depends on another nonce
+    // append after nonce requirement
+    if ((<AuxTransactionRequest>transaction).afterNonce) {
+      const after = (<AuxTransactionRequest>transaction).afterNonce
+      arctx = makeAfterNonce(this.context, arctx,
+        (<NonceDependency>after).address ? {
+          address: (<NonceDependency>after).address,
+          nonce: (<NonceDependency>after).nonce,
+          space: (<NonceDependency>after).space
+        } : {
+          address: this.address,
+          nonce: <BigNumberish>after
+        }
+      )
     }
 
     // If all transactions have 0 gasLimit

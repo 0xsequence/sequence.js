@@ -13,7 +13,7 @@ import { Signer as AbstractSigner } from 'ethers'
 
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf, toArcadeumTransaction, toArcadeumTransactions } from '../src/utils'
+import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf, toArcadeumTransaction, toArcadeumTransactions, encodeNonce } from '../src/utils'
 
 const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
@@ -425,6 +425,123 @@ describe('Arcadeum wallet integration', function () {
           }
 
           const tx = wallet1.sendTransaction(transaction)
+          await expect(tx).to.be.rejected
+          expect(await callReceiver1.lastValB()).to.equal('0x')
+        })
+      })
+
+      describe('linked transactions', async () => {
+        it('Should send transaction linked to same-wallet space', async () => {
+          await wallet.sendTransaction({
+            revertOnError: true,
+            to: wallet.address,
+            value: 0,
+            data: "0x",
+            nonce: encodeNonce(5, 0)
+          })
+
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            afterNonce: encodeNonce(5, 1),
+            nonce: encodeNonce(6, 0)
+          }
+
+          await wallet.sendTransaction(transaction)
+          expect(await callReceiver1.lastValB()).to.equal('0x015561')
+        })
+        it('Should falil to send transaction linked to same-wallet space', async () => {
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            afterNonce: encodeNonce(5, 1),
+            nonce: encodeNonce(6, 0)
+          }
+
+          const tx = wallet.sendTransaction(transaction)
+          await expect(tx).to.be.rejected
+          expect(await callReceiver1.lastValB()).to.equal('0x')
+        })
+        it('Should send transaction linked to other wallet nonce space', async () => {
+          // Create wallet
+          const pk = ethers.utils.randomBytes(32)
+          var wallet2 = await arcadeum.Wallet.singleOwner(context, pk)
+          wallet2 = wallet2.connect(ganache.serverUri, relayer)
+
+          await wallet2.sendTransaction({
+            revertOnError: true,
+            to: wallet.address,
+            value: 0,
+            data: "0x",
+            nonce: encodeNonce(5, 0)
+          })
+
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            afterNonce: {
+              address: wallet2.address,
+              nonce: 1,
+              space: 5
+            }
+          }
+
+          await wallet.sendTransaction(transaction)
+          expect(await callReceiver1.lastValB()).to.equal('0x015561')
+        })
+        it('Should fail to send transaction linked to other wallet nonce space', async () => {
+          // Create wallet
+          const pk = ethers.utils.randomBytes(32)
+          var wallet2 = await arcadeum.Wallet.singleOwner(context, pk)
+          wallet2 = wallet2.connect(ganache.serverUri, relayer)
+
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ganache.signer
+          ).deploy()) as CallReceiverMock
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            afterNonce: {
+              address: wallet2.address,
+              nonce: 1,
+              space: 5
+            }
+          }
+
+          const tx = wallet.sendTransaction(transaction)
           await expect(tx).to.be.rejected
           expect(await callReceiver1.lastValB()).to.equal('0x')
         })

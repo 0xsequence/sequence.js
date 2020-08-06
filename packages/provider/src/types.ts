@@ -147,7 +147,14 @@ export interface ArcadeumTransactionEncoded {
 
 export type AuxTransactionRequest = TransactionRequest & {
   auxiliary?: Transactionish[],
-  expiration?: BigNumberish
+  expiration?: BigNumberish,
+  afterNonce?: NonceDependency | BigNumberish,
+}
+
+export interface NonceDependency {
+  address: string
+  nonce: BigNumberish,
+  space?: BigNumberish
 }
 
 export declare type Transactionish = AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[]
