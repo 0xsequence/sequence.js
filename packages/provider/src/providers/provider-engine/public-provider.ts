@@ -6,7 +6,7 @@ export class PublicProvider implements AsyncSendableMiddleware {
 
   private privateJsonRpcMethods = [
     'net_version', 'eth_chainId',
-    'eth_accounts', 'personal_sign', 'eth_sign',
+    'eth_accounts', 'personal_sign', 'eth_sign', 'eth_signTypedData',
     'eth_sendTransaction', 'eth_sendRawTransaction'
   ]
 
