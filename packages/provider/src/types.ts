@@ -104,6 +104,7 @@ export interface ArcadeumContext {
   mainModule: string,
   mainModuleUpgradable: string,
   guestModule?: string,
+  requireUtils?: string,
   nonStrict?: boolean
 }
 
@@ -145,7 +146,15 @@ export interface ArcadeumTransactionEncoded {
 }
 
 export type AuxTransactionRequest = TransactionRequest & {
-  auxiliary?: Transactionish[]
+  auxiliary?: Transactionish[],
+  expiration?: BigNumberish,
+  afterNonce?: NonceDependency | BigNumberish,
+}
+
+export interface NonceDependency {
+  address: string
+  nonce: BigNumberish,
+  space?: BigNumberish
 }
 
 export declare type Transactionish = AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[]

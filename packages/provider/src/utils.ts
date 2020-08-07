@@ -7,7 +7,8 @@ import {
   ArcadeumTransaction,
   ArcadeumTransactionEncoded,
   AuxTransactionRequest,
-  Transactionish
+  Transactionish,
+  NonceDependency
 } from './types'
 import { ethers, Signer } from 'ethers'
 import * as WalletContract from './commons/wallet_contract'
@@ -15,6 +16,8 @@ import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { TransactionRequest, Provider } from 'ethers/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
+import { abi as requireUtilsAbi } from './abi/requireUtils'
+import { util } from 'chai'
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)
@@ -471,4 +474,70 @@ export function arcadeumTxAbiEncode(txs: ArcadeumTransaction[]): ArcadeumTransac
 
 export function appendNonce(txs: ArcadeumTransaction[], nonce: BigNumberish): ArcadeumTransaction[] {
   return txs.map((t: ArcadeumTransaction) => ({ ...t, nonce }))
+}
+
+export function makeExpirable(context: ArcadeumContext, txs: ArcadeumTransaction[], expiration: BigNumberish): ArcadeumTransaction[] {
+  const requireUtils = new Interface(requireUtilsAbi)
+
+  if (!context || !context.requireUtils) {
+    throw new Error('Undefined requireUtils')
+  }
+
+  return [
+    {
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: 0,
+      to: context.requireUtils,
+      value: 0,
+      data: requireUtils.functions.requireNonExpired.encode([expiration])
+    },
+    ...txs
+  ]
+}
+
+export function makeAfterNonce(context: ArcadeumContext, txs: ArcadeumTransaction[], dep: NonceDependency): ArcadeumTransaction[] {
+  const requireUtils = new Interface(requireUtilsAbi)
+
+  if (!context || !context.requireUtils) {
+    throw new Error('Undefined requireUtils')
+  }
+
+  return [
+    {
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: 0,
+      to: context.requireUtils,
+      value: 0,
+      data: requireUtils.functions.requireMinNonce.encode([
+        dep.address,
+        dep.space ? encodeNonce(dep.space, dep.nonce) : dep.nonce
+      ])
+    },
+    ...txs
+  ]
+}
+
+export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumberish {
+  const bspace = ethers.utils.bigNumberify(space)
+  const bnonce = ethers.utils.bigNumberify(nonce)
+
+  const shl = ethers.constants.Two.pow(ethers.utils.bigNumberify(96))
+
+  if (!bnonce.div(shl).eq(ethers.constants.Zero)) {
+    throw new Error('Space already encoded')
+  }
+
+  return bnonce.add(bspace.mul(shl))
+}
+
+export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
+  const bnonce = ethers.utils.bigNumberify(nonce)
+  const shr = ethers.constants.Two.pow(ethers.utils.bigNumberify(96))
+
+  return [
+    bnonce.div(shr),
+    bnonce.mod(shr)
+  ]
 }

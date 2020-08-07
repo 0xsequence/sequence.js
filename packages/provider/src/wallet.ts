@@ -1,4 +1,4 @@
-import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish } from './types'
+import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish, AuxTransactionRequest, NonceDependency } from './types'
 import { ethers } from 'ethers'
 import {
   addressOf,
@@ -14,7 +14,9 @@ import {
   compareAddr,
   imageHash,
   arcadeumTxAbiEncode,
-  isUsableConfig
+  isUsableConfig,
+  makeExpirable,
+  makeAfterNonce
 } from './utils'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
@@ -179,6 +181,28 @@ export class Wallet extends AbstractSigner {
       arctx = await toArcadeumTransactions(this, [transaction])
     }
 
+    // If transaction is marked as expirable
+    // append expirable require
+    if ((<AuxTransactionRequest>transaction).expiration) {
+      arctx = makeExpirable(this.context, arctx, (<AuxTransactionRequest>transaction).expiration)
+    }
+
+    // If transaction depends on another nonce
+    // append after nonce requirement
+    if ((<AuxTransactionRequest>transaction).afterNonce) {
+      const after = (<AuxTransactionRequest>transaction).afterNonce
+      arctx = makeAfterNonce(this.context, arctx,
+        (<NonceDependency>after).address ? {
+          address: (<NonceDependency>after).address,
+          nonce: (<NonceDependency>after).nonce,
+          space: (<NonceDependency>after).space
+        } : {
+          address: this.address,
+          nonce: <BigNumberish>after
+        }
+      )
+    }
+
     // If all transactions have 0 gasLimit
     // estimate gasLimits for each transaction
     if (!arctx.find((a) => !a.revertOnError && !ethers.utils.bigNumberify(a.gasLimit).eq(ethers.constants.Zero))) {
@@ -188,7 +212,6 @@ export class Wallet extends AbstractSigner {
     const providedNonce = readArcadeumNonce(...arctx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     arctx = appendNonce(arctx, nonce)
-
     const signature = this.signTransactions(...arctx)
     return this.relayer.relay(this.config, this.context, signature, ...arctx)
   }
