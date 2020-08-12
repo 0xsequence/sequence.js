@@ -20,7 +20,7 @@
     "dist"
   ],
   "dependencies": {
-    "ethwebtoken": "^0.2.1",
+    "@arcadeum/ethauth": "^0.3.0",
     "eventemitter3": "^4.0.4",
     "fetch-ponyfill": "^6.1.1"
   },

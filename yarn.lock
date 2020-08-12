@@ -2,6 +2,14 @@
 # yarn lockfile v1
 
 
+"@arcadeum/ethauth@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@arcadeum/ethauth/-/ethauth-0.3.0.tgz#49fba8d6a218559138a8396d8c3dc68c80ea5c07"
+  integrity sha512-jQ5ep5Zs2gOWv7c2rEBDYlX+QDtuV8NGM4vk6FFk+5Ibz7jVUjjDduSW9SWLG5OgdluE7C4F0cYUT/L65qDuzQ==
+  dependencies:
+    base64url "^3.0.1"
+    ethers-eip712 "^0.2.0"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4":
   version "7.10.4"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.10.4.tgz#168da1a36e90da68ae8d49c0f1b48c7c6249213a"
@@ -3759,14 +3767,6 @@ ethjs-util@0.1.6:
   dependencies:
     is-hex-prefixed "1.0.0"
     strip-hex-prefix "1.0.0"
-
-ethwebtoken@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/ethwebtoken/-/ethwebtoken-0.2.1.tgz#844845e85a60eced55cf752855f5f09d26b186b8"
-  integrity sha512-8H4yIHpS85dlxAWriybkm5KL2u/lnIyr6um0whHS8gyEt6AF55PvzIv7cLEgTdFAY1DK1ReiCDOD2s1c9hzwyg==
-  dependencies:
-    base64url "^3.0.1"
-    ethers-eip712 "^0.2.0"
 
 eventemitter3@4.0.4, eventemitter3@^4.0.4:
   version "4.0.4"

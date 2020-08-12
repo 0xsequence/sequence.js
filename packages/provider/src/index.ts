@@ -28,3 +28,12 @@ export { ExternalWindowProvider } from './providers/external-window-provider'
 export { WalletProvider } from './providers/wallet-provider'
 
 export { WalletContext } from './context'
+
+export {
+  ValidateArcadeumDeployedContractAccountProof,
+  ValidateArcadeumUndeployedContractAccountProof
+} from './auth/auth'
+
+// TODO: rename..
+import * as services from './apiclient'
+export { services }
