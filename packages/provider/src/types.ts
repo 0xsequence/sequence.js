@@ -163,5 +163,6 @@ export interface NetworkConfig {
   name: string
   chainId: number
   rpcUrl: string
-  ensAddress?: string
+  ensAddress?: string,
+  sidechains?: NetworkConfig[]
 }

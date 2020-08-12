@@ -102,7 +102,7 @@ export class ExternalWindowProvider implements AsyncSendable {
     return this.connected
   }
 
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     // automatically open the wallet when a provider request makes it here
     if (!this.walletOpened) {
       // toggle the wallet to auto-close once user submits input. ie.
@@ -119,10 +119,10 @@ export class ExternalWindowProvider implements AsyncSendable {
     }
 
     // Send request to the wallet window
-    this.sendRequest(MessageType.SEND_REQUEST, request, callback)
+    this.sendRequest(MessageType.SEND_REQUEST, request, callback, chainId)
   }
 
-  private sendRequest(type: MessageType, payload: MessagePayload, callback?: JsonRpcResponseCallback) {
+  private sendRequest(type: MessageType, payload: MessagePayload, callback?: JsonRpcResponseCallback, chainId?: number) {
     if (!this.connected) {
       this.pendingMessageQueue.push({
         type,
@@ -135,7 +135,8 @@ export class ExternalWindowProvider implements AsyncSendable {
     const sendRequest: MessageRequest = {
       type,
       id: ++requestIdx,
-      payload: payload
+      payload: payload,
+      chainId: chainId
     }
 
     if (callback && sendRequest.payload) {
@@ -322,6 +323,7 @@ export type MessageRequest = {
   type: MessageType
   id: number
   payload?: {[key: string]: any}
+  chainId?: number
 }
 
 export type MessageResponse = {

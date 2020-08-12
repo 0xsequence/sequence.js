@@ -1,8 +1,9 @@
 import { JsonRpcProvider, JsonRpcSigner, AsyncSendable, Web3Provider } from 'ethers/providers'
 import { ArcadeumWalletConfig, ArcadeumContext, NetworkConfig } from '../types'
 import { ExternalWindowProvider } from './external-window-provider'
-import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider } from './provider-engine'
+import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, JsonRpcMiddleware } from './provider-engine'
 import { WalletContext } from '../context'
+import { SidechainProvider } from './sidechain-provider'
 
 export interface IWalletProvider {
   login(): Promise<boolean>
@@ -58,6 +59,9 @@ export class WalletProvider implements IWalletProvider {
   private cachedProvider?: CachedProvider
   private publicProvider?: PublicProvider
   private externalWindowProvider?: ExternalWindowProvider
+  private allowProvider?: JsonRpcMiddleware
+
+  private sidechainProviders: { [id: number] : Web3Provider }
 
   constructor(config?: WalletProviderConfig) {
     this.config = config
@@ -75,7 +79,7 @@ export class WalletProvider implements IWalletProvider {
       case 'ExternalWindow': {
 
         // .....
-        const allowProvider = allowProviderMiddleware((): boolean => {
+        this.allowProvider = allowProviderMiddleware((): boolean => {
           const isLoggedIn = this.isLoggedIn()
           if (!isLoggedIn) {
             throw new Error('not logged in')
@@ -94,7 +98,7 @@ export class WalletProvider implements IWalletProvider {
 
         this.providerEngine = new ProviderEngine(this.externalWindowProvider, [
           loggingProviderMiddleware,
-          allowProvider,
+          this.allowProvider,
           this.cachedProvider,
           this.publicProvider
         ])
@@ -228,6 +232,14 @@ export class WalletProvider implements IWalletProvider {
     return this.provider
   }
 
+  getSidechainProvider(chainId: number): JsonRpcProvider | undefined {
+    return this.sidechainProviders[chainId]
+  }
+
+  getSidechainProviders(): { [id: number] : Web3Provider } {
+    return this.sidechainProviders
+  }
+
   getSigner(): JsonRpcSigner {
     return this.getProvider().getSigner()
   }
@@ -322,6 +334,32 @@ export class WalletProvider implements IWalletProvider {
 
     // update network in session
     this.session.network = network
+
+    // update sidechain providers
+    this.useSidechainNetworks(network.sidechains ? network.sidechains : [])
+  }
+
+  private useSidechainNetworks = (networks: NetworkConfig[]) => {
+    // Reconstruct sidechain providers
+    this.sidechainProviders = networks.reduce((providers, network) => {
+      const sideExternalWindowProvider = new SidechainProvider(
+        this.externalWindowProvider,
+        network.chainId
+      )
+
+      const cachedProvider = new CachedProvider()
+      const publicProvider = new PublicProvider(network.rpcUrl)
+
+      const providerEngine = new ProviderEngine(sideExternalWindowProvider, [
+        loggingProviderMiddleware,
+        this.allowProvider,
+        cachedProvider,
+        publicProvider
+      ])
+
+      providers[network.chainId] = new Web3Provider(providerEngine, network)
+      return providers
+    }, {} as {[id: number]: Web3Provider})
   }
 }
 
