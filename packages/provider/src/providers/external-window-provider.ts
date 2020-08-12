@@ -20,7 +20,7 @@ export class ExternalWindowProvider implements AsyncSendable {
   private networkPayload?: NetworkConfig
   private events: EventEmitter<EventType, any> = new EventEmitter()
 
-  constructor(walletAppURL: string, chainId?: number) {
+  constructor(walletAppURL: string) {
     this.walletURL = new URL(walletAppURL)
 
     // init postMessage handler between dapp and wallet
