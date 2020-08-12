@@ -20,11 +20,8 @@ export class ExternalWindowProvider implements AsyncSendable {
   private networkPayload?: NetworkConfig
   private events: EventEmitter<EventType, any> = new EventEmitter()
 
-  private chainId?: number
-
   constructor(walletAppURL: string, chainId?: number) {
     this.walletURL = new URL(walletAppURL)
-    this.chainId = chainId
 
     // init postMessage handler between dapp and wallet
     window.addEventListener('message', this.handleMessage)
@@ -67,8 +64,7 @@ export class ExternalWindowProvider implements AsyncSendable {
         id: ++requestIdx,
         payload: {
           state: state
-        },
-        chainId: this.chainId
+        }
       }
 
       const postMessageUntilConnected = () => {
@@ -106,7 +102,7 @@ export class ExternalWindowProvider implements AsyncSendable {
     return this.connected
   }
 
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     // automatically open the wallet when a provider request makes it here
     if (!this.walletOpened) {
       // toggle the wallet to auto-close once user submits input. ie.
@@ -123,10 +119,10 @@ export class ExternalWindowProvider implements AsyncSendable {
     }
 
     // Send request to the wallet window
-    this.sendRequest(MessageType.SEND_REQUEST, request, callback)
+    this.sendRequest(MessageType.SEND_REQUEST, request, callback, chainId)
   }
 
-  private sendRequest(type: MessageType, payload: MessagePayload, callback?: JsonRpcResponseCallback) {
+  private sendRequest(type: MessageType, payload: MessagePayload, callback?: JsonRpcResponseCallback, chainId?: number) {
     if (!this.connected) {
       this.pendingMessageQueue.push({
         type,
@@ -140,7 +136,7 @@ export class ExternalWindowProvider implements AsyncSendable {
       type,
       id: ++requestIdx,
       payload: payload,
-      chainId: this.chainId
+      chainId: chainId
     }
 
     if (callback && sendRequest.payload) {

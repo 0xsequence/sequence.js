@@ -3,6 +3,7 @@ import { ArcadeumWalletConfig, ArcadeumContext, NetworkConfig } from '../types'
 import { ExternalWindowProvider } from './external-window-provider'
 import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, JsonRpcMiddleware } from './provider-engine'
 import { WalletContext } from '../context'
+import { SidechainProvider } from './sidechain-provider'
 
 export interface IWalletProvider {
   login(): Promise<boolean>
@@ -341,15 +342,15 @@ export class WalletProvider implements IWalletProvider {
   private useSidechainNetworks = (networks: NetworkConfig[]) => {
     // Reconstruct sidechain providers
     this.sidechainProviders = networks.reduce((providers, network) => {
-      const sideExternalWindowProvider = new ExternalWindowProvider(
-        this.config.externalWindowProvider.walletAppURL,
+      const sideExternalWindowProvider = new SidechainProvider(
+        this.externalWindowProvider,
         network.chainId
       )
 
       const cachedProvider = new CachedProvider()
       const publicProvider = new PublicProvider(network.rpcUrl)
 
-      const providerEngine = new ProviderEngine(this.externalWindowProvider, [
+      const providerEngine = new ProviderEngine(sideExternalWindowProvider, [
         loggingProviderMiddleware,
         this.allowProvider,
         cachedProvider,
