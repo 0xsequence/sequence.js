@@ -20,8 +20,11 @@ export class ExternalWindowProvider implements AsyncSendable {
   private networkPayload?: NetworkConfig
   private events: EventEmitter<EventType, any> = new EventEmitter()
 
-  constructor(walletAppURL: string) {
+  private chainId?: number
+
+  constructor(walletAppURL: string, chainId?: number) {
     this.walletURL = new URL(walletAppURL)
+    this.chainId = chainId
 
     // init postMessage handler between dapp and wallet
     window.addEventListener('message', this.handleMessage)
@@ -64,7 +67,8 @@ export class ExternalWindowProvider implements AsyncSendable {
         id: ++requestIdx,
         payload: {
           state: state
-        }
+        },
+        chainId: this.chainId
       }
 
       const postMessageUntilConnected = () => {
@@ -135,7 +139,8 @@ export class ExternalWindowProvider implements AsyncSendable {
     const sendRequest: MessageRequest = {
       type,
       id: ++requestIdx,
-      payload: payload
+      payload: payload,
+      chainId: this.chainId
     }
 
     if (callback && sendRequest.payload) {
@@ -322,6 +327,7 @@ export type MessageRequest = {
   type: MessageType
   id: number
   payload?: {[key: string]: any}
+  chainId?: number
 }
 
 export type MessageResponse = {
