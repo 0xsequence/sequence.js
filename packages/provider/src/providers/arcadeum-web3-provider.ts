@@ -3,9 +3,8 @@ import { Networkish, BigNumberish, Interface } from "ethers/utils"
 import { toArcadeumTransactions, makeExpirable, makeAfterNonce, arcadeumTxAbiEncode } from "../utils"
 import { NonceDependency, ArcadeumContext } from "../types"
 import { abi as mainModuleAbi } from '../abi/mainModule'
-import { ethers, Signer } from "ethers"
 
-export class SequenceWeb3Provider extends Web3Provider {
+export class ArcadeumWeb3Provider extends Web3Provider {
     private context: ArcadeumContext
 
     constructor(
@@ -17,12 +16,12 @@ export class SequenceWeb3Provider extends Web3Provider {
         this.context = context
     }
 
-    getSequenceSigner(): SequenceSigner {
-        return new SequenceSigner(this.context, this.getSigner())
+    getArcadeumSigner(): ArcadeumSigner {
+        return new ArcadeumSigner(this.context, this.getSigner())
     }
 }
 
-export class SequenceSigner {
+export class ArcadeumSigner {
     private context: ArcadeumContext
     private signer: JsonRpcSigner
 

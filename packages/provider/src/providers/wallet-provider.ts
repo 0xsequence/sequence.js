@@ -4,7 +4,7 @@ import { ExternalWindowProvider } from './external-window-provider'
 import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, JsonRpcMiddleware } from './provider-engine'
 import { WalletContext } from '../context'
 import { SidechainProvider } from './sidechain-provider'
-import { SequenceWeb3Provider } from './sequence-web3-provider'
+import { ArcadeumWeb3Provider } from './arcadeum-web3-provider'
 
 export interface IWalletProvider {
   login(): Promise<boolean>
@@ -55,14 +55,14 @@ export class WalletProvider implements IWalletProvider {
 
   private session: WalletSession | null
 
-  private provider: SequenceWeb3Provider
+  private provider: ArcadeumWeb3Provider
   private providerEngine?: ProviderEngine
   private cachedProvider?: CachedProvider
   private publicProvider?: PublicProvider
   private externalWindowProvider?: ExternalWindowProvider
   private allowProvider?: JsonRpcMiddleware
 
-  private sidechainProviders: { [id: number] : SequenceWeb3Provider }
+  private sidechainProviders: { [id: number] : ArcadeumWeb3Provider }
 
   constructor(config?: WalletProviderConfig) {
     this.config = config
@@ -105,7 +105,7 @@ export class WalletProvider implements IWalletProvider {
         ])
 
         // this.provider = this.providerEngine.createJsonRpcProvider()
-        this.provider = new SequenceWeb3Provider(
+        this.provider = new ArcadeumWeb3Provider(
           this.config.walletContext,
           this.providerEngine,
           'unspecified'
@@ -241,7 +241,7 @@ export class WalletProvider implements IWalletProvider {
     return this.sidechainProviders[chainId]
   }
 
-  getSidechainProviders(): { [id: number] : SequenceWeb3Provider } {
+  getSidechainProviders(): { [id: number] : ArcadeumWeb3Provider } {
     return this.sidechainProviders
   }
 
@@ -325,7 +325,7 @@ export class WalletProvider implements IWalletProvider {
     // TODO: with ethers v5, we can set network to 'any', then set network = null
     // anytime the network changes, and call detectNetwork(). We can reuse
     // that object instance instead of creating a new one as below.
-    this.provider = new SequenceWeb3Provider(
+    this.provider = new ArcadeumWeb3Provider(
       this.config.walletContext,
       this.providerEngine,
       network.name
@@ -366,13 +366,13 @@ export class WalletProvider implements IWalletProvider {
         publicProvider
       ])
 
-      providers[network.chainId] = new SequenceWeb3Provider(
+      providers[network.chainId] = new ArcadeumWeb3Provider(
         this.config.walletContext,
         providerEngine,
         network
       )
       return providers
-    }, {} as {[id: number]: SequenceWeb3Provider})
+    }, {} as {[id: number]: ArcadeumWeb3Provider})
   }
 }
 
