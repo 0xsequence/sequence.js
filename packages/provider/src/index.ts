@@ -21,6 +21,8 @@ export {
   NetworkConfig
 } from './types'
 
+export { ArcadeumWeb3Provider } from './providers/arcadeum-web3-provider'
+
 export { JsonRpcAsyncSender } from './providers/async-sender'
 
 export { ExternalWindowProvider } from './providers/external-window-provider'
