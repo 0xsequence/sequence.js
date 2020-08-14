@@ -21,7 +21,7 @@ export {
   NetworkConfig
 } from './types'
 
-export { ArcadeumWeb3Provider } from './providers/arcadeum-web3-provider'
+export { ArcadeumWeb3Provider, ArcadeumSigner } from './providers/arcadeum-web3-provider'
 
 export { JsonRpcAsyncSender } from './providers/async-sender'
 
@@ -31,10 +31,7 @@ export { WalletProvider } from './providers/wallet-provider'
 
 export { WalletContext } from './context'
 
-export {
-  ValidateArcadeumDeployedContractAccountProof,
-  ValidateArcadeumUndeployedContractAccountProof
-} from './auth/auth'
+export { ValidateArcadeumDeployedContractAccountProof, ValidateArcadeumUndeployedContractAccountProof } from './auth/auth'
 
 // TODO: rename..
 import * as services from './apiclient'
