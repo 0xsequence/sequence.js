@@ -5,7 +5,7 @@ export const WalletContext: ArcadeumContext = {
   mainModule: '0x57bA6Eb1ed6821Db7bC26C6714f093E2BCbea40F',
   mainModuleUpgradable: '0xF52136A04057d889CeBf9bCc2F3142965AeABc54',
   guestModule: '0xe076ad01F1eb18A8eF20bB64003DA4810a429a32',
-  requireUtils: '0xd46566c23ae549fc14abfcfcbc130e3ea7e63f82'
+  requireUtils: '0xdc9b74c548b8697da0a51e32acf891a5a73df22c'
 }
 
 export const ethereumNetworks: {[key: string]: NetworkConfig} = {
