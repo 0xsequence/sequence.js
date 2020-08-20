@@ -50,7 +50,10 @@ export async function deployArcadeum(provider: Provider): Promise<[
     RequireUtilsArtifact.abi,
     RequireUtilsArtifact.bytecode,
     (provider as any).getSigner()
-  ).deploy()) as unknown) as RequireUtils
+  ).deploy(
+    factory.address,
+    mainModule.address
+  )) as unknown) as RequireUtils
 
   return [
     factory,

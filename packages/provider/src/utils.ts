@@ -17,7 +17,6 @@ import { TransactionRequest, Provider } from 'ethers/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
-import { util } from 'chai'
 
 export function compareAddr(a: string, b: string): number {
   const bigA = ethers.utils.bigNumberify(a)

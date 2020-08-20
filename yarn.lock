@@ -1888,7 +1888,11 @@ aproba@^2.0.0:
 
 "arcadeum-wallet@https://github.com/arcadeum/wallet-contracts.git":
   version "0.1.0"
-  resolved "https://github.com/arcadeum/wallet-contracts.git#d846f15f83ba0b02d9e66ab236f51428497ba126"
+  resolved "https://github.com/arcadeum/wallet-contracts.git#12c8c56680f8aab7f2c519a33e3ad8a5f4e24c9f"
+
+"arcadeum-wallet@https://github.com/arcadeum/wallet-contracts.git#require-counterfactual-config":
+  version "0.1.0"
+  resolved "https://github.com/arcadeum/wallet-contracts.git#82a0d2879103b20f450973da26934583a295e76c"
 
 archy@^1.0.0:
   version "1.0.0"
