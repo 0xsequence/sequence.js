@@ -62,6 +62,10 @@ export class Wallet extends AbstractSigner {
     return this.w3provider !== undefined
   }
 
+  async getSigners(): Promise<string[]> {
+    return Promise.all(this._signers.map((s) => s.getAddress()))
+  }
+
   async getAddress(): Promise<string> {
     return this.address
   }
