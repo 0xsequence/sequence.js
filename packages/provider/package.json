@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "@arcadeum/ethauth": "^0.3.0",
-    "eventemitter3": "^4.0.4",
+    "eventemitter3": "^4.0.6",
     "fetch-ponyfill": "^6.1.1"
   },
   "peerDependencies": {
@@ -40,7 +40,7 @@
     "mocha": "^7.2.0",
     "nyc": "^15.0.1",
     "rimraf": "^3.0.2",
-    "ts-node": "^8.8.2",
+    "ts-node": "^9.0.0",
     "tslint": "^6.1.2",
     "web3": "^1.2.8",
     "web3-typescript-typings": "^0.10.2"
