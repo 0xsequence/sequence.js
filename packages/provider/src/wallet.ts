@@ -152,14 +152,18 @@ export class Wallet extends AbstractSigner {
 
     const transactions = [...preTransaction, transaction, ...postTransaction]
 
-    return [{
-      delegateCall: false,
-      revertOnError: false,
-      gasLimit: gasLimit,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: walletInterface.functions.selfExecute.encode([arcadeumTxAbiEncode(transactions)])
-    }]
+    if (transactions.length === 1) {
+      return transactions
+    } else {
+      return [{
+        delegateCall: false,
+        revertOnError: false,
+        gasLimit: gasLimit,
+        to: this.address,
+        value: ethers.constants.Zero,
+        data: walletInterface.functions.selfExecute.encode([arcadeumTxAbiEncode(transactions)])
+      }]
+    }
   }
 
   async updateConfig(
