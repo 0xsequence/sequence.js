@@ -540,3 +540,7 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
     bnonce.mod(shr)
   ]
 }
+
+export function isConfig(a: ArcadeumWalletConfig, b: ArcadeumWalletConfig): boolean {
+  return imageHash(a) === imageHash(b)
+}
