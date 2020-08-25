@@ -29,6 +29,7 @@ import {
 import { IRelayer } from './relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
+import { abi as requireUtilsAbi } from './abi/requireUtils'
 import { JsonRpcAsyncSender } from './providers/async-sender'
 import { ConnectionInfo } from 'ethers/utils/web'
 
@@ -91,7 +92,8 @@ export class Wallet extends AbstractSigner {
   }
 
   async buildUpdateConfig(
-    config: ArcadeumWalletConfig
+    config: ArcadeumWalletConfig,
+    publish = false
   ): Promise<ArcadeumTransaction[]> {
     if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
 
@@ -115,7 +117,7 @@ export class Wallet extends AbstractSigner {
       )
     }]
 
-    const transactions = [...preTransaction, {
+    const transaction = {
       delegateCall: false,
       revertOnError: true,
       gasLimit: ethers.constants.Zero,
@@ -124,7 +126,27 @@ export class Wallet extends AbstractSigner {
       data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
         [imageHash(sortConfig(config))]
       )
-    }]
+    }
+
+    const postTransaction = publish ? [{
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: ethers.constants.Zero,
+      to: this.context.requireUtils,
+      value: ethers.constants.Zero,
+      data: new Interface(requireUtilsAbi).functions.requireConfig.encode(
+        [
+          this.address,
+          config.threshold,
+          sortConfig(config).signers.map((s) => ({
+            weight: s.weight,
+            signer: s.address
+          }))
+        ]
+      )
+    }] : []
+
+    const transactions = [...preTransaction, transaction, ...postTransaction]
 
     return [{
       delegateCall: false,
@@ -138,10 +160,11 @@ export class Wallet extends AbstractSigner {
 
   async updateConfig(
     config: ArcadeumWalletConfig,
-    nonce?: number
+    nonce?: number,
+    publish = false
   ): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
     const [txs, n] = await Promise.all([
-      this.buildUpdateConfig(config),
+      this.buildUpdateConfig(config, publish),
       nonce ? nonce : await this.getNonce()]
     )
 
@@ -149,6 +172,29 @@ export class Wallet extends AbstractSigner {
       { address: this.address, ...config},
       await this.sendTransaction(appendNonce(txs, n))
     ]
+  }
+
+  async publishConfig(
+    nonce?: number
+  ): Promise<TransactionResponse> {
+    return this.sendTransaction({
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: ethers.constants.Zero,
+      to: this.context.requireUtils,
+      value: ethers.constants.Zero,
+      nonce: nonce,
+      data: new Interface(requireUtilsAbi).functions.requireConfig.encode(
+        [
+          this.address,
+          this.config.threshold,
+          sortConfig(this.config).signers.map((s) => ({
+            weight: s.weight,
+            signer: s.address
+          }))
+        ]
+      )
+    })
   }
 
   async getNonce(blockTag?: BlockTag): Promise<number> {

@@ -1237,7 +1237,7 @@ describe('Arcadeum wallet integration', function () {
       }
 
       const [config, tx] = await wallet.updateConfig(newConfig)
-      const txr = await tx.wait()
+      await tx.wait()
 
       const updatedWallet = new arcadeum.Wallet(config, context, s1, s2).connect(ganache.serverUri, relayer)
 
@@ -1248,6 +1248,33 @@ describe('Arcadeum wallet integration', function () {
       expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
 
       await updatedWallet.sendTransaction(transaction)
+    })
+    it('Should migrate and publish config', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const newConfig = {
+        threshold: 2,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
+
+      const [, tx] = await wallet.updateConfig(newConfig, undefined, true)
+      const receipt = await tx.wait()
+      expect(receipt.logs[6].data).to.contain(s1.address.slice(2).toLowerCase())
+      expect(receipt.logs[6].data).to.contain(s2.address.slice(2).toLowerCase())
+    })
+    it('Should publish config', async () => {
+      const receipt = await (await wallet.publishConfig()).wait()
+      expect(receipt.logs[2].data).to.contain(wallet.config.signers[0].address.slice(2).toLowerCase())
     })
     describe('after migrating and updating', () => {
       let wallet2: arcadeum.Wallet
