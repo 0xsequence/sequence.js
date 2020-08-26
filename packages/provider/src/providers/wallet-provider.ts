@@ -5,6 +5,7 @@ import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, Cac
 import { WalletContext } from '../context'
 import { SidechainProvider } from './sidechain-provider'
 import { ArcadeumWeb3Provider } from './arcadeum-web3-provider'
+import { ethers } from 'ethers'
 
 export interface IWalletProvider {
   login(): Promise<boolean>
@@ -17,7 +18,7 @@ export interface IWalletProvider {
   getNetwork(): Promise<string>
   getChainId(): Promise<number>
 
-  openWallet(path?: string): Promise<boolean>
+  openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
 
   getProvider(): JsonRpcProvider
@@ -36,6 +37,7 @@ interface ProviderUtils {
   sendToken()
   callContract()
   signMessage()
+  // signTypedData(object)
   recoverSignature()
 
   history()
@@ -121,6 +123,15 @@ export class WalletProvider implements IWalletProvider {
 
         break
       }
+
+      case 'Web3Global': {
+        // TODO: check if window.web3.currentProvider or window.ethereum exists or is set, otherwise return error
+        // TODO: call window.ethereum.enable() or .connect()
+
+        // this.provider = new Web3Provider((window as any).ethereum, 'unspecified') // TODO: check the network argument
+        break
+      }
+
       default: {
         throw new Error('unsupported provider type, must be one of ${WalletProviderType}')
       }
@@ -148,9 +159,9 @@ export class WalletProvider implements IWalletProvider {
         this.useSession(sessionPayload)
         this.saveSession(sessionPayload)
 
-        setTimeout(() => {
-          this.externalWindowProvider.closeWallet()
-        }, 2000)
+        // setTimeout(() => {
+        //   this.externalWindowProvider.closeWallet()
+        // }, 2000)
 
         break
       }
@@ -215,7 +226,11 @@ export class WalletProvider implements IWalletProvider {
     return session.network.chainId
   }
 
-  openWallet = async (path?: string, state?: object): Promise<boolean> => {
+  openWallet = async (path?: string, state?: any): Promise<boolean> => {
+    if (state?.login !== true && !this.isLoggedIn()) {
+      throw new Error('login first')
+    }
+
     if (this.externalWindowProvider) {
       this.externalWindowProvider.openWallet(path, state)
 
@@ -334,11 +349,16 @@ export class WalletProvider implements IWalletProvider {
     // ..
     this.publicProvider.setRpcUrl(network.rpcUrl)
 
+    // seed the session cache
+    this.cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
+    this.cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
+
     // refresh our provider cache when the network changes
     if (this.session.network && this.session.network.chainId !== network.chainId) {
       this.cachedProvider.resetCache()
       this.provider.send('eth_accounts', [])
       this.provider.send('net_version', [])
+      this.provider.send('eth_chainId', [])
     }
 
     // update network in session
