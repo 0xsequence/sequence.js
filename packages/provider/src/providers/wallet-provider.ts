@@ -14,7 +14,7 @@ export interface IWalletProvider {
   isConnected(): boolean
   isLoggedIn(): boolean
   getSession(): WalletSession | undefined
-  getAccountAddress(): Promise<string>
+  getAddress(): string
   getNetwork(): Promise<string>
   getChainId(): Promise<number>
 
@@ -30,15 +30,20 @@ export interface IWalletProvider {
 
   on(event: WalletProviderEventType, fn: (...args: any[]) => void)
   once(event: WalletProviderEventType, fn: (...args: any[]) => void)
+
+  // utils: ProviderUtils
 }
 
 interface ProviderUtils {
+  signMessage()
+  signTypedData()
+
+  sendTransaction()
+  sendTransactions()
+
   sendETH()
   sendToken()
   callContract()
-  signMessage()
-  // signTypedData(object)
-  recoverSignature()
 
   history()
   getReceipt()
@@ -47,6 +52,9 @@ interface ProviderUtils {
 
   isWalletDeployed()
   deployWallet()
+
+  validateSignature()
+  recoverWalletConfig()
 }
 
 export type WalletProviderEventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
@@ -205,7 +213,7 @@ export class WalletProvider implements IWalletProvider {
     return this.session
   }
 
-  getAccountAddress = async (): Promise<string> => {
+  getAddress = (): string => {
     const session = this.getSession()
     return session.accountAddress
   }
