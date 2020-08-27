@@ -1,5 +1,6 @@
 import { BigNumberish, Arrayish } from 'ethers/utils'
 import { TransactionRequest } from 'ethers/providers'
+import { IRelayer } from './relayer'
 
 export interface JsonRpcRequest {
   jsonrpc: string
@@ -164,5 +165,8 @@ export interface NetworkConfig {
   chainId: number
   rpcUrl: string
   ensAddress?: string,
-  sidechains?: NetworkConfig[]
+  sidechains?: NetworkConfig[],
+  isMain?: boolean,
+  isAuth?: boolean,
+  relayer?: IRelayer,
 }

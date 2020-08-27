@@ -11,5 +11,18 @@ export const abi = [
     outputs: [],
     payable: false,
     stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'imageHash',
+    constant: true,
+    inputs: [],
+    outputs: [
+      {
+        type: 'bytes32'
+      }
+    ],
+    payable: false,
+    stateMutability: 'view'
   }
 ]

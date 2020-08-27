@@ -2,6 +2,7 @@ import * as utils from './utils'
 
 export { utils }
 export { Wallet } from './wallet'
+export { MultiWallet, MultiWalletParams } from './multi-wallet'
 export { Provider } from './provider'
 export { LocalRelayer } from './relayer/local-relayer'
 export { RpcRelayer } from './relayer/rpc-relayer'

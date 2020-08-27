@@ -56,5 +56,36 @@ export const abi = [
     outputs: [],
     payable: false,
     stateMutability: 'nonpayable'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: '_wallet',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'bytes32',
+        name: '_imageHash',
+        type: 'bytes32'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: '_threshold',
+        type: 'uint256'
+      },
+      {
+        indexed: false,
+        internalType: 'bytes',
+        name: '_signers',
+        type: 'bytes'
+      }
+    ],
+    name: 'RequiredConfig',
+    type: 'event'
   }
 ]

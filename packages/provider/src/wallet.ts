@@ -91,6 +91,12 @@ export class Wallet extends AbstractSigner {
     return this
   }
 
+  useConfig(config: ArcadeumWalletConfig): Wallet {
+    return new Wallet(config, this.context, ...this._signers)
+      .setProvider(this.w3provider)
+      .setRelayer(this.relayer)
+  }
+
   connect(provider: AsyncSendable | ConnectionInfo | string, relayer: IRelayer): Wallet {
     return new Wallet(this.config, this.context, ...this._signers).setProvider(provider).setRelayer(relayer)
   }
