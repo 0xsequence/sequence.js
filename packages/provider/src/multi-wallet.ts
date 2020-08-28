@@ -5,7 +5,8 @@ import { NetworkConfig, ArcadeumWalletConfig, ArcadeumContext, Transactionish } 
 import { Arrayish, BigNumberish } from 'ethers/utils'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
-import { isConfig, isAsyncSendable } from './utils'
+import { isConfig } from './utils'
+import { NotEnoughSigners } from './errors'
 
 // TODO: Add more details to network
 // authChain, mainNetwork, etc
@@ -125,7 +126,7 @@ export class MultiWallet extends AbstractSigner {
     }, ethers.constants.Zero)
 
     if (weight.lt(lastConfig.threshold)) {
-      throw Error('Not enough signing power for sending a transaction')
+      throw new NotEnoughSigners(`Wallet combined weight ${weight.toString()} below required ${lastConfig.threshold.toString()}}`)
     }
 
     // If the wallet is updated, procede to transaction send
