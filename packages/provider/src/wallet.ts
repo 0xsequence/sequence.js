@@ -18,7 +18,7 @@ import {
   makeExpirable,
   makeAfterNonce
 } from './utils'
-import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
+import { BigNumberish, Arrayish, Interface, BigNumber } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
 import {
   TransactionResponse,
@@ -72,6 +72,15 @@ export class Wallet extends AbstractSigner {
 
   async chainId(): Promise<BigNumberish> {
     return (await this.provider.getNetwork()).chainId
+  }
+
+  async signWeight(): Promise<BigNumber> {
+    const signers = await this.getSigners()
+    return signers.reduce((p, s) => {
+      const sconfig = this.config.signers.find((c) => c.address === s)
+      if (!sconfig) return p
+      return p.add(sconfig.weight)
+    }, ethers.constants.Zero)
   }
 
   setProvider(provider: AsyncSendable | ConnectionInfo | string): Wallet {

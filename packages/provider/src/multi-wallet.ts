@@ -104,7 +104,18 @@ export class MultiWallet extends AbstractSigner {
 
   async signMessage(message: Arrayish, network?: NetworkConfig): Promise<string> {
     const wallet = network ? this.networkWallet(network) : this.mainWallet()
-    const thisConfig = await this.currentConfig(wallet)
+
+    // TODO: Skip this step if wallet is authWallet
+    const [thisConfig, lastConfig] = await Promise.all([
+      this.currentConfig(wallet), this.currentConfig()
+    ])
+
+    // See if wallet has enough signer power
+    const weight = await wallet.useConfig(thisConfig).signWeight()
+    if (weight.lt(thisConfig.threshold)) {
+      throw new NotEnoughSigners(`Sign message - wallet combined weight ${weight.toString()} below required ${lastConfig.threshold.toString()}`)
+    }
+
     return wallet.useConfig(thisConfig).signMessage(message)
   }
 
@@ -117,15 +128,9 @@ export class MultiWallet extends AbstractSigner {
     ])
 
     // See if wallet has enough signer power
-    const signers = await wallet.getSigners()
-    const weight = signers.reduce((p, s) => {
-      const sconfig = thisConfig.signers.find((c) => c.address === s)
-      if (!sconfig) return p
-      return p.add(sconfig.weight)
-    }, ethers.constants.Zero)
-
-    if (weight.lt(lastConfig.threshold)) {
-      throw new NotEnoughSigners(`Wallet combined weight ${weight.toString()} below required ${lastConfig.threshold.toString()}}`)
+    const weight = await wallet.useConfig(thisConfig).signWeight()
+    if (weight.lt(thisConfig.threshold)) {
+      throw new NotEnoughSigners(`Send transaction - wallet combined weight ${weight.toString()} below required ${lastConfig.threshold.toString()}`)
     }
 
     // If the wallet is updated, procede to transaction send
