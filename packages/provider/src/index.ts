@@ -33,6 +33,5 @@ export { WalletContext } from './context'
 
 export { ValidateArcadeumDeployedContractAccountProof, ValidateArcadeumUndeployedContractAccountProof } from './auth/auth'
 
-// TODO: rename..
-import * as services from './apiclient'
-export { services }
+import * as api from './apiclient'
+export { api }
