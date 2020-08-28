@@ -21,6 +21,24 @@ export type MultiWalletParams = {
   networks: NetworkConfig[]
 }
 
+type FullConfig = {
+  threshold: Threshold[],
+  signers: Signer[]
+}
+
+type Threshold = {
+  chaind: number,
+  weight: number
+}
+
+type Signer = {
+  address: string,
+  networks: {
+    chaind: number,
+    weight: number
+  }[]
+}
+
 export class MultiWallet extends AbstractSigner {
   private readonly _wallets: NetworkWallet[]
 
@@ -53,6 +71,35 @@ export class MultiWallet extends AbstractSigner {
 
   getAddress(): Promise<string> {
     return this._wallets[0].wallet.getAddress()
+  }
+
+  async getFullConfig(): Promise<FullConfig> {
+    const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
+    const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
+    const allSigerns = allConfigs.reduce((p, config) => {
+      config.config.signers.forEach((signer) => {
+        const item = p.find((c) => c.address === signer.address)
+        const netEntry = {
+          weight: signer.weight,
+          chaind: config.wallet.network.chainId
+        }
+
+        if (!item) {
+          p.push({
+            address: signer.address,
+            networks: [netEntry]
+          })
+        } else {
+          item.networks.push(netEntry)
+        }
+      })
+      return p
+    }, [] as Signer[])
+
+    return {
+      threshold: thresholds,
+      signers: allSigerns
+    }
   }
 
   async signMessage(message: Arrayish, network?: NetworkConfig): Promise<string> {
