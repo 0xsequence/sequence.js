@@ -14,9 +14,9 @@ export interface IWalletProvider {
   isConnected(): boolean
   isLoggedIn(): boolean
   getSession(): WalletSession | undefined
-  getAccountAddress(): Promise<string>
-  getNetwork(): Promise<string>
-  getChainId(): Promise<number>
+  getAddress(): string
+  getNetwork(): NetworkConfig
+  getChainId(): number
 
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
@@ -30,15 +30,20 @@ export interface IWalletProvider {
 
   on(event: WalletProviderEventType, fn: (...args: any[]) => void)
   once(event: WalletProviderEventType, fn: (...args: any[]) => void)
+
+  // utils: ProviderUtils
 }
 
 interface ProviderUtils {
+  signMessage()
+  signTypedData()
+
+  sendTransaction()
+  sendTransactions()
+
   sendETH()
   sendToken()
   callContract()
-  signMessage()
-  // signTypedData(object)
-  recoverSignature()
 
   history()
   getReceipt()
@@ -47,6 +52,9 @@ interface ProviderUtils {
 
   isWalletDeployed()
   deployWallet()
+
+  validateSignature()
+  recoverWalletConfig()
 }
 
 export type WalletProviderEventType =  'connected' | 'disconnected' | 'login' | 'logout' | 'network'
@@ -205,20 +213,20 @@ export class WalletProvider implements IWalletProvider {
     return this.session
   }
 
-  getAccountAddress = async (): Promise<string> => {
+  getAddress = (): string => {
     const session = this.getSession()
     return session.accountAddress
   }
 
-  getNetwork = async (): Promise<string> => {
+  getNetwork = (): NetworkConfig => {
     const session = this.getSession()
-    if (!session.network || session.network.name === '') {
+    if (!session.network) {
       throw new Error('network has not been set by session. login first.')
     }
-    return session.network.name
+    return session.network
   }
 
-  getChainId = async (): Promise<number> => {
+  getChainId = (): number => {
     const session = this.getSession()
     if (!session.network || !(session.network.chainId > 0)) {
       throw new Error('network has not been set by session. login first.')
