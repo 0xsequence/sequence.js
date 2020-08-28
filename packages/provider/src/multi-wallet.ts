@@ -42,6 +42,7 @@ type Signer = {
 
 export class MultiWallet extends AbstractSigner {
   private readonly _wallets: NetworkWallet[]
+  provider: ethers.providers.JsonRpcProvider
 
   constructor(params: MultiWalletParams) {
     super()
@@ -60,10 +61,8 @@ export class MultiWallet extends AbstractSigner {
         wallet: wallet
       }
     })
-  }
 
-  get provider(): JsonRpcProvider {
-    return this._wallets[0].wallet.provider
+    this.provider = this._wallets[0].wallet.provider
   }
 
   get address(): string {
