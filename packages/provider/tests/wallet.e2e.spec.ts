@@ -26,7 +26,7 @@ const eth_rpc = process.env.TEST_ETH_RPC
 const relayer_rpc = process.env.TEST_RELAYER_RPC
 
 if (process.env.ONLY_E2E) {
-  describe.only('Arcadeum wallet integration', function () {
+  describe('Arcadeum wallet integration', function () {
     let relayer: IRelayer
 
     let wallet: arcadeum.Wallet

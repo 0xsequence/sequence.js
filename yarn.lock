@@ -10,6 +10,15 @@
     base64url "^3.0.1"
     ethers-eip712 "^0.2.0"
 
+"@arcadeum/provider@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@arcadeum/provider/-/provider-0.1.0.tgz#c7215889066fb16cb1f0955ce129467c0c4fbb79"
+  integrity sha512-MLVZdzrl23P+8tFL70zexHEsPWcf4m5XFwqahr7zljS8w3+bnYDNFadTAOgvMff3rEIfZVp0tq18kUCfTttRiA==
+  dependencies:
+    "@arcadeum/ethauth" "^0.3.0"
+    eventemitter3 "^4.0.4"
+    fetch-ponyfill "^6.1.1"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4":
   version "7.10.4"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.10.4.tgz#168da1a36e90da68ae8d49c0f1b48c7c6249213a"
@@ -1889,10 +1898,6 @@ aproba@^2.0.0:
 "arcadeum-wallet@https://github.com/arcadeum/wallet-contracts.git":
   version "0.1.0"
   resolved "https://github.com/arcadeum/wallet-contracts.git#8db697339a3655e30e0b4e9bc2abcd493ad9b2a7"
-
-"arcadeum-wallet@https://github.com/arcadeum/wallet-contracts.git#require-counterfactual-config":
-  version "0.1.0"
-  resolved "https://github.com/arcadeum/wallet-contracts.git#82a0d2879103b20f450973da26934583a295e76c"
 
 archy@^1.0.0:
   version "1.0.0"
@@ -3781,6 +3786,11 @@ eventemitter3@^3.1.0:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-3.1.2.tgz#2d3d48f9c346698fce83a85d7d664e98535df6e7"
   integrity sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==
+
+eventemitter3@^4.0.4:
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
+  integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
 
 eventemitter3@^4.0.6:
   version "4.0.6"
