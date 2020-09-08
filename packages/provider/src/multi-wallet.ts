@@ -76,7 +76,7 @@ export class MultiWallet extends AbstractSigner {
   async getFullConfig(): Promise<FullConfig> {
     const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
     const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
-    const allSigerns = allConfigs.reduce((p, config) => {
+    const allSigners = allConfigs.reduce((p, config) => {
       config.config.signers.forEach((signer) => {
         const item = p.find((c) => c.address === signer.address)
         const netEntry = {
@@ -98,7 +98,7 @@ export class MultiWallet extends AbstractSigner {
 
     return {
       threshold: thresholds,
-      signers: allSigerns
+      signers: allSigners
     }
   }
 
