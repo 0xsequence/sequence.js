@@ -16,7 +16,8 @@ import {
   arcadeumTxAbiEncode,
   isUsableConfig,
   makeExpirable,
-  makeAfterNonce
+  makeAfterNonce,
+  aggregate
 } from './utils'
 import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
@@ -32,6 +33,7 @@ import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
 import { JsonRpcAsyncSender } from './providers/async-sender'
 import { ConnectionInfo } from 'ethers/utils/web'
+import { RemoteSigner } from './signers/remote-signer'
 
 export class Wallet extends AbstractSigner {
   private readonly _signers: AbstractSigner[]
@@ -287,26 +289,43 @@ export class Wallet extends AbstractSigner {
 
   async sign(raw: Arrayish): Promise<string> {
     const digest = ethers.utils.arrayify(raw)
-    const signersAddr = Promise.all(this._signers.map(s => s.getAddress()))
-    const accountBytes = await Promise.all(
-      this.config.signers.map(async a => {
-        const signerIndex = (await signersAddr).indexOf(a.address)
-        const signer = this._signers[signerIndex]
-        if (signer) {
-          return ethers.utils.solidityPack(
-            ['bool', 'uint8', 'bytes'],
-            [false, a.weight, (await signer.signMessage(digest)) + '02']
-          )
-        } else {
-          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
-        }
-      })
-    )
 
-    return ethers.utils.solidityPack(
-      ['uint16', ...Array(this.config.signers.length).fill('bytes')],
-      [this.config.threshold, ...accountBytes]
-    )
+    // Sign digest using a set of signers and some optional data
+    const signWith = async (signers: AbstractSigner[], data?: string) => {
+      const signersAddr = Promise.all(signers.map(s => s.getAddress()))
+
+      const accountBytes = await Promise.all(
+        this.config.signers.map(async a => {
+          const signerIndex = (await signersAddr).indexOf(a.address)
+          const signer = signers[signerIndex]
+          if (signer) {
+            return ethers.utils.solidityPack(
+              ['bool', 'uint8', 'bytes'],
+              [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, data)) + '02']
+            )
+          } else {
+            return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
+          }
+        })
+      )
+  
+      return ethers.utils.solidityPack(
+        ['uint16', ...Array(this.config.signers.length).fill('bytes')],
+        [this.config.threshold, ...accountBytes]
+      )
+    }
+
+    // Split local signers and remote signers
+    const localSigners = this._signers.filter((s) => !RemoteSigner.isRemoteSigner(s))
+    const remoteSigners = this._signers.filter((s) => RemoteSigner.isRemoteSigner(s))
+
+    // Sign message first using localSigners
+    // include local signatures for remote signers
+    const localSignature = await signWith(localSigners)
+    const remoteSignature = await signWith(remoteSigners, localSignature)
+
+    // Aggregate both local and remote signatures
+    return aggregate(localSignature, remoteSignature)
   }
 
   static async singleOwner(context: ArcadeumContext, owner: Arrayish | AbstractSigner): Promise<Wallet> {

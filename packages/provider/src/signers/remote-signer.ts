@@ -17,4 +17,12 @@ export abstract class RemoteSigner extends AbstractSigner {
   static isRemoteSigner(signer: AbstractSigner): boolean {
     return (<RemoteSigner>signer).signMessageWithData !== undefined
   }
+
+  static signMessageWithData(signer: AbstractSigner, message: Arrayish, data?: Arrayish): Promise<string> {
+    if (this.isRemoteSigner(signer)) {
+      return (signer as RemoteSigner).signMessageWithData(message, data)
+    }
+
+    return signer.signMessage(message)
+  }
 }
