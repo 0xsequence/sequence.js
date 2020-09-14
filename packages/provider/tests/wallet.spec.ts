@@ -13,7 +13,7 @@ import { Signer as AbstractSigner } from 'ethers'
 
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { isValidSignature, isValidEthSignSignature, encodeMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf, toArcadeumTransaction, toArcadeumTransactions, encodeNonce } from '../src/utils'
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidArcadeumDeployedWalletSignature, isValidArcadeumUndeployedWalletSignature, addressOf, toArcadeumTransaction, toArcadeumTransactions, encodeNonce } from '../src/utils'
 
 const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
@@ -1162,20 +1162,20 @@ describe('Arcadeum wallet integration', function () {
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {
         const signature = await wallet.signMessage(message, 1)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(wallet.address, 1, digest)))
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, 1, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
       })
       it('Should validate wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, 1)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(wallet.address, 1, digest)))
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, 1, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidWalletSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
         const signature = await wallet2.signMessage(message, 1)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(wallet.address, 1, digest)))
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, 1, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider, context)).to.be.false
       })

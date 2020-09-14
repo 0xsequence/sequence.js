@@ -7,6 +7,12 @@ export { LocalRelayer } from './relayer/local-relayer'
 export { RpcRelayer } from './relayer/rpc-relayer'
 
 export {
+  RemoteSigner,
+  LocalRemoteSigner,
+  GuarddRemoteSigner
+} from './signers'
+
+export {
   Transactionish,
   AuxTransactionRequest,
   ArcadeumTransactionEncoded,

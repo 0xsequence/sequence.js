@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@arcadeum/ethauth'
-import { encodeMessageData, isValidArcadeumUndeployedWalletSignature } from '../utils'
+import { packMessageData, isValidArcadeumUndeployedWalletSignature } from '../utils'
 import { WalletContext } from '../context'
 
 export const ValidateArcadeumDeployedContractAccountProof: ValidatorFunc = async (provider: ethers.providers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean, address?: string }> => {
@@ -27,7 +27,7 @@ export const ValidateArcadeumDeployedContractAccountProof: ValidatorFunc = async
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
 
   // arcadeum wallet isValidSignature requires a additional encoding
-  const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.arrayify(encodeMessageData(proof.address, chainId, digest))))
+  const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.arrayify(packMessageData(proof.address, chainId, digest))))
 
   const isValidSignature = await contract.isValidSignature(subDigest, ethers.utils.arrayify(proof.signature))
 

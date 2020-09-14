@@ -3,8 +3,8 @@ import { ethers } from 'ethers'
 import {
   addressOf,
   sortConfig,
-  hashMetaTransactionsData,
-  encodeMessageData,
+  encodeMetaTransactionsData,
+  packMessageData,
   isAsyncSendable,
   isArcadeumTransaction,
   readArcadeumNonce,
@@ -269,29 +269,29 @@ export class Wallet extends AbstractSigner {
   }
 
   async signTransactions(...txs: ArcadeumTransaction[]): Promise<string> {
-    const hash = hashMetaTransactionsData(this.address, await this.chainId(), ...txs)
-
-    const digest = ethers.utils.keccak256(hash)
-    return this.sign(digest)
+    const packed = encodeMetaTransactionsData(...txs)
+    return this.sign(packed, false)
   }
 
   async signMessage(message: Arrayish, chainId?: number): Promise<string> {
-    return this.sign(
+    return this.sign(message, false, chainId)
+  }
+
+  async sign(msg: Arrayish, isDigest: boolean = true, chainId?: number): Promise<string> {
+    // TODO: chainId shouldn't be required to sign digest
+    const signChainId = chainId ? chainId : await this.chainId()
+    const digest = ethers.utils.arrayify(isDigest ? msg :
       ethers.utils.keccak256(
-        encodeMessageData(
+        packMessageData(
           this.address,
-          chainId ? chainId : await this.chainId(),
-          ethers.utils.keccak256(message)
+          signChainId,
+          ethers.utils.keccak256(msg)
         )
       )
     )
-  }
-
-  async sign(raw: Arrayish): Promise<string> {
-    const digest = ethers.utils.arrayify(raw)
 
     // Sign digest using a set of signers and some optional data
-    const signWith = async (signers: AbstractSigner[], data?: string) => {
+    const signWith = async (signers: AbstractSigner[], auxData?: string) => {
       const signersAddr = Promise.all(signers.map(s => s.getAddress()))
 
       const accountBytes = await Promise.all(
@@ -301,7 +301,7 @@ export class Wallet extends AbstractSigner {
           if (signer) {
             return ethers.utils.solidityPack(
               ['bool', 'uint8', 'bytes'],
-              [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, data)) + '02']
+              [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
             )
           } else {
             return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
@@ -321,11 +321,15 @@ export class Wallet extends AbstractSigner {
 
     // Sign message first using localSigners
     // include local signatures for remote signers
-    const localSignature = await signWith(localSigners)
-    const remoteSignature = await signWith(remoteSigners, localSignature)
+    const localSignature = await signWith(localSigners, this.packMsgAndSig(msg, [], signChainId))
+    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
 
     // Aggregate both local and remote signatures
     return aggregate(localSignature, remoteSignature)
+  }
+
+  private packMsgAndSig(msg: Arrayish, sig: Arrayish, chainId: BigNumberish, ): string {
+    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }
 
   static async singleOwner(context: ArcadeumContext, owner: Arrayish | AbstractSigner): Promise<Wallet> {
