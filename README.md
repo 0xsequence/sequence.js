@@ -17,9 +17,7 @@ This repository is a monorepo including various developer tools to interact with
 
 | Package                                                  | Version                                                                                                                 | Description                                                                                       |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`arcadeum`](/packages/arcadeum)                               | 0.1.0                                   | An aggregate package combining many utility packages for interacting with the arcadeum stack |
-| [`@arcadeum/encoder`](/packages/encoder) | 0.1.0 | transaction encoder library for the arcadeum relayer    |
-| [`@arcadeum/provider`](/packages/provider) | 0.1.0 | smart wallet provider and utilities    |
+| [`@arcadeum/provider`](https://www.npmjs.com/package/@arcadeum/provider) | 0.2.1 | smart wallet provider and utilities    |
 
 ## Contributing
 
