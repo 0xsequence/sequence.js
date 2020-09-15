@@ -17,7 +17,7 @@ This repository is a monorepo including various developer tools to interact with
 
 | Package                                                  | Version                                                                                                                 | Description                                                                                       |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`@arcadeum/provider`](https://www.npmjs.com/package/@arcadeum/provider) | 0.2.1 | smart wallet provider and utilities    |
+| [`@arcadeum/provider`](https://www.npmjs.com/package/@arcadeum/provider) | 0.3.0 | smart wallet provider and utilities    |
 
 ## Contributing
 
