@@ -15,8 +15,8 @@ export class GuarddRemoteSigner extends RemoteSigner {
     this._address = address
   }
 
-  async signMessageWithData(message: Arrayish, auxData: Arrayish): Promise<string> {
-    const request = { msg: ethers.utils.hexlify(message), auxData: ethers.utils.hexlify(auxData) }
+  async signMessageWithData(message: Arrayish, auxData?: Arrayish): Promise<string> {
+    const request = { msg: ethers.utils.hexlify(message), auxData: ethers.utils.hexlify(auxData ? auxData : []) }
     const res = await this._guardd.sign({ request: request })
     return res.sig
   }
