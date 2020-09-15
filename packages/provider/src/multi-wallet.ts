@@ -106,7 +106,8 @@ export class MultiWallet extends AbstractSigner {
     const wallet = network ? this.networkWallet(network) : this.mainWallet()
 
     // TODO: Skip this step if wallet is authWallet
-    const thisConfig = await this.currentConfig(wallet)
+    let thisConfig = await this.currentConfig(wallet)
+    thisConfig = thisConfig ? thisConfig : this._wallets[0].wallet.config
 
     // See if wallet has enough signer power
     const weight = await wallet.useConfig(thisConfig).signWeight()
@@ -154,7 +155,7 @@ export class MultiWallet extends AbstractSigner {
   async updateConfig(newConfig: ArcadeumWalletConfig): Promise<TransactionResponse | undefined> {
     // The config is the default config, see if the wallet has been deployed
     if (isConfig(this._wallets[0].wallet.config, newConfig)) {
-      if (!this.isDeployed()) {
+      if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
         return this.authWallet().publishConfig()
       }
