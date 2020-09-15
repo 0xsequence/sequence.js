@@ -19,7 +19,7 @@ import {
   makeAfterNonce,
   aggregate
 } from './utils'
-import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
+import { BigNumberish, Arrayish, Interface, BigNumber } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
 import {
   TransactionResponse,
@@ -76,6 +76,15 @@ export class Wallet extends AbstractSigner {
     return (await this.provider.getNetwork()).chainId
   }
 
+  async signWeight(): Promise<BigNumber> {
+    const signers = await this.getSigners()
+    return signers.reduce((p, s) => {
+      const sconfig = this.config.signers.find((c) => c.address === s)
+      if (!sconfig) return p
+      return p.add(sconfig.weight)
+    }, ethers.constants.Zero)
+  }
+
   setProvider(provider: AsyncSendable | ConnectionInfo | string): Wallet {
     if (isAsyncSendable(provider)) {
       this.w3provider = <AsyncSendable>provider
@@ -91,6 +100,12 @@ export class Wallet extends AbstractSigner {
   setRelayer(relayer: IRelayer): Wallet {
     this.relayer = relayer
     return this
+  }
+
+  useConfig(config: ArcadeumWalletConfig): Wallet {
+    return new Wallet(config, this.context, ...this._signers)
+      .setProvider(this.w3provider)
+      .setRelayer(this.relayer)
   }
 
   connect(provider: AsyncSendable | ConnectionInfo | string, relayer: IRelayer): Wallet {

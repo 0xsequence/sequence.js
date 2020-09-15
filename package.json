@@ -11,12 +11,8 @@
     "clean": "lerna clean --yes && rimraf ./node_modules",
     "build": "lerna run build --stream",
     "test": "lerna run test --stream",
-    "test:arcadeum": "lerna run test --scope arcadeum --stream",
-    "test:encoder": "lerna run test --scope @arcadeum/encoder --stream",
     "test:provider": "lerna run test --scope @arcadeum/provider --stream",
     "lint": "lerna run lint --stream",
-    "lint:arcadeum": "lerna run lint --scope arcadeum --stream",
-    "lint:encoder": "lerna run lint --scope @arcadeum/encoder --stream",
     "lint:provider": "lerna run lint --scope @arcadeum/provider --stream",
     "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream",
     "format": "lerna run format --stream"
