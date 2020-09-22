@@ -43,7 +43,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     provider?: Provider
   ) {
     super(bundleDeploy, provider)
-    this.chaindApp = new ChaindService(url, pony().fetch) // TODO: chaind.gen.ts is the wrong one..
+    this.chaindApp = new ChaindService(url, pony().fetch)
   }
 
   async waitReceipt(
