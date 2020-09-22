@@ -1,10 +1,10 @@
 // import { fetch as polyfetch } from 'whatwg-fetch' // TODO: do we even need this polyfill..?
 
-export * from './api.gen'
+export * from './chaind.gen'
 
-import { ArcadeumAPI as BaseArcadeumAPI } from './api.gen'
+import { ChaindService as BaseChaindService } from './chaind.gen'
 
-export class ArcadeumAPI extends BaseArcadeumAPI {
+export class ChaindService extends BaseChaindService {
   jwtAuth: string | undefined = undefined
 
   constructor(hostname: string) {

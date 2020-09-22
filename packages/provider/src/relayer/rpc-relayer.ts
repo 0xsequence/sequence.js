@@ -43,7 +43,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     provider?: Provider
   ) {
     super(bundleDeploy, provider)
-    this.chaindApp = new ChaindService(url, pony().fetch)
+    this.chaindApp = new ChaindService(url, pony().fetch) // TODO: chaind.gen.ts is the wrong one..
   }
 
   async waitReceipt(
@@ -88,7 +88,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       call: {
         contract: addr,
         payload: encoded,
-        signers: config.signers.length
+        numSigners: config.signers.length
       }
     })
 
@@ -122,7 +122,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       call: {
         contract: addr,
         payload: encoded,
-        signers: config.signers.length
+        numSigners: config.signers.length
       }
     })
 
