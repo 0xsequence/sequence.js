@@ -39,7 +39,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
 
   constructor(
     url: string,
-    bundleDeploy: boolean = false,
+    bundleDeploy: boolean = true,
     provider?: Provider
   ) {
     super(bundleDeploy, provider)
