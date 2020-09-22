@@ -226,7 +226,7 @@ export class Wallet extends AbstractSigner {
     return this.getNonce(blockTag)
   }
 
-  async sendTransaction(transaction: Transactionish): Promise<TransactionResponse> {
+  async sendTransaction(transaction: Transactionish, allSigners?: boolean): Promise<TransactionResponse> {
     if (!this.provider) {
       throw new Error('missing provider')
     }
@@ -279,20 +279,20 @@ export class Wallet extends AbstractSigner {
     const providedNonce = readArcadeumNonce(...arctx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     arctx = appendNonce(arctx, nonce)
-    const signature = this.signTransactions(...arctx)
+    const signature = this.signTransactions(arctx, allSigners)
     return this.relayer.relay(this.config, this.context, signature, ...arctx)
   }
 
-  async signTransactions(...txs: ArcadeumTransaction[]): Promise<string> {
+  async signTransactions(txs: ArcadeumTransaction[], allSigners?: boolean): Promise<string> {
     const packed = encodeMetaTransactionsData(...txs)
-    return this.sign(packed, false)
+    return this.sign(packed, false, undefined, allSigners)
   }
 
-  async signMessage(message: Arrayish, chainId?: number): Promise<string> {
-    return this.sign(message, false, chainId)
+  async signMessage(message: Arrayish, chainId?: number, allSigners?: boolean): Promise<string> {
+    return this.sign(message, false, chainId, allSigners)
   }
 
-  async sign(msg: Arrayish, isDigest: boolean = true, chainId?: number): Promise<string> {
+  async sign(msg: Arrayish, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
     // TODO: chainId shouldn't be required to sign digest
     const signChainId = chainId ? chainId : await this.chainId()
     const digest = ethers.utils.arrayify(isDigest ? msg :
@@ -313,14 +313,23 @@ export class Wallet extends AbstractSigner {
         this.config.signers.map(async a => {
           const signerIndex = (await signersAddr).indexOf(a.address)
           const signer = signers[signerIndex]
-          if (signer) {
-            return ethers.utils.solidityPack(
-              ['bool', 'uint8', 'bytes'],
-              [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
-            )
-          } else {
-            return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
+
+          try {
+            if (signer) {
+              return ethers.utils.solidityPack(
+                ['bool', 'uint8', 'bytes'],
+                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
+              )
+            }
+          } catch (e) {
+            if (allSigners) {
+              throw e
+            } else {
+              console.warn(`Skipped signer ${a.address}`)
+            }
           }
+
+          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
         })
       )
   
