@@ -88,7 +88,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       call: {
         contract: addr,
         payload: encoded,
-        signers: config.signers.length
+        numSigners: config.signers.length
       }
     })
 
@@ -122,7 +122,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       call: {
         contract: addr,
         payload: encoded,
-        signers: config.signers.length
+        numSigners: config.signers.length
       }
     })
 

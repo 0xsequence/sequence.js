@@ -32,6 +32,5 @@ export class ArcadeumAPI extends BaseArcadeumAPI {
         reject(err)
       })
     })
-  }
-  
+  } 
 }
