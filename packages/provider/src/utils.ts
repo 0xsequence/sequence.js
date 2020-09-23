@@ -81,14 +81,12 @@ export const MetaTransactionsType = `tuple(
   bytes data
 )[]`
 
-export function hashMetaTransactionsData(wallet: string, networkId: BigNumberish, ...txs: ArcadeumTransaction[]): string {
+export function encodeMetaTransactionsData(...txs: ArcadeumTransaction[]): string {
   const nonce = readArcadeumNonce(...txs)
-  const transactions = ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, arcadeumTxAbiEncode(txs)])
-
-  return encodeMessageData(wallet, networkId, ethers.utils.keccak256(transactions))
+  return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, arcadeumTxAbiEncode(txs)])
 }
 
-export function encodeMessageData(wallet: string, networkId: BigNumberish, digest: Arrayish): string {
+export function packMessageData(wallet: string, networkId: BigNumberish, digest: Arrayish): string {
   return ethers.utils.solidityPack(
     ['string', 'uint256', 'address', 'bytes32'],
     ['\x19\x01', networkId, wallet, digest]
@@ -224,7 +222,7 @@ export async function isValidArcadeumDeployedWalletSignature(
   if (!provider) return undefined // Signature validity can't be determined
   try {
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
-    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
+    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
     return isValidWalletSignature(address, subDigest, sig, provider)
   } catch {
     return false
@@ -245,7 +243,7 @@ export async function isValidArcadeumUndeployedWalletSignature(
   try{
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
     const signature = decodeSignature(sig)
-    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(encodeMessageData(address, cid, digest)))
+    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
     const config = recoverConfigFromDigest(subDigest, signature)
     const weight = signature.signers.reduce((v, s) => isSigner(s) ? v + s.weight : v, 0)
     return compareAddr(addressOf(config, arcadeumContext), address) === 0 && weight >= signature.threshold
@@ -290,7 +288,7 @@ export function recoverConfigFromDigest(digest: Arrayish, signature: string | A
 export function decodeSignature(signature: string): ArcadeumDecodedSignature {
   const auxsig = signature.replace('0x', '')
 
-  const threshold = ethers.utils.bigNumberify(auxsig.slice(0, 4)).toNumber()
+  const threshold = ethers.utils.bigNumberify(`0x${auxsig.slice(0, 4)}`).toNumber()
 
   const signers = []
 

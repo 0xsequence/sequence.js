@@ -3,8 +3,8 @@ import { ethers } from 'ethers'
 import {
   addressOf,
   sortConfig,
-  hashMetaTransactionsData,
-  encodeMessageData,
+  encodeMetaTransactionsData,
+  packMessageData,
   isAsyncSendable,
   isArcadeumTransaction,
   readArcadeumNonce,
@@ -16,7 +16,8 @@ import {
   arcadeumTxAbiEncode,
   isUsableConfig,
   makeExpirable,
-  makeAfterNonce
+  makeAfterNonce,
+  aggregate
 } from './utils'
 import { BigNumberish, Arrayish, Interface, BigNumber } from 'ethers/utils'
 import { Signer as AbstractSigner } from 'ethers'
@@ -32,6 +33,7 @@ import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
 import { JsonRpcAsyncSender } from './providers/async-sender'
 import { ConnectionInfo } from 'ethers/utils/web'
+import { RemoteSigner } from './signers/remote-signer'
 
 export class Wallet extends AbstractSigner {
   private readonly _signers: AbstractSigner[]
@@ -224,7 +226,7 @@ export class Wallet extends AbstractSigner {
     return this.getNonce(blockTag)
   }
 
-  async sendTransaction(transaction: Transactionish): Promise<TransactionResponse> {
+  async sendTransaction(transaction: Transactionish, allSigners?: boolean): Promise<TransactionResponse> {
     if (!this.provider) {
       throw new Error('missing provider')
     }
@@ -277,51 +279,81 @@ export class Wallet extends AbstractSigner {
     const providedNonce = readArcadeumNonce(...arctx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     arctx = appendNonce(arctx, nonce)
-    const signature = this.signTransactions(...arctx)
+    const signature = this.signTransactions(arctx, allSigners)
     return this.relayer.relay(this.config, this.context, signature, ...arctx)
   }
 
-  async signTransactions(...txs: ArcadeumTransaction[]): Promise<string> {
-    const hash = hashMetaTransactionsData(this.address, await this.chainId(), ...txs)
-
-    const digest = ethers.utils.keccak256(hash)
-    return this.sign(digest)
+  async signTransactions(txs: ArcadeumTransaction[], allSigners?: boolean): Promise<string> {
+    const packed = encodeMetaTransactionsData(...txs)
+    return this.sign(packed, false, undefined, allSigners)
   }
 
-  async signMessage(message: Arrayish, chainId?: number): Promise<string> {
-    return this.sign(
+  async signMessage(message: Arrayish, chainId?: number, allSigners?: boolean): Promise<string> {
+    return this.sign(message, false, chainId, allSigners)
+  }
+
+  async sign(msg: Arrayish, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
+    // TODO: chainId shouldn't be required to sign digest
+    const signChainId = chainId ? chainId : await this.chainId()
+    const digest = ethers.utils.arrayify(isDigest ? msg :
       ethers.utils.keccak256(
-        encodeMessageData(
+        packMessageData(
           this.address,
-          chainId ? chainId : await this.chainId(),
-          ethers.utils.keccak256(message)
+          signChainId,
+          ethers.utils.keccak256(msg)
         )
       )
     )
+
+    // Sign digest using a set of signers and some optional data
+    const signWith = async (signers: AbstractSigner[], auxData?: string) => {
+      const signersAddr = Promise.all(signers.map(s => s.getAddress()))
+
+      const accountBytes = await Promise.all(
+        this.config.signers.map(async a => {
+          const signerIndex = (await signersAddr).indexOf(a.address)
+          const signer = signers[signerIndex]
+
+          try {
+            if (signer) {
+              return ethers.utils.solidityPack(
+                ['bool', 'uint8', 'bytes'],
+                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
+              )
+            }
+          } catch (e) {
+            if (allSigners) {
+              throw e
+            } else {
+              console.warn(`Skipped signer ${a.address}`)
+            }
+          }
+
+          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
+        })
+      )
+  
+      return ethers.utils.solidityPack(
+        ['uint16', ...Array(this.config.signers.length).fill('bytes')],
+        [this.config.threshold, ...accountBytes]
+      )
+    }
+
+    // Split local signers and remote signers
+    const localSigners = this._signers.filter((s) => !RemoteSigner.isRemoteSigner(s))
+    const remoteSigners = this._signers.filter((s) => RemoteSigner.isRemoteSigner(s))
+
+    // Sign message first using localSigners
+    // include local signatures for remote signers
+    const localSignature = await signWith(localSigners, this.packMsgAndSig(msg, [], signChainId))
+    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
+
+    // Aggregate both local and remote signatures
+    return aggregate(localSignature, remoteSignature)
   }
 
-  async sign(raw: Arrayish): Promise<string> {
-    const digest = ethers.utils.arrayify(raw)
-    const signersAddr = Promise.all(this._signers.map(s => s.getAddress()))
-    const accountBytes = await Promise.all(
-      this.config.signers.map(async a => {
-        const signerIndex = (await signersAddr).indexOf(a.address)
-        const signer = this._signers[signerIndex]
-        if (signer) {
-          return ethers.utils.solidityPack(
-            ['bool', 'uint8', 'bytes'],
-            [false, a.weight, (await signer.signMessage(digest)) + '02']
-          )
-        } else {
-          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
-        }
-      })
-    )
-
-    return ethers.utils.solidityPack(
-      ['uint16', ...Array(this.config.signers.length).fill('bytes')],
-      [this.config.threshold, ...accountBytes]
-    )
+  private packMsgAndSig(msg: Arrayish, sig: Arrayish, chainId: BigNumberish, ): string {
+    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }
 
   static async singleOwner(context: ArcadeumContext, owner: Arrayish | AbstractSigner): Promise<Wallet> {

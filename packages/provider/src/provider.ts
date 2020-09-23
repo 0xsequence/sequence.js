@@ -104,7 +104,7 @@ export class Provider implements AsyncSendable {
       }
 
       try {
-        const signature = this._wallet.signTransactions(...arctxs)
+        const signature = this._wallet.signTransactions(arctxs)
         callback(undefined, {
           id: request.id,
           jsonrpc: '2.0',
