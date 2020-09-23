@@ -13,6 +13,12 @@ export {
 } from './errors'
 
 export {
+  RemoteSigner,
+  LocalRemoteSigner,
+  GuarddRemoteSigner
+} from './signers'
+
+export {
   Transactionish,
   AuxTransactionRequest,
   ArcadeumTransactionEncoded,
