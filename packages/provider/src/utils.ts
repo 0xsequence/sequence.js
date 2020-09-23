@@ -290,7 +290,7 @@ export function recoverConfigFromDigest(digest: Arrayish, signature: string | A
 export function decodeSignature(signature: string): ArcadeumDecodedSignature {
   const auxsig = signature.replace('0x', '')
 
-  const threshold = ethers.utils.bigNumberify(auxsig.slice(0, 4)).toNumber()
+  const threshold = ethers.utils.bigNumberify(`0x${auxsig.slice(0, 4)}`).toNumber()
 
   const signers = []
 
