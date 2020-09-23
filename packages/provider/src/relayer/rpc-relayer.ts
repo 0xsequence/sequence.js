@@ -34,16 +34,23 @@ type RelayerTxReceipt = {
   transactionIndex: string;
 }
 
+export type PendingTransactionResponse = TransactionResponse & {
+  waitForReceipt?: () => Promise<TransactionResponse>
+}
+
 export class RpcRelayer extends BaseRelayer implements IRelayer {
   private readonly chaindApp: ChaindService
+  public waitForReceipt: boolean
 
   constructor(
     url: string,
     bundleDeploy: boolean = false,
-    provider?: Provider
+    provider?: Provider,
+    waitForReceipt: boolean = true
   ) {
     super(bundleDeploy, provider)
     this.chaindApp = new ChaindService(url, pony().fetch)
+    this.waitForReceipt = waitForReceipt
   }
 
   async waitReceipt(
@@ -152,7 +159,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     context: ArcadeumContext,
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
-  ): Promise<TransactionResponse> {
+  ): Promise<PendingTransactionResponse> {
     const prep = await this.prepare(config, context, signature, ...transactions)
     const result = this.chaindApp.sendMetaTxn({
       call: {
@@ -161,16 +168,32 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       }
     })
 
-    const receipt = (await this.waitReceipt((await result).txnHash)).receipt
-    const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
+    const waitReceipt = async () => {
+      const receipt = (await this.waitReceipt((await result).txnHash)).receipt
+      const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
+
+      return ({
+        blockHash: txReceipt.blockHash,
+        blockNumber: ethers.utils.bigNumberify(txReceipt.blockNumber).toNumber(),
+        confirmations: 1,
+        from: addressOf(config, context),
+        raw: receipt.txnReceipt,
+        wait: async (confirmations?: number) => this.provider.waitForTransaction(txReceipt.transactionHash, confirmations)
+      } as TransactionResponse)
+    }
+
+    if (this.waitForReceipt) {
+      return waitReceipt()
+    }
 
     return ({
-      blockHash: txReceipt.blockHash,
-      blockNumber: ethers.utils.bigNumberify(txReceipt.blockNumber).toNumber(),
-      confirmations: 1,
       from: addressOf(config, context),
-      raw: receipt.txnReceipt,
-      wait: async () => this.provider.waitForTransaction(txReceipt.transactionHash)
-    } as TransactionResponse)
+      raw: (await result).txnHash,
+      waitForReceipt: waitReceipt,
+      wait: async (confirmations?: number) => {
+        const receipt = await waitReceipt()
+        return receipt.wait(confirmations)
+      }
+    } as PendingTransactionResponse)
   }
 }
