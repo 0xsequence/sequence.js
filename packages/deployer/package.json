@@ -1,0 +1,72 @@
+{
+  "name": "@arcadeum/deployer",
+  "version": "0.1.0",
+  "description": "Library to deploy contracts via the universal deployer",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest --ci --runInBand",
+    "prepublishOnly": "yarn test && yarn lint",
+    "preversion": "yarn lint",
+    "build": "rimraf ./dist && rollup -c",
+    "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
+    "lint:fixtslint": "tslint --project ./tsconfig.json --fix",
+    "lint:fixprettier": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arcadeum/arcadeum.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/arcadeum/arcadeum.js/issues"
+  },
+  "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
+  "peerDependencies": {
+    "ethers": "4.0.46"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.2.3",
+    "@types/node": "^14.0.5",
+    "jest": "^26.0.1",
+    "ora": "^5.1.0",
+    "prettier": "^2.0.1",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^26.0.0",
+    "tslint": "^6.1.0",
+    "tslint-config-prettier": "^1.18.0"
+  },
+  "jest": {
+    "setupFiles": [],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts)$",
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ]
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {},
+  "keywords": [
+    "ethereum",
+    "ethers",
+    "contract",
+    "deploy",
+    "chains"
+  ],
+  "author": "Philippe Castonguay, Agustin Aguilar"
+}
