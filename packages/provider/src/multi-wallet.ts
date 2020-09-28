@@ -280,7 +280,7 @@ export class MultiWallet extends AbstractSigner {
     return found ? found : this._wallets[0].wallet
   }
 
-  static isMultiWallet(signer: AbstractSigner): boolean {
+  static isMultiWallet(signer: AbstractSigner): signer is MultiWallet {
     return (<MultiWallet>signer).updateConfig !== undefined
   }
 }
