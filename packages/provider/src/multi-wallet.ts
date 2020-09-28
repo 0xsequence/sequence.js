@@ -106,7 +106,7 @@ export class MultiWallet extends AbstractSigner {
     return this.signMessage(message, this.authWallet(), onlyFullSign)
   }
 
-  async signMessage(message: Arrayish, target?: Wallet | NetworkConfig, onlyFullSign: boolean = true): Promise<string> {
+  async signMessage(message: Arrayish, target?: Wallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
     const wallet = (() => {
       if (!target) return this.mainWallet()
       if ((<Wallet>target).address) {
