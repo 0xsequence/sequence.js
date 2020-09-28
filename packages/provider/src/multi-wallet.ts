@@ -102,8 +102,18 @@ export class MultiWallet extends AbstractSigner {
     }
   }
 
-  async signMessage(message: Arrayish, network?: NetworkConfig, onlyFullSign: boolean = true): Promise<string> {
-    const wallet = network ? this.networkWallet(network) : this.mainWallet()
+  async signAuthMessage(message: Arrayish, onlyFullSign: boolean = true): Promise<string> {
+    return this.signMessage(message, this.authWallet(), onlyFullSign)
+  }
+
+  async signMessage(message: Arrayish, target?: Wallet | NetworkConfig, onlyFullSign: boolean = true): Promise<string> {
+    const wallet = (() => {
+      if (!target) return this.mainWallet()
+      if ((<Wallet>target).address) {
+        return target as Wallet
+      }
+      return this.networkWallet(target as NetworkConfig)
+    })()
 
     // TODO: Skip this step if wallet is authWallet
     let thisConfig = await this.currentConfig(wallet)
@@ -268,5 +278,9 @@ export class MultiWallet extends AbstractSigner {
   private authWallet(): Wallet {
     const found = this._wallets.find((w) => w.network.isAuth).wallet
     return found ? found : this._wallets[0].wallet
+  }
+
+  static isMultiWallet(signer: AbstractSigner): boolean {
+    return (<MultiWallet>signer).updateConfig !== undefined
   }
 }

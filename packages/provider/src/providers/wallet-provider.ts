@@ -72,6 +72,7 @@ export class WalletProvider implements IWalletProvider {
   private externalWindowProvider?: ExternalWindowProvider
   private allowProvider?: JsonRpcMiddleware
 
+  private networks: NetworkConfig[]
   private sidechainProviders: { [id: number] : ArcadeumWeb3Provider }
 
   constructor(config?: WalletProviderConfig) {
@@ -260,6 +261,16 @@ export class WalletProvider implements IWalletProvider {
     return this.provider
   }
 
+  getAuthProvider(): JsonRpcProvider {
+    const provider = this.sidechainProviders[this.getAuthNetwork().chainId]
+    return provider ? provider : this.getProvider()
+  }
+
+  getAuthNetwork(): NetworkConfig {
+    const net = this.networks.find((n) => n.isAuth)
+    return net ? net : this.session.network
+  }
+
   getSidechainProvider(chainId: number): JsonRpcProvider | undefined {
     return this.sidechainProviders[chainId]
   }
@@ -401,6 +412,9 @@ export class WalletProvider implements IWalletProvider {
       )
       return providers
     }, {} as {[id: number]: ArcadeumWeb3Provider})
+
+    // Save raw networks
+    this.networks = networks
   }
 }
 
