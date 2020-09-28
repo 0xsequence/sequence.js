@@ -15,15 +15,13 @@ An `instance` number can be passed if multiple instance of the same contract nee
 ...
 import { UniversalDeployer } from '@arcadeum/deployer'
 
-const provider = new Web3Provider(web3.currentProvider)
-const signer = provider.getSigner()
+const signer = (new Web3Provider(web3.currentProvider)).getSigner()
 const universalDeployer = new UniversalDeployer(network.name, signer)
-const txParams = {gasLimit: 8000000, gasPrice: new BigNumber(10).pow(9).mul(10)}
 
 const main = async () => {
-  await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)
-  await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, txParams)
-  await universalDeployer.deploy('GuestModule', GuestModuleFactory, txParams)
+  await universalDeployer.deploy('WalletFactory', FactoryFactory)
+  await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory)
+  await universalDeployer.deploy('GuestModule', GuestModuleFactory)
 
   prompt.start(`writing deployment information to ${network.name}.json`)
   await universalDeployer.registerDeployment()
@@ -31,6 +29,18 @@ const main = async () => {
 }
 
 main()
+```
+
+You can also pass transaction parameters explicitely :
+
+```typescript
+...
+
+const main = async () => {
+  await universalDeployer.deploy('WalletFactory', FactoryFactory, {gasLimit: 1000000} )
+  await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, {gasPrice: new BigNumber(10).pow(9)})
+}
+
 ```
 
 ---
