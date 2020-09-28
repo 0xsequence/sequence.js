@@ -2,8 +2,9 @@ import ora from 'ora'
 import * as fs from 'fs'
 import { ethers } from 'ethers'
 import { promisify } from 'util'
+import { UniversalDeployer2Factory } from '../utils/UniversalDeployer2Factory'
 import { ContractFactory, ContractTransaction } from 'ethers/contract'
-import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX } from '../utils/constants'
+import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX } from '../utils/constants'
 import { ContractInstance, FactoryDeployedContract } from './types'
 
 const web3 = (global as any).web3
@@ -20,46 +21,34 @@ export class UniversalDeployer {
     contractAlias: string,
     contractFactory: new (signer: ethers.Signer) => T,
     txParams?: ethers.providers.TransactionRequest,
+    instance?: number | ethers.utils.BigNumber,
     ...args: Parameters<T['deploy']>
   ): Promise<ethers.Contract|FactoryDeployedContract> => {
     try {
-
-      const universal_deployer_code = await provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)
-      if (universal_deployer_code === '0x') {
-    
-        if (await provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS) < UNIVERSAL_DEPLOYER_FUNDING) {
-          prompt.start("Funding universal deployer's EOA")
-          await this.signer.sendTransaction({
-            to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
-            value: UNIVERSAL_DEPLOYER_FUNDING,
-            ...txParams
-          })
-          prompt.succeed()
-        }
       
-        prompt.start('Deploying universal deployer contract')
-        await provider.sendTransaction(UNIVERSAL_DEPLOYER_TX)
-        prompt.succeed()
-      } 
+      // Deploy universal deployer 2 if not yet deployed on chain_id
+      const universal_deployer_2_code = await provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
+      if (universal_deployer_2_code === '0x') await this.deployUniversalDeployer2(txParams)
 
+      // Deploying contract
       prompt.start(`Deploying ${contractAlias}`)
       const factory = new contractFactory(this.signer)
       const deploy_tx = await factory.getDeployTransaction(...args)
 
-      // Verify if contract already deployed
-      const contract_address = await this.addressOf(contractFactory, ...args)
-      const contract_code = await provider.getCode(contract_address)
+      // Make sure instance number is specified
+      let instance_number = instance !== undefined ? instance : 0
 
+      // Verify if contract already deployed
+      const contract_address = await this.addressOf(contractFactory, instance_number, ...args)
+      const contract_code = await provider.getCode(contract_address)
       const contract: FactoryDeployedContract = {address: contract_address}
+
+      const deployer = UniversalDeployer2Factory.connect(UNIVERSAL_DEPLOYER_2_ADDRESS, this.signer)
 
       if (contract_code === '0x') {
 
         // Deploy contract if not already deployed
-        const tx = await this.signer.sendTransaction({
-          to: UNIVERSAL_DEPLOYER_ADDRESS,
-          data: deploy_tx.data,
-          ...txParams
-        }) as ContractTransaction
+        const tx = await deployer.functions.deploy(deploy_tx.data!, instance_number, txParams) as ContractTransaction
         const receipt = await tx.wait(1)
         const logs = receipt.logs![0].data
         const contract_address_log: string = ethers.utils.defaultAbiCoder.decode(['address'], logs)[0]
@@ -94,6 +83,43 @@ export class UniversalDeployer {
     })
   }
 
+  deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
+    if (await provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS) < UNIVERSAL_DEPLOYER_FUNDING) {
+      prompt.start("Funding universal deployer's EOA")
+      await this.signer.sendTransaction({
+        to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
+        value: UNIVERSAL_DEPLOYER_FUNDING,
+        ...txParams
+      })
+      prompt.succeed()
+    }
+  
+    prompt.start('Deploying universal deployer contract')
+    await provider.sendTransaction(UNIVERSAL_DEPLOYER_TX)
+    prompt.succeed()
+  }
+
+  // Deploy universal deployer via universal deployer 1
+  deployUniversalDeployer2 = async (txParams?: ethers.providers.TransactionRequest) => {
+    const universal_deployer_code = await provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)
+    if (universal_deployer_code === '0x') {
+      await this.deployUniversalDeployer(txParams)
+    } else {
+      'ALREADY DEPLOYED'
+    }
+
+    const universal_deployer_2_factory = new UniversalDeployer2Factory(this.signer)
+    const universal_deployer_2_deploy_tx = await universal_deployer_2_factory.getDeployTransaction()
+
+    prompt.start('Deploying universal deployer 2 contract')
+    await this.signer.sendTransaction({
+      to: UNIVERSAL_DEPLOYER_ADDRESS,
+      data: universal_deployer_2_deploy_tx.data,
+      ...txParams
+    }) as ContractTransaction
+    prompt.succeed()
+  }
+
   registerDeployment = async () =>
     promisify(fs.writeFile)(
       `./networks/${this.networkName}.json`,
@@ -118,10 +144,10 @@ export class UniversalDeployer {
       )
     )
   
-
   addressOf = async <T extends ContractFactory>(
     contractFactory: new (signer: ethers.Signer) => T,
-    ...args: Parameters<T['deploy']>
+    contractInstance: number | ethers.utils.BigNumber,
+    ...args
   ): Promise<string> => {
     const factory = new contractFactory(this.signer)
     const deploy_tx = await factory.getDeployTransaction(...args)
@@ -131,10 +157,10 @@ export class UniversalDeployer {
       ethers.utils.solidityPack(['bytes'], [deploy_data])
     )
 
-    const salt = ethers.utils.formatBytes32String('')
+    const salt = ethers.utils.solidityPack(['uint256'], [contractInstance])
 
     const hash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_ADDRESS, salt, codeHash])
+      ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
     )
 
     return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
