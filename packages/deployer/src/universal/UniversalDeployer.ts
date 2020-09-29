@@ -5,7 +5,7 @@ import { promisify } from 'util'
 import { UniversalDeployer2Factory } from '../utils/UniversalDeployer2Factory'
 import { ContractFactory, ContractTransaction } from 'ethers/contract'
 import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX } from '../utils/constants'
-import { ContractInstance, FactoryDeployedContract } from './types'
+import { ContractInstance } from './types'
 
 const prompt = ora({ discardStdin: true })
 ethers.errors.setLogLevel("off");
@@ -54,16 +54,11 @@ export class UniversalDeployer {
       if (contract_code === '0x') {
         // Deploy contract if not already deployed
         const tx = await deployer.functions.deploy(deploy_tx.data!, instance_number, txParams) as ContractTransaction
-        const receipt = await tx.wait(1)
-        const logs = receipt.logs!.pop()!.data
-        const contract_address_log: string = ethers.utils.defaultAbiCoder.decode(['address'], logs)[0]
+        await tx.wait()
 
         // Verify that the deployment was successful since tx won't revert
-        if (contract_address_log === ethers.constants.AddressZero || contract_address_log !== contract_address) {
-          prompt.fail()
-        } else {
-          prompt.succeed()
-        }
+        const post_deploy_code =  await this.provider.getCode(contract_address)
+        post_deploy_code === '0x' ?  prompt.fail() : prompt.succeed()
 
       } else {
         prompt.warn(`ALREADY DEPLOYED: ${contractAlias}`)
