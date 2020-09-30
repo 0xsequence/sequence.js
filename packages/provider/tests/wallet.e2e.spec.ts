@@ -51,7 +51,7 @@ if (process.env.ONLY_E2E) {
         CallReceiverMockArtifact.abi,
         CallReceiverMockArtifact.bytecode,
         signer
-      ).deploy()) as CallReceiverMock
+      ).deploy()) as unknown as CallReceiverMock
       await callReceiver.deployTransaction.wait(2)
     })
 

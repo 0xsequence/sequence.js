@@ -1,11 +1,18 @@
 import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish, AuxTransactionRequest, NonceDependency } from './types'
-import { ethers } from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
+import {
+  Provider,
+  TransactionResponse,
+  BlockTag,
+  ExternalProvider,
+  JsonRpcProvider,
+  TransactionRequest
+} from '@ethersproject/providers'
 import {
   addressOf,
   sortConfig,
   encodeMetaTransactionsData,
   packMessageData,
-  isAsyncSendable,
   isArcadeumTransaction,
   readArcadeumNonce,
   appendNonce,
@@ -19,20 +26,13 @@ import {
   makeAfterNonce,
   aggregate
 } from './utils'
-import { BigNumberish, Arrayish, Interface, BigNumber } from 'ethers/utils'
+import { Interface, ConnectionInfo, BytesLike, Deferrable } from 'ethers/lib/utils'
 import { Signer as AbstractSigner } from 'ethers'
-import {
-  TransactionResponse,
-  BlockTag,
-  AsyncSendable,
-  Web3Provider
-} from 'ethers/providers'
 import { IRelayer } from './relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
 import { JsonRpcAsyncSender } from './providers/async-sender'
-import { ConnectionInfo } from 'ethers/utils/web'
 import { RemoteSigner } from './signers/remote-signer'
 
 export class Wallet extends AbstractSigner {
@@ -41,12 +41,12 @@ export class Wallet extends AbstractSigner {
   readonly context: ArcadeumContext
   readonly config: ArcadeumWalletConfig
 
-  w3provider: AsyncSendable
-  provider: ethers.providers.JsonRpcProvider
+  w3provider: ExternalProvider
+  provider: JsonRpcProvider
 
   relayer: IRelayer
 
-  constructor(config: ArcadeumWalletConfig, context: ArcadeumContext, ...signers: (Arrayish | AbstractSigner)[]) {
+  constructor(config: ArcadeumWalletConfig, context: ArcadeumContext, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
 
     if (!context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable configuration in strict mode')
@@ -85,12 +85,12 @@ export class Wallet extends AbstractSigner {
     }, ethers.constants.Zero)
   }
 
-  setProvider(provider: AsyncSendable | ConnectionInfo | string): Wallet {
-    if (isAsyncSendable(provider)) {
-      this.w3provider = <AsyncSendable>provider
-      this.provider = new Web3Provider(this.w3provider)
+  setProvider(provider: JsonRpcProvider | ConnectionInfo | string): Wallet {
+    if (Provider.isProvider(provider)) {
+      this.provider = provider
+      this.w3provider = new JsonRpcAsyncSender(provider)
     } else {
-      const jsonProvider = new ethers.providers.JsonRpcProvider(<ConnectionInfo | string>provider)
+      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider)
       this.provider = jsonProvider
       this.w3provider = new JsonRpcAsyncSender(jsonProvider)
     }
@@ -104,12 +104,13 @@ export class Wallet extends AbstractSigner {
 
   useConfig(config: ArcadeumWalletConfig): Wallet {
     return new Wallet(config, this.context, ...this._signers)
-      .setProvider(this.w3provider)
+      .setProvider(this.provider)
       .setRelayer(this.relayer)
   }
 
-  connect(provider: AsyncSendable | ConnectionInfo | string, relayer: IRelayer): Wallet {
-    return new Wallet(this.config, this.context, ...this._signers).setProvider(provider).setRelayer(relayer)
+  connect(provider: Provider | ConnectionInfo | string, relayer?: IRelayer): Wallet {
+    // TODO: This only works with JsonRpcProviders
+    return new Wallet(this.config, this.context, ...this._signers).setProvider(provider as unknown as JsonRpcProvider).setRelayer(relayer)
   }
 
   async buildUpdateConfig(
@@ -118,8 +119,14 @@ export class Wallet extends AbstractSigner {
   ): Promise<ArcadeumTransaction[]> {
     if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
 
-    const implementation = await this.provider.getStorageAt(this.address, this.address)
-    const isUpgradable = compareAddr(implementation, this.context.mainModuleUpgradable) === 0
+    const isUpgradable = await (async () => {
+      try {
+        const implementation = await this.provider.getStorageAt(this.address, ethers.utils.defaultAbiCoder.encode(['string'], [this.address]))
+        return compareAddr(implementation, this.context.mainModuleUpgradable) === 0
+      } catch {
+        return false
+      }
+    })()
 
     const walletInterface = new Interface(mainModuleAbi)
 
@@ -133,10 +140,12 @@ export class Wallet extends AbstractSigner {
       gasLimit: ethers.constants.Zero,
       to: this.address,
       value: ethers.constants.Zero,
-      data: walletInterface.functions.updateImplementation.encode(
+      data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), 
         [this.context.mainModuleUpgradable]
       )
     }]
+
+    const mainModuleInterface = new Interface(mainModuleUpgradableAbi)
 
     const transaction = {
       delegateCall: false,
@@ -144,10 +153,12 @@ export class Wallet extends AbstractSigner {
       gasLimit: ethers.constants.Zero,
       to: this.address,
       value: ethers.constants.Zero,
-      data: new Interface(mainModuleUpgradableAbi).functions.updateImageHash.encode(
+      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'),
         [imageHash(sortConfig(config))]
       )
     }
+
+    const requireUtilsInterface = new Interface(requireUtilsAbi)
 
     const postTransaction = publish ? [{
       delegateCall: false,
@@ -155,7 +166,7 @@ export class Wallet extends AbstractSigner {
       gasLimit: ethers.constants.Zero,
       to: this.context.requireUtils,
       value: ethers.constants.Zero,
-      data: new Interface(requireUtilsAbi).functions.requireConfig.encode(
+      data: requireUtilsInterface.encodeFunctionData(requireUtilsInterface.getFunction('requireConfig'), 
         [
           this.address,
           config.threshold,
@@ -175,7 +186,9 @@ export class Wallet extends AbstractSigner {
       gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
-      data: walletInterface.functions.selfExecute.encode([arcadeumTxAbiEncode(transactions)])
+      data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'),
+        [arcadeumTxAbiEncode(transactions)]
+      )
     }]
   }
 
@@ -198,6 +211,7 @@ export class Wallet extends AbstractSigner {
   async publishConfig(
     nonce?: number
   ): Promise<TransactionResponse> {
+    const requireUtilsInterface = new Interface(requireUtilsAbi)
     return this.sendTransaction({
       delegateCall: false,
       revertOnError: true,
@@ -205,7 +219,7 @@ export class Wallet extends AbstractSigner {
       to: this.context.requireUtils,
       value: ethers.constants.Zero,
       nonce: nonce,
-      data: new Interface(requireUtilsAbi).functions.requireConfig.encode(
+      data: requireUtilsInterface.encodeFunctionData(requireUtilsInterface.getFunction('requireConfig'), 
         [
           this.address,
           this.config.threshold,
@@ -272,7 +286,7 @@ export class Wallet extends AbstractSigner {
 
     // If all transactions have 0 gasLimit
     // estimate gasLimits for each transaction
-    if (!arctx.find((a) => !a.revertOnError && !ethers.utils.bigNumberify(a.gasLimit).eq(ethers.constants.Zero))) {
+    if (!arctx.find((a) => !a.revertOnError && !ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
       arctx = await this.relayer.estimateGasLimits(this.config, this.context, ...arctx)
     }
 
@@ -288,11 +302,11 @@ export class Wallet extends AbstractSigner {
     return this.sign(packed, false, undefined, allSigners)
   }
 
-  async signMessage(message: Arrayish, chainId?: number, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: number, allSigners?: boolean): Promise<string> {
     return this.sign(message, false, chainId, allSigners)
   }
 
-  async sign(msg: Arrayish, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
+  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
     // TODO: chainId shouldn't be required to sign digest
     const signChainId = chainId ? chainId : await this.chainId()
     const digest = ethers.utils.arrayify(isDigest ? msg :
@@ -352,11 +366,11 @@ export class Wallet extends AbstractSigner {
     return aggregate(localSignature, remoteSignature)
   }
 
-  private packMsgAndSig(msg: Arrayish, sig: Arrayish, chainId: BigNumberish, ): string {
+  private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
     return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }
 
-  static async singleOwner(context: ArcadeumContext, owner: Arrayish | AbstractSigner): Promise<Wallet> {
+  static async singleOwner(context: ArcadeumContext, owner: BytesLike | AbstractSigner): Promise<Wallet> {
     const signer = AbstractSigner.isSigner(owner) ? owner : new ethers.Wallet(owner)
 
     const config = {
@@ -370,5 +384,9 @@ export class Wallet extends AbstractSigner {
     }
 
     return new Wallet(config, context, owner)
+  }
+
+  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error('Method not implemented.')
   }
 }

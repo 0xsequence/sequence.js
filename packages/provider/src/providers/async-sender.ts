@@ -1,7 +1,7 @@
-import { JsonRpcProvider, AsyncSendable } from 'ethers/providers'
+import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '../types'
 
-export class JsonRpcAsyncSender implements AsyncSendable {
+export class JsonRpcAsyncSender implements ExternalProvider {
   provider: JsonRpcProvider
 
   constructor(p: JsonRpcProvider) {

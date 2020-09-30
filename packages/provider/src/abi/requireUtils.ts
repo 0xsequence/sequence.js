@@ -10,7 +10,7 @@ export const abi = [
     ],
     outputs: [],
     payable: false,
-    stateMutability: 'nonpayable'
+    stateMutability: 'view'
   },
   {
     type: 'function',
@@ -26,7 +26,7 @@ export const abi = [
     ],
     outputs: [],
     payable: false,
-    stateMutability: 'nonpayable'
+    stateMutability: 'view'
   },
   {
     type: 'function',

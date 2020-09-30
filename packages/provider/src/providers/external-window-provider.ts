@@ -1,12 +1,11 @@
-import { AsyncSendable } from 'ethers/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback, NetworkConfig } from '../types'
 import EventEmitter from 'eventemitter3'
 import { WalletSession, WalletProviderEventType } from './wallet-provider'
 
 let requestIdx = 0
 
-export class ExternalWindowProvider implements AsyncSendable {
-
+export class ExternalWindowProvider implements ExternalProvider {
   private walletURL: URL
   private walletWindow: Window
   private walletOpened: boolean
@@ -42,7 +41,7 @@ export class ExternalWindowProvider implements AsyncSendable {
     const popup = window.open(this.walletURL.href, '_blank', windowFeatures)
 
     setTimeout(() => {
-      if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
         // popup is definitely blocked if we reach here.
         throw new Error('popup is blocked')
       }

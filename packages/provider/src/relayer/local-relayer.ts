@@ -1,7 +1,6 @@
 import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from '../types'
-import { TransactionResponse, BlockTag } from 'ethers/providers'
 import { abi as mainModuleAbi } from '../abi/mainModule'
-
+import { TransactionResponse, BlockTag } from '@ethersproject/providers'
 import { Signer, ethers } from 'ethers'
 
 import { BaseRelayer } from './base-relayer'
@@ -9,7 +8,7 @@ import { addressOf } from '../utils'
 
 import { IRelayer } from '.'
 
-const DEFAULT_GAS_LIMIT = ethers.utils.bigNumberify(800000)
+const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
 export class LocalRelayer extends BaseRelayer implements IRelayer {
   private readonly signer: Signer
@@ -88,7 +87,7 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
   ): Promise<TransactionResponse> {
-    if (!context.guestModule || context.guestModule.length != 42) {
+    if (!context.guestModule || context.guestModule.length !== 42) {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 

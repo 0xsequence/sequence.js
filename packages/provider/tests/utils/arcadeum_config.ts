@@ -1,4 +1,4 @@
-import { Provider } from 'ethers/providers'
+import { Provider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 
 import { MainModule } from 'arcadeum-wallet/typings/contracts/MainModule'
@@ -12,8 +12,6 @@ const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 const MainModuleUpgradableArtifact = require('arcadeum-wallet/artifacts/MainModuleUpgradable.json')
 const GuestModuleArtifact = require('arcadeum-wallet/artifacts/GuestModule.json')
 const RequireUtilsArtifact = require('arcadeum-wallet/artifacts/RequireUtils.json')
-
-ethers.errors.setLogLevel('error')
 
 export async function deployArcadeum(provider: Provider): Promise<[
   Factory,
