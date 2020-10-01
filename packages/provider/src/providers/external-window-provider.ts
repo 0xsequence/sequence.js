@@ -193,9 +193,13 @@ export class ExternalWindowProvider implements AsyncSendable {
 
       // Require user confirmation, bring up wallet to prompt for input then close
       if (this.confirmationOnly) {
-        if (this.callbacks.size === 0) {
-          this.closeWallet()
-        }
+        // console.log('========> A callback.size?', this.callbacks.size)
+        setTimeout(() => {
+          // console.log('========> B callback?', this.callbacks.size)
+          if (this.callbacks.size === 0) {
+            this.closeWallet()
+          }
+        }, 0)
       }
 
       // Callback to original caller
