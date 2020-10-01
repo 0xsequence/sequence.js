@@ -111,9 +111,9 @@ export class UniversalDeployer {
     prompt.succeed()
   }
 
-  registerDeployment = async () =>
+  registerDeployment = async (filePath?: string) =>
     promisify(fs.writeFile)(
-      `./networks/${this.networkName}.json`,
+      filePath ? filePath : `./networks/${this.networkName}.json`,
       JSON.stringify(
         this.deployedInstances.map(({ contract, contractAlias }) => {
           if (contract as ethers.Contract) {
@@ -131,7 +131,8 @@ export class UniversalDeployer {
         }),
         null,
         2
-      )
+      ),
+      { flag: 'w+' }
     )
   
   manualDeploymentRegistration = (
