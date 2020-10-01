@@ -127,7 +127,8 @@ export class ExternalWindowProvider implements AsyncSendable {
       this.pendingMessageQueue.push({
         type,
         payload,
-        callback
+        callback,
+        chainId
       })
       return
     }
@@ -178,8 +179,8 @@ export class ExternalWindowProvider implements AsyncSendable {
         const pendingMessageRequests = this.pendingMessageQueue.splice(0, this.pendingMessageQueue.length)
 
         pendingMessageRequests.forEach(pendingMessageRequest => {
-          const { type, payload, callback } = pendingMessageRequest
-          this.sendRequest(type, payload, callback)
+          const { type, payload, callback, chainId } = pendingMessageRequest
+          this.sendRequest(type, payload, callback, chainId)
         })
       }
 
@@ -345,4 +346,5 @@ export type PendingMessageRequest = {
   type: MessageType
   payload: MessagePayload
   callback?: MessageCallback
+  chainId?: number
 }
