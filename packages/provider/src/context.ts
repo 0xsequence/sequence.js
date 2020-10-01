@@ -1,11 +1,11 @@
 import { ArcadeumContext, NetworkConfig } from './types'
 
 export const WalletContext: ArcadeumContext = {
-  factory: '0x52f0F4258c69415567b21dfF085C3fd5505D5155',
-  mainModule: '0x57bA6Eb1ed6821Db7bC26C6714f093E2BCbea40F',
-  mainModuleUpgradable: '0xF52136A04057d889CeBf9bCc2F3142965AeABc54',
-  guestModule: '0xe076ad01F1eb18A8eF20bB64003DA4810a429a32',
-  requireUtils: '0xdc9b74c548b8697da0a51e32acf891a5a73df22c'
+  factory: '0x29285b3B5bBCcC83F0C116311AbB93127d0f90Da',
+  mainModule: '0x39BBffACb26C59810A522ae152C98Aef16AE4430',
+  mainModuleUpgradable: '0xD6eA107eed2B292C3289e3a0788b2450287DcC73',
+  guestModule: '0x62CAf680b06db2AaD4895504291B3Aa965C8f24c',
+  requireUtils: '0xC58E02FC87d2d14A166597478e886e823C6430a1'
 }
 
 export const ethereumNetworks: {[key: string]: NetworkConfig} = {
@@ -47,5 +47,17 @@ export const ethereumNetworks: {[key: string]: NetworkConfig} = {
     name: 'kovan',
     chainId: 42,
     rpcUrl: ''
+  },
+
+  mumbai : {
+    name: 'mumbai',
+    chainId: 80001,
+    rpcUrl: 'https://rpc-mumbai.matic.today'
+  },   
+  
+  matic : {
+    name: 'matic',
+    chainId: 137,
+    rpcUrl: 'https://rpc-mainnet.matic.network'
   }
 }

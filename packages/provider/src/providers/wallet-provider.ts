@@ -283,6 +283,10 @@ export class WalletProvider implements IWalletProvider {
     return this.getProvider().getSigner()
   }
 
+  getAuthSigner(): JsonRpcSigner {
+    return this.getAuthProvider().getSigner()
+  }
+
   getWalletConfig(): ArcadeumWalletConfig {
     return this.walletConfig
   }
