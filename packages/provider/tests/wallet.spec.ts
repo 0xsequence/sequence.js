@@ -1,9 +1,10 @@
 import { deployArcadeum } from './utils/arcadeum_config'
-import { ethers, Signer, Wallet } from 'ethers'
+import { encodeData } from './utils'
+import { ethers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
 
-import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/CallReceiverMock'
-import { HookCallerMock } from 'arcadeum-wallet/typings/contracts/HookCallerMock'
+import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
+import { HookCallerMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/HookCallerMock'
 
 import * as arcadeum from '../src'
 import { LocalRelayer } from '../src'
@@ -32,10 +33,6 @@ type GanacheInstance = {
   chainId?: number
 }
 
-async function encodeData(contract: any, method: string, ...args: any): Promise<string> {
-  return (await contract.populateTransaction[method](...args)).data
-}
-
 describe('Arcadeum wallet integration', function () {
   let ganache: GanacheInstance = {}
 
@@ -45,8 +42,6 @@ describe('Arcadeum wallet integration', function () {
 
   let context: ArcadeumContext
   let wallet: arcadeum.Wallet
-
-  let chainId: number
 
   before(async () => {
     // Deploy Ganache test env
@@ -85,14 +80,14 @@ describe('Arcadeum wallet integration', function () {
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ganache.signer
-    ).deploy()) as unknown as CallReceiverMock
+    ).deploy()) as CallReceiverMock
 
     // Deploy hook caller mock
     hookCaller = (await new ethers.ContractFactory(
       HookCallerMockArtifact.abi,
       HookCallerMockArtifact.bytecode,
       ganache.signer
-    ).deploy()) as unknown as HookCallerMock
+    ).deploy()) as HookCallerMock
 
     // Deploy local relayer
     relayer = new LocalRelayer(ganache.signer)
@@ -144,7 +139,7 @@ describe('Arcadeum wallet integration', function () {
         })
 
         it('Should call contract method', async () => {
-          const contractWithSigner = callReceiver.connect(signer) as unknown as CallReceiverMock
+          const contractWithSigner = callReceiver.connect(signer) as CallReceiverMock
 
           await contractWithSigner.testCall(412313, '0x11222334')
           expect(await contractWithSigner.lastValB()).to.equal('0x11222334')
@@ -155,18 +150,18 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
         })
 
         it('Should perform multiple transactions', async () => {
-          const contractWithSigner = callReceiver.connect(signer) as unknown as CallReceiverMock
+          const contractWithSigner = callReceiver.connect(signer) as CallReceiverMock
 
           await contractWithSigner.testCall(412313, '0x11222334')
           await contractWithSigner.testCall(11111, '0x')
         })
 
         it('Should return transaction count', async () => {
-          const contractWithSigner = callReceiver.connect(signer) as unknown as CallReceiverMock
+          const contractWithSigner = callReceiver.connect(signer) as CallReceiverMock
 
           expect(await provider.getTransactionCount(wallet.address)).to.equal(0)
 
@@ -199,7 +194,7 @@ describe('Arcadeum wallet integration', function () {
               CallReceiverMockArtifact.abi,
               CallReceiverMockArtifact.bytecode,
               ganache.signer
-            ).deploy()) as unknown as CallReceiverMock
+            ).deploy()) as CallReceiverMock
   
             const receiver = new ethers.Contract(
               callReceiver1.address,
@@ -229,13 +224,13 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -263,7 +258,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -281,19 +276,19 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const callReceiver3 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -328,19 +323,19 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const callReceiver3 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             from: wallet.address,
@@ -380,7 +375,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -398,7 +393,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -427,7 +422,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -457,7 +452,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -477,7 +472,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -511,7 +506,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -539,7 +534,7 @@ describe('Arcadeum wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ganache.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -567,13 +562,13 @@ describe('Arcadeum wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const transaction = [
           {
@@ -603,19 +598,19 @@ describe('Arcadeum wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const transaction = [
           {
@@ -876,13 +871,13 @@ describe('Arcadeum wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const transaction = {
           from: wallet.address,
@@ -912,19 +907,19 @@ describe('Arcadeum wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const transaction = {
           from: wallet.address,
@@ -961,19 +956,19 @@ describe('Arcadeum wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ganache.signer
-        ).deploy()) as unknown as CallReceiverMock
+        ).deploy()) as CallReceiverMock
 
         const transaction = {
           from: wallet.address,
