@@ -1,6 +1,6 @@
 {
   "name": "@arcadeum/deployer",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Library to deploy contracts via the universal deployer",
   "license": "MIT",
   "main": "dist/index.js",

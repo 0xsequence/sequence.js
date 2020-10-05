@@ -77,11 +77,12 @@ export class UniversalDeployer {
   deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
     if (await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
-      await this.signer.sendTransaction({
+      let tx = await this.signer.sendTransaction({
         to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
         value: UNIVERSAL_DEPLOYER_FUNDING,
         ...txParams
       })
+      await tx.wait()
       prompt.succeed()
     }
   
@@ -103,11 +104,12 @@ export class UniversalDeployer {
     const universal_deployer_2_deploy_tx = await universal_deployer_2_factory.getDeployTransaction()
 
     prompt.start('Deploying universal deployer 2 contract')
-    await this.signer.sendTransaction({
+    let tx = await this.signer.sendTransaction({
       to: UNIVERSAL_DEPLOYER_ADDRESS,
       data: universal_deployer_2_deploy_tx.data,
       ...txParams
     }) as ContractTransaction
+    await tx.wait()
     prompt.succeed()
   }
 
