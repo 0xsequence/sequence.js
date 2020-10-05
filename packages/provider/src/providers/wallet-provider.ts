@@ -360,6 +360,15 @@ export class WalletProvider implements IWalletProvider {
       this.session = {}
     }
 
+    // TODO: Ethers v4 ignores the RPC url provided if the network.name is provided
+    // and since ethers doesn't know about mumbai or matic, it will throw an error
+    // for unknown network. Setting the network to null ensures the RPC url is used 
+    // for the JsonRpcProvivider generated. I don't think Ethers V5 fixes this, but
+    // we will need to test once we migrated to it.
+    if (network.name == 'mumbai' || network.name == 'matic') {
+      network.name = null
+    }
+
     // TODO: with ethers v5, we can set network to 'any', then set network = null
     // anytime the network changes, and call detectNetwork(). We can reuse
     // that object instance instead of creating a new one as below.
