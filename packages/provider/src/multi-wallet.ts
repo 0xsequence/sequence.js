@@ -231,14 +231,14 @@ export class MultiWallet extends AbstractSigner {
       const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
       if (logs.length === 0) return undefined
       const lastLog = logs[logs.length - 1]
-      event = authContract.interface.decodeEventLog(authContract.interface.events.RequiredConfig, lastLog.data, lastLog.topics)
+      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     } else {
       // The wallet it's using the counter-factual configuration
       const filter = authContract.filters.RequiredConfig(address)
       const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
       if (logs.length === 0) return undefined
       const lastLog = logs[0] // TODO: Search for real counter-factual config
-      event = authContract.interface.decodeEventLog(authContract.interface.events.RequiredConfig, lastLog.data, lastLog.topics)
+      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     }
 
     const signers = ethers.utils.defaultAbiCoder.decode(
