@@ -1,5 +1,5 @@
 import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish, AuxTransactionRequest, NonceDependency } from './types'
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
 import {
   Provider,
   TransactionResponse,
@@ -24,10 +24,9 @@ import {
   isUsableConfig,
   makeExpirable,
   makeAfterNonce,
-  aggregate
+  aggregate, resolveArrayProperties
 } from './utils'
-import { Interface, ConnectionInfo, BytesLike, Deferrable } from 'ethers/lib/utils'
-import { Signer as AbstractSigner } from 'ethers'
+import { Interface, ConnectionInfo, BytesLike, Deferrable, resolveProperties } from 'ethers/lib/utils'
 import { IRelayer } from './relayer'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
@@ -240,7 +239,9 @@ export class Wallet extends AbstractSigner {
     return this.getNonce(blockTag)
   }
 
-  async sendTransaction(transaction: Transactionish, allSigners?: boolean): Promise<TransactionResponse> {
+  async sendTransaction(dtransactionish: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
+    const transaction = (await resolveArrayProperties<Transactionish>(dtransactionish))
+
     if (!this.provider) {
       throw new Error('missing provider')
     }
@@ -257,7 +258,7 @@ export class Wallet extends AbstractSigner {
         arctx = await toArcadeumTransactions(this, transaction)
       }
     } else if (isArcadeumTransaction(transaction)) {
-      arctx = [transaction as ArcadeumTransaction]
+      arctx = [transaction]
     } else {
       arctx = await toArcadeumTransactions(this, [transaction])
     }

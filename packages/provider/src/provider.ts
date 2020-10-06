@@ -60,7 +60,7 @@ export class Provider implements ExternalProvider {
     let tx: Promise<TransactionResponse>
 
     if (isArcadeumTransaction(transaction)) {
-      const arctx = flattenAuxTransactions(transaction)
+      const arctx = flattenAuxTransactions([transaction])
       tx = this._wallet.relayer.relay(this._wallet.config, this._wallet.context, signature, ...(arctx as ArcadeumTransaction[]))
     }
 

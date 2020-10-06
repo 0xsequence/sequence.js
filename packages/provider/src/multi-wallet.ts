@@ -4,7 +4,7 @@ import { Wallet } from './wallet'
 import { NetworkConfig, ArcadeumWalletConfig, ArcadeumContext, Transactionish } from './types'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
-import { isConfig } from './utils'
+import { isConfig, resolveArrayProperties } from './utils'
 import { NotEnoughSigners } from './errors'
 import { Deferrable } from 'ethers/lib/utils'
 
@@ -128,7 +128,8 @@ export class MultiWallet extends AbstractSigner {
     return wallet.useConfig(thisConfig).signMessage(message)
   }
 
-  async sendTransaction(transaction: Transactionish, network?: NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<TransactionResponse> {
+  async sendTransaction(dtransactionish: Deferrable<Transactionish>, network?: NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<TransactionResponse> {
+    const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = network ? this.networkWallet(network) : this.mainWallet()
 
     // TODO: Skip this step if wallet is authWallet

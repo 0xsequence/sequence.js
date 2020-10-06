@@ -12,7 +12,7 @@ import {
 } from './types'
 import { BigNumberish, ethers, Signer } from 'ethers'
 import * as WalletContract from './commons/wallet_contract'
-import { BytesLike, Interface } from 'ethers/lib/utils'
+import { BytesLike, Deferrable, Interface, resolveProperties } from 'ethers/lib/utils'
 import { TransactionRequest, Provider } from '@ethersproject/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
@@ -441,7 +441,7 @@ export function isAsyncSendable(target: any) {
   return target.send || target.sendAsync
 }
 
-export function isArcadeumTransaction(tx: any) {
+export function isArcadeumTransaction(tx: any): tx is ArcadeumTransaction {
   return tx.delegateCall !== undefined || tx.revertOnError !== undefined
 }
 
@@ -541,4 +541,13 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
 
 export function isConfig(a: ArcadeumWalletConfig, b: ArcadeumWalletConfig): boolean {
   return imageHash(a) === imageHash(b)
+}
+
+export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
+  if (Array.isArray(object)) {
+    // T must include array type
+    return Promise.all(object.map((o) => resolveProperties(o))) as any
+  }
+
+  return resolveProperties(object)
 }
