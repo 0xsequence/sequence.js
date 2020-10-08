@@ -1,19 +1,17 @@
-import { Provider } from 'ethers/providers'
+import { Provider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 
-import { MainModule } from 'arcadeum-wallet/typings/contracts/MainModule'
-import { MainModuleUpgradable } from 'arcadeum-wallet/typings/contracts/MainModuleUpgradable'
-import { Factory } from 'arcadeum-wallet/typings/contracts/Factory'
-import { GuestModule } from 'arcadeum-wallet/typings/contracts/GuestModule'
-import { RequireUtils } from 'arcadeum-wallet/typings/contracts/RequireUtils'
+import { MainModule } from 'arcadeum-wallet/typings/contracts/ethers-v5/MainModule'
+import { MainModuleUpgradable } from 'arcadeum-wallet/typings/contracts/ethers-v5/MainModuleUpgradable'
+import { Factory } from 'arcadeum-wallet/typings/contracts/ethers-v5/Factory'
+import { GuestModule } from 'arcadeum-wallet/typings/contracts/ethers-v5/GuestModule'
+import { RequireUtils } from 'arcadeum-wallet/typings/contracts/ethers-v5/RequireUtils'
 
 const FactoryArtifact = require('arcadeum-wallet/artifacts/Factory.json')
 const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 const MainModuleUpgradableArtifact = require('arcadeum-wallet/artifacts/MainModuleUpgradable.json')
 const GuestModuleArtifact = require('arcadeum-wallet/artifacts/GuestModule.json')
 const RequireUtilsArtifact = require('arcadeum-wallet/artifacts/RequireUtils.json')
-
-ethers.errors.setLogLevel('error')
 
 export async function deployArcadeum(provider: Provider): Promise<[
   Factory,

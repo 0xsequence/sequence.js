@@ -1,9 +1,9 @@
-import { AsyncSendable } from 'ethers/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 import { ExternalWindowProvider } from './external-window-provider'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '../types'
 
 
-export class SidechainProvider implements AsyncSendable {
+export class SidechainProvider implements ExternalProvider {
     private parent: ExternalWindowProvider
     chainId: number
 

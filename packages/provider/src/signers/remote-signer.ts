@@ -1,14 +1,13 @@
 
-import { Signer as AbstractSigner } from 'ethers'
-import { Arrayish } from 'ethers/utils'
-import { TransactionRequest, TransactionResponse } from 'ethers/providers'
+import { BytesLike, Signer as AbstractSigner } from 'ethers'
+import { TransactionRequest, TransactionResponse } from '@ethersproject/providers'
 
 export abstract class RemoteSigner extends AbstractSigner {
-  signMessage(message: Arrayish): Promise<string> {
+  signMessage(message: BytesLike): Promise<string> {
     return this.signMessageWithData(message)
   }
 
-  abstract signMessageWithData(message: Arrayish, data?: Arrayish): Promise<string>
+  abstract signMessageWithData(message: BytesLike, data?: BytesLike): Promise<string>
 
   sendTransaction(_: TransactionRequest): Promise<TransactionResponse> {
     throw new Error("sendTransaction not implemented.")
@@ -18,7 +17,7 @@ export abstract class RemoteSigner extends AbstractSigner {
     return (<RemoteSigner>signer).signMessageWithData !== undefined
   }
 
-  static signMessageWithData(signer: AbstractSigner, message: Arrayish, data?: Arrayish): Promise<string> {
+  static signMessageWithData(signer: AbstractSigner, message: BytesLike, data?: BytesLike): Promise<string> {
     if (this.isRemoteSigner(signer)) {
       return (signer as RemoteSigner).signMessageWithData(message, data)
     }

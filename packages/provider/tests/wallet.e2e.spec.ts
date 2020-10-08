@@ -1,6 +1,7 @@
 import { ethers, Signer } from 'ethers'
 
-import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/CallReceiverMock'
+import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
+import { encodeData } from './utils'
 
 import * as arcadeum from '../src'
 import { RpcRelayer } from '../src'
@@ -66,7 +67,7 @@ if (process.env.ONLY_E2E) {
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([123, "0x445566"])
+            data: await encodeData(callReceiver, 'testCall', 123, "0x445566")
           }]
 
           const arctx = await toArcadeumTransactions(wallet, transactions)
@@ -85,7 +86,7 @@ if (process.env.ONLY_E2E) {
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([123, "0x445566"])
+            data: await encodeData(callReceiver, 'testCall', 123, "0x445566")
           }]
 
           const arctx = await toArcadeumTransactions(wallet, transactions)
@@ -103,7 +104,7 @@ if (process.env.ONLY_E2E) {
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([123, data])
+            data: await encodeData(callReceiver, 'testCall', 123, data)
           }
 
           const arctx = await toArcadeumTransaction(wallet, transaction)
@@ -121,14 +122,14 @@ if (process.env.ONLY_E2E) {
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([123, data])
+            data: await encodeData(callReceiver, 'testCall', 123, data)
           }, {
             from: wallet.address,
             gasPrice: '20000000000',
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+            data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
           }]
 
           const arctxs = await toArcadeumTransactions(wallet, transactions)
@@ -148,7 +149,7 @@ if (process.env.ONLY_E2E) {
             gasLimit: 1000000,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([743533, data])
+            data: await encodeData(callReceiver, 'testCall', 743533, data)
           }]
 
           const arctxs = await toArcadeumTransactions(wallet, transactions, true)
@@ -168,14 +169,14 @@ if (process.env.ONLY_E2E) {
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([123, data])
+            data: await encodeData(callReceiver, 'testCall', 123, data)
           }, {
             from: wallet.address,
             gasPrice: '20000000000',
             gasLimit: 0,
             to: callReceiver.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([7435, '0x445566'])
+            data: await encodeData(callReceiver, 'testCall', 7435, '0x445566')
           }]
 
           const arctxs = await toArcadeumTransactions(wallet, transactions, true)
@@ -195,7 +196,7 @@ if (process.env.ONLY_E2E) {
               gasLimit: '921987',
               to: callReceiver.address,
               value: 0,
-              data: callReceiver.interface.functions.testCall.encode([24123, data])
+              data: await encodeData(callReceiver, 'testCall', 24123, data)
             }
           ]
 
@@ -238,7 +239,7 @@ if (process.env.ONLY_E2E) {
               gas: '121000',
               to: callReceiver.address,
               value: 0,
-              data: callReceiver.interface.functions.testCall.encode([5512, data2])
+              data: await encodeData(callReceiver, 'testCall', 5512, data2)
             }
           ]
 

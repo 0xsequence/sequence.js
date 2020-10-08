@@ -1,6 +1,7 @@
 import { RemoteSigner } from "./remote-signer"
-import { Signer as AbstractSigner } from 'ethers'
-import { Arrayish } from "ethers/utils"
+import { BytesLike, Signer as AbstractSigner } from 'ethers'
+import { TransactionRequest, Provider } from "@ethersproject/providers"
+import { Deferrable } from "ethers/lib/utils"
 
 
 export class LocalRemoteSigner extends RemoteSigner {
@@ -11,11 +12,18 @@ export class LocalRemoteSigner extends RemoteSigner {
     this._signer = signer
   }
 
-  signMessageWithData(message: Arrayish, _?: Arrayish): Promise<string> {
+  signMessageWithData(message: BytesLike, _?: BytesLike): Promise<string> {
     return this._signer.signMessage(message)
   }
 
   getAddress(): Promise<string> {
     return this._signer.getAddress()
+  }
+
+  signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error("Method not implemented.")
+  }
+  connect(provider: Provider): AbstractSigner {
+    throw new Error("Method not implemented.")
   }
 }

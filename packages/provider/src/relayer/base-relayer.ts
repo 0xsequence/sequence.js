@@ -1,8 +1,8 @@
 import { ArcadeumWalletConfig } from ".."
 import { ArcadeumContext, ArcadeumTransaction } from "../types"
-import { Provider } from "ethers/providers"
+import { Provider } from "@ethersproject/providers"
 import { addressOf, arcadeumTxAbiEncode, readArcadeumNonce, imageHash } from "../utils"
-import { Interface } from "ethers/utils"
+import { Interface } from "ethers/lib/utils"
 
 import { abi as mainModuleAbi } from '../abi/mainModule'
 import { abi as factoryAbi } from '../abi/factory'
@@ -26,9 +26,10 @@ export class BaseRelayer {
     config: ArcadeumWalletConfig,
     context: ArcadeumContext
   ): { to: string, data: string} {
+    const factoryInterface = new Interface(factoryAbi)
     return {
       to: context.factory,
-      data: new Interface(factoryAbi).functions.deploy.encode(
+      data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'),
         [context.mainModule, imageHash(config)
       ])
     }
@@ -46,20 +47,20 @@ export class BaseRelayer {
     if (this.bundleCreation && !(await this.isWalletDeployed(walletAddress))) {
       return {
         to: context.guestModule,
-        data: walletInterface.functions.execute.encode([
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
           arcadeumTxAbiEncode([{
             ...this.prepareWalletDeploy(config, context),
             delegateCall: false,
             revertOnError: false,
             gasLimit: ethers.constants.Two.pow(17),
-            value: ethers.constants.Zero,
+            value: ethers.constants.Zero
           }, {
             delegateCall: false,
             revertOnError: true,
             gasLimit: ethers.constants.Zero,
             to: walletAddress,
             value: ethers.constants.Zero,
-            data: walletInterface.functions.execute.encode(
+            data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), 
               [
                 arcadeumTxAbiEncode(transactions),
                 readArcadeumNonce(...transactions),
@@ -72,7 +73,7 @@ export class BaseRelayer {
     } else {
       return {
         to: walletAddress,
-        data: walletInterface.functions.execute.encode(
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
           [
             arcadeumTxAbiEncode(transactions),
             readArcadeumNonce(...transactions),

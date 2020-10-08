@@ -1,5 +1,5 @@
 import { ArcadeumTransaction, ArcadeumContext, ArcadeumWalletConfig } from '../types'
-import { TransactionResponse, BlockTag } from 'ethers/providers'
+import { providers } from 'ethers'
 
 export interface IRelayer {
   estimateGasLimits(
@@ -14,19 +14,14 @@ export interface IRelayer {
     ...transactions: ArcadeumTransaction[]
   ): Promise<ArcadeumTransaction[][]>
 
-  getNonce(
-    config: ArcadeumWalletConfig,
-    context: ArcadeumContext,
-    space?: number,
-    blockTag?: BlockTag
-  ): Promise<number>
+  getNonce(config: ArcadeumWalletConfig, context: ArcadeumContext, space?: number, blockTag?: providers.BlockTag): Promise<number>
 
   relay(
     config: ArcadeumWalletConfig,
     context: ArcadeumContext,
     signature: string | Promise<string>,
     ...transactions: ArcadeumTransaction[]
-  ): Promise<TransactionResponse>
+  ): Promise<providers.TransactionResponse>
 }
 
 export { LocalRelayer } from './local-relayer'

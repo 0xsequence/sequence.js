@@ -1,12 +1,12 @@
-import { Signer as AbstractSigner, Contract, ethers } from 'ethers'
-import { TransactionResponse, JsonRpcProvider } from 'ethers/providers'
+import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
+import { TransactionResponse, TransactionRequest, Provider } from '@ethersproject/providers'
 import { Wallet } from './wallet'
 import { NetworkConfig, ArcadeumWalletConfig, ArcadeumContext, Transactionish } from './types'
-import { Arrayish, BigNumberish } from 'ethers/utils'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
-import { isConfig } from './utils'
+import { isConfig, resolveArrayProperties } from './utils'
 import { NotEnoughSigners } from './errors'
+import { Deferrable } from 'ethers/lib/utils'
 
 // TODO: Add more details to network
 // authChain, mainNetwork, etc
@@ -102,11 +102,11 @@ export class MultiWallet extends AbstractSigner {
     }
   }
 
-  async signAuthMessage(message: Arrayish, onlyFullSign: boolean = true): Promise<string> {
+  async signAuthMessage(message: BytesLike, onlyFullSign: boolean = true): Promise<string> {
     return this.signMessage(message, this.authWallet(), onlyFullSign)
   }
 
-  async signMessage(message: Arrayish, target?: Wallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
+  async signMessage(message: BytesLike, target?: Wallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
     const wallet = (() => {
       if (!target) return this.mainWallet()
       if ((<Wallet>target).address) {
@@ -128,7 +128,8 @@ export class MultiWallet extends AbstractSigner {
     return wallet.useConfig(thisConfig).signMessage(message)
   }
 
-  async sendTransaction(transaction: Transactionish, network?: NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<TransactionResponse> {
+  async sendTransaction(dtransactionish: Deferrable<Transactionish>, network?: NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<TransactionResponse> {
+    const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = network ? this.networkWallet(network) : this.mainWallet()
 
     // TODO: Skip this step if wallet is authWallet
@@ -214,7 +215,7 @@ export class MultiWallet extends AbstractSigner {
     const walletContract = new Contract(address, mainModuleUpgradableAbi, wallet.provider)
 
     const authWallet = this.authWallet()
-    const authContract = new Contract(authWallet.context.requireUtils, requireUtilsAbi, authWallet.provider);
+    const authContract = new Contract(authWallet.context.requireUtils, requireUtilsAbi, authWallet.provider)
 
     const currentImageHash = walletContract.functions.imageHash.call([])
     currentImageHash.catch(() => {}) // Ignore no imageHash defined
@@ -230,14 +231,14 @@ export class MultiWallet extends AbstractSigner {
       const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
       if (logs.length === 0) return undefined
       const lastLog = logs[logs.length - 1]
-      event = authContract.interface.events.RequiredConfig.decode(lastLog.data, lastLog.topics)
+      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     } else {
       // The wallet it's using the counter-factual configuration
       const filter = authContract.filters.RequiredConfig(address)
       const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
       if (logs.length === 0) return undefined
       const lastLog = logs[0] // TODO: Search for real counter-factual config
-      event = authContract.interface.events.RequiredConfig.decode(lastLog.data, lastLog.topics)
+      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     }
 
     const signers = ethers.utils.defaultAbiCoder.decode(
@@ -264,7 +265,7 @@ export class MultiWallet extends AbstractSigner {
       if ((<NetworkConfig>network).chainId) {
         return (<NetworkConfig>network).chainId
       }
-      return ethers.utils.bigNumberify(network as BigNumberish).toNumber()
+      return ethers.BigNumber.from(network as BigNumberish).toNumber()
     })()
 
     return this._wallets.find((w) =>w.network.chainId === chainId).wallet
@@ -282,5 +283,12 @@ export class MultiWallet extends AbstractSigner {
 
   static isMultiWallet(signer: AbstractSigner): signer is MultiWallet {
     return (<MultiWallet>signer).updateConfig !== undefined
+  }
+
+  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error('Method not implemented.')
+  }
+  connect(_: Provider): AbstractSigner {
+    throw new Error('Method not implemented.')
   }
 }

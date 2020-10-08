@@ -1,14 +1,15 @@
 import { deployArcadeum } from './utils/arcadeum_config'
-import { ethers, Signer, Wallet } from 'ethers'
+import { encodeData } from './utils'
+import { ethers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
 
-import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/CallReceiverMock'
-import { HookCallerMock } from 'arcadeum-wallet/typings/contracts/HookCallerMock'
+import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
+import { HookCallerMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/HookCallerMock'
 
 import * as arcadeum from '../src'
 import { LocalRelayer } from '../src'
 import { ArcadeumContext } from '../src/types'
-import { AsyncSendable, Web3Provider, JsonRpcProvider } from 'ethers/providers'
+import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Signer as AbstractSigner } from 'ethers'
 
 import * as chaiAsPromised from 'chai-as-promised'
@@ -28,7 +29,8 @@ type GanacheInstance = {
   server?: any
   serverUri?: string
   provider?: JsonRpcProvider
-  signer?: Signer
+  signer?: Signer,
+  chainId?: number
 }
 
 describe('Arcadeum wallet integration', function () {
@@ -43,10 +45,16 @@ describe('Arcadeum wallet integration', function () {
 
   before(async () => {
     // Deploy Ganache test env
-    ganache.server = Ganache.server({ network_id: 1 })
+    ganache.chainId = 1337
+    ganache.server = Ganache.server({
+      _chainIdRpc: ganache.chainId,
+      _chainId: ganache.chainId,
+      mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
+    })
+
     await ganache.server.listen(GANACHE_PORT)
     ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
-    ganache.provider = new ethers.providers.JsonRpcProvider(ganache.serverUri)
+    ganache.provider = new JsonRpcProvider(ganache.serverUri)
     ganache.signer = ganache.provider.getSigner()
 
     // Deploy Arcadeum env
@@ -97,7 +105,7 @@ describe('Arcadeum wallet integration', function () {
   })
 
   describe('with ethers.js', () => {
-    let w3provider: AsyncSendable
+    let w3provider: ExternalProvider
     let provider: Web3Provider
 
     let options = [
@@ -138,7 +146,7 @@ describe('Arcadeum wallet integration', function () {
         })
 
         it('Should deploy contract', async () => {
-          ;(await new ethers.ContractFactory(
+          (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             signer
@@ -195,7 +203,7 @@ describe('Arcadeum wallet integration', function () {
             )
 
             const tx = await receiver.functions.testCall(2, "0x030233", {
-              gasLimit: ethers.utils.bigNumberify(1048575)
+              gasLimit: ethers.BigNumber.from(1048575)
             })
 
             expect(tx.data).to.contain("00fffff")
@@ -228,13 +236,13 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x112233']),
+            data: await encodeData(callReceiver, "testCall", 1, "0x112233"),
             auxiliary: [
               {
                 gas: '121000',
                 to: callReceiver2.address,
                 value: 0,
-                data: callReceiver.interface.functions.testCall.encode([2, '0x445566'])
+                data: await encodeData(callReceiver, "testCall", 2, "0x445566")
               }
             ]
           }
@@ -256,7 +264,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015361'])
+            data: await encodeData(callReceiver, "testCall", 1, '0x015361')
           }
 
           await wallet.sendTransaction(transaction)
@@ -286,19 +294,19 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x112233']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
             auxiliary: [
               {
                 gas: '100000',
                 to: callReceiver2.address,
                 value: 0,
-                data: callReceiver.interface.functions.testCall.encode([2, '0x445566'])
+                data: await encodeData(callReceiver, "testCall", 2, '0x445566')
               },
               {
                 gas: '70000',
                 to: callReceiver3.address,
                 value: 0,
-                data: callReceiver.interface.functions.testCall.encode([2, '0x778899'])
+                data: await encodeData(callReceiver, "testCall", 2, '0x778899')
               }
             ]
           }
@@ -334,19 +342,19 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x112233']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
             auxiliary: [
               {
                 gas: '100000',
                 to: callReceiver2.address,
                 value: 0,
-                data: callReceiver.interface.functions.testCall.encode([2, '0x445566']),
+                data: await encodeData(callReceiver, "testCall", 2, '0x445566'),
                 auxiliary: [
                   {
                     gas: '70000',
                     to: callReceiver3.address,
                     value: 0,
-                    data: callReceiver.interface.functions.testCall.encode([2, '0x778899'])
+                    data: await encodeData(callReceiver, "testCall", 2, '0x778899')
                   }
                 ]
               }
@@ -373,7 +381,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) + (86400 * 90)
           }
 
@@ -391,7 +399,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) - (86400 * 90)
           }
 
@@ -420,7 +428,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) + (86400 * 90)
           }
 
@@ -450,7 +458,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
             afterNonce: encodeNonce(5, 1),
             nonce: encodeNonce(6, 0)
@@ -470,7 +478,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
             afterNonce: encodeNonce(5, 1),
             nonce: encodeNonce(6, 0)
@@ -504,7 +512,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
             afterNonce: {
               address: wallet2.address,
@@ -532,7 +540,7 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x015561']),
+            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
             expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
             afterNonce: {
               address: wallet2.address,
@@ -568,14 +576,14 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x112233'])
+            data: await encodeData(callReceiver, "testCall", 1, '0x112233')
           },
           {
             gasPrice: '20000000000',
             gas: '121000',
             to: callReceiver2.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([2, '0x445566'])
+            data: await encodeData(callReceiver, "testCall", 2, '0x445566')
           }
         ]
 
@@ -609,19 +617,19 @@ describe('Arcadeum wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([1, '0x112233'])
+            data: await encodeData(callReceiver, "testCall", 1, '0x112233')
           },
           {
             gas: '100000',
             to: callReceiver2.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([2, '0x445566'])
+            data: await encodeData(callReceiver, "testCall", 2, '0x445566')
           },
           {
             gas: '70000',
             to: callReceiver3.address,
             value: 0,
-            data: callReceiver.interface.functions.testCall.encode([2, '0x778899'])
+            data: await encodeData(callReceiver, "testCall", 2, '0x778899')
           }
         ]
 
@@ -635,7 +643,7 @@ describe('Arcadeum wallet integration', function () {
   })
 
   describe('with web3', () => {
-    let w3provider: AsyncSendable
+    let w3provider: ExternalProvider
     let w3: any
 
     beforeEach(async () => {
@@ -724,7 +732,7 @@ describe('Arcadeum wallet integration', function () {
           gas: '121000',
           to: callReceiver.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
         })
 
         const tx = await w3.eth.sendSignedTransaction(signed)
@@ -773,7 +781,7 @@ describe('Arcadeum wallet integration', function () {
           gas: '121000',
           to: callReceiver.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
         }
 
         const signed_1 = await w3_1.eth.signTransaction(transaction)
@@ -802,7 +810,7 @@ describe('Arcadeum wallet integration', function () {
           gasLimit: 0,
           to: callReceiver.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
         }
 
         const arctx = await toArcadeumTransaction(wallet, transaction)
@@ -820,7 +828,7 @@ describe('Arcadeum wallet integration', function () {
           gasLimit: 0,
           to: callReceiver.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([123, data])
+          data: await encodeData(callReceiver, "testCall", 23, data)
         }
 
         const arctx = await toArcadeumTransaction(wallet, transaction)
@@ -838,14 +846,14 @@ describe('Arcadeum wallet integration', function () {
           gasLimit: 0,
           to: callReceiver.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([123, data])
+          data: await encodeData(callReceiver, "testCall", 123, data)
         }, {
           from: wallet.address,
           gasPrice: '20000000000',
           gasLimit: 0,
           to: callReceiver.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
         }]
 
         const arctxs = await toArcadeumTransactions(wallet, transactions)
@@ -876,13 +884,13 @@ describe('Arcadeum wallet integration', function () {
           gas: '121000',
           to: callReceiver1.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([1, '0x112233']),
+          data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
           auxiliary: [
             {
               gas: '121000',
               to: callReceiver2.address,
               value: 0,
-              data: callReceiver.interface.functions.testCall.encode([2, '0x445566'])
+              data: await encodeData(callReceiver, "testCall", 2, '0x445566')
             }
           ]
         }
@@ -918,19 +926,19 @@ describe('Arcadeum wallet integration', function () {
           gas: '121000',
           to: callReceiver1.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([1, '0x112233']),
+          data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
           auxiliary: [
             {
               gas: '100000',
               to: callReceiver2.address,
               value: 0,
-              data: callReceiver.interface.functions.testCall.encode([2, '0x445566'])
+              data: await encodeData(callReceiver, "testCall", 2, '0x445566')
             },
             {
               gas: '70000',
               to: callReceiver3.address,
               value: 0,
-              data: callReceiver.interface.functions.testCall.encode([2, '0x778899'])
+              data: await encodeData(callReceiver, "testCall", 2, '0x778899')
             }
           ]
         }
@@ -967,19 +975,19 @@ describe('Arcadeum wallet integration', function () {
           gas: '121000',
           to: callReceiver1.address,
           value: 0,
-          data: callReceiver.interface.functions.testCall.encode([1, '0x112233']),
+          data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
           auxiliary: [
             {
               gas: '100000',
               to: callReceiver2.address,
               value: 0,
-              data: callReceiver.interface.functions.testCall.encode([2, '0x445566']),
+              data: await encodeData(callReceiver, "testCall", 2, '0x445566'),
               auxiliary: [
                 {
                   gas: '70000',
                   to: callReceiver3.address,
                   value: 0,
-                  data: callReceiver.interface.functions.testCall.encode([2, '0x778899'])
+                  data: await encodeData(callReceiver, "testCall", 2, '0x778899')
                 }
               ]
             }
@@ -1022,18 +1030,18 @@ describe('Arcadeum wallet integration', function () {
     })
     describe('deployed arcadeum wallet sign', async () => {
       it('Should validate arcadeum wallet signature', async () => {
-        const signature = await wallet.signMessage(message, 1)
+        const signature = await wallet.sign(message, false, ganache.chainId)
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
       })
       it('Should validate arcadeum wallet signature using direct method', async () => {
-        const signature = await wallet.signMessage(message, 1)
+        const signature = await wallet.signMessage(message, ganache.chainId)
         await relayer.deploy(wallet.config, context)
         expect(await isValidArcadeumDeployedWalletSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
       })
       it('Should reject arcadeum wallet invalid signature', async () => {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
-        const signature = await wallet2.signMessage(message, 1)
+        const signature = await wallet2.signMessage(message, ganache.chainId)
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
       })
@@ -1064,18 +1072,18 @@ describe('Arcadeum wallet integration', function () {
           wallet2 = new arcadeum.Wallet(config, context, s1, s2).connect(ganache.serverUri, relayer)
         })
         it('Should reject previus wallet configuration signature', async () => {
-          const signature = await wallet.signMessage(message, 1)
+          const signature = await wallet.signMessage(message, ganache.chainId)
           expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
         })
         it('Should validate new wallet configuration signature', async () => {
-          const signature = await wallet2.signMessage(message, 1)
+          const signature = await wallet2.signMessage(message, ganache.chainId)
           expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.true
         })
       })
     })
     describe('non-deployed arcadeum wallet sign', async () => {
       it('Should validate arcadeum wallet signature', async () => {
-        const signature = await wallet.signMessage(message, 1)
+        const signature = await wallet.signMessage(message)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.true
       })
       it('Should valdiate arcadeum wallet multi-signature', async () => {
@@ -1097,11 +1105,11 @@ describe('Arcadeum wallet integration', function () {
         }
 
         const wallet2 = new arcadeum.Wallet(newConfig, context, s1, s2).connect(ganache.serverUri, relayer)
-        const signature = await wallet2.signMessage(message, 1)
-        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.true
+        const signature = await wallet2.signMessage(message)
+        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, ganache.chainId)).to.be.true
       })
       it('Should validate arcadeum wallet signature using direct method', async () => {
-        const signature = await wallet.signMessage(message, 1)
+        const signature = await wallet.signMessage(message)
         expect(await isValidArcadeumUndeployedWalletSignature(wallet.address, digest, signature, context, ganache.provider)).to.be.true
       })
       it('Should reject arcadeum wallet invalid signature', async () => {
@@ -1128,7 +1136,7 @@ describe('Arcadeum wallet integration', function () {
         }
 
         const wallet2 = new arcadeum.Wallet(newConfig, context, s1).connect(ganache.serverUri, relayer)
-        const signature = await wallet2.signMessage(message, 1)
+        const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
       })
       it('Should reject signature with not enough weigth but enough signers', async () => {
@@ -1155,27 +1163,27 @@ describe('Arcadeum wallet integration', function () {
         }
 
         const wallet2 = new arcadeum.Wallet(newConfig, { ...context, nonStrict: true }, s1, s2).connect(ganache.serverUri, relayer)
-        const signature = await wallet2.signMessage(message, 1)
-        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
+        const signature = await wallet2.signMessage(message)
+        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, ganache.chainId)).to.be.false
       })
     })
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {
-        const signature = await wallet.signMessage(message, 1)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, 1, digest)))
+        const signature = await wallet.signMessage(message)
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
       })
       it('Should validate wallet signature using direct method', async () => {
-        const signature = await wallet.signMessage(message, 1)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, 1, digest)))
+        const signature = await wallet.signMessage(message)
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidWalletSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
         const wallet2 = await arcadeum.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
-        const signature = await wallet2.signMessage(message, 1)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, 1, digest)))
+        const signature = await wallet2.signMessage(message, ganache.chainId)
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
         await relayer.deploy(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider, context)).to.be.false
       })
@@ -1189,7 +1197,7 @@ describe('Arcadeum wallet integration', function () {
         gasPrice: '20000000000',
         to: callReceiver.address,
         value: 0,
-        data: callReceiver.interface.functions.testCall.encode([123, '0x445566'])
+        data: await encodeData(callReceiver, "testCall", 123, '0x445566')
       }
     })
     it('Should migrate and update to a new single owner configuration', async () => {

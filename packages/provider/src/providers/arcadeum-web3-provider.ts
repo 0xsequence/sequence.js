@@ -1,15 +1,16 @@
-import { Web3Provider, AsyncSendable, TransactionRequest, TransactionResponse, JsonRpcSigner } from "ethers/providers"
-import { Networkish, BigNumberish, Interface } from "ethers/utils"
+import { Web3Provider, ExternalProvider, TransactionRequest, TransactionResponse, JsonRpcSigner, Networkish } from "@ethersproject/providers"
+import { Interface } from "ethers/lib/utils"
 import { toArcadeumTransactions, makeExpirable, makeAfterNonce, arcadeumTxAbiEncode } from "../utils"
 import { NonceDependency, ArcadeumContext } from "../types"
 import { abi as mainModuleAbi } from '../abi/mainModule'
+import { BigNumberish } from "ethers"
 
 export class ArcadeumWeb3Provider extends Web3Provider {
     private context: ArcadeumContext
 
     constructor(
         context: ArcadeumContext,
-        web3Provider: AsyncSendable,
+        web3Provider: ExternalProvider,
         network?: Networkish
     ) {
         super(web3Provider, network)
@@ -54,7 +55,7 @@ export class ArcadeumSigner {
 
         return this.signer.sendTransaction({
             to: address,
-            data: walletInterface.functions.selfExecute.encode([arcadeumTxAbiEncode(arctxs)])
+            data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [arcadeumTxAbiEncode(arctxs)])
         })
     }
 }

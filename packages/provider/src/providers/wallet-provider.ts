@@ -1,4 +1,4 @@
-import { JsonRpcProvider, JsonRpcSigner, AsyncSendable } from 'ethers/providers'
+import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ArcadeumWalletConfig, ArcadeumContext, NetworkConfig } from '../types'
 import { ExternalWindowProvider } from './external-window-provider'
 import { ProviderEngine, loggingProviderMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, JsonRpcMiddleware } from './provider-engine'
@@ -447,7 +447,7 @@ export interface WalletProviderConfig {
   type: WalletProviderType
 
   // Global web3 provider (optional)
-  web3Provider?: AsyncSendable
+  web3Provider?: ExternalProvider
 
   // ExternalWindowProvider config (optional)
   externalWindowProvider?: {
