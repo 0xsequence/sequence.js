@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
-    "declaration": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "./dist"
+    "typeRoots": ["./node_modules/@types"],
+    "outDir": "build"
   },
-  "include": [
-    "src/**/*"
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "typings/contracts/*"
   ]
 }

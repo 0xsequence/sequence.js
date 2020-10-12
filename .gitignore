@@ -1,10 +1,14 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
 node_modules/
+artifacts/
+cache/
+build/
 
 *.js.map
 dist/
 typings/contracts/*Factory.ts
+PROD.env
 
 .DS_Store
 .vscode
