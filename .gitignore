@@ -4,10 +4,9 @@ node_modules/
 artifacts/
 cache/
 build/
+dist/
 
 *.js.map
-dist/
-typings/contracts/*Factory.ts
 PROD.env
 
 .DS_Store

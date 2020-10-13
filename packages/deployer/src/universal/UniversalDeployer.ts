@@ -1,4 +1,4 @@
-import ora from 'ora'
+import * as ora from 'ora'
 import * as fs from 'fs'
 import { ethers } from 'ethers'
 import { promisify } from 'util'

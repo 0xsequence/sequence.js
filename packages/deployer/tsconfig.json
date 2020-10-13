@@ -2,15 +2,12 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
     "typeRoots": ["./node_modules/@types"],
-    "outDir": "build"
+    "outDir": "dist"
   },
-  "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "typings/contracts/*"
-  ]
+  "include": ["src/**/*"]
 }

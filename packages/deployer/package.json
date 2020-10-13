@@ -1,11 +1,11 @@
 {
   "name": "@arcadeum/deployer",
-  "version": "0.2.0",
+  "version": "0.2.4",
   "description": "Library to deploy contracts via the universal deployer",
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "module": "dist/src/index.es.js",
+  "types": "dist/src/index.d.ts",
   "scripts": {
     "test": "jest --ci --runInBand",
     "prepublishOnly": "yarn test && yarn lint",
