@@ -89,6 +89,12 @@ export class ExternalWindowProvider implements ExternalProvider {
     }, 1000)
   }
 
+  focusWallet = () => {
+    if (this.walletOpened === true) {
+      this.walletWindow.focus()
+    }
+  }
+
   closeWallet = () => {
     this.confirmationOnly = false
     if (this.walletWindow) {
@@ -116,6 +122,9 @@ export class ExternalWindowProvider implements ExternalProvider {
     if (!this.walletOpened) {
       throw new Error('wallet is not opened.')
     }
+
+    // focus the wallet
+    this.focusWallet()
 
     // Send request to the wallet window
     this.sendRequest(MessageType.SEND_REQUEST, request, callback, chainId)
