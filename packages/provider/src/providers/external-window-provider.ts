@@ -34,12 +34,13 @@ export class ExternalWindowProvider implements ExternalProvider {
       } else {
         // URL was changed, closing wallet to open at proper URL
         // TODO: Should be able to just push to new URL without having to re-open
-        this.closeWallet()
+        this.walletWindow.close()
+        this.walletWindow = null
       }
     }
 
     if (path) {
-      this.walletURL.pathname = path
+      this.walletURL.pathname = path.toLowerCase()
     }
 
     // Open popup window
