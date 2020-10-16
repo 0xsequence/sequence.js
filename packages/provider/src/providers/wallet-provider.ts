@@ -411,6 +411,9 @@ export class WalletProvider implements IWalletProvider {
       const cachedProvider = new CachedProvider()
       const publicProvider = new PublicProvider(network.rpcUrl)
 
+      cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
+      cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
+  
       const providerEngine = new ProviderEngine(sideExternalWindowProvider, [
         loggingProviderMiddleware,
         this.allowProvider,
