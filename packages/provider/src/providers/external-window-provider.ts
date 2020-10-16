@@ -28,8 +28,14 @@ export class ExternalWindowProvider implements ExternalProvider {
 
   openWallet = (path?: string, state?: object) => {
     if (this.walletOpened === true) {
-      this.walletWindow.focus()
-      return
+      if (!path) {
+        this.walletWindow.focus()
+        return
+      } else {
+        // URL was changed, closing wallet to open at proper URL
+        // TODO: Should be able to just push to new URL without having to re-open
+        this.closeWallet()
+      }
     }
 
     if (path) {
@@ -89,12 +95,6 @@ export class ExternalWindowProvider implements ExternalProvider {
     }, 1000)
   }
 
-  focusWallet = () => {
-    if (this.walletOpened === true) {
-      this.walletWindow.focus()
-    }
-  }
-
   closeWallet = () => {
     this.confirmationOnly = false
     if (this.walletWindow) {
@@ -116,15 +116,14 @@ export class ExternalWindowProvider implements ExternalProvider {
 
       // open the wallet
       await this.openWallet()
+    } else {
+      await this.walletWindow.focus()
     }
 
     // double check, in case wallet failed to open
     if (!this.walletOpened) {
       throw new Error('wallet is not opened.')
     }
-
-    // focus the wallet
-    this.focusWallet()
 
     // Send request to the wallet window
     this.sendRequest(MessageType.SEND_REQUEST, request, callback, chainId)
