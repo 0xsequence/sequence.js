@@ -4,7 +4,7 @@ import { Wallet } from './wallet'
 import { NetworkConfig, ArcadeumWalletConfig, ArcadeumContext, Transactionish } from './types'
 import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
-import { isConfig, resolveArrayProperties } from './utils'
+import { addressOf, imageHash, isConfig, resolveArrayProperties } from './utils'
 import { NotEnoughSigners } from './errors'
 import { Deferrable } from 'ethers/lib/utils'
 
@@ -225,6 +225,11 @@ export class MultiWallet extends AbstractSigner {
 
     let event: any
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
+      // Test if given config is the updated config
+      if (imageHash(this._wallets[0].wallet.config) === await currentImageHash) {
+        return this._wallets[0].wallet.config
+      }
+
       // The wallet has been updated
       // lookup configuration using imageHash
       const filter = authContract.filters.RequiredConfig(null, await currentImageHash)
@@ -233,6 +238,11 @@ export class MultiWallet extends AbstractSigner {
       const lastLog = logs[logs.length - 1]
       event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     } else {
+      // Test if given config is counter-factual config
+      if (addressOf(this._wallets[0].wallet.config, this._wallets[0].wallet.context).toLowerCase() === address.toLowerCase()) {
+        return this._wallets[0].wallet.config
+      }
+
       // The wallet it's using the counter-factual configuration
       const filter = authContract.filters.RequiredConfig(address)
       const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
