@@ -1,10 +1,10 @@
 import { Wallet } from './wallet'
-import { AsyncSendable, TransactionResponse } from 'ethers/providers'
 import { JsonRpcRequest, JsonRpcResponse, ArcadeumTransaction } from './types'
+import { ExternalProvider, TransactionResponse } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import { isArcadeumTransaction, toArcadeumTransactions, readArcadeumNonce, appendNonce, flattenAuxTransactions } from './utils'
 
-export class Provider implements AsyncSendable {
+export class Provider implements ExternalProvider {
   private readonly _wallet?: Wallet
 
   constructor(wallet: Wallet) {
@@ -18,7 +18,7 @@ export class Provider implements AsyncSendable {
     return this.provider.host
   }
 
-  get provider(): AsyncSendable {
+  get provider(): ExternalProvider {
     if (!this._wallet.connected) {
       throw Error('Wallet not connected')
     }
@@ -60,7 +60,7 @@ export class Provider implements AsyncSendable {
     let tx: Promise<TransactionResponse>
 
     if (isArcadeumTransaction(transaction)) {
-      const arctx = flattenAuxTransactions(transaction)
+      const arctx = flattenAuxTransactions([transaction])
       tx = this._wallet.relayer.relay(this._wallet.config, this._wallet.context, signature, ...(arctx as ArcadeumTransaction[]))
     }
 
@@ -171,7 +171,7 @@ export class Provider implements AsyncSendable {
         callback(undefined, {
           id: request.id,
           jsonrpc: '2.0',
-          result: ethers.utils.bigNumberify(await count).toHexString()
+          result: ethers.BigNumber.from(await count).toHexString()
         })
       } catch (e) {
         callback(e)

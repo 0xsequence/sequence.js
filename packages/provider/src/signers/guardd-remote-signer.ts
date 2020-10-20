@@ -1,8 +1,9 @@
 import { RemoteSigner } from "./remote-signer"
-import { ethers, Signer as AbstractSigner } from 'ethers'
-import { Arrayish } from "ethers/utils"
+import { BytesLike, ethers } from 'ethers'
+import { TransactionRequest, Provider } from '@ethersproject/providers'
 import { GuarddService } from "./remoteclient/guardd.gen"
 import * as pony from 'fetch-ponyfill'
+import { Deferrable } from "ethers/lib/utils"
 
 
 export class GuarddRemoteSigner extends RemoteSigner {
@@ -15,7 +16,7 @@ export class GuarddRemoteSigner extends RemoteSigner {
     this._address = address
   }
 
-  async signMessageWithData(message: Arrayish, auxData?: Arrayish): Promise<string> {
+  async signMessageWithData(message: BytesLike, auxData?: BytesLike): Promise<string> {
     const request = { msg: ethers.utils.hexlify(message), auxData: ethers.utils.hexlify(auxData ? auxData : []) }
     const res = await this._guardd.sign({ request: request })
     return res.sig
@@ -23,5 +24,12 @@ export class GuarddRemoteSigner extends RemoteSigner {
 
   async getAddress(): Promise<string> {
     return this._address
+  }
+
+  signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error("Method not implemented.")
+  }
+  connect(provider: Provider): ethers.Signer {
+    throw new Error("Method not implemented.")
   }
 }

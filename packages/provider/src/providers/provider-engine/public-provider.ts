@@ -1,6 +1,6 @@
 import { AsyncSendableMiddleware, JsonRpcHandler } from './index'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '../../types'
-import { JsonRpcProvider } from 'ethers/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
 export class PublicProvider implements AsyncSendableMiddleware {
 

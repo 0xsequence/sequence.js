@@ -1,11 +1,11 @@
-import { AsyncSendable } from 'ethers/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '../../types'
 
-export class ProviderEngine implements AsyncSendable {
-  private sender: AsyncSendable
+export class ProviderEngine implements ExternalProvider {
+  private sender: ExternalProvider
   private handler: JsonRpcHandler
 
-  constructor(sender: AsyncSendable, middlewares?: Array<JsonRpcMiddleware | AsyncSendableMiddleware>) {
+  constructor(sender: ExternalProvider, middlewares?: Array<JsonRpcMiddleware | AsyncSendableMiddleware>) {
     this.sender = sender
     if (middlewares) {
       this.setMiddleware(middlewares)
@@ -45,7 +45,7 @@ export const createJsonRpcMiddlewareStack = (middlewares: Array<JsonRpcMiddlewar
 
   let chain: JsonRpcHandler
   chain = toMiddleware(middlewares[middlewares.length-1])(handler)
-  for (let i=middlewares.length-2; i >= 0; i--) {
+  for (let i = middlewares.length - 2; i >= 0; i--) {
     chain = toMiddleware(middlewares[i])(chain)
   }
   return chain

@@ -1,5 +1,5 @@
 import { ArcadeumTransaction, ArcadeumWalletConfig, ArcadeumContext } from '../types'
-import { TransactionResponse, Provider, BlockTag } from 'ethers/providers'
+import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
 
 import { ChaindService } from './gen/chaind.gen'
 import { BaseRelayer } from './base-relayer'
@@ -151,7 +151,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
   ): Promise<number> {
     const addr = addressOf(config, context)
     const resp = await this.chaindApp.getMetaTxnNonce({ walletContractAddress: addr })
-    return ethers.utils.bigNumberify(resp.nonce).toNumber()
+    return ethers.BigNumber.from(resp.nonce).toNumber()
   }
 
   async relay(
@@ -175,7 +175,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
 
       return ({
         blockHash: txReceipt.blockHash,
-        blockNumber: ethers.utils.bigNumberify(txReceipt.blockNumber).toNumber(),
+        blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
         confirmations: 1,
         from: addressOf(config, context),
         hash: txReceipt.transactionHash,

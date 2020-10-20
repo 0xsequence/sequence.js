@@ -1,6 +1,6 @@
 {
   "name": "@arcadeum/provider",
-  "version": "0.4.3",
+  "version": "0.5.5",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -21,20 +21,20 @@
   ],
   "dependencies": {
     "@arcadeum/ethauth": "^0.3.0",
+    "ethers": "^5.0.14",
     "eventemitter3": "^4.0.6",
-    "fetch-ponyfill": "^6.1.1"
+    "fetch-ponyfill": "^6.1.1",
+    "ganache-core": "^2.12.1",
+    "source-map-support": "^0.5.19"
   },
-  "peerDependencies": {
-    "ethers": "^4.0.46"
-  },
+  "peerDependencies": {},
   "devDependencies": {
     "@types/chai": "^4.2.11",
     "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^7.0.2",
-    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts.git",
+    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "ethers": "^4.0.46",
     "express": "^4.17.1",
     "ganache-cli": "^6.9.1",
     "mocha": "^7.2.0",

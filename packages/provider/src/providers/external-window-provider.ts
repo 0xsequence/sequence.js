@@ -1,12 +1,11 @@
-import { AsyncSendable } from 'ethers/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback, NetworkConfig } from '../types'
 import EventEmitter from 'eventemitter3'
 import { WalletSession, WalletProviderEventType } from './wallet-provider'
 
 let requestIdx = 0
 
-export class ExternalWindowProvider implements AsyncSendable {
-
+export class ExternalWindowProvider implements ExternalProvider {
   private walletURL: URL
   private walletWindow: Window
   private walletOpened: boolean
@@ -29,12 +28,19 @@ export class ExternalWindowProvider implements AsyncSendable {
 
   openWallet = (path?: string, state?: object) => {
     if (this.walletOpened === true) {
-      this.walletWindow.focus()
-      return
+      if (!path) {
+        this.walletWindow.focus()
+        return
+      } else {
+        // URL was changed, closing wallet to open at proper URL
+        // TODO: Should be able to just push to new URL without having to re-open
+        this.walletWindow.close()
+        this.walletWindow = null
+      }
     }
 
     if (path) {
-      this.walletURL.pathname = path
+      this.walletURL.pathname = path.toLowerCase()
     }
 
     // Open popup window
@@ -42,7 +48,7 @@ export class ExternalWindowProvider implements AsyncSendable {
     const popup = window.open(this.walletURL.href, '_blank', windowFeatures)
 
     setTimeout(() => {
-      if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
         // popup is definitely blocked if we reach here.
         throw new Error('popup is blocked')
       }
@@ -111,6 +117,8 @@ export class ExternalWindowProvider implements AsyncSendable {
 
       // open the wallet
       await this.openWallet()
+    } else {
+      await this.walletWindow.focus()
     }
 
     // double check, in case wallet failed to open

@@ -10,17 +10,17 @@ import {
   Transactionish,
   NonceDependency
 } from './types'
-import { ethers, Signer } from 'ethers'
+import { BigNumberish, ethers, Signer } from 'ethers'
 import * as WalletContract from './commons/wallet_contract'
-import { BigNumberish, Arrayish, Interface } from 'ethers/utils'
-import { TransactionRequest, Provider } from 'ethers/providers'
+import { BytesLike, Deferrable, Interface, resolveProperties } from 'ethers/lib/utils'
+import { TransactionRequest, Provider } from '@ethersproject/providers'
 import { abi as mainModuleAbi } from './abi/mainModule'
 import { abi as erc1271Abi, returns as erc1271returns } from './abi/erc1271'
 import { abi as requireUtilsAbi } from './abi/requireUtils'
 
 export function compareAddr(a: string, b: string): number {
-  const bigA = ethers.utils.bigNumberify(a)
-  const bigB = ethers.utils.bigNumberify(b)
+  const bigA = ethers.BigNumber.from(a)
+  const bigB = ethers.BigNumber.from(b)
 
   if (bigA.lt(bigB)) {
     return -1
@@ -39,8 +39,8 @@ export function sortConfig(config: ArcadeumWalletConfig): ArcadeumWalletConfig {
 // isUsableConfig checks if a the sum of the owners in the configuration meets the necessary threshold to sign a transaction
 // a wallet that has a non-usable configuration is not able to perform any transactions, and can be considered as destroyed
 export function isUsableConfig(config: ArcadeumWalletConfig): boolean {
-  const sum = config.signers.reduce((p, c) => ethers.utils.bigNumberify(c.weight).add(p), ethers.constants.Zero)
-  return sum.gte(ethers.utils.bigNumberify(config.threshold))
+  const sum = config.signers.reduce((p, c) => ethers.BigNumber.from(c.weight).add(p), ethers.constants.Zero)
+  return sum.gte(ethers.BigNumber.from(config.threshold))
 }
 
 export function imageHash(config: ArcadeumWalletConfig): string {
@@ -86,7 +86,7 @@ export function encodeMetaTransactionsData(...txs: ArcadeumTransaction[]): strin
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, arcadeumTxAbiEncode(txs)])
 }
 
-export function packMessageData(wallet: string, networkId: BigNumberish, digest: Arrayish): string {
+export function packMessageData(wallet: string, networkId: BigNumberish, digest: BytesLike): string {
   return ethers.utils.solidityPack(
     ['string', 'uint256', 'address', 'bytes32'],
     ['\x19\x01', networkId, wallet, digest]
@@ -96,7 +96,7 @@ export function packMessageData(wallet: string, networkId: BigNumberish, digest:
 const SIG_TYPE_EIP712 = 1
 const SIG_TYPE_ETH_SIGN = 2
 
-function recoverSigner(digest: Arrayish, sig: ArcadeumDecodedSigner) {
+function recoverSigner(digest: BytesLike, sig: ArcadeumDecodedSigner) {
   switch (sig.t) {
     case SIG_TYPE_EIP712:
       return ethers.utils.recoverAddress(digest, {
@@ -240,7 +240,7 @@ export async function isValidArcadeumUndeployedWalletSignature(
   if (!provider && !chainId) return undefined // Signature validity can't be determined
   if (!arcadeumContext) return undefined // Signature validity can't be determined
 
-  try{
+  try {
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
     const signature = decodeSignature(sig)
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
@@ -252,17 +252,17 @@ export async function isValidArcadeumUndeployedWalletSignature(
   }
 }
 
-export function recoverConfig(message: Arrayish, signature: string | ArcadeumDecodedSignature): ArcadeumWalletConfig {
+export function recoverConfig(message: BytesLike, signature: string | ArcadeumDecodedSignature): ArcadeumWalletConfig {
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
   return recoverConfigFromDigest(digest, signature)
 }
 
 export function isSigner(obj: ArcadeumDecodedSigner | ArcadeumDecodedOwner): boolean {
   const cast = obj as ArcadeumDecodedSigner
-  return cast.r !== undefined && cast.s != undefined
+  return cast.r !== undefined && cast.s !== undefined
 }
 
-export function recoverConfigFromDigest(digest: Arrayish, signature: string | ArcadeumDecodedSignature): ArcadeumWalletConfig {
+export function recoverConfigFromDigest(digest: BytesLike, signature: string | ArcadeumDecodedSignature): ArcadeumWalletConfig {
   const decoded = (<ArcadeumDecodedSignature>signature).threshold !== undefined ? <ArcadeumDecodedSignature>signature : decodeSignature(signature as string)
 
   const signers = decoded.signers.map(s => {
@@ -288,7 +288,7 @@ export function recoverConfigFromDigest(digest: Arrayish, signature: string | A
 export function decodeSignature(signature: string): ArcadeumDecodedSignature {
   const auxsig = signature.replace('0x', '')
 
-  const threshold = ethers.utils.bigNumberify(`0x${auxsig.slice(0, 4)}`).toNumber()
+  const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
 
   const signers = []
 
@@ -296,7 +296,7 @@ export function decodeSignature(signature: string): ArcadeumDecodedSignature {
     const isAddr = auxsig.slice(rindex, rindex + 2) !== '00'
     rindex += 2
 
-    const weight = ethers.utils.bigNumberify(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+    const weight = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
     rindex += 2
 
     if (isAddr) {
@@ -314,10 +314,10 @@ export function decodeSignature(signature: string): ArcadeumDecodedSignature {
       const s = `0x${auxsig.slice(rindex, rindex + 64)}`
       rindex += 64
 
-      const v = ethers.utils.bigNumberify(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+      const v = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
       rindex += 2
 
-      const t = ethers.utils.bigNumberify(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+      const t = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
       rindex += 2
 
       signers.push({
@@ -375,7 +375,7 @@ export async function toArcadeumTransactions(
 
   // Uses the lowest nonce found on TransactionRequest
   // if there are no nonces, it leaves an undefined nonce
-  const nonces = (await Promise.all(txs.map(t => t.nonce))).filter(n => n !== undefined).map(n => ethers.utils.bigNumberify(n))
+  const nonces = (await Promise.all(txs.map(t => t.nonce))).filter(n => n !== undefined).map(n => ethers.BigNumber.from(n))
   const nonce = nonces.length !== 0 ? nonces.reduce((p, c) => (p.lt(c) ? p : c)) : undefined
 
   // Maps all transactions into ArcadeumTransactions
@@ -422,7 +422,7 @@ export async function toArcadeumTransaction(
     }
   } else {
     const walletInterface = new Interface(mainModuleAbi)
-    const data = walletInterface.functions.createContract.encode([tx.data])
+    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
     const address = typeof wallet === 'string' ? wallet : wallet.getAddress()
 
     return {
@@ -441,7 +441,7 @@ export function isAsyncSendable(target: any) {
   return target.send || target.sendAsync
 }
 
-export function isArcadeumTransaction(tx: any) {
+export function isArcadeumTransaction(tx: any): tx is ArcadeumTransaction {
   return tx.delegateCall !== undefined || tx.revertOnError !== undefined
 }
 
@@ -487,7 +487,7 @@ export function makeExpirable(context: ArcadeumContext, txs: ArcadeumTransaction
       gasLimit: 0,
       to: context.requireUtils,
       value: 0,
-      data: requireUtils.functions.requireNonExpired.encode([expiration])
+      data: requireUtils.encodeFunctionData(requireUtils.getFunction('requireNonExpired'), [expiration])
     },
     ...txs
   ]
@@ -507,7 +507,7 @@ export function makeAfterNonce(context: ArcadeumContext, txs: ArcadeumTransactio
       gasLimit: 0,
       to: context.requireUtils,
       value: 0,
-      data: requireUtils.functions.requireMinNonce.encode([
+      data: requireUtils.encodeFunctionData(requireUtils.getFunction('requireMinNonce'), [
         dep.address,
         dep.space ? encodeNonce(dep.space, dep.nonce) : dep.nonce
       ])
@@ -517,10 +517,10 @@ export function makeAfterNonce(context: ArcadeumContext, txs: ArcadeumTransactio
 }
 
 export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumberish {
-  const bspace = ethers.utils.bigNumberify(space)
-  const bnonce = ethers.utils.bigNumberify(nonce)
+  const bspace = ethers.BigNumber.from(space)
+  const bnonce = ethers.BigNumber.from(nonce)
 
-  const shl = ethers.constants.Two.pow(ethers.utils.bigNumberify(96))
+  const shl = ethers.constants.Two.pow(ethers.BigNumber.from(96))
 
   if (!bnonce.div(shl).eq(ethers.constants.Zero)) {
     throw new Error('Space already encoded')
@@ -530,8 +530,8 @@ export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumber
 }
 
 export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
-  const bnonce = ethers.utils.bigNumberify(nonce)
-  const shr = ethers.constants.Two.pow(ethers.utils.bigNumberify(96))
+  const bnonce = ethers.BigNumber.from(nonce)
+  const shr = ethers.constants.Two.pow(ethers.BigNumber.from(96))
 
   return [
     bnonce.div(shr),
@@ -541,4 +541,13 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
 
 export function isConfig(a: ArcadeumWalletConfig, b: ArcadeumWalletConfig): boolean {
   return imageHash(a) === imageHash(b)
+}
+
+export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
+  if (Array.isArray(object)) {
+    // T must include array type
+    return Promise.all(object.map((o) => resolveProperties(o))) as any
+  }
+
+  return resolveProperties(object)
 }

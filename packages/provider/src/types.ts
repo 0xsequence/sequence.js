@@ -1,5 +1,4 @@
-import { BigNumberish, Arrayish } from 'ethers/utils'
-import { TransactionRequest } from 'ethers/providers'
+import { BigNumberish, BytesLike, providers } from 'ethers'
 import { IRelayer } from './relayer'
 
 export interface JsonRpcRequest {
@@ -92,7 +91,7 @@ export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => 
 export type NextCallback = (callback?: OnNextCompleted) => void
 
 export interface ArcadeumWalletConfig {
-  address?: string,
+  address?: string
   threshold: number
   signers: {
     weight: number
@@ -102,10 +101,10 @@ export interface ArcadeumWalletConfig {
 
 export interface ArcadeumContext {
   factory: string
-  mainModule: string,
-  mainModuleUpgradable: string,
-  guestModule?: string,
-  requireUtils?: string,
+  mainModule: string
+  mainModuleUpgradable: string
+  guestModule?: string
+  requireUtils?: string
   nonStrict?: boolean
 }
 
@@ -133,7 +132,7 @@ export interface ArcadeumTransaction {
   gasLimit: BigNumberish
   to: string
   value: BigNumberish
-  data: Arrayish
+  data: BytesLike
   nonce?: BigNumberish
 }
 
@@ -143,18 +142,18 @@ export interface ArcadeumTransactionEncoded {
   gasLimit: BigNumberish
   target: string
   value: BigNumberish
-  data: Arrayish
+  data: BytesLike
 }
 
-export type AuxTransactionRequest = TransactionRequest & {
-  auxiliary?: Transactionish[],
-  expiration?: BigNumberish,
-  afterNonce?: NonceDependency | BigNumberish,
+export type AuxTransactionRequest = providers.TransactionRequest & {
+  auxiliary?: Transactionish[]
+  expiration?: BigNumberish
+  afterNonce?: NonceDependency | BigNumberish
 }
 
 export interface NonceDependency {
   address: string
-  nonce: BigNumberish,
+  nonce: BigNumberish
   space?: BigNumberish
 }
 
@@ -164,9 +163,9 @@ export interface NetworkConfig {
   name: string
   chainId: number
   rpcUrl: string
-  ensAddress?: string,
-  sidechains?: NetworkConfig[],
-  isMain?: boolean,
-  isAuth?: boolean,
-  relayer?: IRelayer,
+  ensAddress?: string
+  sidechains?: NetworkConfig[]
+  isMain?: boolean
+  isAuth?: boolean
+  relayer?: IRelayer
 }

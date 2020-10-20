@@ -1,14 +1,14 @@
-import ora from 'ora'
+import * as ora from 'ora'
 import * as fs from 'fs'
 import { ethers } from 'ethers'
 import { promisify } from 'util'
-import { UniversalDeployer2Factory } from '../utils/UniversalDeployer2Factory'
-import { ContractFactory, ContractTransaction } from 'ethers/contract'
+import { UniversalDeployer2Factory } from "../../typings/contracts/UniversalDeployer2Factory"
+import { ContractFactory, ContractTransaction } from 'ethers'
 import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX } from '../utils/constants'
 import { ContractInstance } from './types'
 
 const prompt = ora({ discardStdin: true })
-ethers.errors.setLogLevel("off");
+ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
 
 
 export class UniversalDeployer {
@@ -28,7 +28,7 @@ export class UniversalDeployer {
     contractAlias: string,
     contractFactory: new (signer: ethers.Signer) => T,
     txParams?: ethers.providers.TransactionRequest,
-    instance?: number | ethers.utils.BigNumber,
+    instance?: number | ethers.BigNumber,
     ...args: Parameters<T['deploy']>
   ): Promise<ethers.Contract> => {
     try {
@@ -149,7 +149,7 @@ export class UniversalDeployer {
   
   addressOf = async <T extends ContractFactory>(
     contractFactory: new (signer: ethers.Signer) => T,
-    contractInstance: number | ethers.utils.BigNumber,
+    contractInstance: number | ethers.BigNumber,
     ...args: Parameters<T['deploy']>
   ): Promise<string> => {
     const factory = new contractFactory(this.signer)
