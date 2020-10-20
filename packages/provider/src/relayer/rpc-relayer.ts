@@ -59,7 +59,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
   ) {
     let result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
 
-    while(!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') {
+    while (!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') {
       await new Promise(r => setTimeout(r, wait))
       result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
     }
@@ -169,7 +169,8 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     })
 
     const waitReceipt = async () => {
-      const receipt = (await this.waitReceipt((await result).txnHash)).receipt
+      const hash = (await result).txnHash
+      const receipt = (await this.waitReceipt(hash)).receipt
       const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
       return ({
@@ -177,6 +178,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
         blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
         confirmations: 1,
         from: addressOf(config, context),
+        hash: txReceipt.transactionHash,
         raw: receipt.txnReceipt,
         wait: async (confirmations?: number) => this.provider.waitForTransaction(txReceipt.transactionHash, confirmations)
       } as TransactionResponse)
@@ -188,7 +190,8 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
 
     return ({
       from: addressOf(config, context),
-      raw: (await result).txnHash,
+      raw: (await result).toString(),
+      hash: (await result).txnHash,
       waitForReceipt: waitReceipt,
       wait: async (confirmations?: number) => {
         const receipt = await waitReceipt()
