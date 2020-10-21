@@ -460,12 +460,12 @@ export function readArcadeumNonce(...txs: ArcadeumTransaction[]): BigNumberish {
 
 export function arcadeumTxAbiEncode(txs: ArcadeumTransaction[]): ArcadeumTransactionEncoded[] {
   return txs.map(t => ({
-    delegateCall: t.delegateCall,
-    revertOnError: t.revertOnError,
-    gasLimit: t.gasLimit,
+    delegateCall: t.delegateCall === true,
+    revertOnError: t.revertOnError === true,
+    gasLimit: t.gasLimit !== undefined ? t.gasLimit : ethers.constants.Zero,
     target: t.to,
-    value: t.value,
-    data: t.data
+    value: t.value !== undefined ? t.value : ethers.constants.Zero,
+    data: t.data !== undefined ? t.data : []
   }))
 }
 

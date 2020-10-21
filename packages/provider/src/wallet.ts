@@ -285,9 +285,9 @@ export class Wallet extends AbstractSigner {
       )
     }
 
-    // If all transactions have 0 gasLimit
-    // estimate gasLimits for each transaction
-    if (!arctx.find((a) => !a.revertOnError && !ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
+    // If a transaction has 0 gasLimit and not revertOnError
+    // compute all new gas limits
+    if (arctx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
       arctx = await this.relayer.estimateGasLimits(this.config, this.context, ...arctx)
     }
 
