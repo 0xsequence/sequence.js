@@ -59,9 +59,14 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
   ) {
     let result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
 
-    while (!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') {
+    while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === "UNKNOWN") {
       await new Promise(r => setTimeout(r, wait))
       result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
+    }
+
+    // "FAILED" is reserved for when the tx is invalid and never dispatched by remote relayer
+    if (result.receipt.status == "FAILED") {
+      throw new Error(result.receipt.revertReason)
     }
 
     return result
