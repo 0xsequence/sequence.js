@@ -4,34 +4,34 @@ import { TransactionResponse, Provider, BlockTag } from '@ethersproject/provider
 import { ChaindService } from './gen/chaind.gen'
 import { BaseRelayer } from './base-relayer'
 
-import * as pony from 'fetch-ponyfill'
+import pony from 'fetch-ponyfill'
 import { ethers } from 'ethers'
 import { addressOf, readArcadeumNonce, appendNonce, MetaTransactionsType, arcadeumTxAbiEncode } from '../utils'
 
 import { IRelayer } from '.'
 
 type RelayerTxReceipt = {
-  blockHash: string;
-  blockNumber: string;
-  contractAddress: string;
-  cumulativeGasUsed: string;
-  gasUsed: string;
+  blockHash: string
+  blockNumber: string
+  contractAddress: string
+  cumulativeGasUsed: string
+  gasUsed: string
   logs: {
-    address: string;
-    blockHash: string;
-    blockNumber: string;
-    data: string;
-    logIndex: string;
-    removed: boolean;
-    topics: string[];
-    transactionHash: string;
-    transactionIndex: string;
-  }[],
-  logsBloom: string;
-  root: string;
-  status: string;
-  transactionHash: string;
-  transactionIndex: string;
+    address: string
+    blockHash: string
+    blockNumber: string
+    data: string
+    logIndex: string
+    removed: boolean
+    topics: string[]
+    transactionHash: string
+    transactionIndex: string
+  }[]
+  logsBloom: string
+  root: string
+  status: string
+  transactionHash: string
+  transactionIndex: string
 }
 
 export type PendingTransactionResponse = TransactionResponse & {
@@ -42,30 +42,22 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
   private readonly chaindApp: ChaindService
   public waitForReceipt: boolean
 
-  constructor(
-    url: string,
-    bundleDeploy: boolean = true,
-    provider?: Provider,
-    waitForReceipt: boolean = true
-  ) {
+  constructor(url: string, bundleDeploy: boolean = true, provider?: Provider, waitForReceipt: boolean = true) {
     super(bundleDeploy, provider)
     this.chaindApp = new ChaindService(url, pony().fetch)
     this.waitForReceipt = waitForReceipt
   }
 
-  async waitReceipt(
-    metaTxHash: string,
-    wait: number = 500
-  ) {
+  async waitReceipt(metaTxHash: string, wait: number = 500) {
     let result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
 
-    while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === "UNKNOWN") {
+    while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
       await new Promise(r => setTimeout(r, wait))
       result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
     }
 
     // "FAILED" is reserved for when the tx is invalid and never dispatched by remote relayer
-    if (result.receipt.status == "FAILED") {
+    if (result.receipt.status == 'FAILED') {
       throw new Error(result.receipt.revertReason)
     }
 
@@ -148,12 +140,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     return prevNonce === undefined ? appendNonce(modTxns, prevNonce) : modTxns
   }
 
-  async getNonce(
-    config: ArcadeumWalletConfig,
-    context: ArcadeumContext,
-    space?: number,
-    blockTag?: BlockTag
-  ): Promise<number> {
+  async getNonce(config: ArcadeumWalletConfig, context: ArcadeumContext, space?: number, blockTag?: BlockTag): Promise<number> {
     const addr = addressOf(config, context)
     const resp = await this.chaindApp.getMetaTxnNonce({ walletContractAddress: addr })
     return ethers.BigNumber.from(resp.nonce).toNumber()
@@ -178,7 +165,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       const receipt = (await this.waitReceipt(hash)).receipt
       const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
-      return ({
+      return {
         blockHash: txReceipt.blockHash,
         blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
         confirmations: 1,
@@ -186,14 +173,14 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
         hash: txReceipt.transactionHash,
         raw: receipt.txnReceipt,
         wait: async (confirmations?: number) => this.provider.waitForTransaction(txReceipt.transactionHash, confirmations)
-      } as TransactionResponse)
+      } as TransactionResponse
     }
 
     if (this.waitForReceipt) {
       return waitReceipt()
     }
 
-    return ({
+    return {
       from: addressOf(config, context),
       raw: (await result).toString(),
       hash: (await result).txnHash,
@@ -202,6 +189,6 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
         const receipt = await waitReceipt()
         return receipt.wait(confirmations)
       }
-    } as PendingTransactionResponse)
+    } as PendingTransactionResponse
   }
 }
