@@ -1,11 +1,11 @@
 import { ArcadeumContext, NetworkConfig } from './types'
 
 export const WalletContext: ArcadeumContext = {
-  factory: '0x29285b3B5bBCcC83F0C116311AbB93127d0f90Da',
-  mainModule: '0x39BBffACb26C59810A522ae152C98Aef16AE4430',
-  mainModuleUpgradable: '0xD6eA107eed2B292C3289e3a0788b2450287DcC73',
-  guestModule: '0x62CAf680b06db2AaD4895504291B3Aa965C8f24c',
-  requireUtils: '0xC58E02FC87d2d14A166597478e886e823C6430a1'
+  factory: '0x878C961C6da18574e5a09069E541bDb6627eA65c',
+  mainModule: '0x444C9327FF4e8fbF109ed6d22B96F83bb3cf3A06',
+  mainModuleUpgradable: '0xCdB2f31BCe8c41E731c88BCB14A6692AC09e1C6e',
+  guestModule: '0x0aA220BAdC3FD541b68A811bc46198Eadfc7A162',
+  requireUtils: '0xc7406c1556859C567C06f2b8A9356B9D83dfB341'
 }
 
 export const ethereumNetworks: {[key: string]: NetworkConfig} = {
