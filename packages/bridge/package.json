@@ -1,0 +1,36 @@
+{
+  "name": "@arcadeum/bridge",
+  "version": "1.0.0",
+  "description": "> TODO: description",
+  "author": "Agustin Aguilar <aa@horizon.io>",
+  "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arcadeum/arcadeum.js.git"
+  },
+  "scripts": {
+    "build": "rimraf ./dist && rollup -c",
+    "test": "echo \"Not implemented\"",
+    "lint": "tslint -c tslint.json -p .",
+    "lint:fix": "tslint -c tslint.json -p . --fix"
+  },
+  "bugs": {
+    "url": "https://github.com/arcadeum/arcadeum.js/issues"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "rollup": "^2.33.3"
+  },
+  "dependencies": {
+    "@maticnetwork/maticjs": "^2.0.15",
+    "ethers": "^5.0.23",
+    "tslint": "^6.1.3"
+  }
+}
