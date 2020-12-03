@@ -1,11 +1,12 @@
 import { BigNumberish, ethers, providers } from "ethers"
 import { Interface } from "ethers/lib/utils"
-import { Bridge, BridgeERC20, BridgeNative, Move, MoveERC20, MoveEstimate, MoveNative } from "."
+import { Bridge, BridgeERC1155, BridgeERC20, BridgeNative, Move, MoveERC20, MoveEstimate, MoveNative } from "."
 import { ERC_20_ABI } from "../abi/erc20-abi"
 import { MATIC_BRIDGE_ABI } from "../abi/matic-abi"
 import { MaticPOSClient } from '@maticnetwork/maticjs'
 import { NetworkConfig } from '@arcadeum/provider'
 import { flatten, safeSolve } from "../utils"
+import RootChain from "@maticnetwork/maticjs/lib/root/RootChain"
 
 type MaticBridgeConf = {
   parentId: number,
@@ -19,7 +20,7 @@ type MaticBridgeConf = {
   etherPredicateProxy: string
 }
 
-export class MaticPosBridge implements BridgeNative, BridgeERC20 {
+export class MaticPosBridge implements BridgeNative, BridgeERC20, Bridge {
   private static DEPOSIT_TOPIC = "0x9b217a401a5ddf7c4d474074aff9958a18d48690d77cc2151c4706aa7348b401"
   private static TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
   private static DEPOSIT_ETH_TOPIC = "0x3e799b2d61372379e767ef8f04d65089179b7a6f63f9be3065806456c7309f1b"
@@ -180,8 +181,21 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20 {
   // ///
 
   async supportsERC20(from: NetworkConfig, to: NetworkConfig, token: string): Promise<boolean> {
-    // TODO: Check if token is mapped on Matic
-    return !this.isMaticToken(token) && await this.moveERC20(from, to, token, ethers.constants.AddressZero, 0) !== undefined
+    const rootChain = new ethers.Contract(this.conf.rootChainManager, MATIC_BRIDGE_ABI, new ethers.providers.JsonRpcProvider(this.parentNet.rpcUrl))
+
+    // Check if token has child mapped
+    if (this.isDeposit(from, to)) {
+      const child = await safeSolve(rootChain.rootToChildToken(token), ethers.constants.AddressZero)
+      return child && child !== ethers.constants.AddressZero
+    }
+
+    // Check if token has root mapped
+    if (this.isWithdraw(from, to)) {
+      const root = await safeSolve(rootChain.childToRootToken(token), ethers.constants.AddressZero)
+      return root && root !== ethers.constants.AddressZero
+    }
+
+    return false
   }
 
   async estimateERC20(from: NetworkConfig, to: NetworkConfig, token: string): Promise<MoveEstimate> {

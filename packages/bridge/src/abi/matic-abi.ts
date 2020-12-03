@@ -78,5 +78,47 @@ export const MATIC_BRIDGE_ABI = [
     payable: false,
     stateMutability: "nonpayable",
     type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      {
+        internalType: "address",
+        name: "child",
+        type: "address"
+      }
+    ],
+    name: "childToRootToken",
+    outputs: [
+      {
+        internalType: "address",
+        name: "root",
+        type: "address"
+      }
+    ],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      {
+        internalType: "address",
+        name: "root",
+        type: "address"
+      }
+    ],
+    name: "rootToChildToken",
+    outputs: [
+      {
+        internalType: "address",
+        name: "child",
+        type: "address"
+      }
+    ],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
   }
 ]
