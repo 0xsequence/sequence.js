@@ -17,3 +17,5 @@ PROD.env
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+
+.devcontainer
