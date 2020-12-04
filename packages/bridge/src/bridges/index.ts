@@ -33,8 +33,8 @@ export type MoveERC721 = Move & {
 
 export type MoveERC1155 = Move & {
   token: string,
-  id: BigNumberish,
-  amount: BigNumberish
+  ids: BigNumberish[],
+  amounts: BigNumberish[]
 }
 
 export function isERC20Move(move: Move): move is MoveERC20 {
@@ -44,12 +44,12 @@ export function isERC20Move(move: Move): move is MoveERC20 {
 
 export function isERC721Move(move: Move): move is MoveERC721 {
   const cand = move as MoveERC721 & MoveERC1155
-  return cand.token !== undefined && cand.id !== undefined && !cand.amount
+  return cand.token !== undefined && cand.id !== undefined && !cand.amounts
 }
 
 export function isERC1155Move(move: Move): move is MoveERC1155 {
   const cand = move as MoveERC1155
-  return cand.token !== undefined && cand.id !== undefined && cand.amount !== undefined
+  return cand.token !== undefined && cand.ids !== undefined && cand.amounts !== undefined
 }
 
 export function isNativeMove(move: Move): move is MoveNative {
@@ -93,7 +93,7 @@ export function isBridgeERC20(bridge: Bridge): bridge is BridgeERC20 {
 export interface BridgeERC721 extends Bridge {
   supportsERC721(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<boolean>
   estimateERC721(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<MoveEstimate | undefined>
-  moveERC721(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<providers.TransactionRequest[] | undefined>
+  moveERC721(from: NetworkConfig, to: NetworkConfig, token: string, dest: string, ids: BigNumberish[]): Promise<providers.TransactionRequest[] | undefined>
   completeERC721(from: NetworkConfig, to: NetworkConfig, txHash: string, wallet: string): Promise<providers.TransactionRequest[] | undefined>
 }
 
@@ -105,7 +105,7 @@ export function isBridgeERC712(bridge: Bridge): bridge is BridgeERC721 {
 export interface BridgeERC1155 extends Bridge {
   supportsERC1155(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<boolean>
   estimateERC1155(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<MoveEstimate | undefined>
-  moveERC1155(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[], amounts: BigNumberish[]): Promise<providers.TransactionRequest[] | undefined>
+  moveERC1155(from: NetworkConfig, to: NetworkConfig, token: string, dest: string, ids: BigNumberish[], amounts: BigNumberish[]): Promise<providers.TransactionRequest[] | undefined>
   completeERC1155(from: NetworkConfig, to: NetworkConfig, txHash: string, wallet: string): Promise<providers.TransactionRequest[] | undefined>
 }
 

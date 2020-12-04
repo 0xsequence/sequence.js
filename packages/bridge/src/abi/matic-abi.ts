@@ -120,5 +120,25 @@ export const MATIC_BRIDGE_ABI = [
     payable: false,
     stateMutability: "view",
     type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      {
+        internalType: "uint256[]",
+        name: "ids",
+        type: "uint256[]"
+      },
+      {
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]"
+      }
+    ],
+    name: "withdrawBatch",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
   }
 ]
