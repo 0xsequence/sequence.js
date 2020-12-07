@@ -13,8 +13,8 @@ export type Move = {
   completeTx: providers.TransactionRequest[] | undefined,
   isCompleted: boolean,
   isPending: boolean,
-  fromChain: number,
-  toChain: number
+  fromChainId: number,
+  toChainId: number
 }
 
 export type MoveNative = Move & {
