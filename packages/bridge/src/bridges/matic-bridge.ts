@@ -388,7 +388,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
   }
 
   async completeERC1155(from: NetworkConfig, to: NetworkConfig, txHash: string, wallet: string): Promise<ethers.providers.TransactionRequest[]> {
-    const tx = await this.posClient.exitSingleERC1155(txHash, { from: wallet, encodeAbi: true })
+    const tx = await this.posClient.exitBatchERC1155(txHash, { from: wallet, encodeAbi: true })
     delete tx.nonce
     return [tx]
   }
