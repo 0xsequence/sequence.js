@@ -115,7 +115,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
   }
 
   async isMapped(from: NetworkConfig, to: NetworkConfig, token: string): Promise<boolean> {
-    const rootChain = new ethers.Contract(this.conf.rootChainManager, MATIC_BRIDGE_ABI, this.maticClient)
+    const rootChain = new ethers.Contract(this.conf.rootChainManager, MATIC_BRIDGE_ABI, this.parentClient)
 
     // Check if token has child mapped
     if (this.isDeposit(from, to)) {
