@@ -314,7 +314,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
     })
 
     return Promise.all(candidates.map(async (cand) => {
-      const isCompleted = safeSolve(this.posClient.isERC20ExitProcessed(cand.transactionHash), false)
+      const isCompleted = await safeSolve(this.posClient.isERC20ExitProcessed(cand.transactionHash), false)
       const completeTx = !isCompleted ? safeSolve(this.completeERC20(this.maticNet, this.parentNet, cand.transactionHash, wallet), undefined) : undefined
 
       return {
