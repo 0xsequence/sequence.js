@@ -1,13 +1,7 @@
 {
+  "extends": "../../tsconfig.json",
+  "include": ["./src/**/*.ts"],
   "compilerOptions": {
-    "target": "es2017",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "declaration": true,
-    "allowSyntheticDefaultImports": true,
-    "outDir": "./dist"
-  },
-  "include": [
-    "src/**/*"
-  ]
+    "skipLibCheck": true
+  }
 }

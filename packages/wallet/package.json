@@ -1,0 +1,43 @@
+{
+  "name": "@0xsequence/wallet",
+  "version": "0.7.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-wallet.cjs.js",
+  "module": "dist/0xsequence-wallet.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:e2e": "ONLY_E2E=true yarn test:file tests/contract-wallet.e2e.spec.ts",
+    "lint": "echo TODO",
+    "lint:fix": "echo TODO",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "^0.7.0",
+    "@0xsequence/api": "^0.7.0",
+    "@0xsequence/auth": "^0.7.0",
+    "@0xsequence/guard": "^0.7.0",
+    "@0xsequence/networks": "^0.7.0",
+    "@0xsequence/provider": "^0.7.0",
+    "@0xsequence/transactions": "^0.7.0",
+    "@arcadeum/ethauth": "^0.3.0",
+    "@ethersproject/providers": "^5.0.17",
+    "ethers": "^5.0.24",
+    "eventemitter3": "^4.0.6",
+    "fetch-ponyfill": "^7.0.0"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts",
+    "ganache-core": "^2.12.1",
+    "web3": "^1.2.8",
+    "web3-typescript-typings": "^0.10.2"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}

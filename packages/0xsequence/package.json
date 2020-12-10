@@ -1,0 +1,31 @@
+{
+  "name": "0xsequence",
+  "version": "0.7.0",
+  "description": "A simple & powerful development stack for Ethereum",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence.cjs.js",
+  "module": "dist/0xsequence.esm.js",
+  "umd:main": "dist/0xsequence.umd.min.js",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/provider": "^0.7.0",
+    "ethers": "^5.0.24"
+  },
+  "peerDependencies": {
+  },
+  "devDependencies": {
+  },
+  "keywords": [],
+  "preconstruct": {
+    "umdName": "0xsequence"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
