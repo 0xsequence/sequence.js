@@ -1,0 +1,30 @@
+{
+  "name": "@0xsequence/auth",
+  "version": "0.7.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-auth.cjs.js",
+  "module": "dist/0xsequence-auth.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "lint": "echo TODO",
+    "lint:fix": "echo TODO",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "^0.7.0",
+    "@0xsequence/networks": "^0.7.0",
+    "@arcadeum/ethauth": "^0.3.0",
+    "ethers": "^5.0.24"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}

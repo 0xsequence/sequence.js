@@ -1,6 +1,4 @@
-
-
-import { NetworkConfig } from '@arcadeum/provider'
+import { NetworkConfig } from '@0xsequence/networks'
 import { BigNumberish, providers } from 'ethers'
 
 export type MoveEstimate = {

@@ -11,11 +11,13 @@ PROD.env
 
 .DS_Store
 .vscode
-.idea/
+.idea
 *.iml
+.cache
+package-lock.json
+coverage
+.rts2_cache*
 
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-
-.devcontainer

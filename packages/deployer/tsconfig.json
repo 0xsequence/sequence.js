@@ -1,13 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "strict": true,
-    "sourceMap": true,
-    "declaration": true,
-    "moduleResolution": "node",
-    "typeRoots": ["./node_modules/@types"],
-    "outDir": "dist"
-  },
-  "include": ["src/**/*"]
+  "extends": "../../tsconfig.json",
+  "include": ["./src/**/*.ts"],
+  "files": ["./hardhat.config.ts"],
+  "ts-node": {
+    // override compilerOptions when using ts-node
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  }
 }

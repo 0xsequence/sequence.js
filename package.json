@@ -1,28 +1,64 @@
 {
-  "name": "arcadeum",
+  "name": "0xsequence",
   "private": true,
-  "workspaces": {
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "yarn typecheck && preconstruct build",
+    "watch": "preconstruct watch",
+    "clean": "rimraf ./node_modules",
+    "prepublishOnly": "yarn build",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "yarn build && changeset publish",
+    "test": "wsrun --serial -c test",
+    "lint": "eslint -c .eslintrc.js 'packages/**/src/**/*.{ts,tsx}'",
+    "lint:fix": "eslint -c .eslintrc.js --fix 'packages/**/src/**/*.{ts,tsx}'",
+    "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
+    "typecheck": "wsrun -c typecheck",
+    "dev": "preconstruct dev",
+    "postinstall": "preconstruct dev"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-typescript": "^7.12.1",
+    "@babel/runtime": "^7.12.5",
+    "@changesets/cli": "^2.11.2",
+    "@preconstruct/cli": "^2.0.1",
+    "@types/chai": "^4.2.11",
+    "@types/chai-as-promised": "^7.1.2",
+    "@types/mocha": "^8.2.0",
+    "@types/puppeteer": "^5.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.8.1",
+    "@typescript-eslint/parser": "^4.8.1",
+    "ava": "^3.13.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "concurrently": "^5.3.0",
+    "eslint": "^7.13.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "express": "^4.17.1",
+    "ganache-cli": "^6.9.1",
+    "hardhat": "2.0.5",
+    "mocha": "^8.2.1",
+    "nyc": "^15.0.1",
+    "prettier": "^2.1.2",
+    "puppeteer": "^5.5.0",
+    "rimraf": "^3.0.2",
+    "sinon": "^9.2.1",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5",
+    "wsrun": "^5.2.4"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "preconstruct": {
     "packages": [
       "packages/*"
     ]
-  },
-  "scripts": {
-    "bootstrap": "yarn clean && yarn install",
-    "clean": "lerna clean --yes && rimraf ./node_modules",
-    "build": "lerna run build --stream",
-    "test": "lerna run test --stream",
-    "test:provider": "lerna run test --scope @arcadeum/provider --stream",
-    "lint": "lerna run lint --stream",
-    "lint:provider": "lerna run lint --scope @arcadeum/provider --stream",
-    "coverage:provider": "lerna run coverage --scope @arcadeum/provider --stream",
-    "format": "lerna run format --stream"
-  },
-  "devDependencies": {
-    "lerna": "^3.22.0",
-    "prettier": "^2.0.5",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.10.9",
-    "rollup-plugin-typescript2": "^0.27.1",
-    "typescript": "^4.0.2"
   }
 }

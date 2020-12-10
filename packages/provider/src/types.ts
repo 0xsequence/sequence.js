@@ -1,5 +1,15 @@
-import { BigNumberish, BytesLike, providers } from 'ethers'
-import { IRelayer } from './relayer'
+import { NetworkConfig } from '@0xsequence/networks'
+
+export interface WalletSession {
+  // Account address of the wallet
+  accountAddress?: string
+
+  // Network in use for the session
+  network?: NetworkConfig
+
+  // Caching provider responses for things such as account and chainId
+  providerCache?: {[key: string]: any}
+}
 
 export interface JsonRpcRequest {
   jsonrpc: string
@@ -17,155 +27,96 @@ export interface JsonRpcResponse {
 
 export type JsonRpcResponseCallback = (error: any, response?: JsonRpcResponse) => void
 
-export interface ECSignatureString {
-  v: string
-  r: string
-  s: string
+export type JsonRpcHandlerFunc = (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => void
+
+export type JsonRpcHandler = {
+  sendAsync: JsonRpcHandlerFunc
 }
 
-/**
- * addressSearchLimit: The maximum number of addresses to search through, defaults to 1000
- * numAddressesToReturn: Number of addresses to return from 'eth_accounts' call
- * shouldAskForOnDeviceConfirmation: Whether you wish to prompt the user on their Ledger
- *                   before fetching their addresses
- */
-export interface AccountFetchingConfigs {
-  addressSearchLimit?: number
-  numAddressesToReturn?: number
-  shouldAskForOnDeviceConfirmation?: boolean
+export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
+  openWallet(path?: string, state?: object): void
+  closeWallet()
+  isConnected(): boolean
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+  waitUntilConnected(): Promise<boolean>
+  waitUntilLoggedIn(): Promise<WalletSession>
 }
 
-/**
- * mnemonic: The string mnemonic seed
- * addressSearchLimit: The maximum number of addresses to search through, defaults to 1000
- * baseDerivationPath: The base derivation path (e.g 44'/60'/0'/0)
- */
-export interface MnemonicWalletSubproviderConfigs {
-  mnemonic: string
-  addressSearchLimit?: number
-  baseDerivationPath?: string
+export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
+  register()
+  notifyConnect(connectInfo: any)
+  notifyDisconnect(error?: any)
+  notifyAccountsChanged(accounts: string[])
+  notifyChainChanged(connectInfo: any)
+  notifyLogin(accountAddress: string)
+  notifyLogout()
+  notifyNetwork(network: any)
 }
 
-export interface SignatureData {
-  hash: string
-  r: string
-  s: string
-  v: number
+export interface ProviderMessage<T> {
+  idx: number       // message id sequence number
+  type: string      // message type
+  data: T           // the ethereum json-rpc payload
+  chainId?: number  // chain id which the message is intended
 }
 
-export interface PartialTxParams {
-  nonce: string
-  gasPrice?: string
-  gas: string
-  to: string
-  from: string
-  value?: string
-  data?: string
-  chainId: number // EIP 155 chainId - mainnet: 1, ropsten: 3
+export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
+
+export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
+
+// ProviderMessageCallback is used to respond to ProviderMessage requests. The error
+// argument is for exceptions during the execution, and response is the response payload
+// from  ..
+// TODO: error......?
+export type ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => void
+
+// TODO: where do we use this..?
+export interface ProviderRpcError extends Error {
+  code: number
+  data?: {[key: string]: any}
 }
 
-export type DoneCallback = (err?: Error) => void
-
-export interface ResponseWithTxParams {
-  raw: string
-  tx: PartialTxParams
+export interface ProviderMessageRequestHandler {
+  // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet.
+  // This method is similar to `sendMessage`, but it expects a response to this message.
+  sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse>
 }
 
-export enum WalletSubproviderErrors {
-  AddressNotFound = 'ADDRESS_NOT_FOUND',
-  DataMissingForSignPersonalMessage = 'DATA_MISSING_FOR_SIGN_PERSONAL_MESSAGE',
-  DataMissingForSignTypedData = 'DATA_MISSING_FOR_SIGN_TYPED_DATA',
-  SenderInvalidOrNotSupplied = 'SENDER_INVALID_OR_NOT_SUPPLIED',
-  FromAddressMissingOrInvalid = 'FROM_ADDRESS_MISSING_OR_INVALID',
-  MethodNotSupported = 'METHOD_NOT_SUPPORTED'
+export interface ProviderMessageTransport { //extends ProviderMessageRequestHandler {
+  // handleMessage will handle a message received from the remote wallet
+  handleMessage(message: ProviderMessage<any>): void
+
+  // sendMessage will send the provider message over the wire
+  sendMessage(message: ProviderMessage<any>): void
 }
 
-export enum NonceSubproviderErrors {
-  EmptyParametersFound = 'EMPTY_PARAMETERS_FOUND',
-  CannotDetermineAddressFromPayload = 'CANNOT_DETERMINE_ADDRESS_FROM_PAYLOAD'
+export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'network' | 'debug'
+
+export enum ProviderMessageType {
+  MESSAGE = 'message',
+  CONNECT = 'connect',
+  DISCONNECT = 'disconnect',
+  CHAIN_CHANGED = 'chainChanged',
+  ACCOUNTS_CHANGED = 'accountsChanged',
+
+  LOGIN = 'login',
+  LOGOUT = 'logout',
+  NETWORK = 'network',
+
+  DEBUG = '_debug'
+}
+export interface ProviderConnectInfo {
+  chainId: string
+  sidechainIds?: string[]
+  // networkConfig?: NetworkConfig ... // keep..? maybe..
 }
 
-export type ErrorCallback = (err: Error | null, data?: any) => void
-export type Callback = () => void
-export type OnNextCompleted = (err: Error | null, result: any, cb: Callback) => void
-export type NextCallback = (callback?: OnNextCompleted) => void
-
-export interface ArcadeumWalletConfig {
-  address?: string
-  threshold: number
-  signers: {
-    weight: number
-    address: string
-  }[]
+export interface MessageToSign {
+  message?: string
+  typedData?: TypedData
+  chainId?: number
 }
 
-export interface ArcadeumContext {
-  factory: string
-  mainModule: string
-  mainModuleUpgradable: string
-  guestModule?: string
-  requireUtils?: string
-  nonStrict?: boolean
-}
-
-export interface ArcadeumDecodedSignature {
-  threshold: number
-  signers: (ArcadeumDecodedSigner | ArcadeumDecodedOwner)[]
-}
-
-export interface ArcadeumDecodedOwner {
-  weight: number
-  address: string
-}
-
-export interface ArcadeumDecodedSigner {
-  r: string
-  s: string
-  v: number
-  t: number
-  weight: number
-}
-
-export interface ArcadeumTransaction {
-  delegateCall: boolean
-  revertOnError: boolean
-  gasLimit: BigNumberish
-  to: string
-  value: BigNumberish
-  data: BytesLike
-  nonce?: BigNumberish
-}
-
-export interface ArcadeumTransactionEncoded {
-  delegateCall: boolean
-  revertOnError: boolean
-  gasLimit: BigNumberish
-  target: string
-  value: BigNumberish
-  data: BytesLike
-}
-
-export type AuxTransactionRequest = providers.TransactionRequest & {
-  auxiliary?: Transactionish[]
-  expiration?: BigNumberish
-  afterNonce?: NonceDependency | BigNumberish
-}
-
-export interface NonceDependency {
-  address: string
-  nonce: BigNumberish
-  space?: BigNumberish
-}
-
-export declare type Transactionish = AuxTransactionRequest | ArcadeumTransaction | ArcadeumTransaction[] | AuxTransactionRequest[]
-
-export interface NetworkConfig {
-  name: string
-  chainId: number
-  rpcUrl: string
-  ensAddress?: string
-  sidechains?: NetworkConfig[]
-  isMain?: boolean
-  isAuth?: boolean
-  relayer?: IRelayer
-}
+import { TypedData } from 'ethers-eip712'
+export type { TypedData }

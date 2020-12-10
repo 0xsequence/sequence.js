@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "declaration": true,
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "lib": ["dom.iterable", "dom", "es2018"],
+    "types": ["node", "mocha", "puppeteer"]
+  },
+  "include": [
+    "./src/**/*",
+    "./tests/**/*"
+  ]
+}
