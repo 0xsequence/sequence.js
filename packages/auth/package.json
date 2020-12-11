@@ -8,10 +8,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "prepublishOnly": "yarn test && yarn lint",
-    "test": "yarn test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
-    "lint": "echo TODO",
-    "lint:fix": "echo TODO",
+    "test": "echo 'see wallet/tests'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

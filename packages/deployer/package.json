@@ -10,8 +10,6 @@
     "prepublishOnly": "yarn test && yarn lint",
     "test": "yarn test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
-    "lint": "echo TODO",
-    "lint:fix": "echo TODO",
     "typecheck": "tsc --noEmit",
     "build": "rm -rf typings && hardhat clean && yarn compile-contracts && yarn gen:typings",
     "compile-contracts": "hardhat --max-memory 4096 compile",

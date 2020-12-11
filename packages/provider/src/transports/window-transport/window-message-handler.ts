@@ -1,4 +1,3 @@
-import { spyCall } from 'sinon'
 import { JsonRpcHandler, JsonRpcResponse, ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'

@@ -16,8 +16,6 @@
     "test:server2": "PORT=8888 webpack-dev-server --config tests/webpack.config.js",
     "test:concurrently": "concurrently -k --success first 'yarn test:server' 'yarn start:hardhat'",
     "start:hardhat": "yarn run hardhat node",
-    "lint": "echo TODO",
-    "lint:fix": "echo TODO",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
