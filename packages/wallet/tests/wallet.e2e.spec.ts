@@ -8,7 +8,7 @@ import { RpcRelayer } from '../src'
 
 // import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { IRelayer } from '../src/relayer'
+import { Relayer } from '../src/relayer'
 import { toSequenceTransaction, toSequenceTransactions } from '../src/utils'
 
 const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
@@ -29,7 +29,7 @@ const relayer_rpc = process.env.TEST_RELAYER_RPC
 
 if (process.env.ONLY_E2E) {
   describe('ContractWallet integration (e2e)', function () {
-    let relayer: IRelayer
+    let relayer: Relayer
 
     let wallet: arcadeum.ContractWallet
     let signer: Signer

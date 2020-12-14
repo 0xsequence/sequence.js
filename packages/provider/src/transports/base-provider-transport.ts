@@ -1,11 +1,15 @@
 import EventEmitter from 'eventemitter3'
 
 import {
-  ProviderTransport, JsonRpcRequest, JsonRpcResponseCallback, ProviderMessage, ProviderMessageRequest,
+  ProviderTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
   ProviderMessageResponseCallback, ProviderMessageTransport,
   WalletSession
 } from '../types'
+
+import { JsonRpcRequest, JsonRpcResponseCallback } from '../json-rpc'
+
+import { NetworkConfig } from '@0xsequence/networks'
 
 let messageIdx = 0
 
@@ -19,6 +23,9 @@ export class BaseProviderTransport implements ProviderTransport {
   protected connected = false
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
+
+  protected loginPayload: string
+  protected networkPayload: NetworkConfig
 
   constructor() {}
 
@@ -145,31 +152,24 @@ export class BaseProviderTransport implements ProviderTransport {
 
     // NOTIFY LOGIN -- when a user authenticates / logs in
     if (message.type == ProviderMessageType.LOGIN) {
-      this.events.emit('login', 'abcd') // TODO: payload?
+      this.loginPayload = message.data
+      this.events.emit('login', message.data) // payload is `accountAddress: string`
+      return
     }
 
+    // NOTIFY LOGOUT -- when a user logs out
+    if (message.type === ProviderMessageType.LOGOUT) {
+      this.loginPayload = undefined
+      this.events.emit('logout')
+      return
+    }
 
-    // TODO/XXX
-
-    // if (response.type === MessageType.NOTIFY_LOGIN) {
-    //   this.loginPayload = response.payload
-    //   this.events.emit('login', this.loginPayload)
-    //   return
-    // }
-
-    // // NOTIFY LOGOUT -- when a user logs out
-    // if (response.type === MessageType.NOTIFY_LOGOUT) {
-    //   this.loginPayload = undefined
-    //   this.events.emit('logout')
-    //   return
-    // }
-
-    // // NOTIFY NETWORK -- when a user sets or changes their ethereum network
-    // if (response.type === MessageType.NOTIFY_NETWORK) {
-    //   this.networkPayload = response.payload
-    //   this.events.emit('network', this.networkPayload)
-    //   return
-    // }
+    // NOTIFY NETWORK -- when a user sets or changes their ethereum network
+    if (message.type === ProviderMessageType.NETWORK) {
+      this.networkPayload = message.data
+      this.events.emit('network', this.networkPayload)
+      return
+    }
   }
 
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
@@ -216,6 +216,7 @@ export class BaseProviderTransport implements ProviderTransport {
     // TODO: handle popup blockers, perhaps emit connected:false, or call reject().
     // maybe we don't need it if its handled by openWallet?
     // or, we move the logic down to here
+    // ..
     return new Promise((resolve) => {
       if (this.isConnected()) {
         resolve(true)
@@ -227,35 +228,33 @@ export class BaseProviderTransport implements ProviderTransport {
     })
   }
 
-  // TODO: XXX
   waitUntilLoggedIn = async (): Promise<WalletSession> => {
-    return {}
+    // TODO: lets not block forever.
+    await this.waitUntilConnected()
 
-    // await this.waitUntilConnected()
-
-    // return Promise.all([
-    //   new Promise<string>(resolve => {
-    //     if (this.loginPayload) {
-    //       resolve(this.loginPayload)
-    //       return
-    //     }
-    //     this.events.once('login', (payload) => {
-    //       resolve(payload)
-    //     })
-    //   }),
-    //   new Promise<NetworkConfig>(resolve => {
-    //     if (this.networkPayload) {
-    //       resolve(this.networkPayload)
-    //       return
-    //     }
-    //     this.events.once('network', (payload) => {
-    //       resolve(payload)
-    //     })
-    //   })
-    // ]).then(values => {
-    //   const [ accountAddress, network ] = values
-    //   return { accountAddress, network }
-    // })
+    return Promise.all([
+      new Promise<string>(resolve => {
+        if (this.loginPayload) {
+          resolve(this.loginPayload)
+          return
+        }
+        this.events.once('login', (payload) => {
+          resolve(payload)
+        })
+      }),
+      new Promise<NetworkConfig>(resolve => {
+        if (this.networkPayload) {
+          resolve(this.networkPayload)
+          return
+        }
+        this.events.once('network', (payload) => {
+          resolve(payload)
+        })
+      })
+    ]).then(values => {
+      const [ accountAddress, network ] = values
+      return { accountAddress, network }
+    })
   }
 
 }

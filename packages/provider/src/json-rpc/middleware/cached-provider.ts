@@ -1,5 +1,4 @@
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback } from '../types'
-import { JsonRpcMiddlewareHandler } from './index'
+import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 
 export class CachedProvider implements JsonRpcMiddlewareHandler {
 

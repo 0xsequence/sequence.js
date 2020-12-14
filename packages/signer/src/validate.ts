@@ -4,16 +4,10 @@ import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
 import { SequenceDecodedSigner } from './types'
 import { compareAddr, decodeSignature, recoverConfigFromDigest, isSigner, addressOf } from './wallet-config'
+import { packMessageData} from './utils'
 
 const SIG_TYPE_EIP712 = 1
 const SIG_TYPE_ETH_SIGN = 2
-
-export function packMessageData(wallet: string, networkId: BigNumberish, digest: BytesLike): string {
-  return ethers.utils.solidityPack(
-    ['string', 'uint256', 'address', 'bytes32'],
-    ['\x19\x01', networkId, wallet, digest]
-  )
-}
 
 export function recoverSigner(digest: BytesLike, sig: SequenceDecodedSigner) {
   switch (sig.t) {

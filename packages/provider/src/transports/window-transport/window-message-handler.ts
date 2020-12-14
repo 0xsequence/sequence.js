@@ -1,6 +1,7 @@
-import { JsonRpcHandler, JsonRpcResponse, ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse } from '../../types'
+import { ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
+import { JsonRpcRequest, JsonRpcResponseCallback } from '../../json-rpc'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -10,10 +11,9 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     super(walletRequestHandler)
-    this.init()
   }
 
-  private init = () => {
+  register() {
     document.addEventListener('DOMContentLoaded', event => {
       const isPopup = parent.window.opener !== null
       this._isPopup = isPopup
@@ -23,13 +23,12 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
       // record parent window instance for communication
       this.parentWindow = parent.window.opener
-    })
-  }
 
-  register() {
-    document.addEventListener('DOMContentLoaded', event => {
-      // listen for dapp externalWindow requests
+      // listen for window-transport requests
       window.addEventListener('message', this.onWindowEvent, false)
+
+      // init base transport
+      this.init()
     })
   }
 
@@ -75,18 +74,6 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
   get isPopup(): boolean {
     return this._isPopup
-  }
-
-  // TODO: notifyLogin
-  // TODO: notifyNetwork, etc.
-  // or........ emitConnect
-  // emitChainChanged..
-  // emitAccountChanged ..
-
-  // TODO: we need to notifyNetwork, notifyAccountsChanged, etc......... or maybe emitAccountsChanged()
-
-  notifyNetwork() {
-
   }
 
 }

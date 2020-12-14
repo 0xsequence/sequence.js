@@ -5,10 +5,14 @@ import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
 import { HookCallerMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/HookCallerMock'
 
+// import { WalletSigner } from '@0xsequence/signer'
+
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, aggregate } from '@0xsequence/auth'
-import { LocalRelayer, toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish } from '@0xsequence/transactions'
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, aggregate } from '@0xsequence/signer'
+import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish } from '@0xsequence/transactions'
+
+import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext } from '@0xsequence/networks'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
@@ -16,8 +20,6 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-
-// import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, toSequenceTransaction, toSequenceTransactions, encodeNonce } from '../src/utils'
 
 const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
 const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
@@ -38,7 +40,7 @@ type GanacheInstance = {
   chainId?: number
 }
 
-describe('ContractWallet integration', function () {
+describe('Wallet integration', function () {
   const ganache: GanacheInstance = {}
 
   let relayer: LocalRelayer
@@ -46,7 +48,7 @@ describe('ContractWallet integration', function () {
   let hookCaller: HookCallerMock
 
   let context: WalletContext
-  let wallet: lib.ContractWallet
+  let wallet: lib.Wallet
 
   before(async () => {
     // Setup eth test node env
@@ -122,7 +124,7 @@ describe('ContractWallet integration', function () {
   beforeEach(async () => {
     // Create wallet
     const pk = ethers.utils.randomBytes(32)
-    wallet = await lib.ContractWallet.singleOwner(context, pk)
+    wallet = await lib.Wallet.singleOwner(context, pk)
     wallet = wallet.connect(ganache.provider, relayer)
   })
 
@@ -210,7 +212,7 @@ describe('ContractWallet integration', function () {
             const signature = await signer.signMessage(message)
 
             // Contract wallet must be deployed before calling ERC1271
-            const txn = await relayer.deploy(wallet.config, context)
+            const txn = await relayer.deployWallet(wallet.config, context)
 
             // const receipt = await provider.getTransactionReceipt(txn.hash)
             // console.log('status?', receipt.status)
@@ -446,7 +448,7 @@ describe('ContractWallet integration', function () {
           const context1 = { ...context }
           context1.requireUtils = undefined
 
-          let wallet1 = await lib.ContractWallet.singleOwner(context1, pk)
+          let wallet1 = await lib.Wallet.singleOwner(context1, pk)
           wallet1 = wallet1.connect(ganache.provider, relayer)
 
           const callReceiver1 = (await new ethers.ContractFactory(
@@ -522,7 +524,7 @@ describe('ContractWallet integration', function () {
         it('Should send transaction linked to other wallet nonce space', async () => {
           // Create wallet
           const pk = ethers.utils.randomBytes(32)
-          let wallet2 = await lib.ContractWallet.singleOwner(context, pk)
+          let wallet2 = await lib.Wallet.singleOwner(context, pk)
           wallet2 = wallet2.connect(ganache.provider, relayer)
 
           await wallet2.sendTransaction({
@@ -558,7 +560,7 @@ describe('ContractWallet integration', function () {
         it('Should fail to send transaction linked to other wallet nonce space', async () => {
           // Create wallet
           const pk = ethers.utils.randomBytes(32)
-          let wallet2 = await lib.ContractWallet.singleOwner(context, pk)
+          let wallet2 = await lib.Wallet.singleOwner(context, pk)
           wallet2 = wallet2.connect(ganache.provider, relayer)
 
           const callReceiver1 = (await new ethers.ContractFactory(
@@ -750,7 +752,7 @@ describe('ContractWallet integration', function () {
         const signature = await w3.eth.sign(message, wallet.address)
 
         // Contract wallet must be deployed before calling ERC1271
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
 
         const call = hookCaller.callERC1271isValidSignatureData(wallet.address, ethers.utils.toUtf8Bytes(message), signature)
         await expect(call).to.be.fulfilled
@@ -795,9 +797,9 @@ describe('ContractWallet integration', function () {
           ]
         }
 
-        const wallet_1 = new lib.ContractWallet(config, context, s1).connect(ganache.provider, relayer)
-        const wallet_2 = new lib.ContractWallet(config, context, s2).connect(ganache.provider, relayer)
-        const wallet_3 = new lib.ContractWallet(config, context, s3).connect(ganache.provider, relayer)
+        const wallet_1 = new lib.Wallet(config, context, s1).connect(ganache.provider, relayer)
+        const wallet_2 = new lib.Wallet(config, context, s2).connect(ganache.provider, relayer)
+        const wallet_3 = new lib.Wallet(config, context, s3).connect(ganache.provider, relayer)
 
         expect(wallet_1.address).to.equal(wallet_2.address)
         expect(wallet_2.address).to.equal(wallet_3.address)
@@ -1062,22 +1064,22 @@ describe('ContractWallet integration', function () {
     describe('deployed sequence wallet sign', async () => {
       it('Should validate sequence wallet signature', async () => {
         const signature = await wallet.sign(message, false, ganache.chainId)
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
       })
       it('Should validate sequence wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, ganache.chainId)
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
         expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
       })
       it('Should reject sequence wallet invalid signature', async () => {
-        const wallet2 = await lib.ContractWallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
+        const wallet2 = await lib.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
         const signature = await wallet2.signMessage(message, ganache.chainId)
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
       })
       describe('After updating the owners', () => {
-        let wallet2: lib.ContractWallet
+        let wallet2: lib.Wallet
 
         beforeEach(async () => {
           const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1100,7 +1102,7 @@ describe('ContractWallet integration', function () {
           const [config, tx] = await wallet.updateConfig(newConfig)
           await tx.wait()
 
-          wallet2 = new lib.ContractWallet(config, context, s1, s2).connect(ganache.provider, relayer)
+          wallet2 = new lib.Wallet(config, context, s1, s2).connect(ganache.provider, relayer)
         })
         it('Should reject previus wallet configuration signature', async () => {
           const signature = await wallet.signMessage(message, ganache.chainId)
@@ -1135,7 +1137,7 @@ describe('ContractWallet integration', function () {
           ]
         }
 
-        const wallet2 = new lib.ContractWallet(newConfig, context, s1, s2).connect(ganache.provider, relayer)
+        const wallet2 = new lib.Wallet(newConfig, context, s1, s2).connect(ganache.provider, relayer)
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, ganache.chainId)).to.be.true
       })
@@ -1144,7 +1146,7 @@ describe('ContractWallet integration', function () {
         expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ganache.provider)).to.be.true
       })
       it('Should reject sequence wallet invalid signature', async () => {
-        const wallet2 = await lib.ContractWallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
+        const wallet2 = await lib.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
         const signature = await wallet2.signMessage(message, 1)
         expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
       })
@@ -1166,7 +1168,7 @@ describe('ContractWallet integration', function () {
           ]
         }
 
-        const wallet2 = new lib.ContractWallet(newConfig, context, s1).connect(ganache.provider, relayer)
+        const wallet2 = new lib.Wallet(newConfig, context, s1).connect(ganache.provider, relayer)
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
       })
@@ -1193,7 +1195,7 @@ describe('ContractWallet integration', function () {
           ]
         }
 
-        const wallet2 = new lib.ContractWallet(newConfig, { ...context, nonStrict: true }, s1, s2).connect(ganache.provider, relayer)
+        const wallet2 = new lib.Wallet(newConfig, { ...context, nonStrict: true }, s1, s2).connect(ganache.provider, relayer)
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, ganache.chainId)).to.be.false
       })
@@ -1202,20 +1204,20 @@ describe('ContractWallet integration', function () {
       it('Should validate wallet signature', async () => {
         const signature = await wallet.signMessage(message)
         const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
       })
       it('Should validate wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message)
         const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
         expect(await isValidWalletSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
-        const wallet2 = await lib.ContractWallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
+        const wallet2 = await lib.Wallet.singleOwner(context, new ethers.Wallet(ethers.utils.randomBytes(32)))
         const signature = await wallet2.signMessage(message, ganache.chainId)
         const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
-        await relayer.deploy(wallet.config, context)
+        await relayer.deployWallet(wallet.config, context)
         expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider, context)).to.be.false
       })
     })
@@ -1247,7 +1249,7 @@ describe('ContractWallet integration', function () {
       const [config, tx] = await wallet.updateConfig(newConfig)
       await tx.wait()
 
-      const updatedWallet = new lib.ContractWallet(config, context, s1).connect(ganache.provider, relayer)
+      const updatedWallet = new lib.Wallet(config, context, s1).connect(ganache.provider, relayer)
 
       expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
@@ -1278,7 +1280,7 @@ describe('ContractWallet integration', function () {
       const [config, tx] = await wallet.updateConfig(newConfig)
       await tx.wait()
 
-      const updatedWallet = new lib.ContractWallet(config, context, s1, s2).connect(ganache.provider, relayer)
+      const updatedWallet = new lib.Wallet(config, context, s1, s2).connect(ganache.provider, relayer)
 
       expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
@@ -1316,7 +1318,7 @@ describe('ContractWallet integration', function () {
       expect(receipt.logs[2].data).to.contain(wallet.config.signers[0].address.slice(2).toLowerCase())
     })
     describe('after migrating and updating', () => {
-      let wallet2: lib.ContractWallet
+      let wallet2: lib.Wallet
 
       beforeEach(async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1334,7 +1336,7 @@ describe('ContractWallet integration', function () {
         const [config, tx] = await wallet.updateConfig(newConfig)
         await tx.wait()
 
-        wallet2 = new lib.ContractWallet(config, context, s1).connect(ganache.provider, relayer)
+        wallet2 = new lib.Wallet(config, context, s1).connect(ganache.provider, relayer)
       })
       it('Should update to a new single owner configuration', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1352,7 +1354,7 @@ describe('ContractWallet integration', function () {
         const [config, tx] = await wallet2.updateConfig(newConfig)
         await tx.wait()
   
-        const updatedWallet = new lib.ContractWallet(config, context, s1).connect(ganache.provider, relayer)
+        const updatedWallet = new lib.Wallet(config, context, s1).connect(ganache.provider, relayer)
   
         expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
@@ -1383,7 +1385,7 @@ describe('ContractWallet integration', function () {
         const [config, tx] = await wallet2.updateConfig(newConfig)
         await tx.wait()
   
-        const updatedWallet = new lib.ContractWallet(config, context, s1, s2).connect(ganache.provider, relayer)
+        const updatedWallet = new lib.Wallet(config, context, s1, s2).connect(ganache.provider, relayer)
   
         expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
@@ -1416,11 +1418,11 @@ describe('ContractWallet integration', function () {
         ]
       }
 
-      const prom = wallet.buildUpdateConfig(newConfig)
+      const prom = wallet.buildUpdateConfigTransaction(newConfig)
       await expect(prom).to.be.rejected
     })
     it('Should accept a non-usable configuration in non-strict mode', async () => {
-      const wallet = (await lib.ContractWallet.singleOwner(
+      const wallet = (await lib.Wallet.singleOwner(
         { nonStrict: true, ...context},
         new ethers.Wallet(ethers.utils.randomBytes(32))
       )).connect(ganache.provider, relayer)
@@ -1442,7 +1444,7 @@ describe('ContractWallet integration', function () {
         ]
       }
 
-      const prom = wallet.buildUpdateConfig(newConfig)
+      const prom = wallet.buildUpdateConfigTransaction(newConfig)
       await expect(prom).to.be.not.rejected
     })
   })

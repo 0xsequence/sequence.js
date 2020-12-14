@@ -1,8 +1,7 @@
 import { Web3Provider, Networkish } from '@ethersproject/providers'
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandler } from './types'
-import { JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './middleware'
+import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandler, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './types'
 
-export class ProviderEngine implements JsonRpcHandler {
+export class JsonRpcRouter implements JsonRpcHandler {
   private sender: JsonRpcHandler
   private handler: JsonRpcHandlerFunc
 
@@ -44,5 +43,3 @@ export const createJsonRpcMiddlewareStack = (middlewares: Array<JsonRpcMiddlewar
   }
   return chain
 }
-
-export * from './middleware'

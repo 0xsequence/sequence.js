@@ -11,13 +11,7 @@ import { Interface, ConnectionInfo, BytesLike, Deferrable, resolveProperties } f
 
 import { walletContracts } from '@0xsequence/abi'
 
-import { JsonRpcSender } from '@0xsequence/provider'
-
-
-import { RemoteSigner } from './signers/remote-signer'
-
 import {
-  IRelayer,
   SequenceTransaction, Transactionish, AuxTransactionRequest, NonceDependency,
   encodeMetaTransactionsData,
   isSequenceTransaction,
@@ -27,28 +21,34 @@ import {
   toSequenceTransactions,
   sequenceTxAbiEncode,
   makeExpirable,
-  makeAfterNonce,
+  makeAfterNonce
 } from '@0xsequence/transactions'
+
+import { Relayer } from '@0xsequence/relayer'
+
+import { JsonRpcSender } from '@0xsequence/provider'
 
 import { WalletContext } from '@0xsequence/networks'
 
 import {
   WalletConfig,
+  RemoteSigner,
   addressOf,
   sortConfig,
-  packMessageData,
   compareAddr,
   imageHash,
   isUsableConfig,
-  aggregate
-} from '@0xsequence/auth'
+  aggregate,
+  packMessageData
+} from '@0xsequence/signer'
 
 import { resolveArrayProperties } from './utils'
 
-// ContractWallet is an interface to the Sequence Wallet Contract on a specific network/chain.
-// Wallet class allows managing the wallet sub-keys, wallet address, signing messages,
-// signing transactions and updating/deploying the wallet config on a specific chain.
-export class ContractWallet extends AbstractSigner {
+// Wallet is a signer interface to a Smart Contract based Ethereum account.
+//
+// Wallet allows managing the account/wallet sub-keys, wallet address, signing
+// messages, signing transactions and updating/deploying the wallet config on a specific chain.
+export class Wallet extends AbstractSigner {
   private readonly _signers: AbstractSigner[]
 
   readonly context: WalletContext
@@ -64,7 +64,7 @@ export class ContractWallet extends AbstractSigner {
 
   // relayer dispatches transactions to an Ethereum node directly
   // or through a remote transaction Web Service.
-  relayer: IRelayer
+  relayer: Relayer
 
   constructor(config: WalletConfig, context: WalletContext, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
@@ -77,36 +77,53 @@ export class ContractWallet extends AbstractSigner {
     this.context = context
   }
 
-  get address(): string {
-    return addressOf(this.config, this.context)
+  // useConfig creates a new Wallet instance with the provided config, and uses the current provider
+  // and relayer.
+  useConfig(config: WalletConfig): Wallet {
+    return new Wallet(config, this.context, ...this._signers)
+      .setProvider(this.provider)
+      .setRelayer(this.relayer)
   }
 
+  // connect is a short-hand to create an Account instance and set the provider and relayer.
+  //
+  // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
+  connect(provider: Provider | ConnectionInfo | string, relayer?: Relayer): Wallet {
+    // TODO: This only works with JsonRpcProviders
+    return new Wallet(this.config, this.context, ...this._signers).setProvider(provider as unknown as JsonRpcProvider).setRelayer(relayer)
+  }
+
+  // connected reports if json-rpc provider has been connected
   get connected(): boolean {
     return this.sender !== undefined
   }
 
-  async getSigners(): Promise<string[]> {
-    return Promise.all(this._signers.map((s) => s.getAddress()))
+  // address returns the address of the wallet account address
+  get address(): string {
+    return addressOf(this.config, this.context)
   }
 
+  // getAddress returns the address of the wallet account address
+  //
+  // The getAddress method is defined on the AbstractSigner
   async getAddress(): Promise<string> {
     return this.address
   }
 
+  // getSigners returns the multi-sig signers with permission to control the wallet
+  async getSigners(): Promise<string[]> {
+    return Promise.all(this._signers.map((s) => s.getAddress()))
+  }
+
+  // chainId returns the network connected to this wallet instance
+  //
+  // NOTE: AbstractSigner also offers getChainId(): Promise<number>
   async chainId(): Promise<BigNumberish> {
     return (await this.provider.getNetwork()).chainId
   }
 
-  async signWeight(): Promise<BigNumber> {
-    const signers = await this.getSigners()
-    return signers.reduce((p, s) => {
-      const sconfig = this.config.signers.find((c) => c.address === s)
-      if (!sconfig) return p
-      return p.add(sconfig.weight)
-    }, ethers.constants.Zero)
-  }
-
-  setProvider(provider: JsonRpcProvider | ConnectionInfo | string): ContractWallet {
+  // setProvider assigns a json-rpc provider to this wallet instance
+  setProvider(provider: JsonRpcProvider | ConnectionInfo | string): Wallet {
     if (Provider.isProvider(provider)) {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
@@ -118,30 +135,25 @@ export class ContractWallet extends AbstractSigner {
     return this
   }
 
-  setRelayer(relayer: IRelayer): ContractWallet {
+  // setRelayer assigns a Sequence transaction relayer to this wallet instance
+  setRelayer(relayer: Relayer): Wallet {
     this.relayer = relayer
     return this
   }
 
-  useConfig(config: WalletConfig): ContractWallet {
-    return new ContractWallet(config, this.context, ...this._signers)
-      .setProvider(this.provider)
-      .setRelayer(this.relayer)
-  }
-
-  connect(provider: Provider | ConnectionInfo | string, relayer?: IRelayer): ContractWallet {
-    // TODO: This only works with JsonRpcProviders
-    return new ContractWallet(this.config, this.context, ...this._signers).setProvider(provider as unknown as JsonRpcProvider).setRelayer(relayer)
-  }
-
+  // geNonce returns the transaction nonce for this wallet, via the relayer
   async getNonce(blockTag?: BlockTag): Promise<number> {
     return this.relayer.getNonce(this.config, this.context, 0, blockTag)
   }
 
+  // getTransactionCount returns the number of transactions (aka nonce)
+  //
+  // getTransactionCount method is defined on the AbstractSigner
   async getTransactionCount(blockTag?: BlockTag): Promise<number> {
     return this.getNonce(blockTag)
   }
 
+  // sendTransaction will dispatch the transaction to the relayer for submission to the network.
   async sendTransaction(dtransactionish: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
     const transaction = (await resolveArrayProperties<Transactionish>(dtransactionish))
 
@@ -152,31 +164,31 @@ export class ContractWallet extends AbstractSigner {
       throw new Error('missing relayer')
     }
 
-    let arctx: SequenceTransaction[] = []
+    let stx: SequenceTransaction[] = []
 
     if (Array.isArray(transaction)) {
       if (hasSequenceTransactions(transaction)) {
-        arctx = transaction as SequenceTransaction[]
+        stx = transaction as SequenceTransaction[]
       } else {
-        arctx = await toSequenceTransactions(this, transaction)
+        stx = await toSequenceTransactions(this, transaction)
       }
     } else if (isSequenceTransaction(transaction)) {
-      arctx = [transaction]
+      stx = [transaction]
     } else {
-      arctx = await toSequenceTransactions(this, [transaction])
+      stx = await toSequenceTransactions(this, [transaction])
     }
 
     // If transaction is marked as expirable
     // append expirable require
     if ((<AuxTransactionRequest>transaction).expiration) {
-      arctx = makeExpirable(this.context, arctx, (<AuxTransactionRequest>transaction).expiration)
+      stx = makeExpirable(this.context, stx, (<AuxTransactionRequest>transaction).expiration)
     }
 
     // If transaction depends on another nonce
     // append after nonce requirement
     if ((<AuxTransactionRequest>transaction).afterNonce) {
       const after = (<AuxTransactionRequest>transaction).afterNonce
-      arctx = makeAfterNonce(this.context, arctx,
+      stx = makeAfterNonce(this.context, stx,
         (<NonceDependency>after).address ? {
           address: (<NonceDependency>after).address,
           nonce: (<NonceDependency>after).nonce,
@@ -190,26 +202,31 @@ export class ContractWallet extends AbstractSigner {
 
     // If a transaction has 0 gasLimit and not revertOnError
     // compute all new gas limits
-    if (arctx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
-      arctx = await this.relayer.estimateGasLimits(this.config, this.context, ...arctx)
+    if (stx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
+      stx = await this.relayer.estimateGasLimits(this.config, this.context, ...stx)
     }
 
-    const providedNonce = readSequenceNonce(...arctx)
+    const providedNonce = readSequenceNonce(...stx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
-    arctx = appendNonce(arctx, nonce)
-    const signature = this.signTransactions(arctx, allSigners)
-    return this.relayer.relay(this.config, this.context, signature, ...arctx)
+    stx = appendNonce(stx, nonce)
+    const signature = this.signTransactions(stx, allSigners)
+    return this.relayer.relay(this.config, this.context, signature, ...stx)
   }
 
+  // signTransactions will sign a Sequence transaction with the wallet signers
   async signTransactions(txs: SequenceTransaction[], allSigners?: boolean): Promise<string> {
     const packed = encodeMetaTransactionsData(...txs)
     return this.sign(packed, false, undefined, allSigners)
   }
 
+  // signMessage will sign a message for a particular chainId with the wallet signers
+  //
+  // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
   async signMessage(message: BytesLike, chainId?: number, allSigners?: boolean): Promise<string> {
     return this.sign(message, false, chainId, allSigners)
   }
 
+  // sign is a helper method to sign a payload with the wallet signers
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
     // TODO: chainId shouldn't be required to sign digest
     const signChainId = chainId ? chainId : await this.chainId()
@@ -270,8 +287,18 @@ export class ContractWallet extends AbstractSigner {
     return aggregate(localSignature, remoteSignature)
   }
 
-  // buildUpdateConfig creates a transaction object of the an updated wallet config state update.
-  async buildUpdateConfig(
+  // signWeight will return the total weight of all signers available based on the config
+  async signWeight(): Promise<BigNumber> {
+    const signers = await this.getSigners()
+    return signers.reduce((p, s) => {
+      const sconfig = this.config.signers.find((c) => c.address === s)
+      if (!sconfig) return p
+      return p.add(sconfig.weight)
+    }, ethers.constants.Zero)
+  }
+
+  // buildUpdateConfigTransaction creates a transaction object of the an updated wallet config state update.
+  async buildUpdateConfigTransaction(
     config: WalletConfig,
     publish = false
   ): Promise<SequenceTransaction[]> {
@@ -350,13 +377,15 @@ export class ContractWallet extends AbstractSigner {
     }]
   }
 
+  // updateConfig will build an updated config transaction and send/publish it to the network
+  // via the relayer
   async updateConfig(
     config: WalletConfig,
     nonce?: number,
     publish = false
   ): Promise<[WalletConfig, TransactionResponse]> {
     const [txs, n] = await Promise.all([
-      this.buildUpdateConfig(config, publish),
+      this.buildUpdateConfigTransaction(config, publish),
       nonce ? nonce : await this.getNonce()]
     )
 
@@ -366,6 +395,7 @@ export class ContractWallet extends AbstractSigner {
     ]
   }
 
+  // publishConfig will publish the wallet config to the network via the relayer
   async publishConfig(
     nonce?: number
   ): Promise<TransactionResponse> {
@@ -390,11 +420,13 @@ export class ContractWallet extends AbstractSigner {
     })
   }
 
+  // packMsgAndSig ...
   private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
     return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }
 
-  static async singleOwner(context: WalletContext, owner: BytesLike | AbstractSigner): Promise<ContractWallet> {
+  // singleOwner will create a Wallet instance with a single signer (ie. a single EOA account)
+  static async singleOwner(context: WalletContext, owner: BytesLike | AbstractSigner): Promise<Wallet> {
     const signer = AbstractSigner.isSigner(owner) ? owner : new ethers.Wallet(owner)
 
     const config = {
@@ -407,7 +439,7 @@ export class ContractWallet extends AbstractSigner {
       ]
     }
 
-    return new ContractWallet(config, context, owner)
+    return new Wallet(config, context, owner)
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {

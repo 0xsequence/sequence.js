@@ -13,15 +13,15 @@ export abstract class RemoteSigner extends AbstractSigner {
     throw new Error("sendTransaction not implemented.")
   }
 
-  static isRemoteSigner(signer: AbstractSigner): boolean {
-    return (<RemoteSigner>signer).signMessageWithData !== undefined
-  }
-
   static signMessageWithData(signer: AbstractSigner, message: BytesLike, data?: BytesLike): Promise<string> {
     if (this.isRemoteSigner(signer)) {
       return (signer as RemoteSigner).signMessageWithData(message, data)
     }
 
     return signer.signMessage(message)
+  }
+
+  static isRemoteSigner(signer: AbstractSigner): boolean {
+    return (<RemoteSigner>signer).signMessageWithData !== undefined
   }
 }

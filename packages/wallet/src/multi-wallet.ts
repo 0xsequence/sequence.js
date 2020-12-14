@@ -2,65 +2,35 @@ import { TransactionResponse, TransactionRequest, Provider } from '@ethersprojec
 import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
-import { ContractWallet } from './contract-wallet'
-import { NotEnoughSigners } from './errors'
+import { NotEnoughSigners } from './types'
 import { Transactionish } from '@0xsequence/transactions'
-import { WalletConfig, addressOf, imageHash, isConfig } from '@0xsequence/auth'
+import { GlobalWalletConfig, SignerInfo, WalletConfig, addressOf, imageHash, isConfig } from '@0xsequence/signer'
+import { NetworkConfig, WalletContext } from '@0xsequence/networks'
+import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
 
-import { NetworkConfig, WalletContext } from '@0xsequence/networks'
-
-
-// TODO: Add more details to network
-// authChain, mainNetwork, etc
-
-// TODO: move "network" types to @0xsequence/networks
-
-// Network wallet is the wallet on a particular network..
-// .. hmpf.
-// TOOD: move this to ./types.ts
-export type NetworkWallet = {
-  wallet: ContractWallet,
-  network: NetworkConfig
-}
-
-export type SmartWalletOptions = {
+export type MultiWalletOptions = {
   context: WalletContext,
   initialConfig: WalletConfig,
   signers: AbstractSigner[],
   networks: NetworkConfig[]
 }
 
-type FullConfig = {
-  threshold: Threshold[],
-  signers: Signer[]
-}
-
-type Threshold = {
-  chaind: number,
-  weight: number
-}
-
-type Signer = {
-  address: string,
-  networks: {
-    chaind: number,
-    weight: number
+export class MultiWallet extends AbstractSigner {
+  private readonly _wallets: {
+    wallet: Wallet,
+    network: NetworkConfig
   }[]
-}
-
-export class SmartWallet extends AbstractSigner {
-  private readonly _wallets: NetworkWallet[]
   provider: ethers.providers.JsonRpcProvider
 
-  constructor(opts: SmartWalletOptions) {
+  constructor(opts: MultiWalletOptions) {
     super()
 
     if (opts.networks.length === 0) throw new Error('SmartWallet must have networks')
 
-    // Generate wallets using the initial configuration
+    // Account/wallet instances using the initial configuration
     this._wallets = opts.networks.map((network) => {
-      const wallet = new ContractWallet(opts.initialConfig, opts.context, ...opts.signers)
+      const wallet = new Wallet(opts.initialConfig, opts.context, ...opts.signers)
       wallet.setProvider(network.rpcUrl)
       if (network.relayer) {
         wallet.setRelayer(network.relayer)
@@ -71,20 +41,26 @@ export class SmartWallet extends AbstractSigner {
       }
     })
 
+    // TODO: wallets[0] ..? or get the "main" one...?
     this.provider = this._wallets[0].wallet.provider
   }
 
+  // address getter
   get address(): string {
     return this._wallets[0].wallet.address
   }
 
+  // getAddress returns the address of the wallet -- note the account address is the same
+  // across all wallets on all different networks
   getAddress(): Promise<string> {
     return this._wallets[0].wallet.getAddress()
   }
 
-  // getFullConfig builds the FullConfig object which contains all configs across all networks.
+  // getGlobalWalletConfig builds the GlobalWalletConfig object which contains all WalletConfigs across all networks.
   // This is useful to shows all keys/devices connected to a wallet across networks.
-  async getFullConfig(): Promise<FullConfig> {
+
+  // RENAME: .................         getGlobalWalletConfig(): Promise<GlobalWalletConfig>
+  async getFullConfig(): Promise<GlobalWalletConfig> {
     const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
     const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
     const allSigners = allConfigs.reduce((p, config) => {
@@ -105,7 +81,7 @@ export class SmartWallet extends AbstractSigner {
         }
       })
       return p
-    }, [] as Signer[])
+    }, [] as SignerInfo[])
 
     return {
       threshold: thresholds,
@@ -113,17 +89,19 @@ export class SmartWallet extends AbstractSigner {
     }
   }
 
+  // TODO: *full* sign..? name..?
   async signAuthMessage(message: BytesLike, onlyFullSign: boolean = true): Promise<string> {
     return this.signMessage(message, this.authWallet(), onlyFullSign)
   }
 
-  async signMessage(message: BytesLike, target?: ContractWallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
+  // TODO: what does onlyFullSign do here..?
+  async signMessage(message: BytesLike, target?: Wallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
     const wallet = (() => {
       if (!target) return this.mainWallet()
-      if ((<ContractWallet>target).address) {
-        return target as ContractWallet
+      if ((<Wallet>target).address) {
+        return target as Wallet
       }
-      return this.getNetworkWallet(target as NetworkConfig)
+      return this.getWalletByNetwork(target as NetworkConfig)
     })()
 
     // TODO: Skip this step if wallet is authWallet
@@ -141,7 +119,7 @@ export class SmartWallet extends AbstractSigner {
 
   async sendTransaction(dtransactionish: Deferrable<Transactionish>, network?: NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<TransactionResponse> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
-    const wallet = network ? this.getNetworkWallet(network) : this.mainWallet()
+    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
 
     // TODO: Skip this step if wallet is authWallet
     const [thisConfig, lastConfig] = await Promise.all([
@@ -169,7 +147,7 @@ export class SmartWallet extends AbstractSigner {
     })()
 
     return wallet.useConfig(thisConfig).sendTransaction([
-      ...await wallet.buildUpdateConfig(lastConfig, false),
+      ...await wallet.buildUpdateConfigTransaction(lastConfig, false),
       ...transactionParts
     ])
   }
@@ -198,13 +176,13 @@ export class SmartWallet extends AbstractSigner {
     return tx
   }
 
-  async isDeployed(target?: ContractWallet | NetworkConfig): Promise<boolean> {
+  async isDeployed(target?: Wallet | NetworkConfig): Promise<boolean> {
     const wallet = (() => {
       if (!target) return this.authWallet()
-      if ((<ContractWallet>target).address) {
-        return target as ContractWallet
+      if ((<Wallet>target).address) {
+        return target as Wallet
       }
-      return this.getNetworkWallet(target as NetworkConfig)
+      return this.getWalletByNetwork(target as NetworkConfig)
     })()
 
     const walletCode = await wallet.provider.getCode(this.address)
@@ -213,14 +191,14 @@ export class SmartWallet extends AbstractSigner {
 
   // TODO: Split this to it's own class "configProvider" or something
   // this process can be done in different ways (caching, api, utils, etc)
-  async currentConfig(target?: ContractWallet | NetworkConfig): Promise<WalletConfig | undefined> {
+  async currentConfig(target?: Wallet | NetworkConfig): Promise<WalletConfig | undefined> {
     const address = this.address
     const wallet = (() => {
       if (!target) return this.authWallet()
-      if ((<ContractWallet>target).address) {
-        return target as ContractWallet
+      if ((<Wallet>target).address) {
+        return target as Wallet
       }
-      return this.getNetworkWallet(target as NetworkConfig)
+      return this.getWalletByNetwork(target as NetworkConfig)
     })()
   
     const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, wallet.provider)
@@ -281,7 +259,7 @@ export class SmartWallet extends AbstractSigner {
     return config
   }
 
-  private getNetworkWallet(network: NetworkConfig | BigNumberish): ContractWallet {
+  private getWalletByNetwork(network: NetworkConfig | BigNumberish): Wallet {
     const chainId = (() => {
       if ((<NetworkConfig>network).chainId) {
         return (<NetworkConfig>network).chainId
@@ -292,23 +270,24 @@ export class SmartWallet extends AbstractSigner {
     return this._wallets.find((w) => w.network.chainId === chainId).wallet
   }
 
-  private mainWallet(): ContractWallet {
+  private mainWallet(): Wallet {
     const found = this._wallets.find((w) => w.network.isMainChain).wallet
     return found ? found : this._wallets[0].wallet
   }
 
-  private authWallet(): ContractWallet {
+  private authWallet(): Wallet {
     const found = this._wallets.find((w) => w.network.isAuthChain).wallet
     return found ? found : this._wallets[0].wallet
   }
 
-  static isSmartWallet(signer: AbstractSigner): signer is SmartWallet {
-    return (<SmartWallet>signer).updateConfig !== undefined
+  static isMultiWallet(signer: AbstractSigner): signer is MultiWallet {
+    return (<MultiWallet>signer).updateConfig !== undefined
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
     throw new Error('Method not implemented.')
   }
+
   connect(_: Provider): AbstractSigner {
     throw new Error('Method not implemented.')
   }
