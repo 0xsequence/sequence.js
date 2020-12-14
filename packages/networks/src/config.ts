@@ -1,3 +1,5 @@
+import { Relayer } from '@0xsequence/relayer'
+
 export interface NetworkConfig {
   name: string
   chainId: number
@@ -6,11 +8,12 @@ export interface NetworkConfig {
   sidechains?: NetworkConfig[]
   isMainChain?: boolean
   isAuthChain?: boolean
-  // relayer?: IRelayer // TODO: move to @0xsequence/relayer/types .. or @0xsequence/transactions ?
-  relayer?: any
+  relayer?: Relayer
 }
 
-export const ethereumNetworks: {[key: string]: NetworkConfig} = {
+export type NetworkConfigs = {[key: string]: NetworkConfig}
+
+export const ethereumNetworks: NetworkConfigs = {
   mainnet: {
     name: 'mainnet',
     chainId: 1,

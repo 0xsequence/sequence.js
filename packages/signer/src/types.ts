@@ -1,3 +1,18 @@
+export type GlobalWalletConfig = {
+  threshold: SignerThreshold[],
+  signers: SignerInfo[]
+}
+
+export type SignerThreshold = {
+  chaind: number,
+  weight: number
+}
+
+export type SignerInfo = {
+  address: string,
+  networks: SignerThreshold[]
+}
+
 export interface SequenceDecodedSignature {
   threshold: number
   signers: (SequenceDecodedSigner | SequenceDecodedOwner)[]

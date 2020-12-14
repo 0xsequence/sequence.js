@@ -1,6 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback } from '../types'
-import { JsonRpcMiddlewareHandler } from './index'
+import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 
 export class PublicProvider implements JsonRpcMiddlewareHandler {
 

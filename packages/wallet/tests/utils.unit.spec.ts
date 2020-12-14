@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers } from 'ethers'
 
-import { imageHash, addressOf } from '@0xsequence/auth' // TODO: too vague as public exports..? maybe return as authutils, or signUtils .. etc.. walletUtils .., etc..
+import { imageHash, addressOf } from '@0xsequence/signer'
 
 describe('Wallet utils', function () {
   it('should generate image hash', () => {

@@ -2,10 +2,11 @@ import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transpor
 
 import {
   ProviderMessageResponse,
-  JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse,
   ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
   ProviderMessageRequest, ProviderMessageTransport
 } from '../../types'
+
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '../../json-rpc'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 

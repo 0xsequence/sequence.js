@@ -2,9 +2,9 @@ import { expect } from 'chai'
 
 import * as lib from '../src'
 import { ethers, Signer } from 'ethers'
-import { packMessageData, recoverConfig } from '@0xsequence/auth'
+import { packMessageData, recoverConfig } from '@0xsequence/signer'
 
-describe('ContractWallet units', function() {
+describe('Wallet units', function() {
   const context = {
     factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
     mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
@@ -22,7 +22,7 @@ describe('ContractWallet units', function() {
       }
 
       const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
-      const wallet = new lib.ContractWallet(config, context, pk)
+      const wallet = new lib.Wallet(config, context, pk)
 
       const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
       expect(wallet.address).to.be.equal(expected)
@@ -42,7 +42,7 @@ describe('ContractWallet units', function() {
         ]
       }
 
-      expect(() => new lib.ContractWallet(config, context)).to.throw(Error)
+      expect(() => new lib.Wallet(config, context)).to.throw(Error)
     })
     it('Should accept non-usable config on non-strict mode', () => {
       const config = {
@@ -59,7 +59,7 @@ describe('ContractWallet units', function() {
         ]
       }
 
-      expect(() => new lib.ContractWallet(config, { nonStrict: true, ...context })).to.not.throw(Error)
+      expect(() => new lib.Wallet(config, { nonStrict: true, ...context })).to.not.throw(Error)
     })
   })
   describe('signing', () => {
@@ -81,14 +81,14 @@ describe('ContractWallet units', function() {
       }
 
       const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
-      const wallet = new lib.ContractWallet(config, context, pk)
+      const wallet = new lib.Wallet(config, context, pk)
 
       const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
       expect(await wallet.sign(digest, true, 1)).to.equal(expected)
     })
     it('Should sign and recover the configuration of a single signer', async () => {
       const pk = ethers.utils.randomBytes(32)
-      const wallet = await lib.ContractWallet.singleOwner(context, pk)
+      const wallet = await lib.Wallet.singleOwner(context, pk)
 
       const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
       const chainId = 3
@@ -105,7 +105,7 @@ describe('ContractWallet units', function() {
     it('Should sign and recover the configuration of multiple signers', async () => {
       const singer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       const singer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-      const wallet = new lib.ContractWallet(
+      const wallet = new lib.Wallet(
         {
           threshold: 3,
           signers: [{

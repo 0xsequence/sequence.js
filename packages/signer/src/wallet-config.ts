@@ -1,6 +1,6 @@
 import { BigNumberish, BytesLike, ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/networks'
-import { WalletContractBytecode } from './wallet-bytecode'
+import { WalletContractBytecode } from './wallet-contract'
 import { SequenceDecodedSignature, SequenceDecodedSigner, SequenceDecodedOwner } from './types'
 import { recoverSigner } from './validate'
 
@@ -19,6 +19,7 @@ export function isConfig(a: WalletConfig, b: WalletConfig): boolean {
   return imageHash(a) === imageHash(b)
 }
 
+// sortConfig normalizes the list of signer addreses in a WalletConfig
 export function sortConfig(config: WalletConfig): WalletConfig {
   config.signers.sort((a, b) => compareAddr(a.address, b.address))
   return config

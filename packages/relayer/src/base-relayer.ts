@@ -3,9 +3,8 @@ import { ethers } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/networks'
-import { WalletConfig, addressOf, imageHash } from '@0xsequence/auth'
-import { SequenceTransaction } from "../types"
-import { sequenceTxAbiEncode, readSequenceNonce } from "../utils"
+import { WalletConfig, addressOf, imageHash } from '@0xsequence/signer'
+import { SequenceTransaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
 export class BaseRelayer {
   private readonly bundleCreation: boolean
@@ -16,7 +15,7 @@ export class BaseRelayer {
     this.provider = provider
   }
 
-  async isWalletDeployed(walletAddress: string) {
+  async isWalletDeployed(walletAddress: string): Promise<boolean> {
     if (!this.provider) throw Error('Bundled creation provider not found')
     return (await this.provider.getCode(walletAddress)) !== '0x'
   }
@@ -35,8 +34,7 @@ export class BaseRelayer {
     }
   }
 
-  // TODO: rename this as well, prepareTransactions
-  async prepare(
+  async prepareTransactions(
     config: WalletConfig,
     context: WalletContext,
     signature: string | Promise<string>,

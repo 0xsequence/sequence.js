@@ -1,24 +1,24 @@
 import { TransactionResponse, BlockTag } from '@ethersproject/providers'
-import { Signer, ethers } from 'ethers'
+import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { SequenceTransaction } from '../types'
+import { SequenceTransaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/networks'
-import { WalletConfig, addressOf } from '@0xsequence/auth'
+import { WalletConfig, addressOf } from '@0xsequence/signer'
 import { BaseRelayer } from './base-relayer'
-import { IRelayer } from '.'
+import { Relayer } from '.'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
-export class LocalRelayer extends BaseRelayer implements IRelayer {
-  private readonly signer: Signer
+export class LocalRelayer extends BaseRelayer implements Relayer {
+  private readonly signer: AbstractSigner
 
-  constructor(signer: Signer) {
+  constructor(signer: AbstractSigner) {
     super(true, signer.provider)
     this.signer = signer
   }
 
-  // TODO: rename this to deployWallet
-  async deploy(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
+  // TODO: should this be on the Relayer interface or BaseRelayer ....?
+  async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
     // TODO: some tests, with the HookCallerMock fail without the thing below, perhaps review HookCallerMock.sol
     // and fix it to avoid what looks like an infinite loop?
     const walletDeployTxn = this.prepareWalletDeploy(config, context)
@@ -96,7 +96,7 @@ export class LocalRelayer extends BaseRelayer implements IRelayer {
     }
 
     return this.signer.sendTransaction(
-      await this.prepare(config, context, signature, ...transactions)
+      await this.prepareTransactions(config, context, signature, ...transactions)
     )
   }
 }

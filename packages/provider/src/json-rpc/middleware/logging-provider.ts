@@ -1,5 +1,4 @@
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback } from '../types'
-import { JsonRpcMiddleware } from './index'
+import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddleware } from '../types'
 
 export const loggingProviderMiddleware: JsonRpcMiddleware = (next: JsonRpcHandlerFunc) => {
   return (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {

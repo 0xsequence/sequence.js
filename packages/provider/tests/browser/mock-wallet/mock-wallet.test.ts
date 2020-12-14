@@ -1,10 +1,12 @@
+import { Wallet } from 'ethers'
+import { JsonRpcProvider } from '@ethersproject/providers'
+
 import {
   WalletRequestHandler,
   WindowMessageHandler
 } from '@0xsequence/provider'
 
-import { Wallet } from 'ethers'
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { ethereumNetworks } from '@0xsequence/networks'
 
 import { MockWalletUserPrompter } from './utils'
 
@@ -24,17 +26,17 @@ import { MockWalletUserPrompter } from './utils'
 const provider = new JsonRpcProvider('http://localhost:8545')
 
 // generate a random ethereum wallet..
-// TODO: update this to a SmartWallet .................................. <--------------<<<<<<<<<<<<<<
+// TODO: update this to a sequence.Wallet
 // const wallet = Wallet.createRandom()
 const wallet = Wallet.fromMnemonic('canvas sting blast limb wet reward vibrant paper quality feed wood copper rib divert raise nurse asthma romance exhaust profit beauty anxiety ugly ugly')
 
-// the rpc signer via the wallet
+// the json-rpc signer via the wallet
 const mockUserPrompter = new MockWalletUserPrompter(true)
-const walletRequestHandler = new WalletRequestHandler(wallet, provider, mockUserPrompter)
+const walletRequestHandler = new WalletRequestHandler(wallet, provider, mockUserPrompter, ethereumNetworks)
 
 
 // external window handler + engine.. we may not need the engine, but we can use it if we want
-// const sender = new ProviderEngine(signingHandler, [loggingProviderMiddleware])
+// const sender = new JsonRpcRouter(signingHandler, [loggingProviderMiddleware])
 // TODO: lets not do the middleware thing unless we really need it, then can add later..
 
 // in practice, all you have to do is instantiate this, and assign it somewhere

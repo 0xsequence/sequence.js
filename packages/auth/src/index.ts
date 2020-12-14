@@ -1,5 +1,1 @@
 export * from './proof'
-export * from './types'
-export * from './validate'
-export * from './wallet-bytecode'
-export * from './wallet-config'

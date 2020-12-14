@@ -9,8 +9,8 @@ export interface WalletContext {
   nonStrict?: boolean
 }
 
-// SequenceContext are the deployed addresses of modules available on public networks.
-export const SequenceContext: WalletContext = {
+// sequenceContext are the deployed addresses of modules available on public networks.
+export const sequenceContext: WalletContext = {
   factory: '0x878C961C6da18574e5a09069E541bDb6627eA65c',
   mainModule: '0x444C9327FF4e8fbF109ed6d22B96F83bb3cf3A06',
   mainModuleUpgradable: '0xCdB2f31BCe8c41E731c88BCB14A6692AC09e1C6e',

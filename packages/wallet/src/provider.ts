@@ -1,15 +1,18 @@
 import { ExternalProvider, TransactionResponse, JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
-import { ContractWallet } from './contract-wallet'
-import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/provider'
+import { Wallet } from './wallet'
 
 import { SequenceTransaction, isSequenceTransaction, toSequenceTransactions, readSequenceNonce, appendNonce, flattenAuxTransactions } from '@0xsequence/transactions'
 
-// Provider is a low-level provider to a Sequence Wallet object. 
-export class Provider implements ExternalProvider {
-  private readonly _wallet?: ContractWallet
+import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/provider'
 
-  constructor(wallet: ContractWallet) {
+// TODO: what do we use this for?
+
+// Provider is a low-level provider to a Sequence Wallet. 
+export class Provider implements ExternalProvider {
+  private readonly _wallet?: Wallet
+
+  constructor(wallet: Wallet) {
     this._wallet = wallet
   }
 

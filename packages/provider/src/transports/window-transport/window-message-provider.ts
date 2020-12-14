@@ -1,10 +1,11 @@
 import {
   ProviderMessageResponse,
-  JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse,
   ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
   ProviderMessageRequest
 } from '../../types'
 import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
+
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '../../json-rpc'
 
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
@@ -23,6 +24,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
   }
 
   openWallet = (path?: string, state?: object): void => {
+    console.log('window-message', this.walletURL)
     if (this.walletOpened === true) {
       console.log('wallet is opened..')
       if (!path) {
@@ -37,7 +39,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     }
 
     const walletURL = new URL(this.walletURL.href)
-    if (path) {
+    if (path && path !== '') {
       walletURL.pathname = path.toLowerCase()
     }
 

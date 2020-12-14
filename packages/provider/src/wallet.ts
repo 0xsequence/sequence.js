@@ -1,8 +1,8 @@
-import { NetworkConfig, WalletContext, SequenceContext } from '@0xsequence/networks'
-import { WalletConfig } from '@0xsequence/auth'
+import { NetworkConfig, WalletContext, sequenceContext } from '@0xsequence/networks'
+import { WalletConfig } from '@0xsequence/signer'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
-import { ProviderEngine, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from './provider-engine'
+import { JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from './json-rpc'
 import { Web3Provider } from './web3-provider'
 import { SidechainProvider } from './sidechain-provider'
 import { WindowMessageProvider } from './transports'
@@ -67,7 +67,7 @@ export class Wallet implements WalletProvider {
   private session: WalletSession | null
 
   private provider: Web3Provider
-  private providerEngine?: ProviderEngine
+  private jsonRpcRouter?: JsonRpcRouter
   private cachedProvider?: CachedProvider
   private publicProvider?: PublicProvider
   private allowProvider?: JsonRpcMiddleware
@@ -112,19 +112,19 @@ export class Wallet implements WalletProvider {
         this.publicProvider = new PublicProvider()
 
         // ..
-        this.windowTransportProvider = new WindowMessageProvider(this.config.windowTransport.walletAppURL)
+        this.windowTransportProvider = new WindowMessageProvider(this.config.walletAppURL)
 
-        this.providerEngine = new ProviderEngine(this.windowTransportProvider, [
+        this.jsonRpcRouter = new JsonRpcRouter(this.windowTransportProvider, [
           loggingProviderMiddleware,
           this.allowProvider,
           this.cachedProvider,
           this.publicProvider
         ])
 
-        // this.provider = this.providerEngine.createJsonRpcProvider()
+        // this.provider = this.jsonRpcRouter.createJsonRpcProvider()
         this.provider = new Web3Provider(
           this.config.walletContext,
-          this.providerEngine,
+          this.jsonRpcRouter,
           'unspecified'
         )
 
@@ -164,12 +164,17 @@ export class Wallet implements WalletProvider {
       return true
     }
 
+    // TODO: need this to work with multiple transports
+    // ie. Proxy and Window at same time..
+
+    // might want to create abstraction above the transports.. for multi..
+
     // authenticate
     const config = this.config
 
     switch (config.type) {
       case 'Window': {
-        await this.openWallet('/', { login: true })
+        await this.openWallet('', { login: true }) // TODO: do we need the state thing? maybe/maybe not..
         const sessionPayload = await this.windowTransportProvider.waitUntilLoggedIn()
         this.useSession(sessionPayload)
         this.saveSession(sessionPayload)
@@ -250,6 +255,7 @@ export class Wallet implements WalletProvider {
       this.windowTransportProvider.openWallet(path, state)
 
       // TODO: handle case when popup is blocked, should return false, or throw exception
+      //
       await this.windowTransportProvider.waitUntilConnected()
 
       return true
@@ -335,7 +341,7 @@ export class Wallet implements WalletProvider {
 
   private useSession = async (session: WalletSession) => {
     if (!session.accountAddress || session.accountAddress === '') {
-      throw new Error('session error, accountAddress is invalid')
+      throw new Error('session error, accountAddress is empty')
     }
 
     // set active session
@@ -371,6 +377,7 @@ export class Wallet implements WalletProvider {
     // for unknown network. Setting the network to null ensures the RPC url is used 
     // for the JsonRpcProvivider generated. I don't think Ethers V5 fixes this, but
     // we will need to test once we migrated to it.
+    // TODO: review and maybe always set network.name to null..?
     if (network.name == 'mumbai' || network.name == 'matic') {
       network.name = null
     }
@@ -380,7 +387,7 @@ export class Wallet implements WalletProvider {
     // that object instance instead of creating a new one as below.
     this.provider = new Web3Provider(
       this.config.walletContext,
-      this.providerEngine,
+      this.jsonRpcRouter,
       network.name
     )
 
@@ -420,7 +427,7 @@ export class Wallet implements WalletProvider {
       cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
       cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
   
-      const providerEngine = new ProviderEngine(sideExternalWindowProvider, [
+      const jsonRpcRouter = new JsonRpcRouter(sideExternalWindowProvider, [
         loggingProviderMiddleware,
         this.allowProvider,
         cachedProvider,
@@ -429,7 +436,7 @@ export class Wallet implements WalletProvider {
 
       providers[network.chainId] = new Web3Provider(
         this.config.walletContext,
-        providerEngine,
+        jsonRpcRouter,
         network
       )
       return providers
@@ -443,31 +450,33 @@ export class Wallet implements WalletProvider {
 export interface WalletProviderConfig {
   type: WalletProviderType
 
+  // Sequence Wallet App URL, default: https://sequence.app
+  walletAppURL: string
+
+  // Sequence Wallet Modules Context
+  walletContext: WalletContext
+
   // Global web3 provider (optional)
   web3Provider?: ExternalProvider
 
   // WindowProvider config (optional)
   windowTransport?: {
-    // Wallet App url
-    // default is https://wallet.arcadeum.net/
-    walletAppURL?: string
-
     // ..
     // timeout?: number
   }
 
-  // ..
-  walletContext: WalletContext
 }
 
+// TODO: rename to WalletTransportType, maybe?
 export type WalletProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
 
 export const DefaultWalletProviderConfig: WalletProviderConfig = {
-  type: 'Window', // TODO: transports: []
+  walletAppURL: 'http://localhost:3333',
+
+  walletContext: sequenceContext,
+
+  type: 'Window', // TODO: rename.. transports: []
 
   windowTransport: {
-    walletAppURL: 'http://localhost:3333'
-  },
-
-  walletContext: SequenceContext
+  }
 }

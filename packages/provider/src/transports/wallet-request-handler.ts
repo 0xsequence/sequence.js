@@ -1,36 +1,33 @@
+import EventEmitter from 'eventemitter3'
+
 import {
-  JsonRpcHandler, ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
-  ProviderMessageEvent, ProviderMessageResponseCallback,
-  JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, ProviderMessageRequestHandler,
+  ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
+  WalletMessageEvent, ProviderMessageResponseCallback,
+  ProviderMessageRequestHandler,
   MessageToSign
 } from '../types'
+
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '../json-rpc'
 
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { TypedDataUtils } from 'ethers-eip712'
 
-// import { SmartWallet } from '@0xsequence/wallet'
-// circular dependencies are not okay,.. but might not need this?
-
-// TODO: maybe rename to WalletHandler ..?
-
-// TODO: potentially, add on/once and notifyXXX methods..?
+import { NetworkConfigs, NetworkConfig } from '@0xsequence/networks'
 
 export class WalletRequestHandler implements JsonRpcHandler, ProviderMessageRequestHandler {
   private wallet: AbstractSigner
   private provider: JsonRpcProvider
   private prompter: WalletUserPrompter
+  private networkConfigs: NetworkConfigs
+  private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  // TODO: update constructor to accept, AbstractSigner | SmartWallet
-  // TODO: and, lets add get isSmartWallet(): boolean on SmartWallet.ts
-  // ^--- but, maybe we don't need it anymore here and AbstractSigner is enuf..?
-  constructor(wallet: AbstractSigner, provider: JsonRpcProvider, prompter: WalletUserPrompter) {
+  constructor(wallet: AbstractSigner, provider: JsonRpcProvider, prompter: WalletUserPrompter, networkConfigs: NetworkConfigs) {
     this.wallet = wallet.connect(provider)
     this.provider = provider
     this.prompter = prompter
+    this.networkConfigs = networkConfigs
   }
-
-  // TODO/XXX: add getAddress() and getNetwork() methods .., similar to ethers/our SmartWallet
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
   // (aka, the signer in this instance) and then responds with a wrapped response of
@@ -229,6 +226,49 @@ export class WalletRequestHandler implements JsonRpcHandler, ProviderMessageRequ
     }
 
     callback(null, response)
+  }
+
+  on = (event: WalletMessageEvent, fn: (...args: any[]) => void) => {
+    this.events.on(event, fn)
+  }
+
+  once = (event: WalletMessageEvent, fn: (...args: any[]) => void) => {
+    this.events.once(event, fn)
+  }
+
+  getAddress(): Promise<string> {
+    return this.wallet.getAddress()
+  }
+
+  getChainId(): Promise<number> {
+    return this.wallet.getChainId()
+  }
+
+  async getNetwork(): Promise<NetworkConfig> {
+    const chainId = await this.getChainId()
+
+    Object.values(this.networkConfigs).find(config => {
+      if (config.chainId === chainId) {
+        return config
+      }
+    })
+
+    throw Error(`NetworkConfig with chainId ${chainId} could not be found.`)
+  }
+
+  notifyNetwork(network: NetworkConfig) {
+    this.events.emit('network', network)
+    // TODO: check/confirm this is correct..
+    this.events.emit('chainChanged', ethers.utils.hexlify(network.chainId))
+  }
+
+  notifyLogin(accountAddress: string) {
+    this.events.emit('login', accountAddress)
+    this.events.emit('accountsChanged', [accountAddress])
+  }
+
+  notifyLogout() {
+    this.events.emit('logout')
   }
 }
 

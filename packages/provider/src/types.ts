@@ -1,4 +1,5 @@
 import { NetworkConfig } from '@0xsequence/networks'
+import { JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from './json-rpc'
 
 export interface WalletSession {
   // Account address of the wallet
@@ -9,28 +10,6 @@ export interface WalletSession {
 
   // Caching provider responses for things such as account and chainId
   providerCache?: {[key: string]: any}
-}
-
-export interface JsonRpcRequest {
-  jsonrpc: string
-  id: number
-  method: string
-  params: any[]
-}
-
-export interface JsonRpcResponse {
-  jsonrpc: string
-  id: number
-  result: any
-  error?: any
-}
-
-export type JsonRpcResponseCallback = (error: any, response?: JsonRpcResponse) => void
-
-export type JsonRpcHandlerFunc = (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => void
-
-export type JsonRpcHandler = {
-  sendAsync: JsonRpcHandlerFunc
 }
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -45,13 +24,14 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register()
-  notifyConnect(connectInfo: any)
-  notifyDisconnect(error?: any)
+  // TODO/HMMMMMMMMMMMMMM........
+  // notifyConnect(connectInfo: any)
+  // notifyDisconnect(error?: any)
   notifyAccountsChanged(accounts: string[])
   notifyChainChanged(connectInfo: any)
+  notifyNetwork(network: any)
   notifyLogin(accountAddress: string)
   notifyLogout()
-  notifyNetwork(network: any)
 }
 
 export interface ProviderMessage<T> {
@@ -91,7 +71,9 @@ export interface ProviderMessageTransport { //extends ProviderMessageRequestHand
   sendMessage(message: ProviderMessage<any>): void
 }
 
-export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'network' | 'debug'
+export type WalletMessageEvent = 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'network' | 'debug'
+
+export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | 'debug' | WalletMessageEvent
 
 export enum ProviderMessageType {
   MESSAGE = 'message',
@@ -106,6 +88,14 @@ export enum ProviderMessageType {
 
   DEBUG = '_debug'
 }
+
+// TODO: keep / use.. or not..?
+export type LoginEventPayload = string
+
+export type NetworkEventPayload = NetworkConfig
+
+
+// TODO... review, we're not using this..?
 export interface ProviderConnectInfo {
   chainId: string
   sidechainIds?: string[]

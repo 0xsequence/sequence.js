@@ -1,44 +1,15 @@
 import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
-import { SequenceTransaction } from '../types'
-import { readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode } from '../utils'
+import { SequenceTransaction, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode } from '@0xsequence/transactions'
 import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
-import { IRelayer } from '.'
+import { Relayer } from '.'
 import { WalletContext } from '@0xsequence/networks'
-import { WalletConfig, addressOf } from '@0xsequence/auth'
+import { WalletConfig, addressOf } from '@0xsequence/signer'
 
-type RelayerTxReceipt = {
-  blockHash: string
-  blockNumber: string
-  contractAddress: string
-  cumulativeGasUsed: string
-  gasUsed: string
-  logs: {
-    address: string
-    blockHash: string
-    blockNumber: string
-    data: string
-    logIndex: string
-    removed: boolean
-    topics: string[]
-    transactionHash: string
-    transactionIndex: string
-  }[],
-  logsBloom: string
-  root: string
-  status: string
-  transactionHash: string
-  transactionIndex: string
-}
-
-export type PendingTransactionResponse = TransactionResponse & {
-  waitForReceipt?: () => Promise<TransactionResponse>
-}
-
-export class RpcRelayer extends BaseRelayer implements IRelayer {
-  private readonly chaindApp: ChaindService
+export class RpcRelayer extends BaseRelayer implements Relayer {
+  private readonly chaindService: ChaindService
   public waitForReceipt: boolean
 
   constructor(
@@ -48,7 +19,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     waitForReceipt: boolean = true
   ) {
     super(bundleDeploy, provider)
-    this.chaindApp = new ChaindService(url, fetchPonyfill().fetch)
+    this.chaindService = new ChaindService(url, fetchPonyfill().fetch)
     this.waitForReceipt = waitForReceipt
   }
 
@@ -56,11 +27,11 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     metaTxHash: string,
     wait: number = 500
   ) {
-    let result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
+    let result = await this.chaindService.getMetaTxnReceipt({ metaTxID: metaTxHash })
 
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
       await new Promise(r => setTimeout(r, wait))
-      result = await this.chaindApp.getMetaTxnReceipt({ metaTxID: metaTxHash })
+      result = await this.chaindService.getMetaTxnReceipt({ metaTxID: metaTxHash })
     }
 
     // "FAILED" is reserved for when the tx is invalid and never dispatched by remote relayer
@@ -78,7 +49,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
   ): Promise<SequenceTransaction[][]> {
     // chaind only supports refunds on a single token
     // TODO: Add compatiblity for different refund options
-    const tokenFee = (await this.chaindApp.tokenFee()).fee
+    const tokenFee = (await this.chaindService.tokenFee()).fee
 
     // No gas refund required, return transactions as-is
     if (tokenFee === ethers.constants.AddressZero) {
@@ -94,7 +65,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     }
 
     const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    const res = await this.chaindApp.estimateMetaTxnGasReceipt({
+    const res = await this.chaindService.estimateMetaTxnGasReceipt({
       feeToken: tokenFee,
       call: {
         contract: addr,
@@ -117,7 +88,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     }
 
     // chaind requires tokenFee, even for only estimating gasLimits
-    const tokenFee = this.chaindApp.tokenFee()
+    const tokenFee = this.chaindService.tokenFee()
 
     const addr = addressOf(config, context)
     const prevNonce = readSequenceNonce(...transactions)
@@ -128,7 +99,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     }
 
     const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    const res = await this.chaindApp.estimateMetaTxnGasReceipt({
+    const res = await this.chaindService.estimateMetaTxnGasReceipt({
       feeToken: (await tokenFee).fee,
       call: {
         contract: addr,
@@ -154,7 +125,7 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     blockTag?: BlockTag
   ): Promise<number> {
     const addr = addressOf(config, context)
-    const resp = await this.chaindApp.getMetaTxnNonce({ walletContractAddress: addr })
+    const resp = await this.chaindService.getMetaTxnNonce({ walletContractAddress: addr })
     return ethers.BigNumber.from(resp.nonce).toNumber()
   }
 
@@ -164,8 +135,8 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
     signature: string | Promise<string>,
     ...transactions: SequenceTransaction[]
   ): Promise<PendingTransactionResponse> {
-    const prep = await this.prepare(config, context, signature, ...transactions)
-    const result = this.chaindApp.sendMetaTxn({
+    const prep = await this.prepareTransactions(config, context, signature, ...transactions)
+    const result = this.chaindService.sendMetaTxn({
       call: {
         contract: prep.to,
         input: prep.data
@@ -203,4 +174,32 @@ export class RpcRelayer extends BaseRelayer implements IRelayer {
       }
     } as PendingTransactionResponse
   }
+}
+
+export type PendingTransactionResponse = TransactionResponse & {
+  waitForReceipt?: () => Promise<TransactionResponse>
+}
+
+type RelayerTxReceipt = {
+  blockHash: string
+  blockNumber: string
+  contractAddress: string
+  cumulativeGasUsed: string
+  gasUsed: string
+  logs: {
+    address: string
+    blockHash: string
+    blockNumber: string
+    data: string
+    logIndex: string
+    removed: boolean
+    topics: string[]
+    transactionHash: string
+    transactionIndex: string
+  }[],
+  logsBloom: string
+  root: string
+  status: string
+  transactionHash: string
+  transactionIndex: string
 }
