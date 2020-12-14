@@ -102,7 +102,7 @@ export class Multicall {
 
     // Get next candidate
     const next = items[0].next as JsonRpcHandler
-    var blockTag: BlockTag
+    var blockTag: BlockTag = null
 
     // Partition incompatible calls
     var [items, discartItems] = partition(items, (item) => {
@@ -110,7 +110,7 @@ export class Multicall {
         // Mixed next callbacks
         if (item.next !== next) return false
 
-        switch (item.request.jsonrpc) {
+        switch (item.request.method) {
           case rpcMethods.ethCall:
             // Unsupported eth_call parameters
             if (
@@ -202,7 +202,7 @@ export class Multicall {
           to: this.conf.contract,
           value: 0,
           data: encodedCall
-        }]
+        }, blockTag]
       }), () => ({
         jsonrpc: rpcVersion,
         id: reqId,

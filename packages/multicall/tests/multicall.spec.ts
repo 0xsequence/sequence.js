@@ -3,7 +3,7 @@ import { ethers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
 
-import { JsonRpcProvider, Provider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -11,7 +11,6 @@ import { Multicall } from '../src'
 import { MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils/utils'
 import { getRandomInt } from '../src/utils'
-import { ExternalWindowProvider, JsonRpcAsyncSender } from '../../provider/src'
 
 const CallReceiverMockArtifact = require('wallet-contracts/artifacts/CallReceiverMock.json')
 const SequenceUtilsArtifact = require('wallet-contracts/artifacts/MultiCallUtils.json')
@@ -25,7 +24,7 @@ type GanacheInstance = {
   server?: any
   serverUri?: string
   provider?: JsonRpcProvider
-  spyProxy?: Provider
+  spyProxy?: JsonRpcProvider
   signer?: Signer
   chainId?: number
 }
