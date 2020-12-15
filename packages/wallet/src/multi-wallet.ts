@@ -86,12 +86,10 @@ export class MultiWallet extends WalletSigner {
     }
   }
 
-  // TODO: *full* sign..? name..?
   async signAuthMessage(message: BytesLike, onlyFullSign: boolean = true): Promise<string> {
     return this.signMessage(message, this.authWallet(), onlyFullSign)
   }
 
-  // TODO: what does onlyFullSign do here..?
   async signMessage(message: BytesLike, target?: Wallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
     const wallet = (() => {
       if (!target) return this.mainWallet()
@@ -277,7 +275,7 @@ export class MultiWallet extends WalletSigner {
     return found ? found : this._wallets[0].wallet
   }
 
-  static isMultiWallet(signer: AbstractSigner): signer is MultiWallet {
+  static isSequenceWallet(signer: AbstractSigner): signer is MultiWallet {
     return (<MultiWallet>signer).updateConfig !== undefined
   }
 

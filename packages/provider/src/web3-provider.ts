@@ -30,24 +30,20 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   }
 
   // TODO: review..
+  // getSequenceSigner(): WalletSigner
   getSequenceSigner(): SequenceSigner {
     return new SequenceSigner(this.context, this.getSigner())
   }
 }
 
-export class Web3WalletProvider extends Web3Provider {
-
-  // public readonly isMetaMask = false
-  // public readonly isExternalWallet = false
-
+export class LocalWeb3Provider extends Web3Provider {
   constructor(wallet: Wallet, networks: Networks) {
-    const walletRequestHandler = new WalletRequestHandler(wallet, wallet.provider, null, networks)
+    const walletRequestHandler = new WalletRequestHandler(wallet, null, networks)
     super(wallet.context, walletRequestHandler)
   }
-
 }
 
-
+// yes, it shoudl be the "WalletSigner"
 // TODO: should implement an interface...... or..? review
 export class SequenceSigner {
   private context: WalletContext

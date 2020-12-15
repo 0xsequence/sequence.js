@@ -13,22 +13,30 @@ import { TypedDataUtils } from 'ethers-eip712'
 
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
-import { Wallet } from '@0xsequence/wallet'
+import { Wallet, WalletSigner } from '@0xsequence/wallet'
 import { SequenceTransaction, appendNonce, readSequenceNonce, toSequenceTransactions, isSequenceTransaction, flattenAuxTransactions } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private wallet: AbstractSigner // TODO: should be WalletSigner | AbstractSigner
-  private provider: JsonRpcProvider
+  private wallet: Wallet // TODO: should be WalletSigner
+  // private provider: JsonRpcProvider
   private prompter: WalletUserPrompter
   private networks: Networks
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  // TODO: should be WalletSigner | AbstractSigner
-  constructor(wallet: AbstractSigner, provider: JsonRpcProvider, prompter: WalletUserPrompter, networks: Networks) {
-    this.wallet = wallet.connect(provider)
-    this.provider = provider
+  // TODO: should be WalletSigner
+  constructor(wallet: Wallet, prompter: WalletUserPrompter, networks: Networks) {
+    // this.wallet = wallet.connect(provider)
+    // this.provider = provider
+    this.wallet = wallet
     this.prompter = prompter
     this.networks = networks
+
+    if (!wallet.provider) {
+      throw new Error('wallet.provider is undefined')
+    }
+    if (!wallet.relayer) {
+      throw new Error('wallet.relayer is undefined')
+    }
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -62,7 +70,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const signer = this.wallet
     if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
 
-    const provider = this.provider
+    const provider = this.wallet.provider
     if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
 
     if (!chainId) {
@@ -80,13 +88,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       switch (request.method) {
 
         case 'net_version': {
-          const result = await this.provider.send('net_version', [])
+          const result = await provider.send('net_version', [])
           response.result = result
           break
         }
 
         case 'eth_chainId': {
-          const result = await this.provider.send('eth_chainId', [])
+          const result = await provider.send('eth_chainId', [])
           response.result = result
           break
         }
@@ -99,7 +107,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_getBalance': {
           const [accountAddress, blockTag] = request.params
-          const walletBalance = await this.provider.getBalance(accountAddress, blockTag)
+          const walletBalance = await provider.getBalance(accountAddress, blockTag)
           response.result = walletBalance.toHexString()
           break
         }
@@ -111,7 +119,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await this.wallet.signMessage(ethers.utils.arrayify(message))//, chainId)
+
+            // TODO: perhaps check if, isSequenceWallet() then provide chainId to the signMessage
+            // in case if we want to support AbstractSigner for this..? maybe not though.
+
+            sig = await this.wallet.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
@@ -134,7 +146,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             const digest = TypedDataUtils.encodeDigest(typedData)
-            sig = await this.wallet.signMessage(ethers.utils.arrayify(digest))//, chainId)
+            sig = await this.wallet.signMessage(ethers.utils.arrayify(digest), chainId) // TODO: only necessary for multi-wallet..
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
@@ -146,130 +158,145 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // The user has declined the request when value is null
             throw new Error('declined by user')
           }
+          break
         }
 
         case 'eth_sendTransaction': {
+          // https://eth.wiki/json-rpc/API#eth_sendtransaction
           const [transactionParams] = request.params
 
-          // Prompt the user to confirm the signing request
-          const txnResponse = await this.prompter.promptSendTransaction(transactionParams, chainId)
+          let txnHash = ''
+          if (this.prompter === null) {
+            // prompter is null, so we'll send from here
+            // TODO: review the params...
+            const txnResponse = await this.wallet.sendTransaction(transactionParams) // TODO: chainId..?
+            txnHash = txnResponse.hash
+          } else {
+            // prompt user to provide the response
+            txnHash = await this.prompter.promptSendTransaction(transactionParams, chainId)
+          }
 
-          if (txnResponse) {
-            response.result = txnResponse
+          if (txnHash) {
+            response.result = txnHash
           } else {
             // The user has declined the request when value is null
             throw new Error('declined by user')
           }
-
           break
         }
 
         case 'eth_signTransaction': {
-          throw Error('TODO')
-          // const transaction = request.params[0]
-          // const sender = transaction.from.toLowerCase()
+          // https://eth.wiki/json-rpc/API#eth_signTransaction
+          const [transaction] = request.params
+          const sender = transaction.from.toLowerCase()
 
-          // if (sender === this.wallet.address.toLowerCase()) {
-          //   let stxs = await toSequenceTransactions(this.wallet, [transaction])
-          //   if (readSequenceNonce(...stxs) === undefined) {
-          //     stxs = appendNonce(stxs, await this.wallet.getNonce())
-          //   }
+          // TODO: refactor/move
+          // TODO: use prompter
 
-          //   const sig = await this.wallet.signTransactions(stxs)
-          //   response.result = {
-          //     raw: sig,
-          //     tx: stxs.length === 1
-          //       ? stxs[0]
-          //       : {
-          //           ...stxs[0],
-          //           auxiliary: stxs.slice(1)
-          //         }
-          //   }
-          // } else {
-          //   throw Error('sender address does not match wallet')
-          // }
+          if (sender === this.wallet.address.toLowerCase()) {
+            let stxs = await toSequenceTransactions(this.wallet, [transaction])
+            if (readSequenceNonce(...stxs) === undefined) {
+              stxs = appendNonce(stxs, await this.wallet.getNonce())
+            }
+
+            const sig = await this.wallet.signTransactions(stxs)
+            response.result = {
+              raw: sig,
+              tx: stxs.length === 1
+                ? stxs[0]
+                : {
+                    ...stxs[0],
+                    auxiliary: stxs.slice(1)
+                  }
+            }
+          } else {
+            throw Error('sender address does not match wallet')
+          }
+          break
         }
 
         case 'eth_sendRawTransaction': {
-          throw Error('TODO')
-          // const signature = request.params[0].raw
-          // const transaction = request.params[0].tx
+          // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
+          const signature = request.params[0].raw
+          const transaction = request.params[0].tx
 
-          // let tx: Promise<TransactionResponse>
+          let tx: Promise<TransactionResponse>
 
-          // if (isSequenceTransaction(transaction)) {
-          //   const stx = flattenAuxTransactions([transaction])
-          //   tx = this.wallet.relayer.relay(this.wallet.config, this.wallet.context, signature, ...(stx as SequenceTransaction[]))
-          // }
+          // TODO: refactor/move
+          // TODO: use prompter
 
-          // if (tx) {
-          //   response.result = (await tx).hash
-          // }
+          if (isSequenceTransaction(transaction)) {
+            const stx = flattenAuxTransactions([transaction])
+            tx = this.wallet.relayer.relay(this.wallet.config, this.wallet.context, signature, ...(stx as SequenceTransaction[]))
+          }
+          if (tx) {
+            response.result = (await tx).hash
+          }
+          break
+        }
+
+        case 'eth_getTransactionCount': {
+          const address = (request.params[0] as string).toLowerCase()
+          const tag = request.params[1]
+
+          if (address === this.wallet.address.toLowerCase()) {
+            const count = await this.wallet.getTransactionCount(tag)
+            response.result = ethers.BigNumber.from(count).toHexString()
+          } else {
+            const count = await provider.getTransactionCount(address, tag)
+            response.result = ethers.BigNumber.from(count).toHexString()
+          }
+          break
         }
 
         case 'eth_blockNumber': {
-          response.result = await this.provider.getBlockNumber()
+          response.result = await provider.getBlockNumber()
           break
         }
 
         case 'eth_getBlockByNumber': {
-          response.result = await this.provider.getBlock(request.params[0] /* , jsonRpcRequest.params[1] */)
+          response.result = await provider.getBlock(request.params[0] /* , jsonRpcRequest.params[1] */)
           break
         }
 
         case 'eth_getBlockByHash': {
-          response.result = await this.provider.getBlock(request.params[0] /* , jsonRpcRequest.params[1] */)
+          response.result = await provider.getBlock(request.params[0] /* , jsonRpcRequest.params[1] */)
           break
         }
 
         case 'eth_getTransactionByHash': {
-          response.result = await this.provider.getTransaction(request.params[0])
+          response.result = await provider.getTransaction(request.params[0])
           break
         }
 
         case 'eth_call': {
           const [transactionObject, blockTag] = request.params
 
-          response.result = await this.provider.call(transactionObject, blockTag)
+          response.result = await provider.call(transactionObject, blockTag)
           break
         }
 
         case 'eth_getCode': {
           const [contractAddress, blockTag] = request.params
-          response.result = await this.provider.getCode(contractAddress, blockTag)
+          response.result = await provider.getCode(contractAddress, blockTag)
           break
         }
 
         case 'eth_estimateGas': {
           const [transactionObject] = request.params
-          response.result = await this.provider.estimateGas(transactionObject)
+          response.result = await provider.estimateGas(transactionObject)
           break
         }
 
         case 'eth_gasPrice': {
-          const gasPrice = await this.provider.getGasPrice()
+          const gasPrice = await provider.getGasPrice()
           response.result = gasPrice.toHexString()
           break
         }
 
-        case 'eth_getTransactionCount': {
-          throw Error('TODO')
-          // const address = (request.params[0] as string).toLowerCase()
-          // const tag = request.params[1]
-
-          // if (address === this.wallet.address.toLowerCase()) {
-          //   const count = await this.wallet.getTransactionCount(tag)
-          //   response.result = ethers.BigNumber.from(count).toHexString()
-          // } else {
-          //   const count = await this.provider.getTransactionCount(address, tag)
-          //   response.result = ethers.BigNumber.from(count).toHexString()
-          // }
-        }
-
         default: {
-          // const providerResponse = await this.provider.send(request.method, request.params)
-          // response.result = providerResponse
-          throw new Error(`Provider does not implement method '${request.method}'. Check with https://support.sequence.build`)
+          const providerResponse = await provider.send(request.method, request.params)
+          response.result = providerResponse
         }
       }
 
@@ -285,9 +312,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     callback(null, response)
   }
-
-  // private sendRawTransaction
-  // etc..
 
   on = (event: WalletMessageEvent, fn: (...args: any[]) => void) => {
     this.events.on(event, fn)
@@ -308,13 +332,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   async getNetwork(): Promise<NetworkConfig> {
     const chainId = await this.getChainId()
 
-    Object.values(this.networks).find(config => {
+    const chainIds = []
+    const networkConfig = Object.values(this.networks).find(config => {
       if (config.chainId === chainId) {
         return config
       }
+      chainIds.push(config.chainId)
     })
 
-    throw Error(`NetworkConfig with chainId ${chainId} could not be found.`)
+    if (!networkConfig) {
+      throw Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
+    }
+    return networkConfig
   }
 
   notifyNetwork(network: NetworkConfig) {

@@ -12,11 +12,11 @@ import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transaction
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext, Networks } from '@0xsequence/network'
+import { WalletContext, Networks, JsonRpcSender } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
 
-import { LocalProvider, Web3WalletProvider } from '../../provider/src'
+import { LocalWeb3Provider } from '../../provider/src'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -158,11 +158,7 @@ describe('Wallet integration', function () {
     ]
 
     beforeEach(async () => {
-      w3provider = new LocalProvider(wallet)
-      provider = new ethers.providers.Web3Provider(w3provider)
-
-      // provider = new Web3WalletProvider(wallet, networks)
-      // // provider = new ethers.providers.Web3Provider(w3provider)
+      provider = new LocalWeb3Provider(wallet, networks)
     })
 
     it('Should return accounts', async () => {
@@ -691,8 +687,7 @@ describe('Wallet integration', function () {
     let w3: any
 
     beforeEach(async () => {
-      provider = new LocalProvider(wallet)
-      // provider = new Web3WalletProvider(wallet, networks)
+      provider = (new LocalWeb3Provider(wallet, networks)).provider
       w3 = new Web3(provider)
     })
 
@@ -816,12 +811,9 @@ describe('Wallet integration', function () {
         expect(wallet_1.address).to.equal(wallet_2.address)
         expect(wallet_2.address).to.equal(wallet_3.address)
 
-        // const w3_1 = new Web3(new Web3WalletProvider(wallet_1, networks))
-        // const w3_2 = new Web3(new Web3WalletProvider(wallet_2, networks))
-        // const w3_3 = new Web3(new Web3WalletProvider(wallet_3, networks))
-        const w3_1 = new Web3(new LocalProvider(wallet_1))
-        const w3_2 = new Web3(new LocalProvider(wallet_2))
-        const w3_3 = new Web3(new LocalProvider(wallet_3))
+        const w3_1 = new Web3(new LocalWeb3Provider(wallet_1, networks))
+        const w3_2 = new Web3(new LocalWeb3Provider(wallet_2, networks))
+        const w3_3 = new Web3(new LocalWeb3Provider(wallet_3, networks))
 
         const transaction = {
           from: wallet_1.address,
