@@ -23,7 +23,6 @@ export async function safeSolve<T>(promise: Promise<T>, def: T | ((e: any) => T)
     return await promise
   } catch (e) {
     const d = def instanceof Function ? def(e) : def
-    console.warn(`Error solving promise ${e} - default: ${d}`)
     return d
   }
 }
@@ -34,7 +33,6 @@ export function safe<T extends (...p: any[]) => any>(method: T, def?: ReturnType
     try {
       return method.apply(thisContext, ...args)
     } catch (e) {
-      console.warn(`Error ${e} - default: ${def}`)
       return def
     }
   }

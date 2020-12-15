@@ -1,5 +1,5 @@
 
-import { ethers, Signer } from 'ethers'
+import { ethers, providers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
 
@@ -12,7 +12,8 @@ import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } fro
 import { SpyProxy } from './utils/utils'
 import { getRandomInt } from '../src/utils'
 import { JsonRpcAsyncSender, ProviderEngine } from './utils/provider-engine'
-import { rpcMethods } from '../src/constants'
+import { RpcMethod } from '../src/constants'
+import { MulticallConf } from '../src/multicall'
 
 const { JsonRpcEngine } = require('json-rpc-engine')
 
@@ -81,15 +82,14 @@ describe('Arcadeum wallet integration', function () {
       func: ganache.provider.send,
       callback: (method: string, _: any[]) => {
         switch (method) {
-          case rpcMethods.ethCall:
-          case rpcMethods.ethGetCode:
-          case rpcMethods.ethGetBalance:
+          case RpcMethod.ethCall:
+          case RpcMethod.ethGetCode:
+          case RpcMethod.ethGetBalance:
             callCounter++
         }
       }
     })
 
-    brokenProvider = new MulticallProvider(ganache.provider)
     callMock = await createCallMock()
   })
 
@@ -104,41 +104,36 @@ describe('Arcadeum wallet integration', function () {
   let options = [
     {
       name: 'Ether.js provider wrapper',
-      provider: () => new MulticallProvider(
-        ganache.spyProxy,
-        { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+      provider: (conf?: MulticallConf) => new MulticallProvider(
+        ganache.spyProxy, conf
       )
     },
     {
       name: "Provider Engine (Sequence)",
-      provider: () => new ethers.providers.Web3Provider(
+      provider: (conf?: MulticallConf) => new ethers.providers.Web3Provider(
         new ProviderEngine(
           new JsonRpcAsyncSender(ganache.spyProxy),
-          [multicallMiddleware(
-            { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
-          )]
+          [multicallMiddleware(conf)]
         )
       )
     },
     {
       name: 'Ether.js external provider wrapper',
-      provider: () => new ethers.providers.Web3Provider(
+      provider: (conf?: MulticallConf) => new ethers.providers.Web3Provider(
         new MulticallExternalProvider(
-          new JsonRpcAsyncSender(ganache.spyProxy),
-          { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+          new JsonRpcAsyncSender(ganache.spyProxy), conf
         )
       )
     },
     {
       name: "Provider Engine (json-rpc-engine)",
-      provider: () => {
+      provider: (conf?: MulticallConf) => {
         let engine = new JsonRpcEngine()
 
         engine.push(
           providerAsMiddleware(
             new MulticallExternalProvider(
-              new JsonRpcAsyncSender(ganache.spyProxy),
-              { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+              new JsonRpcAsyncSender(ganache.spyProxy), conf
             )
           )
         )
@@ -161,7 +156,7 @@ describe('Arcadeum wallet integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider()
+        provider = option.provider({ ...Multicall.DEFAULT_CONF, contract: utilsContract.address})
       })
 
       describe("Aggregate calls", async () => {
@@ -227,6 +222,18 @@ describe('Arcadeum wallet integration', function () {
           expect(rawCode[0]).to.equal(code[0])
           expect(rawCode[1]).to.equal(code[1])
         })
+        it("Should mix eth_getCode and eth_call", async () => {
+          await callMock.testCall(0, "0x9952")
+      
+          const multiCallMock = callMock.connect(provider)
+          const promiseA = provider.getCode(callMock.address)
+          const promiseB = multiCallMock.lastValB()
+      
+          expect(await promiseA).to.equal(await ganache.provider.getCode(callMock.address))
+          expect(await promiseB).to.equal("0x9952")
+      
+          expect(callCounter).to.equal(1)
+        })
       })
       describe("Handle errors", async () => {
         it("Should not retry after failing to execute single call (not multicalled)", async () => {
@@ -275,21 +282,83 @@ describe('Arcadeum wallet integration', function () {
           expect(res[1]).to.equal("0x1122")
           expect(callCounter).to.equal(2)
         })
-        it("Should fallback to provider if multicall fails eth_getCode", async () => {
-          const code = await Promise.all([
-            brokenProvider.getCode(callMock.address),
-            brokenProvider.getCode(utilsContract.address)
-          ])
+
+        const brokenProviderOptions = [{
+          name: "non-deployed util contract",
+          overhead: 0,
+          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider()
+        }, {
+          name: "EOA address as util contract",
+          overhead: 1,
+          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider({
+            ...Multicall.DEFAULT_CONF,
+            contract: ethers.Wallet.createRandom().address
+          })
+        }, {
+          name: "Broken contract as util contract",
+          overhead: 1,
+          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider({
+            ...Multicall.DEFAULT_CONF,
+            contract: callMock.address
+          })
+        }, {
+          name: "invalid address as util contract",
+          overhead: 0,
+          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider({
+            ...Multicall.DEFAULT_CONF,
+            contract: "This is not a valid address"
+          })
+        }]
+
+        brokenProviderOptions.map((brokenOption) => context(brokenOption.name, () => {
+          beforeEach(() => {
+            brokenProvider = brokenOption.brokenProvider(option.provider)
+          })
+
+          it("Should fallback to provider if multicall fails eth_getCode", async () => {
+            const code = await Promise.all([
+              brokenProvider.getCode(callMock.address),
+              brokenProvider.getCode(utilsContract.address)
+            ])
+        
+            expect(callCounter).to.equal(2 + brokenOption.overhead)
+            const rawCode = await Promise.all([
+              ganache.provider.getCode(callMock.address),
+              ganache.provider.getCode(utilsContract.address)
+            ])
+        
+            expect(rawCode[0]).to.equal(code[0])
+            expect(rawCode[1]).to.equal(code[1])
+          })
+
+          it("Should fallback to provider if multicall fails eth_call", async () => {
+            await callMock.testCall(848487868126387, "0x001122")
       
-          expect(callCounter).to.equal(0)
-          const rawCode = await Promise.all([
-            ganache.provider.getCode(callMock.address),
-            ganache.provider.getCode(utilsContract.address)
-          ])
+            const multiCallMock = callMock.connect(brokenProvider)
+            const promiseA = multiCallMock.lastValA()
+            const promiseB = multiCallMock.lastValB()
+        
+            expect((await promiseA).toString()).to.equal("848487868126387")
+            expect(await promiseB).to.equal("0x001122")
+        
+            expect(callCounter).to.equal(3)
+          })
+
+          it("Should fallback to provider if multicall fails eth_call and eth_getCode", async () => {
+            await callMock.testCall(848487868126387, "0x001122")
       
-          expect(rawCode[0]).to.equal(code[0])
-          expect(rawCode[1]).to.equal(code[1])
-        })
+            const multiCallMock = callMock.connect(brokenProvider)
+            const promiseA = multiCallMock.lastValA()
+            const promiseB = multiCallMock.lastValB()
+            const promiseC = brokenProvider.getCode(callMock.address)
+        
+            expect((await promiseA).toString()).to.equal("848487868126387")
+            expect(await promiseB).to.equal("0x001122")
+            expect(await promiseC).to.equal(await provider.getCode(callMock.address))
+        
+            expect(callCounter).to.equal(4 + brokenOption.overhead)
+          })
+        }))
       })
     })
   })

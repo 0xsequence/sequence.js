@@ -2,7 +2,7 @@ import { ethers, providers } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { getRandomInt, promisify } from '../utils'
 import { Multicall, MulticallConf, JsonRpcRequest, JsonRpcResponseCallback } from '../multicall'
-import { rpcMethods, rpcVersion } from '../constants'
+import { RpcMethod, RpcVersion } from '../constants'
 
 
 export class MulticallProvider implements ethers.providers.Provider {
@@ -46,11 +46,11 @@ export class MulticallProvider implements ethers.providers.Provider {
   next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
     try {
       switch (req.method) {
-        case rpcMethods.ethCall:
+        case RpcMethod.ethCall:
           this.callback(req, callback, await this.provider.call(req.params[0], req.params[1]))
           break
 
-        case rpcMethods.ethGetCode:
+        case RpcMethod.ethGetCode:
           this.callback(req, callback, await this.provider.getCode(req.params[0], req.params[1]))
           break
       }
@@ -61,7 +61,7 @@ export class MulticallProvider implements ethers.providers.Provider {
 
   private callback(req: JsonRpcRequest, callback: JsonRpcResponseCallback, resp: any, err?: any) {
     callback(undefined, {
-      jsonrpc: rpcVersion,
+      jsonrpc: RpcVersion,
       id: req.id,
       result: resp,
       error: err
@@ -69,17 +69,17 @@ export class MulticallProvider implements ethers.providers.Provider {
   }
 
   async call(transaction: Deferrable<ethers.providers.TransactionRequest>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<string> {
-    return this.rpcCall(rpcMethods.ethCall, transaction, blockTag)
+    return this.rpcCall(RpcMethod.ethCall, transaction, blockTag)
   }
 
   async getCode(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<string> {
-    return this.rpcCall(rpcMethods.ethGetCode, addressOrName, blockTag)
+    return this.rpcCall(RpcMethod.ethGetCode, addressOrName, blockTag)
   }
 
   async rpcCall(method: string, ...params: any[]): Promise<any> {
     const reqId = getRandomInt()
     const resp = await promisify(this.multicall.handle)(this.next, {
-      jsonrpc: rpcVersion,
+      jsonrpc: RpcVersion,
       id: reqId,
       method: method,
       params: params

@@ -1,8 +1,8 @@
 
-export const rpcMethods = {
-  ethCall: "eth_call",
-  ethGetBalance: "eth_getBalance",
-  ethGetCode: "eth_getCode",
-}
+export const RpcVersion = "2.0"
 
-export const rpcVersion = "2.0"
+export enum RpcMethod {
+  ethCall = "eth_call",
+  ethGetBalance = "eth_getBalance",
+  ethGetCode = "eth_getCode",
+}

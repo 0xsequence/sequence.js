@@ -1,7 +1,7 @@
 
 import { ethers } from 'ethers'
 import { abi } from './abi/multicall'
-import { rpcMethods, rpcVersion } from './constants'
+import { RpcMethod, RpcVersion } from './constants'
 import { BlockTag, eqBlockTag, getRandomInt, parseBlockTag, partition, promisify, safe, safeSolve } from './utils'
 
 interface JsonRpcResponse {
@@ -50,8 +50,8 @@ export class Multicall {
   }
 
   readonly aggregateJsonRpcMethods = [
-    rpcMethods.ethCall,
-    rpcMethods.ethGetCode
+    RpcMethod.ethCall,
+    RpcMethod.ethGetCode
   ]
 
   readonly multicallInterface = new ethers.utils.Interface(abi)
@@ -72,7 +72,7 @@ export class Multicall {
 
   handle = (next: JsonRpcHandler, request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
     // Schedule for aggregation and return
-    if (this.aggregateJsonRpcMethods.includes(request.method)) {
+    if (this.aggregateJsonRpcMethods.find((m) => m === request.method)) {
       this.queue.push({
         request: request,
         callback: callback,
@@ -119,7 +119,7 @@ export class Multicall {
         if (item.next !== next) return false
 
         switch (item.request.method) {
-          case rpcMethods.ethCall:
+          case RpcMethod.ethCall:
             // Unsupported eth_call parameters
             if (
               item.request.params[0].from ||
@@ -128,8 +128,8 @@ export class Multicall {
             ) {
               return false  
             }
-          case rpcMethods.ethGetBalance:
-          case rpcMethods.ethGetCode:
+          case RpcMethod.ethGetBalance:
+          case RpcMethod.ethGetCode:
             // Mixed blockTags
             const itemBlockTag = parseBlockTag(item.request.params[1])
             if (blockTag === null) blockTag = itemBlockTag
@@ -151,7 +151,7 @@ export class Multicall {
     let callParams = items.map((v) => {
       try {
         switch (v.request.method) {
-          case rpcMethods.ethCall:
+          case RpcMethod.ethCall:
             return {
               delegateCall: false,
               revertOnError: false,
@@ -160,7 +160,7 @@ export class Multicall {
               gasLimit: v.request.params[0].gas ? v.request.params[0].gas : 0,
               value: 0
             }
-          case rpcMethods.ethGetCode:
+          case RpcMethod.ethGetCode:
             return {
               delegateCall: false,
               revertOnError: false,
@@ -204,18 +204,18 @@ export class Multicall {
     const res = await safeSolve(
       promisify(next)({
         id: reqId,
-        jsonrpc: rpcVersion,
-        method: rpcMethods.ethCall,
+        jsonrpc: RpcVersion,
+        method: RpcMethod.ethCall,
         params: [{
           to: this.conf.contract,
           value: 0,
           data: encodedCall
         }, blockTag]
-      }), () => ({
-        jsonrpc: rpcVersion,
+      }), (e) => ({
+        jsonrpc: RpcVersion,
         id: reqId,
         result: undefined,
-        error: "0x"
+        error: e
       })
     )
     
@@ -226,9 +226,15 @@ export class Multicall {
     }
 
     // Decode result from multicall
-    const decoded = this.multicallInterface.decodeFunctionResult(
-      this.multicallInterface.getFunction('multiCall'), res.result
-    )
+    let decoded: ethers.utils.Result
+    try {
+      decoded = this.multicallInterface.decodeFunctionResult(
+        this.multicallInterface.getFunction('multiCall'), res.result
+      )
+    } catch {
+      this.forward(items)
+      return
+    }
 
     // Send results for each request
     // errors fallback through the middleware
@@ -237,14 +243,14 @@ export class Multicall {
         this.forward(item)
       } else {
         switch (item.request.method) {
-          case rpcMethods.ethCall:
+          case RpcMethod.ethCall:
             item.callback(undefined, {
               jsonrpc: item.request.jsonrpc,
               id: item.request.id,
               result: decoded[1][index]
             })
             break
-          case rpcMethods.ethGetCode:
+          case RpcMethod.ethGetCode:
             item.callback(undefined, {
               jsonrpc: item.request.jsonrpc,
               id: item.request.id,
