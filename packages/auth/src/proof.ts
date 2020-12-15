@@ -1,7 +1,7 @@
 import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@arcadeum/ethauth'
 import { ethers } from 'ethers'
-import { sequenceContext } from '@0xsequence/networks'
-import { packMessageData, isValidSequenceUndeployedWalletSignature } from '@0xsequence/signer'
+import { sequenceContext } from '@0xsequence/network'
+import { packMessageData, isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'
 
 export const ValidateSequenceDeployedContractAccountProof: ValidatorFunc = async (provider: ethers.providers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean, address?: string }> => {
 

@@ -6,7 +6,7 @@ import {
   WindowMessageHandler
 } from '@0xsequence/provider'
 
-import { ethereumNetworks } from '@0xsequence/networks'
+import { ethereumNetworks } from '@0xsequence/network'
 
 import { MockWalletUserPrompter } from './utils'
 
@@ -31,8 +31,8 @@ const provider = new JsonRpcProvider('http://localhost:8545')
 const wallet = Wallet.fromMnemonic('canvas sting blast limb wet reward vibrant paper quality feed wood copper rib divert raise nurse asthma romance exhaust profit beauty anxiety ugly ugly')
 
 // the json-rpc signer via the wallet
-const mockUserPrompter = new MockWalletUserPrompter(true)
-const walletRequestHandler = new WalletRequestHandler(wallet, provider, mockUserPrompter, ethereumNetworks)
+// const mockUserPrompter = new MockWalletUserPrompter(true)
+const walletRequestHandler = new WalletRequestHandler(wallet, provider, null, ethereumNetworks)
 
 
 // external window handler + engine.. we may not need the engine, but we can use it if we want

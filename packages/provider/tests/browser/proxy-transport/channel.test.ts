@@ -3,6 +3,7 @@ import { ethers, Wallet } from 'ethers'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { MockWalletUserPrompter } from '../mock-wallet/utils'
+import { ethereumNetworks } from '@0xsequence/network'
 
 export const tests = async () => {
 
@@ -31,8 +32,8 @@ export const tests = async () => {
   const wallet = Wallet.fromMnemonic('canvas sting blast limb wet reward vibrant paper quality feed wood copper rib divert raise nurse asthma romance exhaust profit beauty anxiety ugly ugly')
   
   // the rpc signer via the wallet
-  const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(wallet, jsonRpcProvider, mockUserPrompter)
+  // const mockUserPrompter = new MockWalletUserPrompter(true)
+  const walletRequestHandler = new WalletRequestHandler(wallet, jsonRpcProvider, null, ethereumNetworks)
   
   const walletHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   walletHandler.register()

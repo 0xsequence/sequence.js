@@ -1,4 +1,4 @@
-import { NetworkConfig } from '@0xsequence/networks'
+import { NetworkConfig } from '@0xsequence/network'
 import { BigNumberish, providers } from 'ethers'
 
 export type MoveEstimate = {

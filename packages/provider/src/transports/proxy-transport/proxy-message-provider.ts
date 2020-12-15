@@ -6,7 +6,7 @@ import {
   ProviderMessageRequest, ProviderMessageTransport
 } from '../../types'
 
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '../../json-rpc'
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 

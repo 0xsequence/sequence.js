@@ -5,8 +5,8 @@ import { SequenceTransaction, readSequenceNonce, appendNonce, MetaTransactionsTy
 import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
-import { WalletContext } from '@0xsequence/networks'
-import { WalletConfig, addressOf } from '@0xsequence/signer'
+import { WalletContext } from '@0xsequence/network'
+import { WalletConfig, addressOf } from '@0xsequence/wallet'
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly chaindService: ChaindService

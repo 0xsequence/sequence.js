@@ -1,4 +1,4 @@
-import { NetworkConfig } from "@0xsequence/networks"
+import { NetworkConfig } from "@0xsequence/network"
 import { BigNumberish, providers } from "ethers"
 import { Bridge, BridgeERC1155, BridgeERC20, BridgeERC721, BridgeNative, isBridgeERC1155, isBridgeERC20, isBridgeNative, Move } from "./bridges"
 import { flatten, safeSolve } from "./utils"

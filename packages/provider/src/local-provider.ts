@@ -1,13 +1,16 @@
 import { ExternalProvider, TransactionResponse, JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
-import { Wallet } from './wallet'
+import { Wallet } from '@0xsequence/wallet'
 
 import { SequenceTransaction, isSequenceTransaction, toSequenceTransactions, readSequenceNonce, appendNonce, flattenAuxTransactions } from '@0xsequence/transactions'
 
-import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/provider'
+import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/network'
+
+
+// TODO: deprecate in favor of new implementation .., 
 
 // Provider is a low-level provider to a Sequence Wallet. 
-export class Provider implements ExternalProvider {
+export class LocalProvider implements ExternalProvider {
   private readonly _wallet?: Wallet
 
   constructor(wallet: Wallet) {
@@ -129,6 +132,7 @@ export class Provider implements ExternalProvider {
     }
   }
 
+  // OK
   private async sign(request: JsonRpcRequest, callback: (error: any, response?: JsonRpcResponse) => void) {
     const signer = request.params[0]
     const message = request.params[1]

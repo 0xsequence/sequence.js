@@ -2,7 +2,7 @@ import { TransactionRequest, Provider } from '@ethersproject/providers'
 import { BytesLike, ethers } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import fetchPonyfill from 'fetch-ponyfill'
-import { RemoteSigner } from '@0xsequence/signer'
+import { RemoteSigner } from './remote-signer'
 import { GuarddService } from '@0xsequence/guard'
 
 export class GuarddRemoteSigner extends RemoteSigner {

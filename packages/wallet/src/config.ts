@@ -1,7 +1,7 @@
 import { BigNumberish, BytesLike, ethers } from 'ethers'
-import { WalletContext } from '@0xsequence/networks'
-import { WalletContractBytecode } from './wallet-contract'
-import { SignerInfo, SignerThreshold, SequenceDecodedSignature, SequenceDecodedSigner, SequenceDecodedOwner } from './types'
+import { WalletContext } from '@0xsequence/network'
+import { WalletContractBytecode } from './bytecode'
+import { SignerInfo, SignerThreshold, DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
 import { recoverSigner } from './validate'
 
 // WalletConfig is the configuration of key signers that can access
@@ -79,29 +79,29 @@ export function addressOf(config: WalletConfig, context: WalletContext): string 
   return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
 }
 
-export function recoverConfig(message: BytesLike, signature: string | SequenceDecodedSignature): WalletConfig {
+export function recoverConfig(message: BytesLike, signature: string | DecodedSignature): WalletConfig {
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
   return recoverConfigFromDigest(digest, signature)
 }
 
-export function isSigner(obj: SequenceDecodedSigner | SequenceDecodedOwner): boolean {
-  const cast = obj as SequenceDecodedSigner
+export function isSigner(obj: DecodedSigner | DecodedOwner): boolean {
+  const cast = obj as DecodedSigner
   return cast.r !== undefined && cast.s !== undefined
 }
 
-export function recoverConfigFromDigest(digest: BytesLike, signature: string | SequenceDecodedSignature): WalletConfig {
-  const decoded = (<SequenceDecodedSignature>signature).threshold !== undefined ? <SequenceDecodedSignature>signature : decodeSignature(signature as string)
+export function recoverConfigFromDigest(digest: BytesLike, signature: string | DecodedSignature): WalletConfig {
+  const decoded = (<DecodedSignature>signature).threshold !== undefined ? <DecodedSignature>signature : decodeSignature(signature as string)
 
   const signers = decoded.signers.map(s => {
     if (isSigner(s)) {
       return {
         weight: s.weight,
-        address: recoverSigner(digest, s as SequenceDecodedSigner)
+        address: recoverSigner(digest, s as DecodedSigner)
       }
     } else {
       return {
         weight: s.weight,
-        address: (<SequenceDecodedOwner>s).address
+        address: (<DecodedOwner>s).address
       }
     }
   })
@@ -112,7 +112,7 @@ export function recoverConfigFromDigest(digest: BytesLike, signature: string | 
   }
 }
 
-export function decodeSignature(signature: string): SequenceDecodedSignature {
+export function decodeSignature(signature: string): DecodedSignature {
   const auxsig = signature.replace('0x', '')
 
   const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
@@ -163,22 +163,19 @@ export function decodeSignature(signature: string): SequenceDecodedSignature {
   }
 }
 
-// TODO: put this under a utils object......? maybe.
-// also could make folder, 'wallet' inside of here..?
-// or move back to "0xsequence/wallet" and make another 0xsequence/signer
 export function aggregate(...signatures: string[]) {
   return signatures.reduce((p, c) => aggregateTwo(p, c))
 }
 
-function aggregateTwo(a: string, b: string): string {
+export function aggregateTwo(a: string, b: string): string {
   const da = decodeSignature(a)
   const db = decodeSignature(b)
 
-  const signers = da.signers.map((s, i) => ((<SequenceDecodedSigner>s).r ? s : db.signers[i]))
+  const signers = da.signers.map((s, i) => ((<DecodedSigner>s).r ? s : db.signers[i]))
 
   const accountBytes = signers.map(s => {
-    if ((<SequenceDecodedSigner>s).r) {
-      const sig = s as SequenceDecodedSigner
+    if ((<DecodedSigner>s).r) {
+      const sig = s as DecodedSigner
       return ethers.utils.solidityPack(
         ['bool', 'uint8', 'bytes32', 'bytes32', 'uint8', 'uint8'],
         [false, s.weight, sig.r, sig.s, sig.v, sig.t]
@@ -186,7 +183,7 @@ function aggregateTwo(a: string, b: string): string {
     } else {
       return ethers.utils.solidityPack(
         ['bool', 'uint8', 'address'],
-        [true, s.weight, ethers.utils.getAddress((<SequenceDecodedOwner>s).address)]
+        [true, s.weight, ethers.utils.getAddress((<DecodedOwner>s).address)]
       )
     }
   })

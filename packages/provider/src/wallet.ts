@@ -1,8 +1,7 @@
-import { NetworkConfig, WalletContext, sequenceContext } from '@0xsequence/networks'
-import { WalletConfig } from '@0xsequence/signer'
+import { NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
+import { WalletConfig } from '@0xsequence/wallet'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
-import { JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from './json-rpc'
 import { Web3Provider } from './web3-provider'
 import { SidechainProvider } from './sidechain-provider'
 import { WindowMessageProvider } from './transports'
@@ -32,7 +31,6 @@ export interface WalletProvider extends WalletCommands {
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
 }
-
 
 // TODO: move this to ./commands/index.ts
 export interface WalletCommands {

@@ -1,5 +1,5 @@
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { WalletRequestHandler } from '../wallet-request-handler'
+import { WalletRequestHandler } from '../../wallet-request-handler'
 import { ProviderMessage } from '../../types'
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 

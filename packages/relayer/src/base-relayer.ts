@@ -2,8 +2,8 @@ import { Provider } from "@ethersproject/providers"
 import { ethers } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
-import { WalletContext } from '@0xsequence/networks'
-import { WalletConfig, addressOf, imageHash } from '@0xsequence/signer'
+import { WalletContext } from '@0xsequence/network'
+import { WalletConfig, addressOf, imageHash } from '@0xsequence/wallet'
 import { SequenceTransaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
 export class BaseRelayer {

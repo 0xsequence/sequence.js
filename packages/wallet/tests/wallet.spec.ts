@@ -5,18 +5,18 @@ import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
 import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/HookCallerMock'
 
-// import { WalletSigner } from '@0xsequence/signer'
-
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, aggregate } from '@0xsequence/signer'
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, aggregate } from '../src'
 import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish } from '@0xsequence/transactions'
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext } from '@0xsequence/networks'
+import { WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
+
+import { LocalProvider, Web3WalletProvider } from '../../provider/src'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -49,6 +49,14 @@ describe('Wallet integration', function () {
 
   let context: WalletContext
   let wallet: lib.Wallet
+
+  const networks: Networks = {
+    'ganache': {
+      name: 'ganache',
+      chainId: 31337,
+      rpcUrl: `http://localhost:${GANACHE_PORT}/`
+    }
+  }
 
   before(async () => {
     // Setup eth test node env
@@ -150,8 +158,11 @@ describe('Wallet integration', function () {
     ]
 
     beforeEach(async () => {
-      w3provider = new lib.Provider(wallet)
+      w3provider = new LocalProvider(wallet)
       provider = new ethers.providers.Web3Provider(w3provider)
+
+      // provider = new Web3WalletProvider(wallet, networks)
+      // // provider = new ethers.providers.Web3Provider(w3provider)
     })
 
     it('Should return accounts', async () => {
@@ -676,12 +687,13 @@ describe('Wallet integration', function () {
   })
 
   describe('with web3', () => {
-    let w3provider: ExternalProvider
+    let provider: ExternalProvider
     let w3: any
 
     beforeEach(async () => {
-      w3provider = new lib.Provider(wallet)
-      w3 = new Web3(w3provider)
+      provider = new LocalProvider(wallet)
+      // provider = new Web3WalletProvider(wallet, networks)
+      w3 = new Web3(provider)
     })
 
     it('Should return accounts', async () => {
@@ -804,9 +816,12 @@ describe('Wallet integration', function () {
         expect(wallet_1.address).to.equal(wallet_2.address)
         expect(wallet_2.address).to.equal(wallet_3.address)
 
-        const w3_1 = new Web3(new lib.Provider(wallet_1))
-        const w3_2 = new Web3(new lib.Provider(wallet_2))
-        const w3_3 = new Web3(new lib.Provider(wallet_3))
+        // const w3_1 = new Web3(new Web3WalletProvider(wallet_1, networks))
+        // const w3_2 = new Web3(new Web3WalletProvider(wallet_2, networks))
+        // const w3_3 = new Web3(new Web3WalletProvider(wallet_3, networks))
+        const w3_1 = new Web3(new LocalProvider(wallet_1))
+        const w3_2 = new Web3(new LocalProvider(wallet_2))
+        const w3_3 = new Web3(new LocalProvider(wallet_3))
 
         const transaction = {
           from: wallet_1.address,
@@ -846,8 +861,8 @@ describe('Wallet integration', function () {
           data: await encodeData(callReceiver, "testCall", 123, '0x445566')
         }
 
-        const arctx = await toSequenceTransaction(wallet, transaction)
-        const estimated = await relayer.estimateGasLimits(wallet.config, context, arctx)
+        const stx = await toSequenceTransaction(wallet, transaction)
+        const estimated = await relayer.estimateGasLimits(wallet.config, context, stx)
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(60000)
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(100000)
       })
@@ -864,8 +879,8 @@ describe('Wallet integration', function () {
           data: await encodeData(callReceiver, "testCall", 23, data)
         }
 
-        const arctx = await toSequenceTransaction(wallet, transaction)
-        const estimated = await relayer.estimateGasLimits(wallet.config, context, arctx)
+        const stx = await toSequenceTransaction(wallet, transaction)
+        const estimated = await relayer.estimateGasLimits(wallet.config, context, stx)
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
       })
@@ -889,8 +904,8 @@ describe('Wallet integration', function () {
           data: await encodeData(callReceiver, "testCall", 123, '0x445566')
         }]
 
-        const arctxs = await toSequenceTransactions(wallet, transactions)
-        const estimated = await relayer.estimateGasLimits(wallet.config, context, ...arctxs)
+        const stxs = await toSequenceTransactions(wallet, transactions)
+        const estimated = await relayer.estimateGasLimits(wallet.config, context, ...stxs)
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
         expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
         expect((<any>estimated[1].gasLimit).toNumber()).to.be.above(60000)

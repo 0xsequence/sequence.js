@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.7.0",
-    "@0xsequence/networks": "^0.7.0",
-    "@0xsequence/signer": "^0.7.0",
+    "@0xsequence/network": "^0.7.0",
+    "@0xsequence/wallet": "^0.7.0",
     "@arcadeum/ethauth": "^0.3.0",
     "ethers": "^5.0.24"
   },
