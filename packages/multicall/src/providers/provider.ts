@@ -44,23 +44,27 @@ export class MulticallProvider implements ethers.providers.Provider {
   waitForTransaction = this.provider.waitForTransaction
 
   next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
-    switch (req.method) {
-      case rpcMethods.ethCall:
-        this.callback(req, callback, await this.provider.call(req.params[0], req.params[1]))
-        break
+    try {
+      switch (req.method) {
+        case rpcMethods.ethCall:
+          this.callback(req, callback, await this.provider.call(req.params[0], req.params[1]))
+          break
 
-      case rpcMethods.ethGetCode:
-        this.callback(req, callback, await this.provider.getCode(req.params[0], req.params[1]))
-        break
+        case rpcMethods.ethGetCode:
+          this.callback(req, callback, await this.provider.getCode(req.params[0], req.params[1]))
+          break
+      }
+    } catch (e) {
+      this.callback(req, callback, undefined, e)
     }
   }
 
-  private callback(req: JsonRpcRequest, callback: JsonRpcResponseCallback, resp: any) {
+  private callback(req: JsonRpcRequest, callback: JsonRpcResponseCallback, resp: any, err?: any) {
     callback(undefined, {
       jsonrpc: rpcVersion,
       id: req.id,
       result: resp,
-      error: undefined
+      error: err
     })
   }
 
