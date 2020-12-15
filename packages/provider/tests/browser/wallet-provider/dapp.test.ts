@@ -25,3 +25,23 @@ export const tests = async () => {
 // TODO: test the auth, login, etc.......
 
 // TODO: add auth helpers to @0xsequence/auth, and heplers in "commands"
+
+//--------
+
+// import { sequence} from '@0xsequence'
+
+// const wallet = new sequence.Wallet()
+// wallet.login()
+
+// wallet.sendETH()
+// wallet.signMessage()
+
+// wallet.sendTransaction(...)
+
+// const tokens = new sequence.Tokens()
+
+// tokens.mintCoin(xx)
+// tokens.mintCollectible()
+
+// wallet.sendTransaction(tokens.mintCoin(xx))
+// wallet.sendTransaction(tokens.mintCollectible(xx))

@@ -1,6 +1,5 @@
 export * from './transports'
 export * from './types'
-export * from './web3-provider'
 export * from './wallet'
 export * from './wallet-request-handler'
-export * from './local-provider'
+export * from './web3-provider'

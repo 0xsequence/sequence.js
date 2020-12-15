@@ -20,6 +20,10 @@ export const tests = async () => {
     assert.true(connected, 'connected is true')
   })
 
+  // TODO: switch to sequence Web3Provider(provider)
+  // and use the getSequenceSigner()........ or, maybe getSigner()
+  // will give us some extra methods, perhaps..?
+
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
   const w3provider = new Web3Provider(provider)
   const signer = w3provider.getSigner()
@@ -27,7 +31,7 @@ export const tests = async () => {
   const address = await signer.getAddress()
 
   await test('getAddress', async () => {
-    assert.equal(address, '0x0eA6FD9729d8fCB49FfbBBb43172bCa9F27795e7', 'wallet address')
+    assert.equal(address, '0x5568a201183a4f25561DBe4d58D75b1157dAC256', 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -61,9 +65,13 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x891a514f009166d93b6b7f49b6d4c86be99316cc1baaa520f8b87f36dcaee78d67386b13178405c10892eb96eb970694408e4067fdbd0de4470ba912cc8f94f81b',
+      '0x000100012449b59efc179a4b7468e6553a912fdd10c66fd6a2aa26e9af13b361371534d76a669bfb9932a49489b0847657b5762eac640df77123eb314d9448398a9477a31c02',
       'signature match'
     )
+
+    // TODO: .. lets make this shit easier
+    // signer.verifyMessage()
+    // etc.............. yeay, fun. common.
 
     const verifyOut = ethers.utils.verifyMessage(message, sig)
     assert.equal(

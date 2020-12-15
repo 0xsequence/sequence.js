@@ -76,6 +76,6 @@ with a new code, only the packages that were not published will be published.
 
 ## LICENSE
 
-MIT
+Apache-2.0
 
 Copyright (c) 2017-present Horizon Blockchain Games Inc. / https://horizon.io
