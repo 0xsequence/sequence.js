@@ -45,7 +45,7 @@ type QueueEntry = {
 export class Multicall {
   public static DEFAULT_CONF = {
     batchSize: 50,
-    timeWindow: 10,
+    timeWindow: 50,
     contract: ""
   }
 
@@ -64,7 +64,7 @@ export class Multicall {
   private queue = [] as QueueEntry[]
 
   scheduleExecution = () => {
-    if (this.queue.length < 100) {
+    if (this.queue.length < this.conf.batchSize) {
       if (this.timeout) clearTimeout(this.timeout)
       this.timeout = setTimeout(this.run, this.conf.timeWindow)
     }

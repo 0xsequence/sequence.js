@@ -253,6 +253,28 @@ describe('Arcadeum wallet integration', function () {
 
           expect(callCounter).to.equal(3)
         })
+        it("Should execute batch with errors on it", async () => {
+          const callMockB = await createCallMock()
+
+          callMockB.testCall(1, "0x1122")
+
+          await callMockB.setRevertFlag(true)
+
+          const multiCallMockB = callMockB.connect(provider)
+
+          const errorPromise = multiCallMockB.callStatic.testCall(1, "0x1122")
+
+          const res = await Promise.all([
+            provider.getCode(multiCallMockB.address),
+            multiCallMockB.lastValB()
+          ])
+
+          await expect(errorPromise).to.be.rejected
+
+          expect(res[0].length).to.not.equal(0)
+          expect(res[1]).to.equal("0x1122")
+          expect(callCounter).to.equal(2)
+        })
         it("Should fallback to provider if multicall fails eth_getCode", async () => {
           const code = await Promise.all([
             brokenProvider.getCode(callMock.address),
