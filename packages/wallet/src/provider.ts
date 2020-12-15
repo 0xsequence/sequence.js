@@ -6,8 +6,6 @@ import { SequenceTransaction, isSequenceTransaction, toSequenceTransactions, rea
 
 import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/provider'
 
-// TODO: what do we use this for?
-
 // Provider is a low-level provider to a Sequence Wallet. 
 export class Provider implements ExternalProvider {
   private readonly _wallet?: Wallet

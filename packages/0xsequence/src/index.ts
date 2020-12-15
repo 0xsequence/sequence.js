@@ -1,9 +1,11 @@
 import * as abi from '@0xsequence/abi'
 import * as provider from '@0xsequence/provider'
+import * as wallet from '@0xsequence/wallet'
 
 export const sequence = {
   abi,
   provider,
+  wallet
   // ... etc.
 }
 

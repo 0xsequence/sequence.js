@@ -41,7 +41,6 @@ export class MultiWallet extends AbstractSigner {
       }
     })
 
-    // TODO: wallets[0] ..? or get the "main" one...?
     this.provider = this._wallets[0].wallet.provider
   }
 
@@ -58,9 +57,7 @@ export class MultiWallet extends AbstractSigner {
 
   // getGlobalWalletConfig builds the GlobalWalletConfig object which contains all WalletConfigs across all networks.
   // This is useful to shows all keys/devices connected to a wallet across networks.
-
-  // RENAME: .................         getGlobalWalletConfig(): Promise<GlobalWalletConfig>
-  async getFullConfig(): Promise<GlobalWalletConfig> {
+  async getGlobalWalletConfig(): Promise<GlobalWalletConfig> {
     const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
     const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
     const allSigners = allConfigs.reduce((p, config) => {

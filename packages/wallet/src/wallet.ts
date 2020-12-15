@@ -228,7 +228,6 @@ export class Wallet extends AbstractSigner {
 
   // sign is a helper method to sign a payload with the wallet signers
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
-    // TODO: chainId shouldn't be required to sign digest
     const signChainId = chainId ? chainId : await this.chainId()
     const digest = ethers.utils.arrayify(isDigest ? msg :
       ethers.utils.keccak256(
@@ -298,6 +297,9 @@ export class Wallet extends AbstractSigner {
   }
 
   // buildUpdateConfigTransaction creates a transaction object of the an updated wallet config state update.
+  //
+  // The `publish` argument publishes the WalletConfig object to the chain, where as normally we only
+  // store the hash of a config.
   async buildUpdateConfigTransaction(
     config: WalletConfig,
     publish = false
@@ -395,7 +397,8 @@ export class Wallet extends AbstractSigner {
     ]
   }
 
-  // publishConfig will publish the wallet config to the network via the relayer
+  // publishConfig will publish the wallet config to the network via the relayer. Publishing
+  // the config will also store the entire object of signers.
   async publishConfig(
     nonce?: number
   ): Promise<TransactionResponse> {
@@ -420,7 +423,7 @@ export class Wallet extends AbstractSigner {
     })
   }
 
-  // packMsgAndSig ...
+  // packMsgAndSig is used by RemoteSigners to include details as a string blob of data.
   private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
     return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }

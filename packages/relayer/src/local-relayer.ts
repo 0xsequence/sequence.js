@@ -17,7 +17,6 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     this.signer = signer
   }
 
-  // TODO: should this be on the Relayer interface or BaseRelayer ....?
   async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
     // TODO: some tests, with the HookCallerMock fail without the thing below, perhaps review HookCallerMock.sol
     // and fix it to avoid what looks like an infinite loop?
