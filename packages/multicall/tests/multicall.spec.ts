@@ -8,11 +8,16 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 import { Multicall } from '../src'
-import { multicallMiddleware, MulticallProvider } from '../src/providers'
+import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils/utils'
 import { getRandomInt } from '../src/utils'
 import { JsonRpcAsyncSender, ProviderEngine } from './utils/provider-engine'
 import { rpcMethods } from '../src/constants'
+
+const { JsonRpcEngine } = require('json-rpc-engine')
+
+const providerAsMiddleware = require('eth-json-rpc-middleware/providerAsMiddleware')
+const providerFromEngine = require('eth-json-rpc-middleware/providerFromEngine')
 
 const CallReceiverMockArtifact = require('wallet-contracts/artifacts/CallReceiverMock.json')
 const SequenceUtilsArtifact = require('wallet-contracts/artifacts/MultiCallUtils.json')
@@ -114,6 +119,34 @@ describe('Arcadeum wallet integration', function () {
           )]
         )
       )
+    },
+    {
+      name: 'Ether.js external provider wrapper',
+      provider: () => new ethers.providers.Web3Provider(
+        new MulticallExternalProvider(
+          new JsonRpcAsyncSender(ganache.spyProxy),
+          { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+        )
+      )
+    },
+    {
+      name: "Provider Engine (json-rpc-engine)",
+      provider: () => {
+        let engine = new JsonRpcEngine()
+
+        engine.push(
+          providerAsMiddleware(
+            new MulticallExternalProvider(
+              new JsonRpcAsyncSender(ganache.spyProxy),
+              { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+            )
+          )
+        )
+
+        return new ethers.providers.Web3Provider(
+          providerFromEngine(engine)
+        )
+      }
     }
   ]
 
