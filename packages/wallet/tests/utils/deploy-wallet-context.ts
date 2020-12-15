@@ -1,17 +1,17 @@
 import { ethers } from 'ethers'
 import { Provider } from '@ethersproject/providers'
 
-import { Factory } from 'arcadeum-wallet/typings/contracts/ethers-v5/Factory'
-import { GuestModule } from 'arcadeum-wallet/typings/contracts/ethers-v5/GuestModule'
-import { MainModule } from 'arcadeum-wallet/typings/contracts/ethers-v5/MainModule'
-import { MainModuleUpgradable } from 'arcadeum-wallet/typings/contracts/ethers-v5/MainModuleUpgradable'
-import { RequireUtils } from 'arcadeum-wallet/typings/contracts/ethers-v5/RequireUtils'
+import { Factory } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/Factory'
+import { GuestModule } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/GuestModule'
+import { MainModule } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/MainModule'
+import { MainModuleUpgradable } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/MainModuleUpgradable'
+import { RequireUtils } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/RequireUtils'
 
-const FactoryArtifact = require('arcadeum-wallet/artifacts/Factory.json')
-const GuestModuleArtifact = require('arcadeum-wallet/artifacts/GuestModule.json')
-const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
-const MainModuleUpgradableArtifact = require('arcadeum-wallet/artifacts/MainModuleUpgradable.json')
-const RequireUtilsArtifact = require('arcadeum-wallet/artifacts/RequireUtils.json')
+const FactoryArtifact = require('@0xsequence/wallet-contracts/artifacts/Factory.json')
+const GuestModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/GuestModule.json')
+const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/MainModule.json')
+const MainModuleUpgradableArtifact = require('@0xsequence/wallet-contracts/artifacts/MainModuleUpgradable.json')
+const RequireUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/RequireUtils.json')
 
 export async function deployWalletContext(provider: Provider): Promise<[
   Factory,

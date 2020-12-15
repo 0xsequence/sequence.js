@@ -14,6 +14,7 @@
   "dependencies": {
     "@0xsequence/abi": "^0.7.0",
     "@0xsequence/provider": "^0.7.0",
+    "@0xsequence/wallet": "^0.7.0",
     "ethers": "^5.0.24"
   },
   "peerDependencies": {

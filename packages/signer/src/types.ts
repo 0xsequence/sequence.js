@@ -1,8 +1,3 @@
-export type GlobalWalletConfig = {
-  threshold: SignerThreshold[],
-  signers: SignerInfo[]
-}
-
 export type SignerThreshold = {
   chaind: number,
   weight: number

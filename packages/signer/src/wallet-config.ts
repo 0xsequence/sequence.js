@@ -1,7 +1,7 @@
 import { BigNumberish, BytesLike, ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/networks'
 import { WalletContractBytecode } from './wallet-contract'
-import { SequenceDecodedSignature, SequenceDecodedSigner, SequenceDecodedOwner } from './types'
+import { SignerInfo, SignerThreshold, SequenceDecodedSignature, SequenceDecodedSigner, SequenceDecodedOwner } from './types'
 import { recoverSigner } from './validate'
 
 // WalletConfig is the configuration of key signers that can access
@@ -13,6 +13,11 @@ export interface WalletConfig {
     weight: number
     address: string
   }[]
+}
+
+export type GlobalWalletConfig = {
+  threshold: SignerThreshold[],
+  signers: SignerInfo[]
 }
 
 export function isConfig(a: WalletConfig, b: WalletConfig): boolean {

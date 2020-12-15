@@ -30,7 +30,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "arcadeum-wallet": "https://github.com/arcadeum/wallet-contracts",
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts",
     "ganache-core": "^2.12.1",
     "web3": "^1.2.8",
     "web3-typescript-typings": "^0.10.2"

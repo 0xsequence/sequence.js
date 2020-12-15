@@ -2,8 +2,8 @@ import { deployWalletContext } from './utils/deploy-wallet-context'
 import { encodeData } from './utils'
 import * as Ganache from 'ganache-cli'
 
-import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
-import { HookCallerMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/HookCallerMock'
+import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
+import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/HookCallerMock'
 
 // import { WalletSigner } from '@0xsequence/signer'
 
@@ -21,9 +21,9 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 
-const MainModuleArtifact = require('arcadeum-wallet/artifacts/MainModule.json')
-const CallReceiverMockArtifact = require('arcadeum-wallet/artifacts/CallReceiverMock.json')
-const HookCallerMockArtifact = require('arcadeum-wallet/artifacts/HookCallerMock.json')
+const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/MainModule.json')
+const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/CallReceiverMock.json')
+const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/HookCallerMock.json')
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
