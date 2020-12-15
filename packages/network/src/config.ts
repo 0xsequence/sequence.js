@@ -11,9 +11,9 @@ export interface NetworkConfig {
   relayer?: Relayer
 }
 
-export type NetworkConfigs = {[key: string]: NetworkConfig}
+export type Networks = {[key: string]: NetworkConfig}
 
-export const ethereumNetworks: NetworkConfigs = {
+export const ethereumNetworks: Networks = {
   mainnet: {
     name: 'mainnet',
     chainId: 1,

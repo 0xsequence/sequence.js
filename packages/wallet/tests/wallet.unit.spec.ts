@@ -2,7 +2,7 @@ import { expect } from 'chai'
 
 import * as lib from '../src'
 import { ethers, Signer } from 'ethers'
-import { packMessageData, recoverConfig } from '@0xsequence/signer'
+import { packMessageData, recoverConfig } from '../src'
 
 describe('Wallet units', function() {
   const context = {

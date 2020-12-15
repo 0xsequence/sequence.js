@@ -1,5 +1,4 @@
-import { NetworkConfig } from '@0xsequence/networks'
-import { JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from './json-rpc'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
 
 export interface WalletSession {
   // Account address of the wallet

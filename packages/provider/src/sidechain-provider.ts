@@ -1,5 +1,5 @@
 import { ExternalProvider } from '@ethersproject/providers'
-import { JsonRpcRequest, JsonRpcResponseCallback } from './json-rpc'
+import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 import { ProviderTransport } from './types'
 
 // SidechainProvider is a kind of wrapper around an json-rpc provider, which uses

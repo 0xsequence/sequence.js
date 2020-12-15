@@ -1,15 +1,15 @@
 import { ethers, BytesLike, BigNumberish } from 'ethers'
-import { WalletContext } from '@0xsequence/networks'
+import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
-import { SequenceDecodedSigner } from './types'
-import { compareAddr, decodeSignature, recoverConfigFromDigest, isSigner, addressOf } from './wallet-config'
-import { packMessageData} from './utils'
+import { DecodedSigner } from './signer'
+import { compareAddr, decodeSignature, recoverConfigFromDigest, isSigner, addressOf } from './config'
+import { packMessageData } from './utils'
 
 const SIG_TYPE_EIP712 = 1
 const SIG_TYPE_ETH_SIGN = 2
 
-export function recoverSigner(digest: BytesLike, sig: SequenceDecodedSigner) {
+export function recoverSigner(digest: BytesLike, sig: DecodedSigner) {
   switch (sig.t) {
     case SIG_TYPE_EIP712:
       return ethers.utils.recoverAddress(digest, {

@@ -2,7 +2,7 @@ import { ethers, Signer, BigNumberish } from 'ethers'
 import { Interface } from 'ethers/lib/utils' // TODO: other pkg..?
 import { TransactionRequest } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
-import { WalletContext } from '@0xsequence/networks'
+import { WalletContext } from '@0xsequence/network'
 import { SequenceTransaction, AuxTransactionRequest, Transactionish, SequenceTransactionEncoded, NonceDependency } from './types'
 
 export const MetaTransactionsType = `tuple(

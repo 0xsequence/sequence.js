@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers } from 'ethers'
 
-import { imageHash, addressOf } from '@0xsequence/signer'
+import { imageHash, addressOf } from '../src/index'
 
 describe('Wallet utils', function () {
   it('should generate image hash', () => {

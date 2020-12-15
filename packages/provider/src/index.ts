@@ -1,5 +1,6 @@
-export * from './json-rpc'
 export * from './transports'
 export * from './types'
 export * from './web3-provider'
 export * from './wallet'
+export * from './wallet-request-handler'
+export * from './local-provider'

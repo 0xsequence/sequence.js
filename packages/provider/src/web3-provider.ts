@@ -3,9 +3,11 @@ import { BigNumberish } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { NonceDependency, toSequenceTransactions, makeExpirable, makeAfterNonce, sequenceTxAbiEncode } from '@0xsequence/transactions'
-import { WalletContext } from '@0xsequence/networks'
+import { Networks, WalletContext, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { Wallet } from '@0xsequence/wallet'
+import { WalletRequestHandler } from './wallet-request-handler'
 
-export class Web3Provider extends EthersWeb3Provider {
+export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   private context: WalletContext
 
   constructor(
@@ -17,12 +19,36 @@ export class Web3Provider extends EthersWeb3Provider {
     this.context = context
   }
 
+  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback) {
+    this.send(request.method, request.params).then(r => {
+      callback(undefined, {
+        jsonrpc: '2.0',
+        id: request.id,
+        result: r
+      })
+    }).catch(e => callback(e))
+  }
+
+  // TODO: review..
   getSequenceSigner(): SequenceSigner {
     return new SequenceSigner(this.context, this.getSigner())
   }
 }
 
-// TODO: should implement an interface
+export class Web3WalletProvider extends Web3Provider {
+
+  // public readonly isMetaMask = false
+  // public readonly isExternalWallet = false
+
+  constructor(wallet: Wallet, networks: Networks) {
+    const walletRequestHandler = new WalletRequestHandler(wallet, wallet.provider, null, networks)
+    super(wallet.context, walletRequestHandler)
+  }
+
+}
+
+
+// TODO: should implement an interface...... or..? review
 export class SequenceSigner {
   private context: WalletContext
   private signer: JsonRpcSigner

@@ -7,10 +7,11 @@ export class MockWalletUserPrompter implements WalletUserPrompter {
     this.autoConfirm = autoConfirm
   }
 
-  promptSignMessage = async (message: MessageToSign): Promise<boolean> => {
+  promptSignMessage = async (message: MessageToSign): Promise<string> => {
     // TODO: add failure case here, for message that user will decline..
 
-    return this.autoConfirm
+    // return this.autoConfirm
+    return ''
   }
 
   promptSendTransaction = async (txnParams: any, chaindId?: number): Promise<string> => {

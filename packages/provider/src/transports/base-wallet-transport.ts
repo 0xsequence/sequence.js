@@ -3,12 +3,9 @@ import {
   ProviderMessageType, ProviderMessageResponse, ProviderMessageTransport
 } from '../types'
 
-import { JsonRpcRequest, JsonRpcResponseCallback } from '../json-rpc'
+import { WalletRequestHandler } from '../wallet-request-handler'
 
-
-import { WalletRequestHandler } from './wallet-request-handler'
-
-import { NetworkConfig } from '@0xsequence/networks'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export class BaseWalletTransport implements WalletTransport {
 

@@ -1,7 +1,7 @@
 import { ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse } from '../../types'
-import { WalletRequestHandler } from '../wallet-request-handler'
+import { WalletRequestHandler } from '../../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { JsonRpcRequest, JsonRpcResponseCallback } from '../../json-rpc'
+import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window

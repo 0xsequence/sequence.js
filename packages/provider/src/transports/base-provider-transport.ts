@@ -7,9 +7,7 @@ import {
   WalletSession
 } from '../types'
 
-import { JsonRpcRequest, JsonRpcResponseCallback } from '../json-rpc'
-
-import { NetworkConfig } from '@0xsequence/networks'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 let messageIdx = 0
 

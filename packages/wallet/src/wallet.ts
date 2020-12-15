@@ -26,29 +26,29 @@ import {
 
 import { Relayer } from '@0xsequence/relayer'
 
-import { JsonRpcSender } from '@0xsequence/provider'
-
-import { WalletContext } from '@0xsequence/networks'
+import { WalletContext, JsonRpcSender } from '@0xsequence/network'
 
 import {
   WalletConfig,
-  RemoteSigner,
   addressOf,
   sortConfig,
   compareAddr,
   imageHash,
   isUsableConfig,
-  aggregate,
-  packMessageData
-} from '@0xsequence/signer'
+  aggregate
+} from './config'
 
-import { resolveArrayProperties } from './utils'
+import { RemoteSigner } from './remote-signers'
+
+import { packMessageData, resolveArrayProperties } from './utils'
+
+import { WalletSigner } from './signer'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
 // messages, signing transactions and updating/deploying the wallet config on a specific chain.
-export class Wallet extends AbstractSigner {
+export class Wallet extends WalletSigner {
   private readonly _signers: AbstractSigner[]
 
   readonly context: WalletContext
@@ -423,6 +423,10 @@ export class Wallet extends AbstractSigner {
     })
   }
 
+  signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error('Method not implemented.')
+  }
+
   // packMsgAndSig is used by RemoteSigners to include details as a string blob of data.
   private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
     return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
@@ -443,9 +447,5 @@ export class Wallet extends AbstractSigner {
     }
 
     return new Wallet(config, context, owner)
-  }
-
-  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('Method not implemented.')
   }
 }

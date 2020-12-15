@@ -5,7 +5,7 @@ import {
 } from '../../types'
 import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
 
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '../../json-rpc'
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
