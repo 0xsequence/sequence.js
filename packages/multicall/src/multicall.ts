@@ -91,6 +91,14 @@ export class Multicall {
     const limit = Math.min(this.conf.batchSize, this.queue.length)
     if (limit === 0) return
 
+    // Skip multicall on single item
+    if (limit === 1) {
+      this.forward(this.queue[0])
+      this.queue = []
+      return
+    }
+
+    // Get batch from queue
     var items = this.queue.slice(0, limit)
 
     // Update queue

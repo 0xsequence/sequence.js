@@ -229,7 +229,7 @@ describe('Arcadeum wallet integration', function () {
         })
       })
       describe("Handle errors", async () => {
-        it("Should retry after failing to execute using batch", async () => {
+        it("Should not retry after failing to execute single call (not multicalled)", async () => {
           const callMockB = await createCallMock()
 
           await callMockB.setRevertFlag(true)
@@ -237,7 +237,21 @@ describe('Arcadeum wallet integration', function () {
           const multiCallMockB = callMockB.connect(provider)
 
           await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejected
-          expect(callCounter).to.equal(2)
+          expect(callCounter).to.equal(1)
+        })
+        it("Should retry after failing to execute using batch", async () => {
+          const callMockB = await createCallMock()
+
+          await callMockB.setRevertFlag(true)
+
+          const multiCallMockB = callMockB.connect(provider)
+
+          await expect(Promise.all([
+            multiCallMockB.callStatic.testCall(1, "0x1122"),
+            multiCallMockB.callStatic.testCall(2, "0x1122")
+          ])).to.be.rejected
+
+          expect(callCounter).to.equal(3)
         })
         it("Should fallback to provider if multicall fails eth_getCode", async () => {
           const code = await Promise.all([
