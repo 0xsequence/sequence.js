@@ -8,9 +8,11 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import * as chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 import { Multicall } from '../src'
-import { MulticallProvider } from '../src/providers'
+import { multicallMiddleware, MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils/utils'
 import { getRandomInt } from '../src/utils'
+import { JsonRpcAsyncSender, ProviderEngine } from './utils/provider-engine'
+import { rpcMethods } from '../src/constants'
 
 const CallReceiverMockArtifact = require('wallet-contracts/artifacts/CallReceiverMock.json')
 const SequenceUtilsArtifact = require('wallet-contracts/artifacts/MultiCallUtils.json')
@@ -69,6 +71,17 @@ describe('Arcadeum wallet integration', function () {
       prop: 'getCode',
       func: ganache.provider.getCode,
       callback: () => { callCounter++ }
+    }, {
+      prop: 'send',
+      func: ganache.provider.send,
+      callback: (method: string, _: any[]) => {
+        switch (method) {
+          case rpcMethods.ethCall:
+          case rpcMethods.ethGetCode:
+          case rpcMethods.ethGetBalance:
+            callCounter++
+        }
+      }
     })
 
     brokenProvider = new MulticallProvider(ganache.provider)
@@ -85,10 +98,21 @@ describe('Arcadeum wallet integration', function () {
 
   let options = [
     {
-      name: 'MulticallProvider',
+      name: 'Ether.js provider wrapper',
       provider: () => new MulticallProvider(
         ganache.spyProxy,
         { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+      )
+    },
+    {
+      name: "Provider Engine (Sequence)",
+      provider: () => new ethers.providers.Web3Provider(
+        new ProviderEngine(
+          new JsonRpcAsyncSender(ganache.spyProxy),
+          [multicallMiddleware(
+            { ...Multicall.DEFAULT_CONF, contract: utilsContract.address }
+          )]
+        )
       )
     }
   ]
