@@ -33,6 +33,10 @@ export const assert = {
     }
   },
 
+  false: function(cond: boolean, msg?: string) {
+    return assert.true(!cond, msg)
+  },
+
   equal: function(actual: any, expected: any, msg?: string) {
     if (actual !== expected) {
       if (msg) {

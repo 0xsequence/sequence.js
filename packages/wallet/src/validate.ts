@@ -6,35 +6,6 @@ import { DecodedSigner } from './signer'
 import { compareAddr, decodeSignature, recoverConfigFromDigest, isSigner, addressOf } from './config'
 import { packMessageData } from './utils'
 
-const SIG_TYPE_EIP712 = 1
-const SIG_TYPE_ETH_SIGN = 2
-
-export function recoverSigner(digest: BytesLike, sig: DecodedSigner) {
-  switch (sig.t) {
-    case SIG_TYPE_EIP712:
-      return ethers.utils.recoverAddress(digest, {
-        r: sig.r,
-        s: sig.s,
-        v: sig.v
-      })
-    case SIG_TYPE_ETH_SIGN:
-      const subDigest = ethers.utils.keccak256(
-        ethers.utils.solidityPack(
-          ['string', 'bytes32'],
-          ['\x19Ethereum Signed Message:\n32', digest]
-        )
-      )
-
-      return ethers.utils.recoverAddress(subDigest, {
-        r: sig.r,
-        s: sig.s,
-        v: sig.v
-      })
-    default:
-      throw new Error('Unknown signature')
-  }
-}
-
 export async function isValidSignature(
   address: string,
   digest: Uint8Array,
@@ -43,6 +14,7 @@ export async function isValidSignature(
   walletContext?: WalletContext,
   chainId?: number
 ) {
+  // Check if valid EOA signature
   if (
     isValidEIP712Signature(address, digest, sig) ||
     isValidEthSignSignature(address, digest, sig)
@@ -104,6 +76,7 @@ export function isValidEthSignSignature(
   }
 }
 
+// Check if valid Smart Contract Wallet signature, via ERC1271
 export async function isValidWalletSignature(
   address: string,
   digest: Uint8Array,

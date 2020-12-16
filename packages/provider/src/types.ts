@@ -1,5 +1,7 @@
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
 
+// export class SequenceError extends Error {}
+
 export interface WalletSession {
   // Account address of the wallet
   accountAddress?: string

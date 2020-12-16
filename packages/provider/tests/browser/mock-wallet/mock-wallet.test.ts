@@ -1,5 +1,7 @@
-import { Wallet as EOAWallet } from 'ethers'
+
+import { ethers, Wallet as EOAWallet } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
+// import { packMessageData, addressOf, compareAddr, isValidSignature, isValidSequenceUndeployedWalletSignature, isValidSequenceDeployedWalletSignature, recoverConfig } from '@0xsequence/wallet'
 
 import {
   WalletRequestHandler,
@@ -21,15 +23,20 @@ import { LocalRelayer } from '@0xsequence/relayer'
 
 const main = async () => {
 
+  //
   // Setup single owner Sequence wallet
-  const owner = EOAWallet.fromMnemonic('canvas sting blast limb wet reward vibrant paper quality feed wood copper rib divert raise nurse asthma romance exhaust profit beauty anxiety ugly ugly')
+  //
 
   const provider = new JsonRpcProvider('http://localhost:8545')
+
+  // owner account address: 0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853
+  let owner = EOAWallet.fromMnemonic('ripple axis someone ridge uniform wrist prosper there frog rate olympic knee')
+  owner = owner.connect(provider)
+
   const relayer = new LocalRelayer(owner)
 
+  // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
   const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(provider, relayer)
-  // NOTE: public wallet address will be 0x5568a201183a4f25561DBe4d58D75b1157dAC256 based on the chainId
-
 
   // Network available list
   const networks: Networks = { ...ethereumNetworks }
@@ -38,6 +45,10 @@ const main = async () => {
     chainId: 31337,
     rpcUrl: 'http://localhost:8545'
   }
+
+  // const txn = await relayer.deployWallet(wallet.config, sequenceContext)
+  // console.log('...', txn)
+
 
   // the json-rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
@@ -54,6 +65,8 @@ const main = async () => {
 
   // TODO: perhaps we put the notifyLogin, notifyNetwork, notifyXXX methods on the WalletHandler ..?
   // this way, any message-handler will send this info across..?
+
+  // TODO: register the ProxyMessageHandler() + register()
 
 }
 
