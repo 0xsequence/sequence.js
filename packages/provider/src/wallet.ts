@@ -6,8 +6,9 @@ import { Web3Provider } from './web3-provider'
 import { SidechainProvider } from './sidechain-provider'
 import { WindowMessageProvider, ProxyMessageProvider } from './transports'
 import { WalletSession, ProviderMessageEvent } from './types'
+import { WalletCommands } from './commands'
 
-export interface WalletProvider extends WalletCommands {
+export interface WalletProvider {
   login(refresh?: boolean): Promise<boolean>
   logout(): void
   
@@ -21,8 +22,8 @@ export interface WalletProvider extends WalletCommands {
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
 
-  getProvider(): JsonRpcProvider
-  getSigner(): JsonRpcSigner
+  getProvider(): JsonRpcProvider // TODO: return @0xsequence/provider.Web3Provider type, which subclasses JsonRpcProvider
+  getSigner(): JsonRpcSigner // TODO: return @0xsequence/wallet.Signer, or potentially @0xsequence/wallet.JsonRpcSigner
 
   getWalletConfig(): WalletConfig
   getWalletContext(): WalletContext
@@ -30,34 +31,12 @@ export interface WalletProvider extends WalletCommands {
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
-}
 
-// TODO: move this to ./commands/index.ts
-export interface WalletCommands {
-  hi()
-  // signMessage()
-  // signTypedData()
-
-  // sendTransaction()
-  // sendTransactions()
-
-  // sendETH()
-  // sendToken()
-  // callContract()
-
-  // history()
-  // getReceipt()
-  // getLogs()
-  // // ..
-
-  // isWalletDeployed()
-  // deployWallet()
-
-  // validateSignature()
-  // recoverWalletConfig()
+  commands: WalletCommands
 }
 
 export class Wallet implements WalletProvider {
+  public commands: WalletCommands
 
   private config: WalletProviderConfig
   private walletConfig: WalletConfig // TODO: where is this set..?
@@ -81,12 +60,8 @@ export class Wallet implements WalletProvider {
     if (!this.config) {
       this.config = { ...DefaultWalletProviderConfig }
     }
+    this.commands = new WalletCommands(this)
     this.init()
-  }
-
-  // TODO: remove..
-  hi() {
-
   }
   
   private init = () => {
