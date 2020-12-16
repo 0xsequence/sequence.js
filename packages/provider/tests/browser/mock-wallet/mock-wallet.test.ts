@@ -16,6 +16,8 @@ import { LocalRelayer } from '@0xsequence/relayer'
 
 // import { MockWalletUserPrompter } from './utils'
 
+import { testAccounts, getEOAWallet } from '../testutils'
+
 
 //
 // Wallet, a test wallet
@@ -27,15 +29,15 @@ const main = async () => {
   // Setup single owner Sequence wallet
   //
 
-  const provider = new JsonRpcProvider('http://localhost:8545')
-
   // owner account address: 0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853
-  let owner = EOAWallet.fromMnemonic('ripple axis someone ridge uniform wrist prosper there frog rate olympic knee')
-  owner = owner.connect(provider)
+  const owner = getEOAWallet(testAccounts[0].privateKey)
 
-  const relayer = new LocalRelayer(owner)
+  // relayer account address: 0x3631d4d374c3710c3456d6b1de1ee8745fbff8ba
+  const relayerAccount = getEOAWallet(testAccounts[5].privateKey)
+  const relayer = new LocalRelayer(relayerAccount)
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
+  const provider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(provider, relayer)
 
   // Network available list
@@ -45,6 +47,7 @@ const main = async () => {
     chainId: 31337,
     rpcUrl: 'http://localhost:8545'
   }
+
 
   // const txn = await relayer.deployWallet(wallet.config, sequenceContext)
   // console.log('...', txn)

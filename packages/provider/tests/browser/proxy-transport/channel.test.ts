@@ -6,6 +6,8 @@ import { MockWalletUserPrompter } from '../mock-wallet/utils'
 import { sequenceContext, ethereumNetworks } from '@0xsequence/network'
 import { Wallet, addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { LocalRelayer } from '@0xsequence/relayer'
+import { testAccounts, getEOAWallet } from '../testutils'
+
 
 export const tests = async () => {
 
@@ -26,15 +28,15 @@ export const tests = async () => {
   //
   // Wallet Handler
   //
-  const rpcProvider = new JsonRpcProvider('http://localhost:8545')
 
   // owner account address: 0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853
-  let owner = EOAWallet.fromMnemonic('ripple axis someone ridge uniform wrist prosper there frog rate olympic knee')
-  owner = owner.connect(rpcProvider)
+  const owner = getEOAWallet(testAccounts[0].privateKey)
 
+  // relayer account is same as owner here
   const relayer = new LocalRelayer(owner)
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
+  const rpcProvider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(rpcProvider, relayer)
 
 
@@ -74,11 +76,6 @@ export const tests = async () => {
 
     const chainId = await signer.provider.send('eth_chainId', [])
     assert.equal(chainId, '0x7a69', 'eth_chainId check')
-  })
-
-  await test('balance is 0', async () => {
-    const balance = await signer.getBalance()
-    assert.equal(balance.toNumber(), 0, 'balance is 0')
   })
 
   await test('sign a message and validate/recover', async () => {
