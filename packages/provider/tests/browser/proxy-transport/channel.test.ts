@@ -43,8 +43,8 @@ export const tests = async () => {
   // const mockUserPrompter = new MockWalletUserPrompter(true)
   const walletRequestHandler = new WalletRequestHandler(wallet, null, ethereumNetworks)
   
-  const walletHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
-  walletHandler.register()
+  const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
+  proxyHandler.register()
 
   //--
 
