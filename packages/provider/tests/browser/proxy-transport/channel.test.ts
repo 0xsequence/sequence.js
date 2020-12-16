@@ -1,9 +1,11 @@
 import { ProxyMessageProvider, ProviderMessageTransport, ProviderMessage, WalletRequestHandler, ProxyMessageChannel, ProxyMessageHandler } from '@0xsequence/provider'
-import { ethers, Wallet } from 'ethers'
+import { ethers, Wallet as EOAWallet } from 'ethers'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { MockWalletUserPrompter } from '../mock-wallet/utils'
-import { ethereumNetworks } from '@0xsequence/network'
+import { sequenceContext, ethereumNetworks } from '@0xsequence/network'
+import { Wallet, addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { LocalRelayer } from '@0xsequence/relayer'
 
 export const tests = async () => {
 
@@ -19,38 +21,44 @@ export const tests = async () => {
   //
   // App Provider
   //
-  const provider = new ProxyMessageProvider(ch.app)
+  const walletProvider = new ProxyMessageProvider(ch.app)
 
   //
   // Wallet Handler
   //
-  const jsonRpcProvider = new JsonRpcProvider('http://localhost:8545')
+  const rpcProvider = new JsonRpcProvider('http://localhost:8545')
 
-  // generate a random ethereum wallet..
-  // TODO: update this to a SmartWallet ..
-  // const wallet = Wallet.createRandom()
-  const wallet = Wallet.fromMnemonic('canvas sting blast limb wet reward vibrant paper quality feed wood copper rib divert raise nurse asthma romance exhaust profit beauty anxiety ugly ugly')
-  
+  // owner account address: 0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853
+  let owner = EOAWallet.fromMnemonic('ripple axis someone ridge uniform wrist prosper there frog rate olympic knee')
+  owner = owner.connect(rpcProvider)
+
+  const relayer = new LocalRelayer(owner)
+
+  // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
+  const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(rpcProvider, relayer)
+
+
+
   // the rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(wallet, jsonRpcProvider, null, ethereumNetworks)
+  const walletRequestHandler = new WalletRequestHandler(wallet, null, ethereumNetworks)
   
   const walletHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   walletHandler.register()
 
   //--
 
-  const w3provider = new Web3Provider(provider)
-  const signer = w3provider.getSigner()
+  const provider = new Web3Provider(walletProvider)
+  const signer = provider.getSigner()
 
   const address = await signer.getAddress()
 
-  await test('app sending message', async () => {
-    assert.equal(address, '0x0eA6FD9729d8fCB49FfbBBb43172bCa9F27795e7', 'wallet address')
+  await test('verifying getAddress result', async () => {
+    assert.equal(address, '0x24E78922FE5eCD765101276A422B8431d7151259', 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
-    await provider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
+    await walletProvider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
       assert.true(!err, 'error is empty')
       assert.true(!!resp, 'response successful')
       assert.true(resp.result == address.toLowerCase(), 'response address check')
@@ -58,7 +66,7 @@ export const tests = async () => {
   })
 
   await test('get chain id', async () => {
-    const network = await w3provider.getNetwork()
+    const network = await provider.getNetwork()
     assert.equal(network.chainId, 31337, 'chain id match')
 
     const netVersion = await signer.provider.send('net_version', [])
@@ -73,31 +81,47 @@ export const tests = async () => {
     assert.equal(balance.toNumber(), 0, 'balance is 0')
   })
 
-  // NOTE: when a dapp wants to verify SmartWallet signed messages, they will need to verify against EIP-1271 
-  await test('sign a message and recover/validate', async () => {
+  await test('sign a message and validate/recover', async () => {
     const message = ethers.utils.toUtf8Bytes('hihi')
 
+    // TODO: signer should be a Sequence signer, and should be able to specify the chainId
+    // however, for a single wallet, it can check the chainId and throw if doesnt match, for multi-wallet it will select
+
+    //
+    // Sign the message
+    //
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x891a514f009166d93b6b7f49b6d4c86be99316cc1baaa520f8b87f36dcaee78d67386b13178405c10892eb96eb970694408e4067fdbd0de4470ba912cc8f94f81b',
+      '0x000100011ec026ba887f4237db570b1546f9e793fafecbc08df331253b385e35ae7d9107020143f742d3f6768a978b7a4c32b003deb15f3d010805436db1cb9332104d8e1b02',
       'signature match'
     )
 
-    const verifyOut = ethers.utils.verifyMessage(message, sig)
-    assert.equal(
-      verifyOut,
-      address,
-      'verify address match'
-    )
 
-    const digest = ethers.utils.arrayify(ethers.utils.hashMessage(message))
-    const recoverOut = ethers.utils.recoverAddress(digest, sig)
-    assert.equal(
-      recoverOut,
-      address,
-      'recovered address match'
-    )
+    const chainId = await signer.getChainId()
+
+    //
+    // Verify the message signature
+    //
+    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, chainId)
+    assert.true(isValid, 'signature is valid')
+
+    // also compute the subDigest of the message, to be provided to the end-user
+    // in order to recover the config properly, the subDigest + sig is required.
+    const subDigest = packMessageData(address, chainId, messageDigest)
+
+
+    //
+    // Recover config / address
+    //
+    const walletConfig = await recoverConfig(subDigest, sig)
+
+    const recoveredWalletAddress = addressOf(walletConfig, sequenceContext)
+    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+
+    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
+    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
   })
 
   // TODO: we need to test wallet notifications from wallet to app..
