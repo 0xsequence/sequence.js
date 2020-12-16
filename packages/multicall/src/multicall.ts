@@ -51,7 +51,8 @@ export class Multicall {
 
   readonly aggregateJsonRpcMethods = [
     RpcMethod.ethCall,
-    RpcMethod.ethGetCode
+    RpcMethod.ethGetCode,
+    RpcMethod.ethGetBalance
   ]
 
   readonly multicallInterface = new ethers.utils.Interface(abi)
@@ -171,6 +172,17 @@ export class Multicall {
                 this.multicallInterface.getFunction('callCode'), [v.request.params[0]]
               )
             }
+          case RpcMethod.ethGetBalance:
+            return {
+              delegateCall: false,
+              revertOnError: false,
+              target: this.conf.contract,
+              gasLimit: 0,
+              value: 0,
+              data: this.multicallInterface.encodeFunctionData(
+                this.multicallInterface.getFunction('callBalanceOf'), [v.request.params[0]]
+              )
+            }
           }
         } catch {
           return null
@@ -255,6 +267,13 @@ export class Multicall {
               jsonrpc: item.request.jsonrpc,
               id: item.request.id,
               result: ethers.utils.defaultAbiCoder.decode(['bytes'], decoded[1][index])[0]
+            })
+            break
+          case RpcMethod.ethGetBalance:
+            item.callback(undefined, {
+              jsonrpc: item.request.jsonrpc,
+              id: item.request.id,
+              result: ethers.utils.defaultAbiCoder.decode(['uint256'], decoded[1][index])[0]
             })
             break
         }

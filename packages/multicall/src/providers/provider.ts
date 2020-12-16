@@ -1,8 +1,9 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { getRandomInt, promisify } from '../utils'
 import { Multicall, MulticallConf, JsonRpcRequest, JsonRpcResponseCallback } from '../multicall'
 import { RpcMethod, RpcVersion } from '../constants'
+import { BigNumber } from 'ethers'
 
 
 export class MulticallProvider implements ethers.providers.Provider {
@@ -21,7 +22,6 @@ export class MulticallProvider implements ethers.providers.Provider {
   getNetwork = this.provider.getNetwork
   getBlockNumber = this.provider.getBlockNumber
   getGasPrice = this.provider.getGasPrice
-  getBalance = this.provider.getBalance
   getTransactionCount = this.provider.getTransactionCount
   getStorageAt = this.provider.getStorageAt
   sendTransaction = this.provider.sendTransaction
@@ -53,6 +53,10 @@ export class MulticallProvider implements ethers.providers.Provider {
         case RpcMethod.ethGetCode:
           this.callback(req, callback, await this.provider.getCode(req.params[0], req.params[1]))
           break
+
+        case RpcMethod.ethGetBalance:
+          this.callback(req, callback, await this.provider.getBalance(req.params[0], req.params[1]))
+          break
       }
     } catch (e) {
       this.callback(req, callback, undefined, e)
@@ -74,6 +78,10 @@ export class MulticallProvider implements ethers.providers.Provider {
 
   async getCode(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<string> {
     return this.rpcCall(RpcMethod.ethGetCode, addressOrName, blockTag)
+  }
+
+  async getBalance(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<BigNumber> {
+    return this.rpcCall(RpcMethod.ethGetBalance, addressOrName, blockTag)
   }
 
   async rpcCall(method: string, ...params: any[]): Promise<any> {

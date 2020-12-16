@@ -47,14 +47,25 @@ describe('Arcadeum wallet integration', function () {
   let utilsContract: ethers.Contract
 
   let callCounter = 0
+  let accounts: { account: ethers.Wallet, secretKey: string, balance: string }[]
 
   before(async () => {
+    accounts = Array(5).fill(0).map(() => {
+      const account = ethers.Wallet.createRandom()
+      return {
+        account: account,
+        secretKey: account.privateKey,
+        balance: ethers.utils.hexlify(ethers.utils.randomBytes(9))
+      }
+    })
+
     // Deploy Ganache test env
     ganache.chainId = 1337
     ganache.server = Ganache.server({
       _chainIdRpc: ganache.chainId,
       _chainId: ganache.chainId,
-      mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
+      mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee",
+      accounts: accounts
     })
 
     await ganache.server.listen(GANACHE_PORT)
@@ -76,6 +87,10 @@ describe('Arcadeum wallet integration', function () {
     }, {
       prop: 'getCode',
       func: ganache.provider.getCode,
+      callback: () => { callCounter++ }
+    }, {
+      prop: 'getBalance',
+      func: ganache.provider.getBalance,
       callback: () => { callCounter++ }
     }, {
       prop: 'send',
@@ -234,6 +249,39 @@ describe('Arcadeum wallet integration', function () {
       
           expect(callCounter).to.equal(1)
         })
+        it("Should call eth_getBalance", async () => {
+          const randomAddress = ethers.Wallet.createRandom().address
+
+          const balances = await Promise.all([
+            provider.getBalance(accounts[2].account.address),
+            provider.getBalance(accounts[1].account.address),
+            provider.getBalance(accounts[2].account.address),
+            provider.getBalance(randomAddress),
+          ])
+
+          expect(callCounter).to.equal(1)
+      
+          // expect(callCounter).to.equal(1)
+          const rawBalances = await Promise.all([
+            ganache.provider.getBalance(accounts[2].account.address),
+            ganache.provider.getBalance(accounts[1].account.address),
+            ganache.provider.getBalance(accounts[2].account.address),
+            ganache.provider.getBalance(randomAddress),
+          ])
+
+          rawBalances.forEach((bal, i) => {
+            expect(balances[i].toHexString()).to.equal(bal.toHexString())
+          })
+        })
+        it("Should call eth_getBalance and eth_getCode", async () => {
+          const promiseA = provider.getCode(callMock.address)
+          const promiseB = await provider.getBalance(accounts[3].account.address)
+
+          expect(await promiseA).to.equal(await ganache.provider.getCode(callMock.address))
+          expect(promiseB.toHexString()).to.equal((await ganache.provider.getBalance(accounts[3].account.address)).toHexString())
+
+          expect(callCounter).to.equal(1)
+        })
       })
       describe("Handle errors", async () => {
         it("Should not retry after failing to execute single call (not multicalled)", async () => {
@@ -357,6 +405,41 @@ describe('Arcadeum wallet integration', function () {
             expect(await promiseC).to.equal(await provider.getCode(callMock.address))
         
             expect(callCounter).to.equal(4 + brokenOption.overhead)
+          })
+
+          it("Should fallback to provider if multicall fails eth_getBalance", async () => {
+            const randomAddress = ethers.Wallet.createRandom().address
+
+            const balances = await Promise.all([
+              brokenProvider.getBalance(accounts[2].account.address),
+              brokenProvider.getBalance(accounts[1].account.address),
+              brokenProvider.getBalance(accounts[2].account.address),
+              brokenProvider.getBalance(randomAddress),
+            ])
+
+            expect(callCounter).to.equal(4 + brokenOption.overhead)
+
+            // expect(callCounter).to.equal(1)
+            const rawBalances = await Promise.all([
+              ganache.provider.getBalance(accounts[2].account.address),
+              ganache.provider.getBalance(accounts[1].account.address),
+              ganache.provider.getBalance(accounts[2].account.address),
+              ganache.provider.getBalance(randomAddress),
+            ])
+  
+            rawBalances.forEach((bal, i) => {
+              expect(balances[i].toHexString()).to.equal(bal.toHexString())
+            })
+          })
+
+          it("Should fallback to provider if multicall fails eth_getBalance and eth_getCode", async () => {
+            const promiseA = brokenProvider.getCode(callMock.address)
+            const promiseB = await brokenProvider.getBalance(accounts[3].account.address)
+  
+            expect(await promiseA).to.equal(await ganache.provider.getCode(callMock.address))
+            expect(promiseB.toHexString()).to.equal((await ganache.provider.getBalance(accounts[3].account.address)).toHexString())
+  
+            expect(callCounter).to.equal(2 + brokenOption.overhead)
           })
         }))
       })
