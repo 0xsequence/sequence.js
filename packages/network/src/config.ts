@@ -13,9 +13,6 @@ export interface NetworkConfig {
 
 export type Networks = {[key: string]: NetworkConfig}
 
-// TODO: use ethereumNetworks below as default from /wallet, ie. when making a singleOwner
-// but, also make sure to set all relayers as RpcRelayer by default
-
 export const ethereumNetworks: Networks = {
   mainnet: {
     name: 'mainnet',
