@@ -294,6 +294,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        // TODO: add sequence_getWalletContext and other sequence_ methods
+        // of data we'd like to get from the wallet signer over the transport
+        // + this is cachable, but, we should expire+refresh cache anytime
+        // we open the wallet after sometime?
+
         default: {
           const providerResponse = await provider.send(request.method, request.params)
           response.result = providerResponse

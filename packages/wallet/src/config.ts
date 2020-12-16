@@ -2,7 +2,6 @@ import { BigNumberish, BytesLike, ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
 import { SignerInfo, SignerThreshold, DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
-import { recoverSigner } from './validate'
 
 // WalletConfig is the configuration of key signers that can access
 // and control the wallet
@@ -79,8 +78,12 @@ export function addressOf(config: WalletConfig, context: WalletContext): string 
   return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
 }
 
-export function recoverConfig(message: BytesLike, signature: string | DecodedSignature): WalletConfig {
-  const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+// recoverConfig decodes a WalletConfig from the subDigest and signature combo. Note: the subDigest argument
+// is an encoding format of the original message, encoded by:
+//
+// subDigest = packMessageData(wallet.address, chainId, ethers.utils.keccak256(message))
+export function recoverConfig(subDigest: BytesLike, signature: string | DecodedSignature): WalletConfig {
+  const digest = ethers.utils.arrayify(ethers.utils.keccak256(subDigest))
   return recoverConfigFromDigest(digest, signature)
 }
 
@@ -89,6 +92,8 @@ export function isSigner(obj: DecodedSigner | DecodedOwner): boolean {
   return cast.r !== undefined && cast.s !== undefined
 }
 
+// recoverConfigFromDigest decodes a WalletConfig from a digest and signature combo. Note: the digest
+// is the keccak256 of the subDigest, see `recoverConfig` method.
 export function recoverConfigFromDigest(digest: BytesLike, signature: string | DecodedSignature): WalletConfig {
   const decoded = (<DecodedSignature>signature).threshold !== undefined ? <DecodedSignature>signature : decodeSignature(signature as string)
 
@@ -160,6 +165,35 @@ export function decodeSignature(signature: string): DecodedSignature {
   return {
     threshold: threshold,
     signers: signers
+  }
+}
+
+const SIG_TYPE_EIP712 = 1
+const SIG_TYPE_ETH_SIGN = 2
+
+export function recoverSigner(digest: BytesLike, sig: DecodedSigner) {
+  switch (sig.t) {
+    case SIG_TYPE_EIP712:
+      return ethers.utils.recoverAddress(digest, {
+        r: sig.r,
+        s: sig.s,
+        v: sig.v
+      })
+    case SIG_TYPE_ETH_SIGN:
+      const subDigest = ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ['string', 'bytes32'],
+          ['\x19Ethereum Signed Message:\n32', digest]
+        )
+      )
+
+      return ethers.utils.recoverAddress(subDigest, {
+        r: sig.r,
+        s: sig.s,
+        v: sig.v
+      })
+    default:
+      throw new Error('Unknown signature')
   }
 }
 

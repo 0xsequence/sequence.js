@@ -55,7 +55,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
       `,width=${windowSize[0]},height=${windowSize[1]}`+
       `,left=${windowPos[0]},top=${windowPos[1]}`
 
-    const popup = window.open(walletURL.href, '_blank', windowFeatures)
+    const popup = window.open(walletURL.href, 'sequenceWalletApp', windowFeatures)
 
     // Popup blocking detection and notice
     let warned = false

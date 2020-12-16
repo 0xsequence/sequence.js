@@ -1,14 +1,14 @@
-import { NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
+import { Networks, NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/wallet'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import { Web3Provider } from './web3-provider'
 import { SidechainProvider } from './sidechain-provider'
-import { WindowMessageProvider } from './transports'
+import { WindowMessageProvider, ProxyMessageProvider } from './transports'
 import { WalletSession, ProviderMessageEvent } from './types'
 
 export interface WalletProvider extends WalletCommands {
-  login(): Promise<boolean>
+  login(refresh?: boolean): Promise<boolean>
   logout(): void
   
   isConnected(): boolean
@@ -60,7 +60,7 @@ export interface WalletCommands {
 export class Wallet implements WalletProvider {
 
   private config: WalletProviderConfig
-  private walletConfig: WalletConfig
+  private walletConfig: WalletConfig // TODO: where is this set..?
 
   private session: WalletSession | null
 
@@ -69,7 +69,9 @@ export class Wallet implements WalletProvider {
   private cachedProvider?: CachedProvider
   private publicProvider?: PublicProvider
   private allowProvider?: JsonRpcMiddleware
+
   private windowTransportProvider?: WindowMessageProvider
+  // TODO: ProxyMessageProvider ..?
 
   private networks: NetworkConfig[]
   private sidechainProviders: { [id: number] : Web3Provider }
@@ -86,7 +88,7 @@ export class Wallet implements WalletProvider {
   hi() {
 
   }
-
+  
   private init = () => {
     const config = this.config
 
@@ -98,7 +100,7 @@ export class Wallet implements WalletProvider {
         this.allowProvider = allowProviderMiddleware((): boolean => {
           const isLoggedIn = this.isLoggedIn()
           if (!isLoggedIn) {
-            throw new Error('not logged in')
+            throw new Error('Sequence: not logged in')
           }
           return isLoggedIn
         })
@@ -119,11 +121,10 @@ export class Wallet implements WalletProvider {
           this.publicProvider
         ])
 
-        // this.provider = this.jsonRpcRouter.createJsonRpcProvider()
         this.provider = new Web3Provider(
           this.config.walletContext,
           this.jsonRpcRouter,
-          'unspecified'
+          'any'
         )
 
         this.windowTransportProvider.on('network', network => {
@@ -157,7 +158,11 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  login = async (): Promise<boolean> => {
+  login = async (refresh?: boolean): Promise<boolean> => {
+    if (refresh === true) {
+      this.logout()
+    }
+
     if (this.isLoggedIn()) {
       return true
     }
@@ -192,14 +197,13 @@ export class Wallet implements WalletProvider {
       }
     }
 
-
     return this.isLoggedIn()
   }
 
   logout(): void {
+    window.localStorage.removeItem('@sequence.session')
     this.session = null
     this.cachedProvider?.resetCache()
-    window.localStorage.removeItem('_arcadeum.session')
   }
 
   isConnected(): boolean {
@@ -324,7 +328,7 @@ export class Wallet implements WalletProvider {
   }
 
   private loadSession = (): WalletSession | null => {
-    const data = window.localStorage.getItem('_arcadeum.session')
+    const data = window.localStorage.getItem('@sequence.session')
     if (!data || data === '') {
       return null
     }
@@ -334,7 +338,7 @@ export class Wallet implements WalletProvider {
 
   private saveSession = (session: WalletSession) => {
     const data = JSON.stringify(session)
-    window.localStorage.setItem('_arcadeum.session', data)
+    window.localStorage.setItem('@sequence.session', data)
   }
 
   private useSession = async (session: WalletSession) => {
@@ -376,9 +380,9 @@ export class Wallet implements WalletProvider {
     // for the JsonRpcProvivider generated. I don't think Ethers V5 fixes this, but
     // we will need to test once we migrated to it.
     // TODO: review and maybe always set network.name to null..?
-    if (network.name == 'mumbai' || network.name == 'matic') {
-      network.name = null
-    }
+    // if (network.name == 'mumbai' || network.name == 'matic') {
+    //   network.name = null
+    // }
 
     // TODO: with ethers v5, we can set network to 'any', then set network = null
     // anytime the network changes, and call detectNetwork(). We can reuse
@@ -386,8 +390,10 @@ export class Wallet implements WalletProvider {
     this.provider = new Web3Provider(
       this.config.walletContext,
       this.jsonRpcRouter,
-      network.name
+      null
+      // 'any'
     )
+    
 
     // ..
     this.publicProvider.setRpcUrl(network.rpcUrl)
@@ -445,6 +451,8 @@ export class Wallet implements WalletProvider {
   }
 }
 
+// TODO: allow dapp to specify the requested network and provide their own rpcUrl
+// for a particular chain. Probably pass "networks: object"
 export interface WalletProviderConfig {
   type: WalletProviderType
 
@@ -462,6 +470,9 @@ export interface WalletProviderConfig {
     // ..
     // timeout?: number
   }
+
+  // TODO ..
+  networks?: Networks
 
 }
 

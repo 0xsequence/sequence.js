@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 
 import * as lib from '../src'
-import { ethers, Signer } from 'ethers'
+import { ethers } from 'ethers'
 import { packMessageData, recoverConfig } from '../src'
 
 describe('Wallet units', function() {
@@ -12,6 +12,7 @@ describe('Wallet units', function() {
   }
 
   describe('wallet creation', () => {
+
     it('Should return wallet address', () => {
       const config = {
         threshold: 1,
@@ -27,6 +28,7 @@ describe('Wallet units', function() {
       const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
       expect(wallet.address).to.be.equal(expected)
     })
+
     it('Should reject non-usable config', () => {
       const config = {
         threshold: 4,
@@ -44,6 +46,7 @@ describe('Wallet units', function() {
 
       expect(() => new lib.Wallet(config, context)).to.throw(Error)
     })
+
     it('Should accept non-usable config on non-strict mode', () => {
       const config = {
         threshold: 4,
@@ -62,6 +65,7 @@ describe('Wallet units', function() {
       expect(() => new lib.Wallet(config, { nonStrict: true, ...context })).to.not.throw(Error)
     })
   })
+
   describe('signing', () => {
     it('Should sign a message', async () => {
       const message = '0x1901f0ba65550f2d1dccf4b131b774844dc3d801d886bbd4edcf660f395f21fe94792f7c1da94638270a049646e541004312b3ec1ac5'
@@ -86,6 +90,7 @@ describe('Wallet units', function() {
       const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
       expect(await wallet.sign(digest, true, 1)).to.equal(expected)
     })
+
     it('Should sign and recover the configuration of a single signer', async () => {
       const pk = ethers.utils.randomBytes(32)
       const wallet = await lib.Wallet.singleOwner(context, pk)
@@ -102,6 +107,7 @@ describe('Wallet units', function() {
       expect(recovered.signers[0].weight).to.equal(1)
       expect(recovered.signers[0].address).to.equal(wallet.config.signers[0].address)
     })
+
     it('Should sign and recover the configuration of multiple signers', async () => {
       const singer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       const singer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -133,4 +139,5 @@ describe('Wallet units', function() {
       expect(recovered.signers.find((s) => s.address === singer2.address).weight).to.equal(5)
     })
   })
+
 })
