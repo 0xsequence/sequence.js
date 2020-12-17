@@ -1,29 +1,18 @@
 {
-  "name": "@arcadeum/multicall",
-  "version": "1.0.0",
-  "description": "> TODO: description",
-  "author": "Agustin Aguilar <aa@horizon.io>",
+  "name": "@0xsequence/multicall",
+  "version": "0.7.0",
+  "author": "Horizon Blockchain Games",
   "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
-  "license": "ISC",
-  "main": "dist/arcadeum-multicall.cjs.js",
-  "module": "dist/arcadeum-multicall.esm.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/arcadeum/arcadeum.js.git"
-  },
+  "license": "Apache-2.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-multicall.cjs.js",
+  "module": "dist/0xsequence-multicall.esm.js",
   "scripts": {
-    "build": "rimraf ./dist && rollup -c",
+    "prepublishOnly": "yarn test && yarn lint",
     "test": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000 tests/**/*.spec.ts",
     "lint": "tslint -c tslint.json -p .",
     "lint:fix": "tslint -c tslint.json -p . --fix",
     "typecheck": "tsc --noEmit"
-  },
-  "bugs": {
-    "url": "https://github.com/arcadeum/arcadeum.js/issues"
   },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#multicall",
@@ -33,8 +22,13 @@
     "web3-provider-engine": "^16.0.1"
   },
   "dependencies": {
+    "@0xsequence/network": "^0.7.0",
     "@0xsequence/abi": "^0.7.0",
     "@arcadeum/provider": "^0.6.3",
     "ethers": "^5.0.23"
-  }
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
 }
