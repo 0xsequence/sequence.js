@@ -11,12 +11,19 @@
     "version-packages": "changeset version",
     "release": "yarn build && changeset publish",
     "test": "wsrun --serial -c test",
+    "test:parallel": "wsrun -c test",
     "lint": "eslint -c .eslintrc.js 'packages/**/src/**/*.{ts,tsx}'",
     "lint:fix": "eslint -c .eslintrc.js --fix 'packages/**/src/**/*.{ts,tsx}'",
     "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
     "typecheck": "wsrun -c typecheck",
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint",
+      "pre-push": "yarn test:parallel"
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
@@ -43,6 +50,7 @@
     "express": "^4.17.1",
     "ganache-cli": "^6.9.1",
     "hardhat": "2.0.5",
+    "husky": "^4.3.6",
     "mocha": "^8.2.1",
     "nyc": "^15.0.1",
     "prettier": "^2.1.2",
