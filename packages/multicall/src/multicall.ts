@@ -14,8 +14,9 @@ export type MulticallOptions = {
   // number of calls to batch within a time window (in milliseconds). If 0, will disable timeWindow.
   timeWindow: number,
 
-  // only batch calls for a specific contract.
-  contract?: string
+  // contract is the address of the Sequence MultiCallUtils smart contract where
+  // the batched multicall is sent to an Ethereum node.
+  contract: string
 }
 
 type QueueEntry = {
@@ -28,11 +29,12 @@ type QueueEntry = {
 
 const DefaultMulticallOptions = {
   batchSize: 50,
-  timeWindow: 50
+  timeWindow: 50,
+  contract: ''
 }
 
 export class Multicall {
-  public static DefaultOptions = () => DefaultMulticallOptions
+  public static DefaultOptions = { ... DefaultMulticallOptions }
 
   readonly batchableJsonRpcMethods = [
     JsonRpcMethod.ethCall,

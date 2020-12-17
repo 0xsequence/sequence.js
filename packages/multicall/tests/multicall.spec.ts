@@ -170,7 +170,7 @@ describe('Arcadeum wallet integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider({ ...Multicall.DefaultOptions(), contract: utilsContract.address})
+        provider = option.provider({ ...Multicall.DefaultOptions, contract: utilsContract.address})
       })
 
       describe("Aggregate calls", async () => {
@@ -338,21 +338,21 @@ describe('Arcadeum wallet integration', function () {
           name: "EOA address as util contract",
           overhead: 1,
           brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
-            ...Multicall.DefaultOptions(),
+            ...Multicall.DefaultOptions,
             contract: ethers.Wallet.createRandom().address
           })
         }, {
           name: "Broken contract as util contract",
           overhead: 1,
           brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
-            ...Multicall.DefaultOptions(),
+            ...Multicall.DefaultOptions,
             contract: callMock.address
           })
         }, {
           name: "invalid address as util contract",
           overhead: 0,
           brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
-            ...Multicall.DefaultOptions(),
+            ...Multicall.DefaultOptions,
             contract: "This is not a valid address"
           })
         }]
