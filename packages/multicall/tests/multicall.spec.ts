@@ -26,7 +26,7 @@ const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/Mu
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
 
-const GANACHE_PORT = 38545
+const GANACHE_PORT = 38546
 
 type GanacheInstance = {
   server?: any
