@@ -5,7 +5,7 @@ import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts
 
 import { JsonRpcProvider } from '@ethersproject/providers'
 
-import * as chaiAsPromised from 'chai-as-promised'
+import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 import { Multicall } from '../src'
 import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } from '../src/providers'
