@@ -1,36 +1,27 @@
 {
-  "name": "@arcadeum/bridge",
-  "version": "1.0.0",
-  "description": "> TODO: description",
-  "author": "Agustin Aguilar <aa@horizon.io>",
-  "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
-  "license": "ISC",
-  "main": "dist/index.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/arcadeum/arcadeum.js.git"
-  },
+  "name": "@0xsequence/bridge",
+  "version": "0.7.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-bridge.cjs.js",
+  "module": "dist/0xsequence-bridge.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
   "scripts": {
-    "build": "rimraf ./dist && rollup -c",
-    "test": "echo \"Not implemented\"",
-    "lint": "tslint -c tslint.json -p .",
-    "lint:fix": "tslint -c tslint.json -p . --fix"
-  },
-  "bugs": {
-    "url": "https://github.com/arcadeum/arcadeum.js/issues"
-  },
-  "devDependencies": {
-    "rimraf": "^3.0.2",
-    "rollup": "^2.33.3"
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@0xsequence/network": "^0.7.0",
     "@maticnetwork/maticjs": "^2.0.15",
-    "ethers": "^5.0.23",
-    "tslint": "^6.1.3"
-  }
+    "ethers": "^5.0.24"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
 }

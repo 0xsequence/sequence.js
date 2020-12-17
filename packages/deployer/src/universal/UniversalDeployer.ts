@@ -1,9 +1,8 @@
-import * as ora from 'ora'
+import ora from 'ora'
 import * as fs from 'fs'
-import { ethers } from 'ethers'
+import { ethers, ContractFactory, ContractTransaction } from 'ethers'
 import { promisify } from 'util'
-import { UniversalDeployer2Factory } from "../../typings/contracts/UniversalDeployer2Factory"
-import { ContractFactory, ContractTransaction } from 'ethers'
+import { UniversalDeployer2__factory } from "../../typings/contracts"
 import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX } from '../utils/constants'
 import { ContractInstance } from './types'
 
@@ -43,13 +42,13 @@ export class UniversalDeployer {
       const deploy_tx = await factory.getDeployTransaction(...args)
 
       // Make sure instance number is specified
-      let instance_number = instance !== undefined ? instance : 0
+      const instance_number = instance !== undefined ? instance : 0
 
       // Verify if contract already deployed
       const contract_address = await this.addressOf(contractFactory, instance_number, ...args)
       const contract_code = await this.provider.getCode(contract_address)
 
-      const deployer = UniversalDeployer2Factory.connect(UNIVERSAL_DEPLOYER_2_ADDRESS, this.signer)
+      const deployer = UniversalDeployer2__factory.connect(UNIVERSAL_DEPLOYER_2_ADDRESS, this.signer)
 
       if (contract_code === '0x') {
         // Deploy contract if not already deployed
@@ -77,7 +76,7 @@ export class UniversalDeployer {
   deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
     if (await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
-      let tx = await this.signer.sendTransaction({
+      const tx = await this.signer.sendTransaction({
         to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
         value: UNIVERSAL_DEPLOYER_FUNDING,
         ...txParams
@@ -100,11 +99,11 @@ export class UniversalDeployer {
       'ALREADY DEPLOYED'
     }
 
-    const universal_deployer_2_factory = new UniversalDeployer2Factory(this.signer)
+    const universal_deployer_2_factory = new UniversalDeployer2__factory(this.signer)
     const universal_deployer_2_deploy_tx = await universal_deployer_2_factory.getDeployTransaction()
 
     prompt.start('Deploying universal deployer 2 contract')
-    let tx = await this.signer.sendTransaction({
+    const tx = await this.signer.sendTransaction({
       to: UNIVERSAL_DEPLOYER_ADDRESS,
       data: universal_deployer_2_deploy_tx.data,
       ...txParams

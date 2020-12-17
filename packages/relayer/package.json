@@ -1,0 +1,29 @@
+{
+  "name": "@0xsequence/relayer",
+  "version": "0.7.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-relayer.cjs.js",
+  "module": "dist/0xsequence-relayer.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "^0.7.0",
+    "@0xsequence/chaind": "^0.7.0",
+    "@0xsequence/transactions": "^0.7.0",
+    "@0xsequence/wallet": "^0.7.0",
+    "ethers": "^5.0.24",
+    "fetch-ponyfill": "^7.0.0"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}

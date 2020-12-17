@@ -1,0 +1,24 @@
+{
+  "name": "@0xsequence/network",
+  "version": "0.7.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-network.cjs.js",
+  "module": "dist/0xsequence-network.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "^5.0.17"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}

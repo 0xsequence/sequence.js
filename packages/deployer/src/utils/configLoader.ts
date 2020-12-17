@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
 import * as path from 'path'
-import { HttpNetworkConfig } from '@nomiclabs/buidler/types'
+import { HttpNetworkConfig } from 'hardhat/types/config'
 import { ethers } from 'ethers'
 
 type EthereumNetworksTypes =
@@ -27,7 +27,7 @@ export const getEnvConfig = (env: string) => {
 export const networkConfig = (
   network: EthereumNetworksTypes
 ): HttpNetworkConfig => {
-  const config = getEnvConfig('PROD')  
+  const config = getEnvConfig('PROD')
   const networkConfig: HttpNetworkConfig = {
     url: (function(network) {
       switch(network) {
@@ -41,7 +41,17 @@ export const networkConfig = (
           return `https://${network}.infura.io/v3/${config['INFURA_API_KEY']}`
       }
     })(network),
-    accounts: [config['ETH_MNEMONIC']]
+    accounts: {
+      mnemonic: config['ETH_MNEMONIC'],
+      initialIndex: 0,
+      count: 10,
+      path: `m/44'/60'/0'/0`
+    },
+    gas: "auto",
+    gasPrice: "auto",
+    gasMultiplier: 1,
+    timeout: 20000,
+    httpHeaders: {}
   }
 
   return networkConfig

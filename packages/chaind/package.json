@@ -1,0 +1,23 @@
+{
+  "name": "@0xsequence/chaind",
+  "version": "0.7.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-chaind.cjs.js",
+  "module": "dist/0xsequence-chaind.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}

@@ -1,0 +1,77 @@
+
+on: [push]
+
+name: tests
+
+jobs:
+  install:
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - uses: actions/cache@master
+        id: yarn-cache
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
+      - run: yarn install --network-concurrency 1
+        if: ${{ steps.yarn-cache.outputs.cache-hit != 'true' }}
+
+  typecheck:
+    name: Run typecheck
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - uses: actions/cache@master
+        id: yarn-cache
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
+      - run: yarn dev && yarn typecheck
+
+  lint:
+    name: Run lint
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - uses: actions/cache@master
+        id: yarn-cache
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
+      - run: yarn dev && yarn lint
+
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - uses: actions/cache@master
+        id: yarn-cache
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
+      - run: yarn dev && yarn test

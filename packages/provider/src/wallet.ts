@@ -1,393 +1,466 @@
-import { ArcadeumWalletConfig, ArcadeumContext, ArcadeumTransaction, Transactionish, AuxTransactionRequest, NonceDependency } from './types'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
-import {
-  Provider,
-  TransactionResponse,
-  BlockTag,
-  ExternalProvider,
-  JsonRpcProvider,
-  TransactionRequest
-} from '@ethersproject/providers'
-import {
-  addressOf,
-  sortConfig,
-  encodeMetaTransactionsData,
-  packMessageData,
-  isArcadeumTransaction,
-  readArcadeumNonce,
-  appendNonce,
-  hasArcadeumTransactions,
-  toArcadeumTransactions,
-  compareAddr,
-  imageHash,
-  arcadeumTxAbiEncode,
-  isUsableConfig,
-  makeExpirable,
-  makeAfterNonce,
-  aggregate, resolveArrayProperties
-} from './utils'
-import { Interface, ConnectionInfo, BytesLike, Deferrable, resolveProperties } from 'ethers/lib/utils'
-import { IRelayer } from './relayer'
-import { abi as mainModuleAbi } from './abi/mainModule'
-import { abi as mainModuleUpgradableAbi } from './abi/mainModuleUpgradable'
-import { abi as requireUtilsAbi } from './abi/requireUtils'
-import { JsonRpcAsyncSender } from './providers/async-sender'
-import { RemoteSigner } from './signers/remote-signer'
+import { Networks, NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
+import { WalletConfig } from '@0xsequence/wallet'
+import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
+import { ethers } from 'ethers'
+import { Web3Provider } from './web3-provider'
+import { SidechainProvider } from './sidechain-provider'
+import { WindowMessageProvider, ProxyMessageProvider } from './transports'
+import { WalletSession, ProviderMessageEvent } from './types'
+import { WalletCommands } from './commands'
 
-export class Wallet extends AbstractSigner {
-  private readonly _signers: AbstractSigner[]
-
-  readonly context: ArcadeumContext
-  readonly config: ArcadeumWalletConfig
-
-  w3provider: ExternalProvider
-  provider: JsonRpcProvider
-
-  relayer: IRelayer
-
-  constructor(config: ArcadeumWalletConfig, context: ArcadeumContext, ...signers: (BytesLike | AbstractSigner)[]) {
-    super()
-
-    if (!context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable configuration in strict mode')
-
-    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
-    this.config = sortConfig(config)
-    this.context = context
-  }
-
-  get address(): string {
-    return addressOf(this.config, this.context)
-  }
-
-  get connected(): boolean {
-    return this.w3provider !== undefined
-  }
-
-  async getSigners(): Promise<string[]> {
-    return Promise.all(this._signers.map((s) => s.getAddress()))
-  }
-
-  async getAddress(): Promise<string> {
-    return this.address
-  }
-
-  async chainId(): Promise<BigNumberish> {
-    return (await this.provider.getNetwork()).chainId
-  }
-
-  async signWeight(): Promise<BigNumber> {
-    const signers = await this.getSigners()
-    return signers.reduce((p, s) => {
-      const sconfig = this.config.signers.find((c) => c.address === s)
-      if (!sconfig) return p
-      return p.add(sconfig.weight)
-    }, ethers.constants.Zero)
-  }
-
-  setProvider(provider: JsonRpcProvider | ConnectionInfo | string): Wallet {
-    if (Provider.isProvider(provider)) {
-      this.provider = provider
-      this.w3provider = new JsonRpcAsyncSender(provider)
-    } else {
-      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider)
-      this.provider = jsonProvider
-      this.w3provider = new JsonRpcAsyncSender(jsonProvider)
-    }
-    return this
-  }
-
-  setRelayer(relayer: IRelayer): Wallet {
-    this.relayer = relayer
-    return this
-  }
-
-  useConfig(config: ArcadeumWalletConfig): Wallet {
-    return new Wallet(config, this.context, ...this._signers)
-      .setProvider(this.provider)
-      .setRelayer(this.relayer)
-  }
-
-  connect(provider: Provider | ConnectionInfo | string, relayer?: IRelayer): Wallet {
-    // TODO: This only works with JsonRpcProviders
-    return new Wallet(this.config, this.context, ...this._signers).setProvider(provider as unknown as JsonRpcProvider).setRelayer(relayer)
-  }
-
-  async buildUpdateConfig(
-    config: ArcadeumWalletConfig,
-    publish = false
-  ): Promise<ArcadeumTransaction[]> {
-    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
-
-    const isUpgradable = await (async () => {
-      try {
-        const implementation = await this.provider.getStorageAt(this.address, ethers.utils.defaultAbiCoder.encode(['string'], [this.address]))
-        return compareAddr(implementation, this.context.mainModuleUpgradable) === 0
-      } catch {
-        return false
-      }
-    })()
-
-    const walletInterface = new Interface(mainModuleAbi)
-
-    // 131072 gas, enough for both calls
-    // and a power of two to keep the gas cost of data low
-    const gasLimit = ethers.constants.Two.pow(17)
-
-    const preTransaction = isUpgradable ? [] : [{
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), 
-        [this.context.mainModuleUpgradable]
-      )
-    }]
-
-    const mainModuleInterface = new Interface(mainModuleUpgradableAbi)
-
-    const transaction = {
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'),
-        [imageHash(sortConfig(config))]
-      )
-    }
-
-    const requireUtilsInterface = new Interface(requireUtilsAbi)
-
-    const postTransaction = publish ? [{
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.context.requireUtils,
-      value: ethers.constants.Zero,
-      data: requireUtilsInterface.encodeFunctionData(requireUtilsInterface.getFunction('requireConfig'), 
-        [
-          this.address,
-          config.threshold,
-          sortConfig(config).signers.map((s) => ({
-            weight: s.weight,
-            signer: s.address
-          }))
-        ]
-      )
-    }] : []
-
-    const transactions = [...preTransaction, transaction, ...postTransaction]
-
-    return [{
-      delegateCall: false,
-      revertOnError: false,
-      gasLimit: gasLimit,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'),
-        [arcadeumTxAbiEncode(transactions)]
-      )
-    }]
-  }
-
-  async updateConfig(
-    config: ArcadeumWalletConfig,
-    nonce?: number,
-    publish = false
-  ): Promise<[ArcadeumWalletConfig, TransactionResponse]> {
-    const [txs, n] = await Promise.all([
-      this.buildUpdateConfig(config, publish),
-      nonce ? nonce : await this.getNonce()]
-    )
-
-    return [
-      { address: this.address, ...config},
-      await this.sendTransaction(appendNonce(txs, n))
-    ]
-  }
-
-  async publishConfig(
-    nonce?: number
-  ): Promise<TransactionResponse> {
-    const requireUtilsInterface = new Interface(requireUtilsAbi)
-    return this.sendTransaction({
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.context.requireUtils,
-      value: ethers.constants.Zero,
-      nonce: nonce,
-      data: requireUtilsInterface.encodeFunctionData(requireUtilsInterface.getFunction('requireConfig'), 
-        [
-          this.address,
-          this.config.threshold,
-          sortConfig(this.config).signers.map((s) => ({
-            weight: s.weight,
-            signer: s.address
-          }))
-        ]
-      )
-    })
-  }
-
-  async getNonce(blockTag?: BlockTag): Promise<number> {
-    return this.relayer.getNonce(this.config, this.context, 0, blockTag)
-  }
-
-  async getTransactionCount(blockTag?: BlockTag): Promise<number> {
-    return this.getNonce(blockTag)
-  }
-
-  async sendTransaction(dtransactionish: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
-    const transaction = (await resolveArrayProperties<Transactionish>(dtransactionish))
-
-    if (!this.provider) {
-      throw new Error('missing provider')
-    }
-    if (!this.relayer) {
-      throw new Error('missing relayer')
-    }
-
-    let arctx: ArcadeumTransaction[] = []
-
-    if (Array.isArray(transaction)) {
-      if (hasArcadeumTransactions(transaction)) {
-        arctx = transaction as ArcadeumTransaction[]
-      } else {
-        arctx = await toArcadeumTransactions(this, transaction)
-      }
-    } else if (isArcadeumTransaction(transaction)) {
-      arctx = [transaction]
-    } else {
-      arctx = await toArcadeumTransactions(this, [transaction])
-    }
-
-    // If transaction is marked as expirable
-    // append expirable require
-    if ((<AuxTransactionRequest>transaction).expiration) {
-      arctx = makeExpirable(this.context, arctx, (<AuxTransactionRequest>transaction).expiration)
-    }
-
-    // If transaction depends on another nonce
-    // append after nonce requirement
-    if ((<AuxTransactionRequest>transaction).afterNonce) {
-      const after = (<AuxTransactionRequest>transaction).afterNonce
-      arctx = makeAfterNonce(this.context, arctx,
-        (<NonceDependency>after).address ? {
-          address: (<NonceDependency>after).address,
-          nonce: (<NonceDependency>after).nonce,
-          space: (<NonceDependency>after).space
-        } : {
-          address: this.address,
-          nonce: <BigNumberish>after
-        }
-      )
-    }
-
-    // If a transaction has 0 gasLimit and not revertOnError
-    // compute all new gas limits
-    if (arctx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
-      arctx = await this.relayer.estimateGasLimits(this.config, this.context, ...arctx)
-    }
-
-    const providedNonce = readArcadeumNonce(...arctx)
-    const nonce = providedNonce ? providedNonce : await this.getNonce()
-    arctx = appendNonce(arctx, nonce)
-    const signature = this.signTransactions(arctx, allSigners)
-    return this.relayer.relay(this.config, this.context, signature, ...arctx)
-  }
-
-  async signTransactions(txs: ArcadeumTransaction[], allSigners?: boolean): Promise<string> {
-    const packed = encodeMetaTransactionsData(...txs)
-    return this.sign(packed, false, undefined, allSigners)
-  }
-
-  async signMessage(message: BytesLike, chainId?: number, allSigners?: boolean): Promise<string> {
-    return this.sign(message, false, chainId, allSigners)
-  }
-
-  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
-    // TODO: chainId shouldn't be required to sign digest
-    const signChainId = chainId ? chainId : await this.chainId()
-    const digest = ethers.utils.arrayify(isDigest ? msg :
-      ethers.utils.keccak256(
-        packMessageData(
-          this.address,
-          signChainId,
-          ethers.utils.keccak256(msg)
-        )
-      )
-    )
-
-    // Sign digest using a set of signers and some optional data
-    const signWith = async (signers: AbstractSigner[], auxData?: string) => {
-      const signersAddr = Promise.all(signers.map(s => s.getAddress()))
-
-      const accountBytes = await Promise.all(
-        this.config.signers.map(async a => {
-          const signerIndex = (await signersAddr).indexOf(a.address)
-          const signer = signers[signerIndex]
-
-          try {
-            if (signer) {
-              return ethers.utils.solidityPack(
-                ['bool', 'uint8', 'bytes'],
-                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
-              )
-            }
-          } catch (e) {
-            if (allSigners) {
-              throw e
-            } else {
-              console.warn(`Skipped signer ${a.address}`)
-            }
-          }
-
-          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
-        })
-      )
+export interface WalletProvider {
+  login(refresh?: boolean): Promise<boolean>
+  logout(): void
   
-      return ethers.utils.solidityPack(
-        ['uint16', ...Array(this.config.signers.length).fill('bytes')],
-        [this.config.threshold, ...accountBytes]
+  isConnected(): boolean
+  isLoggedIn(): boolean
+  getSession(): WalletSession | undefined
+  getAddress(): string
+  getNetwork(): NetworkConfig
+  getChainId(): number
+
+  openWallet(path?: string, state?: any): Promise<boolean>
+  closeWallet(): void
+
+  getProvider(): JsonRpcProvider // TODO: return @0xsequence/provider.Web3Provider type, which subclasses JsonRpcProvider
+  getSigner(): JsonRpcSigner // TODO: return @0xsequence/wallet.Signer, or potentially @0xsequence/wallet.JsonRpcSigner
+
+  getWalletConfig(): WalletConfig
+  getWalletContext(): WalletContext
+  getWalletProviderConfig(): WalletProviderConfig
+
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+
+  commands: WalletCommands
+}
+
+export class Wallet implements WalletProvider {
+  public commands: WalletCommands
+
+  private config: WalletProviderConfig
+  private walletConfig: WalletConfig // TODO: where is this set..?
+
+  private session: WalletSession | null
+
+  private provider: Web3Provider
+  private jsonRpcRouter?: JsonRpcRouter
+  private cachedProvider?: CachedProvider
+  private publicProvider?: PublicProvider
+  private allowProvider?: JsonRpcMiddleware
+
+  private windowTransportProvider?: WindowMessageProvider
+  // TODO: ProxyMessageProvider ..?
+
+  private networks: NetworkConfig[]
+  private sidechainProviders: { [id: number] : Web3Provider }
+
+  constructor(config?: WalletProviderConfig) {
+    this.config = config
+    if (!this.config) {
+      this.config = { ...DefaultWalletProviderConfig }
+    }
+    this.commands = new WalletCommands(this)
+    this.init()
+  }
+  
+  private init = () => {
+    const config = this.config
+
+    // Setup provider
+    switch (config.type) {
+      case 'Window': {
+
+        // .....
+        this.allowProvider = allowProviderMiddleware((): boolean => {
+          const isLoggedIn = this.isLoggedIn()
+          if (!isLoggedIn) {
+            throw new Error('Sequence: not logged in')
+          }
+          return isLoggedIn
+        })
+
+        // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
+        this.cachedProvider = new CachedProvider()
+
+        // ..
+        this.publicProvider = new PublicProvider()
+
+        // ..
+        this.windowTransportProvider = new WindowMessageProvider(this.config.walletAppURL)
+
+        this.jsonRpcRouter = new JsonRpcRouter(this.windowTransportProvider, [
+          loggingProviderMiddleware,
+          this.allowProvider,
+          this.cachedProvider,
+          this.publicProvider
+        ])
+
+        this.provider = new Web3Provider(
+          this.config.walletContext,
+          this.jsonRpcRouter,
+          'any'
+        )
+
+        this.windowTransportProvider.on('network', network => {
+          this.useNetwork(network)
+          this.saveSession(this.session)
+        })
+        this.windowTransportProvider.on('logout', () => {
+          this.logout()
+        })
+
+        break
+      }
+
+      case 'Web3Global': {
+        // TODO: check if window.web3.currentProvider or window.ethereum exists or is set, otherwise return error
+        // TODO: call window.ethereum.enable() or .connect()
+
+        // this.provider = new Web3Provider((window as any).ethereum, 'unspecified') // TODO: check the network argument
+        break
+      }
+
+      default: {
+        throw new Error('unsupported provider type, must be one of ${WalletProviderType}')
+      }
+    }
+
+    // Load existing session from localStorage
+    const session = this.loadSession()
+    if (session) {
+      this.useSession(session)
+    }
+  }
+
+  login = async (refresh?: boolean): Promise<boolean> => {
+    if (refresh === true) {
+      this.logout()
+    }
+
+    if (this.isLoggedIn()) {
+      return true
+    }
+
+    // TODO: need this to work with multiple transports
+    // ie. Proxy and Window at same time..
+
+    // might want to create abstraction above the transports.. for multi..
+
+    // authenticate
+    const config = this.config
+
+    switch (config.type) {
+      case 'Window': {
+        await this.openWallet('', { login: true }) // TODO: do we need the state thing? maybe/maybe not..
+        const sessionPayload = await this.windowTransportProvider.waitUntilLoggedIn()
+        this.useSession(sessionPayload)
+        this.saveSession(sessionPayload)
+
+        // setTimeout(() => {
+        //   this.externalWindowProvider.closeWallet()
+        // }, 2000)
+
+        break
+      }
+
+      case 'Web3Global': {
+        // TODO: for Web3Global,
+        // window.ethereum.enable() ..
+        // this.getSession() .. saveSession() ..
+        break
+      }
+    }
+
+    return this.isLoggedIn()
+  }
+
+  logout(): void {
+    window.localStorage.removeItem('@sequence.session')
+    this.session = null
+    this.cachedProvider?.resetCache()
+  }
+
+  isConnected(): boolean {
+    if (this.windowTransportProvider) {
+      return this.windowTransportProvider.isConnected()
+    } else {
+      return false
+    }
+  }
+
+  isLoggedIn(): boolean {
+    return this.session !== undefined && this.session !== null &&
+      this.session.network !== undefined && this.session.network !== null &&
+      this.session.accountAddress.startsWith('0x')
+  }
+
+  getSession = (): WalletSession | undefined => {
+    if (!this.isLoggedIn()) {
+      throw new Error('login first')
+    }
+    return this.session
+  }
+
+  getAddress = (): string => {
+    const session = this.getSession()
+    return session.accountAddress
+  }
+
+  getNetwork = (): NetworkConfig => {
+    const session = this.getSession()
+    if (!session.network) {
+      throw new Error('network has not been set by session. login first.')
+    }
+    return session.network
+  }
+
+  getChainId = (): number => {
+    const session = this.getSession()
+    if (!session.network || !(session.network.chainId > 0)) {
+      throw new Error('network has not been set by session. login first.')
+    }
+    return session.network.chainId
+  }
+
+  openWallet = async (path?: string, state?: any): Promise<boolean> => {
+    if (state?.login !== true && !this.isLoggedIn()) {
+      throw new Error('login first')
+    }
+
+    if (this.windowTransportProvider) {
+      this.windowTransportProvider.openWallet(path, state)
+
+      // TODO: handle case when popup is blocked, should return false, or throw exception
+      //
+      await this.windowTransportProvider.waitUntilConnected()
+
+      return true
+    }
+    return false
+  }
+
+  closeWallet = (): void => {
+    if (this.windowTransportProvider) {
+      this.windowTransportProvider.closeWallet()
+    }
+  }
+
+  getProvider(): JsonRpcProvider {
+    return this.provider
+  }
+
+  getAuthProvider(): JsonRpcProvider {
+    const provider = this.sidechainProviders[this.getAuthNetwork().chainId]
+    return provider ? provider : this.getProvider()
+  }
+
+  getAuthNetwork(): NetworkConfig {
+    const net = this.networks.find((n) => n.isAuthChain)
+    return net ? net : this.session.network
+  }
+
+  getSidechainProvider(chainId: number): JsonRpcProvider | undefined {
+    return this.sidechainProviders[chainId]
+  }
+
+  getSidechainProviders(): { [id: number] : Web3Provider } {
+    return this.sidechainProviders
+  }
+
+  getSigner(): JsonRpcSigner {
+    return this.getProvider().getSigner()
+  }
+
+  getAuthSigner(): JsonRpcSigner {
+    return this.getAuthProvider().getSigner()
+  }
+
+  getWalletConfig(): WalletConfig {
+    return this.walletConfig
+  }
+
+  getWalletContext(): WalletContext {
+    return this.config.walletContext
+  }
+
+  getWalletProviderConfig(): WalletProviderConfig {
+    return this.config
+  }
+
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+    if (!this.windowTransportProvider) {
+      return
+    }
+    this.windowTransportProvider.on(event, fn)
+  }
+
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+    if (!this.windowTransportProvider) {
+      return
+    }
+    this.windowTransportProvider.once(event, fn)
+  }
+
+  private loadSession = (): WalletSession | null => {
+    const data = window.localStorage.getItem('@sequence.session')
+    if (!data || data === '') {
+      return null
+    }
+    const session = JSON.parse(data) as WalletSession
+    return session
+  }
+
+  private saveSession = (session: WalletSession) => {
+    const data = JSON.stringify(session)
+    window.localStorage.setItem('@sequence.session', data)
+  }
+
+  private useSession = async (session: WalletSession) => {
+    if (!session.accountAddress || session.accountAddress === '') {
+      throw new Error('session error, accountAddress is empty')
+    }
+
+    // set active session
+    this.session = session
+
+    // setup provider cache
+    if (!session.providerCache) {
+      session.providerCache = {}
+    }
+    this.cachedProvider.setCache(session.providerCache)
+    this.cachedProvider.onUpdate(() => {
+      this.session.providerCache = this.cachedProvider.getCache()
+      this.saveSession(this.session)
+    })
+
+    // set network
+    this.useNetwork(session.network)
+
+    // confirm the session address matches the one with the signer
+    const accountAddress = await this.getSigner().getAddress()
+    if (session.accountAddress.toLowerCase() !== accountAddress.toLowerCase()) {
+      throw new Error('wallet account address does not match the session')
+    }
+  }
+
+  private useNetwork = (network: NetworkConfig) => {
+    if (!this.session) {
+      this.session = {}
+    }
+
+    // TODO: Ethers v4 ignores the RPC url provided if the network.name is provided
+    // and since ethers doesn't know about mumbai or matic, it will throw an error
+    // for unknown network. Setting the network to null ensures the RPC url is used 
+    // for the JsonRpcProvivider generated. I don't think Ethers V5 fixes this, but
+    // we will need to test once we migrated to it.
+    // TODO: review and maybe always set network.name to null..?
+    // if (network.name == 'mumbai' || network.name == 'matic') {
+    //   network.name = null
+    // }
+
+    // TODO: with ethers v5, we can set network to 'any', then set network = null
+    // anytime the network changes, and call detectNetwork(). We can reuse
+    // that object instance instead of creating a new one as below.
+    this.provider = new Web3Provider(
+      this.config.walletContext,
+      this.jsonRpcRouter,
+      null
+      // 'any'
+    )
+    
+
+    // ..
+    this.publicProvider.setRpcUrl(network.rpcUrl)
+
+    // seed the session cache
+    this.cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
+    this.cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
+
+    // refresh our provider cache when the network changes
+    if (this.session.network && this.session.network.chainId !== network.chainId) {
+      this.cachedProvider.resetCache()
+      this.provider.send('eth_accounts', [])
+      this.provider.send('net_version', [])
+      this.provider.send('eth_chainId', [])
+    }
+
+    // update network in session
+    this.session.network = network
+
+    // update sidechain providers
+    this.useSidechainNetworks(network.sidechains ? network.sidechains : [])
+  }
+
+  private useSidechainNetworks = (networks: NetworkConfig[]) => {
+    // Reconstruct sidechain providers
+    this.sidechainProviders = networks.reduce((providers, network) => {
+      const sideExternalWindowProvider = new SidechainProvider(
+        this.windowTransportProvider,
+        network.chainId
       )
-    }
 
-    // Split local signers and remote signers
-    const localSigners = this._signers.filter((s) => !RemoteSigner.isRemoteSigner(s))
-    const remoteSigners = this._signers.filter((s) => RemoteSigner.isRemoteSigner(s))
+      const cachedProvider = new CachedProvider()
+      const publicProvider = new PublicProvider(network.rpcUrl)
 
-    // Sign message first using localSigners
-    // include local signatures for remote signers
-    const localSignature = await signWith(localSigners, this.packMsgAndSig(msg, [], signChainId))
-    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
+      cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
+      cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
+  
+      const jsonRpcRouter = new JsonRpcRouter(sideExternalWindowProvider, [
+        loggingProviderMiddleware,
+        this.allowProvider,
+        cachedProvider,
+        publicProvider
+      ])
 
-    // Aggregate both local and remote signatures
-    return aggregate(localSignature, remoteSignature)
+      providers[network.chainId] = new Web3Provider(
+        this.config.walletContext,
+        jsonRpcRouter,
+        network
+      )
+      return providers
+    }, {} as {[id: number]: Web3Provider})
+
+    // Save raw networks
+    this.networks = networks
+  }
+}
+
+// TODO: allow dapp to specify the requested network and provide their own rpcUrl
+// for a particular chain. Probably pass "networks: object"
+export interface WalletProviderConfig {
+  type: WalletProviderType
+
+  // Sequence Wallet App URL, default: https://sequence.app
+  walletAppURL: string
+
+  // Sequence Wallet Modules Context
+  walletContext: WalletContext
+
+  // Global web3 provider (optional)
+  web3Provider?: ExternalProvider
+
+  // WindowProvider config (optional)
+  windowTransport?: {
+    // ..
+    // timeout?: number
   }
 
-  private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
-    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
-  }
+  // TODO ..
+  networks?: Networks
 
-  static async singleOwner(context: ArcadeumContext, owner: BytesLike | AbstractSigner): Promise<Wallet> {
-    const signer = AbstractSigner.isSigner(owner) ? owner : new ethers.Wallet(owner)
+}
 
-    const config = {
-      threshold: 1,
-      signers: [
-        {
-          weight: 1,
-          address: await signer.getAddress()
-        }
-      ]
-    }
+// TODO: rename to WalletTransportType, maybe?
+export type WalletProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
 
-    return new Wallet(config, context, owner)
-  }
+export const DefaultWalletProviderConfig: WalletProviderConfig = {
+  walletAppURL: 'http://localhost:3333',
 
-  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('Method not implemented.')
+  walletContext: sequenceContext,
+
+  type: 'Window', // TODO: rename.. transports: []
+
+  windowTransport: {
   }
 }

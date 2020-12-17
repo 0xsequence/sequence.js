@@ -1,7 +1,7 @@
 
 import { ethers, providers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
-import { CallReceiverMock } from 'arcadeum-wallet/typings/contracts/ethers-v5/CallReceiverMock'
+import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
 
 import { JsonRpcProvider } from '@ethersproject/providers'
 
@@ -20,8 +20,8 @@ const { JsonRpcEngine } = require('json-rpc-engine')
 const providerAsMiddleware = require('eth-json-rpc-middleware/providerAsMiddleware')
 const providerFromEngine = require('eth-json-rpc-middleware/providerFromEngine')
 
-const CallReceiverMockArtifact = require('wallet-contracts/artifacts/CallReceiverMock.json')
-const SequenceUtilsArtifact = require('wallet-contracts/artifacts/MultiCallUtils.json')
+const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/CallReceiverMock.json')
+const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/MultiCallUtils.json')
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)

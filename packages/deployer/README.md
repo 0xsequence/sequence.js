@@ -1,10 +1,10 @@
-# @arcadeum/deployer
+# @0xsequence/deployer
 
 Deploy contracts using a universal deployer via CREATE2, allowing contracts to have the same address on any EVM chain. 
 
 # How to use
 
-1. `yarn install @arcadeum/deployer`
+1. `yarn install @0xsequence/deployer`
 1. Import UniversalDeployer into script
 2. Create UniversalDeployer instance
 3. Deploy contracts 
@@ -13,7 +13,7 @@ An `instance` number can be passed if multiple instance of the same contract nee
 
 ```typescript
 ...
-import { UniversalDeployer } from '@arcadeum/deployer'
+import { UniversalDeployer } from '@0xsequence/deployer'
 
 const signer = (new Web3Provider(web3.currentProvider)).getSigner()
 const universalDeployer = new UniversalDeployer(network.name, signer)

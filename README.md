@@ -1,35 +1,81 @@
-<img src="https://avatars2.githubusercontent.com/u/35579638?s=200&v=4" width="80px" >
+0xsequence.js
+=============
 
----
+A simple & powerful Ethereum development library and Web-based smart wallet.
 
-Arcadeum is ...
 
-This repository is a monorepo including various developer tools to interact with the arcadeum stack. Each public sub-package is independently published to NPM.
+## Usage
 
-[![Discord](https://img.shields.io/badge/chat-discord.chat-yellow.svg?style=flat)](https://discord.gg/ZsRkaZs)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+`yarn install 0xsequence`
 
-#### Documentation
+## Packages
 
-...
+* 0xsequence
+* abi
+* api
+* auth
+* bridge
+* chaind
+* deployer
+* guard
+* networks
+* provider
+* transactions
+* wallet
 
-#### Packages
 
-| Package                                                  | Version                                                                                                                 | Description                                                                                       |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`@arcadeum/provider`](https://www.npmjs.com/package/@arcadeum/provider) | 0.5.3 | smart wallet provider and utilities    |
-| [`@arcadeum/deployer`](https://www.npmjs.com/package/@arcadeum/deployer) | 0.1.14 | universal contract deployer using CREATE2    |
+## Development Environment
 
-## Contributing
+Below are notes and instructions on how to get your development environment up and running,
+and enjoyable.
 
-#### Read our [contribution guidelines](./CONTRIBUTING.md).
+1. **Install dependencies** -- we use yarn workspaces, so please use yarn instead of npm.
+Run,  `yarn install`
 
-### Install dependencies
+2. **Workflow** -- we use the amazing [preconstruct](https://github.com/preconstruct/preconstruct)
+package to handle our monorepo build system.
 
-Make sure you are using `Yarn`
+3. **Local dev** -- when you're working on the code in this repository, you can safely run
+`yarn dev` at the root-level, which will link all packages/** together, so that when a
+local dependency from packages/** is used by another, it will automatically be linked
+without having to run a build command. Just remember: run `yarn dev` anytime you developing
+in this repo. Note, that when you run `yarn build` it will clear the dev environment, so
+you will need to run `yarn dev` again after a build. However, `yarn build` should only be
+used when making a release.
 
-Then install dependencies
+4. **Testing** -- to test the system, you can run `yarn test` at the top-level or at an individual
+package-level.
 
-```bash
-yarn && yarn bootstrap
-```
+5. **Type-checking** -- to typecheck the system you can run `yarn typecheck` at any level.
+
+6. **Building** -- to *compile* the project to dist files for a release, run `yarn build` at
+the root-level. Note building packages repeatedly during development is unnecessary with
+`preconstruct`. During local development run `yarn dev` and when building to make a release,
+run `yarn build`. 
+
+7. **Versioning** -- this repository uses the handy [changesets](https://github.com/atlassian/changesets)
+package for package versioning across the monorepo, as well as changelogs. See *Releasing* section below.
+
+## Releasing to NPM
+
+0xsequence uses changesets to do versioning. This makes releasing really easy and changelogs are automatically generated.
+
+### How to do a release
+
+1. Run `yarn` to make sure everything is up to date
+2. Run `yarn version-packages`
+3. Run NPM_CONFIG_OTP=PUTANOTPCODEHERE `yarn release`. If the 2FA code times out while publishing, run the command again
+with a new code, only the packages that were not published will be published.
+
+
+## NOTES
+
+1. Browser tests can be run with `yarn test` or, separately `yarn test:server` and `yarn test:run`
+2. To run a specific test, run `yarn test:only <test-file-basename>`, ie. `yarn test:only window-transport`
+
+
+## LICENSE
+
+Apache-2.0
+
+Copyright (c) 2017-present Horizon Blockchain Games Inc. / https://horizon.io

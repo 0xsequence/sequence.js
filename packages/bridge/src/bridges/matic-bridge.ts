@@ -4,7 +4,7 @@ import { Bridge, BridgeERC1155, BridgeERC20, BridgeNative, Move, MoveERC1155, Mo
 import { ERC_20_ABI } from "../abi/erc20-abi"
 import { MATIC_BRIDGE_ABI } from "../abi/matic-abi"
 import { MaticPOSClient } from '@maticnetwork/maticjs'
-import { NetworkConfig } from '@arcadeum/provider'
+import { NetworkConfig } from '@0xsequence/network'
 import { flatten, safeSolve } from "../utils"
 import { ERC_1155_ABI } from "../abi/erc1155-abi"
 

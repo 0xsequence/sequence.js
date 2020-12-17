@@ -5,8 +5,8 @@
   "author": "Agustin Aguilar <aa@horizon.io>",
   "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
   "license": "ISC",
-  "main": "dist/index.js",
-  "module": "dist/index.es.js",
+  "main": "dist/arcadeum-multicall.cjs.js",
+  "module": "dist/arcadeum-multicall.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -32,7 +32,7 @@
     "rimraf": "^3.0.2",
     "rollup": "^2.33.3",
     "tslint": "^6.1.3",
-    "wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#multicall",
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#multicall",
     "web3-provider-engine": "^16.0.1"
   },
   "dependencies": {
