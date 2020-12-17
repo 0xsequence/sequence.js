@@ -2,15 +2,9 @@ import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 import { JsonRpcRequest, JsonRpcResponseCallback } from './types'
 
 export class JsonRpcSender implements ExternalProvider {
-  provider: JsonRpcProvider
+  constructor(private provider: JsonRpcProvider) { }
 
-  constructor(p: JsonRpcProvider) {
-    this.provider = p
-  }
-
-  send = this.sendAsync
-
-  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) {
+  sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) => {
     this.provider
       .send(request.method, request.params)
       .then(r => {
@@ -20,6 +14,10 @@ export class JsonRpcSender implements ExternalProvider {
           result: r
         })
       })
-      .catch(e => callback(e, undefined))
+      .catch(e => {
+        callback(e, undefined)
+      })
   }
+
+  send = this.sendAsync
 }
