@@ -67,6 +67,8 @@ export class Multicall {
   }
 
   run = async () => {
+    /* eslint-disable no-var */
+
     // Read items from queue
     const limit = Math.min(this.conf.batchSize, this.queue.length)
     if (limit === 0) return
@@ -90,7 +92,7 @@ export class Multicall {
 
     // Get next candidate
     const next = items[0].next as JsonRpcHandlerFunc
-    var blockTag: BlockTag = null
+    let blockTag: BlockTag = null
 
     // Partition incompatible calls
     var [items, discartItems] = partition(items, (item) => {
