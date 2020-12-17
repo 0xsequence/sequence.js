@@ -2,8 +2,8 @@
 import { ethers, providers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
-
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { JsonRpcSender, JsonRpcRouter } from '@0xsequence/network'
+import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -11,7 +11,6 @@ import { Multicall } from '../src'
 import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils/utils'
 import { getRandomInt } from '../src/utils'
-import { JsonRpcAsyncSender, ProviderEngine } from './utils/provider-engine'
 import { RpcMethod } from '../src/constants'
 import { MulticallConf } from '../src/multicall'
 
@@ -124,19 +123,19 @@ describe('Arcadeum wallet integration', function () {
       )
     },
     {
-      name: "Provider Engine (Sequence)",
-      provider: (conf?: MulticallConf) => new ethers.providers.Web3Provider(
-        new ProviderEngine(
-          new JsonRpcAsyncSender(ganache.spyProxy),
+      name: "Json Rpc Router (Sequence)",
+      provider: (conf?: MulticallConf) => new Web3Provider(
+        new JsonRpcRouter(
+          new JsonRpcSender(ganache.spyProxy),
           [multicallMiddleware(conf)]
         )
       )
     },
     {
       name: 'Ether.js external provider wrapper',
-      provider: (conf?: MulticallConf) => new ethers.providers.Web3Provider(
+      provider: (conf?: MulticallConf) => new Web3Provider(
         new MulticallExternalProvider(
-          new JsonRpcAsyncSender(ganache.spyProxy), conf
+          new JsonRpcSender(ganache.spyProxy), conf
         )
       )
     },
@@ -148,7 +147,7 @@ describe('Arcadeum wallet integration', function () {
         engine.push(
           providerAsMiddleware(
             new MulticallExternalProvider(
-              new JsonRpcAsyncSender(ganache.spyProxy), conf
+              new JsonRpcSender(ganache.spyProxy), conf
             )
           )
         )

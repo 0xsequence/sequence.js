@@ -1,10 +1,11 @@
-import { providers } from 'ethers'
-import { Multicall, MulticallConf, JsonRpcRequest, JsonRpcResponseCallback } from '../multicall'
+import { ExternalProvider } from '@ethersproject/providers'
+import { Multicall, MulticallConf } from '../multicall'
+import { JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
 
-export class MulticallExternalProvider implements providers.ExternalProvider {
+export class MulticallExternalProvider implements ExternalProvider {
   private multicall: Multicall
 
-  constructor(private provider: providers.ExternalProvider, multicall?: Multicall | MulticallConf) {
+  constructor(private provider: ExternalProvider, multicall?: Multicall | MulticallConf) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
   }
 

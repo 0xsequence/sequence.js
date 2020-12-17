@@ -2,31 +2,10 @@
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { RpcMethod, RpcVersion } from './constants'
-import { BlockTag, eqBlockTag, getRandomInt, parseBlockTag, partition, promisify, safe, safeSolve } from './utils'
+import { BlockTag, eqBlockTag, getRandomInt, parseBlockTag, partition, safeSolve } from './utils'
+import { promisify } from 'util'
+import { JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddleware, JsonRpcHandlerFunc } from "@0xsequence/network"
 
-interface JsonRpcResponse {
-  jsonrpc: string
-  id: number
-  result: any
-  error?: any
-}
-
-export type JsonRpcResponseCallback = (error: any, response?: JsonRpcResponse) => void
-
-type JsonRpcHandler = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => void
-
-export interface JsonRpcRequest {
-  jsonrpc?: string
-  id?: number
-  method: string
-  params?: any[]
-}
-
-type JsonRpcMiddleware = (next: JsonRpcHandler) => JsonRpcHandler
-
-export interface AsyncSendableMiddleware {
-  sendAsyncMiddleware: JsonRpcMiddleware
-}
 
 export type MulticallConf = {
   batchSize: number,
@@ -37,7 +16,7 @@ export type MulticallConf = {
 type QueueEntry = {
   request: JsonRpcRequest,
   callback: JsonRpcResponseCallback,
-  next: JsonRpcHandler,
+  next: JsonRpcHandlerFunc,
   error?: boolean,
   result?: JsonRpcResponseCallback
 }
@@ -71,7 +50,7 @@ export class Multicall {
     }
   }
 
-  handle = (next: JsonRpcHandler, request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+  handle = (next: JsonRpcHandlerFunc, request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
     // Schedule for aggregation and return
     if (this.aggregateJsonRpcMethods.find((m) => m === request.method)) {
       this.queue.push({
@@ -110,7 +89,7 @@ export class Multicall {
     }
 
     // Get next candidate
-    const next = items[0].next as JsonRpcHandler
+    const next = items[0].next as JsonRpcHandlerFunc
     var blockTag: BlockTag = null
 
     // Partition incompatible calls

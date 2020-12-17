@@ -1,22 +1,4 @@
-import { ethers, BigNumber, BigNumberish } from "ethers"
-
-export function promisify<T>(f: (cb: (err: any, res: T) => void) => void, thisContext?: any): () => Promise<T>
-export function promisify<A, T>(f: (arg: A, cb: (err: any, res: T) => void) => void, thisContext?: any): (arg: A) => Promise<T>
-export function promisify<A, A2, T>(f: (arg: A, arg2: A2, cb: (err: any, res: T) => void) => void, thisContext?: any): (arg: A, arg2: A2) => Promise<T>
-
-export function promisify(f: any, thisContext?: any) {
-  return function () {
-    let args = Array.prototype.slice.call(arguments)
-    return new Promise(async (resolve, reject) => {
-      try {
-        args.push((err: any, result: any) => err ? reject(err) : resolve(result))
-        await f.apply(thisContext, args)
-      } catch (e) {
-        reject(e)
-      }
-    })
-  }
-}
+import { BigNumber, BigNumberish } from "ethers"
 
 export async function safeSolve<T>(promise: Promise<T>, def: T | ((e: any) => T)): Promise<T> {
   try {
@@ -24,17 +6,6 @@ export async function safeSolve<T>(promise: Promise<T>, def: T | ((e: any) => T)
   } catch (e) {
     const d = def instanceof Function ? def(e) : def
     return d
-  }
-}
-
-export function safe<T extends (...p: any[]) => any>(method: T, def?: ReturnType<T>, thisContext?: any): (...params: Parameters<T>) => ReturnType<T> {
-  return function() {
-    let args = Array.prototype.slice.call(arguments)
-    try {
-      return method.apply(thisContext, ...args)
-    } catch (e) {
-      return def
-    }
   }
 }
 
