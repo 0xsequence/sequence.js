@@ -10,7 +10,7 @@ export class JsonRpcSender implements ExternalProvider {
 
   send = this.sendAsync
 
-  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback) {
+  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) {
     this.provider
       .send(request.method, request.params)
       .then(r => {
@@ -20,6 +20,6 @@ export class JsonRpcSender implements ExternalProvider {
           result: r
         })
       })
-      .catch(e => callback(e))
+      .catch(e => callback(e, undefined))
   }
 }
