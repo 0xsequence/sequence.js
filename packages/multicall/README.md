@@ -1,11 +1,8 @@
-# `bridge`
+@0xsequence/multicall
+=====================
 
-> TODO: description
+..
 
 ## Usage
 
-```
-const bridge = require('bridge');
-
-// TODO: DEMONSTRATE API
-```
+..

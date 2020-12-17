@@ -11,8 +11,8 @@ import { Multicall } from '../src'
 import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils/utils'
 import { getRandomInt } from '../src/utils'
-import { RpcMethod } from '../src/constants'
-import { MulticallConf } from '../src/multicall'
+import { JsonRpcMethod } from '../src/constants'
+import { MulticallOptions } from '../src/multicall'
 
 const { JsonRpcEngine } = require('json-rpc-engine')
 
@@ -96,9 +96,9 @@ describe('Arcadeum wallet integration', function () {
       func: ganache.provider.send,
       callback: (method: string, _: any[]) => {
         switch (method) {
-          case RpcMethod.ethCall:
-          case RpcMethod.ethGetCode:
-          case RpcMethod.ethGetBalance:
+          case JsonRpcMethod.ethCall:
+          case JsonRpcMethod.ethGetCode:
+          case JsonRpcMethod.ethGetBalance:
             callCounter++
         }
       }
@@ -118,22 +118,22 @@ describe('Arcadeum wallet integration', function () {
   let options = [
     {
       name: 'Ether.js provider wrapper',
-      provider: (conf?: MulticallConf) => new MulticallProvider(
-        ganache.spyProxy, conf
+      provider: (options?: MulticallOptions) => new MulticallProvider(
+        ganache.spyProxy, options
       )
     },
     {
       name: "Json Rpc Router (Sequence)",
-      provider: (conf?: MulticallConf) => new Web3Provider(
+      provider: (options?: MulticallOptions) => new Web3Provider(
         new JsonRpcRouter(
           new JsonRpcSender(ganache.spyProxy),
-          [multicallMiddleware(conf)]
+          [multicallMiddleware(options)]
         )
       )
     },
     {
       name: 'Ether.js external provider wrapper',
-      provider: (conf?: MulticallConf) => new Web3Provider(
+      provider: (conf?: MulticallOptions) => new Web3Provider(
         new MulticallExternalProvider(
           new JsonRpcSender(ganache.spyProxy), conf
         )
@@ -141,7 +141,7 @@ describe('Arcadeum wallet integration', function () {
     },
     {
       name: "Provider Engine (json-rpc-engine)",
-      provider: (conf?: MulticallConf) => {
+      provider: (conf?: MulticallOptions) => {
         let engine = new JsonRpcEngine()
 
         engine.push(
@@ -170,7 +170,7 @@ describe('Arcadeum wallet integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider({ ...Multicall.DEFAULT_CONF, contract: utilsContract.address})
+        provider = option.provider({ ...Multicall.DefaultOptions, contract: utilsContract.address})
       })
 
       describe("Aggregate calls", async () => {
@@ -333,26 +333,26 @@ describe('Arcadeum wallet integration', function () {
         const brokenProviderOptions = [{
           name: "non-deployed util contract",
           overhead: 0,
-          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider()
+          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider()
         }, {
           name: "EOA address as util contract",
           overhead: 1,
-          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider({
-            ...Multicall.DEFAULT_CONF,
+          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
+            ...Multicall.DefaultOptions,
             contract: ethers.Wallet.createRandom().address
           })
         }, {
           name: "Broken contract as util contract",
           overhead: 1,
-          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider({
-            ...Multicall.DEFAULT_CONF,
+          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
+            ...Multicall.DefaultOptions,
             contract: callMock.address
           })
         }, {
           name: "invalid address as util contract",
           overhead: 0,
-          brokenProvider: (getProvider: (conf?: MulticallConf) => providers.Provider) => getProvider({
-            ...Multicall.DEFAULT_CONF,
+          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
+            ...Multicall.DefaultOptions,
             contract: "This is not a valid address"
           })
         }]

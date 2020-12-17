@@ -1,11 +1,11 @@
 import { ExternalProvider } from '@ethersproject/providers'
-import { Multicall, MulticallConf } from '../multicall'
+import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
 
 export class MulticallExternalProvider implements ExternalProvider {
   private multicall: Multicall
 
-  constructor(private provider: ExternalProvider, multicall?: Multicall | MulticallConf) {
+  constructor(private provider: ExternalProvider, multicall?: Multicall | MulticallOptions) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
   }
 
