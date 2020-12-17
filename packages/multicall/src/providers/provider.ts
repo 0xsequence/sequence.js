@@ -1,10 +1,8 @@
 import { ethers , BigNumber } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
-import { getRandomInt } from '../utils'
+import { promisify, getRandomInt } from '../utils'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'
-
-import { promisify } from 'util'
 import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
 
 
