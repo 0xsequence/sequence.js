@@ -19,14 +19,14 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
     this.context = context
   }
 
-  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback) {
+  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) {
     this.send(request.method, request.params).then(r => {
       callback(undefined, {
         jsonrpc: '2.0',
         id: request.id,
         result: r
       })
-    }).catch(e => callback(e))
+    }).catch(e => callback(e, undefined))
   }
 
   // TODO: review..
