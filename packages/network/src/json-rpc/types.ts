@@ -1,3 +1,4 @@
+export const JsonRpcVersion = '2.0'
 export interface JsonRpcRequest {
   jsonrpc?: string
   id?: number

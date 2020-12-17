@@ -1,0 +1,33 @@
+{
+  "name": "@0xsequence/multicall",
+  "version": "0.7.0",
+  "author": "Horizon Blockchain Games",
+  "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
+  "license": "Apache-2.0",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-multicall.cjs.js",
+  "module": "dist/0xsequence-multicall.esm.js",
+  "scripts": {
+    "prepublishOnly": "yarn test && yarn lint",
+    "test": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000 tests/**/*.spec.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "^0.7.0",
+    "@0xsequence/network": "^0.7.0",
+    "@arcadeum/provider": "^0.6.3",
+    "@ethersproject/providers": "^5.0.17",
+    "ethers": "^5.0.24"
+  },
+  "devDependencies": {
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#multicall",
+    "@types/web3-provider-engine": "^14.0.0",
+    "eth-json-rpc-middleware": "^6.0.0",
+    "json-rpc-engine": "^6.1.0",
+    "web3-provider-engine": "^16.0.1"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
