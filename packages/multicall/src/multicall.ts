@@ -1,6 +1,6 @@
 
 import { ethers } from 'ethers'
-import { abi } from './abi/multicall'
+import { walletContracts } from '@0xsequence/abi'
 import { RpcMethod, RpcVersion } from './constants'
 import { BlockTag, eqBlockTag, getRandomInt, parseBlockTag, partition, promisify, safe, safeSolve } from './utils'
 
@@ -55,7 +55,7 @@ export class Multicall {
     RpcMethod.ethGetBalance
   ]
 
-  readonly multicallInterface = new ethers.utils.Interface(abi)
+  readonly multicallInterface = new ethers.utils.Interface(walletContracts.requireUtils.abi)
 
   constructor(public conf: MulticallConf = Multicall.DEFAULT_CONF) {
     if (conf.batchSize <= 0) throw new Error(`Invalid batch size of ${conf.batchSize}`)
