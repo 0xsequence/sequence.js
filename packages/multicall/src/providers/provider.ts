@@ -9,7 +9,7 @@ import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequ
 export class MulticallProvider implements ethers.providers.Provider {
   private multicall: Multicall
 
-  constructor(private provider: ethers.providers.Provider, multicall?: Multicall | MulticallOptions) {
+  constructor(private provider: ethers.providers.Provider, multicall?: Multicall | Partial<MulticallOptions>) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
   }
 
