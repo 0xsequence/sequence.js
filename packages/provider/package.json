@@ -8,6 +8,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "prepublishOnly": "yarn test && yarn lint",
+    "test": "echo",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
