@@ -1,6 +1,6 @@
 import { Signer as AbstractSigner } from 'ethers'
 
-export abstract class WalletSigner extends AbstractSigner {
+export abstract class Signer extends AbstractSigner {
   // TODO .....
 }
 
