@@ -13,17 +13,17 @@ import { TypedDataUtils } from 'ethers-eip712'
 
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
-import { Wallet, WalletSigner } from '@0xsequence/wallet'
+import { Wallet, Signer } from '@0xsequence/wallet'
 import { SequenceTransaction, appendNonce, readSequenceNonce, toSequenceTransactions, isSequenceTransaction, flattenAuxTransactions } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private wallet: Wallet // TODO: should be WalletSigner
+  private wallet: Wallet // TODO: should be Signer
   // private provider: JsonRpcProvider
   private prompter: WalletUserPrompter
   private networks: Networks
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  // TODO: should be WalletSigner
+  // TODO: should be sequence Signer
   constructor(wallet: Wallet, prompter: WalletUserPrompter, networks: Networks) {
     // this.wallet = wallet.connect(provider)
     // this.provider = provider

@@ -29,8 +29,8 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
     }).catch(e => callback(e, undefined))
   }
 
-  // TODO: review..
-  // getSequenceSigner(): WalletSigner
+  // TODO: review.. should be sequence Signer type
+  // getSequenceSigner(): Signer
   getSequenceSigner(): SequenceSigner {
     return new SequenceSigner(this.context, this.getSigner())
   }
@@ -43,7 +43,7 @@ export class LocalWeb3Provider extends Web3Provider {
   }
 }
 
-// yes, it shoudl be the "WalletSigner"
+// yes, it should be the sequence "Signer"
 // TODO: should implement an interface...... or..? review
 export class SequenceSigner {
   private context: WalletContext

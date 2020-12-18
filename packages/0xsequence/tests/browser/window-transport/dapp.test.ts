@@ -26,7 +26,7 @@ export const tests = async () => {
   // and use the getSequenceSigner()........ or, maybe getSigner()
   // will give us some extra methods, perhaps..?
 
-  // TODO: switch to Web3Provider + WalletSigner..
+  // TODO: switch to sequence's Web3Provider + Signer..
   // we don't even have signTypedData here..
 
 

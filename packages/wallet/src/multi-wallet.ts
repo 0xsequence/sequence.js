@@ -2,7 +2,7 @@ import { TransactionResponse, TransactionRequest, Provider } from '@ethersprojec
 import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
-import { WalletSigner, SignerInfo, NotEnoughSigners } from './signer'
+import { Signer, SignerInfo, NotEnoughSigners } from './signer'
 import { Transactionish } from '@0xsequence/transactions'
 import { GlobalWalletConfig, WalletConfig, addressOf, imageHash, isConfig } from './config'
 import { NetworkConfig, WalletContext } from '@0xsequence/network'
@@ -16,7 +16,7 @@ export type MultiWalletOptions = {
   networks: NetworkConfig[]
 }
 
-export class MultiWallet extends WalletSigner {
+export class MultiWallet extends Signer {
   private readonly _wallets: {
     wallet: Wallet,
     network: NetworkConfig
