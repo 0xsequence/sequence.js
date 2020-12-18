@@ -42,13 +42,13 @@ import { RemoteSigner } from './remote-signers'
 
 import { packMessageData, resolveArrayProperties } from './utils'
 
-import { WalletSigner } from './signer'
+import { Signer } from './signer'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
 // messages, signing transactions and updating/deploying the wallet config on a specific chain.
-export class Wallet extends WalletSigner {
+export class Wallet extends Signer {
   private readonly _signers: AbstractSigner[]
 
   readonly context: WalletContext
