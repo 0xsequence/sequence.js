@@ -118,13 +118,13 @@ describe('Arcadeum wallet integration', function () {
   let options = [
     {
       name: 'Ether.js provider wrapper',
-      provider: (options?: MulticallOptions) => new MulticallProvider(
+      provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(
         ganache.spyProxy, options
       )
     },
     {
       name: "Json Rpc Router (Sequence)",
-      provider: (options?: MulticallOptions) => new Web3Provider(
+      provider: (options?: Partial<MulticallOptions>) => new Web3Provider(
         new JsonRpcRouter(
           new JsonRpcSender(ganache.spyProxy),
           [multicallMiddleware(options)]
@@ -133,7 +133,7 @@ describe('Arcadeum wallet integration', function () {
     },
     {
       name: 'Ether.js external provider wrapper',
-      provider: (conf?: MulticallOptions) => new Web3Provider(
+      provider: (conf?: Partial<MulticallOptions>) => new Web3Provider(
         new MulticallExternalProvider(
           new JsonRpcSender(ganache.spyProxy), conf
         )
@@ -141,7 +141,7 @@ describe('Arcadeum wallet integration', function () {
     },
     {
       name: "Provider Engine (json-rpc-engine)",
-      provider: (conf?: MulticallOptions) => {
+      provider: (conf?: Partial<MulticallOptions>) => {
         let engine = new JsonRpcEngine()
 
         engine.push(
@@ -170,7 +170,7 @@ describe('Arcadeum wallet integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider({ ...Multicall.DefaultOptions, contract: utilsContract.address})
+        provider = option.provider({ contract: utilsContract.address})
       })
 
       describe("Aggregate calls", async () => {
@@ -333,26 +333,23 @@ describe('Arcadeum wallet integration', function () {
         const brokenProviderOptions = [{
           name: "non-deployed util contract",
           overhead: 0,
-          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider()
+          brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) => getProvider()
         }, {
           name: "EOA address as util contract",
           overhead: 1,
-          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
-            ...Multicall.DefaultOptions,
+          brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) => getProvider({
             contract: ethers.Wallet.createRandom().address
           })
         }, {
           name: "Broken contract as util contract",
           overhead: 1,
-          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
-            ...Multicall.DefaultOptions,
+          brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) => getProvider({
             contract: callMock.address
           })
         }, {
           name: "invalid address as util contract",
           overhead: 0,
-          brokenProvider: (getProvider: (options?: MulticallOptions) => providers.Provider) => getProvider({
-            ...Multicall.DefaultOptions,
+          brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) => getProvider({
             contract: "This is not a valid address"
           })
         }]

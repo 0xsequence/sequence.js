@@ -44,8 +44,11 @@ export class Multicall {
 
   readonly multicallInterface = new ethers.utils.Interface(walletContracts.requireUtils.abi)
 
-  constructor(public options: MulticallOptions = DefaultMulticallOptions) {
-    if (options.batchSize <= 0) throw new Error(`Invalid batch size of ${options.batchSize}`)
+  public options: MulticallOptions
+
+  constructor(options: Partial<MulticallOptions>) {
+    this.options = { ...Multicall.DefaultOptions, ...options }
+    if (this.options.batchSize <= 0) throw new Error(`Invalid batch size of ${this.options.batchSize}`)
   }
 
   private timeout: NodeJS.Timeout | undefined
@@ -289,6 +292,7 @@ export class Multicall {
 
   static isMulticallOptions(cand: any): cand is MulticallOptions {
     return (
+      cand !== undefined &&
       cand.batchSize !== undefined &&
       cand.timeWindow !== undefined &&
       cand.contract !== undefined

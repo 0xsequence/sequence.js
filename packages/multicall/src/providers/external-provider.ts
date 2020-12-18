@@ -5,7 +5,7 @@ import { JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
 export class MulticallExternalProvider implements ExternalProvider {
   private multicall: Multicall
 
-  constructor(private provider: ExternalProvider, multicall?: Multicall | MulticallOptions) {
+  constructor(private provider: ExternalProvider, multicall?: Multicall | Partial<MulticallOptions>) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
   }
 
