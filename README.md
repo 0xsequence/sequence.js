@@ -18,8 +18,10 @@ A simple & powerful Ethereum development library and Web-based smart wallet.
 * chaind
 * deployer
 * guard
-* networks
+* multicall
+* network
 * provider
+* relayer
 * transactions
 * wallet
 
