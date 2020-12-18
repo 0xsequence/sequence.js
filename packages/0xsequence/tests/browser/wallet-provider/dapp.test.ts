@@ -58,8 +58,76 @@ export const tests = async () => {
 
     // sequence wallet to now send some eth back to another seed account
     // via the relayer
+    console.log('')
+    console.log('')
+    console.log('')
+    console.log('')
+    console.log('')
 
+
+    /*
+    TODO
+    ====
+    1. confirm eth_sendTransaction json-rpc param format 
+    2. confirm argument naming -- how does web3 handle it? how does ethers handle it? how do we handle it?
+    3. review toSequenceTransaction, etc..
+
+
+    */
+
+    //------------
+
+    // send eth from sequence smart wallet to another test account
+    const toAddress = testAccounts[1].address
+
+    /// yeay... bruk.
+
+    console.log('walletBalance before:', walletBalance)
+
+    // TODO: failed txn with amount too high, etc.
+    // TODO: send txn to invalid address
+
+    // TODO: sending from wallet is bruk. return requestHandler..
+
+    const tx2 = {
+      gasLimit: '0x555', // TODO: dont set the gas..?
+      gasPrice: '0x555',
+      to: toAddress,
+      value: ethers.utils.parseEther('120.4242').toHexString(),
+      // data: '0x'
+    }
+    console.log('===>', tx2)
+
+    const txResp2 = await wallet.getSigner().sendTransaction(tx2)
+
+    // TODO: lets add balanceCheck(before, after, '0.4242', 'remove')
+
+    const txReceipt2 = await wallet.getProvider().getTransactionReceipt(txResp2.hash)
+    assert.true(txReceipt2.status === 1, 'eth sent from wallet')
+
+    console.log('receipt..?', txReceipt2)
+
+    assert.equal(txReceipt2.to.toLowerCase(), toAddress.toLowerCase(), 'sent to the test account')
+    assert.equal(txReceipt2.from.toLowerCase(), testAccounts[5].address.toLowerCase(), 'sent from the relayer account')
+
+    assert.true((await wallet.getProvider().getBalance(toAddress)).gt(0), '0.4242 landed')
+
+    const walletBalance2 = await wallet.getSigner().getBalance()
+    assert.true(walletBalance2.gt(ethers.BigNumber.from(0)), 'wallet balance > 0')
+
+    console.log('walletBalance after:', walletBalance2)
   })
+
+  
+  // <Button px={3} m={1} onClick={() => signMessage()}>Sign Message</Button>
+  // <Button px={3} m={1} onClick={() => sign712()}>Sign TypedData</Button>
+  // <Button px={3} m={1} onClick={() => signAuthMessage()}>Sign auth-chain message</Button>
+  // <Button px={3} m={1} onClick={() => signETHAuth()}>Sign Authorization</Button>
+
+  // sendETH ..
+  // <Button px={3} m={1} onClick={() => sendTransactionForSidechain()}>Send sidechain transaction</Button>
+  // <Button px={3} m={1} onClick={() => sendBatchTransaction()}>Send batch transaction</Button>
+  // <Button px={3} m={1} onClick={() => sendARC()}>Contract, ARC: balanceOf</Button>
   
 }
 
