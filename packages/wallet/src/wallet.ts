@@ -2,12 +2,11 @@ import {
   Provider,
   TransactionResponse,
   BlockTag,
-  ExternalProvider,
   JsonRpcProvider,
   TransactionRequest
 } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
-import { Interface, ConnectionInfo, BytesLike, Deferrable, resolveProperties } from 'ethers/lib/utils' 
+import { Interface, ConnectionInfo, BytesLike, Deferrable } from 'ethers/lib/utils' 
 
 import { walletContracts } from '@0xsequence/abi'
 
@@ -26,7 +25,7 @@ import {
 
 import { Relayer } from '@0xsequence/relayer'
 
-import { WalletContext, JsonRpcSender } from '@0xsequence/network'
+import { WalletContext, JsonRpcSender, NetworkConfig, isNetworkConfig } from '@0xsequence/network'
 
 import {
   WalletConfig,
@@ -222,13 +221,13 @@ export class Wallet extends Signer {
   // signMessage will sign a message for a particular chainId with the wallet signers
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
-  async signMessage(message: BytesLike, chainId?: number, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: NetworkConfig | BigNumberish, allSigners?: boolean): Promise<string> {
     return this.sign(message, false, chainId, allSigners)
   }
 
   // sign is a helper method to sign a payload with the wallet signers
-  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: number, allSigners?: boolean): Promise<string> {
-    const signChainId = chainId ? chainId : await this.chainId()
+  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: NetworkConfig | BigNumberish, allSigners?: boolean): Promise<string> {
+    const signChainId = chainId ? isNetworkConfig(chainId) ? chainId.chainId : BigNumber.from(chainId) : await this.chainId()
     const digest = ethers.utils.arrayify(isDigest ? msg :
       ethers.utils.keccak256(
         packMessageData(
