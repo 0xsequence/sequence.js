@@ -55,6 +55,11 @@ export class MultiWallet extends Signer {
     return this._wallets[0].wallet.getAddress()
   }
 
+  // getSigners returns the multi-sig signers with permission to control the wallet
+  async getSigners(): Promise<string[]> {
+    return this._wallets[0].wallet.getSigners()
+  }
+
   // getGlobalWalletConfig builds the GlobalWalletConfig object which contains all WalletConfigs across all networks.
   // This is useful to shows all keys/devices connected to a wallet across networks.
   async getGlobalWalletConfig(): Promise<GlobalWalletConfig> {
@@ -112,7 +117,7 @@ export class MultiWallet extends Signer {
     return wallet.useConfig(thisConfig).signMessage(message)
   }
 
-  async sendTransaction(dtransactionish: Deferrable<Transactionish>, network?: NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<TransactionResponse> {
+  async sendTransaction(dtransactionish: Deferrable<Transactionish>, onlyFullSign: boolean = true, network?: NetworkConfig | BigNumberish): Promise<TransactionResponse> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
 
@@ -147,19 +152,24 @@ export class MultiWallet extends Signer {
     ])
   }
 
-  async updateConfig(newConfig: WalletConfig): Promise<TransactionResponse | undefined> {
+  // updateConfig will build an updated config transaction and send/publish it to the auth chain
+  // other chains are lazy-updated on the subsequent transactions
+  async updateConfig(newConfig: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
     // The config is the default config, see if the wallet has been deployed
     if (isConfig(this._wallets[0].wallet.config, newConfig)) {
       if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
-        return this.authWallet().publishConfig()
+        return [newConfig, await this.authWallet().publishConfig()]
       }
     }
 
     // Get latest config, update only if neccesary
     const lastConfig = await this.currentConfig()
     if (isConfig(lastConfig, newConfig)) {
-      return undefined
+      return [{
+        ...lastConfig,
+        address: this.address
+      }, undefined]
     }
 
     // Update to new configuration
@@ -168,7 +178,16 @@ export class MultiWallet extends Signer {
       .useConfig(lastConfig)
       .updateConfig(newConfig, undefined, true)
 
-    return tx
+    return [{
+      ...newConfig,
+      address: this.address
+    }, tx]
+  }
+
+  // publishConfig will publish the wallet config to the network via the relayer. Publishing
+  // the config will also store the entire object of signers.
+  publishConfig(): Promise<TransactionResponse> {
+    return this.authWallet().publishConfig()
   }
 
   async isDeployed(target?: Wallet | NetworkConfig): Promise<boolean> {
