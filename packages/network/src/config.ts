@@ -13,6 +13,10 @@ export interface NetworkConfig {
 
 export type Networks = {[key: string]: NetworkConfig}
 
+export function isNetworkConfig(cand: any): cand is NetworkConfig {
+  return cand && cand.chainId !== undefined
+}
+
 export const ethereumNetworks: Networks = {
   mainnet: {
     name: 'mainnet',
