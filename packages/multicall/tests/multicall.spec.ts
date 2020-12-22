@@ -10,7 +10,7 @@ import * as chai from 'chai'
 import { Multicall } from '../src'
 import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils'
-import { getRandomInt } from '../src/utils'
+import { getRandomInt } from '@0xsequence/utils'
 import { JsonRpcMethod } from '../src/constants'
 import { MulticallOptions } from '../src/multicall'
 

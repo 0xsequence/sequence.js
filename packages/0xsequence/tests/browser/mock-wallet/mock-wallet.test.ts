@@ -16,14 +16,20 @@ import { LocalRelayer } from '@0xsequence/relayer'
 
 // import { MockWalletUserPrompter } from './utils'
 
-import { testAccounts, getEOAWallet } from '../testutils'
-
+import { testAccounts, getEOAWallet, deployWalletContext } from '../testutils'
 
 //
 // Wallet, a test wallet
 //
 
 const main = async () => {
+
+  // TODO: first we need to ensure wallet context is available
+
+  const walletContext = await deployWalletContext()
+  console.log('walletContext:', walletContext)
+
+  return
 
   //
   // Setup single owner Sequence wallet

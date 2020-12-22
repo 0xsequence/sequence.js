@@ -16,6 +16,9 @@
     "test:server2": "PORT=8888 webpack-dev-server --config tests/webpack.config.js",
     "test:concurrently": "concurrently -k --success first 'yarn test:server' 'yarn start:hardhat'",
     "start:hardhat": "yarn run hardhat node",
+    "start:hardhat:verbose": "yarn run hardhat --verbose node",
+    "start:ganache": "ganache-cli --chainId ${npm_package_config_ganacheChainID} --networkId ${npm_package_config_ganacheChainID} --port ${npm_package_config_ganachePort} --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
+    "start:ganache:verbose": "yarn run start:ganache --verbose",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -53,5 +56,14 @@
       "ts"
     ],
     "verbose": true
+  },
+  "config": {
+    "mnemonic": "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee",
+    "ganacheChainID": 31337,
+    "ganachePort": 8545,
+    "ganacheGasLimit": "0xfffffffffff",
+    "ganacheGasPrice": "20000000000",
+    "etherBalance": "100000",
+    "extra": ""
   }
 }

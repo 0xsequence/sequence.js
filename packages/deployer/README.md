@@ -1,6 +1,8 @@
 # @0xsequence/deployer
 
-Deploy contracts using a universal deployer via CREATE2, allowing contracts to have the same address on any EVM chain. 
+Deploy contracts using a universal deployer via CREATE2, allowing contracts to have the same address on any EVM chain.
+
+UniversalDeployer works in both a browser and node.
 
 # How to use
 
@@ -15,23 +17,27 @@ An `instance` number can be passed if multiple instance of the same contract nee
 ...
 import { UniversalDeployer } from '@0xsequence/deployer'
 
-const signer = (new Web3Provider(web3.currentProvider)).getSigner()
-const universalDeployer = new UniversalDeployer(network.name, signer)
+const provider = new Web3Provider(web3.currentProvider)
+// const signer = provider.getSigner()
+const universalDeployer = new UniversalDeployer(network.name, provider)
 
 const main = async () => {
-  await universalDeployer.deploy('WalletFactory', FactoryFactory)
+  await universalDeployer.deploy('Factory', FactoryFactory)
   await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory)
   await universalDeployer.deploy('GuestModule', GuestModuleFactory)
 
   prompt.start(`writing deployment information to ${network.name}.json`)
   await universalDeployer.registerDeployment()
+
+  // or, await universalDeployer.getDeployment()
+
   prompt.succeed()
 }
 
 main()
 ```
 
-You can also pass transaction parameters explicitely :
+You can also pass transaction parameters explicitly :
 
 ```typescript
 ...
