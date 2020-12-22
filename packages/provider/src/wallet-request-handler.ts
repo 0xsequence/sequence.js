@@ -11,22 +11,19 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 import { JsonRpcProvider, ExternalProvider, TransactionResponse } from '@ethersproject/providers'
 import { TypedDataUtils } from 'ethers-eip712'
 
-import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, isJsonRpcProvider } from '@0xsequence/network'
 
-import { Wallet, Signer } from '@0xsequence/wallet'
+import { Signer } from '@0xsequence/wallet'
 import { SequenceTransaction, appendNonce, readSequenceNonce, toSequenceTransactions, isSequenceTransaction, flattenAuxTransactions } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private wallet: Wallet // TODO: should be Signer
-  // private provider: JsonRpcProvider
+  private wallet: Signer
+  private provider: JsonRpcProvider
   private prompter: WalletUserPrompter
   private networks: Networks
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  // TODO: should be sequence Signer
-  constructor(wallet: Wallet, prompter: WalletUserPrompter, networks: Networks) {
-    // this.wallet = wallet.connect(provider)
-    // this.provider = provider
+  constructor(wallet: Signer, prompter: WalletUserPrompter, networks: Networks) {
     this.wallet = wallet
     this.prompter = prompter
     this.networks = networks
@@ -34,8 +31,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (!wallet.provider) {
       throw new Error('wallet.provider is undefined')
     }
-    if (!wallet.relayer) {
-      throw new Error('wallet.relayer is undefined')
+    if (isJsonRpcProvider(wallet.provider)) {
+      this.provider = wallet.provider
+    } else {
+      throw new Error('wallet.provider is not a JsonRpcProvider')
     }
   }
 
@@ -70,7 +69,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const signer = this.wallet
     if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
 
-    const provider = this.wallet.provider
+    const provider = this.provider
     if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
 
     if (!chainId) {

@@ -286,7 +286,7 @@ export class Multicall {
       cand &&
       cand.handle !== undefined &&
       cand.conf !== undefined &&
-      Multicall.isMulticallOptions(cand.conf)
+      Multicall.isMulticallOptions(cand.options)
     )
   }
 
