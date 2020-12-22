@@ -1,8 +1,9 @@
-# @0xsequence/deployer
+@0xsequence/deployer
+====================
 
 Deploy contracts using a universal deployer via CREATE2, allowing contracts to have the same address on any EVM chain.
 
-UniversalDeployer works in both a browser and node.
+UniversalDeployer works in both Web Browsers and Nodejs.
 
 # How to use
 
@@ -18,7 +19,6 @@ An `instance` number can be passed if multiple instance of the same contract nee
 import { UniversalDeployer } from '@0xsequence/deployer'
 
 const provider = new Web3Provider(web3.currentProvider)
-// const signer = provider.getSigner()
 const universalDeployer = new UniversalDeployer(network.name, provider)
 
 const main = async () => {

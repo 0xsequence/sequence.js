@@ -32,10 +32,7 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
   const wallet = getEOAWallet(testAccounts[0].privateKey, provider)
   
   // Universal deployer for deterministic contract addresses
-
-  // TODO: how to make a JsonRpcProvider out of a .provider ..? I think Web3Provider ..
-
-  const universalDeployer = new UniversalDeployer('ganache', wallet, provider) //wallet.provider as JsonRpcProvider)
+  const universalDeployer = new UniversalDeployer('ganache', wallet.provider as JsonRpcProvider)
   const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
 
   const walletFactory = await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)

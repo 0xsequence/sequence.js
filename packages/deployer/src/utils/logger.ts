@@ -17,7 +17,7 @@ export const createLogger = async (): Promise<Logger> => {
     return (await loadOra()).default({ discardStdin: true })
   } else {
     // returns a noop ora-compatible logger
-    const debug = true
+    const debug = false
     let startText = ''
     return {
       start: function(text: string = '') {
