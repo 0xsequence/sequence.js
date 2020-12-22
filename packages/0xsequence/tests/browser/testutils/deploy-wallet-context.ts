@@ -39,8 +39,6 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
   const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
 
   const walletFactory = await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)
-
-  /*
   const mainModule = await universalDeployer.deploy('MainModule', MainModuleFactory, txParams, 0, walletFactory.address)
   await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, txParams)
   await universalDeployer.deploy('GuestModule', GuestModuleFactory, txParams)
@@ -50,7 +48,6 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
 
   // TODO .. for multicall, etc.
   // await universalDeployer.deploy('SequenceUtils', SequenceUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
-  */
 
   const deployment = universalDeployer.getDeployment()
 

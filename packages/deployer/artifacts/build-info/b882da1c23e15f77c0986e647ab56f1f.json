@@ -1,0 +1,500 @@
+{
+  "id": "b882da1c23e15f77c0986e647ab56f1f",
+  "_format": "hh-sol-build-info-1",
+  "solcVersion": "0.7.3",
+  "solcLongVersion": "0.7.3+commit.9bfce1f6",
+  "input": {
+    "language": "Solidity",
+    "sources": {
+      "contracts/UniversalDeployer2.sol": {
+        "content": "pragma solidity ^0.7.3;\n\ncontract UniversalDeployer2 {\n  event Deploy(address _addr) anonymous;\n      \n  /**\n    * @notice will deploy a contract via create2\n    * @param _creationCode Creation code of contract to deploy\n    * @param _instance Instance number of contract to deploy\n    */\n  function deploy(bytes memory _creationCode, uint256 _instance) public payable {\n    address addr;\n    assembly { addr := create2(callvalue(), add(_creationCode, 32), mload(_creationCode), _instance) }\n    emit Deploy(addr);\n  }\n}"
+      }
+    },
+    "settings": {
+      "optimizer": {
+        "enabled": true,
+        "runs": 100000,
+        "details": {
+          "yul": true
+        }
+      },
+      "outputSelection": {
+        "*": {
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers"
+          ],
+          "": [
+            "ast"
+          ]
+        }
+      }
+    }
+  },
+  "output": {
+    "contracts": {
+      "contracts/UniversalDeployer2.sol": {
+        "UniversalDeployer2": {
+          "abi": [
+            {
+              "anonymous": true,
+              "inputs": [
+                {
+                  "indexed": false,
+                  "internalType": "address",
+                  "name": "_addr",
+                  "type": "address"
+                }
+              ],
+              "name": "Deploy",
+              "type": "event"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes",
+                  "name": "_creationCode",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_instance",
+                  "type": "uint256"
+                }
+              ],
+              "name": "deploy",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function"
+            }
+          ],
+          "evm": {
+            "bytecode": {
+              "generatedSources": [],
+              "linkReferences": {},
+              "object": "608060405234801561001057600080fd5b5061013d806100206000396000f3fe60806040526004361061001e5760003560e01c80639c4ae2d014610023575b600080fd5b6100cb6004803603604081101561003957600080fd5b81019060208101813564010000000081111561005457600080fd5b82018360208201111561006657600080fd5b8035906020019184600183028401116401000000008311171561008857600080fd5b91908080601f01602080910402602001604051908101604052809392919081815260200183838082843760009201919091525092955050913592506100cd915050565b005b60008183516020850134f56040805173ffffffffffffffffffffffffffffffffffffffff83168152905191925081900360200190a050505056fea2646970667358221220fe4f822e7f534ea48df59f7407f52b4ba6a37ed2ec52a5ae1d4e9b1a2083270a64736f6c63430007030033",
+              "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH2 0x13D DUP1 PUSH2 0x20 PUSH1 0x0 CODECOPY PUSH1 0x0 RETURN INVALID PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x4 CALLDATASIZE LT PUSH2 0x1E JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x9C4AE2D0 EQ PUSH2 0x23 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH2 0xCB PUSH1 0x4 DUP1 CALLDATASIZE SUB PUSH1 0x40 DUP2 LT ISZERO PUSH2 0x39 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP2 ADD SWAP1 PUSH1 0x20 DUP2 ADD DUP2 CALLDATALOAD PUSH5 0x100000000 DUP2 GT ISZERO PUSH2 0x54 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 ADD DUP4 PUSH1 0x20 DUP3 ADD GT ISZERO PUSH2 0x66 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 CALLDATALOAD SWAP1 PUSH1 0x20 ADD SWAP2 DUP5 PUSH1 0x1 DUP4 MUL DUP5 ADD GT PUSH5 0x100000000 DUP4 GT OR ISZERO PUSH2 0x88 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST SWAP2 SWAP1 DUP1 DUP1 PUSH1 0x1F ADD PUSH1 0x20 DUP1 SWAP2 DIV MUL PUSH1 0x20 ADD PUSH1 0x40 MLOAD SWAP1 DUP2 ADD PUSH1 0x40 MSTORE DUP1 SWAP4 SWAP3 SWAP2 SWAP1 DUP2 DUP2 MSTORE PUSH1 0x20 ADD DUP4 DUP4 DUP1 DUP3 DUP5 CALLDATACOPY PUSH1 0x0 SWAP3 ADD SWAP2 SWAP1 SWAP2 MSTORE POP SWAP3 SWAP6 POP POP SWAP2 CALLDATALOAD SWAP3 POP PUSH2 0xCD SWAP2 POP POP JUMP JUMPDEST STOP JUMPDEST PUSH1 0x0 DUP2 DUP4 MLOAD PUSH1 0x20 DUP6 ADD CALLVALUE CREATE2 PUSH1 0x40 DUP1 MLOAD PUSH20 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF DUP4 AND DUP2 MSTORE SWAP1 MLOAD SWAP2 SWAP3 POP DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 LOG0 POP POP POP JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 INVALID 0x4F DUP3 0x2E PUSH32 0x534EA48DF59F7407F52B4BA6A37ED2EC52A5AE1D4E9B1A2083270A64736F6C63 NUMBER STOP SMOD SUB STOP CALLER ",
+              "sourceMap": "25:495:0:-:0;;;;;;;;;;;;;;;;;;;"
+            },
+            "deployedBytecode": {
+              "generatedSources": [],
+              "immutableReferences": {},
+              "linkReferences": {},
+              "object": "60806040526004361061001e5760003560e01c80639c4ae2d014610023575b600080fd5b6100cb6004803603604081101561003957600080fd5b81019060208101813564010000000081111561005457600080fd5b82018360208201111561006657600080fd5b8035906020019184600183028401116401000000008311171561008857600080fd5b91908080601f01602080910402602001604051908101604052809392919081815260200183838082843760009201919091525092955050913592506100cd915050565b005b60008183516020850134f56040805173ffffffffffffffffffffffffffffffffffffffff83168152905191925081900360200190a050505056fea2646970667358221220fe4f822e7f534ea48df59f7407f52b4ba6a37ed2ec52a5ae1d4e9b1a2083270a64736f6c63430007030033",
+              "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x4 CALLDATASIZE LT PUSH2 0x1E JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x9C4AE2D0 EQ PUSH2 0x23 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH2 0xCB PUSH1 0x4 DUP1 CALLDATASIZE SUB PUSH1 0x40 DUP2 LT ISZERO PUSH2 0x39 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP2 ADD SWAP1 PUSH1 0x20 DUP2 ADD DUP2 CALLDATALOAD PUSH5 0x100000000 DUP2 GT ISZERO PUSH2 0x54 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 ADD DUP4 PUSH1 0x20 DUP3 ADD GT ISZERO PUSH2 0x66 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 CALLDATALOAD SWAP1 PUSH1 0x20 ADD SWAP2 DUP5 PUSH1 0x1 DUP4 MUL DUP5 ADD GT PUSH5 0x100000000 DUP4 GT OR ISZERO PUSH2 0x88 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST SWAP2 SWAP1 DUP1 DUP1 PUSH1 0x1F ADD PUSH1 0x20 DUP1 SWAP2 DIV MUL PUSH1 0x20 ADD PUSH1 0x40 MLOAD SWAP1 DUP2 ADD PUSH1 0x40 MSTORE DUP1 SWAP4 SWAP3 SWAP2 SWAP1 DUP2 DUP2 MSTORE PUSH1 0x20 ADD DUP4 DUP4 DUP1 DUP3 DUP5 CALLDATACOPY PUSH1 0x0 SWAP3 ADD SWAP2 SWAP1 SWAP2 MSTORE POP SWAP3 SWAP6 POP POP SWAP2 CALLDATALOAD SWAP3 POP PUSH2 0xCD SWAP2 POP POP JUMP JUMPDEST STOP JUMPDEST PUSH1 0x0 DUP2 DUP4 MLOAD PUSH1 0x20 DUP6 ADD CALLVALUE CREATE2 PUSH1 0x40 DUP1 MLOAD PUSH20 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF DUP4 AND DUP2 MSTORE SWAP1 MLOAD SWAP2 SWAP3 POP DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 LOG0 POP POP POP JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 INVALID 0x4F DUP3 0x2E PUSH32 0x534EA48DF59F7407F52B4BA6A37ED2EC52A5AE1D4E9B1A2083270A64736F6C63 NUMBER STOP SMOD SUB STOP CALLER ",
+              "sourceMap": "25:495:0:-:0;;;;;;;;;;;;;;;;;;;;;291:227;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;291:227:0;;-1:-1:-1;;291:227:0;;;-1:-1:-1;291:227:0;;-1:-1:-1;;291:227:0:i;:::-;;;375:12;479:9;463:13;457:20;452:2;437:13;433:22;420:11;412:77;501:12;;;;;;;;;;404:85;;-1:-1:-1;501:12:0;;;;;;;291:227;;;:::o"
+            },
+            "methodIdentifiers": {
+              "deploy(bytes,uint256)": "9c4ae2d0"
+            }
+          }
+        }
+      }
+    },
+    "errors": [
+      {
+        "component": "general",
+        "errorCode": "1878",
+        "formattedMessage": "contracts/UniversalDeployer2.sol: Warning: SPDX license identifier not provided in source file. Before publishing, consider adding a comment containing \"SPDX-License-Identifier: <SPDX-License>\" to each source file. Use \"SPDX-License-Identifier: UNLICENSED\" for non-open-source code. Please see https://spdx.org for more information.\n",
+        "message": "SPDX license identifier not provided in source file. Before publishing, consider adding a comment containing \"SPDX-License-Identifier: <SPDX-License>\" to each source file. Use \"SPDX-License-Identifier: UNLICENSED\" for non-open-source code. Please see https://spdx.org for more information.",
+        "severity": "warning",
+        "sourceLocation": {
+          "end": -1,
+          "file": "contracts/UniversalDeployer2.sol",
+          "start": -1
+        },
+        "type": "Warning"
+      }
+    ],
+    "sources": {
+      "contracts/UniversalDeployer2.sol": {
+        "ast": {
+          "absolutePath": "contracts/UniversalDeployer2.sol",
+          "exportedSymbols": {
+            "UniversalDeployer2": [
+              23
+            ]
+          },
+          "id": 24,
+          "nodeType": "SourceUnit",
+          "nodes": [
+            {
+              "id": 1,
+              "literals": [
+                "solidity",
+                "^",
+                "0.7",
+                ".3"
+              ],
+              "nodeType": "PragmaDirective",
+              "src": "0:23:0"
+            },
+            {
+              "abstract": false,
+              "baseContracts": [],
+              "contractDependencies": [],
+              "contractKind": "contract",
+              "fullyImplemented": true,
+              "id": 23,
+              "linearizedBaseContracts": [
+                23
+              ],
+              "name": "UniversalDeployer2",
+              "nodeType": "ContractDefinition",
+              "nodes": [
+                {
+                  "anonymous": true,
+                  "id": 5,
+                  "name": "Deploy",
+                  "nodeType": "EventDefinition",
+                  "parameters": {
+                    "id": 4,
+                    "nodeType": "ParameterList",
+                    "parameters": [
+                      {
+                        "constant": false,
+                        "id": 3,
+                        "indexed": false,
+                        "mutability": "mutable",
+                        "name": "_addr",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 5,
+                        "src": "70:13:0",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        "typeName": {
+                          "id": 2,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "70:7:0",
+                          "stateMutability": "nonpayable",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "src": "69:15:0"
+                  },
+                  "src": "57:38:0"
+                },
+                {
+                  "body": {
+                    "id": 21,
+                    "nodeType": "Block",
+                    "src": "369:149:0",
+                    "statements": [
+                      {
+                        "assignments": [
+                          14
+                        ],
+                        "declarations": [
+                          {
+                            "constant": false,
+                            "id": 14,
+                            "mutability": "mutable",
+                            "name": "addr",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 21,
+                            "src": "375:12:0",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            },
+                            "typeName": {
+                              "id": 13,
+                              "name": "address",
+                              "nodeType": "ElementaryTypeName",
+                              "src": "375:7:0",
+                              "stateMutability": "nonpayable",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            "visibility": "internal"
+                          }
+                        ],
+                        "id": 15,
+                        "nodeType": "VariableDeclarationStatement",
+                        "src": "375:12:0"
+                      },
+                      {
+                        "AST": {
+                          "nodeType": "YulBlock",
+                          "src": "402:89:0",
+                          "statements": [
+                            {
+                              "nodeType": "YulAssignment",
+                              "src": "404:85:0",
+                              "value": {
+                                "arguments": [
+                                  {
+                                    "arguments": [],
+                                    "functionName": {
+                                      "name": "callvalue",
+                                      "nodeType": "YulIdentifier",
+                                      "src": "420:9:0"
+                                    },
+                                    "nodeType": "YulFunctionCall",
+                                    "src": "420:11:0"
+                                  },
+                                  {
+                                    "arguments": [
+                                      {
+                                        "name": "_creationCode",
+                                        "nodeType": "YulIdentifier",
+                                        "src": "437:13:0"
+                                      },
+                                      {
+                                        "kind": "number",
+                                        "nodeType": "YulLiteral",
+                                        "src": "452:2:0",
+                                        "type": "",
+                                        "value": "32"
+                                      }
+                                    ],
+                                    "functionName": {
+                                      "name": "add",
+                                      "nodeType": "YulIdentifier",
+                                      "src": "433:3:0"
+                                    },
+                                    "nodeType": "YulFunctionCall",
+                                    "src": "433:22:0"
+                                  },
+                                  {
+                                    "arguments": [
+                                      {
+                                        "name": "_creationCode",
+                                        "nodeType": "YulIdentifier",
+                                        "src": "463:13:0"
+                                      }
+                                    ],
+                                    "functionName": {
+                                      "name": "mload",
+                                      "nodeType": "YulIdentifier",
+                                      "src": "457:5:0"
+                                    },
+                                    "nodeType": "YulFunctionCall",
+                                    "src": "457:20:0"
+                                  },
+                                  {
+                                    "name": "_instance",
+                                    "nodeType": "YulIdentifier",
+                                    "src": "479:9:0"
+                                  }
+                                ],
+                                "functionName": {
+                                  "name": "create2",
+                                  "nodeType": "YulIdentifier",
+                                  "src": "412:7:0"
+                                },
+                                "nodeType": "YulFunctionCall",
+                                "src": "412:77:0"
+                              },
+                              "variableNames": [
+                                {
+                                  "name": "addr",
+                                  "nodeType": "YulIdentifier",
+                                  "src": "404:4:0"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "evmVersion": "istanbul",
+                        "externalReferences": [
+                          {
+                            "declaration": 8,
+                            "isOffset": false,
+                            "isSlot": false,
+                            "src": "437:13:0",
+                            "valueSize": 1
+                          },
+                          {
+                            "declaration": 8,
+                            "isOffset": false,
+                            "isSlot": false,
+                            "src": "463:13:0",
+                            "valueSize": 1
+                          },
+                          {
+                            "declaration": 10,
+                            "isOffset": false,
+                            "isSlot": false,
+                            "src": "479:9:0",
+                            "valueSize": 1
+                          },
+                          {
+                            "declaration": 14,
+                            "isOffset": false,
+                            "isSlot": false,
+                            "src": "404:4:0",
+                            "valueSize": 1
+                          }
+                        ],
+                        "id": 16,
+                        "nodeType": "InlineAssembly",
+                        "src": "393:98:0"
+                      },
+                      {
+                        "eventCall": {
+                          "arguments": [
+                            {
+                              "id": 18,
+                              "name": "addr",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 14,
+                              "src": "508:4:0",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            ],
+                            "id": 17,
+                            "name": "Deploy",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 5,
+                            "src": "501:6:0",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_event_nonpayable$_t_address_$returns$__$",
+                              "typeString": "function (address)"
+                            }
+                          },
+                          "id": 19,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "501:12:0",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 20,
+                        "nodeType": "EmitStatement",
+                        "src": "496:17:0"
+                      }
+                    ]
+                  },
+                  "documentation": {
+                    "id": 6,
+                    "nodeType": "StructuredDocumentation",
+                    "src": "105:183:0",
+                    "text": " @notice will deploy a contract via create2\n @param _creationCode Creation code of contract to deploy\n @param _instance Instance number of contract to deploy"
+                  },
+                  "functionSelector": "9c4ae2d0",
+                  "id": 22,
+                  "implemented": true,
+                  "kind": "function",
+                  "modifiers": [],
+                  "name": "deploy",
+                  "nodeType": "FunctionDefinition",
+                  "parameters": {
+                    "id": 11,
+                    "nodeType": "ParameterList",
+                    "parameters": [
+                      {
+                        "constant": false,
+                        "id": 8,
+                        "mutability": "mutable",
+                        "name": "_creationCode",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 22,
+                        "src": "307:26:0",
+                        "stateVariable": false,
+                        "storageLocation": "memory",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes"
+                        },
+                        "typeName": {
+                          "id": 7,
+                          "name": "bytes",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "307:5:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes_storage_ptr",
+                            "typeString": "bytes"
+                          }
+                        },
+                        "visibility": "internal"
+                      },
+                      {
+                        "constant": false,
+                        "id": 10,
+                        "mutability": "mutable",
+                        "name": "_instance",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 22,
+                        "src": "335:17:0",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 9,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "335:7:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "src": "306:47:0"
+                  },
+                  "returnParameters": {
+                    "id": 12,
+                    "nodeType": "ParameterList",
+                    "parameters": [],
+                    "src": "369:0:0"
+                  },
+                  "scope": 23,
+                  "src": "291:227:0",
+                  "stateMutability": "payable",
+                  "virtual": false,
+                  "visibility": "public"
+                }
+              ],
+              "scope": 24,
+              "src": "25:495:0"
+            }
+          ],
+          "src": "0:520:0"
+        },
+        "id": 0
+      }
+    }
+  }
+}

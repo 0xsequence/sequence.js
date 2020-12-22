@@ -1,0 +1,28 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "NanoUniversalDeployer",
+  "sourceName": "contracts/NanoUniversalDeployer.sol",
+  "abi": [
+    {
+      "anonymous": true,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_addr",
+          "type": "address"
+        }
+      ],
+      "name": "Deploy",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b5060a680601d6000396000f3fe60a06020601f369081018290049091028201604052608081815260009260609284918190838280828437600092018290525084519495509392505060208401905034f56040805173ffffffffffffffffffffffffffffffffffffffff83168152905191935081900360200190a0505000fea2646970667358221220666499be8ca319fc10180c06d4016ad197c8751b9c63f1823b54b2ff9413e37664736f6c63430007030033",
+  "deployedBytecode": "0x60a06020601f369081018290049091028201604052608081815260009260609284918190838280828437600092018290525084519495509392505060208401905034f56040805173ffffffffffffffffffffffffffffffffffffffff83168152905191935081900360200190a0505000fea2646970667358221220666499be8ca319fc10180c06d4016ad197c8751b9c63f1823b54b2ff9413e37664736f6c63430007030033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

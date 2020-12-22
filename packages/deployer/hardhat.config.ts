@@ -1,4 +1,3 @@
-// require('@nomiclabs/hardhat-truffle5')
 import '@nomiclabs/hardhat-truffle5'
 import { networkConfig } from './src/utils/configLoader'
 
@@ -9,7 +8,7 @@ const ganacheNetwork = {
 
 module.exports = {
   solidity: {
-    version: '0.6.10',
+    version: '0.7.3',
     settings: {
       optimizer: {
         enabled: true,

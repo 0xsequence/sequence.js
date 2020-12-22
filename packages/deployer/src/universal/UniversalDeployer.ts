@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import { ethers, ContractFactory, ContractTransaction } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from "../typings/contracts"
-import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX } from '../utils/constants'
+import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX, UNIVERSAL_DEPLOYER_2_BYTECODE } from '../utils/constants'
 import { ContractInstance } from './types'
 import { createLogger, Logger } from '../utils/logger'
 
@@ -106,13 +106,14 @@ export class UniversalDeployer {
       'ALREADY DEPLOYED'
     }
 
-    const universalDeployer2Factory = new UniversalDeployer2__factory(this.signer)
-    const universalDeployer2DeployTx = await universalDeployer2Factory.getDeployTransaction()
+    // NOTE: in case the getCode below fails, double check the UNIVERSAL_DEPLOYER_2_ADDRESS address
+    // which is emitted from the deployer 1 contract creation logs. This address may change if
+    // the UNIVERSAL_DEPLOYER_2_BYTECODE changes of the deployer -- which should never really happen.
 
     prompt.start('Deploying universal deployer 2 contract')
     const tx = await this.signer.sendTransaction({
       to: UNIVERSAL_DEPLOYER_ADDRESS,
-      data: universalDeployer2DeployTx.data,
+      data: UNIVERSAL_DEPLOYER_2_BYTECODE,
       ...txParams
     }) as ContractTransaction
     await tx.wait()
