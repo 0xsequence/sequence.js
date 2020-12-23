@@ -30,7 +30,7 @@ const { expect } = chai.use(chaiAsPromised)
 
 import hardhat from 'hardhat'
 
-const GANACHE_PORT = 38545
+const GANACHE_PORT = 8545
 
 type GanacheInstance = {
   server?: any
@@ -68,23 +68,26 @@ describe('Wallet integration', function () {
     //--
     // Ganache version
     ganache.chainId = 31337
-    ganache.server = Ganache.server({
-      _chainIdRpc: ganache.chainId,
-      _chainId: ganache.chainId,
-      mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
-    })
+    // ganache.server = Ganache.server({
+    //   _chainIdRpc: ganache.chainId,
+    //   _chainId: ganache.chainId,
+    //   mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
+    // })
 
-    await ganache.server.listen(GANACHE_PORT)
+    // await ganache.server.listen(GANACHE_PORT)
 
     ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
     ganache.provider = new JsonRpcProvider(`http://localhost:${GANACHE_PORT}/`, { name: 'wee', chainId: 31337 })
     ganache.signer = ganache.provider.getSigner()
+
+
+
     //--
 
     // --
     // Hardhat version
     // NOTE: as well LocalRelayer deploy wallet method must set gasLimit directly or it will blow up.
-    // hardhat.config.networks.ganache = hardhat.config.networks.hardhat
+    hardhat.config.networks.ganache = hardhat.config.networks.hardhat
     // ganache.provider = new Web3Provider(hardhat.network.provider.send, { name: 'hardhat', chainId: 31337 })
     // ganache.signer = ganache.provider.getSigner()
     //--
@@ -220,9 +223,6 @@ describe('Wallet integration', function () {
 
             // Contract wallet must be deployed before calling ERC1271
             const txn = await relayer.deployWallet(wallet.config, context)
-
-            // const receipt = await provider.getTransactionReceipt(txn.hash)
-            // console.log('status?', receipt.status)
 
             const call = hookCaller.callERC1271isValidSignatureData(wallet.address, message, signature)
             await expect(call).to.be.fulfilled

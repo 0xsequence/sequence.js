@@ -18,13 +18,15 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
   }
 
   async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
-    // TODO: some tests, with the HookCallerMock fail without the thing below, perhaps review HookCallerMock.sol
-    // and fix it to avoid what looks like an infinite loop?
+    // TODO: some tests, with the HookCallerMock fail without setting the constant gasLimit below,
+    // perhaps review HookCallerMock.sol and fix it to avoid what looks like an infinite loop in hardhat?
     const walletDeployTxn = this.prepareWalletDeploy(config, context)
 
-    // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate
-    // return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
-    return this.signer.sendTransaction(walletDeployTxn)
+    // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate.
+    // However, setting a constant gasLimit is also okay, as it saves us a step for what is
+    // a constant value for every wallet deployment.
+    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
+    // return this.signer.sendTransaction(walletDeployTxn)
   }
 
   async gasRefundOptions(
