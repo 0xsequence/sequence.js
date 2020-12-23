@@ -77,7 +77,7 @@ export class Wallet extends Signer {
     this.context = context
   }
 
-  async getProvider(chainId?: number): Promise<Provider> {
+  async getProvider(chainId?: number): Promise<JsonRpcProvider> {
     if (chainId !== undefined && await this.chainId() !== chainId) {
       throw Error("Invalid chain id")
     }

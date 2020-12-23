@@ -1,4 +1,4 @@
-import { TransactionResponse, TransactionRequest, Provider } from '@ethersproject/providers'
+import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
 import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
@@ -58,7 +58,7 @@ export class MultiWallet extends Signer {
     return this._wallets[0].wallet.getSigners()
   }
 
-  getProvider(chainId?: number): Promise<Provider | undefined> {
+  getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
     if (chainId === undefined) return this.mainWallet().getProvider()
     return this._wallets.find((w) => w.network.chainId === chainId)?.wallet.getProvider()
   }

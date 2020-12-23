@@ -1,13 +1,13 @@
 import { NetworkConfig } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
-import { SequenceTransaction, SignedTransactions, Transactionish } from '@0xsequence/transactions'
-import { Provider, TransactionResponse } from '@ethersproject/providers'
+import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
+import { JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
 import { BigNumberish, Signer as AbstractSigner } from 'ethers'
 import { BytesLike, Deferrable } from 'ethers/lib/utils'
 import { WalletConfig } from '.'
 
 export abstract class Signer extends AbstractSigner {
-  abstract getProvider(chainId?: number): Promise<Provider | undefined>
+  abstract getProvider(chainId?: number): Promise<JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   abstract getSigners(): Promise<string[]>
