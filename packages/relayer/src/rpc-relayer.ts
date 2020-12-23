@@ -1,7 +1,7 @@
 import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
-import { SequenceTransaction, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode } from '@0xsequence/transactions'
+import { SequenceTransaction, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
 import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
@@ -129,13 +129,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return ethers.BigNumber.from(resp.nonce).toNumber()
   }
 
-  async relay(
-    config: WalletConfig,
-    context: WalletContext,
-    signature: string | Promise<string>,
-    ...transactions: SequenceTransaction[]
-  ): Promise<PendingTransactionResponse> {
-    const prep = await this.prepareTransactions(config, context, signature, ...transactions)
+  async relay(signed: SignedTransactions): Promise<PendingTransactionResponse> {
+    const prep = await this.prepareTransactions(signed.config, signed.context, signed.signature, ...signed.transactions)
     const result = this.chaindService.sendMetaTxn({
       call: {
         contract: prep.to,
@@ -152,7 +147,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         blockHash: txReceipt.blockHash,
         blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
         confirmations: 1,
-        from: addressOf(config, context),
+        from: addressOf(signed.config, signed.context),
         hash: txReceipt.transactionHash,
         raw: receipt.txnReceipt,
         wait: async (confirmations?: number) => this.provider.waitForTransaction(txReceipt.transactionHash, confirmations)
@@ -164,7 +159,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
 
     return {
-      from: addressOf(config, context),
+      from: addressOf(signed.config, signed.context),
       raw: (await result).toString(),
       hash: (await result).txnHash,
       waitForReceipt: waitReceipt,

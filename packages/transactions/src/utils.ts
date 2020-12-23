@@ -3,7 +3,7 @@ import { Interface } from 'ethers/lib/utils' // TODO: other pkg..?
 import { TransactionRequest } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
-import { SequenceTransaction, AuxTransactionRequest, Transactionish, SequenceTransactionEncoded, NonceDependency } from './types'
+import { SequenceTransaction, AuxTransactionRequest, Transactionish, SequenceTransactionEncoded, NonceDependency, SignedTransactions } from './types'
 
 export const MetaTransactionsType = `tuple(
   bool delegateCall,
@@ -192,4 +192,17 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
     bnonce.div(shr),
     bnonce.mod(shr)
   ]
+}
+
+export function isSignedTransactions(cand: any): cand is SignedTransactions {
+  return (
+    cand !== undefined &&
+    cand.chainId !== undefined &&
+    cand.config !== undefined &&
+    cand.context !== undefined &&
+    cand.signature !== undefined &&
+    cand.transactions !== undefined &&
+    Array.isArray(cand.transactions) &&
+    cand.transactions.reduce((p, c) => p && isSequenceTransaction(c), true)
+  )
 }

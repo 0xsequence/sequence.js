@@ -1,13 +1,14 @@
-import { TransactionResponse, TransactionRequest, Provider } from '@ethersproject/providers'
+import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
 import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 import { Signer, SignerInfo, NotEnoughSigners } from './signer'
-import { Transactionish } from '@0xsequence/transactions'
+import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
 import { GlobalWalletConfig, WalletConfig, addressOf, imageHash, isConfig } from './config'
 import { NetworkConfig, WalletContext } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
+import { Relayer } from '@0xsequence/relayer'
 
 export type MultiWalletOptions = {
   context: WalletContext,
@@ -21,7 +22,6 @@ export class MultiWallet extends Signer {
     wallet: Wallet,
     network: NetworkConfig
   }[]
-  provider: ethers.providers.JsonRpcProvider
 
   constructor(opts: MultiWalletOptions) {
     super()
@@ -40,8 +40,6 @@ export class MultiWallet extends Signer {
         wallet: wallet
       }
     })
-
-    this.provider = this._wallets[0].wallet.provider
   }
 
   // address getter
@@ -58,6 +56,16 @@ export class MultiWallet extends Signer {
   // getSigners returns the multi-sig signers with permission to control the wallet
   async getSigners(): Promise<string[]> {
     return this._wallets[0].wallet.getSigners()
+  }
+
+  getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
+    if (chainId === undefined) return this.mainWallet().getProvider()
+    return this._wallets.find((w) => w.network.chainId === chainId)?.wallet.getProvider()
+  }
+
+  getRelayer(chainId?: number): Promise<Relayer | undefined> {
+    if (chainId === undefined) return this.mainWallet().getRelayer()
+    return this._wallets.find((w) => w.network.chainId === chainId)?.wallet.getRelayer()
   }
 
   // getGlobalWalletConfig builds the GlobalWalletConfig object which contains all WalletConfigs across all networks.
@@ -296,6 +304,11 @@ export class MultiWallet extends Signer {
 
   static isSequenceWallet(signer: AbstractSigner): signer is MultiWallet {
     return (<MultiWallet>signer).updateConfig !== undefined
+  }
+
+  signTransactions(transaction: Deferrable<Transactionish>, allSigners?: boolean, network?: NetworkConfig | BigNumberish): Promise<SignedTransactions> {
+    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
+    return wallet.signTransactions(transaction, allSigners)
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {

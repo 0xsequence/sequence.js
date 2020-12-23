@@ -1,5 +1,5 @@
 import { providers } from 'ethers'
-import { SequenceTransaction } from '@0xsequence/transactions'
+import { SequenceTransaction, SignedTransactions } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/wallet'
 
@@ -25,12 +25,7 @@ export interface Relayer {
   getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: providers.BlockTag): Promise<number>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
-  relay(
-    config: WalletConfig,
-    context: WalletContext,
-    signature: string | Promise<string>,
-    ...transactions: SequenceTransaction[]
-  ): Promise<providers.TransactionResponse>
+  relay(signed: SignedTransactions): Promise<providers.TransactionResponse>
 }
 
 export { LocalRelayer } from './local-relayer'
