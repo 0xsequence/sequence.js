@@ -19,6 +19,21 @@ const resolvePackages = () => {
   }, [])
 }
 
+// Include extra sources for compilation.
+//
+// NOTE: if you experience an error in your webpack builder such as, 
+// Module parse failed: Unexpected token (11:20)
+// You may need an appropriate loader to handle this file type, currently no loaders are
+// configured to process this file. See https://webpack.js.org/concepts#loaders
+//
+// The above error is due to not passing the TypeScript files to the module.rules for
+// babel below. The solution is to include the path to the source files below, and
+// the error will go away.
+const resolveExtras = [
+  // resolveCwd('../wallet/tests/utils'),
+  resolveCwd('../../node_modules/@0xsequence/wallet-contracts/typings')
+]
+
 const resolveTestEntries = (location) => {
   return fs.readdirSync(location).reduce((list, f) => {
     const n = path.join(location, f)
@@ -99,7 +114,7 @@ module.exports = {
     rules: [
       {
         test: /\.(js|mjs|ts)$/,
-        include: [...resolvePackages(), resolveCwd('./tests')],
+        include: [...resolvePackages(), resolveCwd('./tests'), ...resolveExtras],
         loader: require.resolve('babel-loader'),
         options: {
           presets: ['@babel/preset-typescript'],
@@ -126,7 +141,13 @@ module.exports = {
   resolve: {
     modules: ['node_modules', resolveCwd('node_modules')],
     extensions: ['.ts', '.js', '.png', '.jpg', '.d.ts'],
-    alias: {}
+    alias: {},
+    fallback: {
+      fs: false,
+      stream: false,
+      readline: false,
+      assert: false
+    }
   },
   devServer: {
     clientLogLevel: 'silent',

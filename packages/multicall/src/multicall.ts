@@ -2,9 +2,9 @@
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
-import { BlockTag, eqBlockTag, getRandomInt, parseBlockTag, partition, safeSolve } from './utils'
-import { promisify } from 'util'
-import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddleware, JsonRpcHandlerFunc } from "@0xsequence/network"
+import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
+import { promisify, getRandomInt } from '@0xsequence/utils'
+import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddleware, JsonRpcHandlerFunc, JsonRpcResponse } from "@0xsequence/network"
 
 
 export type MulticallOptions = {
@@ -206,7 +206,7 @@ export class Multicall {
     const reqId = getRandomInt()
 
     const res = await safeSolve(
-      promisify(next)({
+      promisify<JsonRpcRequest, JsonRpcResponse>(next)({
         id: reqId,
         jsonrpc: JsonRpcVersion,
         method: JsonRpcMethod.ethCall,

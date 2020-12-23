@@ -5,9 +5,8 @@ import { test, assert } from '../../utils/assert'
 
 import { TypedDataUtils } from 'ethers-eip712'
 
-// TODO: put these in signer utils
 import { addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
-import { sequenceContext } from '@0xsequence/network'
+import { testWalletContext } from '../testutils'
 
 const walletProvider = new WindowMessageProvider('http://localhost:9999/mock-wallet/mock-wallet.test.html')
 
@@ -37,7 +36,7 @@ export const tests = async () => {
   const chainId = await signer.getChainId()
 
   await test('getAddress', async () => {
-    assert.equal(address, '0x24E78922FE5eCD765101276A422B8431d7151259', 'wallet address')
+    assert.equal(address, '0x773988B85A60BE15973FDc5Fcaf3D4E92e992124', 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -84,7 +83,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x000100011ec026ba887f4237db570b1546f9e793fafecbc08df331253b385e35ae7d9107020143f742d3f6768a978b7a4c32b003deb15f3d010805436db1cb9332104d8e1b02',
+      '0x000100013dbb43cb9eb3af6e3f03e3370ed75604a30e224898820ebc0cab85fd9ada5583715e8578f051241cfe052596825e05c197aa7e9f6d34394d3ae27d20b5a39d711c02',
       'signature match'
     )
 
@@ -98,7 +97,7 @@ export const tests = async () => {
     // Verify the message signature
     //
     const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, await signer.getChainId())
+    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
     assert.true(isValid, 'signature is valid')
 
     // also compute the subDigest of the message, to be provided to the end-user
@@ -111,7 +110,7 @@ export const tests = async () => {
     //
     const walletConfig = await recoverConfig(subDigest, sig)
 
-    const recoveredWalletAddress = addressOf(walletConfig, sequenceContext)
+    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
     assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
@@ -170,8 +169,8 @@ export const tests = async () => {
     const sig = await provider.send('eth_signTypedData', [address, typedData])
     assert.equal(
       sig,
-      '0x00010001c3255f8569bad1fce0bc68fa33c11f065fb9e11efe7679b5c0b662a47d47465361c3a8783c4a8941610a404ebb092ed6d5d67575fd7f0846e280d09c235c32a61c02',
-      'signature match'
+      '0x00010001687901ecd5c83560b136ff545ab3b04f4b97ab473fd1b11795c3ae46f25e4b820939d34294c5c559e862c3ec116ebff383cc9d60a64eaa1c68584b4b1b389bf71c02',
+      'signature match typed-data'
     )
 
     // TODO: also compute the 'sig' by using the sequence signer directly
@@ -185,7 +184,7 @@ export const tests = async () => {
     //
     const message = TypedDataUtils.encodeDigest(typedData)
     const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, await signer.getChainId())
+    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
     assert.true(isValid, 'signature is valid')
 
     // also compute the subDigest of the message, to be provided to the end-user
@@ -198,7 +197,7 @@ export const tests = async () => {
     //
     const walletConfig = await recoverConfig(subDigest, sig)
 
-    const recoveredWalletAddress = addressOf(walletConfig, sequenceContext)
+    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
     assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner

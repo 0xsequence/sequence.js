@@ -15,6 +15,7 @@
   "dependencies": {
     "@0xsequence/abi": "^0.7.0",
     "@0xsequence/network": "^0.7.0",
+    "@0xsequence/utils": "^0.7.0",
     "@arcadeum/provider": "^0.6.3",
     "@ethersproject/providers": "^5.0.17",
     "ethers": "^5.0.24"

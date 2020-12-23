@@ -9,6 +9,9 @@ export interface WalletContext {
   nonStrict?: boolean
 }
 
+// TODO: rename sequenceContext to something like "deployedWalletContext"
+// or, deployedContext, etc.
+
 // sequenceContext are the deployed addresses of modules available on public networks.
 export const sequenceContext: WalletContext = {
   factory: '0x878C961C6da18574e5a09069E541bDb6627eA65c',
