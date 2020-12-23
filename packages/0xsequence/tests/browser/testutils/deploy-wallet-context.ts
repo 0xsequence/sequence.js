@@ -58,3 +58,13 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
 
   return deployWalletContextCache
 }
+
+// testWalletContext is determined by the `deployWalletContext` method above. We can use this
+// across instances, but, we must ensure the contracts are deployed by the mock-wallet at least.
+export const testWalletContext: WalletContext = {
+  factory: "0x2174B437A3DCbFe4FB84368Bcd1ad8dEeD796997",
+  guestModule: "0x140B32095aE7571C7D268855F0F1ec923A06257A",
+  mainModule: "0x67d12c45203F10FF0e93FEc6B8ECA052e50Ce227",
+  mainModuleUpgradable: "0xB970f41C5246383e7A2994E0f5AE51d0d6458a4D",
+  requireUtils: "0xfCD9f935EEE6E1DcFB85Db46Df898d3471F437B5",
+}

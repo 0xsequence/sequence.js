@@ -16,6 +16,7 @@
     "gen:typings": "rm -f src/typings/contracts/* && typechain --target ethers-v5 --outDir src/typings/contracts './artifacts/contracts/!(build-info)/**/*[^dbg].json'"
   },
   "dependencies": {
+    "@0xsequence/utils": "^0.7.0",
     "@ethersproject/contracts": "^5.0.8",
     "ethers": "^5.0.24",
     "ora": "^5.1.0"

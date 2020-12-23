@@ -62,7 +62,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     const warnPopupBlocked = () => {
       if (warned) return
       warned = true
-      alert('popup is blocked! hey yo')
+      // alert('popup is blocked! hey yo') // NOTE: for debug purposes only
       throw new Error('popup is blocked')
     }
 
@@ -93,14 +93,15 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
       const connectCheck = setTimeout(() => {
         if (!this.connected && !warned) {
+          warned = true
           // unable to connect after sometime, lets return error notice
-          alert('unable to connect to the wallet')
+          // alert('unable to connect to the wallet') // NOTE: for debug purposes only
           throw new Error('unable to connect to the wallet')
         }
-      }, 3000)
+      }, 4000)
 
       const postMessageUntilConnected = () => {
-        if (this.connected) {
+        if (this.connected || warned) {
           clearTimeout(popupCheck)
           clearTimeout(connectCheck)
           return
