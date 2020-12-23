@@ -25,7 +25,7 @@ export abstract class Signer extends AbstractSigner {
 }
 
 export type SignerThreshold = {
-  chaind: number,
+  chaind: number, // typo..
   weight: number
 }
 
