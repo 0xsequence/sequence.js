@@ -8,7 +8,7 @@ import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/e
 import * as lib from '../src'
 
 import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, aggregate } from '../src'
-import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish } from '@0xsequence/transactions'
+import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish, isSignedTransactions } from '@0xsequence/transactions'
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
@@ -744,13 +744,17 @@ describe('Wallet integration', function () {
           data: '0x9988776655'
         })
 
-        expect(signed.raw).to.be.a('string')
-        expect(signed.tx.gasLimit).to.equal('121000')
-        expect(signed.tx.to).to.equal('0x3535353535353535353535353535353535353535')
-        expect(signed.tx.value).to.equal('0xde0b6b3a7640000')
-        expect(signed.tx.data).to.equal('0x9988776655')
-        expect(signed.tx.delegateCall).to.equal(false)
-        expect(signed.tx.revertOnError).to.equal(false)
+        expect(isSignedTransactions(signed)).to.be.true
+        expect(signed.config).to.deep.equal(wallet.config)
+        expect(signed.context).to.deep.equal(wallet.context)
+        expect(signed.signature).to.be.a('string')
+        expect(signed.transactions.length).to.equal(1)
+        expect(signed.transactions[0].gasLimit).to.equal('121000')
+        expect(signed.transactions[0].to).to.equal('0x3535353535353535353535353535353535353535')
+        expect(signed.transactions[0].value).to.equal('0xde0b6b3a7640000')
+        expect(signed.transactions[0].data).to.equal('0x9988776655')
+        expect(signed.transactions[0].delegateCall).to.equal(false)
+        expect(signed.transactions[0].revertOnError).to.equal(false)
       })
 
       it('Should sign a message', async () => {
@@ -829,8 +833,8 @@ describe('Wallet integration', function () {
         const signed_3 = await w3_3.eth.signTransaction(transaction)
 
         const full_signed = {
-          raw: aggregate(signed_1.raw, signed_2.raw, signed_3.raw), // TODO: 'aggregate' name is too vague
-          tx: signed_1.tx
+          ...signed_1,
+          signature: aggregate(signed_1.signature, signed_2.signature, signed_3.signature) // TODO: 'aggregate' name is too vague
         }
 
         const tx = await w3_1.eth.sendSignedTransaction(full_signed)

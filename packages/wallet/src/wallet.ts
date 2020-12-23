@@ -21,7 +21,7 @@ import {
   sequenceTxAbiEncode,
   makeExpirable,
   makeAfterNonce,
-  SignedTransaction
+  SignedTransactions
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -77,6 +77,22 @@ export class Wallet extends Signer {
     this.context = context
   }
 
+  async getProvider(chainId?: number): Promise<Provider> {
+    if (chainId !== undefined && await this.chainId() !== chainId) {
+      throw Error("Invalid chain id")
+    }
+
+    return this.provider
+  }
+
+  async getRelayer(chainId?: number): Promise<Relayer> {
+    if (chainId !== undefined && await this.chainId() !== chainId) {
+      throw Error("Invalid chain id")
+    }
+
+    return this.relayer
+  }
+
   // useConfig creates a new Wallet instance with the provided config, and uses the current provider
   // and relayer.
   useConfig(config: WalletConfig): Wallet {
@@ -118,7 +134,7 @@ export class Wallet extends Signer {
   // chainId returns the network connected to this wallet instance
   //
   // NOTE: AbstractSigner also offers getChainId(): Promise<number>
-  async chainId(): Promise<BigNumberish> {
+  async chainId(): Promise<number> {
     return (await this.provider.getNetwork()).chainId
   }
 
@@ -155,12 +171,11 @@ export class Wallet extends Signer {
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
   async sendTransaction(transaction: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
-    const signed = await this.signTransactions(transaction, allSigners)
-    return this.relayer.relay(this.config, this.context, signed.signature, ...signed.transaction)
+    return this.relayer.relay(await this.signTransactions(transaction, allSigners))
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
-  async signTransactions(txs: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransaction> {
+  async signTransactions(txs: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransactions> {
     const transaction = (await resolveArrayProperties<Transactionish>(txs))
 
     if (!this.provider) {
@@ -218,10 +233,16 @@ export class Wallet extends Signer {
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     stx = appendNonce(stx, nonce)
 
+    // Get sign chain id
+    const chainId = await this.chainId()
+
     // Bundle with signature
     return {
-      transaction: stx,
-      signature: await this.sign(encodeMetaTransactionsData(...stx), false, undefined, allSigners)
+      chainId: chainId,
+      context: this.context,
+      config: this.config,
+      transactions: stx,
+      signature: await this.sign(encodeMetaTransactionsData(...stx), false, chainId, allSigners)
     }
   }
 

@@ -1,7 +1,7 @@
 import { TransactionResponse, BlockTag } from '@ethersproject/providers'
 import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { SequenceTransaction } from '@0xsequence/transactions'
+import { SequenceTransaction, SignedTransactions } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/wallet'
 import { BaseRelayer } from './base-relayer'
@@ -84,18 +84,13 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     return (await module.nonce({ blockTag: blockTag })).toNumber()
   }
 
-  async relay(
-    config: WalletConfig,
-    context: WalletContext,
-    signature: string | Promise<string>,
-    ...transactions: SequenceTransaction[]
-  ): Promise<TransactionResponse> {
-    if (!context.guestModule || context.guestModule.length !== 42) {
+  async relay(signed: SignedTransactions): Promise<TransactionResponse> {
+    if (!signed.context.guestModule || signed.context.guestModule.length !== 42) {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
     return this.signer.sendTransaction(
-      await this.prepareTransactions(config, context, signature, ...transactions)
+      await this.prepareTransactions(signed.config, signed.context, signed.signature, ...signed.transactions)
     )
   }
 }
