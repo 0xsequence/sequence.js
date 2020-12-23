@@ -3,7 +3,7 @@ import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } f
 import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 import { Signer, SignerInfo, NotEnoughSigners } from './signer'
-import { Transactionish } from '@0xsequence/transactions'
+import { SignedTransaction, Transactionish } from '@0xsequence/transactions'
 import { GlobalWalletConfig, WalletConfig, addressOf, imageHash, isConfig } from './config'
 import { NetworkConfig, WalletContext } from '@0xsequence/network'
 import { Wallet } from './wallet'
@@ -296,6 +296,11 @@ export class MultiWallet extends Signer {
 
   static isSequenceWallet(signer: AbstractSigner): signer is MultiWallet {
     return (<MultiWallet>signer).updateConfig !== undefined
+  }
+
+  signTransactions(transaction: Deferrable<Transactionish>, allSigners?: boolean, network?: NetworkConfig | BigNumberish): Promise<SignedTransaction> {
+    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
+    return wallet.signTransactions(transaction, allSigners)
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {

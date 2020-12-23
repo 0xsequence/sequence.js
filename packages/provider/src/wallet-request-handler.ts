@@ -177,7 +177,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
           const [transaction] = request.params
-          const sender = transaction.from.toLowerCase()
+          const sender = ethers.utils.getAddress(transaction.from)
 
           // TODO: refactor/move
           // TODO: use prompter
@@ -190,31 +190,21 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // ...
           }
 
-          const sig = signer.signTransaction(transaction)
-          response.result = {
-            raw: sig,
-            tx: transaction
+          if (sender === await signer.getAddress()) {
+            const signed = await signer.signTransactions(transaction)
+            response.result = {
+              raw: signed.signature,
+              tx: signed.transaction.length === 1
+                ? signed.transaction[0]
+                : {
+                    ...signed.transaction[0],
+                    auxiliary: signed.transaction.slice(1)
+                  }
+            }
+          } else {
+            throw Error('sender address does not match wallet')
           }
 
-          // if (sender === address.toLowerCase()) {
-          //   let stxs = await toSequenceTransactions(this.wallet, [transaction])
-          //   if (readSequenceNonce(...stxs) === undefined) {
-          //     stxs = appendNonce(stxs, await this.wallet.getNonce())
-          //   }
-
-          //   const sig = await this.wallet.signTransactions(stxs)
-          //   response.result = {
-          //     raw: sig,
-          //     tx: stxs.length === 1
-          //       ? stxs[0]
-          //       : {
-          //           ...stxs[0],
-          //           auxiliary: stxs.slice(1)
-          //         }
-          //   }
-          // } else {
-          //   throw Error('sender address does not match wallet')
-          // }
           break
         }
 

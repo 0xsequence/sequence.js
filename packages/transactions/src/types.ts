@@ -33,3 +33,8 @@ export interface NonceDependency {
 }
 
 export declare type Transactionish = AuxTransactionRequest | SequenceTransaction | SequenceTransaction[] | AuxTransactionRequest[]
+
+export type SignedTransaction = {
+  transaction: SequenceTransaction[],
+  signature: string
+}

@@ -1,5 +1,5 @@
 import { NetworkConfig } from '@0xsequence/network'
-import { Transactionish } from '@0xsequence/transactions'
+import { SequenceTransaction, SignedTransaction, Transactionish } from '@0xsequence/transactions'
 import { JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
 import { BigNumberish, Signer as AbstractSigner } from 'ethers'
 import { BytesLike, Deferrable } from 'ethers/lib/utils'
@@ -10,6 +10,8 @@ export abstract class Signer extends AbstractSigner {
   abstract getSigners(): Promise<string[]>
   abstract sendTransaction(transaction: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse>
   abstract signMessage(message: BytesLike, chainId?: NetworkConfig | BigNumberish, allSigners?: boolean): Promise<string>
+
+  abstract signTransactions(transaction: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransaction>
 
   // TODO: add signTransaction?
   // TODO: add sendRawTransaction?

@@ -20,7 +20,8 @@ import {
   toSequenceTransactions,
   sequenceTxAbiEncode,
   makeExpirable,
-  makeAfterNonce
+  makeAfterNonce,
+  SignedTransaction
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -153,8 +154,14 @@ export class Wallet extends Signer {
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
-  async sendTransaction(dtransactionish: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
-    const transaction = (await resolveArrayProperties<Transactionish>(dtransactionish))
+  async sendTransaction(transaction: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
+    const signed = await this.signTransactions(transaction, allSigners)
+    return this.relayer.relay(this.config, this.context, signed.signature, ...signed.transaction)
+  }
+
+  // signTransactions will sign a Sequence transaction with the wallet signers
+  async signTransactions(txs: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransaction> {
+    const transaction = (await resolveArrayProperties<Transactionish>(txs))
 
     if (!this.provider) {
       throw new Error('missing provider')
@@ -205,17 +212,17 @@ export class Wallet extends Signer {
       stx = await this.relayer.estimateGasLimits(this.config, this.context, ...stx)
     }
 
+    // If provided nonce append it to all other transactions
+    // otherwise get next nonce for this wallet
     const providedNonce = readSequenceNonce(...stx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     stx = appendNonce(stx, nonce)
-    const signature = this.signTransactions(stx, allSigners)
-    return this.relayer.relay(this.config, this.context, signature, ...stx)
-  }
 
-  // signTransactions will sign a Sequence transaction with the wallet signers
-  async signTransactions(txs: SequenceTransaction[], allSigners?: boolean): Promise<string> {
-    const packed = encodeMetaTransactionsData(...txs)
-    return this.sign(packed, false, undefined, allSigners)
+    // Bundle with signature
+    return {
+      transaction: stx,
+      signature: await this.sign(encodeMetaTransactionsData(...stx), false, undefined, allSigners)
+    }
   }
 
   // signMessage will sign a message for a particular chainId with the wallet signers
