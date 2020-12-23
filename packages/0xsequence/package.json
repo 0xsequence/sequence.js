@@ -9,7 +9,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "yarn test:concurrently 'yarn test:run'",
-    "test:run": "TS_NODE_PROJECT=../../tsconfig.test.json ava --fail-fast --timeout 3m",
+    "test:run": "TS_NODE_PROJECT=../../tsconfig.test.json ava --serial --fail-fast --timeout 5m",
     "test:only": "yarn test:run --match",
     "test:watch": "yarn test:run --watch",
     "test:server": "webpack-dev-server --config tests/webpack.config.js",

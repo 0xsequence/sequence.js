@@ -65,11 +65,6 @@ export const tests = async () => {
     assert.equal(chainId2, 31337, 'chainId check')
   })
 
-  await test('balance is 0', async () => {
-    const balance = await signer.getBalance()
-    assert.equal(balance.toNumber(), 0, 'balance is 0')
-  })
-
   // NOTE: when a dapp wants to verify SmartWallet signed messages, they will need to verify against EIP-1271 
   await test('sign a message and validate/recover', async () => {
     const message = ethers.utils.toUtf8Bytes('hihi')
