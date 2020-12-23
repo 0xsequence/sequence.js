@@ -1,4 +1,4 @@
-pragma solidity ^0.7.3;
+pragma solidity ^0.7.6;
 
 contract UniversalDeployer2 {
   event Deploy(address _addr) anonymous;
