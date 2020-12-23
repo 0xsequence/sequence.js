@@ -35,7 +35,7 @@ import {
   compareAddr,
   imageHash,
   isUsableConfig,
-  aggregate
+  joinSignatures
 } from './config'
 
 import { RemoteSigner } from './remote-signers'
@@ -310,7 +310,7 @@ export class Wallet extends Signer {
     const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
 
     // Aggregate both local and remote signatures
-    return aggregate(localSignature, remoteSignature)
+    return joinSignatures(localSignature, remoteSignature)
   }
 
   // signWeight will return the total weight of all signers available based on the config

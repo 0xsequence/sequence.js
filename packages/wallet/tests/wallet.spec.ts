@@ -7,7 +7,7 @@ import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/e
 
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, aggregate } from '../src'
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, joinSignatures } from '../src'
 import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish, isSignedTransactions } from '@0xsequence/transactions'
 
 import { LocalRelayer } from '@0xsequence/relayer'
@@ -785,7 +785,7 @@ describe('Wallet integration', function () {
         expect(await callReceiver.lastValB()).to.equal('0x445566')
       })
 
-      it('Should sign, aggregate and send a transaction', async () => {
+      it('Should sign, joinSignatures and send a transaction', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -834,7 +834,7 @@ describe('Wallet integration', function () {
 
         const full_signed = {
           ...signed_1,
-          signature: aggregate(signed_1.signature, signed_2.signature, signed_3.signature) // TODO: 'aggregate' name is too vague
+          signature: joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature) // TODO: 'joinSignatures' name is too vague
         }
 
         const tx = await w3_1.eth.sendSignedTransaction(full_signed)

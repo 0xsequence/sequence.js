@@ -197,11 +197,11 @@ export function recoverSigner(digest: BytesLike, sig: DecodedSigner) {
   }
 }
 
-export function aggregate(...signatures: string[]) {
-  return signatures.reduce((p, c) => aggregateTwo(p, c))
+export function joinSignatures(...signatures: string[]) {
+  return signatures.reduce((p, c) => joinTwoSignatures(p, c))
 }
 
-export function aggregateTwo(a: string, b: string): string {
+export function joinTwoSignatures(a: string, b: string): string {
   const da = decodeSignature(a)
   const db = decodeSignature(b)
 

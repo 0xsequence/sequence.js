@@ -186,7 +186,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           }
 
           if (sender === await signer.getAddress()) {
-            // const signed = await signer.signTransactions(transaction)
+            // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
+            // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
             response.result = await signer.signTransactions(transaction)
           } else {
             throw Error('sender address does not match wallet')
