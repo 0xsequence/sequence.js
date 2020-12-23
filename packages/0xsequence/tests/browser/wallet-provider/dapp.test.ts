@@ -49,7 +49,7 @@ export const tests = async () => {
 
   await test('getAccounts', async () => {
     const address = wallet.getAddress()
-    assert.equal(address.toLowerCase(), '0x773988b85a60be15973fdc5fcaf3d4e92e992124'.toLowerCase(), 'wallet address is correct')
+    assert.equal(address.toLowerCase(), '0xca736ff96cef0dc9bb7738ed1e68a29df008d68b'.toLowerCase(), 'wallet address is correct')
   })
 
   await test('getBalance', async () => {
