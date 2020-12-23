@@ -14,22 +14,20 @@ export class WindowMessageHandler extends BaseWalletTransport {
   }
 
   register() {
-    document.addEventListener('DOMContentLoaded', event => {
-      const isPopup = parent.window.opener !== null
-      this._isPopup = isPopup
-      if (isPopup !== true) {
-        return
-      }
+    const isPopup = parent.window.opener !== null
+    this._isPopup = isPopup
+    if (isPopup !== true) {
+      return
+    }
 
-      // record parent window instance for communication
-      this.parentWindow = parent.window.opener
+    // record parent window instance for communication
+    this.parentWindow = parent.window.opener
 
-      // listen for window-transport requests
-      window.addEventListener('message', this.onWindowEvent, false)
+    // listen for window-transport requests
+    window.addEventListener('message', this.onWindowEvent, false)
 
-      // init base transport
-      this.init()
-    })
+    // init base transport
+    this.init()
   }
 
   // onmessage is called when (the wallet) receives request messages from the dapp

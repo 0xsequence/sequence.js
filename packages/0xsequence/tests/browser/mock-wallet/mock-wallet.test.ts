@@ -1,29 +1,31 @@
-
-import { ethers, Wallet as EOAWallet } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
-// import { packMessageData, addressOf, compareAddr, isValidSignature, isValidSequenceUndeployedWalletSignature, isValidSequenceDeployedWalletSignature, recoverConfig } from '@0xsequence/wallet'
-
-import {
-  WalletRequestHandler,
-  WindowMessageHandler
-} from '@0xsequence/provider'
-
+import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
 import { Wallet } from '@0xsequence/wallet'
-
 import { sequenceContext, Networks, ethereumNetworks } from '@0xsequence/network'
-
 import { LocalRelayer } from '@0xsequence/relayer'
-
+import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 // import { MockWalletUserPrompter } from './utils'
-
-import { testAccounts, getEOAWallet } from '../testutils'
-
 
 //
 // Wallet, a test wallet
 //
 
 const main = async () => {
+
+  //
+  // Deploy Sequence WalletContext (deterministic)
+  //
+  const deployedWalletContext = await deployWalletContext()
+  console.log('walletContext:', deployedWalletContext)
+
+  // assert testWalletContext value is correct
+  if (
+    deployedWalletContext.factory.toLowerCase() !== testWalletContext.factory.toLowerCase() ||
+    deployedWalletContext.guestModule.toLowerCase() !== testWalletContext.guestModule.toLowerCase()
+  ) {
+    throw new Error('deployedWalletContext and testWalletContext do not match. check or regen.')
+  } 
+
 
   //
   // Setup single owner Sequence wallet
@@ -38,7 +40,7 @@ const main = async () => {
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
   const provider = new JsonRpcProvider('http://localhost:8545')
-  const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(provider, relayer)
+  const wallet = (await Wallet.singleOwner(deployedWalletContext, owner)).connect(provider, relayer)
 
   // Network available list
   const networks: Networks = { ...ethereumNetworks }

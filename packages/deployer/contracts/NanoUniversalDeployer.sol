@@ -1,4 +1,4 @@
-pragma solidity ^0.6.10;
+pragma solidity ^0.7.3;
 
 contract NanoUniversalDeployer {
     event Deploy(address _addr) anonymous;

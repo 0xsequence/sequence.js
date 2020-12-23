@@ -1,10 +1,9 @@
 import { ethers , BigNumber } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
-import { promisify, getRandomInt } from '../utils'
+import { promisify, getRandomInt } from '@0xsequence/utils'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'
 import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
-
 
 export class MulticallProvider implements ethers.providers.Provider {
   private multicall: Multicall

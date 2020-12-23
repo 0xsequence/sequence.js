@@ -11,11 +11,12 @@
     "test": "yarn test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
     "typecheck": "tsc --noEmit",
-    "build": "rm -rf typings && hardhat clean && yarn compile-contracts && yarn gen:typings",
+    "build": "rm -rf src/typings && hardhat clean && yarn compile-contracts && yarn gen:typings",
     "compile-contracts": "hardhat --max-memory 4096 compile",
-    "gen:typings": "rm -f typings/contracts/* && typechain --target ethers-v5 --outDir typings/contracts './artifacts/contracts/!(build-info)/**/*[^dbg].json'"
+    "gen:typings": "rm -f src/typings/contracts/* && typechain --target ethers-v5 --outDir src/typings/contracts './artifacts/contracts/!(build-info)/**/*[^dbg].json'"
   },
   "dependencies": {
+    "@0xsequence/utils": "^0.7.0",
     "@ethersproject/contracts": "^5.0.8",
     "ethers": "^5.0.24",
     "ora": "^5.1.0"
