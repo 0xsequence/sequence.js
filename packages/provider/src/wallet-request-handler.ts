@@ -7,35 +7,28 @@ import {
   MessageToSign
 } from './types'
 
-import { ethers, Signer as AbstractSigner } from 'ethers'
-import { JsonRpcProvider, ExternalProvider, TransactionResponse } from '@ethersproject/providers'
+import { BigNumber, ethers } from 'ethers'
+import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 import { TypedDataUtils } from 'ethers-eip712'
 
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
-import { Wallet, Signer } from '@0xsequence/wallet'
-import { SequenceTransaction, appendNonce, readSequenceNonce, toSequenceTransactions, isSequenceTransaction, flattenAuxTransactions } from '@0xsequence/transactions'
+import { Signer } from '@0xsequence/wallet'
+import { isSignedTransactions } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private wallet: Wallet // TODO: should be Signer
-  // private provider: JsonRpcProvider
+  private wallet: Signer
   private prompter: WalletUserPrompter
   private networks: Networks
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  // TODO: should be sequence Signer
-  constructor(wallet: Wallet, prompter: WalletUserPrompter, networks: Networks) {
-    // this.wallet = wallet.connect(provider)
-    // this.provider = provider
+  constructor(wallet: Signer, prompter: WalletUserPrompter, networks: Networks) {
     this.wallet = wallet
     this.prompter = prompter
     this.networks = networks
 
     if (!wallet.provider) {
       throw new Error('wallet.provider is undefined')
-    }
-    if (!wallet.relayer) {
-      throw new Error('wallet.relayer is undefined')
     }
   }
 
@@ -70,7 +63,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const signer = this.wallet
     if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
 
-    const provider = this.wallet.provider
+    const provider = await this.wallet.getProvider() as JsonRpcProvider
     if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
 
     if (!chainId) {
@@ -119,10 +112,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-
-            // TODO: perhaps check if, isSequenceWallet() then provide chainId to the signMessage
-            // in case if we want to support AbstractSigner for this..? maybe not though.
-
             sig = await this.wallet.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
             // prompt user to provide the response
@@ -188,50 +177,36 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
           const [transaction] = request.params
-          const sender = transaction.from.toLowerCase()
+          const sender = ethers.utils.getAddress(transaction.from)
 
-          // TODO: refactor/move
           // TODO: use prompter
 
-          if (sender === this.wallet.address.toLowerCase()) {
-            let stxs = await toSequenceTransactions(this.wallet, [transaction])
-            if (readSequenceNonce(...stxs) === undefined) {
-              stxs = appendNonce(stxs, await this.wallet.getNonce())
-            }
+          if (this.prompter === null) {
+            // ...
+          }
 
-            const sig = await this.wallet.signTransactions(stxs)
-            response.result = {
-              raw: sig,
-              tx: stxs.length === 1
-                ? stxs[0]
-                : {
-                    ...stxs[0],
-                    auxiliary: stxs.slice(1)
-                  }
-            }
+          if (sender === await signer.getAddress()) {
+            // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
+            // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
+            response.result = await signer.signTransactions(transaction)
           } else {
             throw Error('sender address does not match wallet')
           }
+
           break
         }
 
         case 'eth_sendRawTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
-          const signature = request.params[0].raw
-          const transaction = request.params[0].tx
 
-          let tx: Promise<TransactionResponse>
-
-          // TODO: refactor/move
-          // TODO: use prompter
-
-          if (isSequenceTransaction(transaction)) {
-            const stx = flattenAuxTransactions([transaction])
-            tx = this.wallet.relayer.relay(this.wallet.config, this.wallet.context, signature, ...(stx as SequenceTransaction[]))
-          }
-          if (tx) {
+          if (isSignedTransactions(request.params[0])) {
+            const txChainId = BigNumber.from(request.params[0].chainId).toNumber()
+            const tx = await (await signer.getRelayer(txChainId)).relay(request.params[0])
             response.result = (await tx).hash
+          } else {
+            response.result = await provider.sendTransaction(request.params[0])
           }
+
           break
         }
 
@@ -239,7 +214,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const address = (request.params[0] as string).toLowerCase()
           const tag = request.params[1]
 
-          if (address === this.wallet.address.toLowerCase()) {
+          const walletAddress = await signer.getAddress()
+
+          if (address === walletAddress.toLowerCase()) {
             const count = await this.wallet.getTransactionCount(tag)
             response.result = ethers.BigNumber.from(count).toHexString()
           } else {
@@ -369,5 +346,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
 export interface WalletUserPrompter {
   promptSignMessage(message: MessageToSign, appAuth?: boolean): Promise<string>
+  promptSignTransaction(txnParams: any, chaindId?: number): Promise<string>
   promptSendTransaction(txnParams: any, chaindId?: number): Promise<string>
 }
