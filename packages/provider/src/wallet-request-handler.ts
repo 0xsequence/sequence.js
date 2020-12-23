@@ -18,7 +18,6 @@ import { SequenceTransaction, appendNonce, readSequenceNonce, toSequenceTransact
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private wallet: Signer
-  private provider: JsonRpcProvider
   private prompter: WalletUserPrompter
   private networks: Networks
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
@@ -30,11 +29,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     if (!wallet.provider) {
       throw new Error('wallet.provider is undefined')
-    }
-    if (isJsonRpcProvider(wallet.provider)) {
-      this.provider = wallet.provider
-    } else {
-      throw new Error('wallet.provider is not a JsonRpcProvider')
     }
   }
 
@@ -69,7 +63,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const signer = this.wallet
     if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
 
-    const provider = this.provider
+    const provider = this.wallet.provider
     if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
 
     if (!chainId) {
@@ -118,10 +112,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-
-            // TODO: perhaps check if, isSequenceWallet() then provide chainId to the signMessage
-            // in case if we want to support AbstractSigner for this..? maybe not though.
-
             sig = await this.wallet.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
             // prompt user to provide the response
@@ -192,25 +182,39 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // TODO: refactor/move
           // TODO: use prompter
 
-          if (sender === this.wallet.address.toLowerCase()) {
-            let stxs = await toSequenceTransactions(this.wallet, [transaction])
-            if (readSequenceNonce(...stxs) === undefined) {
-              stxs = appendNonce(stxs, await this.wallet.getNonce())
-            }
+          // TODO: just move signTransactions to the interface, and we done..
 
-            const sig = await this.wallet.signTransactions(stxs)
-            response.result = {
-              raw: sig,
-              tx: stxs.length === 1
-                ? stxs[0]
-                : {
-                    ...stxs[0],
-                    auxiliary: stxs.slice(1)
-                  }
-            }
-          } else {
-            throw Error('sender address does not match wallet')
+          // const address = await signer.getAddress()
+
+          if (this.prompter === null) {
+            // ...
           }
+
+          const sig = signer.signTransaction(transaction)
+          response.result = {
+            raw: sig,
+            tx: transaction
+          }
+
+          // if (sender === address.toLowerCase()) {
+          //   let stxs = await toSequenceTransactions(this.wallet, [transaction])
+          //   if (readSequenceNonce(...stxs) === undefined) {
+          //     stxs = appendNonce(stxs, await this.wallet.getNonce())
+          //   }
+
+          //   const sig = await this.wallet.signTransactions(stxs)
+          //   response.result = {
+          //     raw: sig,
+          //     tx: stxs.length === 1
+          //       ? stxs[0]
+          //       : {
+          //           ...stxs[0],
+          //           auxiliary: stxs.slice(1)
+          //         }
+          //   }
+          // } else {
+          //   throw Error('sender address does not match wallet')
+          // }
           break
         }
 
@@ -219,18 +223,24 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const signature = request.params[0].raw
           const transaction = request.params[0].tx
 
-          let tx: Promise<TransactionResponse>
+          // let tx: Promise<TransactionResponse>
 
           // TODO: refactor/move
           // TODO: use prompter
 
-          if (isSequenceTransaction(transaction)) {
-            const stx = flattenAuxTransactions([transaction])
-            tx = this.wallet.relayer.relay(this.wallet.config, this.wallet.context, signature, ...(stx as SequenceTransaction[]))
-          }
-          if (tx) {
-            response.result = (await tx).hash
-          }
+          // TODO: use signer.sendTransaction() .....
+
+          const tx = await signer.sendTransaction(transaction)
+          response.result = tx.hash
+
+
+          // if (isSequenceTransaction(transaction)) {
+          //   const stx = flattenAuxTransactions([transaction])
+          //   tx = this.wallet.relayer.relay(this.wallet.config, this.wallet.context, signature, ...(stx as SequenceTransaction[]))
+          // }
+          // if (tx) {
+          //   response.result = (await tx).hash
+          // }
           break
         }
 
@@ -238,7 +248,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const address = (request.params[0] as string).toLowerCase()
           const tag = request.params[1]
 
-          if (address === this.wallet.address.toLowerCase()) {
+          const walletAddress = await signer.getAddress()
+
+          if (address === walletAddress.toLowerCase()) {
             const count = await this.wallet.getTransactionCount(tag)
             response.result = ethers.BigNumber.from(count).toHexString()
           } else {
@@ -368,5 +380,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
 export interface WalletUserPrompter {
   promptSignMessage(message: MessageToSign, appAuth?: boolean): Promise<string>
+  promptSignTransaction(txnParams: any, chaindId?: number): Promise<string>
   promptSendTransaction(txnParams: any, chaindId?: number): Promise<string>
 }
