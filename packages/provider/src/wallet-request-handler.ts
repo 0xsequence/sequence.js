@@ -7,14 +7,14 @@ import {
   MessageToSign
 } from './types'
 
-import { ethers, Signer as AbstractSigner } from 'ethers'
-import { JsonRpcProvider, ExternalProvider, TransactionResponse } from '@ethersproject/providers'
+import { BigNumber, ethers } from 'ethers'
+import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 import { TypedDataUtils } from 'ethers-eip712'
 
-import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, isJsonRpcProvider } from '@0xsequence/network'
+import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
 import { Signer } from '@0xsequence/wallet'
-import { SequenceTransaction, appendNonce, readSequenceNonce, toSequenceTransactions, isSequenceTransaction, flattenAuxTransactions } from '@0xsequence/transactions'
+import { isSignedTransactions } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private wallet: Signer
@@ -63,7 +63,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const signer = this.wallet
     if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
 
-    const provider = this.wallet.provider
+    const provider = await this.wallet.getProvider() as JsonRpcProvider
     if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
 
     if (!chainId) {
@@ -177,70 +177,36 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
           const [transaction] = request.params
-          const sender = transaction.from.toLowerCase()
+          const sender = ethers.utils.getAddress(transaction.from)
 
-          // TODO: refactor/move
           // TODO: use prompter
-
-          // TODO: just move signTransactions to the interface, and we done..
-
-          // const address = await signer.getAddress()
 
           if (this.prompter === null) {
             // ...
           }
 
-          const sig = signer.signTransaction(transaction)
-          response.result = {
-            raw: sig,
-            tx: transaction
+          if (sender === await signer.getAddress()) {
+            // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
+            // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
+            response.result = await signer.signTransactions(transaction)
+          } else {
+            throw Error('sender address does not match wallet')
           }
 
-          // if (sender === address.toLowerCase()) {
-          //   let stxs = await toSequenceTransactions(this.wallet, [transaction])
-          //   if (readSequenceNonce(...stxs) === undefined) {
-          //     stxs = appendNonce(stxs, await this.wallet.getNonce())
-          //   }
-
-          //   const sig = await this.wallet.signTransactions(stxs)
-          //   response.result = {
-          //     raw: sig,
-          //     tx: stxs.length === 1
-          //       ? stxs[0]
-          //       : {
-          //           ...stxs[0],
-          //           auxiliary: stxs.slice(1)
-          //         }
-          //   }
-          // } else {
-          //   throw Error('sender address does not match wallet')
-          // }
           break
         }
 
         case 'eth_sendRawTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
-          const signature = request.params[0].raw
-          const transaction = request.params[0].tx
 
-          // let tx: Promise<TransactionResponse>
+          if (isSignedTransactions(request.params[0])) {
+            const txChainId = BigNumber.from(request.params[0].chainId).toNumber()
+            const tx = await (await signer.getRelayer(txChainId)).relay(request.params[0])
+            response.result = (await tx).hash
+          } else {
+            response.result = await provider.sendTransaction(request.params[0])
+          }
 
-          // TODO: refactor/move
-          // TODO: use prompter
-
-          // TODO: use signer.sendTransaction() .....
-
-          const tx = await signer.sendTransaction(transaction)
-          response.result = tx.hash
-
-
-          // if (isSequenceTransaction(transaction)) {
-          //   const stx = flattenAuxTransactions([transaction])
-          //   tx = this.wallet.relayer.relay(this.wallet.config, this.wallet.context, signature, ...(stx as SequenceTransaction[]))
-          // }
-          // if (tx) {
-          //   response.result = (await tx).hash
-          // }
           break
         }
 

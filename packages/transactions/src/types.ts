@@ -1,5 +1,7 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { TransactionRequest } from '@ethersproject/providers'
+import { WalletConfig } from '@0xsequence/wallet'
+import { WalletContext } from '@0xsequence/network'
 
 export interface SequenceTransaction {
   delegateCall: boolean
@@ -33,3 +35,11 @@ export interface NonceDependency {
 }
 
 export declare type Transactionish = AuxTransactionRequest | SequenceTransaction | SequenceTransaction[] | AuxTransactionRequest[]
+
+export type SignedTransactions = {
+  chainId: BigNumberish,
+  config: WalletConfig,
+  context: WalletContext,
+  signature: string,
+  transactions: SequenceTransaction[]
+}

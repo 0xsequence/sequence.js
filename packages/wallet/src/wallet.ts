@@ -20,7 +20,8 @@ import {
   toSequenceTransactions,
   sequenceTxAbiEncode,
   makeExpirable,
-  makeAfterNonce
+  makeAfterNonce,
+  SignedTransactions
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -34,7 +35,7 @@ import {
   compareAddr,
   imageHash,
   isUsableConfig,
-  aggregate
+  joinSignatures
 } from './config'
 
 import { RemoteSigner } from './remote-signers'
@@ -74,6 +75,22 @@ export class Wallet extends Signer {
 
     this.config = sortConfig(config)
     this.context = context
+  }
+
+  async getProvider(chainId?: number): Promise<JsonRpcProvider> {
+    if (chainId !== undefined && await this.chainId() !== chainId) {
+      throw Error("Invalid chain id")
+    }
+
+    return this.provider
+  }
+
+  async getRelayer(chainId?: number): Promise<Relayer> {
+    if (chainId !== undefined && await this.chainId() !== chainId) {
+      throw Error("Invalid chain id")
+    }
+
+    return this.relayer
   }
 
   // useConfig creates a new Wallet instance with the provided config, and uses the current provider
@@ -117,7 +134,7 @@ export class Wallet extends Signer {
   // chainId returns the network connected to this wallet instance
   //
   // NOTE: AbstractSigner also offers getChainId(): Promise<number>
-  async chainId(): Promise<BigNumberish> {
+  async chainId(): Promise<number> {
     return (await this.provider.getNetwork()).chainId
   }
 
@@ -153,8 +170,13 @@ export class Wallet extends Signer {
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
-  async sendTransaction(dtransactionish: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
-    const transaction = (await resolveArrayProperties<Transactionish>(dtransactionish))
+  async sendTransaction(transaction: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
+    return this.relayer.relay(await this.signTransactions(transaction, allSigners))
+  }
+
+  // signTransactions will sign a Sequence transaction with the wallet signers
+  async signTransactions(txs: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransactions> {
+    const transaction = (await resolveArrayProperties<Transactionish>(txs))
 
     if (!this.provider) {
       throw new Error('missing provider')
@@ -205,17 +227,23 @@ export class Wallet extends Signer {
       stx = await this.relayer.estimateGasLimits(this.config, this.context, ...stx)
     }
 
+    // If provided nonce append it to all other transactions
+    // otherwise get next nonce for this wallet
     const providedNonce = readSequenceNonce(...stx)
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     stx = appendNonce(stx, nonce)
-    const signature = this.signTransactions(stx, allSigners)
-    return this.relayer.relay(this.config, this.context, signature, ...stx)
-  }
 
-  // signTransactions will sign a Sequence transaction with the wallet signers
-  async signTransactions(txs: SequenceTransaction[], allSigners?: boolean): Promise<string> {
-    const packed = encodeMetaTransactionsData(...txs)
-    return this.sign(packed, false, undefined, allSigners)
+    // Get sign chain id
+    const chainId = await this.chainId()
+
+    // Bundle with signature
+    return {
+      chainId: chainId,
+      context: this.context,
+      config: this.config,
+      transactions: stx,
+      signature: await this.sign(encodeMetaTransactionsData(...stx), false, chainId, allSigners)
+    }
   }
 
   // signMessage will sign a message for a particular chainId with the wallet signers
@@ -282,7 +310,7 @@ export class Wallet extends Signer {
     const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
 
     // Aggregate both local and remote signatures
-    return aggregate(localSignature, remoteSignature)
+    return joinSignatures(localSignature, remoteSignature)
   }
 
   // signWeight will return the total weight of all signers available based on the config
