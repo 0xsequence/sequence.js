@@ -7,6 +7,7 @@ import { SignerInfo, SignerThreshold, DecodedSignature, DecodedSigner, DecodedOw
 // and control the wallet
 export interface WalletConfig {
   address?: string
+  chainId?: number
   threshold: number
   signers: {
     weight: number
@@ -14,12 +15,16 @@ export interface WalletConfig {
   }[]
 }
 
+// TODO ......
 export type GlobalWalletConfig = {
   threshold: SignerThreshold[],
   signers: SignerInfo[]
 }
 
-export function isConfig(a: WalletConfig, b: WalletConfig): boolean {
+// TODO: and then remove GlobalWalletConfig type..
+// export type GlobalWalletConfig = WalletConfig[]
+
+export function isConfigEqual(a: WalletConfig, b: WalletConfig): boolean {
   return imageHash(a) === imageHash(b)
 }
 

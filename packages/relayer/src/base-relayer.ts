@@ -16,7 +16,7 @@ export class BaseRelayer {
   }
 
   async isWalletDeployed(walletAddress: string): Promise<boolean> {
-    if (!this.provider) throw Error('Bundled creation provider not found')
+    if (!this.provider) throw new Error('Bundled creation provider not found')
     return (await this.provider.getCode(walletAddress)) !== '0x'
   }
 

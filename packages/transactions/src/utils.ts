@@ -107,7 +107,7 @@ export function hasSequenceTransactions(txs: any[]) {
 export function readSequenceNonce(...txs: SequenceTransaction[]): BigNumberish {
   const sample = txs.find(t => t.nonce !== undefined)
   if (txs.find(t => t.nonce !== undefined && t.nonce !== sample.nonce)) {
-    throw Error('Mixed nonces on Sequence transactions')
+    throw new Error('Mixed nonces on Sequence transactions')
   }
 
   return sample ? sample.nonce : undefined

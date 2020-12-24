@@ -4,17 +4,17 @@ import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 import { Signer, SignerInfo, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
-import { GlobalWalletConfig, WalletConfig, addressOf, imageHash, isConfig } from './config'
-import { NetworkConfig, WalletContext } from '@0xsequence/network'
+import { GlobalWalletConfig, WalletConfig, addressOf, imageHash, isConfigEqual } from './config'
+import { NetworkConfig, WalletContext, sequenceContext } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
 import { Relayer } from '@0xsequence/relayer'
 
 export type MultiWalletOptions = {
-  context: WalletContext,
+  context?: WalletContext,
+  networks: NetworkConfig[]
   initialConfig: WalletConfig,
   signers: AbstractSigner[],
-  networks: NetworkConfig[]
 }
 
 export class MultiWallet extends Signer {
@@ -26,11 +26,15 @@ export class MultiWallet extends Signer {
   constructor(opts: MultiWalletOptions) {
     super()
 
-    if (opts.networks.length === 0) throw new Error('SmartWallet must have networks')
+    // TODO: also set default networks here..
+    if (opts.networks.length === 0) throw new Error('MultiWallet constructor options must provide networks')
+
+    // Use deployed wallet context by default if not provided
+    if (!opts.context) opts.context = sequenceContext
 
     // Account/wallet instances using the initial configuration
     this._wallets = opts.networks.map((network) => {
-      const wallet = new Wallet(opts.initialConfig, opts.context, ...opts.signers)
+      const wallet = new Wallet(opts.initialConfig, opts.context).setSigners(...opts.signers)
       wallet.setProvider(network.rpcUrl)
       if (network.relayer) {
         wallet.setRelayer(network.relayer)
@@ -70,6 +74,8 @@ export class MultiWallet extends Signer {
 
   // getGlobalWalletConfig builds the GlobalWalletConfig object which contains all WalletConfigs across all networks.
   // This is useful to shows all keys/devices connected to a wallet across networks.
+  // TODO: rename to getWalletConfig(), and return Promise<[]WalletConfig> ..
+  // and leave comment, its across networks, sorted by......?
   async getGlobalWalletConfig(): Promise<GlobalWalletConfig> {
     const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
     const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
@@ -141,7 +147,7 @@ export class MultiWallet extends Signer {
     }
 
     // If the wallet is updated, procede to transaction send
-    if (isConfig(lastConfig, thisConfig)) {
+    if (isConfigEqual(lastConfig, thisConfig)) {
       return wallet.useConfig(lastConfig).sendTransaction(transaction)
     }
 
@@ -160,11 +166,16 @@ export class MultiWallet extends Signer {
     ])
   }
 
+  signTransactions(transaction: Deferrable<Transactionish>, allSigners?: boolean, network?: NetworkConfig | BigNumberish): Promise<SignedTransactions> {
+    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
+    return wallet.signTransactions(transaction, allSigners)
+  }
+
   // updateConfig will build an updated config transaction and send/publish it to the auth chain
   // other chains are lazy-updated on the subsequent transactions
   async updateConfig(newConfig: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
     // The config is the default config, see if the wallet has been deployed
-    if (isConfig(this._wallets[0].wallet.config, newConfig)) {
+    if (isConfigEqual(this._wallets[0].wallet.config, newConfig)) {
       if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
         return [newConfig, await this.authWallet().publishConfig()]
@@ -173,7 +184,7 @@ export class MultiWallet extends Signer {
 
     // Get latest config, update only if neccesary
     const lastConfig = await this.currentConfig()
-    if (isConfig(lastConfig, newConfig)) {
+    if (isConfigEqual(lastConfig, newConfig)) {
       return [{
         ...lastConfig,
         address: this.address
@@ -302,20 +313,15 @@ export class MultiWallet extends Signer {
     return found ? found : this._wallets[0].wallet
   }
 
-  static isSequenceWallet(signer: AbstractSigner): signer is MultiWallet {
-    return (<MultiWallet>signer).updateConfig !== undefined
-  }
-
-  signTransactions(transaction: Deferrable<Transactionish>, allSigners?: boolean, network?: NetworkConfig | BigNumberish): Promise<SignedTransactions> {
-    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
-    return wallet.signTransactions(transaction, allSigners)
+  connect(_: Provider): AbstractSigner {
+    throw new Error('connect method is not supported in MultiWallet')
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('Method not implemented.')
+    throw new Error('signTransaction method is not supported in MultiWallet, please use signTransactions(...)')
   }
 
-  connect(_: Provider): AbstractSigner {
-    throw new Error('Method not implemented.')
+  static isSequenceWallet(signer: AbstractSigner): signer is MultiWallet {
+    return (<MultiWallet>signer).updateConfig !== undefined
   }
 }

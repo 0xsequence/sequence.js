@@ -1,10 +1,10 @@
-import { Web3Provider as EthersWeb3Provider, ExternalProvider, TransactionRequest, TransactionResponse, JsonRpcSigner, Networkish } from "@ethersproject/providers"
+import { Web3Provider as EthersWeb3Provider, ExternalProvider, TransactionRequest, TransactionResponse, JsonRpcSigner as EthersJsonRpcSigner, Networkish } from "@ethersproject/providers"
 import { BigNumberish } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { NonceDependency, toSequenceTransactions, makeExpirable, makeAfterNonce, sequenceTxAbiEncode } from '@0xsequence/transactions'
 import { Networks, WalletContext, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
-import { Wallet } from '@0xsequence/wallet'
+import { Wallet, Signer } from '@0xsequence/wallet'
 import { WalletRequestHandler } from './wallet-request-handler'
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
@@ -31,8 +31,12 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
   // TODO: review.. should be sequence Signer type
   // getSequenceSigner(): Signer
-  getSequenceSigner(): SequenceSigner {
-    return new SequenceSigner(this.context, this.getSigner())
+  // getSequenceSigner(): SequenceSigner {
+  //   return new SequenceSigner(this.context, this.getSigner())
+  // }
+
+  getSigner(): JsonRpcSigner {
+    return new JsonRpcSigner(null, this)
   }
 }
 
@@ -43,42 +47,47 @@ export class LocalWeb3Provider extends Web3Provider {
   }
 }
 
+// TODO: prob move to signer.ts or json-rpc-signer.ts
+export class JsonRpcSigner extends EthersJsonRpcSigner { //implements Signer {
+
+}
+
 // yes, it should be the sequence "Signer"
 // TODO: should implement an interface...... or..? review
-export class SequenceSigner {
-  private context: WalletContext
-  private signer: JsonRpcSigner
+// export class SequenceSigner {
+//   private context: WalletContext
+//   private signer: JsonRpcSigner
 
-  constructor(
-    context: WalletContext,
-    signer: JsonRpcSigner
-  ) {
-    this.context = context
-    this.signer = signer
-  }
+//   constructor(
+//     context: WalletContext,
+//     signer: JsonRpcSigner
+//   ) {
+//     this.context = context
+//     this.signer = signer
+//   }
 
-  async sendTransactionBatch(
-    transactions: TransactionRequest[],
-    expiration?: BigNumberish,
-    dependencies?: NonceDependency[]
-  ): Promise<TransactionResponse> {
-    const address = await this.signer.getAddress()
+//   async sendTransactionBatch(
+//     transactions: TransactionRequest[],
+//     expiration?: BigNumberish,
+//     dependencies?: NonceDependency[]
+//   ): Promise<TransactionResponse> {
+//     const address = await this.signer.getAddress()
 
-    let arctxs = await toSequenceTransactions(address, transactions, false)
+//     let arctxs = await toSequenceTransactions(address, transactions, false)
 
-    if (expiration) {
-      arctxs = makeExpirable(this.context, arctxs, expiration)
-    }
+//     if (expiration) {
+//       arctxs = makeExpirable(this.context, arctxs, expiration)
+//     }
 
-    if (dependencies && dependencies.length > 0) {
-      arctxs = dependencies.reduce((p, d) => makeAfterNonce(this.context, p, d), arctxs)
-    }
+//     if (dependencies && dependencies.length > 0) {
+//       arctxs = dependencies.reduce((p, d) => makeAfterNonce(this.context, p, d), arctxs)
+//     }
 
-    const walletInterface = new Interface(walletContracts.mainModule.abi)
+//     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
-    return this.signer.sendTransaction({
-      to: address,
-      data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [sequenceTxAbiEncode(arctxs)])
-    })
-  }
-}
+//     return this.signer.sendTransaction({
+//       to: address,
+//       data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [sequenceTxAbiEncode(arctxs)])
+//     })
+//   }
+// }

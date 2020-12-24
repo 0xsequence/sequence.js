@@ -3,6 +3,8 @@ import { TransactionRequest } from '@ethersproject/providers'
 import { WalletConfig } from '@0xsequence/wallet'
 import { WalletContext } from '@0xsequence/network'
 
+// TODO: drop "Sequence" part..? maybe..
+
 export interface SequenceTransaction {
   delegateCall: boolean
   revertOnError: boolean

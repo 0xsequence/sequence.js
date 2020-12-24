@@ -26,7 +26,7 @@ import {
 
 import { Relayer } from '@0xsequence/relayer'
 
-import { WalletContext, JsonRpcSender, NetworkConfig, isNetworkConfig } from '@0xsequence/network'
+import { WalletContext, JsonRpcSender, NetworkConfig, isNetworkConfig, isJsonRpcProvider, sequenceContext } from '@0xsequence/network'
 
 import {
   WalletConfig,
@@ -49,7 +49,7 @@ import { Signer } from './signer'
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
 // messages, signing transactions and updating/deploying the wallet config on a specific chain.
 export class Wallet extends Signer {
-  private readonly _signers: AbstractSigner[]
+  private _signers: AbstractSigner[]
 
   readonly context: WalletContext
   readonly config: WalletConfig
@@ -66,47 +66,52 @@ export class Wallet extends Signer {
   // or through a remote transaction Web Service.
   relayer: Relayer
 
-  constructor(config: WalletConfig, context: WalletContext, ...signers: (BytesLike | AbstractSigner)[]) {
+  constructor(config: WalletConfig, context: WalletContext = sequenceContext) {
     super()
 
     if (!context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable configuration in strict mode')
-
-    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
 
     this.config = sortConfig(config)
     this.context = context
   }
 
-  async getProvider(chainId?: number): Promise<JsonRpcProvider> {
-    if (chainId !== undefined && await this.chainId() !== chainId) {
-      throw Error("Invalid chain id")
-    }
-
-    return this.provider
-  }
-
-  async getRelayer(chainId?: number): Promise<Relayer> {
-    if (chainId !== undefined && await this.chainId() !== chainId) {
-      throw Error("Invalid chain id")
-    }
-
-    return this.relayer
-  }
-
   // useConfig creates a new Wallet instance with the provided config, and uses the current provider
   // and relayer.
   useConfig(config: WalletConfig): Wallet {
-    return new Wallet(config, this.context, ...this._signers)
+    return new Wallet(config, this.context)
+      .setSigners(...this._signers)
       .setProvider(this.provider)
       .setRelayer(this.relayer)
+  }
+
+  setSigners(...signers: (BytesLike | AbstractSigner)[]): Wallet {
+    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
+    return this
   }
 
   // connect is a short-hand to create an Account instance and set the provider and relayer.
   //
   // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
-  connect(provider: Provider | ConnectionInfo | string, relayer?: Relayer): Wallet {
-    // TODO: This only works with JsonRpcProviders
-    return new Wallet(this.config, this.context, ...this._signers).setProvider(provider as unknown as JsonRpcProvider).setRelayer(relayer)
+  connect(provider: Provider, relayer?: Relayer): Wallet {
+    if (isJsonRpcProvider(provider)) {
+      return new Wallet(this.config, this.context).setSigners(...this._signers).setProvider(provider).setRelayer(relayer)
+    } else {
+      throw new Error('Wallet provider argument is expected to be a JsonRpcProvider')
+    }
+  }
+
+  async getProvider(chainId?: number): Promise<JsonRpcProvider> {
+    if (chainId !== undefined && await this.chainId() !== chainId) {
+      throw new Error("Invalid chain id")
+    }
+    return this.provider
+  }
+
+  async getRelayer(chainId?: number): Promise<Relayer> {
+    if (chainId !== undefined && await this.chainId() !== chainId) {
+      throw new Error("Invalid chain id")
+    }
+    return this.relayer
   }
 
   // connected reports if json-rpc provider has been connected
@@ -128,6 +133,7 @@ export class Wallet extends Signer {
 
   // getSigners returns the multi-sig signers with permission to control the wallet
   async getSigners(): Promise<string[]> {
+    // TODO: this won't work if _signers isn't set..
     return Promise.all(this._signers.map((s) => s.getAddress()))
   }
 
@@ -175,6 +181,8 @@ export class Wallet extends Signer {
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
+  //
+  // NOTE: the txs argument of type Transactionish can accept one or many transactions. 
   async signTransactions(txs: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransactions> {
     const transaction = (await resolveArrayProperties<Transactionish>(txs))
 
@@ -406,8 +414,9 @@ export class Wallet extends Signer {
     }]
   }
 
-  // updateConfig will build an updated config transaction and send/publish it to the network
-  // via the relayer
+  // updateConfig will build an updated config transaction and send/publish it to the Ethereum
+  // network via the relayer. Note, the updated wallet config is stilled as a single hash,
+  // unlike `publishConfig` which will store the entire WalletConfig object.
   async updateConfig(
     config: WalletConfig,
     nonce?: number,
@@ -424,8 +433,8 @@ export class Wallet extends Signer {
     ]
   }
 
-  // publishConfig will publish the wallet config to the network via the relayer. Publishing
-  // the config will also store the entire object of signers.
+  // publishConfig will publish the current wallet config to the network via the relayer.
+  // Publishing the config will also store the entire object of signers.
   async publishConfig(
     nonce?: number
   ): Promise<TransactionResponse> {
@@ -450,17 +459,17 @@ export class Wallet extends Signer {
     })
   }
 
-  signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('Method not implemented.')
-  }
-
   // packMsgAndSig is used by RemoteSigners to include details as a string blob of data.
   private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
     return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }
 
-  // singleOwner will create a Wallet instance with a single signer (ie. a single EOA account)
-  static async singleOwner(context: WalletContext, owner: BytesLike | AbstractSigner): Promise<Wallet> {
+  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error('signTransaction method is not supported in Wallet, please use signTransactions(...)')
+  }
+
+  // singleOwner will create a Wallet instance with a single signer (ie. from a single EOA account)
+  static async singleOwner(owner: BytesLike | AbstractSigner, context?: WalletContext): Promise<Wallet> {
     const signer = AbstractSigner.isSigner(owner) ? owner : new ethers.Wallet(owner)
 
     const config = {
@@ -473,6 +482,6 @@ export class Wallet extends Signer {
       ]
     }
 
-    return new Wallet(config, context, owner)
+    return (new Wallet(config, context)).setSigners(signer)
   }
 }

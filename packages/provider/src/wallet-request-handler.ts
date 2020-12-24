@@ -61,10 +61,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // TODO/XXX
     // TODO: throwing, but we must also call the "callback" with the error here..
     const signer = this.wallet
-    if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
+    if (!signer) throw new Error('WalletRequestHandler: wallet is not configured')
 
-    const provider = await this.wallet.getProvider() as JsonRpcProvider
-    if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
+    const provider = await this.wallet.getProvider()
+    if (!provider) throw new Error('WalletRequestHandler: wallet provider is not configured')
 
     if (!chainId) {
       chainId = await this.wallet.getChainId()
@@ -190,7 +190,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
             response.result = await signer.signTransactions(transaction)
           } else {
-            throw Error('sender address does not match wallet')
+            throw new Error('sender address does not match wallet')
           }
 
           break
@@ -323,7 +323,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     })
 
     if (!networkConfig) {
-      throw Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
+      throw new Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
     }
     return networkConfig
   }
