@@ -26,7 +26,7 @@ import {
 
 import { Relayer } from '@0xsequence/relayer'
 
-import { WalletContext, JsonRpcSender, NetworkConfig, isNetworkConfig, isJsonRpcProvider, sequenceContext } from '@0xsequence/network'
+import { ChainId, WalletContext, JsonRpcSender, NetworkConfig, isNetworkConfig, isJsonRpcProvider, sequenceContext } from '@0xsequence/network'
 
 import {
   WalletConfig,
@@ -48,11 +48,19 @@ import { Signer } from './signer'
 //
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
 // messages, signing transactions and updating/deploying the wallet config on a specific chain.
-export class Wallet extends Signer {
-  private _signers: AbstractSigner[]
 
+
+export type WalletOptions = {
+  config: WalletConfig, // HMM: this might need to be the init config always, shoudl specify. rename to: initConfig
+  context?: WalletContext,
+  strict?: boolean
+}
+
+export class Wallet extends Signer {
   readonly context: WalletContext
   readonly config: WalletConfig
+
+  private readonly _signers: AbstractSigner[]
 
   // provider is an Ethereum Json RPC provider that is connected to a particular network (aka chain)
   // and access to the signer for signing transactions.
@@ -66,27 +74,56 @@ export class Wallet extends Signer {
   // or through a remote transaction Web Service.
   relayer: Relayer
 
-  constructor(config: WalletConfig, context: WalletContext = sequenceContext) {
+  constructor(options: WalletOptions, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
 
-    if (!context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable configuration in strict mode')
+    const { config, context, strict } = options
+
+    if (context) {
+      this.context = { ...context }
+    } else {
+      // default context is to use @0xsequence/network deployed context
+      this.context = { ...sequenceContext }
+    }
+
+    if (strict === true) {
+      this.context.nonStrict = undefined
+    } else if (strict === false) {
+      this.context.nonStrict = true
+    }
+    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('wallet config is not usable (strict mode)')
 
     this.config = sortConfig(config)
-    this.context = context
+    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
   }
+
+  // TODO: put useSigners() on the MultiWallet ..
 
   // useConfig creates a new Wallet instance with the provided config, and uses the current provider
   // and relayer.
-  useConfig(config: WalletConfig): Wallet {
-    return new Wallet(config, this.context)
-      .setSigners(...this._signers)
+  useConfig(config: WalletConfig, strict?: boolean): Wallet {
+    return new Wallet({ config, context: this.context, strict }, ...this._signers)
       .setProvider(this.provider)
       .setRelayer(this.relayer)
   }
 
-  setSigners(...signers: (BytesLike | AbstractSigner)[]): Wallet {
-    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
-    return this
+  useSigners(...signers: (BytesLike | AbstractSigner)[]): Wallet {
+    return new Wallet({ config: this.config, context: this.context }, ...signers)
+      .setProvider(this.provider)
+      .setRelayer(this.relayer)
+  }
+
+  async getNetworks(): Promise<number[]> {
+    return [await this.chainId()]
+  }
+
+  async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
+    await this.getChainIdNumber(chainId)
+    return [this.config]
+  }
+
+  getWalletContext(): WalletContext {
+    return this.context
   }
 
   // connect is a short-hand to create an Account instance and set the provider and relayer.
@@ -94,23 +131,19 @@ export class Wallet extends Signer {
   // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
   connect(provider: Provider, relayer?: Relayer): Wallet {
     if (isJsonRpcProvider(provider)) {
-      return new Wallet(this.config, this.context).setSigners(...this._signers).setProvider(provider).setRelayer(relayer)
+      return new Wallet({ config: this.config, context: this.context }, ...this._signers).setProvider(provider).setRelayer(relayer)
     } else {
       throw new Error('Wallet provider argument is expected to be a JsonRpcProvider')
     }
   }
 
   async getProvider(chainId?: number): Promise<JsonRpcProvider> {
-    if (chainId !== undefined && await this.chainId() !== chainId) {
-      throw new Error("Invalid chain id")
-    }
+    await this.getChainIdNumber(chainId)
     return this.provider
   }
 
   async getRelayer(chainId?: number): Promise<Relayer> {
-    if (chainId !== undefined && await this.chainId() !== chainId) {
-      throw new Error("Invalid chain id")
-    }
+    await this.getChainIdNumber(chainId)
     return this.relayer
   }
 
@@ -131,9 +164,13 @@ export class Wallet extends Signer {
     return this.address
   }
 
-  // getSigners returns the multi-sig signers with permission to control the wallet
+  // getSigners returns the list of public account addresses to the currently connected
+  // signer objects for this wallet. Note: for a complete list of configured signers
+  // on the wallet, query getWalletConfig()
   async getSigners(): Promise<string[]> {
-    // TODO: this won't work if _signers isn't set..
+    if (!this._signers || this._signers.length === 0) {
+      return []
+    }
     return Promise.all(this._signers.map((s) => s.getAddress()))
   }
 
@@ -146,6 +183,7 @@ export class Wallet extends Signer {
 
   // setProvider assigns a json-rpc provider to this wallet instance
   setProvider(provider: JsonRpcProvider | ConnectionInfo | string): Wallet {
+    if (provider === undefined) return this
     if (Provider.isProvider(provider)) {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
@@ -159,6 +197,7 @@ export class Wallet extends Signer {
 
   // setRelayer assigns a Sequence transaction relayer to this wallet instance
   setRelayer(relayer: Relayer): Wallet {
+    if (relayer === undefined) return this
     this.relayer = relayer
     return this
   }
@@ -176,14 +215,16 @@ export class Wallet extends Signer {
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
-  async sendTransaction(transaction: Deferrable<Transactionish>, allSigners?: boolean): Promise<TransactionResponse> {
-    return this.relayer.relay(await this.signTransactions(transaction, allSigners))
+  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
+    return this.relayer.relay(await this.signTransactions(transaction, chainId, allSigners))
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
   //
   // NOTE: the txs argument of type Transactionish can accept one or many transactions. 
-  async signTransactions(txs: Deferrable<Transactionish>, allSigners?: boolean): Promise<SignedTransactions> {
+  async signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
+    const signChainId = await this.getChainIdNumber(chainId)
+
     const transaction = (await resolveArrayProperties<Transactionish>(txs))
 
     if (!this.provider) {
@@ -241,12 +282,9 @@ export class Wallet extends Signer {
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     stx = appendNonce(stx, nonce)
 
-    // Get sign chain id
-    const chainId = await this.chainId()
-
     // Bundle with signature
     return {
-      chainId: chainId,
+      chainId: signChainId,
       context: this.context,
       config: this.config,
       transactions: stx,
@@ -254,16 +292,25 @@ export class Wallet extends Signer {
     }
   }
 
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse> {
+    if (!this.relayer) {
+      throw new Error('relayer is not set, first connect a relayer')
+    }
+    await this.getChainIdNumber(chainId)
+    return this.relayer.relay(signedTxs)
+  }
+
   // signMessage will sign a message for a particular chainId with the wallet signers
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
-  async signMessage(message: BytesLike, chainId?: NetworkConfig | BigNumberish, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     return this.sign(message, false, chainId, allSigners)
   }
 
   // sign is a helper method to sign a payload with the wallet signers
-  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: NetworkConfig | BigNumberish, allSigners?: boolean): Promise<string> {
-    const signChainId = chainId ? isNetworkConfig(chainId) ? chainId.chainId : BigNumber.from(chainId) : await this.chainId()
+  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    const signChainId = await this.getChainIdNumber(chainId)
+
     const digest = ethers.utils.arrayify(isDigest ? msg :
       ethers.utils.keccak256(
         packMessageData(
@@ -339,7 +386,7 @@ export class Wallet extends Signer {
     config: WalletConfig,
     publish = false
   ): Promise<SequenceTransaction[]> {
-    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('non-usable new configuration in strict mode')
+    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('wallet config is not usable (strict mode)')
 
     const isUpgradable = await (async () => {
       try {
@@ -435,9 +482,7 @@ export class Wallet extends Signer {
 
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
-  async publishConfig(
-    nonce?: number
-  ): Promise<TransactionResponse> {
+  async publishConfig(nonce?: number): Promise<TransactionResponse> {
     const requireUtilsInterface = new Interface(walletContracts.requireUtils.abi)
     return this.sendTransaction({
       delegateCall: false,
@@ -457,6 +502,41 @@ export class Wallet extends Signer {
         ]
       )
     })
+  }
+
+  async isDeployed(chainId?: ChainId): Promise<boolean> {
+    await this.getChainIdNumber(chainId)
+    const walletCode = await this.provider.getCode(this.address)
+    return walletCode && walletCode !== "0x"
+  }
+
+  // getChainIdFromArgument will return the chainId of the argument, as well as ensure
+  // we're not providing an invalid chainId that isn't connected to this wallet.
+  private async getChainIdNumber(chainId?: ChainId): Promise<number> {
+    if (!chainId) {
+      // it's valid for chainId argument to be undefined, in which case
+      // we will use the connected value
+      return await this.chainId()
+    }
+
+    const chainIdNum = (() => {
+      if ((<NetworkConfig>chainId).chainId) {
+        return ((<NetworkConfig>chainId)).chainId
+      }
+      return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
+    })()
+
+    if (this.context.nonStrict) {
+      // in non-strict mode, just return the chainId from argument
+      return chainIdNum
+    }
+
+    const connectedChainId = await this.chainId()
+    if (connectedChainId !== chainIdNum) {
+      throw new Error(`the specified chainId ${chainIdNum} does not match the wallet's connected chainId ${connectedChainId}`)
+    }
+
+    return connectedChainId
   }
 
   // packMsgAndSig is used by RemoteSigners to include details as a string blob of data.
@@ -482,6 +562,6 @@ export class Wallet extends Signer {
       ]
     }
 
-    return (new Wallet(config, context)).setSigners(signer)
+    return new Wallet({ config, context }, signer)
   }
 }

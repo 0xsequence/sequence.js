@@ -2,25 +2,27 @@ import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } fr
 import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
 import { Deferrable } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
-import { Signer, SignerInfo, NotEnoughSigners } from './signer'
+import { Signer, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
-import { GlobalWalletConfig, WalletConfig, addressOf, imageHash, isConfigEqual } from './config'
-import { NetworkConfig, WalletContext, sequenceContext } from '@0xsequence/network'
+import { WalletConfig, addressOf, imageHash, isConfigEqual } from './config'
+import { ChainId, NetworkConfig, WalletContext, sequenceContext, isNetworkConfig } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
 import { Relayer } from '@0xsequence/relayer'
 
 export type MultiWalletOptions = {
-  context?: WalletContext,
-  networks: NetworkConfig[]
-  initialConfig: WalletConfig,
-  signers: AbstractSigner[],
+  initConfig: WalletConfig, // TODO: init config..? hmm.. how about in Wallet?
+  networks: NetworkConfig[],
+  signers: AbstractSigner[], // TODO: move this up like with Wallet()? ..? maybe.
+  context?: WalletContext
 }
 
 export class MultiWallet extends Signer {
+  private readonly options: MultiWalletOptions
+
   private readonly _wallets: {
     wallet: Wallet,
-    network: NetworkConfig
+    network: NetworkConfig // hmm.. network config here..? why..
   }[]
 
   constructor(opts: MultiWalletOptions) {
@@ -33,8 +35,12 @@ export class MultiWallet extends Signer {
     if (!opts.context) opts.context = sequenceContext
 
     // Account/wallet instances using the initial configuration
+    // TODO: integrity check, ensure networks doesn't have same chainId twice..
+    // prob add as helper method on 0xsequence/network
+
+    // TODO: review... add setNetworkConfig ..? or setNetwork(NetworkConfig) ..?
     this._wallets = opts.networks.map((network) => {
-      const wallet = new Wallet(opts.initialConfig, opts.context).setSigners(...opts.signers)
+      const wallet = new Wallet({ config: opts.initConfig, context: opts.context }, ...opts.signers)
       wallet.setProvider(network.rpcUrl)
       if (network.relayer) {
         wallet.setRelayer(network.relayer)
@@ -44,6 +50,12 @@ export class MultiWallet extends Signer {
         wallet: wallet
       }
     })
+
+    this.options = opts
+  }
+
+  getWalletContext(): WalletContext {
+    return this.options.context
   }
 
   // address getter
@@ -72,44 +84,74 @@ export class MultiWallet extends Signer {
     return this._wallets.find((w) => w.network.chainId === chainId)?.wallet.getRelayer()
   }
 
-  // getGlobalWalletConfig builds the GlobalWalletConfig object which contains all WalletConfigs across all networks.
+  async getNetworks(): Promise<number[]> {
+    return this.options.networks.map(n => n.chainId)
+  }
+
+  // getWalletConfig builds a list of WalletConfigs across all networks.
   // This is useful to shows all keys/devices connected to a wallet across networks.
-  // TODO: rename to getWalletConfig(), and return Promise<[]WalletConfig> ..
-  // and leave comment, its across networks, sorted by......?
-  async getGlobalWalletConfig(): Promise<GlobalWalletConfig> {
-    const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
-    const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
-    const allSigners = allConfigs.reduce((p, config) => {
-      config.config.signers.forEach((signer) => {
-        const item = p.find((c) => c.address === signer.address)
-        const netEntry = {
-          weight: signer.weight,
-          chaind: config.wallet.network.chainId
-        }
+  // Sorted by: mainChain, authChain, ...rest by ascending numerical order of network's chainId
+  // TODO: or just sort by chainId ascending order..?
+  async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> { // TODO: type? include Network..? might be helpful.
+    // const allConfigs = await Promise.all(this._wallets.map(async (w) => ({ wallet: w, config: await this.currentConfig(w.wallet) })))
+    // return allConfigs
 
-        if (!item) {
-          p.push({
-            address: signer.address,
-            networks: [netEntry]
-          })
-        } else {
-          item.networks.push(netEntry)
-        }
-      })
-      return p
-    }, [] as SignerInfo[])
+    // TODO: ordering..? primary, etc..
 
-    return {
-      threshold: thresholds,
-      signers: allSigners
-    }
+    // TODO: only return walletconfig for specific network..
+
+    const chainIdNum = (() => {
+      if (!chainId) {
+        return undefined
+      }
+      if ((<NetworkConfig>chainId).chainId) {
+        return ((<NetworkConfig>chainId)).chainId
+      }
+      return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
+    })()
+
+
+    // TODO: confirm map() doesn't returned elements with undefined
+
+    return Promise.all(this._wallets.map(async w => {
+      const walletConfig = await w.wallet.getWalletConfig()
+      if (!chainId || walletConfig[0].chainId === chainIdNum) {
+        return walletConfig[0]
+      }
+    }))
+
+    // const thresholds = allConfigs.map((c) => ({ chaind: c.wallet.network.chainId, weight: c.config.threshold }))
+    // const allSigners = allConfigs.reduce((p, config) => {
+    //   config.config.signers.forEach((signer) => {
+    //     const item = p.find((c) => c.address === signer.address)
+    //     const netEntry = {
+    //       weight: signer.weight,
+    //       chaind: config.wallet.network.chainId
+    //     }
+
+    //     if (!item) {
+    //       p.push({
+    //         address: signer.address,
+    //         networks: [netEntry]
+    //       })
+    //     } else {
+    //       item.networks.push(netEntry)
+    //     }
+    //   })
+    //   return p
+    // })
+
+    // return {
+    //   threshold: thresholds,
+    //   signers: allSigners
+    // }
   }
 
-  async signAuthMessage(message: BytesLike, onlyFullSign: boolean = true): Promise<string> {
-    return this.signMessage(message, this.authWallet(), onlyFullSign)
+  async signAuthMessage(message: BytesLike, allSigners: boolean = true): Promise<string> {
+    return this.signMessage(message, this.authWallet(), allSigners)
   }
 
-  async signMessage(message: BytesLike, target?: Wallet | NetworkConfig | BigNumberish, onlyFullSign: boolean = true): Promise<string> {
+  async signMessage(message: BytesLike, target?: Wallet | ChainId, allSigners: boolean = true): Promise<string> {
     const wallet = (() => {
       if (!target) return this.mainWallet()
       if ((<Wallet>target).address) {
@@ -122,18 +164,20 @@ export class MultiWallet extends Signer {
     let thisConfig = await this.currentConfig(wallet)
     thisConfig = thisConfig ? thisConfig : this._wallets[0].wallet.config
 
+    // TODO: review..
     // See if wallet has enough signer power
     const weight = await wallet.useConfig(thisConfig).signWeight()
-    if (weight.lt(thisConfig.threshold) && onlyFullSign) {
+    if (weight.lt(thisConfig.threshold) && allSigners) {
       throw new NotEnoughSigners(`Sign message - wallet combined weight ${weight.toString()} below required ${thisConfig.threshold.toString()}`)
     }
 
+    // TODO .. ugh..
     return wallet.useConfig(thisConfig).signMessage(message)
   }
 
-  async sendTransaction(dtransactionish: Deferrable<Transactionish>, onlyFullSign: boolean = true, network?: NetworkConfig | BigNumberish): Promise<TransactionResponse> {
+  async sendTransaction(dtransactionish: Deferrable<Transactionish>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
-    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
+    const wallet = chainId ? this.getWalletByNetwork(chainId) : this.mainWallet()
 
     // TODO: Skip this step if wallet is authWallet
     const [thisConfig, lastConfig] = await Promise.all([
@@ -142,8 +186,8 @@ export class MultiWallet extends Signer {
 
     // See if wallet has enough signer power
     const weight = await wallet.useConfig(thisConfig).signWeight()
-    if (weight.lt(thisConfig.threshold) && onlyFullSign) {
-      throw new NotEnoughSigners(`Send transaction - wallet combined weight ${weight.toString()} below required ${thisConfig.threshold.toString()}`)
+    if (weight.lt(thisConfig.threshold) && allSigners) {
+      throw new NotEnoughSigners(`sendTransaction(), wallet combined weight ${weight.toString()} below required threshold ${thisConfig.threshold.toString()}`)
     }
 
     // If the wallet is updated, procede to transaction send
@@ -166,9 +210,14 @@ export class MultiWallet extends Signer {
     ])
   }
 
-  signTransactions(transaction: Deferrable<Transactionish>, allSigners?: boolean, network?: NetworkConfig | BigNumberish): Promise<SignedTransactions> {
-    const wallet = network ? this.getWalletByNetwork(network) : this.mainWallet()
-    return wallet.signTransactions(transaction, allSigners)
+  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
+    const wallet = chainId ? this.getWalletByNetwork(chainId) : this.mainWallet()
+    return wallet.signTransactions(txs, chainId, allSigners)
+  }
+
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse> {
+    const wallet = chainId ? this.getWalletByNetwork(chainId) : this.mainWallet()
+    return wallet.sendSignedTransactions(signedTxs)
   }
 
   // updateConfig will build an updated config transaction and send/publish it to the auth chain
@@ -181,6 +230,8 @@ export class MultiWallet extends Signer {
         return [newConfig, await this.authWallet().publishConfig()]
       }
     }
+
+    // TODO: consolidate this with Wallet .. there is duplicate stuff in here..
 
     // Get latest config, update only if neccesary
     const lastConfig = await this.currentConfig()
@@ -209,7 +260,10 @@ export class MultiWallet extends Signer {
     return this.authWallet().publishConfig()
   }
 
-  async isDeployed(target?: Wallet | NetworkConfig): Promise<boolean> {
+  async isDeployed(target?: Wallet | ChainId): Promise<boolean> {
+    // TODO: lets check the imageHash.. maybe add arument here..?
+    // TODO: can prob also just use method from Wallet() .. this is duplicated again.
+
     const wallet = (() => {
       if (!target) return this.authWallet()
       if ((<Wallet>target).address) {
@@ -222,6 +276,9 @@ export class MultiWallet extends Signer {
     return walletCode && walletCode !== "0x"
   }
 
+  // TODO: move this to Wallet? and then use target above..?
+
+  // TODO: review..
   // TODO: Split this to it's own class "configProvider" or something
   // this process can be done in different ways (caching, api, utils, etc)
   async currentConfig(target?: Wallet | NetworkConfig): Promise<WalletConfig | undefined> {
@@ -247,7 +304,7 @@ export class MultiWallet extends Signer {
 
     let event: any
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
-      // Test if given config is the updated config
+      // Test if given config is the already updated+published config
       if (imageHash(this._wallets[0].wallet.config) === await currentImageHash) {
         return this._wallets[0].wallet.config
       }
@@ -255,7 +312,7 @@ export class MultiWallet extends Signer {
       // The wallet has been updated
       // lookup configuration using imageHash
       const filter = authContract.filters.RequiredConfig(null, await currentImageHash)
-      const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
+      const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter}) // REVIEW, fromBlock: 0 ?
       if (logs.length === 0) return undefined
       const lastLog = logs[logs.length - 1]
       event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
@@ -292,17 +349,6 @@ export class MultiWallet extends Signer {
     return config
   }
 
-  private getWalletByNetwork(network: NetworkConfig | BigNumberish): Wallet {
-    const chainId = (() => {
-      if ((<NetworkConfig>network).chainId) {
-        return (<NetworkConfig>network).chainId
-      }
-      return ethers.BigNumber.from(network as BigNumberish).toNumber()
-    })()
-
-    return this._wallets.find((w) => w.network.chainId === chainId).wallet
-  }
-
   private mainWallet(): Wallet {
     const found = this._wallets.find((w) => w.network.isMainChain).wallet
     return found ? found : this._wallets[0].wallet
@@ -313,15 +359,22 @@ export class MultiWallet extends Signer {
     return found ? found : this._wallets[0].wallet
   }
 
+  private getWalletByNetwork(network: ChainId): Wallet {
+    const chainId = (() => {
+      if ((<NetworkConfig>network).chainId) {
+        return (<NetworkConfig>network).chainId
+      }
+      return ethers.BigNumber.from(network as BigNumberish).toNumber()
+    })()
+
+    return this._wallets.find((w) => w.network.chainId === chainId).wallet
+  }
+
   connect(_: Provider): AbstractSigner {
     throw new Error('connect method is not supported in MultiWallet')
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
     throw new Error('signTransaction method is not supported in MultiWallet, please use signTransactions(...)')
-  }
-
-  static isSequenceWallet(signer: AbstractSigner): signer is MultiWallet {
-    return (<MultiWallet>signer).updateConfig !== undefined
   }
 }

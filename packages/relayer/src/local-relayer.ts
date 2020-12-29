@@ -84,13 +84,13 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     return (await module.nonce({ blockTag: blockTag })).toNumber()
   }
 
-  async relay(signed: SignedTransactions): Promise<TransactionResponse> {
-    if (!signed.context.guestModule || signed.context.guestModule.length !== 42) {
+  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
+    if (!signedTxs.context.guestModule || signedTxs.context.guestModule.length !== 42) {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
     return this.signer.sendTransaction(
-      await this.prepareTransactions(signed.config, signed.context, signed.signature, ...signed.transactions)
+      await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
     )
   }
 }

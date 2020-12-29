@@ -37,7 +37,7 @@ export const tests = async () => {
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
   const rpcProvider = new JsonRpcProvider('http://localhost:8545')
-  const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(rpcProvider, relayer)
+  const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
 
 

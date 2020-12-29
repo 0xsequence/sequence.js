@@ -6,7 +6,8 @@ export interface WalletContext {
   mainModuleUpgradable: string
   guestModule?: string
   requireUtils?: string
-  nonStrict?: boolean
+  
+  nonStrict?: boolean // maybe rename to just strict..?
 }
 
 // TODO: rename sequenceContext to something like "deployedWalletContext"

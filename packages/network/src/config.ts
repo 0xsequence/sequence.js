@@ -1,4 +1,5 @@
 import { Relayer } from '@0xsequence/relayer'
+import { BigNumberish } from 'ethers'
 
 export interface NetworkConfig {
   name: string
@@ -11,11 +12,17 @@ export interface NetworkConfig {
   relayer?: Relayer
 }
 
-export type Networks = {[key: string]: NetworkConfig}
+export type Networks = {[key: string]: NetworkConfig} // network name :: network config
 
 export function isNetworkConfig(cand: any): cand is NetworkConfig {
-  return cand && cand.chainId !== undefined
+  return cand && cand.chainId !== undefined && cand.name !== undefined &&
+    cand.rpcUrl !== undefined && cand.relayer !== undefined
 }
+
+export type ChainId = NetworkConfig | BigNumberish // TODO: rename to Network ....? maybe .. or Networkish? confusing with ethers?
+// ^ ChainIdish ?
+
+// TODO: where to specify isMainChain and isAuthChain ..?
 
 export const ethereumNetworks: Networks = {
   mainnet: {

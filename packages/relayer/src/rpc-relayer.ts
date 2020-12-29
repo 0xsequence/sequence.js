@@ -129,8 +129,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return ethers.BigNumber.from(resp.nonce).toNumber()
   }
 
-  async relay(signed: SignedTransactions): Promise<PendingTransactionResponse> {
-    const prep = await this.prepareTransactions(signed.config, signed.context, signed.signature, ...signed.transactions)
+  async relay(signedTxs: SignedTransactions): Promise<PendingTransactionResponse> {
+    const prep = await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
     const result = this.chaindService.sendMetaTxn({
       call: {
         contract: prep.to,
@@ -147,7 +147,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         blockHash: txReceipt.blockHash,
         blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
         confirmations: 1,
-        from: addressOf(signed.config, signed.context),
+        from: addressOf(signedTxs.config, signedTxs.context),
         hash: txReceipt.transactionHash,
         raw: receipt.txnReceipt,
         wait: async (confirmations?: number) => this.provider.waitForTransaction(txReceipt.transactionHash, confirmations)
@@ -159,7 +159,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
 
     return {
-      from: addressOf(signed.config, signed.context),
+      from: addressOf(signedTxs.config, signedTxs.context),
       raw: (await result).toString(),
       hash: (await result).txnHash,
       waitForReceipt: waitReceipt,

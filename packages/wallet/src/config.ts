@@ -1,28 +1,30 @@
 import { BigNumberish, BytesLike, ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
-import { SignerInfo, SignerThreshold, DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
+import { DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
 
 // WalletConfig is the configuration of key signers that can access
 // and control the wallet
-export interface WalletConfig {
-  address?: string
-  chainId?: number
+export interface WalletConfig {  
   threshold: number
   signers: {
     weight: number
     address: string
   }[]
+
+  address?: string
+
+  chainId?: number
+  deployed?: string
+  published?: string
 }
 
-// TODO ......
-export type GlobalWalletConfig = {
-  threshold: SignerThreshold[],
-  signers: SignerInfo[]
-}
+// WalletConfigWithNetwork ...?
+// (WalletConfig & { network?: NetworkConfig })[]
 
-// TODO: and then remove GlobalWalletConfig type..
-// export type GlobalWalletConfig = WalletConfig[]
+// export interface NetworkAndWalletConfig extends NetworkConfig {
+//   walletConfig?: WalletConfig
+// }
 
 export function isConfigEqual(a: WalletConfig, b: WalletConfig): boolean {
   return imageHash(a) === imageHash(b)

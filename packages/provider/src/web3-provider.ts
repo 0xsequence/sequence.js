@@ -1,4 +1,4 @@
-import { Web3Provider as EthersWeb3Provider, ExternalProvider, TransactionRequest, TransactionResponse, JsonRpcSigner as EthersJsonRpcSigner, Networkish } from "@ethersproject/providers"
+import { Web3Provider as EthersWeb3Provider, ExternalProvider, TransactionRequest, TransactionResponse, JsonRpcProvider, Networkish } from "@ethersproject/providers"
 import { BigNumberish } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
@@ -8,7 +8,14 @@ import { Wallet, Signer } from '@0xsequence/wallet'
 import { WalletRequestHandler } from './wallet-request-handler'
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
+  // TODO: context here should be optional..?
+  // in fact, maybe shouldnt be provided at all..?
   private context: WalletContext
+
+  // or could be just as an integrity check, for context we're expecting?
+  // TODO: new methods... sequence_getWalletContext   .. sequence_getWalletConfig
+  // etc........
+
 
   constructor(
     context: WalletContext,
@@ -35,9 +42,10 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   //   return new SequenceSigner(this.context, this.getSigner())
   // }
 
-  getSigner(): JsonRpcSigner {
-    return new JsonRpcSigner(null, this)
-  }
+  // TODO: ..
+  // getSigner(): JsonRpcSigner {
+  //   return new JsonRpcSigner(this)
+  // }
 }
 
 export class LocalWeb3Provider extends Web3Provider {
@@ -48,7 +56,15 @@ export class LocalWeb3Provider extends Web3Provider {
 }
 
 // TODO: prob move to signer.ts or json-rpc-signer.ts
-export class JsonRpcSigner extends EthersJsonRpcSigner { //implements Signer {
+// TODO: .. implenment Sequence Signer methods.
+
+// .......
+// @ts-ignore
+export class JsonRpcSigner extends Signer { //implements TypedDataSigner {
+
+  constructor(provider: JsonRpcProvider) {
+    super()
+  }
 
 }
 

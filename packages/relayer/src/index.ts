@@ -25,7 +25,7 @@ export interface Relayer {
   getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: providers.BlockTag): Promise<number>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
-  relay(signed: SignedTransactions): Promise<providers.TransactionResponse>
+  relay(signedTxs: SignedTransactions): Promise<providers.TransactionResponse>
 }
 
 export { LocalRelayer } from './local-relayer'

@@ -40,7 +40,7 @@ const main = async () => {
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
   const provider = new JsonRpcProvider('http://localhost:8545')
-  const wallet = (await Wallet.singleOwner(deployedWalletContext, owner)).connect(provider, relayer)
+  const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list
   const networks: Networks = { ...ethereumNetworks }
