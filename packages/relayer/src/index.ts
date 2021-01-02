@@ -30,3 +30,8 @@ export interface Relayer {
 
 export { LocalRelayer } from './local-relayer'
 export { RpcRelayer } from './rpc-relayer'
+
+export function isRelayer(cand: any): cand is Relayer {
+  return cand && cand.estimateGasLimits !== undefined && cand.gasRefundOptions !== undefined &&
+    cand.getNonce !== undefined && cand.relay !== undefined
+}

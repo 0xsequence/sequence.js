@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
 import { Wallet } from '@0xsequence/wallet'
-import { sequenceContext, Networks, ethereumNetworks } from '@0xsequence/network'
+import { sequenceContext, Networks, sequenceNetworks } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 // import { MockWalletUserPrompter } from './utils'
@@ -43,7 +43,7 @@ const main = async () => {
   const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list
-  const networks: Networks = { ...ethereumNetworks }
+  const networks: Networks = { ...sequenceNetworks }
   networks['ganache'] = {
     name: 'ganache',
     chainId: 31337,

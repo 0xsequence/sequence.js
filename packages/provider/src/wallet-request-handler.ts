@@ -315,7 +315,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const chainId = await this.getChainId()
 
     const chainIds = []
-    const networkConfig = Object.values(this.networks).find(config => {
+    const networkConfig = this.networks.find(config => {
       if (config.chainId === chainId) {
         return config
       }

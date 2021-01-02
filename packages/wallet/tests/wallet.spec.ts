@@ -5,9 +5,6 @@ import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
 import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/HookCallerMock'
 
-import * as lib from '../src'
-
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature, isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, joinSignatures } from '../src'
 import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish, isSignedTransactions } from '@0xsequence/transactions'
 
 import { LocalRelayer } from '@0xsequence/relayer'
@@ -15,6 +12,13 @@ import { LocalRelayer } from '@0xsequence/relayer'
 import { WalletContext, Networks, JsonRpcSender } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
+
+import * as lib from '../src'
+
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
+  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, joinSignatures,
+  imageHash, sortConfig, fetchImageHash
+} from '../src'
 
 import { LocalWeb3Provider } from '../../provider/src'
 
@@ -50,13 +54,11 @@ describe('Wallet integration', function () {
   let context: WalletContext
   let wallet: lib.Wallet
 
-  const networks: Networks = {
-    'ganache': {
+  const networks: Networks = [{
       name: 'ganache',
       chainId: 31337,
       rpcUrl: `http://localhost:${GANACHE_PORT}/`
-    }
-  }
+  }]
 
   before(async () => {
     // Setup eth test node env
@@ -1245,6 +1247,8 @@ describe('Wallet integration', function () {
       }
     })
     it('Should migrate and update to a new single owner configuration', async () => {
+      const address = await wallet.getAddress()
+      
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
       const newConfig = {
@@ -1257,10 +1261,16 @@ describe('Wallet integration', function () {
         ]
       }
 
-      const [config, tx] = await wallet.updateConfig(newConfig)
+      expect(await wallet.isDeployed()).to.be.false
+
+      const [updatedConfig, tx] = await wallet.updateConfig(newConfig)
       await tx.wait()
 
-      const updatedWallet = new lib.Wallet({ config, context }, s1).connect(ganache.provider, relayer)
+      expect(await wallet.isDeployed()).to.be.true
+
+      const updatedWallet = wallet.useConfig(updatedConfig).useSigners(s1)
+      expect(updatedWallet.imageHash).to.equal(await fetchImageHash(updatedWallet))
+      expect(await updatedWallet.getAddress()).to.equal(address)
 
       expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))

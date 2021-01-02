@@ -4,21 +4,21 @@ import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
 import { JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
 import { Signer as AbstractSigner } from 'ethers'
 import { BytesLike, Deferrable } from 'ethers/lib/utils'
-import { WalletConfig } from '.'
+import { WalletConfig, WalletState } from '.'
 
 export abstract class Signer extends AbstractSigner { // TODO: add implements TypedDataSigner
-  abstract getWalletContext(): WalletContext
-
-
-  // yes, this should be of the current / latest / published configs..
-  // what if its counterfactual or unpublished..? then, published = false, deployed = true/false too..?
-  abstract getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> // TODO: add published or current boolean?
-
+  static isSequenceSigner(cand: any): cand is Signer {
+    return isSequenceSigner(cand)
+  }
+  
   abstract getProvider(chainId?: number): Promise<JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
+  abstract getWalletContext(): WalletContext
+  abstract getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
+  abstract getWalletState(chainId?: ChainId): Promise<WalletState[]>
 
-  abstract getNetworks(): Promise<number[]> // TODO: better to return the NetworkConfig + sidechains, etc..
+  abstract getNetworks(): Promise<NetworkConfig[]>
 
   // getSigners returns a list of available / attached signers to the interface. Note: you need
   // enough signers in order to meet the signing threshold that satisfies a wallet config.
@@ -41,12 +41,9 @@ export abstract class Signer extends AbstractSigner { // TODO: add implements Ty
   abstract signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions>
   abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse>
 
-  // getConfig() .. more consistent naming..?
-  // updateWalletConfig(..), publishWalletConfig(..)
-  // ...
-
-  // updateConfig will update the wallet image hash on-chain, which identifies the latest config.
-  abstract updateConfig(newConfig: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]>
+  // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
+  // newConfig argument is undefined, then it will use the existing config.
+  abstract updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]>
 
   // publishConfig will store the raw WalletConfig object on-chain, note: this may be expensive,
   // and is only necessary for config data-availability, in case of MultiWallet we use an authChain, etc.
