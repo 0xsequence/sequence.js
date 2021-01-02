@@ -7,7 +7,7 @@ export interface NetworkConfig {
   chainId: number
   ensAddress?: string
 
-  rpcUrl: string
+  rpcUrl?: string
   provider?: JsonRpcProvider
 
   relayerUrl?: string

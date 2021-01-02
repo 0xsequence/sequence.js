@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
-import { Wallet } from '@0xsequence/wallet'
+import { Wallet, Account } from '@0xsequence/wallet'
 import { sequenceContext, Networks, sequenceNetworks } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
@@ -25,8 +25,7 @@ const main = async () => {
   ) {
     throw new Error('deployedWalletContext and testWalletContext do not match. check or regen.')
   } 
-
-
+  
   //
   // Setup single owner Sequence wallet
   //
@@ -43,12 +42,21 @@ const main = async () => {
   const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list
-  const networks: Networks = { ...sequenceNetworks }
-  networks['ganache'] = {
+  const networks: Networks = [{
     name: 'ganache',
     chainId: 31337,
-    rpcUrl: 'http://localhost:8545'
-  }
+    provider: provider,
+    relayer: relayer,
+    isMainChain: true,
+    isAuthChain: true
+  }]
+
+  // Account for managing multi-network wallets
+  const account = new Account({
+    initialConfig: wallet.config,
+    networks,
+    context: deployedWalletContext
+  }, owner)
 
 
   // const txn = await relayer.deployWallet(wallet.config, sequenceContext)
@@ -57,7 +65,7 @@ const main = async () => {
 
   // the json-rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(wallet, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(account, null, networks)
 
 
   // external window handler + engine.. we may not need the engine, but we can use it if we want
