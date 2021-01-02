@@ -1,7 +1,7 @@
 import { TransactionResponse, BlockTag } from '@ethersproject/providers'
 import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { SequenceTransaction, SignedTransactions } from '@0xsequence/transactions'
+import { Transaction, SignedTransactions } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/wallet'
 import { BaseRelayer } from './base-relayer'
@@ -30,16 +30,16 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
   async gasRefundOptions(
     _config: WalletConfig,
     _context: WalletContext,
-    ...transactions: SequenceTransaction[]
-  ): Promise<SequenceTransaction[][]> {
+    ...transactions: Transaction[]
+  ): Promise<Transaction[][]> {
     return [transactions]
   }
 
   async estimateGasLimits(
     config: WalletConfig,
     context: WalletContext,
-    ...transactions: SequenceTransaction[]
-  ): Promise<SequenceTransaction[]> {
+    ...transactions: Transaction[]
+  ): Promise<Transaction[]> {
     const walletAddr = addressOf(config, context)
 
     const gasCosts = await Promise.all(transactions.map(async (t) => {

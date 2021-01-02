@@ -1,7 +1,7 @@
 import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
-import { SequenceTransaction, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
+import { Transaction, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
 import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
@@ -45,8 +45,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   async gasRefundOptions(
     config: WalletConfig,
     context: WalletContext,
-    ...transactions: SequenceTransaction[]
-  ): Promise<SequenceTransaction[][]> {
+    ...transactions: Transaction[]
+  ): Promise<Transaction[][]> {
     // chaind only supports refunds on a single token
     // TODO: Add compatiblity for different refund options
     const tokenFee = (await this.chaindService.tokenFee()).fee
@@ -81,8 +81,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   async estimateGasLimits(
     config: WalletConfig,
     context: WalletContext,
-    ...transactions: SequenceTransaction[]
-  ): Promise<SequenceTransaction[]> {
+    ...transactions: Transaction[]
+  ): Promise<Transaction[]> {
     if (transactions.length == 0) {
       return []
     }

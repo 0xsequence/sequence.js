@@ -2,8 +2,7 @@ import {
   Provider,
   TransactionResponse,
   BlockTag,
-  JsonRpcProvider,
-  TransactionRequest
+  JsonRpcProvider
 } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, Contract } from 'ethers'
 import { Interface, ConnectionInfo, BytesLike, Deferrable } from 'ethers/lib/utils' 
@@ -11,7 +10,7 @@ import { Interface, ConnectionInfo, BytesLike, Deferrable } from 'ethers/lib/uti
 import { walletContracts } from '@0xsequence/abi'
 
 import {
-  SequenceTransaction, Transactionish, AuxTransactionRequest, NonceDependency,
+  Transaction, Transactionish, TransactionRequest, NonceDependency,
   encodeMetaTransactionsData,
   isSequenceTransaction,
   readSequenceNonce,
@@ -280,11 +279,11 @@ export class Wallet extends Signer {
       throw new Error('missing relayer')
     }
 
-    let stx: SequenceTransaction[] = []
+    let stx: Transaction[] = []
 
     if (Array.isArray(transaction)) {
       if (hasSequenceTransactions(transaction)) {
-        stx = transaction as SequenceTransaction[]
+        stx = transaction as Transaction[]
       } else {
         stx = await toSequenceTransactions(this, transaction)
       }
@@ -296,14 +295,14 @@ export class Wallet extends Signer {
 
     // If transaction is marked as expirable
     // append expirable require
-    if ((<AuxTransactionRequest>transaction).expiration) {
-      stx = makeExpirable(this.context, stx, (<AuxTransactionRequest>transaction).expiration)
+    if ((<TransactionRequest>transaction).expiration) {
+      stx = makeExpirable(this.context, stx, (<TransactionRequest>transaction).expiration)
     }
 
     // If transaction depends on another nonce
     // append after nonce requirement
-    if ((<AuxTransactionRequest>transaction).afterNonce) {
-      const after = (<AuxTransactionRequest>transaction).afterNonce
+    if ((<TransactionRequest>transaction).afterNonce) {
+      const after = (<TransactionRequest>transaction).afterNonce
       stx = makeAfterNonce(this.context, stx,
         (<NonceDependency>after).address ? {
           address: (<NonceDependency>after).address,
@@ -461,7 +460,7 @@ export class Wallet extends Signer {
   // on chain. Note, the transaction is not sent to the network by this method.
   //
   // The `publish` argument when true will also store the contents of the WalletConfig to a chain's logs.
-  async buildUpdateConfigTransaction(config: WalletConfig, publish = false): Promise<SequenceTransaction[]> {
+  async buildUpdateConfigTransaction(config: WalletConfig, publish = false): Promise<Transaction[]> {
     if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('wallet config is not usable (strict mode)')
 
     const isUpgradable = await (async () => {
@@ -519,7 +518,7 @@ export class Wallet extends Signer {
     }]
   }
 
-  buildPublishConfigTransaction(config?: WalletConfig, nonce?: number): SequenceTransaction[] {
+  buildPublishConfigTransaction(config?: WalletConfig, nonce?: number): Transaction[] {
     const requireUtilsInterface = new Interface(walletContracts.requireUtils.abi)
     return [{
       delegateCall: false,
