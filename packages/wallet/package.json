@@ -19,6 +19,7 @@
     "@0xsequence/guard": "^0.7.0",
     "@0xsequence/network": "^0.7.0",
     "@0xsequence/transactions": "^0.7.0",
+    "@0xsequence/utils": "^0.7.0",
     "@arcadeum/ethauth": "^0.3.0",
     "@ethersproject/providers": "^5.0.17",
     "ethers": "^5.0.24",

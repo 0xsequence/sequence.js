@@ -24,6 +24,7 @@ export abstract class Signer extends AbstractSigner {
 
   // getSigners returns a list of available / attached signers to the interface. Note: you need
   // enough signers in order to meet the signing threshold that satisfies a wallet config.
+  // TODO: dont need chainId? here...
   abstract getSigners(chainId?: ChainId): Promise<string[]>
 
   // signMessage .....
