@@ -1,5 +1,5 @@
 import { BigNumberish, BytesLike } from 'ethers'
-import { TransactionRequest as EthersTransactionRequest } from '@ethersproject/providers'
+import { TransactionRequest as EthersTransactionRequest, TransactionResponse } from '@ethersproject/providers'
 import { WalletConfig } from '@0xsequence/wallet'
 import { WalletContext } from '@0xsequence/network'
 
@@ -43,3 +43,5 @@ export type SignedTransactions = {
   signature: string,
   transactions: Transaction[]
 }
+
+export type { TransactionResponse }

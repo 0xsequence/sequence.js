@@ -5,7 +5,11 @@ import {
   JsonRpcProvider
 } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, Contract } from 'ethers'
-import { Interface, ConnectionInfo, BytesLike, Deferrable } from 'ethers/lib/utils' 
+import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
+import { Interface } from '@ethersproject/abi'
+import { BytesLike } from '@ethersproject/bytes'
+import { Deferrable } from '@ethersproject/properties'
+import { ConnectionInfo } from '@ethersproject/web'
 
 import { walletContracts } from '@0xsequence/abi'
 
@@ -167,7 +171,7 @@ export class Wallet extends Signer {
     return this.relayer
   }
 
-  getWalletContext(): WalletContext {
+  async getWalletContext(): Promise<WalletContext> {
     return this.context
   }
 
@@ -350,6 +354,15 @@ export class Wallet extends Signer {
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
   async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     return this.sign(message, false, chainId, allSigners)
+  }
+
+  // ..
+  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    return ''
+  }
+
+  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    return this.signTypedData(domain, types, value, chainId, allSigners)
   }
 
   // sign is a helper method to sign a payload with the wallet signers

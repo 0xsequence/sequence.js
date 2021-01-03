@@ -127,7 +127,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        case 'eth_signTypedData': {
+        case 'eth_signTypedData' || 'eth_signTypedData_v4': {
           // note: message from json-rpc input is in hex format
           const [signingAddress, typedData] = request.params
 

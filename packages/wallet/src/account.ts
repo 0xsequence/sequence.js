@@ -1,6 +1,7 @@
 import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
 import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
-import { Deferrable } from 'ethers/lib/utils'
+import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
+import { Deferrable } from '@ethersproject/properties'
 import { walletContracts } from '@0xsequence/abi'
 import { Signer, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
@@ -70,7 +71,7 @@ export class Account extends Signer {
     return this
   }
 
-  getWalletContext(): WalletContext {
+  async getWalletContext(): Promise<WalletContext> {
     return this.options.context
   }
 
@@ -161,6 +162,15 @@ export class Account extends Signer {
     }
 
     return wallet.signMessage(message)
+  }
+
+  // .. TODO: we may never need to pass the domain... and could have it at end..? allow it to be undefined..
+  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    return ''
+  }
+
+  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    return this.signTypedData(domain, types, value, chainId, allSigners)
   }
 
   async sendTransaction(dtransactionish: Deferrable<Transactionish>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {

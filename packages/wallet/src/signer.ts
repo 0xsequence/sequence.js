@@ -1,12 +1,14 @@
+import { Signer as AbstractSigner } from 'ethers'
+import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainId, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
-import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
-import { JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
-import { Signer as AbstractSigner } from 'ethers'
-import { BytesLike, Deferrable } from 'ethers/lib/utils'
+import { SignedTransactions, Transactionish, TransactionResponse } from '@0xsequence/transactions'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { BytesLike } from '@ethersproject/bytes'
+import { Deferrable } from '@0xsequence/utils'
 import { WalletConfig, WalletState } from '.'
 
-export abstract class Signer extends AbstractSigner { // TODO: add implements TypedDataSigner
+export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
     return isSequenceSigner(cand)
   }
@@ -14,7 +16,7 @@ export abstract class Signer extends AbstractSigner { // TODO: add implements Ty
   abstract getProvider(chainId?: number): Promise<JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
-  abstract getWalletContext(): WalletContext
+  abstract getWalletContext(): Promise<WalletContext>
   abstract getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
   abstract getWalletState(chainId?: ChainId): Promise<WalletState[]>
 
@@ -27,9 +29,8 @@ export abstract class Signer extends AbstractSigner { // TODO: add implements Ty
   // signMessage .....
   abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string>
 
-  // TODO: signTypedData(..) + chainId ..
-  // signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>): Promise<string>;
-  // ...
+  // signTypedData ..
+  abstract signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string>
 
   // sendTransaction takes an unsigned transaction, or list of unsigned transactions, and then has it signed by
   // the signer, and finally sends it to the relayer for submission to an Ethereum network. 
@@ -42,15 +43,16 @@ export abstract class Signer extends AbstractSigner { // TODO: add implements Ty
   abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse>
 
   // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
-  // newConfig argument is undefined, then it will use the existing config.
+  // newConfig argument is undefined, then it will use the existing config. Config contents will also be
+  // automatically published to the authChain when updating the config image hash.
   abstract updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]>
 
   // publishConfig will store the raw WalletConfig object on-chain, note: this may be expensive,
-  // and is only necessary for config data-availability, in case of MultiWallet we use an authChain, etc.
+  // and is only necessary for config data-availability, in case of Account the contents are published
+  // to the authChain.
   abstract publishConfig(): Promise<TransactionResponse>
 
-  // TODO: we'll know its deployed, but how do we know if the latest has been published..? would be good to check this too.
-  // maybe return a tuple..? { deployed: boolean, configUpdated: boolean} ? ..
+  // isDeployed ..
   abstract isDeployed(chainId?: ChainId): Promise<boolean>
 }
 

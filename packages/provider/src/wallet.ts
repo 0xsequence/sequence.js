@@ -2,7 +2,7 @@ import { Networks, NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter,
 import { WalletConfig } from '@0xsequence/wallet'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
-import { Web3Provider } from './web3-provider'
+import { Web3Provider } from './provider'
 import { SidechainProvider } from './sidechain-provider'
 import { WindowMessageProvider, ProxyMessageProvider } from './transports'
 import { WalletSession, ProviderMessageEvent } from './types'
@@ -89,6 +89,8 @@ export class Wallet implements WalletProvider {
         // ..
         this.windowTransportProvider = new WindowMessageProvider(this.config.walletAppURL)
 
+        // TODO: jsonRpcRouter needs to have multi-chain support..
+        // and cache needs to be segmented by the chainId of the network..
         this.jsonRpcRouter = new JsonRpcRouter(this.windowTransportProvider, [
           loggingProviderMiddleware,
           this.allowProvider,
@@ -97,9 +99,9 @@ export class Wallet implements WalletProvider {
         ])
 
         this.provider = new Web3Provider(
-          this.config.walletContext,
           this.jsonRpcRouter,
-          'any'
+          // this.config.walletContext,
+          // 'any'
         )
 
         this.windowTransportProvider.on('network', network => {
@@ -363,9 +365,9 @@ export class Wallet implements WalletProvider {
     // anytime the network changes, and call detectNetwork(). We can reuse
     // that object instance instead of creating a new one as below.
     this.provider = new Web3Provider(
-      this.config.walletContext,
       this.jsonRpcRouter,
-      null
+      // this.config.walletContext,
+      // null
       // 'any'
     )
     
@@ -414,8 +416,8 @@ export class Wallet implements WalletProvider {
       ])
 
       providers[network.chainId] = new Web3Provider(
-        this.config.walletContext,
         jsonRpcRouter,
+        // this.config.walletContext,
         network
       )
       return providers
@@ -428,6 +430,7 @@ export class Wallet implements WalletProvider {
 
 // TODO: allow dapp to specify the requested network and provide their own rpcUrl
 // for a particular chain. Probably pass "networks: object"
+// TODO: rename to just ProviderConfig and ProviderType ..? works..
 export interface WalletProviderConfig {
   type: WalletProviderType
 

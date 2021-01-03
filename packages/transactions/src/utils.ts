@@ -1,5 +1,5 @@
 import { ethers, Signer, BigNumberish } from 'ethers'
-import { Interface } from 'ethers/lib/utils' // TODO: other pkg..?
+import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'

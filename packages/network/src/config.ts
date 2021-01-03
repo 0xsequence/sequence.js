@@ -103,10 +103,18 @@ export const ensureValidNetworkConfig = (networkConfig: NetworkConfig | NetworkC
 }
 
 export const getNetworkId = (chainId: ChainId): number => {
+  if (typeof(chainId) === 'number') {
+    return chainId
+  }
   if ((<NetworkConfig>chainId).chainId) {
     return ((<NetworkConfig>chainId)).chainId
   }
   return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
+}
+
+export const maybeNetworkId = (chainId?: ChainId): number | undefined => {
+  if (!chainId) return undefined
+  return getNetworkId(chainId)
 }
 
 // sortNetworks orders the network config list by: mainChain, authChain, ..rest by chainId ascending numbers

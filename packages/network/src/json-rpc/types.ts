@@ -18,9 +18,11 @@ export type JsonRpcResponseCallback = (error: any, response?: JsonRpcResponse) =
 
 export type JsonRpcHandlerFunc = (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => void
 
-export type JsonRpcHandler = {
+export interface JsonRpcHandler {
   sendAsync: JsonRpcHandlerFunc
 }
+
+export type JsonRpcFetchFunc = (method: string, params?: any[], chainId?: number) => Promise<any>
 
 export type JsonRpcMiddleware = (next: JsonRpcHandlerFunc) => JsonRpcHandlerFunc
 
