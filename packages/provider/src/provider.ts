@@ -56,40 +56,44 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   readonly defaultChainId?: number
 
   constructor(provider: JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainId) {
-    if (typeof (provider) === 'function') {
-      super(provider, 'any')
-    } else {
-      const jsonRpcFetchFunc = (method: string, params?: Array<any>, chainId?: number): Promise<any> => {
-        return new Promise((resolve, reject) => {
-          // TODO: pass id and jsonrpc fields..? or will be auto-assigned?
-          provider.sendAsync({ method, params }, (error: any, response?: JsonRpcResponse) => {
-            if (error) {
-              reject(error)
-            } else {
-              resolve(response.result)
-            }
-          }, chainId)
-        })
-      }
-      super(jsonRpcFetchFunc, 'any')
-    }
-
+    super(provider, 'any')
     this.defaultChainId = maybeNetworkId(defaultChainId)
   }
 
   sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void), chainId?: number) {
-    this.send(request.method, request.params, chainId).then(r => {
-      callback(undefined, {
-        jsonrpc: '2.0',
-        id: request.id,
-        result: r
-      })
-    }).catch(e => callback(e, undefined))
+    if (typeof(this.provider) === 'function') {
+      this.send(request.method, request.params, chainId).then(r => {
+        callback(undefined, {
+          jsonrpc: '2.0',
+          id: request.id,
+          result: r
+        })
+      }).catch(e => callback(e, undefined))
+  } else {
+      (this.provider as JsonRpcHandler).sendAsync(request, callback, chainId)
+    }
   }
 
   send(method: string, params: Array<any>, chainId?: number): Promise<any> {
-    const jsonRpcFetchFunc = this.jsonRpcFetchFunc as JsonRpcFetchFunc
-    return jsonRpcFetchFunc(method, params, chainId || this.defaultChainId)
+    if (typeof(this.provider) === 'function') {
+      return (this.provider as JsonRpcFetchFunc)(method, params, chainId)
+    } else {
+      return new Promise((resolve, reject) => {
+        // TODO: pass id and jsonrpc fields..? or will be auto-assigned?
+        (this.provider as JsonRpcHandler).sendAsync({
+          // jsonrpc: '2.0', // hmpf..
+          // id: 1, // TODO ..
+          method,
+          params
+        }, (error: any, response?: JsonRpcResponse) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve(response.result)
+          }
+        }, chainId)
+      })
+    }
   }
 
   getSigner(): Web3Signer {
