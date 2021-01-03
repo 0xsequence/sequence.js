@@ -2,7 +2,7 @@ import { Networks, NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter,
 import { WalletConfig } from '@0xsequence/wallet'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
-import { Web3Provider } from './provider'
+import { Web3Provider, Web3Signer } from './provider'
 import { SidechainProvider } from './sidechain-provider'
 import { WindowMessageProvider, ProxyMessageProvider } from './transports'
 import { WalletSession, ProviderMessageEvent } from './types'
@@ -248,11 +248,14 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  getProvider(): JsonRpcProvider {
+  // TODO: provider, or undefined ..
+  getProvider(): Web3Provider {
     return this.provider
   }
 
-  getAuthProvider(): JsonRpcProvider {
+  // getMainProvider() ?
+
+  getAuthProvider(): Web3Provider {
     const provider = this.sidechainProviders[this.getAuthNetwork().chainId]
     return provider ? provider : this.getProvider()
   }
@@ -262,6 +265,7 @@ export class Wallet implements WalletProvider {
     return net ? net : this.session.network
   }
 
+  // TODO: just use getProvider(chainId) ...
   getSidechainProvider(chainId: number): JsonRpcProvider | undefined {
     return this.sidechainProviders[chainId]
   }
@@ -270,11 +274,12 @@ export class Wallet implements WalletProvider {
     return this.sidechainProviders
   }
 
-  getSigner(): JsonRpcSigner {
+  // TODO: pass chainId too..
+  getSigner(): Web3Signer {
     return this.getProvider().getSigner()
   }
 
-  getAuthSigner(): JsonRpcSigner {
+  getAuthSigner(): Web3Signer {
     return this.getAuthProvider().getSigner()
   }
 

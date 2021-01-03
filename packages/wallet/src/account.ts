@@ -283,7 +283,7 @@ export class Account extends Signer {
     })()
 
     const address = this.address
-    const chainId = await wallet.chainId()
+    const chainId = await wallet.getChainId()
 
     // fetch current wallet image hash from chain, and skip any errors
     const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, wallet.provider)

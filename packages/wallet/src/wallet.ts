@@ -88,6 +88,9 @@ export class Wallet extends Signer {
   // or through a remote transaction Web Service.
   relayer: Relayer
 
+  // chainId is the node network id, used for memoization
+  chainId?: number
+
   constructor(options: WalletOptions, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
 
@@ -151,6 +154,7 @@ export class Wallet extends Signer {
       this.provider = jsonProvider
       this.sender = new JsonRpcSender(jsonProvider)
     }
+    this.chainId = undefined // reset chainId value
     return this
   }
 
@@ -183,7 +187,7 @@ export class Wallet extends Signer {
   async getWalletState(_?: ChainId): Promise<WalletState[]> {
     const [address, chainId, isDeployed] = await Promise.all([
       this.getAddress(),
-      this.chainId(),
+      this.getChainId(),
       this.isDeployed()
     ])
 
@@ -235,17 +239,17 @@ export class Wallet extends Signer {
   }
 
   // chainId returns the network connected to this wallet instance
-  //
-  // NOTE: AbstractSigner also offers getChainId(): Promise<number>
-  async chainId(): Promise<number> {
+  async getChainId(): Promise<number> {
     if (!this.provider) {
       throw new Error('provider is not set, first connect a provider')
     }
-    return (await this.provider.getNetwork()).chainId
+    if (this.chainId) return this.chainId
+    this.chainId = (await this.provider.getNetwork()).chainId
+    return this.chainId
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
-    const chainId = await this.chainId()
+    const chainId = await this.getChainId()
     return [{
       chainId: chainId, name: '', rpcUrl: ''
     }]
@@ -559,7 +563,7 @@ export class Wallet extends Signer {
     if (!chainId) {
       // it's valid for chainId argument to be undefined, in which case
       // we will use the connected value
-      return await this.chainId()
+      return await this.getChainId()
     }
 
     const id = getNetworkId(chainId)
@@ -569,7 +573,7 @@ export class Wallet extends Signer {
       return id
     }
 
-    const connectedChainId = await this.chainId()
+    const connectedChainId = await this.getChainId()
     if (connectedChainId !== id) {
       throw new Error(`the specified chainId ${id} does not match the wallet's connected chainId ${connectedChainId}`)
     }

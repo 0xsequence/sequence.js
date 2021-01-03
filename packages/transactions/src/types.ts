@@ -34,7 +34,7 @@ export interface NonceDependency {
   space?: BigNumberish
 }
 
-export declare type Transactionish = TransactionRequest | Transaction | Transaction[] | TransactionRequest[]
+export type Transactionish = TransactionRequest | TransactionRequest[] | Transaction | Transaction[]
 
 export type SignedTransactions = {
   chainId: BigNumberish,

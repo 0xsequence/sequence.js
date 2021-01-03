@@ -1,13 +1,14 @@
 import { ethers } from 'ethers'
 import { BytesLike } from '@ethersproject/bytes'
-import { Web3Provider as EthersWeb3Provider, ExternalProvider, TransactionRequest, TransactionResponse, JsonRpcProvider, Networkish } from "@ethersproject/providers"
+import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, Networkish } from "@ethersproject/providers"
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { _TypedDataEncoder } from '@ethersproject/hash'
+import { poll } from '@ethersproject/web'
 import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId } from '@0xsequence/network'
 import { Signer, WalletConfig, WalletState } from '@0xsequence/wallet'
 import { Relayer } from '@0xsequence/relayer'
-import { Deferrable } from '@0xsequence/utils'
-import { Transactionish, SignedTransactions } from '@0xsequence/transactions'
+import { Deferrable, shallowCopy, resolveProperties } from '@0xsequence/utils'
+import { TransactionRequest, TransactionResponse, Transactionish, SignedTransactions } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './wallet-request-handler'
 
 // naming..?
@@ -31,7 +32,14 @@ import { WalletRequestHandler } from './wallet-request-handler'
 
 // SequenceProvider
 // SequenceSigner 
+// SequenceRelayer
+// SequenceChaind -- ..? Collector ..? Data..? .. for events, balances, metadata, Node.. Sidekick ..?
+// SequenceAPI -- various things..
+
 // ..? or just Provider and Signer ..? or.. Web3Provider, etc..?
+
+// TODO: add SequenceProvider
+// which will take networks (or none and fetch initially on connect..?), or, from fetch(https://sequence.app/networks.json) ?
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
@@ -48,7 +56,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   readonly defaultChainId?: number
 
   constructor(provider: JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainId) {
-    if (typeof(provider) === 'function') {
+    if (typeof (provider) === 'function') {
       super(provider, 'any')
     } else {
       const jsonRpcFetchFunc = (method: string, params?: Array<any>, chainId?: number): Promise<any> => {
@@ -106,6 +114,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     this.defaultChainId = defaultChainId
   }
 
+  // memoized
   _address: string
   _index: number
   _context: WalletContext
@@ -124,7 +133,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('signing transactions is unsupported')
+    // TODO .. since ethers isn't using this method, perhaps we will?
+    throw new Error('signTransaction is unsupported, use signTransactions instead')
   }
 
   connect(provider: ethers.providers.Provider): ethers.providers.JsonRpcSigner {
@@ -173,7 +183,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return this._networks
   }
 
-  getSigners(chainId?: ChainId): Promise<string[]> {
+  async getSigners(): Promise<string[]> {
     // first sequence_getNetworks
     // find the auth chain, etc........?
 
@@ -184,13 +194,20 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     throw new Error('TODO')
   }
 
-  signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    // TODO: use classic method.. but, pass extra options..?
-    throw new Error('TODO')
+  // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
+  // multi-chain support.
+  async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    const data = ((typeof(message) === 'string') ? ethers.utils.toUtf8Bytes(message): message)
+    const address = await this.getAddress()
+
+    // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
+    return await this.provider.send('eth_sign', [
+      address.toLowerCase(), ethers.utils.hexlify(data)
+    ], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
-  // TODO: we need a way to pass chainId here too..
-  // our provider send has extra things we can send, lets use it..
+  // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
+  // multi-chain support.
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     // Populate any ENS names (in-place)
     const populated = await _TypedDataEncoder.resolveNames(domain, types, value, (name: string) => {
@@ -202,17 +219,30 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return await this.provider.send('eth_signTypedData_v4', [
       address.toLowerCase(),
       JSON.stringify(_TypedDataEncoder.getPayload(populated.domain, types, populated.value))
-    ], maybeNetworkId(chainId))
+    ], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
-  sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
-    // TODO: use classic method..
-    throw new Error('TODO')
+  // sendTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
+  // multi-chain support.
+  sendTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
+    return this.sendUncheckedTransaction(transaction, chainId).then((hash) => {
+      return poll(() => {
+        // TODO: we need to getTransaction from the right chain .....
+        return this.provider.getTransaction(hash).then((tx: TransactionResponse) => {
+          if (tx === null) { return undefined }
+          return this.provider._wrapTransaction(tx, hash)
+        })
+      }, { onceBlock: this.provider }).catch((error: Error) => {
+        (<any>error).transactionHash = hash
+        throw error
+      })
+    })
   }
 
-  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
-    // TODO: use classic method.. or custom..?
-    throw new Error('TODO')
+  signTransactions(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
+    transaction = shallowCopy(transaction)
+    // TODO: transaction argument..? stringify..?
+    return this.provider.send('eth_signTransaction', [transaction], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
   sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse> {
@@ -232,6 +262,9 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   async isDeployed(chainId?: ChainId): Promise<boolean> {
     // use provider direct.. its read-only
+    // but, we need access to the chain, so, this.provider()
+    // needs a method like .getChainProvider() or something..?
+    // 
     return false
   }
 
@@ -243,16 +276,55 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return this.signTypedData(domain, types, value, chainId, allSigners)
   }
 
+  // sendUncheckedTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
+  // multi-chain support.
+  sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId): Promise<string> {
+    transaction = shallowCopy(transaction)
+
+    const fromAddress = this.getAddress().then((address) => {
+      if (address) { address = address.toLowerCase() }
+      return address
+    })
+
+    // The JSON-RPC for eth_sendTransaction uses 90000 gas; if the user
+    // wishes to use this, it is easy to specify explicitly, otherwise
+    // we look it up for them.
+    if (transaction.gasLimit == null) {
+      const estimate = shallowCopy(transaction)
+      estimate.from = fromAddress
+      transaction.gasLimit = this.provider.estimateGas(estimate)
+    }
+
+    return resolveProperties({
+      tx: resolveProperties(transaction),
+      sender: fromAddress
+    }).then(({ tx, sender }) => {
+      if (tx.from != null) {
+        if (tx.from.toLowerCase() !== sender) {
+          // logger.throwArgumentError("from address mismatch", "transaction", transaction)
+          throw new Error(`from address mismatch for transaction ${transaction}`)
+        }
+      } else {
+        tx.from = sender;
+      }
+
+      const hexTx = (<any>this.provider.constructor).hexlifyTransaction(tx, { from: true })
+
+      return this.provider.send('eth_sendTransaction', [hexTx], maybeNetworkId(chainId) || this.defaultChainId).then((hash) => {
+        return hash
+      }, (error) => {
+        // return checkError("sendTransaction", error, hexTx)
+        throw new Error(`sendTransaction ${error}`)
+      })
+    })
+  }
+
   connectUnchecked(): ethers.providers.JsonRpcSigner {
     throw new Error('connectUnchecked is unsupported')
   }
 
-  sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('sendUncheckedTransaction is unsupported')
-  }
-
   async unlock(password: string): Promise<boolean> {
     const address = await this.getAddress()
-    return this.provider.send("personal_unlockAccount", [ address.toLowerCase(), password, null ])
+    return this.provider.send("personal_unlockAccount", [address.toLowerCase(), password, null])
   }
 }

@@ -1,5 +1,5 @@
 import { Signer as AbstractSigner } from 'ethers'
-import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
+import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainId, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
 import { SignedTransactions, Transactionish, TransactionResponse } from '@0xsequence/transactions'
@@ -24,8 +24,7 @@ export abstract class Signer extends AbstractSigner {
 
   // getSigners returns a list of available / attached signers to the interface. Note: you need
   // enough signers in order to meet the signing threshold that satisfies a wallet config.
-  // TODO: dont need chainId? here...
-  abstract getSigners(chainId?: ChainId): Promise<string[]>
+  abstract getSigners(): Promise<string[]>
 
   // signMessage .....
   abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string>
