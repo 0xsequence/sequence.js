@@ -55,7 +55,7 @@ describe('Account integration', () => {
     const wallet = await lib.Wallet.singleOwner(owner, context)
     
     account = new lib.Account({
-      initialConfig: (await wallet.getWalletConfig())[0],
+      initialConfig: wallet.config,
       networks,
       context
     }, owner)

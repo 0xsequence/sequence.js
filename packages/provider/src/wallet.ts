@@ -1,4 +1,4 @@
-import { Networks, NetworkConfig, WalletContext, sequenceContext, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
+import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/wallet'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
@@ -16,18 +16,20 @@ export interface WalletProvider {
   isLoggedIn(): boolean
   getSession(): WalletSession | undefined
   getAddress(): string
-  getNetwork(): NetworkConfig
+  getNetworks(): Promise<NetworkConfig[]>
   getChainId(): number
 
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
 
-  getProvider(): JsonRpcProvider // TODO: return @0xsequence/provider.Web3Provider type, which subclasses JsonRpcProvider
-  getSigner(): JsonRpcSigner // TODO: return @0xsequence/wallet.Signer, or potentially @0xsequence/wallet.JsonRpcSigner
+  getProvider(chainId?: ChainId): Web3Provider
+  getSigner(chainId?: ChainId): Web3Signer
 
-  getWalletConfig(): WalletConfig
-  getWalletContext(): WalletContext
-  getWalletProviderConfig(): WalletProviderConfig
+  // TODO: add more methods off Signer ..
+
+  getWalletContext(): Promise<WalletContext>
+  getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
+  getWalletProviderConfig(): WalletProviderConfig // TODO: rename to ProviderConfig ..
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
@@ -39,7 +41,7 @@ export class Wallet implements WalletProvider {
   public commands: WalletCommands
 
   private config: WalletProviderConfig
-  private walletConfig: WalletConfig // TODO: where is this set..?
+  // private walletConfig: WalletConfig // TODO: where is this set..?
 
   private session: WalletSession | null
 
@@ -209,12 +211,15 @@ export class Wallet implements WalletProvider {
     return session.accountAddress
   }
 
-  getNetwork = (): NetworkConfig => {
+  getNetworks = async (): Promise<NetworkConfig[]> => {
     const session = this.getSession()
     if (!session.network) {
       throw new Error('network has not been set by session. login first.')
     }
-    return session.network
+    // TODO: get array of networks.. we need em all..........
+    // however, there is a "sidechains" argument on it, we could identify one
+    // as the MainChain, etc. etc.
+    return [session.network]
   }
 
   getChainId = (): number => {
@@ -248,8 +253,8 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  // TODO: provider, or undefined ..
-  getProvider(): Web3Provider {
+  getProvider(chainId?: ChainId): Web3Provider | undefined {
+    // TODO: handle chainId ..
     return this.provider
   }
 
@@ -266,6 +271,8 @@ export class Wallet implements WalletProvider {
   }
 
   // TODO: just use getProvider(chainId) ...
+  // or perhaps we keep this and consider structure of "sidechains" field in NetworkConfig ..?
+  // "sidechains" seems redundant though, instead, need to know where bridges exist instead..
   getSidechainProvider(chainId: number): JsonRpcProvider | undefined {
     return this.sidechainProviders[chainId]
   }
@@ -274,21 +281,23 @@ export class Wallet implements WalletProvider {
     return this.sidechainProviders
   }
 
-  // TODO: pass chainId too..
-  getSigner(): Web3Signer {
-    return this.getProvider().getSigner()
+  getSigner(chainId?: ChainId): Web3Signer {
+    return this.getProvider(chainId).getSigner()
   }
 
   getAuthSigner(): Web3Signer {
     return this.getAuthProvider().getSigner()
   }
 
-  getWalletConfig(): WalletConfig {
-    return this.walletConfig
+  getWalletConfig(): Promise<WalletConfig[]> {
+    // TODO: sequence_getWalletConfig can be cached by provider middleware
+    return this.getSigner().getWalletConfig()
   }
 
-  getWalletContext(): WalletContext {
-    return this.config.walletContext
+  getWalletContext(): Promise<WalletContext> {
+    // TODO: sequence_getWalletContext can be cached by provider middleware
+    // TODO: optionally, this can be forced to a diff value by the ProviderConfig
+    return this.getSigner().getWalletContext()
   }
 
   getWalletProviderConfig(): WalletProviderConfig {
@@ -356,6 +365,7 @@ export class Wallet implements WalletProvider {
       this.session = {}
     }
 
+    // TODO/review comment below and remove it..
     // TODO: Ethers v4 ignores the RPC url provided if the network.name is provided
     // and since ethers doesn't know about mumbai or matic, it will throw an error
     // for unknown network. Setting the network to null ensures the RPC url is used 

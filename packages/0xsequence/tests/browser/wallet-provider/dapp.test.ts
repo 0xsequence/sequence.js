@@ -16,10 +16,10 @@ export const tests = async () => {
   //
   // Setup
   //
-  const walletConfig = { ...DefaultWalletProviderConfig }
-  walletConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
+  const providerConfig = { ...DefaultWalletProviderConfig }
+  providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   
-  const wallet = new Wallet(walletConfig)
+  const wallet = new Wallet(providerConfig)
   
   // clear it in case we're testing in browser session
   wallet.logout()
@@ -50,6 +50,19 @@ export const tests = async () => {
   await test('getAccounts', async () => {
     const address = wallet.getAddress()
     assert.equal(address.toLowerCase(), '0xca736ff96cef0dc9bb7738ed1e68a29df008d68b'.toLowerCase(), 'wallet address is correct')
+  })
+
+  await test('getWalletConfig', async () => {
+    const allWalletConfigs = await wallet.getWalletConfig()
+
+    assert.equal(allWalletConfigs.length, 1, '1 wallet config')
+    const config = allWalletConfigs[0]
+
+    assert.true(config.chainId !== undefined, 'config, chainId is set')
+    assert.true(config.threshold === 1, 'config, 1 threshold')
+    assert.true(config.signers.length === 1, 'config, 1 signer')
+    assert.true(config.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config, signer address')
+    assert.true(config.signers[0].weight === 1, 'config, signer weight')
   })
 
   await test('getBalance', async () => {

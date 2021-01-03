@@ -180,7 +180,8 @@ export class Wallet extends Signer {
   }
 
   async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
-    if (chainId) await this.getChainIdNumber(chainId)
+    chainId = await this.getChainIdNumber(chainId)
+    this.config.chainId = chainId
     return [this.config]
   }
 
