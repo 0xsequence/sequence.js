@@ -128,10 +128,10 @@ export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transactio
 }
 
 export function makeExpirable(context: WalletContext, txs: Transaction[], expiration: BigNumberish): Transaction[] {
-  const requireUtils = new Interface(walletContracts.requireUtils.abi)
+  const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
-  if (!context || !context.requireUtils) {
-    throw new Error('Undefined requireUtils')
+  if (!context || !context.sequenceUtils) {
+    throw new Error('Undefined sequenceUtils')
   }
 
   return [
@@ -139,19 +139,19 @@ export function makeExpirable(context: WalletContext, txs: Transaction[], expira
       delegateCall: false,
       revertOnError: true,
       gasLimit: 0,
-      to: context.requireUtils,
+      to: context.sequenceUtils,
       value: 0,
-      data: requireUtils.encodeFunctionData(requireUtils.getFunction('requireNonExpired'), [expiration])
+      data: sequenceUtils.encodeFunctionData(sequenceUtils.getFunction('requireNonExpired'), [expiration])
     },
     ...txs
   ]
 }
 
 export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: NonceDependency): Transaction[] {
-  const requireUtils = new Interface(walletContracts.requireUtils.abi)
+  const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
-  if (!context || !context.requireUtils) {
-    throw new Error('Undefined requireUtils')
+  if (!context || !context.sequenceUtils) {
+    throw new Error('Undefined sequenceUtils')
   }
 
   return [
@@ -159,9 +159,9 @@ export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: 
       delegateCall: false,
       revertOnError: true,
       gasLimit: 0,
-      to: context.requireUtils,
+      to: context.sequenceUtils,
       value: 0,
-      data: requireUtils.encodeFunctionData(requireUtils.getFunction('requireMinNonce'), [
+      data: sequenceUtils.encodeFunctionData(sequenceUtils.getFunction('requireMinNonce'), [
         dep.address,
         dep.space ? encodeNonce(dep.space, dep.nonce) : dep.nonce
       ])

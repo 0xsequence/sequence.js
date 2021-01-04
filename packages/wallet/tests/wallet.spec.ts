@@ -1,9 +1,9 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { encodeData } from './utils'
+import { encodeData } from './utils'
 import * as Ganache from 'ganache-cli'
 
-import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
-import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/HookCallerMock'
+import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
+import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/HookCallerMock'
 
 import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish, isSignedTransactions } from '@0xsequence/transactions'
 
@@ -15,8 +15,7 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 
 import * as lib from '../src'
 
-import {
-  isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
   isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, joinSignatures,
   imageHash, sortConfig, fetchImageHash
 } from '../src'
@@ -26,9 +25,9 @@ import { LocalWeb3Provider } from '../../provider/src'
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 
-const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/MainModule.json')
-const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/CallReceiverMock.json')
-const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/HookCallerMock.json')
+const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModule.sol/MainModule.json')
+const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
+const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/HookCallerMock.sol/HookCallerMock.json')
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
@@ -80,7 +79,7 @@ describe('Wallet integration', function () {
       mainModule,
       mainModuleUpgradable,
       guestModule,
-      requireUtils
+      sequenceUtils
     ] = await deployWalletContext(ethnode.provider)
 
     // Create fixed context obj
@@ -89,7 +88,7 @@ describe('Wallet integration', function () {
       mainModule: mainModule.address,
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
-      requireUtils: requireUtils.address
+      sequenceUtils: sequenceUtils.address
     }
 
     // Deploy call receiver mock
@@ -470,12 +469,12 @@ describe('Wallet integration', function () {
 
           expect(await callReceiver1.lastValB()).to.equal('0x')
         })
-        it('Should fail to generate a expired transaction without requireUtils', async () => {
+        it('Should fail to generate a expired transaction without sequenceUtils', async () => {
           // Create wallet
           const pk = ethers.utils.randomBytes(32)
 
           const context1 = { ...context }
-          context1.requireUtils = undefined
+          context1.sequenceUtils = undefined
 
           let wallet1 = await lib.Wallet.singleOwner(pk, context1)
           wallet1 = wallet1.connect(ethnode.provider, relayer)

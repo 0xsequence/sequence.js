@@ -549,15 +549,15 @@ export class Wallet extends Signer {
   }
 
   buildPublishConfigTransaction(config?: WalletConfig, nonce?: number): Transaction[] {
-    const requireUtilsInterface = new Interface(walletContracts.requireUtils.abi)
+    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     return [{
       delegateCall: false,
       revertOnError: true,
       gasLimit: ethers.constants.Zero,
-      to: this.context.requireUtils,
+      to: this.context.sequenceUtils,
       value: ethers.constants.Zero,
       nonce: nonce,
-      data: requireUtilsInterface.encodeFunctionData(requireUtilsInterface.getFunction('requireConfig'), 
+      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('requireConfig'), 
         [
           this.address,
           config.threshold,

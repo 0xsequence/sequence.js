@@ -301,7 +301,7 @@ export class Account extends Signer {
     )[0]
 
     const authWallet = this.authWallet()
-    const authContract = new Contract(authWallet.context.requireUtils, walletContracts.requireUtils.abi, authWallet.provider)
+    const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
 
     let event: any
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
