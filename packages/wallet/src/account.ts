@@ -170,9 +170,9 @@ export class Account extends Signer {
     return wallet.signMessage(message)
   }
 
-  // .. TODO: we may never need to pass the domain... and could have it at end..? allow it to be undefined..
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    return ''
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet()
+    return wallet.signTypedData(domain, types, value, chainId, allSigners)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {

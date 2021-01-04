@@ -23,6 +23,7 @@
     "@arcadeum/ethauth": "^0.3.0",
     "@ethersproject/providers": "^5.0.17",
     "ethers": "^5.0.24",
+    "ethers-eip712": "^0.2.0",
     "eventemitter3": "^4.0.6",
     "fetch-ponyfill": "^7.0.0"
   },

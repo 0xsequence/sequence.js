@@ -33,6 +33,7 @@ const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
 
 import hardhat from 'hardhat'
+import { TypedDataUtils } from 'ethers-eip712'
 
 const GANACHE_PORT = 38545
 
@@ -167,6 +168,47 @@ describe('Wallet integration', function () {
       const accounts = await provider.listAccounts()
       expect(accounts.length).to.be.equal(1)
       expect(accounts[0]).to.be.equal(wallet.address)
+    })
+
+    describe('using sequence signer', () => {
+      it('Should sign a typed message', async () => {
+        const typedData = {
+          types: {
+            EIP712Domain: [
+              {name: "name", type: "string"},
+              {name: "version", type: "string"},
+              {name: "chainId", type: "uint256"},
+              {name: "verifyingContract", type: "address"},
+            ],
+            Person: [
+              {name: "name", type: "string"},
+              {name: "wallet", type: "address"},
+            ]
+          },
+          primaryType: 'Person' as const,
+          domain: {
+            name: 'Ether Mail',
+            version: '1',
+            chainId: 1,
+            verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+          },
+          message: {
+            'name': 'Bob',
+            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+          }
+        }
+
+        const digest = TypedDataUtils.encodeDigest(typedData)
+
+        const sig = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message)
+
+        expect(sig).to.not.be.undefined
+        expect(sig).to.not.equal('')
+
+        await relayer.deployWallet(wallet.config, context)
+        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, ethers.utils.arrayify(digest), sig)
+        await expect(call).to.be.fulfilled
+      })
     })
 
     options.forEach(s => {

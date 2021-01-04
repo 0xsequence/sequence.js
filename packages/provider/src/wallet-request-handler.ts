@@ -132,8 +132,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             // TODO: use ethers eip712 impl.
-            const digest = TypedDataUtils.encodeDigest(typedData)
-            sig = await signer.signMessage(ethers.utils.arrayify(digest), chainId)
+            sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })

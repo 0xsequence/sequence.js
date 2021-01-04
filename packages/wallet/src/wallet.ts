@@ -49,6 +49,8 @@ import { packMessageData, resolveArrayProperties } from './utils'
 import { Signer } from './signer'
 import { fetchImageHash } from '.'
 
+import { TypedDataUtils } from 'ethers-eip712'
+
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
@@ -361,9 +363,19 @@ export class Wallet extends Signer {
     return this.sign(message, false, chainId, allSigners)
   }
 
-  // ..
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    return ''
+    const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
+    const domainSalt = domain.salt ? ethers.utils.hexlify(domain.salt) : undefined
+
+    const digest = TypedDataUtils.encodeDigest({
+      types: types,
+      // TODO: Is it the primary type always the last entry of types?
+      primaryType: Object.keys(types)[Object.keys(types).length - 1],
+      domain: { ...domain, salt: domainSalt, chainId: domainChainId },
+      message: value
+    })
+
+    return this.signMessage(ethers.utils.arrayify(digest), chainId, allSigners)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
