@@ -23,8 +23,8 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     const walletDeployTxn = this.prepareWalletDeploy(config, context)
 
     // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate
-    // return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
-    return this.signer.sendTransaction(walletDeployTxn)
+    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
+    // return this.signer.sendTransaction(walletDeployTxn)
   }
 
   async gasRefundOptions(
