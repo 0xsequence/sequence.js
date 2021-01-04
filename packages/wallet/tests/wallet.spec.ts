@@ -1,5 +1,5 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { encodeData } from './utils'
+import { encodeData } from './utils'
 import * as Ganache from 'ganache-cli'
 
 import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
@@ -15,7 +15,8 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
+import {
+  isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
   isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, joinSignatures,
   imageHash, sortConfig, fetchImageHash
 } from '../src'
@@ -35,68 +36,43 @@ const { expect } = chai.use(chaiAsPromised)
 import hardhat from 'hardhat'
 import { TypedDataUtils } from 'ethers-eip712'
 
-const GANACHE_PORT = 38545
-
-type GanacheInstance = {
-  server?: any
-  serverUri?: string
-  provider?: JsonRpcProvider
-  signer?: AbstractSigner,
+type EthereumInstance = {
   chainId?: number
+  provider?: JsonRpcProvider
+  signer?: AbstractSigner
 }
 
 describe('Wallet integration', function () {
-  const ganache: GanacheInstance = {}
+  const ethnode: EthereumInstance = {}
 
   let relayer: LocalRelayer
   let callReceiver: CallReceiverMock
   let hookCaller: HookCallerMock
 
   let context: WalletContext
+  let networks: Networks
   let wallet: lib.Wallet
 
-  const networks: Networks = [{
-      name: 'ganache',
-      chainId: 31337,
-      rpcUrl: `http://localhost:${GANACHE_PORT}/`
-  }]
-
   before(async () => {
-    // Setup eth test node env
+    // Provider from hardhat without a server instance
+    ethnode.provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
 
-    // NOTE: below we have two versions of Ganache or Hardhat, comment/comment between the "--"
-    // TODO: figure out why hardhat version fails for certain tests below. Most likely
-    // due to chainId inconsistencies when writing tests against ganache
+    // NOTE: if you'd like to test with ganache or hardhat in server mode, just uncomment the line below
+    // and make sure your ganache or hardhat instance is running separately
+    // NOTE2: ganache will fail at getStorageAt(), as hardhat and ganache treat it a bit differently,
+    // which is strange. Hardhat is at fault here IMHO.
+    // ethnode.provider = new ethers.providers.JsonRpcProvider(`http://localhost:8545/`)
 
-    //--
-    // Ganache version
-    // ganache.chainId = 31337
+    ethnode.signer = ethnode.provider.getSigner()
+    ethnode.chainId = 31337
 
-    // // TODO: Ganache server with chainId and networkId of 31337 ... check config below..
-
-    // ganache.server = Ganache.server({
-    //   _chainIdRpc: ganache.chainId,
-    //   _chainId: ganache.chainId,
-    //   network_id: ganache.chainId,
-    //   mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
-    // })
-
-    // await ganache.server.listen(GANACHE_PORT)
-
-    // ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
-    // ganache.provider = new JsonRpcProvider(`http://localhost:${GANACHE_PORT}/`, { name: 'wee', chainId: 31337 })
-    // ganache.signer = ganache.provider.getSigner()
-    //--
-
-    // --
-    // Hardhat version
-    // NOTE: as well LocalRelayer deploy wallet method must set gasLimit directly or it will blow up.
-    hardhat.config.networks.ganache = hardhat.config.networks.hardhat
-    ganache.provider = new Web3Provider(hardhat.network.provider.send, { name: 'hardhat', chainId: 31337 })
-    ganache.signer = ganache.provider.getSigner()
-    ganache.chainId = 31337
-
-    //--
+    networks = [{
+      name: 'local',
+      chainId: ethnode.chainId,
+      provider: ethnode.provider,
+      isMainChain: true,
+      isAuthChain: true
+    }]
 
     // Deploy Sequence env
     const [
@@ -105,7 +81,7 @@ describe('Wallet integration', function () {
       mainModuleUpgradable,
       guestModule,
       requireUtils
-    ] = await deployWalletContext(ganache.provider)
+    ] = await deployWalletContext(ethnode.provider)
 
     // Create fixed context obj
     context = {
@@ -120,31 +96,31 @@ describe('Wallet integration', function () {
     callReceiver = (await new ethers.ContractFactory(
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
-      ganache.signer
+      ethnode.signer
     ).deploy()) as CallReceiverMock
 
     // Deploy hook caller mock
     hookCaller = (await new ethers.ContractFactory(
       HookCallerMockArtifact.abi,
       HookCallerMockArtifact.bytecode,
-      ganache.signer
+      ethnode.signer
     ).deploy()) as HookCallerMock
 
     // Deploy local relayer
-    relayer = new LocalRelayer(ganache.signer)
+    relayer = new LocalRelayer(ethnode.signer)
   })
 
   beforeEach(async () => {
     // Create wallet
     const pk = ethers.utils.randomBytes(32)
     wallet = await lib.Wallet.singleOwner(pk, context)
-    wallet = wallet.connect(ganache.provider, relayer)
+    wallet = wallet.connect(ethnode.provider, relayer)
   })
 
   after(async () => {
-    if (ganache.server) {
-      ganache.server.close()
-    }
+    // if (ethnode.server) {
+    //   ethnode.server.close()
+    // }
   })
 
   describe('with ethers.js', () => {
@@ -177,14 +153,14 @@ describe('Wallet integration', function () {
         const typedData = {
           types: {
             EIP712Domain: [
-              {name: "name", type: "string"},
-              {name: "version", type: "string"},
-              {name: "chainId", type: "uint256"},
-              {name: "verifyingContract", type: "address"},
+              { name: "name", type: "string" },
+              { name: "version", type: "string" },
+              { name: "chainId", type: "uint256" },
+              { name: "verifyingContract", type: "address" },
             ],
             Person: [
-              {name: "name", type: "string"},
-              {name: "wallet", type: "address"},
+              { name: "name", type: "string" },
+              { name: "wallet", type: "address" },
             ]
           },
           primaryType: 'Person' as const,
@@ -279,9 +255,9 @@ describe('Wallet integration', function () {
             const callReceiver1 = (await new ethers.ContractFactory(
               CallReceiverMockArtifact.abi,
               CallReceiverMockArtifact.bytecode,
-              ganache.signer
+              ethnode.signer
             ).deploy()) as CallReceiverMock
-  
+
             const receiver = new ethers.Contract(
               callReceiver1.address,
               CallReceiverMockArtifact.abi,
@@ -309,13 +285,13 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -343,7 +319,7 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -361,19 +337,19 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const callReceiver3 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -408,19 +384,19 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const callReceiver3 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -460,7 +436,7 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -478,7 +454,7 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -502,12 +478,12 @@ describe('Wallet integration', function () {
           context1.requireUtils = undefined
 
           let wallet1 = await lib.Wallet.singleOwner(pk, context1)
-          wallet1 = wallet1.connect(ganache.provider, relayer)
+          wallet1 = wallet1.connect(ethnode.provider, relayer)
 
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -537,7 +513,7 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -557,7 +533,7 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -578,7 +554,7 @@ describe('Wallet integration', function () {
           // Create wallet
           const pk = ethers.utils.randomBytes(32)
           let wallet2 = await lib.Wallet.singleOwner(pk, context)
-          wallet2 = wallet2.connect(ganache.provider, relayer)
+          wallet2 = wallet2.connect(ethnode.provider, relayer)
 
           await wallet2.sendTransaction({
             revertOnError: true,
@@ -591,7 +567,7 @@ describe('Wallet integration', function () {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -614,12 +590,12 @@ describe('Wallet integration', function () {
           // Create wallet
           const pk = ethers.utils.randomBytes(32)
           let wallet2 = await lib.Wallet.singleOwner(pk, context)
-          wallet2 = wallet2.connect(ganache.provider, relayer)
+          wallet2 = wallet2.connect(ethnode.provider, relayer)
 
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
-            ganache.signer
+            ethnode.signer
           ).deploy()) as CallReceiverMock
 
           const transaction = {
@@ -647,13 +623,13 @@ describe('Wallet integration', function () {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const transaction = [
@@ -683,19 +659,19 @@ describe('Wallet integration', function () {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const transaction = [
@@ -854,9 +830,9 @@ describe('Wallet integration', function () {
           ]
         }
 
-        const wallet_1 = new lib.Wallet({ config, context }, s1).connect(ganache.provider, relayer)
-        const wallet_2 = new lib.Wallet({ config, context }, s2).connect(ganache.provider, relayer)
-        const wallet_3 = new lib.Wallet({ config, context }, s3).connect(ganache.provider, relayer)
+        const wallet_1 = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
+        const wallet_2 = new lib.Wallet({ config, context }, s2).connect(ethnode.provider, relayer)
+        const wallet_3 = new lib.Wallet({ config, context }, s3).connect(ethnode.provider, relayer)
 
         expect(wallet_1.address).to.equal(wallet_2.address)
         expect(wallet_2.address).to.equal(wallet_3.address)
@@ -960,13 +936,13 @@ describe('Wallet integration', function () {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const transaction = {
@@ -996,19 +972,19 @@ describe('Wallet integration', function () {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const transaction = {
@@ -1045,19 +1021,19 @@ describe('Wallet integration', function () {
         const callReceiver1 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
-          ganache.signer
+          ethnode.signer
         ).deploy()) as CallReceiverMock
 
         const transaction = {
@@ -1120,20 +1096,20 @@ describe('Wallet integration', function () {
     })
     describe('deployed sequence wallet sign', async () => {
       it('Should validate sequence wallet signature', async () => {
-        const signature = await wallet.sign(message, false, ganache.chainId)
+        const signature = await wallet.sign(message, false, ethnode.chainId)
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should validate sequence wallet signature using direct method', async () => {
-        const signature = await wallet.signMessage(message, ganache.chainId)
+        const signature = await wallet.signMessage(message, ethnode.chainId)
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ganache.provider)).to.be.true
+        expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject sequence wallet invalid signature', async () => {
-        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ganache.provider)
-        const signature = await wallet2.signMessage(message, ganache.chainId)
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
+        const signature = await wallet2.signMessage(message, ethnode.chainId)
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
       })
       describe('After updating the owners', () => {
         let wallet2: lib.Wallet
@@ -1159,22 +1135,22 @@ describe('Wallet integration', function () {
           const [config, tx] = await wallet.updateConfig(newConfig)
           await tx.wait()
 
-          wallet2 = new lib.Wallet({ config, context }, s1, s2).connect(ganache.provider, relayer)
+          wallet2 = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
         })
         it('Should reject previus wallet configuration signature', async () => {
-          const signature = await wallet.signMessage(message, ganache.chainId)
-          expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
+          const signature = await wallet.signMessage(message, ethnode.chainId)
+          expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
         })
         it('Should validate new wallet configuration signature', async () => {
-          const signature = await wallet2.signMessage(message, ganache.chainId)
-          expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.true
+          const signature = await wallet2.signMessage(message, ethnode.chainId)
+          expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
         })
       })
     })
     describe('non-deployed sequence wallet sign', async () => {
       it('Should validate sequence wallet signature', async () => {
         const signature = await wallet.signMessage(message)
-        expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.true
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
       })
       it('Should valdiate sequence wallet multi-signature', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1194,18 +1170,18 @@ describe('Wallet integration', function () {
           ]
         }
 
-        const wallet2 = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ganache.provider, relayer)
+        const wallet2 = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
-        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, ganache.chainId)).to.be.true
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
       })
       it('Should validate sequence wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message)
-        expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ganache.provider)).to.be.true
+        expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ethnode.provider)).to.be.true
       })
       it('Should reject sequence wallet invalid signature', async () => {
-        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })).setProvider(ganache.provider)
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })).setProvider(ethnode.provider)
         const signature = await wallet2.signMessage(message, 1)
-        expect(await isValidSignature(wallet.address, digest, signature, ganache.provider, context)).to.be.false
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
       })
       it('Should reject signature with not enough weight', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1225,9 +1201,9 @@ describe('Wallet integration', function () {
           ]
         }
 
-        const wallet2 = new lib.Wallet({ config: newConfig, context }, s1).connect(ganache.provider, relayer)
+        const wallet2 = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
-        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, 1)).to.be.false
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, 1)).to.be.false
       })
       it('Should reject signature with not enough weigth but enough signers', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1252,30 +1228,30 @@ describe('Wallet integration', function () {
           ]
         }
 
-        const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ganache.provider, relayer)
+        const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
-        expect(await isValidSignature(wallet2.address, digest, signature, ganache.provider, context, ganache.chainId)).to.be.false
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
       })
     })
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {
         const signature = await wallet.signMessage(message)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
+        expect(await isValidSignature(wallet.address, subDigest, signature, ethnode.provider)).to.be.true
       })
       it('Should validate wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidWalletSignature(wallet.address, subDigest, signature, ganache.provider)).to.be.true
+        expect(await isValidWalletSignature(wallet.address, subDigest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
-        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ganache.provider)
-        const signature = await wallet2.signMessage(message, ganache.chainId)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ganache.chainId, digest)))
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
+        const signature = await wallet2.signMessage(message, ethnode.chainId)
+        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSignature(wallet.address, subDigest, signature, ganache.provider, context)).to.be.false
+        expect(await isValidSignature(wallet.address, subDigest, signature, ethnode.provider, context)).to.be.false
       })
     })
   })
@@ -1292,7 +1268,7 @@ describe('Wallet integration', function () {
     })
     it('Should migrate and update to a new single owner configuration', async () => {
       const address = await wallet.getAddress()
-      
+
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
       const newConfig = {
@@ -1316,7 +1292,7 @@ describe('Wallet integration', function () {
       expect(updatedWallet.imageHash).to.equal(await fetchImageHash(updatedWallet))
       expect(await updatedWallet.getAddress()).to.equal(address)
 
-      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1345,9 +1321,9 @@ describe('Wallet integration', function () {
       const [config, tx] = await wallet.updateConfig(newConfig)
       await tx.wait()
 
-      const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ganache.provider, relayer)
+      const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
 
-      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1397,11 +1373,11 @@ describe('Wallet integration', function () {
             }
           ]
         }
-  
+
         const [config, tx] = await wallet.updateConfig(newConfig)
         await tx.wait()
 
-        wallet2 = new lib.Wallet({ config, context }, s1).connect(ganache.provider, relayer)
+        wallet2 = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
       })
       it('Should update to a new single owner configuration', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1415,24 +1391,24 @@ describe('Wallet integration', function () {
             }
           ]
         }
-  
+
         const [config, tx] = await wallet2.updateConfig(newConfig)
         await tx.wait()
-  
-        const updatedWallet = new lib.Wallet({ config, context }, s1).connect(ganache.provider, relayer)
-  
-        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet2.address, wallet2.address))[0])
+
+        const updatedWallet = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
+
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
-  
+
         expect(updatedWallet.address).to.be.equal(wallet2.address)
         expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
-  
+
         await updatedWallet.sendTransaction(transaction)
       })
       it('Should update to a new multiple owner configuration', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  
+
         const newConfig = {
           threshold: 2,
           signers: [
@@ -1446,18 +1422,18 @@ describe('Wallet integration', function () {
             }
           ]
         }
-  
+
         const [config, tx] = await wallet2.updateConfig(newConfig)
         await tx.wait()
-  
-        const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ganache.provider, relayer)
-  
-        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet2.address, wallet2.address))[0])
+
+        const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
+
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
-  
+
         expect(updatedWallet.address).to.be.equal(wallet2.address)
         expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
-  
+
         await updatedWallet.sendTransaction(transaction)
       })
       it('Should reject transaction of previous owner', async () => {
@@ -1490,7 +1466,7 @@ describe('Wallet integration', function () {
       const wallet = (await lib.Wallet.singleOwner(
         new ethers.Wallet(ethers.utils.randomBytes(32)),
         { ...context, nonStrict: true }
-      )).connect(ganache.provider, relayer)
+      )).connect(ethnode.provider, relayer)
 
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
