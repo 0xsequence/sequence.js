@@ -20,7 +20,7 @@ export class ProxyMessageChannelPort implements ProviderMessageTransport {
   conn: ProviderMessageTransport
 
   handleMessage = (message: ProviderMessage<any>): void => {
-    throw Error('ProxyMessageChannelPort is not registered')
+    throw new Error('ProxyMessageChannelPort is not registered')
   }
 
   sendMessage = (message: ProviderMessage<any>): void => {

@@ -1,5 +1,5 @@
 import { ethers , BigNumber } from 'ethers'
-import { Deferrable } from 'ethers/lib/utils'
+import { Deferrable } from '@ethersproject/properties'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'

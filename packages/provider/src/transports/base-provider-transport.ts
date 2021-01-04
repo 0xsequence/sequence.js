@@ -32,11 +32,11 @@ export class BaseProviderTransport implements ProviderTransport {
   // or maybe it will work as is already? .. notifyLogin() should do it..? or notifyAuth() ?
 
   openWallet = (path?: string, state?: object): void => {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   closeWallet() {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   isConnected(): boolean {
@@ -44,7 +44,7 @@ export class BaseProviderTransport implements ProviderTransport {
   }
 
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number): Promise<void> => {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   // handleMessage will handle message received from the remote wallet
@@ -96,7 +96,7 @@ export class BaseProviderTransport implements ProviderTransport {
       }
 
       if (!responseCallback) {
-        throw Error('impossible state')
+        throw new Error('impossible state')
       }
 
       // Callback to original caller
@@ -117,7 +117,7 @@ export class BaseProviderTransport implements ProviderTransport {
         // Error response
         if (payload.error) {
           console.log('waaaaaaaaaa?', JSON.stringify(payload))
-          throw Error('TODOOOOOOOOOOO')
+          throw new Error('TODOOOOOOOOOOO')
 
           // Respond with error
           let error: Error
@@ -174,7 +174,7 @@ export class BaseProviderTransport implements ProviderTransport {
   sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {
     return new Promise(resolve => {
       if (!message.idx || message.idx <= 0) {
-        throw Error('message idx not set')
+        throw new Error('message idx not set')
       }
 
       // TODO: sup with the error arg here..?
@@ -185,7 +185,7 @@ export class BaseProviderTransport implements ProviderTransport {
         this.responseCallbacks.set(idx, responseCallback)
       } else {
         // TODO: or just reject..? or is that the same thing..?
-        throw Error('already set -- should not happen')
+        throw new Error('already set -- should not happen')
       }
 
       if (!this.connected) {
@@ -199,7 +199,7 @@ export class BaseProviderTransport implements ProviderTransport {
   }
 
   sendMessage(message: ProviderMessage<any>) {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   on = (event: ProviderMessageEvent, fn: (...args: any[]) => void) => {

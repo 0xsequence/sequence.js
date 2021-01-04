@@ -13,6 +13,8 @@ import {
   // SequenceUtilsFactory
 } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5'
 
+// TODO: use hardhat branch from wallet-contracts..
+
 let deployWalletContextCache: WalletContext = undefined
 
 // deployWalletContext will deploy the Sequence WalletContext via the UniversalDeployer

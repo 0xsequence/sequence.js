@@ -42,7 +42,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
 
   sendMessage(message: ProviderMessage<any>) {
     if (!message.idx || message.idx <= 0) {
-      throw Error('message idx is empty')
+      throw new Error('message idx is empty')
     }
     this.port.sendMessage(message)
   }

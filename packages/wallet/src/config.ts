@@ -1,68 +1,79 @@
-import { BigNumberish, BytesLike, ethers } from 'ethers'
+import { BigNumberish, BytesLike, ethers, Contract, Signer as AbstractSigner } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
-import { SignerInfo, SignerThreshold, DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
+import { Signer, DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
+import { walletContracts } from '@0xsequence/abi'
 
 // WalletConfig is the configuration of key signers that can access
 // and control the wallet
-export interface WalletConfig {
-  address?: string
+export interface WalletConfig {  
   threshold: number
   signers: {
     weight: number
     address: string
   }[]
+
+  address?: string
+  chainId?: number
 }
 
-export type GlobalWalletConfig = {
-  threshold: SignerThreshold[],
-  signers: SignerInfo[]
+export interface WalletState {
+  context: WalletContext
+  config: WalletConfig
+
+  address: string
+  chainId: number
+
+  deployed: boolean
+  imageHash: string
+  currentImageHash?: string
+
+  published?: boolean
 }
 
-export function isConfig(a: WalletConfig, b: WalletConfig): boolean {
-  return imageHash(a) === imageHash(b)
-}
-
-// sortConfig normalizes the list of signer addreses in a WalletConfig
-export function sortConfig(config: WalletConfig): WalletConfig {
-  config.signers.sort((a, b) => compareAddr(a.address, b.address))
-  return config
-}
-
-export function compareAddr(a: string, b: string): number {
-  const bigA = ethers.BigNumber.from(a)
-  const bigB = ethers.BigNumber.from(b)
-
-  if (bigA.lt(bigB)) {
-    return -1
-  } else if (bigA.eq(bigB)) {
-    return 0
-  } else {
-    return 1
+export const createWalletConfig = async (threshold: number, signers: { weight: number, signer: string | AbstractSigner }[]): Promise<WalletConfig> => {
+  const config: WalletConfig = {
+    threshold,
+    signers: []
   }
+  signers.forEach(async s => {
+    config.signers.push({
+      weight: s.weight,
+      address: AbstractSigner.isSigner(s.signer) ? await s.signer.getAddress() : s.signer,
+    })
+  })
+  if (!isUsableConfig(config)) {
+    throw new Error('wallet config is not usable')
+  }
+  return config
 }
 
 // isUsableConfig checks if a the sum of the owners in the configuration meets the necessary threshold to sign a transaction
 // a wallet that has a non-usable configuration is not able to perform any transactions, and can be considered as destroyed
-export function isUsableConfig(config: WalletConfig): boolean {
+export const isUsableConfig = (config: WalletConfig): boolean => {
   const sum = config.signers.reduce((p, c) => ethers.BigNumber.from(c.weight).add(p), ethers.constants.Zero)
   return sum.gte(ethers.BigNumber.from(config.threshold))
 }
 
-export function imageHash(config: WalletConfig): string {
-  let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
-
-  config.signers.forEach(
-    a =>
-      (imageHash = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, a.weight, a.address])
-      ))
-  )
-
-  return imageHash
+export const isValidConfigSigners = (config: WalletConfig, signers: string[]): boolean => {
+  if (signers.length === 0) return true
+  const a = config.signers.map(s => s.address.toLowerCase())
+  const b = signers.map(s => s.toLowerCase())
+  let valid = true
+  b.forEach(s => {
+    if (!a.includes(s)) valid = false
+  })
+  return valid
 }
 
-export function addressOf(config: WalletConfig, context: WalletContext): string {
+export const fetchImageHash = async (signer: Signer): Promise<string> => {
+  const address = await signer.getAddress()
+  const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, await signer.getProvider())
+  const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => []))  as string[]
+  return currentImageHash && currentImageHash.length > 0 ? currentImageHash[0] : ''
+}
+
+export const addressOf = (config: WalletConfig, context: WalletContext): string => {
   if (config.address) return config.address
 
   const salt = imageHash(config)
@@ -78,23 +89,59 @@ export function addressOf(config: WalletConfig, context: WalletContext): string 
   return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
 }
 
+export const imageHash = (config: WalletConfig): string => {
+  let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
+
+  config.signers.forEach(
+    a =>
+      (imageHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, a.weight, a.address])
+      ))
+  )
+
+  return imageHash
+}
+
+// sortConfig normalizes the list of signer addreses in a WalletConfig
+export const sortConfig = (config: WalletConfig): WalletConfig => {
+  config.signers.sort((a, b) => compareAddr(a.address, b.address))
+  return config
+}
+
+export const isConfigEqual = (a: WalletConfig, b: WalletConfig): boolean => {
+  return imageHash(a) === imageHash(b)
+}
+
+export const compareAddr = (a: string, b: string): number => {
+  const bigA = ethers.BigNumber.from(a)
+  const bigB = ethers.BigNumber.from(b)
+
+  if (bigA.lt(bigB)) {
+    return -1
+  } else if (bigA.eq(bigB)) {
+    return 0
+  } else {
+    return 1
+  }
+}
+
 // recoverConfig decodes a WalletConfig from the subDigest and signature combo. Note: the subDigest argument
 // is an encoding format of the original message, encoded by:
 //
 // subDigest = packMessageData(wallet.address, chainId, ethers.utils.keccak256(message))
-export function recoverConfig(subDigest: BytesLike, signature: string | DecodedSignature): WalletConfig {
+export const recoverConfig = (subDigest: BytesLike, signature: string | DecodedSignature): WalletConfig => {
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(subDigest))
   return recoverConfigFromDigest(digest, signature)
 }
 
-export function isSigner(obj: DecodedSigner | DecodedOwner): boolean {
+export const isSigner = (obj: DecodedSigner | DecodedOwner): boolean => {
   const cast = obj as DecodedSigner
   return cast.r !== undefined && cast.s !== undefined
 }
 
 // recoverConfigFromDigest decodes a WalletConfig from a digest and signature combo. Note: the digest
 // is the keccak256 of the subDigest, see `recoverConfig` method.
-export function recoverConfigFromDigest(digest: BytesLike, signature: string | DecodedSignature): WalletConfig {
+export const recoverConfigFromDigest = (digest: BytesLike, signature: string | DecodedSignature): WalletConfig => {
   const decoded = (<DecodedSignature>signature).threshold !== undefined ? <DecodedSignature>signature : decodeSignature(signature as string)
 
   const signers = decoded.signers.map(s => {
@@ -117,7 +164,7 @@ export function recoverConfigFromDigest(digest: BytesLike, signature: string | 
   }
 }
 
-export function decodeSignature(signature: string): DecodedSignature {
+export const decodeSignature = (signature: string): DecodedSignature => {
   const auxsig = signature.replace('0x', '')
 
   const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
@@ -171,7 +218,7 @@ export function decodeSignature(signature: string): DecodedSignature {
 const SIG_TYPE_EIP712 = 1
 const SIG_TYPE_ETH_SIGN = 2
 
-export function recoverSigner(digest: BytesLike, sig: DecodedSigner) {
+export const recoverSigner = (digest: BytesLike, sig: DecodedSigner) => {
   switch (sig.t) {
     case SIG_TYPE_EIP712:
       return ethers.utils.recoverAddress(digest, {
@@ -197,11 +244,11 @@ export function recoverSigner(digest: BytesLike, sig: DecodedSigner) {
   }
 }
 
-export function joinSignatures(...signatures: string[]) {
+export const joinSignatures = (...signatures: string[]) => {
   return signatures.reduce((p, c) => joinTwoSignatures(p, c))
 }
 
-export function joinTwoSignatures(a: string, b: string): string {
+export const joinTwoSignatures = (a: string, b: string): string => {
   const da = decodeSignature(a)
   const db = decodeSignature(b)
 

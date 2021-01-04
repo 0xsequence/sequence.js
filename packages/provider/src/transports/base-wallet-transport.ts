@@ -16,7 +16,7 @@ export class BaseWalletTransport implements WalletTransport {
   }
 
   register() {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   init() {
@@ -30,7 +30,7 @@ export class BaseWalletTransport implements WalletTransport {
   }
 
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   handleMessage = async (message: ProviderMessage<any>) => {
@@ -79,7 +79,7 @@ export class BaseWalletTransport implements WalletTransport {
   }
 
   sendMessage(message: ProviderMessage<any>) {
-    throw Error('abstract method')
+    throw new Error('abstract method')
   }
 
   notifyAccountsChanged(accounts: string[]) {

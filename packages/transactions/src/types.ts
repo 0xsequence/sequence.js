@@ -1,9 +1,9 @@
 import { BigNumberish, BytesLike } from 'ethers'
-import { TransactionRequest } from '@ethersproject/providers'
+import { TransactionRequest as EthersTransactionRequest, TransactionResponse } from '@ethersproject/providers'
 import { WalletConfig } from '@0xsequence/wallet'
 import { WalletContext } from '@0xsequence/network'
 
-export interface SequenceTransaction {
+export interface Transaction {
   delegateCall: boolean
   revertOnError: boolean
   gasLimit: BigNumberish
@@ -13,7 +13,7 @@ export interface SequenceTransaction {
   nonce?: BigNumberish
 }
 
-export interface SequenceTransactionEncoded {
+export interface TransactionEncoded {
   delegateCall: boolean
   revertOnError: boolean
   gasLimit: BigNumberish
@@ -22,7 +22,7 @@ export interface SequenceTransactionEncoded {
   data: BytesLike
 }
 
-export type AuxTransactionRequest = TransactionRequest & {
+export interface TransactionRequest extends EthersTransactionRequest {
   auxiliary?: Transactionish[]
   expiration?: BigNumberish
   afterNonce?: NonceDependency | BigNumberish
@@ -34,12 +34,14 @@ export interface NonceDependency {
   space?: BigNumberish
 }
 
-export declare type Transactionish = AuxTransactionRequest | SequenceTransaction | SequenceTransaction[] | AuxTransactionRequest[]
+export type Transactionish = TransactionRequest | TransactionRequest[] | Transaction | Transaction[]
 
 export type SignedTransactions = {
   chainId: BigNumberish,
   config: WalletConfig,
   context: WalletContext,
   signature: string,
-  transactions: SequenceTransaction[]
+  transactions: Transaction[]
 }
+
+export type { TransactionResponse }

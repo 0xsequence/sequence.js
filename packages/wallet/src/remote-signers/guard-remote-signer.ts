@@ -1,11 +1,11 @@
-import { TransactionRequest, Provider } from '@ethersproject/providers'
-import { BytesLike, ethers } from 'ethers'
-import { Deferrable } from 'ethers/lib/utils'
 import fetchPonyfill from 'fetch-ponyfill'
+import { TransactionRequest, Provider } from '@ethersproject/providers'
+import { ethers, BytesLike } from 'ethers'
+import { Deferrable } from '@ethersproject/properties'
 import { RemoteSigner } from './remote-signer'
 import { GuarddService } from '@0xsequence/guard'
 
-export class GuarddRemoteSigner extends RemoteSigner {
+export class GuardRemoteSigner extends RemoteSigner {
   private readonly _guardd: GuarddService
   private readonly _address: string
 
@@ -26,10 +26,10 @@ export class GuarddRemoteSigner extends RemoteSigner {
   }
 
   signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('Method not implemented.')
+    throw new Error('signTransaction method is not supported in GuardRemoteSigner')
   }
 
   connect(provider: Provider): ethers.Signer {
-    throw new Error('Method not implemented.')
+    throw new Error('connect method is not supported in GuardRemoteSigner')
   }
 }

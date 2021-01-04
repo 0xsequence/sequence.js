@@ -1,5 +1,5 @@
 import { ethers, BytesLike, BigNumberish } from 'ethers'
-import { Deferrable, resolveProperties } from 'ethers/lib/utils'
+import { Deferrable, resolveProperties } from '@ethersproject/properties'
 
 // packMessageData encodes the specified data ready for the Sequence Wallet contracts.
 export const packMessageData = (walletAddress: string, chainId: BigNumberish, digest: BytesLike): string => {

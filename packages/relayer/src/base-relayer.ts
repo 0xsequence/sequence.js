@@ -4,7 +4,7 @@ import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash } from '@0xsequence/wallet'
-import { SequenceTransaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
+import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
 export class BaseRelayer {
   private readonly bundleCreation: boolean
@@ -16,7 +16,7 @@ export class BaseRelayer {
   }
 
   async isWalletDeployed(walletAddress: string): Promise<boolean> {
-    if (!this.provider) throw Error('Bundled creation provider not found')
+    if (!this.provider) throw new Error('Bundled creation provider not found')
     return (await this.provider.getCode(walletAddress)) !== '0x'
   }
 
@@ -38,7 +38,7 @@ export class BaseRelayer {
     config: WalletConfig,
     context: WalletContext,
     signature: string | Promise<string>,
-    ...transactions: SequenceTransaction[]
+    ...transactions: Transaction[]
   ): Promise<{ to: string, data: string}> {
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)

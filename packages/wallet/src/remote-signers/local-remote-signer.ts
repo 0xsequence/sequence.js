@@ -20,10 +20,10 @@ export class LocalRemoteSigner extends RemoteSigner {
   }
 
   signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error("Method not implemented.")
+    throw new Error("signTransaction method is not supported in LocalRemoteSigner")
   }
   
   connect(provider: Provider): AbstractSigner {
-    throw new Error("Method not implemented.")
+    throw new Error("connect method is not supported in LocalRemoteSigner")
   }
 }

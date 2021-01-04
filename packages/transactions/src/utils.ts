@@ -1,9 +1,8 @@
 import { ethers, Signer, BigNumberish } from 'ethers'
-import { Interface } from 'ethers/lib/utils' // TODO: other pkg..?
-import { TransactionRequest } from '@ethersproject/providers'
+import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
-import { SequenceTransaction, AuxTransactionRequest, Transactionish, SequenceTransactionEncoded, NonceDependency, SignedTransactions } from './types'
+import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
 
 export const MetaTransactionsType = `tuple(
   bool delegateCall,
@@ -14,17 +13,17 @@ export const MetaTransactionsType = `tuple(
   bytes data
 )[]`
 
-export function encodeMetaTransactionsData(...txs: SequenceTransaction[]): string {
+export function encodeMetaTransactionsData(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
 export async function toSequenceTransactions(
   wallet: Signer | string,
-  txs: (SequenceTransaction | AuxTransactionRequest)[],
+  txs: (Transaction | TransactionRequest)[],
   revertOnError: boolean = false,
   gasLimit: BigNumberish = ethers.constants.Zero
-): Promise<SequenceTransaction[]> {
+): Promise<Transaction[]> {
   // Bundles all transactions, including the auxiliary ones
   const allTxs = flattenAuxTransactions(txs)
 
@@ -37,30 +36,30 @@ export async function toSequenceTransactions(
   return Promise.all(allTxs.map(tx => toSequenceTransaction(wallet, tx, revertOnError, gasLimit, nonce)))
 }
 
-export function flattenAuxTransactions(txs: (Transactionish | Transactionish)[]): (TransactionRequest | SequenceTransaction)[] {
+export function flattenAuxTransactions(txs: (Transactionish | Transactionish)[]): (TransactionRequest | Transaction)[] {
   if (!Array.isArray(txs)) return flattenAuxTransactions([txs])
   return txs.reduce(function (p: Transactionish[], c: Transactionish) {
     if (Array.isArray(c)) {
       return p.concat(flattenAuxTransactions(c))
     }
 
-    if ((<AuxTransactionRequest>c).auxiliary) {
-      return p.concat([c, ...flattenAuxTransactions((<AuxTransactionRequest>c).auxiliary)])
+    if ((<TransactionRequest>c).auxiliary) {
+      return p.concat([c, ...flattenAuxTransactions((<TransactionRequest>c).auxiliary)])
     }
 
     return p.concat(c)
-  }, []) as (TransactionRequest | SequenceTransaction)[]
+  }, []) as (TransactionRequest | Transaction)[]
 }
 
 export async function toSequenceTransaction(
   wallet: Signer | string,
-  tx: TransactionRequest | SequenceTransaction,
+  tx: TransactionRequest | Transaction,
   revertOnError: boolean = false,
   gasLimit: BigNumberish = ethers.constants.Zero,
   nonce: BigNumberish = undefined
-): Promise<SequenceTransaction> {
+): Promise<Transaction> {
   if (isSequenceTransaction(tx)) {
-    return tx as SequenceTransaction
+    return tx as Transaction
   }
 
   const txGas = tx.gasLimit === undefined ? (<any>tx).gas : tx.gasLimit
@@ -96,7 +95,7 @@ export function isAsyncSendable(target: any) {
   return target.send || target.sendAsync
 }
 
-export function isSequenceTransaction(tx: any): tx is SequenceTransaction {
+export function isSequenceTransaction(tx: any): tx is Transaction {
   return tx.delegateCall !== undefined || tx.revertOnError !== undefined
 }
 
@@ -104,16 +103,16 @@ export function hasSequenceTransactions(txs: any[]) {
   return txs.find(t => isSequenceTransaction(t)) !== undefined
 }
 
-export function readSequenceNonce(...txs: SequenceTransaction[]): BigNumberish {
+export function readSequenceNonce(...txs: Transaction[]): BigNumberish {
   const sample = txs.find(t => t.nonce !== undefined)
   if (txs.find(t => t.nonce !== undefined && t.nonce !== sample.nonce)) {
-    throw Error('Mixed nonces on Sequence transactions')
+    throw new Error('Mixed nonces on Sequence transactions')
   }
 
   return sample ? sample.nonce : undefined
 }
 
-export function sequenceTxAbiEncode(txs: SequenceTransaction[]): SequenceTransactionEncoded[] {
+export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
   return txs.map(t => ({
     delegateCall: t.delegateCall === true,
     revertOnError: t.revertOnError === true,
@@ -124,11 +123,11 @@ export function sequenceTxAbiEncode(txs: SequenceTransaction[]): SequenceTransac
   }))
 }
 
-export function appendNonce(txs: SequenceTransaction[], nonce: BigNumberish): SequenceTransaction[] {
-  return txs.map((t: SequenceTransaction) => ({ ...t, nonce }))
+export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transaction[] {
+  return txs.map((t: Transaction) => ({ ...t, nonce }))
 }
 
-export function makeExpirable(context: WalletContext, txs: SequenceTransaction[], expiration: BigNumberish): SequenceTransaction[] {
+export function makeExpirable(context: WalletContext, txs: Transaction[], expiration: BigNumberish): Transaction[] {
   const requireUtils = new Interface(walletContracts.requireUtils.abi)
 
   if (!context || !context.requireUtils) {
@@ -148,7 +147,7 @@ export function makeExpirable(context: WalletContext, txs: SequenceTransaction[]
   ]
 }
 
-export function makeAfterNonce(context: WalletContext, txs: SequenceTransaction[], dep: NonceDependency): SequenceTransaction[] {
+export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: NonceDependency): Transaction[] {
   const requireUtils = new Interface(walletContracts.requireUtils.abi)
 
   if (!context || !context.requireUtils) {

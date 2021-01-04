@@ -3,7 +3,7 @@ import { ethers, Wallet as EOAWallet } from 'ethers'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { MockWalletUserPrompter } from '../mock-wallet/utils'
-import { sequenceContext, ethereumNetworks } from '@0xsequence/network'
+import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { testAccounts, getEOAWallet } from '../testutils'
@@ -37,13 +37,13 @@ export const tests = async () => {
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
   const rpcProvider = new JsonRpcProvider('http://localhost:8545')
-  const wallet = (await Wallet.singleOwner(sequenceContext, owner)).connect(rpcProvider, relayer)
+  const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
 
 
   // the rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(wallet, null, ethereumNetworks)
+  const walletRequestHandler = new WalletRequestHandler(wallet, null, testnetNetworks)
   
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   proxyHandler.register()

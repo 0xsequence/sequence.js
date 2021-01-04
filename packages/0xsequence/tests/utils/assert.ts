@@ -15,7 +15,7 @@ export const test = async (title: string, run: () => void) => {
   } catch (err) {
     entry.error = err.message
     entry.stack = err.stack
-    // throw Error(`case '${title}' failed due to ${err.message}`)
+    // throw new Error(`case '${title}' failed due to ${err.message}`)
     // throw err
     err.message = `case '${title}' failed due to ${err.message}`
     throw err
@@ -26,9 +26,9 @@ export const assert = {
   true: function(cond: boolean, msg?: string) {
     if (cond !== true) {
       if (msg) {
-        throw Error(`invalid condition, '${msg}'`)
+        throw new Error(`invalid condition, '${msg}'`)
       } else {
-        throw Error(`invalid condition`)
+        throw new Error(`invalid condition`)
       }
     }
   },
@@ -40,9 +40,9 @@ export const assert = {
   equal: function(actual: any, expected: any, msg?: string) {
     if (actual !== expected) {
       if (msg) {
-        throw Error(`expected '${expected}' but got '${actual}', '${msg}'`)
+        throw new Error(`expected '${expected}' but got '${actual}', '${msg}'`)
       } else {
-        throw Error(`expected '${expected}' but got '${actual}'`)
+        throw new Error(`expected '${expected}' but got '${actual}'`)
       }
     }
   }

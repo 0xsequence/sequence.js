@@ -17,17 +17,17 @@ import { Signer } from '@0xsequence/wallet'
 import { isSignedTransactions } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private wallet: Signer
+  private signer: Signer
   private prompter: WalletUserPrompter
   private networks: Networks
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  constructor(wallet: Signer, prompter: WalletUserPrompter, networks: Networks) {
-    this.wallet = wallet
+  constructor(signer: Signer, prompter: WalletUserPrompter, networks: Networks) {
+    this.signer = signer
     this.prompter = prompter
     this.networks = networks
 
-    if (!wallet.provider) {
+    if (!signer.provider) {
       throw new Error('wallet.provider is undefined')
     }
   }
@@ -60,15 +60,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     // TODO/XXX
     // TODO: throwing, but we must also call the "callback" with the error here..
-    const signer = this.wallet
-    if (!signer) throw Error('WalletRequestHandler: wallet is not configured')
+    const signer = this.signer
+    if (!signer) throw new Error('WalletRequestHandler: wallet signer is not configured')
 
-    const provider = await this.wallet.getProvider() as JsonRpcProvider
-    if (!provider) throw Error('WalletRequestHandler: wallet provider is not configured')
-
-    if (!chainId) {
-      chainId = await this.wallet.getChainId()
-    }
+    // fetch the provider for the specific chain, or undefined will select MainChain
+    const provider = await signer.getProvider(chainId)
+    if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
 
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
@@ -112,7 +109,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await this.wallet.signMessage(ethers.utils.arrayify(message), chainId)
+            sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
@@ -127,15 +124,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        case 'eth_signTypedData': {
+        case 'eth_signTypedData' || 'eth_signTypedData_v4': {
           // note: message from json-rpc input is in hex format
           const [signingAddress, typedData] = request.params
 
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            const digest = TypedDataUtils.encodeDigest(typedData)
-            sig = await this.wallet.signMessage(ethers.utils.arrayify(digest), chainId) // TODO: only necessary for multi-wallet..
+            // TODO: use ethers eip712 impl.
+            sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
@@ -157,8 +154,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let txnHash = ''
           if (this.prompter === null) {
             // prompter is null, so we'll send from here
-            // TODO: review the params...
-            const txnResponse = await this.wallet.sendTransaction(transactionParams) // TODO: chainId..?
+            const txnResponse = await signer.sendTransaction(transactionParams, chainId)
             txnHash = txnResponse.hash
           } else {
             // prompt user to provide the response
@@ -188,9 +184,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (sender === await signer.getAddress()) {
             // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
             // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
-            response.result = await signer.signTransactions(transaction)
+            response.result = await signer.signTransactions(transaction, chainId)
           } else {
-            throw Error('sender address does not match wallet')
+            throw new Error('sender address does not match wallet')
           }
 
           break
@@ -198,7 +194,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_sendRawTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
-
           if (isSignedTransactions(request.params[0])) {
             const txChainId = BigNumber.from(request.params[0].chainId).toNumber()
             const tx = await (await signer.getRelayer(txChainId)).relay(request.params[0])
@@ -206,7 +201,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           } else {
             response.result = await provider.sendTransaction(request.params[0])
           }
-
           break
         }
 
@@ -217,7 +211,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const walletAddress = await signer.getAddress()
 
           if (address === walletAddress.toLowerCase()) {
-            const count = await this.wallet.getTransactionCount(tag)
+            const count = await signer.getTransactionCount(tag)
             response.result = ethers.BigNumber.from(count).toHexString()
           } else {
             const count = await provider.getTransactionCount(address, tag)
@@ -248,7 +242,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_call': {
           const [transactionObject, blockTag] = request.params
-
           response.result = await provider.call(transactionObject, blockTag)
           break
         }
@@ -271,12 +264,68 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        // TODO: add sequence_getWalletContext and other sequence_ methods
-        // of data we'd like to get from the wallet signer over the transport
-        // + this is cachable, but, we should expire+refresh cache anytime
-        // we open the wallet after sometime?
+        // smart wallet method
+        case 'sequence_getWalletContext': {
+          response.result = await signer.getWalletContext()
+          break
+        }
+
+        // smart wallet method
+        case 'sequence_getWalletConfig': {
+          response.result = await signer.getWalletConfig(chainId)
+          break
+        }
+
+        // smart wallet method
+        case 'sequence_getWalletState': {
+          response.result = await signer.getWalletState(chainId)
+          break
+        }
+
+        // smart wallet method
+        case 'sequence_getNetworks': {
+          response.result = await signer.getNetworks()
+          break
+        }
+
+        // smart wallet method
+        case 'sequence_updateConfig': {
+          // TODO
+          break
+        }
+
+        // smart wallet method
+        case 'sequence_publishConfig': {
+          // TODO
+          break
+        }
+
+        // relayer method
+        case 'sequence_estimateGasLimits': {
+          // TODO
+          break
+        }
+
+        // relayer method
+        case 'sequence_gasRefundOptions': {
+          // TODO
+          break
+        }
+
+        // relayer method
+        case 'sequence_getNonce': {
+          // TODO
+          break
+        }
+
+        // relayer method
+        case 'sequence_relay': {
+          // TODO
+          break
+        }
 
         default: {
+          // NOTE: provider here will be chain-bound if chainId is provided
           const providerResponse = await provider.send(request.method, request.params)
           response.result = providerResponse
         }
@@ -304,18 +353,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   getAddress(): Promise<string> {
-    return this.wallet.getAddress()
+    return this.signer.getAddress()
   }
 
   getChainId(): Promise<number> {
-    return this.wallet.getChainId()
+    return this.signer.getChainId()
   }
 
   async getNetwork(): Promise<NetworkConfig> {
     const chainId = await this.getChainId()
 
     const chainIds = []
-    const networkConfig = Object.values(this.networks).find(config => {
+    const networkConfig = this.networks.find(config => {
       if (config.chainId === chainId) {
         return config
       }
@@ -323,7 +372,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     })
 
     if (!networkConfig) {
-      throw Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
+      throw new Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
     }
     return networkConfig
   }
