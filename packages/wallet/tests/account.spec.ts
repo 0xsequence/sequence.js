@@ -36,7 +36,7 @@ describe('Account integration', () => {
       mainModule,
       mainModuleUpgradable,
       guestModule,
-      requireUtils
+      sequenceUtils
     ] = await deployWalletContext(provider)
 
     // Create fixed context obj
@@ -45,7 +45,7 @@ describe('Account integration', () => {
       mainModule: mainModule.address,
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
-      requireUtils: requireUtils.address
+      sequenceUtils: sequenceUtils.address
     }
   })
 

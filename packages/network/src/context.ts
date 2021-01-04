@@ -5,7 +5,7 @@ export interface WalletContext {
   mainModule: string
   mainModuleUpgradable: string
   guestModule?: string
-  requireUtils?: string
+  sequenceUtils?: string
   
   nonStrict?: boolean // maybe rename to just strict..?
 }
@@ -23,5 +23,5 @@ export const sequenceContext: WalletContext = {
   mainModule: '0x444C9327FF4e8fbF109ed6d22B96F83bb3cf3A06',
   mainModuleUpgradable: '0xCdB2f31BCe8c41E731c88BCB14A6692AC09e1C6e',
   guestModule: '0x0aA220BAdC3FD541b68A811bc46198Eadfc7A162',
-  requireUtils: '0xc7406c1556859C567C06f2b8A9356B9D83dfB341'
+  sequenceUtils: '0xc7406c1556859C567C06f2b8A9356B9D83dfB341'
 }

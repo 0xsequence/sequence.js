@@ -1,13 +1,12 @@
 
 import { ethers, providers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
-import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/CallReceiverMock'
+import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
 import { JsonRpcSender, JsonRpcRouter } from '@0xsequence/network'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { Multicall } from '../src'
 import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } from '../src/providers'
 import { SpyProxy } from './utils'
 import { getRandomInt } from '@0xsequence/utils'
@@ -19,8 +18,8 @@ const { JsonRpcEngine } = require('json-rpc-engine')
 const providerAsMiddleware = require('eth-json-rpc-middleware/providerAsMiddleware')
 const providerFromEngine = require('eth-json-rpc-middleware/providerFromEngine')
 
-const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/CallReceiverMock.json')
-const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/MultiCallUtils.json')
+const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
+const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/SequenceUtils.sol/SequenceUtils.json')
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
@@ -76,7 +75,10 @@ describe('Arcadeum wallet integration', function () {
       SequenceUtilsArtifact.abi,
       SequenceUtilsArtifact.bytecode,
       ganache.signer
-    ).deploy()
+    ).deploy(
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero
+    )
 
     // Create provider
     ganache.spyProxy = SpyProxy(ganache.provider, {

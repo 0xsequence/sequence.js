@@ -1,24 +1,24 @@
 import { ethers } from 'ethers'
 import { Provider } from '@ethersproject/providers'
 
-import { Factory } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/Factory'
-import { GuestModule } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/GuestModule'
-import { MainModule } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/MainModule'
-import { MainModuleUpgradable } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/MainModuleUpgradable'
-import { RequireUtils } from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5/RequireUtils'
+import { Factory } from '@0xsequence/wallet-contracts/typings/contracts/Factory'
+import { GuestModule } from '@0xsequence/wallet-contracts/typings/contracts/GuestModule'
+import { MainModule } from '@0xsequence/wallet-contracts/typings/contracts/MainModule'
+import { MainModuleUpgradable } from '@0xsequence/wallet-contracts/typings/contracts/MainModuleUpgradable'
+import { SequenceUtils } from '@0xsequence/wallet-contracts/typings/contracts/SequenceUtils'
 
-const FactoryArtifact = require('@0xsequence/wallet-contracts/artifacts/Factory.json')
-const GuestModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/GuestModule.json')
-const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/MainModule.json')
-const MainModuleUpgradableArtifact = require('@0xsequence/wallet-contracts/artifacts/MainModuleUpgradable.json')
-const RequireUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/RequireUtils.json')
+const FactoryArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/Factory.sol/Factory.json')
+const GuestModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/GuestModule.sol/GuestModule.json')
+const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModule.sol/MainModule.json')
+const MainModuleUpgradableArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleUpgradable.sol/MainModuleUpgradable.json')
+const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/SequenceUtils.sol/SequenceUtils.json')
 
 export async function deployWalletContext(provider: Provider): Promise<[
   Factory,
   MainModule,
   MainModuleUpgradable,
   GuestModule,
-  RequireUtils
+  SequenceUtils
 ]> {
   const factory = ((await new ethers.ContractFactory(
     FactoryArtifact.abi,
@@ -44,20 +44,20 @@ export async function deployWalletContext(provider: Provider): Promise<[
     (provider as any).getSigner()
   ).deploy()) as unknown) as GuestModule
 
-  const requireUtils = ((await new ethers.ContractFactory(
-    RequireUtilsArtifact.abi,
-    RequireUtilsArtifact.bytecode,
+  const sequenceUtils = ((await new ethers.ContractFactory(
+    SequenceUtilsArtifact.abi,
+    SequenceUtilsArtifact.bytecode,
     (provider as any).getSigner()
   ).deploy(
     factory.address,
     mainModule.address
-  )) as unknown) as RequireUtils
+  )) as unknown) as SequenceUtils
 
   return [
     factory,
     mainModule,
     mainModuleUpgradable,
     guestModule,
-    requireUtils
+    sequenceUtils
   ]
 }

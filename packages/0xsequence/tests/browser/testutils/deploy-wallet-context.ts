@@ -5,13 +5,12 @@ import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet } from './accounts'
 
 import {
-  FactoryFactory,
-  MainModuleFactory,
-  MainModuleUpgradableFactory,
-  GuestModuleFactory,
-  RequireUtilsFactory,
-  // SequenceUtilsFactory
-} from '@0xsequence/wallet-contracts/typings/contracts/ethers-v5'
+  Factory__factory as FactoryFactory,
+  MainModule__factory as MainModuleFactory,
+  MainModuleUpgradable__factory as MainModuleUpgradableFactory,
+  GuestModule__factory as GuestModuleFactory,
+  SequenceUtils__factory as SequenceUtilsFactory,
+} from '@0xsequence/wallet-contracts/typings/contracts'
 
 // TODO: use hardhat branch from wallet-contracts..
 
@@ -39,14 +38,10 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
 
   const walletFactory = await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)
   const mainModule = await universalDeployer.deploy('MainModule', MainModuleFactory, txParams, 0, walletFactory.address)
+
   await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, txParams)
   await universalDeployer.deploy('GuestModule', GuestModuleFactory, txParams)
-
-  // TODO: rename RequireUtils to SequenceUtils, ... from latest wallet-contracts @master, update hash
-  await universalDeployer.deploy('RequireUtils', RequireUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
-
-  // TODO .. for multicall, etc.
-  // await universalDeployer.deploy('SequenceUtils', SequenceUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
+  await universalDeployer.deploy('SequenceUtils', SequenceUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
 
   const deployment = universalDeployer.getDeployment()
 
@@ -55,8 +50,9 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
     mainModule: deployment['MainModule'].address,
     mainModuleUpgradable: deployment['MainModuleUpgradable'].address,
     guestModule: deployment['GuestModule'].address,
-    requireUtils: deployment['RequireUtils'].address
+    sequenceUtils: deployment['SequenceUtils'].address
   }
+
 
   return deployWalletContextCache
 }
@@ -64,9 +60,9 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
 // testWalletContext is determined by the `deployWalletContext` method above. We can use this
 // across instances, but, we must ensure the contracts are deployed by the mock-wallet at least.
 export const testWalletContext: WalletContext = {
-  factory: "0x98A9AA23d209E39b6b04eF825DAbD6a95D5A4bD7",
-  guestModule: "0x124585Ac29933ec1bFd8676F011401F00963c7a2",
-  mainModule: "0x46caf4dB790F7700690Bd4762D84d7AAda7cC7fC",
-  mainModuleUpgradable: "0x305475d04010546a1FA0dF3D2EB7438156156A10",
-  requireUtils: "0xB69e1338083046A3D4c733052b615b9a920FbC62",
+  factory: "0x34612d35C278c69589111C58FB9405e034070F8D",
+  guestModule: "0x872eA617FED42056cDcEB3979838eba48A72FE41",
+  mainModule: "0xBbC50F0Dc98B5CcE607f7413c589F9247dd28Ac7",
+  mainModuleUpgradable: "0x38364BC14E370C3c5D8Af99A040c24734AB7Cad6",
+  sequenceUtils: "0x10c1c71fb43017d5b968dFea38694632818489b8"
 }
