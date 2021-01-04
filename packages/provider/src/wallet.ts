@@ -12,12 +12,14 @@ export interface WalletProvider {
   login(refresh?: boolean): Promise<boolean>
   logout(): void
   
+  getProviderConfig(): ProviderConfig
   isConnected(): boolean
   isLoggedIn(): boolean
   getSession(): WalletSession | undefined
-  getAddress(): string
+
+  getAddress(): string // TODO: .. Promise..?
   getNetworks(): Promise<NetworkConfig[]>
-  getChainId(): number
+  getChainId(): number // TODO: Promise..?
 
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
@@ -29,7 +31,6 @@ export interface WalletProvider {
 
   getWalletContext(): Promise<WalletContext>
   getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
-  getWalletProviderConfig(): WalletProviderConfig // TODO: rename to ProviderConfig ..
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
@@ -40,7 +41,7 @@ export interface WalletProvider {
 export class Wallet implements WalletProvider {
   public commands: WalletCommands
 
-  private config: WalletProviderConfig // TODO: rename to ProvierConfig, etc.
+  private config: ProviderConfig
   private session: WalletSession | null
 
   private provider: Web3Provider
@@ -55,10 +56,10 @@ export class Wallet implements WalletProvider {
   private networks: NetworkConfig[]
   private sidechainProviders: { [id: number] : Web3Provider }
 
-  constructor(config?: WalletProviderConfig) {
+  constructor(config?: ProviderConfig) { // TODO: perhaps allow Partial<ProviderConfig> and we use defaults where undefined?
     this.config = config
     if (!this.config) {
-      this.config = { ...DefaultWalletProviderConfig }
+      this.config = { ...DefaultProviderConfig }
     }
     this.commands = new WalletCommands(this)
     this.init()
@@ -124,7 +125,7 @@ export class Wallet implements WalletProvider {
       }
 
       default: {
-        throw new Error('unsupported provider type, must be one of ${WalletProviderType}')
+        throw new Error('unsupported provider type, must be one of ${ProviderType}')
       }
     }
 
@@ -183,6 +184,10 @@ export class Wallet implements WalletProvider {
     this.cachedProvider?.resetCache()
   }
 
+  getProviderConfig(): ProviderConfig {
+    return this.config
+  }
+
   isConnected(): boolean {
     if (this.windowTransportProvider) {
       return this.windowTransportProvider.isConnected()
@@ -220,6 +225,7 @@ export class Wallet implements WalletProvider {
     return [session.network]
   }
 
+  // getChainId returns the default dapp chain
   getChainId = (): number => {
     const session = this.getSession()
     if (!session.network || !(session.network.chainId > 0)) {
@@ -296,10 +302,6 @@ export class Wallet implements WalletProvider {
     // TODO: sequence_getWalletContext can be cached by provider middleware
     // TODO: optionally, this can be forced to a diff value by the ProviderConfig
     return this.getSigner().getWalletContext()
-  }
-
-  getWalletProviderConfig(): WalletProviderConfig {
-    return this.config
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
@@ -443,9 +445,8 @@ export class Wallet implements WalletProvider {
 
 // TODO: allow dapp to specify the requested network and provide their own rpcUrl
 // for a particular chain. Probably pass "networks: object"
-// TODO: rename to just ProviderConfig and ProviderType ..? works..
-export interface WalletProviderConfig {
-  type: WalletProviderType
+export interface ProviderConfig {
+  type: ProviderType
 
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
@@ -462,18 +463,21 @@ export interface WalletProviderConfig {
     // timeout?: number
   }
 
-  // TODO ..
-  networks?: Networks
+  // TODO .. we don't need this to be set, but can be provided for overrides..
+  networks?: Networks // TODO: rename to networkConfig: NetworkConfig[] ?
+  // and rename defaultNetwork to "network" ?
 
+  // defaultNetwork
+  defaultNetwork?: number | NetworkConfig
 }
 
-// TODO: rename to WalletTransportType, maybe?
-export type WalletProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
+export type ProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
 
-export const DefaultWalletProviderConfig: WalletProviderConfig = {
+export const DefaultProviderConfig: ProviderConfig = {
+  // TODO: check process.env for this if test or production, etc..
   walletAppURL: 'http://localhost:3333',
 
-  walletContext: sequenceContext,
+  walletContext: { ...sequenceContext },
 
   type: 'Window', // TODO: rename.. transports: []
 

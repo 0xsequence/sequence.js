@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
 import { Wallet, Account } from '@0xsequence/wallet'
-import { sequenceContext, Networks, sequenceNetworks } from '@0xsequence/network'
+import { sequenceContext, Networks } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 // import { MockWalletUserPrompter } from './utils'

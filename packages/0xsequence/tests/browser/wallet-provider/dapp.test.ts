@@ -1,6 +1,6 @@
 import { test, assert } from '../../utils/assert'
 import { ethers, Wallet as EOAWallet } from 'ethers'
-import { Wallet, DefaultWalletProviderConfig } from '@0xsequence/provider'
+import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
 import { sequenceContext } from '@0xsequence/network'
 
@@ -16,7 +16,7 @@ export const tests = async () => {
   //
   // Setup
   //
-  const providerConfig = { ...DefaultWalletProviderConfig }
+  const providerConfig = { ...DefaultProviderConfig }
   providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   
   const wallet = new Wallet(providerConfig)

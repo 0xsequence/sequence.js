@@ -3,7 +3,7 @@ import * as chai from 'chai'
 
 import { ethers } from 'ethers'
 import hardhat from 'hardhat'
-import { WalletContext, NetworkConfig, sequenceNetworks } from '@0xsequence/network'
+import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
 
