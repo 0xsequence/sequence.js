@@ -26,6 +26,6 @@ terminals, and then run a specific test directly from your browser instance by v
 ### From Browser
 
 1. `yarn test:server` -- in one terminal, to start the webpack server compiling typescript
-2. `yarn start:hard` -- in another terminal, to start hardhat local ethereum test node
+2. `yarn start:hardhat` -- in another terminal, to start hardhat local ethereum test node
 3. open browser to `http://localhost:9999/{browser-test-dir}/{test-filename}.test.html` for example,
    http://localhost:9999/wallet-provider/dapp.test.html
