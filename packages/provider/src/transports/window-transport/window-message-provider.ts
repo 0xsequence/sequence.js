@@ -178,7 +178,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     }
 
     if (!message) {
-      throw Error('ProviderMessage object is empty')
+      throw new Error('ProviderMessage object is empty')
     }
 
     this.handleMessage(message)
@@ -186,7 +186,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
   sendMessage(message: ProviderMessage<any>) {
     if (!message.idx || message.idx <= 0) {
-      throw Error('message idx is empty')
+      throw new Error('message idx is empty')
     }
     const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)

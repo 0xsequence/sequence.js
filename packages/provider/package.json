@@ -16,6 +16,7 @@
     "@0xsequence/auth": "^0.7.0",
     "@0xsequence/network": "^0.7.0",
     "@0xsequence/transactions": "^0.7.0",
+    "@0xsequence/wallet": "^0.7.0",
     "@ethersproject/providers": "^5.0.17",
     "ethers": "^5.0.24",
     "ethers-eip712": "^0.2.0",

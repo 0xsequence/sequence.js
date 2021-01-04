@@ -23,7 +23,7 @@ describe('Wallet units', function() {
       }
 
       const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
-      const wallet = new lib.Wallet(config, context, pk)
+      const wallet = new lib.Wallet({ config, context }, pk)
 
       const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
       expect(wallet.address).to.be.equal(expected)
@@ -44,7 +44,7 @@ describe('Wallet units', function() {
         ]
       }
 
-      expect(() => new lib.Wallet(config, context)).to.throw(Error)
+      expect(() => new lib.Wallet({ config })).to.throw(Error)
     })
 
     it('Should accept non-usable config on non-strict mode', () => {
@@ -62,7 +62,7 @@ describe('Wallet units', function() {
         ]
       }
 
-      expect(() => new lib.Wallet(config, { nonStrict: true, ...context })).to.not.throw(Error)
+      expect(() => new lib.Wallet({ config, context, strict: false })).to.not.throw(Error)
     })
   })
 
@@ -76,16 +76,11 @@ describe('Wallet units', function() {
         signers: [{
           weight: 1,
           address: '0xd63A09C47FDc03e2Cff620446b37f205A7D0679D'
-        }],
-        context: {
-          factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
-          mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
-          mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
-        }
+        }]
       }
 
       const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
-      const wallet = new lib.Wallet(config, context, pk)
+      const wallet = (new lib.Wallet({ config, context, strict: false }, pk))
 
       const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
       expect(await wallet.sign(digest, true, 1)).to.equal(expected)
@@ -93,7 +88,7 @@ describe('Wallet units', function() {
 
     it('Should sign and recover the configuration of a single signer', async () => {
       const pk = ethers.utils.randomBytes(32)
-      const wallet = await lib.Wallet.singleOwner(context, pk)
+      const wallet = await lib.Wallet.singleOwner(pk, { ...context, nonStrict: true })
 
       const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
       const chainId = 3
@@ -109,22 +104,22 @@ describe('Wallet units', function() {
     })
 
     it('Should sign and recover the configuration of multiple signers', async () => {
-      const singer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-      const singer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-      const wallet = new lib.Wallet(
-        {
+      const signer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const signer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const wallet = new lib.Wallet({
+        config: {
           threshold: 3,
           signers: [{
             weight: 2,
-            address: singer1.address
+            address: signer1.address
           }, {
             weight: 5,
-            address: singer2.address
+            address: signer2.address
           }]
         },
         context,
-        singer1
-      )
+        strict: false
+      }, signer1)
 
       const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
       const chainId = 3
@@ -135,8 +130,8 @@ describe('Wallet units', function() {
 
       expect(recovered.threshold).to.equal(3)
       expect(recovered.signers.length).to.equal(2)
-      expect(recovered.signers.find((s) => s.address === singer1.address).weight).to.equal(2)
-      expect(recovered.signers.find((s) => s.address === singer2.address).weight).to.equal(5)
+      expect(recovered.signers.find((s) => s.address === signer1.address).weight).to.equal(2)
+      expect(recovered.signers.find((s) => s.address === signer2.address).weight).to.equal(5)
     })
   })
 

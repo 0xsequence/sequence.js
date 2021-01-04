@@ -1,7 +1,7 @@
 import { TransactionResponse, BlockTag } from '@ethersproject/providers'
 import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { SequenceTransaction, SignedTransactions } from '@0xsequence/transactions'
+import { Transaction, SignedTransactions } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/wallet'
 import { BaseRelayer } from './base-relayer'
@@ -23,23 +23,23 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     const walletDeployTxn = this.prepareWalletDeploy(config, context)
 
     // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate
-    // return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
-    return this.signer.sendTransaction(walletDeployTxn)
+    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
+    // return this.signer.sendTransaction(walletDeployTxn)
   }
 
   async gasRefundOptions(
     _config: WalletConfig,
     _context: WalletContext,
-    ...transactions: SequenceTransaction[]
-  ): Promise<SequenceTransaction[][]> {
+    ...transactions: Transaction[]
+  ): Promise<Transaction[][]> {
     return [transactions]
   }
 
   async estimateGasLimits(
     config: WalletConfig,
     context: WalletContext,
-    ...transactions: SequenceTransaction[]
-  ): Promise<SequenceTransaction[]> {
+    ...transactions: Transaction[]
+  ): Promise<Transaction[]> {
     const walletAddr = addressOf(config, context)
 
     const gasCosts = await Promise.all(transactions.map(async (t) => {
@@ -84,13 +84,13 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     return (await module.nonce({ blockTag: blockTag })).toNumber()
   }
 
-  async relay(signed: SignedTransactions): Promise<TransactionResponse> {
-    if (!signed.context.guestModule || signed.context.guestModule.length !== 42) {
+  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
+    if (!signedTxs.context.guestModule || signedTxs.context.guestModule.length !== 42) {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
     return this.signer.sendTransaction(
-      await this.prepareTransactions(signed.config, signed.context, signed.signature, ...signed.transactions)
+      await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
     )
   }
 }
