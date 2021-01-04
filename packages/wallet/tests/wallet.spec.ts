@@ -94,6 +94,8 @@ describe('Wallet integration', function () {
     hardhat.config.networks.ganache = hardhat.config.networks.hardhat
     ganache.provider = new Web3Provider(hardhat.network.provider.send, { name: 'hardhat', chainId: 31337 })
     ganache.signer = ganache.provider.getSigner()
+    ganache.chainId = 31337
+
     //--
 
     // Deploy Sequence env
