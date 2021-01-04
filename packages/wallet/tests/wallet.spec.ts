@@ -1258,7 +1258,7 @@ describe('Wallet integration', function () {
 
       const updatedWallet = new lib.Wallet(config, context, s1).connect(ganache.provider, relayer)
 
-      expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1289,7 +1289,7 @@ describe('Wallet integration', function () {
 
       const updatedWallet = new lib.Wallet(config, context, s1, s2).connect(ganache.provider, relayer)
 
-      expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1363,7 +1363,7 @@ describe('Wallet integration', function () {
   
         const updatedWallet = new lib.Wallet(config, context, s1).connect(ganache.provider, relayer)
   
-        expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
   
         expect(updatedWallet.address).to.be.equal(wallet2.address)
@@ -1394,7 +1394,7 @@ describe('Wallet integration', function () {
   
         const updatedWallet = new lib.Wallet(config, context, s1, s2).connect(ganache.provider, relayer)
   
-        expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
   
         expect(updatedWallet.address).to.be.equal(wallet2.address)
