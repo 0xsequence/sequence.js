@@ -70,30 +70,30 @@ describe('Wallet integration', function () {
 
     //--
     // Ganache version
-    ganache.chainId = 31337
+    // ganache.chainId = 31337
 
-    // TODO: Ganache server with chainId and networkId of 31337 ... check config below..
+    // // TODO: Ganache server with chainId and networkId of 31337 ... check config below..
 
-    ganache.server = Ganache.server({
-      _chainIdRpc: ganache.chainId,
-      _chainId: ganache.chainId,
-      network_id: ganache.chainId,
-      mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
-    })
+    // ganache.server = Ganache.server({
+    //   _chainIdRpc: ganache.chainId,
+    //   _chainId: ganache.chainId,
+    //   network_id: ganache.chainId,
+    //   mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee"
+    // })
 
-    await ganache.server.listen(GANACHE_PORT)
+    // await ganache.server.listen(GANACHE_PORT)
 
-    ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
-    ganache.provider = new JsonRpcProvider(`http://localhost:${GANACHE_PORT}/`, { name: 'wee', chainId: 31337 })
-    ganache.signer = ganache.provider.getSigner()
+    // ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
+    // ganache.provider = new JsonRpcProvider(`http://localhost:${GANACHE_PORT}/`, { name: 'wee', chainId: 31337 })
+    // ganache.signer = ganache.provider.getSigner()
     //--
 
     // --
     // Hardhat version
     // NOTE: as well LocalRelayer deploy wallet method must set gasLimit directly or it will blow up.
-    // hardhat.config.networks.ganache = hardhat.config.networks.hardhat
-    // ganache.provider = new Web3Provider(hardhat.network.provider.send, { name: 'hardhat', chainId: 31337 })
-    // ganache.signer = ganache.provider.getSigner()
+    hardhat.config.networks.ganache = hardhat.config.networks.hardhat
+    ganache.provider = new Web3Provider(hardhat.network.provider.send, { name: 'hardhat', chainId: 31337 })
+    ganache.signer = ganache.provider.getSigner()
     //--
 
     // Deploy Sequence env
@@ -1314,7 +1314,7 @@ describe('Wallet integration', function () {
       expect(updatedWallet.imageHash).to.equal(await fetchImageHash(updatedWallet))
       expect(await updatedWallet.getAddress()).to.equal(address)
 
-      expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1345,7 +1345,7 @@ describe('Wallet integration', function () {
 
       const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ganache.provider, relayer)
 
-      expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet.address, wallet.address)))
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1419,7 +1419,7 @@ describe('Wallet integration', function () {
   
         const updatedWallet = new lib.Wallet({ config, context }, s1).connect(ganache.provider, relayer)
   
-        expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet2.address, wallet2.address))[0])
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
   
         expect(updatedWallet.address).to.be.equal(wallet2.address)
@@ -1450,7 +1450,7 @@ describe('Wallet integration', function () {
   
         const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ganache.provider, relayer)
   
-        expect(ethers.utils.getAddress(await ganache.provider.getStorageAt(wallet2.address, wallet2.address)))
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ganache.provider.getStorageAt(wallet2.address, wallet2.address))[0])
           .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
   
         expect(updatedWallet.address).to.be.equal(wallet2.address)
