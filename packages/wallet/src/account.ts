@@ -9,7 +9,7 @@ import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual } from '
 import { ChainId, NetworkConfig, WalletContext, sequenceContext, sequenceNetworks, isNetworkConfig, ensureValidNetworkConfig, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
-import { Relayer } from '@0xsequence/relayer'
+import { Relayer, RpcRelayer } from '@0xsequence/relayer'
 
 export interface AccountOptions {
   initialConfig: WalletConfig
@@ -46,11 +46,17 @@ export class Account extends Signer {
       const wallet = new Wallet({ config: options.initialConfig, context: options.context }, ...signers)
       if (network.provider) {
         wallet.setProvider(network.provider)
-      } else {
+      } else if (network.rpcUrl && network.rpcUrl !== '') {
         wallet.setProvider(network.rpcUrl)
+      } else {
+        throw new Error(`network config is missing provider settings for chainId ${network.chainId}`)
       }
       if (network.relayer) {
         wallet.setRelayer(network.relayer)
+      } else if (network.relayerUrl && network.relayerUrl !== '') {
+        wallet.setRelayer(new RpcRelayer(network.relayerUrl))
+      } else {
+        throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
       }
       if (network.isMainChain) {
         this.provider = wallet.provider

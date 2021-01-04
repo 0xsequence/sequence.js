@@ -40,12 +40,9 @@ import { WalletRequestHandler } from './wallet-request-handler'
 
 // TODO: add SequenceProvider
 // which will take networks (or none and fetch initially on connect..?), or, from fetch(https://sequence.app/networks.json) ?
+// or.. config.sequence.app/networks ..?
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
-
-  // or could be just as an integrity check, for context we're expecting?
-  // TODO: new methods... sequence_getWalletContext   .. sequence_getWalletConfig
-  // etc........
 
   // also, make to separate util method
   // static isSequenceProvider(cand: any): cand is Web3Provider {

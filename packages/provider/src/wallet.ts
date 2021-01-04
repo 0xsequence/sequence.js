@@ -40,9 +40,7 @@ export interface WalletProvider {
 export class Wallet implements WalletProvider {
   public commands: WalletCommands
 
-  private config: WalletProviderConfig
-  // private walletConfig: WalletConfig // TODO: where is this set..?
-
+  private config: WalletProviderConfig // TODO: rename to ProvierConfig, etc.
   private session: WalletSession | null
 
   private provider: Web3Provider

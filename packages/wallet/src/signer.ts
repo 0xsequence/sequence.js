@@ -80,6 +80,7 @@ export interface DecodedSigner {
   weight: number
 }
 
+// TODO: move to error.ts, along with others..
 export class InvalidSigner extends Error {}
 
 export class NotEnoughSigners extends Error {}
