@@ -42,7 +42,7 @@ export class Multicall {
     JsonRpcMethod.ethGetBalance
   ]
 
-  readonly multicallInterface = new ethers.utils.Interface(walletContracts.requireUtils.abi)
+  readonly multicallInterface = new ethers.utils.Interface(walletContracts.sequenceUtils.abi)
 
   public options: MulticallOptions
 

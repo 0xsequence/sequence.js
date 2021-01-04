@@ -50,7 +50,7 @@ export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<W
     mainModule: deployment['MainModule'].address,
     mainModuleUpgradable: deployment['MainModuleUpgradable'].address,
     guestModule: deployment['GuestModule'].address,
-    requireUtils: deployment['SequenceUtils'].address
+    sequenceUtils: deployment['SequenceUtils'].address
   }
 
 
@@ -64,5 +64,5 @@ export const testWalletContext: WalletContext = {
   guestModule: "0x872eA617FED42056cDcEB3979838eba48A72FE41",
   mainModule: "0xBbC50F0Dc98B5CcE607f7413c589F9247dd28Ac7",
   mainModuleUpgradable: "0x38364BC14E370C3c5D8Af99A040c24734AB7Cad6",
-  requireUtils: "0x10c1c71fb43017d5b968dFea38694632818489b8"
+  sequenceUtils: "0x10c1c71fb43017d5b968dFea38694632818489b8"
 }

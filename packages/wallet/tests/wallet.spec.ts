@@ -79,7 +79,7 @@ describe('Wallet integration', function () {
       mainModule,
       mainModuleUpgradable,
       guestModule,
-      requireUtils
+      sequenceUtils
     ] = await deployWalletContext(ethnode.provider)
 
     // Create fixed context obj
@@ -88,7 +88,7 @@ describe('Wallet integration', function () {
       mainModule: mainModule.address,
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
-      requireUtils: requireUtils.address
+      sequenceUtils: sequenceUtils.address
     }
 
     // Deploy call receiver mock
@@ -469,12 +469,12 @@ describe('Wallet integration', function () {
 
           expect(await callReceiver1.lastValB()).to.equal('0x')
         })
-        it('Should fail to generate a expired transaction without requireUtils', async () => {
+        it('Should fail to generate a expired transaction without sequenceUtils', async () => {
           // Create wallet
           const pk = ethers.utils.randomBytes(32)
 
           const context1 = { ...context }
-          context1.requireUtils = undefined
+          context1.sequenceUtils = undefined
 
           let wallet1 = await lib.Wallet.singleOwner(pk, context1)
           wallet1 = wallet1.connect(ethnode.provider, relayer)
