@@ -125,7 +125,7 @@ export class Wallet implements WalletProvider {
       }
 
       default: {
-        throw new Error('unsupported provider type, must be one of ${WalletProviderType}')
+        throw new Error('unsupported provider type, must be one of ${ProviderType}')
       }
     }
 
