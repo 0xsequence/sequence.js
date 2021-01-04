@@ -6,7 +6,7 @@ import { walletContracts } from '@0xsequence/abi'
 import { Signer, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual } from './config'
-import { ChainId, NetworkConfig, WalletContext, sequenceContext, sequenceNetworks, isNetworkConfig, ensureValidNetworkConfig, sortNetworks, getNetworkId } from '@0xsequence/network'
+import { ChainId, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
 import { Relayer, RpcRelayer } from '@0xsequence/relayer'
@@ -34,8 +34,8 @@ export class Account extends Signer {
     super()
 
     // Network config, defaults will be used if none are provided
-    if (!options.networks) options.networks = [ ...sequenceNetworks ]
-    ensureValidNetworkConfig(options.networks)    
+    if (!options.networks) options.networks = [ ...mainnetNetworks ]
+    ensureValidNetworks(options.networks)
     options.networks = sortNetworks(options.networks)
 
     // Use deployed wallet context by default if not provided

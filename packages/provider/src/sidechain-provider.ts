@@ -3,6 +3,7 @@ import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 import { ProviderTransport } from './types'
 
 // TODO: deprecate.. just use now, Web3Provider(transport, chainId)
+// ... deprecate
 
 // SidechainProvider is a kind of wrapper around an json-rpc provider, which uses
 // the ProviderTransport interface, so that we can include the extra "chainId"
