@@ -7,15 +7,8 @@ export interface WalletContext {
   guestModule?: string
   sequenceUtils?: string
   
-  nonStrict?: boolean // maybe rename to just strict..?
+  nonStrict?: boolean
 }
-
-// TODO: rename sequenceContext to something like "deployedWalletContext"
-// or, deployedContext, etc.
-// ... yes
-// just, "deployedWalletContext" is good
-
-// as well, we could have deployedContext.wallet and deployedContext.utils, etc.
 
 // sequenceContext are the deployed addresses of modules available on public networks.
 export const sequenceContext: WalletContext = {

@@ -30,6 +30,7 @@ export const tests = async () => {
 
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
+  // ..
   const provider = new Web3Provider(walletProvider)
   const signer = provider.getSigner()
   const address = await signer.getAddress()

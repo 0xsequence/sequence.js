@@ -1,10 +1,9 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
 import { Wallet, Account } from '@0xsequence/wallet'
-import { sequenceContext, Networks } from '@0xsequence/network'
+import { Networks } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
-// import { MockWalletUserPrompter } from './utils'
 
 //
 // Wallet, a test wallet
@@ -67,10 +66,6 @@ const main = async () => {
   // const mockUserPrompter = new MockWalletUserPrompter(true)
   const walletRequestHandler = new WalletRequestHandler(account, null, networks)
 
-
-  // external window handler + engine.. we may not need the engine, but we can use it if we want
-  // const sender = new JsonRpcRouter(signingHandler, [loggingProviderMiddleware])
-  // TODO: lets not do the middleware thing unless we really need it, then can add later..
 
   // in practice, all you have to do is instantiate this, and assign it somewhere
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
