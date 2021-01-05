@@ -2,7 +2,6 @@ import { ProxyMessageProvider, ProviderMessageTransport, ProviderMessage, Wallet
 import { ethers, Wallet as EOAWallet } from 'ethers'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
-import { MockWalletUserPrompter } from '../mock-wallet/utils'
 import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { LocalRelayer } from '@0xsequence/relayer'
@@ -42,7 +41,6 @@ export const tests = async () => {
 
 
   // the rpc signer via the wallet
-  // const mockUserPrompter = new MockWalletUserPrompter(true)
   const walletRequestHandler = new WalletRequestHandler(wallet, null, testnetNetworks)
   
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
@@ -50,6 +48,7 @@ export const tests = async () => {
 
   //--
 
+  // TODO: switch to Sequence Web3Provider ........
   const provider = new Web3Provider(walletProvider)
   const signer = provider.getSigner()
 

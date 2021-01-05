@@ -18,8 +18,9 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
   }
 
   async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
-    // TODO: some tests, with the HookCallerMock fail without the thing below, perhaps review HookCallerMock.sol
-    // and fix it to avoid what looks like an infinite loop?
+    // NOTE: on hardhat some tests fail on HookCallerMock when not passing gasLimit directly as below,
+    // and using eth_gasEstimate. Perhaps review HookCallerMock.sol and fix it to avoid what looks
+    // like an infinite loop?
     const walletDeployTxn = this.prepareWalletDeploy(config, context)
 
     // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate

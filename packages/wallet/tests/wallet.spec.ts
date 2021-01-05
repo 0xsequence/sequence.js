@@ -1486,9 +1486,6 @@ describe('Wallet integration', function () {
 
       const prom = wallet.buildUpdateConfigTransaction(newConfig)
       await expect(prom).to.be.not.rejected
-
-      // TODO: check getWalletConfig() to be the new one..?
-      // TODO: check the wallet config was published successfully..
     })
   })
 })

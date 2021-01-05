@@ -12,8 +12,6 @@ import {
   SequenceUtils__factory as SequenceUtilsFactory,
 } from '@0xsequence/wallet-contracts/typings/contracts'
 
-// TODO: use hardhat branch from wallet-contracts..
-
 let deployWalletContextCache: WalletContext = undefined
 
 // deployWalletContext will deploy the Sequence WalletContext via the UniversalDeployer

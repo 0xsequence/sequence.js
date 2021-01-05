@@ -468,7 +468,7 @@ export interface ProviderConfig {
   // and rename defaultNetwork to "network" ?
 
   // defaultNetwork
-  defaultNetwork?: number | NetworkConfig
+  defaultNetwork?: string | number | NetworkConfig // ie. 'mainnet', 1, or { name: 'etc.', chainId: etc.. }
 }
 
 export type ProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
