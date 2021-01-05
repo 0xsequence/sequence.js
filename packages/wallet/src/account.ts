@@ -8,7 +8,7 @@ import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual } from './config'
 import { ChainId, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
-import { resolveArrayProperties } from './utils'
+import { resolveArrayProperties, findLatestLog } from './utils'
 import { Relayer, RpcRelayer } from '@0xsequence/relayer'
 
 export interface AccountOptions {
@@ -313,9 +313,8 @@ export class Account extends Signer {
       // The wallet has been updated. Lookup configuration using imageHash from the authChain
       // which will be the last published entry
       const filter = authContract.filters.RequiredConfig(null, currentImageHash)
-      const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
-      if (logs.length === 0) return undefined
-      const lastLog = logs[logs.length - 1]
+      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
+      if (lastLog === undefined) return undefined
       event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     
     } else {
@@ -326,10 +325,9 @@ export class Account extends Signer {
 
       // The wallet it's using the counter-factual configuration, get the init config from the authChain
       const filter = authContract.filters.RequiredConfig(address)
-      const logs = await authWallet.provider.getLogs({ fromBlock: 0, toBlock: 'latest', ...filter})
-      if (logs.length === 0) return undefined
-      const firstLog = logs[0] // TODO: Search for real counter-factual config
-      event = authContract.interface.decodeEventLog('RequiredConfig', firstLog.data, firstLog.topics)
+      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
+      if (lastLog === undefined) return undefined
+      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     }
 
     const signers = ethers.utils.defaultAbiCoder.decode(
