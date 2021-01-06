@@ -103,13 +103,21 @@ export const sortNetworks = (networks: Networks): Networks => {
     return a.chainId < b.chainId ? -1 : 1
   })
 
-  // AuthChain goes first
-  const authConfigIdx = config.findIndex(c => c.isAuthChain)
-  if (authConfigIdx > 0) config.splice(0, 0, config.splice(authConfigIdx, 1)[0])
+  // // AuthChain goes first
+  // const authConfigIdx = config.findIndex(c => c.isAuthChain)
+  // if (authConfigIdx > 0) config.splice(0, 0, config.splice(authConfigIdx, 1)[0])
 
-  // MainChain goes second
-  const mainConfigIdx = config.findIndex(c => c.isMainChain && c.isAuthChain !== true)
-  if (mainConfigIdx > 0) config.splice(1, 0, config.splice(mainConfigIdx, 1)[0])
+  // // MainChain goes second
+  // const mainConfigIdx = config.findIndex(c => c.isMainChain && c.isAuthChain !== true)
+  // if (mainConfigIdx > 0) config.splice(1, 0, config.splice(mainConfigIdx, 1)[0])
+
+  // MainChain goes first
+  const mainConfigIdx = config.findIndex(c => c.isMainChain)
+  if (mainConfigIdx > 0) config.splice(0, 0, config.splice(mainConfigIdx, 1)[0])
+
+  // AuthChain goes second
+  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isMainChain !== true)
+  if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
 
   return config
 }
