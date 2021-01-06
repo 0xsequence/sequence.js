@@ -14,6 +14,8 @@ import {
 
 let deployWalletContextCache: WalletContext = undefined
 
+// TODO: deploy context on multiple chains, accept networks list..
+
 // deployWalletContext will deploy the Sequence WalletContext via the UniversalDeployer
 // which will return deterministic contract addresses between calls.
 export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<WalletContext> => {

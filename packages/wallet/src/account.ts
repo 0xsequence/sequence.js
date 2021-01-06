@@ -373,9 +373,11 @@ export class Account extends Signer {
   }
 
   authChainId(): number {
-    const n = this.options.networks[0]
-    if (!n || !n.isAuthChain) throw new Error('expecting authChain to be the first in networks list')
-    return n.chainId
+    let n = this.options.networks[0]
+    if (n.isAuthChain) return n.chainId
+    n = this.options.networks[1]
+    if (n.isAuthChain) return n.chainId
+    throw new Error('expecting authChain to be the first or second in networks list')
   }
 
   connect(_: Provider): AbstractSigner {

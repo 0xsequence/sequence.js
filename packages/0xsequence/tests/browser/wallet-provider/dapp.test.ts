@@ -62,7 +62,7 @@ export const tests = async () => {
 
   await test('getWalletConfig', async () => {
     const allWalletConfigs = await wallet.getWalletConfig()
-    assert.equal(allWalletConfigs.length, 1, '2 wallet configs (one for each chain)')
+    assert.equal(allWalletConfigs.length, 2, '2 wallet configs (one for each chain)')
 
     const config1 = allWalletConfigs[0]
     assert.true(config1.chainId !== undefined, 'config1, chainId is set')
@@ -81,8 +81,11 @@ export const tests = async () => {
 
   await test('getWalletState', async () => {
     const allWalletStates = await signer.getWalletState()
-    assert.equal(allWalletStates.length, 1, '2 wallet states (one for each chain)')
+    assert.equal(allWalletStates.length, 2, '2 wallet states (one for each chain)')
 
+    // we expect network order to be [mainChain, authChain, ..], so chain 31337 will be at index 0
+    // hmm.. TODO: WalletProvider defaultNetwork should specify the "defaultNetwork", which will
+    // become out *mainChain* ..
     const state1 = allWalletStates[0]
     assert.true(state1.chainId === 31337, 'state1, chainId is 31337')
     assert.true(state1.config.threshold === 1, 'state1, threshold')

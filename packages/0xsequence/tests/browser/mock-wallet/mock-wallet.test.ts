@@ -35,17 +35,16 @@ const main = async () => {
 
   // providers
   const provider = new JsonRpcProvider('http://localhost:8545')
-  // const provider2 = new JsonRpcProvider('http://localhost:9545')
+  const provider2 = new JsonRpcProvider('http://localhost:9545')
 
 
   // relayers, account address: 0x3631d4d374c3710c3456d6b1de1ee8745fbff8ba
   // const relayerAccount = getEOAWallet(testAccounts[5].privateKey)
   const relayer = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey))
-  // const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
+  const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
   
 
   // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
-  // const provider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list
@@ -56,15 +55,15 @@ const main = async () => {
       provider: provider,
       relayer: relayer,
       isMainChain: true,
-      isAuthChain: true
+      // isAuthChain: true
     },
-    // {
-    //   name: 'ganache',
-    //   chainId: 31338,
-    //   provider: provider2,
-    //   relayer: relayer2,
-    //   isAuthChain: true
-    // }
+    {
+      name: 'ganache',
+      chainId: 31338,
+      provider: provider2,
+      relayer: relayer2,
+      isAuthChain: true
+    }
   ]
 
   // Account for managing multi-network wallets
