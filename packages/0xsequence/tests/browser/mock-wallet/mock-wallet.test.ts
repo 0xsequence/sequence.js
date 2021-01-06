@@ -12,9 +12,16 @@ import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } fr
 const main = async () => {
 
   //
+  // Providers
+  //
+  const provider = new JsonRpcProvider('http://localhost:8545')
+  const provider2 = new JsonRpcProvider('http://localhost:9545')
+
+
+  //
   // Deploy Sequence WalletContext (deterministic)
   //
-  const deployedWalletContext = await deployWalletContext()
+  const deployedWalletContext = await deployWalletContext(provider, provider2)
   console.log('walletContext:', deployedWalletContext)
 
   // assert testWalletContext value is correct
@@ -31,11 +38,6 @@ const main = async () => {
 
   // owner account address: 0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853
   const owner = getEOAWallet(testAccounts[0].privateKey)
-
-
-  // providers
-  const provider = new JsonRpcProvider('http://localhost:8545')
-  const provider2 = new JsonRpcProvider('http://localhost:9545')
 
 
   // relayers, account address: 0x3631d4d374c3710c3456d6b1de1ee8745fbff8ba
