@@ -4,7 +4,7 @@ import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, 
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { _TypedDataEncoder } from '@ethersproject/hash'
 import { poll } from '@ethersproject/web'
-import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId } from '@0xsequence/network'
+import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId, JsonRpcVersion } from '@0xsequence/network'
 import { Signer, WalletConfig, WalletState } from '@0xsequence/wallet'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties } from '@0xsequence/utils'
@@ -42,6 +42,8 @@ import { WalletRequestHandler } from './wallet-request-handler'
 // which will take networks (or none and fetch initially on connect..?), or, from fetch(https://sequence.app/networks.json) ?
 // or.. config.sequence.app/networks ..?
 
+let _nextId = 0
+
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
   // also, make to separate util method
@@ -76,10 +78,9 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
       return (this.provider as JsonRpcFetchFunc)(method, params, chainId)
     } else {
       return new Promise((resolve, reject) => {
-        // TODO: pass id and jsonrpc fields..? or will be auto-assigned?
         (this.provider as JsonRpcHandler).sendAsync({
-          // jsonrpc: '2.0', // hmpf..
-          // id: 1, // TODO ..
+          jsonrpc: JsonRpcVersion,
+          id: ++_nextId,
           method,
           params
         }, (error: any, response?: JsonRpcResponse) => {
@@ -251,9 +252,15 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     throw new Error('TODO')
   }
 
-  updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
+  // updateConfig..
+  // NOTE: this is not supported by the remote wallet by default.
+  async updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
     // sequence_updateConfig
-    throw new Error('TODO')
+    const [config, tx] = await this.provider.send('sequence_updateConfig', [newConfig], this.defaultChainId)
+    if (tx === null) {
+      return [config, undefined]
+    }
+    return [config, this.provider._wrapTransaction(tx, tx.hash)]
   }
 
   publishConfig(): Promise<TransactionResponse> {
@@ -262,11 +269,11 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async isDeployed(chainId?: ChainId): Promise<boolean> {
-    // use provider direct.. its read-only
-    // but, we need access to the chain, so, this.provider()
-    // needs a method like .getChainProvider() or something..?
-    // 
-    return false
+    // TODO: get the appropriate chain from chainId ..
+    // const provider = this.getProvider(maybeNetworkId(chainId))
+
+    const walletCode = await this.provider.getCode(await this.getAddress())
+    return walletCode && walletCode !== "0x"
   }
 
   //

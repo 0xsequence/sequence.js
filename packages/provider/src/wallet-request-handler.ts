@@ -290,7 +290,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_updateConfig': {
-          // TODO
+          throw new Error('sequence_updateConfig method is not allowed')
+          // NOTE: method is disabled as we don't need a dapp to request to update a config.
+          // However, if we ever want this, we can enable it but must also use the prompter
+          // for confirmation.
+          //
+          // const [newConfig] = request.params
+          // response.result = await signer.updateConfig(newConfig)
           break
         }
 

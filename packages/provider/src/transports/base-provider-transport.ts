@@ -9,9 +9,9 @@ import {
 
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
-let messageIdx = 0
+let _messageIdx = 0
 
-export const nextMessageIdx = () => ++messageIdx
+export const nextMessageIdx = () => ++_messageIdx
 
 export class BaseProviderTransport implements ProviderTransport {
 
@@ -19,6 +19,7 @@ export class BaseProviderTransport implements ProviderTransport {
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
   protected connected = false
+  protected connectId: string
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
 
@@ -65,6 +66,10 @@ export class BaseProviderTransport implements ProviderTransport {
     //
     // Flip connected flag, and flush the pending queue 
     if (message.type === ProviderMessageType.CONNECT && !this.connected) {
+      if (this.connectId !== message.data) {
+        console.log('connect received from wallet, but does not match id', this.connectId)
+        return
+      }
       this.connected = true
 
       // flush pending requests when connected
