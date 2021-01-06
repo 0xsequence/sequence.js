@@ -31,6 +31,7 @@ export interface WalletProvider {
 
   getWalletContext(): Promise<WalletContext>
   getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
+  isDeployed(chainId?: ChainId): Promise<boolean>
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
@@ -302,6 +303,10 @@ export class Wallet implements WalletProvider {
     // TODO: sequence_getWalletContext can be cached by provider middleware
     // TODO: optionally, this can be forced to a diff value by the ProviderConfig
     return this.getSigner().getWalletContext()
+  }
+
+  isDeployed(chainId?: ChainId): Promise<boolean> {
+    return this.getSigner(chainId).isDeployed()
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {

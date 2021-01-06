@@ -17,8 +17,12 @@
     "test:concurrently": "concurrently -k --success first 'yarn test:server' 'yarn start:hardhat'",
     "start:hardhat": "yarn run hardhat node",
     "start:hardhat:verbose": "yarn run hardhat --verbose node",
+    "start:hardhat2": "yarn run hardhat --config hardhat2.config.js node --port 9545",
+    "start:hardhat2:verbose": "yarn run hardhat --config hardhat2.config.js --verbose node --port 9545",
     "start:ganache": "ganache-cli --chainId ${npm_package_config_ganacheChainID} --networkId ${npm_package_config_ganacheChainID} --port ${npm_package_config_ganachePort} --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
     "start:ganache:verbose": "yarn run start:ganache --verbose",
+    "start:ganache2": "ganache-cli --chainId 31338 --networkId 31338 --port 9545 --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
+    "start:ganache2:verbose": "yarn run start:ganache2 --verbose",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

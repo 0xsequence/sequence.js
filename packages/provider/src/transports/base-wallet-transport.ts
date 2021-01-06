@@ -10,6 +10,7 @@ import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xseque
 export class BaseWalletTransport implements WalletTransport {
 
   protected walletRequestHandler: WalletRequestHandler
+  protected _connectId: string
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
@@ -50,7 +51,7 @@ export class BaseWalletTransport implements WalletTransport {
         this.sendMessage({
           idx: request.idx,
           type: ProviderMessageType.CONNECT,
-          data: null
+          data: this._connectId
         })
 
         this.notifyNetwork(await this.walletRequestHandler.getNetwork())

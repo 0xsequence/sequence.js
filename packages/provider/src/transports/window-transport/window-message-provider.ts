@@ -38,6 +38,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
       }
     }
 
+    this.connectId = `${performance.now()}`
+    this.walletURL.searchParams.set('cid', this.connectId)
+
     const walletURL = new URL(this.walletURL.href)
     if (path && path !== '') {
       walletURL.pathname = path.toLowerCase()
@@ -87,7 +90,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     if (!this.connected) {
       const initRequest: ProviderMessageRequest = {
         idx: nextMessageIdx(),
-        type: ProviderMessageType.CONNECT,
+        type: ProviderMessageType.CONNECT, // TODO: maybe just use message? and pass { method: '_connect' } ?
         data: null
       }
 

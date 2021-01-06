@@ -297,7 +297,10 @@ export class Account extends Signer {
 
     // fetch wallet implementation, which tells us if its been deployed, and verifies its the main module
     const currentImplementation = ethers.utils.defaultAbiCoder.decode(
-      ['address'], await wallet.provider.getStorageAt(address, address)
+      ['address'],
+      ethers.utils.hexZeroPad(
+        await (wallet.provider.getStorageAt(address, address).catch(() => ethers.constants.AddressZero)), 32
+      )
     )[0]
 
     const authWallet = this.authWallet()
