@@ -12,50 +12,50 @@ import {
   SequenceUtils__factory as SequenceUtilsFactory,
 } from '@0xsequence/wallet-contracts/typings/contracts'
 
-let deployWalletContextCache: WalletContext = undefined
-
-// TODO: deploy context on multiple chains, accept networks list..
+const deployWalletContextCache: WalletContext[] = []
 
 // deployWalletContext will deploy the Sequence WalletContext via the UniversalDeployer
 // which will return deterministic contract addresses between calls.
-export const deployWalletContext = async (provider?: JsonRpcProvider): Promise<WalletContext> => {
-  if (!provider) {
-    provider = new JsonRpcProvider('http://localhost:8545')
+export const deployWalletContext = async (...providers: JsonRpcProvider[]): Promise<WalletContext> => {
+  if (!providers || providers.length === 0) {
+    providers.push(new JsonRpcProvider('http://localhost:8545'))
   }
   
   // Memoize the result. Even though its universal/deterministic, caching the result
   // offers greater efficiency between calls
-  if (deployWalletContextCache) {
-    return deployWalletContextCache
+  if (deployWalletContextCache.length === providers.length) {
+    return deployWalletContextCache[0]
   }
 
-  // Deploying test accounts with the first test account
-  const wallet = getEOAWallet(testAccounts[0].privateKey, provider)
-  
-  // Universal deployer for deterministic contract addresses
-  const universalDeployer = new UniversalDeployer('ganache', wallet.provider as JsonRpcProvider)
-  const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
+  await Promise.all(providers.map(async provider => {
+    // Deploying test accounts with the first test account
+    const wallet = getEOAWallet(testAccounts[0].privateKey, provider)
 
-  const walletFactory = await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)
-  const mainModule = await universalDeployer.deploy('MainModule', MainModuleFactory, txParams, 0, walletFactory.address)
+    // Universal deployer for deterministic contract addresses
+    const universalDeployer = new UniversalDeployer('local', wallet.provider as JsonRpcProvider)
+    const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
 
-  await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, txParams)
-  await universalDeployer.deploy('GuestModule', GuestModuleFactory, txParams)
-  await universalDeployer.deploy('SequenceUtils', SequenceUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
+    const walletFactory = await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)
+    const mainModule = await universalDeployer.deploy('MainModule', MainModuleFactory, txParams, 0, walletFactory.address)
 
-  const deployment = universalDeployer.getDeployment()
+    await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, txParams)
+    await universalDeployer.deploy('GuestModule', GuestModuleFactory, txParams)
+    await universalDeployer.deploy('SequenceUtils', SequenceUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
 
-  deployWalletContextCache =  {
-    factory: deployment['WalletFactory'].address,
-    mainModule: deployment['MainModule'].address,
-    mainModuleUpgradable: deployment['MainModuleUpgradable'].address,
-    guestModule: deployment['GuestModule'].address,
-    sequenceUtils: deployment['SequenceUtils'].address
-  }
+    const deployment = universalDeployer.getDeployment()
 
+    deployWalletContextCache.push({
+      factory: deployment['WalletFactory'].address,
+      mainModule: deployment['MainModule'].address,
+      mainModuleUpgradable: deployment['MainModuleUpgradable'].address,
+      guestModule: deployment['GuestModule'].address,
+      sequenceUtils: deployment['SequenceUtils'].address
+    })
+  }))
 
-  return deployWalletContextCache
+  return deployWalletContextCache[0]
 }
+
 
 // testWalletContext is determined by the `deployWalletContext` method above. We can use this
 // across instances, but, we must ensure the contracts are deployed by the mock-wallet at least.
