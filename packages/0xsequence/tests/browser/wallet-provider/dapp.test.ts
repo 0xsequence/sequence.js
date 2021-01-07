@@ -1,5 +1,6 @@
 import { test, assert } from '../../utils/assert'
 import { ethers, Wallet as EOAWallet } from 'ethers'
+import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
 import { sequenceContext, WalletContext } from '@0xsequence/network'
 import { addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
@@ -184,7 +185,6 @@ export const tests = async () => {
       // Ensure toAddress received their eth
       const toBalanceAfter = await provider.getBalance(toAddress)
       assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
-
     }
   })
 
@@ -240,40 +240,17 @@ export const tests = async () => {
   })
 
   await test('signTypedData on mainChain', async () => {
-    const typedData = {
-      types: {
-        EIP712Domain: [
-          {name: "name", type: "string"},
-          {name: "version", type: "string"},
-          {name: "chainId", type: "uint256"},
-          {name: "verifyingContract", type: "address"},
-        ],
-        Person: [
-          {name: "name", type: "string"},
-          {name: "wallet", type: "address"},
-        ]
-      },
-      primaryType: 'Person' as const,
-      domain: {
-        name: 'Ether Mail',
-        version: '1',
-        chainId: 1,
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
-      },
-      message: {
-        'name': 'Bob',
-        'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
-      }
-    }
+    const address = wallet.getAddress()
+    const chainId = wallet.getChainId()
 
-    const domain = {
+    const domain: TypedDataDomain = {
       name: 'Ether Mail',
       version: '1',
-      chainId: await signer.getChainId(),
+      chainId: chainId,
       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
     }
 
-    const types = {
+    const types: {[key: string] : TypedDataField[]} = {
       'Person': [
         {name: "name", type: "string"},
         {name: "wallet", type: "address"}
@@ -288,10 +265,28 @@ export const tests = async () => {
     const sig = await signer.signTypedData(domain, types, value)
     assert.equal(
       sig,
-      '0x00010001529f138c329f03af22a2e85d087c604e3e7f1910c5bca6d5d2f45555e32d7193269c519ebe41c1ef677cbeaf0b226f7c540ae4f12842eaf6cfe3190ad4deff9b1b02',
+      '0x00010001097d16cab1a08fca49c3d5acae73ecfb4aeaa9051252e698dd7cc2b47f53973e1cc4e0d1855e2134273f62a1c732b500a89ab761acc7625bf4b7ea699365f5b21b02',
       'signature match typed-data'
     )
 
+    // Verify typed data
+    const messageHash = ethers.utils._TypedDataEncoder.hash(domain, types, value)
+    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(messageHash))
+    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, chainId)
+    assert.true(isValid, 'signature is valid')
+
+    // also compute the subDigest of the message, to be provided to the end-user
+    // in order to recover the config properly, the subDigest + sig is required.
+    const subDigest = packMessageData(address, chainId, messageDigest)
+
+    // Recover config / address
+    const walletConfig = await recoverConfig(subDigest, sig)
+
+    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
+    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+
+    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
+    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
 
   })
 

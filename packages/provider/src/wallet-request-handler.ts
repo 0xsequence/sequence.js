@@ -9,7 +9,6 @@ import {
 
 import { BigNumber, ethers } from 'ethers'
 import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
-import { TypedDataUtils } from 'ethers-eip712'
 
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
@@ -126,32 +125,27 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_signTypedData':
         case 'eth_signTypedData_v4': {
-          console.log("ahhhhhhhhhhhhhhhhhhhhh")
-          console.log(request)
-          console.log(chainId)
-
-          // note: message from json-rpc input is in hex format
-          const [signingAddress, typedDataString] = request.params
+          // note: signingAddress from json-rpc input is in hex format, and typedDataObject
+          // should be an object, but in some instances may be double string encoded
+          const [signingAddress, typedDataObject] = request.params
 
           let typedData: any = {}
-          try {
-            typedData = JSON.parse(typedDataString)
-          } catch (e) {}
-
-          console.log(typedData)
-          console.log('?? typeof?', typeof(typedData))
+          if (typeof(typedDataObject) === 'string') {
+            try {
+              typedData = JSON.parse(typedDataObject)
+            } catch (e) {}
+          } else {
+            typedData = typedDataObject
+          }
 
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            // TODO: use ethers eip712 impl.
-            sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message) //, chainId)
+            sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
           }
-
-          console.log('=======> sig', sig)
 
           if (sig.length > 0) {
             response.result = sig
