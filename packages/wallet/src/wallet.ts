@@ -364,6 +364,24 @@ export class Wallet extends Signer {
   }
 
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    // ....... TODO .............
+
+    // lets fix..
+
+    // but yea, lets confirm the chainId matches the domain..
+
+    // and lets deprecate use of ethers-eip712 and just use built-in ethers method of _signTypedData ..
+
+    //--
+
+    console.log('==> domain', domain)
+    console.log('==> types', types)
+    console.log('==> value', value)
+    console.log('==> chainId', chainId)
+
+
+    console.log('-------------------')
+
     const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
     const domainSalt = domain.salt ? ethers.utils.hexlify(domain.salt) : undefined
 

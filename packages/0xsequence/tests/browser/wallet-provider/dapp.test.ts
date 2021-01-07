@@ -1,8 +1,9 @@
 import { test, assert } from '../../utils/assert'
 import { ethers, Wallet as EOAWallet } from 'ethers'
 import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
-import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
 import { sequenceContext, WalletContext } from '@0xsequence/network'
+import { addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
 
 export const tests = async () => {
 
@@ -20,6 +21,9 @@ export const tests = async () => {
   providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   
   const wallet = new Wallet(providerConfig)
+
+  // provider + signer, by default if a chainId is not specified it will direct
+  // requests to the mainChain
   const provider = wallet.getProvider()
   const signer = wallet.getSigner()
   
@@ -71,12 +75,12 @@ export const tests = async () => {
     assert.true(config1.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config1, signer address')
     assert.true(config1.signers[0].weight === 1, 'config1, signer weight')
 
-    // const config2 = allWalletConfigs[0]
-    // assert.true(config2.chainId !== undefined, 'config2, chainId is set')
-    // assert.true(config2.threshold === 1, 'config2, 1 threshold')
-    // assert.true(config2.signers.length === 1, 'config2, 1 signer')
-    // assert.true(config2.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config2, signer address')
-    // assert.true(config2.signers[0].weight === 1, 'config2, signer weight')
+    const config2 = allWalletConfigs[0]
+    assert.true(config2.chainId !== undefined, 'config2, chainId is set')
+    assert.true(config2.threshold === 1, 'config2, 1 threshold')
+    assert.true(config2.signers.length === 1, 'config2, 1 signer')
+    assert.true(config2.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config2, signer address')
+    assert.true(config2.signers[0].weight === 1, 'config2, signer weight')
   })
 
   await test('getWalletState', async () => {
@@ -91,6 +95,12 @@ export const tests = async () => {
     assert.true(state1.config.threshold === 1, 'state1, threshold')
     assert.true(state1.config.signers.length === 1, 'state1, 1 signer')
     assert.true(state1.address.toLowerCase() === wallet.getAddress().toLowerCase(), 'state1, address')
+  })
+
+  await test('getSigners', async () => {
+    const signers = await signer.getSigners()
+    assert.true(signers.length === 1, 'signers, single owner')
+    assert.true(signers[0] === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'signers, check address')
   })
 
   await test('getBalance', async () => {
@@ -124,7 +134,6 @@ export const tests = async () => {
       // send eth from sequence smart wallet to another test account
       const toAddress = testAccounts[1].address
       const toBalanceBefore = await provider.getBalance(toAddress)
-
 
       // TODO: failed txn with amount too high, etc.
       // TODO: send txn to invalid address
@@ -179,7 +188,145 @@ export const tests = async () => {
     }
   })
 
+  await test('signMessage on mainChain', async () => {
+    const address = wallet.getAddress()
+    const chainId = wallet.getChainId()
+
+    const message = 'hihi'
+    const message2 = ethers.utils.toUtf8Bytes('hihi')
+
+    // Sign the message
+    const sigs = await Promise.all([message, message2].map(async m => {
+      // NOTE: is equivalent to signer.signMessage()
+      // const sig = await wallet.commands.signMessage(m)
+      const sig = await signer.signMessage(m)
+      assert.equal(
+        sig,
+        '0x000100019ba7f3b76f70daa61fef6df01c0dfe6e271536b38808ae74bd8cf168e302ba6f1c997646ad59a775be1d434be81868119fe1b2d4a607f2c18ac8327a578067581c02',
+        'signature match'
+      )
+      return sig
+    }))
+    const sig = sigs[0]
+
+    // Verify the signature
+    // TODO: if message is not Uint8Array, then lets run ethers.utils.toUtf8Bytes on it..
+    // we can do this in our helper "commands".isValidSignature ..
+    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message))) // ... remove toUtf8Bytes.. more versatile.. / easier to use..
+    const isValid = await isValidSignature(address, messageDigest, sig, provider, deployedWalletContext, chainId)
+    assert.true(isValid, 'signature is valid')
+
+    // TODO:
+    // now.....
+    // wallet.commands.isValidSignature() .......
+    // maybe helpers like isValidMessage() ..? maybe.. maybe not..
+    // isValidTypedData() ?
+
+    // TODO ... wallet.commands.verifyMessage() ... cleaner .. .. verifyTypedData .. etc..
+    // we should also put these in utils package i think
+    
+    // Recover the address / config from the signature
+    const subDigest = packMessageData(address, chainId, messageDigest)
+    const walletConfig = await recoverConfig(subDigest, sig)
+
+    // TODO: put walletContext on recoverConfig which will do addressOf automatically
+    // it could also check against address in the signature.. to confirm..?
+    // TODO: add utils / commands for easier recovery .... aka....... recoverAddress and recoverConfig .. add both..
+    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
+    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+
+    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
+    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+  })
+
+  await test('signTypedData on mainChain', async () => {
+    const typedData = {
+      types: {
+        EIP712Domain: [
+          {name: "name", type: "string"},
+          {name: "version", type: "string"},
+          {name: "chainId", type: "uint256"},
+          {name: "verifyingContract", type: "address"},
+        ],
+        Person: [
+          {name: "name", type: "string"},
+          {name: "wallet", type: "address"},
+        ]
+      },
+      primaryType: 'Person' as const,
+      domain: {
+        name: 'Ether Mail',
+        version: '1',
+        chainId: 1,
+        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+      },
+      message: {
+        'name': 'Bob',
+        'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+      }
+    }
+
+    const domain = {
+      name: 'Ether Mail',
+      version: '1',
+      chainId: await signer.getChainId(),
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+    }
+
+    const types = {
+      'Person': [
+        {name: "name", type: "string"},
+        {name: "wallet", type: "address"}
+      ]
+    }
+
+    const value = {
+      'name': 'Bob',
+      'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+    }
+
+    const sig = await signer.signTypedData(domain, types, value)
+    assert.equal(
+      sig,
+      '0x00010001529f138c329f03af22a2e85d087c604e3e7f1910c5bca6d5d2f45555e32d7193269c519ebe41c1ef677cbeaf0b226f7c540ae4f12842eaf6cfe3190ad4deff9b1b02',
+      'signature match typed-data'
+    )
+
+
+  })
+
+  await test('signAuthMessage', async () => {
+    // by definition, signAuthMessage will always be directed at the authChain network
+  })
+
+
+  await test('chain ids', async () => {
+    // chainId 31337
+    {
+      const network = await provider.getNetwork()
+      assert.equal(network.chainId, 31337, 'chain id match')
   
+      const netVersion = await provider.send('net_version', [])
+      assert.equal(netVersion, '31337', 'net_version check')
+  
+      const chainId = await provider.send('eth_chainId', [])
+      assert.equal(chainId, '0x7a69', 'eth_chainId check')
+  
+      const chainId2 = await signer.getChainId()
+      assert.equal(chainId2, 31337, 'chainId check')
+    }
+
+    // chainId 31338
+    // TODO
+  })
+  
+  //--------------
+
+  // 1. signMessage, signTypedData, ... signAuthMessage
+  // 2. getProvider for second chain, and lets get the chainId
+
+  //--------------
+
   // <Button px={3} m={1} onClick={() => signMessage()}>Sign Message</Button>
   // <Button px={3} m={1} onClick={() => sign712()}>Sign TypedData</Button>
   // <Button px={3} m={1} onClick={() => signAuthMessage()}>Sign auth-chain message</Button>

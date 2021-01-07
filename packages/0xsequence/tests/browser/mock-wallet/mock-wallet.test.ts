@@ -60,7 +60,7 @@ const main = async () => {
       // isAuthChain: true
     },
     {
-      name: 'ganache',
+      name: 'hardhat2',
       chainId: 31338,
       provider: provider2,
       relayer: relayer2,

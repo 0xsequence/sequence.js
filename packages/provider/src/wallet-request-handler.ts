@@ -124,19 +124,34 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        case 'eth_signTypedData' || 'eth_signTypedData_v4': {
+        case 'eth_signTypedData':
+        case 'eth_signTypedData_v4': {
+          console.log("ahhhhhhhhhhhhhhhhhhhhh")
+          console.log(request)
+          console.log(chainId)
+
           // note: message from json-rpc input is in hex format
-          const [signingAddress, typedData] = request.params
+          const [signingAddress, typedDataString] = request.params
+
+          let typedData: any = {}
+          try {
+            typedData = JSON.parse(typedDataString)
+          } catch (e) {}
+
+          console.log(typedData)
+          console.log('?? typeof?', typeof(typedData))
 
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             // TODO: use ethers eip712 impl.
-            sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
+            sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message) //, chainId)
           } else {
             // prompt user to provide the response
             sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
           }
+
+          console.log('=======> sig', sig)
 
           if (sig.length > 0) {
             response.result = sig
@@ -290,7 +305,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_updateConfig': {
-          throw new Error('sequence_updateConfig method is not allowed')
+          throw new Error('sequence_updateConfig method is not allowed from a dapp')
           // NOTE: method is disabled as we don't need a dapp to request to update a config.
           // However, if we ever want this, we can enable it but must also use the prompter
           // for confirmation.
@@ -302,7 +317,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_publishConfig': {
-          // TODO
+          throw new Error('sequence_publishConfig method is not allowed from a dapp')
           break
         }
 
@@ -338,6 +353,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
 
     } catch (err) {
+      console.error(err)
+
       // TODO/XXX: error messages
       // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1193.md#rpc-errors
       response.result = null

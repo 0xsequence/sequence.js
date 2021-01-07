@@ -186,14 +186,19 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async getSigners(): Promise<string[]> {
-    // first sequence_getNetworks
-    // find the auth chain, etc........?
+    const networks = await this.getNetworks()
 
-    // call, sequence_getWalletConfig
-    // .. passing the authChain ..?
+    const authChainId = networks.find(n => n.isAuthChain)
+    if (!authChainId) {
+      throw new Error('authChainId could not be determined from network list')
+    }
 
-    // and then get list of signers
-    throw new Error('TODO')
+    const walletConfig = await this.getWalletConfig(authChainId)
+    if (!walletConfig || walletConfig.length === 0) {
+      throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
+    }
+
+    return walletConfig[0].signers.map(s => s.address)
   }
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
@@ -216,10 +221,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       return this.provider.resolveName(name)
     })
 
-    const address = await this.getAddress()
-
     return await this.provider.send('eth_signTypedData_v4', [
-      address.toLowerCase(),
+      (await this.getAddress()).toLowerCase(),
       JSON.stringify(_TypedDataEncoder.getPayload(populated.domain, types, populated.value))
     ], maybeNetworkId(chainId) || this.defaultChainId)
   }
@@ -232,6 +235,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
         // TODO: we need to getTransaction from the right chain .....
         return this.provider.getTransaction(hash).then((tx: TransactionResponse) => {
           if (tx === null) { return undefined }
+          // TODO: use this.getProvider(chainId)..
           return this.provider._wrapTransaction(tx, hash)
         })
       }, { onceBlock: this.provider }).catch((error: Error) => {
@@ -260,12 +264,19 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     if (tx === null) {
       return [config, undefined]
     }
+    // TODO: use this.getProvider(chainId)..
     return [config, this.provider._wrapTransaction(tx, tx.hash)]
   }
 
-  publishConfig(): Promise<TransactionResponse> {
-    // sequence_publishConfig
-    throw new Error('TODO')
+  // publishConfig..
+  // NOTE: this is not supported by the remote wallet by default.
+  async publishConfig(): Promise<TransactionResponse | undefined> {
+    const tx = await this.provider.send('sequence_publishConfig', [], this.defaultChainId)
+    if (tx === null) {
+      return undefined
+    }
+    // TODO: use this.getProvider(chainId)..
+    return this.provider._wrapTransaction(tx, tx.hash)
   }
 
   async isDeployed(chainId?: ChainId): Promise<boolean> {
