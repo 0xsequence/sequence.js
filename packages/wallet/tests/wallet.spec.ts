@@ -166,7 +166,7 @@ describe('Wallet integration', function () {
           domain: {
             name: 'Ether Mail',
             version: '1',
-            chainId: 1,
+            chainId: ethnode.chainId,
             verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
           },
           message: {
