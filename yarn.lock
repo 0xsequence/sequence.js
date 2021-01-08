@@ -6,6 +6,10 @@
   version "1.1.0"
   resolved "https://github.com/arcadeum/wallet-contracts#222ef3a7eb1bb84e28e791e91bd8faf0572395c3"
 
+"@0xsequence/wallet-contracts@https://github.com/arcadeum/wallet-contracts.git#update-erc-1271-imp":
+  version "1.1.0"
+  resolved "https://github.com/arcadeum/wallet-contracts.git#c241213e0e44284c9a9c6acd97e03595d2047b72"
+
 "@arcadeum/ethauth@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@arcadeum/ethauth/-/ethauth-0.3.0.tgz#49fba8d6a218559138a8396d8c3dc68c80ea5c07"

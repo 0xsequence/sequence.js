@@ -21,6 +21,7 @@
     "@0xsequence/relayer": "^0.7.0",
     "@0xsequence/transactions": "^0.7.0",
     "@0xsequence/utils": "^0.7.0",
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#update-erc-1271-imp",
     "@arcadeum/ethauth": "^0.3.0",
     "@ethersproject/abi": "^5.0.10",
     "@ethersproject/properties": "^5.0.7",

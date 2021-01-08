@@ -110,8 +110,7 @@ export async function isValidSequenceDeployedWalletSignature(
   if (!provider) return undefined // Signature validity can't be determined
   try {
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
-    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
-    return isValidWalletSignature(address, subDigest, sig, provider)
+    return isValidWalletSignature(address, digest, sig, provider)
   } catch {
     return false
   }

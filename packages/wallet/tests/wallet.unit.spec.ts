@@ -82,7 +82,7 @@ describe('Wallet units', function() {
       const pk = '0x87306d4b9fe56c2af23c7cc3bc69914eba8f7c8fc1d35b4c9a7dd7ea198a428b'
       const wallet = (new lib.Wallet({ config, context, strict: false }, pk))
 
-      const expected = '0x0001000173cb0485449f375942c864e14ebd3b21ae2f3b40a8a6aee4c1e54f026f9a02c27f648bc6304d85745836ee1a7569ae1c83caa600030b91762da1fe5330b394981b02'
+      const expected = '0x00010001a0fb306480bc3027c04d33a16370f4618b29f2d5b89464f526045c94802bc9d1525389c364b75daf58e859ed0d6105aac6b3718e4659814c7793c626653edb871b02'
       expect(await wallet.sign(digest, true, 1)).to.equal(expected)
     })
 
