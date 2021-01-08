@@ -32,7 +32,7 @@ export async function isValidSignature(
     return isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId)
   }
 
-  return wallets[0] || wallets[1]
+  return wallets[0] || wallets[1]
 }
 
 export function isValidEIP712Signature(
