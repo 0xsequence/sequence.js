@@ -21,7 +21,6 @@
     "@0xsequence/relayer": "^0.7.0",
     "@0xsequence/transactions": "^0.7.0",
     "@0xsequence/utils": "^0.7.0",
-    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#update-erc-1271-imp",
     "@arcadeum/ethauth": "^0.3.0",
     "@ethersproject/abi": "^5.0.10",
     "@ethersproject/properties": "^5.0.7",
@@ -32,9 +31,9 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts",
-    "ganache-core": "^2.13.2",
-    "web3": "^1.3.1",
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#update-erc-1271-imp",
+    "ganache-core": "^2.12.1",
+    "web3": "^1.2.8",
     "web3-typescript-typings": "^0.10.2"
   },
   "files": [

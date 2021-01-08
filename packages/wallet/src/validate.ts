@@ -22,18 +22,15 @@ export async function isValidSignature(
     isValidEthSignSignature(address, digest, sig)
   ) return true
 
-  const wallets = await Promise.all([
-    isValidWalletSignature(address, digest, sig, provider),
-    isValidSequenceDeployedWalletSignature(address, digest, sig, provider, chainId)
-  ])
+  const wallet = await isValidWalletSignature(address, digest, sig, provider)
 
   // If validity of wallet signature can't be determined
   // it could be a signature of a non-deployed sequence wallet
-  if (wallets[0] === undefined && wallets[1] === undefined) {
+  if (wallet === undefined) {
     return isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId)
   }
 
-  return wallets[0] || wallets[1]
+  return wallet
 }
 
 export function isValidEIP712Signature(

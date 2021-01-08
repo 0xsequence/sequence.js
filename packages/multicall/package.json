@@ -19,7 +19,7 @@
     "ethers": "^5.0.26"
   },
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts",
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts.git#update-erc-1271-imp",
     "@types/web3-provider-engine": "^14.0.0",
     "eth-json-rpc-middleware": "^6.0.0",
     "json-rpc-engine": "^6.1.0",
