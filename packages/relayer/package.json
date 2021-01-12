@@ -14,8 +14,8 @@
   "dependencies": {
     "@0xsequence/abi": "^0.7.0",
     "@0xsequence/chaind": "^0.7.0",
+    "@0xsequence/config": "^0.7.0",
     "@0xsequence/transactions": "^0.7.0",
-    "@0xsequence/wallet": "^0.7.0",
     "ethers": "^5.0.24",
     "fetch-ponyfill": "^7.0.0"
   },

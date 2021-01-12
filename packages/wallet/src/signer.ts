@@ -6,7 +6,7 @@ import { SignedTransactions, Transactionish, TransactionResponse } from '@0xsequ
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@0xsequence/utils'
-import { WalletConfig, WalletState } from '.'
+import { WalletConfig, WalletState } from '@0xsequence/config'
 
 export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {

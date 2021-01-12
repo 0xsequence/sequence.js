@@ -3,7 +3,9 @@ import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
 import { DecodedSigner } from './signer'
-import { compareAddr, decodeSignature, recoverConfigFromDigest, isSigner, addressOf } from './config'
+import { compareAddr, addressOf } from '@0xsequence/config'
+import { decodeSignature, recoverConfigFromDigest, isSigner } from './config'
+
 import { packMessageData } from './utils'
 
 export async function isValidSignature(

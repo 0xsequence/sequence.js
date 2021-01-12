@@ -1,9 +1,9 @@
 {
-  "name": "@0xsequence/utils",
+  "name": "@0xsequence/config",
   "version": "0.7.0",
   "source": "src/index.ts",
-  "main": "dist/0xsequence-utils.cjs.js",
-  "module": "dist/0xsequence-utils.esm.js",
+  "main": "dist/0xsequence-config.cjs.js",
+  "module": "dist/0xsequence-config.esm.js",
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
@@ -12,11 +12,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ethersproject/properties": "^5.0.7"
+    "@0xsequence/network": "^0.7.0",
+    "ethers": "^5.0.24"
   },
   "peerDependencies": {},
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "files": [
     "src",
     "dist"

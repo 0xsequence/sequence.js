@@ -3,7 +3,7 @@ import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { Transaction, SignedTransactions } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf } from '@0xsequence/wallet'
+import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer } from './base-relayer'
 import { Relayer } from '.'
 
