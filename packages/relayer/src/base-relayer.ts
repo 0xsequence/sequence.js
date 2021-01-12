@@ -3,7 +3,7 @@ import { ethers } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, imageHash } from '@0xsequence/wallet'
+import { WalletConfig, addressOf, imageHash } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
 export class BaseRelayer {

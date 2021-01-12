@@ -6,7 +6,7 @@ import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf } from '@0xsequence/wallet'
+import { WalletConfig, addressOf } from '@0xsequence/config'
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly chaindService: ChaindService

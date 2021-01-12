@@ -1,5 +1,5 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
-import { WalletConfig } from '@0xsequence/wallet'
+import { WalletConfig } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import { Web3Provider, Web3Signer } from './provider'

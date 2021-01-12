@@ -6,6 +6,7 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
+import { isValidConfigSigners, imageHash } from '@0xsequence/config'
 
 import * as lib from '../src'
 
@@ -88,7 +89,7 @@ describe('Account integration', () => {
 
       const signers = await account.getSigners()
       expect(signers[0]).to.equal(await owner.getAddress())
-      expect(lib.isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
+      expect(isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
 
       expect(await account.isDeployed()).to.be.false
 
@@ -109,7 +110,7 @@ describe('Account integration', () => {
       expect(state.config.address).to.equal(await account.getAddress())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.equal(state.currentImageHash)
-      expect(state.imageHash).to.equal(lib.imageHash(currentConfig))
+      expect(state.imageHash).to.equal(imageHash(currentConfig))
     })
 
   })

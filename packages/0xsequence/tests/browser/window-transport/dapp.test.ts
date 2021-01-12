@@ -5,7 +5,8 @@ import { test, assert } from '../../utils/assert'
 
 import { TypedDataUtils } from 'ethers-eip712'
 
-import { addressOf, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { addressOf } from '@0xsequence/config'
 import { testWalletContext } from '../testutils'
 
 const walletProvider = new WindowMessageProvider('http://localhost:9999/mock-wallet/mock-wallet.test.html')
