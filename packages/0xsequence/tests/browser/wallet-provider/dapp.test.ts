@@ -163,90 +163,6 @@ export const tests = async () => {
     assert.true(signers[0] === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'signers, check address')
   })
 
-  await test('getBalance', async () => {
-    // technically, the mock-wallet's single signer owner has some ETH..
-    const balanceSigner1 = await provider.getBalance('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853')
-    assert.true(balanceSigner1.gt(ethers.BigNumber.from(0)), 'signer1 balance > 0')
-  })
-
-  await test('sendETH from the sequence smart wallet (defaultChain)', async () => {
-    // first, lets move some ETH into the wallet from a testnet seed account
-    {
-      const testAccount = getEOAWallet(testAccounts[0].privateKey)
-      const walletBalanceBefore = await signer.getBalance()
-
-      const ethAmount = ethers.utils.parseEther('10.1234')
-      const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
-      const txReceipt = await provider.getTransactionReceipt(txResp.hash)
-      assert.true(txReceipt.status === 1, 'eth sent from signer1')
-
-      const walletBalanceAfter = await signer.getBalance()
-      assert.true(walletBalanceAfter.sub(walletBalanceBefore).eq(ethAmount), `wallet received ${ethAmount} eth`)
-    }
-
-    // sequence wallet to now send some eth back to another seed account
-    // via the relayer
-    {
-      const walletAddress = wallet.getAddress()
-      const walletBalanceBefore = await signer.getBalance()
-
-
-      // send eth from sequence smart wallet to another test account
-      const toAddress = testAccounts[1].address
-      const toBalanceBefore = await provider.getBalance(toAddress)
-
-      // TODO: failed txn with amount too high, etc.
-      // TODO: send txn to invalid address
-
-      const ethAmount = ethers.utils.parseEther('1.4242')
-
-      // NOTE: when a wallet is undeployed (counter-factual), and although the txn contents are to send from our
-      // sequence wallet to the test account, the transaction by the Sequence Wallet instance will be sent `to` the
-      // `GuestModule` smart contract address of the Sequence context `from` the Sequence Relayer (local) account.
-      //
-      // However, when a wallet is deployed on-chain, and the txn object is to send from our sequence wallet to the
-      // test account, the transaction will be sent `to` the smart wallet contract address of the sender by
-      // the relayer. The transaction will then be delegated through the Smart Wallet and transfer will occur
-      // as an internal transaction on-chain.
-      //
-      // Also note, the gasLimit and gasPrice can be estimated by the relayer, or optionally may be specified.
-
-      //--
-
-      // Record wallet deployed state before, so we can check the receipt.to below. We have to do this
-      // because a wallet will automatically get bundled for deployment when it sends a transaction.
-      const beforeWalletDeployed = await wallet.isDeployed()
-
-      const tx = {
-        from: walletAddress,
-        to: toAddress,
-        value: ethAmount,
-        // gasLimit: '0x555',
-        // gasPrice: '0x555',
-      }
-
-      const txReceipt = await (await signer.sendTransaction(tx)).wait()
-
-      assert.true(txReceipt.status === 1, 'txn sent successfully')
-      assert.true(await signer.isDeployed(), 'wallet must be in deployed state after the txn')
-
-      // transaction is sent to the deployed wallet, if the wallet is deployed.. otherwise its sent to guestModule
-      if (beforeWalletDeployed) {
-        assert.equal(txReceipt.to.toLowerCase(), (await wallet.getAddress()).toLowerCase(), 'recipient is correct')
-      } else {
-        assert.equal(txReceipt.to.toLowerCase(), walletContext.guestModule.toLowerCase(), 'recipient is correct')
-      }
-
-      // Ensure fromAddress sent their eth
-      const walletBalanceAfter = await signer.getBalance()
-      assert.true(walletBalanceAfter.sub(walletBalanceBefore).mul(-1).eq(ethAmount), `wallet sent ${ethAmount} eth`)
-
-      // Ensure toAddress received their eth
-      const toBalanceAfter = await provider.getBalance(toAddress)
-      assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
-    }
-  })
-
   await test('signMessage on defaultChain', async () => {
     const address = await wallet.getAddress()
     const chainId = await wallet.getChainId()
@@ -345,7 +261,6 @@ export const tests = async () => {
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
-
   })
 
   await test('signAuthMessage', async () => {
@@ -358,6 +273,7 @@ export const tests = async () => {
 
     assert.equal(chainId, 31338, 'chainId is 31338 (authChain)')
     assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
+    assert.equal(await authProvider.getChainId(), await authProvider.getSigner().getChainId(), 'authProvider signer chainId is 31338')
 
     // Sign the message
     const message = 'hihi'
@@ -394,13 +310,186 @@ export const tests = async () => {
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')    
   })
   
+  await test('getBalance', async () => {
+    // technically, the mock-wallet's single signer owner has some ETH..
+    const balanceSigner1 = await provider.getBalance('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853')
+    assert.true(balanceSigner1.gt(ethers.BigNumber.from(0)), 'signer1 balance > 0')
+  })
+
+  await test('sendETH from the sequence smart wallet (defaultChain)', async () => {
+    // first, lets move some ETH into the wallet from a testnet seed account
+    {
+      const testAccount = getEOAWallet(testAccounts[0].privateKey)
+      const walletBalanceBefore = await signer.getBalance()
+
+      const ethAmount = ethers.utils.parseEther('10.1234')
+      const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
+      const txReceipt = await provider.getTransactionReceipt(txResp.hash)
+      assert.true(txReceipt.status === 1, 'eth sent from signer1')
+
+      const walletBalanceAfter = await signer.getBalance()
+      assert.true(walletBalanceAfter.sub(walletBalanceBefore).eq(ethAmount), `wallet received ${ethAmount} eth`)
+    }
+
+    // sequence wallet to now send some eth back to another seed account
+    // via the relayer
+    {
+      const walletAddress = wallet.getAddress()
+      const walletBalanceBefore = await signer.getBalance()
+
+
+      // send eth from sequence smart wallet to another test account
+      const toAddress = testAccounts[1].address
+      const toBalanceBefore = await provider.getBalance(toAddress)
+
+      // TODO: failed txn with amount too high, etc.
+      // TODO: send txn to invalid address
+
+      const ethAmount = ethers.utils.parseEther('1.4242')
+
+      // NOTE: when a wallet is undeployed (counter-factual), and although the txn contents are to send from our
+      // sequence wallet to the test account, the transaction by the Sequence Wallet instance will be sent `to` the
+      // `GuestModule` smart contract address of the Sequence context `from` the Sequence Relayer (local) account.
+      //
+      // However, when a wallet is deployed on-chain, and the txn object is to send from our sequence wallet to the
+      // test account, the transaction will be sent `to` the smart wallet contract address of the sender by
+      // the relayer. The transaction will then be delegated through the Smart Wallet and transfer will occur
+      // as an internal transaction on-chain.
+      //
+      // Also note, the gasLimit and gasPrice can be estimated by the relayer, or optionally may be specified.
+
+      //--
+
+      // Record wallet deployed state before, so we can check the receipt.to below. We have to do this
+      // because a wallet will automatically get bundled for deployment when it sends a transaction.
+      const beforeWalletDeployed = await wallet.isDeployed()
+
+      const tx = {
+        from: walletAddress,
+        to: toAddress,
+        value: ethAmount,
+        // gasLimit: '0x555',
+        // gasPrice: '0x555',
+      }
+
+      const txReceipt = await (await signer.sendTransaction(tx)).wait()
+
+      assert.true(txReceipt.status === 1, 'txn sent successfully')
+      assert.true(await signer.isDeployed(), 'wallet must be in deployed state after the txn')
+
+      // transaction is sent to the deployed wallet, if the wallet is deployed.. otherwise its sent to guestModule
+      if (beforeWalletDeployed) {
+        assert.equal(txReceipt.to.toLowerCase(), (await wallet.getAddress()).toLowerCase(), 'recipient is correct')
+      } else {
+        assert.equal(txReceipt.to.toLowerCase(), walletContext.guestModule.toLowerCase(), 'recipient is correct')
+      }
+
+      // Ensure fromAddress sent their eth
+      const walletBalanceAfter = await signer.getBalance()
+      assert.true(walletBalanceAfter.sub(walletBalanceBefore).mul(-1).eq(ethAmount), `wallet sent ${ethAmount} eth`)
+
+      // Ensure toAddress received their eth
+      const toBalanceAfter = await provider.getBalance(toAddress)
+      assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
+    }
+  })
+
   await test('sendETH from the sequence smart wallet (authChain)', async () => {
     // multi-chain to send eth on an alternative chain, in this case the authChain
+    //
+    // NOTE: the account addresses are both chains have been seeded with the same private key
+    // so we can have overlapping addresses and keys for ease of use duringtesting
+
+    // get provider of the 2nd chain (the authChain)
+    const provider2 = wallet.getProvider('hardhat2')
+    assert.equal(await provider2.getChainId(), 31338, 'provider is the 2nd chain')
+    assert.equal(await provider2.getChainId(), await wallet.getProvider(31338).getChainId(), 'provider2 code path check')
+
+    const authProvider = await wallet.getAuthProvider()
+    assert.equal(await provider2.getChainId(), await authProvider.getChainId(), 'provider2 === authProvider')
+
+    const signer2 = provider2.getSigner()
+
+    // confirm all account addresses are the same and correct
+    {
+      assert.equal((await wallet.getAddress()).toLowerCase(), await signer.getAddress(), 'wallet and signer address match')
+      assert.equal((await wallet.getAddress()).toLowerCase(), await signer2.getAddress(), 'wallet and signer2 address match')
+      assert.true((await wallet.getAddress()).toLowerCase() !== testAccounts[0].address.toLowerCase(), 'wallet is not subkey address')
+    }
+
+    // initial balances
+    {
+      const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
+      const walletBalanceBefore = await testAccount.getBalance()
+
+      const mainTestAccount = getEOAWallet(testAccounts[0].privateKey, wallet.getProvider())
+      const mainWalletBalanceBefore = await mainTestAccount.getBalance()
+
+      assert.true(walletBalanceBefore.toString() !== mainWalletBalanceBefore.toString(), 'balances across networks do not match')
+
+      // test different code paths lead to same results
+      assert.equal(
+        (await provider2.getBalance(await testAccount.getAddress())).toString(),
+        (await testAccount.getBalance()).toString(),
+        'balance match 1'
+      )
+      assert.equal(
+        (await provider.getBalance(await mainTestAccount.getAddress())).toString(),
+        (await mainTestAccount.getBalance()).toString(),
+        'balance match 2'
+      )
+    }
+
+    // first, lets move some ETH info the wallet from teh testnet seed account
+    {
+      const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
+      const walletBalanceBefore = await signer2.getBalance()
+
+      const ethAmount = ethers.utils.parseEther('4.2')
+
+      // const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
+      // const txReceipt = await provider2.getTransactionReceipt(txResp.hash)
+
+      const txReceipt = await (await sendETH(testAccount, await wallet.getAddress(), ethAmount)).wait()
+      assert.true(txReceipt.status === 1, 'eth sent')
+
+      const walletBalanceAfter = await signer2.getBalance()
+      assert.true(walletBalanceAfter.sub(walletBalanceBefore).eq(ethAmount), `wallet received ${ethAmount} eth`)
+    }
+
+    // using sequence wallet on the authChain, send eth back to anotehr seed account via
+    // the authChain relayer
+    {
+      const walletAddress = wallet.getAddress()
+      const walletBalanceBefore = await signer2.getBalance()
+
+      // send eth from sequence smart wallet to another test account
+      const toAddress = testAccounts[1].address
+      const toBalanceBefore = await provider2.getBalance(toAddress)
+      
+      const ethAmount = ethers.utils.parseEther('1.1234')
+
+      const tx = {
+        from: walletAddress,
+        to: toAddress,
+        value: ethAmount,
+      }
+      const txReceipt = await (await signer2.sendTransaction(tx)).wait()
+
+      assert.true(txReceipt.status === 1, 'txn sent successfully')
+      assert.true(await signer2.isDeployed(), 'wallet must be in deployed state after the txn')
+
+      // Ensure fromAddress sent their eth
+      const walletBalanceAfter = await signer2.getBalance()
+      assert.true(walletBalanceAfter.sub(walletBalanceBefore).mul(-1).eq(ethAmount), `wallet sent ${ethAmount} eth`)
+
+      // Ensure toAddress received their eth
+      const toBalanceAfter = await provider2.getBalance(toAddress)
+      assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
+    }
   })
 
   //--------------
-
-  // <Button px={3} m={1} onClick={() => sendTransactionForSidechain()}>Send sidechain transaction</Button>
 
   // <Button px={3} m={1} onClick={() => signETHAuth()}>Sign Authorization</Button>
   // <Button px={3} m={1} onClick={() => sendBatchTransaction()}>Send batch transaction</Button>

@@ -10,7 +10,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
   readonly _accountAddress: string
   readonly _chainId: number
 
-  constructor(accountAddress: string, chainId: number) {
+  constructor(accountAddress: string, chainId?: number) {
     this._accountAddress = accountAddress
     this._chainId = chainId
   }
@@ -22,14 +22,26 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
       switch (method) {
         case 'net_version':
-          callback(null, { jsonrpc: '2.0', id, result: `${this._chainId}` })
-          return
+          if (this._chainId) {
+            callback(null, { jsonrpc: '2.0', id, result: `${this._chainId}` })
+            return
+          }
+          break
+
         case 'eth_chainId':
-          callback(null, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this._chainId) })
-          return
+          if (this._chainId) {
+            callback(null, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this._chainId) })
+            return
+          }
+          break
+
         case 'eth_accounts':
-          callback(null, { jsonrpc: '2.0', id, result: [this._accountAddress.toLowerCase()] })
-          return
+          if (this._accountAddress) {
+            callback(null, { jsonrpc: '2.0', id, result: [this._accountAddress.toLowerCase()] })
+            return
+          }
+          break
+
         default:
       }
 

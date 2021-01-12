@@ -112,23 +112,27 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // Sequence Signer methods
   //
 
-  // getProvider returns a Web3Provider instance via the signer transport. Note: for our case
+  // getProvider returns a Web3Provider instance for the current chain. Note that this method
+  // and signer is bound to a particular chain to prevent misuse. If you'd like a provider
+  // for a specific chain, try getSender(chainId), or wallet.getProvider(chainId).
+  async getProvider(chainId?: number): Promise<Web3Provider | undefined> {
+    if (chainId) {
+      const currentChainId = await this.getChainId()
+      if (currentChainId !== chainId) {
+        throw new Error(`signer is attempting to access chain ${chainId}, but is already bound to chain ${currentChainId}`)
+      }
+    }
+    return this.provider
+  }
+
+  // getSender returns a Web3Provider instance via the signer transport. Note: for our case
   // the of sequence wallet, this will bring up the wallet window whenever using it, as the json-rpc
   // requests are sent to the window transport. Therefore, for anything non-signing related
   // you can write a higher-order JsonRpcRouter sender to route to the public provider endpoints
   // as we do in the WalletProvider.
   //
-  // TODO: alternatively, in case this is confusing, we can prevent chainId use by this method, and
-  // assume Web3Signer is bound to a single chainId. Then, users would need to use wallet.getProvider(id)
-  async getProvider(chainId?: number): Promise<Web3Provider | undefined> {
-    // if (chainId) {
-    //   const currentChainId = await this.getChainId()
-    //   if (currentChainId !== chainId) {
-    //     throw new Error(`signer is attempting to access chain ${chainId}, but is already bound to chain ${currentChainId}`)
-    //   }
-    // }
-    // return this.provider
-
+  // This method is primary utilized internally when routing requests to a particular chainId.
+  async getSender(chainId?: number): Promise<Web3Provider | undefined> {
     if (!chainId || (chainId && chainId === this.defaultChainId)) {
       return this.provider
     }
@@ -188,7 +192,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
   async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
+    const provider = await this.getSender(maybeNetworkId(chainId) || this.defaultChainId)
 
     const data = ((typeof (message) === 'string') ? ethers.utils.toUtf8Bytes(message) : message)
     const address = await this.getAddress()
@@ -216,7 +220,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // sendTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
   async sendTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
-    const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
+    const provider = await this.getSender(maybeNetworkId(chainId) || this.defaultChainId)
 
     return this.sendUncheckedTransaction(transaction, chainId).then((hash) => {
       return ethers.utils.poll(() => {
@@ -250,14 +254,15 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     if (tx === null) {
       return [config, undefined]
     }
-    // TODO: use this.getProvider(chainId)..
-    return [config, this.provider._wrapTransaction(tx, tx.hash)]
+
+    const provider = await this.getSender(this.defaultChainId)
+    return [config, provider._wrapTransaction(tx, tx.hash)]
   }
 
   // publishConfig..
   // NOTE: this is not supported by the remote wallet by default.
   async publishConfig(): Promise<TransactionResponse | undefined> {
-    const provider = await this.getProvider(this.defaultChainId)
+    const provider = await this.getSender(this.defaultChainId)
 
     const tx = await provider.send('sequence_publishConfig', [])
     if (tx === null) {
@@ -267,7 +272,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async isDeployed(chainId?: ChainId): Promise<boolean> {
-    const provider = await this.getProvider(maybeNetworkId(chainId))
+    const provider = await this.getSender(maybeNetworkId(chainId))
     const walletCode = await provider.getCode(await this.getAddress())
     return walletCode && walletCode !== "0x"
   }
@@ -299,7 +304,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       transaction.gasLimit = this.provider.estimateGas(estimate)
     }
 
-    const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
+    const provider = await this.getSender(maybeNetworkId(chainId) || this.defaultChainId)
 
     return resolveProperties({
       tx: resolveProperties(transaction),

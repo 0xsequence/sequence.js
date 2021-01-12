@@ -217,7 +217,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             const tx = await (await signer.getRelayer(txChainId)).relay(request.params[0])
             response.result = (await tx).hash
           } else {
-            response.result = await provider.sendTransaction(request.params[0])
+            const tx = await provider.sendTransaction(request.params[0])
+            response.result = tx.hash
           }
           break
         }
