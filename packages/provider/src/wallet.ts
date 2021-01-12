@@ -356,7 +356,7 @@ export class Wallet implements WalletProvider {
     // provider stack for the respective network
     const router = new JsonRpcRouter([
       loggingProviderMiddleware,
-      new EagerProvider(this.session.accountAddress, network.chainId), // TODO: keep or use cache..?
+      new EagerProvider(this.session.accountAddress, network.chainId),
       new CachedProvider(network.chainId),
       new SigningProvider(this.transport.provider)
     ], new JsonRpcSender(rpcProvider))
