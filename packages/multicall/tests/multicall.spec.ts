@@ -35,7 +35,7 @@ type GanacheInstance = {
   chainId?: number
 }
 
-describe('Arcadeum wallet integration', function () {
+describe('Multicall integration', function () {
   const ganache: GanacheInstance = {}
   let provider: ethers.providers.Provider
   let brokenProvider: ethers.providers.Provider
