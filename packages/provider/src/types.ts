@@ -6,13 +6,15 @@ export interface WalletSession {
   // Account address of the wallet
   accountAddress?: string
 
-  // Network in use for the session
-  network?: NetworkConfig
+  // Networks in use for the session. The default/dapp network will show
+  // up as the first one in the list as the "main chain"
+  networks?: NetworkConfig[]
 
   // Caching provider responses for things such as account and chainId
   providerCache?: {[key: string]: any}
 }
 
+// TODO: maybe rename to just MessageTransport ..?
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   openWallet(path?: string, state?: object): void
   closeWallet()
@@ -25,12 +27,13 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register()
+  unregister()
   // TODO/HMMMMMMMMMMMMMM........
   // notifyConnect(connectInfo: any)
   // notifyDisconnect(error?: any)
   notifyAccountsChanged(accounts: string[])
   notifyChainChanged(connectInfo: any)
-  notifyNetwork(network: any)
+  notifyNetworks(networks: NetworkConfig[])
   notifyLogin(accountAddress: string)
   notifyLogout()
 }
@@ -72,7 +75,7 @@ export interface ProviderMessageTransport { //extends ProviderMessageRequestHand
   sendMessage(message: ProviderMessage<any>): void
 }
 
-export type WalletMessageEvent = 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'network' | 'debug'
+export type WalletMessageEvent = 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'networks' | 'debug'
 
 export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | 'debug' | WalletMessageEvent
 
@@ -85,7 +88,7 @@ export enum ProviderMessageType {
 
   LOGIN = 'login',
   LOGOUT = 'logout',
-  NETWORK = 'network',
+  NETWORKS = 'networks',
 
   DEBUG = '_debug'
 }

@@ -2,7 +2,7 @@
 import { ethers, providers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
-import { JsonRpcSender, JsonRpcRouter } from '@0xsequence/network'
+import { JsonRpcRouter, JsonRpcExternalProvider } from '@0xsequence/network'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 
 import chaiAsPromised from 'chai-as-promised'
@@ -35,8 +35,8 @@ type GanacheInstance = {
   chainId?: number
 }
 
-describe('Arcadeum wallet integration', function () {
-  let ganache: GanacheInstance = {}
+describe('Multicall integration', function () {
+  const ganache: GanacheInstance = {}
   let provider: ethers.providers.Provider
   let brokenProvider: ethers.providers.Provider
 
@@ -65,6 +65,8 @@ describe('Arcadeum wallet integration', function () {
       mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee",
       accounts: accounts
     })
+
+    // TODO: use hardhat instead like in wallet/wallet.spec.ts
 
     await ganache.server.listen(GANACHE_PORT)
     ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
@@ -117,7 +119,7 @@ describe('Arcadeum wallet integration', function () {
     ).deploy()) as unknown) as CallReceiverMock
   }
 
-  let options = [
+  const options = [
     {
       name: 'Ether.js provider wrapper',
       provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(
@@ -128,8 +130,8 @@ describe('Arcadeum wallet integration', function () {
       name: "Json Rpc Router (Sequence)",
       provider: (options?: Partial<MulticallOptions>) => new Web3Provider(
         new JsonRpcRouter(
-          new JsonRpcSender(ganache.spyProxy),
-          [multicallMiddleware(options)]
+          [multicallMiddleware(options)],
+          new JsonRpcExternalProvider(ganache.spyProxy)
         )
       )
     },
@@ -137,19 +139,19 @@ describe('Arcadeum wallet integration', function () {
       name: 'Ether.js external provider wrapper',
       provider: (conf?: Partial<MulticallOptions>) => new Web3Provider(
         new MulticallExternalProvider(
-          new JsonRpcSender(ganache.spyProxy), conf
+          new JsonRpcExternalProvider(ganache.spyProxy), conf
         )
       )
     },
     {
       name: "Provider Engine (json-rpc-engine)",
       provider: (conf?: Partial<MulticallOptions>) => {
-        let engine = new JsonRpcEngine()
+        const engine = new JsonRpcEngine()
 
         engine.push(
           providerAsMiddleware(
             new MulticallExternalProvider(
-              new JsonRpcSender(ganache.spyProxy), conf
+              new JsonRpcExternalProvider(ganache.spyProxy), conf
             )
           )
         )

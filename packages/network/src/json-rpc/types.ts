@@ -24,6 +24,9 @@ export interface JsonRpcHandler {
 
 export type JsonRpcFetchFunc = (method: string, params?: any[], chainId?: number) => Promise<any>
 
+// EIP-1193 function signature
+export type JsonRpcRequestFunc = (request: { method: string, params?: any[] }, chainId?: number) => Promise<any>
+
 export type JsonRpcMiddleware = (next: JsonRpcHandlerFunc) => JsonRpcHandlerFunc
 
 export interface JsonRpcMiddlewareHandler {

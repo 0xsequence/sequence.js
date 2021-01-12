@@ -54,14 +54,16 @@ const main = async () => {
     {
       name: 'hardhat',
       chainId: 31337,
+      rpcUrl: provider.connection.url,
       provider: provider,
       relayer: relayer,
-      isMainChain: true,
+      isDefaultChain: true,
       // isAuthChain: true
     },
     {
-      name: 'ganache',
+      name: 'hardhat2',
       chainId: 31338,
+      rpcUrl: provider2.connection.url,
       provider: provider2,
       relayer: relayer2,
       isAuthChain: true
@@ -82,10 +84,10 @@ const main = async () => {
 
   // the json-rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(account, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(account, null)
 
 
-  // in practice, all you have to do is instantiate this, and assign it somewhere
+  // setup and register window message transport
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
   windowHandler.register()
 

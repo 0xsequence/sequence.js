@@ -11,6 +11,10 @@ export class WalletCommands {
   signMessage() {
   }
 
+  // TODO
+  signAuthMessage() {
+  }
+
   // signTypedData()
 
   // sendTransaction()

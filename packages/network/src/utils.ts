@@ -11,7 +11,7 @@ export const getNetworkId = (chainId: ChainId): number => {
     return chainId
   }
   if ((<NetworkConfig>chainId).chainId) {
-    return ((<NetworkConfig>chainId)).chainId
+    return (<NetworkConfig>chainId).chainId
   }
   return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
 }
@@ -34,7 +34,7 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
     return false
   }
 
-  // Ensure no duplicate chainId configs
+  // Ensure distinct chainId configs
   const chainIds = configs.map(c => c.chainId).sort()
   const dupes = chainIds.filter((c, i) => chainIds.indexOf(c) !== i)
   if (dupes.length > 0) {
@@ -42,11 +42,22 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
     return false
   }
 
+  // Downcase all network names
+  configs.forEach(c => c.name = c.name.toLowerCase())
+
+  // Ensure distinct network names
+  const names = configs.map(c => c.name).sort()
+  const nameDupes = names.filter((c, i) => names.indexOf(c) !== i)
+  if (nameDupes.length > 0) {
+    if (raise) throw new Error(`invalid network config: duplicate network names ${nameDupes}`)
+    return false
+  }
+
   // Ensure rpcUrl or provider is specified
   // Ensure relayerUrl or relayer is specified
-  // Ensure one main chain
+  // Ensure one default chain
   // Ensure one auth chain
-  let mainChain = false
+  let defaultChain = false
   let authChain = false
   for (let i=0; i < configs.length; i++) {
     const c = configs[i]
@@ -58,12 +69,12 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
       if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: relayerUrl or relayer must be provided`)
       return false
     }
-    if (c.isMainChain) {
-      if (mainChain) {
-        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: MainChain is already set by another config`)
+    if (c.isDefaultChain) {
+      if (defaultChain) {
+        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: DefaultChain is already set by another config`)
         return false
       }
-      mainChain = true
+      defaultChain = true
     }
     if (c.isAuthChain) {
       if (authChain) {
@@ -71,16 +82,10 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
       }
       authChain = true
     }
-
-    if (c.sidechains && c.sidechains.length > 0) {
-      if (!isValidNetworkConfig(c.sidechains)) {
-        return false
-      }
-    }
   }
 
-  if (!mainChain) {
-    if (raise) throw new Error(`invalid network config: MainChain must be set`)
+  if (!defaultChain) {
+    if (raise) throw new Error(`invalid network config: DefaultChain must be set`)
     return false
   }
   if (!authChain) {
@@ -96,33 +101,36 @@ export const ensureValidNetworks = (networks: NetworkConfig[]): NetworkConfig[] 
   return networks
 }
 
-// sortNetworks orders the network config list by: mainChain, authChain, ..rest by chainId ascending numbers
-export const sortNetworks = (networks: Networks): Networks => {
+// sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
+export const sortNetworks = (networks: Networks, defaultChainId?: number): Networks => {
   const config = networks.sort((a, b) => {
     if (a.chainId === b.chainId) return 0
     return a.chainId < b.chainId ? -1 : 1
   })
 
+  // TODO: use defaultChainId if passed to set default chain, first unset any other chain..
+  // ...
+
   // // AuthChain goes first
   // const authConfigIdx = config.findIndex(c => c.isAuthChain)
   // if (authConfigIdx > 0) config.splice(0, 0, config.splice(authConfigIdx, 1)[0])
 
-  // // MainChain goes second
-  // const mainConfigIdx = config.findIndex(c => c.isMainChain && c.isAuthChain !== true)
-  // if (mainConfigIdx > 0) config.splice(1, 0, config.splice(mainConfigIdx, 1)[0])
+  // // DefaultChain goes second
+  // const defaultConfigIdx = config.findIndex(c => c.isDefaultChain && c.isAuthChain !== true)
+  // if (defaultConfigIdx > 0) config.splice(1, 0, config.splice(defaultConfigIdx, 1)[0])
 
-  // MainChain goes first
-  const mainConfigIdx = config.findIndex(c => c.isMainChain)
-  if (mainConfigIdx > 0) config.splice(0, 0, config.splice(mainConfigIdx, 1)[0])
+  // DefaultChain goes first
+  const defaultConfigIdx = config.findIndex(c => c.isDefaultChain)
+  if (defaultConfigIdx > 0) config.splice(0, 0, config.splice(defaultConfigIdx, 1)[0])
 
   // AuthChain goes second
-  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isMainChain !== true)
+  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isDefaultChain !== true)
   if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
 
   return config
 }
 
-export const createNetworkConfig = (networks: Networks | NetworksBuilder, mainChainId?: number, vars?: {[key: string]: any}): Networks => {
+export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaultChainId?: number, vars?: {[key: string]: any}): Networks => {
   let config: NetworkConfig[] = []
   if (typeof(networks) === 'function') {
     config = networks(vars)
@@ -130,15 +138,32 @@ export const createNetworkConfig = (networks: Networks | NetworksBuilder, mainCh
     config = networks
   }
 
-  if (mainChainId) {
-    config.forEach(n => n.isMainChain = false)
-    const mainNetwork = config.filter(n => n.chainId === mainChainId)
+  if (defaultChainId) {
+    config.forEach(n => n.isDefaultChain = false)
+    const mainNetwork = config.filter(n => n.chainId === defaultChainId)
     if (!mainNetwork || mainNetwork.length === 0) {
-      throw new Error(`mainChainId ${mainChainId} cannot be found in network list`)
+      throw new Error(`defaultChainId ${defaultChainId} cannot be found in network list`)
     } else {
-      mainNetwork[0].isMainChain = true
+      mainNetwork[0].isDefaultChain = true
     }
   }
 
   return ensureValidNetworks(sortNetworks(config))
+}
+
+export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): NetworkConfig => {
+  if (typeof(chainId) === 'string') {
+    if (chainId.startsWith('0x')) {
+      const id = ethers.BigNumber.from(chainId).toNumber()
+      return networks.find(n => n.chainId === id)
+    } else {
+      return networks.find(n => n.name === chainId)
+    }
+  } else if (typeof(chainId) === 'number') {
+    return networks.find(n => n.chainId === chainId)
+  } else if ((<NetworkConfig>chainId).chainId) {
+    return networks.find(n => n.chainId === (<NetworkConfig>chainId).chainId)
+  } else {
+    return undefined
+  }
 }
