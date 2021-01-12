@@ -73,50 +73,10 @@ export const tests = async () => {
     const authNetwork = await wallet.getAuthNetwork()
     assert.equal(networks[1].chainId, authNetwork.chainId, 'authNetwork matches chainId')
 
-    // const p = new ethers.providers.JsonRpcProvider('http://localhost:9545') //, 31338)
-    // // const blah = await p.getNetwork()
-    // // console.log('=========> netwrokkkkkk', blah)
-
-    // console.log('jes?A', await p.send('eth_chainId', []))
-
-    // const s = new JsonRpcSender(p)
-    // console.log('jes?B', await s.send('eth_chainId', []))
-
-
-    // const z = new ethers.providers.Web3Provider(new JsonRpcSender(p), 31338)
-    // console.log('mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm')
-    // console.log('22222222222222222jes?', await z.send('eth_chainId', []))
-
-
-    // const p = new JsonRpcProvider('http://localhost:9545', getNetworkId(chainId))
-
-    assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337aaa')
-
-    // TODO: so something wrong with wallet.getProvider()
-    // its overriding the cache value..
-
-    // const authProvider = new Web3Provider(new JsonRpcSender(p)) //, 31338)
     const authProvider = wallet.getProvider(authNetwork)
-
-    // console.log('........')
-    // const y = await authProvider.send('eth_chainId', [])
-    // console.log('yyyyyyy', y)
-
-    // const x = await authProvider.getNetwork()
-    // console.log('ok........', x)
-
-    // console.log('wee', await authProvider.getChainId())
-
-    // throw new Error('halt2')
-
-    // const x = await authProvider.getChainId()
-    // console.log('===========> xxxxxxxxx', x)
-
     assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
 
-
-    assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337zzz')
-
+    assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337')
   })
 
   await test('getAccounts', async () => {
