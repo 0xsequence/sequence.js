@@ -50,7 +50,6 @@ import { packMessageData, resolveArrayProperties } from './utils'
 import { Signer } from './signer'
 import { fetchImageHash } from '.'
 
-import { TypedDataUtils } from 'ethers-eip712'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
@@ -365,18 +364,21 @@ export class Wallet extends Signer {
   }
 
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    const signChainId = await this.getChainIdNumber(chainId)
+
     const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
-    const domainSalt = domain.salt ? ethers.utils.hexlify(domain.salt) : undefined
+    if (!domainChainId) {
+      throw new Error('signTypedData: domain.chainId cannot be empty')
+    }
+    if (domainChainId !== signChainId) {
+      throw new Error(`signTypedData: domain.chainId (${domain.chainId}) is expected to be ${signChainId}`)
+    }
 
-    const digest = TypedDataUtils.encodeDigest({
-      types: types,
-      // TODO: Is it the primary type always the last entry of types?
-      primaryType: Object.keys(types)[Object.keys(types).length - 1],
-      domain: { ...domain, salt: domainSalt, chainId: domainChainId },
-      message: value
-    })
+    // remove EIP712Domain key from types as ethers will auto-gen it
+    delete types['EIP712Domain']
 
-    return this.signMessage(ethers.utils.arrayify(digest), chainId, allSigners)
+    const digest = ethers.utils._TypedDataEncoder.hash(domain, types, value)
+    return this.signMessage(ethers.utils.arrayify(digest), signChainId, allSigners)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {

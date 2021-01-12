@@ -58,7 +58,7 @@ export class Account extends Signer {
       } else {
         throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
       }
-      if (network.isMainChain) {
+      if (network.isDefaultChain) {
         this.provider = wallet.provider
       }
       return {
@@ -363,13 +363,20 @@ export class Account extends Signer {
   }
 
   mainWallet(): Wallet {
-    const found = this._wallets.find(w => w.network.isMainChain).wallet
-    return found ? found : this._wallets[0].wallet
+    const found = this._wallets.find(w => w.network.isDefaultChain).wallet
+    if (!found) {
+      throw new Error('mainWallet not found')
+    }
+    return found
+    // return found ? found : this._wallets[0].wallet
   }
 
   authWallet(): Wallet {
     const found = this._wallets.find(w => w.network.isAuthChain).wallet
-    return found ? found : this._wallets[0].wallet
+    if (!found) {
+      throw new Error('authChain wallet not found')
+    }
+    return found
   }
 
   authChainId(): number {

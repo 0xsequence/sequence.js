@@ -2,9 +2,7 @@ import { ethers } from 'ethers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, Networkish } from "@ethersproject/providers"
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
-import { _TypedDataEncoder } from '@ethersproject/hash'
-import { poll } from '@ethersproject/web'
-import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId, JsonRpcVersion } from '@0xsequence/network'
+import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId, JsonRpcVersion, JsonRpcSender, isJsonRpcProvider } from '@0xsequence/network'
 import { Signer } from '@0xsequence/wallet'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
@@ -13,37 +11,10 @@ import { TransactionRequest, TransactionResponse, Transactionish, SignedTransact
 import { WalletRequestHandler } from './wallet-request-handler'
 
 // naming..?
-// Web3Provider, Web3Signer, Web3Relayer
+// Web3Provider, Web3Signer, Web3Relayer, Web3Indexer
 //
-//.. or.... SequenceProvider, SequenceSigner, SequenceRelayer
+//.. or.... SequenceProvider, SequenceSigner, SequenceRelayer, SequenceIndexer
 //
-
-// for WalletProvider..:
-// hmm.. later, we'll need to be able to target a specific network..
-// for logs, transactions, etc.....
-// even our cache needs to be multi-network
-//
-// a dapp will want to set it's "primary" network, default to one of the networks
-// but, still access others, including the auth chain, etc..
-//
-// lets setup e2e tests with concurrently to have 2 hardhat servers with different ids
-
-
-//----
-
-// SequenceProvider
-// SequenceSigner 
-// SequenceRelayer
-// SequenceChaind -- ..? Collector ..? Data..? .. for events, balances, metadata, Node.. Sidekick ..?
-// SequenceAPI -- various things..
-
-// ..? or just Provider and Signer ..? or.. Web3Provider, etc..?
-
-// TODO: add SequenceProvider
-// which will take networks (or none and fetch initially on connect..?), or, from fetch(https://sequence.app/networks.json) ?
-// or.. config.sequence.app/networks ..?
-
-let _nextId = 0
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
@@ -51,58 +22,50 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   // static isSequenceProvider(cand: any): cand is Web3Provider {
   // }
 
-  // chainId is the default chainId to use with requests, but may be overridden
-  // by passing chainId argument to specific method
-  readonly defaultChainId?: number
+  readonly _sender: JsonRpcSender
 
-  constructor(provider: JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainId) {
+
+  // defaultChainId is the default chainId to use with requests, but may be
+  // overridden by passing chainId argument to a specific request
+  readonly _defaultChainId?: number
+
+  constructor(provider: JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainId) {
+    const sender = new JsonRpcSender(provider, maybeNetworkId(defaultChainId))
+    provider = sender
+
     super(provider, 'any')
-    this.defaultChainId = maybeNetworkId(defaultChainId)
+
+    this._sender = sender
+    this._defaultChainId = maybeNetworkId(defaultChainId)
   }
 
   sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void), chainId?: number) {
-    if (typeof(this.provider) === 'function') {
-      this.send(request.method, request.params, chainId).then(r => {
-        callback(undefined, {
-          jsonrpc: '2.0',
-          id: request.id,
-          result: r
-        })
-      }).catch(e => callback(e, undefined))
-  } else {
-      (this.provider as JsonRpcHandler).sendAsync(request, callback, chainId)
-    }
+    this._sender.sendAsync(request, callback, chainId)
   }
 
   send(method: string, params: Array<any>, chainId?: number): Promise<any> {
-    if (typeof(this.provider) === 'function') {
-      return (this.provider as JsonRpcFetchFunc)(method, params, chainId)
-    } else {
-      return new Promise((resolve, reject) => {
-        (this.provider as JsonRpcHandler).sendAsync({
-          jsonrpc: JsonRpcVersion,
-          id: ++_nextId,
-          method,
-          params
-        }, (error: any, response?: JsonRpcResponse) => {
-          if (error) {
-            reject(error)
-          } else {
-            resolve(response.result)
-          }
-        }, chainId)
-      })
-    }
+    return this._sender.send(method, params, chainId)
   }
 
   getSigner(): Web3Signer {
-    return new Web3Signer(this, this.defaultChainId)
+    return new Web3Signer(this, this._defaultChainId)
+  }
+
+  async getChainId(): Promise<number> {
+    const result = await this.send('eth_chainId', [])
+    const chainId = ethers.BigNumber.from(result).toNumber()
+
+    if (this._defaultChainId && this._defaultChainId !== chainId) {
+      throw new Error(`provider chainId (${chainId}) does not match provider-bound chainId ${this._defaultChainId}`)
+    }
+
+    return chainId
   }
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(signer: Signer, networks: Networks) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null, networks)
+  constructor(signer: Signer) {
+    const walletRequestHandler = new WalletRequestHandler(signer, null)
     super(walletRequestHandler)
   }
 }
@@ -122,6 +85,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   _index: number
   _context: WalletContext
   _networks: NetworkConfig[]
+  private _providers: {[key: number]: Web3Provider} = {}
 
   //
   // ethers AbstractSigner methods
@@ -148,19 +112,38 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // Sequence Signer methods
   //
 
-  async getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
-    // chainId is ignored here
-    return this.provider
+  // getProvider returns a Web3Provider instance via the signer transport. Note: for our case
+  // the of sequence wallet, this will bring up the wallet window whenever using it, as the json-rpc
+  // requests are sent to the window transport. Therefore, for anything non-signing related
+  // you can write a higher-order JsonRpcRouter sender to route to the public provider endpoints
+  // as we do in the WalletProvider.
+  //
+  // TODO: alternatively, in case this is confusing, we can prevent chainId use by this method, and
+  // assume Web3Signer is bound to a single chainId. Then, users would need to use wallet.getProvider(id)
+  async getProvider(chainId?: number): Promise<Web3Provider | undefined> {
+    // if (chainId) {
+    //   const currentChainId = await this.getChainId()
+    //   if (currentChainId !== chainId) {
+    //     throw new Error(`signer is attempting to access chain ${chainId}, but is already bound to chain ${currentChainId}`)
+    //   }
+    // }
+    // return this.provider
+
+    if (!chainId || (chainId && chainId === this.defaultChainId)) {
+      return this.provider
+    }
+    if (!this._providers[chainId]) {
+      this._providers[chainId] = new Web3Provider(new JsonRpcSender(this.provider, chainId), chainId)
+    }
+    return this._providers[chainId]
   }
 
   getRelayer(chainId?: number): Promise<Relayer | undefined> {
-    // hmmmmmm... JsonRpcRelayer ......? or, Web3Relayer.. or SequenceRelayer?
-
+    // TODO: JsonRpcRelayer ......? or, Web3Relayer.. or SequenceRelayer?
     // sequence_estimateGasLimits
     // sequence_gasRefundOptions
     // sequence_getNonce
     // sequence_relay
-
     throw new Error('TODO')
   }
 
@@ -187,53 +170,59 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async getSigners(): Promise<string[]> {
-    // first sequence_getNetworks
-    // find the auth chain, etc........?
+    const networks = await this.getNetworks()
 
-    // call, sequence_getWalletConfig
-    // .. passing the authChain ..?
+    const authChainId = networks.find(n => n.isAuthChain)
+    if (!authChainId) {
+      throw new Error('authChainId could not be determined from network list')
+    }
 
-    // and then get list of signers
-    throw new Error('TODO')
+    const walletConfig = await this.getWalletConfig(authChainId)
+    if (!walletConfig || walletConfig.length === 0) {
+      throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
+    }
+
+    return walletConfig[0].signers.map(s => s.address)
   }
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
   async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    const data = ((typeof(message) === 'string') ? ethers.utils.toUtf8Bytes(message): message)
+    const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
+
+    const data = ((typeof (message) === 'string') ? ethers.utils.toUtf8Bytes(message) : message)
     const address = await this.getAddress()
 
     // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
-    return await this.provider.send('eth_sign', [
+    return await provider.send('eth_sign', [
       address.toLowerCase(), ethers.utils.hexlify(data)
-    ], maybeNetworkId(chainId) || this.defaultChainId)
+    ])
   }
 
   // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     // Populate any ENS names (in-place)
-    const populated = await _TypedDataEncoder.resolveNames(domain, types, value, (name: string) => {
+    const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, value, (name: string) => {
       return this.provider.resolveName(name)
     })
 
-    const address = await this.getAddress()
-
     return await this.provider.send('eth_signTypedData_v4', [
-      address.toLowerCase(),
-      JSON.stringify(_TypedDataEncoder.getPayload(populated.domain, types, populated.value))
+      (await this.getAddress()).toLowerCase(),
+      ethers.utils._TypedDataEncoder.getPayload(populated.domain, types, populated.value)
     ], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
   // sendTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  sendTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
+  async sendTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
+    const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
+
     return this.sendUncheckedTransaction(transaction, chainId).then((hash) => {
-      return poll(() => {
-        // TODO: we need to getTransaction from the right chain .....
-        return this.provider.getTransaction(hash).then((tx: TransactionResponse) => {
+      return ethers.utils.poll(() => {
+        return provider.getTransaction(hash).then((tx: TransactionResponse) => {
           if (tx === null) { return undefined }
-          return this.provider._wrapTransaction(tx, hash)
+          return provider._wrapTransaction(tx, hash)
         })
       }, { onceBlock: this.provider }).catch((error: Error) => {
         (<any>error).transactionHash = hash
@@ -261,19 +250,25 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     if (tx === null) {
       return [config, undefined]
     }
+    // TODO: use this.getProvider(chainId)..
     return [config, this.provider._wrapTransaction(tx, tx.hash)]
   }
 
-  publishConfig(): Promise<TransactionResponse> {
-    // sequence_publishConfig
-    throw new Error('TODO')
+  // publishConfig..
+  // NOTE: this is not supported by the remote wallet by default.
+  async publishConfig(): Promise<TransactionResponse | undefined> {
+    const provider = await this.getProvider(this.defaultChainId)
+
+    const tx = await provider.send('sequence_publishConfig', [])
+    if (tx === null) {
+      return undefined
+    }
+    return provider._wrapTransaction(tx, tx.hash)
   }
 
   async isDeployed(chainId?: ChainId): Promise<boolean> {
-    // TODO: get the appropriate chain from chainId ..
-    // const provider = this.getProvider(maybeNetworkId(chainId))
-
-    const walletCode = await this.provider.getCode(await this.getAddress())
+    const provider = await this.getProvider(maybeNetworkId(chainId))
+    const walletCode = await provider.getCode(await this.getAddress())
     return walletCode && walletCode !== "0x"
   }
 
@@ -287,7 +282,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // sendUncheckedTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId): Promise<string> {
+  async sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId): Promise<string> {
     transaction = shallowCopy(transaction)
 
     const fromAddress = this.getAddress().then((address) => {
@@ -304,6 +299,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       transaction.gasLimit = this.provider.estimateGas(estimate)
     }
 
+    const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
+
     return resolveProperties({
       tx: resolveProperties(transaction),
       sender: fromAddress
@@ -319,7 +316,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
       const hexTx = (<any>this.provider.constructor).hexlifyTransaction(tx, { from: true })
 
-      return this.provider.send('eth_sendTransaction', [hexTx], maybeNetworkId(chainId) || this.defaultChainId).then((hash) => {
+      return provider.send('eth_sendTransaction', [hexTx]).then((hash) => {
         return hash
       }, (error) => {
         // return checkError("sendTransaction", error, hexTx)
