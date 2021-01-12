@@ -9,7 +9,6 @@ import {
 
 import { BigNumber, ethers } from 'ethers'
 import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
-import { TypedDataUtils } from 'ethers-eip712'
 
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
@@ -19,13 +18,12 @@ import { isSignedTransactions } from '@0xsequence/transactions'
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer
   private prompter: WalletUserPrompter
-  private networks: Networks
+
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  constructor(signer: Signer, prompter: WalletUserPrompter, networks: Networks) {
+  constructor(signer: Signer, prompter: WalletUserPrompter) {
     this.signer = signer
     this.prompter = prompter
-    this.networks = networks
 
     if (!signer.provider) {
       throw new Error('wallet.provider is undefined')
@@ -51,7 +49,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         // (probably), or add a type on ProviderMessage<T>
 
         resolve(responseMessage)
-      })
+      }, message.chainId)
     })
   }
 
@@ -63,9 +61,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const signer = this.signer
     if (!signer) throw new Error('WalletRequestHandler: wallet signer is not configured')
 
-    // fetch the provider for the specific chain, or undefined will select MainChain
+    // fetch the provider for the specific chain, or undefined will select defaultChain
     const provider = await signer.getProvider(chainId)
     if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
+
+    if (chainId) {
+
+      const network = (await signer.getNetworks()).find(n => n.chainId === chainId)
+      if (!network) {
+        // TODO: we need to response as well, but this wouldn't be caught, so client would never receive it
+        // ...
+        throw new Error(`chainId ${chainId} cannot be found in network list of the wallet`)
+      }
+    }
 
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
@@ -73,7 +81,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       result: null,
       error: null
     }
-    
+
     try {
       switch (request.method) {
 
@@ -124,14 +132,24 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        case 'eth_signTypedData' || 'eth_signTypedData_v4': {
-          // note: message from json-rpc input is in hex format
-          const [signingAddress, typedData] = request.params
+        case 'eth_signTypedData':
+        case 'eth_signTypedData_v4': {
+          // note: signingAddress from json-rpc input is in hex format, and typedDataObject
+          // should be an object, but in some instances may be double string encoded
+          const [signingAddress, typedDataObject] = request.params
+
+          let typedData: any = {}
+          if (typeof(typedDataObject) === 'string') {
+            try {
+              typedData = JSON.parse(typedDataObject)
+            } catch (e) {}
+          } else {
+            typedData = typedDataObject
+          }
 
           let sig = ''
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            // TODO: use ethers eip712 impl.
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
             // prompt user to provide the response
@@ -284,13 +302,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_getNetworks': {
-          response.result = await signer.getNetworks()
+          // TODO: signer.getNetworks() will return provider and relayer objects, which are not realizable,
+          // instead they should be omitted.
+
+          // response.result = await signer.getNetworks()
+          response.result = await this.getNetworks()
           break
         }
 
         // smart wallet method
         case 'sequence_updateConfig': {
-          throw new Error('sequence_updateConfig method is not allowed')
+          throw new Error('sequence_updateConfig method is not allowed from a dapp')
           // NOTE: method is disabled as we don't need a dapp to request to update a config.
           // However, if we ever want this, we can enable it but must also use the prompter
           // for confirmation.
@@ -302,7 +324,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_publishConfig': {
-          // TODO
+          throw new Error('sequence_publishConfig method is not allowed from a dapp')
           break
         }
 
@@ -338,6 +360,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
 
     } catch (err) {
+      console.error(err)
+
       // TODO/XXX: error messages
       // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1193.md#rpc-errors
       response.result = null
@@ -366,27 +390,25 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return this.signer.getChainId()
   }
 
-  async getNetwork(): Promise<NetworkConfig> {
-    const chainId = await this.getChainId()
+  async getNetworks(): Promise<NetworkConfig[]> {
+    // TODO: connection may request its own defaultChain, so we should update..
+    // hmpf.. what happens if two dapps request same wallet window..? prob namespace it by domain key..?
 
-    const chainIds = []
-    const networkConfig = this.networks.find(config => {
-      if (config.chainId === chainId) {
-        return config
-      }
-      chainIds.push(config.chainId)
+    const networks = await this.signer.getNetworks()
+
+    // omit provider and relayer objects as they are not serializable
+    return networks.map(n => {
+      const network: NetworkConfig = { ...n }
+      network.provider = undefined
+      network.relayer = undefined
+      return network
     })
-
-    if (!networkConfig) {
-      throw new Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
-    }
-    return networkConfig
   }
 
-  notifyNetwork(network: NetworkConfig) {
-    this.events.emit('network', network)
+  notifyNetworks(networks: NetworkConfig[]) {
+    this.events.emit('networks', networks)
     // TODO: check/confirm this is correct..
-    this.events.emit('chainChanged', ethers.utils.hexlify(network.chainId))
+    this.events.emit('chainChanged', ethers.utils.hexlify(networks[0].chainId))
   }
 
   notifyLogin(accountAddress: string) {

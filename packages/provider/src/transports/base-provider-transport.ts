@@ -13,7 +13,7 @@ let _messageIdx = 0
 
 export const nextMessageIdx = () => ++_messageIdx
 
-export class BaseProviderTransport implements ProviderTransport {
+export abstract class BaseProviderTransport implements ProviderTransport {
 
   protected pendingMessageRequests: ProviderMessageRequest[] = []
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
@@ -24,7 +24,7 @@ export class BaseProviderTransport implements ProviderTransport {
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
 
   protected loginPayload: string
-  protected networkPayload: NetworkConfig
+  protected networksPayload: NetworkConfig[]
 
   constructor() {}
 
@@ -52,7 +52,7 @@ export class BaseProviderTransport implements ProviderTransport {
   handleMessage(message: ProviderMessage<any>) {
 
     // message is either a notification, or its a ProviderMessageResponse
-    console.log("RECEIVED MESSAGE FROM WALLET", message)
+    console.log("RECEIVED MESSAGE FROM WALLET", message.idx, message)
 
     const requestIdx = message.idx
     const payload = message.data
@@ -90,17 +90,22 @@ export class BaseProviderTransport implements ProviderTransport {
     if (message.type === ProviderMessageType.MESSAGE) {
 
       // Require user confirmation, bring up wallet to prompt for input then close
+      // TODO: perhaps apply technique like in multicall to queue messages within
+      // a period of time, then close the window if responseCallbacks is empty, this is better.
       if (this.confirmationOnly) {
         // console.log('========> A callback.size?', this.callbacks.size)
         setTimeout(() => {
           // console.log('========> B callback?', this.callbacks.size)
           if (this.responseCallbacks.size === 0) {
-            this.closeWallet()
+            // TODO: re-enable once we add caching provider with mult-chain support..
+            // this.closeWallet()
           }
-        }, 0)
+        }, 1500) // TODO: be smarter about timer as we're processing the response callbacks..
       }
 
       if (!responseCallback) {
+        // TODO: this would occur likely if 'idx' isn't set, which should never happen
+        // or when we register two handler, should use singleton..
         throw new Error('impossible state')
       }
 
@@ -167,10 +172,10 @@ export class BaseProviderTransport implements ProviderTransport {
       return
     }
 
-    // NOTIFY NETWORK -- when a user sets or changes their ethereum network
-    if (message.type === ProviderMessageType.NETWORK) {
-      this.networkPayload = message.data
-      this.events.emit('network', this.networkPayload)
+    // NOTIFY NETWORKS -- when a user sets or changes their ethereum network
+    if (message.type === ProviderMessageType.NETWORKS) {
+      this.networksPayload = message.data
+      this.events.emit('networks', this.networksPayload)
       return
     }
   }
@@ -241,22 +246,23 @@ export class BaseProviderTransport implements ProviderTransport {
           resolve(this.loginPayload)
           return
         }
+        // TODO: return accountsAddress event instead..?
         this.events.once('login', (payload) => {
           resolve(payload)
         })
       }),
-      new Promise<NetworkConfig>(resolve => {
-        if (this.networkPayload) {
-          resolve(this.networkPayload)
+      new Promise<NetworkConfig[]>(resolve => {
+        if (this.networksPayload) {
+          resolve(this.networksPayload)
           return
         }
-        this.events.once('network', (payload) => {
+        this.events.once('networks', (payload) => {
           resolve(payload)
         })
       })
     ]).then(values => {
-      const [ accountAddress, network ] = values
-      return { accountAddress, network }
+      const [ accountAddress, networks ] = values
+      return { accountAddress, networks }
     })
   }
 

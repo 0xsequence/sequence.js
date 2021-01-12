@@ -7,7 +7,7 @@ import { WalletRequestHandler } from '../wallet-request-handler'
 
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
-export class BaseWalletTransport implements WalletTransport {
+export abstract class BaseWalletTransport implements WalletTransport {
 
   protected walletRequestHandler: WalletRequestHandler
   protected _connectId: string
@@ -17,6 +17,10 @@ export class BaseWalletTransport implements WalletTransport {
   }
 
   register() {
+    throw new Error('abstract method')
+  }
+
+  unregister() {
     throw new Error('abstract method')
   }
 
@@ -54,7 +58,7 @@ export class BaseWalletTransport implements WalletTransport {
           data: this._connectId
         })
 
-        this.notifyNetwork(await this.walletRequestHandler.getNetwork())
+        this.notifyNetworks(await this.walletRequestHandler.getNetworks())
         this.notifyLogin(await this.walletRequestHandler.getAddress())
 
         // TODO: perhaps send accountsChanged and chainChanged as well..?
@@ -96,11 +100,12 @@ export class BaseWalletTransport implements WalletTransport {
     // TODO: .. hmfp... format..?
   }
 
-  notifyNetwork(network: NetworkConfig) {
+  notifyNetworks(networks: NetworkConfig[]) {
+    // TODO: ensure "networks" when json stringifying omits the objects..
     this.sendMessage({
       idx: -1,
-      type: ProviderMessageType.NETWORK,
-      data: network
+      type: ProviderMessageType.NETWORKS,
+      data: networks
     })
   }
 

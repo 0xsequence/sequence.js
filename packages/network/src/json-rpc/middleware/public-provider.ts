@@ -1,12 +1,11 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
+import { SignerJsonRpcMethods } from './signing-provider'
 
 export class PublicProvider implements JsonRpcMiddlewareHandler {
 
   private privateJsonRpcMethods = [
-    'net_version', 'eth_chainId',
-    'eth_accounts', 'personal_sign', 'eth_sign', 'eth_signTypedData',
-    'eth_sendTransaction', 'eth_sendRawTransaction'
+    'net_version', 'eth_chainId', 'eth_accounts', ...SignerJsonRpcMethods
   ]
 
   private provider?: JsonRpcProvider

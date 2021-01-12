@@ -16,11 +16,13 @@ export interface NetworkConfig {
   relayerUrl?: string
   relayer?: Relayer
 
-  sidechains?: NetworkConfig[]
+  // TODO: add list of bridges (and their respective configs) available
+  // for a particular network
+  // bridges?: any[]
 
-  // isMainChain identifies the default network. For example, a dapp may run on the Matic
+  // isDefaultChain identifies the default network. For example, a dapp may run on the Matic
   // network and may configure the wallet to use it as its main/default chain.
-  isMainChain?: boolean
+  isDefaultChain?: boolean
 
   // isAuthChain identifies the network containing wallet config contents.
   isAuthChain?: boolean
@@ -40,7 +42,7 @@ export const mainnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     rpcUrl: urlClean(`${vars.baseRpcUrl}/mainnet`),
     relayerUrl: urlClean(`${vars.baseRelayerUrl}/mainnet`),
-    isMainChain: true
+    isDefaultChain: true
   },
   {
     title: 'Matic',
@@ -62,7 +64,7 @@ export const testnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     rpcUrl: urlClean(`${vars.baseRpcUrl}/rinkeby`),
     relayerUrl: urlClean(`${vars.baseRelayerUrl}/rinkeby`),
-    isMainChain: true
+    isDefaultChain: true
   },
   {
     name: 'goerli',

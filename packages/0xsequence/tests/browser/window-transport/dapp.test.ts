@@ -10,6 +10,7 @@ import { addressOf } from '@0xsequence/config'
 import { testWalletContext } from '../testutils'
 
 const walletProvider = new WindowMessageProvider('http://localhost:9999/mock-wallet/mock-wallet.test.html')
+walletProvider.register()
 
 // ;(window as any).walletProvider = walletProvider
 
@@ -21,14 +22,6 @@ export const tests = async () => {
     const connected = await walletProvider.waitUntilConnected()
     assert.true(connected, 'connected is true')
   })
-
-  // TODO: switch to sequence Web3Provider(provider)
-  // and use the getSequenceSigner()........ or, maybe getSigner()
-  // will give us some extra methods, perhaps..?
-
-  // TODO: switch to sequence's Web3Provider + Signer..
-  // we don't even have signTypedData here..
-
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
   // ..
@@ -151,7 +144,7 @@ export const tests = async () => {
       domain: {
         name: 'Ether Mail',
         version: '1',
-        chainId: 1,
+        chainId: 31337,
         verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
       },
       message: {
@@ -166,7 +159,7 @@ export const tests = async () => {
     const sig = await provider.send('eth_signTypedData', [address, typedData])
     assert.equal(
       sig,
-      '0x00010001529f138c329f03af22a2e85d087c604e3e7f1910c5bca6d5d2f45555e32d7193269c519ebe41c1ef677cbeaf0b226f7c540ae4f12842eaf6cfe3190ad4deff9b1b02',
+      '0x00010001097d16cab1a08fca49c3d5acae73ecfb4aeaa9051252e698dd7cc2b47f53973e1cc4e0d1855e2134273f62a1c732b500a89ab761acc7625bf4b7ea699365f5b21b02',
       'signature match typed-data'
     )
 

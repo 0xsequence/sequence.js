@@ -2,19 +2,27 @@ import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCal
 
 export class CachedProvider implements JsonRpcMiddlewareHandler {
 
-  private cachableJsonRpcMethods = ['net_version', 'eth_chainId', 'eth_accounts']
-  private cache: {[key: string]: any}
-  private onUpdateCallback?: () => void
+  private cachableJsonRpcMethods = [
+    'net_version', 'eth_chainId', 'eth_accounts',
+    'sequence_getWalletContext', 'sequence_getNetworks'
+  ]
 
-  constructor() {
+  private cache: {[key: string]: any}
+  private onUpdateCallback?: (key?: string, value?: any) => void
+
+  readonly defaultChainId?: number
+
+  constructor(defaultChainId?: number) {
     this.cache = {}
+    this.defaultChainId = defaultChainId
   }
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method)) {
-        const key = this.cacheKey(request.method, request.params)
+        const key = this.cacheKey(request.method, request.params, chainId || this.defaultChainId)
         const result = this.getCacheValue(key)
         if (result && result !== '') {
           callback(null, {
@@ -27,22 +35,33 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       }
   
       // Continue down the handler chain
-      next(request, (error: any, response?: JsonRpcResponse) => {
+      next(request, (error: any, response?: JsonRpcResponse, chainId?: number) => {
         // Store result in cache and continue
         if (this.cachableJsonRpcMethods.includes(request.method)) {
           if (response.result) {
-            const key = this.cacheKey(request.method, request.params)
+            const key = this.cacheKey(request.method, request.params, chainId || this.defaultChainId)
             this.setCacheValue(key, response.result)
           }
         }
   
         // Exec next handler
         callback(error, response)
-      })
+      }, chainId || this.defaultChainId)
     }
   }
 
-  cacheKey = (method: string, params: any[]) => `${method}:${JSON.stringify(params)}`
+  cacheKey = (method: string, params: any[], chainId?: number) => {
+    let key = ''
+    if (chainId) {
+      key = `${chainId}:${method}:`
+    } else {
+      key = `:${method}:`
+    }
+    if (!params || params.length === 0) {
+      return key+'[]'
+    }
+    return key+JSON.stringify(params)
+  }
 
   getCache = () => this.cache
 
@@ -60,16 +79,15 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
   setCacheValue = (key: string, value: any) => {
     this.cache[key] = value
     if (this.onUpdateCallback) {
-      this.onUpdateCallback()
+      this.onUpdateCallback(key, value)
     }
   }
 
-  onUpdate(callback: () => void) {
+  onUpdate(callback: (key?: string, value?: any) => void) {
     this.onUpdateCallback = callback
   }
 
-  resetCache = () => {
+  clearCache = () => {
     this.cache = {}
-    this.onUpdateCallback = null
   }
 }
