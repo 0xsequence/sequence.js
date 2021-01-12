@@ -124,9 +124,6 @@ export const tests = async () => {
     {
       assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337')
 
-      // TODO: so it appears our defaultChain is wrong.. or we're screwing up teh cache?
-      console.log('weeeeeeeeeeeeeee')
-
       const network = await provider.getNetwork()
       assert.equal(network.chainId, 31337, 'chain id match')
   
