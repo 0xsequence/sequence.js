@@ -25,6 +25,8 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     }
   }
 
+  // TODO: add register() method.
+
   openWallet = (path?: string, state?: object): void => {
     // assume the wallet is already opened or handled by another process
     return
@@ -36,7 +38,12 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   }
 
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    const response = await this.sendMessageRequest({ idx: nextMessageIdx(), type: ProviderMessageType.MESSAGE, data: request })
+    const response = await this.sendMessageRequest({
+      idx: nextMessageIdx(),
+      type: ProviderMessageType.MESSAGE,
+      data: request,
+      chainId: chainId
+    })
     callback(null, response.data)
   }
 

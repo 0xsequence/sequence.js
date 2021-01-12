@@ -1,9 +1,12 @@
-import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, JsonRpcRouter, JsonRpcMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware, allowProviderMiddleware } from '@0xsequence/network'
+import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
+  JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
+  SigningProvider, EagerProvider, JsonRpcExternalProvider,
+  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcHandler, findNetworkConfig
+} from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/wallet'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import { Web3Provider, Web3Signer } from './provider'
-import { SidechainProvider } from './sidechain-provider'
 import { WindowMessageProvider, ProxyMessageProvider } from './transports'
 import { WalletSession, ProviderMessageEvent } from './types'
 import { WalletCommands } from './commands'
@@ -17,9 +20,9 @@ export interface WalletProvider {
   isLoggedIn(): boolean
   getSession(): WalletSession | undefined
 
-  getAddress(): string // TODO: .. Promise..?
-  getNetworks(): Promise<NetworkConfig[]>
-  getChainId(): number // TODO: Promise..?
+  getAddress(): Promise<string>
+  getNetworks(chainId?: ChainId): Promise<NetworkConfig[]>
+  getChainId(): Promise<number>
 
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
@@ -43,25 +46,40 @@ export class Wallet implements WalletProvider {
   public commands: WalletCommands
 
   private config: ProviderConfig
-  private session: WalletSession | null
+  private session?: WalletSession
 
-  private provider: Web3Provider
-  private jsonRpcRouter?: JsonRpcRouter
-  private cachedProvider?: CachedProvider
-  private publicProvider?: PublicProvider
-  private allowProvider?: JsonRpcMiddleware
+  private transport: {
+    provider?: Web3Provider
 
-  private windowTransportProvider?: WindowMessageProvider
-  // TODO: ProxyMessageProvider ..?
+    router?: JsonRpcRouter
+    allowProvider?: JsonRpcMiddleware
+    cachedProvider?: CachedProvider
+    publicProvider?: PublicProvider
+  
+    windowMessageProvider?: WindowMessageProvider
+    proxyMessageProvider?: ProxyMessageProvider // TODO ..
+  }
 
   private networks: NetworkConfig[]
-  private sidechainProviders: { [id: number] : Web3Provider }
+  private providers: { [chainId: number] : Web3Provider }
 
-  constructor(config?: ProviderConfig) { // TODO: perhaps allow Partial<ProviderConfig> and we use defaults where undefined?
-    this.config = config
-    if (!this.config) {
-      this.config = { ...DefaultProviderConfig }
+
+  constructor(defaultNetworkId?: string | number, config?: Partial<ProviderConfig>) {
+    // config is a Partial, so that we may intersect it with the DefaultProviderConfig,
+    // which allows easy overriding and control of the config.
+    this.config = { ...DefaultProviderConfig }
+    if (config) {
+      this.config = { ...this.config, ...config }
     }
+    if (defaultNetworkId) {
+      this.config.defaultNetworkId = defaultNetworkId
+    } else if (!this.config.defaultNetworkId) {
+      this.config.defaultNetworkId = 'mainnet'
+    }
+
+    this.transport = {}
+    this.networks = []
+    this.providers = {}
     this.commands = new WalletCommands(this)
     this.init()
   }
@@ -69,12 +87,36 @@ export class Wallet implements WalletProvider {
   private init = () => {
     const config = this.config
 
+    if (this.transport.provider) {
+      // init must have already been called
+      return
+    }
+
+    // TODO: check the config types, if we want proxy, we need method to pass here.
+    // TODO: higher-order MessageBroadcaster(...transports) should go here, where we send/listen
+    // on multiple channels.. or.. MessageMux(..transports) .. ie. MessageMux(windowTransport, proxyTransport)
+    // this.proxyTransportProvider = new ProxyMessageProvider()
+
+
+    // TODO: upon login... we getNetworks()
+
+    // v----------***********************************
+    // TODO: the dapp sets the *defaultChain*, so when opening a connection, we need to CONNECT and pass
+    // defaultChainId: XXX argument, so then the transport knows which chain is the default expected by the client, etc. weee.. getting there.
+    //
+    // note: on connect, dapp can request between 'mainnet' or 'testnet' mode..? or at least request between both network sets..?
+    // at which point, wallet will go into one of the respective sets..
+    // ^----------***********************************
+
+    //--
+
     // Setup provider
     switch (config.type) {
+      // TODO: loop through types, which are just Window and Proxy
       case 'Window': {
 
         // .....
-        this.allowProvider = allowProviderMiddleware((): boolean => {
+        this.transport.allowProvider = allowProviderMiddleware((): boolean => {
           const isLoggedIn = this.isLoggedIn()
           if (!isLoggedIn) {
             throw new Error('Sequence: not logged in')
@@ -83,40 +125,44 @@ export class Wallet implements WalletProvider {
         })
 
         // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
-        this.cachedProvider = new CachedProvider()
+        this.transport.cachedProvider = new CachedProvider()
 
         // ..
-        this.publicProvider = new PublicProvider()
+        // TODO: might not need this since getProvider() could do this for us..?
+        // but need to check chainId, etc. etc.. check later
+        // this.publicProvider = new PublicProvider()
 
         // ..
-        this.windowTransportProvider = new WindowMessageProvider(this.config.walletAppURL)
+        this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
+        this.transport.windowMessageProvider.register()
 
-        // TODO: jsonRpcRouter needs to have multi-chain support..
-        // and cache needs to be segmented by the chainId of the network..
-        this.jsonRpcRouter = new JsonRpcRouter(this.windowTransportProvider, [
+        // ..
+        this.transport.router = new JsonRpcRouter([
           loggingProviderMiddleware,
-          this.allowProvider,
-          this.cachedProvider,
-          this.publicProvider
-        ])
+          this.transport.allowProvider,
+          this.transport.cachedProvider,
+          // this.publicProvider
+        ], this.transport.windowMessageProvider)
 
-        this.provider = new Web3Provider(
-          this.jsonRpcRouter,
-          // this.config.walletContext,
-          // 'any'
-        )
+        this.transport.provider = new Web3Provider(this.transport.router)
 
-        this.windowTransportProvider.on('network', network => {
-          this.useNetwork(network)
-          this.saveSession(this.session)
-        })
-        this.windowTransportProvider.on('logout', () => {
+        // below will update the networks automatically when the wallet networks change, however
+        // this is currently disabled as it may confuse the dapp. Instead the dapp can
+        // check active networks list from the session and switch the default network
+        // with useNetwork() explicitly
+        //
+        // this.windowTransportProvider.on('networks', networks => {
+        //   this.useNetworks(networks)
+        //   this.saveSession(this.session)
+        // })
+        this.transport.windowMessageProvider.on('logout', () => {
           this.logout()
         })
 
         break
       }
 
+      // TODO: add unsupported message...
       case 'Web3Global': {
         // TODO: check if window.web3.currentProvider or window.ethereum exists or is set, otherwise return error
         // TODO: call window.ethereum.enable() or .connect()
@@ -156,8 +202,10 @@ export class Wallet implements WalletProvider {
 
     switch (config.type) {
       case 'Window': {
+        // TODO: on connect, we need to inform the network..
         await this.openWallet('', { login: true }) // TODO: do we need the state thing? maybe/maybe not..
-        const sessionPayload = await this.windowTransportProvider.waitUntilLoggedIn()
+        const sessionPayload = await this.transport.windowMessageProvider.waitUntilLoggedIn()
+
         this.useSession(sessionPayload)
         this.saveSession(sessionPayload)
 
@@ -168,6 +216,8 @@ export class Wallet implements WalletProvider {
         break
       }
 
+      // TODO: remove..
+      // .. or, if we keep this, can we use our SDK with injected window.web3?
       case 'Web3Global': {
         // TODO: for Web3Global,
         // window.ethereum.enable() ..
@@ -181,8 +231,9 @@ export class Wallet implements WalletProvider {
 
   logout(): void {
     window.localStorage.removeItem('@sequence.session')
-    this.session = null
-    this.cachedProvider?.resetCache()
+    this.session = undefined
+    this.transport.cachedProvider?.clearCache()
+    this.transport.cachedProvider?.onUpdate(undefined)
   }
 
   getProviderConfig(): ProviderConfig {
@@ -190,49 +241,62 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
-    if (this.windowTransportProvider) {
-      return this.windowTransportProvider.isConnected()
+    if (this.transport.windowMessageProvider) {
+      return this.transport.windowMessageProvider.isConnected()
     } else {
       return false
     }
   }
 
   isLoggedIn(): boolean {
-    return this.session !== undefined && this.session !== null &&
-      this.session.network !== undefined && this.session.network !== null &&
+    return this.session !== undefined &&
+      this.session.networks !== undefined && this.session.networks.length > 0 &&
       this.session.accountAddress.startsWith('0x')
   }
 
   getSession = (): WalletSession | undefined => {
     if (!this.isLoggedIn()) {
-      throw new Error('login first')
+      return undefined
     }
     return this.session
   }
 
-  getAddress = (): string => {
+  getAddress = async (): Promise<string> => {
     const session = this.getSession()
     return session.accountAddress
   }
 
-  getNetworks = async (): Promise<NetworkConfig[]> => {
+  getNetworks = async (chainId?: ChainId): Promise<NetworkConfig[]> => {
+    // TODO: we should store the networks list in the session, but allow it to be refreshed here
+    // as well, consider an interface where we update the session whenever we call up the wallet window (for any reason)
+    // after some time (ie 1 hour)
+
+    // return this.getSigner().getNetworks()
+
+    if (!this.isLoggedIn()) {
+      throw new Error('login first')
+    }
+
     const session = this.getSession()
-    if (!session.network) {
+    if (!session.networks) {
       throw new Error('network has not been set by session. login first.')
     }
-    // TODO: get array of networks.. we need em all..........
-    // however, there is a "sidechains" argument on it, we could identify one
-    // as the MainChain, etc. etc.
-    return [session.network]
+
+    if (chainId) {
+      const network = findNetworkConfig(session.networks, chainId)
+      return network ? [network] : []
+    }
+    return session.networks
   }
 
-  // getChainId returns the default dapp chain
-  getChainId = (): number => {
+  // getChainId returns the default chain id
+  getChainId = async (): Promise<number> => {
     const session = this.getSession()
-    if (!session.network || !(session.network.chainId > 0)) {
-      throw new Error('network has not been set by session. login first.')
+    if (!session.networks || session.networks.length < 1) {
+      throw new Error('networks have not been set by session. login first.')
     }
-    return session.network.chainId
+    // default chain id is first one in the list, by design
+    return session.networks[0].chainId
   }
 
   openWallet = async (path?: string, state?: any): Promise<boolean> => {
@@ -240,12 +304,11 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
 
-    if (this.windowTransportProvider) {
-      this.windowTransportProvider.openWallet(path, state)
+    if (this.transport.windowMessageProvider) {
+      this.transport.windowMessageProvider.openWallet(path, state)
 
       // TODO: handle case when popup is blocked, should return false, or throw exception
-      //
-      await this.windowTransportProvider.waitUntilConnected()
+      await this.transport.windowMessageProvider.waitUntilConnected()
 
       return true
     }
@@ -253,55 +316,82 @@ export class Wallet implements WalletProvider {
   }
 
   closeWallet = (): void => {
-    if (this.windowTransportProvider) {
-      this.windowTransportProvider.closeWallet()
+    if (this.transport.windowMessageProvider) {
+      this.transport.windowMessageProvider.closeWallet()
     }
   }
 
   getProvider(chainId?: ChainId): Web3Provider | undefined {
-    // TODO: handle chainId ..
-    return this.provider
+    // return the top-level provider message transport when chainId is unspecified
+    if (!chainId) {
+
+      // TODO: for the "defaultNetwork", we'll also have an entry here..
+      // maybe we should even return that instead of this.provider, as it will have built-in
+      // public-provider and other stuff..?
+      // if (this.networks && this.networks.length > 0 && this.providers[this.networks[0].chainId]) {
+      //   return this.providers[this.networks[0].chainId]
+      // }
+      // or... we set chainId = this.networks[0].chainId ..
+
+      return this.transport.provider
+    }
+
+    if (!this.isLoggedIn()) {
+      throw new Error(`session is empty. login and try again.`)
+    }
+    if (this.session.networks.length === 0) {
+      throw new Error('networks list is empty. upon logging in, networks should be populated')
+    }
+
+    const network = findNetworkConfig(this.session.networks, chainId)
+
+    // return memoized network provider
+    if (this.providers[network.chainId]) {
+      return this.providers[network.chainId]
+    }
+
+    // network.provider may be set by the ProviderConfig override
+    const rpcProvider = network.provider ? network.provider : new JsonRpcProvider(network.rpcUrl, network.chainId)
+
+    // provider stack for the respective network
+    const router = new JsonRpcRouter([
+      loggingProviderMiddleware,
+      new EagerProvider(this.session.accountAddress, network.chainId), // TODO: keep or use cache..?
+      new CachedProvider(network.chainId),
+      new SigningProvider(this.transport.provider)
+    ], new JsonRpcSender(rpcProvider))
+    
+    const provider = new Web3Provider(router, network.chainId)
+
+    this.providers[network.chainId] = provider
+    return provider
   }
 
-  // getMainProvider() ?
-
-  getAuthProvider(): Web3Provider {
-    const provider = this.sidechainProviders[this.getAuthNetwork().chainId]
-    return provider ? provider : this.getProvider()
+  async getAuthProvider(): Promise<Web3Provider> {
+    return this.getProvider((await this.getAuthNetwork()).chainId)
   }
 
-  getAuthNetwork(): NetworkConfig {
-    const net = this.networks.find((n) => n.isAuthChain)
-    return net ? net : this.session.network
+  async getAuthNetwork(): Promise<NetworkConfig> {
+    return (await this.getNetworks()).find((n) => n.isAuthChain)
   }
 
-  // TODO: just use getProvider(chainId) ...
-  // or perhaps we keep this and consider structure of "sidechains" field in NetworkConfig ..?
-  // "sidechains" seems redundant though, instead, need to know where bridges exist instead..
-  getSidechainProvider(chainId: number): JsonRpcProvider | undefined {
-    return this.sidechainProviders[chainId]
-  }
-
-  getSidechainProviders(): { [id: number] : Web3Provider } {
-    return this.sidechainProviders
+  getAllProviders(): { [chainId: number] : Web3Provider } {
+    return this.providers
   }
 
   getSigner(chainId?: ChainId): Web3Signer {
     return this.getProvider(chainId).getSigner()
   }
 
-  getAuthSigner(): Web3Signer {
-    return this.getAuthProvider().getSigner()
+  async getAuthSigner(): Promise<Web3Signer> {
+    return (await this.getAuthProvider()).getSigner()
   }
 
   getWalletConfig(): Promise<WalletConfig[]> {
-    // TODO: sequence_getWalletConfig can be cached by provider middleware
     return this.getSigner().getWalletConfig()
   }
 
   getWalletContext(): Promise<WalletContext> {
-    // TODO: sequence_getWalletContext can be cached by provider middleware
-    // TODO: optionally, this can be forced to a diff value by the ProviderConfig
     return this.getSigner().getWalletContext()
   }
 
@@ -310,26 +400,31 @@ export class Wallet implements WalletProvider {
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    if (!this.windowTransportProvider) {
+    if (!this.transport.windowMessageProvider) {
       return
     }
-    this.windowTransportProvider.on(event, fn)
+    this.transport.windowMessageProvider.on(event, fn)
   }
 
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    if (!this.windowTransportProvider) {
+    if (!this.transport.windowMessageProvider) {
       return
     }
-    this.windowTransportProvider.once(event, fn)
+    this.transport.windowMessageProvider.once(event, fn)
   }
 
-  private loadSession = (): WalletSession | null => {
+  private loadSession = (): WalletSession => {
     const data = window.localStorage.getItem('@sequence.session')
     if (!data || data === '') {
       return null
     }
-    const session = JSON.parse(data) as WalletSession
-    return session
+    try {
+      const session = JSON.parse(data) as WalletSession
+      return session
+    } catch (err) {
+      console.warn('loadSession failed, unable to parse session payload from localStorage.')
+      return undefined
+    }
   }
 
   private saveSession = (session: WalletSession) => {
@@ -349,14 +444,16 @@ export class Wallet implements WalletProvider {
     if (!session.providerCache) {
       session.providerCache = {}
     }
-    this.cachedProvider.setCache(session.providerCache)
-    this.cachedProvider.onUpdate(() => {
-      this.session.providerCache = this.cachedProvider.getCache()
+    this.transport.cachedProvider.setCache(session.providerCache)
+    this.transport.cachedProvider.onUpdate(() => {
+      this.session.providerCache = this.transport.cachedProvider.getCache()
       this.saveSession(this.session)
     })
 
-    // set network
-    this.useNetwork(session.network)
+    // set networks
+    // TODO: build intersected list with this.config.networks
+    this.networks = session.networks
+    // this.useNetworks(session.networks)
 
     // confirm the session address matches the one with the signer
     const accountAddress = await this.getSigner().getAddress()
@@ -365,102 +462,34 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  private useNetwork = (network: NetworkConfig) => {
-    if (!this.session) {
-      this.session = {}
-    }
+  // private useNetworks = (networks: NetworkConfig[]) => {
+  //   if (!this.isLoggedIn()) {
+  //     throw new Error('login first')
+  //   }
 
-    // TODO/review comment below and remove it..
-    // TODO: Ethers v4 ignores the RPC url provided if the network.name is provided
-    // and since ethers doesn't know about mumbai or matic, it will throw an error
-    // for unknown network. Setting the network to null ensures the RPC url is used 
-    // for the JsonRpcProvivider generated. I don't think Ethers V5 fixes this, but
-    // we will need to test once we migrated to it.
-    // TODO: review and maybe always set network.name to null..?
-    // if (network.name == 'mumbai' || network.name == 'matic') {
-    //   network.name = null
-    // }
-
-    // TODO: with ethers v5, we can set network to 'any', then set network = null
-    // anytime the network changes, and call detectNetwork(). We can reuse
-    // that object instance instead of creating a new one as below.
-    this.provider = new Web3Provider(
-      this.jsonRpcRouter,
-      // this.config.walletContext,
-      // null
-      // 'any'
-    )
-    
-
-    // ..
-    this.publicProvider.setRpcUrl(network.rpcUrl)
-
-    // seed the session cache
-    this.cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
-    this.cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
-
-    // refresh our provider cache when the network changes
-    if (this.session.network && this.session.network.chainId !== network.chainId) {
-      this.cachedProvider.resetCache()
-      this.provider.send('eth_accounts', [])
-      this.provider.send('net_version', [])
-      this.provider.send('eth_chainId', [])
-    }
-
-    // update network in session
-    this.session.network = network
-
-    // update sidechain providers
-    this.useSidechainNetworks(network.sidechains ? network.sidechains : [])
-  }
-
-  private useSidechainNetworks = (networks: NetworkConfig[]) => {
-    // Reconstruct sidechain providers
-    this.sidechainProviders = networks.reduce((providers, network) => {
-      const sideExternalWindowProvider = new SidechainProvider(
-        this.windowTransportProvider,
-        network.chainId
-      )
-
-      const cachedProvider = new CachedProvider()
-      const publicProvider = new PublicProvider(network.rpcUrl)
-
-      cachedProvider.setCacheValue('net_version:[]', `${network.chainId}`)
-      cachedProvider.setCacheValue('eth_chainId:[]', ethers.utils.hexlify(network.chainId))
-  
-      const jsonRpcRouter = new JsonRpcRouter(sideExternalWindowProvider, [
-        loggingProviderMiddleware,
-        this.allowProvider,
-        cachedProvider,
-        publicProvider
-      ])
-
-      providers[network.chainId] = new Web3Provider(
-        jsonRpcRouter,
-        // this.config.walletContext,
-        network
-      )
-      return providers
-    }, {} as {[id: number]: Web3Provider})
-
-    // Save raw networks
-    this.networks = networks
-  }
+  //   // ..
+  //   if (this.config.networks) {
+  //     // intersect our this.config.networks if exists..
+  //     this.networks = networks
+  //     // TODO: add a method, which can combine network configs..
+  //   } else {
+  //     this.networks = networks
+  //   }
+  // }
 }
 
-// TODO: allow dapp to specify the requested network and provide their own rpcUrl
-// for a particular chain. Probably pass "networks: object"
 export interface ProviderConfig {
   type: ProviderType
 
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
 
-  // Sequence Wallet Modules Context
-  walletContext: WalletContext
+  // Sequence Wallet Modules Context override. By default (and recommended), the
+  // WalletContext is returned by the wallet app upon login.
+  walletContext?: WalletContext
 
   // Global web3 provider (optional)
-  web3Provider?: ExternalProvider
+  // web3Provider?: ExternalProvider
 
   // WindowProvider config (optional)
   windowTransport?: {
@@ -468,21 +497,64 @@ export interface ProviderConfig {
     // timeout?: number
   }
 
-  // TODO .. we don't need this to be set, but can be provided for overrides..
-  networks?: Networks // TODO: rename to networkConfig: NetworkConfig[] ?
-  // and rename defaultNetwork to "network" ?
 
-  // defaultNetwork
-  defaultNetwork?: string | number | NetworkConfig // ie. 'mainnet', 1, or { name: 'etc.', chainId: etc.. }
+  // or..
+  // networks: { mainnetConfigs: , testnetConfigs: .. , mode: '..', defaultNetworkId: '..',  } ?
+
+  // networks is a configuration list of networks used by the wallet. This list
+  // is combined with the network list supplied from the wallet upon login,
+  // and settings here take precedence such as overriding a relayer setting, or rpcUrl.
+  networks?: NetworkConfig[]
+
+  // mainnetNetworks ..?
+  // testnetNetworks ..?
+
+  // automatically will be set..? hmpf.. if you set your own networks, need to specify this? maybe not
+  // networkMode: 'mainnet' | 'testnet'
+
+  // networkRpcUrl will set the provider rpcUrl of the default network 
+  networkRpcUrl?: string
+
+  // defaultNetworkId is the primary network of a dapp and the default network a
+  // provider will communicate. Note: this setting is also configurable from the
+  // Wallet constructor's first argument.
+  defaultNetworkId?: string | number
 }
 
+/*
+
+const wallet = new Wallet({
+  network: {
+    chainId: 1,
+    rpcUrl: 'https://.....',
+    mode: 'mainnet'
+  }
+})
+
+//--
+
+
+const wallet = new Wallet('mainnet')
+
+const wallet = new Wallet('mainnet', { etc ..})
+const wallet = new Wallet(1, { walletAppURL: 'xx', networkRpcUrl: 'xxx', networks: [{ chainId: 1, rpcUrl: 'xxx' }]  })
+
+
+everything can be omitted and will default to mainnet.. as..
+
+const wallet = new Wallet()
+
+//--
+
+
+*/
+
+// TODO: remove Web3Global ..?
 export type ProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
 
 export const DefaultProviderConfig: ProviderConfig = {
   // TODO: check process.env for this if test or production, etc..
   walletAppURL: 'http://localhost:3333',
-
-  walletContext: { ...sequenceContext },
 
   type: 'Window', // TODO: rename.. transports: []
 

@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ethersproject/providers": "^5.0.17",
-    "ethers": "^5.0.24"
+    "@ethersproject/providers": "^5.0.18",
+    "ethers": "^5.0.25"
   },
   "peerDependencies": {},
   "devDependencies": {

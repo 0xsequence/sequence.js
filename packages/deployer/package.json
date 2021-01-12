@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@0xsequence/utils": "^0.7.0",
-    "@ethersproject/contracts": "^5.0.8",
-    "ethers": "^5.0.24",
+    "@ethersproject/contracts": "^5.0.9",
+    "ethers": "^5.0.25",
     "ora": "^5.1.0"
   },
   "peerDependencies": {},

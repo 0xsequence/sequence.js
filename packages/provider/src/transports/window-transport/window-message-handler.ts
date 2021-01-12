@@ -36,6 +36,10 @@ export class WindowMessageHandler extends BaseWalletTransport {
     this.init()
   }
 
+  unregister() {
+    window.removeEventListener('message', this.onWindowEvent)
+  }
+
   // onmessage is called when (the wallet) receives request messages from the dapp
   // over the window post-messaging transport
   private onWindowEvent = async (event: MessageEvent) => {

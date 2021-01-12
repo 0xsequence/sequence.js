@@ -7,6 +7,9 @@ import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transpor
 
 import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
+// ..
+let registeredWindowMessageProvider: WindowMessageProvider
+
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
   private walletWindow: Window
@@ -15,12 +18,24 @@ export class WindowMessageProvider extends BaseProviderTransport {
   constructor(walletAppURL: string) {
     super()
     this.walletURL = new URL(walletAppURL)
-    this.init()
   }
 
-  private init = () => {
-    // init postMessage handler between dapp and wallet
+  register = () => {
+    if (registeredWindowMessageProvider) {
+      throw new Error('A WindowMessageProvider is already registered. There can only be one.')
+    }
+
+    // listen for incoming messages from wallet
     window.addEventListener('message', this.onWindowEvent)
+    registeredWindowMessageProvider = this
+  }
+
+  unregister = () => {
+    // disable message listener
+    if (registeredWindowMessageProvider === this) {
+      registeredWindowMessageProvider = undefined
+    }
+    window.removeEventListener('message', this.onWindowEvent)
   }
 
   openWallet = (path?: string, state?: object): void => {
@@ -160,7 +175,12 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     // TODO/XXX
     // TODO: try/catch for errors..? what kind of errors could come up...?
-    const response = await this.sendMessageRequest({ idx: nextMessageIdx(), type: ProviderMessageType.MESSAGE, data: request })
+    const response = await this.sendMessageRequest({
+      idx: nextMessageIdx(),
+      type: ProviderMessageType.MESSAGE,
+      data: request,
+      chainId: chainId
+    })
     callback(null, response.data)
   }
 

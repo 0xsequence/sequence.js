@@ -1,11 +1,11 @@
-import { Web3Provider, Networkish } from '@ethersproject/providers'
+import { Web3Provider as EthersWeb3Provider, Networkish } from '@ethersproject/providers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandler, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './types'
 
 export class JsonRpcRouter implements JsonRpcHandler {
   private sender: JsonRpcHandler
   private handler: JsonRpcHandlerFunc
 
-  constructor(sender: JsonRpcHandler, middlewares?: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>) {
+  constructor(middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>, sender: JsonRpcHandler) {
     this.sender = sender
     if (middlewares) {
       this.setMiddleware(middlewares)
@@ -16,13 +16,13 @@ export class JsonRpcRouter implements JsonRpcHandler {
     this.handler = createJsonRpcMiddlewareStack(middlewares, this.sender.sendAsync)
   }
 
-  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback) {
-    this.handler(request, callback)
+  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) {
+    this.handler(request, callback, chainId)
   }
 
-  createWeb3Provider(network?: Networkish): Web3Provider {
-    return new Web3Provider(this.sender, network)
-  }
+  // createWeb3Provider(network?: Networkish): EthersWeb3Provider {
+  //   return new EthersWeb3Provider(this.sender, network)
+  // }
 }
 
 export const createJsonRpcMiddlewareStack = (middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>, handler: JsonRpcHandlerFunc): JsonRpcHandlerFunc => {

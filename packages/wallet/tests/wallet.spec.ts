@@ -69,7 +69,7 @@ describe('Wallet integration', function () {
       name: 'local',
       chainId: ethnode.chainId,
       provider: ethnode.provider,
-      isMainChain: true,
+      isDefaultChain: true,
       isAuthChain: true
     }]
 

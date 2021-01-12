@@ -25,7 +25,7 @@ describe('Account integration', () => {
     // rpcUrl: `http://localhost:8545/`,
     provider: provider,
     relayer: new LocalRelayer(provider.getSigner()),
-    isMainChain: true,
+    isDefaultChain: true,
     isAuthChain: true
   }]
 

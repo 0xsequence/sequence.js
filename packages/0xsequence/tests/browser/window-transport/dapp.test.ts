@@ -9,6 +9,7 @@ import { addressOf, isValidSignature, packMessageData, recoverConfig } from '@0x
 import { testWalletContext } from '../testutils'
 
 const walletProvider = new WindowMessageProvider('http://localhost:9999/mock-wallet/mock-wallet.test.html')
+walletProvider.register()
 
 // ;(window as any).walletProvider = walletProvider
 
@@ -20,14 +21,6 @@ export const tests = async () => {
     const connected = await walletProvider.waitUntilConnected()
     assert.true(connected, 'connected is true')
   })
-
-  // TODO: switch to sequence Web3Provider(provider)
-  // and use the getSequenceSigner()........ or, maybe getSigner()
-  // will give us some extra methods, perhaps..?
-
-  // TODO: switch to sequence's Web3Provider + Signer..
-  // we don't even have signTypedData here..
-
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
   // ..
