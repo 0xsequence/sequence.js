@@ -16,6 +16,7 @@
     "@0xsequence/abi": "^0.7.0",
     "@0xsequence/chaind": "^0.7.0",
     "@0xsequence/network": "^0.7.0",
+    "@ethersproject/abi": "^5.0.10",
     "ethers": "^5.0.24"
   },
   "peerDependencies": {},

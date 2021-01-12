@@ -16,9 +16,10 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 import * as lib from '../src'
 
 import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
-  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, addressOf, joinSignatures,
-  imageHash, sortConfig, fetchImageHash
+  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, joinSignatures, fetchImageHash
 } from '../src'
+
+import { addressOf } from '@0xsequence/config'
 
 import { LocalWeb3Provider } from '../../provider/src'
 

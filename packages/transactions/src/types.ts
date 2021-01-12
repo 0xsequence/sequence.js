@@ -1,6 +1,6 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { TransactionRequest as EthersTransactionRequest, TransactionResponse } from '@ethersproject/providers'
-import { WalletConfig } from '@0xsequence/wallet'
+import { WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
 
 export interface Transaction {

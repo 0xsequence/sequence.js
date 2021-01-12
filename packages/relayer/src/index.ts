@@ -1,7 +1,7 @@
 import { providers } from 'ethers'
 import { Transaction, SignedTransactions } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig } from '@0xsequence/wallet'
+import { WalletConfig } from '@0xsequence/config'
 
 export interface Relayer {
 

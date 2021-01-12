@@ -38,9 +38,10 @@ import {
   sortConfig,
   compareAddr,
   imageHash,
-  isUsableConfig,
-  joinSignatures
-} from './config'
+  isUsableConfig
+} from '@0xsequence/config'
+
+import { joinSignatures } from './config'
 
 import { RemoteSigner } from './remote-signers'
 
