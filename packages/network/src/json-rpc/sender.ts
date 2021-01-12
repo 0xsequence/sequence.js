@@ -20,7 +20,7 @@ export class JsonRpcSender implements JsonRpcHandler {
       this.send = (method: string, params?: Array<any>, chainId?: number): Promise<any> => {
         return new Promise((resolve, reject) => {
           provider.sendAsync({
-            // TODO: really shouldn't have to set these here..?
+            // TODO: really shouldn't have to set these here?
             jsonrpc: JsonRpcVersion,
             id: ++_nextId,
             method,

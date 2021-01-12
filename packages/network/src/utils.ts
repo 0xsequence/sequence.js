@@ -82,12 +82,6 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
       }
       authChain = true
     }
-
-    // if (c.sidechains && c.sidechains.length > 0) {
-    //   if (!isValidNetworkConfig(c.sidechains)) {
-    //     return false
-    //   }
-    // }
   }
 
   if (!defaultChain) {

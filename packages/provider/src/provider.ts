@@ -2,8 +2,6 @@ import { ethers } from 'ethers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, Networkish } from "@ethersproject/providers"
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
-import { _TypedDataEncoder } from '@ethersproject/hash'
-import { poll } from '@ethersproject/web'
 import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId, JsonRpcVersion, JsonRpcSender, isJsonRpcProvider } from '@0xsequence/network'
 import { Signer, WalletConfig, WalletState } from '@0xsequence/wallet'
 import { Relayer } from '@0xsequence/relayer'
@@ -65,8 +63,8 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(signer: Signer, networks: Networks) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null, networks)
+  constructor(signer: Signer) {
+    const walletRequestHandler = new WalletRequestHandler(signer, null)
     super(walletRequestHandler)
   }
 }
@@ -204,13 +202,13 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // multi-chain support.
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     // Populate any ENS names (in-place)
-    const populated = await _TypedDataEncoder.resolveNames(domain, types, value, (name: string) => {
+    const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, value, (name: string) => {
       return this.provider.resolveName(name)
     })
 
     return await this.provider.send('eth_signTypedData_v4', [
       (await this.getAddress()).toLowerCase(),
-      _TypedDataEncoder.getPayload(populated.domain, types, populated.value)
+      ethers.utils._TypedDataEncoder.getPayload(populated.domain, types, populated.value)
     ], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
@@ -220,7 +218,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const provider = await this.getProvider(maybeNetworkId(chainId) || this.defaultChainId)
 
     return this.sendUncheckedTransaction(transaction, chainId).then((hash) => {
-      return poll(() => {
+      return ethers.utils.poll(() => {
         return provider.getTransaction(hash).then((tx: TransactionResponse) => {
           if (tx === null) { return undefined }
           return provider._wrapTransaction(tx, hash)

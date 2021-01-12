@@ -84,7 +84,7 @@ const main = async () => {
 
   // the json-rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(account, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(account, null)
 
 
   // setup and register window message transport

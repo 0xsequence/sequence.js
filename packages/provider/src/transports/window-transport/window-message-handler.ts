@@ -1,7 +1,7 @@
 import { ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse } from '../../types'
 import { WalletRequestHandler } from '../../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { sanitizeNumberString } from '@0xsequence/utils'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -22,7 +22,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // record connectId from the window url
     const location = new URL(window.location.href)
-    this._connectId = location.searchParams.get('cid')
+    this._connectId = sanitizeNumberString(location.searchParams.get('cid'))
     location.searchParams.delete('cid')
     window.history.replaceState({}, document.title, location.pathname)
 

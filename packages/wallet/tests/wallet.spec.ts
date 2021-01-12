@@ -138,7 +138,7 @@ describe('Wallet integration', function () {
     ]
 
     beforeEach(async () => {
-      provider = new LocalWeb3Provider(wallet, networks)
+      provider = new LocalWeb3Provider(wallet)
     })
 
     it('Should return accounts', async () => {
@@ -708,7 +708,7 @@ describe('Wallet integration', function () {
     let w3: any
 
     beforeEach(async () => {
-      provider = (new LocalWeb3Provider(wallet, networks)).provider
+      provider = (new LocalWeb3Provider(wallet)).provider
       w3 = new Web3(provider)
     })
 
@@ -836,9 +836,9 @@ describe('Wallet integration', function () {
         expect(wallet_1.address).to.equal(wallet_2.address)
         expect(wallet_2.address).to.equal(wallet_3.address)
 
-        const w3_1 = new Web3(new LocalWeb3Provider(wallet_1, networks))
-        const w3_2 = new Web3(new LocalWeb3Provider(wallet_2, networks))
-        const w3_3 = new Web3(new LocalWeb3Provider(wallet_3, networks))
+        const w3_1 = new Web3(new LocalWeb3Provider(wallet_1))
+        const w3_2 = new Web3(new LocalWeb3Provider(wallet_2))
+        const w3_3 = new Web3(new LocalWeb3Provider(wallet_3))
 
         const transaction = {
           from: wallet_1.address,

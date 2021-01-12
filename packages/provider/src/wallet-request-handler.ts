@@ -18,15 +18,12 @@ import { isSignedTransactions } from '@0xsequence/transactions'
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer
   private prompter: WalletUserPrompter
-  private networks: Networks
+
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  // TODO: do we need networks argument here..? or just get it from signer.getNetworks() ..?
-
-  constructor(signer: Signer, prompter: WalletUserPrompter, networks: Networks) {
+  constructor(signer: Signer, prompter: WalletUserPrompter) {
     this.signer = signer
     this.prompter = prompter
-    this.networks = networks
 
     if (!signer.provider) {
       throw new Error('wallet.provider is undefined')
@@ -68,15 +65,22 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const provider = await signer.getProvider(chainId)
     if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
 
+    if (chainId) {
+
+      const network = (await signer.getNetworks()).find(n => n.chainId === chainId)
+      if (!network) {
+        // TODO: we need to response as well, but this wouldn't be caught, so client would never receive it
+        // ...
+        throw new Error(`chainId ${chainId} cannot be found in network list of the wallet`)
+      }
+    }
+
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
       id: request.id,
       result: null,
       error: null
     }
-
-    // TODO: if chainId is specified, let's ensure its part of our network list, otherwise
-    // return error the chainId is not part of network list
 
     try {
       switch (request.method) {
@@ -390,40 +394,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // TODO: connection may request its own defaultChain, so we should update..
     // hmpf.. what happens if two dapps request same wallet window..? prob namespace it by domain key..?
 
-    // return this.networks
-
-    // const networks = [ ...this.networks ]
-
-    // networks.forEach(n => {
-    //   n.provider = undefined
-    //   n.relayer = undefined
-    // })
-
-    // return networks
+    const networks = await this.signer.getNetworks()
 
     // omit provider and relayer objects as they are not serializable
-    return this.networks.map(n => {
+    return networks.map(n => {
       const network: NetworkConfig = { ...n }
       network.provider = undefined
       network.relayer = undefined
       return network
     })
-
-
-    // const chainId = await this.getChainId()
-
-    // const chainIds = []
-    // const networkConfig = this.networks.find(config => {
-    //   if (config.chainId === chainId) {
-    //     return config
-    //   }
-    //   chainIds.push(config.chainId)
-    // })
-
-    // if (!networkConfig) {
-    //   throw new Error(`NetworkConfig with chainId ${chainId} could not be found in list: ${chainIds}.`)
-    // }
-    // return networkConfig
   }
 
   notifyNetworks(networks: NetworkConfig[]) {
