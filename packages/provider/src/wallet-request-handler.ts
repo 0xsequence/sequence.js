@@ -402,6 +402,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   notifyNetworks(networks: NetworkConfig[]) {
     this.events.emit('networks', networks)
     // TODO: check/confirm this is correct..
+    // we could notify when the "default" chain changes, which would happen when switching between mainnet / testnet modes.
     this.events.emit('chainChanged', ethers.utils.hexlify(networks[0].chainId))
   }
 

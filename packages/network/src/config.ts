@@ -103,3 +103,15 @@ export const testnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
   baseRpcUrl: 'https://nodes.sequence.app',
   baseRelayerUrl: 'https://relayers.sequence.app'
 })
+
+
+const networkCheck = [
+  ...mainnetNetworks,
+  ...testnetNetworks
+].map(n => n.chainId).
+  sort().some((v, i, a) => {
+    if (a.indexOf(v) !== i) {
+      throw new Error('library error! mainnetNetworks and/or testnetNetworks contain duplicate chainIds.')
+    }
+    return false
+  })
