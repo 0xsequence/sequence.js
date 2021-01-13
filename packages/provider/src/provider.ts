@@ -131,7 +131,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // you can write a higher-order JsonRpcRouter sender to route to the public provider endpoints
   // as we do in the WalletProvider.
   //
-  // This method is primary utilized internally when routing requests to a particular chainId.
+  // This method is primarily utilized internally when routing requests to a particular chainId.
   async getSender(chainId?: number): Promise<Web3Provider | undefined> {
     if (!chainId || (chainId && chainId === this.defaultChainId)) {
       return this.provider

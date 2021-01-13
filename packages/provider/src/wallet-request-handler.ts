@@ -65,16 +65,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const provider = await signer.getProvider(chainId)
     if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
 
-    if (chainId) {
-
-      const network = (await signer.getNetworks()).find(n => n.chainId === chainId)
-      if (!network) {
-        // TODO: we need to response as well, but this wouldn't be caught, so client would never receive it
-        // ...
-        throw new Error(`chainId ${chainId} cannot be found in network list of the wallet`)
-      }
-    }
-
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
       id: request.id,
