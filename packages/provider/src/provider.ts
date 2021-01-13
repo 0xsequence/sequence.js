@@ -237,7 +237,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   signTransactions(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
     transaction = shallowCopy(transaction)
-    // TODO: transaction argument..? stringify..?
+    // TODO: transaction argument..? make sure to resolve any properties and serialize property before sending over
+    // the wire.. see sendUncheckedTransaction and resolveProperties
     return this.provider.send('eth_signTransaction', [transaction], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
