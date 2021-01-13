@@ -13,7 +13,7 @@ import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
 import { Signer } from '@0xsequence/wallet'
-import { isSignedTransactions } from '@0xsequence/transactions'
+import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer
@@ -183,24 +183,28 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const [transaction] = request.params
           const sender = ethers.utils.getAddress(transaction.from)
 
-          // TODO: use prompter
-
-          if (this.prompter === null) {
-            // ...
+          if (sender !== await signer.getAddress()) {
+            throw new Error('sender address does not match wallet')
           }
 
-          if (sender === await signer.getAddress()) {
+          if (this.prompter === null) {
             // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
             // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
+            // 
+            // TODO: verify serializing / transporting the SignedTransaction object works as expected, most likely however
+            // we will want to resolveProperties the bignumber values to hex strings
             response.result = await signer.signTransactions(transaction, chainId)
           } else {
-            throw new Error('sender address does not match wallet')
+            response.result = await this.prompter.promptSignTransaction(transaction, chainId)
           }
 
           break
         }
 
         case 'eth_sendRawTransaction': {
+          // NOTE: we're not using a prompter here as the transaction is already signed
+          // and would have prompted the user upon signing.
+
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
           if (isSignedTransactions(request.params[0])) {
             const txChainId = BigNumber.from(request.params[0].chainId).toNumber()
@@ -293,10 +297,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_getNetworks': {
-          // TODO: signer.getNetworks() will return provider and relayer objects, which are not realizable,
-          // instead they should be omitted.
-
-          // response.result = await signer.getNetworks()
+          // NOTE: must ensure that the response result below returns clean serialized data, which is to omit
+          // the provider and relayer objects and only return the urls so can be reinstantiated on dapp side.
+          // This is handled by this.getNetworks() but noted here for future readers.
           response.result = await this.getNetworks()
           break
         }
@@ -414,6 +417,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
 export interface WalletUserPrompter {
   promptSignMessage(message: MessageToSign, appAuth?: boolean): Promise<string>
-  promptSignTransaction(txnParams: any, chaindId?: number): Promise<string>
-  promptSendTransaction(txnParams: any, chaindId?: number): Promise<string>
+  promptSignTransaction(txs: TransactionRequest, chaindId?: number): Promise<string>
+  promptSendTransaction(txs: TransactionRequest, chaindId?: number): Promise<string>
 }
