@@ -4,31 +4,29 @@ export class AllowProvider implements JsonRpcMiddlewareHandler {
 
   sendAsyncMiddleware: JsonRpcMiddleware
 
-  private isAllowedFunc: () => boolean
+  private isAllowedFunc: (request: JsonRpcRequest) => boolean
 
-  constructor(isAllowedFunc?: () => boolean) {
+  constructor(isAllowedFunc?: (request: JsonRpcRequest) => boolean) {
     if (isAllowedFunc) {
       this.isAllowedFunc = isAllowedFunc
     } else {
-      this.isAllowedFunc = (): boolean => true
+      this.isAllowedFunc = (request: JsonRpcRequest): boolean => true
     }
 
     this.sendAsyncMiddleware = allowProviderMiddleware(this.isAllowedFunc)
   }
 
-  setIsAllowedFunc(fn: () => boolean) {
+  setIsAllowedFunc(fn: (request: JsonRpcRequest) => boolean) {
     this.isAllowedFunc = fn
     this.sendAsyncMiddleware = allowProviderMiddleware(this.isAllowedFunc)
   }
 
 }
 
-export const allowProviderMiddleware = (isAllowed: () => boolean): JsonRpcMiddleware => (next: JsonRpcHandlerFunc) => {
-  const alwaysAllowedMethods = [] //['net_version', 'eth_chainId']
-
+export const allowProviderMiddleware = (isAllowed: (request: JsonRpcRequest) => boolean): JsonRpcMiddleware => (next: JsonRpcHandlerFunc) => {
   return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     // ensure precondition is met or do not allow the request to continue
-    if (!alwaysAllowedMethods.includes(request.method) && !isAllowed()) {
+    if (!isAllowed(request)) {
       throw new Error('allowProvider middleware precondition is unmet.')
     }
 

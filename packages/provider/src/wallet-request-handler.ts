@@ -12,7 +12,7 @@ import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 
 import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
-import { Signer } from '@0xsequence/wallet'
+import { Signer, Account } from '@0xsequence/wallet'
 import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
@@ -20,6 +20,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private prompter: WalletUserPrompter
 
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
+
+  // TODO: perhaps we take argument of mainnetNetworks and testnetNetworks
+  // in this config? and signer can use between those from here..
+
+  // TODO: determine login state
 
   constructor(signer: Signer, prompter: WalletUserPrompter) {
     this.signer = signer
@@ -56,15 +61,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   // sendAsync implements the JsonRpcHandler interface for sending JsonRpcRequests to the wallet
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
 
-    // TODO/XXX
-    // TODO: throwing, but we must also call the "callback" with the error here..
-    const signer = this.signer
-    if (!signer) throw new Error('WalletRequestHandler: wallet signer is not configured')
-
-    // fetch the provider for the specific chain, or undefined will select defaultChain
-    const provider = await signer.getProvider(chainId)
-    if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
-
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
       id: request.id,
@@ -72,7 +68,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       error: null
     }
 
+    // TODO: if signer account is empty, aka user is not logged in to the wallet,
+    // then prevent the use of many of the methods below.
+
     try {
+
+      // wallet signer
+      const signer = this.signer
+      if (!signer) throw new Error('WalletRequestHandler: wallet signer is not configured')
+
+      // fetch the provider for the specific chain, or undefined will select defaultChain
+      const provider = await signer.getProvider(chainId)
+      if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
+
       switch (request.method) {
 
         case 'net_version': {
@@ -346,6 +354,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        // set default network of wallet
+        case 'sequence_setDefaultChain': {
+          const [defaultNetworkId] = request.params
+          if (defaultNetworkId) {
+            this.setDefaultNetworkId(defaultNetworkId)
+          }
+          response.result = await this.getNetworks()
+          break
+        }
+
         default: {
           // NOTE: provider here will be chain-bound if chainId is provided
           const providerResponse = await provider.send(request.method, request.params)
@@ -377,11 +395,26 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   getAddress(): Promise<string> {
+    // TODO return '' if not logged in, or undefined
     return this.signer.getAddress()
   }
 
   getChainId(): Promise<number> {
     return this.signer.getChainId()
+  }
+
+  setDefaultNetworkId(chainId: string | number) {
+    if (!chainId) return
+
+    // TODO: rename to setDefaultChain
+    // then, also pass 'networks' list optionally, for when we switch from mainnetNetworks <> testnetNetworks
+    // but keep logic in signer setDefaultNetworkId
+
+    if ((<any>this.signer).setDefaultNetworkId) {
+      (<any>this.signer).setDefaultNetworkId(chainId)
+    } else {
+      throw new Error('signer does not have setDefaultNetworkId method available')
+    }
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
@@ -401,18 +434,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   notifyNetworks(networks: NetworkConfig[]) {
     this.events.emit('networks', networks)
-    // TODO: check/confirm this is correct..
-    // we could notify when the "default" chain changes, which would happen when switching between mainnet / testnet modes.
+
+    // TODO: only if the default network has indeed changed from previous value, then lets emit
     this.events.emit('chainChanged', ethers.utils.hexlify(networks[0].chainId))
   }
 
   notifyLogin(accountAddress: string) {
-    this.events.emit('login', accountAddress)
     this.events.emit('accountsChanged', [accountAddress])
   }
 
   notifyLogout() {
-    this.events.emit('logout')
+    this.events.emit('accountsChanged', [])
   }
 }
 

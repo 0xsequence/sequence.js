@@ -27,7 +27,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
 
   // TODO: add register() method.
 
-  openWallet = (path?: string, state?: object): void => {
+  openWallet = (path?: string, state?: any): void => {
     // assume the wallet is already opened or handled by another process
     return
   }

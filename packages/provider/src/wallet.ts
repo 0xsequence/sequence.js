@@ -1,11 +1,10 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
   JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
-  SigningProvider, EagerProvider, JsonRpcExternalProvider,
+  SigningProvider, EagerProvider, exceptionProviderMiddleware, JsonRpcExternalProvider,
   JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcHandler, findNetworkConfig
 } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
-import { ethers } from 'ethers'
 import { Web3Provider, Web3Signer } from './provider'
 import { WindowMessageProvider, ProxyMessageProvider } from './transports'
 import { WalletSession, ProviderMessageEvent } from './types'
@@ -98,25 +97,15 @@ export class Wallet implements WalletProvider {
     // this.proxyTransportProvider = new ProxyMessageProvider()
 
 
-    // TODO: upon login... we getNetworks()
-
-    // v----------***********************************
-    // TODO: the dapp sets the *defaultChain*, so when opening a connection, we need to CONNECT and pass
-    // defaultChainId: XXX argument, so then the transport knows which chain is the default expected by the client, etc. weee.. getting there.
-    //
-    // note: on connect, dapp can request between 'mainnet' or 'testnet' mode..? or at least request between both network sets..?
-    // at which point, wallet will go into one of the respective sets..
-    // ^----------***********************************
-
-    //--
-
     // Setup provider
     switch (config.type) {
       // TODO: loop through types, which are just Window and Proxy
       case 'Window': {
 
         // .....
-        this.transport.allowProvider = allowProviderMiddleware((): boolean => {
+        this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
+          if (request.method === 'sequence_setDefaultChain') return true
+
           const isLoggedIn = this.isLoggedIn()
           if (!isLoggedIn) {
             throw new Error('Sequence: not logged in')
@@ -140,6 +129,7 @@ export class Wallet implements WalletProvider {
         this.transport.router = new JsonRpcRouter([
           loggingProviderMiddleware,
           this.transport.allowProvider,
+          exceptionProviderMiddleware,
           this.transport.cachedProvider,
           // this.publicProvider
         ], this.transport.windowMessageProvider)
@@ -155,8 +145,10 @@ export class Wallet implements WalletProvider {
         //   this.useNetworks(networks)
         //   this.saveSession(this.session)
         // })
-        this.transport.windowMessageProvider.on('logout', () => {
-          this.logout()
+        this.transport.windowMessageProvider.on('accountsChanged', (accounts) => {
+          if (accounts && accounts.length === 0) {
+            this.logout()
+          }
         })
 
         break
@@ -202,17 +194,10 @@ export class Wallet implements WalletProvider {
 
     switch (config.type) {
       case 'Window': {
-        // TODO: on connect, we need to inform the network..
-        await this.openWallet('', { login: true }) // TODO: do we need the state thing? maybe/maybe not..
+        await this.openWallet('', { login: true })
         const sessionPayload = await this.transport.windowMessageProvider.waitUntilLoggedIn()
-
         this.useSession(sessionPayload)
         this.saveSession(sessionPayload)
-
-        // setTimeout(() => {
-        //   this.externalWindowProvider.closeWallet()
-        // }, 2000)
-
         break
       }
 
@@ -307,8 +292,12 @@ export class Wallet implements WalletProvider {
     if (this.transport.windowMessageProvider) {
       this.transport.windowMessageProvider.openWallet(path, state)
 
-      // TODO: handle case when popup is blocked, should return false, or throw exception
       await this.transport.windowMessageProvider.waitUntilConnected()
+
+      // setDefaultNetworkId
+      // it's important to send this right away upon connection
+      const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
+      this.useNetworks(networks)
 
       return true
     }
@@ -356,7 +345,8 @@ export class Wallet implements WalletProvider {
     // provider stack for the respective network
     const router = new JsonRpcRouter([
       loggingProviderMiddleware,
-      new EagerProvider(this.session.accountAddress, network.chainId),
+      new EagerProvider(this.session.accountAddress), //, network.chainId),
+      exceptionProviderMiddleware,
       new CachedProvider(network.chainId),
       new SigningProvider(this.transport.provider)
     ], new JsonRpcSender(rpcProvider))
@@ -452,8 +442,9 @@ export class Wallet implements WalletProvider {
 
     // set networks
     // TODO: build intersected list with this.config.networks
-    this.networks = session.networks
-    // this.useNetworks(session.networks)
+    if (session.networks) {
+      this.useNetworks(session.networks)
+    }
 
     // confirm the session address matches the one with the signer
     const accountAddress = await this.getSigner().getAddress()
@@ -462,20 +453,22 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  // private useNetworks = (networks: NetworkConfig[]) => {
-  //   if (!this.isLoggedIn()) {
-  //     throw new Error('login first')
-  //   }
+  private useNetworks(networks: NetworkConfig[]) {
+    this.networks = networks
 
-  //   // ..
-  //   if (this.config.networks) {
-  //     // intersect our this.config.networks if exists..
-  //     this.networks = networks
-  //     // TODO: add a method, which can combine network configs..
-  //   } else {
-  //     this.networks = networks
-  //   }
-  // }
+    // hmm.. here..?
+    if (!this.session) this.session = {}
+    this.session.networks = networks // TODO ..
+
+    // // ..
+    // if (this.config.networks) {
+    //   // intersect our this.config.networks if exists..
+    //   this.networks = networks
+    //   // TODO: add a method, which can combine network configs..
+    // } else {
+    //   this.networks = networks
+    // }
+  }
 }
 
 export interface ProviderConfig {
@@ -497,20 +490,10 @@ export interface ProviderConfig {
     // timeout?: number
   }
 
-
-  // or..
-  // networks: { mainnetConfigs: , testnetConfigs: .. , mode: '..', defaultNetworkId: '..',  } ?
-
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list supplied from the wallet upon login,
   // and settings here take precedence such as overriding a relayer setting, or rpcUrl.
   networks?: NetworkConfig[]
-
-  // mainnetNetworks ..?
-  // testnetNetworks ..?
-
-  // automatically will be set..? hmpf.. if you set your own networks, need to specify this? maybe not
-  // networkMode: 'mainnet' | 'testnet'
 
   // networkRpcUrl will set the provider rpcUrl of the default network 
   networkRpcUrl?: string

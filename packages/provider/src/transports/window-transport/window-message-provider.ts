@@ -3,7 +3,7 @@ import {
   ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
   ProviderMessageRequest
 } from '../../types'
-import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
+import { BaseProviderTransport, nextMessageIdx, PROVIDER_CONNECT_TIMEOUT } from '../base-provider-transport'
 
 import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
@@ -28,6 +28,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
     // listen for incoming messages from wallet
     window.addEventListener('message', this.onWindowEvent)
     registeredWindowMessageProvider = this
+
+    // disconnect clean up
+    this.on('disconnect', () => this.disconnect())
   }
 
   unregister = () => {
@@ -36,12 +39,13 @@ export class WindowMessageProvider extends BaseProviderTransport {
       registeredWindowMessageProvider = undefined
     }
     window.removeEventListener('message', this.onWindowEvent)
+
+    // clear event listeners
+    this.events.removeAllListeners()
   }
 
-  openWallet = (path?: string, state?: object): void => {
-    console.log('window-message', this.walletURL)
+  openWallet = (path?: string, state?: any): void => {
     if (this.walletOpened === true) {
-      console.log('wallet is opened..')
       if (!path) {
         this.walletWindow.focus()
         return
@@ -53,8 +57,8 @@ export class WindowMessageProvider extends BaseProviderTransport {
       }
     }
 
-    this.connectId = `${performance.now()}`
-    this.walletURL.searchParams.set('cid', this.connectId)
+    this.sessionId = `${performance.now()}`
+    this.walletURL.searchParams.set('sid', this.sessionId)
 
     const walletURL = new URL(this.walletURL.href)
     if (path && path !== '') {
@@ -103,25 +107,17 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     // Send connection request and wait for confirmation
     if (!this.connected) {
-      const initRequest: ProviderMessageRequest = {
+
+      // CONNECT is special case, as we emit multiple tranmissions waiting for a response
+      const initRequest: ProviderMessage<any> = {
         idx: nextMessageIdx(),
-        type: ProviderMessageType.CONNECT, // TODO: maybe just use message? and pass { method: '_connect' } ?
+        type: ProviderMessageType.CONNECT,
         data: null
       }
-
-      const connectCheck = setTimeout(() => {
-        if (!this.connected && !warned) {
-          warned = true
-          // unable to connect after sometime, lets return error notice
-          // alert('unable to connect to the wallet') // NOTE: for debug purposes only
-          throw new Error('unable to connect to the wallet')
-        }
-      }, 4000)
 
       const postMessageUntilConnected = () => {
         if (this.connected || warned) {
           clearTimeout(popupCheck)
-          clearTimeout(connectCheck)
           return
         }
         this.sendMessage(initRequest)
@@ -136,11 +132,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
         clearInterval(interval)
         this.walletOpened = false
         this.connected = false
-        // TODO/XXX
-        // this.loginPayload = undefined
         this.events.emit('disconnect')
       }
-    }, 1000)
+    }, 1250)
   }
 
   closeWallet() {
@@ -173,15 +167,18 @@ export class WindowMessageProvider extends BaseProviderTransport {
       throw new Error('wallet is not opened.')
     }
 
-    // TODO/XXX
-    // TODO: try/catch for errors..? what kind of errors could come up...?
-    const response = await this.sendMessageRequest({
-      idx: nextMessageIdx(),
-      type: ProviderMessageType.MESSAGE,
-      data: request,
-      chainId: chainId
-    })
-    callback(null, response.data)
+    // send message request, await, and then execute callback after receiving the response
+    try {
+      const response = await this.sendMessageRequest({
+        idx: nextMessageIdx(),
+        type: ProviderMessageType.MESSAGE,
+        data: request,
+        chainId: chainId
+      })
+      callback(null, response.data)
+    } catch (err) {
+      callback(err)
+    }
   }
 
   // onmessage, receives ProviderMessageResponse from the wallet post-message transport

@@ -7,7 +7,9 @@ import {
   WalletSession
 } from '../types'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+
+export const PROVIDER_CONNECT_TIMEOUT = 4000 // in ms
 
 let _messageIdx = 0
 
@@ -19,20 +21,16 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
   protected connected = false
-  protected connectId: string
+  protected sessionId: string
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
 
-  protected loginPayload: string
+  protected accountPayload: string
   protected networksPayload: NetworkConfig[]
 
   constructor() {}
 
-  // TODO: would be nice for openWallet() to return an auth token for the url too
-  // so we don't need to request it after we login..
-  // or maybe it will work as is already? .. notifyLogin() should do it..? or notifyAuth() ?
-
-  openWallet = (path?: string, state?: object): void => {
+  openWallet = (path?: string, state?: any): void => {
     throw new Error('abstract method')
   }
 
@@ -55,8 +53,6 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     console.log("RECEIVED MESSAGE FROM WALLET", message.idx, message)
 
     const requestIdx = message.idx
-    const payload = message.data
-
     const responseCallback = this.responseCallbacks.get(requestIdx)
     if (requestIdx) {
       this.responseCallbacks.delete(requestIdx)
@@ -66,11 +62,13 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     //
     // Flip connected flag, and flush the pending queue 
     if (message.type === ProviderMessageType.CONNECT && !this.connected) {
-      if (this.connectId !== message.data) {
-        console.log('connect received from wallet, but does not match id', this.connectId)
+      if (this.sessionId !== message.data?.result?.sessionId) {
+        console.log('connect received from wallet, but does not match id', this.sessionId)
         return
       }
+
       this.connected = true
+      this.events.emit('connect')
 
       // flush pending requests when connected
       if (this.pendingMessageRequests.length !== 0) {
@@ -81,10 +79,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         })
       }
 
-      this.events.emit('connect')
       return
     }
-
 
     // MESSAGE resposne
     if (message.type === ProviderMessageType.MESSAGE) {
@@ -93,86 +89,44 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       // TODO: perhaps apply technique like in multicall to queue messages within
       // a period of time, then close the window if responseCallbacks is empty, this is better.
       if (this.confirmationOnly) {
-        // console.log('========> A callback.size?', this.callbacks.size)
         setTimeout(() => {
-          // console.log('========> B callback?', this.callbacks.size)
           if (this.responseCallbacks.size === 0) {
-            // TODO: re-enable once we add caching provider with mult-chain support..
-            // this.closeWallet()
+            this.closeWallet()
           }
         }, 1500) // TODO: be smarter about timer as we're processing the response callbacks..
       }
 
       if (!responseCallback) {
-        // TODO: this would occur likely if 'idx' isn't set, which should never happen
-        // or when we register two handler, should use singleton..
+        // NOTE: this would occur if 'idx' isn't set, which should never happen
+        // or when we register two handler, or duplicate messages with the same idx are sent,
+        // all of which should be prevented prior to getting to this point
         throw new Error('impossible state')
       }
 
       // Callback to original caller
       if (responseCallback) {
-
-        // const responseMessage: ProviderMessageResponse = {
-        //   type: message.type,
-        //   chainId: message.chainId,
-        //   data: {
-        //     jsonrpc: '2.0',
-        //     id: message.data.id,
-        //     result: null
-        //   }
-        // }
-
-        // TODOOOOOOOOOOOO................... XXX
-
-        // Error response
-        if (payload.error) {
-          console.log('waaaaaaaaaa?', JSON.stringify(payload))
-          throw new Error('TODOOOOOOOOOOO')
-
-          // Respond with error
-          let error: Error
-          if (payload.error.message) {
-            error = new Error(payload.error.message)
-          } else {
-            error = new Error(payload.error)
-          }
-          // callback(error.message)
-          // TODO ........ error handling
-          responseCallback({
-
-          })
-          return
-        }
-
-        // Respond with result
-        // TODO: weird type..
-        responseCallback(null, message)
-        // callback(null, {
-        //   jsonrpc: '2.0',
-        //   // ...result,
-        //   id: result.id,
-        //   result: result
-        // })
-
+        responseCallback(undefined, message)
         return
       }
     }
 
-    // NOTIFY LOGIN -- when a user authenticates / logs in
-    if (message.type == ProviderMessageType.LOGIN) {
-      this.loginPayload = message.data
-      this.events.emit('login', message.data) // payload is `accountAddress: string`
+    // ACCOUNTS_CHANGED -- when a user logs in or out
+    if (message.type === ProviderMessageType.ACCOUNTS_CHANGED) {
+      this.accountPayload = undefined
+      if (message.data && message.data.length > 0) {
+        this.accountPayload = message.data[0].toLowerCase()
+      }
+      this.events.emit('accountsChanged', message.data)
       return
     }
 
-    // NOTIFY LOGOUT -- when a user logs out
-    if (message.type === ProviderMessageType.LOGOUT) {
-      this.loginPayload = undefined
-      this.events.emit('logout')
+    // CHAIN_CHANGED -- when a user changes their default chain
+    if (message.type === ProviderMessageType.CHAIN_CHANGED) {
+      this.events.emit('chainChanged', message.data)
       return
     }
 
-    // NOTIFY NETWORKS -- when a user sets or changes their ethereum network
+    // NOTIFY NETWORKS -- when a user connects or logs in
     if (message.type === ProviderMessageType.NETWORKS) {
       this.networksPayload = message.data
       this.events.emit('networks', this.networksPayload)
@@ -182,20 +136,24 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
   sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       if (!message.idx || message.idx <= 0) {
-        throw new Error('message idx not set')
+        reject(new Error('message idx not set'))
       }
 
-      // TODO: sup with the error arg here..?
-      const responseCallback: ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => resolve(response)
+      const responseCallback: ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(response)
+        }
+      }
 
       const idx = message.idx
       if (!this.responseCallbacks.get(idx)) {
         this.responseCallbacks.set(idx, responseCallback)
       } else {
-        // TODO: or just reject..? or is that the same thing..?
-        throw new Error('already set -- should not happen')
+        reject(new Error('duplicate message idx, should never happen'))
       }
 
       if (!this.connected) {
@@ -221,34 +179,47 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   }
 
   waitUntilConnected = async (): Promise<boolean> => {
-    // TODO: handle popup blockers, perhaps emit connected:false, or call reject().
-    // maybe we don't need it if its handled by openWallet?
-    // or, we move the logic down to here
-    // ..
-    return new Promise((resolve) => {
-      if (this.isConnected()) {
-        resolve(true)
-        return
-      }
-      this.events.once('connect', () => {
-        resolve(true)
+    let connected = false
+    return Promise.race([
+      new Promise<boolean>((_, reject) => {
+        const timeout = setTimeout(() => {
+          clearTimeout(timeout)
+          // only emit disconnect if the timeout wins the race
+          if (!connected) this.events.emit('disconnect')
+          reject(new Error('connection attempt to the wallet timed out'))
+        }, PROVIDER_CONNECT_TIMEOUT)
+      }),
+      new Promise<boolean>(resolve => {
+        if (this.isConnected()) {
+          connected = true
+          resolve(true)
+          return
+        }
+        this.events.once('connect', () => {
+          connected = true
+          resolve(true)
+        })
       })
-    })
+    ])
   }
 
   waitUntilLoggedIn = async (): Promise<WalletSession> => {
-    // TODO: lets not block forever.
     await this.waitUntilConnected()
 
-    return Promise.all([
+    const login = Promise.all([
       new Promise<string>(resolve => {
-        if (this.loginPayload) {
-          resolve(this.loginPayload)
+        if (this.accountPayload) {
+          resolve(this.accountPayload)
           return
         }
-        // TODO: return accountsAddress event instead..?
-        this.events.once('login', (payload) => {
-          resolve(payload)
+        this.events.once('accountsChanged', (accounts) => {
+          if (accounts && accounts.length > 0) {
+            // account logged in
+            resolve(accounts[0])
+          } else {
+            // account logged out
+            resolve(undefined)
+          }
         })
       }),
       new Promise<NetworkConfig[]>(resolve => {
@@ -256,14 +227,38 @@ export abstract class BaseProviderTransport implements ProviderTransport {
           resolve(this.networksPayload)
           return
         }
-        this.events.once('networks', (payload) => {
-          resolve(payload)
+        this.events.once('networks', (networks) => {
+          resolve(networks)
         })
       })
     ]).then(values => {
       const [ accountAddress, networks ] = values
       return { accountAddress, networks }
     })
+
+    const disconnect = new Promise((_, reject) => {
+      this.events.once('disconnect', () => {
+        reject(new Error('user disconnected the wallet'))
+      })
+    })
+
+    return Promise.race<WalletSession>([
+      login,
+      disconnect
+    ])
   }
 
+  protected disconnect() {
+    console.log('disconnecting wallet and flushing!')
+
+    // flush pending requests and return error to all callbacks
+    this.pendingMessageRequests.length = 0
+    this.responseCallbacks.forEach(responseCallback => {
+      responseCallback('wallet disconnected')
+    })
+    this.responseCallbacks.clear()
+
+    this.accountPayload = undefined
+    this.networksPayload = undefined
+  }
 }
