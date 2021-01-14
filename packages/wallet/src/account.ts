@@ -387,6 +387,25 @@ export class Account extends Signer {
     throw new Error('expecting authChain to be the first or second in networks list')
   }
 
+  setDefaultNetworkId(chainId: string | number) {
+    if (!chainId) return
+    this.options.networks = ensureValidNetworks(sortNetworks(this.options.networks, chainId))
+
+    // sort wallets according to network list, as we expect defaultChain to be
+    // first on the list
+    const index = this.options.networks.map(n => n.chainId)
+    const wallets = []
+    for (let i=0; i<index.length; i++) {
+      const w = this._wallets.find(w => w.network.chainId === index[i])
+      if (!w) throw new Error('impossible state')
+      wallets.push(w)
+    }
+    if (wallets.length !== this._wallets.length) {
+      throw new Error('impossible state')
+    }
+    this._wallets = wallets
+  }
+
   connect(_: Provider): AbstractSigner {
     throw new Error('connect method is not supported in MultiWallet')
   }

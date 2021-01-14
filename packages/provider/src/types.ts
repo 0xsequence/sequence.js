@@ -14,9 +14,8 @@ export interface WalletSession {
   providerCache?: {[key: string]: any}
 }
 
-// TODO: maybe rename to just MessageTransport ..?
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
-  openWallet(path?: string, state?: object): void
+  openWallet(path?: string, state?: any): void
   closeWallet()
   isConnected(): boolean
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
@@ -28,14 +27,10 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register()
   unregister()
-  // TODO/HMMMMMMMMMMMMMM........
-  // notifyConnect(connectInfo: any)
-  // notifyDisconnect(error?: any)
+  notifyConnect(connectInfo: { chainId?: string, sessionId?: string })
   notifyAccountsChanged(accounts: string[])
   notifyChainChanged(connectInfo: any)
   notifyNetworks(networks: NetworkConfig[])
-  notifyLogin(accountAddress: string)
-  notifyLogout()
 }
 
 export interface ProviderMessage<T> {
@@ -51,8 +46,7 @@ export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
 
 // ProviderMessageCallback is used to respond to ProviderMessage requests. The error
 // argument is for exceptions during the execution, and response is the response payload
-// from  ..
-// TODO: error......?
+// which may contain the result or an error payload from the wallet.
 export type ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => void
 
 // TODO: where do we use this..?
@@ -85,26 +79,12 @@ export enum ProviderMessageType {
   DISCONNECT = 'disconnect',
   CHAIN_CHANGED = 'chainChanged',
   ACCOUNTS_CHANGED = 'accountsChanged',
-
-  LOGIN = 'login',
-  LOGOUT = 'logout',
   NETWORKS = 'networks',
 
   DEBUG = '_debug'
 }
 
-// TODO: keep / use.. or not..?
-export type LoginEventPayload = string
-
 export type NetworkEventPayload = NetworkConfig
-
-
-// TODO... review, we're not using this..?
-export interface ProviderConnectInfo {
-  chainId: string
-  sidechainIds?: string[]
-  // networkConfig?: NetworkConfig ... // keep..? maybe..
-}
 
 export interface MessageToSign {
   message?: string
@@ -112,5 +92,6 @@ export interface MessageToSign {
   chainId?: number
 }
 
+// TODO: deprecate
 import { TypedData } from 'ethers-eip712'
 export type { TypedData }

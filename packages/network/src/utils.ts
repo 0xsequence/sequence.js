@@ -101,15 +101,37 @@ export const ensureValidNetworks = (networks: NetworkConfig[]): NetworkConfig[] 
   return networks
 }
 
+export const ensureUniqueNetworks = (networks: NetworkConfig[], raise: boolean = true): boolean => {
+  const chainIds = networks.map(c => c.chainId).sort()
+  const dupes = chainIds.filter((c, i) => chainIds.indexOf(c) !== i)
+  if (dupes.length > 0) {
+    if (raise) throw new Error(`invalid network config: duplicate chainIds ${dupes}`)
+    return false
+  }
+  return true
+}
+
 // sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
-export const sortNetworks = (networks: Networks, defaultChainId?: number): Networks => {
+export const sortNetworks = (networks: Networks, defaultChainId?: string | number): Networks => {
   const config = networks.sort((a, b) => {
     if (a.chainId === b.chainId) return 0
     return a.chainId < b.chainId ? -1 : 1
   })
 
-  // TODO: use defaultChainId if passed to set default chain, first unset any other chain..
-  // ...
+  // Set defaultChainId if passed to set default chain
+  if (defaultChainId) {
+    let found = false
+    networks.forEach(n => {
+      n.isDefaultChain = false
+      if (n.name === defaultChainId || n.chainId === defaultChainId) {
+        found = true
+        n.isDefaultChain = true
+      }
+    })
+    if (!found) {
+      throw new Error(`unable to set default network as chain '${defaultChainId}' does not exist`)
+    }
+  }
 
   // // AuthChain goes first
   // const authConfigIdx = config.findIndex(c => c.isAuthChain)

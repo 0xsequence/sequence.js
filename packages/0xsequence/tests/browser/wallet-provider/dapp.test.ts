@@ -22,7 +22,7 @@ export const tests = async () => {
   const providerConfig = { ...DefaultProviderConfig }
   providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   
-  const wallet = new Wallet('hardhat7', providerConfig)
+  const wallet = new Wallet('hardhat', providerConfig)
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain

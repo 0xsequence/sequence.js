@@ -22,8 +22,8 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // record connectId from the window url
     const location = new URL(window.location.href)
-    this._connectId = sanitizeNumberString(location.searchParams.get('cid'))
-    location.searchParams.delete('cid')
+    this._sessionId = sanitizeNumberString(location.searchParams.get('sid'))
+    location.searchParams.delete('sid')
     window.history.replaceState({}, document.title, location.pathname)
 
     // record parent window instance for communication
@@ -31,9 +31,6 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // listen for window-transport requests
     window.addEventListener('message', this.onWindowEvent, false)
-
-    // init base transport
-    this.init()
   }
 
   unregister() {

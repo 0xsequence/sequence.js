@@ -1,3 +1,4 @@
+import { ethers } from 'ethers'
 import {
   WalletTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageResponse, ProviderMessageTransport
@@ -10,7 +11,7 @@ import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xseque
 export abstract class BaseWalletTransport implements WalletTransport {
 
   protected walletRequestHandler: WalletRequestHandler
-  protected _connectId: string
+  protected _sessionId: string
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
@@ -24,16 +25,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
-  init() {
-    // TODO... keep this, and add network -- in case someone does change network, etc from walletHandler
-    // once we integrate into wallet-webapp will become more clear.
-    // XXX
-    //
-    // this.walletRequestHandler.on('login', (accountAddress: string) => {
-    //   this.notifyLogin(accountAddress)
-    // })
-  }
-
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     throw new Error('abstract method')
   }
@@ -42,34 +33,37 @@ export abstract class BaseWalletTransport implements WalletTransport {
     const request = message
 
     switch (request.type) {
+
       case ProviderMessageType.CONNECT: {
 
-        // TODO/XXX: does this matter anymore?
-        //
-        // check connect request state
-        // if (request.payload?.state?.login) {
-        //   this.isLoginRequest.set(true)
-        // }
+        // success, respond with 'connect' event to the dapp directly
+        this.notifyConnect({ sessionId: this._sessionId })
 
-        // respond with 'connect' event to the dapp directly
-        this.sendMessage({
-          idx: request.idx,
-          type: ProviderMessageType.CONNECT,
-          data: this._connectId
-        })
+        // notify account and network details depending on state
+        const accountAddress = await this.walletRequestHandler.getAddress()
 
-        this.notifyNetworks(await this.walletRequestHandler.getNetworks())
-        this.notifyLogin(await this.walletRequestHandler.getAddress())
+        if (accountAddress && accountAddress.startsWith('0x')) {
+          // logged in
+          this.notifyAccountsChanged([accountAddress])
 
-        // TODO: perhaps send accountsChanged and chainChanged as well..?
+          const networks = await this.walletRequestHandler.getNetworks()
+          if (networks && networks.length > 0) {
+            this.notifyNetworks(networks)
+            this.notifyChainChanged(ethers.utils.hexlify(networks[0].chainId))
+          }
 
-        break
+        } else {
+          // not logged in, we do not emit chain details until logged in
+          this.notifyAccountsChanged([])
+        }
+
+        return
       }
 
       case ProviderMessageType.MESSAGE: {
         const response = await this.walletRequestHandler.sendMessageRequest(request)
         this.sendMessage(response)
-        break
+        return
       }
 
       default: {
@@ -87,41 +81,38 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
+  notifyConnect(connectInfo: { chainId?: string, sessionId?: string }) {
+    const { chainId, sessionId } = connectInfo
+    this.sendMessage({
+      idx: -1,
+      type: ProviderMessageType.CONNECT,
+      data: {
+        result: { chainId, sessionId }
+      }
+    })
+  }
+
   notifyAccountsChanged(accounts: string[]) {
     this.sendMessage({
       idx: -1,
-      type: ProviderMessageType.LOGIN,
+      type: ProviderMessageType.ACCOUNTS_CHANGED,
       data: accounts
     })
   }
 
-  // TODO: connectInfo seems wrong..? lets just have it hexChainId: string
-  notifyChainChanged(connectInfo: any) { // TODO: ProviderConnectInfo
-    // TODO: .. hmfp... format..?
+  notifyChainChanged(hexChainId: string) {
+    this.sendMessage({
+      idx: -1,
+      type: ProviderMessageType.CHAIN_CHANGED,
+      data: hexChainId
+    })
   }
 
   notifyNetworks(networks: NetworkConfig[]) {
-    // TODO: ensure "networks" when json stringifying omits the objects..
     this.sendMessage({
       idx: -1,
       type: ProviderMessageType.NETWORKS,
       data: networks
-    })
-  }
-
-  notifyLogin(accountAddress: string) {
-    this.sendMessage({
-      idx: -1,
-      type: ProviderMessageType.LOGIN,
-      data: accountAddress
-    })
-  }
-
-  notifyLogout() {
-    this.sendMessage({
-      idx: -1,
-      type: ProviderMessageType.LOGOUT,
-      data: null
     })
   }
 

@@ -1,6 +1,7 @@
 export { AllowProvider, allowProviderMiddleware } from './allow-provider'
 export { CachedProvider } from './cached-provider'
 export { EagerProvider } from './eager-provider'
+export { exceptionProviderMiddleware } from './exception-provider'
 export { loggingProviderMiddleware } from './logging-provider'
 export { PublicProvider } from './public-provider'
 export { SigningProvider } from './signing-provider'
