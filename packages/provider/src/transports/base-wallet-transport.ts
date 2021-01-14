@@ -63,6 +63,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
       case ProviderMessageType.MESSAGE: {
         const response = await this.walletRequestHandler.sendMessageRequest(request)
         this.sendMessage(response)
+
+        if (response.data.error) {
+          // TODO: for certain errors, whenever we want to render something to the UI
+          // we should throw
+        }
         return
       }
 

@@ -84,15 +84,12 @@ const main = async () => {
 
   // the json-rpc signer via the wallet
   // const mockUserPrompter = new MockWalletUserPrompter(true)
-  const walletRequestHandler = new WalletRequestHandler(account, null)
+  const walletRequestHandler = new WalletRequestHandler(account, null, networks)
 
 
   // setup and register window message transport
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
   windowHandler.register()
-
-  // TODO: perhaps we put the notifyLogin, notifyNetwork, notifyXXX methods on the WalletHandler ..?
-  // this way, any message-handler will send this info across..?
 
   // TODO: register the ProxyMessageHandler() + register()
 

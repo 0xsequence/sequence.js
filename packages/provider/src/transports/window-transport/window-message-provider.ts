@@ -175,7 +175,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
         data: request,
         chainId: chainId
       })
-      callback(null, response.data)
+      callback(undefined, response.data)
     } catch (err) {
       callback(err)
     }

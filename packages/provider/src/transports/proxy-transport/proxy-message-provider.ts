@@ -44,7 +44,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
       data: request,
       chainId: chainId
     })
-    callback(null, response.data)
+    callback(undefined, response.data)
   }
 
   sendMessage(message: ProviderMessage<any>) {

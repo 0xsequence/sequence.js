@@ -42,7 +42,7 @@ export const tests = async () => {
 
 
   // the rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(wallet, null)
+  const walletRequestHandler = new WalletRequestHandler(wallet, null, [])
   
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   proxyHandler.register()

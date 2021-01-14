@@ -64,8 +64,8 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(signer: Signer) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null)
+  constructor(signer: Signer, networks?: Networks) {
+    const walletRequestHandler = new WalletRequestHandler(signer, null, networks)
     super(walletRequestHandler)
   }
 }
