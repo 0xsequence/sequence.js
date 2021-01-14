@@ -23,21 +23,21 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
       switch (method) {
         case 'net_version':
           if (this._chainId) {
-            callback(null, { jsonrpc: '2.0', id, result: `${this._chainId}` })
+            callback(undefined, { jsonrpc: '2.0', id, result: `${this._chainId}` })
             return
           }
           break
 
         case 'eth_chainId':
           if (this._chainId) {
-            callback(null, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this._chainId) })
+            callback(undefined, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this._chainId) })
             return
           }
           break
 
         case 'eth_accounts':
           if (this._accountAddress) {
-            callback(null, { jsonrpc: '2.0', id, result: [this._accountAddress.toLowerCase()] })
+            callback(undefined, { jsonrpc: '2.0', id, result: [this._accountAddress.toLowerCase()] })
             return
           }
           break

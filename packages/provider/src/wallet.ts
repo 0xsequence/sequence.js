@@ -29,8 +29,6 @@ export interface WalletProvider {
   getProvider(chainId?: ChainId): Web3Provider
   getSigner(chainId?: ChainId): Web3Signer
 
-  // TODO: add more methods off Signer ..
-
   getWalletContext(): Promise<WalletContext>
   getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
   isDeployed(chainId?: ChainId): Promise<boolean>
@@ -197,7 +195,6 @@ export class Wallet implements WalletProvider {
         await this.openWallet('', { login: true })
         const sessionPayload = await this.transport.windowMessageProvider.waitUntilLoggedIn()
         this.useSession(sessionPayload)
-        this.saveSession(sessionPayload)
         break
       }
 
@@ -206,7 +203,6 @@ export class Wallet implements WalletProvider {
       case 'Web3Global': {
         // TODO: for Web3Global,
         // window.ethereum.enable() ..
-        // this.getSession() .. saveSession() ..
         break
       }
     }
@@ -217,6 +213,8 @@ export class Wallet implements WalletProvider {
   logout(): void {
     window.localStorage.removeItem('@sequence.session')
     this.session = undefined
+    this.networks = undefined
+    this.providers = {}
     this.transport.cachedProvider?.clearCache()
     this.transport.cachedProvider?.onUpdate(undefined)
   }
@@ -313,6 +311,7 @@ export class Wallet implements WalletProvider {
   getProvider(chainId?: ChainId): Web3Provider | undefined {
     // return the top-level provider message transport when chainId is unspecified
     if (!chainId) {
+
 
       // TODO: for the "defaultNetwork", we'll also have an entry here..
       // maybe we should even return that instead of this.provider, as it will have built-in
@@ -445,6 +444,8 @@ export class Wallet implements WalletProvider {
     if (session.networks) {
       this.useNetworks(session.networks)
     }
+
+    this.saveSession(this.session)
 
     // confirm the session address matches the one with the signer
     const accountAddress = await this.getSigner().getAddress()

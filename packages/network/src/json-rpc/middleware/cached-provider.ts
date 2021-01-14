@@ -25,7 +25,7 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
         const key = this.cacheKey(request.method, request.params, chainId || this.defaultChainId)
         const result = this.getCacheValue(key)
         if (result && result !== '') {
-          callback(null, {
+          callback(undefined, {
             jsonrpc: '2.0',
             id: request.id,
             result: result

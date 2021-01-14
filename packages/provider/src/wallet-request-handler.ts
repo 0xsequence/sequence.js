@@ -18,17 +18,18 @@ import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer
   private prompter: WalletUserPrompter
-
-  private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
-
-  // TODO: perhaps we take argument of mainnetNetworks and testnetNetworks
-  // in this config? and signer can use between those from here..
+  private mainnetNetworks: NetworkConfig[]
+  private testnetNetworks: NetworkConfig[]
 
   // TODO: determine login state
 
-  constructor(signer: Signer, prompter: WalletUserPrompter) {
+  private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
+
+  constructor(signer: Signer, prompter: WalletUserPrompter, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
     this.signer = signer
     this.prompter = prompter
+    this.mainnetNetworks = mainnetNetworks
+    this.testnetNetworks = testnetNetworks
 
     if (!signer.provider) {
       throw new Error('wallet.provider is undefined')
@@ -39,21 +40,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   // (aka, the signer in this instance) and then responds with a wrapped response of
   // ProviderMessageResponse to be sent over the transport
   sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
-    return new Promise((resolve, reject) => {
-
+    return new Promise(resolve => {
       this.sendAsync(message.data, (error: any, response?: JsonRpcResponse) => {
         const responseMessage: ProviderMessageResponse = {
           ...message,
           data: response
         }
 
-        // TODO: we're not doing anything with error here, this is when the Wallet
-        // sendAsync returns an error / blows up, we should throw to the wallet-app
-        // but we should also respond with the error so it knows something went wrong.
-        // We can either form a JsonRpcResponse ourselves with the error code..
-        // (probably), or add a type on ProviderMessage<T>
-
+        // NOTE: we always resolve here, are the sendAsync call will wrap any exceptions
+        // in the error field of the response to ensure we send back to the user
         resolve(responseMessage)
+
       }, message.chainId)
     })
   }
@@ -358,7 +355,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'sequence_setDefaultChain': {
           const [defaultNetworkId] = request.params
           if (defaultNetworkId) {
-            this.setDefaultNetworkId(defaultNetworkId)
+            this.setDefaultChain(defaultNetworkId)
           }
           response.result = await this.getNetworks()
           break
@@ -383,7 +380,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    callback(null, response)
+    callback(undefined, response)
   }
 
   on = (event: WalletMessageEvent, fn: (...args: any[]) => void) => {
@@ -395,7 +392,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   getAddress(): Promise<string> {
-    // TODO return '' if not logged in, or undefined
+    // TODO return '' if not logged in, or undefined.. first need
+    // something on login state
     return this.signer.getAddress()
   }
 
@@ -403,24 +401,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return this.signer.getChainId()
   }
 
-  setDefaultNetworkId(chainId: string | number) {
+  setDefaultChain(chainId: string | number) {
     if (!chainId) return
-
-    // TODO: rename to setDefaultChain
-    // then, also pass 'networks' list optionally, for when we switch from mainnetNetworks <> testnetNetworks
-    // but keep logic in signer setDefaultNetworkId
-
-    if ((<any>this.signer).setDefaultNetworkId) {
-      (<any>this.signer).setDefaultNetworkId(chainId)
+    if ((<any>this.signer).setNetworks) {
+      (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
     } else {
-      throw new Error('signer does not have setDefaultNetworkId method available')
+      throw new Error('signer does not have setNetworks method available')
     }
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
-    // TODO: connection may request its own defaultChain, so we should update..
-    // hmpf.. what happens if two dapps request same wallet window..? prob namespace it by domain key..?
-
     const networks = await this.signer.getNetworks()
 
     // omit provider and relayer objects as they are not serializable
@@ -434,8 +424,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   notifyNetworks(networks: NetworkConfig[]) {
     this.events.emit('networks', networks)
-
-    // TODO: only if the default network has indeed changed from previous value, then lets emit
     this.events.emit('chainChanged', ethers.utils.hexlify(networks[0].chainId))
   }
 

@@ -6,7 +6,7 @@ import { walletContracts } from '@0xsequence/abi'
 import { Signer, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual } from '@0xsequence/config'
-import { ChainId, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
+import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties, findLatestLog } from './utils'
 import { Relayer, RpcRelayer } from '@0xsequence/relayer'
@@ -26,6 +26,8 @@ export class Account extends Signer {
     network: NetworkConfig
   }[]
 
+  private _signers: (BytesLike | AbstractSigner)[]
+
   // provider points at the main chain for compatability with the Signer.
   // Use getProvider(chainId) to get the provider for the respective network.
   provider: JsonRpcProvider
@@ -33,44 +35,22 @@ export class Account extends Signer {
   constructor(options: AccountOptions, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
 
-    // Network config, defaults will be used if none are provided
-    if (!options.networks) options.networks = [ ...mainnetNetworks ]
-    ensureValidNetworks(options.networks)
-    options.networks = sortNetworks(options.networks)
+    this.options = options
+    this._signers = signers
 
     // Use deployed wallet context by default if not provided
-    if (!options.context) options.context = { ...sequenceContext }
+    if (!options.context) this.options.context = { ...sequenceContext }
 
-    // Account/wallet instances using the initial configuration
-    this._wallets = options.networks.map((network) => {
-      const wallet = new Wallet({ config: options.initialConfig, context: options.context }, ...signers)
-      if (network.provider) {
-        wallet.setProvider(network.provider)
-      } else if (network.rpcUrl && network.rpcUrl !== '') {
-        wallet.setProvider(network.rpcUrl)
-      } else {
-        throw new Error(`network config is missing provider settings for chainId ${network.chainId}`)
-      }
-      if (network.relayer) {
-        wallet.setRelayer(network.relayer)
-      } else if (network.relayerUrl && network.relayerUrl !== '') {
-        wallet.setRelayer(new RpcRelayer(network.relayerUrl))
-      } else {
-        throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
-      }
-      if (network.isDefaultChain) {
-        this.provider = wallet.provider
-      }
-      return {
-        network: network,
-        wallet: wallet
-      }
-    })
-
-    this.options = options
+    // Network config, defaults will be used if none are provided
+    if (this.options.networks) {
+      this.setNetworks(this.options.networks)
+    } else {
+      this.setNetworks([ ...mainnetNetworks ])
+    }
   }
 
   useSigners(...signers: (BytesLike | AbstractSigner)[]): Account {
+    this._signers = signers
     this._wallets.forEach(w => {
       w.wallet = w.wallet.useSigners(...signers)
     })
@@ -387,23 +367,61 @@ export class Account extends Signer {
     throw new Error('expecting authChain to be the first or second in networks list')
   }
 
-  setDefaultNetworkId(chainId: string | number) {
-    if (!chainId) return
-    this.options.networks = ensureValidNetworks(sortNetworks(this.options.networks, chainId))
+  setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number) {
+    let networks: Networks = []
 
-    // sort wallets according to network list, as we expect defaultChain to be
-    // first on the list
-    const index = this.options.networks.map(n => n.chainId)
-    const wallets = []
-    for (let i=0; i<index.length; i++) {
-      const w = this._wallets.find(w => w.network.chainId === index[i])
-      if (!w) throw new Error('impossible state')
-      wallets.push(w)
+    // find chain between mainnet and testnet network groups, and set that network group.
+    // otherwise use mainnetNetworks without changes
+    if (testnetNetworks && testnetNetworks.length > 0 && defaultChainId) {
+      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainId)
+      if (mainnetNetwork) {
+        mainnetNetwork.isDefaultChain = true
+        networks = mainnetNetworks
+      } else {
+        const testnetNetwork = testnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainId)
+        if (testnetNetwork) {
+          testnetNetwork.isDefaultChain = true
+          networks = testnetNetworks
+        }
+      }
+    } else if (mainnetNetworks && mainnetNetworks.length > 0 && defaultChainId) {
+      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainId)
+      if (mainnetNetwork) {
+        mainnetNetwork.isDefaultChain = true
+        networks = mainnetNetworks
+      }
+    } else {
+      networks = mainnetNetworks
     }
-    if (wallets.length !== this._wallets.length) {
-      throw new Error('impossible state')
-    }
-    this._wallets = wallets
+
+    // assign while validating network list
+    this.options.networks = ensureValidNetworks(sortNetworks(networks, defaultChainId))
+
+    // Account/wallet instances using the initial configuration and network list
+    this._wallets = this.options.networks.map(network => {
+      const wallet = new Wallet({ config: this.options.initialConfig, context: this.options.context }, ...this._signers)
+      if (network.provider) {
+        wallet.setProvider(network.provider)
+      } else if (network.rpcUrl && network.rpcUrl !== '') {
+        wallet.setProvider(network.rpcUrl)
+      } else {
+        throw new Error(`network config is missing provider settings for chainId ${network.chainId}`)
+      }
+      if (network.relayer) {
+        wallet.setRelayer(network.relayer)
+      } else if (network.relayerUrl && network.relayerUrl !== '') {
+        wallet.setRelayer(new RpcRelayer(network.relayerUrl))
+      } else {
+        throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
+      }
+      if (network.isDefaultChain) {
+        this.provider = wallet.provider
+      }
+      return {
+        network: network,
+        wallet: wallet
+      }
+    })
   }
 
   connect(_: Provider): AbstractSigner {

@@ -22,6 +22,8 @@ export const maybeNetworkId = (chainId?: ChainId): number | undefined => {
 }
 
 export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfig[], raise: boolean = false): boolean => {
+  if (!networkConfig) throw new Error(`invalid network config: empty config`)
+
   const configs: NetworkConfig[] = []
   if (Array.isArray(networkConfig)) {
     configs.push(...networkConfig)
@@ -113,6 +115,7 @@ export const ensureUniqueNetworks = (networks: NetworkConfig[], raise: boolean =
 
 // sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
 export const sortNetworks = (networks: Networks, defaultChainId?: string | number): Networks => {
+  if (!networks) return []
   const config = networks.sort((a, b) => {
     if (a.chainId === b.chainId) return 0
     return a.chainId < b.chainId ? -1 : 1
