@@ -21,7 +21,7 @@ export const maybeNetworkId = (chainId?: ChainId): number | undefined => {
   return getNetworkId(chainId)
 }
 
-export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfig[], raise: boolean = false): boolean => {
+export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfig[], raise: boolean = false, skipRelayerCheck: boolean = false): boolean => {
   if (!networkConfig) throw new Error(`invalid network config: empty config`)
 
   const configs: NetworkConfig[] = []
@@ -67,9 +67,11 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
       if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: rpcUrl or provider must be provided`)
       return false
     }
-    if ((!c.relayerUrl || c.relayerUrl === '') && !c.relayer) {
-      if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: relayerUrl or relayer must be provided`)
-      return false
+    if (!skipRelayerCheck) {
+      if ((!c.relayerUrl || c.relayerUrl === '') && !c.relayer) {
+        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: relayerUrl or relayer must be provided`)
+        return false
+      }
     }
     if (c.isDefaultChain) {
       if (defaultChain) {
@@ -98,8 +100,8 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
   return true
 }
 
-export const ensureValidNetworks = (networks: NetworkConfig[]): NetworkConfig[] => {
-  isValidNetworkConfig(networks, true)
+export const ensureValidNetworks = (networks: NetworkConfig[], skipRelayerCheck: boolean = false): NetworkConfig[] => {
+  isValidNetworkConfig(networks, true, skipRelayerCheck)
   return networks
 }
 
@@ -153,6 +155,42 @@ export const sortNetworks = (networks: Networks, defaultChainId?: string | numbe
   if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
 
   return config
+}
+
+export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkConfig) => {
+  if (!src || !dest) return
+
+  if (!src.chainId && !src.name) {
+    throw new Error('failed to update network config: source config is missing chainId or name')
+  }
+  if (src.chainId !== dest.chainId && src.name !== dest.name) {
+    throw new Error('failed to update network config: one of chainId or name must match')
+  }
+
+  if (src.rpcUrl) {
+    dest.rpcUrl = src.rpcUrl
+    dest.provider = undefined
+  }
+  if (src.provider) {
+    dest.provider = src.provider
+  }
+  if (src.relayerUrl) {
+    dest.relayerUrl = src.relayerUrl
+    dest.relayer = undefined
+  }
+  if (src.relayer) {
+    dest.relayer = src.relayer
+  }
+  if (src.ensAddress) {
+    dest.ensAddress = src.ensAddress
+  }
+  // NOTE: we do not set default or auth chain from here
+  // if (src.isDefaultChain) {
+  //   dest.isDefaultChain = src.isDefaultChain
+  // }
+  // if (src.isAuthChain) {
+  //   dest.isAuthChain = src.isAuthChain
+  // }
 }
 
 export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaultChainId?: number, vars?: {[key: string]: any}): Networks => {
