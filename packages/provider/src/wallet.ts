@@ -51,7 +51,6 @@ export class Wallet implements WalletProvider {
     router?: JsonRpcRouter
     allowProvider?: JsonRpcMiddleware
     cachedProvider?: CachedProvider
-    publicProvider?: PublicProvider
   
     windowMessageProvider?: WindowMessageProvider
     proxyMessageProvider?: ProxyMessageProvider // TODO ..
@@ -115,11 +114,6 @@ export class Wallet implements WalletProvider {
         this.transport.cachedProvider = new CachedProvider()
 
         // ..
-        // TODO: might not need this since getProvider() could do this for us..?
-        // but need to check chainId, etc. etc.. check later
-        // this.publicProvider = new PublicProvider()
-
-        // ..
         this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
         this.transport.windowMessageProvider.register()
 
@@ -129,7 +123,6 @@ export class Wallet implements WalletProvider {
           this.transport.allowProvider,
           exceptionProviderMiddleware,
           this.transport.cachedProvider,
-          // this.publicProvider
         ], this.transport.windowMessageProvider)
 
         this.transport.provider = new Web3Provider(this.transport.router)
@@ -250,12 +243,6 @@ export class Wallet implements WalletProvider {
   }
 
   getNetworks = async (chainId?: ChainId): Promise<NetworkConfig[]> => {
-    // TODO: we should store the networks list in the session, but allow it to be refreshed here
-    // as well, consider an interface where we update the session whenever we call up the wallet window (for any reason)
-    // after some time (ie 1 hour)
-
-    // return this.getSigner().getNetworks()
-
     if (!this.isLoggedIn()) {
       throw new Error('login first')
     }
@@ -292,8 +279,8 @@ export class Wallet implements WalletProvider {
 
       await this.transport.windowMessageProvider.waitUntilConnected()
 
-      // setDefaultNetworkId
-      // it's important to send this right away upon connection
+      // setDefaultChain - it's important to send this right away upon connection. This will also
+      // update the network list in the session each time the wallet is opened & connected.
       const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
       this.useNetworks(networks)
 
@@ -310,28 +297,21 @@ export class Wallet implements WalletProvider {
 
   getProvider(chainId?: ChainId): Web3Provider | undefined {
     // return the top-level provider message transport when chainId is unspecified
-    if (!chainId) {
-
-
-      // TODO: for the "defaultNetwork", we'll also have an entry here..
-      // maybe we should even return that instead of this.provider, as it will have built-in
-      // public-provider and other stuff..?
-      // if (this.networks && this.networks.length > 0 && this.providers[this.networks[0].chainId]) {
-      //   return this.providers[this.networks[0].chainId]
-      // }
-      // or... we set chainId = this.networks[0].chainId ..
-
-      return this.transport.provider
-    }
-
-    if (!this.isLoggedIn()) {
+    // and user has not logged in
+    if (chainId && !this.isLoggedIn()) {
       throw new Error(`session is empty. login and try again.`)
+    }
+    if (!chainId) {
+      return this.transport.provider
     }
     if (this.session.networks.length === 0) {
       throw new Error('networks list is empty. upon logging in, networks should be populated')
     }
 
-    const network = findNetworkConfig(this.session.networks, chainId)
+    let network = this.session.networks[0]
+    if (chainId) {
+      network = findNetworkConfig(this.session.networks, chainId)
+    }
 
     // return memoized network provider
     if (this.providers[network.chainId]) {
