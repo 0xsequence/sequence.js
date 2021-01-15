@@ -67,8 +67,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     // TODO: if signer account is empty, aka user is not logged in to the wallet,
     // then prevent the use of many of the methods below.
+    const loggedIn = true // ..
 
     try {
+
+      if (!loggedIn && !publicJsonRpcMethods.includes(request.method)) {
+        throw new Error(`not logged in. ${request.method} is unavailable`)
+      }
 
       // wallet signer
       const signer = this.signer
@@ -441,3 +446,11 @@ export interface WalletUserPrompter {
   promptSignTransaction(txs: TransactionRequest, chaindId?: number): Promise<string>
   promptSendTransaction(txs: TransactionRequest, chaindId?: number): Promise<string>
 }
+
+const publicJsonRpcMethods = [
+  'net_version', 'eth_chainId', 'eth_getBalance', 'eth_getTransactionCount',
+  'eth_blockNumber', 'eth_getBlockByNumber', 'eth_getBlockByHash', 'eth_getTransactionByHash',
+  'eth_getCode', 'eth_estimateGas', 'eth_gasPrice',
+
+  'sequence_getWalletContext', 'sequence_getNetworks', 'sequence_setDefaultChain'
+]

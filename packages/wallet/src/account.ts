@@ -109,12 +109,12 @@ export class Account extends Signer {
 
   getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
     if (!chainId) return this.mainWallet().getProvider()
-    return this._wallets.find((w) => w.network.chainId === chainId)?.wallet.getProvider()
+    return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getProvider()
   }
 
   getRelayer(chainId?: number): Promise<Relayer | undefined> {
     if (!chainId) return this.mainWallet().getRelayer()
-    return this._wallets.find((w) => w.network.chainId === chainId)?.wallet.getRelayer()
+    return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getRelayer()
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
