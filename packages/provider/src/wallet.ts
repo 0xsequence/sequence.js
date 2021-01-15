@@ -1,7 +1,7 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
   JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
   SigningProvider, EagerProvider, exceptionProviderMiddleware, JsonRpcExternalProvider,
-  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcHandler, findNetworkConfig
+  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcHandler, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
@@ -227,6 +227,7 @@ export class Wallet implements WalletProvider {
   isLoggedIn(): boolean {
     return this.session !== undefined &&
       this.session.networks !== undefined && this.session.networks.length > 0 &&
+      this.networks !== undefined && this.networks.length > 0 &&
       this.session.accountAddress.startsWith('0x')
   }
 
@@ -246,27 +247,23 @@ export class Wallet implements WalletProvider {
     if (!this.isLoggedIn()) {
       throw new Error('login first')
     }
-
-    const session = this.getSession()
-    if (!session.networks) {
+    if (!this.networks) {
       throw new Error('network has not been set by session. login first.')
     }
-
     if (chainId) {
-      const network = findNetworkConfig(session.networks, chainId)
+      const network = findNetworkConfig(this.networks, chainId)
       return network ? [network] : []
     }
-    return session.networks
+    return this.networks
   }
 
   // getChainId returns the default chain id
   getChainId = async (): Promise<number> => {
-    const session = this.getSession()
-    if (!session.networks || session.networks.length < 1) {
+    if (!this.networks || this.networks.length < 1) {
       throw new Error('networks have not been set by session. login first.')
     }
     // default chain id is first one in the list, by design
-    return session.networks[0].chainId
+    return this.networks[0].chainId
   }
 
   openWallet = async (path?: string, state?: any): Promise<boolean> => {
@@ -304,13 +301,13 @@ export class Wallet implements WalletProvider {
     if (!chainId) {
       return this.transport.provider
     }
-    if (this.session.networks.length === 0) {
+    if (this.networks.length === 0) {
       throw new Error('networks list is empty. upon logging in, networks should be populated')
     }
 
-    let network = this.session.networks[0]
+    let network = this.networks[0]
     if (chainId) {
-      network = findNetworkConfig(this.session.networks, chainId)
+      network = findNetworkConfig(this.networks, chainId)
     }
 
     // return memoized network provider
@@ -420,11 +417,11 @@ export class Wallet implements WalletProvider {
     })
 
     // set networks
-    // TODO: build intersected list with this.config.networks
     if (session.networks) {
       this.useNetworks(session.networks)
     }
 
+    // save session
     this.saveSession(this.session)
 
     // confirm the session address matches the one with the signer
@@ -435,20 +432,30 @@ export class Wallet implements WalletProvider {
   }
 
   private useNetworks(networks: NetworkConfig[]) {
-    this.networks = networks
-
-    // hmm.. here..?
+    // set networks in the session
     if (!this.session) this.session = {}
-    this.session.networks = networks // TODO ..
+    this.session.networks = networks
 
-    // // ..
-    // if (this.config.networks) {
-    //   // intersect our this.config.networks if exists..
-    //   this.networks = networks
-    //   // TODO: add a method, which can combine network configs..
-    // } else {
-    //   this.networks = networks
-    // }
+    if (!this.config.networks && !this.config.networkRpcUrl) {
+      this.networks = networks
+      return
+    }
+
+    // combine custom network config with networks in the session
+    if (this.config.networks) {
+      this.networks = networks.map(n => ({ ...n })) // copy
+      this.config.networks.forEach(n => {
+        const network = findNetworkConfig(this.networks, n.chainId || n.name)
+        if (!network) return
+        updateNetworkConfig(n, network)
+      })
+      ensureValidNetworks(this.networks, true)
+    }
+
+    // an extra override for convenience
+    if (this.config.networkRpcUrl) {
+      this.networks[0].rpcUrl = this.config.networkRpcUrl
+    }
   }
 }
 
@@ -474,7 +481,7 @@ export interface ProviderConfig {
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list supplied from the wallet upon login,
   // and settings here take precedence such as overriding a relayer setting, or rpcUrl.
-  networks?: NetworkConfig[]
+  networks?: Partial<NetworkConfig>[]
 
   // networkRpcUrl will set the provider rpcUrl of the default network 
   networkRpcUrl?: string
@@ -485,33 +492,6 @@ export interface ProviderConfig {
   defaultNetworkId?: string | number
 }
 
-/*
-
-const wallet = new Wallet({
-  network: {
-    chainId: 1,
-    rpcUrl: 'https://.....',
-    mode: 'mainnet'
-  }
-})
-
-//--
-
-
-const wallet = new Wallet('mainnet')
-
-const wallet = new Wallet('mainnet', { etc ..})
-const wallet = new Wallet(1, { walletAppURL: 'xx', networkRpcUrl: 'xxx', networks: [{ chainId: 1, rpcUrl: 'xxx' }]  })
-
-
-everything can be omitted and will default to mainnet.. as..
-
-const wallet = new Wallet()
-
-//--
-
-
-*/
 
 // TODO: remove Web3Global ..?
 export type ProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
