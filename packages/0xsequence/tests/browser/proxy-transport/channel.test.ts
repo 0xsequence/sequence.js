@@ -1,6 +1,6 @@
-import { ProxyMessageProvider, ProviderMessageTransport, ProviderMessage, WalletRequestHandler, ProxyMessageChannel, ProxyMessageHandler } from '@0xsequence/provider'
+import { Web3Provider, ProxyMessageProvider, ProviderMessageTransport, ProviderMessage, WalletRequestHandler, ProxyMessageChannel, ProxyMessageHandler } from '@0xsequence/provider'
 import { ethers, Wallet as EOAWallet } from 'ethers'
-import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
@@ -17,13 +17,14 @@ export const tests = async () => {
   // `ch.app` (port) will be injected into the app, and `ch.wallet` (port) will be injected into the wallet.
   //
   // Sending messages to the app port will go through channel and get received by the wallet.
-  // Sending message to the wallet port will go through channel and get received by the app.
+  // Sending messages to the wallet port will go through channel and get received by the app.
   const ch = new ProxyMessageChannel()
 
   //
   // App Provider
   //
   const walletProvider = new ProxyMessageProvider(ch.app)
+  walletProvider.register()
 
   //
   // Wallet Handler
@@ -39,24 +40,20 @@ export const tests = async () => {
   const rpcProvider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
-
-
   // the rpc signer via the wallet
   const walletRequestHandler = new WalletRequestHandler(wallet, null, [])
   
+  // register wallet message handler, in this case using the ProxyMessage transport.
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   proxyHandler.register()
 
-  //--
-
-  // TODO: switch to Sequence Web3Provider ........
+  // setup web3 provider
   const provider = new Web3Provider(walletProvider)
   const signer = provider.getSigner()
-
   const address = await signer.getAddress()
 
   await test('verifying getAddress result', async () => {
-    assert.equal(address, '0x24E78922FE5eCD765101276A422B8431d7151259', 'wallet address')
+    assert.equal(address.toLowerCase(), '0x24E78922FE5eCD765101276A422B8431d7151259'.toLowerCase(), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -80,9 +77,6 @@ export const tests = async () => {
 
   await test('sign a message and validate/recover', async () => {
     const message = ethers.utils.toUtf8Bytes('hihi')
-
-    // TODO: signer should be a Sequence signer, and should be able to specify the chainId
-    // however, for a single wallet, it can check the chainId and throw if doesnt match, for multi-wallet it will select
 
     //
     // Sign the message
@@ -120,8 +114,5 @@ export const tests = async () => {
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
   })
-
-  // TODO: we need to test wallet notifications from wallet to app..
-  // TODO: perhaps we can trigger a network change there..? and notifyNetwork..?
 
 }

@@ -6,7 +6,7 @@ import {
   ProviderMessageRequest, ProviderMessageTransport
 } from '../../types'
 
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 
@@ -16,16 +16,22 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   
   constructor(port: ProxyMessageChannelPort) {
     super()
-
     this.connected = true // assume always connected
-
     this.port = port
+    if (!port) {
+      throw new Error('port argument cannot be empty')
+    }
+  }
+
+  register = () => {
     this.port.handleMessage = (message: ProviderMessage<any>): void => {
       this.handleMessage(message)
     }
   }
 
-  // TODO: add register() method.
+  unregister = () => {
+    this.port.handleMessage = undefined
+  }
 
   openWallet = (path?: string, state?: any): void => {
     // assume the wallet is already opened or handled by another process

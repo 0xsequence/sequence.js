@@ -30,7 +30,15 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   constructor() {}
 
-  openWallet = (path?: string, state?: any): void => {
+  register() {
+    throw new Error('abstract method')
+  }
+
+  unregister() {
+    throw new Error('abstract method')
+  }
+
+  openWallet(path?: string, state?: any) {
     throw new Error('abstract method')
   }
 

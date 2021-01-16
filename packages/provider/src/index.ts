@@ -1,5 +1,4 @@
 export * from './transports'
 export * from './types'
 export * from './wallet'
-export * from './wallet-request-handler'
 export * from './provider'

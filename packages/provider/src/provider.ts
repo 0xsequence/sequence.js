@@ -8,7 +8,7 @@ import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties } from '@0xsequence/utils'
 import { TransactionRequest, TransactionResponse, Transactionish, SignedTransactions } from '@0xsequence/transactions'
-import { WalletRequestHandler } from './wallet-request-handler'
+import { WalletRequestHandler } from './transports/wallet-request-handler'
 
 // naming..?
 // Web3Provider, Web3Signer, Web3Relayer, Web3Indexer
