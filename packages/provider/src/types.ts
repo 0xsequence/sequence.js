@@ -86,6 +86,12 @@ export enum ProviderMessageType {
   DEBUG = '_debug'
 }
 
+export enum ConnectionState {
+  DISCONNECTED = 0,
+  CONNECTING = 1,
+  CONNECTED = 2
+}
+
 export type NetworkEventPayload = NetworkConfig
 
 export interface MessageToSign {

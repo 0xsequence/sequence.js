@@ -6,7 +6,7 @@ import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNe
 import { WalletConfig } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
-import { WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
+import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
 import { WalletSession, ProviderMessageEvent, ProviderTransport } from './types'
 import { WalletCommands } from './commands'
 
@@ -55,7 +55,7 @@ export class Wallet implements WalletProvider {
     cachedProvider?: CachedProvider
 
     // message communication
-    messageProvider?: ProviderTransport
+    messageProvider?: MuxMessageProvider
     windowMessageProvider?: WindowMessageProvider
     proxyMessageProvider?: ProxyMessageProvider
   }
@@ -99,14 +99,24 @@ export class Wallet implements WalletProvider {
 
     // Setup provider
 
-    if (this.config.transports.proxyTransport.enabled) {
-      this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort)
-      this.transport.proxyMessageProvider.register()
+    this.transport.messageProvider = new MuxMessageProvider()
+
+    // ..
+    if (this.config.transports.windowTransport.enabled) {
+      this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
+      this.transport.messageProvider.add(this.transport.windowMessageProvider)
+      // this.transport.windowMessageProvider.register()
     }
 
-    // --
+    if (this.config.transports.proxyTransport.enabled) {
+      this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort)
+      this.transport.messageProvider.add(this.transport.proxyMessageProvider)
+      // this.transport.proxyMessageProvider.register()      
+    }
 
-    // TODO: setup MuxTransport if we have multiple, or just set .. this.transport.messageTransport = this.window, etc.
+    this.transport.messageProvider.register()
+
+    // --
 
     // .....
     this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
@@ -123,16 +133,12 @@ export class Wallet implements WalletProvider {
     this.transport.cachedProvider = new CachedProvider()
 
     // ..
-    this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
-    this.transport.windowMessageProvider.register()
-
-    // ..
     this.transport.router = new JsonRpcRouter([
       loggingProviderMiddleware,
       this.transport.allowProvider,
       exceptionProviderMiddleware,
       this.transport.cachedProvider,
-    ], this.transport.windowMessageProvider) // <-------<< use the mux..
+    ], this.transport.messageProvider)
 
     this.transport.provider = new Web3Provider(this.transport.router)
 
@@ -145,7 +151,8 @@ export class Wallet implements WalletProvider {
     //   this.useNetworks(networks)
     //   this.saveSession(this.session)
     // })
-    this.transport.windowMessageProvider.on('accountsChanged', (accounts) => {
+
+    this.transport.messageProvider.on('accountsChanged', (accounts) => {
       if (accounts && accounts.length === 0) {
         this.logout()
       }
@@ -167,15 +174,11 @@ export class Wallet implements WalletProvider {
       return true
     }
 
-    // TODO: need this to work with multiple transports
-    // ie. Proxy and Window at same time..
-    // TODO... use the mux...
-
-    if (this.config.transports.windowTransport?.enabled) {
+    // if (this.config.transports.windowTransport?.enabled) {
       await this.openWallet('', { login: true })
-      const sessionPayload = await this.transport.windowMessageProvider.waitUntilLoggedIn()
+      const sessionPayload = await this.transport.messageProvider.waitUntilLoggedIn()
       this.useSession(sessionPayload)
-    }
+    // }
 
     return this.isLoggedIn()
   }
@@ -194,11 +197,11 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
-    if (this.transport.windowMessageProvider) {
-      return this.transport.windowMessageProvider.isConnected()
-    } else {
-      return false
-    }
+    // if (this.transport.windowMessageProvider) {
+      return this.transport.messageProvider.isConnected()
+    // } else {
+      // return false
+    // }
   }
 
   isLoggedIn(): boolean {
@@ -248,10 +251,10 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
 
-    if (this.transport.windowMessageProvider) {
-      this.transport.windowMessageProvider.openWallet(path, state)
+    // if (this.transport.windowMessageProvider) {
+      this.transport.messageProvider.openWallet(path, state)
 
-      await this.transport.windowMessageProvider.waitUntilConnected()
+      await this.transport.messageProvider.waitUntilConnected()
 
       // setDefaultChain - it's important to send this right away upon connection. This will also
       // update the network list in the session each time the wallet is opened & connected.
@@ -259,14 +262,14 @@ export class Wallet implements WalletProvider {
       this.useNetworks(networks)
 
       return true
-    }
-    return false
+    // }
+    // return false
   }
 
   closeWallet = (): void => {
-    if (this.transport.windowMessageProvider) {
-      this.transport.windowMessageProvider.closeWallet()
-    }
+    // if (this.transport.windowMessageProvider) {
+      this.transport.messageProvider.closeWallet()
+    // }
   }
 
   getProvider(chainId?: ChainId): Web3Provider | undefined {
@@ -343,17 +346,17 @@ export class Wallet implements WalletProvider {
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    if (!this.transport.windowMessageProvider) {
-      return
-    }
-    this.transport.windowMessageProvider.on(event, fn)
+    // if (!this.transport.windowMessageProvider) {
+    //   return
+    // }
+    this.transport.messageProvider.on(event, fn)
   }
 
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    if (!this.transport.windowMessageProvider) {
-      return
-    }
-    this.transport.windowMessageProvider.once(event, fn)
+    // if (!this.transport.windowMessageProvider) {
+    //   return
+    // }
+    this.transport.messageProvider.once(event, fn)
   }
 
   private loadSession = (): WalletSession => {

@@ -4,7 +4,7 @@ import {
   ProviderTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
   ProviderMessageResponseCallback, ProviderMessageTransport,
-  WalletSession
+  WalletSession, ConnectionState
 } from '../types'
 
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -20,7 +20,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected pendingMessageRequests: ProviderMessageRequest[] = []
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
-  protected connected = false
+  protected connection: ConnectionState
   protected sessionId: string
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
@@ -28,7 +28,9 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected accountPayload: string
   protected networksPayload: NetworkConfig[]
 
-  constructor() {}
+  constructor() {
+    this.connection = ConnectionState.DISCONNECTED
+  }
 
   register() {
     throw new Error('abstract method')
@@ -47,11 +49,46 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   }
 
   isConnected(): boolean {
-    return this.connected
+    return this.connection === ConnectionState.CONNECTED
   }
 
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number): Promise<void> => {
-    throw new Error('abstract method')
+  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+    // here, we receive the message from the dapp provider call
+
+    // automatically open the wallet when a provider request makes it here
+
+    // TODO: cuz, if we're connecting, we should enqueue.. ? is will this happen automatically for us?
+
+    // TODO: we can remove focusWallet()
+    // and just use openWallet(), and it can itself focus etc. if already connected?
+    // seems better..
+
+    if (this.connection === ConnectionState.DISCONNECTED ) {
+      // flag the wallet to auto-close once user submits input. ie.
+      // prompting to sign a message or transaction
+      this.confirmationOnly = true
+    }
+
+    // open/focus the wallet
+    await this.openWallet()
+
+    // double check, in case wallet failed to open
+    if (!this.isConnected()) {
+      throw new Error('wallet is not connected.')
+    }
+
+    // send message request, await, and then execute callback after receiving the response
+    try {
+      const response = await this.sendMessageRequest({
+        idx: nextMessageIdx(),
+        type: ProviderMessageType.MESSAGE,
+        data: request,
+        chainId: chainId
+      })
+      callback(undefined, response.data)
+    } catch (err) {
+      callback(err)
+    }
   }
 
   // handleMessage will handle message received from the remote wallet
@@ -69,13 +106,13 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // CONNECT response
     //
     // Flip connected flag, and flush the pending queue 
-    if (message.type === ProviderMessageType.CONNECT && !this.connected) {
+    if (message.type === ProviderMessageType.CONNECT && !this.isConnected()) {
       if (this.sessionId !== message.data?.result?.sessionId) {
         console.log('connect received from wallet, but does not match id', this.sessionId)
         return
       }
 
-      this.connected = true
+      this.connection = ConnectionState.CONNECTED
       this.events.emit('connect')
 
       // flush pending requests when connected
@@ -164,13 +201,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         reject(new Error('duplicate message idx, should never happen'))
       }
 
-      if (!this.connected) {
+      if (!this.isConnected()) {
         console.log('pushing to pending requests', message)
         this.pendingMessageRequests.push(message)
-        return
+      } else {
+        this.sendMessage(message)
       }
-
-      this.sendMessage(message)
     })
   }
 
@@ -256,12 +292,49 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     ])
   }
 
+  protected connect = async (): Promise<boolean> => {
+    if (this.isConnected()) return true
+
+    console.log('connecting.........')
+
+    // Send connection request and wait for confirmation
+    this.connection = ConnectionState.CONNECTING
+
+    // CONNECT is special case, as we emit multiple tranmissions waiting for a response
+    const initRequest: ProviderMessage<any> = {
+      idx: nextMessageIdx(),
+      type: ProviderMessageType.CONNECT,
+      data: null
+    }
+
+
+    // TODO: timeout...? race..
+
+    // return new Promise(resolve => {
+      const postMessageUntilConnected = () => {
+        console.log('send..')
+        // if (this.isConnected() || warned) {
+        //   clearTimeout(popupCheck)
+        //   return
+        // }
+        if (this.isConnected()) return true //resolve(true)
+        this.sendMessage(initRequest)
+        setTimeout(postMessageUntilConnected, 250)
+      }
+      postMessageUntilConnected()
+    // })
+  }
+
   protected disconnect() {
+    this.connection = ConnectionState.DISCONNECTED
     console.log('disconnecting wallet and flushing!')
 
     // flush pending requests and return error to all callbacks
     this.pendingMessageRequests.length = 0
     this.responseCallbacks.forEach(responseCallback => {
+      // TODO: in mux situation, this isn't ideal.
+      // or is it fine because we're just cancelling the message? not
+      // the sendAsync request in the first place..
       responseCallback('wallet disconnected')
     })
     this.responseCallbacks.clear()

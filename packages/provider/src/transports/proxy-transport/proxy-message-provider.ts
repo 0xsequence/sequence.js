@@ -3,7 +3,7 @@ import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transpor
 import {
   ProviderMessageResponse,
   ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
-  ProviderMessageRequest, ProviderMessageTransport
+  ProviderMessageRequest, ProviderMessageTransport, ConnectionState
 } from '../../types'
 
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
@@ -16,7 +16,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   
   constructor(port: ProxyMessageChannelPort) {
     super()
-    this.connected = true // assume always connected
+    this.connection = ConnectionState.DISCONNECTED
     this.port = port
     if (!port) {
       throw new Error('port argument cannot be empty')
@@ -34,23 +34,11 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   }
 
   openWallet = (path?: string, state?: any): void => {
-    // assume the wallet is already opened or handled by another process
-    return
+    this.connect()
   }
 
   closeWallet() {
-    // closing the wallet is handled by another process
-    return
-  }
-
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    const response = await this.sendMessageRequest({
-      idx: nextMessageIdx(),
-      type: ProviderMessageType.MESSAGE,
-      data: request,
-      chainId: chainId
-    })
-    callback(undefined, response.data)
+    this.disconnect()
   }
 
   sendMessage(message: ProviderMessage<any>) {

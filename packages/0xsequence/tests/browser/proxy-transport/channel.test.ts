@@ -20,11 +20,8 @@ export const tests = async () => {
   // Sending messages to the wallet port will go through channel and get received by the app.
   const ch = new ProxyMessageChannel()
 
-  //
-  // App Provider
-  //
-  const walletProvider = new ProxyMessageProvider(ch.app)
-  walletProvider.register()
+  // TODO: need to check events from app side when wallet is connected/disconnected
+  // so that channel code can display wallet modal or hide it from mobile side
 
   //
   // Wallet Handler
@@ -46,6 +43,14 @@ export const tests = async () => {
   // register wallet message handler, in this case using the ProxyMessage transport.
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   proxyHandler.register()
+
+
+  //
+  // App Provider
+  //
+  const walletProvider = new ProxyMessageProvider(ch.app)
+  walletProvider.register()
+  // await walletProvider.waitUntilConnected()
 
   // setup web3 provider
   const provider = new Web3Provider(walletProvider)

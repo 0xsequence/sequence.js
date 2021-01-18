@@ -18,6 +18,8 @@ export class ProxyMessageHandler extends BaseWalletTransport {
     }
   }
 
+  // TODO: unregister()
+
   sendMessage(message: ProviderMessage<any>) {
     this.port.sendMessage(message)
   }
