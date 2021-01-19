@@ -1,5 +1,5 @@
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { WalletRequestHandler } from '../../wallet-request-handler'
+import { WalletRequestHandler } from '../wallet-request-handler'
 import { ProviderMessage } from '../../types'
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 
@@ -16,6 +16,10 @@ export class ProxyMessageHandler extends BaseWalletTransport {
     this.port.handleMessage = (message: ProviderMessage<any>): void => {
       this.handleMessage(message)
     }
+  }
+
+  unregister() {
+    this.port.handleMessage = undefined
   }
 
   sendMessage(message: ProviderMessage<any>) {

@@ -5,7 +5,7 @@ import {
   WalletMessageEvent, ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   MessageToSign
-} from './types'
+} from '../types'
 
 import { BigNumber, ethers } from 'ethers'
 import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'

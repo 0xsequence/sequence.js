@@ -4,7 +4,7 @@ import {
   ProviderMessageType, ProviderMessageResponse, ProviderMessageTransport
 } from '../types'
 
-import { WalletRequestHandler } from '../wallet-request-handler'
+import { WalletRequestHandler } from './wallet-request-handler'
 
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 

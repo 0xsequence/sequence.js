@@ -77,21 +77,12 @@ const main = async () => {
     context: deployedWalletContext
   }, owner)
 
-
-  // const txn = await relayer.deployWallet(wallet.config, sequenceContext)
-  // console.log('...', txn)
-
-
   // the json-rpc signer via the wallet
-  // const mockUserPrompter = new MockWalletUserPrompter(true)
   const walletRequestHandler = new WalletRequestHandler(account, null, networks)
-
 
   // setup and register window message transport
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
   windowHandler.register()
-
-  // TODO: register the ProxyMessageHandler() + register()
 
 }
 
