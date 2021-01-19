@@ -1,4 +1,4 @@
-@0xsequence/bridge
+@0xsequence/config
 ==================
 
 ...
