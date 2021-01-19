@@ -1,4 +1,5 @@
-# @0xSequence/multicall
+@0xsequence/multicall
+=====================
 
 An Ethereum provider wrapper that aggregates multiple operations in one, reducing the network load on clients and servers. The project aims to be plug-and-play with existing ether.js integrations.
 
