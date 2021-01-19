@@ -3,8 +3,6 @@ import { ethers } from 'ethers'
 import { Web3Provider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 
-import { TypedDataUtils } from 'ethers-eip712'
-
 import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { testWalletContext } from '../testutils'
@@ -129,15 +127,9 @@ export const tests = async () => {
 
     const typedData = {
       types: {
-        EIP712Domain: [
-          {name: "name", type: "string"},
-          {name: "version", type: "string"},
-          {name: "chainId", type: "uint256"},
-          {name: "verifyingContract", type: "address"},
-        ],
         Person: [
           {name: "name", type: "string"},
-          {name: "wallet", type: "address"},  
+          {name: "wallet", type: "address"},
         ]
       },
       primaryType: 'Person' as const,
@@ -172,8 +164,9 @@ export const tests = async () => {
     //
     // Verify the message signature
     //
-    const message = TypedDataUtils.encodeDigest(typedData)
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+
+    const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
+    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(messageHash))
     const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
     assert.true(isValid, 'signature is valid')
 

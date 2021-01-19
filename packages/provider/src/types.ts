@@ -1,4 +1,5 @@
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
+import { TypedDataDomain, TypedDataField }  from '@ethersproject/abstract-signer'
 
 // export class SequenceError extends Error {}
 
@@ -100,6 +101,10 @@ export interface MessageToSign {
   chainId?: number
 }
 
-// TODO: deprecate
-import { TypedData } from 'ethers-eip712'
-export type { TypedData }
+export interface TypedData {
+  domain: TypedDataDomain
+  types: Record<string, Array<TypedDataField>>
+  value: Record<string, any>
+}
+
+export type { TypedDataDomain, TypedDataField }
