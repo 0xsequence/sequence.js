@@ -1,7 +1,7 @@
 {
   "name": "0xsequence",
   "version": "0.7.0",
-  "description": "A simple & powerful development stack for Ethereum",
+  "description": "Sequence: simple & powerful Ethereum development library and Web-based smart wallet",
   "source": "src/index.ts",
   "main": "dist/0xsequence.cjs.js",
   "module": "dist/0xsequence.esm.js",
@@ -27,7 +27,17 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.7.0",
+    "@0xsequence/api": "^0.7.0",
+    "@0xsequence/auth": "^0.7.0",
+    "@0xsequence/chaind": "^0.7.0",
+    "@0xsequence/config": "^0.7.0",
+    "@0xsequence/guard": "^0.7.0",
+    "@0xsequence/multicall": "^0.7.0",
+    "@0xsequence/network": "^0.7.0",
     "@0xsequence/provider": "^0.7.0",
+    "@0xsequence/relayer": "^0.7.0",
+    "@0xsequence/transactions": "^0.7.0",
+    "@0xsequence/utils": "^0.7.0",
     "@0xsequence/wallet": "^0.7.0",
     "ethers": "^5.0.26"
   },

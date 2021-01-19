@@ -1,12 +1,12 @@
 {
   "name": "@0xsequence/multicall",
   "version": "0.7.0",
-  "author": "Horizon Blockchain Games",
-  "homepage": "https://github.com/arcadeum/arcadeum.js#readme",
-  "license": "Apache-2.0",
+  "description": "multicall sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-multicall.cjs.js",
   "module": "dist/0xsequence-multicall.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
   "scripts": {
     "prepublishOnly": "yarn test && yarn lint",
     "test": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000 tests/**/*.spec.ts",

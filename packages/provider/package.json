@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/provider",
   "version": "0.7.0",
+  "description": "provider sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-provider.cjs.js",
   "module": "dist/0xsequence-provider.esm.js",

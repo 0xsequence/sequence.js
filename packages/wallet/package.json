@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/wallet",
   "version": "0.7.0",
+  "description": "wallet sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-wallet.cjs.js",
   "module": "dist/0xsequence-wallet.esm.js",

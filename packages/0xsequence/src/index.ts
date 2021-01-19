@@ -1,25 +1,39 @@
 import * as abi from '@0xsequence/abi'
+import * as api from '@0xsequence/api'
+import * as auth from '@0xsequence/auth'
+import * as chaind from '@0xsequence/chaind'
+import * as config from '@0xsequence/config'
+import * as guard from '@0xsequence/guard'
+import * as multicall from '@0xsequence/multicall'
+import * as network from '@0xsequence/network'
 import * as provider from '@0xsequence/provider'
-import * as wallet from '@0xsequence/wallet'
-
-export const sequence = {
-  abi,
-  provider,
-  // ... etc.
-}
-
-// NOTE: 0xsequence top-level package will not export the entiure @0xsequence/wallet
-// module, only utility methods.
-
-// TODO: utils.recover, etc.. from 0xsequence/wallet
-// TODO: for utils, included utils.typedData.encode(), etc..TypedDataUtils
-// or typedData.XX at same level as utils
-// or utils.wallet, utils.typedData, etc.
+import * as relayer from '@0xsequence/relayer'
+import * as transactions from '@0xsequence/transactions'
+import * as _utils from '@0xsequence/utils'
 
 // pkg-level export of 0xsequence/provider for easier consumption
 import { Wallet } from '@0xsequence/provider'
 
+// utility methods
+// TODO: add util methods from @0xsequence/wallet to utils
+const utils = {
+  ..._utils
+}
+
+// sequence meta-package types
 export {
+  abi,
+  api,
+  auth,
+  chaind,
+  config,
+  guard,
+  multicall,
+  network,
+  provider,
+  relayer,
+  transactions,
+  utils,
+
   Wallet
-  // etc.....
 }

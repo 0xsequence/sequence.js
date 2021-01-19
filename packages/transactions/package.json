@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/transactions",
   "version": "0.7.0",
+  "description": "transactions sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-transactions.cjs.js",
   "module": "dist/0xsequence-transactions.esm.js",
