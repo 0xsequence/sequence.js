@@ -35,7 +35,6 @@ const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
 
 import hardhat from 'hardhat'
-import { TypedDataUtils } from 'ethers-eip712'
 
 type EthereumInstance = {
   chainId?: number
@@ -153,12 +152,6 @@ describe('Wallet integration', function () {
       it('Should sign a typed message', async () => {
         const typedData = {
           types: {
-            EIP712Domain: [
-              { name: "name", type: "string" },
-              { name: "version", type: "string" },
-              { name: "chainId", type: "uint256" },
-              { name: "verifyingContract", type: "address" },
-            ],
             Person: [
               { name: "name", type: "string" },
               { name: "wallet", type: "address" },
@@ -177,7 +170,7 @@ describe('Wallet integration', function () {
           }
         }
 
-        const digest = TypedDataUtils.encodeDigest(typedData)
+        const digest = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
 
         const sig = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message)
 
