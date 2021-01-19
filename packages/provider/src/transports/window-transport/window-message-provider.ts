@@ -1,12 +1,5 @@
-import {
-  ProviderMessageResponse,
-  ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
-  ProviderMessageRequest,
-  ConnectionState
-} from '../../types'
-import { BaseProviderTransport, nextMessageIdx, PROVIDER_CONNECT_TIMEOUT } from '../base-provider-transport'
-
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { ProviderMessage } from '../../types'
+import { BaseProviderTransport } from '../base-provider-transport'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider
@@ -31,15 +24,19 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     // disconnect clean up
     this.on('disconnect', () => {
-      this.disconnect()
       if (this.walletWindow) {
         this.walletWindow.close()
         this.walletWindow = undefined
       }
     })
+
+    this.registered = true
   }
 
   unregister = () => {
+    this.registered = false
+    this.closeWallet()
+
     // disable message listener
     if (registeredWindowMessageProvider === this) {
       registeredWindowMessageProvider = undefined
@@ -108,23 +105,16 @@ export class WindowMessageProvider extends BaseProviderTransport {
     const interval = setInterval(() => {
       if (popup && popup.closed) {
         clearInterval(interval)
-        this.connection = ConnectionState.DISCONNECTED
-        this.events.emit('disconnect')
+        this.disconnect()
       }
     }, 1250)
 
-    // TODO: use popupCheck above....... etc........
     // connect to the wallet by sending requests
     this.connect()
   }
 
   closeWallet() {
     this.disconnect()
-    this.confirmationOnly = false
-    if (this.walletWindow) {
-      this.walletWindow.close()
-      this.walletWindow = undefined
-    }
   }
 
   // onmessage, receives ProviderMessageResponse from the wallet post-message transport
@@ -153,6 +143,10 @@ export class WindowMessageProvider extends BaseProviderTransport {
   sendMessage(message: ProviderMessage<any>) {
     if (!message.idx || message.idx <= 0) {
       throw new Error('message idx is empty')
+    }
+    if (!this.walletWindow) {
+      console.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
+      return
     }
     const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)

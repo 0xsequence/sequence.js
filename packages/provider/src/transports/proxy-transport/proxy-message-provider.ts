@@ -6,8 +6,6 @@ import {
   ProviderMessageRequest, ProviderMessageTransport, ConnectionState
 } from '../../types'
 
-import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
-
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 
 export class ProxyMessageProvider extends BaseProviderTransport {
@@ -27,9 +25,21 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.port.handleMessage = (message: ProviderMessage<any>): void => {
       this.handleMessage(message)
     }
+
+    this.on('connect', (...args: any[]) => {
+      this.port.events.emit('connect', args)
+    })
+    this.on('disconnect', (...args: any[]) => {
+      this.port.events.emit('disconnect', args)
+    })
+
+    this.registered = true
   }
 
   unregister = () => {
+    this.registered = false
+    this.closeWallet()
+    this.events.removeAllListeners()
     this.port.handleMessage = undefined
   }
 

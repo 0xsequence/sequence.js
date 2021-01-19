@@ -63,7 +63,7 @@ export interface ProviderMessageRequestHandler {
   sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse>
 }
 
-export interface ProviderMessageTransport { //extends ProviderMessageRequestHandler {
+export interface ProviderMessageTransport {
   // handleMessage will handle a message received from the remote wallet
   handleMessage(message: ProviderMessage<any>): void
 

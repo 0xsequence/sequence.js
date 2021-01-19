@@ -20,8 +20,12 @@ export const tests = async () => {
   // Sending messages to the wallet port will go through channel and get received by the app.
   const ch = new ProxyMessageChannel()
 
-  // TODO: need to check events from app side when wallet is connected/disconnected
-  // so that channel code can display wallet modal or hide it from mobile side
+  ch.app.on('connect', () => {
+    console.log('wallet connected.')
+  })
+  ch.app.on('disconnect', () => {
+    console.log('wallet disconnected.')
+  })
 
   //
   // Wallet Handler
@@ -50,7 +54,9 @@ export const tests = async () => {
   //
   const walletProvider = new ProxyMessageProvider(ch.app)
   walletProvider.register()
-  // await walletProvider.waitUntilConnected()
+
+  walletProvider.openWallet()
+  await walletProvider.waitUntilConnected()
 
   // setup web3 provider
   const provider = new Web3Provider(walletProvider)
@@ -119,5 +125,7 @@ export const tests = async () => {
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
   })
+
+  walletProvider.closeWallet()
 
 }

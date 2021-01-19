@@ -92,31 +92,20 @@ export class Wallet implements WalletProvider {
       return
     }
 
-    // TODO: check the config types, if we want proxy, we need method to pass here.
-    // TODO: higher-order MessageBroadcaster(...transports) should go here, where we send/listen
-    // on multiple channels.. or.. MessageMux(..transports) .. ie. MessageMux(windowTransport, proxyTransport)
-    // this.proxyTransportProvider = new ProxyMessageProvider()
-
     // Setup provider
 
     this.transport.messageProvider = new MuxMessageProvider()
 
-    // ..
-    if (this.config.transports.windowTransport.enabled) {
+    // multiple message provider setup, first one to connect will be the main transport
+    if (this.config.transports?.windowTransport?.enabled) {
       this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
       this.transport.messageProvider.add(this.transport.windowMessageProvider)
-      // this.transport.windowMessageProvider.register()
     }
-
-    if (this.config.transports.proxyTransport.enabled) {
+    if (this.config.transports?.proxyTransport?.enabled) {
       this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort)
       this.transport.messageProvider.add(this.transport.proxyMessageProvider)
-      // this.transport.proxyMessageProvider.register()      
     }
-
     this.transport.messageProvider.register()
-
-    // --
 
     // .....
     this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
@@ -169,16 +158,13 @@ export class Wallet implements WalletProvider {
     if (refresh === true) {
       this.logout()
     }
-
     if (this.isLoggedIn()) {
       return true
     }
 
-    // if (this.config.transports.windowTransport?.enabled) {
-      await this.openWallet('', { login: true })
-      const sessionPayload = await this.transport.messageProvider.waitUntilLoggedIn()
-      this.useSession(sessionPayload)
-    // }
+    await this.openWallet('', { login: true })
+    const sessionPayload = await this.transport.messageProvider.waitUntilLoggedIn()
+    this.useSession(sessionPayload)
 
     return this.isLoggedIn()
   }
@@ -197,11 +183,7 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
-    // if (this.transport.windowMessageProvider) {
-      return this.transport.messageProvider.isConnected()
-    // } else {
-      // return false
-    // }
+    return this.transport.messageProvider.isConnected()
   }
 
   isLoggedIn(): boolean {
@@ -251,25 +233,19 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
 
-    // if (this.transport.windowMessageProvider) {
-      this.transport.messageProvider.openWallet(path, state)
+    this.transport.messageProvider.openWallet(path, state)
+    await this.transport.messageProvider.waitUntilConnected()
 
-      await this.transport.messageProvider.waitUntilConnected()
+    // setDefaultChain - it's important to send this right away upon connection. This will also
+    // update the network list in the session each time the wallet is opened & connected.
+    const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
+    this.useNetworks(networks)
 
-      // setDefaultChain - it's important to send this right away upon connection. This will also
-      // update the network list in the session each time the wallet is opened & connected.
-      const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
-      this.useNetworks(networks)
-
-      return true
-    // }
-    // return false
+    return true
   }
 
   closeWallet = (): void => {
-    // if (this.transport.windowMessageProvider) {
-      this.transport.messageProvider.closeWallet()
-    // }
+    this.transport.messageProvider.closeWallet()
   }
 
   getProvider(chainId?: ChainId): Web3Provider | undefined {
@@ -346,16 +322,10 @@ export class Wallet implements WalletProvider {
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    // if (!this.transport.windowMessageProvider) {
-    //   return
-    // }
     this.transport.messageProvider.on(event, fn)
   }
 
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    // if (!this.transport.windowMessageProvider) {
-    //   return
-    // }
     this.transport.messageProvider.once(event, fn)
   }
 
@@ -478,10 +448,10 @@ export interface ProviderConfig {
 }
 
 export const DefaultProviderConfig: ProviderConfig = {
-  // TODO: check process.env for this if test or production, etc..
-  walletAppURL: 'http://localhost:3333',
+  walletAppURL: 'https://sequence.app',
 
   transports: {
-    windowTransport: { enabled: true }
+    windowTransport: { enabled: true },
+    proxyTransport: { enabled: false }
   }
 }

@@ -1075,8 +1075,6 @@ describe('Wallet integration', function () {
     const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
     const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
 
-    // TODO: Test EIP712 Sign
-
     describe('ethSign', () => {
       it('Should validate ethSign signature', async () => {
         const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
