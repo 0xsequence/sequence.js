@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@0xsequence/utils": "^0.7.0",
-    "@ethersproject/providers": "^5.0.17",
-    "ethers": "^5.0.24"
+    "@ethersproject/providers": "^5.0.19",
+    "ethers": "^5.0.26"
   },
   "peerDependencies": {},
   "devDependencies": {},

@@ -24,16 +24,16 @@
     "@arcadeum/ethauth": "^0.3.0",
     "@ethersproject/abi": "^5.0.10",
     "@ethersproject/properties": "^5.0.7",
-    "@ethersproject/providers": "^5.0.17",
-    "ethers": "^5.0.24",
+    "@ethersproject/providers": "^5.0.19",
+    "ethers": "^5.0.26",
     "eventemitter3": "^4.0.6",
-    "fetch-ponyfill": "^7.0.0"
+    "fetch-ponyfill": "^7.1.0"
   },
   "peerDependencies": {},
   "devDependencies": {
     "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts",
-    "ganache-core": "^2.12.1",
-    "web3": "^1.2.8",
+    "ganache-core": "^2.13.2",
+    "web3": "^1.3.1",
     "web3-typescript-typings": "^0.10.2"
   },
   "files": [
