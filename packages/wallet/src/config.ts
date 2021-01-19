@@ -1,7 +1,10 @@
 import { BytesLike, ethers, Contract } from 'ethers'
-import { Signer, DecodedSignature } from './signer'
+import { Signer, DecodedSignature, DecodedEOASigner, isSequenceSigner, SignatureType, isDecodedEOASigner, isDecodedFullSigner, isDecodedAddress, DecodedAddressPart, DecodedFullSigner } from './signer'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletConfig } from '@0xsequence/config'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { isValidSignature } from './validate'
+import { WalletContext } from '@0xsequence/network'
 
 export interface DecodedOwner {
   weight: number
@@ -27,34 +30,62 @@ export const fetchImageHash = async (signer: Signer): Promise<string> => {
 // is an encoding format of the original message, encoded by:
 //
 // subDigest = packMessageData(wallet.address, chainId, ethers.utils.keccak256(message))
-export const recoverConfig = (subDigest: BytesLike, signature: string | DecodedSignature): WalletConfig => {
+export const recoverConfig = async (
+  subDigest:
+  BytesLike,
+  signature: string | DecodedSignature,
+  provider?: ethers.providers.Provider,
+  context?: WalletContext,
+  chainId?: number,
+  walletSignersValidation?: boolean
+): Promise<WalletConfig> => {
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(subDigest))
-  return recoverConfigFromDigest(digest, signature)
-}
-
-export const isSigner = (obj: DecodedSigner | DecodedOwner): boolean => {
-  const cast = obj as DecodedSigner
-  return cast.r !== undefined && cast.s !== undefined
+  return recoverConfigFromDigest(digest, signature, provider, context, chainId, walletSignersValidation)
 }
 
 // recoverConfigFromDigest decodes a WalletConfig from a digest and signature combo. Note: the digest
 // is the keccak256 of the subDigest, see `recoverConfig` method.
-export const recoverConfigFromDigest = (digest: BytesLike, signature: string | DecodedSignature): WalletConfig => {
+export const recoverConfigFromDigest = async (
+  digest: BytesLike,
+  signature: string | DecodedSignature,
+  provider?: ethers.providers.Provider,
+  context?: WalletContext,
+  chainId?: number,
+  walletSignersValidation?: boolean
+): Promise<WalletConfig> => {
   const decoded = (<DecodedSignature>signature).threshold !== undefined ? <DecodedSignature>signature : decodeSignature(signature as string)
 
-  const signers = decoded.signers.map(s => {
-    if (isSigner(s)) {
+  const signers = await Promise.all(decoded.signers.map(async (s) => {
+    if (isDecodedEOASigner(s)) {
       return {
         weight: s.weight,
-        address: recoverSigner(digest, s as DecodedSigner)
+        address: recoverEOASigner(digest, s)
       }
-    } else {
+    } else if (isDecodedAddress(s)) {
       return {
         weight: s.weight,
         address: ethers.utils.getAddress((<DecodedOwner>s).address)
       }
+    } else if (isDecodedFullSigner(s)) {
+      if (walletSignersValidation) {
+        if (!(await isValidSignature(
+          s.address,
+          ethers.utils.arrayify(digest),
+          ethers.utils.hexlify(s.signature),
+          provider,
+          context,
+          chainId
+        ))) throw Error('Invalid signature')
+      }
+
+      return {
+        weight: s.weight,
+        address: s.address
+      }
+    } else {
+      throw Error('Uknown signature type')
     }
-  })
+  }))
 
   return {
     threshold: decoded.threshold,
@@ -67,43 +98,67 @@ export const decodeSignature = (signature: string): DecodedSignature => {
 
   const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
 
-  const signers: (DecodedSigner | DecodedOwner)[] = []
+  const signers: (DecodedAddressPart | DecodedEOASigner | DecodedFullSigner)[] = []
 
   for (let rindex = 4; rindex < auxsig.length; ) {
-    const isAddr = auxsig.slice(rindex, rindex + 2) !== '00'
+    const signatureType = ethers.BigNumber.from(auxsig.slice(rindex, rindex + 2)).toNumber() as SignatureType
     rindex += 2
 
     const weight = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
     rindex += 2
 
-    if (isAddr) {
-      const addr = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
-      rindex += 40
+    switch (signatureType) {
+      case SignatureType.Address:
+        const addr = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
+        rindex += 40
+  
+        signers.push({
+          weight: weight,
+          address: addr
+        })
+        break;
+    
+      case SignatureType.EOA:
+        const r = `0x${auxsig.slice(rindex, rindex + 64)}`
+        rindex += 64
+  
+        const s = `0x${auxsig.slice(rindex, rindex + 64)}`
+        rindex += 64
+  
+        const v = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+        rindex += 2
+  
+        const t = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+        rindex += 2
+  
+        signers.push({
+          weight: weight,
+          r: r,
+          s: s,
+          v: v,
+          t: t
+        })
+        break
 
-      signers.push({
-        weight: weight,
-        address: addr
-      })
-    } else {
-      const r = `0x${auxsig.slice(rindex, rindex + 64)}`
-      rindex += 64
+      case SignatureType.Full:
+        const address = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
+        rindex += 40
 
-      const s = `0x${auxsig.slice(rindex, rindex + 64)}`
-      rindex += 64
+        const size = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 4)}`).mul(2).toNumber()
+        rindex += 4
 
-      const v = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
-      rindex += 2
+        const signature = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + size)}`)
+        rindex += size
 
-      const t = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
-      rindex += 2
+        signers.push({
+          weight: weight,
+          address: address,
+          signature: signature
+        })
+        break
 
-      signers.push({
-        weight: weight,
-        r: r,
-        s: s,
-        v: v,
-        t: t
-      })
+      default:
+        throw Error('Signature type not supported')
     }
   }
 
@@ -116,7 +171,7 @@ export const decodeSignature = (signature: string): DecodedSignature => {
 const SIG_TYPE_EIP712 = 1
 const SIG_TYPE_ETH_SIGN = 2
 
-export const recoverSigner = (digest: BytesLike, sig: DecodedSigner) => {
+export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner) => {
   switch (sig.t) {
     case SIG_TYPE_EIP712:
       return ethers.utils.recoverAddress(digest, {
@@ -150,21 +205,31 @@ export const joinTwoSignatures = (a: string, b: string): string => {
   const da = decodeSignature(a)
   const db = decodeSignature(b)
 
-  const signers = da.signers.map((s, i) => ((<DecodedSigner>s).r ? s : db.signers[i]))
+  const signers = da.signers.map((s, i) => isDecodedAddress(s) ? db.signers[i] : s)
 
   const accountBytes = signers.map(s => {
-    if ((<DecodedSigner>s).r) {
-      const sig = s as DecodedSigner
+    if (isDecodedAddress(s)) {
       return ethers.utils.solidityPack(
-        ['bool', 'uint8', 'bytes32', 'bytes32', 'uint8', 'uint8'],
-        [false, s.weight, sig.r, sig.s, sig.v, sig.t]
-      )
-    } else {
-      return ethers.utils.solidityPack(
-        ['bool', 'uint8', 'address'],
-        [true, s.weight, ethers.utils.getAddress((<DecodedOwner>s).address)]
+        ['uint8', 'uint8', 'address'],
+        [SignatureType.Address, s.weight, s.address]
       )
     }
+
+    if (isDecodedEOASigner(s)) {
+      return ethers.utils.solidityPack(
+        ['uint8', 'uint8', 'bytes32', 'bytes32', 'uint8', 'uint8'],
+        [SignatureType.EOA, s.weight, s.r, s.s, s.v, s.t]
+      )
+    }
+
+    if (isDecodedFullSigner(s)) {
+      return ethers.utils.solidityPack(
+        ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
+        [SignatureType.Full, s.weight, s.address, s.signature.length, s.signature]
+      )
+    }
+
+    throw Error('Unkwnown signature part type')
   })
 
   return ethers.utils.solidityPack(['uint16', ...Array(accountBytes.length).fill('bytes')], [da.threshold, ...accountBytes])

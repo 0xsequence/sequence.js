@@ -83,7 +83,7 @@ describe('Wallet integration', function () {
       mainModuleUpgradable,
       guestModule,
       sequenceUtils
-    ] = await deployWalletContext(ethnode.provider)
+    ] = await deployWalletContext(ethnode.signer)
 
     // Create fixed context obj
     context = {
@@ -217,7 +217,20 @@ describe('Wallet integration', function () {
         await expect(call).to.be.fulfilled
       })
     })
+    describe('Nested wallets', async () => {
+      it('Should use wallet as wallet signer', async () => {
+        const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
+        const walletB = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
 
+        // TODO: Bundle deployment with child wallets
+        await relayer.deployWallet(walletA.config, walletA.context)
+
+        const contractWithSigner = callReceiver.connect(walletB) as CallReceiverMock
+
+        await contractWithSigner.testCall(412313, '0x12222334')
+        expect(await contractWithSigner.lastValB()).to.equal('0x12222334')
+      })
+    })
     options.forEach(s => {
       describe(`using ${s.name} provider`, () => {
         let signer: AbstractSigner
@@ -263,7 +276,7 @@ describe('Wallet integration', function () {
           expect(await provider.getTransactionCount(wallet.address)).to.equal(3)
         })
 
-        describe('signing', async () => {
+        describe('Signing', async () => {
           it('Should sign a message', async () => {
             const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
 

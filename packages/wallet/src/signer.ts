@@ -28,7 +28,7 @@ export abstract class Signer extends AbstractSigner {
   abstract getSigners(): Promise<string[]>
 
   // signMessage .....
-  abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string>
+  abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean, isDigest?: boolean): Promise<string>
 
   // signTypedData ..
   abstract signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string>
@@ -67,9 +67,59 @@ export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
     cand.getWalletContext !== undefined && cand.getWalletConfig !== undefined
 }
 
-export interface DecodedSignature {
+export type DecodedSignature = {
   threshold: number
-  signers: (DecodedSigner | DecodedOwner)[]
+  signers: DecodedSignaturePart[]
+}
+
+export type DecodedSignaturePart = {
+  weight: number
+}
+
+export type DecodedAddressPart = DecodedSignaturePart & {
+  address: string
+}
+
+export type DecodedEOASigner = DecodedSignaturePart & {
+  r: string
+  s: string
+  v: number
+  t: number
+}
+
+export type DecodedFullSigner = DecodedSignaturePart & {
+  address: string
+  signature: Uint8Array,
+}
+
+export function isDecodedAddress(cand: DecodedSignaturePart): cand is DecodedAddressPart {
+  const c = cand as any; return c.address !== undefined && c.signature === undefined
+}
+
+export function isDecodedEOASigner(cand: DecodedSignaturePart): cand is DecodedEOASigner {
+  const c = cand as any
+
+  return (
+    c.r !== undefined &&
+    c.s !== undefined &&
+    c.v !== undefined &&
+    c.t !== undefined
+  )
+}
+
+export function isDecodedFullSigner(cand: DecodedSignaturePart): cand is DecodedFullSigner {
+  const c = cand as any
+
+  return (
+    c.address !== undefined &&
+    c.signature !== undefined
+  )
+}
+
+export enum SignatureType {
+  EOA = 0,
+  Address = 1,
+  Full = 2
 }
 
 // TODO: move to error.ts, along with others..

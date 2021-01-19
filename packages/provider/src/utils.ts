@@ -17,15 +17,15 @@ export const isValidSignature = async (
   return _isValidSignature(address, digest, sig, provider, walletContext, chainId)
 }
 
-export const recoverWalletConfig = (
+export const recoverWalletConfig = async (
   address: string,
   digest: BytesLike,
   signature: string | DecodedSignature,
   chainId: BigNumberish,
   walletContext?: WalletContext
-): WalletConfig => {
+): Promise<WalletConfig> => {
   const subDigest = packMessageData(address, chainId, digest)
-  const config = recoverConfig(subDigest, signature)
+  const config = await recoverConfig(subDigest, signature)
 
   if (walletContext) {
     const recoveredWalletAddress = addressOf(config, walletContext)

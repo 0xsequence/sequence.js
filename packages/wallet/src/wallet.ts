@@ -49,7 +49,7 @@ import { RemoteSigner } from './remote-signers'
 
 import { packMessageData, resolveArrayProperties } from './utils'
 
-import { Signer } from './signer'
+import { isSequenceSigner, Signer } from './signer'
 import { fetchImageHash } from '.'
 
 
@@ -246,10 +246,11 @@ export class Wallet extends Signer {
 
   // chainId returns the network connected to this wallet instance
   async getChainId(): Promise<number> {
+    if (this.chainId) return this.chainId
     if (!this.provider) {
       throw new Error('provider is not set, first connect a provider')
     }
-    if (this.chainId) return this.chainId
+
     this.chainId = (await this.provider.getNetwork()).chainId
     return this.chainId
   }
@@ -414,16 +415,26 @@ export class Wallet extends Signer {
 
           try {
             if (signer) {
-              return ethers.utils.solidityPack(
-                ['bool', 'uint8', 'bytes'],
-                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, subDigest, auxData)) + '02']
-              )
+              if (isSequenceSigner(signer)) {
+                if (signer === this) throw Error('Can\'t sign transactions for self')
+                const signature = ethers.utils.arrayify(await signer.signMessage(subDigest, chainId, allSigners, true) + '03')
+                return ethers.utils.solidityPack(
+                  ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
+                  [2, a.weight, a.address, signature.length, signature]
+                )
+
+              } else {
+                return ethers.utils.solidityPack(
+                  ['bool', 'uint8', 'bytes'],
+                  [false, a.weight, (await RemoteSigner.signMessageWithData(signer, subDigest, auxData)) + '02']
+                )
+              }
             }
           } catch (err) {
             if (allSigners) {
               throw err
             } else {
-              console.warn(`Skipped signer ${a.address}`)
+              console.warn(`Skipped signer ${err} ${a.address}`)
             }
           }
 
