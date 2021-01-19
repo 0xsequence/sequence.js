@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/config",
   "version": "0.7.0",
+  "description": "config sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-config.cjs.js",
   "module": "dist/0xsequence-config.esm.js",

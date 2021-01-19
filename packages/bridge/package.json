@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/bridge",
   "version": "0.7.0",
+  "description": "bridge sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-bridge.cjs.js",
   "module": "dist/0xsequence-bridge.esm.js",

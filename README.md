@@ -16,6 +16,7 @@ A simple & powerful Ethereum development library and Web-based smart wallet.
 * auth
 * bridge
 * chaind
+* config
 * deployer
 * guard
 * multicall
@@ -23,6 +24,7 @@ A simple & powerful Ethereum development library and Web-based smart wallet.
 * provider
 * relayer
 * transactions
+* utils
 * wallet
 
 

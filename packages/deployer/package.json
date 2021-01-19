@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/deployer",
   "version": "0.7.0",
+  "description": "deployer sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-deployer.cjs.js",
   "module": "dist/0xsequence-deployer.esm.js",
