@@ -1,11 +1,5 @@
-import {
-  ProviderMessageResponse,
-  ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
-  ProviderMessageRequest
-} from '../../types'
-import { BaseProviderTransport, nextMessageIdx, PROVIDER_CONNECT_TIMEOUT } from '../base-provider-transport'
-
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { ProviderMessage } from '../../types'
+import { BaseProviderTransport } from '../base-provider-transport'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider
@@ -13,7 +7,6 @@ let registeredWindowMessageProvider: WindowMessageProvider
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
   private walletWindow: Window
-  private walletOpened: boolean
 
   constructor(walletAppURL: string) {
     super()
@@ -30,10 +23,20 @@ export class WindowMessageProvider extends BaseProviderTransport {
     registeredWindowMessageProvider = this
 
     // disconnect clean up
-    this.on('disconnect', () => this.disconnect())
+    this.on('disconnect', () => {
+      if (this.walletWindow) {
+        this.walletWindow.close()
+        this.walletWindow = undefined
+      }
+    })
+
+    this.registered = true
   }
 
   unregister = () => {
+    this.registered = false
+    this.closeWallet()
+
     // disable message listener
     if (registeredWindowMessageProvider === this) {
       registeredWindowMessageProvider = undefined
@@ -45,16 +48,10 @@ export class WindowMessageProvider extends BaseProviderTransport {
   }
 
   openWallet = (path?: string, state?: any): void => {
-    if (this.walletOpened === true) {
-      if (!path) {
-        this.walletWindow.focus()
-        return
-      } else {
-        // URL was changed, closing wallet to open at proper URL
-        // TODO: Should be able to just push to new URL without having to re-open
-        this.walletWindow.close()
-        this.walletWindow = null
-      }
+    if (this.walletWindow && this.isConnected()) {
+      // TODO: update the location of window to path
+      this.walletWindow.focus()
+      return
     }
 
     this.sessionId = `${performance.now()}`
@@ -80,105 +77,44 @@ export class WindowMessageProvider extends BaseProviderTransport {
     const popup = window.open(walletURL.href, 'sequenceWalletApp', windowFeatures)
 
     // Popup blocking detection and notice
-    let warned = false
-    const warnPopupBlocked = () => {
-      if (warned) return
-      warned = true
-      // alert('popup is blocked! hey yo') // NOTE: for debug purposes only
-      throw new Error('popup is blocked')
-    }
+    // let warned = false
+    // const warnPopupBlocked = () => {
+    //   if (warned) return
+    //   warned = true
+    //   // alert('popup is blocked! hey yo') // NOTE: for debug purposes only
+    //   throw new Error('popup is blocked')
+    // }
 
-    const popupCheck = setTimeout(() => {
-      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-        // popup is definitely blocked if we reach here.
-        warnPopupBlocked()
-      }
-    }, 1000)
+    // const popupCheck = setTimeout(() => {
+    //   if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    //     // popup is definitely blocked if we reach here.
+    //     warnPopupBlocked()
+    //   }
+    // }, 1000)
 
-    const popupBlocked = popup === null || popup === undefined
-    if (popupBlocked) {
-      warnPopupBlocked()
-      return
-    }
+    // const popupBlocked = popup === null || popup === undefined
+    // if (popupBlocked) {
+    //   warnPopupBlocked()
+    //   return
+    // }
 
     // Popup window is available
     this.walletWindow = popup
-    this.walletOpened = true
 
-    // Send connection request and wait for confirmation
-    if (!this.connected) {
-
-      // CONNECT is special case, as we emit multiple tranmissions waiting for a response
-      const initRequest: ProviderMessage<any> = {
-        idx: nextMessageIdx(),
-        type: ProviderMessageType.CONNECT,
-        data: null
-      }
-
-      const postMessageUntilConnected = () => {
-        if (this.connected || warned) {
-          clearTimeout(popupCheck)
-          return
-        }
-        this.sendMessage(initRequest)
-        setTimeout(postMessageUntilConnected, 250)
-      }
-      postMessageUntilConnected()
-    }
-
-    // Heartbeat to track if wallet is closed / disconnected
+    // Heartbeat to track if window closed
     const interval = setInterval(() => {
       if (popup && popup.closed) {
         clearInterval(interval)
-        this.walletOpened = false
-        this.connected = false
-        this.events.emit('disconnect')
+        this.disconnect()
       }
     }, 1250)
+
+    // connect to the wallet by sending requests
+    this.connect()
   }
 
   closeWallet() {
-    this.confirmationOnly = false
-    if (this.walletWindow) {
-      this.walletWindow.close()
-      this.walletWindow = null
-    }
-  }
-
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    // here, we receive the message from the dapp provider call
-
-    // automatically open the wallet when a provider request makes it here
-    if (!this.walletOpened) {
-      // toggle the wallet to auto-close once user submits input. ie.
-      // prompting to sign a message or transaction
-      this.confirmationOnly = true
-
-      // open the wallet
-      await this.openWallet()
-    } else {
-      // TODO: we could add focusWallet() method I guess..?
-      // and then we could move this to the base provider ..
-      await this.walletWindow.focus()
-    }
-
-    // double check, in case wallet failed to open
-    if (!this.walletOpened) {
-      throw new Error('wallet is not opened.')
-    }
-
-    // send message request, await, and then execute callback after receiving the response
-    try {
-      const response = await this.sendMessageRequest({
-        idx: nextMessageIdx(),
-        type: ProviderMessageType.MESSAGE,
-        data: request,
-        chainId: chainId
-      })
-      callback(undefined, response.data)
-    } catch (err) {
-      callback(err)
-    }
+    this.disconnect()
   }
 
   // onmessage, receives ProviderMessageResponse from the wallet post-message transport
@@ -207,6 +143,10 @@ export class WindowMessageProvider extends BaseProviderTransport {
   sendMessage(message: ProviderMessage<any>) {
     if (!message.idx || message.idx <= 0) {
       throw new Error('message idx is empty')
+    }
+    if (!this.walletWindow) {
+      console.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
+      return
     }
     const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)

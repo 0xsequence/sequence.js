@@ -1,4 +1,5 @@
-import { ProviderMessage, ProviderMessageTransport } from '../../types'
+import EventEmitter from 'eventemitter3'
+import { ProviderMessage, ProviderMessageTransport, ProviderMessageEvent } from '../../types'
 
 export class ProxyMessageChannel {
   app: ProxyMessageChannelPort
@@ -18,6 +19,7 @@ export class ProxyMessageChannel {
 
 export class ProxyMessageChannelPort implements ProviderMessageTransport {
   conn: ProviderMessageTransport
+  events: EventEmitter<ProxyMessageEvent, any> = new EventEmitter()
 
   handleMessage = (message: ProviderMessage<any>): void => {
     throw new Error('ProxyMessageChannelPort is not registered')
@@ -26,4 +28,14 @@ export class ProxyMessageChannelPort implements ProviderMessageTransport {
   sendMessage = (message: ProviderMessage<any>): void => {
     this.conn.handleMessage(message)
   }
+
+  on(event: ProxyMessageEvent, fn: (...args: any[]) => void) {
+    this.events.on(event, fn)
+  }
+
+  once(event: ProxyMessageEvent, fn: (...args: any[]) => void) {
+    this.events.once(event, fn)
+  }
 }
+
+type ProxyMessageEvent = 'connect' | 'disconnect'

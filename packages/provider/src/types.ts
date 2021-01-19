@@ -15,7 +15,9 @@ export interface WalletSession {
 }
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
-  openWallet(path?: string, state?: any): void
+  register()
+  unregister()
+  openWallet(path?: string, state?: any)
   closeWallet()
   isConnected(): boolean
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
@@ -61,7 +63,7 @@ export interface ProviderMessageRequestHandler {
   sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse>
 }
 
-export interface ProviderMessageTransport { //extends ProviderMessageRequestHandler {
+export interface ProviderMessageTransport {
   // handleMessage will handle a message received from the remote wallet
   handleMessage(message: ProviderMessage<any>): void
 
@@ -82,6 +84,12 @@ export enum ProviderMessageType {
   NETWORKS = 'networks',
 
   DEBUG = '_debug'
+}
+
+export enum ConnectionState {
+  DISCONNECTED = 0,
+  CONNECTING = 1,
+  CONNECTED = 2
 }
 
 export type NetworkEventPayload = NetworkConfig

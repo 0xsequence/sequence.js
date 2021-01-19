@@ -114,8 +114,6 @@ export const tests = async () => {
     assert.equal(allWalletStates.length, 2, '2 wallet states (one for each chain)')
 
     // we expect network order to be [defaultChain, authChain, ..], so chain 31337 will be at index 0
-    // hmm.. TODO: WalletProvider defaultNetwork should specify the "defaultNetwork", which will
-    // become our *defaultChain* ..
     const state1 = allWalletStates[0]
     assert.true(state1.chainId === 31337, 'state1, chainId is 31337')
     assert.true(state1.config.threshold === 1, 'state1, threshold')

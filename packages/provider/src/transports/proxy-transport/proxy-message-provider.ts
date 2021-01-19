@@ -3,10 +3,8 @@ import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transpor
 import {
   ProviderMessageResponse,
   ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
-  ProviderMessageRequest, ProviderMessageTransport
+  ProviderMessageRequest, ProviderMessageTransport, ConnectionState
 } from '../../types'
-
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 
@@ -16,35 +14,41 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   
   constructor(port: ProxyMessageChannelPort) {
     super()
-
-    this.connected = true // assume always connected
-
+    this.connection = ConnectionState.DISCONNECTED
     this.port = port
-    this.port.handleMessage = (message: ProviderMessage<any>): void => {
-      this.handleMessage(message)
+    if (!port) {
+      throw new Error('port argument cannot be empty')
     }
   }
 
-  // TODO: add register() method.
+  register = () => {
+    this.port.handleMessage = (message: ProviderMessage<any>): void => {
+      this.handleMessage(message)
+    }
+
+    this.on('connect', (...args: any[]) => {
+      this.port.events.emit('connect', args)
+    })
+    this.on('disconnect', (...args: any[]) => {
+      this.port.events.emit('disconnect', args)
+    })
+
+    this.registered = true
+  }
+
+  unregister = () => {
+    this.registered = false
+    this.closeWallet()
+    this.events.removeAllListeners()
+    this.port.handleMessage = undefined
+  }
 
   openWallet = (path?: string, state?: any): void => {
-    // assume the wallet is already opened or handled by another process
-    return
+    this.connect()
   }
 
   closeWallet() {
-    // closing the wallet is handled by another process
-    return
-  }
-
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    const response = await this.sendMessageRequest({
-      idx: nextMessageIdx(),
-      type: ProviderMessageType.MESSAGE,
-      data: request,
-      chainId: chainId
-    })
-    callback(undefined, response.data)
+    this.disconnect()
   }
 
   sendMessage(message: ProviderMessage<any>) {

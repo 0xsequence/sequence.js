@@ -4,7 +4,7 @@ import {
   ProviderTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
   ProviderMessageResponseCallback, ProviderMessageTransport,
-  WalletSession
+  WalletSession, ConnectionState
 } from '../types'
 
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -20,7 +20,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected pendingMessageRequests: ProviderMessageRequest[] = []
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
-  protected connected = false
+  protected connection: ConnectionState
   protected sessionId: string
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
@@ -28,9 +28,22 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected accountPayload: string
   protected networksPayload: NetworkConfig[]
 
-  constructor() {}
+  protected registered: boolean
 
-  openWallet = (path?: string, state?: any): void => {
+  constructor() {
+    this.connection = ConnectionState.DISCONNECTED
+    this.registered = false
+  }
+
+  register() {
+    throw new Error('abstract method')
+  }
+
+  unregister() {
+    throw new Error('abstract method')
+  }
+
+  openWallet(path?: string, state?: any) {
     throw new Error('abstract method')
   }
 
@@ -39,11 +52,39 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   }
 
   isConnected(): boolean {
-    return this.connected
+    return this.registered && this.connection === ConnectionState.CONNECTED
   }
 
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number): Promise<void> => {
-    throw new Error('abstract method')
+  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+    // here, we receive the message from the dapp provider call
+
+    if (this.connection === ConnectionState.DISCONNECTED ) {
+      // flag the wallet to auto-close once user submits input. ie.
+      // prompting to sign a message or transaction
+      this.confirmationOnly = true
+    }
+
+    // open/focus the wallet.
+    // automatically open the wallet when a provider request makes it here.
+    await this.openWallet()
+
+    // double check, in case wallet failed to open
+    if (!this.isConnected()) {
+      throw new Error('wallet is not connected.')
+    }
+
+    // send message request, await, and then execute callback after receiving the response
+    try {
+      const response = await this.sendMessageRequest({
+        idx: nextMessageIdx(),
+        type: ProviderMessageType.MESSAGE,
+        data: request,
+        chainId: chainId
+      })
+      callback(undefined, response.data)
+    } catch (err) {
+      callback(err)
+    }
   }
 
   // handleMessage will handle message received from the remote wallet
@@ -61,13 +102,13 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // CONNECT response
     //
     // Flip connected flag, and flush the pending queue 
-    if (message.type === ProviderMessageType.CONNECT && !this.connected) {
+    if (message.type === ProviderMessageType.CONNECT && !this.isConnected()) {
       if (this.sessionId !== message.data?.result?.sessionId) {
         console.log('connect received from wallet, but does not match id', this.sessionId)
         return
       }
 
-      this.connected = true
+      this.connection = ConnectionState.CONNECTED
       this.events.emit('connect')
 
       // flush pending requests when connected
@@ -156,13 +197,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         reject(new Error('duplicate message idx, should never happen'))
       }
 
-      if (!this.connected) {
+      if (!this.isConnected()) {
         console.log('pushing to pending requests', message)
         this.pendingMessageRequests.push(message)
-        return
+      } else {
+        this.sendMessage(message)
       }
-
-      this.sendMessage(message)
     })
   }
 
@@ -170,11 +210,11 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  on = (event: ProviderMessageEvent, fn: (...args: any[]) => void) => {
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
     this.events.on(event, fn)
   }
 
-  once = (event: ProviderMessageEvent, fn: (...args: any[]) => void) => {
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
     this.events.once(event, fn)
   }
 
@@ -248,7 +288,42 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     ])
   }
 
+  protected connect = async (): Promise<boolean> => {
+    if (this.isConnected()) return true
+
+    // Send connection request and wait for confirmation
+    this.connection = ConnectionState.CONNECTING
+
+    // CONNECT is special case, as we emit multiple tranmissions waiting for a response
+    const initRequest: ProviderMessage<any> = {
+      idx: nextMessageIdx(),
+      type: ProviderMessageType.CONNECT,
+      data: null
+    }
+
+    // Continually send connect requesst until we're connected or timeout passes
+    let connected: boolean = undefined
+    const postMessageUntilConnected = () => {
+      if (!this.registered) return false
+      if (connected !== undefined) return connected
+
+      this.sendMessage(initRequest)
+      setTimeout(postMessageUntilConnected, 200)
+    }
+    postMessageUntilConnected()
+
+    // Wait for connection or timeout
+    try {
+      connected = await this.waitUntilConnected()
+    } catch (err) {
+      connected = false
+    }
+    return connected
+  }
+
   protected disconnect() {
+    this.connection = ConnectionState.DISCONNECTED
+    this.confirmationOnly = false
     console.log('disconnecting wallet and flushing!')
 
     // flush pending requests and return error to all callbacks
@@ -260,5 +335,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     this.accountPayload = undefined
     this.networksPayload = undefined
+
+    this.events.emit('disconnect')
   }
 }

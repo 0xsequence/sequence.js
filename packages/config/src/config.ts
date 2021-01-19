@@ -25,7 +25,7 @@ export interface WalletState {
 
   deployed: boolean
   imageHash: string
-  currentImageHash?: string // TODO: rename to deployedImageHash
+  currentImageHash?: string
 
   published?: boolean
 }

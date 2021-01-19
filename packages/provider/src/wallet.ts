@@ -6,8 +6,8 @@ import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNe
 import { WalletConfig } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
-import { WindowMessageProvider, ProxyMessageProvider } from './transports'
-import { WalletSession, ProviderMessageEvent } from './types'
+import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
+import { WalletSession, ProviderMessageEvent, ProviderTransport } from './types'
 import { WalletCommands } from './commands'
 
 export interface WalletProvider {
@@ -46,14 +46,18 @@ export class Wallet implements WalletProvider {
   private session?: WalletSession
 
   private transport: {
+    // top-level provider which connects all transport layers
     provider?: Web3Provider
 
+    // middleware stack for provider
     router?: JsonRpcRouter
     allowProvider?: JsonRpcMiddleware
     cachedProvider?: CachedProvider
-  
+
+    // message communication
+    messageProvider?: MuxMessageProvider
     windowMessageProvider?: WindowMessageProvider
-    proxyMessageProvider?: ProxyMessageProvider // TODO ..
+    proxyMessageProvider?: ProxyMessageProvider
   }
 
   private networks: NetworkConfig[]
@@ -88,76 +92,60 @@ export class Wallet implements WalletProvider {
       return
     }
 
-    // TODO: check the config types, if we want proxy, we need method to pass here.
-    // TODO: higher-order MessageBroadcaster(...transports) should go here, where we send/listen
-    // on multiple channels.. or.. MessageMux(..transports) .. ie. MessageMux(windowTransport, proxyTransport)
-    // this.proxyTransportProvider = new ProxyMessageProvider()
-
-
     // Setup provider
-    switch (config.type) {
-      // TODO: loop through types, which are just Window and Proxy
-      case 'Window': {
 
-        // .....
-        this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
-          if (request.method === 'sequence_setDefaultChain') return true
+    this.transport.messageProvider = new MuxMessageProvider()
 
-          const isLoggedIn = this.isLoggedIn()
-          if (!isLoggedIn) {
-            throw new Error('Sequence: not logged in')
-          }
-          return isLoggedIn
-        })
-
-        // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
-        this.transport.cachedProvider = new CachedProvider()
-
-        // ..
-        this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
-        this.transport.windowMessageProvider.register()
-
-        // ..
-        this.transport.router = new JsonRpcRouter([
-          loggingProviderMiddleware,
-          this.transport.allowProvider,
-          exceptionProviderMiddleware,
-          this.transport.cachedProvider,
-        ], this.transport.windowMessageProvider)
-
-        this.transport.provider = new Web3Provider(this.transport.router)
-
-        // below will update the networks automatically when the wallet networks change, however
-        // this is currently disabled as it may confuse the dapp. Instead the dapp can
-        // check active networks list from the session and switch the default network
-        // with useNetwork() explicitly
-        //
-        // this.windowTransportProvider.on('networks', networks => {
-        //   this.useNetworks(networks)
-        //   this.saveSession(this.session)
-        // })
-        this.transport.windowMessageProvider.on('accountsChanged', (accounts) => {
-          if (accounts && accounts.length === 0) {
-            this.logout()
-          }
-        })
-
-        break
-      }
-
-      // TODO: add unsupported message...
-      case 'Web3Global': {
-        // TODO: check if window.web3.currentProvider or window.ethereum exists or is set, otherwise return error
-        // TODO: call window.ethereum.enable() or .connect()
-
-        // this.provider = new Web3Provider((window as any).ethereum, 'unspecified') // TODO: check the network argument
-        break
-      }
-
-      default: {
-        throw new Error('unsupported provider type, must be one of ${ProviderType}')
-      }
+    // multiple message provider setup, first one to connect will be the main transport
+    if (this.config.transports?.windowTransport?.enabled) {
+      this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
+      this.transport.messageProvider.add(this.transport.windowMessageProvider)
     }
+    if (this.config.transports?.proxyTransport?.enabled) {
+      this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort)
+      this.transport.messageProvider.add(this.transport.proxyMessageProvider)
+    }
+    this.transport.messageProvider.register()
+
+    // .....
+    this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
+      if (request.method === 'sequence_setDefaultChain') return true
+
+      const isLoggedIn = this.isLoggedIn()
+      if (!isLoggedIn) {
+        throw new Error('Sequence: not logged in')
+      }
+      return isLoggedIn
+    })
+
+    // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
+    this.transport.cachedProvider = new CachedProvider()
+
+    // ..
+    this.transport.router = new JsonRpcRouter([
+      loggingProviderMiddleware,
+      this.transport.allowProvider,
+      exceptionProviderMiddleware,
+      this.transport.cachedProvider,
+    ], this.transport.messageProvider)
+
+    this.transport.provider = new Web3Provider(this.transport.router)
+
+    // below will update the networks automatically when the wallet networks change, however
+    // this is currently disabled as it may confuse the dapp. Instead the dapp can
+    // check active networks list from the session and switch the default network
+    // with useNetwork() explicitly
+    //
+    // this.windowTransportProvider.on('networks', networks => {
+    //   this.useNetworks(networks)
+    //   this.saveSession(this.session)
+    // })
+
+    this.transport.messageProvider.on('accountsChanged', (accounts) => {
+      if (accounts && accounts.length === 0) {
+        this.logout()
+      }
+    })
 
     // Load existing session from localStorage
     const session = this.loadSession()
@@ -170,35 +158,13 @@ export class Wallet implements WalletProvider {
     if (refresh === true) {
       this.logout()
     }
-
     if (this.isLoggedIn()) {
       return true
     }
 
-    // TODO: need this to work with multiple transports
-    // ie. Proxy and Window at same time..
-
-    // might want to create abstraction above the transports.. for multi..
-
-    // authenticate
-    const config = this.config
-
-    switch (config.type) {
-      case 'Window': {
-        await this.openWallet('', { login: true })
-        const sessionPayload = await this.transport.windowMessageProvider.waitUntilLoggedIn()
-        this.useSession(sessionPayload)
-        break
-      }
-
-      // TODO: remove..
-      // .. or, if we keep this, can we use our SDK with injected window.web3?
-      case 'Web3Global': {
-        // TODO: for Web3Global,
-        // window.ethereum.enable() ..
-        break
-      }
-    }
+    await this.openWallet('', { login: true })
+    const sessionPayload = await this.transport.messageProvider.waitUntilLoggedIn()
+    this.useSession(sessionPayload)
 
     return this.isLoggedIn()
   }
@@ -217,11 +183,7 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
-    if (this.transport.windowMessageProvider) {
-      return this.transport.windowMessageProvider.isConnected()
-    } else {
-      return false
-    }
+    return this.transport.messageProvider.isConnected()
   }
 
   isLoggedIn(): boolean {
@@ -271,25 +233,19 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
 
-    if (this.transport.windowMessageProvider) {
-      this.transport.windowMessageProvider.openWallet(path, state)
+    this.transport.messageProvider.openWallet(path, state)
+    await this.transport.messageProvider.waitUntilConnected()
 
-      await this.transport.windowMessageProvider.waitUntilConnected()
+    // setDefaultChain - it's important to send this right away upon connection. This will also
+    // update the network list in the session each time the wallet is opened & connected.
+    const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
+    this.useNetworks(networks)
 
-      // setDefaultChain - it's important to send this right away upon connection. This will also
-      // update the network list in the session each time the wallet is opened & connected.
-      const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
-      this.useNetworks(networks)
-
-      return true
-    }
-    return false
+    return true
   }
 
   closeWallet = (): void => {
-    if (this.transport.windowMessageProvider) {
-      this.transport.windowMessageProvider.closeWallet()
-    }
+    this.transport.messageProvider.closeWallet()
   }
 
   getProvider(chainId?: ChainId): Web3Provider | undefined {
@@ -366,17 +322,11 @@ export class Wallet implements WalletProvider {
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    if (!this.transport.windowMessageProvider) {
-      return
-    }
-    this.transport.windowMessageProvider.on(event, fn)
+    this.transport.messageProvider.on(event, fn)
   }
 
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    if (!this.transport.windowMessageProvider) {
-      return
-    }
-    this.transport.windowMessageProvider.once(event, fn)
+    this.transport.messageProvider.once(event, fn)
   }
 
   private loadSession = (): WalletSession => {
@@ -460,23 +410,12 @@ export class Wallet implements WalletProvider {
 }
 
 export interface ProviderConfig {
-  type: ProviderType
-
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
 
   // Sequence Wallet Modules Context override. By default (and recommended), the
   // WalletContext is returned by the wallet app upon login.
   walletContext?: WalletContext
-
-  // Global web3 provider (optional)
-  // web3Provider?: ExternalProvider
-
-  // WindowProvider config (optional)
-  windowTransport?: {
-    // ..
-    // timeout?: number
-  }
 
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list supplied from the wallet upon login,
@@ -490,18 +429,29 @@ export interface ProviderConfig {
   // provider will communicate. Note: this setting is also configurable from the
   // Wallet constructor's first argument.
   defaultNetworkId?: string | number
+
+  // transports for dapp to wallet jron-rpc communication
+  transports?: {
+
+    // WindowMessage transport (optional)
+    windowTransport?: {
+      enabled: boolean
+    }
+
+    // ProxyMessage transport (optional)
+    proxyTransport?: {
+      enabled: boolean
+      appPort?: ProxyMessageChannelPort
+    }
+
+  }
 }
 
-
-// TODO: remove Web3Global ..?
-export type ProviderType = 'Web3Global' | 'Window' | 'Proxy' // TODO: combo..? ie, window+proxy ..
-
 export const DefaultProviderConfig: ProviderConfig = {
-  // TODO: check process.env for this if test or production, etc..
-  walletAppURL: 'http://localhost:3333',
+  walletAppURL: 'https://sequence.app',
 
-  type: 'Window', // TODO: rename.. transports: []
-
-  windowTransport: {
+  transports: {
+    windowTransport: { enabled: true },
+    proxyTransport: { enabled: false }
   }
 }
