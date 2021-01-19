@@ -10,22 +10,22 @@ A simple & powerful Ethereum development library and Web-based smart wallet.
 
 ## Packages
 
-* 0xsequence
-* abi
-* api
-* auth
-* bridge
-* chaind
-* config
-* deployer
-* guard
-* multicall
-* network
-* provider
-* relayer
-* transactions
-* utils
-* wallet
+* [0xsequence](./packages/0xsequence)
+* [abi](./packages/abi)
+* [api](./packages/api)
+* [auth](./packages/auth)
+* [bridge](./packages/bridge)
+* [chaind](./packages/chaind)
+* [config](./packages/config)
+* [deployer](./packages/deployer)
+* [guard](./packages/guard)
+* [multicall](./packages/multicall)
+* [network](./packages/network)
+* [provider](./packages/provider)
+* [relayer](./packages/relayer)
+* [transactions](./packages/transactions)
+* [utils](./packages/utils)
+* [wallet](./packages/wallet)
 
 
 ## Development Environment
