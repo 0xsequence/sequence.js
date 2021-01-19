@@ -15,7 +15,7 @@
   "dependencies": {
     "@0xsequence/network": "^0.7.0",
     "@maticnetwork/maticjs": "^2.0.15",
-    "ethers": "^5.0.24"
+    "ethers": "^5.0.26"
   },
   "peerDependencies": {},
   "devDependencies": {
