@@ -8,7 +8,6 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "prepublishOnly": "yarn test && yarn lint",
     "test": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000 tests/**/*.spec.ts",
     "typecheck": "tsc --noEmit"
   },
