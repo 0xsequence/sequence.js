@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/transactions",
-  "version": "0.7.1",
+  "version": "0.7.0",
   "description": "transactions sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-transactions.cjs.js",
@@ -13,9 +13,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.7.1",
-    "@0xsequence/chaind": "^0.7.1",
-    "@0xsequence/network": "^0.7.1",
+    "@0xsequence/abi": "^0.7.0",
+    "@0xsequence/chaind": "^0.7.0",
+    "@0xsequence/network": "^0.7.0",
     "@ethersproject/abi": "^5.0.10",
     "ethers": "^5.0.26"
   },

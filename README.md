@@ -67,9 +67,17 @@ package for package versioning across the monorepo, as well as changelogs. See *
 ### How to do a release
 
 1. Run `yarn` to make sure everything is up to date
-2. Run `yarn version-packages`
-3. Run NPM_CONFIG_OTP=PUT_OTP_CODE_HERE `yarn release`. If the 2FA code timesout while publishing, run the command again
-with a new code, only the packages that were not published will be published.
+
+2. Code.. do your magic
+3. Run `yarn changeset` to generate a new .changeset/ entry explaining the code changes
+4. Commit and submit your changes as a PR for review
+5. Once merged and you're ready to make a release, continue to the next step. If you're not
+   ready to make a release, then go back to step 2.
+
+6. Run `yarn test` to double check all tests pass
+7. Run `yarn version-packages` to bump versions of the packages, and then commit+merge the version.
+8. Run NPM_CONFIG_OTP=PUT_OTP_CODE_HERE `yarn release`. If the 2FA code timesout while publishing, run the command again
+   with a new code, only the packages that were not published will be published.
 
 
 ## NOTES
