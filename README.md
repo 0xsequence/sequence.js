@@ -75,10 +75,10 @@ package for package versioning across the monorepo, as well as changelogs. See *
    ready to make a release, then go back to step 2.
 
 6. Run `yarn test` to double check all tests pass
-7. Run `yarn version-packages` to bump versions of the packages, and then commit+merge the version.
-8. Run NPM_CONFIG_OTP=PUT_OTP_CODE_HERE `yarn release`. If the 2FA code timesout while publishing, run the command again
+7. Run `yarn version-packages` to bump versions of the packages
+8. Commit files after versioning. This is the commit that will be published and tagged.
+9. Run NPM_CONFIG_OTP=PUT_OTP_CODE_HERE `yarn release`. If the 2FA code timesout while publishing, run the command again
    with a new code, only the packages that were not published will be published.
-
 
 ## NOTES
 
