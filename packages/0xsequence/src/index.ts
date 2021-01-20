@@ -20,8 +20,8 @@ const utils = {
   ..._utils
 }
 
-// sequence meta-package types
-export {
+// sequence meta-package
+export const sequence = {
   abi,
   api,
   auth,
@@ -37,3 +37,5 @@ export {
 
   Wallet
 }
+
+export { Wallet }

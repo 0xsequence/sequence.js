@@ -1,5 +1,11 @@
 # 0xsequence
 
+## 0.7.1
+
+### Patch Changes
+
+- - For developer convenience, update 0xsequence package to make possible: `import { sequence } from '0xsequence'`
+
 ## 0.7.0
 
 ### Patch Changes
