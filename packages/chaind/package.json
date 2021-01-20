@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/chaind",
-  "version": "0.7.1",
+  "version": "0.7.0",
   "description": "chaind sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-chaind.cjs.js",
