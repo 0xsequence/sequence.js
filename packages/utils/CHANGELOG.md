@@ -3,4 +3,4 @@
 ## 0.7.0
 ### Patch Changes
 
-- 7ae7e5d: sequence.js, init release
+- 6f11ed7: sequence.js, init release
