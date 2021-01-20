@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/abi",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "abi sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-abi.cjs.js",
@@ -11,11 +11,9 @@
     "test": "echo",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "peerDependencies": {},
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "files": [
     "src",
     "dist"
