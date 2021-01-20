@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "auth sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-auth.cjs.js",
@@ -12,15 +12,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.7.0",
-    "@0xsequence/network": "^0.7.0",
-    "@0xsequence/wallet": "^0.7.0",
+    "@0xsequence/abi": "^0.7.1",
+    "@0xsequence/network": "^0.7.1",
+    "@0xsequence/wallet": "^0.7.1",
     "@arcadeum/ethauth": "^0.3.0",
     "ethers": "^5.0.26"
   },
   "peerDependencies": {},
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "files": [
     "src",
     "dist"

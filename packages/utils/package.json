@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/utils",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "utils sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-utils.cjs.js",
@@ -15,8 +15,7 @@
     "@ethersproject/properties": "^5.0.7"
   },
   "peerDependencies": {},
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "files": [
     "src",
     "dist"
