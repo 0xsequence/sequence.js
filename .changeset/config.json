@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@1.4.0/schema.json",
+  "changelog": [
+    "@changesets/cli/changelog",
+    { "repo": "arcadeum/arcadeum.js" }
+  ],
+  "commit": false,
+  "linked": [
+    [
+      "@0xsequence/*"
+    ]
+  ],
+  "access": "public",
+  "baseBranch": "master",
+  "ignore": []
+}
