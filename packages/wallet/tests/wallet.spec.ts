@@ -9,19 +9,20 @@ import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transaction
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext, Networks, JsonRpcSender } from '@0xsequence/network'
+import { WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
-import { addressOf, imageHash, sortConfig } from '@0xsequence/config'
+import { addressOf, joinSignatures, encodeSignature } from '@0xsequence/config'
 
 import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidContractWalletSignature,
-  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, joinSignatures,
-  fetchImageHash
+import { isValidSignature, isValidEthSignSignature,
+  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature,
+  fetchImageHash,
+  isValidContractWalletSignature
 } from '../src'
 
 import { LocalWeb3Provider } from '../../provider/src'
@@ -883,7 +884,7 @@ describe('Wallet integration', function () {
         expect(await callReceiver.lastValB()).to.equal('0x445566')
       })
 
-      it('Should sign, joinSignatures and send a transaction', async () => {
+      it('Should sign, joinSignatures and send a transaction with decoded signature', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -932,7 +933,65 @@ describe('Wallet integration', function () {
 
         const full_signed = {
           ...signed_1,
-          signature: joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature) // TODO: 'joinSignatures' name is too vague
+          signature: joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature)
+        }
+
+        const tx = await w3_1.eth.sendSignedTransaction(full_signed)
+        expect(tx.transactionHash).to.be.a('string')
+
+        expect(await callReceiver.lastValB()).to.equal('0x445566')
+      })
+
+      it('Should sign, joinSignatures and send a transaction with encoded signature', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const config = {
+          threshold: 3,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            },
+            {
+              address: s3.address,
+              weight: 1
+            }
+          ]
+        }
+
+        const wallet_1 = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
+        const wallet_2 = new lib.Wallet({ config, context }, s2).connect(ethnode.provider, relayer)
+        const wallet_3 = new lib.Wallet({ config, context }, s3).connect(ethnode.provider, relayer)
+
+        expect(wallet_1.address).to.equal(wallet_2.address)
+        expect(wallet_2.address).to.equal(wallet_3.address)
+
+        const w3_1 = new Web3(new LocalWeb3Provider(wallet_1))
+        const w3_2 = new Web3(new LocalWeb3Provider(wallet_2))
+        const w3_3 = new Web3(new LocalWeb3Provider(wallet_3))
+
+        const transaction = {
+          from: wallet_1.address,
+          gasPrice: '20000000000',
+          gas: '121000',
+          to: callReceiver.address,
+          value: 0,
+          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+        }
+
+        const signed_1 = await w3_1.eth.signTransaction(transaction)
+        const signed_2 = await w3_2.eth.signTransaction(transaction)
+        const signed_3 = await w3_3.eth.signTransaction(transaction)
+
+        const full_signed = {
+          ...signed_1,
+          signature: encodeSignature(joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature))
         }
 
         const tx = await w3_1.eth.sendSignedTransaction(full_signed)

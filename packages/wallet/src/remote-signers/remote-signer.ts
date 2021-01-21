@@ -29,7 +29,7 @@ export abstract class RemoteSigner extends AbstractSigner {
     return signer.signMessage(message)
   }
 
-  static isRemoteSigner(signer: AbstractSigner): boolean {
+  static isRemoteSigner(signer: AbstractSigner): signer is RemoteSigner {
     return (<RemoteSigner>signer).signMessageWithData !== undefined
   }
 

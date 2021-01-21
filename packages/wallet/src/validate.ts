@@ -2,9 +2,9 @@ import { ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
-import { DecodedEOASigner, isDecodedEOASigner, isDecodedFullSigner } from './signer'
+import { isDecodedEOASigner, isDecodedFullSigner, decodeSignature } from '@0xsequence/config'
 import { compareAddr, addressOf } from '@0xsequence/config'
-import { decodeSignature, recoverConfigFromDigest } from './config'
+import { recoverConfigFromDigest } from './config'
 
 import { packMessageData } from './utils'
 

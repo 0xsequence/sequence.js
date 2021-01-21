@@ -1,6 +1,6 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { TransactionRequest as EthersTransactionRequest, TransactionResponse } from '@ethersproject/providers'
-import { WalletConfig } from '@0xsequence/config'
+import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
 
 // Transaction is a Sequence transaction payload. Note, we do not include gasPrice as an option in this form,
@@ -42,7 +42,7 @@ export type SignedTransactions = {
   chainId: BigNumberish,
   config: WalletConfig,
   context: WalletContext,
-  signature: string,
+  signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>,
   transactions: Transaction[]
 }
 

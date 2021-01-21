@@ -3,7 +3,7 @@ import { ethers } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, imageHash } from '@0xsequence/config'
+import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
 export class BaseRelayer {
@@ -37,11 +37,18 @@ export class BaseRelayer {
   async prepareTransactions(
     config: WalletConfig,
     context: WalletContext,
-    signature: string | Promise<string>,
+    signature: string | Promise<string> | DecodedSignature | Promise<DecodedSignature>,
     ...transactions: Transaction[]
   ): Promise<{ to: string, data: string  }> { //, gasLimit?: ethers.BigNumberish }> {
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
+
+    const encodedSignature = (async () => {
+      const sig = await signature
+
+      if (typeof sig === 'string') return sig
+      return encodeSignature(sig)
+    })()
 
     if (this.bundleCreation && !(await this.isWalletDeployed(walletAddress))) {
       return {
@@ -65,7 +72,7 @@ export class BaseRelayer {
                 [
                   sequenceTxAbiEncode(transactions),
                   readSequenceNonce(...transactions),
-                  await signature
+                  await encodedSignature
                 ]
               )
             }
@@ -79,7 +86,7 @@ export class BaseRelayer {
           [
             sequenceTxAbiEncode(transactions),
             readSequenceNonce(...transactions),
-            await signature
+            await encodedSignature
           ]
         )
       }

@@ -38,12 +38,14 @@ import {
   sortConfig,
   compareAddr,
   imageHash,
-  isUsableConfig
+  isUsableConfig,
+  DecodedSignature,
+  encodeSignature,
+  joinSignatures,
+  recoverEOASigner
 } from '@0xsequence/config'
 
 import { encodeTypedDataDigest } from '@0xsequence/utils'
-
-import { joinSignatures } from './config'
 
 import { RemoteSigner } from './remote-signers'
 
@@ -405,47 +407,62 @@ export class Wallet extends Signer {
     )
 
     // Sign sub-digest using a set of signers and some optional data
-    const signWith = async (signers: AbstractSigner[], auxData?: string) => {
-      const signersAddr = Promise.all(signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
+    const signWith = async (signers: AbstractSigner[], auxData?: string): Promise<DecodedSignature> => {
+      const signersAddr = await Promise.all(signers.map(s => s.getAddress()))
+      const parts = await Promise.all(this.config.signers.map(async (s) => {
+        const signer = signers[signersAddr.indexOf(s.address)]
 
-      const accountBytes = await Promise.all(
-        this.config.signers.map(async a => {
-          const signerIndex = (await signersAddr).indexOf(a.address)
-          const signer = signers[signerIndex]
+        // Is not a signer, return config entry as-is
+        if (!signer) {
+          return s
+        }
+
+        // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
+        if (isSequenceSigner(signer)) {
+          if (signer === this) throw Error('Can\'t sign transactions for self')
+          const signature = await signer.signMessage(subDigest, chainId, allSigners, true) + '03'
+
+          return {
+            ...s,
+            signature: signature
+          }
+        }
+
+        // Is remote signer, call and deduce signature type
+        if (RemoteSigner.isRemoteSigner(signer)) {
+          const signature = await signer.signMessageWithData(subDigest, auxData)
 
           try {
-            if (signer) {
-              if (isSequenceSigner(signer)) {
-                if (signer === this) throw Error('Can\'t sign transactions for self')
-                const signature = ethers.utils.arrayify(await signer.signMessage(subDigest, chainId, allSigners, true) + '03')
-                return ethers.utils.solidityPack(
-                  ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
-                  [2, a.weight, a.address, signature.length, signature]
-                )
+            // Check if signature can be recovered as EOA signature
+            const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
 
-              } else {
-                return ethers.utils.solidityPack(
-                  ['bool', 'uint8', 'bytes'],
-                  [false, a.weight, (await RemoteSigner.signMessageWithData(signer, subDigest, auxData)) + '02']
-                )
+            if (isEOASignature) {
+              // Exclude address on EOA signatures
+              return {
+                weight: s.weight,
+                signature: signature
               }
             }
-          } catch (err) {
-            if (allSigners) {
-              throw err
-            } else {
-              console.warn(`Skipped signer ${err} ${a.address}`)
-            }
-          }
+          } catch {}
 
-          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
-        })
-      )
-  
-      return ethers.utils.solidityPack(
-        ['uint16', ...Array(this.config.signers.length).fill('bytes')],
-        [this.config.threshold, ...accountBytes]
-      )
+          // Prepare signature for full encoding
+          return {
+            ...s,
+            signature: signature
+          }
+        }
+
+        // Is EOA signer
+        return {
+          weight: s.weight,
+          signature: await signer.signMessage(subDigest) + '02'
+        }
+      }))
+
+      return {
+        threshold: this.config.threshold,
+        signers: parts
+      }
     }
 
     // Split local signers and remote signers
@@ -455,10 +472,10 @@ export class Wallet extends Signer {
     // Sign message first using localSigners
     // include local signatures for remote signers
     const localSignature = await signWith(localSigners, this.packMsgAndSig(msg, [], signChainId))
-    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
+    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, encodeSignature(localSignature), signChainId))
 
     // Aggregate both local and remote signatures
-    return joinSignatures(localSignature, remoteSignature)
+    return encodeSignature(joinSignatures(localSignature, remoteSignature))
   }
 
   // signWeight will return the total weight of all signers available based on the config

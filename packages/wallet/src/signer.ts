@@ -1,4 +1,4 @@
-import { Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainId, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
@@ -65,61 +65,6 @@ export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer
   return cand && cand.updateConfig !== undefined && cand.publishConfig !== undefined &&
     cand.getWalletContext !== undefined && cand.getWalletConfig !== undefined
-}
-
-export type DecodedSignature = {
-  threshold: number
-  signers: DecodedSignaturePart[]
-}
-
-export type DecodedSignaturePart = {
-  weight: number
-}
-
-export type DecodedAddressPart = DecodedSignaturePart & {
-  address: string
-}
-
-export type DecodedEOASigner = DecodedSignaturePart & {
-  r: string
-  s: string
-  v: number
-  t: number
-}
-
-export type DecodedFullSigner = DecodedSignaturePart & {
-  address: string
-  signature: Uint8Array,
-}
-
-export function isDecodedAddress(cand: DecodedSignaturePart): cand is DecodedAddressPart {
-  const c = cand as any; return c.address !== undefined && c.signature === undefined
-}
-
-export function isDecodedEOASigner(cand: DecodedSignaturePart): cand is DecodedEOASigner {
-  const c = cand as any
-
-  return (
-    c.r !== undefined &&
-    c.s !== undefined &&
-    c.v !== undefined &&
-    c.t !== undefined
-  )
-}
-
-export function isDecodedFullSigner(cand: DecodedSignaturePart): cand is DecodedFullSigner {
-  const c = cand as any
-
-  return (
-    c.address !== undefined &&
-    c.signature !== undefined
-  )
-}
-
-export enum SignatureType {
-  EOA = 0,
-  Address = 1,
-  Full = 2
 }
 
 // TODO: move to error.ts, along with others..
