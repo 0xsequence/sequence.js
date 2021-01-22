@@ -1,5 +1,14 @@
 # 0xsequence
 
+## 0.7.2
+
+### Patch Changes
+
+- 1fe4379: \* explicitly export types in 0xsequence meta-package
+  - introduce new `networksIndex` method in network package
+- Updated dependencies [1fe4379]
+  - @0xsequence/network@0.7.1
+
 ## 0.7.1
 
 ### Patch Changes
