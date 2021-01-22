@@ -230,3 +230,11 @@ export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): 
     return undefined
   }
 }
+
+export const networksIndex = (networks: NetworkConfig[]): { [key: string]: NetworkConfig } => {
+  const index: { [key: string]: NetworkConfig } = {}
+  for (let i=0; i<networks.length; i++) {
+    index[networks[i].name] = networks[i]
+  }
+  return index
+}
