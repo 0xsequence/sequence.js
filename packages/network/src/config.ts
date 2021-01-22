@@ -2,7 +2,7 @@ import { ethers, BigNumberish } from 'ethers'
 import { JsonRpcProvider, Network } from '@ethersproject/providers'
 import { Relayer } from '@0xsequence/relayer'
 import { urlClean } from '@0xsequence/utils'
-import { createNetworkConfig } from './utils'
+import { createNetworkConfig, networksIndex } from './utils'
 
 export interface NetworkConfig {
   title?: string
@@ -103,3 +103,7 @@ export const testnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
   baseRpcUrl: 'https://nodes.sequence.app',
   baseRelayerUrl: 'https://relayers.sequence.app'
 })
+
+// export const mainnetNetworksIndex = networksIndex(mainnetNetworks)
+
+// export const testnetNetworksIndex = networksIndex(testnetNetworks)
