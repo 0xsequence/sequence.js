@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/network",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "network sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-network.cjs.js",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/utils": "^0.7.0",
+    "@0xsequence/utils": "^0.7.1",
     "@ethersproject/providers": "^5.0.19",
     "ethers": "^5.0.26"
   },

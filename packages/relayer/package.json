@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/relayer",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "relayer sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-relayer.cjs.js",
