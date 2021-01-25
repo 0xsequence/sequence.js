@@ -1,6 +1,6 @@
 {
   "name": "0xsequence",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Sequence: simple & powerful Ethereum development library and Web-based smart wallet",
   "source": "src/index.ts",
   "main": "dist/0xsequence.cjs.js",
