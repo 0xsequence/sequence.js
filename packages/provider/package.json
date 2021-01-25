@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/provider",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "provider sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-provider.cjs.js",
@@ -12,12 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.7.0",
-    "@0xsequence/auth": "^0.7.0",
-    "@0xsequence/network": "^0.7.1",
-    "@0xsequence/transactions": "^0.7.0",
-    "@0xsequence/utils": "^0.7.1",
-    "@0xsequence/wallet": "^0.7.1",
+    "@0xsequence/abi": "^0.8.0",
+    "@0xsequence/auth": "^0.8.0",
+    "@0xsequence/network": "^0.8.0",
+    "@0xsequence/transactions": "^0.8.0",
+    "@0xsequence/utils": "^0.8.0",
+    "@0xsequence/wallet": "^0.8.0",
     "@ethersproject/abstract-signer": "5.0.11",
     "@ethersproject/hash": "^5.0.10",
     "@ethersproject/providers": "^5.0.19",

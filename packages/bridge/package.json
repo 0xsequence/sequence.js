@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/bridge",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "bridge sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-bridge.cjs.js",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/network": "^0.7.1",
+    "@0xsequence/network": "^0.8.0",
     "@maticnetwork/maticjs": "^2.0.15",
     "ethers": "^5.0.26"
   },

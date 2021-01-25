@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/config",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "config sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-config.cjs.js",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/network": "^0.7.0",
+    "@0xsequence/network": "^0.8.0",
     "ethers": "^5.0.26"
   },
   "peerDependencies": {},

@@ -1,5 +1,23 @@
 # @0xsequence/wallet
 
+## 0.8.0
+
+### Minor Changes
+
+- - changeset fix
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.8.0
+  - @0xsequence/api@0.8.0
+  - @0xsequence/config@0.8.0
+  - @0xsequence/guard@0.8.0
+  - @0xsequence/network@0.8.0
+  - @0xsequence/relayer@0.8.0
+  - @0xsequence/transactions@0.8.0
+  - @0xsequence/utils@0.8.0
+
 ## 0.7.1
 
 ### Patch Changes

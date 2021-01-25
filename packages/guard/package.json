@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/guard",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "guard sub-package for Sequence",
   "source": "src/index.ts",
   "main": "dist/0xsequence-guard.cjs.js",

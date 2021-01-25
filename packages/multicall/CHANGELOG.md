@@ -1,5 +1,18 @@
 # @0xsequence/multicall
 
+## 0.8.0
+
+### Minor Changes
+
+- - changeset fix
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.8.0
+  - @0xsequence/network@0.8.0
+  - @0xsequence/utils@0.8.0
+
 ## 0.7.2
 
 ### Patch Changes
