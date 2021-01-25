@@ -45,9 +45,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
         default:
       }
 
-      next(request, (error: any, response?: JsonRpcResponse, chainId?: number) => {
-        callback(error, response)
-      }, chainId)
+      next(request, callback, chainId)
 
     }
   }

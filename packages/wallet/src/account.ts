@@ -399,7 +399,11 @@ export class Account extends Signer {
 
     // Account/wallet instances using the initial configuration and network list
     this._wallets = this.options.networks.map(network => {
-      const wallet = new Wallet({ config: this.options.initialConfig, context: this.options.context }, ...this._signers)
+      const wallet = new Wallet({
+        config: this.options.initialConfig,
+        context: this.options.context
+      }, ...this._signers)
+
       if (network.provider) {
         wallet.setProvider(network.provider)
       } else if (network.rpcUrl && network.rpcUrl !== '') {
@@ -407,13 +411,19 @@ export class Account extends Signer {
       } else {
         throw new Error(`network config is missing provider settings for chainId ${network.chainId}`)
       }
+
       if (network.relayer) {
         wallet.setRelayer(network.relayer)
       } else if (network.relayerUrl && network.relayerUrl !== '') {
-        wallet.setRelayer(new RpcRelayer(network.relayerUrl))
+        wallet.setRelayer(new RpcRelayer(
+          network.relayerUrl,
+          true,
+          network.provider || new ethers.providers.JsonRpcProvider(network.rpcUrl)
+        ))
       } else {
         throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
       }
+
       if (network.isDefaultChain) {
         this.provider = wallet.provider
       }

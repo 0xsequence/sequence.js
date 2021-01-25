@@ -9,7 +9,7 @@ import {
 
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
-export const PROVIDER_CONNECT_TIMEOUT = 4000 // in ms
+export const PROVIDER_CONNECT_TIMEOUT = 8000 // in ms
 
 let _messageIdx = 0
 
@@ -67,10 +67,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // open/focus the wallet.
     // automatically open the wallet when a provider request makes it here.
     await this.openWallet()
-
-    // double check, in case wallet failed to open
     if (!this.isConnected()) {
-      throw new Error('wallet is not connected.')
+      await this.waitUntilConnected()
     }
 
     // send message request, await, and then execute callback after receiving the response

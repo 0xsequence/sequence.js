@@ -14,6 +14,9 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
 
   constructor(signer: AbstractSigner) {
     super(true, signer.provider)
+    // if (!signer.provider) {
+    //   throw new Error('signer.provider is not set, but is required')
+    // }
     this.signer = signer
   }
 

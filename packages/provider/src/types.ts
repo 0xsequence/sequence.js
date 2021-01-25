@@ -1,5 +1,5 @@
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
-import { TypedDataDomain, TypedDataField }  from '@ethersproject/abstract-signer'
+import { TypedData } from '@0xsequence/utils'
 
 // export class SequenceError extends Error {}
 
@@ -100,11 +100,3 @@ export interface MessageToSign {
   typedData?: TypedData
   chainId?: number
 }
-
-export interface TypedData {
-  domain: TypedDataDomain
-  types: Record<string, Array<TypedDataField>>
-  value: Record<string, any>
-}
-
-export type { TypedDataDomain, TypedDataField }

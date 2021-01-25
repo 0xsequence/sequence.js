@@ -17,7 +17,11 @@ export class JsonRpcRouter implements JsonRpcHandler {
   }
 
   sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) {
-    this.handler(request, callback, chainId)
+    try {
+      this.handler(request, callback, chainId)
+    } catch (err) {
+      callback(err, undefined)
+    }
   }
 
   // createWeb3Provider(network?: Networkish): EthersWeb3Provider {

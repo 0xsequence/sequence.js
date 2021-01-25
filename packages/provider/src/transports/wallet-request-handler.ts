@@ -21,18 +21,26 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
-  // TODO: determine login state
-
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
-  constructor(signer: Signer, prompter: WalletUserPrompter, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
+  constructor(signer: Signer | null, prompter: WalletUserPrompter | null, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
     this.signer = signer
     this.prompter = prompter
     this.mainnetNetworks = mainnetNetworks
     this.testnetNetworks = testnetNetworks
 
-    if (!signer.provider) {
-      throw new Error('wallet.provider is undefined')
+    // if (!signer.provider) {
+    //   throw new Error('wallet.provider is undefined')
+    // }
+  }
+
+  setup(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
+    this.signer = signer
+    if (mainnetNetworks && mainnetNetworks.length > 0) {
+      this.mainnetNetworks = mainnetNetworks
+    }
+    if (testnetNetworks && testnetNetworks.length > 0) {
+      this.testnetNetworks = testnetNetworks
     }
   }
 
@@ -65,13 +73,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       error: null
     }
 
-    // TODO: if signer account is empty, aka user is not logged in to the wallet,
-    // then prevent the use of many of the methods below.
-    const loggedIn = true // ..
-
     try {
 
-      if (!loggedIn && !publicJsonRpcMethods.includes(request.method)) {
+      // only allow public json rpc method to the provider when user is not logged in, aka signer is not set
+      if ((!this.signer || this.signer === null) && !publicJsonRpcMethods.includes(request.method)) {
         throw new Error(`not logged in. ${request.method} is unavailable`)
       }
 
@@ -439,12 +444,22 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   notifyLogout() {
     this.events.emit('accountsChanged', [])
   }
+
+  getSigner(): Signer | null {
+    return this.signer
+  }
+
+  setSigner(signer: Signer | null) {
+    this.signer = signer
+  }
 }
 
 export interface WalletUserPrompter {
+  // TODO: remove appAuth?: boolean ..? doesnt seem to be used, and MessageToSign has all the details.
   promptSignMessage(message: MessageToSign, appAuth?: boolean): Promise<string>
-  promptSignTransaction(txs: TransactionRequest, chaindId?: number): Promise<string>
-  promptSendTransaction(txs: TransactionRequest, chaindId?: number): Promise<string>
+
+  promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
+  promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
 }
 
 const publicJsonRpcMethods = [

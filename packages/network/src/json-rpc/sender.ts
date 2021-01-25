@@ -45,16 +45,16 @@ export class JsonRpcSender implements JsonRpcHandler {
 
   sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void), chainId?: number) => {
     this.send(request.method, request.params, chainId || this.defaultChainId)
-    .then(r => {
-      callback(undefined, {
-        jsonrpc: '2.0',
-        id: request.id,
-        result: r
+      .then(r => {
+        callback(undefined, {
+          jsonrpc: '2.0',
+          id: request.id,
+          result: r
+        })
       })
-    })
-    .catch(e => {
-      callback(e, undefined)
-    })
+      .catch(e => {
+        callback(e, undefined)
+      })
   }
 }
 

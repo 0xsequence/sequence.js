@@ -1,6 +1,6 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
   JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
-  SigningProvider, EagerProvider, exceptionProviderMiddleware, JsonRpcExternalProvider,
+  SigningProvider, EagerProvider, exceptionProviderMiddleware, networkProviderMiddleware, JsonRpcExternalProvider,
   JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcHandler, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
@@ -51,6 +51,7 @@ export class Wallet implements WalletProvider {
 
     // middleware stack for provider
     router?: JsonRpcRouter
+    networkProvider?: JsonRpcMiddleware
     allowProvider?: JsonRpcMiddleware
     cachedProvider?: CachedProvider
 
@@ -107,6 +108,15 @@ export class Wallet implements WalletProvider {
     }
     this.transport.messageProvider.register()
 
+    // ...
+    this.transport.networkProvider = networkProviderMiddleware((request: JsonRpcRequest): number => {
+      // return stub chainId of 0 when not connected to any
+      if (!this.networks || this.networks.length === 0) return 0
+
+      // return the default chainId as we're connected
+      return this.networks[0].chainId
+    })
+
     // .....
     this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
       if (request.method === 'sequence_setDefaultChain') return true
@@ -124,12 +134,14 @@ export class Wallet implements WalletProvider {
     // ..
     this.transport.router = new JsonRpcRouter([
       loggingProviderMiddleware,
+      this.transport.networkProvider,
       this.transport.allowProvider,
       exceptionProviderMiddleware,
       this.transport.cachedProvider,
     ], this.transport.messageProvider)
 
     this.transport.provider = new Web3Provider(this.transport.router)
+
 
     // below will update the networks automatically when the wallet networks change, however
     // this is currently disabled as it may confuse the dapp. Instead the dapp can

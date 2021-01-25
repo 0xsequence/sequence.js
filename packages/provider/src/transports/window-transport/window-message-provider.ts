@@ -121,7 +121,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
   private onWindowEvent = (event: MessageEvent) => {
     // Security check, ensure message is coming from wallet origin url
     if (event.origin !== this.walletURL.origin) {
-      console.warn(`event.origin '${event.origin}' does not match walletURL.origin '${this.walletURL.origin}'`)
+      // Safetly can skip events not intended for us
       return
     }
   

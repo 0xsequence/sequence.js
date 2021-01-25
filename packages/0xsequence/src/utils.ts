@@ -1,5 +1,9 @@
 export * from '@0xsequence/utils'
 
 export type {
-  Deferrable
+  Deferrable,
+  
+  TypedData,
+  TypedDataDomain,
+  TypedDataField
 } from '@0xsequence/utils'

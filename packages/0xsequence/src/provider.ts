@@ -19,9 +19,5 @@ export type {
 
   ConnectionState,
   NetworkEventPayload,
-  MessageToSign,
-
-  TypedData,
-  TypedDataDomain,
-  TypedDataField
+  MessageToSign
 } from '@0xsequence/provider'
