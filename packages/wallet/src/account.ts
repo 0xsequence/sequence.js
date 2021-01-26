@@ -226,7 +226,7 @@ export class Account extends Signer {
 
   // updateConfig will build an updated config transaction, update the imageHash on-chain and also publish
   // the wallet config to the authChain. Other chains are lazy-updated on-demand as batched transactions.
-  async updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
+  async updateConfig(newConfig?: WalletConfig, index?: boolean): Promise<[WalletConfig, TransactionResponse | undefined]> {
     const authWallet = this.authWallet().wallet
 
     if (!newConfig) {
@@ -237,7 +237,7 @@ export class Account extends Signer {
     if (isConfigEqual(authWallet.config, newConfig)) {
       if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
-        return await authWallet.updateConfig(newConfig, undefined, true)
+        return await authWallet.updateConfig(newConfig, undefined, true, index)
       }
     }
 
@@ -252,7 +252,7 @@ export class Account extends Signer {
 
     // Update to new configuration on the authWallet. Other networks will be lazily updated
     // once used. The wallet config is also auto-published to the authChain.
-    const [_, tx] = await authWallet.useConfig(lastConfig).updateConfig(newConfig, undefined, true)
+    const [_, tx] = await authWallet.useConfig(lastConfig).updateConfig(newConfig, undefined, true, index)
 
     return [{
       ...newConfig,
@@ -262,8 +262,8 @@ export class Account extends Signer {
 
   // publishConfig will publish the wallet config to the network via the relayer. Publishing
   // the config will also store the entire object of signers.
-  publishConfig(): Promise<TransactionResponse> {
-    return this.authWallet().wallet.publishConfig()
+  publishConfig(indexed?: boolean): Promise<TransactionResponse> {
+    return this.authWallet().wallet.publishConfig(indexed)
   }
 
   async isDeployed(target?: Wallet | ChainId): Promise<boolean> {
@@ -307,30 +307,47 @@ export class Account extends Signer {
     const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
 
     let event: any
+
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
       // Wallet is deployed on chain, test if given config is the updated one
       if (imageHash(authWallet.config) === currentImageHash[0]) {
         return { ...authWallet.config, address, chainId }
       }
 
+      // Get block height for log of current image hash
+      const logBlockHeight = (await authContract.imageHashBlockHeight(currentImageHash[0])).toNumber()
+
       // The wallet has been updated. Lookup configuration using imageHash from the authChain
       // which will be the last published entry
       const filter = authContract.filters.RequiredConfig(null, currentImageHash)
-      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
+      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
       if (lastLog === undefined) return undefined
       event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     
     } else {
       // Wallet is undeployed, test if given config is counter-factual config
-      if (addressOf(authWallet.config, authWallet.context).toLowerCase() === address.toLowerCase()) {
+      if (addressOf({ ...authWallet.config, address: undefined }, authWallet.context).toLowerCase() === address.toLowerCase()) {
         return { ...authWallet.config, chainId }
       }
 
-      // The wallet it's using the counter-factual configuration, get the init config from the authChain
-      const filter = authContract.filters.RequiredConfig(address)
-      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
-      if (lastLog === undefined) return undefined
-      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
+      // The wallet it's using the counter-factual configuration
+
+      // Get imageHash for counter-factual deployed wallet
+      const initialImageHash = await authContract.initialImageHash(address)
+      if (initialImageHash !== ethers.constants.HashZero) {
+        // The initial imageHash is indexed, fast find log
+        const filter = authContract.filters.RequiredConfig(null, initialImageHash)
+        const logBlockHeight = (await authContract.imageHashBlockHeight(initialImageHash)).toNumber()
+        const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
+        if (lastLog === undefined) return undefined
+        event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
+      } else {
+        // The initial imageHash is not indexed, look in whole range of logs
+        const filter = authContract.filters.RequiredConfig(address)
+        const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
+        if (lastLog === undefined) return undefined
+        event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
+      }
     }
 
     const signers = ethers.utils.defaultAbiCoder.decode(
