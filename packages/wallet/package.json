@@ -10,6 +10,7 @@
   "scripts": {
     "test": "yarn test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "coverage": "nyc --reporter=lcov --reporter=text-summary yarn test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -32,7 +33,9 @@
   "peerDependencies": {},
   "devDependencies": {
     "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts",
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ganache-core": "^2.13.2",
+    "nyc": "^15.1.0",
     "web3": "^1.3.1",
     "web3-typescript-typings": "^0.10.2"
   },
