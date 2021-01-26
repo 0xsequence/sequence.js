@@ -2,17 +2,16 @@
 # yarn lockfile v1
 
 
-"@0xsequence/wallet-contracts@https://github.com/arcadeum/wallet-contracts":
-  version "1.1.0"
-  resolved "https://github.com/arcadeum/wallet-contracts#222ef3a7eb1bb84e28e791e91bd8faf0572395c3"
-
-"@arcadeum/ethauth@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@arcadeum/ethauth/-/ethauth-0.3.0.tgz#49fba8d6a218559138a8396d8c3dc68c80ea5c07"
-  integrity sha512-jQ5ep5Zs2gOWv7c2rEBDYlX+QDtuV8NGM4vk6FFk+5Ibz7jVUjjDduSW9SWLG5OgdluE7C4F0cYUT/L65qDuzQ==
+"@0xsequence/ethauth@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.4.0.tgz#8137274b325a25d87187dfd27ce7c61ca12efcc9"
+  integrity sha512-eo2pPcV+6+m4kRXzmhBVVBBAahNzoG20Sog2VjXJ6uliH8/HNOZ66aCJE+QSshj9gL41MiCBFJWe0eONtKzLKw==
   dependencies:
     base64url "^3.0.1"
-    ethers-eip712 "^0.2.0"
+
+"@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
+  version "1.1.0"
+  resolved "https://github.com/0xsequence/wallet-contracts#222ef3a7eb1bb84e28e791e91bd8faf0572395c3"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.11", "@babel/code-frame@^7.5.5":
   version "7.12.11"
@@ -6109,11 +6108,6 @@ ethereumjs-wallet@0.6.5:
     scryptsy "^1.2.1"
     utf8 "^3.0.0"
     uuid "^3.3.2"
-
-ethers-eip712@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/ethers-eip712/-/ethers-eip712-0.2.0.tgz#52973b3a9a22638f7357283bf66624994c6e91ed"
-  integrity sha512-fgS196gCIXeiLwhsWycJJuxI9nL/AoUPGSQ+yvd+8wdWR+43G+J1n69LmWVWvAON0M6qNaf2BF4/M159U8fujQ==
 
 ethers@^4.0.0-beta.1, ethers@^4.0.32:
   version "4.0.48"

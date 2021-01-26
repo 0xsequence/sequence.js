@@ -1,5 +1,5 @@
-import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@arcadeum/ethauth'
 import { ethers } from 'ethers'
+import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@0xsequence/ethauth'
 import { sequenceContext } from '@0xsequence/network'
 import { packMessageData, isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'
 
