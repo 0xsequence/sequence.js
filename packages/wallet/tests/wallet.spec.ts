@@ -17,7 +17,7 @@ import { addressOf, imageHash, sortConfig } from '@0xsequence/config'
 
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidWalletSignature,
+import { isValidSignature, isValidEthSignSignature, packMessageData, isValidContractWalletSignature,
   isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, joinSignatures,
   fetchImageHash
 } from '../src'
@@ -1236,7 +1236,7 @@ describe('Wallet integration', function () {
         const signature = await wallet.signMessage(message)
         const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidWalletSignature(wallet.address, subDigest, signature, ethnode.provider)).to.be.true
+        expect(await isValidContractWalletSignature(wallet.address, subDigest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
         const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)

@@ -186,29 +186,12 @@ export const tests = async () => {
     const sig = sigs[0]
 
     // Verify the signature
-    // TODO: if message is not Uint8Array, then lets run ethers.utils.toUtf8Bytes on it..
-    // we can do this in our helper "commands".isValidSignature ..
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message))) // ... remove toUtf8Bytes.. more versatile.. / easier to use..
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, deployedWalletContext, chainId)
+    const isValid = await wallet.commands.isValidMessageSignature(address, message, sig)
     assert.true(isValid, 'signature is valid')
 
-    // TODO: ............
-    // wallet.commands.isValidSignature() .......
-    // maybe helpers like isValidMessage() ..? maybe.. maybe not..
-    // isValidTypedData() ?
-
-    // TODO ... wallet.commands.verifyMessage() ... cleaner .. .. verifyTypedData .. etc..
-    // we should also put these in utils package i think
-    
     // Recover the address / config from the signature
-    const subDigest = packMessageData(address, chainId, messageDigest)
-    const walletConfig = await recoverConfig(subDigest, sig)
-
-    // TODO: put walletContext on recoverConfig which will do addressOf automatically
-    // it could also check against address in the signature.. to confirm..?
-    // TODO: add utils / commands for easier recovery .... aka....... recoverAddress and recoverConfig .. add both..
-    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+    const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(address, message, sig, chainId)
+    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
@@ -245,20 +228,12 @@ export const tests = async () => {
     )
 
     // Verify typed data
-    const messageHash = ethers.utils._TypedDataEncoder.hash(domain, types, value)
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(messageHash))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, chainId)
+    const isValid = await wallet.commands.isValidTypedDataSignature(address, { domain, types, value }, sig, chainId)
     assert.true(isValid, 'signature is valid')
 
-    // also compute the subDigest of the message, to be provided to the end-user
-    // in order to recover the config properly, the subDigest + sig is required.
-    const subDigest = packMessageData(address, chainId, messageDigest)
-
     // Recover config / address
-    const walletConfig = await recoverConfig(subDigest, sig)
-
-    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+    const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, value }, sig, chainId)
+    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
@@ -291,21 +266,12 @@ export const tests = async () => {
     assert.equal(sigChk, sig, 'authSigner.signMessage returns the same sig')
 
     // Verify the signature
-    // TODO: if message is not Uint8Array, then lets run ethers.utils.toUtf8Bytes on it..
-    // we can do this in our helper "commands".isValidSignature ..
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message))) // ... remove toUtf8Bytes.. more versatile.. / easier to use..
-    const isValid = await isValidSignature(address, messageDigest, sig, authProvider, deployedWalletContext, chainId)
+      const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signAuthMessage, signature is valid')
 
     // Recover the address / config from the signature
-    const subDigest = packMessageData(address, chainId, messageDigest)
-    const walletConfig = await recoverConfig(subDigest, sig)
-
-    // TODO: put walletContext on recoverConfig which will do addressOf automatically
-    // it could also check against address in the signature.. to confirm..?
-    // TODO: add utils / commands for easier recovery .... aka....... recoverAddress and recoverConfig .. add both..
-    const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+    const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(address, message, sig, chainId)
+    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')    

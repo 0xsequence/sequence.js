@@ -23,7 +23,7 @@ export async function isValidSignature(
   ) return true
 
   const wallets = await Promise.all([
-    isValidWalletSignature(address, digest, sig, provider),
+    isValidContractWalletSignature(address, digest, sig, provider),
     isValidSequenceDeployedWalletSignature(address, digest, sig, provider, chainId)
   ])
 
@@ -79,7 +79,7 @@ export function isValidEthSignSignature(
 }
 
 // Check if valid Smart Contract Wallet signature, via ERC1271
-export async function isValidWalletSignature(
+export async function isValidContractWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
@@ -111,7 +111,7 @@ export async function isValidSequenceDeployedWalletSignature(
   try {
     const cid = chainId ? chainId : (await provider.getNetwork()).chainId
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
-    return isValidWalletSignature(address, subDigest, sig, provider)
+    return isValidContractWalletSignature(address, subDigest, sig, provider)
   } catch {
     return false
   }

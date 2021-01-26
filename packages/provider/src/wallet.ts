@@ -22,6 +22,7 @@ export interface WalletProvider {
   getAddress(): Promise<string>
   getNetworks(chainId?: ChainId): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
+  getAuthChainId(): Promise<number>
 
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
@@ -237,7 +238,29 @@ export class Wallet implements WalletProvider {
       throw new Error('networks have not been set by session. login first.')
     }
     // default chain id is first one in the list, by design
-    return this.networks[0].chainId
+    const network = this.networks[0]
+    if (!network.isDefaultChain) {
+      throw new Error('expecting first network in list to be default chain')
+    }
+    return network.chainId
+  }
+
+  getAuthChainId = async (): Promise<number> => {
+    if (!this.networks || this.networks.length < 1) {
+      throw new Error('networks have not been set by session. login first.')
+    }
+    // auth chain is first or second one in the list, by design
+    const network0 = this.networks[0]
+    if (network0.isAuthChain) {
+      return network0.chainId
+    }
+    if (this.networks.length > 1) {
+      const network1 = this.networks[1]
+      if (network1.isAuthChain) {
+        return network1.chainId
+      }
+    }
+    throw new Error('expecting first or second network in list to be the auth chain')
   }
 
   openWallet = async (path?: string, state?: any): Promise<boolean> => {

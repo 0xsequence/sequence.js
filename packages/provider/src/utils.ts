@@ -1,0 +1,40 @@
+import { BigNumberish, BytesLike } from 'ethers'
+import { WalletContext } from '@0xsequence/network'
+import { WalletConfig, addressOf } from '@0xsequence/config'
+import { Web3Provider } from './provider'
+import { isValidSignature as _isValidSignature, packMessageData, recoverConfig, DecodedSignature } from '@0xsequence/wallet'
+
+export const isValidSignature = async (
+  address: string,
+  digest: Uint8Array,
+  sig: string,
+  provider?: Web3Provider,
+  chainId?: number,
+  walletContext?: WalletContext
+): Promise<boolean> => {
+  chainId ||= await provider.getChainId()
+  walletContext ||= await provider.getSigner().getWalletContext()
+  return _isValidSignature(address, digest, sig, provider, walletContext, chainId)
+}
+
+export const recoverWalletConfig = (
+  address: string,
+  digest: BytesLike,
+  signature: string | DecodedSignature,
+  chainId: BigNumberish,
+  walletContext?: WalletContext
+): WalletConfig => {
+  const subDigest = packMessageData(address, chainId, digest)
+  const config = recoverConfig(subDigest, signature)
+
+  if (walletContext) {
+    const recoveredWalletAddress = addressOf(config, walletContext)
+    if (config.address && config.address !== recoveredWalletAddress) {
+      throw new Error('recovered address does not match the WalletConfig address, check the WalletContext')
+    } else {
+      config.address = recoveredWalletAddress
+    }
+  }
+
+  return config
+}

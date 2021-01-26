@@ -14,6 +14,7 @@
   "dependencies": {
     "@0xsequence/abi": "^0.8.0",
     "@0xsequence/auth": "^0.8.0",
+    "@0xsequence/config": "^0.8.0",
     "@0xsequence/network": "^0.8.0",
     "@0xsequence/transactions": "^0.8.0",
     "@0xsequence/utils": "^0.8.0",
