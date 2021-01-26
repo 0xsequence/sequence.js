@@ -468,12 +468,13 @@ export class Wallet extends Signer {
   async updateConfig(
     config?: WalletConfig,
     nonce?: number,
-    publish = false
+    publish = false,
+    index?: boolean
   ): Promise<[WalletConfig, TransactionResponse]> {
     if (!config) config = this.config
 
     const [txs, n] = await Promise.all([
-      this.buildUpdateConfigTransaction(config, publish),
+      this.buildUpdateConfigTransaction(config, publish, index),
       nonce ? nonce : await this.getNonce()]
     )
 
@@ -485,15 +486,15 @@ export class Wallet extends Signer {
 
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
-  async publishConfig(nonce?: number): Promise<TransactionResponse> {
-    return this.sendTransaction(await this.buildPublishConfigTransaction(this.config, nonce))
+  async publishConfig(index?: boolean, nonce?: number): Promise<TransactionResponse> {
+    return this.sendTransaction(this.buildPublishConfigTransaction(this.config, index, nonce))
   }
 
   // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
   // on chain. Note, the transaction is not sent to the network by this method.
   //
   // The `publish` argument when true will also store the contents of the WalletConfig to a chain's logs.
-  async buildUpdateConfigTransaction(config: WalletConfig, publish = false): Promise<Transaction[]> {
+  async buildUpdateConfigTransaction(config: WalletConfig, publish = false, index?: boolean): Promise<Transaction[]> {
     if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('wallet config is not usable (strict mode)')
 
     const isUpgradable = await (async () => {
@@ -535,7 +536,7 @@ export class Wallet extends Signer {
       )
     }
 
-    const postTransaction = publish ? this.buildPublishConfigTransaction(config) : []
+    const postTransaction = publish ? this.buildPublishConfigTransaction(config, index) : []
 
     const transactions = [...preTransaction, transaction, ...postTransaction]
 
@@ -551,7 +552,7 @@ export class Wallet extends Signer {
     }]
   }
 
-  buildPublishConfigTransaction(config?: WalletConfig, nonce?: number): Transaction[] {
+  buildPublishConfigTransaction(config?: WalletConfig, index: boolean = true, nonce?: number): Transaction[] {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     return [{
       delegateCall: false,
@@ -560,7 +561,7 @@ export class Wallet extends Signer {
       to: this.context.sequenceUtils,
       value: ethers.constants.Zero,
       nonce: nonce,
-      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('requireConfig'), 
+      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction(index ? 'requireAndIndexConfig' : 'requireConfig'), 
         [
           this.address,
           config.threshold,

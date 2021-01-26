@@ -32,7 +32,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts",
+    "@0xsequence/wallet-contracts": "https://github.com/arcadeum/wallet-contracts#indexed-require-config",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ganache-core": "^2.13.2",
     "nyc": "^15.1.0",
