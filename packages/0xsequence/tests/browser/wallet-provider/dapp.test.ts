@@ -6,6 +6,7 @@ import { sequenceContext, WalletContext, JsonRpcSender, JsonRpcRequest, JsonRpcR
 import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
+import { Transaction, TransactionRequest } from '@0xsequence/transactions'
 
 export const tests = async () => {
 
@@ -393,6 +394,63 @@ export const tests = async () => {
       const toBalanceAfter = await provider.getBalance(toAddress)
       assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
     }
+  })
+
+  await test('sendTransaction batch', async () => {
+    const testAccount = getEOAWallet(testAccounts[1].privateKey)
+
+    const ethAmount1 = ethers.utils.parseEther('1.234')
+    const ethAmount2 = ethers.utils.parseEther('0.456')
+
+    const tx1: TransactionRequest = {
+      to: testAccount.address,
+      value: ethAmount1,
+      data: '0x'
+    }
+    const tx2: TransactionRequest = {
+      to: testAccount.address,
+      value: ethAmount2,
+      data: '0x'
+    }
+    const txBatched = {
+      ...tx1,
+      auxiliary: [tx2]
+    }
+
+    const toBalanceBefore = await provider.getBalance(testAccount.address)
+    const txnResp = await signer.sendTransaction(txBatched) // error
+
+    await txnResp.wait()
+
+    const toBalanceAfter = await provider.getBalance(testAccount.address)
+    assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
+  })
+
+  await test('sendTransaction batch format 2', async () => {
+    const testAccount = getEOAWallet(testAccounts[1].privateKey)
+
+    const ethAmount1 = ethers.utils.parseEther('1.234')
+    const ethAmount2 = ethers.utils.parseEther('0.456')
+
+    const tx1: TransactionRequest = {
+      to: testAccount.address,
+      value: ethAmount1,
+      data: '0x'
+    }
+
+    const tx2: TransactionRequest = {
+      to: testAccount.address,
+      value: ethAmount2,
+      data: '0x'
+    }
+
+    const toBalanceBefore = await provider.getBalance(testAccount.address)
+    const txnResp = await signer.sendTransactionBatch([tx1, tx2])
+
+    await txnResp.wait()
+
+    const toBalanceAfter = await provider.getBalance(testAccount.address)
+    assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
   })
 
   await test('sendETH from the sequence smart wallet (authChain)', async () => {
