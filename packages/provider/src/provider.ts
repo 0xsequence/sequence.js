@@ -3,11 +3,11 @@ import { BytesLike } from '@ethersproject/bytes'
 import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, Networkish } from "@ethersproject/providers"
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { NetworkConfig, Networks, WalletContext, ChainId, JsonRpcHandler, JsonRpcHandlerFunc, JsonRpcFetchFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, maybeNetworkId, JsonRpcVersion, JsonRpcSender, isJsonRpcProvider } from '@0xsequence/network'
-import { Signer } from '@0xsequence/wallet'
+import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties } from '@0xsequence/utils'
-import { TransactionRequest, TransactionResponse, Transactionish, SignedTransactions } from '@0xsequence/transactions'
+import { Transaction, TransactionRequest, TransactionResponse, Transactionish, SignedTransactions } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 
 // naming..?
@@ -235,6 +235,29 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     })
   }
 
+  // sendTransactionBatch is a convience method to call sendTransaction in a batch format, allowing you to
+  // send multiple transaction as a single payload and just one on-chain transaction.
+  async sendTransactionBatch(
+    transactions: Deferrable<TransactionRequest[] | Transaction[]>,
+    chainId?: ChainId,
+    allSigners?: boolean
+  ): Promise<TransactionResponse> {
+    const batch = await resolveArrayProperties<TransactionRequest[] | Transaction[]>(transactions)
+    if (!batch || batch.length === 0) {
+      throw new Error('cannot send empty batch')
+    }
+
+    const tx: TransactionRequest = {
+      ...batch[0],
+      auxiliary: []
+    }
+    if (batch.length > 1) {
+      tx.auxiliary = batch.splice(1)
+    }
+
+    return this.sendTransaction(tx, chainId, allSigners)
+  }
+
   signTransactions(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
     transaction = shallowCopy(transaction)
     // TODO: transaction argument..? make sure to resolve any properties and serialize property before sending over
@@ -320,7 +343,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
         tx.from = sender;
       }
 
-      const hexTx = (<any>this.provider.constructor).hexlifyTransaction(tx, { from: true })
+      const hexTx = hexlifyTransaction(tx)
 
       return provider.send('eth_sendTransaction', [hexTx]).then((hash) => {
         return hash
@@ -339,4 +362,49 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const address = await this.getAddress()
     return this.provider.send("personal_unlockAccount", [address.toLowerCase(), password, null])
   }
+}
+
+
+// NOTE: method has been copied + modified from ethers.js JsonRpcProvider
+// Convert an ethers.js transaction into a JSON-RPC transaction
+
+const allowedTransactionKeys: { [ key: string ]: boolean } = {
+  chainId: true, data: true, gasLimit: true, gasPrice:true, nonce: true, to: true, value: true,
+  from: true, auxiliary: true, expiration: true, afterNonce: true
+}
+
+const hexlifyTransaction = (transaction: TransactionRequest, allowExtra?: { [key: string]: boolean }): { [key: string]: string } => {
+  // Check only allowed properties are given
+  const allowed = shallowCopy(allowedTransactionKeys)
+  if (allowExtra) {
+      for (const key in allowExtra) {
+          if (allowExtra[key]) { allowed[key] = true; }
+      }
+  }
+  ethers.utils.checkProperties(transaction, allowed)
+
+  const result: { [key: string]: any } = {};
+
+  // Some nodes (INFURA ropsten; INFURA mainnet is fine) do not like leading zeros.
+  ['gasLimit', 'gasPrice', 'nonce', 'value'].forEach(key => {
+    if (!(<any>transaction)[key]) { return }
+    const value = ethers.utils.hexValue((<any>transaction)[key])
+    if (key === 'gasLimit') { key = 'gas' }
+    result[key] = value
+  });
+
+  ['from', 'to', 'data'].forEach(key => {
+    if (!(<any>transaction)[key]) { return }
+    result[key] = ethers.utils.hexlify((<any>transaction)[key])
+  })
+
+  const auxiliary = <any>transaction['auxiliary']
+  if (auxiliary && auxiliary.length > 0) {
+    result['auxiliary'] = []
+    auxiliary.forEach(a => {
+      result['auxiliary'].push(hexlifyTransaction(a))
+    })
+  }
+
+  return result
 }
