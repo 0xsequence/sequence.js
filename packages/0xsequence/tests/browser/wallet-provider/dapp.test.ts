@@ -384,7 +384,7 @@ export const tests = async () => {
     }
 
     const toBalanceBefore = await provider.getBalance(testAccount.address)
-    const txnResp = await signer.sendTransaction(txBatched) // error
+    const txnResp = await signer.sendTransaction(txBatched)
 
     await txnResp.wait()
 
