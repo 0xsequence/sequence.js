@@ -43,8 +43,8 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.port.handleMessage = undefined
   }
 
-  openWallet = (path?: string, state?: any): void => {
-    this.connect()
+  openWallet = (path?: string, state?: any, defaultNetworkId?: string | number): void => {
+    this.connect(defaultNetworkId)
   }
 
   closeWallet() {

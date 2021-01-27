@@ -18,7 +18,7 @@ export interface WalletSession {
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register()
   unregister()
-  openWallet(path?: string, state?: any)
+  openWallet(path?: string, state?: any, defaultNetworkId?: string | number)
   closeWallet()
   isConnected(): boolean
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)

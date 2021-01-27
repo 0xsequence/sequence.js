@@ -47,7 +47,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this.events.removeAllListeners()
   }
 
-  openWallet = (path?: string, state?: any): void => {
+  openWallet = (path?: string, state?: any, defaultNetworkId?: string | number): void => {
     if (this.walletWindow && this.isConnected()) {
       // TODO: update the location of window to path
       this.walletWindow.focus()
@@ -110,7 +110,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     }, 1250)
 
     // connect to the wallet by sending requests
-    this.connect()
+    this.connect(defaultNetworkId)
   }
 
   closeWallet() {

@@ -247,10 +247,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       throw new Error('cannot send empty batch')
     }
 
-    const tx: TransactionRequest = {
-      ...batch[0],
-      auxiliary: []
-    }
+    const tx: TransactionRequest = { ...batch[0] }
     if (batch.length > 1) {
       tx.auxiliary = batch.splice(1)
     }

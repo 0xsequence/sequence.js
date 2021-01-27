@@ -36,6 +36,21 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
       case ProviderMessageType.CONNECT: {
 
+        // set defaultChain upon connecting if one is requested
+        const defaultNetworkId = message.data.defaultNetworkId
+        if (defaultNetworkId) {
+          try {
+            this.walletRequestHandler.setDefaultChain(defaultNetworkId)
+          } catch (err) {
+            console.error(err)
+            this.notifyConnect({
+              sessionId: this._sessionId,
+              error: `${err}`
+            })
+            return
+          }
+        }
+
         // success, respond with 'connect' event to the dapp directly
         this.notifyConnect({ sessionId: this._sessionId })
 
@@ -46,6 +61,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
           // logged in
           this.notifyAccountsChanged([accountAddress])
 
+          // notify networks once the user has authenticated to avoid non-authed access
           const networks = await this.walletRequestHandler.getNetworks()
           if (networks && networks.length > 0) {
             this.notifyNetworks(networks)
@@ -86,13 +102,13 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
-  notifyConnect(connectInfo: { chainId?: string, sessionId?: string }) {
-    const { chainId, sessionId } = connectInfo
+  notifyConnect(connectInfo: { chainId?: string, sessionId?: string, error?: string }) {
+    const { chainId, sessionId, error } = connectInfo
     this.sendMessage({
       idx: -1,
       type: ProviderMessageType.CONNECT,
       data: {
-        result: { chainId, sessionId }
+        result: { chainId, sessionId, error }
       }
     })
   }
