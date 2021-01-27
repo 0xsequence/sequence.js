@@ -546,31 +546,17 @@ export const tests = async () => {
       assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
     }
   })
-
-  //--------------
-
-  // <Button px={3} m={1} onClick={() => signETHAuth()}>Sign Authorization</Button>
-  // <Button px={3} m={1} onClick={() => sendBatchTransaction()}>Send batch transaction</Button>
-  // <Button px={3} m={1} onClick={() => sendARC()}>Contract, ARC: balanceOf</Button>
-  // Send Token .. erc20/721/1155 ...
   
 }
 
-
-// TODO: test getting sequence signer, and getting the wallet config
-
-// TODO: send batch transaction
 
 // TODO: send coins
 
 // TODO: send collectible
 
-// TODO: setup all other tests from demo-dapp, just do it..
-
 // TODO: setup some failure states..? hmm, might be trickier, but maybe could have requestHandler do some faults/other..
 
 // TODO: add auth helpers to @0xsequence/auth, and heplers in "commands"
-
 
 //
 //--------
