@@ -235,7 +235,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     })
   }
 
-  // sendTransactionBatch is a convience method to call sendTransaction in a batch format, allowing you to
+  // sendTransactionBatch is a convenience method to call sendTransaction in a batch format, allowing you to
   // send multiple transaction as a single payload and just one on-chain transaction.
   async sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,

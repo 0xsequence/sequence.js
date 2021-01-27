@@ -3,6 +3,8 @@
 
 An Ethereum provider wrapper that aggregates multiple operations in one, reducing the network load on clients and servers. The project aims to be plug-and-play with existing ether.js integrations.
 
+For more info see [0xsequence project page](https://github.com/0xsequence/sequence.js).
+
 Inspired by MakerDAO [Multicall.js](https://github.com/makerdao/multicall.js).
 
 ## Installation

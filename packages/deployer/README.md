@@ -5,9 +5,11 @@ Deploy contracts using a universal deployer via CREATE2, allowing contracts to h
 
 UniversalDeployer works in both Web Browsers and Nodejs.
 
+For more info, see [0xsequence project page](https://github.com/0xsequence/sequence.js).
+
 # How to use
 
-1. `yarn install @0xsequence/deployer`
+1. `yarn add @0xsequence/deployer`
 1. Import UniversalDeployer into script
 2. Create UniversalDeployer instance
 3. Deploy contracts 

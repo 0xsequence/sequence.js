@@ -4,7 +4,7 @@
 ## Install
 
 ```
-yarn install 0xsequence
+yarn add 0xsequence
 ```
 
 
