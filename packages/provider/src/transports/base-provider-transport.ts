@@ -43,7 +43,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  openWallet(path?: string, state?: any) {
+  openWallet(path?: string, state?: any, defaultNetworkId?: string | number) {
     throw new Error('abstract method')
   }
 
@@ -106,6 +106,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         return
       }
 
+      // check if connection error occured due to invalid defaultNetworkId
+      if (message.data?.result?.error) {
+        console.error('connection to wallet failed')
+        this.disconnect()
+        throw new Error(message.data?.result?.error)
+      }
+
+      // success!
       this.connection = ConnectionState.CONNECTED
       this.events.emit('connect')
 
@@ -286,7 +294,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     ])
   }
 
-  protected connect = async (): Promise<boolean> => {
+  protected connect = async (defaultNetworkId?: string | number): Promise<boolean> => {
     if (this.isConnected()) return true
 
     // Send connection request and wait for confirmation
@@ -296,7 +304,9 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     const initRequest: ProviderMessage<any> = {
       idx: nextMessageIdx(),
       type: ProviderMessageType.CONNECT,
-      data: null
+      data: {
+        defaultNetworkId: defaultNetworkId
+      }
     }
 
     // Continually send connect requesst until we're connected or timeout passes
@@ -304,6 +314,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     const postMessageUntilConnected = () => {
       if (!this.registered) return false
       if (connected !== undefined) return connected
+      if (this.connection === ConnectionState.DISCONNECTED) return false
 
       this.sendMessage(initRequest)
       setTimeout(postMessageUntilConnected, 200)

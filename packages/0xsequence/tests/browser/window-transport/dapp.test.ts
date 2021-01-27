@@ -75,12 +75,6 @@ export const tests = async () => {
       'signature match'
     )
 
-    // TODO: .. lets make this more convienient
-    // ie.
-    // sequence.utils.verifyMessage()
-    // sequence.utils.recoverAddress()
-    // sequence.utils.recoverConfig()
-
     //
     // Verify the message signature
     //
@@ -154,9 +148,6 @@ export const tests = async () => {
       '0x00010001097d16cab1a08fca49c3d5acae73ecfb4aeaa9051252e698dd7cc2b47f53973e1cc4e0d1855e2134273f62a1c732b500a89ab761acc7625bf4b7ea699365f5b21b02',
       'signature match typed-data'
     )
-
-    // TODO: also compute the 'sig' by using the sequence signer directly
-    // const sig = await signer.signTypedData(typedData)
 
     // NOTE: verification of message below is identical to verifying a message with eth_sign,
     // the difference is we have to provide 'message' as the typedData digest format

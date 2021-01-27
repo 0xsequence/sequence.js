@@ -51,12 +51,12 @@ export class MuxMessageProvider implements ProviderTransport {
     this.provider = undefined
   }
 
-  openWallet = (path?: string, state?: any): void => {
+  openWallet = (path?: string, state?: any, defaultNetworkId?: string | number): void => {
     if (this.provider) {
-      this.provider.openWallet(path, state)
+      this.provider.openWallet(path, state, defaultNetworkId)
       return
     }
-    this.messageProviders.forEach(m => m.openWallet(path, state))
+    this.messageProviders.forEach(m => m.openWallet(path, state, defaultNetworkId))
   }
 
   closeWallet() {

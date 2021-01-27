@@ -56,4 +56,45 @@ export const tests = async () => {
     assert.equal(network.chainId, 31338, 'chain id match')
   })
 
+  await test('getNetworks()', async () => {
+    const networks = await wallet.getNetworks()
+    console.log('=> networks', networks)
+
+    assert.true(networks[0].isDefaultChain, 'network0 is defaultChain')
+    assert.true(networks[0].isAuthChain, 'network0 is authChain (as per config)')
+    assert.true(!networks[1].isDefaultChain, 'network1 is not defaultChain')
+    assert.true(!networks[1].isAuthChain, 'network1 is not authChain (as per config)')
+
+    assert.true(networks[0].chainId === 31338, 'network0 is chainId 31338')
+    assert.true(networks[1].chainId === 31337, 'network1 is chainId 31337')
+  })
+
+  await test('signMessage with our custom defaultChain', async () => {
+    console.log('signing message...')
+    const signer = wallet.getSigner()
+
+    const message = 'Hi there! Please sign this message, 123456789, thanks.'
+
+    // sign
+    const sig = await signer.signMessage(message)
+
+    // validate
+    const isValid = await wallet.commands.isValidMessageSignature(
+      await wallet.getAddress(),
+      message,
+      sig,
+      // await signer.getChainId()
+    )
+    assert.true(isValid, 'signMessage sig is valid')
+
+    // recover
+    const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(
+      await wallet.getAddress(),
+      message,
+      sig,
+      await signer.getChainId()
+    )
+    assert.equal(walletConfig.address.toLowerCase(), (await wallet.getAddress()).toLowerCase(), 'signMessage, recovered address ok')
+  })
+
 }

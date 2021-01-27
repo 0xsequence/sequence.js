@@ -1,7 +1,7 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
   JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
   SigningProvider, EagerProvider, exceptionProviderMiddleware, networkProviderMiddleware, JsonRpcExternalProvider,
-  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcHandler, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
+  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, checkNetworkConfig, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
@@ -87,8 +87,6 @@ export class Wallet implements WalletProvider {
   }
   
   private init = () => {
-    const config = this.config
-
     if (this.transport.provider) {
       // init must have already been called
       return
@@ -163,7 +161,7 @@ export class Wallet implements WalletProvider {
     // Load existing session from localStorage
     const session = this.loadSession()
     if (session) {
-      this.useSession(session)
+      this.useSession(session, false)
     }
   }
 
@@ -177,7 +175,7 @@ export class Wallet implements WalletProvider {
 
     await this.openWallet('', { login: true })
     const sessionPayload = await this.transport.messageProvider.waitUntilLoggedIn()
-    this.useSession(sessionPayload)
+    this.useSession(sessionPayload, true)
 
     return this.isLoggedIn()
   }
@@ -226,6 +224,7 @@ export class Wallet implements WalletProvider {
       throw new Error('network has not been set by session. login first.')
     }
     if (chainId) {
+      // filter list to just the specific chain requested
       const network = findNetworkConfig(this.networks, chainId)
       return network ? [network] : []
     }
@@ -268,13 +267,8 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
 
-    this.transport.messageProvider.openWallet(path, state)
+    this.transport.messageProvider.openWallet(path, state, this.config.defaultNetworkId)
     await this.transport.messageProvider.waitUntilConnected()
-
-    // setDefaultChain - it's important to send this right away upon connection. This will also
-    // update the network list in the session each time the wallet is opened & connected.
-    const networks = await this.transport.provider.send('sequence_setDefaultChain', [this.config.defaultNetworkId])
-    this.useNetworks(networks)
 
     return true
   }
@@ -383,7 +377,7 @@ export class Wallet implements WalletProvider {
     window.localStorage.setItem('@sequence.session', data)
   }
 
-  private useSession = async (session: WalletSession) => {
+  private useSession = async (session: WalletSession, autoSave: boolean = true) => {
     if (!session.accountAddress || session.accountAddress === '') {
       throw new Error('session error, accountAddress is empty')
     }
@@ -401,13 +395,21 @@ export class Wallet implements WalletProvider {
       this.saveSession(this.session)
     })
 
-    // set networks
+    // set networks from the session
     if (session.networks) {
-      this.useNetworks(session.networks)
+      // reset session.networks in case it doesn't match defaultNetwork, assuming the dapp has changed it.
+      if (this.config.defaultNetworkId && !checkNetworkConfig(session.networks[0], this.config.defaultNetworkId)) {
+        console.warn('session.networks defaultNetworkId has changed, so clearing the network list')
+        session.networks = undefined
+      } else {
+        this.useNetworks(session.networks)
+      }
     }
 
     // save session
-    this.saveSession(this.session)
+    if (autoSave) {
+      this.saveSession(this.session)
+    }
 
     // confirm the session address matches the one with the signer
     const accountAddress = await this.getSigner().getAddress()
@@ -419,8 +421,18 @@ export class Wallet implements WalletProvider {
   private useNetworks(networks: NetworkConfig[]) {
     // set networks in the session
     if (!this.session) this.session = {}
+
+    // confirm default network is set correctly
+    if (this.config.defaultNetworkId) {
+      if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
+        throw new Error(`expecting defaultNetworkId ${this.config.defaultNetworkId} but is set to ${networks[0]}`)
+      }
+    }
+
+    // set networks on session object
     this.session.networks = networks
 
+    // check if any custom network settings, otherwise return early
     if (!this.config.networks && !this.config.networkRpcUrl) {
       this.networks = networks
       return

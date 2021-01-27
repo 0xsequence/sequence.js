@@ -231,6 +231,13 @@ export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): 
   }
 }
 
+export const checkNetworkConfig = (network: NetworkConfig, networkId: string | number): boolean => {
+  if (!network) return false
+  if (network.name === networkId) return true
+  if (network.chainId === networkId) return true
+  return false
+}
+
 export const networksIndex = (networks: NetworkConfig[]): { [key: string]: NetworkConfig } => {
   const index: { [key: string]: NetworkConfig } = {}
   for (let i=0; i<networks.length; i++) {
