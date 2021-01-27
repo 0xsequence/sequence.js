@@ -280,16 +280,15 @@ export class Wallet implements WalletProvider {
   getProvider(chainId?: ChainId): Web3Provider | undefined {
     // return the top-level provider message transport when chainId is unspecified
     // and user has not logged in
-    if (chainId && !this.isLoggedIn()) {
-      throw new Error(`session is empty. login and try again.`)
-    }
-    if (!chainId) {
-      return this.transport.provider
-    }
-    if (this.networks.length === 0) {
-      throw new Error('networks list is empty. upon logging in, networks should be populated')
+    if (!this.isLoggedIn()) {
+      if (chainId) {
+        throw new Error(`session is empty. login and try again.`)
+      } else {
+        return this.transport.provider
+      }
     }
 
+    // we're logged in, get network from list available
     let network = this.networks[0]
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
@@ -306,7 +305,7 @@ export class Wallet implements WalletProvider {
     // provider stack for the respective network
     const router = new JsonRpcRouter([
       loggingProviderMiddleware,
-      new EagerProvider(this.session.accountAddress), //, network.chainId),
+      new EagerProvider(this.session.accountAddress, network.chainId),
       exceptionProviderMiddleware,
       new CachedProvider(network.chainId),
       new SigningProvider(this.transport.provider)
