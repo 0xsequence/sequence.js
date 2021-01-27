@@ -419,6 +419,39 @@ export const tests = async () => {
     assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
   })
 
+  await test('sendTransaction batch format 3', async () => {
+    const testAccount = getEOAWallet(testAccounts[1].privateKey)
+
+    const ethAmount1 = ethers.utils.parseEther('1.234')
+    const ethAmount2 = ethers.utils.parseEther('0.456')
+
+    const tx1: Transaction = {
+      delegateCall: false,
+      revertOnError: false,
+      gasLimit: '0x55555',
+      to: testAccount.address,
+      value: ethAmount1,
+      data: '0x'
+    }
+
+    const tx2: Transaction = {
+      delegateCall: false,
+      revertOnError: false,
+      gasLimit: '0x55555',
+      to: testAccount.address,
+      value: ethAmount2,
+      data: '0x'
+    }
+
+    const toBalanceBefore = await provider.getBalance(testAccount.address)
+    const txnResp = await signer.sendTransactionBatch([tx1, tx2])
+
+    await txnResp.wait()
+
+    const toBalanceAfter = await provider.getBalance(testAccount.address)
+    assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
+  })
+
   await test('sendETH from the sequence smart wallet (authChain)', async () => {
     // multi-chain to send eth on an alternative chain, in this case the authChain
     //

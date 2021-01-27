@@ -368,9 +368,20 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 // NOTE: method has been copied + modified from ethers.js JsonRpcProvider
 // Convert an ethers.js transaction into a JSON-RPC transaction
 
-const allowedTransactionKeys: { [ key: string ]: boolean } = {
-  chainId: true, data: true, gasLimit: true, gasPrice:true, nonce: true, to: true, value: true,
-  from: true, auxiliary: true, expiration: true, afterNonce: true
+const allowedTransactionKeys: { [key: string]: boolean } = {
+  chainId: true,
+  data: true,
+  gasLimit: true,
+  gasPrice: true,
+  nonce: true,
+  to: true,
+  value: true,
+  from: true,
+  auxiliary: true,
+  expiration: true,
+  afterNonce: true,
+  delegateCall: true,
+  revertOnError: true
 }
 
 const hexlifyTransaction = (transaction: TransactionRequest, allowExtra?: { [key: string]: boolean }): { [key: string]: string } => {
