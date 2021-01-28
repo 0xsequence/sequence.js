@@ -97,14 +97,14 @@ export const tests = async () => {
     assert.true(config1.chainId !== undefined, 'config1, chainId is set')
     assert.true(config1.threshold === 1, 'config1, 1 threshold')
     assert.true(config1.signers.length === 1, 'config1, 1 signer')
-    assert.true(config1.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config1, signer address')
+    assert.true(config1.signers[0].address === '0x4e37e14f5d5aac4df1151c6e8df78b7541680853', 'config1, signer address')
     assert.true(config1.signers[0].weight === 1, 'config1, signer weight')
 
     const config2 = allWalletConfigs[0]
     assert.true(config2.chainId !== undefined, 'config2, chainId is set')
     assert.true(config2.threshold === 1, 'config2, 1 threshold')
     assert.true(config2.signers.length === 1, 'config2, 1 signer')
-    assert.true(config2.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config2, signer address')
+    assert.true(config2.signers[0].address === '0x4e37e14f5d5aac4df1151c6e8df78b7541680853', 'config2, signer address')
     assert.true(config2.signers[0].weight === 1, 'config2, signer weight')
   })
 
@@ -160,7 +160,7 @@ export const tests = async () => {
   await test('getSigners', async () => {
     const signers = await signer.getSigners()
     assert.true(signers.length === 1, 'signers, single owner')
-    assert.true(signers[0] === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'signers, check address')
+    assert.true(signers[0] === '0x4e37e14f5d5aac4df1151c6e8df78b7541680853', 'signers, check address')
   })
 
   await test('signMessage on defaultChain', async () => {
@@ -185,7 +185,7 @@ export const tests = async () => {
     const sig = sigs[0]
 
     // Verify the signature
-    const isValid = await wallet.commands.isValidMessageSignature(address, message, sig)
+    const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signature is valid')
 
     // Recover the address / config from the signature

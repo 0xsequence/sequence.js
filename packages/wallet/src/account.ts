@@ -10,6 +10,7 @@ import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainn
 import { Wallet } from './wallet'
 import { resolveArrayProperties, findLatestLog } from './utils'
 import { Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { encodeTypedDataHash } from '@0xsequence/utils'
 
 export interface AccountOptions {
   initialConfig: WalletConfig
@@ -108,12 +109,12 @@ export class Account extends Signer {
   }
 
   getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
-    if (!chainId) return this.mainWallet().getProvider()
+    if (!chainId) return this.mainWallet()?.wallet.getProvider()
     return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getProvider()
   }
 
   getRelayer(chainId?: number): Promise<Relayer | undefined> {
-    if (!chainId) return this.mainWallet().getRelayer()
+    if (!chainId) return this.mainWallet()?.wallet.getRelayer()
     return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getRelayer()
   }
 
@@ -121,38 +122,47 @@ export class Account extends Signer {
     return this.options.networks
   }
 
-  async signAuthMessage(message: BytesLike, allSigners: boolean = true): Promise<string> {
-    return this.signMessage(message, this.authWallet(), allSigners)
-  }
-
+  // TODO: maybe rename allSigners to partialSign
   async signMessage(message: BytesLike, target?: Wallet | ChainId, allSigners: boolean = true): Promise<string> {
-    let wallet = (() => {
-      if (!target) return this.mainWallet()
-      if ((<Wallet>target).address) {
-        return target as Wallet
+    let { wallet, network } = await (async () => { // eslint-disable-line
+      if (!target) {
+        return this.mainWallet()
       }
-      return this.getWalletByNetwork(target as NetworkConfig).wallet
+      if ((<Wallet>target).address) {
+        const chainId = await ((<Wallet>target).getChainId())
+        return this._wallets.find(w => w.wallet.chainId === chainId)
+      }
+      return this.getWalletByNetwork(target as NetworkConfig)
     })()
 
-    // Fetch the latest config of the wallet
-    // TODO: Skip this step if wallet is authWallet
-    let thisConfig = await this.currentConfig(wallet)
-    thisConfig = thisConfig ? thisConfig : this._wallets[0].wallet.config
-
-    wallet = wallet.useConfig(thisConfig)
+    // Fetch the latest config of the wallet.
+    //
+    // We skip this step if wallet is authWallet
+    // TODO: instead, memoize the currentConfig, as below will break
+    // if we skip
+    // if (!network.isAuthChain) {
+      let thisConfig = await this.currentConfig(wallet)
+      thisConfig = thisConfig ? thisConfig : this._wallets[0].wallet.config
+      wallet = wallet.useConfig(thisConfig)
+    // }
 
     // See if wallet has enough signer power
     const weight = await wallet.signWeight()
-    if (weight.lt(thisConfig.threshold) && allSigners) {
-      throw new NotEnoughSigners(`Sign message - wallet combined weight ${weight.toString()} below required ${thisConfig.threshold.toString()}`)
+    if (weight.lt(wallet.config.threshold) && allSigners) {
+      throw new NotEnoughSigners(`Sign message - wallet combined weight ${weight.toString()} below required ${wallet.config.threshold.toString()}`)
     }
 
     return wallet.signMessage(message, undefined, allSigners)
   }
 
+  async signAuthMessage(message: BytesLike, allSigners: boolean = true): Promise<string> {
+    return this.signMessage(message, this.authWallet()?.wallet, allSigners)
+  }
+
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners: boolean = true): Promise<string> {
-    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet()
-    return wallet.signTypedData(domain, types, message, chainId, allSigners)
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
+    const hash = encodeTypedDataHash({ domain, types, message })
+    return this.signMessage(hash, wallet, allSigners)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners: boolean = true): Promise<string> {
@@ -161,7 +171,7 @@ export class Account extends Signer {
 
   async sendTransaction(dtransactionish: Deferrable<Transactionish>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
-    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet()
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
 
     // TODO: Skip this step if wallet is authWallet
     const [thisConfig, lastConfig] = await Promise.all([
@@ -195,19 +205,19 @@ export class Account extends Signer {
   }
 
   signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
-    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet()
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     return wallet.signTransactions(txs, chainId, allSigners)
   }
 
   async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse> {
-    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet()
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     return wallet.sendSignedTransactions(signedTxs)
   }
 
   // updateConfig will build an updated config transaction, update the imageHahs on-chain and also publish
   // the wallet config to the authChain. Other chains are lazy-updated on-demand as batched transactions.
   async updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
-    const authWallet = this.authWallet()
+    const authWallet = this.authWallet().wallet
 
     if (!newConfig) {
       newConfig = authWallet.config
@@ -243,12 +253,12 @@ export class Account extends Signer {
   // publishConfig will publish the wallet config to the network via the relayer. Publishing
   // the config will also store the entire object of signers.
   publishConfig(): Promise<TransactionResponse> {
-    return this.authWallet().publishConfig()
+    return this.authWallet().wallet.publishConfig()
   }
 
   async isDeployed(target?: Wallet | ChainId): Promise<boolean> {
     const wallet = (() => {
-      if (!target) return this.authWallet()
+      if (!target) return this.authWallet().wallet
       if ((<Wallet>target).address) {
         return target as Wallet
       }
@@ -261,7 +271,7 @@ export class Account extends Signer {
   // this process can be done in different ways (caching, api, utils, etc)
   async currentConfig(target?: Wallet | NetworkConfig): Promise<WalletConfig | undefined> {
     const wallet = (() => {
-      if (!target) return this.authWallet()
+      if (!target) return this.authWallet().wallet
       if ((<Wallet>target).address) {
         return target as Wallet
       }
@@ -283,7 +293,7 @@ export class Account extends Signer {
       )
     )[0]
 
-    const authWallet = this.authWallet()
+    const authWallet = this.authWallet().wallet
     const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
 
     let event: any
@@ -342,17 +352,18 @@ export class Account extends Signer {
     return this._wallets.find(w => w.network.chainId === networkId)
   }
 
-  mainWallet(): Wallet {
-    const found = this._wallets.find(w => w.network.isDefaultChain).wallet
+  // mainWallet is the DefaultChain wallet
+  mainWallet(): { wallet: Wallet, network: NetworkConfig } {
+    const found = this._wallets.find(w => w.network.isDefaultChain)
     if (!found) {
       throw new Error('mainWallet not found')
     }
     return found
-    // return found ? found : this._wallets[0].wallet
   }
 
-  authWallet(): Wallet {
-    const found = this._wallets.find(w => w.network.isAuthChain).wallet
+  // authWallet is the AuthChain wallet
+  authWallet(): { wallet: Wallet, network: NetworkConfig } {
+    const found = this._wallets.find(w => w.network.isAuthChain)
     if (!found) {
       throw new Error('authChain wallet not found')
     }

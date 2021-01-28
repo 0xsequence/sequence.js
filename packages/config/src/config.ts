@@ -84,20 +84,22 @@ export const addressOf = (config: WalletConfig, context: WalletContext): string 
 
 export const imageHash = (config: WalletConfig): string => {
   let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
-
   config.signers.forEach(
     a =>
       (imageHash = ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, a.weight, a.address])
       ))
   )
-
   return imageHash
 }
 
 // sortConfig normalizes the list of signer addreses in a WalletConfig
-export const sortConfig = (config: WalletConfig): WalletConfig => {
+export const sortConfig = (config: WalletConfig, downcase: boolean = true): WalletConfig => {
   config.signers.sort((a, b) => compareAddr(a.address, b.address))
+  if (downcase) {
+    config.signers.forEach(s => s.address = s.address.toLowerCase())
+    if (config.address) config.address = config.address.toLowerCase()
+  }
   return config
 }
 

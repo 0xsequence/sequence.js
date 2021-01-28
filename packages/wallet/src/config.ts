@@ -33,12 +33,12 @@ export const recoverConfigFromDigest = (digest: BytesLike, signature: string | 
     if (isSigner(s)) {
       return {
         weight: s.weight,
-        address: recoverSigner(digest, s as DecodedSigner)
+        address: recoverSigner(digest, s as DecodedSigner).toLowerCase()
       }
     } else {
       return {
         weight: s.weight,
-        address: (<DecodedOwner>s).address
+        address: (<DecodedOwner>s).address.toLowerCase()
       }
     }
   })

@@ -69,7 +69,7 @@ describe('Account integration', () => {
       const wallet = (await lib.Wallet.singleOwner(owner)).connect(networks[0].provider)
 
       expect(await wallet.getChainId()).to.equal(31337)
-      expect((await wallet.getWalletConfig())[0].signers[0].address).to.equal(await owner.getAddress())
+      expect((await wallet.getWalletConfig())[0].signers[0].address).to.equal((await owner.getAddress()).toLowerCase())
 
       const account = (new lib.Account({
         initialConfig: (await wallet.getWalletConfig())[0],
@@ -77,7 +77,7 @@ describe('Account integration', () => {
       })).useSigners(owner)
 
       expect(await account.getChainId()).to.equal(31337)
-      expect((await account.getWalletConfig())[0].signers[0].address).to.equal(await owner.getAddress())
+      expect((await account.getWalletConfig())[0].signers[0].address).to.equal((await owner.getAddress()).toLowerCase())
 
       expect(await wallet.getAddress()).to.equal(await account.getAddress())
       expect(await wallet.getSigners()).to.deep.equal(await account.getSigners())
@@ -88,7 +88,7 @@ describe('Account integration', () => {
       expect(await wallet.getAddress()).to.equal(await account.getAddress())
 
       const signers = await account.getSigners()
-      expect(signers[0]).to.equal(await owner.getAddress())
+      expect(signers[0]).to.equal((await owner.getAddress()).toLowerCase())
       expect(isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
 
       expect(await account.isDeployed()).to.be.false
@@ -102,7 +102,7 @@ describe('Account integration', () => {
       expect(currentConfig.address).to.equal(await account.getAddress())
       expect(currentConfig.signers.length).to.equal(1)
       expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await owner.getAddress())
+      expect(currentConfig.signers[0].address).to.equal((await owner.getAddress()).toLowerCase())
       expect(currentConfig.chainId).to.equal(await account.getChainId())
 
       // wallet state

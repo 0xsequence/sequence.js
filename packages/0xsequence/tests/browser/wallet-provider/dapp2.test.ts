@@ -83,7 +83,7 @@ export const tests = async () => {
       await wallet.getAddress(),
       message,
       sig,
-      // await signer.getChainId()
+      await signer.getChainId()
     )
     assert.true(isValid, 'signMessage sig is valid')
 
