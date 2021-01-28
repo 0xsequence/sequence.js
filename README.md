@@ -6,7 +6,7 @@ A simple & powerful Ethereum development library and Web-based smart wallet.
 
 ## Usage
 
-`yarn install 0xsequence`
+`yarn add 0xsequence`
 
 ## Packages
 
