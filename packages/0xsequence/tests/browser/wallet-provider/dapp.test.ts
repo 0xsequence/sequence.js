@@ -89,8 +89,6 @@ export const tests = async () => {
     assert.equal(address.toLowerCase(), '0x1abe642a25d9f3a725f07c622abd4356646c1820'.toLowerCase(), 'wallet address is correct')
   })
 
-  // return
-
   await test('getWalletConfig', async () => {
     const allWalletConfigs = await wallet.getWalletConfig()
     assert.equal(allWalletConfigs.length, 2, '2 wallet configs (one for each chain)')

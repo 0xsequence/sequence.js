@@ -288,7 +288,6 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    // we're logged in, get network from list available
     let network = this.networks[0]
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
@@ -299,19 +298,37 @@ export class Wallet implements WalletProvider {
       return this.providers[network.chainId]
     }
 
+    // builder web3 provider stack
+    let provider: Web3Provider
+
     // network.provider may be set by the ProviderConfig override
     const rpcProvider = network.provider ? network.provider : new JsonRpcProvider(network.rpcUrl, network.chainId)
 
-    // provider stack for the respective network
-    const router = new JsonRpcRouter([
-      loggingProviderMiddleware,
-      new EagerProvider(this.session.accountAddress, network.chainId),
-      exceptionProviderMiddleware,
-      new CachedProvider(network.chainId),
-      new SigningProvider(this.transport.provider)
-    ], new JsonRpcSender(rpcProvider))
-    
-    const provider = new Web3Provider(router, network.chainId)
+    if (network.isDefaultChain) {
+      // communicating with defaultChain will prioritize the wallet message transport
+      const router = new JsonRpcRouter([
+        loggingProviderMiddleware,
+        exceptionProviderMiddleware,
+        new EagerProvider(this.session.accountAddress),
+        new SigningProvider(this.transport.provider),
+        this.transport.cachedProvider,
+      ], new JsonRpcSender(rpcProvider))
+
+      provider = new Web3Provider(router)
+
+    } else {
+      // communicating with another chain will bind to that network, but will forward
+      // any signing-related requests to the wallet message transport
+      const router = new JsonRpcRouter([
+        loggingProviderMiddleware,
+        exceptionProviderMiddleware,
+        new EagerProvider(this.session.accountAddress, network.chainId),
+        new SigningProvider(this.transport.provider),
+        new CachedProvider(network.chainId),
+      ], new JsonRpcSender(rpcProvider))
+
+      provider = new Web3Provider(router, network.chainId)
+    }
 
     this.providers[network.chainId] = provider
     return provider

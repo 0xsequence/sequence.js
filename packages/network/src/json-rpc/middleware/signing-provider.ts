@@ -1,8 +1,7 @@
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler, JsonRpcHandler } from '../types'
+import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler, JsonRpcHandler } from '../types'
 
 export const SignerJsonRpcMethods = [
-  'personal_sign', 'eth_sign', 'eth_signTypedData',
+  'personal_sign', 'eth_sign', 'eth_signTypedData', 'eth_signTypedData_v4',
   'eth_sendTransaction', 'eth_sendRawTransaction',
   
   'sequence_getWalletContext', 'sequence_getWalletConfig', 'sequence_getWalletState', 'sequence_getNetworks',
