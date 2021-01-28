@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.8.1
+
+### Patch Changes
+
+- - variety of optimizations
+
 ## 0.8.0
 
 ### Minor Changes

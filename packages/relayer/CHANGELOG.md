@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.8.1
+
+### Patch Changes
+
+- - variety of optimizations
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.8.1
+  - @0xsequence/chaind@0.8.1
+  - @0xsequence/config@0.8.1
+  - @0xsequence/transactions@0.8.1
+
 ## 0.8.0
 
 ### Minor Changes
