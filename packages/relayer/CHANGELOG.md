@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.8.2
+
+### Patch Changes
+
+- - field rename and ethauth dependency bump
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.8.2
+  - @0xsequence/chaind@0.8.2
+  - @0xsequence/config@0.8.2
+  - @0xsequence/transactions@0.8.2
+
 ## 0.8.1
 
 ### Patch Changes
