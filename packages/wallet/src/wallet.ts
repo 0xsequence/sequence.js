@@ -377,8 +377,8 @@ export class Wallet extends Signer {
     // remove EIP712Domain key from types as ethers will auto-gen it
     delete types['EIP712Domain']
 
-    const digest = ethers.utils._TypedDataEncoder.hash(domain, types, message)
-    return this.signMessage(ethers.utils.arrayify(digest), signChainId, allSigners)
+    const hash = ethers.utils._TypedDataEncoder.hash(domain, types, message)
+    return this.signMessage(ethers.utils.arrayify(hash), signChainId, allSigners)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {

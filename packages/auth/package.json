@@ -16,7 +16,7 @@
     "@0xsequence/abi": "^0.8.1",
     "@0xsequence/network": "^0.8.1",
     "@0xsequence/wallet": "^0.8.1",
-    "@0xsequence/ethauth": "^0.4.0",
+    "@0xsequence/ethauth": "^0.4.1",
     "ethers": "^5.0.26"
   },
   "peerDependencies": {},
