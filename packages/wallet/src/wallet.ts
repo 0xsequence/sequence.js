@@ -363,7 +363,7 @@ export class Wallet extends Signer {
     return this.sign(message, false, chainId, allSigners)
   }
 
-  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
@@ -377,12 +377,12 @@ export class Wallet extends Signer {
     // remove EIP712Domain key from types as ethers will auto-gen it
     delete types['EIP712Domain']
 
-    const digest = ethers.utils._TypedDataEncoder.hash(domain, types, value)
+    const digest = ethers.utils._TypedDataEncoder.hash(domain, types, message)
     return this.signMessage(ethers.utils.arrayify(digest), signChainId, allSigners)
   }
 
-  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    return this.signTypedData(domain, types, value, chainId, allSigners)
+  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
   // sign is a helper method to sign a payload with the wallet signers

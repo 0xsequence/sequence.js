@@ -15,6 +15,7 @@ import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcRespons
 import { Signer, Account } from '@0xsequence/wallet'
 import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 
+import { TypedData } from '@0xsequence/utils'
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer
   private prompter: WalletUserPrompter
@@ -128,7 +129,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
           }
 
-          if (sig.length > 0) {
+          if (sig && sig.length > 0) {
             response.result = sig
           } else {
             // The user has declined the request when value is null
@@ -143,13 +144,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // should be an object, but in some instances may be double string encoded
           const [signingAddress, typedDataObject] = request.params
 
-          let typedData: any = {}
+          let typedData: TypedData
           if (typeof(typedDataObject) === 'string') {
             try {
               typedData = JSON.parse(typedDataObject)
             } catch (e) {}
           } else {
             typedData = typedDataObject
+          }
+
+          if (!typedData || !typedData.domain || !typedData.types || !typedData.message) {
+            throw new Error('invalid typedData object')
           }
 
           let sig = ''
@@ -161,7 +166,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
           }
 
-          if (sig.length > 0) {
+          if (sig && sig.length > 0) {
             response.result = sig
           } else {
             // The user has declined the request when value is null

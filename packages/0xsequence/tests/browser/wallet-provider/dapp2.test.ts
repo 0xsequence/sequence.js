@@ -97,4 +97,45 @@ export const tests = async () => {
     assert.equal(walletConfig.address.toLowerCase(), (await wallet.getAddress()).toLowerCase(), 'signMessage, recovered address ok')
   })
 
+  await test('signTypedData on defaultChain (in this case, hardhat2)', async () => {
+    const address = await wallet.getAddress()
+    const chainId = await wallet.getChainId()
+
+    const domain: TypedDataDomain = {
+      name: 'Ether Mail',
+      version: '1',
+      chainId: chainId,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+    }
+
+    const types: {[key: string] : TypedDataField[]} = {
+      'Person': [
+        {name: "name", type: "string"},
+        {name: "wallet", type: "address"}
+      ]
+    }
+
+    const message = {
+      'name': 'Bob',
+      'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+    }
+
+    const sig = await signer.signTypedData(domain, types, message)
+    assert.equal(
+      sig,
+      '0x00010001a6a03e71cfe249bba6272696e9612e30c83a7aeaad09d5d6fd984747fc384f1c5624bc5833f994d5b2903d6703c038b4c20ccf790cab297a255b36d9e429ce711c02',
+      'signature match typed-data'
+    )
+
+    // Verify typed data
+    const isValid = await wallet.commands.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
+    assert.true(isValid, 'signature is valid')
+
+    // Recover config / address
+    const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
+    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
+
+    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
+    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+  })
 }

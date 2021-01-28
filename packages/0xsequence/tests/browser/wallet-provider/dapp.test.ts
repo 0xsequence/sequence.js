@@ -214,12 +214,12 @@ export const tests = async () => {
       ]
     }
 
-    const value = {
+    const message = {
       'name': 'Bob',
       'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
     }
 
-    const sig = await signer.signTypedData(domain, types, value)
+    const sig = await signer.signTypedData(domain, types, message)
     assert.equal(
       sig,
       '0x00010001097d16cab1a08fca49c3d5acae73ecfb4aeaa9051252e698dd7cc2b47f53973e1cc4e0d1855e2134273f62a1c732b500a89ab761acc7625bf4b7ea699365f5b21b02',
@@ -227,11 +227,11 @@ export const tests = async () => {
     )
 
     // Verify typed data
-    const isValid = await wallet.commands.isValidTypedDataSignature(address, { domain, types, value }, sig, chainId)
+    const isValid = await wallet.commands.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
     assert.true(isValid, 'signature is valid')
 
     // Recover config / address
-    const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, value }, sig, chainId)
+    const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
     assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
@@ -265,7 +265,7 @@ export const tests = async () => {
     assert.equal(sigChk, sig, 'authSigner.signMessage returns the same sig')
 
     // Verify the signature
-      const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)
+    const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signAuthMessage, signature is valid')
 
     // Recover the address / config from the signature

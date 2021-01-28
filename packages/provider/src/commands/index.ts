@@ -29,17 +29,17 @@ export class WalletCommands {
   }
 
   // Sign EIP-712 TypedData on a specified chain, or DefaultChain by default
-  signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signer = this.wallet.getSigner()
     if (!signer) throw new Error('unable to get signer')
-    return signer.signTypedData(domain, types, value, chainId, allSigners)
+    return signer.signTypedData(domain, types, message, chainId, allSigners)
   }
 
   // Sign EIP-712 TypedData on the AuthChain
-  async signAuthTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, allSigners?: boolean): Promise<string> {
+  async signAuthTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, allSigners?: boolean): Promise<string> {
     const signer = await this.wallet.getAuthSigner()
     if (!signer) throw new Error('unable to get AuthChain signer')
-    return signer.signTypedData(domain, types, value, await signer.getChainId(), allSigners)
+    return signer.signTypedData(domain, types, message, await signer.getChainId(), allSigners)
   }
 
   // Verify signature of a digest, one of a message, typedData or other

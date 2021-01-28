@@ -205,9 +205,9 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     // Populate any ENS names (in-place)
-    const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, value, (name: string) => {
+    const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
       return this.provider.resolveName(name)
     })
 
@@ -302,8 +302,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // ethers JsonRpcSigner methods
   //
 
-  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    return this.signTypedData(domain, types, value, chainId, allSigners)
+  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+    return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
   // sendUncheckedTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with

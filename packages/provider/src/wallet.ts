@@ -181,6 +181,9 @@ export class Wallet implements WalletProvider {
   }
 
   logout(): void {
+    if (this.isConnected()) {
+      this.closeWallet()
+    }
     window.localStorage.removeItem('@sequence.session')
     this.session = undefined
     this.networks = undefined

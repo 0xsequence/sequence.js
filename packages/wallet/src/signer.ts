@@ -30,7 +30,7 @@ export abstract class Signer extends AbstractSigner {
   abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string>
 
   // signTypedData ..
-  abstract signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string>
+  abstract signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string>
 
   // sendTransaction takes an unsigned transaction, or list of unsigned transactions, and then has it signed by
   // the signer, and finally sends it to the relayer for submission to an Ethereum network. 

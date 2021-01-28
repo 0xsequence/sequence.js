@@ -4,13 +4,13 @@ import { TypedDataDomain, TypedDataField }  from '@ethersproject/abstract-signer
 export interface TypedData {
   domain: TypedDataDomain
   types: Record<string, Array<TypedDataField>>
-  value: Record<string, any>
+  message: Record<string, any>
 }
 
 export type { TypedDataDomain, TypedDataField }
 
 export const encodeTypedDataHash = (typedData: TypedData) => {
-  return ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.value)
+  return ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
 }
 
 export const encodeTypedDataDigest = (typedData: TypedData) => {
