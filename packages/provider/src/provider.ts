@@ -207,13 +207,13 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // multi-chain support.
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     // Populate any ENS names (in-place)
-    const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
-      return this.provider.resolveName(name)
-    })
+    // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
+    //   return this.provider.resolveName(name)
+    // })
 
     return await this.provider.send('eth_signTypedData_v4', [
       (await this.getAddress()).toLowerCase(),
-      ethers.utils._TypedDataEncoder.getPayload(populated.domain, types, populated.value)
+      ethers.utils._TypedDataEncoder.getPayload(domain, types, message)
     ], maybeNetworkId(chainId) || this.defaultChainId)
   }
 

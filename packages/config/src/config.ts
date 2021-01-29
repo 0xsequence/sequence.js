@@ -20,14 +20,24 @@ export interface WalletState {
   context: WalletContext
   config: WalletConfig
 
+  // the wallet address
   address: string
+  
+  // the chainId of the network
   chainId: number
 
+  // whether the wallet has been ever deployed
   deployed: boolean
+  
+  // the unique has of the WalletConfig
   imageHash: string
-  currentImageHash?: string
 
-  published?: boolean
+  // the currently (on-chain) published imageHash of the WalletConfig
+  publishedImageHash?: string
+  
+  // whether the published imageHash is the latest based on `config`,
+  // or the wallet config is pending another publish
+  publishedLatest?: boolean
 }
 
 export const createWalletConfig = async (threshold: number, signers: { weight: number, signer: string | AbstractSigner }[]): Promise<WalletConfig> => {
@@ -84,20 +94,22 @@ export const addressOf = (config: WalletConfig, context: WalletContext): string 
 
 export const imageHash = (config: WalletConfig): string => {
   let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
-
   config.signers.forEach(
     a =>
       (imageHash = ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, a.weight, a.address])
       ))
   )
-
   return imageHash
 }
 
 // sortConfig normalizes the list of signer addreses in a WalletConfig
-export const sortConfig = (config: WalletConfig): WalletConfig => {
+export const sortConfig = (config: WalletConfig, downcase: boolean = true): WalletConfig => {
   config.signers.sort((a, b) => compareAddr(a.address, b.address))
+  if (downcase) {
+    config.signers.forEach(s => s.address = s.address.toLowerCase())
+    if (config.address) config.address = config.address.toLowerCase()
+  }
   return config
 }
 

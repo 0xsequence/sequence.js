@@ -10,7 +10,13 @@ export interface TypedData {
 export type { TypedDataDomain, TypedDataField }
 
 export const encodeTypedDataHash = (typedData: TypedData) => {
-  return ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
+  const types = { ...typedData.types }
+  
+  // remove EIP712Domain key from types as ethers will auto-gen it in
+  // the hash encoder below
+  delete types['EIP712Domain']
+
+  return ethers.utils._TypedDataEncoder.hash(typedData.domain, types, typedData.message)
 }
 
 export const encodeTypedDataDigest = (typedData: TypedData) => {

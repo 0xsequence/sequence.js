@@ -41,6 +41,8 @@ import {
   isUsableConfig
 } from '@0xsequence/config'
 
+import { encodeTypedDataHash } from '@0xsequence/utils'
+
 import { joinSignatures } from './config'
 
 import { RemoteSigner } from './remote-signers'
@@ -114,7 +116,7 @@ export class Wallet extends Signer {
       throw new Error('wallet config is not usable (strict mode)')
     }
 
-    this.config = sortConfig(config)
+    this.config = sortConfig(config, true)
     this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
   }
 
@@ -201,10 +203,13 @@ export class Wallet extends Signer {
       chainId: chainId,
       deployed: isDeployed,
       imageHash: this.imageHash,
-      currentImageHash: isDeployed ? await fetchImageHash(this) : undefined,
+      publishedImageHash: isDeployed ? await fetchImageHash(this) : undefined,
+      publishedLatest: false
     }
 
-    // TODO: check if its published
+    if (state.publishedImageHash && state.publishedImageHash.length > 0 && state.imageHash === state.publishedImageHash) {
+      state.publishedLatest = true
+    }
 
     return [state]
   }
@@ -238,7 +243,7 @@ export class Wallet extends Signer {
     if (!this._signers || this._signers.length === 0) {
       return []
     }
-    return Promise.all(this._signers.map(s => s.getAddress()))
+    return Promise.all(this._signers.map(s => s.getAddress().then(s => s.toLowerCase())))
   }
 
   // chainId returns the network connected to this wallet instance
@@ -374,10 +379,7 @@ export class Wallet extends Signer {
       throw new Error(`signTypedData: domain.chainId (${domain.chainId}) is expected to be ${signChainId}`)
     }
 
-    // remove EIP712Domain key from types as ethers will auto-gen it
-    delete types['EIP712Domain']
-
-    const hash = ethers.utils._TypedDataEncoder.hash(domain, types, message)
+    const hash = encodeTypedDataHash({ domain, types, message })
     return this.signMessage(ethers.utils.arrayify(hash), signChainId, allSigners)
   }
 
@@ -401,7 +403,7 @@ export class Wallet extends Signer {
 
     // Sign digest using a set of signers and some optional data
     const signWith = async (signers: AbstractSigner[], auxData?: string) => {
-      const signersAddr = Promise.all(signers.map(s => s.getAddress()))
+      const signersAddr = Promise.all(signers.map(s => s.getAddress().then(s => s.toLowerCase())))
 
       const accountBytes = await Promise.all(
         this.config.signers.map(async a => {
@@ -564,7 +566,7 @@ export class Wallet extends Signer {
         [
           this.address,
           config.threshold,
-          sortConfig(config).signers.map((s) => ({
+          sortConfig(config, true).signers.map((s) => ({
             weight: s.weight,
             signer: s.address
           }))
@@ -614,7 +616,7 @@ export class Wallet extends Signer {
       signers: [
         {
           weight: 1,
-          address: await signer.getAddress()
+          address: (await signer.getAddress()).toLowerCase()
         }
       ]
     }

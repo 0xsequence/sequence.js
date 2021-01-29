@@ -111,10 +111,10 @@ describe('Wallet units', function() {
           threshold: 3,
           signers: [{
             weight: 2,
-            address: signer1.address
+            address: signer1.address.toLowerCase()
           }, {
             weight: 5,
-            address: signer2.address
+            address: signer2.address.toLowerCase()
           }]
         },
         context,
@@ -130,8 +130,8 @@ describe('Wallet units', function() {
 
       expect(recovered.threshold).to.equal(3)
       expect(recovered.signers.length).to.equal(2)
-      expect(recovered.signers.find((s) => s.address === signer1.address).weight).to.equal(2)
-      expect(recovered.signers.find((s) => s.address === signer2.address).weight).to.equal(5)
+      expect(recovered.signers.find((s) => s.address === signer1.address.toLowerCase()).weight).to.equal(2)
+      expect(recovered.signers.find((s) => s.address === signer2.address.toLowerCase()).weight).to.equal(5)
     })
   })
 

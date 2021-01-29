@@ -1259,7 +1259,7 @@ describe('Wallet integration', function () {
       }
     })
     it('Should migrate and update to a new single owner configuration', async () => {
-      const address = await wallet.getAddress()
+      const address = (await wallet.getAddress()).toLowerCase()
 
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
@@ -1267,7 +1267,7 @@ describe('Wallet integration', function () {
         threshold: 1,
         signers: [
           {
-            address: s1.address,
+            address: s1.address.toLowerCase(),
             weight: 1
           }
         ]
@@ -1282,13 +1282,13 @@ describe('Wallet integration', function () {
 
       const updatedWallet = wallet.useConfig(updatedConfig).useSigners(s1)
       expect(updatedWallet.imageHash).to.equal(await fetchImageHash(updatedWallet))
-      expect(await updatedWallet.getAddress()).to.equal(address)
+      expect((await updatedWallet.getAddress()).toLowerCase()).to.equal(address)
 
       expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
-      expect(updatedWallet.address).to.be.equal(wallet.address)
-      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+      expect(updatedWallet.address).to.be.equal(wallet.address.toLowerCase())
+      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context).toLowerCase())
 
       await updatedWallet.sendTransaction(transaction)
     })
@@ -1300,11 +1300,11 @@ describe('Wallet integration', function () {
         threshold: 2,
         signers: [
           {
-            address: s1.address,
+            address: s1.address.toLowerCase(),
             weight: 1
           },
           {
-            address: s2.address,
+            address: s2.address.toLowerCase(),
             weight: 1
           }
         ]
@@ -1318,8 +1318,8 @@ describe('Wallet integration', function () {
       expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
-      expect(updatedWallet.address).to.be.equal(wallet.address)
-      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+      expect(updatedWallet.address).to.be.equal(wallet.address.toLowerCase())
+      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context).toLowerCase())
 
       await updatedWallet.sendTransaction(transaction)
     })

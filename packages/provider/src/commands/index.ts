@@ -47,10 +47,11 @@ export class WalletCommands {
     address: string,
     digest: Uint8Array,
     signature: string,
-    chainId?: number,
+    chainId: number,
     walletContext?: WalletContext
   ): Promise<boolean> {
     const provider = this.wallet.getProvider(chainId)
+    if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
     return isValidSignature(address, digest, signature, provider, chainId, walletContext)
   }
 
@@ -59,7 +60,7 @@ export class WalletCommands {
     address: string,
     message: string | Uint8Array,
     signature: string,
-    chainId?: number,
+    chainId: number,
     walletContext?: WalletContext
   ): Promise<boolean> {
     return this.isValidSignature(address, encodeMessageDigest(message), signature, chainId, walletContext)
@@ -70,7 +71,7 @@ export class WalletCommands {
     address: string,
     typedData: TypedData,
     signature: string,
-    chainId?: number,
+    chainId: number,
     walletContext?: WalletContext
   ): Promise<boolean> {
     return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
@@ -84,7 +85,7 @@ export class WalletCommands {
     chainId: BigNumberish,
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
-    walletContext ||= await this.wallet.getWalletContext()
+    walletContext = walletContext || await this.wallet.getWalletContext()
     return recoverWalletConfig(address, digest, signature, chainId, walletContext)
   }
 
@@ -96,7 +97,7 @@ export class WalletCommands {
     chainId: BigNumberish,
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
-    walletContext ||= await this.wallet.getWalletContext()
+    walletContext = walletContext || await this.wallet.getWalletContext()
     return recoverWalletConfig(address, encodeMessageDigest(message), signature, chainId, walletContext)
   }
 
@@ -108,7 +109,7 @@ export class WalletCommands {
     chainId: BigNumberish,
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
-    walletContext ||= await this.wallet.getWalletContext()
+    walletContext = walletContext || await this.wallet.getWalletContext()
     return recoverWalletConfig(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
   }
 
