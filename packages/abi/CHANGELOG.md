@@ -1,5 +1,15 @@
 # @0xsequence/abi
 
+## 0.8.3
+
+### Patch Changes
+
+- - refinements
+
+  - normalize signer address in config
+
+  - provider: getWalletState() method to WalletProvider
+
 ## 0.8.2
 
 ### Patch Changes

@@ -1,5 +1,21 @@
 # @0xsequence/relayer
 
+## 0.8.3
+
+### Patch Changes
+
+- - refinements
+
+  - normalize signer address in config
+
+  - provider: getWalletState() method to WalletProvider
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.8.3
+  - @0xsequence/chaind@0.8.3
+  - @0xsequence/config@0.8.3
+  - @0xsequence/transactions@0.8.3
+
 ## 0.8.2
 
 ### Patch Changes
