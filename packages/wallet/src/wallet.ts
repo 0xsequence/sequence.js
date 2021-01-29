@@ -203,10 +203,13 @@ export class Wallet extends Signer {
       chainId: chainId,
       deployed: isDeployed,
       imageHash: this.imageHash,
-      currentImageHash: isDeployed ? await fetchImageHash(this) : undefined,
+      publishedImageHash: isDeployed ? await fetchImageHash(this) : undefined,
+      publishedLatest: false
     }
 
-    // TODO: check if its published
+    if (state.publishedImageHash && state.publishedImageHash.length > 0 && state.imageHash === state.publishedImageHash) {
+      state.publishedLatest = true
+    }
 
     return [state]
   }

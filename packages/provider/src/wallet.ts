@@ -3,7 +3,7 @@ import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNe
   SigningProvider, EagerProvider, exceptionProviderMiddleware, networkProviderMiddleware, JsonRpcExternalProvider,
   JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, checkNetworkConfig, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
-import { WalletConfig } from '@0xsequence/config'
+import { WalletConfig, WalletState } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
@@ -32,6 +32,7 @@ export interface WalletProvider {
 
   getWalletContext(): Promise<WalletContext>
   getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
+  getWalletState(chainId?: ChainId): Promise<WalletState[]>
   isDeployed(chainId?: ChainId): Promise<boolean>
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
@@ -359,6 +360,10 @@ export class Wallet implements WalletProvider {
 
   getWalletConfig(): Promise<WalletConfig[]> {
     return this.getSigner().getWalletConfig()
+  }
+
+  getWalletState(): Promise<WalletState[]> {
+    return this.getSigner().getWalletState()
   }
 
   getWalletContext(): Promise<WalletContext> {

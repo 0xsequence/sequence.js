@@ -20,14 +20,24 @@ export interface WalletState {
   context: WalletContext
   config: WalletConfig
 
+  // the wallet address
   address: string
+  
+  // the chainId of the network
   chainId: number
 
+  // whether the wallet has been ever deployed
   deployed: boolean
+  
+  // the unique has of the WalletConfig
   imageHash: string
-  currentImageHash?: string
 
-  published?: boolean
+  // the currently (on-chain) published imageHash of the WalletConfig
+  publishedImageHash?: string
+  
+  // whether the published imageHash is the latest based on `config`,
+  // or the wallet config is pending another publish
+  publishedLatest?: boolean
 }
 
 export const createWalletConfig = async (threshold: number, signers: { weight: number, signer: string | AbstractSigner }[]): Promise<WalletConfig> => {

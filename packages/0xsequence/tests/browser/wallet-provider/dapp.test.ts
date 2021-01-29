@@ -118,6 +118,8 @@ export const tests = async () => {
     assert.true(state1.config.threshold === 1, 'state1, threshold')
     assert.true(state1.config.signers.length === 1, 'state1, 1 signer')
     assert.true(state1.address.toLowerCase() === (await wallet.getAddress()).toLowerCase(), 'state1, address')
+    // assert.true(state1.deployed, 'state1, deployed')
+    // assert.true(state1.publishedLatest, 'state1, publishedLatest')
   })
 
   await test('multiple networks', async () => {
@@ -263,6 +265,9 @@ export const tests = async () => {
     const authSigner = authProvider.getSigner()
     const sigChk = await authSigner.signMessage(message, chainId)
     assert.equal(sigChk, sig, 'authSigner.signMessage returns the same sig')
+
+    const sigChk2 = await wallet.commands.signAuthMessage(message)
+    assert.equal(sigChk2, sig, 'wallet.commands.signAuthMessage returns the same sig')
 
     // Verify the signature
     const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)

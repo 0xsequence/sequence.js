@@ -84,7 +84,8 @@ export class Account extends Signer {
 
     const states = (await Promise.all(wallets.map(w => w.wallet.getWalletState()))).flat()
 
-    const idx = states.findIndex(s => s.chainId === this.authChainId())
+    // fetch the current config for the AuthChain, as it will be available
+    const idx = states.findIndex(s => s.chainId === this.getAuthChainId())
     if (idx >= 0) {
       states[idx].config = await this.currentConfig(wallets[idx].wallet)
     }
@@ -120,6 +121,14 @@ export class Account extends Signer {
 
   async getNetworks(): Promise<NetworkConfig[]> {
     return this.options.networks
+  }
+
+  getAuthChainId(): number {
+    let n = this.options.networks[0]
+    if (n.isAuthChain) return n.chainId
+    n = this.options.networks[1]
+    if (n.isAuthChain) return n.chainId
+    throw new Error('expecting authChain to be the first or second in networks list')
   }
 
   // TODO: maybe rename allSigners to partialSign
@@ -368,14 +377,6 @@ export class Account extends Signer {
       throw new Error('authChain wallet not found')
     }
     return found
-  }
-
-  authChainId(): number {
-    let n = this.options.networks[0]
-    if (n.isAuthChain) return n.chainId
-    n = this.options.networks[1]
-    if (n.isAuthChain) return n.chainId
-    throw new Error('expecting authChain to be the first or second in networks list')
   }
 
   setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number) {
