@@ -19,31 +19,50 @@ export const abi = [
     anonymous: false,
     inputs: [
       {
-        "indexed": true,
+        indexed: true,
         internalType: "address",
         name: "_wallet",
         type: "address"
       },
       {
-        "indexed": true,
+        indexed: true,
         internalType: "bytes32",
         name: "_imageHash",
         type: "bytes32"
       },
       {
-        "indexed": false,
+        indexed: false,
         internalType: "uint256",
         name: "_threshold",
         type: "uint256"
       },
       {
-        "indexed": false,
+        indexed: false,
         internalType: "bytes",
         name: "_signers",
         type: "bytes"
       }
     ],
     name: "RequiredConfig",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_wallet",
+        type: "address"
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_signer",
+        type: "address"
+      }
+    ],
+    name: "RequiredSigner",
     type: "event"
   },
   {
@@ -261,12 +280,12 @@ export const abi = [
   {
     inputs: [
       {
-        internalType: "bytes32",
+        internalType: "address",
         name: "",
-        type: "bytes32"
+        type: "address"
       }
     ],
-    name: "imageHashBlockHeight",
+    name: "lastSignerUpdate",
     outputs: [
       {
         internalType: "uint256",
@@ -285,12 +304,12 @@ export const abi = [
         type: "address"
       }
     ],
-    name: "initialImageHash",
+    name: "lastWalletUpdate",
     outputs: [
       {
-        internalType: "bytes32",
+        internalType: "uint256",
         name: "",
-        type: "bytes32"
+        type: "uint256"
       }
     ],
     stateMutability: "view",
@@ -380,9 +399,14 @@ export const abi = [
         internalType: "struct RequireUtils.Member[]",
         name: "_members",
         type: "tuple[]"
+      },
+      {
+        internalType: "bool",
+        name: "_index",
+        type: "bool"
       }
     ],
-    name: "requireAndIndexConfig",
+    name: "publishConfig",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
@@ -395,29 +419,27 @@ export const abi = [
         type: "address"
       },
       {
+        internalType: "bytes32",
+        name: "_hash",
+        type: "bytes32"
+      },
+      {
         internalType: "uint256",
-        name: "_threshold",
+        name: "_sizeMembers",
         type: "uint256"
       },
       {
-        components: [
-          {
-            internalType: "uint256",
-            name: "weight",
-            type: "uint256"
-          },
-          {
-            internalType: "address",
-            name: "signer",
-            type: "address"
-          }
-        ],
-        internalType: "struct RequireUtils.Member[]",
-        name: "_members",
-        type: "tuple[]"
+        internalType: "bytes",
+        name: "_signature",
+        type: "bytes"
+      },
+      {
+        internalType: "bool",
+        name: "_index",
+        type: "bool"
       }
     ],
-    name: "requireConfig",
+    name: "publishInitialSigners",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"

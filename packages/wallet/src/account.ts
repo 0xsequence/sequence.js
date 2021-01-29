@@ -306,49 +306,23 @@ export class Account extends Signer {
     const authWallet = this.authWallet().wallet
     const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
 
-    let event: any
-
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
-      // Wallet is deployed on chain, test if given config is the updated one
       if (imageHash(authWallet.config) === currentImageHash[0]) {
         return { ...authWallet.config, address, chainId }
       }
-
-      // Get block height for log of current image hash
-      const logBlockHeight = (await authContract.imageHashBlockHeight(currentImageHash[0])).toNumber()
-
-      // The wallet has been updated. Lookup configuration using imageHash from the authChain
-      // which will be the last published entry
-      const filter = authContract.filters.RequiredConfig(null, currentImageHash)
-      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-      if (lastLog === undefined) return undefined
-      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-    
     } else {
-      // Wallet is undeployed, test if given config is counter-factual config
       if (addressOf({ ...authWallet.config, address: undefined }, authWallet.context).toLowerCase() === address.toLowerCase()) {
         return { ...authWallet.config, chainId }
       }
-
-      // The wallet it's using the counter-factual configuration
-
-      // Get imageHash for counter-factual deployed wallet
-      const initialImageHash = await authContract.initialImageHash(address)
-      if (initialImageHash !== ethers.constants.HashZero) {
-        // The initial imageHash is indexed, fast find log
-        const filter = authContract.filters.RequiredConfig(null, initialImageHash)
-        const logBlockHeight = (await authContract.imageHashBlockHeight(initialImageHash)).toNumber()
-        const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-        if (lastLog === undefined) return undefined
-        event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-      } else {
-        // The initial imageHash is not indexed, look in whole range of logs
-        const filter = authContract.filters.RequiredConfig(address)
-        const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
-        if (lastLog === undefined) return undefined
-        event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-      }
     }
+
+
+    // Get last known configuration
+    const logBlockHeight = (await authContract.lastWalletUpdate(this.address)).toNumber()
+    const filter = authContract.filters.RequiredConfig(this.address)
+    const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
+    if (lastLog === undefined) { console.log("LOG NOT FOUND"); return undefined }
+    const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
 
     const signers = ethers.utils.defaultAbiCoder.decode(
       [`tuple(
@@ -365,6 +339,12 @@ export class Account extends Signer {
         address: s.signer,
         weight: ethers.BigNumber.from(s.weight).toNumber()
       }))
+    }
+
+    if (currentImplementation === wallet.context.mainModuleUpgradable) {
+      if (imageHash(config) !== currentImageHash[0]) throw Error('Invalid configuration')
+    } else {
+      if (addressOf(config, this._wallets[0].wallet.context) !== this.address) throw Error('Invalid configuration')
     }
 
     return config

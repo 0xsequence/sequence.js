@@ -489,7 +489,7 @@ export class Wallet extends Signer {
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
   async publishConfig(index?: boolean, nonce?: number): Promise<TransactionResponse> {
-    return this.sendTransaction(this.buildPublishConfigTransaction(this.config, index, nonce))
+    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, index, nonce) : await this.buildPublishSignersTransaction(index, nonce))
   }
 
   // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
@@ -538,7 +538,7 @@ export class Wallet extends Signer {
       )
     }
 
-    const postTransaction = publish ? this.buildPublishConfigTransaction(config, index) : []
+    const postTransaction = publish ? await this.buildPublishConfigTransaction(config, index) : []
 
     const transactions = [...preTransaction, transaction, ...postTransaction]
 
@@ -563,14 +563,51 @@ export class Wallet extends Signer {
       to: this.context.sequenceUtils,
       value: ethers.constants.Zero,
       nonce: nonce,
-      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction(index ? 'requireAndIndexConfig' : 'requireConfig'), 
+      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), 
         [
           this.address,
           config.threshold,
           sortConfig(config, true).signers.map((s) => ({
             weight: s.weight,
             signer: s.address
-          }))
+          })),
+          index
+        ]
+      )
+    }]
+  }
+
+  async buildPublishSignersTransaction(index: boolean = true, nonce?: number): Promise<Transaction[]> {
+    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+    const message = ethers.utils.randomBytes(32)
+
+    // TODO: Remove subDigest from here on ERC1271 fix merge
+    const subDigest = ethers.utils.arrayify(
+      ethers.utils.keccak256(
+        packMessageData(
+          this.address,
+          await this.getChainId(),
+          ethers.utils.keccak256(message)
+        )
+      )
+    )
+
+    const signature = await this.signMessage(message, this.chainId, false)
+
+    return [{
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: ethers.constants.Zero,
+      to: this.context.sequenceUtils,
+      value: ethers.constants.Zero,
+      nonce: nonce,
+      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 
+        [
+          this.address,
+          subDigest,
+          this.config.signers.length,
+          signature,
+          index
         ]
       )
     }]

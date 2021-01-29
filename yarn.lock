@@ -8,9 +8,9 @@
   integrity sha512-G7Ggq3absovUNMBQ1oQDtABt7uCJVtyRxMQNSzxrSddKlSI9FkbB9J+f9X5BpYX640SPXP+CE+gPlSI42qqqxw==
   dependencies:
     base64url "^3.0.1"
-"@0xsequence/wallet-contracts@https://github.com/arcadeum/wallet-contracts#indexed-require-config":
+"@0xsequence/wallet-contracts@https://github.com/arcadeum/wallet-contracts#alt-indexed-require-config":
   version "1.1.0"
-  resolved "https://github.com/arcadeum/wallet-contracts#indexed-require-config#222ef3a7eb1bb84e28e791e91bd8faf0572395c3"
+  resolved "https://github.com/arcadeum/wallet-contracts#alt-indexed-require-config#222ef3a7eb1bb84e28e791e91bd8faf0572395c3"
 
 "@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
   version "1.1.0"
