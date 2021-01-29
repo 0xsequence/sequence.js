@@ -117,8 +117,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.currentImageHash)
-      expect(state.currentImageHash).to.equal(imageHash(currentConfig))
+      expect(state.imageHash).to.not.equal(state.publishedImageHash)
+      expect(state.publishedImageHash).to.equal(imageHash(currentConfig))
     })
 
     it('should update config and get current config from chain, not indexed', async () => {
@@ -126,7 +126,7 @@ describe('Account integration', () => {
       expect(await wallet.getAddress()).to.equal(await account.getAddress())
 
       const signers = await account.getSigners()
-      expect(signers[0]).to.equal(await owner.getAddress())
+      expect(signers[0]).to.equal((await owner.getAddress()).toLowerCase())
       expect(isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
 
       expect(await account.isDeployed()).to.be.false
@@ -155,8 +155,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.currentImageHash)
-      expect(state.currentImageHash).to.equal(imageHash(currentConfig))
+      expect(state.imageHash).to.not.equal(state.publishedImageHash)
+      expect(state.publishedImageHash).to.equal(imageHash(currentConfig))
     })
 
     it('should find current config from published config on counter-factual wallet', async () => {
@@ -164,7 +164,7 @@ describe('Account integration', () => {
       expect(await wallet.getAddress()).to.equal(await account.getAddress())
 
       const signers = await account.getSigners()
-      expect(signers[0]).to.equal(await owner.getAddress())
+      expect(signers[0]).to.equal((await owner.getAddress()).toLowerCase())
       expect(isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
 
       expect(await account.isDeployed()).to.be.false
@@ -177,7 +177,7 @@ describe('Account integration', () => {
         context
       }, owner)
 
-      expect(account2.address).to.equal(account.address)
+      expect(account2.address).to.equal(account.address.toLowerCase())
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
@@ -191,8 +191,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.currentImageHash)
-      expect(state.currentImageHash).to.equal('')
+      expect(state.imageHash).to.not.equal(state.publishedImageHash)
+      expect(state.publishedImageHash).to.equal('')
     })
 
     it('should find current config from published config on counter-factual wallet, not indexed', async () => {
@@ -200,7 +200,7 @@ describe('Account integration', () => {
       expect(await wallet.getAddress()).to.equal(await account.getAddress())
 
       const signers = await account.getSigners()
-      expect(signers[0]).to.equal(await owner.getAddress())
+      expect(signers[0]).to.equal((await owner.getAddress()).toLowerCase())
       expect(isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
 
       expect(await account.isDeployed()).to.be.false
@@ -213,7 +213,7 @@ describe('Account integration', () => {
         context
       }, owner)
 
-      expect(account2.address).to.equal(account.address)
+      expect(account2.address).to.equal(account.address.toLowerCase())
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
@@ -227,8 +227,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.currentImageHash)
-      expect(state.currentImageHash).to.equal('')
+      expect(state.imageHash).to.not.equal(state.publishedImageHash)
+      expect(state.publishedImageHash).to.equal('')
     })
 
     it('should update config and get current config from chain, matching defined imageHash', async () => {
@@ -236,7 +236,7 @@ describe('Account integration', () => {
       expect(await wallet.getAddress()).to.equal(await account.getAddress())
 
       const signers = await account.getSigners()
-      expect(signers[0]).to.equal(await owner.getAddress())
+      expect(signers[0]).to.equal((await owner.getAddress()).toLowerCase())
       expect(isValidConfigSigners((await account.getWalletConfig())[0], await account.getSigners())).to.be.true
 
       expect(await account.isDeployed()).to.be.false
