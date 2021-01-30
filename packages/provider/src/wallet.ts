@@ -216,16 +216,16 @@ export class Wallet implements WalletProvider {
   }
 
   getAddress = async (): Promise<string> => {
+    if (!this.isLoggedIn()) {
+      throw new Error('login first')
+    }
     const session = this.getSession()
     return session.accountAddress
   }
 
   getNetworks = async (chainId?: ChainId): Promise<NetworkConfig[]> => {
-    if (!this.isLoggedIn()) {
+    if (!this.isLoggedIn() || !this.networks) {
       throw new Error('login first')
-    }
-    if (!this.networks) {
-      throw new Error('network has not been set by session. login first.')
     }
     if (chainId) {
       // filter list to just the specific chain requested

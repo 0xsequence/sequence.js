@@ -131,7 +131,6 @@ export class Account extends Signer {
     throw new Error('expecting authChain to be the first or second in networks list')
   }
 
-  // TODO: maybe rename allSigners to partialSign
   async signMessage(message: BytesLike, target?: Wallet | ChainId, allSigners: boolean = true): Promise<string> {
     let { wallet, network } = await (async () => { // eslint-disable-line
       if (!target) {
@@ -141,12 +140,13 @@ export class Account extends Signer {
         const chainId = await ((<Wallet>target).getChainId())
         return this._wallets.find(w => w.wallet.chainId === chainId)
       }
-      return this.getWalletByNetwork(target as NetworkConfig)
+      return this.getWalletByNetwork(target as ChainId)
     })()
 
     // Fetch the latest config of the wallet.
     //
-    // We skip this step if wallet is authWallet
+    // We skip this step if wallet is authWallet. The assumption is that authWallet
+    // will already have the latest config, but lets confirm that.
     // TODO: instead, memoize the currentConfig, as below will break
     // if we skip
     // if (!network.isAuthChain) {
@@ -155,9 +155,10 @@ export class Account extends Signer {
       wallet = wallet.useConfig(thisConfig)
     // }
 
-    // See if wallet has enough signer power
+    // See if wallet and available signers set has enough signer power,
+    // but if allSigners is false, we allow partial signing
     const weight = await wallet.signWeight()
-    if (weight.lt(wallet.config.threshold) && allSigners) {
+    if (weight.lt(wallet.config.threshold) && allSigners !== false) {
       throw new NotEnoughSigners(`Sign message - wallet combined weight ${weight.toString()} below required ${wallet.config.threshold.toString()}`)
     }
 
@@ -223,7 +224,7 @@ export class Account extends Signer {
     return wallet.sendSignedTransactions(signedTxs)
   }
 
-  // updateConfig will build an updated config transaction, update the imageHahs on-chain and also publish
+  // updateConfig will build an updated config transaction, update the imageHash on-chain and also publish
   // the wallet config to the authChain. Other chains are lazy-updated on-demand as batched transactions.
   async updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
     const authWallet = this.authWallet().wallet

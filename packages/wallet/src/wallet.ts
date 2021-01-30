@@ -365,7 +365,8 @@ export class Wallet extends Signer {
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
   async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
-    return this.sign(message, false, chainId, allSigners)
+    const data = typeof(message) === 'string' && !message.startsWith('0x') ? ethers.utils.toUtf8Bytes(message) : message
+    return this.sign(data, false, chainId, allSigners)
   }
 
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
@@ -476,11 +477,11 @@ export class Wallet extends Signer {
 
     const [txs, n] = await Promise.all([
       this.buildUpdateConfigTransaction(config, publish),
-      nonce ? nonce : await this.getNonce()]
-    )
+      nonce ? nonce : await this.getNonce()
+    ])
 
     return [
-      { address: this.address, ...config},
+      { address: this.address, ...config },
       await this.sendTransaction(appendNonce(txs, n))
     ]
   }
