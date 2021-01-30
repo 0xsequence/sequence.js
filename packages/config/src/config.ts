@@ -29,15 +29,14 @@ export interface WalletState {
   // whether the wallet has been ever deployed
   deployed: boolean
   
-  // the unique has of the WalletConfig
+  // the imageHash of the `config` WalletConfig
   imageHash: string
 
-  // the currently (on-chain) published imageHash of the WalletConfig
-  publishedImageHash?: string
+  // the last imageHash of a WalletConfig, stored on-chain
+  lastImageHash?: string
   
-  // whether the published imageHash is the latest based on `config`,
-  // or the wallet config is pending another publish
-  publishedLatest?: boolean
+  // whether the WalletConfig object itself has been published to logs
+  published?: boolean
 }
 
 export const createWalletConfig = async (threshold: number, signers: { weight: number, signer: string | AbstractSigner }[]): Promise<WalletConfig> => {
@@ -106,10 +105,20 @@ export const imageHash = (config: WalletConfig): string => {
 // sortConfig normalizes the list of signer addreses in a WalletConfig
 export const sortConfig = (config: WalletConfig, downcase: boolean = true): WalletConfig => {
   config.signers.sort((a, b) => compareAddr(a.address, b.address))
+
+  // normalize
   if (downcase) {
     config.signers.forEach(s => s.address = s.address.toLowerCase())
     if (config.address) config.address = config.address.toLowerCase()
   }
+
+  // ensure no duplicate signers in the config
+  const signers = config.signers.map(s => s.address)
+  const signerDupes = signers.filter((c, i) => signers.indexOf(c) !== i)
+  if (signerDupes.length > 0) {
+    throw new Error('invalid wallet config: duplicate signer addresses detected in the config, ${signerDupes}')
+  }
+
   return config
 }
 

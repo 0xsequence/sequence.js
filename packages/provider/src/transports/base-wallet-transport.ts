@@ -62,7 +62,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
           this.notifyAccountsChanged([accountAddress])
 
           // notify networks once the user has authenticated to avoid non-authed access
-          const networks = await this.walletRequestHandler.getNetworks()
+          const networks = await this.walletRequestHandler.getNetworks(true)
           if (networks && networks.length > 0) {
             this.notifyNetworks(networks)
             this.notifyChainChanged(ethers.utils.hexlify(networks[0].chainId))

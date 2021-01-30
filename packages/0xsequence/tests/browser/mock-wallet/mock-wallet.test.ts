@@ -71,6 +71,7 @@ const main = async () => {
   ]
 
   // Account for managing multi-network wallets
+  // TODO: make this a 3-key multisig with threshold of 2
   const account = new Account({
     initialConfig: wallet.config,
     networks,
@@ -87,3 +88,7 @@ const main = async () => {
 }
 
 main()
+
+// TODO: add tests() method to verify some wallet functionality such a login
+// and adding / removing keys, etc..
+// + mock in a RemoteSigner as well.

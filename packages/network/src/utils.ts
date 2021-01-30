@@ -21,6 +21,13 @@ export const maybeNetworkId = (chainId?: ChainId): number | undefined => {
   return getNetworkId(chainId)
 }
 
+export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undefined => {
+  if (!networks || networks.length === 0) return undefined
+  if (networks[0] && networks[0].isAuthChain) return networks[0]
+  if (networks.length > 1 && networks[1].isAuthChain) return networks[1]
+  return undefined
+}
+
 export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfig[], raise: boolean = false, skipRelayerCheck: boolean = false): boolean => {
   if (!networkConfig) throw new Error(`invalid network config: empty config`)
 

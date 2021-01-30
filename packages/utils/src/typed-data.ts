@@ -16,7 +16,7 @@ export const encodeTypedDataHash = (typedData: TypedData) => {
   // the hash encoder below
   delete types['EIP712Domain']
 
-  return ethers.utils._TypedDataEncoder.hash(typedData.domain, types, typedData.message)
+  return ethers.utils.arrayify(ethers.utils._TypedDataEncoder.hash(typedData.domain, types, typedData.message))
 }
 
 export const encodeTypedDataDigest = (typedData: TypedData) => {

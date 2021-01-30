@@ -320,7 +320,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // NOTE: must ensure that the response result below returns clean serialized data, which is to omit
           // the provider and relayer objects and only return the urls so can be reinstantiated on dapp side.
           // This is handled by this.getNetworks() but noted here for future readers.
-          response.result = await this.getNetworks()
+          response.result = await this.getNetworks(true)
           break
         }
 
@@ -372,7 +372,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (defaultNetworkId) {
             this.setDefaultChain(defaultNetworkId)
           }
-          response.result = await this.getNetworks()
+          response.result = await this.getNetworks(true)
           break
         }
 
@@ -425,16 +425,20 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  async getNetworks(): Promise<NetworkConfig[]> {
+  async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
     const networks = await this.signer.getNetworks()
 
-    // omit provider and relayer objects as they are not serializable
-    return networks.map(n => {
-      const network: NetworkConfig = { ...n }
-      network.provider = undefined
-      network.relayer = undefined
-      return network
-    })
+    if (jsonRpcResponse) {
+      // omit provider and relayer objects as they are not serializable
+      return networks.map(n => {
+        const network: NetworkConfig = { ...n }
+        network.provider = undefined
+        network.relayer = undefined
+        return network
+      })
+    } else {
+      return networks
+    }
   }
 
   notifyNetworks(networks: NetworkConfig[]) {
