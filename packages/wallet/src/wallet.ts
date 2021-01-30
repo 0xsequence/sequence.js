@@ -203,13 +203,11 @@ export class Wallet extends Signer {
       chainId: chainId,
       deployed: isDeployed,
       imageHash: this.imageHash,
-      publishedImageHash: isDeployed ? await fetchImageHash(this) : undefined,
-      publishedLatest: false
+      lastImageHash: isDeployed ? await fetchImageHash(this) : undefined
     }
 
-    if (state.publishedImageHash && state.publishedImageHash.length > 0 && state.imageHash === state.publishedImageHash) {
-      state.publishedLatest = true
-    }
+    // TODO: set published boolean by checking if we have the latest logs
+    // that compute to the same hash as in lastImageHash
 
     return [state]
   }
@@ -392,6 +390,7 @@ export class Wallet extends Signer {
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
+    // Prepare Sequence message digest comprised of the address, chainId and hash of original message contents
     const digest = ethers.utils.arrayify(isDigest ? msg :
       ethers.utils.keccak256(
         packMessageData(
@@ -418,9 +417,9 @@ export class Wallet extends Signer {
                 [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
               )
             }
-          } catch (e) {
+          } catch (err) {
             if (allSigners) {
-              throw e
+              throw err
             } else {
               console.warn(`Skipped signer ${a.address}`)
             }

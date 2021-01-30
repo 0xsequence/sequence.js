@@ -109,7 +109,7 @@ describe('Account integration', () => {
       const state = (await account.getWalletState())[0]
       expect(state.config.address).to.equal(await account.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.equal(state.publishedImageHash)
+      expect(state.imageHash).to.equal(state.lastImageHash)
       expect(state.imageHash).to.equal(imageHash(currentConfig))
     })
 
