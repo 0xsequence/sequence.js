@@ -1,5 +1,13 @@
 # @0xsequence/config
 
+## 0.8.4
+
+### Patch Changes
+
+- - minor improvements, name updates and comments
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes
