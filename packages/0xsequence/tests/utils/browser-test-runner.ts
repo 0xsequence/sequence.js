@@ -76,14 +76,16 @@ export const browserContext = async (t, run) => {
 const getChromePath = (): string | undefined => {
 	if (process.env['NIX_PATH']) {
 		// nixos users are unable to use the chrome bin packaged with puppeteer,
-		// so instead we use the locally installed chrome binary.
-		const out = spawnSync('which', ['google-chrome-stable'])
-		if (out.status !== 0) {
-			console.error('Unable to find `google-chrome-stable` binary on your NixOS system.')
-			process.exit(1)
+		// so instead we use the locally installed chrome or chromium binary.
+		for (const bin of ['google-chrome-stable', 'chromium']) {
+			const out = spawnSync('which', [bin])
+			if (out.status === 0) {
+				const executablePath = out.stdout.toString().trim()
+				return executablePath
+			}
 		}
-		const executablePath = out.stdout.toString().trim()
-		return executablePath
+		console.error('Unable to find `google-chrome-stable` or `chromium` binary on your NixOS system.')
+		process.exit(1)
 	} else {
 		// undefined will use the chrome version packaged with puppeteer npm package
 		return undefined
