@@ -331,7 +331,7 @@ export class Wallet extends Signer {
 
     // If a transaction has 0 gasLimit and not revertOnError
     // compute all new gas limits
-    if (stx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit).eq(ethers.constants.Zero))) {
+    if (stx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit || 0).eq(ethers.constants.Zero))) {
       stx = await this.relayer.estimateGasLimits(this.config, this.context, ...stx)
     }
 
