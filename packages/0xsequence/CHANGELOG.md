@@ -1,5 +1,25 @@
 # 0xsequence
 
+## 0.8.5
+
+### Patch Changes
+
+- - use latest wallet-contracts
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.8.5
+  - @0xsequence/api@0.8.5
+  - @0xsequence/auth@0.8.5
+  - @0xsequence/chaind@0.8.5
+  - @0xsequence/config@0.8.5
+  - @0xsequence/guard@0.8.5
+  - @0xsequence/multicall@0.8.5
+  - @0xsequence/network@0.8.5
+  - @0xsequence/provider@0.8.5
+  - @0xsequence/relayer@0.8.5
+  - @0xsequence/transactions@0.8.5
+  - @0xsequence/utils@0.8.5
+  - @0xsequence/wallet@0.8.5
+
 ## 0.8.4
 
 ### Patch Changes

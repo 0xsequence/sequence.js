@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.8.5
+
+### Patch Changes
+
+- - use latest wallet-contracts
+
 ## 0.8.4
 
 ### Patch Changes

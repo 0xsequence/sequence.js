@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.8.5
+
+### Patch Changes
+
+- - use latest wallet-contracts
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.8.5
+
 ## 0.8.4
 
 ### Patch Changes
