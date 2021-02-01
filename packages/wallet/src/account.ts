@@ -226,7 +226,7 @@ export class Account extends Signer {
 
   // updateConfig will build an updated config transaction, update the imageHash on-chain and also publish
   // the wallet config to the authChain. Other chains are lazy-updated on-demand as batched transactions.
-  async updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]> {
+  async updateConfig(newConfig?: WalletConfig, index?: boolean): Promise<[WalletConfig, TransactionResponse | undefined]> {
     const authWallet = this.authWallet().wallet
 
     if (!newConfig) {
@@ -237,7 +237,7 @@ export class Account extends Signer {
     if (isConfigEqual(authWallet.config, newConfig)) {
       if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
-        return await authWallet.updateConfig(newConfig, undefined, true)
+        return await authWallet.updateConfig(newConfig, undefined, true, index)
       }
     }
 
@@ -252,7 +252,7 @@ export class Account extends Signer {
 
     // Update to new configuration on the authWallet. Other networks will be lazily updated
     // once used. The wallet config is also auto-published to the authChain.
-    const [_, tx] = await authWallet.useConfig(lastConfig).updateConfig(newConfig, undefined, true)
+    const [_, tx] = await authWallet.useConfig(lastConfig).updateConfig(newConfig, undefined, true, index)
 
     return [{
       ...newConfig,
@@ -262,8 +262,8 @@ export class Account extends Signer {
 
   // publishConfig will publish the wallet config to the network via the relayer. Publishing
   // the config will also store the entire object of signers.
-  publishConfig(): Promise<TransactionResponse> {
-    return this.authWallet().wallet.publishConfig()
+  publishConfig(indexed?: boolean): Promise<TransactionResponse> {
+    return this.authWallet().wallet.publishConfig(indexed)
   }
 
   async isDeployed(target?: Wallet | ChainId): Promise<boolean> {
@@ -306,32 +306,23 @@ export class Account extends Signer {
     const authWallet = this.authWallet().wallet
     const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
 
-    let event: any
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
-      // Wallet is deployed on chain, test if given config is the updated one
       if (imageHash(authWallet.config) === currentImageHash[0]) {
         return { ...authWallet.config, address, chainId }
       }
-
-      // The wallet has been updated. Lookup configuration using imageHash from the authChain
-      // which will be the last published entry
-      const filter = authContract.filters.RequiredConfig(null, currentImageHash)
-      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
-      if (lastLog === undefined) return undefined
-      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-    
     } else {
-      // Wallet is undeployed, test if given config is counter-factual config
-      if (addressOf(authWallet.config, authWallet.context).toLowerCase() === address.toLowerCase()) {
+      if (addressOf({ ...authWallet.config, address: undefined }, authWallet.context).toLowerCase() === address.toLowerCase()) {
         return { ...authWallet.config, chainId }
       }
-
-      // The wallet it's using the counter-factual configuration, get the init config from the authChain
-      const filter = authContract.filters.RequiredConfig(address)
-      const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: 0, toBlock: 'latest'})
-      if (lastLog === undefined) return undefined
-      event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
     }
+
+
+    // Get last known configuration
+    const logBlockHeight = (await authContract.lastWalletUpdate(this.address)).toNumber()
+    const filter = authContract.filters.RequiredConfig(this.address)
+    const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
+    if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return undefined }
+    const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
 
     const signers = ethers.utils.defaultAbiCoder.decode(
       [`tuple(
@@ -348,6 +339,12 @@ export class Account extends Signer {
         address: s.signer,
         weight: ethers.BigNumber.from(s.weight).toNumber()
       }))
+    }
+
+    if (currentImplementation === wallet.context.mainModuleUpgradable) {
+      if (imageHash(config) !== currentImageHash[0]) throw Error('Invalid configuration')
+    } else {
+      if (addressOf(config, this._wallets[0].wallet.context) !== this.address) throw Error('Invalid configuration')
     }
 
     return config

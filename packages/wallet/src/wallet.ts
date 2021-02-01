@@ -470,12 +470,13 @@ export class Wallet extends Signer {
   async updateConfig(
     config?: WalletConfig,
     nonce?: number,
-    publish = false
+    publish = false,
+    indexed?: boolean
   ): Promise<[WalletConfig, TransactionResponse]> {
     if (!config) config = this.config
 
     const [txs, n] = await Promise.all([
-      this.buildUpdateConfigTransaction(config, publish),
+      this.buildUpdateConfigTransaction(config, publish, indexed),
       nonce ? nonce : await this.getNonce()
     ])
 
@@ -487,15 +488,15 @@ export class Wallet extends Signer {
 
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
-  async publishConfig(nonce?: number): Promise<TransactionResponse> {
-    return this.sendTransaction(await this.buildPublishConfigTransaction(this.config, nonce))
+  async publishConfig(indexed?: boolean, nonce?: number): Promise<TransactionResponse> {
+    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, indexed, nonce) : await this.buildPublishSignersTransaction(indexed, nonce))
   }
 
   // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
   // on chain. Note, the transaction is not sent to the network by this method.
   //
   // The `publish` argument when true will also store the contents of the WalletConfig to a chain's logs.
-  async buildUpdateConfigTransaction(config: WalletConfig, publish = false): Promise<Transaction[]> {
+  async buildUpdateConfigTransaction(config: WalletConfig, publish = false, indexed?: boolean): Promise<Transaction[]> {
     if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('wallet config is not usable (strict mode)')
 
     const isUpgradable = await (async () => {
@@ -537,7 +538,7 @@ export class Wallet extends Signer {
       )
     }
 
-    const postTransaction = publish ? this.buildPublishConfigTransaction(config) : []
+    const postTransaction = publish ? await this.buildPublishConfigTransaction(config, indexed) : []
 
     const transactions = [...preTransaction, transaction, ...postTransaction]
 
@@ -553,7 +554,7 @@ export class Wallet extends Signer {
     }]
   }
 
-  buildPublishConfigTransaction(config?: WalletConfig, nonce?: number): Transaction[] {
+  buildPublishConfigTransaction(config?: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     return [{
       delegateCall: false,
@@ -562,14 +563,51 @@ export class Wallet extends Signer {
       to: this.context.sequenceUtils,
       value: ethers.constants.Zero,
       nonce: nonce,
-      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('requireConfig'), 
+      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), 
         [
           this.address,
           config.threshold,
           sortConfig(config, true).signers.map((s) => ({
             weight: s.weight,
             signer: s.address
-          }))
+          })),
+          indexed
+        ]
+      )
+    }]
+  }
+
+  async buildPublishSignersTransaction(indexed: boolean = true, nonce?: number): Promise<Transaction[]> {
+    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+    const message = ethers.utils.randomBytes(32)
+
+    // TODO: Remove subDigest from here on ERC1271 fix merge
+    const subDigest = ethers.utils.arrayify(
+      ethers.utils.keccak256(
+        packMessageData(
+          this.address,
+          await this.getChainId(),
+          ethers.utils.keccak256(message)
+        )
+      )
+    )
+
+    const signature = await this.signMessage(message, this.chainId, false)
+
+    return [{
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: ethers.constants.Zero,
+      to: this.context.sequenceUtils,
+      value: ethers.constants.Zero,
+      nonce: nonce,
+      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 
+        [
+          this.address,
+          ethers.utils.keccak256(message),
+          this.config.signers.length,
+          signature,
+          indexed
         ]
       )
     }]

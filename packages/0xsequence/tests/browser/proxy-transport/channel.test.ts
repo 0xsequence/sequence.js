@@ -37,7 +37,7 @@ export const tests = async () => {
   // relayer account is same as owner here
   const relayer = new LocalRelayer(owner)
 
-  // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
+  // wallet account address: 0xfbbabe29b5ec5fcd0beead9fa1c7f367bb985e9d based on the chainId
   const rpcProvider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
@@ -64,7 +64,7 @@ export const tests = async () => {
   const address = await signer.getAddress()
 
   await test('verifying getAddress result', async () => {
-    assert.equal(address.toLowerCase(), '0x24E78922FE5eCD765101276A422B8431d7151259'.toLowerCase(), 'wallet address')
+    assert.equal(address.toLowerCase(), '0xfbbabe29b5ec5fcd0beead9fa1c7f367bb985e9d'.toLowerCase(), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -95,7 +95,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x000100011ec026ba887f4237db570b1546f9e793fafecbc08df331253b385e35ae7d9107020143f742d3f6768a978b7a4c32b003deb15f3d010805436db1cb9332104d8e1b02',
+      '0x00010001adeb90fa6d1d11a249be655249d430e8520d51921e8c9590fee9ba4676e88cac7f4c92d6dfa8cee5609d7eb6464d81d81bda6194f0ae7c129925ff286cb779e61c02',
       'signature match'
     )
 

@@ -52,7 +52,7 @@ export const tests = async () => {
   const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
 
 
-  // wallet account address: 0x24E78922FE5eCD765101276A422B8431d7151259 based on the chainId
+  // wallet account address: 0xfbbabe29b5ec5fcd0beead9fa1c7f367bb985e9d based on the chainId
   const swallet = (await SequenceWallet.singleOwner(owner, deployedWalletContext)).connect(provider1, relayer1)
 
   // Network available list

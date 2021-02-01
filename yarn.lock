@@ -11,7 +11,7 @@
 
 "@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
   version "1.1.0"
-  resolved "https://github.com/0xsequence/wallet-contracts#222ef3a7eb1bb84e28e791e91bd8faf0572395c3"
+  resolved "https://github.com/0xsequence/wallet-contracts#ae753cda6c8e6e9b620f22bbe5270a6751702653"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.11", "@babel/code-frame@^7.5.5":
   version "7.12.11"
@@ -1500,6 +1500,13 @@
     get-package-type "^0.1.0"
     js-yaml "^3.13.1"
     resolve-from "^5.0.0"
+
+"@istanbuljs/nyc-config-typescript@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@istanbuljs/nyc-config-typescript/-/nyc-config-typescript-1.0.1.tgz#55172f5663b3635586add21b14d42ca94a163d58"
+  integrity sha512-/gz6LgVpky205LuoOfwEZmnUtaSmdk0QIMcNFj9OvxhiMhPpKftMgZmGN7jNj7jR+lr8IB1Yks3QSSSNSxfoaQ==
+  dependencies:
+    "@istanbuljs/schema" "^0.1.2"
 
 "@istanbuljs/schema@^0.1.2":
   version "0.1.2"
@@ -9651,7 +9658,7 @@ number-to-bn@1.7.0:
     bn.js "4.11.6"
     strip-hex-prefix "1.0.0"
 
-nyc@^15.0.1:
+nyc@^15.0.1, nyc@^15.1.0:
   version "15.1.0"
   resolved "https://registry.yarnpkg.com/nyc/-/nyc-15.1.0.tgz#1335dae12ddc87b6e249d5a1994ca4bdaea75f02"
   integrity sha512-jMW04n9SxKdKi1ZMGhvUTHBN0EICCRkHemEoE5jm6mTYcqcdas0ATzgUgejlQUHMvpnOZqGB5Xxsv9KxJW1j8A==

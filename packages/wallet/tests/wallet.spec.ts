@@ -1348,7 +1348,7 @@ describe('Wallet integration', function () {
     })
     it('Should publish config', async () => {
       const receipt = await (await wallet.publishConfig()).wait()
-      expect(receipt.logs[2].data).to.contain(wallet.config.signers[0].address.slice(2).toLowerCase())
+      expect(receipt.logs[3].data).to.contain(wallet.config.signers[0].address.slice(2).toLowerCase())
     })
     describe('after migrating and updating', () => {
       let wallet2: lib.Wallet
