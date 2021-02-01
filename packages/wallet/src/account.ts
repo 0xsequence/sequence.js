@@ -321,7 +321,7 @@ export class Account extends Signer {
     const logBlockHeight = (await authContract.lastWalletUpdate(this.address)).toNumber()
     const filter = authContract.filters.RequiredConfig(this.address)
     const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-    if (lastLog === undefined) { console.log("LOG NOT FOUND"); return undefined }
+    if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return undefined }
     const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
 
     const signers = ethers.utils.defaultAbiCoder.decode(
