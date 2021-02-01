@@ -604,7 +604,7 @@ export class Wallet extends Signer {
       data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 
         [
           this.address,
-          subDigest,
+          ethers.utils.keccak256(message),
           this.config.signers.length,
           signature,
           index

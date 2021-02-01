@@ -117,8 +117,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.publishedImageHash)
-      expect(state.publishedImageHash).to.equal(imageHash(currentConfig))
+      expect(state.imageHash).to.not.equal(state.lastImageHash)
+      expect(state.lastImageHash).to.equal(imageHash(currentConfig))
     })
 
     it('should update config and get current config from chain, not indexed', async () => {
@@ -155,8 +155,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.publishedImageHash)
-      expect(state.publishedImageHash).to.equal(imageHash(currentConfig))
+      expect(state.imageHash).to.not.equal(state.lastImageHash)
+      expect(state.lastImageHash).to.equal(imageHash(currentConfig))
     })
 
     it('should find current config from published config on counter-factual wallet', async () => {
@@ -191,8 +191,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.publishedImageHash)
-      expect(state.publishedImageHash).to.equal('')
+      expect(state.imageHash).to.not.equal(state.lastImageHash)
+      expect(state.lastImageHash).to.equal('')
     })
 
     it('should find current config from published config on counter-factual wallet, not indexed', async () => {
@@ -227,8 +227,8 @@ describe('Account integration', () => {
       const state = (await account2.getWalletState())[0]
       expect(state.config.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
-      expect(state.imageHash).to.not.equal(state.publishedImageHash)
-      expect(state.publishedImageHash).to.equal('')
+      expect(state.imageHash).to.not.equal(state.lastImageHash)
+      expect(state.lastImageHash).to.equal('')
     })
 
     it('should update config and get current config from chain, matching defined imageHash', async () => {

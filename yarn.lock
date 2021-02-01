@@ -9,9 +9,9 @@
   dependencies:
     base64url "^3.0.1"
 
-"@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts#alt-indexed-require-config":
+"@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
   version "1.1.0"
-  resolved "https://github.com/0xsequence/wallet-contracts#7ad3d0dfe6cb2f623d5ed1c7810256267fb167bb"
+  resolved "https://github.com/0xsequence/wallet-contracts#ae753cda6c8e6e9b620f22bbe5270a6751702653"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.11", "@babel/code-frame@^7.5.5":
   version "7.12.11"
@@ -1500,6 +1500,13 @@
     get-package-type "^0.1.0"
     js-yaml "^3.13.1"
     resolve-from "^5.0.0"
+
+"@istanbuljs/nyc-config-typescript@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@istanbuljs/nyc-config-typescript/-/nyc-config-typescript-1.0.1.tgz#55172f5663b3635586add21b14d42ca94a163d58"
+  integrity sha512-/gz6LgVpky205LuoOfwEZmnUtaSmdk0QIMcNFj9OvxhiMhPpKftMgZmGN7jNj7jR+lr8IB1Yks3QSSSNSxfoaQ==
+  dependencies:
+    "@istanbuljs/schema" "^0.1.2"
 
 "@istanbuljs/schema@^0.1.2":
   version "0.1.2"
