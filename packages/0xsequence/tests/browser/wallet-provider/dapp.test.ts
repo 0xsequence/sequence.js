@@ -1,5 +1,5 @@
 import { test, assert } from '../../utils/assert'
-import { ethers, Wallet as EOAWallet } from 'ethers'
+import { BigNumber, ethers, Wallet as EOAWallet } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Wallet, DefaultProviderConfig, Web3Provider } from '@0xsequence/provider'
 import { sequenceContext, WalletContext, JsonRpcSender, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
@@ -8,8 +8,10 @@ import { addressOf } from '@0xsequence/config'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
 import { Transaction, TransactionRequest } from '@0xsequence/transactions'
 
-export const tests = async () => {
+// TODO: webpack doesn't like 'import type' from generated typechain typings, check onlyRemoveTypeImports for babel preset
+// import { ERC1155__factory } from 'multi-token-standard/typings/contracts/factories/ERC1155__factory'
 
+export const tests = async () => {
   //
   // Deploy Sequence WalletContext (deterministic). We skip deployment
   // as we rely on mock-wallet to deploy it.
@@ -381,6 +383,48 @@ export const tests = async () => {
   // NOTE: this will pass, as we set the gasLimit low on the txn, but the LocalRelayer will re-estimate
   // the entire transaction to have it pass.
   await testSendETH('sendETH with high gasLimit override (defaultChain)', { gasLimit: '0x55555' })
+  
+  await test('ERC1155 token transfer', async () => {
+    const ERC1155Artifact = require('multi-token-standard/artifacts/contracts/mocks/ERC1155MetaMintBurnMock.sol/ERC1155MetaMintBurnMock.json')
+
+    const deploymentProvider = new ethers.providers.JsonRpcProvider(`http://localhost:8545/`)
+
+    const token = (await new ethers.ContractFactory(
+      ERC1155Artifact.abi,
+      ERC1155Artifact.bytecode,
+      deploymentProvider.getSigner()
+    ).deploy())
+
+    const walletAddress = await wallet.getAddress()
+
+    const tokenID = 999
+    const initialAmount = 100
+
+    await token.mintMock(walletAddress, tokenID, initialAmount, [])
+
+    const tokenContract = new ethers.Contract(
+      token.address,
+      ERC1155Artifact.abi,
+      wallet.getSigner()
+    )
+
+    const initialBalance = await tokenContract.balanceOf(walletAddress, tokenID) as BigNumber
+
+    const recipient = getEOAWallet(testAccounts[1].privateKey)
+
+    const transferBalance = 50
+
+    await tokenContract.safeBatchTransferFrom(
+      walletAddress, 
+      recipient.address, 
+      [tokenID], 
+      [transferBalance], 
+      [])
+
+    const afterBalance = await tokenContract.balanceOf(walletAddress, tokenID) as BigNumber
+
+    assert.true(afterBalance.add(transferBalance).eq(initialBalance), 'balance does not match after transfer')
+  })
 
   await test('sendTransaction batch', async () => {
     const testAccount = getEOAWallet(testAccounts[1].privateKey)
