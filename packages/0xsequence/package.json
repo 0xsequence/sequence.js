@@ -76,7 +76,7 @@
     "ganacheChainID": 31337,
     "ganachePort": 8545,
     "ganacheGasLimit": "0xfffffffffff",
-    "ganacheGasPrice": "20000000000",
+    "ganacheGasPrice": "0x200",
     "etherBalance": "100000",
     "extra": ""
   }

@@ -39,7 +39,7 @@ export class BaseRelayer {
     context: WalletContext,
     signature: string | Promise<string>,
     ...transactions: Transaction[]
-  ): Promise<{ to: string, data: string}> {
+  ): Promise<{ to: string, data: string  }> { //, gasLimit?: ethers.BigNumberish }> {
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
