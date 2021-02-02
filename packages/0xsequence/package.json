@@ -13,8 +13,8 @@
     "test:run": "TS_NODE_PROJECT=../../tsconfig.test.json ava --serial --fail-fast --timeout 5m",
     "test:only": "yarn test:run --match",
     "test:watch": "yarn test:run --watch",
-    "test:server": "webpack-dev-server --config tests/webpack.config.js",
-    "test:server2": "PORT=8888 webpack-dev-server --config tests/webpack.config.js",
+    "test:server": "webpack serve --config tests/webpack.config.js",
+    "test:server2": "PORT=8888 webpack serve --config tests/webpack.config.js",
     "test:concurrently": "concurrently -k --success first 'yarn test:server' 'yarn start:hardhat' 'yarn start:hardhat2'",
     "start:hardhat": "yarn run hardhat node",
     "start:hardhat:verbose": "yarn run hardhat --verbose node",
@@ -40,7 +40,7 @@
     "@0xsequence/transactions": "^0.8.5",
     "@0xsequence/utils": "^0.8.5",
     "@0xsequence/wallet": "^0.8.5",
-    "ethers": "^5.0.26"
+    "ethers": "^5.0.27"
   },
   "peerDependencies": {},
   "devDependencies": {
@@ -48,7 +48,7 @@
     "babel-loader": "^8.2.1",
     "html-webpack-plugin": "^5.0.0-alpha.14",
     "webpack": "^5.16.0",
-    "webpack-cli": "^3.3.10",
+    "webpack-cli": "^4.4.0",
     "webpack-dev-server": "^3.11.2"
   },
   "keywords": [],

@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@0xsequence/network": "^0.8.5",
-    "ethers": "^5.0.26"
+    "ethers": "^5.0.27"
   },
   "peerDependencies": {},
   "devDependencies": {},

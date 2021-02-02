@@ -17,7 +17,7 @@
     "@0xsequence/chaind": "^0.8.5",
     "@0xsequence/config": "^0.8.5",
     "@0xsequence/transactions": "^0.8.5",
-    "ethers": "^5.0.26",
+    "ethers": "^5.0.27",
     "fetch-ponyfill": "^7.1.0"
   },
   "peerDependencies": {},

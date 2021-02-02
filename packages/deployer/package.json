@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@0xsequence/utils": "^0.8.5",
-    "@ethersproject/contracts": "^5.0.9",
-    "ethers": "^5.0.26",
+    "@ethersproject/contracts": "^5.0.10",
+    "ethers": "^5.0.27",
     "ora": "^5.2.0"
   },
   "peerDependencies": {},
