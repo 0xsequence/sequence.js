@@ -46,24 +46,29 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
   ): Promise<Transaction[]> {
     const walletAddr = addressOf(config, context)
 
-    const gasCosts = await Promise.all(transactions.map(async (t) => {
+    const gasCosts = await Promise.all(transactions.map(async tx => {
+      // Respect gasLimit request of the transaction (as long as its not 0)
+      if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
+        return tx.gasLimit
+      }
+
       // Fee can't be estimated locally for delegateCalls
-      if (t.delegateCall) {
+      if (tx.delegateCall) {
         return DEFAULT_GAS_LIMIT
       }
 
       // Fee can't be estimated for self-called if wallet hasn't been deployed
-      if (t.to === walletAddr && !(await this.isWalletDeployed(walletAddr))) {
+      if (tx.to === walletAddr && !(await this.isWalletDeployed(walletAddr))) {
         return DEFAULT_GAS_LIMIT
       }
 
       // TODO: If the wallet address has been deployed, gas limits can be
-      // estimated with more accuracy by using self-calls with the batch transactions one by one
+      // estimated with more accurately by using self-calls with the batch transactions one by one
       return this.signer.provider.estimateGas({
         from: walletAddr,
-        to: t.to,
-        data: t.data,
-        value: t.value
+        to: tx.to,
+        data: tx.data,
+        value: tx.value
       })
     }))
 
@@ -93,8 +98,13 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
-    return this.signer.sendTransaction(
-      await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
-    )
+    const txRequest = await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
+
+    // TODO: think about computing gas limit individually, summing together and passing across
+    // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
+    // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
+    // txRequest.gasLimit = gasLimit
+
+    return this.signer.sendTransaction(txRequest)
   }
 }

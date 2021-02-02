@@ -287,21 +287,23 @@ export const tests = async () => {
     assert.true(balanceSigner1.gt(ethers.BigNumber.from(0)), 'signer1 balance > 0')
   })
 
-  await test('sendETH from the sequence smart wallet (defaultChain)', async () => {
-    // first, lets move some ETH into the wallet from a testnet seed account
-    {
-      const testAccount = getEOAWallet(testAccounts[0].privateKey)
-      const walletBalanceBefore = await signer.getBalance()
+  await test('fund sequence wallet', async () => {
+    // fund Sequence wallet with some ETH from test seed account
+    const testAccount = getEOAWallet(testAccounts[0].privateKey)
+    const walletBalanceBefore = await signer.getBalance()
 
-      const ethAmount = ethers.utils.parseEther('10.1234')
-      const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
-      const txReceipt = await provider.getTransactionReceipt(txResp.hash)
-      assert.true(txReceipt.status === 1, 'eth sent from signer1')
+    const ethAmount = ethers.utils.parseEther('10.1234')
+    const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
+    const txReceipt = await provider.getTransactionReceipt(txResp.hash)
+    assert.true(txReceipt.status === 1, 'eth sent from signer1')
 
-      const walletBalanceAfter = await signer.getBalance()
-      assert.true(walletBalanceAfter.sub(walletBalanceBefore).eq(ethAmount), `wallet received ${ethAmount} eth`)
-    }
+    const walletBalanceAfter = await signer.getBalance()
+    assert.true(walletBalanceAfter.sub(walletBalanceBefore).eq(ethAmount), `wallet received ${ethAmount} eth`)
+  })
 
+  const testSendETH = async (title: string, opts: {
+    gasLimit?: string
+  } = {}) => test(title, async () => {
     // sequence wallet to now send some eth back to another seed account
     // via the relayer
     {
@@ -312,9 +314,6 @@ export const tests = async () => {
       // send eth from sequence smart wallet to another test account
       const toAddress = testAccounts[1].address
       const toBalanceBefore = await provider.getBalance(toAddress)
-
-      // TODO: failed txn with amount too high, etc.
-      // TODO: send txn to invalid address
 
       const ethAmount = ethers.utils.parseEther('1.4242')
 
@@ -335,15 +334,20 @@ export const tests = async () => {
       // because a wallet will automatically get bundled for deployment when it sends a transaction.
       const beforeWalletDeployed = await wallet.isDeployed()
 
-      const tx = {
-        from: walletAddress,
+      // NOTE/TODO: gasPrice even if set will be set again by the LocalRelayer, we should allow it to be overridden
+      const tx: TransactionRequest = {
+        from: await walletAddress,
         to: toAddress,
         value: ethAmount,
-        // gasLimit: '0x555',
-        // gasPrice: '0x555',
       }
 
-      const txReceipt = await (await signer.sendTransaction(tx)).wait()
+      // specifying gasLimit manually
+      if (opts.gasLimit) {
+        tx.gasLimit = opts.gasLimit
+      }
+
+      const txResp = await signer.sendTransaction(tx)
+      const txReceipt = await txResp.wait()
 
       assert.true(txReceipt.status === 1, 'txn sent successfully')
       assert.true(await signer.isDeployed(), 'wallet must be in deployed state after the txn')
@@ -362,8 +366,21 @@ export const tests = async () => {
       // Ensure toAddress received their eth
       const toBalanceAfter = await provider.getBalance(toAddress)
       assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
+
+      // Extra checks
+      if (opts.gasLimit) {
+        // In our test, we are passing a high gas limit for an internal transaction, so overall
+        // transaction must be higher than this value if it used our value correctly
+        assert.true(txResp.gasLimit.gte(opts.gasLimit), 'sendETH, using higher gasLimit')
+      }
     }
   })
+
+  await testSendETH('sendETH (defaultChain)')
+
+  // NOTE: this will pass, as we set the gasLimit low on the txn, but the LocalRelayer will re-estimate
+  // the entire transaction to have it pass.
+  await testSendETH('sendETH with high gasLimit override (defaultChain)', { gasLimit: '0x55555' })
 
   await test('sendTransaction batch', async () => {
     const testAccount = getEOAWallet(testAccounts[1].privateKey)

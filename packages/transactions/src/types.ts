@@ -3,6 +3,8 @@ import { TransactionRequest as EthersTransactionRequest, TransactionResponse } f
 import { WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
 
+// Transaction is a Sequence transaction payload. Note, we do not include gasPrice as an option in this form,
+// as we expect the gasPrice to be optimally estimated by the transaction relayer.
 export interface Transaction {
   delegateCall: boolean
   revertOnError: boolean

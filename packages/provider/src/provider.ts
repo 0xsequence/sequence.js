@@ -306,8 +306,6 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  // sendUncheckedTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
-  // multi-chain support.
   async sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId): Promise<string> {
     transaction = shallowCopy(transaction)
 
@@ -316,14 +314,16 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       return address
     })
 
-    // The JSON-RPC for eth_sendTransaction uses 90000 gas; if the user
-    // wishes to use this, it is easy to specify explicitly, otherwise
-    // we look it up for them.
-    if (transaction.gasLimit == null) {
-      const estimate = shallowCopy(transaction)
-      estimate.from = fromAddress
-      transaction.gasLimit = this.provider.estimateGas(estimate)
-    }
+    // NOTE: we do not use provider estimation, and instead rely on our relayer to determine the gasLimit and gasPrice
+    //
+    // TODO: alternatively/one day, we could write a provider middleware to eth_estimateGas
+    // and send it to our relayer url instead for estimation..
+    //
+    // if (!transaction.gasLimit) {
+    //   const estimate = shallowCopy(transaction)
+    //   estimate.from = fromAddress
+    //   transaction.gasLimit = this.provider.estimateGas(estimate)
+    // }
 
     const provider = await this.getSender(maybeNetworkId(chainId) || this.defaultChainId)
 
