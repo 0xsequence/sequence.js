@@ -4,6 +4,7 @@ import { Wallet, Account } from '@0xsequence/wallet'
 import { Networks } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
+import { test, assert } from '../../utils/assert'
 
 //
 // Wallet, a test wallet
@@ -89,6 +90,12 @@ const main = async () => {
 
 main()
 
-// TODO: add tests() method to verify some wallet functionality such a login
-// and adding / removing keys, etc..
-// + mock in a RemoteSigner as well.
+export const tests = async () => {
+  // TODO: add tests() method to verify some wallet functionality such a login
+  // and adding / removing keys, etc..
+  // + mock in a RemoteSigner as well.
+
+  await test('stub', async () => {
+    assert.true(true, 'ok')
+  })
+}
