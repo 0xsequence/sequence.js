@@ -26,6 +26,7 @@ export interface Relayer {
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   relay(signedTxs: SignedTransactions): Promise<providers.TransactionResponse>
+
 }
 
 export { LocalRelayer } from './local-relayer'

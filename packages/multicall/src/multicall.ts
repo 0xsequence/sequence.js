@@ -1,11 +1,9 @@
-
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddleware, JsonRpcHandlerFunc, JsonRpcResponse } from "@0xsequence/network"
-
 
 export type MulticallOptions = {
   // number of calls to enqueue before calling.

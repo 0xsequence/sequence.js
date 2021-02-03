@@ -1,1 +1,1 @@
-export * from '@0xsequence/api'
+export * from '@0xsequence/abi'

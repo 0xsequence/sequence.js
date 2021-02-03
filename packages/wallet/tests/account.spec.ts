@@ -107,15 +107,15 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
-      expect(currentConfig.address).to.equal(await account2.getAddress())
+      expect(currentConfig.address).to.equal((await account2.getAddress()).toLowerCase())
       expect(currentConfig.signers.length).to.equal(1)
       expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await newSigner.getAddress())
+      expect(currentConfig.signers[0].address).to.equal((await newSigner.getAddress()).toLowerCase())
       expect(currentConfig.chainId).to.equal(await account2.getChainId())
 
       // wallet state
       const state = (await account2.getWalletState())[0]
-      expect(state.config.address).to.equal(await account2.getAddress())
+      expect(state.config.address).to.equal((await account2.getAddress()).toLowerCase())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.not.equal(state.lastImageHash)
       expect(state.lastImageHash).to.equal(imageHash(currentConfig))
@@ -145,15 +145,15 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
-      expect(currentConfig.address).to.equal(await account2.getAddress())
+      expect(currentConfig.address).to.equal((await account2.getAddress()).toLowerCase())
       expect(currentConfig.signers.length).to.equal(1)
       expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await newSigner.getAddress())
+      expect(currentConfig.signers[0].address).to.equal((await newSigner.getAddress()).toLowerCase())
       expect(currentConfig.chainId).to.equal(await account2.getChainId())
 
       // wallet state
       const state = (await account2.getWalletState())[0]
-      expect(state.config.address).to.equal(await account2.getAddress())
+      expect(state.config.address).to.equal((await account2.getAddress()).toLowerCase())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.not.equal(state.lastImageHash)
       expect(state.lastImageHash).to.equal(imageHash(currentConfig))

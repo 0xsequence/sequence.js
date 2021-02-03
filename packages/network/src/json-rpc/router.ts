@@ -1,4 +1,3 @@
-import { Web3Provider as EthersWeb3Provider, Networkish } from '@ethersproject/providers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandler, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './types'
 
 export class JsonRpcRouter implements JsonRpcHandler {

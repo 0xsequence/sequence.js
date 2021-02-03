@@ -224,7 +224,7 @@ export class Wallet extends Signer {
 
   // imageHash is the unique hash of the WalletConfig
   get imageHash(): string {
-    return imageHash(sortConfig(this.config))
+    return imageHash(this.config)
   }
 
   // getAddress returns the address of the wallet account address
@@ -534,7 +534,7 @@ export class Wallet extends Signer {
       to: this.address,
       value: ethers.constants.Zero,
       data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'),
-        [imageHash(sortConfig(config))]
+        [imageHash(config)]
       )
     }
 

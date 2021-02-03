@@ -25,11 +25,4 @@ export class GuardRemoteSigner extends RemoteSigner {
     return this._address
   }
 
-  signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error('signTransaction method is not supported in GuardRemoteSigner')
-  }
-
-  connect(provider: Provider): ethers.Signer {
-    throw new Error('connect method is not supported in GuardRemoteSigner')
-  }
 }

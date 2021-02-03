@@ -5,7 +5,7 @@ import { Deferrable } from '@ethersproject/properties'
 import { walletContracts } from '@0xsequence/abi'
 import { Signer, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual } from '@0xsequence/config'
+import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual, sortConfig } from '@0xsequence/config'
 import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties, findLatestLog } from './utils'
@@ -165,6 +165,7 @@ export class Account extends Signer {
     return wallet.signMessage(message, undefined, allSigners)
   }
 
+  // TODO: should allSigners default to false here..?
   async signAuthMessage(message: BytesLike, allSigners: boolean = true): Promise<string> {
     return this.signMessage(message, this.authWallet()?.wallet, allSigners)
   }
@@ -231,6 +232,9 @@ export class Account extends Signer {
 
     if (!newConfig) {
       newConfig = authWallet.config
+    } else {
+      // ensure its normalized
+      newConfig = sortConfig(newConfig)
     }
 
     // The config is the default config, see if the wallet has been deployed
@@ -304,8 +308,6 @@ export class Account extends Signer {
     )[0]
 
     const authWallet = this.authWallet().wallet
-    const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
-
     if (currentImplementation === wallet.context.mainModuleUpgradable) {
       if (imageHash(authWallet.config) === currentImageHash[0]) {
         return { ...authWallet.config, address, chainId }
@@ -316,8 +318,8 @@ export class Account extends Signer {
       }
     }
 
-
-    // Get last known configuration
+    // Get last known configuration from the authChain by reconstructing it from the logs
+    const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
     const logBlockHeight = (await authContract.lastWalletUpdate(this.address)).toNumber()
     const filter = authContract.filters.RequiredConfig(this.address)
     const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
