@@ -5,6 +5,7 @@ export interface TypedData {
   domain: TypedDataDomain
   types: Record<string, Array<TypedDataField>>
   message: Record<string, any>
+  primaryType?: string
 }
 
 export type { TypedDataDomain, TypedDataField }
