@@ -108,15 +108,6 @@ export class Wallet implements WalletProvider {
     }
     this.transport.messageProvider.register()
 
-    // ...
-    this.transport.networkProvider = networkProviderMiddleware((request: JsonRpcRequest): number => {
-      // return stub chainId of 0 when not connected to any
-      if (!this.networks || this.networks.length === 0) return 0
-
-      // return the default chainId as we're connected
-      return this.networks[0].chainId
-    })
-
     // .....
     this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
       if (request.method === 'sequence_setDefaultChain') return true
@@ -128,8 +119,22 @@ export class Wallet implements WalletProvider {
       return isLoggedIn
     })
 
+    // ...
+    this.transport.networkProvider = networkProviderMiddleware((request: JsonRpcRequest): number => {
+      // return stub chainId of 0 when not connected to any
+      if (!this.networks || this.networks.length === 0) return 0
+
+      // return the default chainId as we're connected
+      return this.networks[0].chainId
+    })    
+
     // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
     this.transport.cachedProvider = new CachedProvider()
+    this.transport.cachedProvider.onUpdate(() => {
+      if (!this.session) this.session = { providerCache: {} }
+      this.session.providerCache = this.transport.cachedProvider.getCache()
+      this.saveSession(this.session)
+    })
 
     // ..
     this.transport.router = new JsonRpcRouter([
@@ -143,20 +148,18 @@ export class Wallet implements WalletProvider {
     this.transport.provider = new Web3Provider(this.transport.router)
 
 
-    // below will update the networks automatically when the wallet networks change, however
-    // this is currently disabled as it may confuse the dapp. Instead the dapp can
-    // check active networks list from the session and switch the default network
-    // with useNetwork() explicitly
-    //
-    // this.windowTransportProvider.on('networks', networks => {
-    //   this.useNetworks(networks)
-    //   this.saveSession(this.session)
-    // })
-
-    this.transport.messageProvider.on('accountsChanged', (accounts) => {
-      if (accounts && accounts.length === 0) {
-        this.logout()
+    // below will update the account upon wallet login/logout
+    this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
+      if (!accounts || accounts.length === 0 || accounts[0] === '') {
+        this.clearSession()
+      } else {
+        this.useSession({ accountAddress: accounts[0] }, true)
       }
+    })
+
+    // below will update the networks automatically when the wallet networks change
+    this.transport.messageProvider.on('networks', (networks: NetworkConfig[]) => {
+      this.useSession({ networks: networks }, true)
     })
 
     // Load existing session from localStorage
@@ -185,12 +188,7 @@ export class Wallet implements WalletProvider {
     if (this.isConnected()) {
       this.closeWallet()
     }
-    window.localStorage.removeItem('@sequence.session')
-    this.session = undefined
-    this.networks = undefined
-    this.providers = {}
-    this.transport.cachedProvider?.clearCache()
-    this.transport.cachedProvider?.onUpdate(undefined)
+    this.clearSession()
   }
 
   getProviderConfig(): ProviderConfig {
@@ -402,44 +400,32 @@ export class Wallet implements WalletProvider {
   }
 
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
-    if (!session.accountAddress || session.accountAddress === '') {
-      throw new Error('session error, accountAddress is empty')
+    if (!this.session) this.session = {}
+
+    // setup account
+    if (session.accountAddress) {
+      this.useAccountAddress(session.accountAddress)
     }
 
-    // set active session
-    this.session = session
+    // setup networks
+    if (session.networks) {
+      this.useNetworks(session.networks)
+    }
 
     // setup provider cache
-    if (!session.providerCache) {
-      session.providerCache = {}
-    }
-    this.transport.cachedProvider.setCache(session.providerCache)
-    this.transport.cachedProvider.onUpdate(() => {
-      this.session.providerCache = this.transport.cachedProvider.getCache()
-      this.saveSession(this.session)
-    })
-
-    // set networks from the session
-    if (session.networks) {
-      // reset session.networks in case it doesn't match defaultNetwork, assuming the dapp has changed it.
-      if (this.config.defaultNetworkId && !checkNetworkConfig(session.networks[0], this.config.defaultNetworkId)) {
-        console.warn('session.networks defaultNetworkId has changed, so clearing the network list')
-        session.networks = undefined
-      } else {
-        this.useNetworks(session.networks)
-      }
+    if (session.providerCache) {
+      this.transport.cachedProvider.setCache(session.providerCache)
     }
 
-    // save session
+    // persist
     if (autoSave) {
       this.saveSession(this.session)
     }
+  }
 
-    // confirm the session address matches the one with the signer
-    const accountAddress = await this.getSigner().getAddress()
-    if (session.accountAddress.toLowerCase() !== accountAddress.toLowerCase()) {
-      throw new Error('wallet account address does not match the session')
-    }
+  private useAccountAddress(accountAddress: string) {
+    if (!this.session) this.session = {}
+    this.session.accountAddress = accountAddress.toLowerCase()
   }
 
   private useNetworks(networks: NetworkConfig[]) {
@@ -477,6 +463,14 @@ export class Wallet implements WalletProvider {
     if (this.config.networkRpcUrl) {
       this.networks[0].rpcUrl = this.config.networkRpcUrl
     }
+  }
+
+  private clearSession(): void {
+    window.localStorage.removeItem('@sequence.session')
+    this.session = undefined
+    this.networks = undefined
+    this.providers = {}
+    this.transport.cachedProvider?.clearCache()
   }
 }
 

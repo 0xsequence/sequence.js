@@ -149,6 +149,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
       return
     }
     const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
+    // TODO: connecting so fast, we're sending a message so quickly, that in certain instances
+    // we receive a target origin failure as the window's origin is not set yet but we're sending anyway
+    // The error is annoying, but the system should work correctly.
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)
   }
 }

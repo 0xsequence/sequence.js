@@ -108,9 +108,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
       // check if connection error occured due to invalid defaultNetworkId
       if (message.data?.result?.error) {
-        console.error('connection to wallet failed')
+        const err = new Error(`connection to wallet failed: received ${message.data?.result?.error}`)
+        console.error(err)
         this.disconnect()
-        throw new Error(message.data?.result?.error)
+        throw err
       }
 
       // success!
@@ -162,8 +163,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       this.accountPayload = undefined
       if (message.data && message.data.length > 0) {
         this.accountPayload = message.data[0].toLowerCase()
+        this.events.emit('accountsChanged', [this.accountPayload])
+      } else {
+        this.events.emit('accountsChanged', [])
       }
-      this.events.emit('accountsChanged', message.data)
       return
     }
 

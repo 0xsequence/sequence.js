@@ -12,9 +12,28 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
   protected walletRequestHandler: WalletRequestHandler
   protected _sessionId: string
+  protected registered: boolean
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
+
+    this.walletRequestHandler.on('accountsChanged', (accounts: string[]) => {
+      if (!this.registered) return
+      this.notifyAccountsChanged(accounts)
+    })
+
+    this.walletRequestHandler.on('networks', (networks: NetworkConfig[]) => {
+      if (!this.registered) return
+      this.notifyNetworks(networks)
+      if (!networks || networks.length === 0) {
+        this.notifyChainChanged('0x0')
+      } else {
+        this.notifyChainChanged(ethers.utils.hexlify(networks[0].chainId))
+      }
+    })
+
+    // TODO: add .on('chainChanged') event? or covered by networks?
+
   }
 
   register() {
@@ -36,21 +55,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
       case ProviderMessageType.CONNECT: {
 
-        // set defaultChain upon connecting if one is requested
-        const defaultNetworkId = message.data.defaultNetworkId
-        if (defaultNetworkId) {
-          try {
-            this.walletRequestHandler.setDefaultChain(defaultNetworkId)
-          } catch (err) {
-            console.error(err)
-            this.notifyConnect({
-              sessionId: this._sessionId,
-              error: `${err}`
-            })
-            return
-          }
-        }
-
         // success, respond with 'connect' event to the dapp directly
         this.notifyConnect({ sessionId: this._sessionId })
 
@@ -60,17 +64,15 @@ export abstract class BaseWalletTransport implements WalletTransport {
         if (accountAddress && accountAddress.startsWith('0x')) {
           // logged in
           this.notifyAccountsChanged([accountAddress])
-
-          // notify networks once the user has authenticated to avoid non-authed access
-          const networks = await this.walletRequestHandler.getNetworks(true)
-          if (networks && networks.length > 0) {
-            this.notifyNetworks(networks)
-            this.notifyChainChanged(ethers.utils.hexlify(networks[0].chainId))
-          }
-
         } else {
           // not logged in, we do not emit chain details until logged in
           this.notifyAccountsChanged([])
+        }
+
+        // set defaultChain upon connecting if one is requested
+        const defaultNetworkId = message.data.defaultNetworkId
+        if (defaultNetworkId) {
+          await this.walletRequestHandler.setDefaultChain(defaultNetworkId)
         }
 
         return

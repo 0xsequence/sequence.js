@@ -46,6 +46,7 @@ export const tests = async () => {
 
   await test('login', async () => {
     const loggedIn = await wallet.login()
+    assert.true(wallet.isConnected(), 'before login, is connected')
     assert.true(loggedIn, 'is logged in')
   })
 

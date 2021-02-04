@@ -22,6 +22,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
+  private defaultNetworkId?: string | number
+
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
   constructor(signer: Signer | null, prompter: WalletUserPrompter | null, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
@@ -35,13 +37,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // }
   }
 
-  setup(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
+  async setup(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
     this.signer = signer
     if (mainnetNetworks && mainnetNetworks.length > 0) {
       this.mainnetNetworks = mainnetNetworks
     }
     if (testnetNetworks && testnetNetworks.length > 0) {
       this.testnetNetworks = testnetNetworks
+    }
+    if (this.defaultNetworkId) {
+      if (!(await this.setDefaultChain(this.defaultNetworkId))) {
+        throw new Error(`WalletRequestHandler setup unable to set defaulNetworkId ${this.defaultNetworkId}`)
+      }
     }
   }
 
@@ -121,6 +128,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const [signingAddress, message] = request.params
 
           let sig = ''
+          // TODO:
+          // if (process.env.DEBUG_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
@@ -369,9 +378,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         // set default network of wallet
         case 'sequence_setDefaultChain': {
           const [defaultNetworkId] = request.params
-          if (defaultNetworkId) {
-            this.setDefaultChain(defaultNetworkId)
+          
+          if (!defaultNetworkId) {
+            throw new Error('invalid request, method argument defaultNetworkId cannot be empty')
           }
+          const ok = await this.setDefaultChain(defaultNetworkId)
+          if (!ok) {
+            throw new Error(`unable to set default network ${defaultNetworkId}`)
+          }
+      
           response.result = await this.getNetworks(true)
           break
         }
@@ -406,26 +421,40 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.events.once(event, fn)
   }
 
-  getAddress(): Promise<string> {
-    // TODO return '' if not logged in, or undefined.. first need
-    // something on login state
-    return this.signer.getAddress()
-  }
-
-  getChainId(): Promise<number> {
-    return this.signer.getChainId()
-  }
-
-  setDefaultChain(chainId: string | number) {
-    if (!chainId) return
-    if ((<any>this.signer).setNetworks) {
-      (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
+  async getAddress(): Promise<string> {
+    if (!this.signer) {
+      return ''
     } else {
-      throw new Error('signer does not have setNetworks method available')
+      return this.signer.getAddress()
+    }
+  }
+
+  async getChainId(): Promise<number> {
+    if (!this.signer) {
+      return 0
+    } else {
+      return this.signer.getChainId()
+    }
+  }
+
+  async setDefaultChain(chainId: string | number): Promise<boolean> {
+    if (!chainId) return
+    this.defaultNetworkId = chainId
+    if (this.signer && (<any>this.signer).setNetworks) {
+      (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
+      await this.notifyNetworks()
+      return true
+    } else {
+      return false
     }
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
+    if (!this.signer) {
+      console.warn('getNetworks returns empty list as signer is not set on WalletRequestHandler')
+      return []
+    }
+
     const networks = await this.signer.getNetworks()
 
     if (jsonRpcResponse) {
@@ -441,17 +470,28 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  notifyNetworks(networks: NetworkConfig[]) {
-    this.events.emit('networks', networks)
-    this.events.emit('chainChanged', ethers.utils.hexlify(networks[0].chainId))
-  }
-
   notifyLogin(accountAddress: string) {
-    this.events.emit('accountsChanged', [accountAddress])
+    if (!accountAddress || accountAddress.length === 0) {
+      this.events.emit('accountsChanged', [])
+    } else {
+      this.events.emit('accountsChanged', [accountAddress])
+    }
+    this.notifyNetworks()
   }
 
   notifyLogout() {
     this.events.emit('accountsChanged', [])
+    this.events.emit('networks', [])
+  }
+
+  async notifyNetworks(networks?: NetworkConfig[]) {
+    const n = networks || await this.getNetworks(true)
+    this.events.emit('networks', n)
+    if (n && n.length > 0) {
+      this.events.emit('chainChanged', ethers.utils.hexlify(n[0].chainId))
+    } else {
+      this.events.emit('chainChanged', '0x0')
+    }
   }
 
   getSigner(): Signer | null {
