@@ -17,7 +17,7 @@
     "typecheck": "wsrun -c typecheck",
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
-    "coverage": "c8 --reporter=lcov --reporter=text-summary yarn test:parallel"
+    "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc yarn test:parallel"
   },
   "husky": {
     "hooks": {
@@ -40,7 +40,6 @@
     "@typescript-eslint/eslint-plugin": "^4.14.2",
     "@typescript-eslint/parser": "^4.14.2",
     "ava": "^3.15.0",
-    "c8": "^7.5.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "concurrently": "^5.3.0",
@@ -53,6 +52,7 @@
     "hardhat": "2.0.8",
     "husky": "^4.3.8",
     "mocha": "^8.2.1",
+    "nyc": "^15.1.0",
     "prettier": "^2.1.2",
     "puppeteer": "^6.0.0",
     "rimraf": "^3.0.2",

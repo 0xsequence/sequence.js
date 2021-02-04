@@ -1,0 +1,25 @@
+{
+    "include": [
+      "packages/**/*.ts"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "**/dist/*",
+      "**/tests/*",
+      "**/0xsequence/*"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register",
+      "babel-core/register"
+    ],
+    "reporter": [
+      "html",
+      "text"
+    ],
+    "sourceMap": true,
+    "instrument": true,
+    "all": true
+}
