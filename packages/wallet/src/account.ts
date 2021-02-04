@@ -1,11 +1,11 @@
 import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
-import { Signer as AbstractSigner, Contract, ethers, BytesLike, BigNumberish } from 'ethers'
+import { Signer as AbstractSigner, ethers, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { walletContracts } from '@0xsequence/abi'
 import { Signer, NotEnoughSigners } from './signer'
 import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, addressOf, imageHash, isConfigEqual, sortConfig } from '@0xsequence/config'
+import { WalletConfig, WalletState, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties, findLatestLog } from './utils'
@@ -16,6 +16,7 @@ export interface AccountOptions {
   initialConfig: WalletConfig
   networks?: NetworkConfig[]
   context?: WalletContext
+  configFinder?: ConfigFinder
 }
 
 // Account is an interface to a multi-network smart contract wallet.
@@ -60,6 +61,11 @@ export class Account extends Signer {
 
   async getWalletContext(): Promise<WalletContext> {
     return this.options.context
+  }
+
+  getConfigFinder(): ConfigFinder {
+    if (this.options.configFinder) return this.options.configFinder
+    return new SequenceUtilsFinder(this.authWallet().wallet.provider)
   }
 
   // getWalletConfig builds a list of WalletConfigs across all networks.
@@ -292,64 +298,12 @@ export class Account extends Signer {
       return this.getWalletByNetwork(target as NetworkConfig).wallet
     })()
 
-    const address = this.address
-    const chainId = await wallet.getChainId()
-
-    // fetch current wallet image hash from chain, and skip any errors
-    const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, wallet.provider)
-    const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => [])) as string[]
-
-    // fetch wallet implementation, which tells us if its been deployed, and verifies its the main module
-    const currentImplementation = ethers.utils.defaultAbiCoder.decode(
-      ['address'],
-      ethers.utils.hexZeroPad(
-        await (wallet.provider.getStorageAt(address, address).catch(() => ethers.constants.AddressZero)), 32
-      )
-    )[0]
-
-    const authWallet = this.authWallet().wallet
-    if (currentImplementation === wallet.context.mainModuleUpgradable) {
-      if (imageHash(authWallet.config) === currentImageHash[0]) {
-        return { ...authWallet.config, address, chainId }
-      }
-    } else {
-      if (addressOf({ ...authWallet.config, address: undefined }, authWallet.context).toLowerCase() === address.toLowerCase()) {
-        return { ...authWallet.config, chainId }
-      }
-    }
-
-    // Get last known configuration from the authChain by reconstructing it from the logs
-    const authContract = new Contract(authWallet.context.sequenceUtils, walletContracts.sequenceUtils.abi, authWallet.provider)
-    const logBlockHeight = (await authContract.lastWalletUpdate(this.address)).toNumber()
-    const filter = authContract.filters.RequiredConfig(this.address)
-    const lastLog = await findLatestLog(authWallet.provider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-    if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return undefined }
-    const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-
-    const signers = ethers.utils.defaultAbiCoder.decode(
-      [`tuple(
-        uint256 weight,
-        address signer
-      )[]`], event._signers
-    )[0]
-
-    const config = {
-      chainId: chainId,
-      address: address,
-      threshold: ethers.BigNumber.from(event._threshold).toNumber(),
-      signers: signers.map((s: any) => ({
-        address: s.signer,
-        weight: ethers.BigNumber.from(s.weight).toNumber()
-      }))
-    }
-
-    if (currentImplementation === wallet.context.mainModuleUpgradable) {
-      if (imageHash(config) !== currentImageHash[0]) throw Error('Invalid configuration')
-    } else {
-      if (addressOf(config, this._wallets[0].wallet.context) !== this.address) throw Error('Invalid configuration')
-    }
-
-    return config
+    return (await this.getConfigFinder().findCurrentConfig({
+      address: this.address,
+      provider: wallet.provider,
+      context: wallet.context,
+      knownConfigs: [wallet.config]
+    })).config
   }
 
   getWallets(): { wallet: Wallet, network: NetworkConfig }[] {
