@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/transactions",
-  "version": "0.8.5",
+  "version": "0.9.1",
   "description": "transactions sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/transactions",
   "source": "src/index.ts",
@@ -14,9 +14,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.8.5",
-    "@0xsequence/chaind": "^0.8.5",
-    "@0xsequence/network": "^0.8.5",
+    "@0xsequence/abi": "^0.9.1",
+    "@0xsequence/chaind": "^0.9.1",
+    "@0xsequence/network": "^0.9.1",
     "@ethersproject/abi": "^5.0.11",
     "ethers": "^5.0.27"
   },

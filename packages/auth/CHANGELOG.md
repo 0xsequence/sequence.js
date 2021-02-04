@@ -1,5 +1,28 @@
 # @0xsequence/auth
 
+## 0.9.1
+
+### Patch Changes
+
+- - patch bump
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.9.1
+  - @0xsequence/network@0.9.1
+  - @0xsequence/wallet@0.9.1
+
+## 0.9.0
+
+### Minor Changes
+
+- - provider transport hardening
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.9.0
+  - @0xsequence/network@0.9.0
+  - @0xsequence/wallet@0.9.0
+
 ## 0.8.5
 
 ### Patch Changes

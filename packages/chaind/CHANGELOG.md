@@ -1,5 +1,17 @@
 # @0xsequence/chaind
 
+## 0.9.1
+
+### Patch Changes
+
+- - patch bump
+
+## 0.9.0
+
+### Minor Changes
+
+- - provider transport hardening
+
 ## 0.8.5
 
 ### Patch Changes
