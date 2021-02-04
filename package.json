@@ -16,7 +16,8 @@
     "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
     "typecheck": "wsrun -c typecheck",
     "dev": "preconstruct dev",
-    "postinstall": "preconstruct dev"
+    "postinstall": "preconstruct dev",
+    "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc yarn test"
   },
   "husky": {
     "hooks": {
@@ -51,7 +52,7 @@
     "hardhat": "2.0.8",
     "husky": "^4.3.8",
     "mocha": "^8.2.1",
-    "nyc": "^15.0.1",
+    "nyc": "^15.1.0",
     "prettier": "^2.1.2",
     "puppeteer": "^6.0.0",
     "rimraf": "^3.0.2",
