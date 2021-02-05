@@ -6,7 +6,7 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { isValidConfigSigners, imageHash } from '@0xsequence/config'
+import { isValidConfigSigners, imageHash, SequenceUtilsFinder } from '@0xsequence/config'
 
 import * as lib from '../src'
 
@@ -60,6 +60,63 @@ describe('Account integration', () => {
       networks,
       context
     }, owner)
+  })
+
+  describe('find wallet by signer', () => {
+    it('should find wallet of an indexed signer', async () => {
+      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer)
+
+      await wallet.publishConfig(true)
+
+      const found = await new SequenceUtilsFinder(networks[0].provider).findLastWalletOfInitialSigner({
+        signer: owner.address,
+        context: context,
+        provider: networks[0].provider
+      })
+
+      expect(found.wallet).to.equal(wallet.address)
+    })
+    it('should find wallet of not indexed signer', async () => {
+      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer)
+
+      await wallet.publishConfig(false)
+
+      const found = await new SequenceUtilsFinder(networks[0].provider).findLastWalletOfInitialSigner({
+        signer: owner.address,
+        context: context,
+        provider: networks[0].provider
+      })
+
+      expect(found.wallet).to.equal(wallet.address)
+    })
+    it('should find wallet of indexed signer, ignoring index', async () => {
+      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer)
+
+      await wallet.publishConfig(true)
+
+      const found = await new SequenceUtilsFinder(networks[0].provider).findLastWalletOfInitialSigner({
+        signer: owner.address,
+        context: context,
+        provider: networks[0].provider,
+        ignoreIndex: true
+      })
+
+      expect(found.wallet).to.equal(wallet.address)
+    })
+    it('should not find wallet of not published signer', async () => {
+      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const found = await new SequenceUtilsFinder(networks[0].provider).findLastWalletOfInitialSigner({
+        signer: owner.address,
+        context: context,
+        provider: networks[0].provider
+      })
+
+      expect(found.wallet).to.be.undefined
+    })
   })
 
   describe('config', () => {

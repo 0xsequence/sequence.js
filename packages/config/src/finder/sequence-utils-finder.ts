@@ -84,14 +84,20 @@ export class SequenceUtilsFinder implements ConfigFinder {
     return { config: config }
   }
 
-  findLastWalletOfSigner = async (args:  {
-    signer: string,
-    provider: ethers.providers.Provider,
-    context: WalletContext,
-    knownConfigs?: WalletConfig[],
+  findLastWalletOfInitialSigner = async(args: {
+    signer: string
+    provider: ethers.providers.Provider
+    context: WalletContext
     ignoreIndex?: boolean
-  }): Promise<{ wallet: string }> => {
-    throw Error('Not implemented')
+  }): Promise<{ wallet: string | undefined }> => {
+    const { signer, context, ignoreIndex } = args
+    const authContract = new Contract(context.sequenceUtils, walletContracts.sequenceUtils.abi, this.authProvider)
+    const logBlockHeight = ignoreIndex ? 0 : (await authContract.lastSignerUpdate(signer)).toNumber()
+    const filter = authContract.filters.RequiredSigner(null, signer)
+    const lastLog = await this.findLatestLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
+    if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return { wallet: undefined } }
+    const event = authContract.interface.decodeEventLog('RequiredSigner', lastLog.data, lastLog.topics)
+    return { wallet: event._wallet }
   }
 
   private findLatestLog = async (provider: ethers.providers.Provider, filter: ethers.providers.Filter): Promise<ethers.providers.Log | undefined> => {

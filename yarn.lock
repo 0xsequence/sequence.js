@@ -2,12 +2,35 @@
 # yarn lockfile v1
 
 
+"@0xsequence/abi@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@0xsequence/abi/-/abi-0.9.1.tgz#b63aecc003ce76d89a176486573025fb32f51f87"
+  integrity sha512-OnSOstrgT/GnlVomJQP2RiB6DREVSQIbWyq5zHoFvim3xdR3GzBNcLvPjRzncmdY14gZZ9/LIPSeWiLCOwUjEw==
+
 "@0xsequence/ethauth@^0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.4.1.tgz#2a7682b5c247cee50d58ea8a81b94509d0367baf"
   integrity sha512-G7Ggq3absovUNMBQ1oQDtABt7uCJVtyRxMQNSzxrSddKlSI9FkbB9J+f9X5BpYX640SPXP+CE+gPlSI42qqqxw==
   dependencies:
     base64url "^3.0.1"
+
+"@0xsequence/network@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@0xsequence/network/-/network-0.9.1.tgz#90d06b3de4ed39ea7c03103117b02bb98f1e8c6c"
+  integrity sha512-Rf51svi8XdUVj+LHg7XBb3QKSfSsBP2EaMOBA0v+YRRhFBZLhgvTd/gMar51rmtXBKoU+UgjlQfhHRREBWRhMQ==
+  dependencies:
+    "@0xsequence/utils" "^0.9.1"
+    "@ethersproject/providers" "^5.0.20"
+    ethers "^5.0.27"
+
+"@0xsequence/utils@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@0xsequence/utils/-/utils-0.9.1.tgz#f62c618825788d370c380991f2ce01e3c1f19251"
+  integrity sha512-v67IGF/N0UhQXK6AK93C0lzhYs9Blmi1e7WgGdA2hmG0cj3BX+3JcN3o2gIPn/aTt4eUoyUCVXcMTn7FLNDX8w==
+  dependencies:
+    "@ethersproject/abstract-signer" "5.0.12"
+    "@ethersproject/properties" "^5.0.8"
+    ethers "^5.0.27"
 
 "@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
   version "1.1.0"
