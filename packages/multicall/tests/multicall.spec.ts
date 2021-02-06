@@ -339,7 +339,9 @@ describe('Multicall integration', function () {
         const brokenProviderOptions = [{
           name: "non-deployed util contract",
           overhead: 0,
-          brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) => getProvider()
+          brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) => getProvider({
+            contract: ''
+          })
         }, {
           name: "EOA address as util contract",
           overhead: 1,

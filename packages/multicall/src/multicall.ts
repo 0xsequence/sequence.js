@@ -31,7 +31,7 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  contract: '',
+  contract: '0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48',
   verbose: false
 }
 
