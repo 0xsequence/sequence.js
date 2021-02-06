@@ -14,7 +14,10 @@ export type MulticallOptions = {
 
   // contract is the address of the Sequence MultiCallUtils smart contract where
   // the batched multicall is sent to an Ethereum node.
-  contract: string
+  contract: string,
+
+  // logs details about aggregated calls
+  verbose: boolean
 }
 
 type QueueEntry = {
@@ -28,7 +31,8 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  contract: ''
+  contract: '',
+  verbose: false
 }
 
 export class Multicall {
@@ -67,9 +71,12 @@ export class Multicall {
         callback: callback,
         next: next
       })
+      if (this.options.verbose) console.log('Scheduling call', request.method)
       this.scheduleExecution()
       return
     }
+
+    if (this.options.verbose) console.log('Forwarded call', request.method)
 
     // Move to next handler
     return next(request, callback)
@@ -77,6 +84,7 @@ export class Multicall {
 
   run = async () => {
     /* eslint-disable no-var */
+    if (this.options.verbose) console.log('Processing multicall')
 
     // Read items from queue
     const limit = Math.min(this.options.batchSize, this.queue.length)
@@ -86,14 +94,18 @@ export class Multicall {
     if (limit === 1) {
       this.forward(this.queue[0])
       this.queue = []
+      if (this.options.verbose) console.log('Skip multicall, single item')
       return
     }
+
+    if (this.options.verbose) console.log('Resolving', limit)
 
     // Get batch from queue
     var items = this.queue.slice(0, limit)
 
     // Update queue
     this.queue = limit === this.queue.length ? [] : this.queue.slice(limit)
+    if (this.options.verbose) console.log('Updated queue', this.queue.length)
 
     if (this.queue.length !== 0) {
       this.scheduleExecution()
@@ -136,6 +148,7 @@ export class Multicall {
     // Forward discarted items
     // end execution if no items remain
     if (discartItems.length !== 0) {
+      if (this.options.verbose) console.log('Forwarding incompatible calls', discartItems.length)
       this.forward(discartItems)
       if (items.length === 0) return
     }
@@ -189,6 +202,7 @@ export class Multicall {
     callParams = callParams.filter((c) => c)
 
     if (discartItems.length !== 0) {
+      if (this.options.verbose) console.log('Forwarding calls on error', discartItems.length)
       this.forward(discartItems)
       if (items.length === 0) return
     }
@@ -248,6 +262,7 @@ export class Multicall {
 
     // Send results for each request
     // errors fallback through the middleware
+    if (this.options.verbose) console.log('Got response for', items.length)
     items.forEach((item, index) => {
       if (!decoded[0][index]) {
         this.forward(item)
