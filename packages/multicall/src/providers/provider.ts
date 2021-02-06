@@ -32,8 +32,8 @@ export class MulticallProvider implements ethers.providers.Provider {
   getTransaction = this.provider.getTransaction
   getTransactionReceipt = this.provider.getTransactionReceipt
   getLogs = this.provider.getLogs
-  resolveName = this.provider.resolveName
-  lookupAddress = this.provider.lookupAddress
+  resolveName = (name: string | Promise<string>) => this.provider.resolveName(name)
+  lookupAddress = (addr: string | Promise<string>) => this.provider.lookupAddress(addr)
   on = this.provider.on
   once = this.provider.once
   emit = this.provider.emit
