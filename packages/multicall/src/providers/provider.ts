@@ -6,14 +6,13 @@ import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'
 import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
 
-export class MulticallProvider implements ethers.providers.Provider {
+export class MulticallProvider extends ethers.providers.BaseProvider {
   private multicall: Multicall
 
   constructor(private provider: ethers.providers.Provider, multicall?: Multicall | Partial<MulticallOptions>) {
-    this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall!)
+    super(provider.getNetwork())
+    this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
   }
-
-  _isProvider = true
 
   listenerCount = this.provider.listenerCount
 
@@ -32,18 +31,23 @@ export class MulticallProvider implements ethers.providers.Provider {
   getTransaction = this.provider.getTransaction
   getTransactionReceipt = this.provider.getTransactionReceipt
   getLogs = this.provider.getLogs
-  resolveName = (name: string | Promise<string>) => this.provider.resolveName(name)
-  lookupAddress = (addr: string | Promise<string>) => this.provider.lookupAddress(addr)
-  on = this.provider.on
-  once = this.provider.once
   emit = this.provider.emit
   litenerCount = this.provider.listenerCount
   listeners = this.provider.listeners
-  off = this.provider.off
-  removeAllListeners = this.provider.removeAllListeners
   addListener = this.provider.addListener
   removeListener = this.provider.removeListener
   waitForTransaction = this.provider.waitForTransaction
+
+  getResolver = async (name: string | Promise<string>) => {
+    const provider = this.provider as ethers.providers.BaseProvider
+
+    if (provider.getResolver) {
+      const ogResolver = await provider.getResolver(await name)
+      return new ethers.providers.Resolver(this as any, ogResolver.address, ogResolver.name)
+    }
+
+    return undefined
+  }
 
   next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
     try {
