@@ -21,7 +21,7 @@ const providerFromEngine = require('eth-json-rpc-middleware/providerFromEngine')
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
 const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/SequenceUtils.sol/SequenceUtils.json')
 
-const Web3 = require('web3')
+import Web3 from 'web3'
 const { expect } = chai.use(chaiAsPromised)
 
 const GANACHE_PORT = 38546
@@ -160,7 +160,30 @@ describe('Multicall integration', function () {
           providerFromEngine(engine)
         )
       }
-    }
+    },
+    {
+      name: 'Web3 external provider wrapper',
+      provider: (conf?: Partial<MulticallOptions>) => {
+        const web3HttpProvider = new Web3.providers.HttpProvider(ganache.serverUri)
+        const spyHttpProvider = SpyProxy(web3HttpProvider, {
+          prop: 'send',
+          func: web3HttpProvider.send,
+          callback: (p: any) => {
+            switch (p.method) {
+              case JsonRpcMethod.ethCall:
+              case JsonRpcMethod.ethGetCode:
+              case JsonRpcMethod.ethGetBalance:
+                callCounter++
+            }
+          }
+        })
+        return new Web3Provider(
+          new MulticallExternalProvider(
+            spyHttpProvider as any, conf
+          )
+        )
+      }
+    },
   ]
 
   beforeEach(() => {
