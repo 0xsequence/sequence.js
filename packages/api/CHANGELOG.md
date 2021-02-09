@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.9.2
+
+### Patch Changes
+
+- - Update api client
+
 ## 0.9.1
 
 ### Patch Changes

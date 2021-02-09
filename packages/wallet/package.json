@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.9.1",
-    "@0xsequence/api": "^0.9.1",
     "@0xsequence/config": "^0.9.1",
     "@0xsequence/guard": "^0.9.1",
     "@0xsequence/network": "^0.9.1",
