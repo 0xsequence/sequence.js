@@ -13,9 +13,12 @@ export class SequenceUtilsFinder implements ConfigFinder {
     provider: ethers.providers.Provider,
     context: WalletContext,
     knownConfigs?: WalletConfig[],
-    ignoreIndex?: boolean
+    ignoreIndex?: boolean,
+    requireIndex?: boolean
   }): Promise<{ config: WalletConfig }> => {
-    const { address, provider, context, ignoreIndex } = args
+    const { address, provider, context, ignoreIndex, requireIndex } = args
+    if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
+
     const knownConfigs = args.knownConfigs ? args.knownConfigs : []
 
     const chainId = (await provider.getNetwork()).chainId
@@ -48,6 +51,8 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     // Get last known configuration
     const logBlockHeight = ignoreIndex ? 0 : (await authContract.lastWalletUpdate(address)).toNumber()
+    if (requireIndex && logBlockHeight === 0) return { config: undefined }
+
     const filter = authContract.filters.RequiredConfig(address)
     const lastLog = await this.findLatestLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
     if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return { config: undefined } }
@@ -72,7 +77,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     const isValid = currentImplementation === context.mainModuleUpgradable ? imageHash(config) === currentImageHash[0] : addressOf(config, context) === address
     if (!isValid) {
-      if (ignoreIndex) {
+      if (ignoreIndex || requireIndex) {
         console.warn('No valid configuration found')
         return { config: undefined }
       } else {
@@ -88,11 +93,15 @@ export class SequenceUtilsFinder implements ConfigFinder {
     signer: string
     provider: ethers.providers.Provider
     context: WalletContext
-    ignoreIndex?: boolean
+    ignoreIndex?: boolean,
+    requireIndex?: boolean
   }): Promise<{ wallet: string | undefined }> => {
-    const { signer, context, ignoreIndex } = args
+    const { signer, context, ignoreIndex, requireIndex } = args
+    if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
+
     const authContract = new Contract(context.sequenceUtils, walletContracts.sequenceUtils.abi, this.authProvider)
     const logBlockHeight = ignoreIndex ? 0 : (await authContract.lastSignerUpdate(signer)).toNumber()
+    if (requireIndex && logBlockHeight === 0) return { wallet: undefined }
     const filter = authContract.filters.RequiredSigner(null, signer)
     const lastLog = await this.findLatestLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
     if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return { wallet: undefined } }
