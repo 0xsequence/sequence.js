@@ -435,7 +435,7 @@ export class Wallet implements WalletProvider {
     // confirm default network is set correctly
     if (this.config.defaultNetworkId) {
       if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
-        throw new Error(`expecting defaultNetworkId ${this.config.defaultNetworkId} but is set to ${networks[0]}`)
+        throw new Error(`expecting defaultNetworkId '${this.config.defaultNetworkId}' but is set to '${networks[0].name}'`)
       }
     }
 
