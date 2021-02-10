@@ -17,7 +17,9 @@
     "typecheck": "wsrun -c typecheck",
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
-    "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc yarn test"
+    "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc yarn test",
+    "link-sequence": "./scripts/yarn-link.sh link",
+    "unlink-sequence": "./scripts/yarn-link.sh unlink"
   },
   "husky": {
     "hooks": {
