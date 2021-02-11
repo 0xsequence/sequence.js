@@ -410,7 +410,7 @@ export class Wallet implements WalletProvider {
     // setup wallet context
     if (this.config.walletContext) {
       this.session.walletContext = this.config.walletContext
-    } else {
+    } else if (session.walletContext) {
       this.session.walletContext = session.walletContext
     }
 

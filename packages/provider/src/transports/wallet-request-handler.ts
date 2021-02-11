@@ -37,19 +37,23 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // }
   }
 
-  async setup(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
+  async login(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
     this.signer = signer
+
     if (mainnetNetworks && mainnetNetworks.length > 0) {
       this.mainnetNetworks = mainnetNetworks
     }
     if (testnetNetworks && testnetNetworks.length > 0) {
       this.testnetNetworks = testnetNetworks
     }
+
     if (this._defaultNetworkId) {
-      if (!(await this.setDefaultNetwork(this._defaultNetworkId))) {
-        throw new Error(`WalletRequestHandler setup unable to set defaulNetworkId ${this._defaultNetworkId}`)
+      if (!(await this.setDefaultNetwork(this._defaultNetworkId, false))) {
+        throw new Error(`WalletRequestHandler setup unable to set defaultNetworkId ${this._defaultNetworkId}`)
       }
     }
+
+    this.notifyLogin(await this.signer.getAddress())
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -437,13 +441,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  async setDefaultNetwork(chainId: string | number): Promise<boolean> {
+  async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<boolean> {
     if (!chainId) return
     this._defaultNetworkId = chainId
+
     if (this.signer && (<any>this.signer).setNetworks) {
       (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
-      await this.notifyNetworks()
+
+      if (notifyNetworks) {
+        await this.notifyNetworks()
+      }
       return true
+
     } else {
       return false
     }
@@ -455,7 +464,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
     if (!this.signer) {
-      console.warn('getNetworks returns empty list as signer is not set on WalletRequestHandler')
+      console.warn('signer not set: getNetworks is returning an empty list')
       return []
     }
 
@@ -481,6 +490,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       this.events.emit('accountsChanged', [accountAddress])
     }
     this.notifyNetworks()
+    this.notifyWalletContext()
   }
 
   notifyLogout() {
@@ -500,7 +510,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   async notifyWalletContext() {
     if (!this.signer) {
-      console.warn('signer is not set, skipping to notify wallet context')
+      console.warn('signer not set: skipping to notify wallet context')
       return
     }
     const walletContext = await this.signer.getWalletContext()

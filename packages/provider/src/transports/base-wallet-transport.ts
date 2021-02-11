@@ -88,7 +88,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
           // the dapp with its networks list
           await this.walletRequestHandler.setDefaultNetwork(defaultNetworkId)
         } else {
-          // notify networks list
+          // notify networks list without changing the default network
           await this.walletRequestHandler.notifyNetworks()
         }
 
