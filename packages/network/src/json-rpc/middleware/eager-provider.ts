@@ -1,18 +1,24 @@
 import { ethers } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
+import { WalletContext } from '../../context'
 
 // EagerProvider will eagerly respond to a provider request from pre-initialized data values.
 //
 // This is useful for saving a few remote calls for responses we're already expecting when
 // communicating to a specific network provider.
+
+export type EagerProviderProps = {
+  accountAddress?: string,
+  chainId?: number,
+  walletContext?: WalletContext
+}
+
 export class EagerProvider implements JsonRpcMiddlewareHandler {
 
-  readonly _accountAddress: string
-  readonly _chainId: number
+  readonly props: EagerProviderProps
 
-  constructor(accountAddress: string, chainId?: number) {
-    this._accountAddress = accountAddress
-    this._chainId = chainId
+  constructor(props: EagerProviderProps) {
+    this.props = props
   }
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
@@ -22,22 +28,29 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
       switch (method) {
         case 'net_version':
-          if (this._chainId) {
-            callback(undefined, { jsonrpc: '2.0', id, result: `${this._chainId}` })
+          if (this.props.chainId) {
+            callback(undefined, { jsonrpc: '2.0', id, result: `${this.props.chainId}` })
             return
           }
           break
 
         case 'eth_chainId':
-          if (this._chainId) {
-            callback(undefined, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this._chainId) })
+          if (this.props.chainId) {
+            callback(undefined, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this.props.chainId) })
             return
           }
           break
 
         case 'eth_accounts':
-          if (this._accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id, result: [this._accountAddress.toLowerCase()] })
+          if (this.props.accountAddress) {
+            callback(undefined, { jsonrpc: '2.0', id, result: [this.props.accountAddress.toLowerCase()] })
+            return
+          }
+          break
+
+        case 'sequence_getWalletContext':
+          if (this.props.walletContext) {
+            callback(undefined, { jsonrpc: '2.0', id, result: this.props.walletContext })
             return
           }
           break

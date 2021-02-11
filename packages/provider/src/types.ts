@@ -1,9 +1,12 @@
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
+import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
 // export class SequenceError extends Error {}
 
 export interface WalletSession {
+  // Wallet context
+  walletContext?: WalletContext
+
   // Account address of the wallet
   accountAddress?: string
 
@@ -72,9 +75,9 @@ export interface ProviderMessageTransport {
   sendMessage(message: ProviderMessage<any>): void
 }
 
-export type WalletMessageEvent = 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'networks' | 'debug'
+export type WalletMessageEvent = 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'networks' | 'walletContext' | '_debug'
 
-export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | 'debug' | WalletMessageEvent
+export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | '_debug' | WalletMessageEvent
 
 export enum ProviderMessageType {
   MESSAGE = 'message',
@@ -83,6 +86,7 @@ export enum ProviderMessageType {
   CHAIN_CHANGED = 'chainChanged',
   ACCOUNTS_CHANGED = 'accountsChanged',
   NETWORKS = 'networks',
+  WALLET_CONTEXT = 'walletContext',
 
   DEBUG = '_debug'
 }

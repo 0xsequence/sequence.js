@@ -22,7 +22,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
-  private defaultNetworkId?: string | number
+  private _defaultNetworkId?: string | number
 
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
@@ -45,9 +45,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (testnetNetworks && testnetNetworks.length > 0) {
       this.testnetNetworks = testnetNetworks
     }
-    if (this.defaultNetworkId) {
-      if (!(await this.setDefaultChain(this.defaultNetworkId))) {
-        throw new Error(`WalletRequestHandler setup unable to set defaulNetworkId ${this.defaultNetworkId}`)
+    if (this._defaultNetworkId) {
+      if (!(await this.setDefaultNetwork(this._defaultNetworkId))) {
+        throw new Error(`WalletRequestHandler setup unable to set defaulNetworkId ${this._defaultNetworkId}`)
       }
     }
   }
@@ -84,7 +84,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     try {
 
       // only allow public json rpc method to the provider when user is not logged in, aka signer is not set
-      if ((!this.signer || this.signer === null) && !publicJsonRpcMethods.includes(request.method)) {
+      if ((!this.signer || this.signer === null) && !permittedJsonRpcMethods.includes(request.method)) {
         throw new Error(`not logged in. ${request.method} is unavailable`)
       }
 
@@ -376,13 +376,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         // set default network of wallet
-        case 'sequence_setDefaultChain': {
+        case 'sequence_setDefaultNetwork': {
           const [defaultNetworkId] = request.params
           
           if (!defaultNetworkId) {
             throw new Error('invalid request, method argument defaultNetworkId cannot be empty')
           }
-          const ok = await this.setDefaultChain(defaultNetworkId)
+          const ok = await this.setDefaultNetwork(defaultNetworkId)
           if (!ok) {
             throw new Error(`unable to set default network ${defaultNetworkId}`)
           }
@@ -437,9 +437,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  async setDefaultChain(chainId: string | number): Promise<boolean> {
+  async setDefaultNetwork(chainId: string | number): Promise<boolean> {
     if (!chainId) return
-    this.defaultNetworkId = chainId
+    this._defaultNetworkId = chainId
     if (this.signer && (<any>this.signer).setNetworks) {
       (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
       await this.notifyNetworks()
@@ -447,6 +447,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     } else {
       return false
     }
+  }
+
+  get defaultNetworkId(): string | number | undefined {
+    return this._defaultNetworkId
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
@@ -494,6 +498,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
+  async notifyWalletContext() {
+    if (!this.signer) {
+      console.warn('signer is not set, skipping to notify wallet context')
+      return
+    }
+    const walletContext = await this.signer.getWalletContext()
+    this.events.emit('walletContext', walletContext)
+  }
+
   getSigner(): Signer | null {
     return this.signer
   }
@@ -511,10 +524,10 @@ export interface WalletUserPrompter {
   promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
 }
 
-const publicJsonRpcMethods = [
+const permittedJsonRpcMethods = [
   'net_version', 'eth_chainId', 'eth_getBalance', 'eth_getTransactionCount',
   'eth_blockNumber', 'eth_getBlockByNumber', 'eth_getBlockByHash', 'eth_getTransactionByHash',
   'eth_getCode', 'eth_estimateGas', 'eth_gasPrice',
 
-  'sequence_getWalletContext', 'sequence_getNetworks', 'sequence_setDefaultChain'
+  'sequence_getWalletContext', 'sequence_getNetworks', 'sequence_setDefaultNetwork'
 ]

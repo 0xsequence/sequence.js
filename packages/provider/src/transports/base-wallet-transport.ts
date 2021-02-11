@@ -6,13 +6,13 @@ import {
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export abstract class BaseWalletTransport implements WalletTransport {
 
   protected walletRequestHandler: WalletRequestHandler
   protected _sessionId: string
-  protected registered: boolean
+  protected _registered: boolean
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
@@ -34,6 +34,15 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
     // TODO: add .on('chainChanged') event? or covered by networks?
 
+    this.walletRequestHandler.on('walletContext', (walletContext: WalletContext) => {
+      if (!this.registered || !walletContext) return
+      this.notifyWalletContext(walletContext)
+    })
+
+  }
+
+  get registered(): boolean {
+    return this._registered
   }
 
   register() {
@@ -58,6 +67,9 @@ export abstract class BaseWalletTransport implements WalletTransport {
         // success, respond with 'connect' event to the dapp directly
         this.notifyConnect({ sessionId: this._sessionId })
 
+        // notify wallet context
+        await this.walletRequestHandler.notifyWalletContext()
+
         // notify account and network details depending on state
         const accountAddress = await this.walletRequestHandler.getAddress()
 
@@ -72,7 +84,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
         // set defaultChain upon connecting if one is requested
         const defaultNetworkId = message.data.defaultNetworkId
         if (defaultNetworkId) {
-          await this.walletRequestHandler.setDefaultChain(defaultNetworkId)
+          // sets dapp network on the remote wallet, which will then notify
+          // the dapp with its networks list
+          await this.walletRequestHandler.setDefaultNetwork(defaultNetworkId)
+        } else {
+          // notify networks list
+          await this.walletRequestHandler.notifyNetworks()
         }
 
         return
@@ -136,6 +153,14 @@ export abstract class BaseWalletTransport implements WalletTransport {
       idx: -1,
       type: ProviderMessageType.NETWORKS,
       data: networks
+    })
+  }
+
+  notifyWalletContext(walletContext: WalletContext) {
+    this.sendMessage({
+      idx: -1,
+      type: ProviderMessageType.WALLET_CONTEXT,
+      data: walletContext
     })
   }
 

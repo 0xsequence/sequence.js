@@ -413,6 +413,11 @@ export class Account extends Signer {
     this.options.networks = ensureValidNetworks(sortNetworks(networks, defaultChainId))
 
     // Account/wallet instances using the initial configuration and network list
+    //
+    // TODO: we can make an optimization where if mainnetNetworks and testnetNetworks lists
+    // haven't changed between calls, and only the defaultChainId, as well, the group between
+    // mainnet vs testnet has not changed either -- aka just defaultChainId within a group,
+    // then we can avoid rebuilding all of these objects and instead just sort them
     this._wallets = this.options.networks.map(network => {
       const wallet = new Wallet({
         config: this.options.initialConfig,

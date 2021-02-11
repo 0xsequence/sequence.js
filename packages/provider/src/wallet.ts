@@ -110,7 +110,7 @@ export class Wallet implements WalletProvider {
 
     // .....
     this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
-      if (request.method === 'sequence_setDefaultChain') return true
+      if (request.method === 'sequence_setDefaultNetwork') return true
 
       const isLoggedIn = this.isLoggedIn()
       if (!isLoggedIn) {
@@ -160,6 +160,11 @@ export class Wallet implements WalletProvider {
     // below will update the networks automatically when the wallet networks change
     this.transport.messageProvider.on('networks', (networks: NetworkConfig[]) => {
       this.useSession({ networks: networks }, true)
+    })
+
+    // below will update the wallet context automatically
+    this.transport.messageProvider.on('walletContext', (walletContext: WalletContext) => {
+      this.useSession({ walletContext: walletContext }, true)
     })
 
     // Load existing session from localStorage
@@ -311,7 +316,7 @@ export class Wallet implements WalletProvider {
       const router = new JsonRpcRouter([
         loggingProviderMiddleware,
         exceptionProviderMiddleware,
-        new EagerProvider(this.session.accountAddress),
+        new EagerProvider({ accountAddress: this.session.accountAddress, walletContext: this.session.walletContext }),
         new SigningProvider(this.transport.provider),
         this.transport.cachedProvider,
       ], new JsonRpcSender(rpcProvider))
@@ -324,7 +329,7 @@ export class Wallet implements WalletProvider {
       const router = new JsonRpcRouter([
         loggingProviderMiddleware,
         exceptionProviderMiddleware,
-        new EagerProvider(this.session.accountAddress, network.chainId),
+        new EagerProvider({ accountAddress: this.session.accountAddress, walletContext: this.session.walletContext, chainId: network.chainId }),
         new SigningProvider(this.transport.provider),
         new CachedProvider(network.chainId),
       ], new JsonRpcSender(rpcProvider))
@@ -402,6 +407,13 @@ export class Wallet implements WalletProvider {
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
     if (!this.session) this.session = {}
 
+    // setup wallet context
+    if (this.config.walletContext) {
+      this.session.walletContext = this.config.walletContext
+    } else {
+      this.session.walletContext = session.walletContext
+    }
+
     // setup account
     if (session.accountAddress) {
       this.useAccountAddress(session.accountAddress)
@@ -433,7 +445,7 @@ export class Wallet implements WalletProvider {
     if (!this.session) this.session = {}
 
     // confirm default network is set correctly
-    if (this.config.defaultNetworkId) {
+    if (this.config.defaultNetworkId && networks && networks.length > 0) {
       if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
         throw new Error(`expecting defaultNetworkId '${this.config.defaultNetworkId}' but is set to '${networks[0].name}'`)
       }
@@ -441,6 +453,11 @@ export class Wallet implements WalletProvider {
 
     // set networks on session object
     this.session.networks = networks
+
+    // short-circuit if setting empty network list (aka logged out state)
+    if (!this.session.networks || this.session.networks.length === 0) {
+      return
+    }
 
     // check if any custom network settings, otherwise return early
     if (!this.config.networks && !this.config.networkRpcUrl) {
@@ -478,10 +495,6 @@ export interface ProviderConfig {
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
 
-  // Sequence Wallet Modules Context override. By default (and recommended), the
-  // WalletContext is returned by the wallet app upon login.
-  walletContext?: WalletContext
-
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list supplied from the wallet upon login,
   // and settings here take precedence such as overriding a relayer setting, or rpcUrl.
@@ -510,6 +523,13 @@ export interface ProviderConfig {
     }
 
   }
+
+  // Sequence Wallet Modules Context override. By default (and recommended), the
+  // WalletContext used the one returned by the wallet app upon login.
+  //
+  // NOTE: do not use this option unless you know what you're doing
+  walletContext?: WalletContext
+
 }
 
 export const DefaultProviderConfig: ProviderConfig = {
