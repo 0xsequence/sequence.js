@@ -33,11 +33,11 @@ export class ProxyMessageProvider extends BaseProviderTransport {
       this.port.events.emit('disconnect', args)
     })
 
-    this.registered = true
+    this._registered = true
   }
 
   unregister = () => {
-    this.registered = false
+    this._registered = false
     this.closeWallet()
     this.events.removeAllListeners()
     this.port.handleMessage = undefined

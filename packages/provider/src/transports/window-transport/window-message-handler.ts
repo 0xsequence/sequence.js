@@ -31,12 +31,12 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // listen for window-transport requests
     window.addEventListener('message', this.onWindowEvent, false)
-    this.registered = true
+    this._registered = true
   }
 
   unregister() {
     window.removeEventListener('message', this.onWindowEvent)
-    this.registered = false
+    this._registered = false
   }
 
   // onmessage is called when (the wallet) receives request messages from the dapp

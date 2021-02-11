@@ -30,11 +30,11 @@ export class WindowMessageProvider extends BaseProviderTransport {
       }
     })
 
-    this.registered = true
+    this._registered = true
   }
 
   unregister = () => {
-    this.registered = false
+    this._registered = false
     this.closeWallet()
 
     // disable message listener

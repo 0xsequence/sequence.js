@@ -7,7 +7,7 @@ import {
   WalletSession, ConnectionState
 } from '../types'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 
 export const PROVIDER_CONNECT_TIMEOUT = 8000 // in ms
 
@@ -27,12 +27,17 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   protected accountPayload: string
   protected networksPayload: NetworkConfig[]
+  protected walletContextPayload: WalletContext
 
-  protected registered: boolean
+  protected _registered: boolean
 
   constructor() {
     this.connection = ConnectionState.DISCONNECTED
-    this.registered = false
+    this._registered = false
+  }
+
+  get registered(): boolean {
+    return this._registered
   }
 
   register() {
@@ -182,6 +187,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       this.events.emit('networks', this.networksPayload)
       return
     }
+
+    // NOTIFY WALLET_CONTEXT -- when a user connects or logs in
+    if (message.type === ProviderMessageType.WALLET_CONTEXT) {
+      this.walletContextPayload = message.data
+      this.events.emit('walletContext', this.walletContextPayload)
+      return
+    }
+
   }
 
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
@@ -279,10 +292,20 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         this.events.once('networks', (networks) => {
           resolve(networks)
         })
+      }),
+      new Promise<WalletContext>(resolve => {
+        if (this.walletContextPayload) {
+          resolve(this.walletContextPayload)
+          return
+        }
+        this.events.once('walletContext', (walletContext) => {
+          resolve(walletContext)
+        })
       })
+
     ]).then(values => {
-      const [ accountAddress, networks ] = values
-      return { accountAddress, networks }
+      const [ accountAddress, networks, walletContext ] = values
+      return { accountAddress, networks, walletContext }
     })
 
     const disconnect = new Promise((_, reject) => {
@@ -347,6 +370,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     this.accountPayload = undefined
     this.networksPayload = undefined
+    this.walletContextPayload = undefined
 
     this.events.emit('disconnect')
   }
