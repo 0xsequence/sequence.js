@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.9.3
+
+### Patch Changes
+
+- - minor improvements
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.9.3
+  - @0xsequence/config@0.9.3
+  - @0xsequence/guard@0.9.3
+  - @0xsequence/network@0.9.3
+  - @0xsequence/relayer@0.9.3
+  - @0xsequence/transactions@0.9.3
+  - @0xsequence/utils@0.9.3
+
 ## 0.9.1
 
 ### Patch Changes

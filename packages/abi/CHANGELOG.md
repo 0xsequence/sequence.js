@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.9.3
+
+### Patch Changes
+
+- - minor improvements
+
 ## 0.9.1
 
 ### Patch Changes
