@@ -1,4 +1,4 @@
-import { SequenceUtilsFinder, sortConfig, WalletConfig } from "@0xsequence/config"
+import { editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from "@0xsequence/config"
 import { NetworkConfig, WalletContext } from "@0xsequence/network"
 import { Account } from "@0xsequence/wallet"
 import { ethers, Signer } from "ethers"
@@ -26,10 +26,7 @@ export async function newSession(args: {
   const authProvider = new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
   const configFinder = new SequenceUtilsFinder(authProvider)
 
-  const normalizedSigners = Promise.all(signers.map(async (s) => ({
-    address: ethers.utils.getAddress(await s.signer.getAddress()),
-    weight: ethers.BigNumber.from(s.weight).toNumber()
-  })))
+  const solvedSigners = Promise.all(signers.map(async (s) => ({ ...s, address: await s.signer.getAddress() })))
 
   const existingWallet = (await configFinder.findLastWalletOfInitialSigner({
     signer: referenceSigner,
@@ -56,17 +53,10 @@ export async function newSession(args: {
       context: context
     }, ...signers.map((s) => s.signer))
 
-    // Generate and update configuration
-    const prevConfigAddresses = config.signers.map((s) => ethers.utils.getAddress(s.address))
-
     const [newConfig, tx] = await account.updateConfig(
-      sortConfig({
-        address: config.address,
-        threshold: ethers.BigNumber.from(thershold).toNumber(),
-        signers: [
-          ...config.signers,
-          ...(await normalizedSigners).filter((s) => prevConfigAddresses.indexOf(s.address) === -1)
-        ]
+      editConfig(config, {
+        threshold: thershold,
+        set: await solvedSigners
       }), noIndex ? false : true
     )
 
@@ -81,10 +71,7 @@ export async function newSession(args: {
     }, ...signers.map((s) => s.signer))
   }
 
-  const config = sortConfig({
-    threshold: ethers.BigNumber.from(thershold).toNumber(),
-    signers: await normalizedSigners
-  })
+  const config = genConfig(thershold, await solvedSigners)
 
   const account = new Account({
     initialConfig: config,

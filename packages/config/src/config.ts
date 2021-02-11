@@ -138,3 +138,36 @@ export const compareAddr = (a: string, b: string): number => {
     return 1
   }
 }
+
+
+export function editConfig(config: WalletConfig, args: {
+  threshold?: ethers.BigNumberish,
+  set?: { weight: ethers.BigNumberish, address: string }[],
+  del?: { address: string }[]
+}): WalletConfig {
+  const normSigner = (s: { weight: ethers.BigNumberish, address: string }) => ({ weight: ethers.BigNumber.from(s.weight).toNumber(), address: ethers.utils.getAddress(s.address) })
+
+  const normSrcSigners = config.signers.map(normSigner)
+
+  const normSetSigners = args.set ? args.set.map(normSigner) : []
+  const normDelAddress = args.del ? args.del.map((a) => ethers.utils.getAddress(a.address)) : []
+
+  const normSetAddress = normSetSigners.map((s) => s.address)
+
+  const newSigners = normSrcSigners
+    .filter((s) => normDelAddress.indexOf(s.address) === -1 && normSetAddress.indexOf(s.address) === -1)
+    .concat(...normSetSigners)
+
+  return sortConfig({
+    address: config.address,
+    threshold: args.threshold ? ethers.BigNumber.from(args.threshold).toNumber() : config.threshold,
+    signers: newSigners
+  })
+}
+
+export function genConfig(threshold: ethers.BigNumberish, signers: { weight: ethers.BigNumberish, address: string }[]): WalletConfig {
+  return sortConfig({
+    threshold: ethers.BigNumber.from(threshold).toNumber(),
+    signers: signers.map((s) => ({ weight: ethers.BigNumber.from(s.weight).toNumber(), address: ethers.utils.getAddress(s.address) }))
+  })
+}
