@@ -1,5 +1,13 @@
 # 0xsequence
 
+## 0.9.4
+
+### Patch Changes
+
+- - session improvements
+- Updated dependencies [undefined]
+  - @0xsequence/provider@0.9.4
+
 ## 0.9.3
 
 ### Patch Changes
