@@ -26,6 +26,9 @@ export interface NetworkConfig {
 
   // isAuthChain identifies the network containing wallet config contents.
   isAuthChain?: boolean
+
+  // optional sequence chaind service
+  chaindUrl?: string
 }
 
 export type Networks = NetworkConfig[]
