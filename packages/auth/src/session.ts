@@ -78,7 +78,7 @@ export class Session implements SessionDump {
     const authChain = networks.find((n) => n.isAuthChain)
     if (!authChain) throw Error('Auth chain not found')
   
-    const authProvider = new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
+    const authProvider = authChain.provider ? authChain.provider : new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
     const configFinder = new SequenceUtilsFinder(authProvider)
   
     const solvedSigners = Promise.all(signers.map(async (s) => ({ ...s, address: await s.signer.getAddress() })))

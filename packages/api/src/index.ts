@@ -1,12 +1,13 @@
 export * from './api.gen'
 
 import { ArcadeumAPI as BaseArcadeumAPI } from './api.gen'
+import fetch from 'cross-fetch'
 
 export class ArcadeumAPIClient extends BaseArcadeumAPI {
   jwtAuth: string | undefined = undefined
 
   constructor(hostname: string) {
-    super(hostname, window.fetch)
+    super(hostname, fetch)
     this.fetch = this._fetch
   }
 
@@ -22,7 +23,7 @@ export class ArcadeumAPIClient extends BaseArcadeumAPI {
       // before the request is made
       init!.headers = { ...init!.headers, ...headers }
   
-      window.fetch(input, init).then(resp => {
+      fetch(input, init).then(resp => {
         // after the request has been made..
         resolve(resp)
       }).catch(err => {
