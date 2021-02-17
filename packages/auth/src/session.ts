@@ -10,15 +10,21 @@ export type SessionMeta = {
   expiration?: number
 }
 
+export type SessionJWT = { token: string, expiration: number }
+export type SessionJWTs = { [url: string]: SessionJWT }
+
 export type SessionDump = {
   config: WalletConfig,
   context: WalletContext,
-  jwts:  { [url: string]: string },
+  jwts: SessionJWTs,
   metadata: SessionMeta
 }
+
+const EXPIRATION_JWT_MARGIN = 60 // seconds
+
 export class Session implements SessionDump {
-  public jwts: { [url: string]: string }
-  public authPromises: { url: string, jwt: Promise<string | undefined> }[] = []
+  public jwts: SessionJWTs
+  public authPromises: { url: string, promise: Promise<void> }[] = []
 
   private onAuthCallbacks: (() => void)[] = []
 
@@ -27,7 +33,7 @@ export class Session implements SessionDump {
     public context: WalletContext,
     public account: Account,
     public metadata: SessionMeta,
-    jwts?: { [url: string]: string },
+    jwts?: SessionJWTs,
   ) {
     this.jwts = jwts ? jwts : {}
   }
@@ -37,7 +43,7 @@ export class Session implements SessionDump {
   }
 
   get expiration(): number {
-    return this.metadata.expiration ? this.metadata.expiration : 3e7
+    return this.metadata.expiration ? Math.max(this.metadata.expiration, 120) : 3e7
   }
 
   onAuth(cb: () => void) {
@@ -179,9 +185,9 @@ export class Session implements SessionDump {
     if (!url) throw Error('No chaind url')
 
     const jwt = this.jwts[url]
-    if (jwt) {
+    if (jwt && jwt.expiration > this.now()) {
       const api = new ArcadeumAPIClient(url)
-      api.jwtAuth = jwt
+      api.jwtAuth = jwt.token
       return api
     }
 
@@ -193,7 +199,7 @@ export class Session implements SessionDump {
       return this.auth(net, tries, maxTries)
     }
 
-    await Promise.all(thisAuthPromises.map((p) => p.jwt))
+    await Promise.all(thisAuthPromises.map((p) => p.promise))
     this.authPromises = this.authPromises.filter((p) => thisAuthPromises.indexOf(p) === -1)
 
     return this.auth(net, tries + 1, maxTries)
@@ -205,7 +211,7 @@ export class Session implements SessionDump {
 
     this.authPromises.push({
       url: url,
-      jwt: this.tryAuth(net)
+      promise: this.tryAuth(net)
     })
   }
 
@@ -217,19 +223,17 @@ export class Session implements SessionDump {
 
     const jwt = this.jwts[url]
 
-    // TODO: Check for jwt expiration
-
-    if (!jwt) {
+    if (!jwt || jwt.expiration < this.now()) {
       if (tryAuth) return this.auth(net)
       throw Error('Not authenticated')
     }
 
     const api = new ArcadeumAPIClient(url)
-    api.jwtAuth = jwt
+    api.jwtAuth = jwt.token
     return api
   }
 
-  async tryAuth(net: NetworkConfig | number): Promise<string | undefined> {
+  async tryAuth(net: NetworkConfig | number): Promise<void> {
     const network = this.getNetwork(net)
 
     const ethAuth = new ETHAuth()
@@ -243,25 +247,29 @@ export class Session implements SessionDump {
   
     proof.setIssuedAtNow()
     proof.setExpiryIn(this.expiration)
+
+    const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
+
     proof.claims.app = this.name
   
     proof.signature = await authWallet.wallet.signMessage(proof.messageDigest())
     const proofString = await ethAuth.encodeProof(proof)
   
     const url = (await network).chaindUrl
-    if (!url) return undefined
+    if (!url) return
 
     const api = new ArcadeumAPIClient(url)
 
     try {
       const authResp = await api.getAuthToken({ ewtString: proofString })
       if (authResp?.status === true && authResp.jwtToken.length !== 0) {
-        this.jwts[url] = authResp.jwtToken
+        this.jwts[url] = {
+          token: authResp.jwtToken,
+          expiration: expiration
+        }
+
         this.onAuthCallbacks.forEach((cb) => { try { cb() } catch {} })
-        return authResp.jwtToken
-      } else {
-        return undefined
-      }
+      } else { }
     } catch {}
   }
 
@@ -286,5 +294,9 @@ export class Session implements SessionDump {
 
     if (!network) throw Error('Network not found')
     return network
+  }
+
+  private now(): number {
+    return Math.floor(new Date().getTime() / 1000)
   }
 }
