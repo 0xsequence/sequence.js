@@ -18,7 +18,7 @@ export type SessionDump = {
 }
 export class Session implements SessionDump {
   public jwts: { [url: string]: string }
-  public authPromises: { url: string, jwt: Promise<string | undefined>, failed: boolean }[] = []
+  public authPromises: { url: string, jwt: Promise<string | undefined> }[] = []
 
   private onAuthCallbacks: (() => void)[] = []
 
@@ -116,7 +116,7 @@ export class Session implements SessionDump {
       )
 
       // Fire JWT requests before opening session
-      networks.forEach((n) => session.scheduleAuth(n))
+      networks.map((n) => session.scheduleAuth(n))
 
       const [newConfig] = await account.updateConfig(
         editConfig(config, {
@@ -173,40 +173,30 @@ export class Session implements SessionDump {
     )
   }
 
-  async auth(net: NetworkConfig | number): Promise<ArcadeumAPIClient> {
-    const network = this.getNetwork(net)
-    const url = (await network).chaindUrl
+  async auth(net: NetworkConfig | number, tries: number = 0, maxTries: number = 5): Promise<ArcadeumAPIClient> {
+    const network = await this.getNetwork(net)
+    const url = network.chaindUrl
     if (!url) throw Error('No chaind url')
 
-    const candidateIndex = this.authPromises.findIndex((p) => p.url === url && !p.failed)
-    const countFailed = this.authPromises.filter((c) => c.failed).length
-
-    if (countFailed >= 10) throw Error('Too many JWT retries ' + url)
-
-    if (candidateIndex !== -1) {
-      const candidate = this.authPromises[candidateIndex]
-
-      const jwt = await candidate.jwt
-
-      if (jwt) {
-        const api = new ArcadeumAPIClient(url)
-        api.jwtAuth = jwt
-        return api
-      } else {
-        // maybe delete entry instead? inifinite loop risk
-        this.authPromises[candidateIndex].failed = true
-
-        // re-start process, may be other jwt requests
-        return this.auth(net)
-      }
-    } else {
-      console.log("JWT Request not found")
+    const jwt = this.jwts[url]
+    if (jwt) {
+      const api = new ArcadeumAPIClient(url)
+      api.jwtAuth = jwt
+      return api
     }
 
-    // Auth failed or no auth for net
-    this.scheduleAuth(await network)
+    const thisAuthPromises = this.authPromises.filter((p) => p.url === url)
 
-    return this.auth(net)
+    if (thisAuthPromises.length === 0) {
+      if (tries >= maxTries) throw Error('Error getting JWT token')
+      this.scheduleAuth(network)
+      return this.auth(net, tries, maxTries)
+    }
+
+    await Promise.all(thisAuthPromises.map((p) => p.jwt))
+    this.authPromises = this.authPromises.filter((p) => thisAuthPromises.indexOf(p) === -1)
+
+    return this.auth(net, tries + 1, maxTries)
   }
 
   scheduleAuth(net: NetworkConfig): Promise<void> {
@@ -215,7 +205,6 @@ export class Session implements SessionDump {
 
     this.authPromises.push({
       url: url,
-      failed: false,
       jwt: this.tryAuth(net)
     })
   }
@@ -273,9 +262,7 @@ export class Session implements SessionDump {
       } else {
         return undefined
       }
-    } catch {
-      console.log("get auth error")
-    }
+    } catch {}
   }
 
   dump(): SessionDump {

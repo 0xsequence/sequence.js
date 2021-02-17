@@ -47,6 +47,10 @@ export const ValidateSequenceUndeployedContractAccountProof = (context?: WalletC
       return { isValid: false }
     }
 
+    // The contract must not be deployed
+    const walletCode = ethers.utils.arrayify(await provider.getCode(proof.address))
+    if (walletCode.length !== 0) return { isValid: false }
+
     // Compute eip712 message digest from the proof claims
     const message = proof.messageDigest()
 
