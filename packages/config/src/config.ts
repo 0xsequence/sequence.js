@@ -39,6 +39,7 @@ export interface WalletState {
   published?: boolean
 }
 
+// TODO: createWalletConfig and genConfig are very similar, lets update + remove one
 export const createWalletConfig = async (threshold: number, signers: { weight: number, signer: string | AbstractSigner }[]): Promise<WalletConfig> => {
   const config: WalletConfig = {
     threshold,
@@ -139,7 +140,6 @@ export const compareAddr = (a: string, b: string): number => {
   }
 }
 
-
 export function editConfig(config: WalletConfig, args: {
   threshold?: ethers.BigNumberish,
   set?: { weight: ethers.BigNumberish, address: string }[],
@@ -165,6 +165,8 @@ export function editConfig(config: WalletConfig, args: {
   })
 }
 
+// TODO: very similar to createWalletConfig, but doesn't allow an AbstractSigner object
+// TODO: lets also check isUsableConfig before returning it
 export function genConfig(threshold: ethers.BigNumberish, signers: { weight: ethers.BigNumberish, address: string }[]): WalletConfig {
   return sortConfig({
     threshold: ethers.BigNumber.from(threshold).toNumber(),

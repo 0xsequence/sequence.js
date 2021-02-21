@@ -22,7 +22,7 @@
     "@0xsequence/config": "^0.9.3",
     "@0xsequence/network": "^0.9.3",
     "@0xsequence/wallet": "^0.9.3",
-    "@0xsequence/ethauth": "^0.4.1",
+    "@0xsequence/ethauth": "^0.4.3",
     "ethers": "^5.0.27"
   },
   "peerDependencies": {},

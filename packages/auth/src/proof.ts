@@ -3,7 +3,7 @@ import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@0xsequ
 import { sequenceContext, WalletContext } from '@0xsequence/network'
 import { packMessageData, isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'
 
-export const ValidateSequenceDeployedContractAccountProof: ValidatorFunc = async (provider: ethers.providers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean, address?: string }> => {
+export const ValidateSequenceDeployedWalletProof: ValidatorFunc = async (provider: ethers.providers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean, address?: string }> => {
   if (!provider || provider === undefined || chainId === undefined) {
     return { isValid: false }
   }
@@ -14,7 +14,7 @@ export const ValidateSequenceDeployedContractAccountProof: ValidatorFunc = async
   // Early check to ensure the contract wallet has been deployed
   const walletCode = await provider.getCode(proof.address)
   if (walletCode === '0x' || walletCode.length <= 2) {
-    throw new Error('ValidateSequenceDeployedContractAccountProof failed. unable to fetch wallet contract code')
+    throw new Error('ValidateSequenceDeployedWalletProof failed. unable to fetch wallet contract code')
   }
 
   // Call EIP-1271 IsValidSignature(bytes32, bytes) method on the deployed wallet. Note: for undeployed
@@ -37,7 +37,7 @@ export const ValidateSequenceDeployedContractAccountProof: ValidatorFunc = async
   }
 }
 
-export const ValidateSequenceUndeployedContractAccountProof = (context?: WalletContext): ValidatorFunc => {
+export const ValidateSequenceUndeployedWalletProof = (context?: WalletContext): ValidatorFunc => {
   return async (
     provider: ethers.providers.JsonRpcProvider,
     chainId: number,

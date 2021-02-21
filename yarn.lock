@@ -2,12 +2,12 @@
 # yarn lockfile v1
 
 
-"@0xsequence/ethauth@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.4.1.tgz#2a7682b5c247cee50d58ea8a81b94509d0367baf"
-  integrity sha512-G7Ggq3absovUNMBQ1oQDtABt7uCJVtyRxMQNSzxrSddKlSI9FkbB9J+f9X5BpYX640SPXP+CE+gPlSI42qqqxw==
+"@0xsequence/ethauth@^0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.4.3.tgz#bfb962ed46623c33e0586f271041e3059ac61fc1"
+  integrity sha512-eIKpcrzXUAXpjZF1WGcV1PlyWZKj8TBR1iTpEgRHyNxaGF0EmGOh20SVkJH9zOpgZpfWUlgCWFMIXcAD4fUDlw==
   dependencies:
-    base64url "^3.0.1"
+    js-base64 "^3.6.0"
 
 "@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
   version "1.1.0"
@@ -3589,11 +3589,6 @@ base64-js@^1.1.2, base64-js@^1.3.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
-
-base64url@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/base64url/-/base64url-3.0.1.tgz#6399d572e2bc3f90a9a8b22d5dbb0a32d33f788d"
-  integrity sha512-ir1UPr3dkwexU7FdV8qBBbNDRUhMmIekYMFZfi+C/sLNnRESKPl23nB9b2pltqfOQNnGzsDdId90AEtG5tCx4A==
 
 base@^0.11.1:
   version "0.11.2"
@@ -8417,6 +8412,11 @@ jest-worker@^26.3.0, jest-worker@^26.6.2:
     "@types/node" "*"
     merge-stream "^2.0.0"
     supports-color "^7.0.0"
+
+js-base64@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.6.0.tgz#773e1de628f4f298d65a7e9842c50244751f5756"
+  integrity sha512-wVdUBYQeY2gY73RIlPrysvpYx+2vheGo8Y1SNQv/BzHToWpAZzJU7Z6uheKMAe+GLSBig5/Ps2nxg/8tRB73xg==
 
 js-sha3@0.5.7, js-sha3@^0.5.7:
   version "0.5.7"
