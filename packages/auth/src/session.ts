@@ -69,7 +69,7 @@ export class Session implements SessionDump {
 
   async auth(net: NetworkConfig | number, tries: number = 0, maxTries: number = 5): Promise<ArcadeumAPIClient> {
     const network = await this.getNetwork(net)
-    const url = network.chaindUrl
+    const url = network.sequenceApiUrl
     if (!url) throw Error('No chaind url')
 
     // TODO: remove # of tries, shouldnt be necessary.
@@ -96,7 +96,7 @@ export class Session implements SessionDump {
   }
 
   scheduleAuth(net: NetworkConfig): Promise<void> {
-    const url = net.chaindUrl
+    const url = net.sequenceApiUrl
     if (!url) return
 
     this.authPromises.push({
@@ -107,7 +107,7 @@ export class Session implements SessionDump {
 
   async getAPI(net: NetworkConfig | number, tryAuth = true): Promise<ArcadeumAPIClient> {
     const network = await this.getNetwork(net)
-    const url = network.chaindUrl
+    const url = network.sequenceApiUrl
 
     if (!url) throw Error('No chaind url')
 
@@ -161,7 +161,7 @@ export class Session implements SessionDump {
     // TODO: ethauth.js v0.4.4:
     // const proofString = await ethAuth.encodeProof(proof, { skipValidation: true })
 
-    const url = (await network).chaindUrl
+    const url = (await network).sequenceApiUrl
     if (!url) return
 
     const api = new ArcadeumAPIClient(url)

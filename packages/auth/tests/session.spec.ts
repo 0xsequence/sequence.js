@@ -276,12 +276,12 @@ describe('Wallet integration', function () {
 
     let alwaysFail: boolean = false
 
-    const chaindUrl = "http://localhost:8099"
+    const sequenceApiUrl = "http://localhost:8099"
 
     beforeEach(() => {
       networksWithApi = [{
         ...networks[0],
-        chaindUrl: chaindUrl
+        sequenceApiUrl: sequenceApiUrl
       }] as NetworkConfig[]
 
       fakeJwt = ethers.utils.hexlify(ethers.utils.randomBytes(64))
@@ -359,7 +359,7 @@ describe('Wallet integration', function () {
   
       await session.auth(networksWithApi[0])
       expect(totalCount).to.equal(1)
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
       expect(proofAddress.toLowerCase()).to.equal(session.account.address.toLowerCase())
     })
 
@@ -379,7 +379,7 @@ describe('Wallet integration', function () {
   
       await session.auth(ethnode.chainId)
       expect(totalCount).to.equal(1)
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
       expect(proofAddress.toLowerCase()).to.equal(session.account.address.toLowerCase())
     })
 
@@ -455,7 +455,7 @@ describe('Wallet integration', function () {
       await Promise.all(session.authPromises.map((p) => p.promise))
 
       expect(totalCount).to.equal(1)
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
       expect(proofAddress.toLowerCase()).to.equal(session.account.address.toLowerCase())
     })
 
@@ -479,7 +479,7 @@ describe('Wallet integration', function () {
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
 
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
     })
 
     it("Should get JWT during session opening", async () => {
@@ -518,7 +518,7 @@ describe('Wallet integration', function () {
       expect(recoverCount["error"]).to.equal(1)
       expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
 
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
     })
 
     it("Should get API with lazy JWT during first session creation", async () => {
@@ -540,7 +540,7 @@ describe('Wallet integration', function () {
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
 
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 
       server.post('/rpc/ArcadeumAPI/FriendList').thenCallback(async (request) => {
         const hasToken = request.headers['authorization'].includes(fakeJwt)
@@ -583,7 +583,7 @@ describe('Wallet integration', function () {
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
 
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 
       server.post('/rpc/ArcadeumAPI/FriendList').thenCallback(async (request) => {
         const hasToken = request.headers['authorization'].includes(fakeJwt)
@@ -671,7 +671,7 @@ describe('Wallet integration', function () {
       const auth = session.auth(networksWithApi[0])
       await expect(auth).to.be.rejected
       expect(totalCount).to.equal(5)
-      expect(session.jwts[chaindUrl]).to.be.undefined
+      expect(session.jwts[sequenceApiUrl]).to.be.undefined
     })
 
     it("Should get API with JWT already present", async () => {
@@ -710,7 +710,7 @@ describe('Wallet integration', function () {
       expect(recoverCount["error"]).to.equal(1)
       expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
 
-      expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+      expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 
       server.post('/rpc/ArcadeumAPI/FriendList').thenCallback(async (request) => {
         const hasToken = request.headers['authorization'].includes(fakeJwt)
@@ -739,7 +739,7 @@ describe('Wallet integration', function () {
       await expect(apiPromise).to.be.rejected
 
       expect(totalCount).to.equal(0)
-      expect(session.jwts[chaindUrl]).to.be.undefined
+      expect(session.jwts[sequenceApiUrl]).to.be.undefined
     })
 
     it("Should fail to get API without api url", async () => {
@@ -761,7 +761,7 @@ describe('Wallet integration', function () {
       await expect(apiPromise).to.be.rejected
 
       expect(totalCount).to.equal(0)
-      expect(session.jwts[chaindUrl]).to.be.undefined
+      expect(session.jwts[sequenceApiUrl]).to.be.undefined
     })
 
     it("Should fail to get JWT with no api configured", async () => {
@@ -783,7 +783,7 @@ describe('Wallet integration', function () {
       await expect(authPromise).to.be.rejected
 
       expect(totalCount).to.equal(0)
-      expect(session.jwts[chaindUrl]).to.be.undefined
+      expect(session.jwts[sequenceApiUrl]).to.be.undefined
     })
 
     describe('With expiration', () => {
@@ -821,8 +821,8 @@ describe('Wallet integration', function () {
         await Promise.all(session.authPromises.map((p) => p.promise))
 
         expect(totalCount).to.equal(1)
-        expect(session.jwts[chaindUrl].expiration).to.equal(baseTime + 240 - 60)
-        expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+        expect(session.jwts[sequenceApiUrl].expiration).to.equal(baseTime + 240 - 60)
+        expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 
         // Force expire (1 hour)
         const newBaseTime = baseTime + (60 * 60)
@@ -833,8 +833,8 @@ describe('Wallet integration', function () {
         await session.getAPI(networksWithApi[0])
 
         expect(totalCount).to.equal(2)
-        expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
-        expect(session.jwts[chaindUrl].expiration).to.equal(newBaseTime + 240 - 60)
+        expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
+        expect(session.jwts[sequenceApiUrl].expiration).to.equal(newBaseTime + 240 - 60)
       })
 
       it("Should force min expiration time", async () => {
@@ -858,8 +858,8 @@ describe('Wallet integration', function () {
         await Promise.all(session.authPromises.map((p) => p.promise))
 
         expect(totalCount).to.equal(1)
-        expect(session.jwts[chaindUrl].expiration).to.equal(baseTime + 120 - 60)
-        expect(session.jwts[chaindUrl].token).to.equal(fakeJwt)
+        expect(session.jwts[sequenceApiUrl].expiration).to.equal(baseTime + 120 - 60)
+        expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
       })
     })
   })
