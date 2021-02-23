@@ -1,5 +1,31 @@
 # @0xsequence/wallet
 
+## 0.9.6
+
+### Patch Changes
+
+- Update ABIs for latest sequence contracts
+- Updated dependencies [undefined]
+  - @0xsequence/config@0.9.6
+  - @0xsequence/network@0.9.6
+  - @0xsequence/relayer@0.9.6
+  - @0xsequence/transactions@0.9.6
+  - @0xsequence/utils@0.9.6
+  - @0xsequence/abi@0.9.6
+  - @0xsequence/guard@0.9.6
+
+## 0.9.5
+
+### Patch Changes
+
+- Implemented session class
+- Updated dependencies [undefined]
+  - @0xsequence/config@0.9.5
+  - @0xsequence/network@0.9.5
+  - @0xsequence/relayer@0.9.5
+  - @0xsequence/transactions@0.9.5
+  - @0xsequence/utils@0.9.5
+
 ## 0.9.3
 
 ### Patch Changes

@@ -1197,7 +1197,7 @@ describe('Wallet integration', function () {
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, 1)).to.be.false
       })
-      it('Should reject signature with not enough weigth but enough signers', async () => {
+      it('Should reject signature with not enough weight but enough signers', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))

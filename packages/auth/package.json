@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "0.9.3",
+  "version": "0.9.6",
   "description": "auth sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
   "source": "src/index.ts",
@@ -9,18 +9,29 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "echo",
+    "test": "yarn test:concurrently 'yarn test:run'",
+    "test:run": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:concurrently": "concurrently -k --success first 'yarn start:hardhat > /dev/null' ",
+    "start:hardhat": "yarn run hardhat node --port 9546",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.9.3",
-    "@0xsequence/network": "^0.9.3",
-    "@0xsequence/wallet": "^0.9.3",
-    "@0xsequence/ethauth": "^0.4.1",
-    "ethers": "^5.0.27"
+    "@0xsequence/abi": "^0.9.6",
+    "@0xsequence/api": "^0.9.6",
+    "@0xsequence/config": "^0.9.6",
+    "@0xsequence/network": "^0.9.6",
+    "@0xsequence/wallet": "^0.9.6",
+    "@0xsequence/ethauth": "^0.4.3",
+    "ethers": "^5.0.31"
   },
   "peerDependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "concurrently": "^5.3.0",
+    "hardhat": "2.0.8",
+    "mocha": "^8.3.0",
+    "mockttp": "^1.1.0"
+  },
   "files": [
     "src",
     "dist"

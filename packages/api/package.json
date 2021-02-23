@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/api",
-  "version": "0.9.3",
+  "version": "0.9.6",
   "description": "api sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/api",
   "source": "src/index.ts",
@@ -12,7 +12,9 @@
     "test": "echo",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "cross-fetch": "^3.0.6"
+  },
   "peerDependencies": {},
   "devDependencies": {},
   "files": [

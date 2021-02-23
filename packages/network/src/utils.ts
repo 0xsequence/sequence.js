@@ -222,14 +222,14 @@ export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaul
 }
 
 export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): NetworkConfig => {
-  if (typeof(chainId) === 'string') {
+  if (typeof chainId === 'string') {
     if (chainId.startsWith('0x')) {
       const id = ethers.BigNumber.from(chainId).toNumber()
       return networks.find(n => n.chainId === id)
     } else {
       return networks.find(n => n.name === chainId)
     }
-  } else if (typeof(chainId) === 'number') {
+  } else if (typeof chainId === 'number') {
     return networks.find(n => n.chainId === chainId)
   } else if ((<NetworkConfig>chainId).chainId) {
     return networks.find(n => n.chainId === (<NetworkConfig>chainId).chainId)
