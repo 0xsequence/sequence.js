@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.9.6
+
+### Patch Changes
+
+- Update ABIs for latest sequence contracts
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.9.6
+
 ## 0.9.5
 
 ### Patch Changes

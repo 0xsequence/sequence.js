@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.9.6
+
+### Patch Changes
+
+- Update ABIs for latest sequence contracts
+
 ## 0.9.5
 
 ### Patch Changes
