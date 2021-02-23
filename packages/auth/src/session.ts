@@ -126,21 +126,6 @@ export class Session implements SessionDump {
   async performAuthRequest(net: NetworkConfig | number): Promise<void> {
     const network = this.getNetwork(net)
 
-    // TODO: one such optimization here we can do is that instead of signing with
-    // every available signer, we pass a list of signers to sign the message,
-    // and lets say we find the minimum set which passes the threshold, then that is all
-    // that we need. In our case, this is just login + guard keys, so we won't require
-    // the session key to sign at all or to be valid.
-    // 
-    // In order to support this, lets add a few wallet config methods and to wallet/Wallet.ts
-    // which will .getMinimumSignersToPassThreshold(): []Signer, which is a bad name,
-    // but that is the idea. Maybe call it, minViableSigners? Then, in the call to `await authWallet.wallet.signMessage(proof.messageDigest())`,
-    // below, maybe `allSigners` argument can either be a boolean or an array of addresses?
-    // or I suppose we can just do `const authWallet = authWallet.wallet.useSigners(authWallet.wallet.minViableSigners())`
-    //
-    // ... or, from .open(), we can identify which is the new "session" address,
-    // then, use .getSigners() from authWallet(), and skip that one by with useSigners().
-
     const ethAuth = new ETHAuth()
     const authWallet = this.account.authWallet()
   
@@ -187,11 +172,6 @@ export class Session implements SessionDump {
       metadata: this.metadata
     }
   }
-
-  // private async getNetwork(net: NetworkConfig | number): Promise<NetworkConfig> {
-  //   const networks = await this.account.getNetworks()
-  //   return findNetworkConfig(networks, net)
-  // }
 
   private async getNetwork(net: NetworkConfig | number): Promise<NetworkConfig> {
     const networks = await this.account.getNetworks()
