@@ -24,7 +24,7 @@
     "@ethersproject/hash": "^5.0.11",
     "@ethersproject/providers": "^5.0.20",
     "@ethersproject/web": "^5.0.13",
-    "ethers": "^5.0.27",
+    "ethers": "^5.0.31",
     "eventemitter3": "^4.0.7"
   },
   "peerDependencies": {},

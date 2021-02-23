@@ -15,7 +15,7 @@
   "dependencies": {
     "@ethersproject/abstract-signer": "5.0.12",
     "@ethersproject/properties": "^5.0.8",
-    "ethers": "^5.0.27"
+    "ethers": "^5.0.31"
   },
   "peerDependencies": {},
   "devDependencies": {},
