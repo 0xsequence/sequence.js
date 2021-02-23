@@ -1,5 +1,14 @@
 # @0xsequence/multicall
 
+## 0.9.5
+
+### Patch Changes
+
+- Implemented session class
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.9.5
+  - @0xsequence/utils@0.9.5
+
 ## 0.9.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.9.5
+
+### Patch Changes
+
+- Implemented session class
+
 ## 0.9.3
 
 ### Patch Changes

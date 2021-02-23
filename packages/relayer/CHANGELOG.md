@@ -1,5 +1,14 @@
 # @0xsequence/relayer
 
+## 0.9.5
+
+### Patch Changes
+
+- Implemented session class
+- Updated dependencies [undefined]
+  - @0xsequence/config@0.9.5
+  - @0xsequence/transactions@0.9.5
+
 ## 0.9.3
 
 ### Patch Changes
