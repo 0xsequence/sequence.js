@@ -113,7 +113,7 @@ describe('Wallet integration', function () {
     expect(session.config.address).to.be.undefined
     expect(session.config.threshold).to.equal(1)
     expect(session.config.signers.length).to.equal(1)
-    expect(session.config.signers[0].address).to.equal(referenceSigner.address.toLowerCase())
+    expect(session.config.signers[0].address).to.equal(referenceSigner.address)
     expect(session.config.signers[0].weight).to.equal(1)
 
     await session.account.sendTransaction({ to: referenceSigner.address })
@@ -171,12 +171,12 @@ describe('Wallet integration', function () {
 
     const [ogSignerId, signerId] = compareAddr(referenceSigner.address, newSigner.address) === 1 ? [1, 0] : [0, 1]
 
-    expect(session.account.address.toLowerCase()).to.equal(ogSession.account.address.toLowerCase())
+    expect(session.account.address).to.equal(ogSession.account.address)
     expect(session.config.threshold).to.equal(2)
     expect(session.config.signers.length).to.equal(2)
-    expect(session.config.signers[ogSignerId].address.toLowerCase()).to.equal(referenceSigner.address.toLowerCase())
+    expect(session.config.signers[ogSignerId].address).to.equal(referenceSigner.address)
     expect(session.config.signers[ogSignerId].weight).to.equal(1)
-    expect(session.config.signers[signerId].address.toLowerCase()).to.equal(newSigner.address.toLowerCase())
+    expect(session.config.signers[signerId].address).to.equal(newSigner.address)
     expect(session.config.signers[signerId].weight).to.equal(1)
   })
 
@@ -210,7 +210,7 @@ describe('Wallet integration', function () {
       deepSearch: true
     })
 
-    expect(ogSession.account.address.toLowerCase()).to.equal(session.account.address.toLowerCase())
+    expect(ogSession.account.address).to.equal(session.account.address)
   })
 
   it("Should fail to open session without authChain", async () => {
@@ -260,7 +260,7 @@ describe('Wallet integration', function () {
       deepSearch: false
     })
 
-    expect(ogSession.account.address.toLowerCase()).to.not.equal(session.account.address.toLowerCase())
+    expect(ogSession.account.address).to.not.equal(session.account.address)
   })
 
   describe('JWT Auth', () => {
@@ -306,7 +306,7 @@ describe('Wallet integration', function () {
 
         try {
           const proof = await ethauth.decodeProof(request.body.json['ewtString'])
-          proofAddress = proof.address.toLowerCase()
+          proofAddress = ethers.utils.getAddress(proof.address)
 
           if (recoverCount[proofAddress]) {
             recoverCount[proofAddress]++
@@ -360,7 +360,7 @@ describe('Wallet integration', function () {
       await session.auth(networksWithApi[0])
       expect(totalCount).to.equal(1)
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
-      expect(proofAddress.toLowerCase()).to.equal(session.account.address.toLowerCase())
+      expect(proofAddress).to.equal(session.account.address)
     })
 
     it("Should get JWT token (using network number)", async () => {
@@ -380,7 +380,7 @@ describe('Wallet integration', function () {
       await session.auth(ethnode.chainId)
       expect(totalCount).to.equal(1)
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
-      expect(proofAddress.toLowerCase()).to.equal(session.account.address.toLowerCase())
+      expect(proofAddress).to.equal(session.account.address)
     })
 
     it("Should fail to get JWT token (using non-existing network)", async () => {
@@ -456,7 +456,7 @@ describe('Wallet integration', function () {
 
       expect(totalCount).to.equal(1)
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
-      expect(proofAddress.toLowerCase()).to.equal(session.account.address.toLowerCase())
+      expect(proofAddress).to.equal(session.account.address)
     })
 
     it("Should get JWT during first session creation", async () => {
@@ -477,7 +477,7 @@ describe('Wallet integration', function () {
       await Promise.all(session.authPromises.map((p) => p.promise))
 
       expect(totalCount).to.equal(1)
-      expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
+      expect(recoverCount[session.account.address]).to.equal(1)
 
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
     })
@@ -516,7 +516,7 @@ describe('Wallet integration', function () {
 
       expect(totalCount).to.equal(2)
       expect(recoverCount["error"]).to.equal(1)
-      expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
+      expect(recoverCount[session.account.address]).to.equal(1)
 
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
     })
@@ -538,7 +538,7 @@ describe('Wallet integration', function () {
       const api = await session.getAPI(networksWithApi[0])
 
       expect(totalCount).to.equal(1)
-      expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
+      expect(recoverCount[session.account.address]).to.equal(1)
 
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 
@@ -581,7 +581,7 @@ describe('Wallet integration', function () {
       const api = await session.getAPI(networksWithApi[0])
 
       expect(totalCount).to.equal(1)
-      expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
+      expect(recoverCount[session.account.address]).to.equal(1)
 
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 
@@ -708,7 +708,7 @@ describe('Wallet integration', function () {
 
       expect(totalCount).to.equal(2)
       expect(recoverCount["error"]).to.equal(1)
-      expect(recoverCount[session.account.address.toLowerCase()]).to.equal(1)
+      expect(recoverCount[session.account.address]).to.equal(1)
 
       expect(session.jwts[sequenceApiUrl].token).to.equal(fakeJwt)
 

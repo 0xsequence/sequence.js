@@ -29,19 +29,19 @@ export const tests = async () => {
   const chainId = await signer.getChainId()
 
   await test('getAddress', async () => {
-    assert.equal(address.toLowerCase(), '0x1abe642a25d9f3a725f07c622abd4356646c1820', 'wallet address')
+    assert.equal(address, ethers.utils.getAddress('0x1abe642a25d9f3a725f07c622abd4356646c1820'), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
     await walletProvider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
       assert.true(!err, 'error is empty')
       assert.true(!!resp, 'response successful')
-      assert.true(resp.result[0] === address.toLowerCase(), 'response address check')
+      assert.true(resp.result[0] === address, 'response address check')
     })
 
     const resp = await provider.send('eth_accounts', [])
     assert.true(!!resp, 'response successful')
-    assert.true(resp[0] === address.toLowerCase(), 'response address check')
+    assert.true(resp[0] === address, 'response address check')
   })
 
   await test('get chain id', async () => {
@@ -93,10 +93,10 @@ export const tests = async () => {
     const walletConfig = await recoverConfig(subDigest, sig)
 
     const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+    assert.true(recoveredWalletAddress === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
 
 
     // NOTE: below is to verify and recover signature of an EOA account
@@ -172,9 +172,9 @@ export const tests = async () => {
     const walletConfig = await recoverConfig(subDigest, sig)
 
     const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress.toLowerCase() === address.toLowerCase(), 'recover address')
+    assert.true(recoveredWalletAddress === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 }

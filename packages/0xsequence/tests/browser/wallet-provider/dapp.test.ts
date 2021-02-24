@@ -87,7 +87,7 @@ export const tests = async () => {
 
   await test('getAccounts', async () => {
     const address = await wallet.getAddress()
-    assert.equal(address.toLowerCase(), '0x1abe642a25d9f3a725f07c622abd4356646c1820'.toLowerCase(), 'wallet address is correct')
+    assert.equal(address, ethers.utils.getAddress('0x1abe642a25d9f3a725f07c622abd4356646c1820'), 'wallet address is correct')
   })
 
   await test('getWalletConfig', async () => {
@@ -98,14 +98,14 @@ export const tests = async () => {
     assert.true(config1.chainId !== undefined, 'config1, chainId is set')
     assert.true(config1.threshold === 1, 'config1, 1 threshold')
     assert.true(config1.signers.length === 1, 'config1, 1 signer')
-    assert.true(config1.signers[0].address === '0x4e37e14f5d5aac4df1151c6e8df78b7541680853', 'config1, signer address')
+    assert.true(config1.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config1, signer address')
     assert.true(config1.signers[0].weight === 1, 'config1, signer weight')
 
     const config2 = allWalletConfigs[0]
     assert.true(config2.chainId !== undefined, 'config2, chainId is set')
     assert.true(config2.threshold === 1, 'config2, 1 threshold')
     assert.true(config2.signers.length === 1, 'config2, 1 signer')
-    assert.true(config2.signers[0].address === '0x4e37e14f5d5aac4df1151c6e8df78b7541680853', 'config2, signer address')
+    assert.true(config2.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config2, signer address')
     assert.true(config2.signers[0].weight === 1, 'config2, signer weight')
   })
 
@@ -118,7 +118,7 @@ export const tests = async () => {
     assert.true(state1.chainId === 31337, 'state1, chainId is 31337')
     assert.true(state1.config.threshold === 1, 'state1, threshold')
     assert.true(state1.config.signers.length === 1, 'state1, 1 signer')
-    assert.true(state1.address.toLowerCase() === (await wallet.getAddress()).toLowerCase(), 'state1, address')
+    assert.true(state1.address === await wallet.getAddress(), 'state1, address')
     // assert.true(state1.deployed, 'state1, deployed')
     // assert.true(state1.publishedLatest, 'state1, publishedLatest')
   })
@@ -163,7 +163,7 @@ export const tests = async () => {
   await test('getSigners', async () => {
     const signers = await signer.getSigners()
     assert.true(signers.length === 1, 'signers, single owner')
-    assert.true(signers[0] === '0x4e37e14f5d5aac4df1151c6e8df78b7541680853', 'signers, check address')
+    assert.true(signers[0] === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'signers, check address')
   })
 
   await test('signMessage on defaultChain', async () => {
@@ -193,10 +193,10 @@ export const tests = async () => {
 
     // Recover the address / config from the signature
     const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(address, message, sig, chainId)
-    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
+    assert.true(walletConfig.address === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
   await test('signTypedData on defaultChain', async () => {
@@ -235,10 +235,10 @@ export const tests = async () => {
 
     // Recover config / address
     const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
-    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
+    assert.true(walletConfig.address === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
   await test('signAuthMessage', async () => {
@@ -276,10 +276,10 @@ export const tests = async () => {
 
     // Recover the address / config from the signature
     const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(address, message, sig, chainId)
-    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
+    assert.true(walletConfig.address === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')    
+    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')    
   })
   
   await test('getBalance', async () => {
@@ -355,9 +355,9 @@ export const tests = async () => {
 
       // transaction is sent to the deployed wallet, if the wallet is deployed.. otherwise its sent to guestModule
       if (beforeWalletDeployed) {
-        assert.equal(txReceipt.to.toLowerCase(), (await wallet.getAddress()).toLowerCase(), 'recipient is correct')
+        assert.equal(txReceipt.to, await wallet.getAddress(), 'recipient is correct')
       } else {
-        assert.equal(txReceipt.to.toLowerCase(), walletContext.guestModule.toLowerCase(), 'recipient is correct')
+        assert.equal(txReceipt.to, walletContext.guestModule, 'recipient is correct')
       }
 
       // Ensure fromAddress sent their eth
@@ -491,9 +491,9 @@ export const tests = async () => {
 
     // confirm all account addresses are the same and correct
     {
-      assert.equal((await wallet.getAddress()).toLowerCase(), await signer.getAddress(), 'wallet and signer address match')
-      assert.equal((await wallet.getAddress()).toLowerCase(), await signer2.getAddress(), 'wallet and signer2 address match')
-      assert.true((await wallet.getAddress()).toLowerCase() !== testAccounts[0].address.toLowerCase(), 'wallet is not subkey address')
+      assert.equal(await wallet.getAddress(), await signer.getAddress(), 'wallet and signer address match')
+      assert.equal(await wallet.getAddress(), await signer2.getAddress(), 'wallet and signer2 address match')
+      assert.true(await wallet.getAddress() !== testAccounts[0].address, 'wallet is not subkey address')
     }
 
     // initial balances

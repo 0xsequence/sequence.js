@@ -16,7 +16,9 @@ export class SequenceUtilsFinder implements ConfigFinder {
     ignoreIndex?: boolean,
     requireIndex?: boolean
   }): Promise<{ config: WalletConfig }> => {
-    const { address, provider, context, ignoreIndex, requireIndex } = args
+    const { provider, context, ignoreIndex, requireIndex } = args
+    const address = ethers.utils.getAddress(args.address)
+
     if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
 
     const knownConfigs = args.knownConfigs ? args.knownConfigs : []
@@ -43,7 +45,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
         return { config: { ...foundConfig, address, chainId } }
       }
     } else {
-      const foundConfig = knownConfigs.find((k) => addressOf({ ...k, address: undefined}, context).toLowerCase() === address.toLowerCase())
+      const foundConfig = knownConfigs.find((k) => addressOf({ ...k, address: undefined}, context) === address)
       if (foundConfig) {
         return { config: { ...{ ...foundConfig, address: undefined }, chainId } }
       }

@@ -96,7 +96,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const accounts = await this.provider.send('eth_accounts', [])
     this._address = accounts[0]
     this._index = 0
-    return this._address
+    return ethers.utils.getAddress(this._address)
   }
 
   signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
@@ -199,7 +199,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
     // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
     return await provider.send('eth_sign', [
-      address.toLowerCase(), ethers.utils.hexlify(data)
+      address, ethers.utils.hexlify(data)
     ])
   }
 
@@ -212,7 +212,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     // })
 
     return await this.provider.send('eth_signTypedData_v4', [
-      (await this.getAddress()).toLowerCase(),
+      await this.getAddress(),
       ethers.utils._TypedDataEncoder.getPayload(domain, types, message)
     ], maybeNetworkId(chainId) || this.defaultChainId)
   }
@@ -309,10 +309,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   async sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId): Promise<string> {
     transaction = shallowCopy(transaction)
 
-    const fromAddress = this.getAddress().then((address) => {
-      if (address) { address = address.toLowerCase() }
-      return address
-    })
+    const fromAddress = this.getAddress()
 
     // NOTE: we do not use provider estimation, and instead rely on our relayer to determine the gasLimit and gasPrice
     //
@@ -329,15 +326,15 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
     return resolveProperties({
       tx: resolveProperties(transaction),
-      sender: fromAddress
+      sender: await fromAddress
     }).then(({ tx, sender }) => {
       if (tx.from != null) {
-        if (tx.from.toLowerCase() !== sender) {
+        if (ethers.utils.getAddress(tx.from) !== sender) {
           // logger.throwArgumentError("from address mismatch", "transaction", transaction)
           throw new Error(`from address mismatch for transaction ${transaction}`)
         }
       } else {
-        tx.from = sender;
+        tx.from = sender
       }
 
       const hexTx = hexlifyTransaction(tx)
@@ -357,7 +354,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   async unlock(password: string): Promise<boolean> {
     const address = await this.getAddress()
-    return this.provider.send("personal_unlockAccount", [address.toLowerCase(), password, null])
+    return this.provider.send("personal_unlockAccount", [address, password, null])
   }
 }
 

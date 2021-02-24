@@ -94,7 +94,7 @@ export const tests = async () => {
       sig,
       await signer.getChainId()
     )
-    assert.equal(walletConfig.address.toLowerCase(), (await wallet.getAddress()).toLowerCase(), 'signMessage, recovered address ok')
+    assert.equal(walletConfig.address, await wallet.getAddress(), 'signMessage, recovered address ok')
   })
 
   await test('signTypedData on defaultChain (in this case, hardhat2)', async () => {
@@ -133,9 +133,9 @@ export const tests = async () => {
 
     // Recover config / address
     const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
-    assert.true(walletConfig.address.toLowerCase() === address.toLowerCase(), 'recover address')
+    assert.true(walletConfig.address === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress.toLowerCase() === walletConfig.signers[0].address.toLowerCase(), 'owner address check')
+    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 }

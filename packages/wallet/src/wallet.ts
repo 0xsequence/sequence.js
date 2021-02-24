@@ -116,7 +116,7 @@ export class Wallet extends Signer {
       throw new Error('wallet config is not usable (strict mode)')
     }
 
-    this.config = sortConfig(config, true)
+    this.config = sortConfig(config)
     this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
   }
 
@@ -241,7 +241,7 @@ export class Wallet extends Signer {
     if (!this._signers || this._signers.length === 0) {
       return []
     }
-    return Promise.all(this._signers.map(s => s.getAddress().then(s => s.toLowerCase())))
+    return Promise.all(this._signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
   }
 
   // chainId returns the network connected to this wallet instance
@@ -403,7 +403,7 @@ export class Wallet extends Signer {
 
     // Sign digest using a set of signers and some optional data
     const signWith = async (signers: AbstractSigner[], auxData?: string) => {
-      const signersAddr = Promise.all(signers.map(s => s.getAddress().then(s => s.toLowerCase())))
+      const signersAddr = Promise.all(signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
 
       const accountBytes = await Promise.all(
         this.config.signers.map(async a => {
@@ -567,7 +567,7 @@ export class Wallet extends Signer {
         [
           this.address,
           config.threshold,
-          sortConfig(config, true).signers.map((s) => ({
+          sortConfig(config).signers.map((s) => ({
             weight: s.weight,
             signer: s.address
           })),
@@ -654,7 +654,7 @@ export class Wallet extends Signer {
       signers: [
         {
           weight: 1,
-          address: (await signer.getAddress()).toLowerCase()
+          address: ethers.utils.getAddress(await signer.getAddress())
         }
       ]
     }

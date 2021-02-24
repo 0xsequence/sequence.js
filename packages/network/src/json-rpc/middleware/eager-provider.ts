@@ -43,7 +43,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
         case 'eth_accounts':
           if (this.props.accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id, result: [this.props.accountAddress.toLowerCase()] })
+            callback(undefined, { jsonrpc: '2.0', id, result: [ethers.utils.getAddress(this.props.accountAddress)] })
             return
           }
           break
