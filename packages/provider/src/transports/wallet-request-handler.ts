@@ -116,7 +116,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_accounts': {
           const walletAddress = await signer.getAddress()
-          response.result = [walletAddress.toLowerCase()]
+          response.result = [walletAddress]
           break
         }
 
@@ -251,12 +251,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getTransactionCount': {
-          const address = (request.params[0] as string).toLowerCase()
+          const address = ethers.utils.getAddress((request.params[0] as string))
           const tag = request.params[1]
 
-          const walletAddress = await signer.getAddress()
+          const walletAddress = ethers.utils.getAddress(await signer.getAddress())
 
-          if (address === walletAddress.toLowerCase()) {
+          if (address === walletAddress) {
             const count = await signer.getTransactionCount(tag)
             response.result = ethers.BigNumber.from(count).toHexString()
           } else {

@@ -77,7 +77,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
   }
 
   isMaticToken(token: string): boolean {
-    return token.toLowerCase() === this.conf.maticToken
+    return ethers.utils.getAddress(token) === ethers.utils.getAddress(this.conf.maticToken)
   }
 
   get posClient() {

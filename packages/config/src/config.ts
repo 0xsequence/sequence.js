@@ -67,8 +67,8 @@ export const isUsableConfig = (config: WalletConfig): boolean => {
 
 export const isValidConfigSigners = (config: WalletConfig, signers: string[]): boolean => {
   if (signers.length === 0) return true
-  const a = config.signers.map(s => s.address.toLowerCase())
-  const b = signers.map(s => s.toLowerCase())
+  const a = config.signers.map(s => ethers.utils.getAddress(s.address))
+  const b = signers.map(s => ethers.utils.getAddress(s))
   let valid = true
   b.forEach(s => {
     if (!a.includes(s)) valid = false
@@ -104,14 +104,12 @@ export const imageHash = (config: WalletConfig): string => {
 }
 
 // sortConfig normalizes the list of signer addreses in a WalletConfig
-export const sortConfig = (config: WalletConfig, downcase: boolean = true): WalletConfig => {
+export const sortConfig = (config: WalletConfig): WalletConfig => {
   config.signers.sort((a, b) => compareAddr(a.address, b.address))
 
   // normalize
-  if (downcase) {
-    config.signers.forEach(s => s.address = s.address.toLowerCase())
-    if (config.address) config.address = config.address.toLowerCase()
-  }
+  config.signers.forEach(s => s.address = ethers.utils.getAddress(s.address))
+  if (config.address) config.address = ethers.utils.getAddress(config.address)
 
   // ensure no duplicate signers in the config
   const signers = config.signers.map(s => s.address)

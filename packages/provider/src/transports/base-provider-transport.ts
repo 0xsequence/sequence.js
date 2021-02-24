@@ -8,6 +8,7 @@ import {
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { ethers } from 'ethers'
 
 export const PROVIDER_CONNECT_TIMEOUT = 8000 // in ms
 
@@ -167,7 +168,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     if (message.type === ProviderMessageType.ACCOUNTS_CHANGED) {
       this.accountPayload = undefined
       if (message.data && message.data.length > 0) {
-        this.accountPayload = message.data[0].toLowerCase()
+        this.accountPayload = ethers.utils.getAddress(message.data[0])
         this.events.emit('accountsChanged', [this.accountPayload])
       } else {
         this.events.emit('accountsChanged', [])

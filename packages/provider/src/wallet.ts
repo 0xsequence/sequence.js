@@ -9,6 +9,7 @@ import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
 import { WalletSession, ProviderMessageEvent, ProviderTransport } from './types'
 import { WalletCommands } from './commands'
+import { ethers } from 'ethers'
 
 export interface WalletProvider {
   login(refresh?: boolean): Promise<boolean>
@@ -437,7 +438,7 @@ export class Wallet implements WalletProvider {
 
   private useAccountAddress(accountAddress: string) {
     if (!this.session) this.session = {}
-    this.session.accountAddress = accountAddress.toLowerCase()
+    this.session.accountAddress = ethers.utils.getAddress(accountAddress)
   }
 
   private useNetworks(networks: NetworkConfig[]) {

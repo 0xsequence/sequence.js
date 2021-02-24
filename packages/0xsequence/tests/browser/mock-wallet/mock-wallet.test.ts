@@ -27,8 +27,8 @@ const main = async () => {
 
   // assert testWalletContext value is correct
   if (
-    deployedWalletContext.factory.toLowerCase() !== testWalletContext.factory.toLowerCase() ||
-    deployedWalletContext.guestModule.toLowerCase() !== testWalletContext.guestModule.toLowerCase()
+    deployedWalletContext.factory !== testWalletContext.factory ||
+    deployedWalletContext.guestModule !== testWalletContext.guestModule
   ) {
     throw new Error('deployedWalletContext and testWalletContext do not match. check or regen.')
   } 
