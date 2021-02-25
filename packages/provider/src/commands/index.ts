@@ -49,7 +49,7 @@ export class WalletCommands {
     signature: string,
     chainId: number,
     walletContext?: WalletContext
-  ): Promise<boolean> {
+  ): Promise<boolean | undefined> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
     return isValidSignature(address, digest, signature, provider, chainId, walletContext)
@@ -62,7 +62,7 @@ export class WalletCommands {
     signature: string,
     chainId: number,
     walletContext?: WalletContext
-  ): Promise<boolean> {
+  ): Promise<boolean | undefined> {
     return this.isValidSignature(address, encodeMessageDigest(message), signature, chainId, walletContext)
   }
 
@@ -73,7 +73,7 @@ export class WalletCommands {
     signature: string,
     chainId: number,
     walletContext?: WalletContext
-  ): Promise<boolean> {
+  ): Promise<boolean | undefined> {
     return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
   }
 

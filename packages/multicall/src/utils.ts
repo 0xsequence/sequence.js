@@ -13,7 +13,7 @@ export function partition<T>(array: T[], callback: (v: T, i: number) => boolean)
   return array.reduce(function(result, element, i) {
       callback(element, i) ? result[0].push(element) : result[1].push(element)
       return result
-    }, [[], []]
+    }, [[] as any[], [] as any[]]
   )
 }
 

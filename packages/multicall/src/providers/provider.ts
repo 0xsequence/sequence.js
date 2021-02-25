@@ -9,13 +9,14 @@ export class MulticallProvider implements ethers.providers.Provider {
   private multicall: Multicall
 
   constructor(private provider: ethers.providers.Provider, multicall?: Multicall | Partial<MulticallOptions>) {
-    this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
+    this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall!)
   }
 
   _isProvider = true
 
   listenerCount = this.provider.listenerCount
 
+  // @ts-ignore
   getBlockWithTransactions = undefined
 
   getNetwork = this.provider.getNetwork
@@ -46,15 +47,15 @@ export class MulticallProvider implements ethers.providers.Provider {
     try {
       switch (req.method) {
         case JsonRpcMethod.ethCall:
-          this.callback(req, callback, await this.provider.call(req.params[0], req.params[1]))
+          this.callback(req, callback, await this.provider.call(req.params![0], req.params![1]))
           break
 
         case JsonRpcMethod.ethGetCode:
-          this.callback(req, callback, await this.provider.getCode(req.params[0], req.params[1]))
+          this.callback(req, callback, await this.provider.getCode(req.params![0], req.params![1]))
           break
 
         case JsonRpcMethod.ethGetBalance:
-          this.callback(req, callback, await this.provider.getBalance(req.params[0], req.params[1]))
+          this.callback(req, callback, await this.provider.getBalance(req.params![0], req.params![1]))
           break
       }
     } catch (e) {
@@ -65,7 +66,7 @@ export class MulticallProvider implements ethers.providers.Provider {
   private callback(req: JsonRpcRequest, callback: JsonRpcResponseCallback, resp: any, err?: any) {
     callback(undefined, {
       jsonrpc: JsonRpcVersion,
-      id: req.id,
+      id: req.id!,
       result: resp,
       error: err
     })
@@ -91,6 +92,6 @@ export class MulticallProvider implements ethers.providers.Provider {
       method: method,
       params: params
     })
-    return resp.result
+    return resp!.result
   }
 }

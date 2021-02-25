@@ -22,7 +22,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // record connectId from the window url
     const location = new URL(window.location.href)
-    this._sessionId = sanitizeNumberString(location.searchParams.get('sid'))
+    this._sessionId = sanitizeNumberString(location.searchParams.get('sid')!)
     location.searchParams.delete('sid')
     window.history.replaceState({}, document.title, location.pathname)
 

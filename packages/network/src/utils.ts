@@ -202,10 +202,10 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
 
 export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaultChainId?: number, vars?: {[key: string]: any}): Networks => {
   let config: NetworkConfig[] = []
-  if (typeof(networks) === 'function') {
+  if (typeof(networks) === 'function' && vars) {
     config = networks(vars)
   } else {
-    config = networks
+    config = networks as Networks
   }
 
   if (defaultChainId) {
@@ -221,7 +221,7 @@ export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaul
   return ensureValidNetworks(sortNetworks(config))
 }
 
-export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): NetworkConfig => {
+export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): NetworkConfig | undefined => {
   if (typeof chainId === 'string') {
     if (chainId.startsWith('0x')) {
       const id = ethers.BigNumber.from(chainId).toNumber()

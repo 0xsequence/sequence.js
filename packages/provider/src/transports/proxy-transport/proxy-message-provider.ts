@@ -40,6 +40,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this._registered = false
     this.closeWallet()
     this.events.removeAllListeners()
+    // @ts-ignore
     this.port.handleMessage = undefined
   }
 

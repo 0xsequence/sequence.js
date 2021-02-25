@@ -15,7 +15,7 @@ export class ArcadeumAPIClient extends BaseArcadeumAPI {
     return new Promise<Response>((resolve, reject) => {
       // automatically include jwt auth header to requests
       // if its been set on the api client
-      const headers = {}
+      const headers: { [key: string]: any } = {}
       if (this.jwtAuth && this.jwtAuth.length > 0) {
         headers['Authorization'] = `BEARER ${this.jwtAuth}`
       }

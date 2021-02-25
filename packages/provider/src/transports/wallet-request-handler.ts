@@ -17,8 +17,8 @@ import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0
 
 import { TypedData } from '@0xsequence/utils'
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private signer: Signer
-  private prompter: WalletUserPrompter
+  private signer: Signer | null
+  private prompter: WalletUserPrompter | null
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
@@ -53,7 +53,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    this.notifyLogin(await this.signer.getAddress())
+    this.notifyLogin(await this.signer!.getAddress())
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -64,7 +64,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       this.sendAsync(message.data, (error: any, response?: JsonRpcResponse) => {
         const responseMessage: ProviderMessageResponse = {
           ...message,
-          data: response
+          data: response!
         }
 
         // NOTE: we always resolve here, are the sendAsync call will wrap any exceptions
@@ -80,7 +80,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
-      id: request.id,
+      id: request.id!,
       result: null,
       error: null
     }
@@ -121,7 +121,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getBalance': {
-          const [accountAddress, blockTag] = request.params
+          const [accountAddress, blockTag] = request.params!
           const walletBalance = await provider.getBalance(accountAddress, blockTag)
           response.result = walletBalance.toHexString()
           break
@@ -129,7 +129,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_sign': {
           // note: message from json-rpc input is in hex format
-          const [signingAddress, message] = request.params
+          const [signingAddress, message] = request.params!
 
           let sig = ''
           // TODO:
@@ -155,9 +155,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTypedData_v4': {
           // note: signingAddress from json-rpc input is in hex format, and typedDataObject
           // should be an object, but in some instances may be double string encoded
-          const [signingAddress, typedDataObject] = request.params
+          const [signingAddress, typedDataObject] = request.params!
 
-          let typedData: TypedData
+          let typedData: TypedData | undefined = undefined
           if (typeof(typedDataObject) === 'string') {
             try {
               typedData = JSON.parse(typedDataObject)
@@ -190,7 +190,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_sendTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendtransaction
-          const [transactionParams] = request.params
+          const [transactionParams] = request.params!
 
           let txnHash = ''
           if (this.prompter === null) {
@@ -213,7 +213,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
-          const [transaction] = request.params
+          const [transaction] = request.params!
           const sender = ethers.utils.getAddress(transaction.from)
 
           if (sender !== await signer.getAddress()) {
@@ -239,20 +239,20 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // and would have prompted the user upon signing.
 
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
-          if (isSignedTransactions(request.params[0])) {
-            const txChainId = BigNumber.from(request.params[0].chainId).toNumber()
-            const tx = await (await signer.getRelayer(txChainId)).relay(request.params[0])
+          if (isSignedTransactions(request.params![0])) {
+            const txChainId = BigNumber.from(request.params![0].chainId).toNumber()
+            const tx = await (await signer.getRelayer(txChainId))!.relay(request.params![0])
             response.result = (await tx).hash
           } else {
-            const tx = await provider.sendTransaction(request.params[0])
+            const tx = await provider.sendTransaction(request.params![0])
             response.result = tx.hash
           }
           break
         }
 
         case 'eth_getTransactionCount': {
-          const address = ethers.utils.getAddress((request.params[0] as string))
-          const tag = request.params[1]
+          const address = ethers.utils.getAddress((request.params![0] as string))
+          const tag = request.params![1]
 
           const walletAddress = ethers.utils.getAddress(await signer.getAddress())
 
@@ -272,34 +272,34 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getBlockByNumber': {
-          response.result = await provider.getBlock(request.params[0] /* , jsonRpcRequest.params[1] */)
+          response.result = await provider.getBlock(request.params![0] /* , jsonRpcRequest.params[1] */)
           break
         }
 
         case 'eth_getBlockByHash': {
-          response.result = await provider.getBlock(request.params[0] /* , jsonRpcRequest.params[1] */)
+          response.result = await provider.getBlock(request.params![0] /* , jsonRpcRequest.params[1] */)
           break
         }
 
         case 'eth_getTransactionByHash': {
-          response.result = await provider.getTransaction(request.params[0])
+          response.result = await provider.getTransaction(request.params![0])
           break
         }
 
         case 'eth_call': {
-          const [transactionObject, blockTag] = request.params
+          const [transactionObject, blockTag] = request.params!
           response.result = await provider.call(transactionObject, blockTag)
           break
         }
 
         case 'eth_getCode': {
-          const [contractAddress, blockTag] = request.params
+          const [contractAddress, blockTag] = request.params!
           response.result = await provider.getCode(contractAddress, blockTag)
           break
         }
 
         case 'eth_estimateGas': {
-          const [transactionObject] = request.params
+          const [transactionObject] = request.params!
           response.result = await provider.estimateGas(transactionObject)
           break
         }
@@ -381,7 +381,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // set default network of wallet
         case 'sequence_setDefaultNetwork': {
-          const [defaultNetworkId] = request.params
+          const [defaultNetworkId] = request.params!
           
           if (!defaultNetworkId) {
             throw new Error('invalid request, method argument defaultNetworkId cannot be empty')
@@ -397,7 +397,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         default: {
           // NOTE: provider here will be chain-bound if chainId is provided
-          const providerResponse = await provider.send(request.method, request.params)
+          const providerResponse = await provider.send(request.method, request.params!)
           response.result = providerResponse
         }
       }
@@ -442,7 +442,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<boolean> {
-    if (!chainId) return
+    if (!chainId) return false
     this._defaultNetworkId = chainId
 
     if (this.signer && (<any>this.signer).setNetworks) {

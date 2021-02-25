@@ -65,7 +65,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
 export class LocalWeb3Provider extends Web3Provider {
   constructor(signer: Signer, networks?: Networks) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null, networks)
+    const walletRequestHandler = new WalletRequestHandler(signer, null, networks || [])
     super(walletRequestHandler)
   }
 }
@@ -198,7 +198,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const address = await this.getAddress()
 
     // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
-    return await provider.send('eth_sign', [
+    return await provider!.send('eth_sign', [
       address, ethers.utils.hexlify(data)
     ])
   }
@@ -222,17 +222,20 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   async sendTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
     const provider = await this.getSender(maybeNetworkId(chainId) || this.defaultChainId)
 
-    return this.sendUncheckedTransaction(transaction, chainId).then((hash) => {
+    const tx = this.sendUncheckedTransaction(transaction, chainId).then((hash) => {
       return ethers.utils.poll(() => {
-        return provider.getTransaction(hash).then((tx: TransactionResponse) => {
+        return provider!.getTransaction(hash).then((tx: TransactionResponse) => {
           if (tx === null) { return undefined }
-          return provider._wrapTransaction(tx, hash)
+          return provider!._wrapTransaction(tx, hash)
         })
-      }, { onceBlock: this.provider }).catch((error: Error) => {
+      }, { onceBlock: this.provider! }).catch((error: Error) => {
         (<any>error).transactionHash = hash
         throw error
       })
     })
+    
+    // @ts-ignore
+    return tx
   }
 
   // sendTransactionBatch is a convenience method to call sendTransaction in a batch format, allowing you to
@@ -277,7 +280,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     }
 
     const provider = await this.getSender(this.defaultChainId)
-    return [config, provider._wrapTransaction(tx, tx.hash)]
+    return [config, provider!._wrapTransaction(tx, tx.hash)]
   }
 
   // publishConfig..
@@ -285,17 +288,17 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   async publishConfig(): Promise<TransactionResponse | undefined> {
     const provider = await this.getSender(this.defaultChainId)
 
-    const tx = await provider.send('sequence_publishConfig', [])
+    const tx = await provider!.send('sequence_publishConfig', [])
     if (tx === null) {
       return undefined
     }
-    return provider._wrapTransaction(tx, tx.hash)
+    return provider!._wrapTransaction(tx, tx.hash)
   }
 
   async isDeployed(chainId?: ChainId): Promise<boolean> {
     const provider = await this.getSender(maybeNetworkId(chainId))
-    const walletCode = await provider.getCode(await this.getAddress())
-    return walletCode && walletCode !== "0x"
+    const walletCode = await provider!.getCode(await this.getAddress())
+    return !!walletCode && walletCode !== "0x"
   }
 
   //
@@ -339,7 +342,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
       const hexTx = hexlifyTransaction(tx)
 
-      return provider.send('eth_sendTransaction', [hexTx]).then((hash) => {
+      return provider!.send('eth_sendTransaction', [hexTx]).then((hash) => {
         return hash
       }, (error) => {
         // return checkError("sendTransaction", error, hexTx)
@@ -406,7 +409,7 @@ const hexlifyTransaction = (transaction: TransactionRequest, allowExtra?: { [key
   const auxiliary = <any>transaction['auxiliary']
   if (auxiliary && auxiliary.length > 0) {
     result['auxiliary'] = []
-    auxiliary.forEach(a => {
+    auxiliary.forEach((a: any) => {
       result['auxiliary'].push(hexlifyTransaction(a))
     })
   }

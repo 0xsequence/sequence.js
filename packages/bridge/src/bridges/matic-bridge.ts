@@ -63,8 +63,8 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
   connect(networks: NetworkConfig[]): MaticPosBridge {
     this.maticNet = networks.find((n) => n.chainId === this.conf.maticId)
     this.parentNet = networks.find((n) => n.chainId === this.conf.parentId)
-    this.maticClient = new ethers.providers.JsonRpcProvider(this.maticNet.rpcUrl)
-    this.parentClient = new ethers.providers.JsonRpcProvider(this.parentNet.rpcUrl)
+    this.maticClient = new ethers.providers.JsonRpcProvider(this.maticNet!.rpcUrl)
+    this.parentClient = new ethers.providers.JsonRpcProvider(this.parentNet!.rpcUrl)
     return this
   }
 
@@ -120,14 +120,16 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
     // Check if token has child mapped
     if (this.isDeposit(from, to)) {
       const child = await safeSolve(rootChain.rootToChildToken(token), ethers.constants.AddressZero)
-      return child && child !== ethers.constants.AddressZero
+      return !!child && child !== ethers.constants.AddressZero
     }
 
     // Check if token has root mapped
     if (this.isWithdraw(from, to)) {
       const root = await safeSolve(rootChain.childToRootToken(token), ethers.constants.AddressZero)
-      return root && root !== ethers.constants.AddressZero
+      return !!root && root !== ethers.constants.AddressZero
     }
+
+    return false
   }
 
   async getMoves(wallet: string, from: providers.BlockTag = 0, to: providers.BlockTag = "latest"): Promise<Move[]> {
@@ -165,11 +167,11 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
       }]
     }
 
-    return undefined
+    return []
   }
 
-  completeNative(_from: NetworkConfig, _to: NetworkConfig, _txHash: string, _wallet: string): Promise<providers.TransactionRequest[]> {
-    return undefined
+  async completeNative(_from: NetworkConfig, _to: NetworkConfig, _txHash: string, _wallet: string): Promise<providers.TransactionRequest[]> {
+    return []
   }
 
   async _depositsNative(wallet: string, from: providers.BlockTag, to: providers.BlockTag): Promise<MoveNative[]> {
@@ -190,15 +192,15 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
 
     return Promise.all(candidates.map(async (cand) => {
       const stateSyncId = await this.getStateSyncId(cand.transactionHash, cand.logIndex + 1)
-      const isPending = stateSyncId.gte(await lastStateId)
+      const isPending = stateSyncId!.gte(await lastStateId)
 
       return {
         ...cand,
         completeTx: undefined,
         isCompleted: !isPending,
         isPending: isPending,
-        fromChainId: this.parentNet.chainId,
-        toChainId: this.maticNet.chainId,
+        fromChainId: this.parentNet!.chainId,
+        toChainId: this.maticNet!.chainId,
         amount: ethers.utils.defaultAbiCoder.decode(['uint256'], cand.data)[0]
       }
     }))
@@ -212,7 +214,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
     return this.isMapped(from, to, token)
   }
 
-  async estimateERC20(from: NetworkConfig, to: NetworkConfig, token: string): Promise<MoveEstimate> {
+  async estimateERC20(from: NetworkConfig, to: NetworkConfig, token: string): Promise<MoveEstimate | undefined> {
     if (this.isDeposit(from, to)) {
       return {
         crossTime: MaticPosBridge.POS_TIME_DEPOSIT,
@@ -233,7 +235,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
   async moveERC20(from: NetworkConfig, to: NetworkConfig, token: string, dest: string, amount: BigNumberish): Promise<providers.TransactionRequest[]> {
     if (this.isMaticToken(token)) {
       // Matic token must use the plasma bridge
-      return undefined
+      return []
     }
 
     if (this.isDeposit(from, to)) {
@@ -259,7 +261,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
       }]
     }
 
-    return undefined
+    return []
   }
 
   async completeERC20(_from: NetworkConfig, _to: NetworkConfig, txHash: string, wallet: string): Promise<providers.TransactionRequest[]> {
@@ -286,14 +288,14 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
 
     return Promise.all(candidates.map(async (cand) => {
       const stateSyncId = await this.getStateSyncId(cand.transactionHash, cand.logIndex + 2)
-      const isPending = stateSyncId.gte(await lastStateId)
+      const isPending = stateSyncId!.gte(await lastStateId)
       return {
         ...cand,
         completeTx: undefined,
         isCompleted: !isPending,
         isPending: isPending,
-        fromChainId: this.parentNet.chainId,
-        toChainId: this.maticNet.chainId,
+        fromChainId: this.parentNet!.chainId,
+        toChainId: this.maticNet!.chainId,
         token: ethers.utils.defaultAbiCoder.decode(['address'], cand.topics[3])[0],
         amount: ethers.utils.defaultAbiCoder.decode(['uint256'], cand.data)[0]
       }
@@ -315,15 +317,15 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
 
     return Promise.all(candidates.map(async (cand) => {
       const isCompleted = await safeSolve(this.posClient.isERC20ExitProcessed(cand.transactionHash), false)
-      const completeTx = !isCompleted ? safeSolve(this.completeERC20(this.maticNet, this.parentNet, cand.transactionHash, wallet), undefined) : undefined
+      const completeTx = !isCompleted ? safeSolve(this.completeERC20(this.maticNet!, this.parentNet!, cand.transactionHash, wallet), undefined) : undefined
 
       return {
         ...cand,
         completeTx: await completeTx,
         isCompleted: await isCompleted,
         isPending: !isCompleted && !(await completeTx),
-        fromChainId: this.maticNet.chainId,
-        toChainId: this.parentNet.chainId,
+        fromChainId: this.maticNet!.chainId,
+        toChainId: this.parentNet!.chainId,
         token: cand.address,
         amount: ethers.utils.defaultAbiCoder.decode(['uint256'], cand.data)[0]
       }
@@ -338,7 +340,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
     return this.isMapped(from, to, token)
   }
 
-  async estimateERC1155(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<MoveEstimate> {
+  async estimateERC1155(from: NetworkConfig, to: NetworkConfig, token: string, ids: BigNumberish[]): Promise<MoveEstimate | undefined> {
     if (this.isDeposit(from, to)) {
       return {
         crossTime: MaticPosBridge.POS_TIME_DEPOSIT,
@@ -384,7 +386,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
       }]
     }
 
-    return undefined
+    return []
   }
 
   async completeERC1155(from: NetworkConfig, to: NetworkConfig, txHash: string, wallet: string): Promise<ethers.providers.TransactionRequest[]> {
@@ -411,15 +413,15 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
 
     return Promise.all(candidates.map(async (cand) => {
       const stateSyncId = await this.getStateSyncId(cand.transactionHash, cand.logIndex + 2)
-      const isPending = stateSyncId.gte(await lastStateId)
+      const isPending = stateSyncId!.gte(await lastStateId)
       const decodedData = ethers.utils.defaultAbiCoder.decode(['uint256[]', 'uint256[]'], cand.data)
       return {
         ...cand,
         completeTx: undefined,
         isCompleted: !isPending,
         isPending: isPending,
-        fromChainId: this.parentNet.chainId,
-        toChainId: this.maticNet.chainId,
+        fromChainId: this.parentNet!.chainId,
+        toChainId: this.maticNet!.chainId,
         token: ethers.utils.defaultAbiCoder.decode(['address'], cand.topics[3])[0],
         ids: decodedData[0],
         amounts: decodedData[1]
@@ -435,7 +437,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
       toBlock: to,
       topics: [
         MaticPosBridge.TRANSFER_ERC1155_TOPIC,
-        undefined,
+        '',
         ethers.utils.defaultAbiCoder.encode(['address'], [wallet]),
         ethers.utils.defaultAbiCoder.encode(['address'], [ethers.constants.AddressZero])
       ]
@@ -443,7 +445,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
 
     return Promise.all(candidates.map(async (cand) => {
       const isCompleted = await safeSolve(this.posClient.isBatchERC1155ExitProcessed(cand.transactionHash), false)
-      const completeTx = !isCompleted ? safeSolve(this.completeERC1155(this.maticNet, this.parentNet, cand.transactionHash, wallet), undefined) : undefined
+      const completeTx = !isCompleted ? safeSolve(this.completeERC1155(this.maticNet!, this.parentNet!, cand.transactionHash, wallet), undefined) : undefined
       const decodedData = ethers.utils.defaultAbiCoder.decode(['uint256[]', 'uint256[]'], cand.data)
 
       return {
@@ -451,8 +453,8 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
         completeTx: await completeTx,
         isCompleted: isCompleted,
         isPending: !isCompleted && !(await completeTx),
-        fromChainId: this.maticNet.chainId,
-        toChainId: this.parentNet.chainId,
+        fromChainId: this.maticNet!.chainId,
+        toChainId: this.parentNet!.chainId,
         token: cand.address,
         amount: ethers.utils.defaultAbiCoder.decode(['uint256'], cand.data)[0],
         ids: decodedData[0],

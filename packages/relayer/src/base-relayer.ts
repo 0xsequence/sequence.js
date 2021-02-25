@@ -8,7 +8,7 @@ import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence
 
 export class BaseRelayer {
   private readonly bundleCreation: boolean
-  readonly provider: Provider
+  readonly provider: Provider | undefined
 
   constructor(bundleCreation: boolean, provider?: Provider) {
     this.bundleCreation = bundleCreation
@@ -45,7 +45,7 @@ export class BaseRelayer {
 
     if (this.bundleCreation && !(await this.isWalletDeployed(walletAddress))) {
       return {
-        to: context.guestModule,
+        to: context.guestModule!,
         data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
           sequenceTxAbiEncode([
             {

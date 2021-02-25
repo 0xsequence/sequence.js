@@ -75,7 +75,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     })
 
     const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
-    return prevNonce === undefined ? [appendNonce(decoded, prevNonce)] : [decoded]
+    return prevNonce === undefined ? [decoded] : [appendNonce(decoded, prevNonce)]
   }
 
   async estimateGasLimits(
@@ -115,7 +115,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }))
 
     // Remove placeholder nonce if previously defined
-    return prevNonce === undefined ? appendNonce(modTxns, prevNonce) : modTxns
+    return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
 
   async getNonce(
@@ -130,6 +130,10 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   }
 
   async relay(signedTxs: SignedTransactions): Promise<PendingTransactionResponse> {
+    if (!this.provider) {
+      throw new Error('provider is not set')
+    }
+
     const prep = await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
     const result = this.chaindService.sendMetaTxn({
       call: {
@@ -150,7 +154,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         from: addressOf(signedTxs.config, signedTxs.context),
         hash: txReceipt.transactionHash,
         raw: receipt.txnReceipt,
-        wait: async (confirmations?: number) => this.provider.waitForTransaction(txReceipt.transactionHash, confirmations)
+        wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
       } as TransactionResponse
     }
 

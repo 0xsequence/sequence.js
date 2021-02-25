@@ -28,8 +28,10 @@ export class JsonRpcSender implements JsonRpcHandler {
           }, (error: any, response?: JsonRpcResponse) => {
             if (error) {
               reject(error)
-            } else {
+            } else if (response) {
               resolve(response.result)
+            } else {
+              resolve(undefined)
             }
           }, chainId || this.defaultChainId)
         })
@@ -63,7 +65,7 @@ export class JsonRpcExternalProvider implements ExternalProvider, JsonRpcHandler
 
   sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) => {
     this.provider
-      .send(request.method, request.params)
+      .send(request.method, request.params!)
       .then(r => {
         callback(undefined, {
           jsonrpc: '2.0',

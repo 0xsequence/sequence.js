@@ -95,7 +95,7 @@ export class Session implements SessionDump {
     return this.auth(net, tries + 1, maxTries)
   }
 
-  scheduleAuth(net: NetworkConfig): Promise<void> {
+  scheduleAuth(net: NetworkConfig) {
     const url = net.sequenceApiUrl
     if (!url) return
 

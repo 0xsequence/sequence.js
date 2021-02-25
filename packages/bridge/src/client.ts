@@ -21,7 +21,7 @@ export class BridgesClient {
     return this
   }
 
-  get(id: string): Bridge {
+  get(id: string): Bridge | undefined {
     return this.bridges.find((b) => b.id() === id)
   }
 

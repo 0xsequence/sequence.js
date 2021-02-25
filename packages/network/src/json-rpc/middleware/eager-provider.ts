@@ -29,28 +29,28 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
       switch (method) {
         case 'net_version':
           if (this.props.chainId) {
-            callback(undefined, { jsonrpc: '2.0', id, result: `${this.props.chainId}` })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: `${this.props.chainId}` })
             return
           }
           break
 
         case 'eth_chainId':
           if (this.props.chainId) {
-            callback(undefined, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(this.props.chainId) })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.utils.hexlify(this.props.chainId) })
             return
           }
           break
 
         case 'eth_accounts':
           if (this.props.accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id, result: [ethers.utils.getAddress(this.props.accountAddress)] })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.utils.getAddress(this.props.accountAddress)] })
             return
           }
           break
 
         case 'sequence_getWalletContext':
           if (this.props.walletContext) {
-            callback(undefined, { jsonrpc: '2.0', id, result: this.props.walletContext })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: this.props.walletContext })
             return
           }
           break

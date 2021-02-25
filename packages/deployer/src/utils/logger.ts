@@ -1,12 +1,12 @@
 import { isNode } from '@0xsequence/utils'
 
 export interface Logger {
-  start(text?: string)
-  stop()
-  succeed(text?: string)
-  fail(text?: string)
-  warn(text?: string)
-  info(text?: string)
+  start(text?: string): void
+  stop(): void
+  succeed(text?: string): void
+  fail(text?: string): void
+  warn(text?: string): void
+  info(text?: string): void
 }
 
 const loadOra = () => import('ora')

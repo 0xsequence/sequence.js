@@ -9,7 +9,7 @@ import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 export class MuxMessageProvider implements ProviderTransport {
 
   private messageProviders: ProviderTransport[]
-  private provider: ProviderTransport
+  private provider: ProviderTransport | undefined
 
   constructor(...messageProviders: ProviderTransport[]) {
     this.messageProviders = messageProviders

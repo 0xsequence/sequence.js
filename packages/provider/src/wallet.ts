@@ -28,7 +28,7 @@ export interface WalletProvider {
   openWallet(path?: string, state?: any): Promise<boolean>
   closeWallet(): void
 
-  getProvider(chainId?: ChainId): Web3Provider
+  getProvider(chainId?: ChainId): Web3Provider | undefined
   getSigner(chainId?: ChainId): Web3Signer
 
   getWalletContext(): Promise<WalletContext>
@@ -36,8 +36,8 @@ export interface WalletProvider {
   getWalletState(chainId?: ChainId): Promise<WalletState[]>
   isDeployed(chainId?: ChainId): Promise<boolean>
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
 
   commands: WalletCommands
 }
@@ -104,7 +104,7 @@ export class Wallet implements WalletProvider {
       this.transport.messageProvider.add(this.transport.windowMessageProvider)
     }
     if (this.config.transports?.proxyTransport?.enabled) {
-      this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort)
+      this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort!)
       this.transport.messageProvider.add(this.transport.proxyMessageProvider)
     }
     this.transport.messageProvider.register()
@@ -133,7 +133,7 @@ export class Wallet implements WalletProvider {
     this.transport.cachedProvider = new CachedProvider()
     this.transport.cachedProvider.onUpdate(() => {
       if (!this.session) this.session = { providerCache: {} }
-      this.session.providerCache = this.transport.cachedProvider.getCache()
+      this.session.providerCache = this.transport.cachedProvider!.getCache()
       this.saveSession(this.session)
     })
 
@@ -184,7 +184,7 @@ export class Wallet implements WalletProvider {
     }
 
     await this.openWallet('', { login: true })
-    const sessionPayload = await this.transport.messageProvider.waitUntilLoggedIn()
+    const sessionPayload = await this.transport.messageProvider!.waitUntilLoggedIn()
     this.useSession(sessionPayload, true)
 
     return this.isLoggedIn()
@@ -202,14 +202,14 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
-    return this.transport.messageProvider.isConnected()
+    return this.transport.messageProvider!.isConnected()
   }
 
   isLoggedIn(): boolean {
     return this.session !== undefined &&
       this.session.networks !== undefined && this.session.networks.length > 0 &&
       this.networks !== undefined && this.networks.length > 0 &&
-      this.session.accountAddress.startsWith('0x')
+      this.session.accountAddress!.startsWith('0x')
   }
 
   getSession = (): WalletSession | undefined => {
@@ -224,7 +224,7 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
     const session = this.getSession()
-    return session.accountAddress
+    return session!.accountAddress!
   }
 
   getNetworks = async (chainId?: ChainId): Promise<NetworkConfig[]> => {
@@ -275,14 +275,14 @@ export class Wallet implements WalletProvider {
       throw new Error('login first')
     }
 
-    this.transport.messageProvider.openWallet(path, state, this.config.defaultNetworkId)
-    await this.transport.messageProvider.waitUntilConnected()
+    this.transport.messageProvider!.openWallet(path, state, this.config.defaultNetworkId)
+    await this.transport.messageProvider!.waitUntilConnected()
 
     return true
   }
 
   closeWallet = (): void => {
-    this.transport.messageProvider.closeWallet()
+    this.transport.messageProvider!.closeWallet()
   }
 
   getProvider(chainId?: ChainId): Web3Provider | undefined {
@@ -296,9 +296,12 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    let network = this.networks[0]
+    let network: NetworkConfig | undefined = this.networks[0]
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
+      if (!network) {
+        throw new Error(`network ${chainId} is not in the network list`)
+      }
     }
 
     // return memoized network provider
@@ -317,9 +320,9 @@ export class Wallet implements WalletProvider {
       const router = new JsonRpcRouter([
         loggingProviderMiddleware,
         exceptionProviderMiddleware,
-        new EagerProvider({ accountAddress: this.session.accountAddress, walletContext: this.session.walletContext }),
-        new SigningProvider(this.transport.provider),
-        this.transport.cachedProvider,
+        new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext }),
+        new SigningProvider(this.transport!.provider!),
+        this.transport.cachedProvider!,
       ], new JsonRpcSender(rpcProvider))
 
       provider = new Web3Provider(router)
@@ -330,8 +333,8 @@ export class Wallet implements WalletProvider {
       const router = new JsonRpcRouter([
         loggingProviderMiddleware,
         exceptionProviderMiddleware,
-        new EagerProvider({ accountAddress: this.session.accountAddress, walletContext: this.session.walletContext, chainId: network.chainId }),
-        new SigningProvider(this.transport.provider),
+        new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext, chainId: network.chainId }),
+        new SigningProvider(this.transport.provider!),
         new CachedProvider(network.chainId),
       ], new JsonRpcSender(rpcProvider))
 
@@ -343,11 +346,11 @@ export class Wallet implements WalletProvider {
   }
 
   async getAuthProvider(): Promise<Web3Provider> {
-    return this.getProvider((await this.getAuthNetwork()).chainId)
+    return this.getProvider((await this.getAuthNetwork()).chainId)!
   }
 
   async getAuthNetwork(): Promise<NetworkConfig> {
-    return (await this.getNetworks()).find((n) => n.isAuthChain)
+    return (await this.getNetworks()).find((n) => n.isAuthChain)!
   }
 
   getAllProviders(): { [chainId: number] : Web3Provider } {
@@ -355,7 +358,7 @@ export class Wallet implements WalletProvider {
   }
 
   getSigner(chainId?: ChainId): Web3Signer {
-    return this.getProvider(chainId).getSigner()
+    return this.getProvider(chainId)!.getSigner()
   }
 
   async getAuthSigner(): Promise<Web3Signer> {
@@ -379,17 +382,17 @@ export class Wallet implements WalletProvider {
   }
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    this.transport.messageProvider.on(event, fn)
+    this.transport.messageProvider!.on(event, fn)
   }
 
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    this.transport.messageProvider.once(event, fn)
+    this.transport.messageProvider!.once(event, fn)
   }
 
-  private loadSession = (): WalletSession => {
+  private loadSession = (): WalletSession | undefined => {
     const data = window.localStorage.getItem('@sequence.session')
     if (!data || data === '') {
-      return null
+      return undefined
     }
     try {
       const session = JSON.parse(data) as WalletSession
@@ -427,7 +430,7 @@ export class Wallet implements WalletProvider {
 
     // setup provider cache
     if (session.providerCache) {
-      this.transport.cachedProvider.setCache(session.providerCache)
+      this.transport.cachedProvider!.setCache(session.providerCache)
     }
 
     // persist
@@ -470,7 +473,7 @@ export class Wallet implements WalletProvider {
     if (this.config.networks) {
       this.networks = networks.map(n => ({ ...n })) // copy
       this.config.networks.forEach(n => {
-        const network = findNetworkConfig(this.networks, n.chainId || n.name)
+        const network = findNetworkConfig(this.networks, n.chainId || n.name!)
         if (!network) return
         updateNetworkConfig(n, network)
       })
@@ -486,7 +489,7 @@ export class Wallet implements WalletProvider {
   private clearSession(): void {
     window.localStorage.removeItem('@sequence.session')
     this.session = undefined
-    this.networks = undefined
+    this.networks = []
     this.providers = {}
     this.transport.cachedProvider?.clearCache()
   }

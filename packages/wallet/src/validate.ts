@@ -2,9 +2,8 @@ import { ethers, BytesLike, BigNumberish } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
-import { DecodedSigner } from './signer'
 import { compareAddr, addressOf } from '@0xsequence/config'
-import { decodeSignature, recoverConfigFromDigest, isSigner } from './config'
+import { DecodedSigner, decodeSignature, recoverConfigFromDigest, isSigner } from './config'
 
 import { packMessageData } from './utils'
 
@@ -129,7 +128,7 @@ export async function isValidSequenceUndeployedWalletSignature(
   if (!walletContext) return undefined // Signature validity can't be determined
 
   try {
-    const cid = chainId ? chainId : (await provider.getNetwork()).chainId
+    const cid = chainId ? chainId : (await provider!.getNetwork()).chainId
     const signature = decodeSignature(sig)
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
     const config = recoverConfigFromDigest(subDigest, signature)

@@ -12,17 +12,19 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
   private rpcUrl?: string
  
   constructor(rpcUrl?: string) {
-    this.setRpcUrl(rpcUrl)
+    if (rpcUrl) {
+      this.setRpcUrl(rpcUrl)
+    }
   }
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
     return (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
       // When provider is configured, send non-private methods to our local public provider
-      if (this.provider !== null && !this.privateJsonRpcMethods.includes(request.method)) {
-        this.provider.send(request.method, request.params).then(r => {
+      if (this.provider && !this.privateJsonRpcMethods.includes(request.method)) {
+        this.provider.send(request.method, request.params!).then(r => {
           callback(undefined, {
             jsonrpc: '2.0',
-            id: request.id,
+            id: request.id!,
             result: r
           })
         }).catch(e => callback(e))
@@ -35,14 +37,14 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
     }
   }
 
-  getRpcUrl(): string | null {
+  getRpcUrl() {
     return this.rpcUrl
   }
 
   setRpcUrl(rpcUrl: string) {
     if (!rpcUrl || rpcUrl === '') {
-      this.rpcUrl = null
-      this.provider = null
+      this.rpcUrl = undefined
+      this.provider = undefined
     } else {
       this.rpcUrl = rpcUrl
       this.provider = new JsonRpcProvider(rpcUrl)

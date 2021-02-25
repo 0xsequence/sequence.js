@@ -66,6 +66,6 @@ export const ValidateSequenceUndeployedWalletProof = (context?: WalletContext): 
       chainId
     )
 
-    return { isValid: isValid }
+    return { isValid: !!isValid }
   }
 }
