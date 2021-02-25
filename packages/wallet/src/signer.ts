@@ -7,6 +7,7 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@0xsequence/utils'
 import { WalletConfig, WalletState } from '@0xsequence/config'
+import { DecodedSigner, DecodedOwner } from './config'
 
 export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
@@ -50,7 +51,7 @@ export abstract class Signer extends AbstractSigner {
   // publishConfig will store the raw WalletConfig object on-chain, note: this may be expensive,
   // and is only necessary for config data-availability, in case of Account the contents are published
   // to the authChain.
-  abstract publishConfig(): Promise<TransactionResponse>
+  abstract publishConfig(): Promise<TransactionResponse | undefined>
 
   // isDeployed ..
   abstract isDeployed(chainId?: ChainId): Promise<boolean>
@@ -65,19 +66,6 @@ export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
 export interface DecodedSignature {
   threshold: number
   signers: (DecodedSigner | DecodedOwner)[]
-}
-
-export interface DecodedOwner {
-  weight: number
-  address: string
-}
-
-export interface DecodedSigner {
-  r: string
-  s: string
-  v: number
-  t: number
-  weight: number
 }
 
 // TODO: move to error.ts, along with others..

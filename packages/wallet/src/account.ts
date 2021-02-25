@@ -60,7 +60,7 @@ export class Account extends Signer {
   }
 
   async getWalletContext(): Promise<WalletContext> {
-    return this.options.context
+    return this.options.context!
   }
 
   getConfigFinder(): ConfigFinder {
@@ -73,7 +73,10 @@ export class Account extends Signer {
   async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
     let wallets: { wallet: Wallet, network: NetworkConfig }[] = []
     if (chainId) {
-      wallets.push(this.getWalletByNetwork(chainId))
+      const v = this.getWalletByNetwork(chainId)
+      if (v) {
+        wallets.push(v)
+      }
     } else {
       wallets = this._wallets
     }
@@ -83,7 +86,10 @@ export class Account extends Signer {
   async getWalletState(chainId?: ChainId): Promise<WalletState[]> {
     let wallets: { wallet: Wallet, network: NetworkConfig }[] = []
     if (chainId) {
-      wallets.push(this.getWalletByNetwork(chainId))
+      const v = this.getWalletByNetwork(chainId)
+      if (v) {
+        wallets.push(v)
+      }
     } else {
       wallets = this._wallets
     }
@@ -115,24 +121,24 @@ export class Account extends Signer {
     return this._wallets[0].wallet.getSigners()
   }
 
-  getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
+  async getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
     if (!chainId) return this.mainWallet()?.wallet.getProvider()
     return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getProvider()
   }
 
-  getRelayer(chainId?: number): Promise<Relayer | undefined> {
+  async getRelayer(chainId?: number): Promise<Relayer | undefined> {
     if (!chainId) return this.mainWallet()?.wallet.getRelayer()
     return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getRelayer()
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
-    return this.options.networks
+    return this.options.networks!
   }
 
   getAuthChainId(): number {
-    let n = this.options.networks[0]
+    let n = this.options.networks![0]
     if (n.isAuthChain) return n.chainId
-    n = this.options.networks[1]
+    n = this.options.networks![1]
     if (n.isAuthChain) return n.chainId
     throw new Error('expecting authChain to be the first or second in networks list')
   }
@@ -144,7 +150,7 @@ export class Account extends Signer {
       }
       if ((<Wallet>target).address) {
         const chainId = await ((<Wallet>target).getChainId())
-        return this._wallets.find(w => w.wallet.chainId === chainId)
+        return this.getWalletByNetwork(chainId)
       }
       return this.getWalletByNetwork(target as ChainId)
     })()
@@ -196,14 +202,14 @@ export class Account extends Signer {
     ])
 
     // See if wallet has enough signer power
-    const weight = await wallet.useConfig(thisConfig).signWeight()
-    if (weight.lt(thisConfig.threshold) && allSigners) {
-      throw new NotEnoughSigners(`sendTransaction(), wallet combined weight ${weight.toString()} below required threshold ${thisConfig.threshold.toString()}`)
+    const weight = await wallet.useConfig(thisConfig!).signWeight()
+    if (weight.lt(thisConfig!.threshold) && allSigners) {
+      throw new NotEnoughSigners(`sendTransaction(), wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`)
     }
 
     // If the wallet is updated, procede to transaction send
-    if (isConfigEqual(lastConfig, thisConfig)) {
-      return wallet.useConfig(lastConfig).sendTransaction(transaction)
+    if (isConfigEqual(lastConfig!, thisConfig!)) {
+      return wallet.useConfig(lastConfig!).sendTransaction(transaction)
     }
 
     // Bundle with configuration update
@@ -215,8 +221,8 @@ export class Account extends Signer {
       }
     })()
 
-    return wallet.useConfig(thisConfig).sendTransaction([
-      ...await wallet.buildUpdateConfigTransaction(lastConfig, false),
+    return wallet.useConfig(thisConfig!).sendTransaction([
+      ...await wallet.buildUpdateConfigTransaction(lastConfig!, false),
       ...transactionParts
     ])
   }
@@ -253,16 +259,16 @@ export class Account extends Signer {
 
     // Get latest config, update only if neccesary
     const lastConfig = await this.currentConfig()
-    if (isConfigEqual(lastConfig, newConfig)) {
+    if (isConfigEqual(lastConfig!, newConfig)) {
       return [{
-        ...lastConfig,
+        ...lastConfig!,
         address: this.address
       }, undefined]
     }
 
     // Update to new configuration on the authWallet. Other networks will be lazily updated
     // once used. The wallet config is also auto-published to the authChain.
-    const [_, tx] = await authWallet.useConfig(lastConfig).updateConfig(newConfig, undefined, true, index)
+    const [_, tx] = await authWallet.useConfig(lastConfig!).updateConfig(newConfig, undefined, true, index)
 
     return [{
       ...newConfig,
@@ -312,7 +318,11 @@ export class Account extends Signer {
 
   getWalletByNetwork(chainId: ChainId) {
     const networkId = getNetworkId(chainId)
-    return this._wallets.find(w => w.network.chainId === networkId)
+    const network = this._wallets.find(w => w.network.chainId === networkId)
+    if (!network) {
+      throw new Error(`network ${chainId} not found in wallets list`)
+    }
+    return network
   }
 
   // mainWallet is the DefaultChain wallet

@@ -22,12 +22,12 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
 
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method)) {
-        const key = this.cacheKey(request.method, request.params, chainId || this.defaultChainId)
+        const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
         const result = this.getCacheValue(key)
         if (result && result !== '') {
           callback(undefined, {
             jsonrpc: '2.0',
-            id: request.id,
+            id: request.id!,
             result: result
           })
           return
@@ -38,8 +38,8 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       next(request, (error: any, response?: JsonRpcResponse, chainId?: number) => {
         // Store result in cache and continue
         if (this.cachableJsonRpcMethods.includes(request.method)) {
-          if (response.result) {
-            const key = this.cacheKey(request.method, request.params, chainId || this.defaultChainId)
+          if (response && response.result) {
+            const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
             this.setCacheValue(key, response.result)
           }
         }

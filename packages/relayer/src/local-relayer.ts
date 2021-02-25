@@ -62,6 +62,10 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
         return DEFAULT_GAS_LIMIT
       }
 
+      if (!this.signer.provider) {
+        throw new Error('signer.provider is not set, but is required')
+      }
+
       // TODO: If the wallet address has been deployed, gas limits can be
       // estimated with more accurately by using self-calls with the batch transactions one by one
       return this.signer.provider.estimateGas({
@@ -84,7 +88,12 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     space?: number,
     blockTag?: BlockTag
   ): Promise<number> {
+    if (!this.provider) {
+      throw new Error('provider is not set')
+    }
+
     const addr = addressOf(config, context)
+    
     if ((await this.provider.getCode(addr)) === '0x') {
       return 0
     }

@@ -26,9 +26,9 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
 
-  protected accountPayload: string
-  protected networksPayload: NetworkConfig[]
-  protected walletContextPayload: WalletContext
+  protected accountPayload: string | undefined
+  protected networksPayload: NetworkConfig[] | undefined
+  protected walletContextPayload: WalletContext | undefined
 
   protected _registered: boolean
 
@@ -208,8 +208,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       const responseCallback: ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => {
         if (error) {
           reject(error)
-        } else {
+        } else if (response) {
           resolve(response)
+        } else {
+          throw new Error('no valid response to return')
         }
       }
 
@@ -270,7 +272,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     await this.waitUntilConnected()
 
     const login = Promise.all([
-      new Promise<string>(resolve => {
+      new Promise<string | undefined>(resolve => {
         if (this.accountPayload) {
           resolve(this.accountPayload)
           return
@@ -309,7 +311,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       return { accountAddress, networks, walletContext }
     })
 
-    const disconnect = new Promise((_, reject) => {
+    const disconnect = new Promise<WalletSession>((_, reject) => {
       this.events.once('disconnect', () => {
         reject(new Error('user disconnected the wallet'))
       })
@@ -337,7 +339,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     }
 
     // Continually send connect requesst until we're connected or timeout passes
-    let connected: boolean = undefined
+    let connected: boolean | undefined = undefined
     const postMessageUntilConnected = () => {
       if (!this.registered) return false
       if (connected !== undefined) return connected

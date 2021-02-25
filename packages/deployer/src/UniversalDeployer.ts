@@ -6,7 +6,7 @@ import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_D
 import { ContractInstance } from './types'
 import { createLogger, Logger } from './utils/logger'
 
-let prompt: Logger = undefined
+let prompt: Logger
 createLogger().then(logger => prompt = logger)
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);

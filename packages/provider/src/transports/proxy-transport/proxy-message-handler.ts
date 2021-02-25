@@ -20,6 +20,7 @@ export class ProxyMessageHandler extends BaseWalletTransport {
   }
 
   unregister() {
+    // @ts-ignore
     this.port.handleMessage = undefined
     this._registered = false
   }

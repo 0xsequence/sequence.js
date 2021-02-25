@@ -44,7 +44,7 @@ export function flattenAuxTransactions(txs: (Transactionish | Transactionish)[])
     }
 
     if ((<TransactionRequest>c).auxiliary) {
-      return p.concat([c, ...flattenAuxTransactions((<TransactionRequest>c).auxiliary)])
+      return p.concat([c, ...flattenAuxTransactions((<TransactionRequest>c).auxiliary!)])
     }
 
     return p.concat(c)
@@ -56,7 +56,7 @@ export async function toSequenceTransaction(
   tx: TransactionRequest | Transaction,
   revertOnError: boolean = false,
   gasLimit: BigNumberish = ethers.constants.Zero,
-  nonce: BigNumberish = undefined
+  nonce?: BigNumberish
 ): Promise<Transaction> {
   if (isSequenceTransaction(tx)) {
     return tx as Transaction
@@ -71,7 +71,7 @@ export async function toSequenceTransaction(
       gasLimit: txGas ? await txGas : gasLimit,
       to: await tx.to,
       value: tx.value ? await tx.value : 0,
-      data: await tx.data,
+      data: (await tx.data)!,
       nonce: nonce ? nonce : await tx.nonce
     }
   } else {
@@ -103,8 +103,11 @@ export function hasSequenceTransactions(txs: any[]) {
   return txs.find(t => isSequenceTransaction(t)) !== undefined
 }
 
-export function readSequenceNonce(...txs: Transaction[]): BigNumberish {
+export function readSequenceNonce(...txs: Transaction[]): BigNumberish | undefined {
   const sample = txs.find(t => t.nonce !== undefined)
+  if (!sample) {
+    return undefined
+  }
   if (txs.find(t => t.nonce !== undefined && t.nonce !== sample.nonce)) {
     throw new Error('Mixed nonces on Sequence transactions')
   }

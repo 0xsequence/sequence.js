@@ -4,7 +4,7 @@ export const exceptionProviderMiddleware: JsonRpcMiddleware = (next: JsonRpcHand
   return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     next(request, (error: any, response?: JsonRpcResponse) => {
 
-      if (!error && response.error) {
+      if (!error && response && response.error) {
         if (typeof(response.error) === 'string') {
           throw new Error(response.error)
         } else {

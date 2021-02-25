@@ -15,7 +15,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     knownConfigs?: WalletConfig[],
     ignoreIndex?: boolean,
     requireIndex?: boolean
-  }): Promise<{ config: WalletConfig }> => {
+  }): Promise<{ config: WalletConfig | undefined }> => {
     const { provider, context, ignoreIndex, requireIndex } = args
     const address = ethers.utils.getAddress(args.address)
 
@@ -37,7 +37,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
       )
     )[0]
 
-    const authContract = new Contract(context.sequenceUtils, walletContracts.sequenceUtils.abi, this.authProvider)
+    const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
 
     if (currentImplementation === context.mainModuleUpgradable) {
       const foundConfig = knownConfigs.find((k) => imageHash(k) === currentImageHash[0])
@@ -101,7 +101,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const { signer, context, ignoreIndex, requireIndex } = args
     if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
 
-    const authContract = new Contract(context.sequenceUtils, walletContracts.sequenceUtils.abi, this.authProvider)
+    const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
     const logBlockHeight = ignoreIndex ? 0 : (await authContract.lastSignerUpdate(signer)).toNumber()
     if (requireIndex && logBlockHeight === 0) return { wallet: undefined }
     const filter = authContract.filters.RequiredSigner(null, signer)

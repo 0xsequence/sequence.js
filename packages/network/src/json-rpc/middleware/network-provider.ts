@@ -10,11 +10,11 @@ export const networkProviderMiddleware = (getChainId: (request: JsonRpcRequest) 
 
     switch (method) {
       case 'net_version':
-        callback(undefined, { jsonrpc: '2.0', id, result: `${networkChainId}` })
+        callback(undefined, { jsonrpc: '2.0', id: id!, result: `${networkChainId}` })
         return
 
       case 'eth_chainId':
-        callback(undefined, { jsonrpc: '2.0', id, result: ethers.utils.hexlify(networkChainId) })
+        callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.utils.hexlify(networkChainId) })
         return
 
       default:

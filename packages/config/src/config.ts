@@ -18,7 +18,7 @@ export interface WalletConfig {
 
 export interface WalletState {
   context: WalletContext
-  config: WalletConfig
+  config?: WalletConfig
 
   // the wallet address
   address: string

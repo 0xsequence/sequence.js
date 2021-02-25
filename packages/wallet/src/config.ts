@@ -1,7 +1,20 @@
 import { BytesLike, ethers, Contract } from 'ethers'
-import { Signer, DecodedSignature, DecodedSigner, DecodedOwner } from './signer'
+import { Signer, DecodedSignature } from './signer'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletConfig } from '@0xsequence/config'
+
+export interface DecodedOwner {
+  weight: number
+  address: string
+}
+
+export interface DecodedSigner {
+  r: string
+  s: string
+  v: number
+  t: number
+  weight: number
+}
 
 export const fetchImageHash = async (signer: Signer): Promise<string> => {
   const address = await signer.getAddress()
@@ -54,7 +67,7 @@ export const decodeSignature = (signature: string): DecodedSignature => {
 
   const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
 
-  const signers = []
+  const signers: (DecodedSigner | DecodedOwner)[] = []
 
   for (let rindex = 4; rindex < auxsig.length; ) {
     const isAddr = auxsig.slice(rindex, rindex + 2) !== '00'

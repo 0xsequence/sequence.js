@@ -8,6 +8,6 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
-    "strictNullChecks": false // TODO: set to true
+    "strictNullChecks": true
   }
 }

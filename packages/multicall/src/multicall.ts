@@ -101,7 +101,7 @@ export class Multicall {
 
     // Get next candidate
     const next = items[0].next as JsonRpcHandlerFunc
-    let blockTag: BlockTag = null
+    let blockTag: BlockTag | null = null
 
     // Partition incompatible calls
     var [items, discartItems] = partition(items, (item) => {
@@ -113,22 +113,24 @@ export class Multicall {
           case JsonRpcMethod.ethCall:
             // Unsupported eth_call parameters
             if (
-              item.request.params[0].from ||
-              item.request.params[0].gasPrice ||
-              item.request.params[0].value
+              item.request.params![0].from ||
+              item.request.params![0].gasPrice ||
+              item.request.params![0].value
             ) {
               return false  
             }
           case JsonRpcMethod.ethGetBalance:
           case JsonRpcMethod.ethGetCode:
             // Mixed blockTags
-            const itemBlockTag = parseBlockTag(item.request.params[1])
+            const itemBlockTag = parseBlockTag(item.request.params![1])
             if (blockTag === null) blockTag = itemBlockTag
             if (!eqBlockTag(itemBlockTag, blockTag)) return false
         }
 
         return true
-      } catch {}
+      } catch {
+        return false
+      }
     })
 
     // Forward discarted items
@@ -146,9 +148,9 @@ export class Multicall {
             return {
               delegateCall: false,
               revertOnError: false,
-              target: v.request.params[0].to,
-              data: v.request.params[0].data,
-              gasLimit: v.request.params[0].gas ? v.request.params[0].gas : 0,
+              target: v.request.params![0].to,
+              data: v.request.params![0].data,
+              gasLimit: v.request.params![0].gas ? v.request.params![0].gas : 0,
               value: 0
             }
           case JsonRpcMethod.ethGetCode:
@@ -159,7 +161,7 @@ export class Multicall {
               gasLimit: 0,
               value: 0,
               data: this.multicallInterface.encodeFunctionData(
-                this.multicallInterface.getFunction('callCode'), [v.request.params[0]]
+                this.multicallInterface.getFunction('callCode'), [v.request.params![0]]
               )
             }
           case JsonRpcMethod.ethGetBalance:
@@ -170,7 +172,7 @@ export class Multicall {
               gasLimit: 0,
               value: 0,
               data: this.multicallInterface.encodeFunctionData(
-                this.multicallInterface.getFunction('callBalanceOf'), [v.request.params[0]]
+                this.multicallInterface.getFunction('callBalanceOf'), [v.request.params![0]]
               )
             }
           }
@@ -203,26 +205,31 @@ export class Multicall {
     // Forward single multicall rpc call
     const reqId = getRandomInt()
 
+    // TODO: fix types below..
+
     const res = await safeSolve(
+      // @ts-ignore
       promisify<JsonRpcRequest, JsonRpcResponse>(next)({
-        id: reqId,
-        jsonrpc: JsonRpcVersion,
-        method: JsonRpcMethod.ethCall,
+        id: reqId!,
+        jsonrpc: JsonRpcVersion!,
+        method: JsonRpcMethod.ethCall!,
         params: [{
-          to: this.options.contract,
+          to: this.options.contract!,
           value: 0,
-          data: encodedCall
-        }, blockTag]
+          data: encodedCall!
+        }, blockTag!]
+      // @ts-ignore
       }), (e) => ({
-        jsonrpc: JsonRpcVersion,
-        id: reqId,
+        jsonrpc: JsonRpcVersion!,
+        id: reqId!,
         result: undefined,
-        error: e
+        error: e!
       })
     )
     
     // Error calling multicall
     // Forward all calls to middleware
+    // @ts-ignore
     if (res.error) {
       return this.forward(items)
     }
@@ -230,9 +237,8 @@ export class Multicall {
     // Decode result from multicall
     let decoded: ethers.utils.Result
     try {
-      decoded = this.multicallInterface.decodeFunctionResult(
-        this.multicallInterface.getFunction('multiCall'), res.result
-      )
+      // @ts-ignore
+      decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('multiCall'), res.result)
     } catch {
       this.forward(items)
       return
@@ -247,22 +253,22 @@ export class Multicall {
         switch (item.request.method) {
           case JsonRpcMethod.ethCall:
             item.callback(undefined, {
-              jsonrpc: item.request.jsonrpc,
-              id: item.request.id,
+              jsonrpc: item.request.jsonrpc!,
+              id: item.request.id!,
               result: decoded[1][index]
             })
             break
           case JsonRpcMethod.ethGetCode:
             item.callback(undefined, {
-              jsonrpc: item.request.jsonrpc,
-              id: item.request.id,
+              jsonrpc: item.request.jsonrpc!,
+              id: item.request.id!,
               result: ethers.utils.defaultAbiCoder.decode(['bytes'], decoded[1][index])[0]
             })
             break
           case JsonRpcMethod.ethGetBalance:
             item.callback(undefined, {
-              jsonrpc: item.request.jsonrpc,
-              id: item.request.id,
+              jsonrpc: item.request.jsonrpc!,
+              id: item.request.id!,
               result: ethers.utils.defaultAbiCoder.decode(['uint256'], decoded[1][index])[0]
             })
             break

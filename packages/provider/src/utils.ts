@@ -11,7 +11,7 @@ export const isValidSignature = async (
   provider: Web3Provider,
   chainId?: number,
   walletContext?: WalletContext
-): Promise<boolean> => {
+): Promise<boolean | undefined> => {
   chainId = chainId || await provider.getChainId()
   walletContext = walletContext || await provider.getSigner().getWalletContext()
   return _isValidSignature(address, digest, sig, provider, walletContext, chainId)

@@ -141,7 +141,7 @@ export class Wallet extends Signer {
   // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
   connect(provider: Provider, relayer?: Relayer): Wallet {
     if (isJsonRpcProvider(provider)) {
-      return new Wallet({ config: this.config, context: this.context }, ...this._signers).setProvider(provider).setRelayer(relayer)
+      return new Wallet({ config: this.config, context: this.context }, ...this._signers).setProvider(provider).setRelayer(relayer!)
     } else {
       throw new Error('Wallet provider argument is expected to be a JsonRpcProvider')
     }
@@ -310,7 +310,7 @@ export class Wallet extends Signer {
     // If transaction is marked as expirable
     // append expirable require
     if ((<TransactionRequest>transaction).expiration) {
-      stx = makeExpirable(this.context, stx, (<TransactionRequest>transaction).expiration)
+      stx = makeExpirable(this.context, stx, (<TransactionRequest>transaction).expiration!)
     }
 
     // If transaction depends on another nonce
@@ -461,7 +461,7 @@ export class Wallet extends Signer {
   async isDeployed(chainId?: ChainId): Promise<boolean> {
     await this.getChainIdNumber(chainId)
     const walletCode = await this.provider.getCode(this.address)
-    return walletCode && walletCode !== "0x"
+    return !!walletCode && walletCode !== '0x'
   }
 
   // updateConfig will build an updated config transaction and send it to the Ethereum
@@ -554,13 +554,13 @@ export class Wallet extends Signer {
     }]
   }
 
-  buildPublishConfigTransaction(config?: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
+  buildPublishConfigTransaction(config: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     return [{
       delegateCall: false,
       revertOnError: true,
       gasLimit: ethers.constants.Zero,
-      to: this.context.sequenceUtils,
+      to: this.context.sequenceUtils!,
       value: ethers.constants.Zero,
       nonce: nonce,
       data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), 
@@ -598,7 +598,7 @@ export class Wallet extends Signer {
       delegateCall: false,
       revertOnError: true,
       gasLimit: ethers.constants.Zero,
-      to: this.context.sequenceUtils,
+      to: this.context.sequenceUtils!,
       value: ethers.constants.Zero,
       nonce: nonce,
       data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 

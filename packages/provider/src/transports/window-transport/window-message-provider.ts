@@ -2,7 +2,7 @@ import { ProviderMessage } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 
 // ..
-let registeredWindowMessageProvider: WindowMessageProvider
+let registeredWindowMessageProvider: WindowMessageProvider | undefined
 
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
@@ -26,6 +26,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this.on('disconnect', () => {
       if (this.walletWindow) {
         this.walletWindow.close()
+        // @ts-ignore
         this.walletWindow = undefined
       }
     })
@@ -99,6 +100,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     // }
 
     // Popup window is available
+    // @ts-ignore
     this.walletWindow = popup
 
     // Heartbeat to track if window closed

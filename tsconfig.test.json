@@ -5,7 +5,7 @@
     "declaration": true,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "strictNullChecks": false, // TODO: set to true
+    "strictNullChecks": false,
     "esModuleInterop": true,
     "lib": ["dom.iterable", "dom", "es2020"],
     "types": ["node", "mocha", "puppeteer"]
