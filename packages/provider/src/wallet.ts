@@ -36,8 +36,8 @@ export interface WalletProvider {
   getWalletState(chainId?: ChainId): Promise<WalletState[]>
   isDeployed(chainId?: ChainId): Promise<boolean>
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
 
   commands: WalletCommands
 }

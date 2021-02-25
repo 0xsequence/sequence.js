@@ -175,6 +175,8 @@ export class Multicall {
                 this.multicallInterface.getFunction('callBalanceOf'), [v.request.params![0]]
               )
             }
+          default:
+            return null
           }
         } catch {
           return null

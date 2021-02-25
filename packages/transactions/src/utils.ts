@@ -205,6 +205,6 @@ export function isSignedTransactions(cand: any): cand is SignedTransactions {
     cand.signature !== undefined &&
     cand.transactions !== undefined &&
     Array.isArray(cand.transactions) &&
-    cand.transactions.reduce((p, c) => p && isSequenceTransaction(c), true)
+    (<SignedTransactions>cand).transactions.reduce((p, c) => p && isSequenceTransaction(c), true)
   )
 }

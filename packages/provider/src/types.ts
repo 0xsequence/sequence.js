@@ -19,24 +19,24 @@ export interface WalletSession {
 }
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
-  register()
-  unregister()
-  openWallet(path?: string, state?: any, defaultNetworkId?: string | number)
-  closeWallet()
+  register(): void
+  unregister(): void
+  openWallet(path?: string, state?: any, defaultNetworkId?: string | number): void
+  closeWallet(): void
   isConnected(): boolean
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void)
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void)
+  on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
+  once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
   waitUntilConnected(): Promise<boolean>
   waitUntilLoggedIn(): Promise<WalletSession>
 }
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
-  register()
-  unregister()
-  notifyConnect(connectInfo: { chainId?: string, sessionId?: string })
-  notifyAccountsChanged(accounts: string[])
-  notifyChainChanged(connectInfo: any)
-  notifyNetworks(networks: NetworkConfig[])
+  register(): void
+  unregister(): void
+  notifyConnect(connectInfo: { chainId?: string, sessionId?: string }): void
+  notifyAccountsChanged(accounts: string[]): void
+  notifyChainChanged(connectInfo: any): void
+  notifyNetworks(networks: NetworkConfig[]): void
 }
 
 export interface ProviderMessage<T> {

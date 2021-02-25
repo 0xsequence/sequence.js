@@ -409,7 +409,7 @@ const hexlifyTransaction = (transaction: TransactionRequest, allowExtra?: { [key
   const auxiliary = <any>transaction['auxiliary']
   if (auxiliary && auxiliary.length > 0) {
     result['auxiliary'] = []
-    auxiliary.forEach(a => {
+    auxiliary.forEach((a: any) => {
       result['auxiliary'].push(hexlifyTransaction(a))
     })
   }

@@ -347,6 +347,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
       this.sendMessage(initRequest)
       setTimeout(postMessageUntilConnected, 200)
+      return
     }
     postMessageUntilConnected()
 
