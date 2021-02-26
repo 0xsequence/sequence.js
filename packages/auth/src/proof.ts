@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@0xsequence/ethauth'
 import { sequenceContext, WalletContext } from '@0xsequence/network'
-import { packMessageData, isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'
+import { isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'
 
 export const ValidateSequenceDeployedWalletProof: ValidatorFunc = async (provider: ethers.providers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean, address?: string }> => {
   if (!provider || provider === undefined || chainId === undefined) {
@@ -9,7 +9,7 @@ export const ValidateSequenceDeployedWalletProof: ValidatorFunc = async (provide
   }
 
   // Compute eip712 message digest from the proof claims
-  const message = proof.messageDigest()
+  const digest = proof.messageDigest()
 
   // Early check to ensure the contract wallet has been deployed
   const walletCode = await provider.getCode(proof.address)
@@ -23,12 +23,7 @@ export const ValidateSequenceDeployedWalletProof: ValidatorFunc = async (provide
   const contract = new ethers.Contract(proof.address, abi, provider)
 
   // hash the message digest as required by isValidSignature
-  const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
-
-  // sequence wallet isValidSignature requires a additional encoding
-  const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.arrayify(packMessageData(proof.address, chainId, digest))))
-
-  const isValidSignature = await contract.isValidSignature(subDigest, ethers.utils.arrayify(proof.signature))
+  const isValidSignature = await contract.isValidSignature(digest, ethers.utils.arrayify(proof.signature))
 
   if (isValidSignature === IsValidSignatureBytes32MagicValue) {
     return { isValid: true }

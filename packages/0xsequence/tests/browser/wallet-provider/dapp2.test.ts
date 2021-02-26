@@ -123,7 +123,7 @@ export const tests = async () => {
     const sig = await signer.signTypedData(domain, types, message)
     assert.equal(
       sig,
-      '0x00010001a6a03e71cfe249bba6272696e9612e30c83a7aeaad09d5d6fd984747fc384f1c5624bc5833f994d5b2903d6703c038b4c20ccf790cab297a255b36d9e429ce711c02',
+      '0x00010001d6648684f5923f2d3909e8c804085e58fb7eacaa650b7f42f6649127c572a2aa22a82b9844737cad6cdfd692539820b73feccbb93bd4a21e04eb3e9755b7bf291b02',
       'signature match typed-data'
     )
 

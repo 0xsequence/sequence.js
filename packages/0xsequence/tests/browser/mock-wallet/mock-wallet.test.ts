@@ -47,7 +47,7 @@ const main = async () => {
   const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
   
 
-  // wallet account address: 0xfbbabe29b5ec5fcd0beead9fa1c7f367bb985e9d based on the chainId
+  // wallet account address: 0x5d77Bf3d31A7E77db104Cdc6AaB78eb961CA6786 based on the chainId
   const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list

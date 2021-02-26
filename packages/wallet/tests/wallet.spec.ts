@@ -1228,22 +1228,19 @@ describe('Wallet integration', function () {
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {
         const signature = await wallet.signMessage(message)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSignature(wallet.address, subDigest, signature, ethnode.provider)).to.be.true
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should validate wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidContractWalletSignature(wallet.address, subDigest, signature, ethnode.provider)).to.be.true
+        expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
         const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
         const signature = await wallet2.signMessage(message, ethnode.chainId)
-        const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(wallet.address, ethnode.chainId, digest)))
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSignature(wallet.address, subDigest, signature, ethnode.provider, context)).to.be.false
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
       })
     })
   })

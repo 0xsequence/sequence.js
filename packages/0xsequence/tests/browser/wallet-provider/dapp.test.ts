@@ -87,7 +87,7 @@ export const tests = async () => {
 
   await test('getAccounts', async () => {
     const address = await wallet.getAddress()
-    assert.equal(address, ethers.utils.getAddress('0x1abe642a25d9f3a725f07c622abd4356646c1820'), 'wallet address is correct')
+    assert.equal(address, ethers.utils.getAddress('0xf4c293EdEd54005F3566421f44f418Be9e484C15'), 'wallet address is correct')
   })
 
   await test('getWalletConfig', async () => {
@@ -180,7 +180,7 @@ export const tests = async () => {
       const sig = await signer.signMessage(m)
       assert.equal(
         sig,
-        '0x000100019ba7f3b76f70daa61fef6df01c0dfe6e271536b38808ae74bd8cf168e302ba6f1c997646ad59a775be1d434be81868119fe1b2d4a607f2c18ac8327a578067581c02',
+        '0x0001000161413429921f2035779d24c7c383f78f02f40317e0e28095ceeebababa1a7d7651cc212313bd355737fe6d0b6ce0428cafe8dc418ae82af46167ab993bd753d01c02',
         'signature match'
       )
       return sig
@@ -225,7 +225,7 @@ export const tests = async () => {
     const sig = await signer.signTypedData(domain, types, message)
     assert.equal(
       sig,
-      '0x00010001097d16cab1a08fca49c3d5acae73ecfb4aeaa9051252e698dd7cc2b47f53973e1cc4e0d1855e2134273f62a1c732b500a89ab761acc7625bf4b7ea699365f5b21b02',
+      '0x0001000131561deeae937716dadeaac6483acd974f5a98ef86dcffb26eef2f6345d8fff5573f4b526a2b136356e268361759e42ff8548cfe3a59b5cfd5609a4cc12bd1ee1c02',
       'signature match typed-data'
     )
 
@@ -258,7 +258,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message, chainId)
     assert.equal(
       sig,
-      '0x00010001eec4f9928faca500d557295c029a074bffc3282d4e4ad5bac415a779009acc1b1f42c6888673735c6dd6f54d1f859b4cb527addf16b69a4ed4c5781cd39fb7b71c02',
+      '0x0001000138519ea0b0b8c8d38f987b2dc2a6df425cf5febc6a6595dd1c566609e217edeb546cc02c754fe66c333fb880d1fa2e82c41a9afb001e625a716bcc1ff9f096191b02',
       'signAuthMessage, signature match'
     )
 
