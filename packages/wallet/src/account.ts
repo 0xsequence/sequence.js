@@ -2,13 +2,12 @@ import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } fr
 import { Signer as AbstractSigner, ethers, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
-import { walletContracts } from '@0xsequence/abi'
 import { Signer, NotEnoughSigners } from './signer'
-import { SignedTransactions, Transactionish } from '@0xsequence/transactions'
+import { SignedTransactions, Transactionish, Transaction } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, isNetworkConfig, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
-import { resolveArrayProperties, findLatestLog } from './utils'
+import { resolveArrayProperties } from './utils'
 import { Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { encodeTypedDataHash } from '@0xsequence/utils'
 
@@ -225,6 +224,10 @@ export class Account extends Signer {
       ...await wallet.buildUpdateConfigTransaction(lastConfig!, false),
       ...transactionParts
     ])
+  }
+
+  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
+    return this.sendTransaction(transactions, chainId, allSigners)
   }
 
   signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {

@@ -309,6 +309,40 @@ describe('Wallet integration', function () {
           expect(await callReceiver2.lastValB()).to.equal('0x445566')
         })
 
+        it('Should send two transactions at once, alternate syntax', async () => {
+          const callReceiver1 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ethnode.signer
+          ).deploy()) as CallReceiverMock
+
+          const callReceiver2 = (await new ethers.ContractFactory(
+            CallReceiverMockArtifact.abi,
+            CallReceiverMockArtifact.bytecode,
+            ethnode.signer
+          ).deploy()) as CallReceiverMock
+
+          const transactions = [
+            {
+              gas: '121000',
+              to: callReceiver1.address,
+              value: 0,
+              data: await encodeData(callReceiver, "testCall", 1, "0x112233"),
+            },
+            {
+              gas: '121000',
+              to: callReceiver2.address,
+              value: 0,
+              data: await encodeData(callReceiver, "testCall", 2, "0x445566")
+            }
+          ]
+ 
+          await wallet.sendTransactionBatch(transactions)
+
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+        })
+
         it('Should send a single transaction with sendTransaction', async () => {
           const callReceiver1 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
