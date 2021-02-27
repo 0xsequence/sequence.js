@@ -2,7 +2,7 @@ import { Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainId, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
-import { SignedTransactions, Transactionish, TransactionResponse } from '@0xsequence/transactions'
+import { SignedTransactions, Transactionish, TransactionRequest, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@0xsequence/utils'
@@ -36,6 +36,10 @@ export abstract class Signer extends AbstractSigner {
   // sendTransaction takes an unsigned transaction, or list of unsigned transactions, and then has it signed by
   // the signer, and finally sends it to the relayer for submission to an Ethereum network. 
   abstract sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse>
+
+  // sendTransactionBatch provides the ability to send an array/batch of transactions as a single native on-chain transaction.
+  // This method works identically to sendTransaction but offers a different syntax for convience, readability and type clarity.
+  abstract sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse>
 
   // Low-level methods to sign and send/relayer signed transactions separately. The combination of these methods
   // is like calling just sendTransaction(..) above. Also note that sendSignedTransactions is identical

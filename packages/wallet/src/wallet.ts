@@ -278,6 +278,11 @@ export class Wallet extends Signer {
     return this.relayer.relay(await this.signTransactions(transaction, chainId, allSigners))
   }
 
+  // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
+  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
+    return this.sendTransaction(transactions, chainId, allSigners)
+  }
+
   // signTransactions will sign a Sequence transaction with the wallet signers
   //
   // NOTE: the txs argument of type Transactionish can accept one or many transactions. 
