@@ -1,9 +1,9 @@
-import { ethers, BytesLike, BigNumberish } from 'ethers'
+import { ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
 import { compareAddr, addressOf } from '@0xsequence/config'
-import { DecodedSigner, decodeSignature, recoverConfigFromDigest, isSigner } from './config'
+import { decodeSignature, recoverConfigFromDigest, isSigner } from './config'
 
 import { packMessageData } from './utils'
 
@@ -23,7 +23,7 @@ export async function isValidSignature(
 
   const wallets = await Promise.all([
     isValidContractWalletSignature(address, digest, sig, provider),
-    isValidSequenceDeployedWalletSignature(address, digest, sig, provider, chainId)
+    isValidSequenceDeployedWalletSignature(address, digest, sig, provider)
   ])
 
   // If validity of wallet signature can't be determined
@@ -103,14 +103,11 @@ export async function isValidSequenceDeployedWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider?: Provider,
-  chainId?: number
+  provider?: Provider
 ) {
   if (!provider) return undefined // Signature validity can't be determined
   try {
-    const cid = chainId ? chainId : (await provider.getNetwork()).chainId
-    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
-    return isValidContractWalletSignature(address, subDigest, sig, provider)
+    return isValidContractWalletSignature(address, digest, sig, provider)
   } catch {
     return false
   }

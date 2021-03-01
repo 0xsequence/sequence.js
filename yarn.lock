@@ -11,7 +11,7 @@
 
 "@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts":
   version "1.1.0"
-  resolved "https://github.com/0xsequence/wallet-contracts#ae753cda6c8e6e9b620f22bbe5270a6751702653"
+  resolved "https://github.com/0xsequence/wallet-contracts#27d9f9b753b4973a01ccb9efc4e3b3dd57bb9a17"
 
 "@ardatan/aggregate-error@0.0.6":
   version "0.0.6"

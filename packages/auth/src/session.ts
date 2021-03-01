@@ -140,7 +140,7 @@ export class Session implements SessionDump {
 
     proof.claims.app = this.name
   
-    proof.signature = await authWallet.wallet.signMessage(proof.messageDigest())
+    proof.signature = await authWallet.wallet.sign(proof.messageDigest())
     const proofString = await ethAuth.encodeProof(proof, true)
 
     // TODO: ethauth.js v0.4.4:

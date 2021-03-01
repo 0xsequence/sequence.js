@@ -4,7 +4,7 @@ import {
   BlockTag,
   JsonRpcProvider
 } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, Contract } from 'ethers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Interface } from '@ethersproject/abi'
 import { BytesLike } from '@ethersproject/bytes'
@@ -29,7 +29,7 @@ import {
 
 import { Relayer } from '@0xsequence/relayer'
 
-import { ChainId, WalletContext, JsonRpcSender, NetworkConfig, isNetworkConfig, isJsonRpcProvider, sequenceContext, getNetworkId } from '@0xsequence/network'
+import { ChainId, WalletContext, JsonRpcSender, NetworkConfig, isJsonRpcProvider, sequenceContext, getNetworkId } from '@0xsequence/network'
 
 import {
   WalletConfig,
@@ -395,18 +395,18 @@ export class Wallet extends Signer {
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
-    // Prepare Sequence message digest comprised of the address, chainId and hash of original message contents
-    const digest = ethers.utils.arrayify(isDigest ? msg :
+    // Generate sub-digest
+    const subDigest = ethers.utils.arrayify(
       ethers.utils.keccak256(
         packMessageData(
           this.address,
           signChainId,
-          ethers.utils.keccak256(msg)
+          isDigest ? msg : ethers.utils.keccak256(msg)
         )
       )
     )
 
-    // Sign digest using a set of signers and some optional data
+    // Sign sub-digest using a set of signers and some optional data
     const signWith = async (signers: AbstractSigner[], auxData?: string) => {
       const signersAddr = Promise.all(signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
 
@@ -419,7 +419,7 @@ export class Wallet extends Signer {
             if (signer) {
               return ethers.utils.solidityPack(
                 ['bool', 'uint8', 'bytes'],
-                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, digest, auxData)) + '02']
+                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, subDigest, auxData)) + '02']
               )
             }
           } catch (err) {
