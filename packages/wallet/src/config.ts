@@ -1,8 +1,7 @@
-import { DecodedSignature, isDecodedEOASigner, isDecodedFullSigner, isDecodedAddress, decodeSignature, recoverEOASigner } from '@0xsequence/config'
+import { WalletConfig, DecodedSignature, isDecodedEOASigner, isDecodedFullSigner, isDecodedAddress, decodeSignature, recoverEOASigner } from '@0xsequence/config'
 import { BytesLike, ethers, Contract } from 'ethers'
 import { Signer } from './signer'
 import { walletContracts } from '@0xsequence/abi'
-import { WalletConfig } from '@0xsequence/config'
 import { isValidSignature } from './validate'
 import { WalletContext } from '@0xsequence/network'
 
