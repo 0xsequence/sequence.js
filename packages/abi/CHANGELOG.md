@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.10.0
+
+### Minor Changes
+
+- Deployed new contracts with ERC1271 signer support
+
 ## 0.9.6
 
 ### Patch Changes
