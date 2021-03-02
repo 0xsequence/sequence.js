@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.10.2
+
+### Patch Changes
+
+- - message digest fix
+
 ## 0.10.1
 
 ### Patch Changes

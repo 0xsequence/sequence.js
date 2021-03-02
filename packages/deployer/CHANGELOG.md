@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.10.2
+
+### Patch Changes
+
+- - message digest fix
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.10.2
+
 ## 0.10.1
 
 ### Patch Changes

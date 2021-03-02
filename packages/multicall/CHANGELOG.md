@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.10.2
+
+### Patch Changes
+
+- - message digest fix
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.2
+  - @0xsequence/network@0.10.2
+  - @0xsequence/utils@0.10.2
+
 ## 0.10.1
 
 ### Patch Changes

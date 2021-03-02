@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.10.2
+
+### Patch Changes
+
+- - message digest fix
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.2
+  - @0xsequence/chaind@0.10.2
+  - @0xsequence/config@0.10.2
+  - @0xsequence/transactions@0.10.2
+
 ## 0.10.1
 
 ### Patch Changes
