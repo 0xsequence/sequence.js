@@ -145,7 +145,7 @@ export const tests = async () => {
     const sig = await provider.send('eth_signTypedData', [address, typedData])
     assert.equal(
       sig,
-      '0x0001000131561deeae937716dadeaac6483acd974f5a98ef86dcffb26eef2f6345d8fff5573f4b526a2b136356e268361759e42ff8548cfe3a59b5cfd5609a4cc12bd1ee1c02',
+      '0x000100013749d9388b1f0f7fd793d2d80c3062015210c7261313263d0afa2ead01b5465a5d62a5c12da7fa1c08583dac983d0ff257508e6768c82084cb0582d7160f48541c02',
       'signature match typed-data'
     )
 
@@ -157,7 +157,7 @@ export const tests = async () => {
     //
 
     const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(messageHash))
+    const messageDigest = ethers.utils.arrayify(messageHash)
     const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
     assert.true(isValid, 'signature is valid')
 
