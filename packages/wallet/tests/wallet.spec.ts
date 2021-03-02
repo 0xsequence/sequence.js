@@ -1,6 +1,6 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { encodeData } from './utils'
-import * as Ganache from 'ganache-cli'
+import { Proof } from '@0xsequence/ethauth'
 
 import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
 import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/HookCallerMock'
@@ -11,7 +11,7 @@ import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, Networks, JsonRpcSender } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
 import { addressOf, imageHash, sortConfig } from '@0xsequence/config'
 
@@ -35,6 +35,7 @@ const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
 
 import hardhat from 'hardhat'
+import { encodeTypedDataHash } from '@0xsequence/utils'
 
 type EthereumInstance = {
   chainId?: number
@@ -178,7 +179,7 @@ describe('Wallet integration', function () {
         expect(sig).to.not.equal('')
 
         await relayer.deployWallet(wallet.config, context)
-        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, ethers.utils.arrayify(digest), sig)
+        const call = hookCaller.callERC1271isValidSignatureHash(wallet.address, ethers.utils.arrayify(digest), sig)
         await expect(call).to.be.fulfilled
       })
     })
@@ -1276,6 +1277,29 @@ describe('Wallet integration', function () {
         await relayer.deployWallet(wallet.config, context)
         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
       })
+    })
+    it('Should sign typed data', async () => {
+      const proof = new Proof({
+        address: wallet.address
+      })
+
+      proof.setIssuedAtNow()
+      proof.setExpiryIn(3e7) // 1 year
+      proof.claims.app = 'SkyWeaver'
+  
+      const messageTypedData = proof.messageTypedData()
+  
+      const sigResp = await wallet.signTypedData(
+        { ...messageTypedData.domain, chainId: ethnode.chainId },
+        messageTypedData.types,
+        messageTypedData.message
+      )
+
+      await relayer.deployWallet(wallet.config, wallet.context)
+
+      const hash = encodeTypedDataHash({ domain: { ...messageTypedData.domain, chainId: ethnode.chainId }, types: messageTypedData.types, message: messageTypedData.message })
+
+      expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](hash, sigResp)).to.equal("0x1626ba7e")
     })
   })
   describe('Update wallet configuration', () => {
