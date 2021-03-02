@@ -384,7 +384,7 @@ export class Wallet extends Signer {
     }
 
     const hash = encodeTypedDataHash({ domain, types, message })
-    return this.signMessage(ethers.utils.arrayify(hash), signChainId, allSigners)
+    return this.sign(hash, true, signChainId, allSigners)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
