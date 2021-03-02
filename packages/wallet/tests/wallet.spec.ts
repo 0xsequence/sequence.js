@@ -1290,16 +1290,14 @@ describe('Wallet integration', function () {
       const messageTypedData = proof.messageTypedData()
   
       const sigResp = await wallet.signTypedData(
-        { ...messageTypedData.domain, chainId: ethnode.chainId },
+        messageTypedData.domain,
         messageTypedData.types,
         messageTypedData.message
       )
 
       await relayer.deployWallet(wallet.config, wallet.context)
 
-      const hash = encodeTypedDataHash({ domain: { ...messageTypedData.domain, chainId: ethnode.chainId }, types: messageTypedData.types, message: messageTypedData.message })
-
-      expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](hash, sigResp)).to.equal("0x1626ba7e")
+      expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](proof.messageDigest(), sigResp)).to.equal("0x1626ba7e")
     })
   })
   describe('Update wallet configuration', () => {
