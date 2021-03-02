@@ -1213,21 +1213,6 @@ describe('Wallet integration', function () {
           const signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, ethnode.chainId)
           expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
         }
-
-        /*
-
-        // const signature = await wallet.signMessage(message, ethnode.chainId)
-        const signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, ethnode.chainId)
-        await relayer.deployWallet(wallet.config, context)
-
-        console.log('digest', digest)
-        console.log('signature', signature)
-
-        expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-        
-        // const sig = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message)
-
-        */
       })
       describe('After updating the owners', () => {
         let wallet2: lib.Wallet
