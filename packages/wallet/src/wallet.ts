@@ -376,10 +376,7 @@ export class Wallet extends Signer {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
-    if (!domainChainId) {
-      throw new Error('signTypedData: domain.chainId cannot be empty')
-    }
-    if (domainChainId !== signChainId) {
+    if (domainChainId && domainChainId !== signChainId) {
       throw new Error(`signTypedData: domain.chainId (${domain.chainId}) is expected to be ${signChainId}`)
     }
 
