@@ -9,7 +9,7 @@ import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainn
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
 import { Relayer, RpcRelayer } from '@0xsequence/relayer'
-import { encodeTypedDataHash } from '@0xsequence/utils'
+import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 export interface AccountOptions {
   initialConfig: WalletConfig
@@ -142,7 +142,7 @@ export class Account extends Signer {
     throw new Error('expecting authChain to be the first or second in networks list')
   }
 
-  async signMessage(message: BytesLike, target?: Wallet | ChainId, allSigners: boolean = true): Promise<string> {
+  async signMessage(message: BytesLike, target?: Wallet | ChainId, allSigners: boolean = true, isDigest: boolean = false): Promise<string> {
     let { wallet, network } = await (async () => { // eslint-disable-line
       if (!target) {
         return this.mainWallet()
@@ -173,18 +173,18 @@ export class Account extends Signer {
       throw new NotEnoughSigners(`Sign message - wallet combined weight ${weight.toString()} below required ${wallet.config.threshold.toString()}`)
     }
 
-    return wallet.signMessage(message, undefined, allSigners)
+    return wallet.signMessage(message, undefined, allSigners, isDigest)
   }
 
   // TODO: should allSigners default to false here..?
-  async signAuthMessage(message: BytesLike, allSigners: boolean = true): Promise<string> {
-    return this.signMessage(message, this.authWallet()?.wallet, allSigners)
+  async signAuthMessage(message: BytesLike, allSigners: boolean = true, isDigest: boolean = false): Promise<string> {
+    return this.signMessage(message, this.authWallet()?.wallet, allSigners, isDigest)
   }
 
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners: boolean = true): Promise<string> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
-    const hash = encodeTypedDataHash({ domain, types, message })
-    return this.signMessage(hash, wallet, allSigners)
+    const digest = encodeTypedDataDigest({ domain, types, message })
+    return this.signMessage(digest, wallet, allSigners, true)
   }
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners: boolean = true): Promise<string> {

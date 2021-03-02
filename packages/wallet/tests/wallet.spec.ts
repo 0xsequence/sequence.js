@@ -15,6 +15,8 @@ import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
 import { addressOf, imageHash, sortConfig } from '@0xsequence/config'
 
+import { encodeTypedDataDigest } from '@0xsequence/utils'
+
 import * as lib from '../src'
 
 import { isValidSignature, isValidEthSignSignature, packMessageData, isValidContractWalletSignature,
@@ -35,7 +37,6 @@ const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
 
 import hardhat from 'hardhat'
-import { encodeTypedDataHash } from '@0xsequence/utils'
 
 type EthereumInstance = {
   chainId?: number
@@ -150,12 +151,43 @@ describe('Wallet integration', function () {
     })
 
     describe('using sequence signer', () => {
+      it('should compute valid signedTypeData digest', async () => {
+        const typedData = {
+          types: {
+            Person: [
+              { name: "name", type: "string" },
+              { name: "wallet", type: "address" },
+              { name: 'count', type: 'uint8' }
+            ]
+          },
+          primaryType: 'Person' as const,
+          domain: {
+            name: 'Ether Mail',
+            version: '1',
+            chainId: 1, //ethnode.chainId,
+            verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+          },
+          message: {
+            'name': 'Bob',
+            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            'count': 4
+          }
+        }
+
+        const digest = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
+        expect(digest).to.equal('0x2218fda59750be7bb9e5dfb2b49e4ec000dc2542862c5826f1fe980d6d727e95')
+
+        const digestChk2 = ethers.utils.hexlify(encodeTypedDataDigest(typedData))
+        expect(digestChk2).to.equal(digest)
+      })
+
       it('Should sign a typed message', async () => {
         const typedData = {
           types: {
             Person: [
               { name: "name", type: "string" },
               { name: "wallet", type: "address" },
+              { name: 'count', type: 'uint8' }
             ]
           },
           primaryType: 'Person' as const,
@@ -167,11 +199,13 @@ describe('Wallet integration', function () {
           },
           message: {
             'name': 'Bob',
-            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            'count': 4
           }
         }
 
         const digest = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
+        expect(digest).to.equal('0x69d3381dfd41c0a9cea56d325bcd482eace26dd2e7b95df398cb6d8edc00290c')
 
         const sig = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message)
 
@@ -1138,6 +1172,48 @@ describe('Wallet integration', function () {
         await relayer.deployWallet(wallet.config, context)
         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
       })
+      it('Should validate sequence wallet signature via signTypedData', async () => {
+        // ensure its deployed, as in our test we're assuming we're testing to a deployed wallet
+        await relayer.deployWallet(wallet.config, context)
+
+        const typedData = {
+          types: {
+            Person: [
+              { name: "name", type: "string" },
+              { name: "wallet", type: "address" },
+              { name: 'count', type: 'uint8' }
+            ]
+          },
+          primaryType: 'Person' as const,
+          domain: {
+            name: 'Ether Mail',
+            version: '1',
+            chainId: ethnode.chainId,
+            verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+          },
+          message: {
+            'name': 'Bob',
+            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            'count': 4
+          }
+        }
+
+        const digest = encodeTypedDataDigest(typedData)
+        expect(ethers.utils.hexlify(digest)).to.equal('0x69d3381dfd41c0a9cea56d325bcd482eace26dd2e7b95df398cb6d8edc00290c')
+
+        // an eip712 signed message is just a 712 object's encoded digest, signed as a message.
+        // therefore, first we will do so directly
+        {
+          const signature = await wallet.sign(digest, true, ethnode.chainId)
+          expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        }
+
+        // second, we use the signTypedData method directly for convenience
+        {
+          const signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, ethnode.chainId)
+          expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        }
+      })
       describe('After updating the owners', () => {
         let wallet2: lib.Wallet
 
@@ -1258,7 +1334,7 @@ describe('Wallet integration', function () {
         const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
-      })
+      })      
     })
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {

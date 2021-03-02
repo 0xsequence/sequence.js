@@ -41,7 +41,7 @@ import {
   isUsableConfig
 } from '@0xsequence/config'
 
-import { encodeTypedDataHash } from '@0xsequence/utils'
+import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 import { joinSignatures } from './config'
 
@@ -367,9 +367,9 @@ export class Wallet extends Signer {
   // signMessage will sign a message for a particular chainId with the wallet signers
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
-  async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean, isDigest: boolean = false): Promise<string> {
     const data = typeof(message) === 'string' && !message.startsWith('0x') ? ethers.utils.toUtf8Bytes(message) : message
-    return this.sign(data, false, chainId, allSigners)
+    return this.sign(data, isDigest, chainId, allSigners)
   }
 
   async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
@@ -380,7 +380,7 @@ export class Wallet extends Signer {
       throw new Error(`signTypedData: domain.chainId (${domain.chainId}) is expected to be ${signChainId}`)
     }
 
-    const hash = encodeTypedDataHash({ domain, types, message })
+    const hash = encodeTypedDataDigest({ domain, types, message })
     return this.sign(hash, true, signChainId, allSigners)
   }
 
