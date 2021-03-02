@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.10.1
+
+### Patch Changes
+
+- upgrade deps
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.1
+  - @0xsequence/config@0.10.1
+  - @0xsequence/guard@0.10.1
+  - @0xsequence/network@0.10.1
+  - @0xsequence/relayer@0.10.1
+  - @0xsequence/transactions@0.10.1
+  - @0xsequence/utils@0.10.1
+
 ## 0.10.0
 
 ### Minor Changes

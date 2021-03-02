@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.10.1
+
+### Patch Changes
+
+- upgrade deps
+
 ## 0.10.0
 
 ### Minor Changes
