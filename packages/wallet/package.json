@@ -23,14 +23,14 @@
     "@0xsequence/utils": "^0.10.0",
     "@ethersproject/abi": "^5.0.11",
     "@ethersproject/properties": "^5.0.8",
-    "@ethersproject/providers": "^5.0.20",
+    "@ethersproject/providers": "^5.0.23",
     "ethers": "^5.0.31",
     "eventemitter3": "^4.0.6",
     "fetch-ponyfill": "^7.1.0"
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "https://github.com/0xsequence/wallet-contracts",
+    "@0xsequence/wallet-contracts": "https://github.com/0xsequence/wallet-contracts#v1.3.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ganache-core": "^2.13.2",
     "web3": "^1.3.3",

@@ -1,4 +1,3 @@
-
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
