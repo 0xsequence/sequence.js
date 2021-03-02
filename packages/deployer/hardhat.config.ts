@@ -1,4 +1,4 @@
-import '@nomiclabs/hardhat-truffle5'
+// import '@nomiclabs/hardhat-truffle5'
 import { networkConfig } from './src/utils/configLoader'
 
 const ganacheNetwork = {

@@ -16,11 +16,11 @@
     "@0xsequence/abi": "^0.10.0",
     "@0xsequence/network": "^0.10.0",
     "@0xsequence/utils": "^0.10.0",
-    "@ethersproject/providers": "^5.0.20",
+    "@ethersproject/providers": "^5.0.23",
     "ethers": "^5.0.31"
   },
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "https://github.com/0xsequence/wallet-contracts",
+    "@0xsequence/wallet-contracts": "https://github.com/0xsequence/wallet-contracts#v1.3.0",
     "@types/web3-provider-engine": "^14.0.0",
     "eth-json-rpc-middleware": "^6.0.0",
     "json-rpc-engine": "^6.1.0",

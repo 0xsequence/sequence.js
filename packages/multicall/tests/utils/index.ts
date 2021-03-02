@@ -25,5 +25,6 @@ export const SpyProxy = <T extends Object>(obj: T, ...hooks: SpyProxyHooks<T, (.
     }
   }
 
+  // @ts-ignore
   return new Proxy(obj, handler)
 }

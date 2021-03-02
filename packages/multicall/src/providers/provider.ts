@@ -1,4 +1,5 @@
 import { ethers , BigNumber } from 'ethers'
+import { BlockTag, BlockWithTransactions } from '@ethersproject/abstract-provider'
 import { Deferrable } from '@ethersproject/properties'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { Multicall, MulticallOptions } from '../multicall'
@@ -16,8 +17,9 @@ export class MulticallProvider implements ethers.providers.Provider {
 
   listenerCount = this.provider.listenerCount
 
-  // @ts-ignore
-  getBlockWithTransactions = undefined
+  getBlockWithTransactions = (blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<BlockWithTransactions> => {
+    throw new Error('unsupported')
+  }
 
   getNetwork = this.provider.getNetwork
   getBlockNumber = this.provider.getBlockNumber
