@@ -410,52 +410,61 @@ export class Wallet extends Signer {
     const signWith = async (signers: AbstractSigner[], auxData?: string): Promise<DecodedSignature> => {
       const signersAddr = await Promise.all(signers.map(s => s.getAddress()))
       const parts = await Promise.all(this.config.signers.map(async (s) => {
-        const signer = signers[signersAddr.indexOf(s.address)]
+        try {
+          const signer = signers[signersAddr.indexOf(s.address)]
 
-        // Is not a signer, return config entry as-is
-        if (!signer) {
-          return s
-        }
-
-        // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
-        if (isSequenceSigner(signer)) {
-          if (signer === this) throw Error('Can\'t sign transactions for self')
-          const signature = await signer.signMessage(subDigest, chainId, allSigners, true) + '03'
-
-          return {
-            ...s,
-            signature: signature
+          // Is not a signer, return config entry as-is
+          if (!signer) {
+            return s
           }
-        }
 
-        // Is remote signer, call and deduce signature type
-        if (RemoteSigner.isRemoteSigner(signer)) {
-          const signature = await signer.signMessageWithData(subDigest, auxData)
+          // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
+          if (isSequenceSigner(signer)) {
+            if (signer === this) throw Error('Can\'t sign transactions for self')
+            const signature = await signer.signMessage(subDigest, chainId, allSigners, true) + '03'
 
-          try {
-            // Check if signature can be recovered as EOA signature
-            const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
-
-            if (isEOASignature) {
-              // Exclude address on EOA signatures
-              return {
-                weight: s.weight,
-                signature: signature
-              }
+            return {
+              ...s,
+              signature: signature
             }
-          } catch {}
-
-          // Prepare signature for full encoding
-          return {
-            ...s,
-            signature: signature
           }
-        }
 
-        // Is EOA signer
-        return {
-          weight: s.weight,
-          signature: await signer.signMessage(subDigest) + '02'
+          // Is remote signer, call and deduce signature type
+          if (RemoteSigner.isRemoteSigner(signer)) {
+            const signature = await signer.signMessageWithData(subDigest, auxData)
+
+            try {
+              // Check if signature can be recovered as EOA signature
+              const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
+
+              if (isEOASignature) {
+                // Exclude address on EOA signatures
+                return {
+                  weight: s.weight,
+                  signature: signature
+                }
+              }
+            } catch {}
+
+            // Prepare signature for full encoding
+            return {
+              ...s,
+              signature: signature
+            }
+          }
+
+          // Is EOA signer
+          return {
+            weight: s.weight,
+            signature: await signer.signMessage(subDigest) + '02'
+          }
+        } catch (err) {
+          if (allSigners) {
+            throw err
+          } else {
+            console.warn(`Skipped signer ${s.address}`)
+            return s
+          }
         }
       }))
 
