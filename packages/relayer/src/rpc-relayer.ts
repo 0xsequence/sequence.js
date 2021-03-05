@@ -1,7 +1,7 @@
 import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
-import { Transaction, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
+import { Transaction, TransactionEncoded, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
 import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
@@ -46,14 +46,14 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     config: WalletConfig,
     context: WalletContext,
     ...transactions: Transaction[]
-  ): Promise<Transaction[][]> {
+  ): Promise<TransactionEncoded[][]> {
     // chaind only supports refunds on a single token
     // TODO: Add compatiblity for different refund options
     const tokenFee = (await this.chaindService.tokenFee()).fee
 
-    // No gas refund required, return transactions as-is
+    // No gas refund required
     if (tokenFee === ethers.constants.AddressZero) {
-      return [transactions]
+      return [[]]
     }
 
     const addr = addressOf(config, context)
@@ -74,8 +74,16 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       }
     })
 
-    const decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
-    return prevNonce === undefined ? [decoded] : [appendNonce(decoded, prevNonce)]
+    let decoded = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], `0x${res.res.payload}`)[0]
+    if (prevNonce !== undefined) {
+      decoded = appendNonce(decoded, prevNonce)
+    }
+
+    if (res.res.feeAppended) {
+      return [[decoded[decoded.length - 1]]]
+    } else {
+      return [[]]
+    }
   }
 
   async estimateGasLimits(
