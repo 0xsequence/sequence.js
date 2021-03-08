@@ -42,7 +42,9 @@ import {
   DecodedSignature,
   encodeSignature,
   joinSignatures,
-  recoverEOASigner
+  recoverEOASigner,
+  decodeSignature,
+  isDecodedFullSigner
 } from '@0xsequence/config'
 
 import { encodeTypedDataDigest } from '@0xsequence/utils'
@@ -395,14 +397,12 @@ export class Wallet extends Signer {
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
+    const digest = isDigest ? msg : ethers.utils.keccak256(msg)
+
     // Generate sub-digest
     const subDigest = ethers.utils.arrayify(
       ethers.utils.keccak256(
-        packMessageData(
-          this.address,
-          signChainId,
-          isDigest ? msg : ethers.utils.keccak256(msg)
-        )
+        packMessageData(this.address, signChainId, digest)
       )
     )
 
@@ -421,7 +421,7 @@ export class Wallet extends Signer {
           // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
           if (isSequenceSigner(signer)) {
             if (signer === this) throw Error('Can\'t sign transactions for self')
-            const signature = await signer.signMessage(subDigest, chainId, allSigners, true) + '03'
+            const signature = await signer.signMessage(subDigest, signChainId, allSigners, true) + '03'
 
             return {
               ...s,
@@ -431,7 +431,7 @@ export class Wallet extends Signer {
 
           // Is remote signer, call and deduce signature type
           if (RemoteSigner.isRemoteSigner(signer)) {
-            const signature = await signer.signMessageWithData(subDigest, auxData)
+            const signature = await signer.signMessageWithData(subDigest, auxData, signChainId)
 
             try {
               // Check if signature can be recovered as EOA signature
@@ -480,8 +480,8 @@ export class Wallet extends Signer {
 
     // Sign message first using localSigners
     // include local signatures for remote signers
-    const localSignature = await signWith(localSigners, this.packMsgAndSig(msg, [], signChainId))
-    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, encodeSignature(localSignature), signChainId))
+    const localSignature = await signWith(localSigners, this.packMsgAndSig(digest, [], signChainId))
+    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(digest, encodeSignature(localSignature), signChainId))
 
     // Aggregate both local and remote signatures
     return encodeSignature(joinSignatures(localSignature, remoteSignature))
@@ -620,18 +620,25 @@ export class Wallet extends Signer {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     const message = ethers.utils.randomBytes(32)
 
-    // TODO: Remove subDigest from here on ERC1271 fix merge
-    const subDigest = ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        packMessageData(
-          this.address,
-          await this.getChainId(),
-          ethers.utils.keccak256(message)
-        )
-      )
-    )
-
     const signature = await this.signMessage(message, this.chainId, false)
+
+    // TODO: This is only required because RequireUtils doesn't support dynamic signatures
+    // remove this filtering of dynamic once a new version of RequireUtils is deployed
+    const decodedSignature = decodeSignature(signature)
+    const filteredSignature = encodeSignature({
+      threshold: decodedSignature.threshold,
+      signers: decodedSignature.signers.map((s, i) => {
+        if (isDecodedFullSigner(s)) {
+          const a = this.config.signers[i]
+          return {
+            weight: a.weight,
+            address: a.address
+          }
+        }
+
+        return s
+      })
+    })
 
     return [{
       delegateCall: false,
@@ -645,7 +652,7 @@ export class Wallet extends Signer {
           this.address,
           ethers.utils.keccak256(message),
           this.config.signers.length,
-          signature,
+          filteredSignature,
           indexed
         ]
       )

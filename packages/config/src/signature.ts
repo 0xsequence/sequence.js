@@ -32,7 +32,11 @@ export type DecodedFullSigner = {
 }
 
 export function isDecodedAddress(cand: DecodedSignaturePart): cand is DecodedAddressPart {
-  const c = cand as any; return c.address !== undefined && c.signature === undefined
+  const c = cand as any; return c.address !== undefined && !isDecodedSigner(cand)
+}
+
+export function isDecodedSigner(cand: DecodedSignaturePart): cand is DecodedEOASigner | DecodedEOASplitSigner | DecodedFullSigner {
+  return isDecodedEOASigner(cand) || isDecodedEOASplitSigner(cand) || isDecodedFullSigner(cand)
 }
 
 export function isDecodedEOASigner(cand: DecodedSignaturePart): cand is DecodedEOASigner {

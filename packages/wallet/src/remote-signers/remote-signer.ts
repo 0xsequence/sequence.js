@@ -1,12 +1,13 @@
 import { BytesLike, Signer as AbstractSigner } from 'ethers'
 import { TransactionRequest, TransactionResponse, Provider } from '@ethersproject/providers'
 import { Deferrable } from '@ethersproject/properties'
+import { ChainId } from '@0xsequence/network'
 
 export abstract class RemoteSigner extends AbstractSigner {
 
-  abstract signMessageWithData(message: BytesLike, data?: BytesLike): Promise<string>
+  abstract signMessageWithData(message: BytesLike, data?: BytesLike, chainId?: ChainId): Promise<string>
 
-  signMessage(message: BytesLike): Promise<string> {
+  signMessage(message: BytesLike, chainId?: number): Promise<string> {
     return this.signMessageWithData(message)
   }
 
@@ -22,9 +23,9 @@ export abstract class RemoteSigner extends AbstractSigner {
     throw new Error("connect method is not supported in RemoteSigner")
   }
 
-  static signMessageWithData(signer: AbstractSigner, message: BytesLike, data?: BytesLike): Promise<string> {
+  static signMessageWithData(signer: AbstractSigner, message: BytesLike, data?: BytesLike, chainId?: number): Promise<string> {
     if (this.isRemoteSigner(signer)) {
-      return (signer as RemoteSigner).signMessageWithData(message, data)
+      return (signer as RemoteSigner).signMessageWithData(message, data, chainId)
     }
     return signer.signMessage(message)
   }

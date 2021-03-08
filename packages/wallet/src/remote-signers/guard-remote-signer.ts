@@ -1,22 +1,21 @@
 import fetchPonyfill from 'fetch-ponyfill'
-import { TransactionRequest, Provider } from '@ethersproject/providers'
-import { ethers, BytesLike } from 'ethers'
-import { Deferrable } from '@ethersproject/properties'
+import { BigNumber, ethers, BytesLike } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 import { GuarddService } from '@0xsequence/guard'
+import { ChainId } from '@0xsequence/network'
 
 export class GuardRemoteSigner extends RemoteSigner {
   private readonly _guardd: GuarddService
   private readonly _address: string
 
-  constructor(address: string, hostname: string, public isSequence: boolean = false) {
+  constructor(address: string, hostname: string, public isSequence: boolean = false, public defaultChainId: number = 1) {
     super()
     this._guardd = new GuarddService(hostname, fetchPonyfill().fetch)
     this._address = address
   }
 
-  async signMessageWithData(message: BytesLike, auxData?: BytesLike): Promise<string> {
-    const request = { msg: ethers.utils.hexlify(message), auxData: ethers.utils.hexlify(auxData ? auxData : []) }
+  async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainId): Promise<string> {
+    const request = { msg: ethers.utils.hexlify(message), auxData: ethers.utils.hexlify(auxData ? auxData : []), chainId: chainId ? BigNumber.from(chainId).toNumber() : this.defaultChainId }
     const res = await this._guardd.sign({ request: request })
 
     // TODO: The guardd service doesn't include the EIP2126 signature type on it's reponse
@@ -27,5 +26,4 @@ export class GuardRemoteSigner extends RemoteSigner {
   async getAddress(): Promise<string> {
     return this._address
   }
-
 }
