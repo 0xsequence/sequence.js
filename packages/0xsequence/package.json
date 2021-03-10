@@ -40,13 +40,13 @@
     "@0xsequence/transactions": "^0.10.2",
     "@0xsequence/utils": "^0.10.2",
     "@0xsequence/wallet": "^0.10.2",
-    "ethers": "^5.0.31"
+    "ethers": "^5.0.32"
   },
   "peerDependencies": {},
   "devDependencies": {
     "@babel/plugin-transform-runtime": "^7.13.9",
     "babel-loader": "^8.2.1",
-    "hardhat": "2.0.11",
+    "hardhat": "2.1.1",
     "html-webpack-plugin": "^5.2.0",
     "webpack": "^5.24.2",
     "webpack-cli": "^4.4.0",

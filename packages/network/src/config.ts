@@ -78,12 +78,6 @@ export const testnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     isAuthChain: true
   },
   // {
-  //   name: 'morden',
-  //   chainId: 2,
-  //   rpcUrl: '', // TODO: ..... etc.. and use a proxy..
-  //   // relayer: null
-  // },
-  // {
   //   name: 'ropsten',
   //   chainId: 3,
   //   ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',

@@ -13,9 +13,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ethersproject/abstract-signer": "5.0.13",
-    "@ethersproject/properties": "^5.0.8",
-    "ethers": "^5.0.31"
+    "@ethersproject/abstract-signer": "5.0.14",
+    "@ethersproject/properties": "^5.0.9",
+    "ethers": "^5.0.32"
   },
   "peerDependencies": {},
   "devDependencies": {},
