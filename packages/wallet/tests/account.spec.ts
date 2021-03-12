@@ -320,4 +320,17 @@ describe('Account integration', () => {
 
   })
 
+  describe('networks', () => {
+    it('should set valid default network', async () => {
+      expect(() => {
+        account.setNetworks(networks, [], 31337)
+      }).to.not.throw
+    })
+
+    it('should fail to set invalid default network', async () => {
+      expect(() => {
+        account.setNetworks(networks, [], 123)
+      }).to.throw(`unable to set default network as chain '123' does not exist`)
+    })
+  })
 })
