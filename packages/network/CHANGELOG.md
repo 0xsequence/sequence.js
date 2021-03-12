@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.10.3
+
+### Patch Changes
+
+- Fix loading config cross-chain
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.10.3
+
 ## 0.10.2
 
 ### Patch Changes
