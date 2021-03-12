@@ -79,6 +79,34 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     const isValid = currentImplementation === context.mainModuleUpgradable ? imageHash(config) === currentImageHash[0] : addressOf({ ...config, address: undefined }, context) === address
     if (!isValid) {
+      // Try to find the config for the known image-hash
+      const filter = authContract.filters.RequiredConfig(address, currentImageHash[0])
+      const log = await this.findFirstLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
+      if (log !== undefined) {
+        const event = authContract.interface.decodeEventLog('RequiredConfig', log.data, log.topics)
+        const signers = ethers.utils.defaultAbiCoder.decode(
+          [`tuple(
+            uint256 weight,
+            address signer
+          )[]`], event._signers
+        )[0]
+
+        const config = {
+          chainId: chainId,
+          address: address,
+          threshold: ethers.BigNumber.from(event._threshold).toNumber(),
+          signers: signers.map((s: any) => ({
+            address: s.signer,
+            weight: ethers.BigNumber.from(s.weight).toNumber()
+          }))
+        }
+
+        if (imageHash(config) === currentImageHash[0]) {
+          return { config }
+        }
+      }
+
+      // If imageHash couldn't be found, return undefined or try without index
       if (ignoreIndex || requireIndex) {
         console.warn('No valid configuration found')
         return { config: undefined }
