@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.10.4
+
+### Patch Changes
+
+- Update api proto
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.4
+  - @0xsequence/chaind@0.10.4
+  - @0xsequence/config@0.10.4
+  - @0xsequence/transactions@0.10.4
+
 ## 0.10.3
 
 ### Patch Changes
