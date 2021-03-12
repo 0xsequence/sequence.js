@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.10.5
+
+### Patch Changes
+
+- update relayer gas refund options
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.5
+  - @0xsequence/config@0.10.5
+  - @0xsequence/guard@0.10.5
+  - @0xsequence/network@0.10.5
+  - @0xsequence/relayer@0.10.5
+  - @0xsequence/transactions@0.10.5
+  - @0xsequence/utils@0.10.5
+
 ## 0.10.4
 
 ### Patch Changes

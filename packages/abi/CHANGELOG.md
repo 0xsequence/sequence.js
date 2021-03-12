@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.10.5
+
+### Patch Changes
+
+- update relayer gas refund options
+
 ## 0.10.4
 
 ### Patch Changes
