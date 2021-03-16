@@ -20,14 +20,24 @@ describe('Account integration', () => {
 
   const provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
 
+  const nodeB = "http://localhost:7047/"
+  const providerB = new ethers.providers.JsonRpcProvider(nodeB)
+  const signerB = providerB.getSigner()
+
   const networks: NetworkConfig[] = [{
     chainId: 31337, name: 'hardhat',
     rpcUrl: '',
-    // rpcUrl: `http://localhost:8545/`,
     provider: provider,
     relayer: new LocalRelayer(provider.getSigner()),
     isDefaultChain: true,
     isAuthChain: true
+  }, {
+    chainId: 31338, name: 'hardhat-b',
+    rpcUrl: nodeB,
+    provider: providerB,
+    relayer: new LocalRelayer(signerB),
+    isDefaultChain: false,
+    isAuthChain: false
   }]
 
   before(async () => {
@@ -39,6 +49,9 @@ describe('Account integration', () => {
       guestModule,
       sequenceUtils
     ] = await deployWalletContext(provider)
+
+    // Deploy Sequence context b
+    await deployWalletContext(providerB)
 
     // Create fixed context obj
     context = {
@@ -318,6 +331,149 @@ describe('Account integration', () => {
       expect(state.imageHash).to.equal(imageHash(currentConfig))
     })
 
+    it('should return different configs for different chains (indexed)', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }]}, true)
+
+      const state = await account.getWalletState()
+      const authState = state[0].config
+      const altState = state[1].config
+
+      expect(authState.threshold).to.equal(3)
+      expect(authState.signers.length).to.equal(1)
+      expect(authState.signers[0].weight).to.equal(10)
+      expect(authState.signers[0].address).to.equal(newSigner.address)
+
+      expect(altState.threshold).to.equal(1)
+      expect(altState.signers.length).to.equal(1)
+      expect(altState.signers[0].weight).to.equal(1)
+      expect(altState.signers[0].address).to.equal(owner.address)
+    })
+
+    it('should return different configs for different chains (not-indexed)', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }]}, false)
+
+      const state = await account.getWalletState()
+      const authState = state[0].config
+      const altState = state[1].config
+
+      expect(authState.threshold).to.equal(3)
+      expect(authState.signers.length).to.equal(1)
+      expect(authState.signers[0].weight).to.equal(10)
+      expect(authState.signers[0].address).to.equal(newSigner.address)
+
+      expect(altState.threshold).to.equal(1)
+      expect(altState.signers.length).to.equal(1)
+      expect(altState.signers[0].weight).to.equal(1)
+      expect(altState.signers[0].address).to.equal(owner.address)
+    })
+
+    it('should return different configs for different chains after reload auth config (indexed)', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }]}, true)
+
+      const importedAccount = new lib.Account({
+        initialConfig: account.authWallet().wallet.config,
+        networks,
+        context
+      }, owner)
+
+      const state = await importedAccount.getWalletState()
+      const authState = state[0].config
+      const altState = state[1].config
+
+      expect(authState.threshold).to.equal(3)
+      expect(authState.signers.length).to.equal(1)
+      expect(authState.signers[0].weight).to.equal(10)
+      expect(authState.signers[0].address).to.equal(newSigner.address)
+
+      expect(altState.threshold).to.equal(1)
+      expect(altState.signers.length).to.equal(1)
+      expect(altState.signers[0].weight).to.equal(1)
+      expect(altState.signers[0].address).to.equal(owner.address)
+    })
+
+    it('should return different configs for different chains after reload auth config (not-indexed)', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }]}, false)
+
+      const importedAccount = new lib.Account({
+        initialConfig: account.authWallet().wallet.config,
+        networks,
+        context
+      }, owner)
+
+      const state = await importedAccount.getWalletState()
+      const authState = state[0].config
+      const altState = state[1].config
+
+      expect(authState.threshold).to.equal(3)
+      expect(authState.signers.length).to.equal(1)
+      expect(authState.signers[0].weight).to.equal(10)
+      expect(authState.signers[0].address).to.equal(newSigner.address)
+
+      expect(altState.threshold).to.equal(1)
+      expect(altState.signers.length).to.equal(1)
+      expect(altState.signers[0].weight).to.equal(1)
+      expect(altState.signers[0].address).to.equal(owner.address)
+    })
+
+    it('should return different configs for different chains after reload alt config (indexed)', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      const newConfig = { threshold: 3, signers: [{ address: newSigner.address, weight: 10 }]}
+
+      await account.publishConfig(true)
+      await account.updateConfig(newConfig, true)
+
+      const importedAccount = new lib.Account({
+        initialConfig: { address: account.address, ...newConfig },
+        networks,
+        context
+      }, owner)
+
+      const state = await importedAccount.getWalletState()
+      const authState = state[0].config
+      const altState = state[1].config
+
+      expect(authState.threshold).to.equal(3)
+      expect(authState.signers.length).to.equal(1)
+      expect(authState.signers[0].weight).to.equal(10)
+      expect(authState.signers[0].address).to.equal(newSigner.address)
+
+      expect(altState.threshold).to.equal(1)
+      expect(altState.signers.length).to.equal(1)
+      expect(altState.signers[0].weight).to.equal(1)
+      expect(altState.signers[0].address).to.equal(owner.address)
+    })
+
+    it('should return different configs for different chains after reload alt config (not-indexed)', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      const newConfig = { threshold: 3, signers: [{ address: newSigner.address, weight: 10 }]}
+
+      await account.publishConfig(false)
+      await account.updateConfig(newConfig, false)
+
+      const importedAccount = new lib.Account({
+        initialConfig: { address: account.address, ...newConfig },
+        networks,
+        context
+      }, owner)
+
+      const state = await importedAccount.getWalletState()
+      const authState = state[0].config
+      const altState = state[1].config
+
+      expect(authState.threshold).to.equal(3)
+      expect(authState.signers.length).to.equal(1)
+      expect(authState.signers[0].weight).to.equal(10)
+      expect(authState.signers[0].address).to.equal(newSigner.address)
+
+      expect(altState.threshold).to.equal(1)
+      expect(altState.signers.length).to.equal(1)
+      expect(altState.signers[0].weight).to.equal(1)
+      expect(altState.signers[0].address).to.equal(owner.address)
+    })
   })
 
   describe('networks', () => {
