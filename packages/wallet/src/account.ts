@@ -93,6 +93,13 @@ export class Account extends Signer {
       wallets = this._wallets
     }
 
+    const configsPromise = Promise.all(wallets.map(w => this.getConfigFinder().findCurrentConfig({
+      address: w.wallet.address,
+      provider: w.wallet.provider,
+      context: w.wallet.context,
+      knownConfigs: [w.wallet.config]
+    })))
+
     const states = (await Promise.all(wallets.map(w => w.wallet.getWalletState()))).flat()
 
     // fetch the current config for the AuthChain, as it will be available
@@ -101,7 +108,12 @@ export class Account extends Signer {
       states[idx].config = await this.currentConfig(wallets[idx].wallet)
     }
 
-    return states
+    const configs = await configsPromise
+
+    return states.map((s, i) => ({
+      ...s,
+      config: configs[i]?.config
+    }))
   }
 
   // address getter
