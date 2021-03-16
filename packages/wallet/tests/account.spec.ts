@@ -32,7 +32,7 @@ describe('Account integration', () => {
     isDefaultChain: true,
     isAuthChain: true
   }, {
-    chainId: 31338, name: 'hardhat-b',
+    chainId: 31338, name: 'hardhat2',
     rpcUrl: nodeB,
     provider: providerB,
     relayer: new LocalRelayer(signerB),

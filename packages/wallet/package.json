@@ -12,8 +12,8 @@
     "test": "yarn test:concurrently 'yarn test:run'",
     "test:run": "yarn test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
-    "test:concurrently": "concurrently -k --success first 'yarn start:hardhat_b > /dev/null'",
-    "start:hardhat_b": "yarn run hardhat node --port 7047 --config ./hardhat-b.config.js",
+    "test:concurrently": "concurrently -k --success first 'yarn start:hardhat2 > /dev/null'",
+    "start:hardhat2": "yarn run hardhat node --port 7047 --config ./hardhat2.config.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
