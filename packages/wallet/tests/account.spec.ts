@@ -51,7 +51,7 @@ describe('Account integration', () => {
     ] = await deployWalletContext(provider.getSigner())
 
     // Deploy Sequence context b
-    await deployWalletContext(providerB)
+    await deployWalletContext(signerB)
 
     // Create fixed context obj
     context = {
