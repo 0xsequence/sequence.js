@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.10.6
+
+### Patch Changes
+
+- - fix getWalletState method
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.10.6
+
 ## 0.10.5
 
 ### Patch Changes
