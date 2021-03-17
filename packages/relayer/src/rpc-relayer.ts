@@ -49,10 +49,10 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   ): Promise<TransactionEncoded[][]> {
     // chaind only supports refunds on a single token
     // TODO: Add compatiblity for different refund options
-    const tokenFee = (await this.chaindService.tokenFee()).fee
+    const tokenFee = await this.chaindService.tokenFee()
 
     // No gas refund required
-    if (tokenFee === ethers.constants.AddressZero) {
+    if (!tokenFee.isFee || tokenFee.fee === ethers.constants.AddressZero) {
       return [[]]
     }
 
@@ -66,7 +66,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     const encoded = ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
     const res = await this.chaindService.estimateMetaTxnGasReceipt({
-      feeToken: tokenFee,
+      feeToken: tokenFee.fee,
       call: {
         contract: addr,
         payload: encoded,
