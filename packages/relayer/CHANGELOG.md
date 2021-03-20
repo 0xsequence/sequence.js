@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.10.7
+
+### Patch Changes
+
+- allow provider transport to force disconnect
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.7
+  - @0xsequence/chaind@0.10.7
+  - @0xsequence/config@0.10.7
+  - @0xsequence/transactions@0.10.7
+
 ## 0.10.6
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.10.7
+
+### Patch Changes
+
+- allow provider transport to force disconnect
+
 ## 0.10.6
 
 ### Patch Changes
