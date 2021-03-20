@@ -1,9 +1,7 @@
-import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
+import { BaseProviderTransport } from '../base-provider-transport'
 
 import {
-  ProviderMessageResponse,
-  ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType,
-  ProviderMessageRequest, ProviderMessageTransport, ConnectionState
+  ProviderMessage, ConnectionState
 } from '../../types'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'

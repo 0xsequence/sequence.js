@@ -1,6 +1,5 @@
-import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
 import {
-  ProviderMessage, ProviderMessageResponseCallback, ProviderMessageType, ProviderTransport,
+  ProviderMessage, ProviderMessageType, ProviderTransport,
   ProviderMessageEvent, ProviderMessageRequest, ProviderMessageResponse, WalletSession
 } from '../../types'
 

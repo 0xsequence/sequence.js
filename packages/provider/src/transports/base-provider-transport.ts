@@ -196,6 +196,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       return
     }
 
+    // NOTIFY DISCONNECT -- when wallet instructs to disconnect
+    if (message.type === ProviderMessageType.DISCONNECT) {
+      if (this.isConnected()) {
+        this.disconnect()
+      }
+    }
   }
 
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet

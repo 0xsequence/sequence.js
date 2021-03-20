@@ -21,10 +21,12 @@ export class ProxyMessageChannelPort implements ProviderMessageTransport {
   conn: ProviderMessageTransport
   events: EventEmitter<ProxyMessageEvent, any> = new EventEmitter()
 
+  // handle messages which hit this port
   handleMessage = (message: ProviderMessage<any>): void => {
     throw new Error('ProxyMessageChannelPort is not registered')
   }
 
+  // send messages to the connected port
   sendMessage = (message: ProviderMessage<any>): void => {
     this.conn.handleMessage(message)
   }
