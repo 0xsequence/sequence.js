@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.10.8
+
+### Patch Changes
+
+- Multicall production configuration
+
 ## 0.10.7
 
 ### Patch Changes

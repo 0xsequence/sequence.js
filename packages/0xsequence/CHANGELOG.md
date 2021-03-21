@@ -1,5 +1,25 @@
 # 0xsequence
 
+## 0.10.8
+
+### Patch Changes
+
+- Multicall production configuration
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.8
+  - @0xsequence/api@0.10.8
+  - @0xsequence/auth@0.10.8
+  - @0xsequence/chaind@0.10.8
+  - @0xsequence/config@0.10.8
+  - @0xsequence/guard@0.10.8
+  - @0xsequence/multicall@0.10.8
+  - @0xsequence/network@0.10.8
+  - @0xsequence/provider@0.10.8
+  - @0xsequence/relayer@0.10.8
+  - @0xsequence/transactions@0.10.8
+  - @0xsequence/utils@0.10.8
+  - @0xsequence/wallet@0.10.8
+
 ## 0.10.7
 
 ### Patch Changes

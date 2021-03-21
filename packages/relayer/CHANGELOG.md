@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.10.8
+
+### Patch Changes
+
+- Multicall production configuration
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.8
+  - @0xsequence/chaind@0.10.8
+  - @0xsequence/config@0.10.8
+  - @0xsequence/transactions@0.10.8
+
 ## 0.10.7
 
 ### Patch Changes

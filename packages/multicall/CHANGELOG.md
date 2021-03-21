@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.10.8
+
+### Patch Changes
+
+- Multicall production configuration
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.10.8
+  - @0xsequence/network@0.10.8
+  - @0xsequence/utils@0.10.8
+
 ## 0.10.7
 
 ### Patch Changes
