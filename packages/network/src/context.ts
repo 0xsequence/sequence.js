@@ -6,7 +6,7 @@ export interface WalletContext {
   mainModuleUpgradable: string
   guestModule?: string
   sequenceUtils?: string
-  
+
   nonStrict?: boolean
 }
 
