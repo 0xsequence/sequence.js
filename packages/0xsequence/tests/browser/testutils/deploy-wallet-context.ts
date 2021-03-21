@@ -10,7 +10,7 @@ import {
   MainModuleUpgradable__factory as MainModuleUpgradableFactory,
   GuestModule__factory as GuestModuleFactory,
   SequenceUtils__factory as SequenceUtilsFactory,
-} from '@0xsequence/wallet-contracts/typings/contracts'
+} from '@0xsequence/wallet-contracts'
 
 const deployWalletContextCache: WalletContext[] = []
 

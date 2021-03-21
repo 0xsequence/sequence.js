@@ -2,8 +2,7 @@ import { deployWalletContext } from './utils/deploy-wallet-context'
 import { encodeData } from './utils'
 import { Proof } from '@0xsequence/ethauth'
 
-import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
-import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/HookCallerMock'
+import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
 import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transactionish, isSignedTransactions } from '@0xsequence/transactions'
 

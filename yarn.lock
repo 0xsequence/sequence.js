@@ -9,9 +9,12 @@
   dependencies:
     js-base64 "^3.6.0"
 
-"@0xsequence/wallet-contracts@https://github.com/0xsequence/wallet-contracts#v1.3.0":
-  version "1.3.0"
-  resolved "https://github.com/0xsequence/wallet-contracts#244ed19c70bf57fb40ce790cb44419057ea81a35"
+"@0xsequence/wallet-contracts@1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@0xsequence/wallet-contracts/-/wallet-contracts-1.6.0.tgz#5b2029aaa46082de580482c3a1697d9029ffd804"
+  integrity sha512-TDHCqGqotBVpLEqHLwm8qAMcDM7ApF/sIDKU2ELH6YCZp8GsVunFXbwjzKPjkv5ysYUKb7J2/+Y5fOojGUIDKQ==
+  optionalDependencies:
+    ethers "^5.0.32"
 
 "@ardatan/aggregate-error@0.0.6":
   version "0.0.6"

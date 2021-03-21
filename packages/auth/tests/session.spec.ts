@@ -1,9 +1,7 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { delay, mockDate } from './utils'
 
-import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
-import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/HookCallerMock'
-
+import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
