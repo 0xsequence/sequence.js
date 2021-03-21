@@ -31,7 +31,7 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  contract: sequenceContext.multicallUtils,
+  contract: sequenceContext.sequenceUtils,
   verbose: false
 }
 
