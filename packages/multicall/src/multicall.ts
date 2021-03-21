@@ -31,7 +31,7 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  contract: sequenceContext.sequenceUtils,
+  contract: sequenceContext.sequenceUtils!,
   verbose: false
 }
 
@@ -48,8 +48,8 @@ export class Multicall {
 
   public options: MulticallOptions
 
-  constructor(options: Partial<MulticallOptions>) {
-    this.options = { ...Multicall.DefaultOptions, ...options }
+  constructor(options?: Partial<MulticallOptions>) {
+    this.options = options ? { ...Multicall.DefaultOptions, ...options } : Multicall.DefaultOptions
     if (this.options.batchSize <= 0) throw new Error(`Invalid batch size of ${this.options.batchSize}`)
   }
 

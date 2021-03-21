@@ -46,7 +46,7 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
       return new ethers.providers.Resolver(this as any, ogResolver.address, ogResolver.name)
     }
 
-    return undefined
+    return provider.getResolver(await name)
   }
 
   next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
