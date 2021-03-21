@@ -122,7 +122,7 @@ The MulticallProvider comes with a pre-defined configuration; it's ready to work
 DEFAULT_CONF = {
   batchSize: 50,
   timeWindow: 50, // ms
-  contract: "0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48"
+  contract: "0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80"
 }
 ```
 | Parameter  | Required | Description                                                                                                                                  |
@@ -133,16 +133,17 @@ DEFAULT_CONF = {
 
 ### Supported networks
 
-The utility contract is `0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48`, it has been deployed using an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa018e2572031) and it uses the same address on all networks. It can be used on any of these chains without configuration changes.
+The utility contract is `0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80`, it has been deployed using an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa018e2572031) and it uses the same address on all networks. It can be used on any of these chains without configuration changes.
 
 | Network                | Address                                    | Deployed |
 |------------------------|--------------------------------------------|----------|
-| Mainnet                | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
-| Ropsten                | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
-| Rinkeby                | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
-| Kovan                  | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
-| Görli                  | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
-| Matic                  | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
-| Mumbai (Matic testnet) | 0x88b1F30E7b6BefA20880DD8059Fe5C3002A7fD48 | Yes      |
+| Mainnet                | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Ropsten                | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Rinkeby                | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Kovan                  | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Görli                  | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Matic                  | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Mumbai (Matic testnet) | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Arbitrum testnet       | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
 
 It can be deployed on any network that supports the `CREATE2` opcode.
