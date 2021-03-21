@@ -129,7 +129,7 @@ DEFAULT_CONF = {
 |------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------|
 | batchSize  | Yes      | Defines the maximum number of calls to batch into a single JSON-RPC call.                                                                    |
 | timeWindow | Yes      | Defines the time each call is held on buffer waiting for subsequent calls before aggregation, use 0 for "next js tick".                      |
-| contract   | Yes      | Instance of SequenceUtils contract, see: https://github.com/0xsequence/wallet-contracts/blob/master/contracts/modules/utils/SequenceUtils.sol. |
+| contract   | Yes      | Instance of MultiCallUtils contract, see: https://github.com/0xsequence/wallet-contracts/blob/master/src/contracts/modules/utils/MultiCallUtils.sol. |
 
 ### Supported networks
 
