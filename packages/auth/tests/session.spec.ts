@@ -180,6 +180,63 @@ describe('Wallet integration', function () {
     expect(session.config.signers[signerId].weight).to.equal(1)
   })
 
+  it("Should open an existing session with one signer being an public address", async () => {
+    const referenceSigner = ethers.Wallet.createRandom()
+
+    const ogSession = await Session.open({
+      context: context,
+      networks: networks,
+      referenceSigner: referenceSigner.address,
+      signers: [{ signer: referenceSigner, weight: 1 }],
+      thershold: 1,
+      metadata: {
+        name: "Test"
+      }
+    })
+
+    const newSigner = ethers.Wallet.createRandom()
+
+    const session = await Session.open({
+      context: context,
+      networks: networks,
+      referenceSigner: referenceSigner.address,
+      signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner.address, weight: 1 }],
+      thershold: 1,
+      metadata: {
+        name: "Test"
+      }
+    })
+
+    const [ogSignerId, signerId] = compareAddr(referenceSigner.address, newSigner.address) === 1 ? [1, 0] : [0, 1]
+
+    expect(session.account.address).to.equal(ogSession.account.address)
+    expect(session.config.threshold).to.equal(1)
+    expect(session.config.signers.length).to.equal(2)
+    expect(session.config.signers[ogSignerId].address).to.equal(referenceSigner.address)
+    expect(session.config.signers[ogSignerId].weight).to.equal(1)
+    expect(session.config.signers[signerId].address).to.equal(newSigner.address)
+    expect(session.config.signers[signerId].weight).to.equal(1)
+  })
+
+  it("Should fail open an existing session with all signers being public addresses", async () => {
+    const referenceSigner = ethers.Wallet.createRandom()
+
+    const newSigner = ethers.Wallet.createRandom()
+
+    const sessionPromise = Session.open({
+      context: context,
+      networks: networks,
+      referenceSigner: referenceSigner.address,
+      signers: [{ signer: referenceSigner.address, weight: 1 }, { signer: newSigner.address, weight: 1 }],
+      thershold: 1,
+      metadata: {
+        name: "Test"
+      }
+    })
+
+    expect(sessionPromise).to.be.rejected
+  })
+
   it("Should open session without index and using deepSearch", async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
