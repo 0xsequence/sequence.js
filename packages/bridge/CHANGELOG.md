@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.10.9
+
+### Patch Changes
+
+- add support for public addresses as signers in session.open
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.10.9
+
 ## 0.10.8
 
 ### Patch Changes

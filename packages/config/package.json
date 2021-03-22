@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/config",
-  "version": "0.10.8",
+  "version": "0.10.9",
   "description": "config sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/config",
   "source": "src/index.ts",
@@ -18,8 +18,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.10.8",
-    "@0xsequence/network": "^0.10.8",
+    "@0xsequence/abi": "^0.10.9",
+    "@0xsequence/network": "^0.10.9",
     "ethers": "^5.0.32"
   },
   "peerDependencies": {},

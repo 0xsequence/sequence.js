@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.10.9
+
+### Patch Changes
+
+- add support for public addresses as signers in session.open
+
 ## 0.10.8
 
 ### Patch Changes
