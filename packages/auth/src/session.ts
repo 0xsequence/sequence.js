@@ -200,7 +200,7 @@ export class Session implements SessionDump {
     context: WalletContext,
     networks: NetworkConfig[],
     referenceSigner: string,
-    signers: { signer: AbstractSigner, weight: ethers.BigNumberish }[],
+    signers: { signer: AbstractSigner | string, weight: ethers.BigNumberish }[],
     thershold: ethers.BigNumberish,
     metadata: SessionMeta,
     deepSearch?: boolean,
@@ -225,7 +225,11 @@ export class Session implements SessionDump {
     const authProvider = authChain.provider ? authChain.provider : new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
     const configFinder = new SequenceUtilsFinder(authProvider)
   
-    const solvedSigners = Promise.all(signers.map(async (s) => ({ ...s, address: await s.signer.getAddress() })))
+    const solvedSigners = Promise.all(
+      signers.map(async s => ({ ...s, address: typeof(s.signer) === 'string' ? s.signer : await s.signer.getAddress() }))
+    )
+
+    const fullSigners = signers.filter(s => typeof(s.signer) !== 'string').map(s => s.signer)
   
     const existingWallet = (await configFinder.findLastWalletOfInitialSigner({
       signer: referenceSigner,
@@ -252,7 +256,7 @@ export class Session implements SessionDump {
         initialConfig: config,
         networks: networks,
         context: context
-      }, ...signers.map((s) => s.signer))
+      }, ...fullSigners)
   
       const session = new Session(
         config,
@@ -280,7 +284,7 @@ export class Session implements SessionDump {
         initialConfig: newConfig,
         networks: networks,
         context: context
-      }, ...signers.map((s) => s.signer)))
+      }, ...fullSigners))
 
       // Fire JWT requests again, but with new config
       // MAYBE This is not neccesary, we can rely on the first request?
@@ -298,7 +302,7 @@ export class Session implements SessionDump {
         initialConfig: config,
         networks: networks,
         context: context
-      }, ...signers.map((s) => s.signer))
+      }, ...fullSigners)
     
       await account.publishConfig(noIndex ? false : true)
     
