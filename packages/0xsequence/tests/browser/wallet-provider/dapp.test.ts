@@ -1,11 +1,9 @@
 import { test, assert } from '../../utils/assert'
-import { ethers, Wallet as EOAWallet } from 'ethers'
+import { ethers } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { Wallet, DefaultProviderConfig, Web3Provider } from '@0xsequence/provider'
-import { sequenceContext, WalletContext, JsonRpcSender, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
-import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
-import { addressOf } from '@0xsequence/config'
-import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
+import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
+import { WalletContext } from '@0xsequence/network'
+import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testutils'
 import { Transaction, TransactionRequest } from '@0xsequence/transactions'
 
 export const tests = async () => {

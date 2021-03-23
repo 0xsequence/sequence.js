@@ -2,8 +2,8 @@ import { ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
-import { compareAddr, addressOf } from '@0xsequence/config'
-import { decodeSignature, recoverConfigFromDigest, isSigner } from './config'
+import { isDecodedEOASigner, isDecodedFullSigner, decodeSignature, compareAddr, addressOf } from '@0xsequence/config'
+import { recoverConfigFromDigest } from './config'
 
 import { packMessageData } from './utils'
 
@@ -32,7 +32,7 @@ export async function isValidSignature(
     return isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId)
   }
 
-  return wallets[0] || wallets[1]
+  return wallets[0] || wallets[1]
 }
 
 export function isValidEIP712Signature(
@@ -128,8 +128,8 @@ export async function isValidSequenceUndeployedWalletSignature(
     const cid = chainId ? chainId : (await provider!.getNetwork()).chainId
     const signature = decodeSignature(sig)
     const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
-    const config = recoverConfigFromDigest(subDigest, signature)
-    const weight = signature.signers.reduce((v, s) => isSigner(s) ? v + s.weight : v, 0)
+    const config = await recoverConfigFromDigest(subDigest, signature, provider, walletContext, chainId, true)
+    const weight = signature.signers.reduce((v, s) => isDecodedEOASigner(s) || isDecodedFullSigner(s) ? v + s.weight : v, 0)
     return compareAddr(addressOf(config, walletContext), address) === 0 && weight >= signature.threshold
   } catch {
     return false

@@ -1,4 +1,4 @@
-import { Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainId, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
@@ -28,7 +28,7 @@ export abstract class Signer extends AbstractSigner {
   abstract getSigners(): Promise<string[]>
 
   // signMessage .....
-  abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string>
+  abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean, isDigest?: boolean): Promise<string>
 
   // signTypedData ..
   abstract signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string>
@@ -65,11 +65,6 @@ export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer
   return cand && cand.updateConfig !== undefined && cand.publishConfig !== undefined &&
     cand.getWalletContext !== undefined && cand.getWalletConfig !== undefined
-}
-
-export interface DecodedSignature {
-  threshold: number
-  signers: (DecodedSigner | DecodedOwner)[]
 }
 
 // TODO: move to error.ts, along with others..

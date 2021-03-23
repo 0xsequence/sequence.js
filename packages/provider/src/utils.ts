@@ -1,8 +1,8 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf } from '@0xsequence/config'
+import { WalletConfig, addressOf, DecodedSignature } from '@0xsequence/config'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, packMessageData, recoverConfig, DecodedSignature } from '@0xsequence/wallet'
+import { isValidSignature as _isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 
 export const isValidSignature = async (
   address: string,
@@ -17,15 +17,15 @@ export const isValidSignature = async (
   return _isValidSignature(address, digest, sig, provider, walletContext, chainId)
 }
 
-export const recoverWalletConfig = (
+export const recoverWalletConfig = async (
   address: string,
   digest: BytesLike,
   signature: string | DecodedSignature,
   chainId: BigNumberish,
   walletContext?: WalletContext
-): WalletConfig => {
+): Promise<WalletConfig> => {
   const subDigest = packMessageData(address, chainId, digest)
-  const config = recoverConfig(subDigest, signature)
+  const config = await recoverConfig(subDigest, signature)
 
   if (walletContext) {
     const recoveredWalletAddress = addressOf(config, walletContext)

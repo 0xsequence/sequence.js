@@ -9,19 +9,21 @@ import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transaction
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext, Networks, JsonRpcSender } from '@0xsequence/network'
+import { WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
-import { addressOf, imageHash, sortConfig } from '@0xsequence/config'
+import { addressOf, joinSignatures, encodeSignature, WalletConfig } from '@0xsequence/config'
 
 import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature, packMessageData, isValidContractWalletSignature,
-  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature, joinSignatures,
-  fetchImageHash
+import { isValidSignature, isValidEthSignSignature,
+  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature,
+  fetchImageHash,
+  isValidContractWalletSignature,
+  RemoteSigner
 } from '../src'
 
 import { LocalWeb3Provider } from '../../provider/src'
@@ -83,7 +85,7 @@ describe('Wallet integration', function () {
       mainModuleUpgradable,
       guestModule,
       sequenceUtils
-    ] = await deployWalletContext(ethnode.provider)
+    ] = await deployWalletContext(ethnode.signer)
 
     // Create fixed context obj
     context = {
@@ -217,7 +219,20 @@ describe('Wallet integration', function () {
         await expect(call).to.be.fulfilled
       })
     })
+    describe('Nested wallets', async () => {
+      it('Should use wallet as wallet signer', async () => {
+        const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
+        const walletB = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
 
+        // TODO: Bundle deployment with child wallets
+        await relayer.deployWallet(walletA.config, walletA.context)
+
+        const contractWithSigner = callReceiver.connect(walletB) as CallReceiverMock
+
+        await contractWithSigner.testCall(412313, '0x12222334')
+        expect(await contractWithSigner.lastValB()).to.equal('0x12222334')
+      })
+    })
     options.forEach(s => {
       describe(`using ${s.name} provider`, () => {
         let signer: AbstractSigner
@@ -263,7 +278,7 @@ describe('Wallet integration', function () {
           expect(await provider.getTransactionCount(wallet.address)).to.equal(3)
         })
 
-        describe('signing', async () => {
+        describe('Signing', async () => {
           it('Should sign a message', async () => {
             const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
 
@@ -870,7 +885,7 @@ describe('Wallet integration', function () {
         expect(await callReceiver.lastValB()).to.equal('0x445566')
       })
 
-      it('Should sign, joinSignatures and send a transaction', async () => {
+      it('Should sign, joinSignatures and send a transaction with decoded signature', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -919,7 +934,65 @@ describe('Wallet integration', function () {
 
         const full_signed = {
           ...signed_1,
-          signature: joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature) // TODO: 'joinSignatures' name is too vague
+          signature: joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature)
+        }
+
+        const tx = await w3_1.eth.sendSignedTransaction(full_signed)
+        expect(tx.transactionHash).to.be.a('string')
+
+        expect(await callReceiver.lastValB()).to.equal('0x445566')
+      })
+
+      it('Should sign, joinSignatures and send a transaction with encoded signature', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+        const config = {
+          threshold: 3,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            },
+            {
+              address: s3.address,
+              weight: 1
+            }
+          ]
+        }
+
+        const wallet_1 = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
+        const wallet_2 = new lib.Wallet({ config, context }, s2).connect(ethnode.provider, relayer)
+        const wallet_3 = new lib.Wallet({ config, context }, s3).connect(ethnode.provider, relayer)
+
+        expect(wallet_1.address).to.equal(wallet_2.address)
+        expect(wallet_2.address).to.equal(wallet_3.address)
+
+        const w3_1 = new Web3(new LocalWeb3Provider(wallet_1))
+        const w3_2 = new Web3(new LocalWeb3Provider(wallet_2))
+        const w3_3 = new Web3(new LocalWeb3Provider(wallet_3))
+
+        const transaction = {
+          from: wallet_1.address,
+          gasPrice: '20000000000',
+          gas: '121000',
+          to: callReceiver.address,
+          value: 0,
+          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+        }
+
+        const signed_1 = await w3_1.eth.signTransaction(transaction)
+        const signed_2 = await w3_2.eth.signTransaction(transaction)
+        const signed_3 = await w3_3.eth.signTransaction(transaction)
+
+        const full_signed = {
+          ...signed_1,
+          signature: encodeSignature(joinSignatures(signed_1.signature, signed_2.signature, signed_3.signature))
         }
 
         const tx = await w3_1.eth.sendSignedTransaction(full_signed)
@@ -1374,6 +1447,133 @@ describe('Wallet integration', function () {
       await relayer.deployWallet(wallet.config, wallet.context)
 
       expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](proof.messageDigest(), sigResp)).to.equal("0x1626ba7e")
+    })
+    describe('Broken signers', () => {
+      describe('Broken EOA signer', async () => {
+        let s1: ethers.Wallet
+        let s2: ethers.Wallet
+        let config: WalletConfig
+
+        beforeEach(() => {
+          s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+          s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+    
+          s2.signMessage = (() => {
+            throw Error('ups')
+          }) as any
+    
+          config = {
+            threshold: 1,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: s2.address,
+                weight: 1
+              }
+            ]
+          }
+        })
+
+        it('Should skip broken signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
+          const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        })
+        it('Should reject broken signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
+          const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
+          await expect(signature).to.be.rejected
+        })
+      })
+      describe('Broken nested sequence signer', async () => {
+        let s1: ethers.Wallet
+        let w2: lib.Wallet
+        let config: WalletConfig
+
+        beforeEach(async () => {
+          s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      
+          const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
+          w2 = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
+  
+          // TODO: Bundle deployment with child wallets
+          await relayer.deployWallet(walletA.config, walletA.context)
+  
+          w2.sign = (() => {
+            throw Error('ups')
+          }) as any
+    
+          config = {
+            threshold: 1,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: w2.address,
+                weight: 1
+              }
+            ]
+          }
+        })
+
+        it('Should skip broken nested signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
+          const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        })
+        it('Should reject broken nested signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
+          const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
+          await expect(signature).to.be.rejected
+        })
+      })
+      describe('Broken remote signer', async () => {
+        let s1: ethers.Wallet
+        let r2: RemoteSigner
+        let config: WalletConfig
+
+        beforeEach(async () => {
+          s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      
+          const r2Addr = ethers.Wallet.createRandom().address
+
+          r2 = {
+            _isSigner: true,
+            getAddress: async () => r2Addr,
+            signMessageWithData: () => { throw Error('Ups') }
+          } as any
+
+          config = {
+            threshold: 1,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: await r2.getAddress(),
+                weight: 1
+              }
+            ]
+          }
+        })
+
+        it('Should skip broken remote signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
+          const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        })
+        it('Should reject broken remote signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
+          const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
+          await expect(signature).to.be.rejected
+        })
+      })
     })
   })
   describe('Update wallet configuration', () => {

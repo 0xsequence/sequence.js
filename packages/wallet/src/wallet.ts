@@ -38,18 +38,22 @@ import {
   sortConfig,
   compareAddr,
   imageHash,
-  isUsableConfig
+  isUsableConfig,
+  DecodedSignature,
+  encodeSignature,
+  joinSignatures,
+  recoverEOASigner,
+  decodeSignature,
+  isDecodedFullSigner
 } from '@0xsequence/config'
 
 import { encodeTypedDataDigest } from '@0xsequence/utils'
-
-import { joinSignatures } from './config'
 
 import { RemoteSigner } from './remote-signers'
 
 import { packMessageData, resolveArrayProperties } from './utils'
 
-import { Signer } from './signer'
+import { isSequenceSigner, Signer } from './signer'
 import { fetchImageHash } from '.'
 
 
@@ -246,10 +250,11 @@ export class Wallet extends Signer {
 
   // chainId returns the network connected to this wallet instance
   async getChainId(): Promise<number> {
+    if (this.chainId) return this.chainId
     if (!this.provider) {
       throw new Error('provider is not set, first connect a provider')
     }
-    if (this.chainId) return this.chainId
+
     this.chainId = (await this.provider.getNetwork()).chainId
     return this.chainId
   }
@@ -392,49 +397,81 @@ export class Wallet extends Signer {
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
+    const digest = isDigest ? msg : ethers.utils.keccak256(msg)
+
     // Generate sub-digest
     const subDigest = ethers.utils.arrayify(
       ethers.utils.keccak256(
-        packMessageData(
-          this.address,
-          signChainId,
-          isDigest ? msg : ethers.utils.keccak256(msg)
-        )
+        packMessageData(this.address, signChainId, digest)
       )
     )
 
     // Sign sub-digest using a set of signers and some optional data
-    const signWith = async (signers: AbstractSigner[], auxData?: string) => {
-      const signersAddr = Promise.all(signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
+    const signWith = async (signers: AbstractSigner[], auxData?: string): Promise<DecodedSignature> => {
+      const signersAddr = await Promise.all(signers.map(s => s.getAddress()))
+      const parts = await Promise.all(this.config.signers.map(async (s) => {
+        try {
+          const signer = signers[signersAddr.indexOf(s.address)]
 
-      const accountBytes = await Promise.all(
-        this.config.signers.map(async a => {
-          const signerIndex = (await signersAddr).indexOf(a.address)
-          const signer = signers[signerIndex]
+          // Is not a signer, return config entry as-is
+          if (!signer) {
+            return s
+          }
 
-          try {
-            if (signer) {
-              return ethers.utils.solidityPack(
-                ['bool', 'uint8', 'bytes'],
-                [false, a.weight, (await RemoteSigner.signMessageWithData(signer, subDigest, auxData)) + '02']
-              )
-            }
-          } catch (err) {
-            if (allSigners) {
-              throw err
-            } else {
-              console.warn(`Skipped signer ${a.address}`)
+          // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
+          if (isSequenceSigner(signer)) {
+            if (signer === this) throw Error('Can\'t sign transactions for self')
+            const signature = await signer.signMessage(subDigest, signChainId, allSigners, true) + '03'
+
+            return {
+              ...s,
+              signature: signature
             }
           }
 
-          return ethers.utils.solidityPack(['bool', 'uint8', 'address'], [true, a.weight, a.address])
-        })
-      )
-  
-      return ethers.utils.solidityPack(
-        ['uint16', ...Array(this.config.signers.length).fill('bytes')],
-        [this.config.threshold, ...accountBytes]
-      )
+          // Is remote signer, call and deduce signature type
+          if (RemoteSigner.isRemoteSigner(signer)) {
+            const signature = await signer.signMessageWithData(subDigest, auxData, signChainId)
+
+            try {
+              // Check if signature can be recovered as EOA signature
+              const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
+
+              if (isEOASignature) {
+                // Exclude address on EOA signatures
+                return {
+                  weight: s.weight,
+                  signature: signature
+                }
+              }
+            } catch {}
+
+            // Prepare signature for full encoding
+            return {
+              ...s,
+              signature: signature
+            }
+          }
+
+          // Is EOA signer
+          return {
+            weight: s.weight,
+            signature: await signer.signMessage(subDigest) + '02'
+          }
+        } catch (err) {
+          if (allSigners) {
+            throw err
+          } else {
+            console.warn(`Skipped signer ${s.address}`)
+            return s
+          }
+        }
+      }))
+
+      return {
+        threshold: this.config.threshold,
+        signers: parts
+      }
     }
 
     // Split local signers and remote signers
@@ -443,11 +480,11 @@ export class Wallet extends Signer {
 
     // Sign message first using localSigners
     // include local signatures for remote signers
-    const localSignature = await signWith(localSigners, this.packMsgAndSig(msg, [], signChainId))
-    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(msg, localSignature, signChainId))
+    const localSignature = await signWith(localSigners, this.packMsgAndSig(digest, [], signChainId))
+    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(digest, encodeSignature(localSignature), signChainId))
 
     // Aggregate both local and remote signatures
-    return joinSignatures(localSignature, remoteSignature)
+    return encodeSignature(joinSignatures(localSignature, remoteSignature))
   }
 
   // signWeight will return the total weight of all signers available based on the config
@@ -583,18 +620,25 @@ export class Wallet extends Signer {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     const message = ethers.utils.randomBytes(32)
 
-    // TODO: Remove subDigest from here on ERC1271 fix merge
-    const subDigest = ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        packMessageData(
-          this.address,
-          await this.getChainId(),
-          ethers.utils.keccak256(message)
-        )
-      )
-    )
-
     const signature = await this.signMessage(message, this.chainId, false)
+
+    // TODO: This is only required because RequireUtils doesn't support dynamic signatures
+    // remove this filtering of dynamic once a new version of RequireUtils is deployed
+    const decodedSignature = decodeSignature(signature)
+    const filteredSignature = encodeSignature({
+      threshold: decodedSignature.threshold,
+      signers: decodedSignature.signers.map((s, i) => {
+        if (isDecodedFullSigner(s)) {
+          const a = this.config.signers[i]
+          return {
+            weight: a.weight,
+            address: a.address
+          }
+        }
+
+        return s
+      })
+    })
 
     return [{
       delegateCall: false,
@@ -608,7 +652,7 @@ export class Wallet extends Signer {
           this.address,
           ethers.utils.keccak256(message),
           this.config.signers.length,
-          signature,
+          filteredSignature,
           indexed
         ]
       )
