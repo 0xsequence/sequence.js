@@ -229,6 +229,30 @@ describe('Multicall integration', function () {
       },
       ignoreCount: true
     },
+    {
+      name: 'Web3 external provider wrapper (without proxy)',
+      provider: (conf?: Partial<MulticallOptions>) => {
+        const web3HttpProvider = new Web3.providers.HttpProvider(ganache.serverUri)
+        const spyHttpProvider = SpyProxy(web3HttpProvider, {
+          prop: 'send',
+          func: web3HttpProvider.send,
+          callback: (p: any) => {
+            switch (p.method) {
+              case JsonRpcMethod.ethCall:
+              case JsonRpcMethod.ethGetCode:
+              case JsonRpcMethod.ethGetBalance:
+                callCounter++
+            }
+          }
+        })
+        return new Web3Provider(
+          new MulticallExternalProvider(
+            web3HttpProvider as any, conf
+          )
+        )
+      },
+      ignoreCount: true
+    },
   ]
 
   beforeEach(() => {
@@ -242,7 +266,7 @@ describe('Multicall integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider({ contract: utilsContract.address})
+        provider = option.provider({ contract: utilsContract.address })
       })
 
       describe("Aggregate calls", async () => {
