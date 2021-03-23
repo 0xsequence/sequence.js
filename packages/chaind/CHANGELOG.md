@@ -1,5 +1,11 @@
 # @0xsequence/chaind
 
+## 0.11.2
+
+### Patch Changes
+
+- Fix multicall proxy scopes
+
 ## 0.11.1
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.11.2
+
+### Patch Changes
+
+- Fix multicall proxy scopes
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.11.2
+
 ## 0.11.1
 
 ### Patch Changes

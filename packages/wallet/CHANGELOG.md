@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.11.2
+
+### Patch Changes
+
+- Fix multicall proxy scopes
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.11.2
+  - @0xsequence/config@0.11.2
+  - @0xsequence/guard@0.11.2
+  - @0xsequence/network@0.11.2
+  - @0xsequence/relayer@0.11.2
+  - @0xsequence/transactions@0.11.2
+  - @0xsequence/utils@0.11.2
+
 ## 0.11.1
 
 ### Patch Changes

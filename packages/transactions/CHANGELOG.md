@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.11.2
+
+### Patch Changes
+
+- Fix multicall proxy scopes
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.11.2
+  - @0xsequence/chaind@0.11.2
+  - @0xsequence/network@0.11.2
+
 ## 0.11.1
 
 ### Patch Changes
