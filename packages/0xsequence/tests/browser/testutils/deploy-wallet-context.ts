@@ -1,16 +1,23 @@
 import { ethers } from 'ethers'
-import { Provider, JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { UniversalDeployer } from '@0xsequence/deployer'
 import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet } from './accounts'
 
+// TODO/NOTE: it should be possible to import below from just '@0xsequence/wallet-contracts'
+// however, experiencing a strange JS packaging/module resolution issue which leads to:
+//
+// mock-wallet.test.js:70822 Uncaught (in promise) TypeError: Class constructor ContractFactory cannot be invoked without 'new'
+//
+// by importing from '@0xsequence/wallet-contracts/gen/typechain', this issue goes away
+
 import {
-  Factory__factory as FactoryFactory,
-  MainModule__factory as MainModuleFactory,
-  MainModuleUpgradable__factory as MainModuleUpgradableFactory,
-  GuestModule__factory as GuestModuleFactory,
-  SequenceUtils__factory as SequenceUtilsFactory,
-} from '@0xsequence/wallet-contracts/typings/contracts'
+  Factory__factory,
+  MainModule__factory,
+  MainModuleUpgradable__factory,
+  GuestModule__factory,
+  SequenceUtils__factory,
+} from '@0xsequence/wallet-contracts/gen/typechain'
 
 const deployWalletContextCache: WalletContext[] = []
 
@@ -35,12 +42,12 @@ export const deployWalletContext = async (...providers: JsonRpcProvider[]): Prom
     const universalDeployer = new UniversalDeployer('local', wallet.provider as JsonRpcProvider)
     const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
 
-    const walletFactory = await universalDeployer.deploy('WalletFactory', FactoryFactory, txParams)
-    const mainModule = await universalDeployer.deploy('MainModule', MainModuleFactory, txParams, 0, walletFactory.address)
+    const walletFactory = await universalDeployer.deploy('WalletFactory', Factory__factory, txParams)
+    const mainModule = await universalDeployer.deploy('MainModule', MainModule__factory, txParams, 0, walletFactory.address)
 
-    await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, txParams)
-    await universalDeployer.deploy('GuestModule', GuestModuleFactory, txParams)
-    await universalDeployer.deploy('SequenceUtils', SequenceUtilsFactory, txParams, 0, walletFactory.address, mainModule.address)
+    await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradable__factory, txParams)
+    await universalDeployer.deploy('GuestModule', GuestModule__factory, txParams)
+    await universalDeployer.deploy('SequenceUtils', SequenceUtils__factory, txParams, 0, walletFactory.address, mainModule.address)
 
     const deployment = universalDeployer.getDeployment()
 
@@ -61,8 +68,8 @@ export const deployWalletContext = async (...providers: JsonRpcProvider[]): Prom
 // across instances, but, we must ensure the contracts are deployed by the mock-wallet at least.
 export const testWalletContext: WalletContext = {
   factory: "0xf9D09D634Fb818b05149329C1dcCFAeA53639d96",
-  guestModule: "0x425bcE1ecBF6dca1c09dF648FD72B4576f26FCe0",
-  mainModule: "0xEc91D6144AFaCb3021dF43A84530041759ff7294",
-  mainModuleUpgradable: "0x264E53d61f4814e981281b614743a5193216f3D0",
-  sequenceUtils: "0x0341daA0bB5AD9B9c84660C211b132e7641705e9"
+  guestModule: "0x02390F3E6E5FD1C6786CB78FD3027C117a9955A7",
+  mainModule: "0xd01F11855bCcb95f88D7A48492F66410d4637313",
+  mainModuleUpgradable: "0x7EFE6cE415956c5f80C6530cC6cc81b4808F6118",
+  sequenceUtils: "0xC8aEEa34948F313ed8661E1C7E5b4c5a2885988B"
 }
