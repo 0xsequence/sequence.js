@@ -1,5 +1,16 @@
 # @0xsequence/deployer
 
+## 0.11.0
+
+### Minor Changes
+
+- Update wallet context to 1.7 contracts
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.11.0
+
 ## 0.10.9
 
 ### Patch Changes

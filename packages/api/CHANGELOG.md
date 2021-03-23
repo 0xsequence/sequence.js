@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.11.0
+
+### Minor Changes
+
+- Update wallet context to 1.7 contracts
+
 ## 0.10.9
 
 ### Patch Changes
