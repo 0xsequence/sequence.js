@@ -31,7 +31,7 @@ const resolvePackages = () => {
 // the error will go away.
 const resolveExtras = [
   // resolveCwd('../wallet/tests/utils'),
-  resolveCwd('../../node_modules/@0xsequence/wallet-contracts/typings')
+  resolveCwd('../../node_modules/@0xsequence/wallet-contracts/gen')
 ]
 
 const resolveTestEntries = (location) => {

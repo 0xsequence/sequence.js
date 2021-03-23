@@ -1,11 +1,12 @@
 import { ethers } from 'ethers'
-import { Provider } from '@ethersproject/providers'
 
-import { Factory } from '@0xsequence/wallet-contracts/typings/contracts/Factory'
-import { GuestModule } from '@0xsequence/wallet-contracts/typings/contracts/GuestModule'
-import { MainModule } from '@0xsequence/wallet-contracts/typings/contracts/MainModule'
-import { MainModuleUpgradable } from '@0xsequence/wallet-contracts/typings/contracts/MainModuleUpgradable'
-import { SequenceUtils } from '@0xsequence/wallet-contracts/typings/contracts/SequenceUtils'
+import {
+  Factory,
+  GuestModule,
+  MainModule,
+  MainModuleUpgradable,
+  SequenceUtils
+} from '@0xsequence/wallet-contracts'
 
 const FactoryArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/Factory.sol/Factory.json')
 const GuestModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/GuestModule.sol/GuestModule.json')

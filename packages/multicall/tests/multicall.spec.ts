@@ -1,7 +1,7 @@
 
 import { ethers, providers, Signer } from 'ethers'
 import * as Ganache from 'ganache-cli'
-import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
+import { CallReceiverMock } from '@0xsequence/wallet-contracts'
 import { JsonRpcRouter, JsonRpcExternalProvider } from '@0xsequence/network'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 

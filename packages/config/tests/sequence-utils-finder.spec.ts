@@ -1,8 +1,6 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
 
-import { CallReceiverMock } from '@0xsequence/wallet-contracts/typings/contracts/CallReceiverMock'
-import { HookCallerMock } from '@0xsequence/wallet-contracts/typings/contracts/HookCallerMock'
-
+import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
 import { LocalRelayer } from '@0xsequence/relayer'
 import { Wallet } from '@0xsequence/wallet'
