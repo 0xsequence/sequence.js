@@ -1,5 +1,11 @@
 # @0xsequence/chaind
 
+## 0.11.1
+
+### Patch Changes
+
+- Add support for dynamic and nested signatures
+
 ## 0.11.0
 
 ### Minor Changes

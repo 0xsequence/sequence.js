@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.11.1
+
+### Patch Changes
+
+- Add support for dynamic and nested signatures
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.11.1
+  - @0xsequence/chaind@0.11.1
+  - @0xsequence/network@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes

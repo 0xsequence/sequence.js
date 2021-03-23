@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.11.1
+
+### Patch Changes
+
+- Add support for dynamic and nested signatures
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.11.1
+  - @0xsequence/auth@0.11.1
+  - @0xsequence/config@0.11.1
+  - @0xsequence/network@0.11.1
+  - @0xsequence/transactions@0.11.1
+  - @0xsequence/utils@0.11.1
+  - @0xsequence/wallet@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes
