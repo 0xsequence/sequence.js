@@ -7,18 +7,33 @@ export class MulticallExternalProvider implements ExternalProvider {
 
   constructor(private provider: ExternalProvider, multicall?: Multicall | Partial<MulticallOptions>) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall!)
+
+    if (provider.send) {
+      const next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+        provider.send!(req, callback)
+      }
+
+      (this as any).send = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+        this.multicall.handle(next, request, callback)
+      }
+    }
+
+    if (provider.sendAsync) {
+      const next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+        provider.sendAsync!(req, callback)
+      }
+
+      (this as any).sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+        this.multicall.handle(next, request, callback)
+      }
+    }
   }
 
-  next = async (req: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
-    const cb = this.provider.send ? this.provider.send : this.provider.sendAsync
-    cb!(req, callback)
+  public get isMetaMask() {
+    return this.provider.isMetaMask
   }
 
-  sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
-    this.multicall.handle(this.next, request, callback)
-  }
-
-  send = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
-    this.multicall.handle(this.next, request, callback)
+  public get isStatus() {
+    return this.provider.isStatus
   }
 }

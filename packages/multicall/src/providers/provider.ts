@@ -1,10 +1,30 @@
 import { ethers , BigNumber } from 'ethers'
-import { BlockTag, BlockWithTransactions } from '@ethersproject/abstract-provider'
 import { Deferrable } from '@ethersproject/properties'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'
 import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
+
+export const ProxyMethods = [
+  'getNetwork',
+  'getBlockNumber',
+  'getGasPrice',
+  'getTransactionCount',
+  'getStorageAt',
+  'sendTransaction',
+  'estimateGas',
+  'getBlock',
+  'getTransaction',
+  'getTransactionReceipt',
+  'getLogs',
+  'emit',
+  'litenerCount',
+  'addListener',
+  'removeListener',
+  'waitForTransaction',
+  'detectNetwork',
+  'getBlockWithTransactions'
+]
 
 export class MulticallProvider extends ethers.providers.BaseProvider {
   private multicall: Multicall
@@ -12,31 +32,15 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
   constructor(private provider: ethers.providers.Provider, multicall?: Multicall | Partial<MulticallOptions>) {
     super(provider.getNetwork())
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
+
+    ProxyMethods.forEach((m) => {
+      if ((provider as any)[m] !== undefined) {
+        (this as any)[m] = (...args: any) => (provider as any)[m](...args)
+      }
+    })
   }
 
   listenerCount = this.provider.listenerCount
-
-  getBlockWithTransactions = (blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<BlockWithTransactions> => {
-    throw new Error('unsupported')
-  }
-
-  getNetwork = this.provider.getNetwork
-  getBlockNumber = this.provider.getBlockNumber
-  getGasPrice = this.provider.getGasPrice
-  getTransactionCount = this.provider.getTransactionCount
-  getStorageAt = this.provider.getStorageAt
-  sendTransaction = this.provider.sendTransaction
-  estimateGas = this.provider.estimateGas
-  getBlock = this.provider.getBlock
-  getTransaction = this.provider.getTransaction
-  getTransactionReceipt = this.provider.getTransactionReceipt
-  getLogs = this.provider.getLogs
-  emit = this.provider.emit
-  litenerCount = this.provider.listenerCount
-  listeners = this.provider.listeners
-  addListener = this.provider.addListener
-  removeListener = this.provider.removeListener
-  waitForTransaction = this.provider.waitForTransaction
 
   getResolver = async (name: string | Promise<string>) => {
     const provider = this.provider as ethers.providers.BaseProvider

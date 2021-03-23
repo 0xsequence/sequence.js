@@ -184,6 +184,75 @@ describe('Multicall integration', function () {
         )
       }
     },
+    {
+      name: 'Ether.js provider wrapper (without proxy)',
+      provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(
+        ganache.provider, options
+      ),
+      ignoreCount: true
+    },
+    {
+      name: "Json Rpc Router (Sequence) (without proxy)",
+      provider: (options?: Partial<MulticallOptions>) => new Web3Provider(
+        new JsonRpcRouter(
+          [multicallMiddleware(options)],
+          new JsonRpcExternalProvider(ganache.provider)
+        )
+      ),
+      ignoreCount: true
+    },
+    {
+      name: 'Ether.js external provider wrapper (without proxy)',
+      provider: (conf?: Partial<MulticallOptions>) => new Web3Provider(
+        new MulticallExternalProvider(
+          new JsonRpcExternalProvider(ganache.provider), conf
+        )
+      ),
+      ignoreCount: true
+    },
+    {
+      name: "Provider Engine (json-rpc-engine) (without proxy)",
+      provider: (conf?: Partial<MulticallOptions>) => {
+        const engine = new JsonRpcEngine()
+
+        engine.push(
+          providerAsMiddleware(
+            new MulticallExternalProvider(
+              new JsonRpcExternalProvider(ganache.provider), conf
+            )
+          )
+        )
+
+        return new ethers.providers.Web3Provider(
+          providerFromEngine(engine)
+        )
+      },
+      ignoreCount: true
+    },
+    {
+      name: 'Web3 external provider wrapper (without proxy)',
+      provider: (conf?: Partial<MulticallOptions>) => {
+        const web3HttpProvider = new Web3.providers.HttpProvider(ganache.serverUri)
+        const spyHttpProvider = SpyProxy(web3HttpProvider, {
+          prop: 'send',
+          func: web3HttpProvider.send,
+          callback: (p: any) => {
+            switch (p.method) {
+              case JsonRpcMethod.ethCall:
+              case JsonRpcMethod.ethGetCode:
+              case JsonRpcMethod.ethGetBalance:
+                callCounter++
+            }
+          }
+        })
+        return new Web3Provider(
+          new MulticallExternalProvider(
+            web3HttpProvider as any, conf
+          )
+        )
+      },
+      ignoreCount: true
+    },
   ]
 
   beforeEach(() => {
@@ -197,7 +266,7 @@ describe('Multicall integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider({ contract: utilsContract.address})
+        provider = option.provider({ contract: utilsContract.address })
       })
 
       describe("Aggregate calls", async () => {
@@ -211,6 +280,7 @@ describe('Multicall integration', function () {
           expect((await promiseA).toString()).to.equal("848487868126387")
           expect(await promiseB).to.equal("0x001122")
       
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
         })
         it("Should aggregate three calls", async () => {
@@ -236,6 +306,7 @@ describe('Multicall integration', function () {
           expect(valB).to.equal(randomData1)
           expect(valC).to.equal(randomData2)
       
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
         })
         it("Should aggregate 62 calls in two batches", async () => {
@@ -246,6 +317,8 @@ describe('Multicall integration', function () {
       
           const values = await Promise.all(callMocks.map((c) => c.connect(provider).lastValB()))
           values.forEach((v, i) => expect(v).to.equal(randomValues[i]))
+
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(2)
         })
         it("Should call eth_getCode", async () => {
@@ -254,7 +327,8 @@ describe('Multicall integration', function () {
             provider.getCode(utilsContract.address)
           ])
       
-          expect(callCounter).to.equal(1)
+          if (!option.ignoreCount) expect(callCounter).to.equal(1)
+
           const rawCode = await Promise.all([
             ganache.provider.getCode(callMock.address),
             ganache.provider.getCode(utilsContract.address)
@@ -272,7 +346,8 @@ describe('Multicall integration', function () {
       
           expect(await promiseA).to.equal(await ganache.provider.getCode(callMock.address))
           expect(await promiseB).to.equal("0x9952")
-      
+
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
         })
         it("Should call eth_getBalance", async () => {
@@ -285,7 +360,7 @@ describe('Multicall integration', function () {
             provider.getBalance(randomAddress),
           ])
 
-          expect(callCounter).to.equal(1)
+          if (!option.ignoreCount) expect(callCounter).to.equal(1)
       
           // expect(callCounter).to.equal(1)
           const rawBalances = await Promise.all([
@@ -306,6 +381,7 @@ describe('Multicall integration', function () {
           expect(await promiseA).to.equal(await ganache.provider.getCode(callMock.address))
           expect(promiseB.toHexString()).to.equal((await ganache.provider.getBalance(accounts[3].account.address)).toHexString())
 
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
         })
       })
@@ -318,6 +394,8 @@ describe('Multicall integration', function () {
           const multiCallMockB = callMockB.connect(provider)
 
           await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejected
+
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
         })
         it("Should retry after failing to execute using batch", async () => {
@@ -332,7 +410,20 @@ describe('Multicall integration', function () {
             multiCallMockB.callStatic.testCall(2, "0x1122")
           ])).to.be.rejected
 
+          if (option.ignoreCount) return
           expect(callCounter).to.equal(3)
+        })
+
+        it("Should call getStorageAt", async () => {
+          const random = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          await callMock.testCall(random, "0x00")
+          const storageAt = await provider.getStorageAt(callMock.address, 0)
+          expect(storageAt).to.equal(random)
+        })
+
+        it("Should detect network", async () => {
+          const net = await (provider as ethers.providers.BaseProvider).detectNetwork()
+          expect(net.chainId).to.equal(1337)
         })
 
         // TODO: fix this test, its breaking on macOS node v15.12.0
@@ -396,7 +487,7 @@ describe('Multicall integration', function () {
               brokenProvider.getCode(utilsContract.address)
             ])
         
-            expect(callCounter).to.equal(2 + brokenOption.overhead)
+            if (!option.ignoreCount) expect(callCounter).to.equal(2 + brokenOption.overhead)
             const rawCode = await Promise.all([
               ganache.provider.getCode(callMock.address),
               ganache.provider.getCode(utilsContract.address)
@@ -415,7 +506,8 @@ describe('Multicall integration', function () {
         
             expect((await promiseA).toString()).to.equal("848487868126387")
             expect(await promiseB).to.equal("0x001122")
-        
+
+            if (option.ignoreCount) return
             expect(callCounter).to.equal(3)
           })
 
@@ -430,7 +522,8 @@ describe('Multicall integration', function () {
             expect((await promiseA).toString()).to.equal("848487868126387")
             expect(await promiseB).to.equal("0x001122")
             expect(await promiseC).to.equal(await provider.getCode(callMock.address))
-        
+
+            if (option.ignoreCount) return
             expect(callCounter).to.equal(4 + brokenOption.overhead)
           })
 
@@ -444,7 +537,7 @@ describe('Multicall integration', function () {
               brokenProvider.getBalance(randomAddress),
             ])
 
-            expect(callCounter).to.equal(4 + brokenOption.overhead)
+            if (!option.ignoreCount) expect(callCounter).to.equal(4 + brokenOption.overhead)
 
             // expect(callCounter).to.equal(1)
             const rawBalances = await Promise.all([
@@ -466,6 +559,7 @@ describe('Multicall integration', function () {
             expect(await promiseA).to.equal(await ganache.provider.getCode(callMock.address))
             expect(promiseB.toHexString()).to.equal((await ganache.provider.getBalance(accounts[3].account.address)).toHexString())
   
+            if (option.ignoreCount) return
             expect(callCounter).to.equal(2 + brokenOption.overhead)
           })
         }))
