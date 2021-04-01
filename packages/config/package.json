@@ -25,8 +25,8 @@
   "peerDependencies": {},
   "devDependencies": {
     "concurrently": "^6.0.0",
-    "hardhat": "2.1.1",
-    "mocha": "^8.3.1"
+    "hardhat": "2.1.2",
+    "mocha": "^8.3.2"
   },
   "files": [
     "src",
