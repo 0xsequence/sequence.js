@@ -581,6 +581,12 @@ export class Wallet extends Signer {
 
     const transactions = [...preTransaction, transaction, ...postTransaction]
 
+    // If update config reguires a single transaction
+    // skip nested selfExecute bundle
+    if (transactions.length === 1) {
+      return transactions
+    }
+
     return [{
       delegateCall: false,
       revertOnError: false,

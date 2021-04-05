@@ -1694,6 +1694,42 @@ describe('Wallet integration', function () {
       const decoded1 = sequenceUtilsInterface.decodeFunctionData('publishConfig', decoded[1].data)
       expect(decoded1).to.not.be.undefined
     })
+    it('Should skip selfExecute if update requires a single transaction', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+
+      const newConfig = {
+        threshold: 2,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
+
+      const oldConfig = wallet.config
+      const [config, tx] = await wallet.updateConfig(newConfig)
+      await tx.wait()
+
+      const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
+
+      const updateTx = await updatedWallet.buildUpdateConfigTransaction(oldConfig, false)
+
+      const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
+      const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+
+      expect(updateTx.length).to.equal(1)
+
+      await expect((async () => mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data))()).to.be.rejected
+
+      const decoded = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', updateTx[0].data)
+      expect(decoded).to.not.be.undefined
+    })
     it('Should migrate and publish config', async () => {
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
