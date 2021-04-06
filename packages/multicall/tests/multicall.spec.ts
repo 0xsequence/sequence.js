@@ -418,7 +418,7 @@ describe('Multicall integration', function () {
           const random = ethers.utils.hexlify(ethers.utils.randomBytes(32))
           await callMock.testCall(random, "0x00")
           const storageAt = await provider.getStorageAt(callMock.address, 0)
-          expect(storageAt).to.equal(random)
+          expect(storageAt).to.equal(ethers.utils.defaultAbiCoder.encode(['bytes32'], [random]))
         })
 
         it("Should detect network", async () => {

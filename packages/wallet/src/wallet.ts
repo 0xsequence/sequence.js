@@ -540,7 +540,7 @@ export class Wallet extends Signer {
 
     const isUpgradable = await (async () => {
       try {
-        const implementation = await this.provider.getStorageAt(this.address, ethers.utils.defaultAbiCoder.encode(['string'], [this.address]))
+        const implementation = await this.provider.getStorageAt(this.address, ethers.utils.defaultAbiCoder.encode(['address'], [this.address]))
         return compareAddr(implementation, this.context.mainModuleUpgradable) === 0
       } catch {
         return false
@@ -580,6 +580,12 @@ export class Wallet extends Signer {
     const postTransaction = publish ? await this.buildPublishConfigTransaction(config, indexed) : []
 
     const transactions = [...preTransaction, transaction, ...postTransaction]
+
+    // If update config reguires a single transaction
+    // skip nested selfExecute bundle
+    if (transactions.length === 1) {
+      return transactions
+    }
 
     return [{
       delegateCall: false,
