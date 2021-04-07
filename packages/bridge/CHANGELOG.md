@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.11.3
+
+### Patch Changes
+
+- improve openWindow state options handling
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.11.3
+
 ## 0.11.2
 
 ### Patch Changes

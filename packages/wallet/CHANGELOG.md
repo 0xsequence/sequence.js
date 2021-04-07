@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.11.3
+
+### Patch Changes
+
+- improve openWindow state options handling
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.11.3
+  - @0xsequence/config@0.11.3
+  - @0xsequence/guard@0.11.3
+  - @0xsequence/network@0.11.3
+  - @0xsequence/relayer@0.11.3
+  - @0xsequence/transactions@0.11.3
+  - @0xsequence/utils@0.11.3
+
 ## 0.11.2
 
 ### Patch Changes

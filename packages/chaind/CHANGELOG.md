@@ -1,5 +1,11 @@
 # @0xsequence/chaind
 
+## 0.11.3
+
+### Patch Changes
+
+- improve openWindow state options handling
+
 ## 0.11.2
 
 ### Patch Changes

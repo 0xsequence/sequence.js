@@ -1,5 +1,17 @@
 # @0xsequence/auth
 
+## 0.11.3
+
+### Patch Changes
+
+- improve openWindow state options handling
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.11.3
+  - @0xsequence/api@0.11.3
+  - @0xsequence/config@0.11.3
+  - @0xsequence/network@0.11.3
+  - @0xsequence/wallet@0.11.3
+
 ## 0.11.2
 
 ### Patch Changes
