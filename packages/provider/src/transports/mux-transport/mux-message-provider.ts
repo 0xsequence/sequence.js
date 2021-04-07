@@ -1,6 +1,6 @@
 import {
   ProviderMessage, ProviderMessageType, ProviderTransport,
-  ProviderMessageEvent, ProviderMessageRequest, ProviderMessageResponse, WalletSession
+  ProviderMessageEvent, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent
 } from '../../types'
 
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
@@ -50,7 +50,7 @@ export class MuxMessageProvider implements ProviderTransport {
     this.provider = undefined
   }
 
-  openWallet = (path?: string, state?: any, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
     if (this.provider) {
       this.provider.openWallet(path, state, defaultNetworkId)
       return

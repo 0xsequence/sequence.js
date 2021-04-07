@@ -3,6 +3,10 @@ import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
 import { sanitizeNumberString } from '@0xsequence/utils'
 
+export interface RegisterOptions {
+  loadingPath: string
+}
+
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
   protected parentOrigin: string
@@ -13,7 +17,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     super(walletRequestHandler)
   }
 
-  register() {
+  register(options?: RegisterOptions) {
     const isPopup = parent.window.opener !== null
     this._isPopup = isPopup
     if (isPopup !== true) {
@@ -24,7 +28,14 @@ export class WindowMessageHandler extends BaseWalletTransport {
     const location = new URL(window.location.href)
     this._sessionId = sanitizeNumberString(location.searchParams.get('sid')!)
     location.searchParams.delete('sid')
-    window.history.replaceState({}, document.title, location.pathname)
+
+    const jsonRpcRequest = location.searchParams.get('jsonRpcRequest')
+
+    if (options?.loadingPath && !!jsonRpcRequest) {
+      window.history.replaceState({}, document.title, options.loadingPath)
+    } else {
+      window.history.replaceState({}, document.title, location.pathname)
+    }
 
     // record parent window instance for communication
     this.parentWindow = parent.window.opener
@@ -82,5 +93,4 @@ export class WindowMessageHandler extends BaseWalletTransport {
   get isPopup(): boolean {
     return this._isPopup
   }
-
 }

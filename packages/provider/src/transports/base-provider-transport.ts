@@ -4,7 +4,7 @@ import {
   ProviderTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
   ProviderMessageResponseCallback, ProviderMessageTransport,
-  WalletSession, ConnectionState
+  WalletSession, ConnectionState, OpenWalletIntent
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -49,7 +49,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  openWallet(path?: string, state?: any, defaultNetworkId?: string | number) {
+  openWallet(path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number) {
     throw new Error('abstract method')
   }
 
@@ -72,10 +72,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // open/focus the wallet.
     // automatically open the wallet when a provider request makes it here.
-    await this.openWallet()
+    await this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method })
     if (!this.isConnected()) {
       await this.waitUntilConnected()
-    }
+  }
 
     // send message request, await, and then execute callback after receiving the response
     try {

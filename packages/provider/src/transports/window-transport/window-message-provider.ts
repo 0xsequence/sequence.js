@@ -1,4 +1,4 @@
-import { ProviderMessage } from '../../types'
+import { OpenWalletIntent, ProviderMessage } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 
 // ..
@@ -48,7 +48,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this.events.removeAllListeners()
   }
 
-  openWallet = (path?: string, state?: any, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
     if (this.walletWindow && this.isConnected()) {
       // TODO: update the location of window to path
       this.walletWindow.focus()
@@ -57,6 +57,12 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     this.sessionId = `${performance.now()}`
     this.walletURL.searchParams.set('sid', this.sessionId)
+    
+    if(state?.type === 'jsonRpcRequest') {
+      this.walletURL.searchParams.set('jsonRpcRequest', state.method)
+    } else {
+      this.walletURL.searchParams.delete('jsonRpcRequest')
+    }
 
     const walletURL = new URL(this.walletURL.href)
     if (path && path !== '') {
