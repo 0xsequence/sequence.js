@@ -21,7 +21,7 @@ export interface WalletSession {
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
-  openWallet(path?: string, state?: any, defaultNetworkId?: string | number): void
+  openWallet(path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void
   closeWallet(): void
   isConnected(): boolean
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
@@ -104,3 +104,5 @@ export interface MessageToSign {
   typedData?: TypedData
   chainId?: number
 }
+
+export type OpenWalletIntent = { type: 'login' } | { type: 'jsonRpcRequest'; method: string }

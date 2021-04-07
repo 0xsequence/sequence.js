@@ -1,7 +1,7 @@
 import { BaseProviderTransport } from '../base-provider-transport'
 
 import {
-  ProviderMessage, ConnectionState
+  ProviderMessage, ConnectionState, OpenWalletIntent
 } from '../../types'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
@@ -42,7 +42,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.port.handleMessage = undefined
   }
 
-  openWallet = (path?: string, state?: any, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
     this.connect(defaultNetworkId)
   }
 

@@ -7,7 +7,7 @@ import { WalletConfig, WalletState } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
-import { WalletSession, ProviderMessageEvent, ProviderTransport } from './types'
+import { WalletSession, ProviderMessageEvent, ProviderTransport, OpenWalletIntent } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 
@@ -25,7 +25,7 @@ export interface WalletProvider {
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
 
-  openWallet(path?: string, state?: any): Promise<boolean>
+  openWallet(path?: string, state?: OpenWalletIntent): Promise<boolean>
   closeWallet(): void
 
   getProvider(chainId?: ChainId): Web3Provider | undefined
@@ -183,7 +183,7 @@ export class Wallet implements WalletProvider {
       return true
     }
 
-    await this.openWallet('', { login: true })
+    await this.openWallet(undefined, { type: 'login' })
     const sessionPayload = await this.transport.messageProvider!.waitUntilLoggedIn()
     this.useSession(sessionPayload, true)
 
@@ -270,8 +270,8 @@ export class Wallet implements WalletProvider {
     throw new Error('expecting first or second network in list to be the auth chain')
   }
 
-  openWallet = async (path?: string, state?: any): Promise<boolean> => {
-    if (state?.login !== true && !this.isLoggedIn()) {
+  openWallet = async (path?: string, state?: OpenWalletIntent): Promise<boolean> => {
+    if (state?.type !== 'login' && !this.isLoggedIn()) {
       throw new Error('login first')
     }
 
