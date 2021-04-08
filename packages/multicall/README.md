@@ -20,12 +20,12 @@ or
 Sequence Multicall works by implementing `ethers.Provider` and wrapping an existing `ethers.Provider`; this wrapped provider can transparently aggregate supported JSON-RPC calls.
 
 ```ts
-import { MulticallProvider } from '@0xsequence/multicall'
-import { providers } from 'ethers'
+import { providers } from '@0xsequence/multicall'
+import { providers as ethersProviders } from 'ethers'
 
 // MulticallProvider can wrap and extend with multicall functionality
 // any ethers.js provider, it's not limited to JsonRpcProvider
-const provider = new MulticallProvider(new providers.JsonRpcProvider("https://cloudflare-eth.com/"))
+const provider = new providers.MulticallProvider(new ethersProviders.JsonRpcProvider("https://cloudflare-eth.com/"))
 ```
 
 ### Making aggregated calls
