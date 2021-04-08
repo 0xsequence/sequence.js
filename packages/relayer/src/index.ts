@@ -1,5 +1,5 @@
 import { providers } from 'ethers'
-import { SignedTransactions, Transaction, TransactionEncoded } from '@0xsequence/transactions'
+import { SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 
@@ -19,7 +19,7 @@ export interface Relayer {
     config: WalletConfig,
     context: WalletContext,
     ...transactions: Transaction[]
-  ): Promise<TransactionEncoded[][]>
+  ): Promise<Transaction[][]>
 
   // getNonce returns the transaction count/nonce for a wallet.
   getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: providers.BlockTag): Promise<number>
