@@ -31,14 +31,6 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
     // return this.signer.sendTransaction(walletDeployTxn)
   }
 
-  async gasRefundOptions(
-    _config: WalletConfig,
-    _context: WalletContext,
-    ..._transactions: Transaction[]
-  ): Promise<TransactionEncoded[][]> {
-    return [[]]
-  }
-
   async estimateGasLimits(
     config: WalletConfig,
     context: WalletContext,
@@ -80,6 +72,14 @@ export class LocalRelayer extends BaseRelayer implements Relayer {
       t.gasLimit = gasCosts[i]
       return t
     })
+  }
+
+  async gasRefundOptions(
+    _config: WalletConfig,
+    _context: WalletContext,
+    ..._transactions: Transaction[]
+  ): Promise<Transaction[][]> {
+    return [[]]
   }
 
   async getNonce(
