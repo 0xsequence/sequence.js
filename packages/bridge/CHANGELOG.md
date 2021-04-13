@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.11.4
+
+### Patch Changes
+
+- update api client
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.11.4
+
 ## 0.11.3
 
 ### Patch Changes

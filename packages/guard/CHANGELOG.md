@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.11.4
+
+### Patch Changes
+
+- update api client
+
 ## 0.11.3
 
 ### Patch Changes
