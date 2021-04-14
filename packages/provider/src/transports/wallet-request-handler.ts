@@ -23,6 +23,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private testnetNetworks: NetworkConfig[]
 
   private _defaultNetworkId?: string | number
+  private _chainId?: number
 
   private events: EventEmitter<WalletMessageEvent, any> = new EventEmitter()
 
@@ -37,7 +38,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // }
   }
 
-  async login(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
+  async connect(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
     this.signer = signer
 
     if (mainnetNetworks && mainnetNetworks.length > 0) {
@@ -53,7 +54,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    this.notifyLogin(await this.signer!.getAddress(), await this.getChainId())
+    this.notifyConnect(await this.signer!.getAddress(), await this.getChainId())
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -437,13 +438,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (!this.signer) {
       return 0
     } else {
-      return this.signer.getChainId()
+      if (this._chainId) return this._chainId // memoized
+      this._chainId = await this.signer.getChainId()
+      return this._chainId
     }
   }
 
   async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<number | undefined> {
     if (!chainId) return undefined
     this._defaultNetworkId = chainId
+    this._chainId = undefined
 
     if (this.signer && (<any>this.signer).setNetworks) {
       const defaultChainId: number = (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
@@ -482,9 +486,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  // TODO: maybe rename notifyLogin and notifyLogout to notifyConnect and notifyDisconnect ...?
-
-  notifyLogin(accountAddress: string, chainId: number) {
+  notifyConnect(accountAddress: string, chainId: number) {
     if (!accountAddress || accountAddress.length === 0) {
       this.events.emit('accountsChanged', [])
     } else {
@@ -498,7 +500,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     } as ProviderConnectInfo)
   }
 
-  notifyLogout() {
+  notifyDisconnect() {
     this.events.emit('accountsChanged', [])
     this.events.emit('networks', [])
     this.events.emit('disconnect', { code: 4900 } as ProviderRpcError)

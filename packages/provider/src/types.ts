@@ -32,7 +32,7 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
 
   waitUntilOpened(): Promise<boolean>
-  waitUntilLoggedIn(): Promise<WalletSession>
+  waitUntilConnected(): Promise<WalletSession>
 }
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -88,10 +88,9 @@ export interface ProviderMessageTransport {
   sendMessage(message: ProviderMessage<any>): void
 }
 
-// export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'login' | 'logout' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | '_debug'
-export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | '_debug'
+export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | 'init' | '_debug'
 
-export type ProviderMessageEvent = 'message' | '_debug' | WalletMessageEvent
+export type ProviderMessageEvent = 'message' | WalletMessageEvent
 
 export enum ProviderMessageType {
   OPEN = 'open',
@@ -106,6 +105,7 @@ export enum ProviderMessageType {
   NETWORKS = 'networks',
   WALLET_CONTEXT = 'walletContext',
 
+  INIT = 'init',
   DEBUG = '_debug'
 }
 
@@ -113,6 +113,12 @@ export enum OpenState {
   CLOSED = 0,
   OPENING = 1,
   OPENED = 2
+}
+
+export enum InitState {
+  NIL = 0,
+  SENT_NONCE = 1,
+  OK = 2
 }
 
 export type NetworkEventPayload = NetworkConfig
@@ -123,11 +129,11 @@ export interface MessageToSign {
   chainId?: number
 }
 
-export interface LoginOptions {
+export interface ConnectOptions {
   refresh?: boolean
   authorize?: boolean
 }
 
 export type OpenWalletIntent =
-  { type: 'login'; authorize?: boolean } |
+  { type: 'connect'; authorize?: boolean } |
   { type: 'jsonRpcRequest'; method: string }

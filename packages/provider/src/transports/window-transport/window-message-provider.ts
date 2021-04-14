@@ -1,4 +1,4 @@
-import { OpenWalletIntent, ProviderMessage } from '../../types'
+import { OpenWalletIntent, ProviderMessage, InitState, ProviderMessageType } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 
 // ..
@@ -7,6 +7,7 @@ let registeredWindowMessageProvider: WindowMessageProvider | undefined
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
   private walletWindow: Window | null
+  private _init: InitState
 
   constructor(walletAppURL: string) {
     super()
@@ -67,8 +68,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
     }
 
     // Set session and network id on class instance walletURL
-    this.sessionId = `${performance.now()}`
-    this.walletURL.searchParams.set('sid', this.sessionId)
+    this._init = InitState.NIL
+    this._sessionId = `${performance.now()}`
+    this.walletURL.searchParams.set('sid', this._sessionId)
 
     if (defaultNetworkId) {
       this.walletURL.searchParams.set('net', `${defaultNetworkId}`)
@@ -150,11 +152,33 @@ export class WindowMessageProvider extends BaseProviderTransport {
       throw new Error('ProviderMessage object is empty')
     }
 
+    // window init
+    if (this._init !== InitState.OK) {
+      if (message.type === ProviderMessageType.INIT) {
+        const { nonce } = message.data as { nonce: string }
+        if (!nonce || nonce.length === 0) {
+          console.error('invalid init nonce')
+          return
+        }
+        this._init = InitState.OK
+        this.sendMessage({
+          idx: -1,
+          type: ProviderMessageType.INIT,
+          data: {
+            sessionId: this._sessionId,
+            nonce: nonce
+          }
+        }, true)
+      }
+      return
+    }
+
+    // handle message with base message provider
     this.handleMessage(message)
   }
 
-  sendMessage(message: ProviderMessage<any>) {
-    if (!message.idx || message.idx <= 0) {
+  sendMessage(message: ProviderMessage<any>, skipIdx = false) {
+    if (!skipIdx && (!message.idx || message.idx <= 0)) {
       throw new Error('message idx is empty')
     }
     if (!this.walletWindow) {

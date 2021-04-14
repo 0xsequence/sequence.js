@@ -10,7 +10,7 @@ import {
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { ethers } from 'ethers'
 
-export const PROVIDER_OPEN_TIMEOUT = 6000 // in ms
+export const PROVIDER_OPEN_TIMEOUT = 600000 // in ms
 
 let _messageIdx = 0
 
@@ -22,7 +22,6 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
   protected state: OpenState
-  protected sessionId: string
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
 
@@ -30,6 +29,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected networksPayload: NetworkConfig[] | undefined
   protected walletContextPayload: WalletContext | undefined
 
+  protected _sessionId: string
   protected _registered: boolean
 
   constructor() {
@@ -117,8 +117,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     //
     // Flip opened flag, and flush the pending queue 
     if (message.type === ProviderMessageType.OPEN && !this.isOpened()) {
-      if (this.sessionId !== message.data?.result?.sessionId) {
-        console.log('open event received from wallet, but does not match sessionId', this.sessionId)
+      if (this._sessionId !== message.data?.result?.sessionId) {
+        console.log('open event received from wallet, but does not match sessionId', this._sessionId)
         return
       }
 
@@ -217,6 +217,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     if (message.type === ProviderMessageType.DISCONNECT) {
       if (this.isConnected()) {
         this.events.emit('disconnect', message.data)
+        this.close()
       }
     }
   }
@@ -291,12 +292,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     ])
   }
 
-  // NOTE: we could also rename this to waitUntilConnected
-  // as connected implies the user is logged in too.
-  waitUntilLoggedIn = async (): Promise<WalletSession> => {
+  waitUntilConnected = async (): Promise<WalletSession> => {
     await this.waitUntilOpened()
 
-    const login = Promise.all([
+    const connect = Promise.all([
       new Promise<string | undefined>(resolve => {
         if (this.accountPayload) {
           resolve(this.accountPayload)
@@ -343,7 +342,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     })
 
     return Promise.race<WalletSession>([
-      login,
+      connect,
       closeWallet
     ])
   }
@@ -367,6 +366,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected close() {
     this.state = OpenState.CLOSED
     this.confirmationOnly = false
+    this._sessionId = ''
     console.log('closing wallet and flushing!')
 
     // flush pending requests and return error to all callbacks

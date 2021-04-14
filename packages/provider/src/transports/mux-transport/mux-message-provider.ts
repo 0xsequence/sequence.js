@@ -140,9 +140,9 @@ export class MuxMessageProvider implements ProviderTransport {
     return Promise.race(this.messageProviders.map(p => p.waitUntilOpened()))
   }
 
-  waitUntilLoggedIn = async (): Promise<WalletSession> => {
+  waitUntilConnected = async (): Promise<WalletSession> => {
     if (this.provider) {
-      return this.provider.waitUntilLoggedIn()
+      return this.provider.waitUntilConnected()
     }
     throw new Error('impossible state, wallet must be opened first')
   }
