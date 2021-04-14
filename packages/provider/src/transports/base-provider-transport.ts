@@ -4,13 +4,13 @@ import {
   ProviderTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
   ProviderMessageResponseCallback, ProviderMessageTransport,
-  WalletSession, ConnectionState, OpenWalletIntent
+  WalletSession, OpenState, OpenWalletIntent
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { ethers } from 'ethers'
 
-export const PROVIDER_CONNECT_TIMEOUT = 8000 // in ms
+export const PROVIDER_OPEN_TIMEOUT = 6000 // in ms
 
 let _messageIdx = 0
 
@@ -21,7 +21,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected pendingMessageRequests: ProviderMessageRequest[] = []
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
-  protected connection: ConnectionState
+  protected state: OpenState
   protected sessionId: string
   protected confirmationOnly: boolean = false
   protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
@@ -33,7 +33,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected _registered: boolean
 
   constructor() {
-    this.connection = ConnectionState.DISCONNECTED
+    this.state = OpenState.CLOSED
     this._registered = false
   }
 
@@ -49,7 +49,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  openWallet(path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number) {
+  openWallet(path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number) {
     throw new Error('abstract method')
   }
 
@@ -57,14 +57,23 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
+  isOpened(): boolean {
+    return this.registered && this.state === OpenState.OPENED
+  }
+
   isConnected(): boolean {
-    return this.registered && this.connection === ConnectionState.CONNECTED
+    // if we're registered, and we have the account details, then we are connected
+    return (
+      this.registered &&
+      !!this.accountPayload && this.accountPayload.length === 42 &&
+      !!this.networksPayload && this.networksPayload.length > 0
+    )
   }
 
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     // here, we receive the message from the dapp provider call
 
-    if (this.connection === ConnectionState.DISCONNECTED ) {
+    if (this.state === OpenState.CLOSED) {
       // flag the wallet to auto-close once user submits input. ie.
       // prompting to sign a message or transaction
       this.confirmationOnly = true
@@ -72,13 +81,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // open/focus the wallet.
     // automatically open the wallet when a provider request makes it here.
-    await this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method })
-    if (!this.isConnected()) {
-      await this.waitUntilConnected()
-  }
+    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method })
 
     // send message request, await, and then execute callback after receiving the response
     try {
+      if (!this.isOpened()) {
+        await this.waitUntilOpened() // will throw on timeout
+      }
+
       const response = await this.sendMessageRequest({
         idx: nextMessageIdx(),
         type: ProviderMessageType.MESSAGE,
@@ -103,26 +113,26 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       this.responseCallbacks.delete(requestIdx)
     }
 
-    // CONNECT response
+    // OPEN response
     //
-    // Flip connected flag, and flush the pending queue 
-    if (message.type === ProviderMessageType.CONNECT && !this.isConnected()) {
+    // Flip opened flag, and flush the pending queue 
+    if (message.type === ProviderMessageType.OPEN && !this.isOpened()) {
       if (this.sessionId !== message.data?.result?.sessionId) {
-        console.log('connect received from wallet, but does not match id', this.sessionId)
+        console.log('open event received from wallet, but does not match sessionId', this.sessionId)
         return
       }
 
-      // check if connection error occured due to invalid defaultNetworkId
+      // check if open error occured due to invalid defaultNetworkId
       if (message.data?.result?.error) {
-        const err = new Error(`connection to wallet failed: received ${message.data?.result?.error}`)
+        const err = new Error(`opening wallet failed: received ${message.data?.result?.error}`)
         console.error(err)
-        this.disconnect()
+        this.close()
         throw err
       }
 
       // success!
-      this.connection = ConnectionState.CONNECTED
-      this.events.emit('connect')
+      this.state = OpenState.OPENED
+      this.events.emit('open')
 
       // flush pending requests when connected
       if (this.pendingMessageRequests.length !== 0) {
@@ -196,10 +206,17 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       return
     }
 
+    // NOTIFY CLOSE -- when wallet instructs to close
+    if (message.type === ProviderMessageType.CLOSE) {
+      if (this.isOpened()) {
+        this.close()
+      }
+    }
+
     // NOTIFY DISCONNECT -- when wallet instructs to disconnect
     if (message.type === ProviderMessageType.DISCONNECT) {
       if (this.isConnected()) {
-        this.disconnect()
+        this.events.emit('disconnect', message.data)
       }
     }
   }
@@ -228,7 +245,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         reject(new Error('duplicate message idx, should never happen'))
       }
 
-      if (!this.isConnected()) {
+      if (!this.isOpened()) {
         console.log('pushing to pending requests', message)
         this.pendingMessageRequests.push(message)
       } else {
@@ -249,33 +266,35 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     this.events.once(event, fn)
   }
 
-  waitUntilConnected = async (): Promise<boolean> => {
-    let connected = false
+  waitUntilOpened = async (openTimeout = PROVIDER_OPEN_TIMEOUT): Promise<boolean> => {
+    let opened = false
     return Promise.race([
       new Promise<boolean>((_, reject) => {
         const timeout = setTimeout(() => {
           clearTimeout(timeout)
-          // only emit disconnect if the timeout wins the race
-          if (!connected) this.events.emit('disconnect')
-          reject(new Error('connection attempt to the wallet timed out'))
-        }, PROVIDER_CONNECT_TIMEOUT)
+          // only emit close if the timeout wins the race
+          if (!opened) this.events.emit('close')
+          reject(new Error('opening wallet timed out'))
+        }, openTimeout)
       }),
       new Promise<boolean>(resolve => {
-        if (this.isConnected()) {
-          connected = true
+        if (this.isOpened()) {
+          opened = true
           resolve(true)
           return
         }
-        this.events.once('connect', () => {
-          connected = true
+        this.events.once('open', () => {
+          opened = true
           resolve(true)
         })
       })
     ])
   }
 
+  // NOTE: we could also rename this to waitUntilConnected
+  // as connected implies the user is logged in too.
   waitUntilLoggedIn = async (): Promise<WalletSession> => {
-    await this.waitUntilConnected()
+    await this.waitUntilOpened()
 
     const login = Promise.all([
       new Promise<string | undefined>(resolve => {
@@ -317,64 +336,43 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       return { accountAddress, networks, walletContext }
     })
 
-    const disconnect = new Promise<WalletSession>((_, reject) => {
-      this.events.once('disconnect', () => {
-        reject(new Error('user disconnected the wallet'))
+    const closeWallet = new Promise<WalletSession>((_, reject) => {
+      this.events.once('close', () => {
+        reject(new Error('user closed the wallet'))
       })
     })
 
     return Promise.race<WalletSession>([
       login,
-      disconnect
+      closeWallet
     ])
   }
 
-  protected connect = async (defaultNetworkId?: string | number): Promise<boolean> => {
-    if (this.isConnected()) return true
+  protected open = async (): Promise<boolean> => {
+    if (this.isOpened()) return true
 
-    // Send connection request and wait for confirmation
-    this.connection = ConnectionState.CONNECTING
+    // Set to opening state
+    this.state = OpenState.OPENING
 
-    // CONNECT is special case, as we emit multiple tranmissions waiting for a response
-    const initRequest: ProviderMessage<any> = {
-      idx: nextMessageIdx(),
-      type: ProviderMessageType.CONNECT,
-      data: {
-        defaultNetworkId: defaultNetworkId
-      }
-    }
-
-    // Continually send connect requesst until we're connected or timeout passes
-    let connected: boolean | undefined = undefined
-    const postMessageUntilConnected = () => {
-      if (!this.registered) return false
-      if (connected !== undefined) return connected
-      if (this.connection === ConnectionState.DISCONNECTED) return false
-
-      this.sendMessage(initRequest)
-      setTimeout(postMessageUntilConnected, 200)
-      return
-    }
-    postMessageUntilConnected()
-
-    // Wait for connection or timeout
+    // Wait for open response from wallet, or timeout
+    let opened: boolean | undefined = undefined
     try {
-      connected = await this.waitUntilConnected()
+      opened = await this.waitUntilOpened()
     } catch (err) {
-      connected = false
+      opened = false
     }
-    return connected
+    return opened
   }
 
-  protected disconnect() {
-    this.connection = ConnectionState.DISCONNECTED
+  protected close() {
+    this.state = OpenState.CLOSED
     this.confirmationOnly = false
-    console.log('disconnecting wallet and flushing!')
+    console.log('closing wallet and flushing!')
 
     // flush pending requests and return error to all callbacks
     this.pendingMessageRequests.length = 0
     this.responseCallbacks.forEach(responseCallback => {
-      responseCallback('wallet disconnected')
+      responseCallback('wallet closed')
     })
     this.responseCallbacks.clear()
 
@@ -382,6 +380,6 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     this.networksPayload = undefined
     this.walletContextPayload = undefined
 
-    this.events.emit('disconnect')
+    this.events.emit('close')
   }
 }

@@ -23,11 +23,15 @@ export class WindowMessageHandler extends BaseWalletTransport {
     if (isPopup !== true) {
       return
     }
+    this.parentOrigin = parent.window.origin
 
-    // record connectId from the window url
+    // record open details (sessionId + default network) from the window url
     const location = new URL(window.location.href)
     this._sessionId = sanitizeNumberString(location.searchParams.get('sid')!)
     location.searchParams.delete('sid')
+
+    const defaultNetwork = location.searchParams.get('net')!
+    location.searchParams.delete('net')
 
     const jsonRpcRequest = location.searchParams.get('jsonRpcRequest')
 
@@ -43,6 +47,17 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // listen for window-transport requests
     window.addEventListener('message', this.onWindowEvent, false)
     this._registered = true
+
+    // send open event to the app which opened us
+    this.open(defaultNetwork).then(opened => {
+      if (!opened) {
+        console.error(`failed to open to network ${defaultNetwork}`)
+        window.close()
+      }
+    }).catch(err => {
+      console.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
+      window.close()
+    })
   }
 
   unregister() {
@@ -67,18 +82,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
       return
     }
 
-    console.log('RECEIVED EVENT', event)
-
-    // Record the parent origin url on connect
-    if (request.type == ProviderMessageType.CONNECT) {
-      if (!this.parentOrigin || this.parentOrigin === '') {
-        if (!event.origin || event.origin === '') {
-          console.warn('event.origin is empty, window transport will fail.')
-        } else {
-          this.parentOrigin = event.origin
-        }
-      }
-    }
+    console.log('RECEIVED MESSAGE', request)
 
     // Handle message via the base transport
     this.handleMessage(request)

@@ -16,9 +16,9 @@ export const tests = async () => {
   
   walletProvider.openWallet()
 
-  await test('provider connected to wallet', async () => {
-    const connected = await walletProvider.waitUntilConnected()
-    assert.true(connected, 'connected is true')
+  await test('provider opened the wallet', async () => {
+    const opened = await walletProvider.waitUntilOpened()
+    assert.true(opened, 'opened is true')
   })
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..

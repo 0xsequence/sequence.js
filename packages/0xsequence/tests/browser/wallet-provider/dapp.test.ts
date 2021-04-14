@@ -38,14 +38,21 @@ export const tests = async () => {
     assert.false(wallet.isLoggedIn(), 'is logged out')
   })
 
+  await test('is closed', async () => {
+    assert.false(wallet.isOpened(), 'is closed')
+  })
+
   await test('is disconnected', async () => {
     assert.false(wallet.isConnected(), 'is disconnnected')
   })
 
   await test('login', async () => {
     const loggedIn = await wallet.login()
-    assert.true(wallet.isConnected(), 'before login, is connected')
     assert.true(loggedIn, 'is logged in')
+  })
+
+  await test('isOpened', async () => {
+    assert.true(wallet.isOpened(), 'is opened')
   })
 
   await test('isConnected', async () => {

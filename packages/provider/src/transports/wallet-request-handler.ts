@@ -4,7 +4,7 @@ import {
   ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
   WalletMessageEvent, ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
-  MessageToSign
+  MessageToSign, ProviderRpcError, ProviderConnectInfo
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -53,7 +53,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    this.notifyLogin(await this.signer!.getAddress())
+    this.notifyLogin(await this.signer!.getAddress(), await this.getChainId())
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -441,20 +441,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<boolean> {
-    if (!chainId) return false
+  async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<number | undefined> {
+    if (!chainId) return undefined
     this._defaultNetworkId = chainId
 
     if (this.signer && (<any>this.signer).setNetworks) {
-      (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
-
-      if (notifyNetworks) {
+      const defaultChainId: number = (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
+      if (defaultChainId && notifyNetworks) {
         await this.notifyNetworks()
       }
-      return true
+      return defaultChainId
 
     } else {
-      return false
+      return undefined
     }
   }
 
@@ -483,7 +482,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  notifyLogin(accountAddress: string) {
+  // TODO: maybe rename notifyLogin and notifyLogout to notifyConnect and notifyDisconnect ...?
+
+  notifyLogin(accountAddress: string, chainId: number) {
     if (!accountAddress || accountAddress.length === 0) {
       this.events.emit('accountsChanged', [])
     } else {
@@ -491,11 +492,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
     this.notifyNetworks()
     this.notifyWalletContext()
+
+    this.events.emit('connect', {
+      chainId: `${chainId}`
+    } as ProviderConnectInfo)
   }
 
   notifyLogout() {
     this.events.emit('accountsChanged', [])
     this.events.emit('networks', [])
+    this.events.emit('disconnect', { code: 4900 } as ProviderRpcError)
   }
 
   async notifyNetworks(networks?: NetworkConfig[]) {
@@ -527,8 +533,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
-  // TODO: remove appAuth?: boolean ..? doesnt seem to be used, and MessageToSign has all the details.
-  promptSignMessage(message: MessageToSign, appAuth?: boolean): Promise<string>
+  promptSignMessage(message: MessageToSign): Promise<string>
 
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>

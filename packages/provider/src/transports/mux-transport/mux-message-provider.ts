@@ -29,8 +29,8 @@ export class MuxMessageProvider implements ProviderTransport {
     this.messageProviders.forEach(m => {
       m.register()
 
-      m.once('connect', () => {
-        // the first one to connect is the winner, and others will be unregistered
+      m.once('open', () => {
+        // the first one to open is the winner, and others will be unregistered
         if (!this.provider) {
           this.provider = m
 
@@ -50,18 +50,25 @@ export class MuxMessageProvider implements ProviderTransport {
     this.provider = undefined
   }
 
-  openWallet = (path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
     if (this.provider) {
-      this.provider.openWallet(path, state, defaultNetworkId)
+      this.provider.openWallet(path, intent, defaultNetworkId)
       return
     }
-    this.messageProviders.forEach(m => m.openWallet(path, state, defaultNetworkId))
+    this.messageProviders.forEach(m => m.openWallet(path, intent, defaultNetworkId))
   }
 
   closeWallet() {
     if (this.provider) {
       this.provider.closeWallet()
     }
+  }
+
+  isOpened(): boolean {
+    if (this.provider) {
+      return this.provider.isOpened()
+    }
+    return false
   }
 
   isConnected(): boolean {
@@ -96,7 +103,7 @@ export class MuxMessageProvider implements ProviderTransport {
       this.provider.sendAsync(request, callback, chainId)
       return
     }
-    throw new Error('impossible state, must be connected first')
+    throw new Error('impossible state, wallet must be opened first')
   }
 
   sendMessage(message: ProviderMessage<any>) {
@@ -104,17 +111,10 @@ export class MuxMessageProvider implements ProviderTransport {
       throw new Error('message idx is empty')
     }
 
-    // connected
     if (this.provider) {
       this.provider.sendMessage(message)
-      return
-    }
-
-    // not connceted
-    if (message.type === ProviderMessageType.CONNECT) {
-      this.messageProviders.forEach(m => m.sendMessage(message))
     } else {
-      throw new Error('impossible state, must be connected first')
+      throw new Error('impossible state, wallet must be opened first')
     }
   }
 
@@ -122,7 +122,7 @@ export class MuxMessageProvider implements ProviderTransport {
     if (this.provider) {
       return this.provider.sendMessageRequest(message)
     }
-    throw new Error('impossible state, must be connected first')
+    throw new Error('impossible state, wallet must be opened first')
   }
 
   handleMessage(message: ProviderMessage<any>): void {
@@ -130,21 +130,21 @@ export class MuxMessageProvider implements ProviderTransport {
       this.provider.handleMessage(message)
       return
     }
-    throw new Error('impossible state, must be connected first')
+    throw new Error('impossible state, wallet must be opened first')
   }
 
-  waitUntilConnected = async (): Promise<boolean> => {
+  waitUntilOpened = async (): Promise<boolean> => {
     if (this.provider) {
-      return this.provider.waitUntilConnected()
+      return this.provider.waitUntilOpened()
     }
-    throw new Error('impossible state, must be connected first')
+    return Promise.race(this.messageProviders.map(p => p.waitUntilOpened()))
   }
 
   waitUntilLoggedIn = async (): Promise<WalletSession> => {
     if (this.provider) {
       return this.provider.waitUntilLoggedIn()
     }
-    throw new Error('impossible state, must be connected first')
+    throw new Error('impossible state, wallet must be opened first')
   }
 
 }

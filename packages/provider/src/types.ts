@@ -21,19 +21,28 @@ export interface WalletSession {
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
-  openWallet(path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void
+
+  openWallet(path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void
   closeWallet(): void
+
+  isOpened(): boolean
   isConnected(): boolean
+
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
-  waitUntilConnected(): Promise<boolean>
+
+  waitUntilOpened(): Promise<boolean>
   waitUntilLoggedIn(): Promise<WalletSession>
 }
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
-  notifyConnect(connectInfo: { chainId?: string, sessionId?: string }): void
+  
+  notifyOpen(openInfo: { chainId?: string, sessionId?: string }): void
+  notifyClose(): void
+
+  notifyConnect(connectInfo: { chainId?: string }): void
   notifyAccountsChanged(accounts: string[]): void
   notifyChainChanged(connectInfo: any): void
   notifyNetworks(networks: NetworkConfig[]): void
@@ -55,8 +64,12 @@ export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
 // which may contain the result or an error payload from the wallet.
 export type ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => void
 
-// TODO: where do we use this..?
+export interface ProviderConnectInfo {
+  chainId: string
+}
+
 export interface ProviderRpcError extends Error {
+  message: string
   code: number
   data?: {[key: string]: any}
 }
@@ -75,26 +88,31 @@ export interface ProviderMessageTransport {
   sendMessage(message: ProviderMessage<any>): void
 }
 
-export type WalletMessageEvent = 'chainChanged' | 'accountsChanged' | 'login' | 'logout' | 'networks' | 'walletContext' | '_debug'
+// export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'login' | 'logout' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | '_debug'
+export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | '_debug'
 
-export type ProviderMessageEvent = 'message' | 'connect' | 'disconnect' | '_debug' | WalletMessageEvent
+export type ProviderMessageEvent = 'message' | '_debug' | WalletMessageEvent
 
 export enum ProviderMessageType {
+  OPEN = 'open',
+  CLOSE = 'close',
+
   MESSAGE = 'message',
   CONNECT = 'connect',
   DISCONNECT = 'disconnect',
   CHAIN_CHANGED = 'chainChanged',
   ACCOUNTS_CHANGED = 'accountsChanged',
+
   NETWORKS = 'networks',
   WALLET_CONTEXT = 'walletContext',
 
   DEBUG = '_debug'
 }
 
-export enum ConnectionState {
-  DISCONNECTED = 0,
-  CONNECTING = 1,
-  CONNECTED = 2
+export enum OpenState {
+  CLOSED = 0,
+  OPENING = 1,
+  OPENED = 2
 }
 
 export type NetworkEventPayload = NetworkConfig
@@ -105,4 +123,11 @@ export interface MessageToSign {
   chainId?: number
 }
 
-export type OpenWalletIntent = { type: 'login' } | { type: 'jsonRpcRequest'; method: string }
+export interface LoginOptions {
+  refresh?: boolean
+  authorize?: boolean
+}
+
+export type OpenWalletIntent =
+  { type: 'login'; authorize?: boolean } |
+  { type: 'jsonRpcRequest'; method: string }

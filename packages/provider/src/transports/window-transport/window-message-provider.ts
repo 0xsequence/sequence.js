@@ -6,7 +6,7 @@ let registeredWindowMessageProvider: WindowMessageProvider | undefined
 
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
-  private walletWindow: Window
+  private walletWindow: Window | null
 
   constructor(walletAppURL: string) {
     super()
@@ -22,12 +22,23 @@ export class WindowMessageProvider extends BaseProviderTransport {
     window.addEventListener('message', this.onWindowEvent)
     registeredWindowMessageProvider = this
 
-    // disconnect clean up
-    this.on('disconnect', () => {
+    // open heartbeat
+    this.on('open', () => {
+      // Heartbeat to track if window closed
+      const popup = this.walletWindow
+      const interval = setInterval(() => {
+        if (popup && popup.closed) {
+          clearInterval(interval)
+          this.close()
+        }
+      }, 1250)
+    })
+
+    // close clean up
+    this.on('close', () => {
       if (this.walletWindow) {
         this.walletWindow.close()
-        // @ts-ignore
-        this.walletWindow = undefined
+        this.walletWindow = null
       }
     })
 
@@ -48,25 +59,30 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this.events.removeAllListeners()
   }
 
-  openWallet = (path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
-    if (this.walletWindow && this.isConnected()) {
+  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+    if (this.walletWindow && this.isOpened()) {
       // TODO: update the location of window to path
       this.walletWindow.focus()
       return
     }
 
+    // Set session and network id on class instance walletURL
     this.sessionId = `${performance.now()}`
     this.walletURL.searchParams.set('sid', this.sessionId)
-    
-    if(state?.type === 'jsonRpcRequest') {
-      this.walletURL.searchParams.set('jsonRpcRequest', state.method)
-    } else {
-      this.walletURL.searchParams.delete('jsonRpcRequest')
+
+    if (defaultNetworkId) {
+      this.walletURL.searchParams.set('net', `${defaultNetworkId}`)
     }
 
+    // Instantiate new walletURL for this call 
     const walletURL = new URL(this.walletURL.href)
     if (path && path !== '') {
       walletURL.pathname = path.toLowerCase()
+    }
+
+    // set intent of wallet opening due to jsonRpcRequest send by provider
+    if (intent?.type === 'jsonRpcRequest') {
+      walletURL.searchParams.set('jsonRpcRequest', intent.method)
     }
 
     // Open popup window on center of the app window
@@ -81,8 +97,10 @@ export class WindowMessageProvider extends BaseProviderTransport {
       `,width=${windowSize[0]},height=${windowSize[1]}`+
       `,left=${windowPos[0]},top=${windowPos[1]}`
 
-    // const popup = window.open(walletURL.href, 'sequence.app', windowFeatures)
-    const popup = window.open(walletURL.href, 'sequenceWalletApp', windowFeatures)
+    this.walletWindow = window.open(walletURL.href, 'sequence.app', windowFeatures)
+
+    // TODO: move this somewhere else
+    // TODO: perhaps we trigger a .on('openTimeout') event..? maybe.. could help.
 
     // Popup blocking detection and notice
     // let warned = false
@@ -105,32 +123,18 @@ export class WindowMessageProvider extends BaseProviderTransport {
     //   warnPopupBlocked()
     //   return
     // }
-
-    // Popup window is available
-    // @ts-ignore
-    this.walletWindow = popup
-
-    // Heartbeat to track if window closed
-    const interval = setInterval(() => {
-      if (popup && popup.closed) {
-        clearInterval(interval)
-        this.disconnect()
-      }
-    }, 1250)
-
-    // connect to the wallet by sending requests
-    this.connect(defaultNetworkId)
   }
 
   closeWallet() {
-    this.disconnect()
+    this.close()
+    this.walletWindow?.close()
   }
 
   // onmessage, receives ProviderMessageResponse from the wallet post-message transport
   private onWindowEvent = (event: MessageEvent) => {
     // Security check, ensure message is coming from wallet origin url
     if (event.origin !== this.walletURL.origin) {
-      // Safetly can skip events not intended for us
+      // Safetly can skip events not from the wallet
       return
     }
   
@@ -158,9 +162,6 @@ export class WindowMessageProvider extends BaseProviderTransport {
       return
     }
     const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
-    // TODO: connecting so fast, we're sending a message so quickly, that in certain instances
-    // we receive a target origin failure as the window's origin is not set yet but we're sending anyway
-    // The error is annoying, but the system should work correctly.
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)
   }
 }

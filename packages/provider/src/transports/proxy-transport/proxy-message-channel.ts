@@ -40,4 +40,4 @@ export class ProxyMessageChannelPort implements ProviderMessageTransport {
   }
 }
 
-type ProxyMessageEvent = 'connect' | 'disconnect'
+type ProxyMessageEvent = 'open' | 'close' | 'connect' | 'disconnect'

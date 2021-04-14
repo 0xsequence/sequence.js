@@ -17,7 +17,7 @@ export type {
   ProviderMessageEvent,
   ProviderMessageType,
 
-  ConnectionState,
+  OpenState,
   NetworkEventPayload,
   MessageToSign
 } from '@0xsequence/provider'

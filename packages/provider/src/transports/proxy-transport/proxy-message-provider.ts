@@ -1,7 +1,7 @@
 import { BaseProviderTransport } from '../base-provider-transport'
 
 import {
-  ProviderMessage, ConnectionState, OpenWalletIntent
+  ProviderMessage, OpenState, OpenWalletIntent
 } from '../../types'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
@@ -12,7 +12,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   
   constructor(port: ProxyMessageChannelPort) {
     super()
-    this.connection = ConnectionState.DISCONNECTED
+    this.state = OpenState.CLOSED
     this.port = port
     if (!port) {
       throw new Error('port argument cannot be empty')
@@ -24,6 +24,12 @@ export class ProxyMessageProvider extends BaseProviderTransport {
       this.handleMessage(message)
     }
 
+    this.on('open', (...args: any[]) => {
+      this.port.events.emit('open', args)
+    })
+    this.on('close', (...args: any[]) => {
+      this.port.events.emit('close', args)
+    })
     this.on('connect', (...args: any[]) => {
       this.port.events.emit('connect', args)
     })
@@ -42,12 +48,14 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.port.handleMessage = undefined
   }
 
-  openWallet = (path?: string, state?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
-    this.connect(defaultNetworkId)
+  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+    // NOTE: noop as the open occurs on the wallet side at ProxyMessageHandler upon
+    // registration
+    return
   }
 
   closeWallet() {
-    this.disconnect()
+    // NOTE: noop as this should be handled outside of the proxy provider
   }
 
   sendMessage(message: ProviderMessage<any>) {

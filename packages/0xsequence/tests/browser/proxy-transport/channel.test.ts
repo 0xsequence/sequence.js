@@ -20,6 +20,12 @@ export const tests = async () => {
   // Sending messages to the wallet port will go through channel and get received by the app.
   const ch = new ProxyMessageChannel()
 
+  ch.app.on('open', () => {
+    console.log('wallet opened.')
+  })
+  ch.app.on('close', () => {
+    console.log('wallet closed.')
+  })
   ch.app.on('connect', () => {
     console.log('wallet connected.')
   })
@@ -56,7 +62,7 @@ export const tests = async () => {
   walletProvider.register()
 
   walletProvider.openWallet()
-  await walletProvider.waitUntilConnected()
+  await walletProvider.waitUntilOpened()
 
   // setup web3 provider
   const provider = new Web3Provider(walletProvider)
