@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.12.1
+
+### Patch Changes
+
+- npm bump
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.12.1
+  - @0xsequence/network@0.12.1
+  - @0xsequence/utils@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes

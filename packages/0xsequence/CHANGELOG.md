@@ -1,5 +1,25 @@
 # 0xsequence
 
+## 0.12.1
+
+### Patch Changes
+
+- npm bump
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.12.1
+  - @0xsequence/api@0.12.1
+  - @0xsequence/auth@0.12.1
+  - @0xsequence/chaind@0.12.1
+  - @0xsequence/config@0.12.1
+  - @0xsequence/guard@0.12.1
+  - @0xsequence/multicall@0.12.1
+  - @0xsequence/network@0.12.1
+  - @0xsequence/provider@0.12.1
+  - @0xsequence/relayer@0.12.1
+  - @0xsequence/transactions@0.12.1
+  - @0xsequence/utils@0.12.1
+  - @0xsequence/wallet@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes

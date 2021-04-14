@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.12.1
+
+### Patch Changes
+
+- npm bump
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes

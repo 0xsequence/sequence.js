@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.12.1
+
+### Patch Changes
+
+- npm bump
+
 ## 0.12.0
 
 ### Minor Changes
