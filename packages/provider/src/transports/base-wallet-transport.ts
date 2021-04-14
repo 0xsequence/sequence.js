@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import {
   WalletTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageResponse, ProviderMessageTransport,
-  ProviderConnectInfo, ProviderRpcError
+  ProviderConnectInfo, ProviderRpcError, InitState
 } from '../types'
 
 import { WalletRequestHandler } from './wallet-request-handler'
@@ -14,9 +14,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
   protected walletRequestHandler: WalletRequestHandler
   protected _sessionId: string
   protected _registered: boolean
+  protected _init: InitState
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
+    this._init = InitState.NIL
 
     this.walletRequestHandler.on('connect', (connectInfo: any) => {
       if (!this.registered) return
@@ -71,6 +73,14 @@ export abstract class BaseWalletTransport implements WalletTransport {
     const request = message
 
     switch (request.type) {
+
+      case ProviderMessageType.OPEN: {
+        if (this._init !== InitState.OK) return
+        const { defaultNetworkId } = request.data
+        this.open(defaultNetworkId)
+        return
+      }
+
       case ProviderMessageType.MESSAGE: {
         const response = await this.walletRequestHandler.sendMessageRequest(request)
         this.sendMessage(response)
@@ -103,7 +113,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       idx: -1,
       type: ProviderMessageType.OPEN,
       data: {
-        result: { chainId, sessionId, error }
+        chainId, sessionId, error
       }
     })
   }

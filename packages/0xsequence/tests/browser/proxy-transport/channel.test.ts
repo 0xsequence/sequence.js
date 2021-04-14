@@ -21,17 +21,29 @@ export const tests = async () => {
   const ch = new ProxyMessageChannel()
 
   ch.app.on('open', () => {
-    console.log('wallet opened.')
+    console.log('app, wallet opened.')
   })
   ch.app.on('close', () => {
-    console.log('wallet closed.')
+    console.log('app, wallet closed.')
   })
   ch.app.on('connect', () => {
-    console.log('wallet connected.')
+    console.log('app, wallet connected.')
   })
   ch.app.on('disconnect', () => {
-    console.log('wallet disconnected.')
+    console.log('app, wallet disconnected.')
   })
+  // ch.wallet.on('open', () => {
+  //   console.log('wallet, wallet opened.')
+  // })
+  // ch.wallet.on('close', () => {
+  //   console.log('wallet, wallet closed.')
+  // })
+  // ch.wallet.on('connect', () => {
+  //   console.log('wallet, wallet connected.')
+  // })
+  // ch.wallet.on('disconnect', () => {
+  //   console.log('wallet, wallet disconnected.')
+  // })
 
   //
   // Wallet Handler
