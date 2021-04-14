@@ -358,7 +358,7 @@ export class Account extends Signer {
     return found
   }
 
-  setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number) {
+  setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number): number {
     let networks: Networks = []
 
     // force-convert to a number in case someone sends a number in a string like "1"
@@ -431,6 +431,9 @@ export class Account extends Signer {
         wallet: wallet
       }
     })
+
+    // return the default chain id as number
+    return this.options.networks[0].chainId
   }
 
   connect(_: Provider): AbstractSigner {

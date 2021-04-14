@@ -7,17 +7,19 @@ import { WalletConfig, WalletState } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
-import { WalletSession, ProviderMessageEvent, ProviderTransport, OpenWalletIntent } from './types'
+import { WalletSession, ProviderMessageEvent, ConnectOptions, OpenWalletIntent } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 
 export interface WalletProvider {
-  login(refresh?: boolean): Promise<boolean>
-  logout(): void
+  connect(options?: ConnectOptions): Promise<boolean>
+  disconnect(): void
   
-  getProviderConfig(): ProviderConfig
+  // TODO:
+  // authorize()
+
+  isOpened(): boolean
   isConnected(): boolean
-  isLoggedIn(): boolean
   getSession(): WalletSession | undefined
 
   getAddress(): Promise<string>
@@ -25,7 +27,7 @@ export interface WalletProvider {
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
 
-  openWallet(path?: string, state?: OpenWalletIntent): Promise<boolean>
+  openWallet(path?: string, intent?: OpenWalletIntent): Promise<boolean>
   closeWallet(): void
 
   getProvider(chainId?: ChainId): Web3Provider | undefined
@@ -35,6 +37,8 @@ export interface WalletProvider {
   getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
   getWalletState(chainId?: ChainId): Promise<WalletState[]>
   isDeployed(chainId?: ChainId): Promise<boolean>
+
+  getProviderConfig(): ProviderConfig
 
   on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
   once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
@@ -113,11 +117,11 @@ export class Wallet implements WalletProvider {
     this.transport.allowProvider = allowProviderMiddleware((request: JsonRpcRequest): boolean => {
       if (request.method === 'sequence_setDefaultNetwork') return true
 
-      const isLoggedIn = this.isLoggedIn()
-      if (!isLoggedIn) {
-        throw new Error('Sequence: not logged in')
+      const isConnected = this.isConnected()
+      if (!isConnected) {
+        throw new Error('Sequence: wallet not connected')
       }
-      return isLoggedIn
+      return isConnected
     })
 
     // ...
@@ -149,7 +153,7 @@ export class Wallet implements WalletProvider {
     this.transport.provider = new Web3Provider(this.transport.router)
 
 
-    // below will update the account upon wallet login/logout
+    // below will update the account upon wallet connect/disconnect (aka, login/logout)
     this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
         this.clearSession()
@@ -175,23 +179,23 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  login = async (refresh?: boolean): Promise<boolean> => {
-    if (refresh === true) {
-      this.logout()
+  connect = async (options?: ConnectOptions): Promise<boolean> => {
+    if (options?.refresh === true) {
+      this.disconnect()
     }
-    if (this.isLoggedIn()) {
+    if (this.isConnected()) {
       return true
     }
 
-    await this.openWallet(undefined, { type: 'login' })
-    const sessionPayload = await this.transport.messageProvider!.waitUntilLoggedIn()
+    await this.openWallet(undefined, { type: 'connect', authorize: options?.authorize })
+    const sessionPayload = await this.transport.messageProvider!.waitUntilConnected()
     this.useSession(sessionPayload, true)
 
-    return this.isLoggedIn()
+    return this.isConnected()
   }
 
-  logout(): void {
-    if (this.isConnected()) {
+  disconnect(): void {
+    if (this.isOpened()) {
       this.closeWallet()
     }
     this.clearSession()
@@ -201,11 +205,11 @@ export class Wallet implements WalletProvider {
     return this.config
   }
 
-  isConnected(): boolean {
-    return this.transport.messageProvider!.isConnected()
+  isOpened(): boolean {
+    return this.transport.messageProvider!.isOpened()
   }
 
-  isLoggedIn(): boolean {
+  isConnected(): boolean {
     return this.session !== undefined &&
       this.session.networks !== undefined && this.session.networks.length > 0 &&
       this.networks !== undefined && this.networks.length > 0 &&
@@ -213,23 +217,23 @@ export class Wallet implements WalletProvider {
   }
 
   getSession = (): WalletSession | undefined => {
-    if (!this.isLoggedIn()) {
+    if (!this.isConnected()) {
       return undefined
     }
     return this.session
   }
 
   getAddress = async (): Promise<string> => {
-    if (!this.isLoggedIn()) {
-      throw new Error('login first')
+    if (!this.isConnected()) {
+      throw new Error('connect first')
     }
     const session = this.getSession()
     return session!.accountAddress!
   }
 
   getNetworks = async (chainId?: ChainId): Promise<NetworkConfig[]> => {
-    if (!this.isLoggedIn() || !this.networks) {
-      throw new Error('login first')
+    if (!this.isConnected() || !this.networks) {
+      throw new Error('connect first')
     }
     if (chainId) {
       // filter list to just the specific chain requested
@@ -242,7 +246,7 @@ export class Wallet implements WalletProvider {
   // getChainId returns the default chain id
   getChainId = async (): Promise<number> => {
     if (!this.networks || this.networks.length < 1) {
-      throw new Error('networks have not been set by session. login first.')
+      throw new Error('networks have not been set by session. connect first.')
     }
     // default chain id is first one in the list, by design
     const network = this.networks[0]
@@ -254,7 +258,7 @@ export class Wallet implements WalletProvider {
 
   getAuthChainId = async (): Promise<number> => {
     if (!this.networks || this.networks.length < 1) {
-      throw new Error('networks have not been set by session. login first.')
+      throw new Error('networks have not been set by session. connect first.')
     }
     // auth chain is first or second one in the list, by design
     const network0 = this.networks[0]
@@ -270,13 +274,13 @@ export class Wallet implements WalletProvider {
     throw new Error('expecting first or second network in list to be the auth chain')
   }
 
-  openWallet = async (path?: string, state?: OpenWalletIntent): Promise<boolean> => {
-    if (state?.type !== 'login' && !this.isLoggedIn()) {
-      throw new Error('login first')
+  openWallet = async (path?: string, intent?: OpenWalletIntent): Promise<boolean> => {
+    if (intent?.type !== 'connect' && !this.isConnected()) {
+      throw new Error('connect first')
     }
-
-    this.transport.messageProvider!.openWallet(path, state, this.config.defaultNetworkId)
-    await this.transport.messageProvider!.waitUntilConnected()
+    
+    this.transport.messageProvider!.openWallet(path, intent, this.config.defaultNetworkId)
+    await this.transport.messageProvider!.waitUntilOpened()
 
     return true
   }
@@ -288,9 +292,9 @@ export class Wallet implements WalletProvider {
   getProvider(chainId?: ChainId): Web3Provider | undefined {
     // return the top-level provider message transport when chainId is unspecified
     // and user has not logged in
-    if (!this.isLoggedIn()) {
+    if (!this.isConnected()) {
       if (chainId) {
-        throw new Error(`session is empty. login and try again.`)
+        throw new Error(`session is empty. connect and try again.`)
       } else {
         return this.transport.provider
       }

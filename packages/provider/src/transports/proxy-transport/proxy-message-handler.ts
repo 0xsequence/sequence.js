@@ -13,6 +13,8 @@ export class ProxyMessageHandler extends BaseWalletTransport {
   }
 
   register() {
+    this.open()
+
     this.port.handleMessage = (message: ProviderMessage<any>): void => {
       this.handleMessage(message)
     }

@@ -114,23 +114,33 @@ export const tests = async () => {
   // const signer = wallet.getSigner()
   
   // clear it in case we're testing in browser session
-  wallet.logout()
+  wallet.disconnect()
 
-  await test('is logged out', async () => {
-    assert.false(wallet.isLoggedIn(), 'is logged out')
+  await test('is disconnected / logged out', async () => {
+    assert.false(wallet.isConnected(), 'is logged out')
   })
 
-  await test('is disconnected', async () => {
-    assert.false(wallet.isConnected(), 'is disconnnected')
+  await test('is closed', async () => {
+    assert.false(wallet.isOpened(), 'is closed')
   })
 
-  await test('login', async () => {
-    const loggedIn = await wallet.login()
-    assert.true(loggedIn, 'is logged in')
+  await test('connect', async () => {
+    const connected = await wallet.connect()
+    assert.true(connected, 'is connected')
+  })
+
+  await test('isOpened', async () => {
+    assert.true(wallet.isOpened(), 'is opened')
   })
 
   await test('isConnected', async () => {
     assert.true(wallet.isConnected(), 'is connected')
+  })
+
+  await test('open wallet while its already opened', async () => {
+    // its already opened, but lets do it again
+    const opened = await wallet.openWallet()
+    assert.true(opened, 'wallet is opened')
   })
 
   let walletContext: WalletContext
