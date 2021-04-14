@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.12.0
+
+### Minor Changes
+
+- provider: improvements to window transport
+
 ## 0.11.4
 
 ### Patch Changes

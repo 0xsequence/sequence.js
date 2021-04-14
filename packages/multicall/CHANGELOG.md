@@ -1,5 +1,18 @@
 # @0xsequence/multicall
 
+## 0.12.0
+
+### Minor Changes
+
+- provider: improvements to window transport
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.12.0
+  - @0xsequence/network@0.12.0
+  - @0xsequence/utils@0.12.0
+
 ## 0.11.4
 
 ### Patch Changes
