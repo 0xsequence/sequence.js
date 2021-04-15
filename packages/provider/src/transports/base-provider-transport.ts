@@ -10,7 +10,7 @@ import {
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { ethers } from 'ethers'
 
-export const PROVIDER_OPEN_TIMEOUT = 5000 // in ms
+export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
 
 let _messageIdx = 0
 
