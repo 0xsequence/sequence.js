@@ -1,5 +1,11 @@
 # @0xsequence/provider
 
+## 0.12.3
+
+### Patch Changes
+
+- provider: proxy message event support
+
 ## 0.12.2
 
 ### Patch Changes
