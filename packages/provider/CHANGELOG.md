@@ -1,5 +1,11 @@
 # @0xsequence/provider
 
+## 0.12.2
+
+### Patch Changes
+
+- proxy transport improvements
+
 ## 0.12.1
 
 ### Patch Changes

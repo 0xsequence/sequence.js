@@ -1,6 +1,6 @@
 {
   "name": "0xsequence",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Sequence: simple & powerful Ethereum development library and Web-based smart wallet",
   "repository": "https://github.com/0xsequence/sequence.js",
   "source": "src/index.ts",
@@ -35,7 +35,7 @@
     "@0xsequence/guard": "^0.12.1",
     "@0xsequence/multicall": "^0.12.1",
     "@0xsequence/network": "^0.12.1",
-    "@0xsequence/provider": "^0.12.1",
+    "@0xsequence/provider": "^0.12.2",
     "@0xsequence/relayer": "^0.12.1",
     "@0xsequence/transactions": "^0.12.1",
     "@0xsequence/utils": "^0.12.1",
