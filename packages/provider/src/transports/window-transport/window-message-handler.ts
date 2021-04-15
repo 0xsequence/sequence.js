@@ -13,7 +13,6 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
   private _isPopup: boolean = false
 
-  private _init: InitState
   private _initNonce: string
   private _postMessageQueue: Array<any> = []
 

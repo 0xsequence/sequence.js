@@ -10,7 +10,7 @@ import {
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { ethers } from 'ethers'
 
-export const PROVIDER_OPEN_TIMEOUT = 600000 // in ms
+export const PROVIDER_OPEN_TIMEOUT = 5000 // in ms
 
 let _messageIdx = 0
 
@@ -29,7 +29,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected networksPayload: NetworkConfig[] | undefined
   protected walletContextPayload: WalletContext | undefined
 
-  protected _sessionId: string
+  protected _sessionId?: string
   protected _registered: boolean
 
   constructor() {
@@ -117,14 +117,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     //
     // Flip opened flag, and flush the pending queue 
     if (message.type === ProviderMessageType.OPEN && !this.isOpened()) {
-      if (this._sessionId !== message.data?.result?.sessionId) {
+      if (this._sessionId && this._sessionId !== message.data?.sessionId) {
         console.log('open event received from wallet, but does not match sessionId', this._sessionId)
         return
       }
 
       // check if open error occured due to invalid defaultNetworkId
-      if (message.data?.result?.error) {
-        const err = new Error(`opening wallet failed: received ${message.data?.result?.error}`)
+      if (message.data?.error) {
+        const err = new Error(`opening wallet failed: received ${message.data?.error}`)
         console.error(err)
         this.close()
         throw err
@@ -366,7 +366,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected close() {
     this.state = OpenState.CLOSED
     this.confirmationOnly = false
-    this._sessionId = ''
+    this._sessionId = undefined
     console.log('closing wallet and flushing!')
 
     // flush pending requests and return error to all callbacks

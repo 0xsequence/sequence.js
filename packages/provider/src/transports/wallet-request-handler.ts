@@ -4,7 +4,7 @@ import {
   ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
   WalletMessageEvent, ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
-  MessageToSign, ProviderRpcError, ProviderConnectInfo
+  MessageToSign, ProviderRpcError, ProviderConnectInfo, ConnectOptions, ConnectDetails
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -535,8 +535,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
+  // promptConnect(options?: ConnectOptions): Promise<ConnectDetails>
   promptSignMessage(message: MessageToSign): Promise<string>
-
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
 }

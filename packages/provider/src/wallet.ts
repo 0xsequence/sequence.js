@@ -7,16 +7,15 @@ import { WalletConfig, WalletState } from '@0xsequence/config'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
-import { WalletSession, ProviderMessageEvent, ConnectOptions, OpenWalletIntent } from './types'
+import { WalletSession, ProviderMessageEvent, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 
 export interface WalletProvider {
+  // connect(options?: ConnectOptions): Promise<ConnectDetails>
+  // authorize(options?: ConnectOptions): Promise<ConnectDetails>
   connect(options?: ConnectOptions): Promise<boolean>
   disconnect(): void
-  
-  // TODO:
-  // authorize()
 
   isOpened(): boolean
   isConnected(): boolean
@@ -183,16 +182,31 @@ export class Wallet implements WalletProvider {
     if (options?.refresh === true) {
       this.disconnect()
     }
-    if (this.isConnected()) {
-      return true
+    if (this.isConnected() && !options?.requestAuthorization && !options?.requestEmail) {
+      return this.isConnected()
+      // return {
+      //   success: this.isConnected()
+      // }
     }
 
-    await this.openWallet(undefined, { type: 'connect', authorize: options?.authorize })
+    await this.openWallet(undefined, { type: 'connect', options })
     const sessionPayload = await this.transport.messageProvider!.waitUntilConnected()
     this.useSession(sessionPayload, true)
 
     return this.isConnected()
+
+    // TODO: the wallet-webapp itself will handle the open request..
+    // prob with window, etc.. or other proxy-message
+
+    // return {
+    //   success: this.isConnected()
+    //   // TODO: ..
+    // }
   }
+
+  // authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+  //   return this.connect({ ...options, requestAuthorization: true })
+  // }
 
   disconnect(): void {
     if (this.isOpened()) {

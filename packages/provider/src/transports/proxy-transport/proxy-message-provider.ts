@@ -1,7 +1,7 @@
 import { BaseProviderTransport } from '../base-provider-transport'
 
 import {
-  ProviderMessage, OpenState, OpenWalletIntent
+  ProviderMessage, OpenState, OpenWalletIntent, ProviderMessageType
 } from '../../types'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
@@ -49,17 +49,21 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   }
 
   openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
-    // NOTE: noop as the open occurs on the wallet side at ProxyMessageHandler upon
-    // registration
-    return
+    if (!this.isOpened()) {
+      this.sendMessage({
+        idx: -1, type: ProviderMessageType.OPEN, data: {
+          path, intent, defaultNetworkId
+        }
+      })
+    }
   }
 
   closeWallet() {
-    // NOTE: noop as this should be handled outside of the proxy provider
+    this.close()
   }
 
   sendMessage(message: ProviderMessage<any>) {
-    if (!message.idx || message.idx <= 0) {
+    if (!message.idx) {
       throw new Error('message idx is empty')
     }
     this.port.sendMessage(message)

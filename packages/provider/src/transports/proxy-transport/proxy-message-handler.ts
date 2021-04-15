@@ -1,6 +1,6 @@
 import { BaseWalletTransport } from '../base-wallet-transport'
 import { WalletRequestHandler } from '../wallet-request-handler'
-import { ProviderMessage } from '../../types'
+import { InitState, ProviderMessage } from '../../types'
 import { ProxyMessageChannelPort } from './proxy-message-channel'
 
 export class ProxyMessageHandler extends BaseWalletTransport {
@@ -10,11 +10,10 @@ export class ProxyMessageHandler extends BaseWalletTransport {
   constructor(walletRequestHandler: WalletRequestHandler, port: ProxyMessageChannelPort) {
     super(walletRequestHandler)
     this.port = port
+    this._init = InitState.OK
   }
 
   register() {
-    this.open()
-
     this.port.handleMessage = (message: ProviderMessage<any>): void => {
       this.handleMessage(message)
     }

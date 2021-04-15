@@ -123,17 +123,27 @@ export enum InitState {
 
 export type NetworkEventPayload = NetworkConfig
 
+export interface ConnectOptions {
+  refresh?: boolean
+  requestAuthorization?: boolean
+  requestEmail?: boolean
+}
+
+export interface ConnectDetails {
+  success: boolean
+  proof?: {
+    type?: string
+    sig: string
+  }
+  email?: string
+}
+
+export type OpenWalletIntent =
+  { type: 'connect'; options?: ConnectOptions } |
+  { type: 'jsonRpcRequest'; method: string }
+
 export interface MessageToSign {
   message?: string
   typedData?: TypedData
   chainId?: number
 }
-
-export interface ConnectOptions {
-  refresh?: boolean
-  authorize?: boolean
-}
-
-export type OpenWalletIntent =
-  { type: 'connect'; authorize?: boolean } |
-  { type: 'jsonRpcRequest'; method: string }
