@@ -29,6 +29,20 @@ export class ProxyMessageChannelPort implements ProviderMessageTransport {
   // send messages to the connected port
   sendMessage = (message: ProviderMessage<any>): void => {
     this.conn.handleMessage(message)
+
+    // trigger events
+    if (message.type === 'open') {
+      this.events.emit('open', message)
+    }
+    if (message.type === 'close') {
+      this.events.emit('close', message)
+    }
+    if (message.type === 'connect') {
+      this.events.emit('connect', message)
+    }
+    if (message.type === 'disconnect') {
+      this.events.emit('disconnect', message)
+    }
   }
 
   on(event: ProxyMessageEvent, fn: (...args: any[]) => void) {

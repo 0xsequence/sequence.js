@@ -208,7 +208,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // NOTIFY CLOSE -- when wallet instructs to close
     if (message.type === ProviderMessageType.CLOSE) {
-      if (this.isOpened()) {
+      if (this.state !== OpenState.CLOSED) {
         this.close()
       }
     }
@@ -274,7 +274,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         const timeout = setTimeout(() => {
           clearTimeout(timeout)
           // only emit close if the timeout wins the race
-          if (!opened) this.events.emit('close')
+          if (!opened) {
+            this.state = OpenState.CLOSED
+            this.events.emit('close')
+          }
           reject(new Error('opening wallet timed out'))
         }, openTimeout)
       }),

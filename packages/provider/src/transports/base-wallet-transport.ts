@@ -81,6 +81,13 @@ export abstract class BaseWalletTransport implements WalletTransport {
         return
       }
 
+      // case ProviderMessageType.CLOSE: {
+      //   if (this._init !== InitState.OK) return
+      //   // we echo back to close, confirming wallet close request
+      //   this.notifyClose()
+      //   return
+      // }
+
       case ProviderMessageType.MESSAGE: {
         const response = await this.walletRequestHandler.sendMessageRequest(request)
         this.sendMessage(response)
