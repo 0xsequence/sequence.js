@@ -1,5 +1,11 @@
 # @0xsequence/provider
 
+## 0.12.4
+
+### Patch Changes
+
+- provider: set timeout to open wallet to 30s
+
 ## 0.12.3
 
 ### Patch Changes
