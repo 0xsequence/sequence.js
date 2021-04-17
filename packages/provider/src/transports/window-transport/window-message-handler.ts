@@ -1,7 +1,7 @@
 import { ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse, InitState } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { sanitizeNumberString } from '@0xsequence/utils'
+import { logger, sanitizeNumberString } from '@0xsequence/utils'
 
 export interface RegisterOptions {
   loadingPath: string
@@ -34,7 +34,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     location.searchParams.delete('sid')
 
     if (this._sessionId.length === 0) {
-      console.error('invalid sessionId')
+      logger.error('invalid sessionId')
       return
     }
 
@@ -59,11 +59,11 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // send open event to the app which opened us
     this.open(defaultNetwork).then(opened => {
       if (!opened) {
-        console.error(`failed to open to network ${defaultNetwork}`)
+        logger.error(`failed to open to network ${defaultNetwork}`)
         window.close()
       }
     }).catch(err => {
-      console.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
+      logger.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
       window.close()
     })
   }
@@ -86,7 +86,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
     if (this._init === InitState.OK && (!this.parentOrigin || this.parentOrigin.length < 8)) {
       // impossible state
-      console.error('impossible state, init.OK and parentOrigin required')
+      logger.error('impossible state, init.OK and parentOrigin required')
       return
     }
 
@@ -99,18 +99,18 @@ export class WindowMessageHandler extends BaseWalletTransport {
       return
     }
 
-    console.log('RECEIVED MESSAGE', request)
+    logger.debug('RECEIVED MESSAGE', request)
 
     // Record the parent origin url on init
     if (this._init !== InitState.OK) {
       if (request.type === ProviderMessageType.INIT) {
         const { sessionId, nonce } = request.data as any as { sessionId: string, nonce: string }
         if (!sessionId || sessionId.length === 0 || !nonce || nonce.length === 0) {
-          console.error('invalid init response')
+          logger.error('invalid init response')
           return
         }
         if (sessionId !== this._sessionId || nonce !== this._initNonce) {
-          console.error('invalid init match')
+          logger.error('invalid init match')
           return
         }
         this._init = InitState.OK
@@ -164,7 +164,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
   private flushPostMessageQueue() {
     if (this._postMessageQueue.length === 0) return
 
-    // console.log(`flushPostMessageQueue # of messages, ${this._postMessageQueue.length}`)
+    // logger.debug(`flushPostMessageQueue # of messages, ${this._postMessageQueue.length}`)
     for (let i=0; i < this._postMessageQueue.length; i++) {
       this.postMessage(this._postMessageQueue[i])
     }
@@ -173,13 +173,13 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
   private postMessage(message: any) {
     if (this._init !== InitState.OK) {
-      console.error('impossible state, should not be calling postMessage until inited')
+      logger.error('impossible state, should not be calling postMessage until inited')
       return
     }
     if (this.parentOrigin && this.parentOrigin.length > 8) {
       this.parentWindow.postMessage(message, this.parentOrigin)
     } else {
-      console.error('unable to postMessage as parentOrigin is invalid')
+      logger.error('unable to postMessage as parentOrigin is invalid')
     }
   }
 }

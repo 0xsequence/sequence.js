@@ -5,7 +5,11 @@ import { test, assert } from '../../utils/assert'
 
 import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
+import { configureLogger } from '@0xsequence/utils'
+
 import { testWalletContext } from '../testutils'
+
+configureLogger({ logLevel: 'DEBUG' })
 
 const walletProvider = new WindowMessageProvider('http://localhost:9999/mock-wallet/mock-wallet.test.html')
 walletProvider.register()

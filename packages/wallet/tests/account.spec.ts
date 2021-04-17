@@ -7,10 +7,13 @@ import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { isValidConfigSigners, imageHash, SequenceUtilsFinder } from '@0xsequence/config'
+import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
 
 const { expect } = chai.use(chaiAsPromised)
+
+configureLogger({ logLevel: 'DEBUG' })
 
 describe('Account integration', () => {
 

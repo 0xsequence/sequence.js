@@ -5,6 +5,9 @@ import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
 import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testutils'
 import { Transaction, TransactionRequest } from '@0xsequence/transactions'
+import { configureLogger } from '@0xsequence/utils'
+
+configureLogger({ logLevel: 'DEBUG' })
 
 export const tests = async () => {
 

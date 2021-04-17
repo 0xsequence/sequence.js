@@ -5,5 +5,8 @@ export type {
   
   TypedData,
   TypedDataDomain,
-  TypedDataField
+  TypedDataField,
+
+  LogLevel,
+  LoggerConfig
 } from '@0xsequence/utils'

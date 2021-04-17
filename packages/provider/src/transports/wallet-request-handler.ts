@@ -15,7 +15,7 @@ import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcRespons
 import { Signer, Account } from '@0xsequence/wallet'
 import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 
-import { TypedData } from '@0xsequence/utils'
+import { logger, TypedData } from '@0xsequence/utils'
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer | null
   private prompter: WalletUserPrompter | null
@@ -404,7 +404,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
 
     } catch (err) {
-      console.error(err)
+      logger.error(err)
 
       // TODO/XXX: error messages
       // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1193.md#rpc-errors
@@ -467,7 +467,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
     if (!this.signer) {
-      console.warn('signer not set: getNetworks is returning an empty list')
+      logger.warn('signer not set: getNetworks is returning an empty list')
       return []
     }
 
@@ -518,7 +518,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   async notifyWalletContext() {
     if (!this.signer) {
-      console.warn('signer not set: skipping to notify wallet context')
+      logger.warn('signer not set: skipping to notify wallet context')
       return
     }
     const walletContext = await this.signer.getWalletContext()

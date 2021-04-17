@@ -1,5 +1,6 @@
 import { OpenWalletIntent, ProviderMessage, InitState, ProviderMessageType } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
+import { logger } from '@0xsequence/utils'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider | undefined
@@ -157,7 +158,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
       if (message.type === ProviderMessageType.INIT) {
         const { nonce } = message.data as { nonce: string }
         if (!nonce || nonce.length === 0) {
-          console.error('invalid init nonce')
+          logger.error('invalid init nonce')
           return
         }
         this._init = InitState.OK
@@ -182,7 +183,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
       throw new Error('message idx is empty')
     }
     if (!this.walletWindow) {
-      console.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
+      logger.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
       return
     }
     const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message

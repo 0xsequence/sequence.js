@@ -20,6 +20,7 @@
   "dependencies": {
     "@0xsequence/abi": "^0.12.1",
     "@0xsequence/network": "^0.12.1",
+    "@0xsequence/utils": "^0.12.1",
     "ethers": "^5.0.32"
   },
   "peerDependencies": {},
