@@ -3,6 +3,7 @@ import { addressOf, imageHash, WalletConfig } from ".."
 import { ConfigFinder } from "./config-finder"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from "@0xsequence/network"
+import { logger } from '@0xsequence/utils'
 
 
 export class SequenceUtilsFinder implements ConfigFinder {
@@ -57,7 +58,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     const filter = authContract.filters.RequiredConfig(address)
     const lastLog = await this.findFirstLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-    if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return { config: undefined } }
+    if (lastLog === undefined) { logger.warn("publishConfig: wallet config last log not found"); return { config: undefined } }
     const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
 
     const signers = ethers.utils.defaultAbiCoder.decode(
@@ -108,7 +109,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
       // If imageHash couldn't be found, return undefined or try without index
       if (ignoreIndex || requireIndex) {
-        console.warn('No valid configuration found')
+        logger.warn('No valid configuration found')
         return { config: undefined }
       } else {
         // Re-try but skip index
@@ -134,7 +135,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     if (requireIndex && logBlockHeight === 0) return { wallet: undefined }
     const filter = authContract.filters.RequiredSigner(null, signer)
     const lastLog = await this.findLatestLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-    if (lastLog === undefined) { console.warn("publishConfig: wallet config last log not found"); return { wallet: undefined } }
+    if (lastLog === undefined) { logger.warn("publishConfig: wallet config last log not found"); return { wallet: undefined } }
     const event = authContract.interface.decodeEventLog('RequiredSigner', lastLog.data, lastLog.topics)
     return { wallet: event._wallet }
   }

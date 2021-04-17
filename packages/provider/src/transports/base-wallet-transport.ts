@@ -8,6 +8,7 @@ import {
 import { WalletRequestHandler } from './wallet-request-handler'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { logger } from '@0xsequence/utils'
 
 export abstract class BaseWalletTransport implements WalletTransport {
 
@@ -100,7 +101,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       }
 
       default: {
-        console.error(`unexpected payload type ${request.type}`)
+        logger.error(`unexpected payload type ${request.type}`)
       }
     }
   }

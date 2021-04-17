@@ -6,8 +6,10 @@ import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
+import { configureLogger } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet } from '../testutils'
 
+configureLogger({ logLevel: 'DEBUG' })
 
 export const tests = async () => {
 

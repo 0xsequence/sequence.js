@@ -5,7 +5,10 @@ import { Wallet, DefaultProviderConfig, Web3Provider } from '@0xsequence/provide
 import { sequenceContext, WalletContext, JsonRpcSender, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
+import { configureLogger } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
+
+configureLogger({ logLevel: 'DEBUG' })
 
 export const tests = async () => {
 

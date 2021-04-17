@@ -1,6 +1,7 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 import { SignerJsonRpcMethods } from './signing-provider'
+import { logger } from '@0xsequence/utils'
 
 export class PublicProvider implements JsonRpcMiddlewareHandler {
 
@@ -32,7 +33,7 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
       }
 
       // Continue to next handler
-      console.log('[public-provider] sending request to signer window', request.method)
+      logger.debug('[public-provider] sending request to signer window', request.method)
       next(request, callback)
     }
   }

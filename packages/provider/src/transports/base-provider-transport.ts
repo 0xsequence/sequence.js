@@ -8,6 +8,7 @@ import {
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
@@ -105,7 +106,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   handleMessage(message: ProviderMessage<any>) {
 
     // message is either a notification, or its a ProviderMessageResponse
-    console.log("RECEIVED MESSAGE FROM WALLET", message.idx, message)
+    logger.debug("RECEIVED MESSAGE FROM WALLET", message.idx, message)
 
     const requestIdx = message.idx
     const responseCallback = this.responseCallbacks.get(requestIdx)
@@ -118,14 +119,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // Flip opened flag, and flush the pending queue 
     if (message.type === ProviderMessageType.OPEN && !this.isOpened()) {
       if (this._sessionId && this._sessionId !== message.data?.sessionId) {
-        console.log('open event received from wallet, but does not match sessionId', this._sessionId)
+        logger.debug('open event received from wallet, but does not match sessionId', this._sessionId)
         return
       }
 
       // check if open error occured due to invalid defaultNetworkId
       if (message.data?.error) {
         const err = new Error(`opening wallet failed: received ${message.data?.error}`)
-        console.error(err)
+        logger.error(err)
         this.close()
         throw err
       }
@@ -247,7 +248,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       }
 
       if (!this.isOpened()) {
-        console.log('pushing to pending requests', message)
+        logger.debug('pushing to pending requests', message)
         this.pendingMessageRequests.push(message)
       } else {
         this.sendMessage(message)
@@ -370,7 +371,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     this.state = OpenState.CLOSED
     this.confirmationOnly = false
     this._sessionId = undefined
-    console.log('closing wallet and flushing!')
+    logger.info('closing wallet and flushing!')
 
     // flush pending requests and return error to all callbacks
     this.pendingMessageRequests.length = 0

@@ -14,7 +14,7 @@ import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
 import { addressOf, joinSignatures, encodeSignature, WalletConfig } from '@0xsequence/config'
 
-import { encodeTypedDataDigest } from '@0xsequence/utils'
+import { configureLogger, encodeTypedDataDigest } from '@0xsequence/utils'
 
 import * as lib from '../src'
 
@@ -36,6 +36,8 @@ const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/c
 
 const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
+
+configureLogger({ logLevel: 'DEBUG' })
 
 import hardhat from 'hardhat'
 import { Interface } from 'ethers/lib/utils'

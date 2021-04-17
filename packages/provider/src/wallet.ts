@@ -4,6 +4,7 @@ import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNe
   JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, checkNetworkConfig, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
+import { logger } from '@0xsequence/utils'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
@@ -416,7 +417,7 @@ export class Wallet implements WalletProvider {
       const session = JSON.parse(data) as WalletSession
       return session
     } catch (err) {
-      console.warn('loadSession failed, unable to parse session payload from localStorage.')
+      logger.warn('loadSession failed, unable to parse session payload from localStorage.')
       return undefined
     }
   }

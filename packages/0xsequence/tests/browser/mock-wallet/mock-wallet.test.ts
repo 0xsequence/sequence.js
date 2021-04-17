@@ -3,8 +3,12 @@ import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider
 import { Wallet, Account } from '@0xsequence/wallet'
 import { Networks } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
+import { configureLogger } from '@0xsequence/utils'
+
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 import { test, assert } from '../../utils/assert'
+
+configureLogger({ logLevel: 'DEBUG' })
 
 //
 // Wallet, a test wallet
