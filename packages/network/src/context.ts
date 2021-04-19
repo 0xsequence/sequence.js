@@ -16,5 +16,5 @@ export const sequenceContext: WalletContext = {
   mainModule: '0xd01F11855bCcb95f88D7A48492F66410d4637313',
   mainModuleUpgradable: '0x7EFE6cE415956c5f80C6530cC6cc81b4808F6118',
   guestModule: '0x02390F3E6E5FD1C6786CB78FD3027C117a9955A7',
-  sequenceUtils: '0xC8aEEa34948F313ed8661E1C7E5b4c5a2885988B'
+  sequenceUtils: '0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E'
 }

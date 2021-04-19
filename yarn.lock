@@ -16,6 +16,13 @@
   optionalDependencies:
     ethers "^5.0.32"
 
+"@0xsequence/wallet-contracts@1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@0xsequence/wallet-contracts/-/wallet-contracts-1.8.0.tgz#1a1fbd4f22d2f7768201e2d692fe8adb9a9975c0"
+  integrity sha512-H2D3RTv1x2w0VdjoZBQ3tSSkrkT6QYfRy9Gcx69RoL8+1r1pk57wKAW1wHGPGvkYfA7mbiKAz9abcsZTOuOZWA==
+  optionalDependencies:
+    ethers "^5.0.32"
+
 "@ardatan/aggregate-error@0.0.6":
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/@ardatan/aggregate-error/-/aggregate-error-0.0.6.tgz#fe6924771ea40fc98dc7a7045c2e872dc8527609"
