@@ -1,5 +1,18 @@
 # @0xsequence/multicall
 
+## 0.13.0
+
+### Minor Changes
+
+- Update SequenceUtils deployed contract
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.13.0
+  - @0xsequence/network@0.13.0
+  - @0xsequence/utils@0.13.0
+
 ## 0.12.1
 
 ### Patch Changes

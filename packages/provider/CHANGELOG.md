@@ -1,5 +1,22 @@
 # @0xsequence/provider
 
+## 0.13.0
+
+### Minor Changes
+
+- Update SequenceUtils deployed contract
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.13.0
+  - @0xsequence/auth@0.13.0
+  - @0xsequence/config@0.13.0
+  - @0xsequence/network@0.13.0
+  - @0xsequence/transactions@0.13.0
+  - @0xsequence/utils@0.13.0
+  - @0xsequence/wallet@0.13.0
+
 ## 0.12.4
 
 ### Patch Changes

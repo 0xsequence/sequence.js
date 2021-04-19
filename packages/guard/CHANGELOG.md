@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.13.0
+
+### Minor Changes
+
+- Update SequenceUtils deployed contract
+
 ## 0.12.1
 
 ### Patch Changes
