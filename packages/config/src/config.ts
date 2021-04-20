@@ -75,20 +75,21 @@ export const isValidConfigSigners = (config: WalletConfig, signers: string[]): b
   return valid
 }
 
-export const addressOf = (config: WalletConfig, context: WalletContext): string => {
-  if (config.address) return config.address
+export const addressOf = (salt: WalletConfig | string, context: WalletContext, ignoreAddress: boolean = false): string => {
+  if (typeof salt === 'string') {
+    const codeHash = ethers.utils.keccak256(
+      ethers.utils.solidityPack(['bytes', 'bytes32'], [WalletContractBytecode, ethers.utils.hexZeroPad(context.mainModule, 32)])
+    )
+  
+    const hash = ethers.utils.keccak256(
+      ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', context.factory, salt, codeHash])
+    )
+  
+    return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+  }
 
-  const salt = imageHash(config)
-
-  const codeHash = ethers.utils.keccak256(
-    ethers.utils.solidityPack(['bytes', 'bytes32'], [WalletContractBytecode, ethers.utils.hexZeroPad(context.mainModule, 32)])
-  )
-
-  const hash = ethers.utils.keccak256(
-    ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', context.factory, salt, codeHash])
-  )
-
-  return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+  if (salt.address && !ignoreAddress) return salt.address
+  return addressOf(imageHash(salt), context)
 }
 
 export const imageHash = (config: WalletConfig): string => {
