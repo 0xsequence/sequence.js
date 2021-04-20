@@ -20,7 +20,9 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const { provider, context, ignoreIndex, requireIndex } = args
     const address = ethers.utils.getAddress(args.address)
 
-    if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
+    logger.info(`[findCurrentConfig] address:${address}, ignoreIndex:${ignoreIndex}, requireIndex:${requireIndex}`)
+
+    if (requireIndex && ignoreIndex) throw Error(`findCurrentConfig: can't ignore index and require index`)
 
     const chainIdPromise = provider.getNetwork()
     const knownConfigs = args.knownConfigs ? args.knownConfigs : []
@@ -46,7 +48,10 @@ export class SequenceUtilsFinder implements ConfigFinder {
     requireIndex?: boolean
   }): Promise<{ wallet: string | undefined }> => {
     const { signer, context, ignoreIndex, requireIndex } = args
-    if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
+
+    logger.info(`[findLastWalletOfInitialSigner] signer:${signer}`)
+
+    if (requireIndex && ignoreIndex) throw Error(`findCurrentConfig: can't ignore index and require index`)
 
     const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
     const logBlockHeight = ignoreIndex ? 0 : (await authContract.lastSignerUpdate(signer)).toNumber()
@@ -59,6 +64,8 @@ export class SequenceUtilsFinder implements ConfigFinder {
   }
 
   findConfigForImageHash = async (context: WalletContext, image: string, knownConfigs: WalletConfig[] = []): Promise<WalletConfig | undefined> => {
+    logger.info(`[findConfigForImageHash] image:${image}`)
+
     // Lookup config in known configurations
     const found = knownConfigs.find((kc) => imageHash(kc) === image)
     if (found) return found
@@ -93,6 +100,8 @@ export class SequenceUtilsFinder implements ConfigFinder {
   }
 
   findCurrentImageHash = async (context: WalletContext, provider: ethers.providers.Provider, address: string, knownConfigs: WalletConfig[] = []): Promise<{ imageHash?: string, config?: WalletConfig }> => {
+    logger.info(`[findCurrentImageHash] address:${address}`)
+
     const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
     const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => [])) as string[]
 
@@ -110,7 +119,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const knownImageHash = await authContract.knownImageHashes(address) as string
 
     if (knownImageHash !== ethers.constants.HashZero) {
-      if (addressOf(knownImageHash, context) !== address) throw Error('Inconsistent RequireUtils results A')
+      if (addressOf(knownImageHash, context) !== address) throw Error('findCurrentImageHash: inconsistent RequireUtils results')
       return { imageHash: knownImageHash }
     }
 
@@ -149,6 +158,10 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : filter.toBlock as number
     const fromBlock = filter.fromBlock as number
   
+    if (fromBlock === 0 && filter.toBlock === 'latest') {
+      logger.warn('findLatestLog: expensive getLogs query fromBlock 0 toBlock latest')
+    }
+
     try {
       const logs = await provider.getLogs({ ...filter, toBlock: toBlock })
       return logs.length === 0 ? undefined : logs[logs.length - 1]
@@ -164,6 +177,10 @@ export class SequenceUtilsFinder implements ConfigFinder {
   private findFirstLog = async (provider: ethers.providers.Provider, filter: ethers.providers.Filter): Promise<ethers.providers.Log | undefined> => {
     const toBlock = filter.toBlock === 'latest' || !filter.toBlock ? await provider.getBlockNumber() : filter.toBlock as number
     const fromBlock = filter.fromBlock ? filter.fromBlock as number : 0
+
+    if (fromBlock === 0 && filter.toBlock === 'latest') {
+      logger.warn('findFirstLog: expensive getLogs query fromBlock 0 toBlock latest')
+    }
 
     try {
       const logs = await provider.getLogs({ ...filter, fromBlock, toBlock })
