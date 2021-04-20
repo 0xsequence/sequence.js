@@ -158,8 +158,8 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : filter.toBlock as number
     const fromBlock = filter.fromBlock as number
   
-    if (fromBlock === 0 && filter.toBlock === 'latest') {
-      logger.warn('findLatestLog: expensive getLogs query fromBlock 0 toBlock latest')
+    if (fromBlock === 0) {
+      logger.warn(`findLatestLog: expensive getLogs query fromBlock 0 toBlock ${toBlock}`)
     }
 
     try {
@@ -178,8 +178,8 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const toBlock = filter.toBlock === 'latest' || !filter.toBlock ? await provider.getBlockNumber() : filter.toBlock as number
     const fromBlock = filter.fromBlock ? filter.fromBlock as number : 0
 
-    if (fromBlock === 0 && filter.toBlock === 'latest') {
-      logger.warn('findFirstLog: expensive getLogs query fromBlock 0 toBlock latest')
+    if (fromBlock === 0) {
+      logger.warn(`findFirstLog: expensive getLogs query fromBlock 0 toBlock ${toBlock}`)
     }
 
     try {
