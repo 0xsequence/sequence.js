@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.14.0
+
+### Minor Changes
+
+- update sequence utils finder which includes optimization
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.14.0
+  - @0xsequence/api@0.14.0
+  - @0xsequence/config@0.14.0
+  - @0xsequence/network@0.14.0
+  - @0xsequence/wallet@0.14.0
+
 ## 0.13.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.14.0
+
+### Minor Changes
+
+- update sequence utils finder which includes optimization
+
 ## 0.13.0
 
 ### Minor Changes
