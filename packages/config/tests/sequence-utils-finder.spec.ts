@@ -210,6 +210,7 @@ describe('Wallet integration', function () {
         }
       )
 
+      expect(found).to.not.be.undefined
       expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
     })
     it('Find counterfactual wallet after deployment and update on authChain (not-indexed)', async () => {
@@ -235,6 +236,7 @@ describe('Wallet integration', function () {
         }
       )
 
+      expect(found?.config).to.not.be.undefined
       expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
     })
     it('Fail to find counterfactual wallet after deployment and update on authChain if og config is not published', async () => {

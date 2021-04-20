@@ -22,102 +22,20 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     if (requireIndex && ignoreIndex) throw Error('Can\'t ignore index and require index')
 
+    const chainIdPromise = provider.getNetwork()
     const knownConfigs = args.knownConfigs ? args.knownConfigs : []
 
-    const chainId = (await provider.getNetwork()).chainId
+    // Get imageHash of wallet
+    const { imageHash, config } = await this.findCurrentImageHash(context, provider, address, knownConfigs)
+    if (imageHash === undefined) return { config: undefined }
 
-    // fetch current wallet image hash from chain, and skip any errors
-    const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
-    const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => [])) as string[]
+    // Get config for that imageHash
+    const found = await this.findConfigForImageHash(context, imageHash, config ? [config, ...knownConfigs] : knownConfigs)
+    const chainId = (await chainIdPromise).chainId
 
-    // fetch wallet implementation, which tells us if its been deployed, and verifies its the main module
-    const currentImplementation = ethers.utils.defaultAbiCoder.decode(
-      ['address'],
-      ethers.utils.hexZeroPad(
-        await (provider.getStorageAt(address, address).catch(() => ethers.constants.AddressZero)), 32
-      )
-    )[0]
-
-    const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
-
-    if (currentImplementation === context.mainModuleUpgradable) {
-      const foundConfig = knownConfigs.find((k) => imageHash(k) === currentImageHash[0])
-      if (foundConfig) {
-        return { config: { ...foundConfig, address, chainId } }
-      }
-    } else {
-      const foundConfig = knownConfigs.find((k) => addressOf({ ...k, address: undefined}, context) === address)
-      if (foundConfig) {
-        return { config: { ...{ ...foundConfig, address: undefined }, chainId } }
-      }
+    return {
+      config: found ? { ...found, chainId, address } : undefined
     }
-
-    // Get last known configuration
-    const logBlockHeight = ignoreIndex ? 0 : (await authContract.lastWalletUpdate(address)).toNumber()
-    if (requireIndex && logBlockHeight === 0) return { config: undefined }
-
-    const filter = authContract.filters.RequiredConfig(address)
-    const lastLog = await this.findFirstLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-    if (lastLog === undefined) { logger.warn("publishConfig: wallet config last log not found"); return { config: undefined } }
-    const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-
-    const signers = ethers.utils.defaultAbiCoder.decode(
-      [`tuple(
-        uint256 weight,
-        address signer
-      )[]`], event._signers
-    )[0]
-
-    const config = {
-      chainId: chainId,
-      address: address,
-      threshold: ethers.BigNumber.from(event._threshold).toNumber(),
-      signers: signers.map((s: any) => ({
-        address: s.signer,
-        weight: ethers.BigNumber.from(s.weight).toNumber()
-      }))
-    }
-
-    const isValid = currentImplementation === context.mainModuleUpgradable ? imageHash(config) === currentImageHash[0] : addressOf({ ...config, address: undefined }, context) === address
-    if (!isValid) {
-      // Try to find the config for the known image-hash
-      const filter = authContract.filters.RequiredConfig(address, currentImageHash[0])
-      const log = await this.findFirstLog(this.authProvider, { ...filter, fromBlock: logBlockHeight, toBlock: logBlockHeight !== 0 ? logBlockHeight : 'latest'})
-      if (log !== undefined) {
-        const event = authContract.interface.decodeEventLog('RequiredConfig', log.data, log.topics)
-        const signers = ethers.utils.defaultAbiCoder.decode(
-          [`tuple(
-            uint256 weight,
-            address signer
-          )[]`], event._signers
-        )[0]
-
-        const config = {
-          chainId: chainId,
-          address: address,
-          threshold: ethers.BigNumber.from(event._threshold).toNumber(),
-          signers: signers.map((s: any) => ({
-            address: s.signer,
-            weight: ethers.BigNumber.from(s.weight).toNumber()
-          }))
-        }
-
-        if (imageHash(config) === currentImageHash[0]) {
-          return { config }
-        }
-      }
-
-      // If imageHash couldn't be found, return undefined or try without index
-      if (ignoreIndex || requireIndex) {
-        logger.warn('No valid configuration found')
-        return { config: undefined }
-      } else {
-        // Re-try but skip index
-        return this.findCurrentConfig({ ...args, ignoreIndex: true })
-      }
-    }
-
-    return { config: config }
   }
 
   findLastWalletOfInitialSigner = async(args: {
@@ -140,6 +58,93 @@ export class SequenceUtilsFinder implements ConfigFinder {
     return { wallet: event._wallet }
   }
 
+  findConfigForImageHash = async (context: WalletContext, image: string, knownConfigs: WalletConfig[] = []): Promise<WalletConfig | undefined> => {
+    // Lookup config in known configurations
+    const found = knownConfigs.find((kc) => imageHash(kc) === image)
+    if (found) return found
+
+    // Load index for last imageHash update
+    const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
+    const imageHashHeight = (await authContract.lastImageHashUpdate(image)).toNumber() as number
+
+    // Get requireConfig with imageHash info
+    const filter = authContract.filters.RequiredConfig(undefined, image)
+    const lastLog = await this.findLatestLog(this.authProvider, { ...filter, fromBlock: imageHashHeight, toBlock: imageHashHeight !== 0 ? imageHashHeight : 'latest'})
+
+    // If there is no log, and no knownConfig...
+    // the config is not found
+    if (lastLog === undefined) return undefined
+
+    const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
+    const signers = ethers.utils.defaultAbiCoder.decode(
+      [`tuple(
+        uint256 weight,
+        address signer
+      )[]`], event._signers
+    )[0]
+
+    return {
+      threshold: ethers.BigNumber.from(event._threshold).toNumber(),
+      signers: signers.map((s: any) => ({
+        address: s.signer,
+        weight: ethers.BigNumber.from(s.weight).toNumber()
+      }))
+    }
+  }
+
+  findCurrentImageHash = async (context: WalletContext, provider: ethers.providers.Provider, address: string, knownConfigs: WalletConfig[] = []): Promise<{ imageHash?: string, config?: WalletConfig }> => {
+    const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
+    const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => [])) as string[]
+
+    // Wallet is not counterfactual and has a defined imageHash
+    if (currentImageHash[0] !== undefined) return { imageHash: currentImageHash[0] }
+
+    // Wallet is in counter-factual mode
+    // Lookup config in known configurations
+    const normalizedAddress = ethers.utils.getAddress(address)
+    const found = knownConfigs.find((kc) => addressOf(kc, context, true) === normalizedAddress)
+    if (found) return { imageHash: imageHash(found), config: found }
+
+    // Call wallet index
+    const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
+    const knownImageHash = await authContract.knownImageHashes(address) as string
+
+    if (knownImageHash !== ethers.constants.HashZero) {
+      if (addressOf(knownImageHash, context) !== address) throw Error('Inconsistent RequireUtils results A')
+      return { imageHash: knownImageHash }
+    }
+
+    // Get known image hash from raw logs, as last resort
+    const filter = authContract.filters.RequiredConfig(address)
+    const log = await this.findFirstLog(this.authProvider, filter)
+
+    if (log !== undefined) {
+      const event = authContract.interface.decodeEventLog('RequiredConfig', log.data, log.topics)
+      const signers = ethers.utils.defaultAbiCoder.decode(
+        [`tuple(
+          uint256 weight,
+          address signer
+        )[]`], event._signers
+      )[0]
+
+      const config = {
+        threshold: ethers.BigNumber.from(event._threshold).toNumber(),
+        signers: signers.map((s: any) => ({
+          address: s.signer,
+          weight: ethers.BigNumber.from(s.weight).toNumber()
+        }))
+      }
+
+      const gotImageHash = imageHash(config)
+      if (addressOf(gotImageHash, context) === address) {
+        return { imageHash: gotImageHash, config }
+      }
+    }
+
+    // Counter-factual imageHash not found
+    return {}
+  }
+
   private findLatestLog = async (provider: ethers.providers.Provider, filter: ethers.providers.Filter): Promise<ethers.providers.Log | undefined> => {
     const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : filter.toBlock as number
     const fromBlock = filter.fromBlock as number
@@ -157,18 +162,18 @@ export class SequenceUtilsFinder implements ConfigFinder {
   }
 
   private findFirstLog = async (provider: ethers.providers.Provider, filter: ethers.providers.Filter): Promise<ethers.providers.Log | undefined> => {
-    const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : filter.toBlock as number
-    const fromBlock = filter.fromBlock as number
+    const toBlock = filter.toBlock === 'latest' || !filter.toBlock ? await provider.getBlockNumber() : filter.toBlock as number
+    const fromBlock = filter.fromBlock ? filter.fromBlock as number : 0
 
     try {
-      const logs = await provider.getLogs({ ...filter, toBlock: toBlock })
+      const logs = await provider.getLogs({ ...filter, fromBlock, toBlock })
       return logs.length === 0 ? undefined : logs[0]
     } catch (e) {
       // TODO Don't assume all errors are bad
       const pivot = Math.floor(((toBlock - fromBlock) / 2) + fromBlock)
-      const nhalf = await this.findFirstLog(provider, { ...filter, fromBlock: fromBlock, toBlock: pivot })
+      const nhalf = await this.findFirstLog(provider, { ...filter, fromBlock, toBlock: pivot })
       if (nhalf !== undefined) return nhalf
-      return this.findFirstLog(provider, { ...filter, fromBlock: pivot, toBlock: toBlock })
+      return this.findFirstLog(provider, { ...filter, fromBlock: pivot, toBlock })
     }
   }
 }
