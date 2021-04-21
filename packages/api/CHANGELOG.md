@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.14.1
+
+### Patch Changes
+
+- update api client
+
 ## 0.14.0
 
 ### Minor Changes
