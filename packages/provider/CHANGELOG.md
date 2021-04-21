@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.14.2
+
+### Patch Changes
+
+- Add debug logs to rpc-relayer
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.14.2
+  - @0xsequence/auth@0.14.2
+  - @0xsequence/config@0.14.2
+  - @0xsequence/network@0.14.2
+  - @0xsequence/transactions@0.14.2
+  - @0xsequence/utils@0.14.2
+  - @0xsequence/wallet@0.14.2
+
 ## 0.14.0
 
 ### Minor Changes

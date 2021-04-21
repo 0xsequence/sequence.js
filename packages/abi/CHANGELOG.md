@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.14.2
+
+### Patch Changes
+
+- Add debug logs to rpc-relayer
+
 ## 0.14.0
 
 ### Minor Changes
