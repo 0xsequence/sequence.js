@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 0.15.0
+
+### Patch Changes
+
+- - update chaind and api bindings
+  - replace EstimateMetaTxnGasReceipt with UpdateMetaTxnGasLimits and GetMetaTxnNetworkFeeOptions
+
 ## 0.14.3
 
 ### Patch Changes

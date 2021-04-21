@@ -1,5 +1,12 @@
 # @0xsequence/transactions
 
+## 0.15.0
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/chaind@0.15.0
+
 ## 0.14.3
 
 ### Patch Changes

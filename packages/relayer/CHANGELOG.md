@@ -1,5 +1,18 @@
 # @0xsequence/relayer
 
+## 0.15.0
+
+### Minor Changes
+
+- - update chaind and api bindings
+  - replace EstimateMetaTxnGasReceipt with UpdateMetaTxnGasLimits and GetMetaTxnNetworkFeeOptions
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/chaind@0.15.0
+  - @0xsequence/transactions@0.15.0
+
 ## 0.14.3
 
 ### Patch Changes
