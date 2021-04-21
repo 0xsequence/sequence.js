@@ -1,5 +1,17 @@
 # @0xsequence/auth
 
+## 0.14.3
+
+### Patch Changes
+
+- Fix 0xSequence relayer dependencies
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.14.3
+  - @0xsequence/api@0.14.3
+  - @0xsequence/config@0.14.3
+  - @0xsequence/network@0.14.3
+  - @0xsequence/wallet@0.14.3
+
 ## 0.14.2
 
 ### Patch Changes

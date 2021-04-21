@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.14.3
+
+### Patch Changes
+
+- Fix 0xSequence relayer dependencies
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.14.3
+
 ## 0.14.2
 
 ### Patch Changes

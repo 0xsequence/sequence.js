@@ -1,5 +1,17 @@
 # @0xsequence/relayer
 
+## 0.14.3
+
+### Patch Changes
+
+- Fix 0xSequence relayer dependencies
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.14.3
+  - @0xsequence/chaind@0.14.3
+  - @0xsequence/config@0.14.3
+  - @0xsequence/transactions@0.14.3
+  - @0xsequence/utils@0.14.3
+
 ## 0.14.2
 
 ### Patch Changes
