@@ -74,7 +74,7 @@ package for package versioning across the monorepo, as well as changelogs. See *
 5. Once merged and you're ready to make a release, continue to the next step. If you're not
    ready to make a release, then go back to step 2.
 
-6. Run `yarn test` to double check all tests pass
+6. Run `yarn build && yarn test` to double check all tests pass
 7. Run `yarn version-packages` to bump versions of the packages
 8. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
 9. Run `yarn release`. If the 2FA code timesout while publishing, run the command again
