@@ -7,6 +7,7 @@ import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
+import { logger } from '@0xsequence/utils'
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly chaindService: ChaindService
@@ -51,6 +52,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     // TODO: Add compatiblity for different refund options
     const tokenFee = await this.chaindService.tokenFee()
 
+    logger.info(`[rpc-relayer/gasRefundOptions] using token fee ${tokenFee}`)
+
     // No gas refund required
     if (!tokenFee.isFee || tokenFee.fee === ethers.constants.AddressZero) {
       return [[]]
@@ -79,6 +82,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       decoded = appendNonce(decoded, prevNonce)
     }
 
+    logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(decoded)}`)
+
     if (res.res.feeAppended) {
       return [[decoded[decoded.length - 1]]]
     } else {
@@ -91,12 +96,16 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     context: WalletContext,
     ...transactions: Transaction[]
   ): Promise<Transaction[]> {
+    logger.info(`[rpc-relayer/estimateGasLimits] estimate gas limits request ${JSON.stringify(transactions)}`)
+
     if (transactions.length == 0) {
       return []
     }
 
     // chaind requires tokenFee, even for only estimating gasLimits
     const tokenFee = this.chaindService.tokenFee()
+
+    logger.info(`[rpc-relayer/estimateGasLimits] using token fee ${tokenFee}`)
 
     const addr = addressOf(config, context)
     const prevNonce = readSequenceNonce(...transactions)
@@ -122,6 +131,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       gasLimit: decoded[i].gasLimit
     }))
 
+    logger.info(`[rpc-relayer/estimateGasLimits] got transactions with gas limits ${JSON.stringify(modTxns)}`)
+
     // Remove placeholder nonce if previously defined
     return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
@@ -133,12 +144,18 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     blockTag?: BlockTag
   ): Promise<number> {
     const addr = addressOf(config, context)
+    logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
     const resp = await this.chaindService.getMetaTxnNonce({ walletContractAddress: addr })
-    return ethers.BigNumber.from(resp.nonce).toNumber()
+    const nonce = ethers.BigNumber.from(resp.nonce).toNumber()
+    logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${addr} ${nonce} space: ${space}`)
+    return nonce
   }
 
   async relay(signedTxs: SignedTransactions): Promise<PendingTransactionResponse> {
+    logger.info(`[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)}`)
+
     if (!this.provider) {
+      logger.warn(`[rpc-relayer/relay] provider not set, failed relay`)
       throw new Error('provider is not set')
     }
 
@@ -149,6 +166,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         input: prep.data
       }
     })
+
+    logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(result)}`)
 
     const waitReceipt = async () => {
       const hash = (await result).txnHash
@@ -177,6 +196,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       waitForReceipt: waitReceipt,
       wait: async (confirmations?: number) => {
         const receipt = await waitReceipt()
+        logger.info(`[rpc-relayer/relay] got meta-transaction receipt ${JSON.stringify(receipt)}`)
         return receipt.wait(confirmations)
       }
     } as PendingTransactionResponse
