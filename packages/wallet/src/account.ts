@@ -414,11 +414,10 @@ export class Account extends Signer {
       if (network.relayer) {
         wallet.setRelayer(network.relayer)
       } else if (network.relayerUrl && network.relayerUrl !== '') {
-        wallet.setRelayer(new RpcRelayer(
-          network.relayerUrl,
-          true,
-          network.provider || new ethers.providers.JsonRpcProvider(network.rpcUrl)
-        ))
+        wallet.setRelayer(new RpcRelayer({
+          url: network.relayerUrl,
+          provider: network.provider || new ethers.providers.JsonRpcProvider(network.rpcUrl)
+        }))
       } else {
         throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
       }

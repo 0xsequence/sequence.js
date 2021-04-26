@@ -4,14 +4,21 @@ import { walletContracts } from '@0xsequence/abi'
 import { SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
-import { BaseRelayer } from './base-relayer'
+import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { Relayer } from '.'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
+export type ProviderRelayerOptions = BaseRelayerOptions & {
+  provider: providers.Provider
+}
+
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
-  constructor(public provider: providers.Provider) {
-    super(true, provider)
+  public provider: providers.Provider
+
+  constructor(options: ProviderRelayerOptions) {
+    super(options)
+    this.provider = options.provider
   }
 
   abstract gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[][]>

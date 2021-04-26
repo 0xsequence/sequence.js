@@ -2,26 +2,31 @@ import { TransactionResponse, Provider, BlockTag } from '@ethersproject/provider
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
 import { Transaction, TransactionEncoded, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
-import { BaseRelayer } from './base-relayer'
+import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 
+export type RpcRelayerOptions = BaseRelayerOptions & {
+  url: string,
+  waitForReceipt?: boolean
+}
+
+export const RpcRelayerDefaults = {
+  waitForReceipt: true
+}
+
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly chaindService: ChaindService
   public waitForReceipt: boolean
 
-  constructor(
-    url: string,
-    bundleDeploy: boolean = true,
-    provider?: Provider,
-    waitForReceipt: boolean = true
-  ) {
-    super(bundleDeploy, provider)
-    this.chaindService = new ChaindService(url, fetchPonyfill().fetch)
-    this.waitForReceipt = waitForReceipt
+  constructor(options: RpcRelayerOptions) {
+    super(options)
+    const opts = { ...RpcRelayerDefaults, ...options }
+    this.chaindService = new ChaindService(opts.url, fetchPonyfill().fetch)
+    this.waitForReceipt = opts.waitForReceipt
   }
 
   async waitReceipt(

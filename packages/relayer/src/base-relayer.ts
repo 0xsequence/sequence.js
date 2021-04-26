@@ -6,13 +6,24 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
+
+export type BaseRelayerOptions = {
+  bundleCreation?: boolean,
+  provider?: Provider
+}
+
+export const BaseRelayerDefaults = {
+  bundleCreation: true
+}
+
 export class BaseRelayer {
   private readonly bundleCreation: boolean
   readonly provider: Provider | undefined
 
-  constructor(bundleCreation: boolean, provider?: Provider) {
-    this.bundleCreation = bundleCreation
-    this.provider = provider
+  constructor(options?: BaseRelayerOptions) {
+    const opts = { ...BaseRelayerDefaults, ...options }
+    this.bundleCreation = opts.bundleCreation
+    this.provider = opts.provider
   }
 
   async isWalletDeployed(walletAddress: string): Promise<boolean> {

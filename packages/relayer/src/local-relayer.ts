@@ -4,13 +4,19 @@ import { SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { Relayer } from '.'
-import { ProviderRelayer } from './provider-relayer'
+import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
+
+export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
+  signer: AbstractSigner
+}
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
-  constructor(private signer: AbstractSigner) {
-    super(signer.provider!)
+  private signer: AbstractSigner
 
-    if (!signer.provider) throw new Error("Signer must have a provider")
+  constructor(options: LocalRelayerOptions | AbstractSigner) {
+    super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
+    this.signer = AbstractSigner.isSigner(options) ? options : options.signer
+    if (!this.signer.provider) throw new Error("Signer must have a provider")
   }
 
   async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {

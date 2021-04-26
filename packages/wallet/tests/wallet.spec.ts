@@ -114,7 +114,7 @@ describe('Wallet integration', function () {
     ).deploy()) as HookCallerMock
 
     // Deploy local relayer
-    relayer = new LocalRelayer(ethnode.signer)
+    relayer = new LocalRelayer({signer: ethnode.signer })
   })
 
   beforeEach(async () => {
