@@ -167,7 +167,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       }
     })
 
-    logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(result)}`)
+    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(result)}`)
 
     const waitReceipt = async () => {
       const hash = (await result).txnHash
