@@ -1,5 +1,15 @@
 # @0xsequence/config
 
+## 0.15.1
+
+### Patch Changes
+
+- update api clients
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.15.1
+  - @0xsequence/network@0.15.1
+  - @0xsequence/utils@0.15.1
+
 ## 0.14.3
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @0xsequence/auth
 
+## 0.15.1
+
+### Patch Changes
+
+- update api clients
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.15.1
+  - @0xsequence/api@0.15.1
+  - @0xsequence/config@0.15.1
+  - @0xsequence/network@0.15.1
+  - @0xsequence/wallet@0.15.1
+
 ## 0.15.0
 
 ### Patch Changes

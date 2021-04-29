@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/relayer",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "relayer sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/relayer",
   "source": "src/index.ts",
@@ -13,11 +13,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.14.3",
-    "@0xsequence/chaind": "^0.15.0",
-    "@0xsequence/config": "^0.14.3",
-    "@0xsequence/transactions": "^0.15.0",
-    "@0xsequence/utils": "^0.14.3",
+    "@0xsequence/abi": "^0.15.1",
+    "@0xsequence/chaind": "^0.15.1",
+    "@0xsequence/config": "^0.15.1",
+    "@0xsequence/transactions": "^0.15.1",
+    "@0xsequence/utils": "^0.15.1",
     "ethers": "^5.0.32",
     "fetch-ponyfill": "^7.1.0"
   },

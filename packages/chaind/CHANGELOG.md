@@ -1,5 +1,11 @@
 # @0xsequence/chaind
 
+## 0.15.1
+
+### Patch Changes
+
+- update api clients
+
 ## 0.15.0
 
 ### Patch Changes

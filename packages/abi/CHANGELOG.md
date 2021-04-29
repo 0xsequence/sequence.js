@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.15.1
+
+### Patch Changes
+
+- update api clients
+
 ## 0.14.3
 
 ### Patch Changes
