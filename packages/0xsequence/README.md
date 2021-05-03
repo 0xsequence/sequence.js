@@ -14,13 +14,13 @@ Sequence is a critical piece of software and any change should be delivered via 
 workflow. 
 
 As well, sequence.js's monorepo tooling is setup with preconstruct, which links all sub-packages together
-so it feels like a single program is is easy to work with. Please run `yarn dev` in the root of `sequence.js/`
+so it feels like a single program and is easy to work with. Please run `yarn dev` in the root of `sequence.js/`
 folder to ensure the monorepo is in 'dev-mode'.
 
 Second, you can run the test suite directly from console with a single `yarn test`, or you can boot up the Typescript
 compiling server (`yarn test:server`) and ethereum test node (`yarn start:hardhat` and `yarn start:hardhat2`) manually
 in separate terminals, and then run a specific test directly from your browser instance. We recommend running the
-test stack separately and running specific browser tests manually during development. See [here](./#from-browser).
+test stack separately and running specific browser tests manually during development. See [here for recommended setup](./#from-browser).
 
 
 ## Running E2E Tests
