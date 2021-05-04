@@ -1,5 +1,11 @@
 # @0xsequence/provider
 
+## 0.16.1
+
+### Patch Changes
+
+- @0xsequence/auth@0.16.1
+
 ## 0.16.0
 
 ### Minor Changes

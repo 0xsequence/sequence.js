@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.16.1
+
+### Patch Changes
+
+- api: add legacy types for bw compat
+
 ## 0.16.0
 
 ### Minor Changes
