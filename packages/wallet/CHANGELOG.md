@@ -1,5 +1,22 @@
 # @0xsequence/wallet
 
+## 0.16.0
+
+### Minor Changes
+
+- relayer as its own service separate from chaind
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.16.0
+  - @0xsequence/config@0.16.0
+  - @0xsequence/guard@0.16.0
+  - @0xsequence/network@0.16.0
+  - @0xsequence/relayer@0.16.0
+  - @0xsequence/transactions@0.16.0
+  - @0xsequence/utils@0.16.0
+
 ## 0.15.1
 
 ### Patch Changes
