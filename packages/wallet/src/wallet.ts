@@ -351,13 +351,17 @@ export class Wallet extends Signer {
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     stx = appendNonce(stx, nonce)
 
+    // Get transactions digest
+    const digest = ethers.utils.keccak256(encodeMetaTransactionsData(...stx))
+
     // Bundle with signature
     return {
+      digest: digest,
       chainId: signChainId,
       context: this.context,
       config: this.config,
       transactions: stx,
-      signature: await this.sign(encodeMetaTransactionsData(...stx), false, chainId, allSigners)
+      signature: await this.sign(digest, true, chainId, allSigners)
     }
   }
 
@@ -393,6 +397,16 @@ export class Wallet extends Signer {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
+  async subDigest(digest: BytesLike, chainId?: ChainId): Promise<Uint8Array> {
+    const solvedChainId = await this.getChainIdNumber(chainId)
+
+    return ethers.utils.arrayify(
+      ethers.utils.keccak256(
+        packMessageData(this.address, solvedChainId, digest)
+      )
+    )
+  }
+
   // sign is a helper method to sign a payload with the wallet signers
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
@@ -400,11 +414,7 @@ export class Wallet extends Signer {
     const digest = isDigest ? msg : ethers.utils.keccak256(msg)
 
     // Generate sub-digest
-    const subDigest = ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        packMessageData(this.address, signChainId, digest)
-      )
-    )
+    const subDigest = await this.subDigest(digest, chainId)
 
     // Sign sub-digest using a set of signers and some optional data
     const signWith = async (signers: AbstractSigner[], auxData?: string): Promise<DecodedSignature> => {

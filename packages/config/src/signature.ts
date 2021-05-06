@@ -1,4 +1,5 @@
 import { BytesLike, ethers } from "ethers"
+import { WalletConfig } from "."
 
 export type DecodedSignature = {
   threshold: number
@@ -75,7 +76,9 @@ export enum SignatureType {
 }
 
 
-export const decodeSignature = (signature: string): DecodedSignature => {
+export const decodeSignature = (signature: string | DecodedSignature): DecodedSignature => {
+  if (typeof signature !== 'string') return signature
+
   const auxsig = signature.replace('0x', '')
 
   const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
@@ -202,7 +205,9 @@ export const joinTwoSignatures = (a: DecodedSignature, b: DecodedSignature): Dec
   return { threshold: a.threshold, signers: a.signers.map((s, i) => isDecodedAddress(s) ? b.signers[i] : s) }
 }
 
-export const encodeSignature = (sig: DecodedSignature): string => {
+export const encodeSignature = (sig: DecodedSignature | string): string => {
+  if (typeof sig === 'string') return encodeSignature(decodeSignature(sig))
+
   const accountBytes = sig.signers.map(s => {
     if (isDecodedAddress(s)) {
       return ethers.utils.solidityPack(
@@ -237,4 +242,40 @@ export const encodeSignature = (sig: DecodedSignature): string => {
   })
 
   return ethers.utils.solidityPack(['uint16', ...Array(accountBytes.length).fill('bytes')], [sig.threshold, ...accountBytes])
+}
+
+export function signerOf(part: DecodedSignaturePart, digest: BytesLike): string {
+  if (isDecodedAddress(part)) {
+    return part.address
+  }
+
+  if (isDecodedFullSigner(part)) {
+    return part.address
+  }
+
+  if (isDecodedEOASplitSigner(part) || isDecodedEOASigner(part)) {
+    return recoverEOASigner(digest, part)
+  }
+
+  throw Error('Unkwnown signature part type')
+}
+
+export function mutateSignature(sig: DecodedSignature, config: WalletConfig, digest: BytesLike): DecodedSignature {
+  const allSigners = sig.signers.map((s) => signerOf(s, digest))
+
+  return {
+    threshold: config.threshold,
+    signers: config.signers.map((s) => {
+      const found = allSigners.indexOf(s.address)
+      if (found !== -1) {
+        const part = sig.signers[found]
+        return { ...part, weight: s.weight }
+      }
+
+      return {
+        weight: s.weight,
+        address: s.address
+      }
+    })
+  }
 }
