@@ -1,6 +1,6 @@
 import {
   ProviderMessage, ProviderMessageType, ProviderTransport,
-  ProviderMessageEvent, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent
+  ProviderMessageEvent, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent, ConnectDetails
 } from '../../types'
 
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
@@ -143,6 +143,13 @@ export class MuxMessageProvider implements ProviderTransport {
   waitUntilConnected = async (): Promise<WalletSession> => {
     if (this.provider) {
       return this.provider.waitUntilConnected()
+    }
+    throw new Error('impossible state, wallet must be opened first')
+  }
+
+  waitUntilAuthorized = async(): Promise<ConnectDetails> => {
+    if(this.provider) {
+      return this.provider.waitUntilAuthorized()
     }
     throw new Error('impossible state, wallet must be opened first')
   }

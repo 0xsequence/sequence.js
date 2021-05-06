@@ -1,10 +1,18 @@
 import EventEmitter from 'eventemitter3'
 
 import {
-  ProviderTransport, ProviderMessage, ProviderMessageRequest,
-  ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
-  ProviderMessageResponseCallback, ProviderMessageTransport,
-  WalletSession, OpenState, OpenWalletIntent
+  ProviderTransport,
+  ProviderMessage,
+  ProviderMessageRequest,
+  ProviderMessageType,
+  ProviderMessageEvent,
+  ProviderMessageResponse,
+  ProviderMessageResponseCallback,
+  ProviderMessageTransport,
+  WalletSession,
+  OpenState,
+  OpenWalletIntent,
+  ConnectDetails
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -18,7 +26,6 @@ let _messageIdx = 0
 export const nextMessageIdx = () => ++_messageIdx
 
 export abstract class BaseProviderTransport implements ProviderTransport {
-
   protected pendingMessageRequests: ProviderMessageRequest[] = []
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
@@ -66,8 +73,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // if we're registered, and we have the account details, then we are connected
     return (
       this.registered &&
-      !!this.accountPayload && this.accountPayload.length === 42 &&
-      !!this.networksPayload && this.networksPayload.length > 0
+      !!this.accountPayload &&
+      this.accountPayload.length === 42 &&
+      !!this.networksPayload &&
+      this.networksPayload.length > 0
     )
   }
 
@@ -106,7 +115,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   handleMessage(message: ProviderMessage<any>) {
 
     // message is either a notification, or its a ProviderMessageResponse
-    logger.debug("RECEIVED MESSAGE FROM WALLET", message.idx, message)
+    logger.debug('RECEIVED MESSAGE FROM WALLET', message.idx, message)
 
     const requestIdx = message.idx
     const responseCallback = this.responseCallbacks.get(requestIdx)
@@ -116,7 +125,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // OPEN response
     //
-    // Flip opened flag, and flush the pending queue 
+    // Flip opened flag, and flush the pending queue
     if (message.type === ProviderMessageType.OPEN && !this.isOpened()) {
       if (this._sessionId && this._sessionId !== message.data?.sessionId) {
         logger.debug('open event received from wallet, but does not match sessionId', this._sessionId)
@@ -147,9 +156,13 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       return
     }
 
+    if (message.type === ProviderMessageType.AUTHORIZED) {
+      this.events.emit('authorized', message.data)
+      return
+    }
+
     // MESSAGE resposne
     if (message.type === ProviderMessageType.MESSAGE) {
-
       // Require user confirmation, bring up wallet to prompt for input then close
       // TODO: perhaps apply technique like in multicall to queue messages within
       // a period of time, then close the window if responseCallbacks is empty, this is better.
@@ -305,7 +318,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
           resolve(this.accountPayload)
           return
         }
-        this.events.once('accountsChanged', (accounts) => {
+        this.events.once('accountsChanged', accounts => {
           if (accounts && accounts.length > 0) {
             // account logged in
             resolve(accounts[0])
@@ -320,7 +333,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
           resolve(this.networksPayload)
           return
         }
-        this.events.once('networks', (networks) => {
+        this.events.once('networks', networks => {
           resolve(networks)
         })
       }),
@@ -329,13 +342,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
           resolve(this.walletContextPayload)
           return
         }
-        this.events.once('walletContext', (walletContext) => {
+        this.events.once('walletContext', walletContext => {
           resolve(walletContext)
         })
       })
-
     ]).then(values => {
-      const [ accountAddress, networks, walletContext ] = values
+      const [accountAddress, networks, walletContext] = values
       return { accountAddress, networks, walletContext }
     })
 
@@ -345,9 +357,27 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       })
     })
 
-    return Promise.race<WalletSession>([
-      connect,
-      closeWallet
+    return Promise.race<WalletSession>([connect, closeWallet])
+  }
+
+  waitUntilAuthorized = async (): Promise<ConnectDetails> => {
+    await this.waitUntilConnected()
+
+    return Promise.race([
+      new Promise<ConnectDetails>((_, reject) => {
+        this.events.once('close', () => {
+          reject(new Error('user closed the wallet'))
+        })
+      }),
+      new Promise<ConnectDetails>(resolve => {
+        // if (this.isAuthorized()) {
+        //   resolve(...) // cached connect details?
+        //   return
+        // }
+        this.events.once('authorized', (connectDetails: ConnectDetails) => {
+          resolve(connectDetails)
+        })
+      })
     ])
   }
 

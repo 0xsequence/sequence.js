@@ -1,11 +1,14 @@
-import { ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse, InitState } from '../../types'
+import {
+  ProviderMessageRequest,
+  ProviderMessage,
+  ProviderMessageType,
+  ProviderMessageResponse,
+  InitState,
+  ConnectDetails
+} from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
 import { logger, sanitizeNumberString } from '@0xsequence/utils'
-
-export interface RegisterOptions {
-  loadingPath: string
-}
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -21,7 +24,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     this._init = InitState.NIL
   }
 
-  register(options?: RegisterOptions) {
+  register() {
     const isPopup = parent.window.opener !== null
     this._isPopup = isPopup
     if (isPopup !== true) {
@@ -30,23 +33,41 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // record open details (sessionId + default network) from the window url
     const location = new URL(window.location.href)
-    this._sessionId = sanitizeNumberString(location.searchParams.get('sid')!)
-    location.searchParams.delete('sid')
+
+    // TODO: add typings
+    const params = Object.fromEntries(new URLSearchParams(location.search))
+
+    this._sessionId = sanitizeNumberString(params['sid'])
 
     if (this._sessionId.length === 0) {
       logger.error('invalid sessionId')
       return
     }
 
-    const defaultNetwork = location.searchParams.get('net')!
-    location.searchParams.delete('net')
+    const defaultNetwork = params['net']
 
-    const jsonRpcRequest = location.searchParams.get('jsonRpcRequest')
+    const toBool = (s: string) => s === 'true'
 
-    if (options?.loadingPath && !!jsonRpcRequest) {
-      window.history.replaceState({}, document.title, options.loadingPath)
+    if (toBool(params['requestAuthorization'])) {
+      this.walletRequestHandler
+        .promptConnect({
+          refresh: toBool(params['refresh']),
+          requestEmail: toBool(params['requestEmail']),
+          requestAuthorization: toBool(params['requestAuthorization']),
+          appName: params['appName'],
+          // TODO: use parentOrigin .. but its currently not being set before register()
+          // use origin from walletURL param for now.
+          // internal
+          origin: params['origin']
+        })
+        .then((connectDetails: ConnectDetails) => {
+          this.notifyAuthorized(connectDetails)
+        })
+        .catch(error => {
+          throw error
+        })
     } else {
-      window.history.replaceState({}, document.title, location.pathname)
+      window.history.replaceState(params['jsonRpcRequest'] ? { jsonRpcRequest: true } : {}, document.title, location.pathname)
     }
 
     // record parent window instance for communication
@@ -57,15 +78,17 @@ export class WindowMessageHandler extends BaseWalletTransport {
     this._registered = true
 
     // send open event to the app which opened us
-    this.open(defaultNetwork).then(opened => {
-      if (!opened) {
-        logger.error(`failed to open to network ${defaultNetwork}`)
+    this.open(defaultNetwork)
+      .then(opened => {
+        if (!opened) {
+          logger.error(`failed to open to network ${defaultNetwork}`)
+          window.close()
+        }
+      })
+      .catch(err => {
+        logger.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
         window.close()
-      }
-    }).catch(err => {
-      logger.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
-      window.close()
-    })
+      })
   }
 
   unregister() {
@@ -104,7 +127,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // Record the parent origin url on init
     if (this._init !== InitState.OK) {
       if (request.type === ProviderMessageType.INIT) {
-        const { sessionId, nonce } = request.data as any as { sessionId: string, nonce: string }
+        const { sessionId, nonce } = (request.data as any) as { sessionId: string; nonce: string }
         if (!sessionId || sessionId.length === 0 || !nonce || nonce.length === 0) {
           logger.error('invalid init response')
           return
@@ -144,9 +167,14 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // init stage + check
     if (this._init === InitState.NIL) {
       this._initNonce = `${performance.now()}`
-      this.parentWindow.postMessage(JSON.stringify({
-        idx: -1, type: ProviderMessageType.INIT, data: { nonce: this._initNonce }
-      } as ProviderMessage<any>), '*')
+      this.parentWindow.postMessage(
+        JSON.stringify({
+          idx: -1,
+          type: ProviderMessageType.INIT,
+          data: { nonce: this._initNonce }
+        } as ProviderMessage<any>),
+        '*'
+      )
       this._init = InitState.SENT_NONCE
       return
     } else if (this._init !== InitState.OK) {
@@ -165,7 +193,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     if (this._postMessageQueue.length === 0) return
 
     // logger.debug(`flushPostMessageQueue # of messages, ${this._postMessageQueue.length}`)
-    for (let i=0; i < this._postMessageQueue.length; i++) {
+    for (let i = 0; i < this._postMessageQueue.length; i++) {
       this.postMessage(this._postMessageQueue[i])
     }
     this._postMessageQueue.length = 0

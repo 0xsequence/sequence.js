@@ -83,10 +83,20 @@ export class WindowMessageProvider extends BaseProviderTransport {
       walletURL.pathname = path.toLowerCase()
     }
 
+    // set connect options
+    if (intent?.type === 'connect' && !!intent.options) {
+      for (const [option, val] of Object.entries(intent.options)) {
+        walletURL.searchParams.set(option, val)
+      }
+    }
+
     // set intent of wallet opening due to jsonRpcRequest send by provider
     if (intent?.type === 'jsonRpcRequest') {
       walletURL.searchParams.set('jsonRpcRequest', intent.method)
     }
+
+    // TODO: get parent window origin from transport message events instead
+    walletURL.searchParams.set('origin', window.location.origin)
 
     // Open popup window on center of the app window
     const windowSize = [450, 700]

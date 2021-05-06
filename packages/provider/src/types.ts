@@ -33,6 +33,7 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
 
   waitUntilOpened(): Promise<boolean>
   waitUntilConnected(): Promise<WalletSession>
+  waitUntilAuthorized(): Promise<ConnectDetails>
 }
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -43,6 +44,7 @@ export interface WalletTransport extends JsonRpcHandler, ProviderMessageTranspor
   notifyClose(): void
 
   notifyConnect(connectInfo: { chainId?: string }): void
+  notifyAuthorized(connectDetails: ConnectDetails): void
   notifyAccountsChanged(accounts: string[]): void
   notifyChainChanged(connectInfo: any): void
   notifyNetworks(networks: NetworkConfig[]): void
@@ -88,7 +90,7 @@ export interface ProviderMessageTransport {
   sendMessage(message: ProviderMessage<any>): void
 }
 
-export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | 'init' | '_debug'
+export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'authorized' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | 'init' | '_debug'
 
 export type ProviderMessageEvent = 'message' | WalletMessageEvent
 
@@ -101,6 +103,7 @@ export enum ProviderMessageType {
   DISCONNECT = 'disconnect',
   CHAIN_CHANGED = 'chainChanged',
   ACCOUNTS_CHANGED = 'accountsChanged',
+  AUTHORIZED = 'authorized',
 
   NETWORKS = 'networks',
   WALLET_CONTEXT = 'walletContext',
@@ -123,18 +126,24 @@ export enum InitState {
 
 export type NetworkEventPayload = NetworkConfig
 
+export interface PromptConnectOptions extends ConnectOptions {
+  origin?: string
+}
 export interface ConnectOptions {
+  appName?: string
   refresh?: boolean
   requestAuthorization?: boolean
   requestEmail?: boolean
 }
 
+export interface ETHAuthProof {
+  typedData: TypedData
+  proofString: string
+}
+
 export interface ConnectDetails {
   success: boolean
-  proof?: {
-    type?: string
-    sig: string
-  }
+  proof?: ETHAuthProof
   email?: string
 }
 

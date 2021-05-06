@@ -15,7 +15,7 @@ import { ethers } from 'ethers'
 export interface WalletProvider {
   // connect(options?: ConnectOptions): Promise<ConnectDetails>
   // authorize(options?: ConnectOptions): Promise<ConnectDetails>
-  connect(options?: ConnectOptions): Promise<boolean>
+  connect(options?: ConnectOptions): Promise<ConnectDetails>
   disconnect(): void
 
   isOpened(): boolean
@@ -179,35 +179,33 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  connect = async (options?: ConnectOptions): Promise<boolean> => {
+  connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
     if (options?.refresh === true) {
       this.disconnect()
     }
     if (this.isConnected() && !options?.requestAuthorization && !options?.requestEmail) {
-      return this.isConnected()
-      // return {
-      //   success: this.isConnected()
-      // }
+      return {
+        success: this.isConnected()
+      }
     }
 
     await this.openWallet(undefined, { type: 'connect', options })
     const sessionPayload = await this.transport.messageProvider!.waitUntilConnected()
     this.useSession(sessionPayload, true)
 
-    return this.isConnected()
+    if(options?.requestAuthorization){
+      const connectDetails = await this.transport.messageProvider!.waitUntilAuthorized()
+      return connectDetails
+    }
 
-    // TODO: the wallet-webapp itself will handle the open request..
-    // prob with window, etc.. or other proxy-message
-
-    // return {
-    //   success: this.isConnected()
-    //   // TODO: ..
-    // }
+    return {
+      success: this.isConnected()
+    }
   }
 
-  // authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
-  //   return this.connect({ ...options, requestAuthorization: true })
-  // }
+  authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+    return this.connect({ ...options, requestAuthorization: true })
+  }
 
   disconnect(): void {
     if (this.isOpened()) {

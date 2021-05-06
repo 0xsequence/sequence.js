@@ -4,7 +4,7 @@ import {
   ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
   WalletMessageEvent, ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
-  MessageToSign, ProviderRpcError, ProviderConnectInfo, ConnectOptions, ConnectDetails
+  MessageToSign, ProviderRpcError, ProviderConnectInfo, ConnectOptions, ConnectDetails, PromptConnectOptions
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -74,6 +74,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
       }, message.chainId)
     })
+  }
+
+  promptConnect = (options?: PromptConnectOptions): Promise<ConnectDetails> => {
+    if(!this.prompter){
+      throw new Error('prompter is undefined, unable to promptConnect')
+    }
+    return this.prompter.promptConnect(options)
   }
 
   // sendAsync implements the JsonRpcHandler interface for sending JsonRpcRequests to the wallet
@@ -535,7 +542,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
-  // promptConnect(options?: ConnectOptions): Promise<ConnectDetails>
+  promptConnect(options?: PromptConnectOptions): Promise<ConnectDetails>
   promptSignMessage(message: MessageToSign): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>

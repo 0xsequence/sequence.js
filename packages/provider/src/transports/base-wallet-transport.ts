@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import {
   WalletTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageResponse, ProviderMessageTransport,
-  ProviderConnectInfo, ProviderRpcError, InitState
+  ProviderConnectInfo, ProviderRpcError, InitState, ConnectDetails
 } from '../types'
 
 import { WalletRequestHandler } from './wallet-request-handler'
@@ -122,6 +122,16 @@ export abstract class BaseWalletTransport implements WalletTransport {
       type: ProviderMessageType.OPEN,
       data: {
         chainId, sessionId, error
+      }
+    })
+  }
+
+  notifyAuthorized(connectDetails: ConnectDetails) {
+    this.sendMessage({
+      idx: -1,
+      type: ProviderMessageType.AUTHORIZED,
+      data: {
+        ...connectDetails
       }
     })
   }
