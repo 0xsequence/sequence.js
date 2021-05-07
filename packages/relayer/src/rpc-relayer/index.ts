@@ -2,12 +2,14 @@ import { TransactionResponse, Provider, BlockTag } from '@ethersproject/provider
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
 import { Transaction, TransactionEncoded, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
-import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
-import { ChaindService } from '@0xsequence/chaind'
-import { Relayer } from '.'
+import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
+import { Relayer } from '..'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
+import * as proto from './relayer.gen'
+
+export { proto }
 
 export type RpcRelayerOptions = BaseRelayerOptions & {
   url: string,
@@ -19,13 +21,13 @@ export const RpcRelayerDefaults = {
 }
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
-  private readonly chaindService: ChaindService
+  private readonly service: proto.RelayerService
   public waitForReceipt: boolean
 
   constructor(options: RpcRelayerOptions) {
     super(options)
     const opts = { ...RpcRelayerDefaults, ...options }
-    this.chaindService = new ChaindService(opts.url, fetchPonyfill().fetch)
+    this.service = new proto.RelayerService(options.url, fetchPonyfill().fetch)
     this.waitForReceipt = opts.waitForReceipt
   }
 
@@ -33,11 +35,11 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     metaTxHash: string,
     wait: number = 500
   ) {
-    let result = await this.chaindService.getMetaTxnReceipt({ metaTxID: metaTxHash })
+    let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxHash })
 
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
       await new Promise(r => setTimeout(r, wait))
-      result = await this.chaindService.getMetaTxnReceipt({ metaTxID: metaTxHash })
+      result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxHash })
     }
 
     // "FAILED" is reserved for when the tx is invalid and never dispatched by remote relayer
@@ -69,7 +71,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     const coder = ethers.utils.defaultAbiCoder
     const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    const res = await this.chaindService.updateMetaTxnGasLimits({
+    const res = await this.service.updateMetaTxnGasLimits({
       walletAddress: addr,
       payload: encoded
     })
@@ -93,7 +95,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   ): Promise<Transaction[][]> {
     // chaind only supports refunds on a single token
     // TODO: Add compatiblity for different refund options
-    const tokenFee = await this.chaindService.tokenFee()
+    const tokenFee = await this.service.tokenFee()
 
     logger.info(`[rpc-relayer/gasRefundOptions] using token fee ${tokenFee}`)
 
@@ -112,7 +114,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     const coder = ethers.utils.defaultAbiCoder
     const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    const res = await this.chaindService.getMetaTxnNetworkFeeOptions({
+    const res = await this.service.getMetaTxnNetworkFeeOptions({
       walletAddress: addr,
       payload: encoded,
       signers: config.signers.length
@@ -145,7 +147,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   ): Promise<number> {
     const addr = addressOf(config, context)
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
-    const resp = await this.chaindService.getMetaTxnNonce({ walletContractAddress: addr })
+    const resp = await this.service.getMetaTxnNonce({ walletContractAddress: addr })
     const nonce = ethers.BigNumber.from(resp.nonce).toNumber()
     logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${addr} ${nonce} space: ${space}`)
     return nonce
@@ -160,7 +162,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
 
     const prep = await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
-    const result = this.chaindService.sendMetaTxn({
+    const result = this.service.sendMetaTxn({
       call: {
         contract: prep.to,
         input: prep.data

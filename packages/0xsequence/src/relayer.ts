@@ -1,5 +1,6 @@
 export * from '@0xsequence/relayer'
 
 export type {
-  Relayer
+  Relayer,
+  RpcRelayerProto
 } from '@0xsequence/relayer'
