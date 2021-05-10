@@ -1000,68 +1000,6 @@ describe('Wallet integration', function () {
       expect(totalCount).to.equal(0)
     })
 
-    it('Should re-authenticate and retry successfully if re-authentication succeeds', async () => {
-      const referenceSigner = new CountingSigner(ethers.Wallet.createRandom())
-
-      const session = await Session.open({
-        context,
-        networks: networksWithApi,
-        referenceSigner: await referenceSigner.getAddress(),
-        signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
-        metadata: {
-          name: 'Test'
-        }
-      })
-
-      await initialAuthToFinish(session)
-
-      const api = await session.getAPI(networksWithApi[0])
-
-      const okResponses = [false, true]
-      server.post('/rpc/ArcadeumAPI/FriendList').thenCallback(async () => {
-        return { statusCode: okResponses.shift() ? 200 : 401, body: JSON.stringify({}) }
-      })
-
-      totalCount = 0
-
-      await expect(api.friendList({ page: {} })).to.be.fulfilled
-
-      // one re-authentication since it failed, succeed on retry
-      expect(totalCount).to.equal(1)
-    })
-
-    it('Should re-authenticate only once if the request fails twice', async () => {
-      const referenceSigner = new CountingSigner(ethers.Wallet.createRandom())
-
-      const session = await Session.open({
-        context,
-        networks: networksWithApi,
-        referenceSigner: await referenceSigner.getAddress(),
-        signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
-        metadata: {
-          name: 'Test'
-        }
-      })
-
-      await initialAuthToFinish(session)
-
-      const api = await session.getAPI(networksWithApi[0])
-
-      const okResponses = [false, false]
-      server.post('/rpc/ArcadeumAPI/FriendList').thenCallback(async () => {
-        return { statusCode: okResponses.shift() ? 200 : 401, body: JSON.stringify({}) }
-      })
-
-      totalCount = 0
-
-      await expect(api.friendList({ page: {} })).to.be.rejected
-
-      // one re-authentication since it failed, fail on retry
-      expect(totalCount).to.equal(1)
-    })
-
     describe('With expiration', () => {
       let resetDateMock : Function | undefined
 

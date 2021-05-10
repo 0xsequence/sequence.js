@@ -116,17 +116,7 @@ export class Session {
       }
     }
 
-    return new ArcadeumAPIClient(url, jwtAuth, async () => {
-      this._jwts.delete(url)
-
-      const proofStringKey = this.getProofStringKey()
-      const proofString = this.proofStrings.get(proofStringKey)
-      if (proofString && !await this.isProofStringValid(await proofString.proofString)) {
-        this.proofStrings.delete(proofStringKey)
-      }
-
-      return (await this.getJWT(network, true)).token
-    })
+    return new ArcadeumAPIClient(url, jwtAuth)
   }
 
   async getAPI(net: NetworkConfig | number, tryAuth = true): Promise<ArcadeumAPIClient> {
@@ -137,17 +127,7 @@ export class Session {
 
     const jwtAuth = (await this.getJWT(network, tryAuth)).token
 
-    return new ArcadeumAPIClient(url, jwtAuth, async () => {
-      this._jwts.delete(url)
-
-      const proofStringKey = this.getProofStringKey()
-      const proofString = this.proofStrings.get(proofStringKey)
-      if (proofString && !await this.isProofStringValid(await proofString.proofString)) {
-        this.proofStrings.delete(proofStringKey)
-      }
-
-      return (await this.getJWT(network, true)).token
-    })
+    return new ArcadeumAPIClient(url, jwtAuth)
   }
 
   private async getJWT(network: NetworkConfig, tryAuth: boolean): Promise<SessionJWT> {
