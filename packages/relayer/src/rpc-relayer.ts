@@ -1,7 +1,15 @@
 import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
-import { Transaction, TransactionEncoded, readSequenceNonce, appendNonce, MetaTransactionsType, sequenceTxAbiEncode, SignedTransactions } from '@0xsequence/transactions'
+import {
+  Transaction,
+  TransactionEncoded,
+  readSequenceNonce,
+  appendNonce,
+  MetaTransactionsType,
+  sequenceTxAbiEncode,
+  SignedTransactions
+} from '@0xsequence/transactions'
 import { BaseRelayer } from './base-relayer'
 import { ChaindService } from '@0xsequence/chaind'
 import { Relayer } from '.'
@@ -13,21 +21,13 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly chaindService: ChaindService
   public waitForReceipt: boolean
 
-  constructor(
-    url: string,
-    bundleDeploy: boolean = true,
-    provider?: Provider,
-    waitForReceipt: boolean = true
-  ) {
+  constructor(url: string, bundleDeploy: boolean = true, provider?: Provider, waitForReceipt: boolean = true) {
     super(bundleDeploy, provider)
     this.chaindService = new ChaindService(url, fetchPonyfill().fetch)
     this.waitForReceipt = waitForReceipt
   }
 
-  async waitReceipt(
-    metaTxHash: string,
-    wait: number = 500
-  ) {
+  async waitReceipt(metaTxHash: string, wait: number = 500) {
     let result = await this.chaindService.getMetaTxnReceipt({ metaTxID: metaTxHash })
 
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
@@ -43,11 +43,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return result
   }
 
-  async estimateGasLimits(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<Transaction[]> {
+  async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[]> {
     logger.info(`[rpc-relayer/estimateGasLimits] estimate gas limits request ${JSON.stringify(transactions)}`)
 
     if (transactions.length == 0) {
@@ -81,16 +77,12 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
 
-  async gasRefundOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<Transaction[][]> {
+  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[][]> {
     // chaind only supports refunds on a single token
     // TODO: Add compatiblity for different refund options
     const tokenFee = await this.chaindService.tokenFee()
 
-    logger.info(`[rpc-relayer/gasRefundOptions] using token fee ${tokenFee}`)
+    logger.info(`[rpc-relayer/gasRefundOptions] using token fee ${JSON.stringify(tokenFee)}`)
 
     // No gas refund required
     if (!tokenFee.isFee || tokenFee.fee === ethers.constants.AddressZero) {
@@ -115,16 +107,20 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     let decoded: Transaction[][]
     if (prevNonce === undefined) {
-      decoded = res.options.map(option => coder.decode([MetaTransactionsType], option)[0].map((txn: TransactionEncoded) => ({
-        ...txn,
-        to: txn.target
-      })))
+      decoded = res.options.map(option =>
+        coder.decode([MetaTransactionsType], option)[0].map((txn: TransactionEncoded) => ({
+          ...txn,
+          to: txn.target
+        }))
+      )
     } else {
-      decoded = res.options.map(option => coder.decode([MetaTransactionsType], option)[0].map((txn: TransactionEncoded) => ({
-        ...txn,
-        to: txn.target,
-        nonce: prevNonce
-      })))
+      decoded = res.options.map(option =>
+        coder.decode([MetaTransactionsType], option)[0].map((txn: TransactionEncoded) => ({
+          ...txn,
+          to: txn.target,
+          nonce: prevNonce
+        }))
+      )
     }
 
     logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(decoded)}`)
@@ -132,12 +128,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return decoded
   }
 
-  async getNonce(
-    config: WalletConfig,
-    context: WalletContext,
-    space?: number,
-    blockTag?: BlockTag
-  ): Promise<number> {
+  async getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: BlockTag): Promise<number> {
     const addr = addressOf(config, context)
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
     const resp = await this.chaindService.getMetaTxnNonce({ walletContractAddress: addr })
@@ -154,8 +145,13 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       throw new Error('provider is not set')
     }
 
-    const prep = await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
-    const result = this.chaindService.sendMetaTxn({
+    const prep = await this.prepareTransactions(
+      signedTxs.config,
+      signedTxs.context,
+      signedTxs.signature,
+      ...signedTxs.transactions
+    )
+    const result = await this.chaindService.sendMetaTxn({
       call: {
         contract: prep.to,
         input: prep.data
@@ -165,7 +161,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(result)}`)
 
     const waitReceipt = async () => {
-      const hash = (await result).txnHash
+      const hash = result.txnHash
       const receipt = (await this.waitReceipt(hash)).receipt
       const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
@@ -186,8 +182,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     return {
       from: addressOf(signedTxs.config, signedTxs.context),
-      raw: (await result).toString(),
-      hash: (await result).txnHash,
+      raw: JSON.stringify(result),
+      hash: result.txnHash,
       waitForReceipt: waitReceipt,
       wait: async (confirmations?: number) => {
         const receipt = await waitReceipt()
@@ -218,7 +214,7 @@ type RelayerTxReceipt = {
     topics: string[]
     transactionHash: string
     transactionIndex: string
-  }[],
+  }[]
   logsBloom: string
   root: string
   status: string
