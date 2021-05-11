@@ -24,7 +24,7 @@ export function digestOfTransactions(...txs: Transaction[]): string {
 }
 
 export function subdigestOfTransactions(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {
-  return subDigestOf(address, chainId, digestOfTransactions(...txs))
+  return subDigestOf(address, chainId, digestOfTransactions(...txs)).replace(/^0x/, '') // TODO Backend should store the hash with 0x prefix
 }
 
 export async function toSequenceTransactions(
@@ -142,7 +142,7 @@ export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transactio
 export function makeExpirable(context: WalletContext, txs: Transaction[], expiration: BigNumberish): Transaction[] {
   const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
-  if (!context || !context.sequenceUtils) {
+  if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
   }
 
@@ -162,7 +162,7 @@ export function makeExpirable(context: WalletContext, txs: Transaction[], expira
 export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: NonceDependency): Transaction[] {
   const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
-  if (!context || !context.sequenceUtils) {
+  if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
   }
 
@@ -199,10 +199,7 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
   const bnonce = ethers.BigNumber.from(nonce)
   const shr = ethers.constants.Two.pow(ethers.BigNumber.from(96))
 
-  return [
-    bnonce.div(shr),
-    bnonce.mod(shr)
-  ]
+  return [bnonce.div(shr), bnonce.mod(shr)]
 }
 
 export function isSignedTransactions(cand: any): cand is SignedTransactions {
