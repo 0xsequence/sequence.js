@@ -22,7 +22,7 @@ export { proto }
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly service: proto.RelayerService
 
-  constructor(relayerSerivceUrl: string, bundleDeploy: boolean = true, provider?: Provider, waitForReceipt: boolean = true) {
+  constructor(relayerSerivceUrl: string, bundleDeploy: boolean = true, provider?: Provider) {
     super(bundleDeploy, provider)
     this.service = new proto.RelayerService(relayerSerivceUrl, fetchPonyfill().fetch)
   }
