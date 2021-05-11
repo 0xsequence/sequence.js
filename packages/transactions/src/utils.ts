@@ -23,8 +23,8 @@ export function digestOfTransactions(...txs: Transaction[]): string {
   return ethers.utils.keccak256(packMetaTransactionsData(...txs))
 }
 
-export function subdigestOfTransactions(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {
-  return subDigestOf(address, chainId, digestOfTransactions(...txs)).replace(/^0x/, '') // TODO Backend should store the hash with 0x prefix
+export function computeMetaTxnHash(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {
+  return subDigestOf(address, chainId, digestOfTransactions(...txs)).replace(/^0x/, '')
 }
 
 export async function toSequenceTransactions(
