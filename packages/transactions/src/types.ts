@@ -39,6 +39,7 @@ export interface NonceDependency {
 export type Transactionish = TransactionRequest | TransactionRequest[] | Transaction | Transaction[]
 
 export type SignedTransactions = {
+  digest: string,
   chainId: BigNumberish,
   config: WalletConfig,
   context: WalletContext,
