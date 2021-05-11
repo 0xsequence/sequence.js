@@ -1,5 +1,19 @@
 # 0xsequence
 
+## 0.17.0
+
+### Minor Changes
+
+- api: ArcadeumAPIClient no longer exposes jwtAuth
+- auth: piggyback on already pending JWT and signing requests
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.17.0
+  - @0xsequence/auth@0.17.0
+  - @0xsequence/provider@0.17.0
+
 ## 0.16.1
 
 ### Patch Changes

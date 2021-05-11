@@ -1,5 +1,12 @@
 # @0xsequence/provider
 
+## 0.17.0
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/auth@0.17.0
+
 ## 0.16.1
 
 ### Patch Changes
