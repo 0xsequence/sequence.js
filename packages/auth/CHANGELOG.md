@@ -1,5 +1,16 @@
 # @0xsequence/auth
 
+## 0.17.0
+
+### Minor Changes
+
+- piggyback on already pending JWT and signing requests
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.17.0
+
 ## 0.16.1
 
 ### Patch Changes

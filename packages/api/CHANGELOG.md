@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.17.0
+
+### Minor Changes
+
+- ArcadeumAPIClient no longer exposes jwtAuth
+
 ## 0.16.1
 
 ### Patch Changes
