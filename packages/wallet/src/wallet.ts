@@ -15,7 +15,6 @@ import { walletContracts } from '@0xsequence/abi'
 
 import {
   Transaction, Transactionish, TransactionRequest, NonceDependency,
-  encodeMetaTransactionsData,
   isSequenceTransaction,
   readSequenceNonce,
   appendNonce,
@@ -24,7 +23,8 @@ import {
   sequenceTxAbiEncode,
   makeExpirable,
   makeAfterNonce,
-  SignedTransactions
+  SignedTransactions,
+  digestOfTransactions
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -47,11 +47,11 @@ import {
   isDecodedFullSigner
 } from '@0xsequence/config'
 
-import { encodeTypedDataDigest } from '@0xsequence/utils'
+import { encodeTypedDataDigest, packMessageData, subDigestOf } from '@0xsequence/utils'
 
 import { RemoteSigner } from './remote-signers'
 
-import { packMessageData, resolveArrayProperties } from './utils'
+import { resolveArrayProperties } from './utils'
 
 import { isSequenceSigner, Signer } from './signer'
 import { fetchImageHash } from '.'
@@ -352,7 +352,7 @@ export class Wallet extends Signer {
     stx = appendNonce(stx, nonce)
 
     // Get transactions digest
-    const digest = ethers.utils.keccak256(encodeMetaTransactionsData(...stx))
+    const digest = digestOfTransactions(...stx)
 
     // Bundle with signature
     return {
@@ -399,12 +399,7 @@ export class Wallet extends Signer {
 
   async subDigest(digest: BytesLike, chainId?: ChainId): Promise<Uint8Array> {
     const solvedChainId = await this.getChainIdNumber(chainId)
-
-    return ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        packMessageData(this.address, solvedChainId, digest)
-      )
-    )
+    return ethers.utils.arrayify(subDigestOf(this.address, solvedChainId, digest))
   }
 
   // sign is a helper method to sign a payload with the wallet signers
