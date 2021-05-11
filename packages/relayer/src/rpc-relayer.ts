@@ -19,12 +19,10 @@ import { logger } from '@0xsequence/utils'
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly chaindService: ChaindService
-  public waitForReceipt: boolean
 
   constructor(url: string, bundleDeploy: boolean = true, provider?: Provider, waitForReceipt: boolean = true) {
     super(bundleDeploy, provider)
     this.chaindService = new ChaindService(url, fetchPonyfill().fetch)
-    this.waitForReceipt = waitForReceipt
   }
 
   async waitReceipt(metaTxHash: string, wait: number = 500) {
@@ -137,7 +135,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return nonce
   }
 
-  async relay(signedTxs: SignedTransactions): Promise<PendingTransactionResponse> {
+  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
     logger.info(`[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)}`)
 
     if (!this.provider) {
@@ -151,51 +149,28 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       signedTxs.signature,
       ...signedTxs.transactions
     )
-    const result = await this.chaindService.sendMetaTxn({
+    const metaTxn = await this.chaindService.sendMetaTxn({
       call: {
         contract: prep.to,
         input: prep.data
       }
     })
 
-    logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(result)}`)
+    logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
-    const waitReceipt = async () => {
-      const hash = result.txnHash
-      const receipt = (await this.waitReceipt(hash)).receipt
-      const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
-
-      return {
-        blockHash: txReceipt.blockHash,
-        blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
-        confirmations: 1,
-        from: addressOf(signedTxs.config, signedTxs.context),
-        hash: txReceipt.transactionHash,
-        raw: receipt.txnReceipt,
-        wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
-      } as TransactionResponse
-    }
-
-    if (this.waitForReceipt) {
-      return waitReceipt()
-    }
+    const { receipt } = await this.waitReceipt(metaTxn.txnHash)
+    const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
     return {
+      blockHash: txReceipt.blockHash,
+      blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
+      confirmations: 1,
       from: addressOf(signedTxs.config, signedTxs.context),
-      raw: JSON.stringify(result),
-      hash: result.txnHash,
-      waitForReceipt: waitReceipt,
-      wait: async (confirmations?: number) => {
-        const receipt = await waitReceipt()
-        logger.info(`[rpc-relayer/relay] got meta-transaction receipt ${JSON.stringify(receipt)}`)
-        return receipt.wait(confirmations)
-      }
-    } as PendingTransactionResponse
+      hash: txReceipt.transactionHash,
+      raw: receipt.txnReceipt,
+      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
+    } as TransactionResponse
   }
-}
-
-export type PendingTransactionResponse = TransactionResponse & {
-  waitForReceipt?: () => Promise<TransactionResponse>
 }
 
 type RelayerTxReceipt = {
