@@ -8,7 +8,8 @@ import {
   appendNonce,
   MetaTransactionsType,
   sequenceTxAbiEncode,
-  SignedTransactions
+  SignedTransactions,
+  subdigestOfTransactions
 } from '@0xsequence/transactions'
 import { BaseRelayer } from '../base-relayer'
 import { Relayer } from '..'
@@ -27,12 +28,25 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     this.service = new proto.RelayerService(relayerSerivceUrl, fetchPonyfill().fetch)
   }
 
-  async waitReceipt(metaTxHash: string, wait: number = 500) {
-    let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxHash })
+  async waitReceipt(metaTxId: string | SignedTransactions, wait: number = 500): Promise<proto.GetMetaTxnReceiptReturn> {
+    if (typeof metaTxId !== 'string') {
+      return this.waitReceipt(
+        subdigestOfTransactions(
+          addressOf(
+            metaTxId.config,
+            metaTxId.context
+          ),
+          metaTxId.chainId,
+          ...metaTxId.transactions
+        )
+      )
+    }
+
+    let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxId })
 
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
       await new Promise(r => setTimeout(r, wait))
-      result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxHash })
+      result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxId })
     }
 
     // "FAILED" is reserved for when the tx is invalid and never dispatched by remote relayer
@@ -160,14 +174,18 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
-    const { receipt } = await this.waitReceipt(metaTxn.txnHash)
+    return this.wait(signedTxs)
+  }
+
+  async wait(metaTxnId: string | SignedTransactions, wait: number = 500): Promise<TransactionResponse> {
+    const { receipt } = await this.waitReceipt(metaTxnId, wait)
     const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
     return {
       blockHash: txReceipt.blockHash,
       blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
       confirmations: 1,
-      from: addressOf(signedTxs.config, signedTxs.context),
+      from: typeof metaTxnId === 'string' ? undefined : addressOf(metaTxnId.config, metaTxnId.context),
       hash: txReceipt.transactionHash,
       raw: receipt.txnReceipt,
       wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
