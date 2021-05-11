@@ -3,9 +3,9 @@ import { ethers, Wallet as EOAWallet } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Wallet, DefaultProviderConfig, Web3Provider } from '@0xsequence/provider'
 import { sequenceContext, WalletContext, JsonRpcSender, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
-import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { isValidSignature, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
-import { configureLogger } from '@0xsequence/utils'
+import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
 
 configureLogger({ logLevel: 'DEBUG' })

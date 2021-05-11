@@ -2,10 +2,9 @@ import { ethers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
+import { packMessageData } from '@0xsequence/utils'
 import { isDecodedEOASigner, isDecodedFullSigner, decodeSignature, compareAddr, addressOf } from '@0xsequence/config'
 import { recoverConfigFromDigest } from './config'
-
-import { packMessageData } from './utils'
 
 export async function isValidSignature(
   address: string,

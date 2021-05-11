@@ -17,6 +17,7 @@
     "@0xsequence/abi": "^0.16.0",
     "@0xsequence/chaind": "^0.16.0",
     "@0xsequence/network": "^0.16.0",
+    "@0xsequence/utils": "^0.16.0",
     "@ethersproject/abi": "^5.0.13",
     "ethers": "^5.0.32"
   },

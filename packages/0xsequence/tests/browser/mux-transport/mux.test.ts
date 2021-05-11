@@ -7,10 +7,10 @@ import { ethers, Wallet as EOAWallet } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { Networks, WalletContext } from '@0xsequence/network'
-import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { configureLogger } from '@0xsequence/utils'
+import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
 
 configureLogger({ logLevel: 'DEBUG' })

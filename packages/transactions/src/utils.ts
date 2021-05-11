@@ -3,6 +3,7 @@ import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
+import { subDigestOf } from '@0xsequence/utils'
 
 export const MetaTransactionsType = `tuple(
   bool delegateCall,
@@ -13,9 +14,17 @@ export const MetaTransactionsType = `tuple(
   bytes data
 )[]`
 
-export function encodeMetaTransactionsData(...txs: Transaction[]): string {
+export function packMetaTransactionsData(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
+}
+
+export function digestOfTransactions(...txs: Transaction[]): string {
+  return ethers.utils.keccak256(packMetaTransactionsData(...txs))
+}
+
+export function subdigestOfTransactions(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {
+  return subDigestOf(address, chainId, digestOfTransactions(...txs))
 }
 
 export async function toSequenceTransactions(
