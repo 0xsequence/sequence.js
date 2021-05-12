@@ -194,8 +194,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
   protected open = async (intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
 
-    console.log('open call, with intent:', intent)
-
     // Prepare connect options from intent
     if (intent && intent.type === 'connect' && intent.options) {
       const connectOptions = intent.options
