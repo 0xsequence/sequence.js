@@ -50,12 +50,12 @@ export class MuxMessageProvider implements ProviderTransport {
     this.provider = undefined
   }
 
-  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.provider) {
-      this.provider.openWallet(path, intent, defaultNetworkId)
+      this.provider.openWallet(path, intent, networkId)
       return
     }
-    this.messageProviders.forEach(m => m.openWallet(path, intent, defaultNetworkId))
+    this.messageProviders.forEach(m => m.openWallet(path, intent, networkId))
   }
 
   closeWallet() {
@@ -140,16 +140,9 @@ export class MuxMessageProvider implements ProviderTransport {
     return Promise.race(this.messageProviders.map(p => p.waitUntilOpened()))
   }
 
-  waitUntilConnected = async (): Promise<WalletSession> => {
+  waitUntilConnected = async (): Promise<ConnectDetails> => {
     if (this.provider) {
       return this.provider.waitUntilConnected()
-    }
-    throw new Error('impossible state, wallet must be opened first')
-  }
-
-  waitUntilAuthorized = async(): Promise<ConnectDetails> => {
-    if(this.provider) {
-      return this.provider.waitUntilAuthorized()
     }
     throw new Error('impossible state, wallet must be opened first')
   }

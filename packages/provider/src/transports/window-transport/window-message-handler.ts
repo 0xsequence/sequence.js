@@ -4,18 +4,17 @@ import {
   ProviderMessageType,
   ProviderMessageResponse,
   InitState,
-  ConnectDetails
+  ConnectDetails,
+  OpenWalletIntent
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, sanitizeNumberString } from '@0xsequence/utils'
+import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/utils'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
-  protected parentOrigin?: string
-
+  
   private _isPopup: boolean = false
-
   private _initNonce: string
   private _postMessageQueue: Array<any> = []
 
@@ -33,42 +32,40 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // record open details (sessionId + default network) from the window url
     const location = new URL(window.location.href)
+    const params = new URLSearchParams(location.search)
 
-    // TODO: add typings
-    const params = Object.fromEntries(new URLSearchParams(location.search))
-
-    this._sessionId = sanitizeNumberString(params['sid'])
-
+    this._sessionId = sanitizeNumberString(params.get('sid')!)
     if (this._sessionId.length === 0) {
       logger.error('invalid sessionId')
       return
     }
 
-    const defaultNetwork = params['net']
+    const intent = base64DecodeObject<OpenWalletIntent>(params.get('intent')!)
+    const networkId = params.get('net')!
 
-    const toBool = (s: string) => s === 'true'
+    // const toBool = (s: string) => s === 'true'
 
-    if (toBool(params['requestAuthorization'])) {
-      this.walletRequestHandler
-        .promptConnect({
-          refresh: toBool(params['refresh']),
-          requestEmail: toBool(params['requestEmail']),
-          requestAuthorization: toBool(params['requestAuthorization']),
-          appName: params['appName'],
-          // TODO: use parentOrigin .. but its currently not being set before register()
-          // use origin from walletURL param for now.
-          // internal
-          origin: params['origin']
-        })
-        .then((connectDetails: ConnectDetails) => {
-          this.notifyAuthorized(connectDetails)
-        })
-        .catch(error => {
-          throw error
-        })
-    } else {
-      window.history.replaceState(params['jsonRpcRequest'] ? { jsonRpcRequest: true } : {}, document.title, location.pathname)
-    }
+    // if (toBool(params['requestAuthorization'])) {
+    //   this.walletRequestHandler
+    //     .promptConnect({
+    //       refresh: toBool(params['refresh']),
+    //       requestEmail: toBool(params['requestEmail']),
+    //       requestAuthorization: toBool(params['requestAuthorization']),
+    //       appName: params['appName'],
+    //       // TODO: use parentOrigin .. but its currently not being set before register()
+    //       // use origin from walletURL param for now.
+    //       // internal
+    //       origin: params['origin']
+    //     })
+    //     .then((connectDetails: ConnectDetails) => {
+    //       this.notifyAuthorized(connectDetails)
+    //     })
+    //     .catch(error => {
+    //       throw error
+    //     })
+    // } else {
+    //   window.history.replaceState(params['jsonRpcRequest'] ? { jsonRpcRequest: true } : {}, document.title, location.pathname)
+    // }
 
     // record parent window instance for communication
     this.parentWindow = parent.window.opener
@@ -77,18 +74,41 @@ export class WindowMessageHandler extends BaseWalletTransport {
     window.addEventListener('message', this.onWindowEvent, false)
     this._registered = true
 
-    // send open event to the app which opened us
-    this.open(defaultNetwork)
-      .then(opened => {
-        if (!opened) {
-          logger.error(`failed to open to network ${defaultNetwork}`)
+    // TODO: perhaps we can call .initOpen().then(etc.)
+    // where we can do the exchange, it should work..
+
+    // this.init().then(() =>
+      this.open(intent, networkId)
+        .then(opened => {
+          if (!opened) {
+            logger.error(`failed to open to network ${networkId}`)
+            window.close()
+          }
+        })
+        // TODO: we might want open() to handle this reporting on its own to message back..? hmpf..
+        .catch(err => {
+          logger.error(`failed to open to network ${networkId}, due to: ${err}`)
           window.close()
-        }
-      })
-      .catch(err => {
-        logger.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
-        window.close()
-      })
+        })
+    // ).catch(err => {
+    //   logger.error(`initOpen failed, due to ${err}`)
+    //   window.close()
+    // })
+
+
+    // send open event to the app which opened us
+    // this.open(intent, networkId)
+    //   .then(opened => {
+    //     if (!opened) {
+    //       logger.error(`failed to open to network ${networkId}`)
+    //       window.close()
+    //     }
+    //   })
+    //   // TODO: we might want open() to handle this reporting on its own to message back..? hmpf..
+    //   .catch(err => {
+    //     logger.error(`failed to open to network ${networkId}, due to: ${err}`)
+    //     window.close()
+    //   })
   }
 
   unregister() {
@@ -209,5 +229,28 @@ export class WindowMessageHandler extends BaseWalletTransport {
     } else {
       logger.error('unable to postMessage as parentOrigin is invalid')
     }
+  }
+
+  private init(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this._initNonce = `${performance.now()}`
+      this.parentWindow.postMessage(
+        JSON.stringify({
+          idx: -1,
+          type: ProviderMessageType.INIT,
+          data: { nonce: this._initNonce }
+        } as ProviderMessage<any>),
+        '*'
+      )
+      this._init = InitState.SENT_NONCE
+
+      // resolve()
+
+      // TODO: we could specify a timeout, etc..
+      // we can set _initResolve = resolve
+      // and then above call this._initResolve()
+
+      // or up to timeout, we'll reject with timeout etc.
+    })
   }
 }

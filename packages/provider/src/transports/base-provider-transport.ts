@@ -8,8 +8,6 @@ import {
   ProviderMessageEvent,
   ProviderMessageResponse,
   ProviderMessageResponseCallback,
-  ProviderMessageTransport,
-  WalletSession,
   OpenState,
   OpenWalletIntent,
   ConnectDetails
@@ -36,6 +34,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected accountPayload: string | undefined
   protected networksPayload: NetworkConfig[] | undefined
   protected walletContextPayload: WalletContext | undefined
+  protected connectDetailsPayload: ConnectDetails | undefined
 
   protected _sessionId?: string
   protected _registered: boolean
@@ -57,7 +56,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  openWallet(path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number) {
+  openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number) {
     throw new Error('abstract method')
   }
 
@@ -69,6 +68,9 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     return this.registered && this.state === OpenState.OPENED
   }
 
+  // TODO: review, does this still work..? 
+  // I don't think so,... we need to check this._connectDetails
+  // but we dont persist this at this level.. hmpf..?
   isConnected(): boolean {
     // if we're registered, and we have the account details, then we are connected
     return (
@@ -91,7 +93,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // open/focus the wallet.
     // automatically open the wallet when a provider request makes it here.
-    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method })
+    // TODO: what if we're not signed in.. or session had expired..? etc.
+    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method }, chainId)
 
     // send message request, await, and then execute callback after receiving the response
     try {
@@ -156,11 +159,6 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       return
     }
 
-    if (message.type === ProviderMessageType.AUTHORIZED) {
-      this.events.emit('authorized', message.data)
-      return
-    }
-
     // MESSAGE resposne
     if (message.type === ProviderMessageType.MESSAGE) {
       // Require user confirmation, bring up wallet to prompt for input then close
@@ -171,7 +169,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
           if (this.responseCallbacks.size === 0) {
             this.closeWallet()
           }
-        }, 1500) // TODO: be smarter about timer as we're processing the response callbacks..
+        }, 500) // TODO: be smarter about timer as we're processing the response callbacks..
       }
 
       if (!responseCallback) {
@@ -225,6 +223,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       if (this.state !== OpenState.CLOSED) {
         this.close()
       }
+    }
+
+    // NOTIFY CONNECT -- when wallet instructs we've connected
+    if (message.type === ProviderMessageType.CONNECT) {
+      this.connectDetailsPayload = message.data
+      this.events.emit('connect', this.connectDetailsPayload)
     }
 
     // NOTIFY DISCONNECT -- when wallet instructs to disconnect
@@ -309,76 +313,28 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     ])
   }
 
-  waitUntilConnected = async (): Promise<WalletSession> => {
+  waitUntilConnected = async (): Promise<ConnectDetails> => {
     await this.waitUntilOpened()
 
-    const connect = Promise.all([
-      new Promise<string | undefined>(resolve => {
-        if (this.accountPayload) {
-          resolve(this.accountPayload)
-          return
-        }
-        this.events.once('accountsChanged', accounts => {
-          if (accounts && accounts.length > 0) {
-            // account logged in
-            resolve(accounts[0])
-          } else {
-            // account logged out
-            resolve(undefined)
-          }
-        })
-      }),
-      new Promise<NetworkConfig[]>(resolve => {
-        if (this.networksPayload) {
-          resolve(this.networksPayload)
-          return
-        }
-        this.events.once('networks', networks => {
-          resolve(networks)
-        })
-      }),
-      new Promise<WalletContext>(resolve => {
-        if (this.walletContextPayload) {
-          resolve(this.walletContextPayload)
-          return
-        }
-        this.events.once('walletContext', walletContext => {
-          resolve(walletContext)
-        })
+    const connect = new Promise<ConnectDetails>(resolve => {
+      if (this.connectDetailsPayload) {
+        resolve(this.connectDetailsPayload)
+        return
+      }
+      
+      this.events.once('connect', connectDetails => {
+        this.connectDetailsPayload = connectDetails
+        resolve(connectDetails)
       })
-    ]).then(values => {
-      const [accountAddress, networks, walletContext] = values
-      return { accountAddress, networks, walletContext }
     })
 
-    const closeWallet = new Promise<WalletSession>((_, reject) => {
+    const closeWallet = new Promise<ConnectDetails>((_, reject) => {
       this.events.once('close', () => {
         reject(new Error('user closed the wallet'))
       })
     })
 
-    return Promise.race<WalletSession>([connect, closeWallet])
-  }
-
-  waitUntilAuthorized = async (): Promise<ConnectDetails> => {
-    await this.waitUntilConnected()
-
-    return Promise.race([
-      new Promise<ConnectDetails>((_, reject) => {
-        this.events.once('close', () => {
-          reject(new Error('user closed the wallet'))
-        })
-      }),
-      new Promise<ConnectDetails>(resolve => {
-        // if (this.isAuthorized()) {
-        //   resolve(...) // cached connect details?
-        //   return
-        // }
-        this.events.once('authorized', (connectDetails: ConnectDetails) => {
-          resolve(connectDetails)
-        })
-      })
-    ])
+    return Promise.race<ConnectDetails>([ connect, closeWallet ])
   }
 
   protected open = async (): Promise<boolean> => {
@@ -398,6 +354,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   }
 
   protected close() {
+    if (this.state === OpenState.CLOSED) return
+    
     this.state = OpenState.CLOSED
     this.confirmationOnly = false
     this._sessionId = undefined
@@ -413,6 +371,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     this.accountPayload = undefined
     this.networksPayload = undefined
     this.walletContextPayload = undefined
+    this.connectDetailsPayload = undefined
 
     this.events.emit('close')
   }

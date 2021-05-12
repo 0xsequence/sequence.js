@@ -4,7 +4,7 @@ import {
   ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
   WalletMessageEvent, ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
-  MessageToSign, ProviderRpcError, ProviderConnectInfo, ConnectOptions, ConnectDetails, PromptConnectOptions
+  MessageToSign, ProviderRpcError, ConnectOptions, ConnectDetails, PromptConnectDetails, WalletSession
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -15,13 +15,17 @@ import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcRespons
 import { Signer, Account } from '@0xsequence/wallet'
 import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 
+import { signAuthorization } from '@0xsequence/auth'
+
 import { logger, TypedData } from '@0xsequence/utils'
+
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer | null
   private prompter: WalletUserPrompter | null
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
+  private _connectOptions?: ConnectOptions
   private _defaultNetworkId?: string | number
   private _chainId?: number
 
@@ -32,13 +36,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.prompter = prompter
     this.mainnetNetworks = mainnetNetworks
     this.testnetNetworks = testnetNetworks
-
-    // if (!signer.provider) {
-    //   throw new Error('wallet.provider is undefined')
-    // }
   }
 
-  async connect(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = []) {
+  async signIn(signer: Signer | null, mainnetNetworks: Networks = [], testnetNetworks: Networks = [], newConnect = false) {
     this.signer = signer
 
     if (mainnetNetworks && mainnetNetworks.length > 0) {
@@ -48,13 +48,88 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       this.testnetNetworks = testnetNetworks
     }
 
+    // TODO: if mainnetNetworks or testnetNetworks is empty, lets throw..?
+
     if (this._defaultNetworkId) {
       if (!(await this.setDefaultNetwork(this._defaultNetworkId, false))) {
         throw new Error(`WalletRequestHandler setup unable to set defaultNetworkId ${this._defaultNetworkId}`)
       }
     }
 
-    this.notifyConnect(await this.signer!.getAddress(), await this.getChainId())
+    // Optionally, connect the dapp and wallet. In case connectOptions are provided, we will perform
+    // necessary auth request, and then notify the dapp of the 'connect' details.
+    //
+    // NOTE: if a user is signing into a dapp from a fresh state, and and auth request is made
+    // we don't trigger the promptConnect flow, as we consider the user just authenticated
+    // for this dapp, so its safe to authorize in the connect() method without the prompt.
+    //
+    // NOTE: signIn can optionally connect and notify dapp at this time for new signIn flows
+    if (newConnect) {
+      const connectOptions = this._connectOptions
+
+      const connectDetails = await this.connect(connectOptions)
+      this.notifyConnect(connectDetails)
+
+      if (!connectOptions || connectOptions.keepWalletOpened !== true) {
+        this.notifyClose()
+      }
+    }
+  }
+
+  async connect(options?: ConnectOptions): Promise<ConnectDetails> {
+    if (!this.signer) {
+      // throw new Error('unable to connect without signed in account')
+      return {
+        connected: false,
+        chainId: '0x0',
+        error: 'unable to connect without signed in account',
+      }
+    }
+
+    const connectDetails: ConnectDetails = {
+      connected: true,
+      chainId: ethers.utils.hexlify(await this.getChainId())
+    }
+
+    if (options && options.authorize) {
+      // Perform ethauth eip712 request and construct the ConnectDetails response
+      // including the auth proof
+
+      // TODO: .. auth options are super whack......
+      // TODO: can we get 'origin' from wallet-request-handler, or something..?
+      // TODO: appName is included in options.. okay
+      // TODO: expiration, lets just set constant for now..
+
+      // TODO: try { .. } and return error: '' in ConnectDetails .....
+      connectDetails.proof = await signAuthorization(this.signer, options)
+    }
+
+    // Build session response for connect details
+    connectDetails.session = await this.walletSession()
+
+    return connectDetails
+  }
+
+  promptConnect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+    if (!options && !this._connectOptions) {
+      // this is an unexpected state and should not happen
+      throw new Error('prompter connect options are empty')
+    }
+
+    // TODO: maybe if process.env.TEST_MODE === 'true' and prompter === null
+    // then we just auto-respond to connect..? yes
+    if (!this.prompter) { // TODO: && process.env.TEST_MODE !== 'true'
+      throw new Error('prompter is undefined, unable to promptConnect')
+    }
+
+    const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions)
+
+    const connectDetails: ConnectDetails = promptConnectDetails
+    if (!connectDetails.session) {
+      connectDetails.session = await this.walletSession()
+    }
+
+    return promptConnectDetails
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -74,13 +149,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
       }, message.chainId)
     })
-  }
-
-  promptConnect = (options?: PromptConnectOptions): Promise<ConnectDetails> => {
-    if(!this.prompter){
-      throw new Error('prompter is undefined, unable to promptConnect')
-    }
-    return this.prompter.promptConnect(options)
   }
 
   // sendAsync implements the JsonRpcHandler interface for sending JsonRpcRequests to the wallet
@@ -141,7 +209,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           let sig = ''
           // TODO:
-          // if (process.env.DEBUG_MODE === 'true' && this.prompter === null) {
+          // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
@@ -451,6 +519,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
+  get connectOptions(): ConnectOptions | undefined {
+    return this._connectOptions
+  }
+
+  setConnectOptions(options: ConnectOptions | undefined) {
+    this._connectOptions = options
+  }
+
+  get defaultNetworkId(): string | number | undefined {
+    return this._defaultNetworkId
+  }
+
   async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<number | undefined> {
     if (!chainId) return undefined
     this._defaultNetworkId = chainId
@@ -466,10 +546,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     } else {
       return undefined
     }
-  }
-
-  get defaultNetworkId(): string | number | undefined {
-    return this._defaultNetworkId
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
@@ -493,18 +569,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  notifyConnect(accountAddress: string, chainId: number) {
-    if (!accountAddress || accountAddress.length === 0) {
-      this.events.emit('accountsChanged', [])
-    } else {
-      this.events.emit('accountsChanged', [accountAddress])
+  async walletSession(): Promise<WalletSession> {
+    if (!this.signer) {
+      throw new Error('signer is not set, session is unavailable')
     }
-    this.notifyNetworks()
-    this.notifyWalletContext()
+    return {
+      walletContext: await this.signer.getWalletContext(),
+      accountAddress: await this.signer.getAddress(),
+      networks: await this.getNetworks(true)
+    }
+  }
 
-    this.events.emit('connect', {
-      chainId: `${chainId}`
-    } as ProviderConnectInfo)
+  notifyConnect(connectDetails: ConnectDetails) {
+    this.events.emit('connect', connectDetails)
   }
 
   notifyDisconnect() {
@@ -532,6 +609,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.events.emit('walletContext', walletContext)
   }
 
+  notifyClose(error?: string) {
+    this.events.emit('close', error)
+  }
+
+  isSignedIn(): boolean {
+    return !!this.signer
+  }
+
   getSigner(): Signer | null {
     return this.signer
   }
@@ -542,7 +627,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
-  promptConnect(options?: PromptConnectOptions): Promise<ConnectDetails>
+  promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>

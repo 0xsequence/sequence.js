@@ -2,13 +2,13 @@ import { ethers } from 'ethers'
 import {
   WalletTransport, ProviderMessage, ProviderMessageRequest,
   ProviderMessageType, ProviderMessageResponse, ProviderMessageTransport,
-  ProviderConnectInfo, ProviderRpcError, InitState, ConnectDetails
+  ProviderRpcError, InitState, ConnectDetails, OpenWalletIntent
 } from '../types'
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
-import { logger } from '@0xsequence/utils'
+import { logger, sanitizeAlphanumeric, sanitizeHost } from '@0xsequence/utils'
 
 export abstract class BaseWalletTransport implements WalletTransport {
 
@@ -17,14 +17,18 @@ export abstract class BaseWalletTransport implements WalletTransport {
   protected _registered: boolean
   protected _init: InitState
 
+  // parentOrigin identifies the dapp's origin which opened the app. A transport
+  // will auto-detect and set this value if it can.
+  protected parentOrigin?: string
+
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
     this._init = InitState.NIL
 
-    this.walletRequestHandler.on('connect', (connectInfo: any) => {
+    this.walletRequestHandler.on('connect', (connectDetails: ConnectDetails) => {
       if (!this.registered) return
       // means user has logged in and wallet is connected to the app
-      this.notifyConnect(connectInfo)
+      this.notifyConnect(connectDetails)
     })
 
     this.walletRequestHandler.on('disconnect', (error?: ProviderRpcError) => {
@@ -52,6 +56,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
       if (!this.registered || !walletContext) return
       this.notifyWalletContext(walletContext)
     })
+
+    this.walletRequestHandler.on('close', (error?: string) => {
+      if (!this.registered) return
+      this.notifyClose(error)
+    })
   }
 
   get registered(): boolean {
@@ -77,8 +86,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
       case ProviderMessageType.OPEN: {
         if (this._init !== InitState.OK) return
-        const { defaultNetworkId } = request.data
-        this.open(defaultNetworkId)
+        const { intent, networkId } = request.data
+        await this.open(intent, networkId)
         return
       }
 
@@ -126,32 +135,20 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  notifyAuthorized(connectDetails: ConnectDetails) {
-    this.sendMessage({
-      idx: -1,
-      type: ProviderMessageType.AUTHORIZED,
-      data: {
-        ...connectDetails
-      }
-    })
-  }
-
-  notifyClose() {
+  notifyClose(error?: string) {
+    const data = error ? { error } : null
     this.sendMessage({
       idx: -1,
       type: ProviderMessageType.CLOSE,
-      data: null
+      data
     })
   }
 
-  notifyConnect(connectInfo: ProviderConnectInfo & { error?: string }) {
-    const { chainId, error } = connectInfo
+  notifyConnect(connectDetails: ConnectDetails) {
     this.sendMessage({
       idx: -1,
       type: ProviderMessageType.CONNECT,
-      data: {
-        chainId, error
-      }
+      data: connectDetails
     })
   }
 
@@ -195,63 +192,121 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  protected open = async (defaultNetworkId?: string | number): Promise<boolean> => {
-    let loggedIn = false
-    const accountAddress = await this.walletRequestHandler.getAddress()
-    if (accountAddress && accountAddress.startsWith('0x') && accountAddress.length === 42) {
-      loggedIn = true
+  protected open = async (intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
+
+    console.log('open call, with intent:', intent)
+
+    // Prepare connect options from intent
+    if (intent && intent.type === 'connect' && intent.options) {
+      const connectOptions = intent.options
+
+      // console.log('.weeeeeeeeeeee......! parentorigin', this.parentOrigin)
+      // console.log('origin from options..,', connectOptions.origin)
+
+      // Sanity/integrity check the intent payload
+      if (this.parentOrigin && connectOptions.origin) {
+        if (connectOptions.origin !== this.parentOrigin) {
+          throw new Error('origin is invalid')
+        } else {
+          // set connectOptions origin to the parentOrigin determined by the transport
+          connectOptions.origin = this.parentOrigin
+        }
+      } else if (!this.parentOrigin && connectOptions.origin) {
+        connectOptions.origin = sanitizeHost(connectOptions.origin)
+      }
+      if (connectOptions.appName) {
+        connectOptions.appName = sanitizeAlphanumeric(connectOptions.appName)
+      }
+
+      // Set connect options on the walletRequestHandler as our primary
+      // wallet controller
+      this.walletRequestHandler.setConnectOptions(connectOptions)
+      if (connectOptions.networkId) {
+        networkId = connectOptions.networkId
+      }
+
+    } else {
+      this.walletRequestHandler.setConnectOptions(undefined)
     }
 
-    if (!loggedIn) {
-      // open wallet without a specific connected chainId, as the user is not logged in
+    // Notify open and proceed to prompt for connection if intended
+    if (!this.walletRequestHandler.isSignedIn()) {
+
+      // open wallet without a specific connected chainId, as the user is not signed in
       this.notifyOpen({
         sessionId: this._sessionId
       })
-      // this.notifyAccountsChanged([])
       return true
-    }
 
-    // account is logged in, lets return chainId information
-    let chainId: number | undefined = undefined
-    try {
-      if (defaultNetworkId) {
-        chainId = await this.walletRequestHandler.setDefaultNetwork(defaultNetworkId, false)
-      } else {
-        chainId = await this.walletRequestHandler.getChainId()
+    } else {
+
+      // Set default network, in case of error chainId will be undefined or 0
+      let chainId: number | undefined = undefined
+      try {
+        if (networkId) {
+          chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
+        } else {
+          chainId = await this.walletRequestHandler.getChainId()
+        }
+      } catch (err) {
       }
-    } catch (err) {
-    }
 
-    // failed to set default network or open
-    if (!chainId || chainId <= 0) {
+      // Failed to set default network on open -- quit + close
+      if (!chainId || chainId <= 0) {
+        this.notifyOpen({
+          sessionId: this._sessionId,
+          error: `failed to open wallet on network ${networkId}`
+        })
+        return false
+      }
+
+      // successfully opened wallet to a network
       this.notifyOpen({
         sessionId: this._sessionId,
-        error: `failed to open wallet on network ${defaultNetworkId}`
+        chainId: `${chainId}`
       })
-      return false
+
+      // prompt user with a connect request. the options will be used as previously set above.
+      // upon success, the walletRequestHandler will notify the dapp with the ConnectDetails.
+      // upon cancellation by user, the walletRequestHandler will throw an error
+
+      // TODO: keep track of 'connected' .. so we don't re-ask, but maybe its okay if dapp calls .connect()?
+
+
+      // TODO: upon error, we should be notifyConnect() with error that its been rejected..
+      // TODO: should we notify right from promptCOnnect()...? I don't think so..
+      // lets notify here instead......
+      // TODO: ........ try { ....... } catch ........ ....? return notifyConnect(err..)
+
+      if (intent && intent.type === 'connect') {
+        const connectDetails = await this.walletRequestHandler.promptConnect()
+        this.walletRequestHandler.notifyConnect(connectDetails)
+
+        // TODO: if !keepWalletOpened(), then, call closeWallet()
+        // we auto-close then..?
+        if (!intent.options || intent.options.keepWalletOpened !== true) {
+          this.notifyClose()
+        }
+      }
     }
 
-    // successfully opened wallet to the default network
-    this.notifyOpen({
-      chainId: `${chainId}`,
-      sessionId: this._sessionId
-    })
 
-    // notify wallet context each time wallet is opened, to ensure latest
-    // context is always provided
-    await this.walletRequestHandler.notifyWalletContext()
-  
-    // notify networks
-    await this.walletRequestHandler.notifyNetworks()
+    // Notify state on open, in cases when we're not connecting to the wallet
+    // for the first time
+    if (!intent || intent.type !== 'connect') {
 
-    // notify account address
-    this.notifyAccountsChanged([accountAddress])
+      // notify wallet context each time wallet is opened, to ensure latest
+      // context is always provided
+      await this.walletRequestHandler.notifyWalletContext()
+    
+      // notify networks
+      // await this.walletRequestHandler.notifyNetworks()
 
-    // notify connect
-    // NOTE: we don't send 'connect' event to app from here, as it's handled
-    // by the WalletRequestHandler as it may occur outside of the open() call in
-    // certain cases (ie. wallet opens which isnt logged in, then signs in after)
- 
+      // notify account address
+      // this.notifyAccountsChanged([accountAddress])
+
+    }
+    
     return true
   }
 }

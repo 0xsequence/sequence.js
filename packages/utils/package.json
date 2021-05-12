@@ -9,13 +9,15 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "echo",
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ethersproject/abstract-signer": "5.0.14",
     "@ethersproject/properties": "^5.0.9",
-    "ethers": "^5.0.32"
+    "ethers": "^5.0.32",
+    "js-base64": "^3.6.0"
   },
   "peerDependencies": {},
   "devDependencies": {},

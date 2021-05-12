@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { ETHAuthProof } from '@0xsequence/provider'
 import { DEFAULT_SESSION_EXPIRATION } from './session'
-import { Account } from '@0xsequence/wallet'
+import { Signer } from '@0xsequence/wallet'
 
 export interface AuthorizationOptions {
   originHost?: string
@@ -10,26 +10,32 @@ export interface AuthorizationOptions {
   expiration?: number
 }
 
-export const requestAuthorization = async (wallet: Account, options?: AuthorizationOptions): Promise<ETHAuthProof> => {
-  const chainId = await wallet.getChainId()
+export const signAuthorization = async (signer: Signer, options?: AuthorizationOptions): Promise<ETHAuthProof> => {
+  const chainId = await signer.getChainId()
 
-  const address = ethers.utils.getAddress(await wallet.getAddress())
+  const address = ethers.utils.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw EmptyAccountError
   }
 
-  const expiry = options?.expiration ? Math.max(options.expiration, 120) : DEFAULT_SESSION_EXPIRATION
+  const expiry = options?.expiration ? Math.max(options.expiration, 200) : DEFAULT_SESSION_EXPIRATION
 
   const proof = new Proof()
   proof.address = address
+
+  // TODO:
+  // 1.) dont think window.location.origin is a good idea..... lets remove that..
+  // 2.) app name 'unknown', seems wrong too.
+  // .. we could make these both required..? .. or neither required..?
   proof.claims.ogn = options?.originHost || window.location.origin
   proof.claims.app = options?.appName || 'unknown'
+
   proof.setIssuedAtNow()
   proof.setExpiryIn(expiry)
 
   const typedData = proof.messageTypedData()
 
-  proof.signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
+  proof.signature = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
 
   const ethAuth = new ETHAuth()
 

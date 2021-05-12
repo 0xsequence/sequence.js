@@ -48,12 +48,12 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.port.handleMessage = undefined
   }
 
-  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.state === OpenState.CLOSED) {
       this.state = OpenState.OPENING
       this.sendMessage({
         idx: -1, type: ProviderMessageType.OPEN, data: {
-          path, intent, defaultNetworkId
+          path, intent, networkId
         }
       })
     }

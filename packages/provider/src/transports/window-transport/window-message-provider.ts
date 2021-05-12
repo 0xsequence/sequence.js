@@ -1,6 +1,6 @@
 import { OpenWalletIntent, ProviderMessage, InitState, ProviderMessageType } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
-import { logger } from '@0xsequence/utils'
+import { logger, base64EncodeObject } from '@0xsequence/utils'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider | undefined
@@ -33,7 +33,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
           clearInterval(interval)
           this.close()
         }
-      }, 1250)
+      }, 500)
     })
 
     // close clean up
@@ -61,20 +61,11 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this.events.removeAllListeners()
   }
 
-  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.walletWindow && this.isOpened()) {
       // TODO: update the location of window to path
       this.walletWindow.focus()
       return
-    }
-
-    // Set session and network id on class instance walletURL
-    this._init = InitState.NIL
-    this._sessionId = `${performance.now()}`
-    this.walletURL.searchParams.set('sid', this._sessionId)
-
-    if (defaultNetworkId) {
-      this.walletURL.searchParams.set('net', `${defaultNetworkId}`)
     }
 
     // Instantiate new walletURL for this call 
@@ -83,20 +74,16 @@ export class WindowMessageProvider extends BaseProviderTransport {
       walletURL.pathname = path.toLowerCase()
     }
 
-    // set connect options
-    if (intent?.type === 'connect' && !!intent.options) {
-      for (const [option, val] of Object.entries(intent.options)) {
-        walletURL.searchParams.set(option, val)
-      }
+    // Set session, intent and network id on walletURL
+    this._init = InitState.NIL
+    this._sessionId = `${performance.now()}`
+    walletURL.searchParams.set('sid', this._sessionId)
+    if (intent) {
+      walletURL.searchParams.set('intent', base64EncodeObject(intent))
     }
-
-    // set intent of wallet opening due to jsonRpcRequest send by provider
-    if (intent?.type === 'jsonRpcRequest') {
-      walletURL.searchParams.set('jsonRpcRequest', intent.method)
+    if (networkId) {
+      walletURL.searchParams.set('net', `${networkId}`)
     }
-
-    // TODO: get parent window origin from transport message events instead
-    walletURL.searchParams.set('origin', window.location.origin)
 
     // Open popup window on center of the app window
     const windowSize = [450, 700]
@@ -166,6 +153,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     // window init
     if (this._init !== InitState.OK) {
       if (message.type === ProviderMessageType.INIT) {
+        logger.debug('WindowMessageProvider, received INIT message', message)
         const { nonce } = message.data as { nonce: string }
         if (!nonce || nonce.length === 0) {
           logger.error('invalid init nonce')

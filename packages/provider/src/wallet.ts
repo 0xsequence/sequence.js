@@ -13,9 +13,8 @@ import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 
 export interface WalletProvider {
-  // connect(options?: ConnectOptions): Promise<ConnectDetails>
-  // authorize(options?: ConnectOptions): Promise<ConnectDetails>
   connect(options?: ConnectOptions): Promise<ConnectDetails>
+  // authorize(options?: ConnectOptions): Promise<ConnectDetails>
   disconnect(): void
 
   isOpened(): boolean
@@ -27,7 +26,7 @@ export interface WalletProvider {
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
 
-  openWallet(path?: string, intent?: OpenWalletIntent): Promise<boolean>
+  openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
 
   getProvider(chainId?: ChainId): Web3Provider | undefined
@@ -183,28 +182,30 @@ export class Wallet implements WalletProvider {
     if (options?.refresh === true) {
       this.disconnect()
     }
-    if (this.isConnected() && !options?.requestAuthorization && !options?.requestEmail) {
+    if (this.isConnected() && !!this.session && !options?.authorize && !options?.askForEmail) {
       return {
-        success: this.isConnected()
+        connected: true,
+        session: this.session,
+        chainId: ethers.utils.hexlify(await this.getChainId())
       }
     }
 
     await this.openWallet(undefined, { type: 'connect', options })
-    const sessionPayload = await this.transport.messageProvider!.waitUntilConnected()
-    this.useSession(sessionPayload, true)
+    const connectDetails = await this.transport.messageProvider!.waitUntilConnected()
 
-    if(options?.requestAuthorization){
-      const connectDetails = await this.transport.messageProvider!.waitUntilAuthorized()
-      return connectDetails
+    if (connectDetails.connected) {
+      if (!!connectDetails.session) {
+        this.useSession(connectDetails.session, true)
+      } else {
+        throw new Error('impossible state, connect response is missing session')
+      }
     }
 
-    return {
-      success: this.isConnected()
-    }
+    return connectDetails
   }
 
   authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
-    return this.connect({ ...options, requestAuthorization: true })
+    return this.connect({ ...options, authorize: true })
   }
 
   disconnect(): void {
@@ -287,12 +288,12 @@ export class Wallet implements WalletProvider {
     throw new Error('expecting first or second network in list to be the auth chain')
   }
 
-  openWallet = async (path?: string, intent?: OpenWalletIntent): Promise<boolean> => {
+  openWallet = async (path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
     if (intent?.type !== 'connect' && !this.isConnected()) {
       throw new Error('connect first')
     }
     
-    this.transport.messageProvider!.openWallet(path, intent, this.config.defaultNetworkId)
+    this.transport.messageProvider!.openWallet(path, intent, networkId || this.config.defaultNetworkId)
     await this.transport.messageProvider!.waitUntilOpened()
 
     return true
@@ -516,6 +517,9 @@ export interface ProviderConfig {
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
 
+  // Sequence Wallet Session URL, default: https://session.sequence.app
+  // walletSessionURL: string
+
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list supplied from the wallet upon login,
   // and settings here take precedence such as overriding a relayer setting, or rpcUrl.
@@ -550,7 +554,6 @@ export interface ProviderConfig {
   //
   // NOTE: do not use this option unless you know what you're doing
   walletContext?: WalletContext
-
 }
 
 export const DefaultProviderConfig: ProviderConfig = {
