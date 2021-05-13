@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3'
-import { ProviderMessage, ProviderMessageTransport, ProviderMessageEvent } from '../../types'
+import { ProviderMessage, ProviderMessageTransport } from '../../types'
 
 export class ProxyMessageChannel {
   app: ProxyMessageChannelPort

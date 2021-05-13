@@ -5,40 +5,42 @@ import { DEFAULT_SESSION_EXPIRATION } from './session'
 import { Signer } from '@0xsequence/wallet'
 
 export interface AuthorizationOptions {
-  originHost?: string
-  appName?: string
-  expiration?: number
+  // app name string, ie 'Skyweaver'
+  app?: string
+
+  // origin hostname of encoded in the message, ie. 'play.skyweaver.net'
+  origin?: string
+
+  // expiry in seconds encoded in the message
+  expiry?: number
 }
 
-export const signAuthorization = async (signer: Signer, options?: AuthorizationOptions): Promise<ETHAuthProof> => {
+// signAuthorization will perform an EIP712 typed-data message signing of ETHAuth domain via the provided
+// Signer and authorization options.
+export const signAuthorization = async (signer: Signer, options: AuthorizationOptions): Promise<ETHAuthProof> => {
   const chainId = await signer.getChainId()
 
   const address = ethers.utils.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
-    throw EmptyAccountError
+    throw ErrAccountIsRequired
   }
-
-  const expiry = options?.expiration ? Math.max(options.expiration, 200) : DEFAULT_SESSION_EXPIRATION
 
   const proof = new Proof()
   proof.address = address
 
-  // TODO:
-  // 1.) dont think window.location.origin is a good idea..... lets remove that..
-  // 2.) app name 'unknown', seems wrong too.
-  // .. we could make these both required..? .. or neither required..?
-  proof.claims.ogn = options?.originHost || window.location.origin
-  proof.claims.app = options?.appName || 'unknown'
+  if (!options || !options.app || options.app === '') {
+    throw new AuthError('authorization options requires app to be set')
+  }
+  proof.claims.app = options.app
+  proof.claims.ogn = options.origin
 
+  proof.setExpiryIn(options.expiry ? Math.max(options.expiry, 200) : DEFAULT_SESSION_EXPIRATION)
   proof.setIssuedAtNow()
-  proof.setExpiryIn(expiry)
 
   const typedData = proof.messageTypedData()
-
   proof.signature = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
 
   const ethAuth = new ETHAuth()
-
   const proofString = await ethAuth.encodeProof(proof, true)
 
   return {
@@ -47,6 +49,7 @@ export const signAuthorization = async (signer: Signer, options?: AuthorizationO
   }
 }
 
+// TODO: review......
 export class AuthError extends Error {
   constructor(message?: string) {
     super(message)
@@ -54,4 +57,4 @@ export class AuthError extends Error {
   }
 }
 
-export const EmptyAccountError = new AuthError('auth error: account address is empty')
+export const ErrAccountIsRequired = new AuthError('auth error: account address is empty')

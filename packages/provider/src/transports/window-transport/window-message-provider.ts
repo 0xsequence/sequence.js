@@ -1,4 +1,4 @@
-import { OpenWalletIntent, ProviderMessage, InitState, ProviderMessageType } from '../../types'
+import { OpenWalletIntent, ProviderMessage, InitState, EventType } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 import { logger, base64EncodeObject } from '@0xsequence/utils'
 
@@ -150,9 +150,13 @@ export class WindowMessageProvider extends BaseProviderTransport {
       throw new Error('ProviderMessage object is empty')
     }
 
+    // TODO: review init, and maybe move it out..?
+    // we could also have class-specific if this._inited = true, and we can skip on .open()
+    // or on certain transports, we will do the handshake, ie. liek this one..
+
     // window init
     if (this._init !== InitState.OK) {
-      if (message.type === ProviderMessageType.INIT) {
+      if (message.type === EventType.INIT) {
         logger.debug('WindowMessageProvider, received INIT message', message)
         const { nonce } = message.data as { nonce: string }
         if (!nonce || nonce.length === 0) {
@@ -162,7 +166,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
         this._init = InitState.OK
         this.sendMessage({
           idx: -1,
-          type: ProviderMessageType.INIT,
+          type: EventType.INIT,
           data: {
             sessionId: this._sessionId,
             nonce: nonce

@@ -8,7 +8,7 @@ import { logger } from '@0xsequence/utils'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
-import { WalletSession, ProviderMessageEvent, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
+import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 
@@ -39,8 +39,8 @@ export interface WalletProvider {
 
   getProviderConfig(): ProviderConfig
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
 
   commands: WalletCommands
 }
@@ -152,6 +152,24 @@ export class Wallet implements WalletProvider {
     this.transport.provider = new Web3Provider(this.transport.router)
 
 
+    // NOTE: we don't listen on 'connect' even here as we handle it within connect() method
+    // in more synchronous flow.
+
+    // below will update the wallet session object and persist it. In case the session
+    // is undefined, we consider the session to have been removed by the user, so we clear it.
+    this.transport.messageProvider.on('open', (openInfo: { session?: WalletSession }) => {
+      const { session } = openInfo
+      if (!session) {
+        if (this.session && this.session.accountAddress) {
+          // emit disconnect even if previously we had a session, and now we don't.
+          this.transport.messageProvider!.emit('disconnect')
+        }
+        this.clearSession()
+      } else {
+        this.useSession(session, true)
+      }
+    })
+    
     // below will update the account upon wallet connect/disconnect (aka, login/logout)
     this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
@@ -399,11 +417,11 @@ export class Wallet implements WalletProvider {
     return this.getSigner(chainId).isDeployed()
   }
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
     this.transport.messageProvider!.on(event, fn)
   }
 
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
     this.transport.messageProvider!.once(event, fn)
   }
 
@@ -422,6 +440,7 @@ export class Wallet implements WalletProvider {
   }
 
   private saveSession = (session: WalletSession) => {
+    logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
     window.localStorage.setItem('@sequence.session', data)
   }
@@ -469,6 +488,7 @@ export class Wallet implements WalletProvider {
     // confirm default network is set correctly
     if (this.config.defaultNetworkId && networks && networks.length > 0) {
       if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
+        // TODO: what is the correct behaviour here we want for dapps?
         throw new Error(`expecting defaultNetworkId '${this.config.defaultNetworkId}' but is set to '${networks[0].name}'`)
       }
     }
@@ -505,6 +525,7 @@ export class Wallet implements WalletProvider {
   }
 
   private clearSession(): void {
+    logger.debug('wallet provider: clearing session')
     window.localStorage.removeItem('@sequence.session')
     this.session = undefined
     this.networks = []
@@ -558,6 +579,8 @@ export interface ProviderConfig {
 
 export const DefaultProviderConfig: ProviderConfig = {
   walletAppURL: 'https://sequence.app',
+
+  // walletSessionURL: 'https://session.sequence.app',
 
   transports: {
     windowTransport: { enabled: true },

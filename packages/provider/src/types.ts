@@ -11,10 +11,11 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
   isOpened(): boolean
   isConnected(): boolean
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
+  emit<K extends keyof ProviderEventTypes>(event: K, ...args: Parameters<ProviderEventTypes[K]>): boolean
 
-  waitUntilOpened(): Promise<boolean>
+  waitUntilOpened(): Promise<WalletSession | undefined>
   waitUntilConnected(): Promise<ConnectDetails>
 }
 
@@ -22,20 +23,17 @@ export interface WalletTransport extends JsonRpcHandler, ProviderMessageTranspor
   register(): void
   unregister(): void
   
-  // TODO: ..?
-  // closeWallet(): void
+  notifyOpen(openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }): void
+  notifyClose(error?: ProviderRpcError): void
 
-  notifyOpen(openInfo: { chainId?: string, sessionId?: string }): void
-  notifyClose(): void
-
-  notifyConnect(connectInfo: { chainId?: string }): void
+  notifyConnect(connectDetails: ConnectDetails): void
   notifyAccountsChanged(accounts: string[]): void
-  notifyChainChanged(connectInfo: any): void
+  notifyChainChanged(chainIdHex: string): void
   notifyNetworks(networks: NetworkConfig[]): void
 }
 
 export interface ProviderMessage<T> {
-  idx: number       // message id sequence number
+  idx: number       // message id number
   type: string      // message type
   data: T           // the ethereum json-rpc payload
   chainId?: number  // chain id which the message is intended
@@ -70,25 +68,39 @@ export interface ProviderMessageTransport {
   sendMessage(message: ProviderMessage<any>): void
 }
 
-export type WalletMessageEvent = 'open' | 'close' | 'connect' | 'disconnect' | 'chainChanged' | 'accountsChanged' | 'networks' | 'walletContext' | 'init' | '_debug'
-
-export type ProviderMessageEvent = 'message' | WalletMessageEvent
-
-export enum ProviderMessageType {
+export enum EventType {
   OPEN = 'open',
   CLOSE = 'close',
 
   MESSAGE = 'message',
   CONNECT = 'connect',
   DISCONNECT = 'disconnect',
-  CHAIN_CHANGED = 'chainChanged',
   ACCOUNTS_CHANGED = 'accountsChanged',
+  CHAIN_CHANGED = 'chainChanged',
 
   NETWORKS = 'networks',
   WALLET_CONTEXT = 'walletContext',
 
   INIT = 'init',
   DEBUG = '_debug'
+}
+
+export interface WalletEventTypes {
+  'open': (openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }) => void
+  'close': (error?: ProviderRpcError) => void
+  
+  'connect': (connectDetails: ConnectDetails) => void
+  'disconnect': (error?: ProviderRpcError) => void
+  
+  'accountsChanged': (accounts: string[]) => void
+  'chainChanged': (chainIdHex: string) => void
+
+  'networks': (networks: NetworkConfig[]) => void
+  'walletContext': (walletContext: WalletContext) => void
+}
+
+export interface ProviderEventTypes extends WalletEventTypes {
+  'message': (message: ProviderMessageResponse) => void
 }
 
 export enum OpenState {
@@ -111,13 +123,11 @@ export interface ConnectOptions {
   networkId?: string | number
 
   // app name of the dapp which will be announced to user on connect screen
-  appName?: string
+  app?: string
 
-  // origin ....
-  origin?: string
-
-  // authorize will perform an ETHAuth eip712 signing and return the proof to the dapp
-  authorize?: boolean
+  // authorize will perform an ETHAuth eip712 signing and return the proof to the dapp.
+  // true will use defaults, or you can pass directly an object for origin/expiry information
+  authorize?: boolean | { origin?: string; expiry?: number }
 
   // askForEmail will prompt to give permission to the dapp to access email address
   // TODO: this feature is currently not used as the wallet does not report emails yet
@@ -127,12 +137,12 @@ export interface ConnectOptions {
   refresh?: boolean
 
   // keepWalletOpened will keep the wallet window opened after connecting, as the default
-  // is to automatically close the wallet upon connecting.
+  // is to automatically close the wallet after connecting.
   keepWalletOpened?: boolean
 }
 
 export interface ConnectDetails {
-  // chainId and error are defined by EIP-1193 expected fields
+  // chainId (in hex) and error are defined by EIP-1193 expected fields
   chainId?: string
   error?: string
 
@@ -150,11 +160,6 @@ export interface ConnectDetails {
   // by a user during a connect request
   email?: string
 }
-
-// export interface PromptConnectOptions extends ConnectOptions {
-//   // TODO: keep/move...? hmpf.......?
-//   origin?: string
-// }
 
 export type PromptConnectDetails = Pick<ConnectDetails, 'connected' | 'proof' | 'email'>
 
@@ -191,4 +196,13 @@ export interface WalletSession {
   providerCache?: {[key: string]: any}
 }
 
-// export class SequenceError extends Error {}
+export class ProviderError extends Error {
+  constructor(message?: string) {
+    super(message)
+    this.name = 'ProviderError'
+  }
+}
+
+export const ErrSignedInRequired = new ProviderError('Wallet is not signed in. Connect a wallet and try again.')
+
+// TODO: lets build some nice error handling tools, prob in /utils ...

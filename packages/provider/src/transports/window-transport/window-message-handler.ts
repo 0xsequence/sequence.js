@@ -1,7 +1,7 @@
 import {
   ProviderMessageRequest,
   ProviderMessage,
-  ProviderMessageType,
+  EventType,
   ProviderMessageResponse,
   InitState,
   ConnectDetails,
@@ -43,7 +43,9 @@ export class WindowMessageHandler extends BaseWalletTransport {
     const intent = base64DecodeObject<OpenWalletIntent>(params.get('intent')!)
     const networkId = params.get('net')!
 
-    // const toBool = (s: string) => s === 'true'
+
+    // TODO: review how we should be intefacing with window.history, so we can route
+    // to the correct destination based on 'intent' ie. 'connect' or 'jsonRpcRequest'
 
     // if (toBool(params['requestAuthorization'])) {
     //   this.walletRequestHandler
@@ -74,8 +76,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     window.addEventListener('message', this.onWindowEvent, false)
     this._registered = true
 
-    // TODO: perhaps we can call .initOpen().then(etc.)
-    // where we can do the exchange, it should work..
+    // TODO: decide on init(), we can prob move this to .open()
 
     // this.init().then(() =>
       this.open(intent, networkId)
@@ -146,7 +147,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // Record the parent origin url on init
     if (this._init !== InitState.OK) {
-      if (request.type === ProviderMessageType.INIT) {
+      if (request.type === EventType.INIT) {
         const { sessionId, nonce } = (request.data as any) as { sessionId: string; nonce: string }
         if (!sessionId || sessionId.length === 0 || !nonce || nonce.length === 0) {
           logger.error('invalid init response')
@@ -171,7 +172,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
   // postMessage sends message to the dapp window
   sendMessage(message: ProviderMessage<any>) {
-    if (message.type === ProviderMessageType.INIT) {
+    if (message.type === EventType.INIT) {
       // clients should not send init requests directly
       return
     }
@@ -190,7 +191,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
       this.parentWindow.postMessage(
         JSON.stringify({
           idx: -1,
-          type: ProviderMessageType.INIT,
+          type: EventType.INIT,
           data: { nonce: this._initNonce }
         } as ProviderMessage<any>),
         '*'
@@ -231,13 +232,15 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
   }
 
+  // TODO: move this to base-provider-transport so its reusable init handshake.
+  // TODO: rename to initHandshake() ..?
   private init(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this._initNonce = `${performance.now()}`
       this.parentWindow.postMessage(
         JSON.stringify({
           idx: -1,
-          type: ProviderMessageType.INIT,
+          type: EventType.INIT,
           data: { nonce: this._initNonce }
         } as ProviderMessage<any>),
         '*'

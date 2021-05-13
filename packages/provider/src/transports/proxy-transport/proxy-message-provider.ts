@@ -1,7 +1,7 @@
 import { BaseProviderTransport } from '../base-provider-transport'
 
 import {
-  ProviderMessage, OpenState, OpenWalletIntent, ProviderMessageType
+  ProviderMessage, OpenState, OpenWalletIntent, EventType
 } from '../../types'
 
 import { ProxyMessageChannelPort } from './proxy-message-channel'
@@ -52,7 +52,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     if (this.state === OpenState.CLOSED) {
       this.state = OpenState.OPENING
       this.sendMessage({
-        idx: -1, type: ProviderMessageType.OPEN, data: {
+        idx: -1, type: EventType.OPEN, data: {
           path, intent, networkId
         }
       })
@@ -61,7 +61,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
 
   closeWallet() {
     this.sendMessage({
-      idx: -1, type: ProviderMessageType.CLOSE, data: null
+      idx: -1, type: EventType.CLOSE, data: null
     })
     this.close()
   }

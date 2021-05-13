@@ -13,9 +13,9 @@ export type {
   ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   ProviderMessageTransport,
-  WalletMessageEvent,
-  ProviderMessageEvent,
-  ProviderMessageType,
+  WalletEventTypes,
+  ProviderEventTypes,
+  EventType,
 
   OpenState,
   NetworkEventPayload,

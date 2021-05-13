@@ -10,20 +10,16 @@ import { Deferrable, shallowCopy, resolveProperties } from '@0xsequence/utils'
 import { Transaction, TransactionRequest, TransactionResponse, Transactionish, SignedTransactions } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 
-// naming..?
-// Web3Provider, Web3Signer, Web3Relayer, Web3Indexer
-//
-//.. or.... SequenceProvider, SequenceSigner, SequenceRelayer, SequenceIndexer
-//
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
-  // also, make to separate util method
-  // static isSequenceProvider(cand: any): cand is Web3Provider {
-  // }
+  static isSequenceProvider(cand: any): cand is Web3Provider {
+    return isSequenceProvider(cand)
+  }
 
   readonly _sender: JsonRpcSender
-
+  
+  readonly _isSequenceProvider: boolean  
 
   // defaultChainId is the default chainId to use with requests, but may be
   // overridden by passing chainId argument to a specific request
@@ -36,6 +32,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
     super(provider, 'any')
 
     this._sender = sender
+    this._isSequenceProvider = true
     this._defaultChainId = maybeNetworkId(defaultChainId)
   }
 
@@ -61,6 +58,11 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
 
     return chainId
   }
+}
+
+export function isSequenceProvider(provider: any): provider is Web3Provider {
+  const cand = provider as Web3Provider
+  return cand && cand.send !== undefined && cand._isSequenceProvider === true
 }
 
 export class LocalWeb3Provider extends Web3Provider {
