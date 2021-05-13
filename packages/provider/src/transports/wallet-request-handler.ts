@@ -130,10 +130,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       throw new Error('prompter connect options are empty')
     }
 
-    // TODO: maybe if process.env.TEST_MODE === 'true' and prompter === null
-    // then we just auto-respond to connect..? yes
-    if (!this.prompter) { // TODO: && process.env.TEST_MODE !== 'true'
-      throw new Error('prompter is undefined, unable to promptConnect')
+    if (!this.prompter) {
+      // if prompter is null, we'll auto connect
+      return this.connect(options)
     }
 
     const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions)

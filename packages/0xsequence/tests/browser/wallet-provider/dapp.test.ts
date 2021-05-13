@@ -50,8 +50,10 @@ export const tests = async () => {
   })
 
   await test('connect', async () => {
-    const connected = await wallet.connect()
-    assert.true(connected.success, 'is connected')
+    const { connected } = await wallet.connect({
+      keepWalletOpened: true
+    })
+    assert.true(connected, 'is connected')
   })
 
   await test('isOpened', async () => {
