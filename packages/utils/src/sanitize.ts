@@ -23,6 +23,6 @@ export const sanitizeHost = (host: string): string => {
   if (!host || typeof(host) !== 'string') {
     return ''
   }
-  const v = host.match(/[\w\d.-]+/)
+  const v = host.match(/[\w\d.\-:\/]+/)
   return v && v.length > 0 ? v[0].trim() : ''
 }

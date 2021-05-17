@@ -125,9 +125,15 @@ export interface ConnectOptions {
   // app name of the dapp which will be announced to user on connect screen
   app?: string
 
+  // origin hint of the dapp's host opening the wallet. This value will automatically
+  // be determined and verified for integrity, and can be omitted.
+  origin?: string
+
+  // expiry number (in seconds) to expire connect session. default is 1 week of seconds.
+  expiry?: number
+
   // authorize will perform an ETHAuth eip712 signing and return the proof to the dapp.
-  // true will use defaults, or you can pass directly an object for origin/expiry information
-  authorize?: boolean | { origin?: string; expiry?: number }
+  authorize?: boolean
 
   // askForEmail will prompt to give permission to the dapp to access email address
   // TODO: this feature is currently not used as the wallet does not report emails yet
@@ -136,7 +142,7 @@ export interface ConnectOptions {
   // refresh flag will force a full re-connect (ie. disconnect then connect again)
   refresh?: boolean
 
-  // keepWalletOpened will keep the wallet window opened after connecting, as the default
+  // keepWalletOpened will keep the wallet window opened after connecting. The default
   // is to automatically close the wallet after connecting.
   keepWalletOpened?: boolean
 }

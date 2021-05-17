@@ -8,7 +8,6 @@ let registeredWindowMessageProvider: WindowMessageProvider | undefined
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
   private walletWindow: Window | null
-  private _init: InitState
 
   constructor(walletAppURL: string) {
     super()
@@ -79,6 +78,14 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this._sessionId = `${performance.now()}`
     walletURL.searchParams.set('sid', this._sessionId)
     if (intent) {
+      // for the window-transport, we eagerly/optimistically set the origin host
+      // when connecting to the wallet, however, this will be verified and enforced
+      // on the wallet-side, so if a dapp provides the wrong origin, it will be dropped.
+      if (intent.type === 'connect') {
+        if (!intent.options) intent.options = {} 
+        intent.options.origin = window.location.origin
+      }
+      // encode intent as base6 url-encoded param
       walletURL.searchParams.set('intent', base64EncodeObject(intent))
     }
     if (networkId) {
@@ -150,40 +157,11 @@ export class WindowMessageProvider extends BaseProviderTransport {
       throw new Error('ProviderMessage object is empty')
     }
 
-    // TODO: review init, and maybe move it out..?
-    // we could also have class-specific if this._inited = true, and we can skip on .open()
-    // or on certain transports, we will do the handshake, ie. liek this one..
-
-    // window init
-    if (this._init !== InitState.OK) {
-      if (message.type === EventType.INIT) {
-        logger.debug('WindowMessageProvider, received INIT message', message)
-        const { nonce } = message.data as { nonce: string }
-        if (!nonce || nonce.length === 0) {
-          logger.error('invalid init nonce')
-          return
-        }
-        this._init = InitState.OK
-        this.sendMessage({
-          idx: -1,
-          type: EventType.INIT,
-          data: {
-            sessionId: this._sessionId,
-            nonce: nonce
-          }
-        }, true)
-      }
-      return
-    }
-
     // handle message with base message provider
     this.handleMessage(message)
   }
 
-  sendMessage(message: ProviderMessage<any>, skipIdx = false) {
-    if (!skipIdx && (!message.idx || message.idx <= 0)) {
-      throw new Error('message idx is empty')
-    }
+  sendMessage(message: ProviderMessage<any>) {
     if (!this.walletWindow) {
       logger.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
       return

@@ -12,7 +12,8 @@ import {
   OpenWalletIntent,
   ConnectDetails,
   WalletSession,
-  ProviderRpcError
+  ProviderRpcError,
+  InitState
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -40,11 +41,13 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected walletContextPayload: WalletContext | undefined
 
   protected _sessionId?: string
+  protected _init: InitState
   protected _registered: boolean
 
   constructor() {
     this.state = OpenState.CLOSED
     this._registered = false
+    this._init = InitState.NIL
   }
 
   get registered(): boolean {
@@ -118,6 +121,30 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   // handleMessage will handle message received from the remote wallet
   handleMessage(message: ProviderMessage<any>) {
+
+    // init incoming for initial handshake with transport.
+    if (this._init !== InitState.OK) {
+      // if provider is not init'd, then we drop any received messages. the only
+      // message we will process is of event type 'init', as our acknowledgement
+      if (message.type === EventType.INIT) {
+        logger.debug('MessageProvider, received INIT message', message)
+        const { nonce } = message.data as { nonce: string }
+        if (!nonce || nonce.length == 0) {
+          logger.error('invalid init nonce')
+          return
+        }
+        this._init = InitState.OK
+        this.sendMessage({
+          idx: -1,
+          type: EventType.INIT,
+          data: {
+            sessionId: this._sessionId,
+            nonce: nonce
+          }
+        })
+      }
+      return
+    }
 
     // message is either a notification, or its a ProviderMessageResponse
     logger.debug('RECEIVED MESSAGE FROM WALLET', message.idx, message)
@@ -247,7 +274,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
   sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {
     return new Promise((resolve, reject) => {
-      if (!message.idx || message.idx <= 0) {
+      if ((!message.idx || message.idx <= 0) && message.type !== 'init') {
         reject(new Error('message idx not set'))
       }
 

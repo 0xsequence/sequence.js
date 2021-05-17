@@ -10,16 +10,25 @@ import { WalletRequestHandler } from './wallet-request-handler'
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 import { logger, sanitizeAlphanumeric, sanitizeHost } from '@0xsequence/utils'
 
+import { AuthorizationOptions } from '@0xsequence/auth'
+
+import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
+
 export abstract class BaseWalletTransport implements WalletTransport {
 
   protected walletRequestHandler: WalletRequestHandler
   protected _sessionId: string
   protected _registered: boolean
-  protected _init: InitState
 
-  // parentOrigin identifies the dapp's origin which opened the app. A transport
-  // will auto-detect and set this value if it can.
-  protected parentOrigin?: string
+  protected _init: InitState
+  protected _initNonce: string
+  protected _initCallback?: (error?: string) => void
+  // protected _sendMessageQueue: Array<any> = []
+
+  // appOrigin identifies the dapp's origin which opened the app. A transport
+  // will auto-detect and set this value if it can. This is determined
+  // as the parent app/window which opened the wallet.
+  protected appOrigin?: string
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     this.walletRequestHandler = walletRequestHandler
@@ -82,6 +91,28 @@ export abstract class BaseWalletTransport implements WalletTransport {
   handleMessage = async (message: ProviderMessage<any>) => {
     const request = message
 
+    // TODO: should we use _sendMessageQueue if this._init !== InitState.OK
+    // or, unnecessary, as system will init first anyways..
+
+    // ensure initial handshake is complete
+    if (this._init !== InitState.OK) {
+      if (request.type === EventType.INIT) {
+        if (this.isValidInitAck(message)) {
+          // successful init
+          // this.flushSendMessageQueue()
+          if (this._initCallback) this._initCallback()
+        } else {
+          // failed init
+          if (this._initCallback) this._initCallback('invalid init')
+          return          
+        }
+      } else {
+        // we expect init message first. do nothing here.
+      }
+      return
+    }
+
+    // handle request
     switch (request.type) {
 
       case EventType.OPEN: {
@@ -91,12 +122,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
         return
       }
 
-      // case ProviderMessageType.CLOSE: {
-      //   if (this._init !== InitState.OK) return
-      //   // we echo back to close, confirming wallet close request
-      //   this.notifyClose()
-      //   return
-      // }
+      case EventType.CLOSE: {
+        if (this._init !== InitState.OK) return
+        // noop. just here to capture the message so event emitters may be notified
+        return
+      }
 
       case EventType.MESSAGE: {
         const response = await this.walletRequestHandler.sendMessageRequest(request)
@@ -191,30 +221,121 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
+  // private flushSendMessageQueue() {
+  //   if (this._sendMessageQueue.length === 0) return
+
+  //   // logger.debug(`flushSendMessageQueue # of messages, ${this._sendMessageQueue.length}`)
+  //   for (let i = 0; i < this._sendMessageQueue.length; i++) {
+  //     this.sendMessage(this._sendMessageQueue[i])
+  //   }
+  //   this._sendMessageQueue.length = 0
+  // }
+
+  protected isValidInitAck(message: ProviderMessage<any>): boolean {
+    if (this._init === InitState.OK) {
+      // we're already in init state, we shouldn't handle this message
+      logger.warn('isValidInitAck, already in init\'d state, so inquiry is invalid.')
+      return false
+    }
+    if (message.type !== EventType.INIT) {
+      logger.warn('isValidInitAck, invalid message type, expecting init')
+      return false
+    }
+
+    const { sessionId, nonce } = (message.data as any) as { sessionId: string; nonce: string }
+    if (!sessionId || sessionId.length === 0 || !nonce || nonce.length === 0) {
+      logger.error('invalid init ack')
+      return false
+    }
+    if (sessionId !== this._sessionId || nonce !== this._initNonce) {
+      logger.error('invalid init ack match')
+      return false
+    }
+
+    // all checks pass, its true
+    return true
+  }
+
+  private init(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      // avoid re-init`ing, or if there is a transport which doesn't require
+      // it, then it may set this._init to OK in its constructor.
+      if (this._init === InitState.OK) {
+        resolve()
+        return
+      }
+      if (this._init !== InitState.NIL || this._initCallback) {
+        reject('transport init is in progress')
+        return
+      }
+
+      // start init timeout, if we don't receive confirmation
+      // from provider within this amount of time, then we timeout
+      const initTimeout = setTimeout(() => {
+        logger.warn('transport init timed out')
+        if (this._initCallback) {
+          this._initCallback('transport init timed out')
+        }
+      }, PROVIDER_OPEN_TIMEOUT / 2)
+
+      // setup callback as we receive the init message async in the handleMessage function
+      this._initCallback = (error?: string) => {
+        this._initCallback = undefined // reset
+        clearTimeout(initTimeout)
+        if (error) {
+          reject(error)
+        } else {
+          this._init = InitState.OK
+          resolve()
+        }
+      }
+
+      // send init request with random nonce to the provider, where we expect
+      // for the provider to echo it back to us as complete handshake
+      this._initNonce = `${performance.now()}`
+      this.sendMessage({
+        idx: -1,
+        type: EventType.INIT,
+        data: { nonce: this._initNonce }
+      })
+      this._init = InitState.SENT_NONCE
+
+      // NOTE: the promise will resolve in the _initCallback method
+      // which will be called from either handleMessage or the initTimeout
+    })
+  }
+
   protected open = async (intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
 
-    // TODO: should we move the .init() method to this class and call it from here..? possibly..
+    // init handshake for certain transports, before we can open the communication.
+    //
+    // for example, with the window-transport, we have to exchange messages to determine the
+    // origin host of the dapp.
+    await this.init()
 
     // Prepare connect options from intent
     if (intent && intent.type === 'connect' && intent.options) {
       const connectOptions = intent.options
+      const authorizeOptions: AuthorizationOptions = connectOptions // overlapping types
 
-      // TODO: review/remove..
-      // console.log('.weeeeeeeeeeee......! parentorigin', this.parentOrigin)
-      // console.log('origin from options..,', connectOptions.origin)
-
-      // Sanity/integrity check the intent payload
-      // TODO: update .........
-      // if (this.parentOrigin && connectOptions.origin) {
-      //   if (connectOptions.origin !== this.parentOrigin) {
-      //     throw new Error('origin is invalid')
-      //   } else {
-      //     // set connectOptions origin to the parentOrigin determined by the transport
-      //     connectOptions.origin = this.parentOrigin
-      //   }
-      // } else if (!this.parentOrigin && connectOptions.origin) {
-      //   connectOptions.origin = sanitizeHost(connectOptions.origin)
-      // }
+      // Sanity/integrity check the intent payload, and set authorization origin
+      // if its been determined as part of the init handshake from earlier.
+      if (this.appOrigin && authorizeOptions?.origin) {
+        if (authorizeOptions.origin !== this.appOrigin) {
+          throw new Error('origin is invalid')
+        } else {
+          // request origin and derived origins match, lets carry on
+        }
+      } else if (!this.appOrigin && authorizeOptions?.origin) {
+        // ie. when we can't determine the origin in our transport, but dapp provides it to us.
+        // we just sanitize the origin host.
+        connectOptions.origin = sanitizeHost(authorizeOptions.origin)
+        // connectOptions.authorize = mergeConnectAuthorizeOptions(connectOptions.authorize, { origin: sanitizeHost(authorizeOptions?.origin) })
+      } else if (this.appOrigin) {
+        // ie. when we auto-determine the origin such as in window-transport
+        connectOptions.origin = this.appOrigin
+        // connectOptions.authorize = mergeConnectAuthorizeOptions(connectOptions.authorize, { origin: this.appOrigin })
+      }
       if (connectOptions.app) {
         connectOptions.app = sanitizeAlphanumeric(connectOptions.app)
       }
@@ -266,7 +387,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // upon cancellation by user, the walletRequestHandler will throw an error
 
       if (intent && intent.type === 'connect') {
-        
+
         // notify wallet is opened, without session details
         this.notifyOpen({
           sessionId: this._sessionId
@@ -297,3 +418,13 @@ export abstract class BaseWalletTransport implements WalletTransport {
     return true
   }
 }
+
+// const mergeConnectAuthorizeOptions = (base: AuthorizationOptions | boolean | undefined, update: AuthorizationOptions) => {
+//   if (base === undefined) {
+//     return base
+//   }
+//   if (typeof(base) !== 'object') {
+//     return base
+//   }
+//   return { ...base, ...update }
+// }

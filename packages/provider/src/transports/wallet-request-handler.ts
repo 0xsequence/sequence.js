@@ -103,10 +103,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (options && options.authorize) {
       // Perform ethauth eip712 request and construct the ConnectDetails response
       // including the auth proof
-      let authOptions: AuthorizationOptions = { app: options.app }
-      if (typeof(options.authorize) === 'object') {
-        authOptions = { ...authOptions, ...options.authorize }
+      const authOptions: AuthorizationOptions = {
+        app: options.app, origin: options.origin, expiry: options.expiry
       }
+      // if (typeof(options.authorize) === 'object') {
+      //   authOptions = { ...authOptions, ...options.authorize }
+      // }
 
       try {
         connectDetails.proof = await signAuthorization(this.signer, authOptions)
