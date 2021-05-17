@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.18.0
+  - @0xsequence/api@0.18.0
+  - @0xsequence/config@0.18.0
+  - @0xsequence/network@0.18.0
+  - @0xsequence/wallet@0.18.0
+
 ## 0.17.0
 
 ### Minor Changes

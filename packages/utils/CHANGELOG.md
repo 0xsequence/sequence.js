@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
 ## 0.16.0
 
 ### Minor Changes

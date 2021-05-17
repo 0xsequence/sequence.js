@@ -1,5 +1,18 @@
 # @0xsequence/multicall
 
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.18.0
+  - @0xsequence/network@0.18.0
+  - @0xsequence/utils@0.18.0
+
 ## 0.16.0
 
 ### Minor Changes

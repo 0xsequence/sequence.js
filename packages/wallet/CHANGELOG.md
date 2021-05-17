@@ -1,5 +1,22 @@
 # @0xsequence/wallet
 
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.18.0
+  - @0xsequence/config@0.18.0
+  - @0xsequence/guard@0.18.0
+  - @0xsequence/network@0.18.0
+  - @0xsequence/relayer@0.18.0
+  - @0xsequence/transactions@0.18.0
+  - @0xsequence/utils@0.18.0
+
 ## 0.16.0
 
 ### Minor Changes

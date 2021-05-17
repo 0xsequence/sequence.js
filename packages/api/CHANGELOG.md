@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
 ## 0.17.0
 
 ### Minor Changes
