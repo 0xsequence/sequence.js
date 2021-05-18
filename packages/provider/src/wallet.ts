@@ -208,6 +208,12 @@ export class Wallet implements WalletProvider {
       }
     }
 
+    if (options) {
+      if (options.authorize && (!options.app || options.app === '')) {
+        throw new Error(`connecting with 'authorize' option also requires 'app' to be set`)
+      }
+    }
+
     await this.openWallet(undefined, { type: 'connect', options })
     const connectDetails = await this.transport.messageProvider!.waitUntilConnected()
 
