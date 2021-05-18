@@ -1,5 +1,19 @@
 # 0xsequence
 
+## 0.19.2
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.2
+  - @0xsequence/auth@0.19.2
+  - @0xsequence/config@0.19.2
+  - @0xsequence/multicall@0.19.2
+  - @0xsequence/provider@0.19.2
+  - @0xsequence/relayer@0.19.2
+  - @0xsequence/transactions@0.19.2
+  - @0xsequence/wallet@0.19.2
+
 ## 0.19.1
 
 ### Patch Changes

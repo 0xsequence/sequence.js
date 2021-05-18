@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/multicall",
-  "version": "0.19.0",
+  "version": "0.19.2",
   "description": "multicall sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/multicall",
   "source": "src/index.ts",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.19.0",
+    "@0xsequence/abi": "^0.19.2",
     "@0xsequence/network": "^0.19.0",
     "@0xsequence/utils": "^0.19.0",
     "@ethersproject/providers": "^5.0.24",

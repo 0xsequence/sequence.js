@@ -1,5 +1,12 @@
 # @0xsequence/multicall
 
+## 0.19.2
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.2
+
 ## 0.19.0
 
 ### Minor Changes

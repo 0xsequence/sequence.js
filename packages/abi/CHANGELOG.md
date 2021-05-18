@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.19.2
+
+### Patch Changes
+
+- - api: change jwtAuth visibility
+
 ## 0.19.0
 
 ### Minor Changes
