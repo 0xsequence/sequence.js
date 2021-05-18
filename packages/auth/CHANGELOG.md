@@ -1,5 +1,16 @@
 # @0xsequence/auth
 
+## 0.20.0
+
+### Minor Changes
+
+- revert JWT request piggybacking
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.20.0
+
 ## 0.19.3
 
 ### Patch Changes
