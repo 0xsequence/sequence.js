@@ -1,5 +1,11 @@
 # @0xsequence/provider
 
+## 0.19.1
+
+### Patch Changes
+
+- add open intent in history state
+
 ## 0.19.0
 
 ### Minor Changes

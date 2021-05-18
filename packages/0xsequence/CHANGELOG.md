@@ -1,5 +1,12 @@
 # 0xsequence
 
+## 0.19.1
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/provider@0.19.1
+
 ## 0.19.0
 
 ### Minor Changes
