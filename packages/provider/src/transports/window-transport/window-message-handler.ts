@@ -13,7 +13,7 @@ import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/ut
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
-  
+
   private _isPopup: boolean = false
 
   constructor(walletRequestHandler: WalletRequestHandler) {
@@ -41,11 +41,9 @@ export class WindowMessageHandler extends BaseWalletTransport {
     const intent = base64DecodeObject<OpenWalletIntent>(params.get('intent')!)
     const networkId = params.get('net')!
 
-
-    // TODO: review how we should be intefacing with window.history, so we can route
-    // to the correct destination based on 'intent' ie. 'connect' or 'jsonRpcRequest'
-    // ie.. maybe..
-    // window.history.replaceState(params['jsonRpcRequest'] ? { jsonRpcRequest: true } : {}, document.title, location.pathname)
+    if (intent) {
+      window.history.replaceState({ openWalletIntent: true }, document.title, location.pathname)
+    }
 
     // record parent window instance for communication
     this.parentWindow = parent.window.opener
@@ -68,7 +66,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
       .catch(e => {
         const err = `failed to open to network ${networkId}, due to: ${e}`
         logger.error(err)
-          // TODO?
+        // TODO?
         // this.notifyOpen({ error: err }) // or notifyClose({ message: err })
         window.close()
       })
@@ -149,9 +147,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
         this.parentWindow.postMessage(message, this.appOrigin)
       } else {
         logger.error('unable to postMessage as parentOrigin is invalid')
-      }  
+      }
     }
-
   }
-
 }
