@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.19.3
+
 ## 0.19.0
 
 ### Minor Changes

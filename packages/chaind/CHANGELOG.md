@@ -1,5 +1,11 @@
 # @0xsequence/chaind
 
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+
 ## 0.19.0
 
 ### Minor Changes

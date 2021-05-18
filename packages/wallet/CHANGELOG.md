@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.3
+  - @0xsequence/config@0.19.3
+  - @0xsequence/guard@0.19.3
+  - @0xsequence/network@0.19.3
+  - @0xsequence/relayer@0.19.3
+  - @0xsequence/transactions@0.19.3
+  - @0xsequence/utils@0.19.3
+
 ## 0.19.2
 
 ### Patch Changes

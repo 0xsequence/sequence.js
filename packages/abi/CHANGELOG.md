@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+
 ## 0.19.2
 
 ### Patch Changes
