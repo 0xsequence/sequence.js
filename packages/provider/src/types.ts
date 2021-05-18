@@ -115,8 +115,6 @@ export enum InitState {
   OK = 2
 }
 
-export type NetworkEventPayload = NetworkConfig
-
 export interface ConnectOptions {
   // networkId specifics the default network a dapp would like to connect to. This field
   // is optional as it can be provided a number of different ways.

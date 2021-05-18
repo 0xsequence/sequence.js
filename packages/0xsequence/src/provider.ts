@@ -4,7 +4,8 @@ export type {
   WalletProvider,
   ProviderConfig,
 
-  WalletSession,
+  WalletSignInOptions,
+
   ProviderTransport,
   WalletTransport,
   ProviderMessage,
@@ -13,11 +14,21 @@ export type {
   ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   ProviderMessageTransport,
+
   WalletEventTypes,
   ProviderEventTypes,
   EventType,
-
+  
+  WalletSession,
   OpenState,
-  NetworkEventPayload,
-  MessageToSign
+  ConnectOptions,
+  ConnectDetails,
+  PromptConnectDetails,
+  OpenWalletIntent,
+  ETHAuthProof,
+  ProviderError,
+  MessageToSign,
+  ProviderRpcError,
+
+  ErrSignedInRequired
 } from '@0xsequence/provider'
