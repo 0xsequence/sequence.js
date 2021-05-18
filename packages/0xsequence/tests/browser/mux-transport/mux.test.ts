@@ -40,7 +40,6 @@ export const tests = async () => {
   //
   const ch = new ProxyMessageChannel()
 
-
   //
   // Wallet Handler (local mock wallet, same a mock-wallet tests)
   //
@@ -128,7 +127,10 @@ export const tests = async () => {
   })
 
   await test('connect', async () => {
-    const connected = await wallet.connect()
+    const { connected } = await wallet.connect({
+      keepWalletOpened: true
+    })
+
     assert.true(connected, 'is connected')
   })
 

@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3'
-import { ProviderMessage, ProviderMessageTransport, ProviderMessageEvent } from '../../types'
+import { ProviderMessage, ProviderMessageTransport, ProviderEventTypes } from '../../types'
 
 export class ProxyMessageChannel {
   app: ProxyMessageChannelPort
@@ -19,7 +19,7 @@ export class ProxyMessageChannel {
 
 export class ProxyMessageChannelPort implements ProviderMessageTransport {
   conn: ProviderMessageTransport
-  events: EventEmitter<ProxyMessageEvent, any> = new EventEmitter()
+  events: EventEmitter<ProxyEventTypes, any> = new EventEmitter()
 
   // handle messages which hit this port
   handleMessage = (message: ProviderMessage<any>): void => {
@@ -32,26 +32,26 @@ export class ProxyMessageChannelPort implements ProviderMessageTransport {
 
     // trigger events
     if (message.type === 'open') {
-      this.events.emit('open', message)
+      this.events.emit('open', message as any)
     }
     if (message.type === 'close') {
-      this.events.emit('close', message)
+      this.events.emit('close', message as any)
     }
     if (message.type === 'connect') {
-      this.events.emit('connect', message)
+      this.events.emit('connect', message as any)
     }
     if (message.type === 'disconnect') {
-      this.events.emit('disconnect', message)
+      this.events.emit('disconnect', message as any)
     }
   }
 
-  on(event: ProxyMessageEvent, fn: (...args: any[]) => void) {
-    this.events.on(event, fn)
+  on<K extends keyof ProxyEventTypes>(event: K, fn: ProxyEventTypes[K]) {
+    this.events.on(event, fn as any)
   }
 
-  once(event: ProxyMessageEvent, fn: (...args: any[]) => void) {
-    this.events.once(event, fn)
+  once<K extends keyof ProxyEventTypes>(event: K, fn: ProxyEventTypes[K]) {
+    this.events.once(event, fn as any)
   }
 }
 
-type ProxyMessageEvent = 'open' | 'close' | 'connect' | 'disconnect'
+export type ProxyEventTypes = Pick<ProviderEventTypes, 'open' | 'close' | 'connect' | 'disconnect'>

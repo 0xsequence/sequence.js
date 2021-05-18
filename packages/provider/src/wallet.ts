@@ -8,14 +8,13 @@ import { logger } from '@0xsequence/utils'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
-import { WalletSession, ProviderMessageEvent, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
+import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 
 export interface WalletProvider {
-  // connect(options?: ConnectOptions): Promise<ConnectDetails>
+  connect(options?: ConnectOptions): Promise<ConnectDetails>
   // authorize(options?: ConnectOptions): Promise<ConnectDetails>
-  connect(options?: ConnectOptions): Promise<boolean>
   disconnect(): void
 
   isOpened(): boolean
@@ -27,7 +26,7 @@ export interface WalletProvider {
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
 
-  openWallet(path?: string, intent?: OpenWalletIntent): Promise<boolean>
+  openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
 
   getProvider(chainId?: ChainId): Web3Provider | undefined
@@ -40,8 +39,8 @@ export interface WalletProvider {
 
   getProviderConfig(): ProviderConfig
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void): void
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
 
   commands: WalletCommands
 }
@@ -153,6 +152,24 @@ export class Wallet implements WalletProvider {
     this.transport.provider = new Web3Provider(this.transport.router)
 
 
+    // NOTE: we don't listen on 'connect' even here as we handle it within connect() method
+    // in more synchronous flow.
+
+    // below will update the wallet session object and persist it. In case the session
+    // is undefined, we consider the session to have been removed by the user, so we clear it.
+    this.transport.messageProvider.on('open', (openInfo: { session?: WalletSession }) => {
+      const { session } = openInfo
+      if (!session) {
+        if (this.session && this.session.accountAddress) {
+          // emit disconnect even if previously we had a session, and now we don't.
+          this.transport.messageProvider!.emit('disconnect')
+        }
+        this.clearSession()
+      } else {
+        this.useSession(session, true)
+      }
+    })
+    
     // below will update the account upon wallet connect/disconnect (aka, login/logout)
     this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
@@ -179,35 +196,35 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  connect = async (options?: ConnectOptions): Promise<boolean> => {
+  connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
     if (options?.refresh === true) {
       this.disconnect()
     }
-    if (this.isConnected() && !options?.requestAuthorization && !options?.requestEmail) {
-      return this.isConnected()
-      // return {
-      //   success: this.isConnected()
-      // }
+    if (this.isConnected() && !!this.session && !options?.authorize && !options?.askForEmail) {
+      return {
+        connected: true,
+        session: this.session,
+        chainId: ethers.utils.hexlify(await this.getChainId())
+      }
     }
 
     await this.openWallet(undefined, { type: 'connect', options })
-    const sessionPayload = await this.transport.messageProvider!.waitUntilConnected()
-    this.useSession(sessionPayload, true)
+    const connectDetails = await this.transport.messageProvider!.waitUntilConnected()
 
-    return this.isConnected()
+    if (connectDetails.connected) {
+      if (!!connectDetails.session) {
+        this.useSession(connectDetails.session, true)
+      } else {
+        throw new Error('impossible state, connect response is missing session')
+      }
+    }
 
-    // TODO: the wallet-webapp itself will handle the open request..
-    // prob with window, etc.. or other proxy-message
-
-    // return {
-    //   success: this.isConnected()
-    //   // TODO: ..
-    // }
+    return connectDetails
   }
 
-  // authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
-  //   return this.connect({ ...options, requestAuthorization: true })
-  // }
+  authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+    return this.connect({ ...options, authorize: true })
+  }
 
   disconnect(): void {
     if (this.isOpened()) {
@@ -289,12 +306,12 @@ export class Wallet implements WalletProvider {
     throw new Error('expecting first or second network in list to be the auth chain')
   }
 
-  openWallet = async (path?: string, intent?: OpenWalletIntent): Promise<boolean> => {
+  openWallet = async (path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
     if (intent?.type !== 'connect' && !this.isConnected()) {
       throw new Error('connect first')
     }
     
-    this.transport.messageProvider!.openWallet(path, intent, this.config.defaultNetworkId)
+    this.transport.messageProvider!.openWallet(path, intent, networkId || this.config.defaultNetworkId)
     await this.transport.messageProvider!.waitUntilOpened()
 
     return true
@@ -400,11 +417,11 @@ export class Wallet implements WalletProvider {
     return this.getSigner(chainId).isDeployed()
   }
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
     this.transport.messageProvider!.on(event, fn)
   }
 
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
     this.transport.messageProvider!.once(event, fn)
   }
 
@@ -423,6 +440,7 @@ export class Wallet implements WalletProvider {
   }
 
   private saveSession = (session: WalletSession) => {
+    logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
     window.localStorage.setItem('@sequence.session', data)
   }
@@ -470,6 +488,7 @@ export class Wallet implements WalletProvider {
     // confirm default network is set correctly
     if (this.config.defaultNetworkId && networks && networks.length > 0) {
       if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
+        // TODO: what is the correct behaviour here we want for dapps?
         throw new Error(`expecting defaultNetworkId '${this.config.defaultNetworkId}' but is set to '${networks[0].name}'`)
       }
     }
@@ -506,6 +525,7 @@ export class Wallet implements WalletProvider {
   }
 
   private clearSession(): void {
+    logger.debug('wallet provider: clearing session')
     window.localStorage.removeItem('@sequence.session')
     this.session = undefined
     this.networks = []
@@ -517,6 +537,9 @@ export class Wallet implements WalletProvider {
 export interface ProviderConfig {
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
+
+  // Sequence Wallet Session URL, default: https://session.sequence.app
+  // walletSessionURL: string
 
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list supplied from the wallet upon login,
@@ -552,11 +575,12 @@ export interface ProviderConfig {
   //
   // NOTE: do not use this option unless you know what you're doing
   walletContext?: WalletContext
-
 }
 
 export const DefaultProviderConfig: ProviderConfig = {
   walletAppURL: 'https://sequence.app',
+
+  // walletSessionURL: 'https://session.sequence.app',
 
   transports: {
     windowTransport: { enabled: true },

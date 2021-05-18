@@ -1,10 +1,10 @@
 import { BaseProviderTransport } from '../base-provider-transport'
 
 import {
-  ProviderMessage, OpenState, OpenWalletIntent, ProviderMessageType
+  ProviderMessage, OpenState, OpenWalletIntent, EventType, InitState
 } from '../../types'
 
-import { ProxyMessageChannelPort } from './proxy-message-channel'
+import { ProxyMessageChannelPort, ProxyEventTypes } from './proxy-message-channel'
 
 export class ProxyMessageProvider extends BaseProviderTransport {
 
@@ -13,10 +13,14 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   constructor(port: ProxyMessageChannelPort) {
     super()
     this.state = OpenState.CLOSED
-    this.port = port
+    this.port = port    
     if (!port) {
       throw new Error('port argument cannot be empty')
     }
+
+    // disable init handshake for proxy-transport, we set it to OK, to
+    // consider it in completed state.
+    this._init = InitState.OK
   }
 
   register = () => {
@@ -24,17 +28,17 @@ export class ProxyMessageProvider extends BaseProviderTransport {
       this.handleMessage(message)
     }
 
-    this.on('open', (...args: any[]) => {
-      this.port.events.emit('open', args)
+    this.on('open', (...args: Parameters<ProxyEventTypes['open']>) => {
+      this.port.events.emit('open', ...args)
     })
-    this.on('close', (...args: any[]) => {
-      this.port.events.emit('close', args)
+    this.on('close', (...args: Parameters<ProxyEventTypes['close']>) => {
+      this.port.events.emit('close', ...args)
     })
-    this.on('connect', (...args: any[]) => {
-      this.port.events.emit('connect', args)
+    this.on('connect', (...args: Parameters<ProxyEventTypes['connect']>) => {
+      this.port.events.emit('connect', ...args)
     })
-    this.on('disconnect', (...args: any[]) => {
-      this.port.events.emit('disconnect', args)
+    this.on('disconnect', (...args: Parameters<ProxyEventTypes['disconnect']>) => {
+      this.port.events.emit('disconnect', ...args)
     })
 
     this._registered = true
@@ -48,12 +52,12 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.port.handleMessage = undefined
   }
 
-  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.state === OpenState.CLOSED) {
       this.state = OpenState.OPENING
       this.sendMessage({
-        idx: -1, type: ProviderMessageType.OPEN, data: {
-          path, intent, defaultNetworkId
+        idx: -1, type: EventType.OPEN, data: {
+          path, intent, networkId
         }
       })
     }
@@ -61,7 +65,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
 
   closeWallet() {
     this.sendMessage({
-      idx: -1, type: ProviderMessageType.CLOSE, data: null
+      idx: -1, type: EventType.CLOSE, data: null
     })
     this.close()
   }

@@ -22,7 +22,7 @@ export const tests = async () => {
 
   await test('provider opened the wallet', async () => {
     const opened = await walletProvider.waitUntilOpened()
-    assert.true(opened, 'opened is true')
+    assert.true(!!opened, 'opened is true')
   })
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..

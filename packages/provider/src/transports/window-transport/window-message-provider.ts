@@ -1,6 +1,6 @@
-import { OpenWalletIntent, ProviderMessage, InitState, ProviderMessageType } from '../../types'
+import { OpenWalletIntent, ProviderMessage, InitState, EventType } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
-import { logger } from '@0xsequence/utils'
+import { logger, base64EncodeObject } from '@0xsequence/utils'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider | undefined
@@ -8,7 +8,6 @@ let registeredWindowMessageProvider: WindowMessageProvider | undefined
 export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
   private walletWindow: Window | null
-  private _init: InitState
 
   constructor(walletAppURL: string) {
     super()
@@ -33,7 +32,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
           clearInterval(interval)
           this.close()
         }
-      }, 1250)
+      }, 500)
     })
 
     // close clean up
@@ -61,20 +60,11 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this.events.removeAllListeners()
   }
 
-  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.walletWindow && this.isOpened()) {
       // TODO: update the location of window to path
       this.walletWindow.focus()
       return
-    }
-
-    // Set session and network id on class instance walletURL
-    this._init = InitState.NIL
-    this._sessionId = `${performance.now()}`
-    this.walletURL.searchParams.set('sid', this._sessionId)
-
-    if (defaultNetworkId) {
-      this.walletURL.searchParams.set('net', `${defaultNetworkId}`)
     }
 
     // Instantiate new walletURL for this call 
@@ -83,9 +73,23 @@ export class WindowMessageProvider extends BaseProviderTransport {
       walletURL.pathname = path.toLowerCase()
     }
 
-    // set intent of wallet opening due to jsonRpcRequest send by provider
-    if (intent?.type === 'jsonRpcRequest') {
-      walletURL.searchParams.set('jsonRpcRequest', intent.method)
+    // Set session, intent and network id on walletURL
+    this._init = InitState.NIL
+    this._sessionId = `${performance.now()}`
+    walletURL.searchParams.set('sid', this._sessionId)
+    if (intent) {
+      // for the window-transport, we eagerly/optimistically set the origin host
+      // when connecting to the wallet, however, this will be verified and enforced
+      // on the wallet-side, so if a dapp provides the wrong origin, it will be dropped.
+      if (intent.type === 'connect') {
+        if (!intent.options) intent.options = {} 
+        intent.options.origin = window.location.origin
+      }
+      // encode intent as base6 url-encoded param
+      walletURL.searchParams.set('intent', base64EncodeObject(intent))
+    }
+    if (networkId) {
+      walletURL.searchParams.set('net', `${networkId}`)
     }
 
     // Open popup window on center of the app window
@@ -153,35 +157,11 @@ export class WindowMessageProvider extends BaseProviderTransport {
       throw new Error('ProviderMessage object is empty')
     }
 
-    // window init
-    if (this._init !== InitState.OK) {
-      if (message.type === ProviderMessageType.INIT) {
-        const { nonce } = message.data as { nonce: string }
-        if (!nonce || nonce.length === 0) {
-          logger.error('invalid init nonce')
-          return
-        }
-        this._init = InitState.OK
-        this.sendMessage({
-          idx: -1,
-          type: ProviderMessageType.INIT,
-          data: {
-            sessionId: this._sessionId,
-            nonce: nonce
-          }
-        }, true)
-      }
-      return
-    }
-
     // handle message with base message provider
     this.handleMessage(message)
   }
 
-  sendMessage(message: ProviderMessage<any>, skipIdx = false) {
-    if (!skipIdx && (!message.idx || message.idx <= 0)) {
-      throw new Error('message idx is empty')
-    }
+  sendMessage(message: ProviderMessage<any>) {
     if (!this.walletWindow) {
       logger.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
       return

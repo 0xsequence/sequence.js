@@ -1,6 +1,6 @@
 import {
-  ProviderMessage, ProviderMessageType, ProviderTransport,
-  ProviderMessageEvent, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent
+  ProviderMessage, EventType, ProviderTransport,
+  ProviderEventTypes, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent, ConnectDetails
 } from '../../types'
 
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
@@ -50,12 +50,12 @@ export class MuxMessageProvider implements ProviderTransport {
     this.provider = undefined
   }
 
-  openWallet = (path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number): void => {
+  openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.provider) {
-      this.provider.openWallet(path, intent, defaultNetworkId)
+      this.provider.openWallet(path, intent, networkId)
       return
     }
-    this.messageProviders.forEach(m => m.openWallet(path, intent, defaultNetworkId))
+    this.messageProviders.forEach(m => m.openWallet(path, intent, networkId))
   }
 
   closeWallet() {
@@ -78,7 +78,7 @@ export class MuxMessageProvider implements ProviderTransport {
     return false
   }
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
     if (this.provider) {
       this.provider.on(event, fn)
       return
@@ -88,7 +88,7 @@ export class MuxMessageProvider implements ProviderTransport {
     })
   }
 
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
     if (this.provider) {
       this.provider.once(event, fn)
       return
@@ -96,6 +96,16 @@ export class MuxMessageProvider implements ProviderTransport {
     this.messageProviders.forEach(m => {
       m.once(event, fn)
     })
+  }
+
+  emit<K extends keyof ProviderEventTypes>(event: K, ...args: Parameters<ProviderEventTypes[K]>): boolean {
+    if (this.provider) {
+      return this.provider.emit(event, ...args)
+    }
+    for (let i=0; i < this.messageProviders.length; i++) {
+      this.messageProviders[i].emit(event, ...args)
+    }
+    return true
   }
 
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -133,14 +143,14 @@ export class MuxMessageProvider implements ProviderTransport {
     throw new Error('impossible state, wallet must be opened first')
   }
 
-  waitUntilOpened = async (): Promise<boolean> => {
+  waitUntilOpened = async (): Promise<WalletSession | undefined> => {
     if (this.provider) {
       return this.provider.waitUntilOpened()
     }
     return Promise.race(this.messageProviders.map(p => p.waitUntilOpened()))
   }
 
-  waitUntilConnected = async (): Promise<WalletSession> => {
+  waitUntilConnected = async (): Promise<ConnectDetails> => {
     if (this.provider) {
       return this.provider.waitUntilConnected()
     }

@@ -4,7 +4,7 @@ import { ETHAuth, Proof } from "@0xsequence/ethauth"
 import { NetworkConfig, WalletContext, getAuthNetwork, findNetworkConfig } from "@0xsequence/network"
 import { Account } from "@0xsequence/wallet"
 import { ethers, Signer as AbstractSigner } from "ethers"
-import jwtDecode from 'jwt-decode'
+import { jwtDecodeClaims } from '@0xsequence/utils'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -423,5 +423,5 @@ function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcPro
 }
 
 function getJWTExpiration(jwt: string): number {
-  return jwtDecode<{ exp: number }>(jwt).exp
+  return jwtDecodeClaims<{ exp: number }>(jwt).exp
 }

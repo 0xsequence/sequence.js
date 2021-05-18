@@ -1,27 +1,27 @@
-import { ProviderMessageRequest, ProviderMessage, ProviderMessageType, ProviderMessageResponse, InitState } from '../../types'
+import {
+  ProviderMessageRequest,
+  ProviderMessage,
+  EventType,
+  ProviderMessageResponse,
+  InitState,
+  ConnectDetails,
+  OpenWalletIntent
+} from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, sanitizeNumberString } from '@0xsequence/utils'
-
-export interface RegisterOptions {
-  loadingPath: string
-}
+import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/utils'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
-  protected parentOrigin?: string
-
+  
   private _isPopup: boolean = false
-
-  private _initNonce: string
-  private _postMessageQueue: Array<any> = []
 
   constructor(walletRequestHandler: WalletRequestHandler) {
     super(walletRequestHandler)
     this._init = InitState.NIL
   }
 
-  register(options?: RegisterOptions) {
+  register() {
     const isPopup = parent.window.opener !== null
     this._isPopup = isPopup
     if (isPopup !== true) {
@@ -30,24 +30,22 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // record open details (sessionId + default network) from the window url
     const location = new URL(window.location.href)
-    this._sessionId = sanitizeNumberString(location.searchParams.get('sid')!)
-    location.searchParams.delete('sid')
+    const params = new URLSearchParams(location.search)
 
+    this._sessionId = sanitizeNumberString(params.get('sid')!)
     if (this._sessionId.length === 0) {
       logger.error('invalid sessionId')
       return
     }
 
-    const defaultNetwork = location.searchParams.get('net')!
-    location.searchParams.delete('net')
+    const intent = base64DecodeObject<OpenWalletIntent>(params.get('intent')!)
+    const networkId = params.get('net')!
 
-    const jsonRpcRequest = location.searchParams.get('jsonRpcRequest')
 
-    if (options?.loadingPath && !!jsonRpcRequest) {
-      window.history.replaceState({}, document.title, options.loadingPath)
-    } else {
-      window.history.replaceState({}, document.title, location.pathname)
-    }
+    // TODO: review how we should be intefacing with window.history, so we can route
+    // to the correct destination based on 'intent' ie. 'connect' or 'jsonRpcRequest'
+    // ie.. maybe..
+    // window.history.replaceState(params['jsonRpcRequest'] ? { jsonRpcRequest: true } : {}, document.title, location.pathname)
 
     // record parent window instance for communication
     this.parentWindow = parent.window.opener
@@ -57,15 +55,23 @@ export class WindowMessageHandler extends BaseWalletTransport {
     this._registered = true
 
     // send open event to the app which opened us
-    this.open(defaultNetwork).then(opened => {
-      if (!opened) {
-        logger.error(`failed to open to network ${defaultNetwork}`)
+    this.open(intent, networkId)
+      .then(opened => {
+        if (!opened) {
+          const err = `failed to open to network ${networkId}`
+          logger.error(err)
+          // TODO?
+          // this.notifyOpen({ error: err })  // or notifyClose({ message: err })
+          window.close()
+        }
+      })
+      .catch(e => {
+        const err = `failed to open to network ${networkId}, due to: ${e}`
+        logger.error(err)
+          // TODO?
+        // this.notifyOpen({ error: err }) // or notifyClose({ message: err })
         window.close()
-      }
-    }).catch(err => {
-      logger.error(`failed to open to network ${defaultNetwork}, due to: ${err}`)
-      window.close()
-    })
+      })
   }
 
   unregister() {
@@ -80,13 +86,8 @@ export class WindowMessageHandler extends BaseWalletTransport {
       // skip same-origin or when event.origin is empty/undefined
       return
     }
-    if (this.parentOrigin && event.origin !== this.parentOrigin) {
+    if (this.appOrigin && event.origin !== this.appOrigin) {
       // skip message as not from expected app origin
-      return
-    }
-    if (this._init === InitState.OK && (!this.parentOrigin || this.parentOrigin.length < 8)) {
-      // impossible state
-      logger.error('impossible state, init.OK and parentOrigin required')
       return
     }
 
@@ -101,24 +102,13 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     logger.debug('RECEIVED MESSAGE', request)
 
-    // Record the parent origin url on init
-    if (this._init !== InitState.OK) {
-      if (request.type === ProviderMessageType.INIT) {
-        const { sessionId, nonce } = request.data as any as { sessionId: string, nonce: string }
-        if (!sessionId || sessionId.length === 0 || !nonce || nonce.length === 0) {
-          logger.error('invalid init response')
-          return
-        }
-        if (sessionId !== this._sessionId || nonce !== this._initNonce) {
-          logger.error('invalid init match')
-          return
-        }
-        this._init = InitState.OK
-        this.parentOrigin = event.origin
-        this.flushPostMessageQueue()
-      } else {
-        // we expect init message first
-      }
+    // Record event origin for valid init ack
+    if (this._init !== InitState.OK && this.isValidInitAck(request)) {
+      this.appOrigin = event.origin
+    }
+    if (this._init === InitState.OK && (!this.appOrigin || this.appOrigin.length < 8)) {
+      // impossible state
+      logger.error('impossible state, init.OK and appOrigin required')
       return
     }
 
@@ -128,58 +118,40 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
   // postMessage sends message to the dapp window
   sendMessage(message: ProviderMessage<any>) {
-    if (message.type === ProviderMessageType.INIT) {
-      // clients should not send init requests directly
-      return
-    }
-
     // prepare payload
     const payload = JSON.stringify(message)
 
-    // queue sending messages until we're inited
-    if (this._init !== InitState.OK) {
-      this._postMessageQueue.push(payload)
+    // post-message to app.
+    // only for init requests, we send to '*' origin
+    if (message.type === EventType.INIT) {
+      this.postMessage(payload, true)
+    } else {
+      this.postMessage(payload)
     }
-
-    // init stage + check
-    if (this._init === InitState.NIL) {
-      this._initNonce = `${performance.now()}`
-      this.parentWindow.postMessage(JSON.stringify({
-        idx: -1, type: ProviderMessageType.INIT, data: { nonce: this._initNonce }
-      } as ProviderMessage<any>), '*')
-      this._init = InitState.SENT_NONCE
-      return
-    } else if (this._init !== InitState.OK) {
-      return
-    }
-
-    // post-message to app
-    this.postMessage(payload)
   }
 
   get isPopup(): boolean {
     return this._isPopup
   }
 
-  private flushPostMessageQueue() {
-    if (this._postMessageQueue.length === 0) return
-
-    // logger.debug(`flushPostMessageQueue # of messages, ${this._postMessageQueue.length}`)
-    for (let i=0; i < this._postMessageQueue.length; i++) {
-      this.postMessage(this._postMessageQueue[i])
-    }
-    this._postMessageQueue.length = 0
-  }
-
-  private postMessage(message: any) {
-    if (this._init !== InitState.OK) {
+  private postMessage(message: any, init = false) {
+    if (init !== true && this._init !== InitState.OK) {
       logger.error('impossible state, should not be calling postMessage until inited')
       return
     }
-    if (this.parentOrigin && this.parentOrigin.length > 8) {
-      this.parentWindow.postMessage(message, this.parentOrigin)
+
+    if (init) {
+      // init message transmission to global target -- for 'init' payloads only
+      this.parentWindow.postMessage(message, '*')
     } else {
-      logger.error('unable to postMessage as parentOrigin is invalid')
+      // open message transmission
+      if (this.appOrigin && this.appOrigin.length > 4) { // just above '.com'
+        this.parentWindow.postMessage(message, this.appOrigin)
+      } else {
+        logger.error('unable to postMessage as parentOrigin is invalid')
+      }  
     }
+
   }
+
 }
