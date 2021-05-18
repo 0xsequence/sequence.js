@@ -21,17 +21,10 @@
     "@0xsequence/api": "^0.18.0",
     "@0xsequence/config": "^0.18.0",
     "@0xsequence/ethauth": "^0.4.3",
-<<<<<<< HEAD
     "@0xsequence/network": "^0.18.0",
     "@0xsequence/wallet": "^0.18.0",
-    "ethers": "^5.0.32",
-    "jwt-decode": "^3.1.2"
-=======
-    "@0xsequence/network": "^0.16.0",
-    "@0xsequence/wallet": "^0.16.0",
-    "@0xsequence/utils": "^0.16.0",
+    "@0xsequence/utils": "^0.18.0",
     "ethers": "^5.0.32"
->>>>>>> 9c2a5a6 (updates)
   },
   "peerDependencies": {},
   "devDependencies": {

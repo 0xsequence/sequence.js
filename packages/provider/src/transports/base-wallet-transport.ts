@@ -9,7 +9,6 @@ import { WalletRequestHandler } from './wallet-request-handler'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 import { logger, sanitizeAlphanumeric, sanitizeHost } from '@0xsequence/utils'
-
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
@@ -23,7 +22,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
   protected _init: InitState
   protected _initNonce: string
   protected _initCallback?: (error?: string) => void
-  // protected _sendMessageQueue: Array<any> = []
 
   // appOrigin identifies the dapp's origin which opened the app. A transport
   // will auto-detect and set this value if it can. This is determined
@@ -91,15 +89,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
   handleMessage = async (message: ProviderMessage<any>) => {
     const request = message
 
-    // TODO: should we use _sendMessageQueue if this._init !== InitState.OK
-    // or, unnecessary, as system will init first anyways..
-
-    // ensure initial handshake is complete
+    // ensure initial handshake is complete before accepting
+    // other kinds of messages.
     if (this._init !== InitState.OK) {
       if (request.type === EventType.INIT) {
         if (this.isValidInitAck(message)) {
           // successful init
-          // this.flushSendMessageQueue()
           if (this._initCallback) this._initCallback()
         } else {
           // failed init
@@ -221,16 +216,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  // private flushSendMessageQueue() {
-  //   if (this._sendMessageQueue.length === 0) return
-
-  //   // logger.debug(`flushSendMessageQueue # of messages, ${this._sendMessageQueue.length}`)
-  //   for (let i = 0; i < this._sendMessageQueue.length; i++) {
-  //     this.sendMessage(this._sendMessageQueue[i])
-  //   }
-  //   this._sendMessageQueue.length = 0
-  // }
-
   protected isValidInitAck(message: ProviderMessage<any>): boolean {
     if (this._init === InitState.OK) {
       // we're already in init state, we shouldn't handle this message
@@ -330,11 +315,9 @@ export abstract class BaseWalletTransport implements WalletTransport {
         // ie. when we can't determine the origin in our transport, but dapp provides it to us.
         // we just sanitize the origin host.
         connectOptions.origin = sanitizeHost(authorizeOptions.origin)
-        // connectOptions.authorize = mergeConnectAuthorizeOptions(connectOptions.authorize, { origin: sanitizeHost(authorizeOptions?.origin) })
       } else if (this.appOrigin) {
         // ie. when we auto-determine the origin such as in window-transport
         connectOptions.origin = this.appOrigin
-        // connectOptions.authorize = mergeConnectAuthorizeOptions(connectOptions.authorize, { origin: this.appOrigin })
       }
       if (connectOptions.app) {
         connectOptions.app = sanitizeAlphanumeric(connectOptions.app)
@@ -418,13 +401,3 @@ export abstract class BaseWalletTransport implements WalletTransport {
     return true
   }
 }
-
-// const mergeConnectAuthorizeOptions = (base: AuthorizationOptions | boolean | undefined, update: AuthorizationOptions) => {
-//   if (base === undefined) {
-//     return base
-//   }
-//   if (typeof(base) !== 'object') {
-//     return base
-//   }
-//   return { ...base, ...update }
-// }
