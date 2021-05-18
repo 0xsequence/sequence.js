@@ -5,7 +5,7 @@ import fetch from 'cross-fetch'
 import { ArcadeumAPI as BaseArcadeumAPI } from './api.gen'
 
 export class ArcadeumAPIClient extends BaseArcadeumAPI {
-  constructor(hostname: string, private jwtAuth?: string) {
+  constructor(hostname: string, public jwtAuth?: string) {
     super(hostname, fetch)
     this.fetch = this._fetch
   }
