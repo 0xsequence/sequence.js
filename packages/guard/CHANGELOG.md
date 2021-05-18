@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
 ## 0.18.0
 
 ### Minor Changes

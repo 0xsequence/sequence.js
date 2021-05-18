@@ -1,5 +1,16 @@
 # @0xsequence/bridge
 
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.19.0
+
 ## 0.18.0
 
 ### Minor Changes

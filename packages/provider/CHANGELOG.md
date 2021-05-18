@@ -1,5 +1,22 @@
 # @0xsequence/provider
 
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.0
+  - @0xsequence/auth@0.19.0
+  - @0xsequence/config@0.19.0
+  - @0xsequence/network@0.19.0
+  - @0xsequence/transactions@0.19.0
+  - @0xsequence/utils@0.19.0
+  - @0xsequence/wallet@0.19.0
+
 ## 0.18.0
 
 ### Minor Changes
