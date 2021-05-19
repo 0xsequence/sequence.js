@@ -50,7 +50,7 @@ export type ProviderMessageResponseCallback = (error: any, response?: ProviderMe
 
 export interface ProviderRpcError extends Error {
   message: string
-  code: number
+  code?: number
   data?: {[key: string]: any}
 }
 
@@ -165,7 +165,7 @@ export interface ConnectDetails {
   email?: string
 }
 
-export type PromptConnectDetails = Pick<ConnectDetails, 'connected' | 'proof' | 'email'>
+export type PromptConnectDetails = Pick<ConnectDetails, 'chainId' | 'error' | 'connected' | 'proof' | 'email'>
 
 export type OpenWalletIntent =
   { type: 'connect'; options?: ConnectOptions } |

@@ -5,7 +5,8 @@ import {
   ProviderMessageResponse,
   InitState,
   ConnectDetails,
-  OpenWalletIntent
+  OpenWalletIntent,
+  ProviderRpcError
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
@@ -58,16 +59,14 @@ export class WindowMessageHandler extends BaseWalletTransport {
         if (!opened) {
           const err = `failed to open to network ${networkId}`
           logger.error(err)
-          // TODO?
-          // this.notifyOpen({ error: err })  // or notifyClose({ message: err })
+          this.notifyClose({ message: err } as ProviderRpcError)
           window.close()
         }
       })
       .catch(e => {
         const err = `failed to open to network ${networkId}, due to: ${e}`
         logger.error(err)
-        // TODO?
-        // this.notifyOpen({ error: err }) // or notifyClose({ message: err })
+        this.notifyClose({ message: err } as ProviderRpcError)
         window.close()
       })
   }

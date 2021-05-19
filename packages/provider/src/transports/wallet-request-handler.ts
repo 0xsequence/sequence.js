@@ -113,9 +113,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       try {
         connectDetails.proof = await signAuthorization(this.signer, authOptions)
       } catch (err) {
-        logger.warn(`connect, signAuthorization failed for options: ${options}, due to: ${err.message}`)
+        logger.warn(`connect, signAuthorization failed for options: ${JSON.stringify(options)}, due to: ${err.message}`)
         return {
-          connected: false, chainId: '0x0', error: 'signAuthorization failed'
+          connected: false, chainId: '0x0', error: `signAuthorization failed: ${err.message}`
         }
       }
     }

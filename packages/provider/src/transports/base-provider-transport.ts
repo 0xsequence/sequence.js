@@ -252,7 +252,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // NOTIFY CLOSE -- when wallet instructs to close
     if (message.type === EventType.CLOSE) {
       if (this.state !== OpenState.CLOSED) {
-        this.close()
+        this.close(message.data)
       }
     }
 
@@ -365,15 +365,19 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     })
 
     const closeWallet = new Promise<ConnectDetails>((_, reject) => {
-      this.events.once('close', () => {
-        reject(new Error('user closed the wallet'))
+      this.events.once('close', error => {
+        if (error) {
+          reject(new Error(`wallet closed due to ${JSON.stringify(error)}`))
+        } else {
+          reject(new Error(`user closed the wallet`))
+        }
       })
     })
 
     return Promise.race<ConnectDetails>([ connect, closeWallet ])
   }
 
-  protected close() {
+  protected close(error?: ProviderRpcError) {
     if (this.state === OpenState.CLOSED) return
     
     this.state = OpenState.CLOSED
@@ -394,6 +398,6 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     this.networksPayload = undefined
     this.walletContextPayload = undefined
 
-    this.events.emit('close')
+    this.events.emit('close', error)
   }
 }
