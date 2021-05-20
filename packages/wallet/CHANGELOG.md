@@ -1,5 +1,11 @@
 # @0xsequence/wallet
 
+## 0.21.1
+
+### Patch Changes
+
+- config updates must not be revertOnError
+
 ## 0.21.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @0xsequence/auth
 
+## 0.21.1
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/wallet@0.21.1
+
 ## 0.21.0
 
 ### Minor Changes
