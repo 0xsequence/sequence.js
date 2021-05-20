@@ -521,7 +521,7 @@ export class Wallet extends Signer {
 
     const [txs, n] = await Promise.all([
       this.buildUpdateConfigTransaction(config, publish, indexed),
-      nonce ? nonce : await this.getNonce()
+      nonce ?? this.getNonce()
     ])
 
     return [
