@@ -12,7 +12,7 @@ import { WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
-import { addressOf, joinSignatures, encodeSignature, WalletConfig } from '@0xsequence/config'
+import { addressOf, joinSignatures, encodeSignature, imageHash, WalletConfig } from '@0xsequence/config'
 
 import { configureLogger, encodeTypedDataDigest } from '@0xsequence/utils'
 
@@ -327,10 +327,10 @@ describe('Wallet integration', function () {
           })
 
           it('Should be able to update the config for a wallet with many signers', async () => {
-            // first, we try just one signer
+            // first, we try just two signers
 
             const signers = wallet.config.signers
-            while (signers.length < 1) {
+            while (signers.length < 2) {
               signers.push({
                 address: ethers.Wallet.createRandom().address,
                 weight: 1
@@ -341,10 +341,16 @@ describe('Wallet integration', function () {
               threshold: 1,
               signers
             }
+            let expectedImageHash = imageHash(newConfig)
 
             let tx = (await wallet.updateConfig(newConfig, undefined, true))[1]
             let receipt = await tx.wait()
+            // console.log(`gas usage: ${receipt.gasUsed.toString()} of ${tx.gasLimit.toString()}`)
             expect(receipt.status).to.equal(1)
+
+            let actualImageHash = await fetchImageHash(wallet)
+            expect(actualImageHash).to.equal(expectedImageHash)
+
             const gasLimit1 = tx.gasLimit
 
             // next, we try 100 signers
@@ -357,10 +363,16 @@ describe('Wallet integration', function () {
             }
 
             newConfig.signers = signers
+            expectedImageHash = imageHash(newConfig)
 
             tx = (await wallet.updateConfig(newConfig, undefined, true))[1]
             receipt = await tx.wait()
+            // console.log(`gas usage: ${receipt.gasUsed.toString()} of ${tx.gasLimit.toString()}`)
             expect(receipt.status).to.equal(1)
+
+            actualImageHash = await fetchImageHash(wallet)
+            expect(actualImageHash).to.equal(expectedImageHash)
+
             const gasLimit2 = tx.gasLimit
 
             // the second operation should have more gas allocated than the first one
