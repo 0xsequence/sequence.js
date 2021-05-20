@@ -554,9 +554,11 @@ export class Wallet extends Signer {
 
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
-    // 131072 gas, enough for both calls
-    // and a power of two to keep the gas cost of data low
-    const gasLimit = ethers.constants.Two.pow(17)
+    // empirically, this seems to work for the tests:
+    // const gasLimit = 100000 + 1800 * config.signers.length
+    //
+    // but we're going to play it safe with this instead:
+    const gasLimit = 2 * (100000 + 1800 * config.signers.length)
 
     const preTransaction = isUpgradable ? [] : [{
       delegateCall: false,

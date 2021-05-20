@@ -317,12 +317,54 @@ describe('Wallet integration', function () {
 
             expect(tx.data).to.contain("00fffff")
           })
+
           it('Should estimate gas for transaction with 0 gasLimit and revertOnError false', async () => {
             await new ethers.ContractFactory(
               MainModuleArtifact.abi,
               MainModuleArtifact.bytecode,
               signer
             ).deploy(wallet.address)
+          })
+
+          it('Should be able to update the config for a wallet with many signers', async () => {
+            // first, we try just one signer
+
+            const signers = wallet.config.signers
+            while (signers.length < 1) {
+              signers.push({
+                address: ethers.Wallet.createRandom().address,
+                weight: 1
+              })
+            }
+
+            const newConfig = {
+              threshold: 1,
+              signers
+            }
+
+            let tx = (await wallet.updateConfig(newConfig, undefined, true))[1]
+            let receipt = await tx.wait()
+            expect(receipt.status).to.equal(1)
+            const gasLimit1 = tx.gasLimit
+
+            // next, we try 100 signers
+
+            while (signers.length < 100) {
+              signers.push({
+                address: ethers.Wallet.createRandom().address,
+                weight: 1
+              })
+            }
+
+            newConfig.signers = signers
+
+            tx = (await wallet.updateConfig(newConfig, undefined, true))[1]
+            receipt = await tx.wait()
+            expect(receipt.status).to.equal(1)
+            const gasLimit2 = tx.gasLimit
+
+            // the second operation should have more gas allocated than the first one
+            expect(gasLimit2.gt(gasLimit1)).to.be.true
           })
         })
       })
