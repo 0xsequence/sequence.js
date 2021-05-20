@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 0.21.0
+
+### Minor Changes
+
+- - fix gas estimation on wallets with large number of signers
+  - update to session handling and wallet config construction upon auth
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.0
+  - @0xsequence/api@0.21.0
+  - @0xsequence/auth@0.21.0
+  - @0xsequence/chaind@0.21.0
+  - @0xsequence/config@0.21.0
+  - @0xsequence/guard@0.21.0
+  - @0xsequence/multicall@0.21.0
+  - @0xsequence/network@0.21.0
+  - @0xsequence/provider@0.21.0
+  - @0xsequence/relayer@0.21.0
+  - @0xsequence/transactions@0.21.0
+  - @0xsequence/utils@0.21.0
+  - @0xsequence/wallet@0.21.0
+
 ## 0.20.0
 
 ### Minor Changes

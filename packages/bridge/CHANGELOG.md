@@ -1,5 +1,17 @@
 # @0xsequence/bridge
 
+## 0.21.0
+
+### Minor Changes
+
+- - fix gas estimation on wallets with large number of signers
+  - update to session handling and wallet config construction upon auth
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.21.0
+
 ## 0.19.3
 
 ### Patch Changes
