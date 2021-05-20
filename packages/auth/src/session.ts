@@ -1,9 +1,10 @@
 import { ArcadeumAPIClient } from '@0xsequence/api'
 import { editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from "@0xsequence/config"
 import { ETHAuth, Proof } from "@0xsequence/ethauth"
-import { NetworkConfig, WalletContext, getAuthNetwork, findNetworkConfig } from "@0xsequence/network"
+import { NetworkConfig, WalletContext, getAuthNetwork } from "@0xsequence/network"
 import { Account } from "@0xsequence/wallet"
 import { ethers, Signer as AbstractSigner } from "ethers"
+import { jwtDecodeClaims } from '@0xsequence/utils'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -13,8 +14,24 @@ export type SessionMeta = {
   expiration?: number
 }
 
-export type SessionJWT = { token: string, expiration: number }
-export type SessionJWTs = { [url: string]: SessionJWT }
+export type SessionJWTs = {
+  [url: string]: SessionJWT
+}
+
+export type SessionJWT = {
+  token: string
+  expiration: number
+}
+
+type SessionJWTPromise = {
+  token: Promise<string>
+  expiration: number
+}
+
+type ProofStringPromise = {
+  proofString: Promise<string>
+  expiration: number
+}
 
 export interface SessionDump {
   config: WalletConfig
@@ -31,20 +48,33 @@ export const LONG_SESSION_EXPIRATION = 3e7
 
 const EXPIRATION_JWT_MARGIN = 60 // seconds
 
-export class Session implements SessionDump {
-  public jwts: SessionJWTs
-  public authPromises: { url: string, promise: Promise<void> }[] = []
+export class Session {
+  _initialAuthRequests: Promise<ArcadeumAPIClient>[]
 
-  private onAuthCallbacks: (() => void)[] = []
+  // JWTs are indexed by API host
+  readonly _jwts: Map<string, SessionJWTPromise> = new Map()
+
+  // proof strings are indexed by account address and app name, see getProofStringKey()
+  private readonly proofStrings: Map<string, ProofStringPromise> = new Map()
+
+  private onAuthCallbacks: ((result: PromiseSettledResult<void>) => void)[] = []
 
   constructor(
     public config: WalletConfig,
     public context: WalletContext,
     public account: Account,
     public metadata: SessionMeta,
+    private readonly authProvider: ethers.providers.JsonRpcProvider,
     jwts?: SessionJWTs,
   ) {
-    this.jwts = jwts ? jwts : {}
+    if (jwts) {
+      Object.entries(jwts).forEach(([url, jwt]) => {
+        this._jwts.set(url, {
+          token: Promise.resolve(jwt.token),
+          expiration: jwt.expiration ?? getJWTExpiration(jwt.token)
+        })
+      })
+    }
   }
 
   get name(): string {
@@ -55,7 +85,7 @@ export class Session implements SessionDump {
     return this.metadata.expiration ? Math.max(this.metadata.expiration, 120) : DEFAULT_SESSION_EXPIRATION
   }
 
-  onAuth(cb: () => void) {
+  onAuth(cb: (result: PromiseSettledResult<void>) => void) {
     this.onAuthCallbacks.push(cb)
   }
 
@@ -67,115 +97,180 @@ export class Session implements SessionDump {
     this.config = config
   }
 
-  async auth(net: NetworkConfig | number, tries: number = 0, maxTries: number = 5): Promise<ArcadeumAPIClient> {
+  async auth(net: NetworkConfig | number, maxTries: number = 5): Promise<ArcadeumAPIClient> {
     const network = await this.getNetwork(net)
+
     const url = network.sequenceApiUrl
     if (!url) throw Error('No chaind url')
 
-    // TODO: remove # of tries, shouldnt be necessary.
-
-    const jwt = this.jwts[url]
-    if (jwt && jwt.expiration > this.now()) {
-      const api = new ArcadeumAPIClient(url)
-      api.jwtAuth = jwt.token
-      return api
+    let jwtAuth: string | undefined
+    for (let i = 0; ; i++) {
+      try {
+        jwtAuth = (await this.getJWT(network, true)).token
+        break
+      } catch (error) {
+        if (i === maxTries - 1) {
+          console.error(`couldn't authenticate after ${maxTries} attempts`, error)
+          throw error
+        }
+      }
     }
 
-    const thisAuthPromises = this.authPromises.filter((p) => p.url === url)
-
-    if (thisAuthPromises.length === 0) {
-      if (tries >= maxTries) throw Error('Error getting JWT token')
-      this.scheduleAuth(network)
-      return this.auth(net, tries, maxTries)
-    }
-
-    await Promise.all(thisAuthPromises.map((p) => p.promise))
-    this.authPromises = this.authPromises.filter((p) => thisAuthPromises.indexOf(p) === -1)
-
-    return this.auth(net, tries + 1, maxTries)
-  }
-
-  scheduleAuth(net: NetworkConfig) {
-    const url = net.sequenceApiUrl
-    if (!url) return
-
-    this.authPromises.push({
-      url: url,
-      promise: this.performAuthRequest(net)
-    })
+    return new ArcadeumAPIClient(url, jwtAuth)
   }
 
   async getAPI(net: NetworkConfig | number, tryAuth = true): Promise<ArcadeumAPIClient> {
     const network = await this.getNetwork(net)
-    const url = network.sequenceApiUrl
 
+    const url = network.sequenceApiUrl
     if (!url) throw Error('No chaind url')
 
-    const jwt = this.jwts[url]
+    const jwtAuth = (await this.getJWT(network, tryAuth)).token
 
-    if (!jwt || jwt.expiration < this.now()) {
-      if (tryAuth) return this.auth(net)
-      throw Error('Not authenticated')
-    }
-
-    const api = new ArcadeumAPIClient(url)
-    api.jwtAuth = jwt.token
-    return api
+    return new ArcadeumAPIClient(url, jwtAuth)
   }
 
-  async performAuthRequest(net: NetworkConfig | number): Promise<void> {
-    const network = this.getNetwork(net)
+  private async getJWT(network: NetworkConfig, tryAuth: boolean): Promise<SessionJWT> {
+    const url = network.sequenceApiUrl
+    if (!url) throw Error('No chaind url')
 
-    const ethAuth = new ETHAuth()
-    const authWallet = this.account.authWallet()
-  
+    // check if we already have or are waiting for a token
+    if (this._jwts.has(url)) {
+      const jwt = this._jwts.get(url)!
+
+      const token = await jwt.token
+
+      if (this.now() < jwt.expiration) {
+        return { token, expiration: jwt.expiration }
+      }
+
+      // token expired, delete it and get a new one
+      this._jwts.delete(url)
+    }
+
+    if (!tryAuth) {
+      throw new Error('no auth token in memory')
+    }
+
+    const proofStringKey = this.getProofStringKey()
+    const { proofString, expiration } = this.getProofString(proofStringKey)
+
+    const jwt = {
+      token: proofString.then(async proofString => {
+        const api = new ArcadeumAPIClient(url)
+
+        const authResp = await api.getAuthToken({ ewtString: proofString })
+
+        if (authResp?.status === true && authResp.jwtToken.length !== 0) {
+          return authResp.jwtToken
+        } else {
+          if (!await this.isProofStringValid(proofString)) {
+            this.proofStrings.delete(proofStringKey)
+          }
+          throw new Error('no auth token from server')
+        }
+      }).catch(reason => {
+        this._jwts.delete(url)
+        throw reason
+      }),
+      expiration
+    }
+    this._jwts.set(url, jwt)
+
+    jwt.token.then(() => {
+      this.onAuthCallbacks.forEach(cb => { try { cb({ status: 'fulfilled', value: undefined }) } catch {} })
+    }).catch((reason: any) => {
+      this.onAuthCallbacks.forEach(cb => { try { cb({ status: 'rejected', reason }) } catch {} })
+    })
+
+    const token = await jwt.token
+    return { token, expiration }
+  }
+
+  private getProofString(key: string): ProofStringPromise {
+    // check if we already have or are waiting for a proof string
+    if (this.proofStrings.has(key)) {
+      const proofString = this.proofStrings.get(key)!
+
+      if (this.now() < proofString.expiration) {
+        return proofString
+      }
+
+      // proof string expired, delete it and make a new one
+      this.proofStrings.delete(key)
+    }
+
     const proof = new Proof({
       address: this.account.address
     })
-  
+    proof.claims.app = this.name
     proof.setIssuedAtNow()
     proof.setExpiryIn(this.expiration)
 
+    const ethAuth = new ETHAuth()
+    // TODO: is authWallet up-to-date?
+    const authWallet = this.account.authWallet()
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
-    proof.claims.app = this.name
-  
-    proof.signature = await authWallet.wallet.sign(proof.messageDigest())
-    const proofString = await ethAuth.encodeProof(proof, true)
+    const proofString = {
+      proofString: authWallet.wallet.sign(proof.messageDigest()).then(signature => {
+        proof.signature = signature
+        return ethAuth.encodeProof(proof, true)
+      }).catch(reason => {
+        this.proofStrings.delete(key)
+        throw reason
+      }),
+      expiration
+    }
+    this.proofStrings.set(key, proofString)
 
-    // TODO: ethauth.js v0.4.4:
-    // const proofString = await ethAuth.encodeProof(proof, { skipValidation: true })
-
-    const url = (await network).sequenceApiUrl
-    if (!url) return
-
-    const api = new ArcadeumAPIClient(url)
-
-    try {
-      const authResp = await api.getAuthToken({ ewtString: proofString })
-      if (authResp?.status === true && authResp.jwtToken.length !== 0) {
-        this.jwts[url] = {
-          token: authResp.jwtToken,
-          expiration: expiration
-        }
-
-        this.onAuthCallbacks.forEach((cb) => { try { cb() } catch {} })
-      } else { }
-    } catch {}
+    return proofString
   }
 
-  dump(): SessionDump {
+  private getProofStringKey(): string {
+    return `${this.account.address} - ${this.name}`
+  }
+
+  private async isProofStringValid(proofString: string): Promise<boolean> {
+    try {
+      const ethAuth = new ETHAuth()
+      ethAuth.provider = this.authProvider
+
+      await ethAuth.decodeProof(proofString)
+
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async dump(): Promise<SessionDump> {
+    const jwts: { [index: string]: SessionJWT } = {}
+
+    ;(await Promise.allSettled(
+      Array.from(this._jwts.entries()).map(
+        ([url, jwt]) => jwt.token.then(
+          token => [url, { token, expiration: jwt.expiration }] as [string, SessionJWT]
+        )
+      )
+    )).forEach(result => {
+      if (result.status === 'fulfilled') {
+        const [url, jwt] = result.value
+        jwts[url] = jwt
+      }
+    })
+
     return {
       config: this.config,
       context: this.context,
-      jwts: this.jwts,
-      metadata: this.metadata
+      metadata: this.metadata,
+      jwts
     }
   }
 
   private async getNetwork(net: NetworkConfig | number): Promise<NetworkConfig> {
     const networks = await this.account.getNetworks()
-    
+
     // TODO: ..
     let network: NetworkConfig | undefined
     if (typeof net === 'number') {
@@ -187,7 +282,7 @@ export class Session implements SessionDump {
     // with the network config from this.account.getNetworks()
     // which does not have chaindUrl set..
     // const network = findNetworkConfig(networks, net)
-    
+
     if (!network) throw Error('Network not found')
     return network
   }
@@ -219,18 +314,15 @@ export class Session implements SessionDump {
       metadata
     } = args
 
-    const authChain = getAuthNetwork(networks)
-    if (!authChain) throw Error('Auth chain not found')
-  
-    const authProvider = authChain.provider ? authChain.provider : new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
+    const authProvider = getAuthProvider(networks)
     const configFinder = new SequenceUtilsFinder(authProvider)
-  
+
     const solvedSigners = Promise.all(
       signers.map(async s => ({ ...s, address: typeof(s.signer) === 'string' ? s.signer : await s.signer.getAddress() }))
     )
 
     const fullSigners = signers.filter(s => typeof(s.signer) !== 'string').map(s => s.signer)
-  
+
     const existingWallet = (await configFinder.findLastWalletOfInitialSigner({
       signer: referenceSigner,
       context: context,
@@ -248,27 +340,17 @@ export class Session implements SessionDump {
         context: context,
         knownConfigs
       })).config
-  
+
       if (!config) throw Error('Wallet config not found')
-  
+
       // Load prev account
       const account = new Account({
         initialConfig: config,
         networks: networks,
         context: context
       }, ...fullSigners)
-  
-      const session = new Session(
-        config,
-        context,
-        account,
-        metadata 
-      )
 
-      // Fire JWT requests before opening session. The server-side will have to
-      // be smart enough to try a few times if it fails on the first block, as in
-      // our case we're adding a new session in parallel.
-      networks.map((n) => session.scheduleAuth(n))
+      const session = new Session(config, context, account, metadata, authProvider)
 
       // Update wallet config on-chain on the authChain
       const [newConfig] = await account.updateConfig(
@@ -286,38 +368,39 @@ export class Session implements SessionDump {
         context: context
       }, ...fullSigners))
 
-      // Fire JWT requests again, but with new config
-      // MAYBE This is not neccesary, we can rely on the first request?
-      // TODO: lets remove this one we no longer depend on session
-      // key from this new auth request to gain an auth token
-      networks.forEach((n) => session.scheduleAuth(n))
+      // Fire JWT requests after updating config
+      session._initialAuthRequests = networks.map(n => session.auth(n))
 
       return session
 
     } else {
       // fresh account
       const config = genConfig(thershold, await solvedSigners)
-    
+
       const account = new Account({
         initialConfig: config,
         networks: networks,
         context: context
       }, ...fullSigners)
-    
+
       await account.publishConfig(noIndex ? false : true)
-    
-      const session = new Session(config, context, account, metadata)
-      networks.forEach((n) => session.scheduleAuth(n))
+
+      const session = new Session(config, context, account, metadata, authProvider)
+
+      // Fire JWT requests when opening session
+      session._initialAuthRequests = networks.map(n => session.auth(n))
+
       return session
     }
   }
 
-  static load(args: { 
+  static load(args: {
     dump: SessionDump,
     signers: AbstractSigner[],
     networks: NetworkConfig[]
   }): Session {
     const { dump, signers, networks } = args
+
     return new Session(
       dump.config,
       dump.context,
@@ -327,7 +410,18 @@ export class Session implements SessionDump {
         networks: networks
       }, ...signers),
       dump.metadata,
+      getAuthProvider(networks),
       dump.jwts
     )
   }
+}
+
+function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcProvider {
+  const authChain = getAuthNetwork(networks)
+  if (!authChain) throw Error('Auth chain not found')
+  return authChain.provider ?? new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
+}
+
+function getJWTExpiration(jwt: string): number {
+  return jwtDecodeClaims<{ exp: number }>(jwt).exp
 }

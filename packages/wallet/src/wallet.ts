@@ -521,7 +521,7 @@ export class Wallet extends Signer {
 
     const [txs, n] = await Promise.all([
       this.buildUpdateConfigTransaction(config, publish, indexed),
-      nonce ? nonce : await this.getNonce()
+      nonce ?? this.getNonce()
     ])
 
     return [
@@ -554,9 +554,11 @@ export class Wallet extends Signer {
 
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
-    // 131072 gas, enough for both calls
-    // and a power of two to keep the gas cost of data low
-    const gasLimit = ethers.constants.Two.pow(17)
+    // empirically, this seems to work for the tests:
+    // const gasLimit = 100000 + 1800 * config.signers.length
+    //
+    // but we're going to play it safe with this instead:
+    const gasLimit = 2 * (100000 + 1800 * config.signers.length)
 
     const preTransaction = isUpgradable ? [] : [{
       delegateCall: false,
@@ -594,7 +596,7 @@ export class Wallet extends Signer {
 
     return [{
       delegateCall: false,
-      revertOnError: false,
+      revertOnError: true,
       gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
