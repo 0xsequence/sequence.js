@@ -594,7 +594,7 @@ export class Wallet extends Signer {
 
     return [{
       delegateCall: false,
-      revertOnError: false,
+      revertOnError: true,
       gasLimit: gasLimit,
       to: this.address,
       value: ethers.constants.Zero,
