@@ -28,7 +28,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     this.service = new proto.RelayerService(relayerSerivceUrl, fetchPonyfill().fetch)
   }
 
-  async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 500): Promise<proto.GetMetaTxnReceiptReturn> {
+  async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
       return this.waitReceipt(
         computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
@@ -40,11 +40,6 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
       await new Promise(r => setTimeout(r, wait))
       result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
-    }
-
-    // "FAILED" is reserved for when the tx is invalid and never dispatched by remote relayer
-    if (result.receipt.status == 'FAILED') {
-      throw new Error(result.receipt.revertReason)
     }
 
     return result
@@ -170,8 +165,13 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return this.wait(signedTxs)
   }
 
-  async wait(metaTxnHash: string | SignedTransactions, wait: number = 500): Promise<TransactionResponse> {
+  async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse> {
     const { receipt } = await this.waitReceipt(metaTxnHash, wait)
+
+    if (!receipt.txnReceipt || receipt.status === 'FAILED' || receipt.status === 'DROPPED') {
+      throw new MetaTransactionResponseException(receipt)
+    }
+
     const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
     return {
@@ -184,6 +184,10 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
     } as TransactionResponse
   }
+}
+
+class MetaTransactionResponseException {
+  constructor(public receipt: proto.MetaTxnReceipt) {}
 }
 
 type RelayerTxReceipt = {
