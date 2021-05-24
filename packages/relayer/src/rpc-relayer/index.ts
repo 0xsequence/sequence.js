@@ -20,6 +20,13 @@ import * as proto from './relayer.gen'
 
 export { proto }
 
+const FAILED_STATUSES = [
+  proto.ETHTxnStatus.FAILED,
+  proto.ETHTxnStatus.PARTIALLY_FAILED,
+  proto.ETHTxnStatus.DROPPED,
+  proto.ETHTxnStatus.REVERTED
+]
+
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly service: proto.RelayerService
 
@@ -168,7 +175,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse> {
     const { receipt } = await this.waitReceipt(metaTxnHash, wait)
 
-    if (!receipt.txnReceipt || receipt.status === 'FAILED' || receipt.status === 'DROPPED') {
+    if (!receipt.txnReceipt || FAILED_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
       throw new MetaTransactionResponseException(receipt)
     }
 
