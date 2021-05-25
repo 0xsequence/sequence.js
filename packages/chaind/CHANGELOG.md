@@ -1,5 +1,11 @@
 # @0xsequence/chaind
 
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+
 ## 0.21.0
 
 ### Minor Changes

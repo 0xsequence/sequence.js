@@ -1,5 +1,15 @@
 # @0xsequence/config
 
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.2
+  - @0xsequence/network@0.21.2
+  - @0xsequence/utils@0.21.2
+
 ## 0.21.0
 
 ### Minor Changes

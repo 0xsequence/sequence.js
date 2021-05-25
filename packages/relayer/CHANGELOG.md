@@ -1,5 +1,17 @@
 # @0xsequence/relayer
 
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.2
+  - @0xsequence/chaind@0.21.2
+  - @0xsequence/config@0.21.2
+  - @0xsequence/transactions@0.21.2
+  - @0xsequence/utils@0.21.2
+
 ## 0.21.0
 
 ### Minor Changes
