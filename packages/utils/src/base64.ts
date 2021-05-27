@@ -15,7 +15,7 @@ export const base64Decode = (encodedString: string): string | undefined => {
   return Base64.decode(encodedString)
 }
 
-export const base64DecodeObject = <T = any>(encodedObject: string): T | undefined => {
+export const base64DecodeObject = <T = any>(encodedObject: string | null): T | undefined => {
   if (encodedObject === null || encodedObject === undefined) {
     return undefined
   }

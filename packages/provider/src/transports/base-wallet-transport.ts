@@ -290,7 +290,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  protected open = async (intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
+  protected open = async (intent?: OpenWalletIntent, networkId?: string | number | null): Promise<boolean> => {
 
     // init handshake for certain transports, before we can open the communication.
     //
