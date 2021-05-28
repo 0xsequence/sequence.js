@@ -123,26 +123,28 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   handleMessage(message: ProviderMessage<any>) {
 
     // init incoming for initial handshake with transport.
+    // always respond to INIT messages, e.g. on popup window reload
+    if (message.type === EventType.INIT) {
+      logger.debug('MessageProvider, received INIT message', message)
+      const { nonce } = message.data as { nonce: string }
+      if (!nonce || nonce.length == 0) {
+        logger.error('invalid init nonce')
+        return
+      }
+      this._init = InitState.OK
+      this.sendMessage({
+        idx: -1,
+        type: EventType.INIT,
+        data: {
+          sessionId: this._sessionId,
+          nonce: nonce
+        }
+      })
+    }
+
     if (this._init !== InitState.OK) {
       // if provider is not init'd, then we drop any received messages. the only
       // message we will process is of event type 'init', as our acknowledgement
-      if (message.type === EventType.INIT) {
-        logger.debug('MessageProvider, received INIT message', message)
-        const { nonce } = message.data as { nonce: string }
-        if (!nonce || nonce.length == 0) {
-          logger.error('invalid init nonce')
-          return
-        }
-        this._init = InitState.OK
-        this.sendMessage({
-          idx: -1,
-          type: EventType.INIT,
-          data: {
-            sessionId: this._sessionId,
-            nonce: nonce
-          }
-        })
-      }
       return
     }
 

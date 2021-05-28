@@ -1,4 +1,4 @@
-import { OpenWalletIntent, ProviderMessage, InitState, EventType } from '../../types'
+import { OpenWalletIntent, ProviderMessage, InitState, EventType, WindowSessionParams } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 import { logger, base64EncodeObject } from '@0xsequence/utils'
 
@@ -67,8 +67,10 @@ export class WindowMessageProvider extends BaseProviderTransport {
       return
     }
 
-    // Instantiate new walletURL for this call 
+    // Instantiate new walletURL for this call
     const walletURL = new URL(this.walletURL.href)
+    const windowSessionParams = new WindowSessionParams()
+    
     if (path && path !== '') {
       walletURL.pathname = path.toLowerCase()
     }
@@ -76,33 +78,36 @@ export class WindowMessageProvider extends BaseProviderTransport {
     // Set session, intent and network id on walletURL
     this._init = InitState.NIL
     this._sessionId = `${performance.now()}`
-    walletURL.searchParams.set('sid', this._sessionId)
+    windowSessionParams.set('sid', this._sessionId)
     if (intent) {
       // for the window-transport, we eagerly/optimistically set the origin host
       // when connecting to the wallet, however, this will be verified and enforced
       // on the wallet-side, so if a dapp provides the wrong origin, it will be dropped.
       if (intent.type === 'connect') {
-        if (!intent.options) intent.options = {} 
+        if (!intent.options) intent.options = {}
         intent.options.origin = window.location.origin
       }
       // encode intent as base6 url-encoded param
-      walletURL.searchParams.set('intent', base64EncodeObject(intent))
+      windowSessionParams.set('intent', base64EncodeObject(intent))
     }
     if (networkId) {
-      walletURL.searchParams.set('net', `${networkId}`)
+      windowSessionParams.set('net', `${networkId}`)
     }
 
     // Open popup window on center of the app window
     const windowSize = [450, 700]
     const windowPos = [
-      Math.abs(window.screenX+(window.innerWidth/2)-(windowSize[0]/2)),
-      Math.abs(window.screenY+(window.innerHeight/2)-(windowSize[1]/2))
+      Math.abs(window.screenX + window.innerWidth / 2 - windowSize[0] / 2),
+      Math.abs(window.screenY + window.innerHeight / 2 - windowSize[1] / 2)
     ]
 
     const windowFeatures =
-      `toolbar=0,location=0,menubar=0,scrollbars=yes,status=yes`+
-      `,width=${windowSize[0]},height=${windowSize[1]}`+
+      `toolbar=0,location=0,menubar=0,scrollbars=yes,status=yes` +
+      `,width=${windowSize[0]},height=${windowSize[1]}` +
       `,left=${windowPos[0]},top=${windowPos[1]}`
+
+    // serialize params
+    walletURL.search = windowSessionParams.toString()
 
     this.walletWindow = window.open(walletURL.href, 'sequence.app', windowFeatures)
 
@@ -144,8 +149,8 @@ export class WindowMessageProvider extends BaseProviderTransport {
       // Safetly can skip events not from the wallet
       return
     }
-  
-    let message: ProviderMessage<any>    
+
+    let message: ProviderMessage<any>
     try {
       message = JSON.parse(event.data)
     } catch (err) {

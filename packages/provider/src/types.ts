@@ -68,6 +68,19 @@ export interface ProviderMessageTransport {
   sendMessage(message: ProviderMessage<any>): void
 }
 
+export type WindowSessionParam = 'sid' | 'net' | 'intent'
+
+export interface WindowSessionParams extends URLSearchParams {
+  get(name: WindowSessionParam): string | null
+  set(name: WindowSessionParam, value: string): void
+}
+
+export class WindowSessionParams extends URLSearchParams {
+  static new(init?: Record<WindowSessionParam, string> | string) {
+    return new URLSearchParams(init) as WindowSessionParams
+  }
+}
+
 export enum EventType {
   OPEN = 'open',
   CLOSE = 'close',
