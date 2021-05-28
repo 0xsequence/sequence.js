@@ -1,5 +1,16 @@
 # @0xsequence/transactions
 
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.3
+  - @0xsequence/chaind@0.21.3
+  - @0xsequence/network@0.21.3
+  - @0xsequence/utils@0.21.3
+
 ## 0.21.2
 
 ### Patch Changes

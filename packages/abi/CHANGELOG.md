@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+
 ## 0.21.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.21.3
+
 ## 0.21.2
 
 ### Patch Changes
