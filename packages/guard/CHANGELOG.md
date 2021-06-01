@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.21.5
+
+### Patch Changes
+
+- Give priority to metaTxnId returned by relayer
+
 ## 0.21.4
 
 ### Patch Changes
