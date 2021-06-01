@@ -719,4 +719,9 @@ export class Wallet extends Signer {
     }
     return new Wallet({ config, context }, signer)
   }
+
+  async hasEnoughSigners(chainId?: ChainId): Promise<boolean> {
+    if (chainId) await this.getChainIdNumber(chainId)
+    return (await this.signWeight()).gte(this.config.threshold)
+  }
 }
