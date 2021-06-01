@@ -169,7 +169,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
-    return this.wait(signedTxs)
+    return this.wait(metaTxn.txnHash)
   }
 
   async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse> {
