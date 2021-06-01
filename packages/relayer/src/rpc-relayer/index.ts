@@ -28,32 +28,26 @@ const FAILED_STATUSES = [
 ]
 
 export type RpcRelayerOptions = BaseRelayerOptions & {
-  url: string,
-  waitForReceipt?: boolean
-}
-
-export const RpcRelayerDefaults = {
-  waitForReceipt: true
+  url: string
 }
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly service: proto.RelayerService
-  public waitForReceipt: boolean
 
   constructor(options: RpcRelayerOptions) {
     super(options)
-    const opts = { ...RpcRelayerDefaults, ...options }
     this.service = new proto.RelayerService(options.url, fetchPonyfill().fetch)
-    this.waitForReceipt = opts.waitForReceipt
   }
 
   async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
+      console.log("computing id", metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
       return this.waitReceipt(
         computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
       )
     }
 
+    console.log("waiting for", metaTxnHash)
     let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
 
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
@@ -181,7 +175,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
-    return this.wait(signedTxs)
+    return this.wait(metaTxn.txnHash)
   }
 
   async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse> {
