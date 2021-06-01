@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+
 ## 0.21.3
 
 ### Patch Changes

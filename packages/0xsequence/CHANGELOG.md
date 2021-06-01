@@ -1,5 +1,25 @@
 # 0xsequence
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.4
+  - @0xsequence/api@0.21.4
+  - @0xsequence/auth@0.21.4
+  - @0xsequence/chaind@0.21.4
+  - @0xsequence/config@0.21.4
+  - @0xsequence/guard@0.21.4
+  - @0xsequence/multicall@0.21.4
+  - @0xsequence/network@0.21.4
+  - @0xsequence/provider@0.21.4
+  - @0xsequence/relayer@0.21.4
+  - @0xsequence/transactions@0.21.4
+  - @0xsequence/utils@0.21.4
+  - @0xsequence/wallet@0.21.4
+
 ## 0.21.3
 
 ### Patch Changes

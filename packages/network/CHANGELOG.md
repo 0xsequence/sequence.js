@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.21.4
+
 ## 0.21.3
 
 ### Patch Changes
