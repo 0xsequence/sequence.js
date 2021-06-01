@@ -7,10 +7,10 @@ import { ethers, Wallet as EOAWallet } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { Networks, WalletContext } from '@0xsequence/network'
-import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { configureLogger } from '@0xsequence/utils'
+import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
 
 configureLogger({ logLevel: 'DEBUG' })
@@ -39,7 +39,6 @@ export const tests = async () => {
   // Proxy Channel (normally would be out-of-band)
   //
   const ch = new ProxyMessageChannel()
-
 
   //
   // Wallet Handler (local mock wallet, same a mock-wallet tests)
@@ -128,7 +127,10 @@ export const tests = async () => {
   })
 
   await test('connect', async () => {
-    const connected = await wallet.connect()
+    const { connected } = await wallet.connect({
+      keepWalletOpened: true
+    })
+
     assert.true(connected, 'is connected')
   })
 

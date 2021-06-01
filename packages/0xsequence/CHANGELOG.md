@@ -1,5 +1,213 @@
 # 0xsequence
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.4
+  - @0xsequence/api@0.21.4
+  - @0xsequence/auth@0.21.4
+  - @0xsequence/chaind@0.21.4
+  - @0xsequence/config@0.21.4
+  - @0xsequence/guard@0.21.4
+  - @0xsequence/multicall@0.21.4
+  - @0xsequence/network@0.21.4
+  - @0xsequence/provider@0.21.4
+  - @0xsequence/relayer@0.21.4
+  - @0xsequence/transactions@0.21.4
+  - @0xsequence/utils@0.21.4
+  - @0xsequence/wallet@0.21.4
+
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.3
+  - @0xsequence/api@0.21.3
+  - @0xsequence/auth@0.21.3
+  - @0xsequence/chaind@0.21.3
+  - @0xsequence/config@0.21.3
+  - @0xsequence/guard@0.21.3
+  - @0xsequence/multicall@0.21.3
+  - @0xsequence/network@0.21.3
+  - @0xsequence/provider@0.21.3
+  - @0xsequence/relayer@0.21.3
+  - @0xsequence/transactions@0.21.3
+  - @0xsequence/utils@0.21.3
+  - @0xsequence/wallet@0.21.3
+
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.2
+  - @0xsequence/api@0.21.2
+  - @0xsequence/auth@0.21.2
+  - @0xsequence/chaind@0.21.2
+  - @0xsequence/config@0.21.2
+  - @0xsequence/guard@0.21.2
+  - @0xsequence/multicall@0.21.2
+  - @0xsequence/network@0.21.2
+  - @0xsequence/provider@0.21.2
+  - @0xsequence/relayer@0.21.2
+  - @0xsequence/transactions@0.21.2
+  - @0xsequence/utils@0.21.2
+  - @0xsequence/wallet@0.21.2
+
+## 0.21.1
+
+### Patch Changes
+
+- config updates must not be revertOnError
+- Updated dependencies [undefined]
+  - @0xsequence/wallet@0.21.1
+  - @0xsequence/auth@0.21.1
+  - @0xsequence/provider@0.21.1
+
+## 0.21.0
+
+### Minor Changes
+
+- - fix gas estimation on wallets with large number of signers
+  - update to session handling and wallet config construction upon auth
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.0
+  - @0xsequence/api@0.21.0
+  - @0xsequence/auth@0.21.0
+  - @0xsequence/chaind@0.21.0
+  - @0xsequence/config@0.21.0
+  - @0xsequence/guard@0.21.0
+  - @0xsequence/multicall@0.21.0
+  - @0xsequence/network@0.21.0
+  - @0xsequence/provider@0.21.0
+  - @0xsequence/relayer@0.21.0
+  - @0xsequence/transactions@0.21.0
+  - @0xsequence/utils@0.21.0
+  - @0xsequence/wallet@0.21.0
+
+## 0.20.0
+
+### Minor Changes
+
+- revert JWT request piggybacking
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.20.0
+  - @0xsequence/auth@0.20.0
+  - @0xsequence/provider@0.20.0
+
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.3
+  - @0xsequence/api@0.19.3
+  - @0xsequence/auth@0.19.3
+  - @0xsequence/chaind@0.19.3
+  - @0xsequence/config@0.19.3
+  - @0xsequence/guard@0.19.3
+  - @0xsequence/multicall@0.19.3
+  - @0xsequence/network@0.19.3
+  - @0xsequence/provider@0.19.3
+  - @0xsequence/relayer@0.19.3
+  - @0xsequence/transactions@0.19.3
+  - @0xsequence/utils@0.19.3
+  - @0xsequence/wallet@0.19.3
+
+## 0.19.2
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.2
+  - @0xsequence/auth@0.19.2
+  - @0xsequence/config@0.19.2
+  - @0xsequence/multicall@0.19.2
+  - @0xsequence/provider@0.19.2
+  - @0xsequence/relayer@0.19.2
+  - @0xsequence/transactions@0.19.2
+  - @0xsequence/wallet@0.19.2
+
+## 0.19.1
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/provider@0.19.1
+
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.0
+  - @0xsequence/api@0.19.0
+  - @0xsequence/auth@0.19.0
+  - @0xsequence/chaind@0.19.0
+  - @0xsequence/config@0.19.0
+  - @0xsequence/guard@0.19.0
+  - @0xsequence/multicall@0.19.0
+  - @0xsequence/network@0.19.0
+  - @0xsequence/provider@0.19.0
+  - @0xsequence/relayer@0.19.0
+  - @0xsequence/transactions@0.19.0
+  - @0xsequence/utils@0.19.0
+  - @0xsequence/wallet@0.19.0
+
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.18.0
+  - @0xsequence/api@0.18.0
+  - @0xsequence/auth@0.18.0
+  - @0xsequence/chaind@0.18.0
+  - @0xsequence/config@0.18.0
+  - @0xsequence/guard@0.18.0
+  - @0xsequence/multicall@0.18.0
+  - @0xsequence/network@0.18.0
+  - @0xsequence/provider@0.18.0
+  - @0xsequence/relayer@0.18.0
+  - @0xsequence/transactions@0.18.0
+  - @0xsequence/utils@0.18.0
+  - @0xsequence/wallet@0.18.0
+
+## 0.17.0
+
+### Minor Changes
+
+- api: ArcadeumAPIClient no longer exposes jwtAuth
+- auth: piggyback on already pending JWT and signing requests
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.17.0
+  - @0xsequence/auth@0.17.0
+  - @0xsequence/provider@0.17.0
+
 ## 0.16.1
 
 ### Patch Changes

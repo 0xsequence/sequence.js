@@ -1,5 +1,143 @@
 # @0xsequence/auth
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.4
+  - @0xsequence/api@0.21.4
+  - @0xsequence/config@0.21.4
+  - @0xsequence/network@0.21.4
+  - @0xsequence/utils@0.21.4
+  - @0xsequence/wallet@0.21.4
+
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.3
+  - @0xsequence/api@0.21.3
+  - @0xsequence/config@0.21.3
+  - @0xsequence/network@0.21.3
+  - @0xsequence/utils@0.21.3
+  - @0xsequence/wallet@0.21.3
+
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.2
+  - @0xsequence/api@0.21.2
+  - @0xsequence/config@0.21.2
+  - @0xsequence/network@0.21.2
+  - @0xsequence/utils@0.21.2
+  - @0xsequence/wallet@0.21.2
+
+## 0.21.1
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/wallet@0.21.1
+
+## 0.21.0
+
+### Minor Changes
+
+- - fix gas estimation on wallets with large number of signers
+  - update to session handling and wallet config construction upon auth
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.0
+  - @0xsequence/api@0.21.0
+  - @0xsequence/config@0.21.0
+  - @0xsequence/network@0.21.0
+  - @0xsequence/utils@0.21.0
+  - @0xsequence/wallet@0.21.0
+
+## 0.20.0
+
+### Minor Changes
+
+- revert JWT request piggybacking
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.20.0
+
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.3
+  - @0xsequence/api@0.19.3
+  - @0xsequence/config@0.19.3
+  - @0xsequence/network@0.19.3
+  - @0xsequence/utils@0.19.3
+  - @0xsequence/wallet@0.19.3
+
+## 0.19.2
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.2
+  - @0xsequence/config@0.19.2
+  - @0xsequence/wallet@0.19.2
+
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.19.0
+  - @0xsequence/api@0.19.0
+  - @0xsequence/config@0.19.0
+  - @0xsequence/network@0.19.0
+  - @0xsequence/utils@0.19.0
+  - @0xsequence/wallet@0.19.0
+
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.18.0
+  - @0xsequence/api@0.18.0
+  - @0xsequence/config@0.18.0
+  - @0xsequence/network@0.18.0
+  - @0xsequence/wallet@0.18.0
+
+## 0.17.0
+
+### Minor Changes
+
+- piggyback on already pending JWT and signing requests
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.17.0
+
 ## 0.16.1
 
 ### Patch Changes

@@ -3,6 +3,7 @@ import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
+import { subDigestOf } from '@0xsequence/utils'
 
 export const MetaTransactionsType = `tuple(
   bool delegateCall,
@@ -13,9 +14,17 @@ export const MetaTransactionsType = `tuple(
   bytes data
 )[]`
 
-export function encodeMetaTransactionsData(...txs: Transaction[]): string {
+export function packMetaTransactionsData(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
+}
+
+export function digestOfTransactions(...txs: Transaction[]): string {
+  return ethers.utils.keccak256(packMetaTransactionsData(...txs))
+}
+
+export function computeMetaTxnHash(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {
+  return subDigestOf(address, chainId, digestOfTransactions(...txs)).replace(/^0x/, '')
 }
 
 export async function toSequenceTransactions(
@@ -133,7 +142,7 @@ export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transactio
 export function makeExpirable(context: WalletContext, txs: Transaction[], expiration: BigNumberish): Transaction[] {
   const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
-  if (!context || !context.sequenceUtils) {
+  if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
   }
 
@@ -153,7 +162,7 @@ export function makeExpirable(context: WalletContext, txs: Transaction[], expira
 export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: NonceDependency): Transaction[] {
   const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
-  if (!context || !context.sequenceUtils) {
+  if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
   }
 
@@ -190,10 +199,7 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
   const bnonce = ethers.BigNumber.from(nonce)
   const shr = ethers.constants.Two.pow(ethers.BigNumber.from(96))
 
-  return [
-    bnonce.div(shr),
-    bnonce.mod(shr)
-  ]
+  return [bnonce.div(shr), bnonce.mod(shr)]
 }
 
 export function isSignedTransactions(cand: any): cand is SignedTransactions {

@@ -1,5 +1,60 @@
 # @0xsequence/api
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+
+## 0.21.0
+
+### Minor Changes
+
+- - fix gas estimation on wallets with large number of signers
+  - update to session handling and wallet config construction upon auth
+
+## 0.20.0
+
+### Minor Changes
+
+- revert JWT request piggybacking
+
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+## 0.17.0
+
+### Minor Changes
+
+- ArcadeumAPIClient no longer exposes jwtAuth
+
 ## 0.16.1
 
 ### Patch Changes

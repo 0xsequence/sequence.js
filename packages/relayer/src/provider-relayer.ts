@@ -86,4 +86,8 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     const module = new ethers.Contract(addr, walletContracts.mainModule.abi, this.provider)
     return (await module.readNonce(space ? space : 0, { blockTag: blockTag })).toNumber()
   }
+
+  wait(_metaTxnId: any, _timeout: number): Promise<any> {
+    throw new Error('Method not implemented.')
+  }
 }

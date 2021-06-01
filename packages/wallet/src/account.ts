@@ -155,7 +155,7 @@ export class Account extends Signer {
   }
 
   async signMessage(message: BytesLike, target?: Wallet | ChainId, allSigners: boolean = true, isDigest: boolean = false): Promise<string> {
-    let { wallet, network } = await (async () => { // eslint-disable-line
+    let { wallet } = await (async () => { // eslint-disable-line
       if (!target) {
         return this.mainWallet()
       }
@@ -201,6 +201,12 @@ export class Account extends Signer {
 
   async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners: boolean = true): Promise<string> {
     return this.signTypedData(domain, types, message, chainId, allSigners)
+  }
+
+  async hasEnoughSigners(chainId?: ChainId): Promise<boolean> {
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
+    const thisConfig = await this.currentConfig(wallet)
+    return wallet.useConfig(thisConfig!).hasEnoughSigners()
   }
 
   async sendTransaction(dtransactionish: Deferrable<Transactionish>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {

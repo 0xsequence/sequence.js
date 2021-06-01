@@ -16,6 +16,10 @@ export interface NetworkConfig {
   relayerUrl?: string
   relayer?: Relayer
 
+  // TODO:
+  // indexerUrl?: string
+  // indexer?: Indexer
+
   // TODO: add list of bridges (and their respective configs) available
   // for a particular network
   // bridges?: any[]

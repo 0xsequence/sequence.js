@@ -1,10 +1,19 @@
 import EventEmitter from 'eventemitter3'
 
 import {
-  ProviderTransport, ProviderMessage, ProviderMessageRequest,
-  ProviderMessageType, ProviderMessageEvent, ProviderMessageResponse,
-  ProviderMessageResponseCallback, ProviderMessageTransport,
-  WalletSession, OpenState, OpenWalletIntent
+  ProviderTransport,
+  ProviderMessage,
+  ProviderMessageRequest,
+  EventType,
+  ProviderEventTypes,
+  ProviderMessageResponse,
+  ProviderMessageResponseCallback,
+  OpenState,
+  OpenWalletIntent,
+  ConnectDetails,
+  WalletSession,
+  ProviderRpcError,
+  InitState
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -18,24 +27,27 @@ let _messageIdx = 0
 export const nextMessageIdx = () => ++_messageIdx
 
 export abstract class BaseProviderTransport implements ProviderTransport {
-
   protected pendingMessageRequests: ProviderMessageRequest[] = []
   protected responseCallbacks = new Map<number, ProviderMessageResponseCallback>()
 
   protected state: OpenState
   protected confirmationOnly: boolean = false
-  protected events: EventEmitter<ProviderMessageEvent, any> = new EventEmitter()
-
-  protected accountPayload: string | undefined
+  protected events: EventEmitter<ProviderEventTypes, any> = new EventEmitter()
+  
+  protected openPayload: { sessionId?: string; session?: WalletSession } | undefined
+  protected connectPayload: ConnectDetails | undefined
+  protected accountsChangedPayload: string | undefined
   protected networksPayload: NetworkConfig[] | undefined
   protected walletContextPayload: WalletContext | undefined
 
   protected _sessionId?: string
+  protected _init: InitState
   protected _registered: boolean
 
   constructor() {
     this.state = OpenState.CLOSED
     this._registered = false
+    this._init = InitState.NIL
   }
 
   get registered(): boolean {
@@ -50,7 +62,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  openWallet(path?: string, intent?: OpenWalletIntent, defaultNetworkId?: string | number) {
+  openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number) {
     throw new Error('abstract method')
   }
 
@@ -64,10 +76,11 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   isConnected(): boolean {
     // if we're registered, and we have the account details, then we are connected
+    const session = this.openPayload?.session
     return (
-      this.registered &&
-      !!this.accountPayload && this.accountPayload.length === 42 &&
-      !!this.networksPayload && this.networksPayload.length > 0
+      this.registered && session !== undefined &&
+      !!session.accountAddress && session.accountAddress.length === 42 &&
+      !!session.networks && session.networks.length > 0
     )
   }
 
@@ -82,7 +95,11 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // open/focus the wallet.
     // automatically open the wallet when a provider request makes it here.
-    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method })
+    //
+    // NOTE: if we're not signed in, then the provider will fail, users must first connect+sign in.
+    //
+    // TODO: how does this behave with a session has expired?
+    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method }, chainId)
 
     // send message request, await, and then execute callback after receiving the response
     try {
@@ -92,7 +109,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
       const response = await this.sendMessageRequest({
         idx: nextMessageIdx(),
-        type: ProviderMessageType.MESSAGE,
+        type: EventType.MESSAGE,
         data: request,
         chainId: chainId
       })
@@ -105,8 +122,34 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   // handleMessage will handle message received from the remote wallet
   handleMessage(message: ProviderMessage<any>) {
 
+    // init incoming for initial handshake with transport.
+    // always respond to INIT messages, e.g. on popup window reload
+    if (message.type === EventType.INIT) {
+      logger.debug('MessageProvider, received INIT message', message)
+      const { nonce } = message.data as { nonce: string }
+      if (!nonce || nonce.length == 0) {
+        logger.error('invalid init nonce')
+        return
+      }
+      this._init = InitState.OK
+      this.sendMessage({
+        idx: -1,
+        type: EventType.INIT,
+        data: {
+          sessionId: this._sessionId,
+          nonce: nonce
+        }
+      })
+    }
+
+    if (this._init !== InitState.OK) {
+      // if provider is not init'd, then we drop any received messages. the only
+      // message we will process is of event type 'init', as our acknowledgement
+      return
+    }
+
     // message is either a notification, or its a ProviderMessageResponse
-    logger.debug("RECEIVED MESSAGE FROM WALLET", message.idx, message)
+    logger.debug('RECEIVED MESSAGE FROM WALLET', message.idx, message)
 
     const requestIdx = message.idx
     const responseCallback = this.responseCallbacks.get(requestIdx)
@@ -116,8 +159,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // OPEN response
     //
-    // Flip opened flag, and flush the pending queue 
-    if (message.type === ProviderMessageType.OPEN && !this.isOpened()) {
+    // Flip opened flag, and flush the pending queue
+    if (message.type === EventType.OPEN && !this.isOpened()) {
       if (this._sessionId && this._sessionId !== message.data?.sessionId) {
         logger.debug('open event received from wallet, but does not match sessionId', this._sessionId)
         return
@@ -133,7 +176,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
       // success!
       this.state = OpenState.OPENED
-      this.events.emit('open')
+      this.openPayload = message.data
+      this.events.emit('open', this.openPayload!)
 
       // flush pending requests when connected
       if (this.pendingMessageRequests.length !== 0) {
@@ -148,8 +192,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     }
 
     // MESSAGE resposne
-    if (message.type === ProviderMessageType.MESSAGE) {
-
+    if (message.type === EventType.MESSAGE) {
       // Require user confirmation, bring up wallet to prompt for input then close
       // TODO: perhaps apply technique like in multicall to queue messages within
       // a period of time, then close the window if responseCallbacks is empty, this is better.
@@ -158,7 +201,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
           if (this.responseCallbacks.size === 0) {
             this.closeWallet()
           }
-        }, 1500) // TODO: be smarter about timer as we're processing the response callbacks..
+        }, 500) // TODO: be smarter about timer as we're processing the response callbacks..
       }
 
       if (!responseCallback) {
@@ -170,17 +213,18 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
       // Callback to original caller
       if (responseCallback) {
+        this.events.emit('message', message)
         responseCallback(undefined, message)
         return
       }
     }
 
     // ACCOUNTS_CHANGED -- when a user logs in or out
-    if (message.type === ProviderMessageType.ACCOUNTS_CHANGED) {
-      this.accountPayload = undefined
+    if (message.type === EventType.ACCOUNTS_CHANGED) {
+      this.accountsChangedPayload = undefined
       if (message.data && message.data.length > 0) {
-        this.accountPayload = ethers.utils.getAddress(message.data[0])
-        this.events.emit('accountsChanged', [this.accountPayload])
+        this.accountsChangedPayload = ethers.utils.getAddress(message.data[0])
+        this.events.emit('accountsChanged', [this.accountsChangedPayload])
       } else {
         this.events.emit('accountsChanged', [])
       }
@@ -188,34 +232,40 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     }
 
     // CHAIN_CHANGED -- when a user changes their default chain
-    if (message.type === ProviderMessageType.CHAIN_CHANGED) {
+    if (message.type === EventType.CHAIN_CHANGED) {
       this.events.emit('chainChanged', message.data)
       return
     }
 
     // NOTIFY NETWORKS -- when a user connects or logs in
-    if (message.type === ProviderMessageType.NETWORKS) {
+    if (message.type === EventType.NETWORKS) {
       this.networksPayload = message.data
-      this.events.emit('networks', this.networksPayload)
+      this.events.emit('networks', this.networksPayload!)
       return
     }
 
     // NOTIFY WALLET_CONTEXT -- when a user connects or logs in
-    if (message.type === ProviderMessageType.WALLET_CONTEXT) {
+    if (message.type === EventType.WALLET_CONTEXT) {
       this.walletContextPayload = message.data
-      this.events.emit('walletContext', this.walletContextPayload)
+      this.events.emit('walletContext', this.walletContextPayload!)
       return
     }
 
     // NOTIFY CLOSE -- when wallet instructs to close
-    if (message.type === ProviderMessageType.CLOSE) {
+    if (message.type === EventType.CLOSE) {
       if (this.state !== OpenState.CLOSED) {
-        this.close()
+        this.close(message.data)
       }
     }
 
+    // NOTIFY CONNECT -- when wallet instructs we've connected
+    if (message.type === EventType.CONNECT) {
+      this.connectPayload = message.data
+      this.events.emit('connect', this.connectPayload!)
+    }
+
     // NOTIFY DISCONNECT -- when wallet instructs to disconnect
-    if (message.type === ProviderMessageType.DISCONNECT) {
+    if (message.type === EventType.DISCONNECT) {
       if (this.isConnected()) {
         this.events.emit('disconnect', message.data)
         this.close()
@@ -226,7 +276,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
   sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {
     return new Promise((resolve, reject) => {
-      if (!message.idx || message.idx <= 0) {
+      if ((!message.idx || message.idx <= 0) && message.type !== 'init') {
         reject(new Error('message idx not set'))
       }
 
@@ -260,114 +310,78 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     throw new Error('abstract method')
   }
 
-  on(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    this.events.on(event, fn)
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
+    this.events.on(event, fn as any)
   }
 
-  once(event: ProviderMessageEvent, fn: (...args: any[]) => void) {
-    this.events.once(event, fn)
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
+    this.events.once(event, fn as any)
   }
 
-  waitUntilOpened = async (openTimeout = PROVIDER_OPEN_TIMEOUT): Promise<boolean> => {
+  emit<K extends keyof ProviderEventTypes>(event: K, ...args: Parameters<ProviderEventTypes[K]>): boolean {
+    return this.events.emit(event, ...args as any)
+  }
+
+  waitUntilOpened = async (openTimeout = PROVIDER_OPEN_TIMEOUT): Promise<WalletSession | undefined> => {
     let opened = false
     return Promise.race([
-      new Promise<boolean>((_, reject) => {
+      new Promise<WalletSession | undefined>((_, reject) => {
         const timeout = setTimeout(() => {
           clearTimeout(timeout)
           // only emit close if the timeout wins the race
           if (!opened) {
             this.state = OpenState.CLOSED
-            this.events.emit('close')
+            this.events.emit('close', { code: 1005, message: 'opening wallet timed out' } as ProviderRpcError)
           }
           reject(new Error('opening wallet timed out'))
         }, openTimeout)
       }),
-      new Promise<boolean>(resolve => {
+      new Promise<WalletSession | undefined>(resolve => {
         if (this.isOpened()) {
           opened = true
-          resolve(true)
+          resolve(this.openPayload?.session)
           return
         }
-        this.events.once('open', () => {
+        this.events.once('open', (openInfo: { session?: WalletSession }) => {
+          this.openPayload = openInfo
           opened = true
-          resolve(true)
+          resolve(openInfo.session)
         })
       })
     ])
   }
 
-  waitUntilConnected = async (): Promise<WalletSession> => {
+  waitUntilConnected = async (): Promise<ConnectDetails> => {
     await this.waitUntilOpened()
 
-    const connect = Promise.all([
-      new Promise<string | undefined>(resolve => {
-        if (this.accountPayload) {
-          resolve(this.accountPayload)
-          return
-        }
-        this.events.once('accountsChanged', (accounts) => {
-          if (accounts && accounts.length > 0) {
-            // account logged in
-            resolve(accounts[0])
-          } else {
-            // account logged out
-            resolve(undefined)
-          }
-        })
-      }),
-      new Promise<NetworkConfig[]>(resolve => {
-        if (this.networksPayload) {
-          resolve(this.networksPayload)
-          return
-        }
-        this.events.once('networks', (networks) => {
-          resolve(networks)
-        })
-      }),
-      new Promise<WalletContext>(resolve => {
-        if (this.walletContextPayload) {
-          resolve(this.walletContextPayload)
-          return
-        }
-        this.events.once('walletContext', (walletContext) => {
-          resolve(walletContext)
-        })
-      })
-
-    ]).then(values => {
-      const [ accountAddress, networks, walletContext ] = values
-      return { accountAddress, networks, walletContext }
-    })
-
-    const closeWallet = new Promise<WalletSession>((_, reject) => {
-      this.events.once('close', () => {
-        reject(new Error('user closed the wallet'))
+    const connect = new Promise<ConnectDetails>(resolve => {
+      if (this.connectPayload) {
+        resolve(this.connectPayload)
+        return
+      }
+      
+      this.events.once('connect', connectDetails => {
+        this.connectPayload = connectDetails
+        resolve(connectDetails)
       })
     })
 
-    return Promise.race<WalletSession>([
-      connect,
-      closeWallet
-    ])
+    const closeWallet = new Promise<ConnectDetails>((_, reject) => {
+      this.events.once('close', error => {
+        if (error) {
+          reject(new Error(`wallet closed due to ${JSON.stringify(error)}`))
+        } else {
+          reject(new Error(`user closed the wallet`))
+        }
+      })
+    })
+
+    return Promise.race<ConnectDetails>([ connect, closeWallet ])
   }
 
-  protected open = async (): Promise<boolean> => {
-    if (this.isOpened()) return true
-
-    // Set to opening state
-    this.state = OpenState.OPENING
-
-    // Wait for open response from wallet, or timeout
-    let opened: boolean | undefined = undefined
-    try {
-      opened = await this.waitUntilOpened()
-    } catch (err) {
-      opened = false
-    }
-    return opened
-  }
-
-  protected close() {
+  protected close(error?: ProviderRpcError) {
+    if (this.state === OpenState.CLOSED) return
+    
     this.state = OpenState.CLOSED
     this.confirmationOnly = false
     this._sessionId = undefined
@@ -380,10 +394,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     })
     this.responseCallbacks.clear()
 
-    this.accountPayload = undefined
+    this.connectPayload = undefined
+    this.openPayload = undefined
+    this.accountsChangedPayload = undefined
     this.networksPayload = undefined
     this.walletContextPayload = undefined
 
-    this.events.emit('close')
+    this.events.emit('close', error)
   }
 }

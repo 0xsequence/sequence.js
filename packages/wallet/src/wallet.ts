@@ -15,7 +15,6 @@ import { walletContracts } from '@0xsequence/abi'
 
 import {
   Transaction, Transactionish, TransactionRequest, NonceDependency,
-  encodeMetaTransactionsData,
   isSequenceTransaction,
   readSequenceNonce,
   appendNonce,
@@ -24,7 +23,8 @@ import {
   sequenceTxAbiEncode,
   makeExpirable,
   makeAfterNonce,
-  SignedTransactions
+  SignedTransactions,
+  digestOfTransactions
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -47,11 +47,11 @@ import {
   isDecodedFullSigner
 } from '@0xsequence/config'
 
-import { encodeTypedDataDigest } from '@0xsequence/utils'
+import { encodeTypedDataDigest, packMessageData, subDigestOf } from '@0xsequence/utils'
 
 import { RemoteSigner } from './remote-signers'
 
-import { packMessageData, resolveArrayProperties } from './utils'
+import { resolveArrayProperties } from './utils'
 
 import { isSequenceSigner, Signer } from './signer'
 import { fetchImageHash } from '.'
@@ -351,13 +351,17 @@ export class Wallet extends Signer {
     const nonce = providedNonce ? providedNonce : await this.getNonce()
     stx = appendNonce(stx, nonce)
 
+    // Get transactions digest
+    const digest = digestOfTransactions(...stx)
+
     // Bundle with signature
     return {
+      digest: digest,
       chainId: signChainId,
       context: this.context,
       config: this.config,
       transactions: stx,
-      signature: await this.sign(encodeMetaTransactionsData(...stx), false, chainId, allSigners)
+      signature: await this.sign(digest, true, chainId, allSigners)
     }
   }
 
@@ -393,6 +397,11 @@ export class Wallet extends Signer {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
+  async subDigest(digest: BytesLike, chainId?: ChainId): Promise<Uint8Array> {
+    const solvedChainId = await this.getChainIdNumber(chainId)
+    return ethers.utils.arrayify(subDigestOf(this.address, solvedChainId, digest))
+  }
+
   // sign is a helper method to sign a payload with the wallet signers
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
@@ -400,11 +409,7 @@ export class Wallet extends Signer {
     const digest = isDigest ? msg : ethers.utils.keccak256(msg)
 
     // Generate sub-digest
-    const subDigest = ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        packMessageData(this.address, signChainId, digest)
-      )
-    )
+    const subDigest = await this.subDigest(digest, chainId)
 
     // Sign sub-digest using a set of signers and some optional data
     const signWith = async (signers: AbstractSigner[], auxData?: string): Promise<DecodedSignature> => {
@@ -516,7 +521,7 @@ export class Wallet extends Signer {
 
     const [txs, n] = await Promise.all([
       this.buildUpdateConfigTransaction(config, publish, indexed),
-      nonce ? nonce : await this.getNonce()
+      nonce ?? this.getNonce()
     ])
 
     return [
@@ -549,9 +554,11 @@ export class Wallet extends Signer {
 
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
-    // 131072 gas, enough for both calls
-    // and a power of two to keep the gas cost of data low
-    const gasLimit = ethers.constants.Two.pow(17)
+    // empirically, this seems to work for the tests:
+    // const gasLimit = 100000 + 1800 * config.signers.length
+    //
+    // but we're going to play it safe with this instead:
+    const gasLimit = 2 * (100000 + 1800 * config.signers.length)
 
     const preTransaction = isUpgradable ? [] : [{
       delegateCall: false,
@@ -711,5 +718,10 @@ export class Wallet extends Signer {
       ]
     }
     return new Wallet({ config, context }, signer)
+  }
+
+  async hasEnoughSigners(chainId?: ChainId): Promise<boolean> {
+    if (chainId) await this.getChainIdNumber(chainId)
+    return (await this.signWeight()).gte(this.config.threshold)
   }
 }

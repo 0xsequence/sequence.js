@@ -1,5 +1,71 @@
 # @0xsequence/bridge
 
+## 0.21.4
+
+### Patch Changes
+
+- Add has enough signers method
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.21.4
+
+## 0.21.3
+
+### Patch Changes
+
+- add window session cache
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.21.3
+
+## 0.21.2
+
+### Patch Changes
+
+- exception handlind in relayer
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.21.2
+
+## 0.21.0
+
+### Minor Changes
+
+- - fix gas estimation on wallets with large number of signers
+  - update to session handling and wallet config construction upon auth
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.21.0
+
+## 0.19.3
+
+### Patch Changes
+
+- jwtAuth visibility, package version sync
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.19.3
+
+## 0.19.0
+
+### Minor Changes
+
+- - provider, improve dapp / wallet transport io
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.19.0
+
+## 0.18.0
+
+### Minor Changes
+
+- relayer improvements and pending transaction handling
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.18.0
+
 ## 0.16.0
 
 ### Minor Changes

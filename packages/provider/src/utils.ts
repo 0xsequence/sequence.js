@@ -1,8 +1,9 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature } from '@0xsequence/config'
+import { packMessageData } from '@0xsequence/utils'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { isValidSignature as _isValidSignature, recoverConfig } from '@0xsequence/wallet'
 
 export const isValidSignature = async (
   address: string,

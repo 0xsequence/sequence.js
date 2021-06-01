@@ -3,9 +3,9 @@ import { ethers } from 'ethers'
 import { Web3Provider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 
-import { isValidSignature, packMessageData, recoverConfig } from '@0xsequence/wallet'
+import { isValidSignature, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
-import { configureLogger } from '@0xsequence/utils'
+import { configureLogger, packMessageData } from '@0xsequence/utils'
 
 import { testWalletContext } from '../testutils'
 
@@ -22,7 +22,7 @@ export const tests = async () => {
 
   await test('provider opened the wallet', async () => {
     const opened = await walletProvider.waitUntilOpened()
-    assert.true(opened, 'opened is true')
+    assert.true(!!opened, 'opened is true')
   })
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
