@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.21.5
+
+### Patch Changes
+
+- Give priority to metaTxnId returned by relayer
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.21.5
+  - @0xsequence/network@0.21.5
+  - @0xsequence/utils@0.21.5
+
 ## 0.21.4
 
 ### Patch Changes
