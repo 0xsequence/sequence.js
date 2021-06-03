@@ -13,6 +13,10 @@ export type ProviderRelayerOptions = BaseRelayerOptions & {
   provider: providers.Provider
 }
 
+export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
+  return obj.provider !== undefined && providers.Provider.isProvider(obj.provider)
+}
+
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
   public provider: providers.Provider
 

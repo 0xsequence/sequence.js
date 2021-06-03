@@ -4,7 +4,7 @@ import * as chai from 'chai'
 import { ethers } from 'ethers'
 import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { LocalRelayer } from '@0xsequence/relayer'
+import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { isValidConfigSigners, imageHash, SequenceUtilsFinder } from '@0xsequence/config'
 import { configureLogger } from '@0xsequence/utils'
@@ -81,7 +81,7 @@ describe('Account integration', () => {
   describe('find wallet by signer', () => {
     it('should find wallet of an indexed signer', async () => {
       const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
-      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer)
+      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer as RpcRelayer)
 
       await wallet.publishConfig(true)
 
@@ -95,7 +95,7 @@ describe('Account integration', () => {
     })
     it('should find wallet of not indexed signer', async () => {
       const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
-      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer)
+      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer as RpcRelayer)
 
       await wallet.publishConfig(false)
 
@@ -109,7 +109,7 @@ describe('Account integration', () => {
     })
     it('should find wallet of indexed signer, ignoring index', async () => {
       const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
-      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer)
+      const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(networks[0].provider, networks[0].relayer as RpcRelayer)
 
       await wallet.publishConfig(true)
 

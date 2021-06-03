@@ -10,6 +10,10 @@ export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
   signer: AbstractSigner
 }
 
+export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
+  return obj.signer !== undefined && AbstractSigner.isSigner(obj.signer)
+}
+
 export class LocalRelayer extends ProviderRelayer implements Relayer {
   private signer: AbstractSigner
 

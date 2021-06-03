@@ -1,16 +1,24 @@
-import { Provider } from "@ethersproject/providers"
-import { ethers } from "ethers"
+import { ethers, providers } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
+import { isBigNumberish } from '@0xsequence/utils'
 
 
 export type BaseRelayerOptions = {
   bundleCreation?: boolean,
   creationGasLimit?: ethers.BigNumberish,
-  provider?: Provider
+  provider?: providers.Provider | string
+}
+
+export function isBaseRelayerOptions(obj: any): obj is BaseRelayerOptions {
+  return (
+    (obj.bundleCreation !== undefined && typeof obj.bundleCreation === 'boolean') ||
+    (obj.creationGasLimit !== undefined && isBigNumberish(obj.creationGasLimit)) ||
+    (obj.provider !== undefined && (providers.Provider.isProvider(obj.provider) || typeof obj.provider === 'string'))
+  )
 }
 
 export const BaseRelayerDefaults = {
@@ -19,14 +27,14 @@ export const BaseRelayerDefaults = {
 }
 
 export class BaseRelayer {
-  readonly provider: Provider | undefined
+  readonly provider: providers.Provider | undefined
   public readonly bundleCreation: boolean
   public creationGasLimit: ethers.BigNumber
 
   constructor(options?: BaseRelayerOptions) {
     const opts = { ...BaseRelayerDefaults, ...options }
     this.bundleCreation = opts.bundleCreation
-    this.provider = opts.provider
+    this.provider = typeof opts.provider === 'string' ? new ethers.providers.JsonRpcProvider(opts.provider) : opts.provider
     this.creationGasLimit = ethers.BigNumber.from(opts.creationGasLimit)
   }
 

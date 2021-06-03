@@ -8,7 +8,7 @@ import { WalletConfig, WalletState, isConfigEqual, sortConfig, ConfigFinder, Seq
 import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
-import { Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { isRelayer, Relayer, RpcRelayer, isRpcRelayerOptions } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 export interface AccountOptions {
@@ -409,6 +409,7 @@ export class Account extends Signer {
         context: this.options.context
       }, ...this._signers)
 
+
       if (network.provider) {
         wallet.setProvider(network.provider)
       } else if (network.rpcUrl && network.rpcUrl !== '') {
@@ -417,13 +418,10 @@ export class Account extends Signer {
         throw new Error(`network config is missing provider settings for chainId ${network.chainId}`)
       }
 
-      if (network.relayer) {
+      if (isRelayer(network.relayer)) {
         wallet.setRelayer(network.relayer)
-      } else if (network.relayerUrl && network.relayerUrl !== '') {
-        wallet.setRelayer(new RpcRelayer({
-          url: network.relayerUrl,
-          provider: network.provider || new ethers.providers.JsonRpcProvider(network.rpcUrl)
-        }))
+      } else if (isRpcRelayerOptions(network.relayer)) {
+        wallet.setRelayer(new RpcRelayer({ provider: wallet.provider, ...network.relayer }))
       } else {
         throw new Error(`network config is missing relayer settings for chainId ${network.chainId}`)
       }

@@ -31,6 +31,10 @@ export type RpcRelayerOptions = BaseRelayerOptions & {
   url: string
 }
 
+export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
+  return obj.url !== undefined && typeof obj.url === 'string'
+}
+
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly service: proto.RelayerService
 
