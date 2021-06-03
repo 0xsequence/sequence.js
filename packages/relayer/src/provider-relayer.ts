@@ -1,5 +1,5 @@
-import { TransactionResponse, BlockTag } from '@ethersproject/providers'
-import { ethers, providers } from 'ethers'
+import { TransactionResponse, BlockTag, Provider } from '@ethersproject/providers'
+import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
@@ -9,12 +9,12 @@ import { Relayer } from '.'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
-export type ProviderRelayerOptions = BaseRelayerOptions & {
-  provider: providers.Provider
+export interface ProviderRelayerOptions extends BaseRelayerOptions {
+  provider: Provider
 }
 
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
-  public provider: providers.Provider
+  public provider: Provider
 
   constructor(options: ProviderRelayerOptions) {
     super(options)

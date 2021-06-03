@@ -27,7 +27,7 @@ const FAILED_STATUSES = [
   proto.ETHTxnStatus.REVERTED
 ]
 
-export type RpcRelayerOptions = BaseRelayerOptions & {
+export interface RpcRelayerOptions extends BaseRelayerOptions {
   url: string
 }
 
