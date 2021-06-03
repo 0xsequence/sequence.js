@@ -6,13 +6,28 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
-export class BaseRelayer {
-  private readonly bundleCreation: boolean
-  readonly provider: Provider | undefined
 
-  constructor(bundleCreation: boolean, provider?: Provider) {
-    this.bundleCreation = bundleCreation
-    this.provider = provider
+export type BaseRelayerOptions = {
+  bundleCreation?: boolean,
+  creationGasLimit?: ethers.BigNumberish,
+  provider?: Provider
+}
+
+export const BaseRelayerDefaults = {
+  bundleCreation: true,
+  creationGasLimit: ethers.constants.Two.pow(17)
+}
+
+export class BaseRelayer {
+  readonly provider: Provider | undefined
+  public readonly bundleCreation: boolean
+  public creationGasLimit: ethers.BigNumber
+
+  constructor(options?: BaseRelayerOptions) {
+    const opts = { ...BaseRelayerDefaults, ...options }
+    this.bundleCreation = opts.bundleCreation
+    this.provider = opts.provider
+    this.creationGasLimit = ethers.BigNumber.from(opts.creationGasLimit)
   }
 
   async isWalletDeployed(walletAddress: string): Promise<boolean> {
@@ -59,7 +74,7 @@ export class BaseRelayer {
               ...this.prepareWalletDeploy(config, context),
               delegateCall: false,
               revertOnError: false,
-              gasLimit: ethers.constants.Two.pow(17),
+              gasLimit: this.creationGasLimit,
               value: ethers.constants.Zero
             },
             {

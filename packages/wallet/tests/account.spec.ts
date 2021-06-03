@@ -31,14 +31,14 @@ describe('Account integration', () => {
     chainId: 31337, name: 'hardhat',
     rpcUrl: '',
     provider: provider,
-    relayer: new LocalRelayer(provider.getSigner()),
+    relayer: new LocalRelayer({ signer: provider.getSigner() }),
     isDefaultChain: true,
     isAuthChain: true
   }, {
     chainId: 31338, name: 'hardhat2',
     rpcUrl: nodeB,
     provider: providerB,
-    relayer: new LocalRelayer(signerB),
+    relayer: new LocalRelayer({ signer: signerB }),
     isDefaultChain: false,
     isAuthChain: false
   }]

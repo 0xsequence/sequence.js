@@ -14,6 +14,23 @@ export const abi = [
   },
   {
     type: 'function',
+    name: 'readNonce',
+    constant: true,
+    inputs: [
+      {
+        type: 'uint256'
+      }
+    ],
+    outputs: [
+      {
+        type: 'uint256'
+      }
+    ],
+    payable: false,
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'updateImplementation',
     constant: false,
     inputs: [

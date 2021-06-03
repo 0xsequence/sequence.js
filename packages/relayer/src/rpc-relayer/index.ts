@@ -11,7 +11,7 @@ import {
   SignedTransactions,
   computeMetaTxnHash
 } from '@0xsequence/transactions'
-import { BaseRelayer } from '../base-relayer'
+import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
 import { Relayer } from '..'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
@@ -27,21 +27,27 @@ const FAILED_STATUSES = [
   proto.ETHTxnStatus.REVERTED
 ]
 
+export type RpcRelayerOptions = BaseRelayerOptions & {
+  url: string
+}
+
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly service: proto.RelayerService
 
-  constructor(relayerSerivceUrl: string, bundleDeploy: boolean = true, provider?: Provider) {
-    super(bundleDeploy, provider)
-    this.service = new proto.RelayerService(relayerSerivceUrl, fetchPonyfill().fetch)
+  constructor(options: RpcRelayerOptions) {
+    super(options)
+    this.service = new proto.RelayerService(options.url, fetchPonyfill().fetch)
   }
 
   async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
+      console.log("computing id", metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
       return this.waitReceipt(
         computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
       )
     }
 
+    console.log("waiting for", metaTxnHash)
     let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
 
     while ((!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') && result.receipt.status === 'UNKNOWN') {
