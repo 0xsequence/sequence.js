@@ -7,13 +7,13 @@ import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature }
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 
 
-export type BaseRelayerOptions = {
-  bundleCreation?: boolean,
-  creationGasLimit?: ethers.BigNumberish,
+export interface BaseRelayerOptions {
+  bundleCreation?: boolean
+  creationGasLimit?: ethers.BigNumberish
   provider?: Provider
 }
 
-export const BaseRelayerDefaults = {
+export const BaseRelayerDefaults: BaseRelayerOptions = {
   bundleCreation: true,
   creationGasLimit: ethers.constants.Two.pow(17)
 }
@@ -25,7 +25,7 @@ export class BaseRelayer {
 
   constructor(options?: BaseRelayerOptions) {
     const opts = { ...BaseRelayerDefaults, ...options }
-    this.bundleCreation = opts.bundleCreation
+    this.bundleCreation = !!opts.bundleCreation
     this.provider = opts.provider
     this.creationGasLimit = ethers.BigNumber.from(opts.creationGasLimit)
   }
