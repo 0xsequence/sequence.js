@@ -55,9 +55,11 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     if (this.state === OpenState.CLOSED) {
       this.state = OpenState.OPENING
+      const sessionId = `${performance.now()}`
+      this._sessionId = sessionId
       this.sendMessage({
         idx: -1, type: EventType.OPEN, data: {
-          path, intent, networkId
+          path, intent, networkId, sessionId
         }
       })
     }
