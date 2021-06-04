@@ -18,6 +18,7 @@
     "@0xsequence/config": "^0.21.5",
     "@0xsequence/transactions": "^0.21.5",
     "@0xsequence/utils": "^0.21.5",
+    "@ethersproject/providers": "^5.0.24",
     "ethers": "^5.0.32",
     "fetch-ponyfill": "^7.1.0"
   },
