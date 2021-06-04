@@ -75,8 +75,8 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
       return false
     }
     if (!skipRelayerCheck) {
-      if (!c.relayer || (typeof c.relayer === 'string' && c.relayer === '')) {
-        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: relayerUrl or relayer must be provided`)
+      if (!c.relayer) {
+        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: relayer must be provided`)
         return false
       }
     }
