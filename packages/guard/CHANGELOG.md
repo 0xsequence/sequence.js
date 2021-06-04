@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.22.0
+
+### Minor Changes
+
+- e667b65: Expose all relayer options on networks
+
 ## 0.21.5
 
 ### Patch Changes

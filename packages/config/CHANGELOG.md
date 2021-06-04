@@ -1,5 +1,18 @@
 # @0xsequence/config
 
+## 0.22.0
+
+### Minor Changes
+
+- e667b65: Expose all relayer options on networks
+
+### Patch Changes
+
+- Updated dependencies [e667b65]
+  - @0xsequence/abi@0.22.0
+  - @0xsequence/network@0.22.0
+  - @0xsequence/utils@0.22.0
+
 ## 0.21.5
 
 ### Patch Changes

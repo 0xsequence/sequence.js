@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 0.22.0
+
+### Minor Changes
+
+- e667b65: Expose all relayer options on networks
+
+### Patch Changes
+
+- Updated dependencies [e667b65]
+  - @0xsequence/abi@0.22.0
+  - @0xsequence/network@0.22.0
+  - @0xsequence/relayer@0.22.0
+  - @0xsequence/utils@0.22.0
+  - @0xsequence/wallet@0.22.0
+  - @0xsequence/api@0.22.0
+  - @0xsequence/auth@0.22.0
+  - @0xsequence/chaind@0.22.0
+  - @0xsequence/config@0.22.0
+  - @0xsequence/guard@0.22.0
+  - @0xsequence/multicall@0.22.0
+  - @0xsequence/provider@0.22.0
+  - @0xsequence/transactions@0.22.0
+
 ## 0.21.5
 
 ### Patch Changes
