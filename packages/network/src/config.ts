@@ -1,8 +1,9 @@
-import { ethers, BigNumberish } from 'ethers'
-import { JsonRpcProvider, Network } from '@ethersproject/providers'
+import { BigNumberish } from 'ethers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { Relayer } from '@0xsequence/relayer'
 import { urlClean } from '@0xsequence/utils'
-import { createNetworkConfig, networksIndex } from './utils'
+import { createNetworkConfig } from './utils'
+import { RpcRelayerOptions } from '@0xsequence/relayer/src/rpc-relayer'
 
 export interface NetworkConfig {
   title?: string
@@ -12,9 +13,7 @@ export interface NetworkConfig {
 
   rpcUrl?: string
   provider?: JsonRpcProvider
-
-  relayerUrl?: string
-  relayer?: Relayer
+  relayer?: Relayer | RpcRelayerOptions
 
   // TODO:
   // indexerUrl?: string
@@ -48,7 +47,7 @@ export const mainnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     chainId: 1,
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     rpcUrl: urlClean(`${vars.baseRpcUrl}/mainnet`),
-    relayerUrl: urlClean(`${vars.baseRelayerUrl}/mainnet`),
+    relayer: { url: urlClean(`${vars.baseRelayerUrl}/mainnet`) },
     isDefaultChain: true
   },
   {
@@ -56,7 +55,7 @@ export const mainnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     name: 'matic',
     chainId: 137,
     rpcUrl: 'https://rpc-mainnet.matic.network',
-    relayerUrl: urlClean(`${vars.baseRelayerUrl}/matic`),
+    relayer: { url: urlClean(`${vars.baseRelayerUrl}/matic`) },
     isAuthChain: true
   }
 ], 1, {
@@ -70,7 +69,7 @@ export const testnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     chainId: 4,
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     rpcUrl: urlClean(`${vars.baseRpcUrl}/rinkeby`),
-    relayerUrl: urlClean(`${vars.baseRelayerUrl}/rinkeby`),
+    relayer: { url: urlClean(`${vars.baseRelayerUrl}/rinkeby`) },
     isDefaultChain: true
   },
   {
@@ -78,7 +77,7 @@ export const testnetNetworks = createNetworkConfig((vars: {[key: string]: any}) 
     chainId: 5,
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     rpcUrl: urlClean(`${vars.baseRpcUrl}/goerli`),
-    relayerUrl: urlClean(`${vars.baseRelayerUrl}/goerli`),
+    relayer: { url: urlClean(`${vars.baseRelayerUrl}/goerli`) },
     isAuthChain: true
   },
   // {

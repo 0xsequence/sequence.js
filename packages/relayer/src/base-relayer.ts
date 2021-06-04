@@ -1,10 +1,11 @@
-import { Provider } from "@ethersproject/providers"
-import { ethers } from "ethers"
+import { ethers, providers } from "ethers"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
+import { isBigNumberish } from '@0xsequence/utils'
+import { Provider } from "@ethersproject/providers"
 
 
 export interface BaseRelayerOptions {
@@ -13,13 +14,21 @@ export interface BaseRelayerOptions {
   provider?: Provider
 }
 
+export function isBaseRelayerOptions(obj: any): obj is BaseRelayerOptions {
+  return (
+    (obj.bundleCreation !== undefined && typeof obj.bundleCreation === 'boolean') ||
+    (obj.creationGasLimit !== undefined && isBigNumberish(obj.creationGasLimit)) ||
+    (obj.provider !== undefined && (providers.Provider.isProvider(obj.provider) || typeof obj.provider === 'string'))
+  )
+}
+
 export const BaseRelayerDefaults: BaseRelayerOptions = {
   bundleCreation: true,
   creationGasLimit: ethers.constants.Two.pow(17)
 }
 
 export class BaseRelayer {
-  readonly provider: Provider | undefined
+  readonly provider: providers.Provider | undefined
   public readonly bundleCreation: boolean
   public creationGasLimit: ethers.BigNumber
 

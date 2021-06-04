@@ -31,8 +31,11 @@ export interface Relayer {
   wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse>
 }
 
-export { LocalRelayer } from './local-relayer'
-export { RpcRelayer, proto as RpcRelayerProto } from './rpc-relayer'
+export * from './local-relayer'
+export * from './base-relayer'
+export * from './provider-relayer'
+export * from './rpc-relayer'
+export { proto as RpcRelayerProto } from './rpc-relayer'
 
 export function isRelayer(cand: any): cand is Relayer {
   return cand && cand.estimateGasLimits !== undefined && cand.gasRefundOptions !== undefined &&
