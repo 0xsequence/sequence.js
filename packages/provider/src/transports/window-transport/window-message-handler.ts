@@ -5,7 +5,8 @@ import {
   InitState,
   WindowSessionParams,
   OpenWalletIntent,
-  ProviderRpcError
+  ProviderRpcError,
+  TransportSession
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
@@ -31,30 +32,22 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // record open details (sessionId + default network) from the window url
     const { pathname, search: rawParams } = new URL(window.location.href)
 
-    let params = this.getWindowSession(rawParams)
+    let session: TransportSession | null = this.getWindowTransportSession(rawParams)
 
     // provider should always include sid when opening a new window
-    const isNewWindowSession = params.get('sid') !== null
+    const isNewWindowSession = !!session.sessionId
 
-    if (isNewWindowSession) {
-      // brand new popup opened, persist session params
-      params = this.saveWindowSession(rawParams)
-    } else {
-      // no sid? might be popup window redirect or reload ..
-      // attempt to restore previous session from local storage
-      params = this.restoreWindowSession()
+    // attempt to restore previous session in the case of a redirect or window reload
+    if (!isNewWindowSession) {
+      session = this.getCachedTransportSession()
     }
 
-    this._sessionId = sanitizeNumberString(params.get('sid'))
-
-    if (this._sessionId.length === 0) {
-      logger.error('invalid sessionId')
+    if (!session) {
+      logger.error('window session is undefined')
       return
     }
 
-    const intent = base64DecodeObject<OpenWalletIntent>(params.get('intent'))
-
-    if (intent && isNewWindowSession) {
+    if (session.intent && isNewWindowSession) {
       window.history.replaceState({ openWalletIntent: true }, document.title, pathname)
     }
 
@@ -65,20 +58,18 @@ export class WindowMessageHandler extends BaseWalletTransport {
     window.addEventListener('message', this.onWindowEvent, false)
     this._registered = true
 
-    const networkId = params.get('net')
-
     // send open event to the app which opened us
-    this.open(intent, networkId)
+    this.open(session)
       .then(opened => {
         if (!opened) {
-          const err = `failed to open to network ${networkId}`
+          const err = `failed to open to network ${session?.networkId}`
           logger.error(err)
           this.notifyClose({ message: err } as ProviderRpcError)
           window.close()
         }
       })
       .catch(e => {
-        const err = `failed to open to network ${networkId}, due to: ${e}`
+        const err = `failed to open to network ${session?.networkId}, due to: ${e}`
         logger.error(err)
         this.notifyClose({ message: err } as ProviderRpcError)
         window.close()
@@ -164,17 +155,12 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
   }
 
-  private getWindowSession = (params: string | undefined): WindowSessionParams => {
-    return new WindowSessionParams(params)
-  }
-
-  private saveWindowSession = (params: string): WindowSessionParams => {
-    window.localStorage.setItem('@sequence.windowSession', params)
-    return this.getWindowSession(params)
-  }
-
-  private restoreWindowSession = (): WindowSessionParams => {
-    const cachedWindowSessionParams = window.localStorage.getItem('@sequence.windowSession')
-    return this.getWindowSession(cachedWindowSessionParams || undefined)
+  private getWindowTransportSession = (windowParams: string | undefined): TransportSession => {
+    const params = new WindowSessionParams(windowParams)
+    return {
+      sessionId: params.get('sid'),
+      networkId: params.get('net'),
+      intent: base64DecodeObject<OpenWalletIntent>(params.get('intent'))
+    }
   }
 }

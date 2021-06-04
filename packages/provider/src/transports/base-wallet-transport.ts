@@ -2,16 +2,18 @@ import { ethers } from 'ethers'
 import {
   WalletTransport, ProviderMessage, ProviderMessageRequest,
   EventType, ProviderMessageResponse, ProviderMessageTransport,
-  ProviderRpcError, InitState, ConnectDetails, OpenWalletIntent, WalletSession
+  ProviderRpcError, InitState, ConnectDetails, OpenWalletIntent, WalletSession, TransportSession
 } from '../types'
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
-import { logger, sanitizeAlphanumeric, sanitizeHost } from '@0xsequence/utils'
+import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from '@0xsequence/utils'
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
+
+const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
 export abstract class BaseWalletTransport implements WalletTransport {
 
@@ -99,7 +101,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
         } else {
           // failed init
           if (this._initCallback) this._initCallback('invalid init')
-          return          
+          return
         }
       } else {
         // we expect init message first. do nothing here.
@@ -112,8 +114,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
       case EventType.OPEN: {
         if (this._init !== InitState.OK) return
-        const { intent, networkId } = request.data
-        await this.open(intent, networkId)
+        const session: TransportSession = {
+          sessionId: request.data.sessionId,
+          intent: request.data.intent,
+          networkId: request.data.networkId
+        }
+        await this.open(session)
         return
       }
 
@@ -290,7 +296,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  protected open = async (intent?: OpenWalletIntent, networkId?: string | number | null): Promise<boolean> => {
+  protected open = async ({ sessionId, intent, networkId }: TransportSession): Promise<boolean> => {
+    if (sessionId) {
+      this._sessionId = sanitizeNumberString(sessionId)
+      // persist transport session in localstorage for restoring after redirect/reload
+      this.saveTransportSession({ sessionId, intent, networkId })
+    }
 
     // init handshake for certain transports, before we can open the communication.
     //
@@ -329,7 +340,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
       if (connectOptions.networkId) {
         networkId = connectOptions.networkId
       }
-
     } else {
       this.walletRequestHandler.setConnectOptions(undefined)
     }
@@ -397,11 +407,26 @@ export abstract class BaseWalletTransport implements WalletTransport {
           sessionId: this._sessionId,
           chainId: `${chainId}`,
           session: await this.walletRequestHandler.walletSession()
-        })  
+        })
 
       }
     }
-    
+
     return true
+  }
+
+  private saveTransportSession = (session: TransportSession) => {
+    window.localStorage.setItem(TRANSPORT_SESSION_LS_KEY, JSON.stringify(session))
+  }
+
+  protected getCachedTransportSession = (): TransportSession | null => {
+    const session = window.localStorage.getItem(TRANSPORT_SESSION_LS_KEY)
+
+    try {
+      return session ? JSON.parse(session) as TransportSession : null
+    } catch (err) {
+      console.error(`unable to parse transport session: ${session}`)
+      return null
+    }
   }
 }
