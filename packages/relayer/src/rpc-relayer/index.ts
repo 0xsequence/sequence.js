@@ -12,7 +12,7 @@ import {
   computeMetaTxnHash
 } from '@0xsequence/transactions'
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
-import { Relayer } from '..'
+import { FeeOption, Relayer } from '..'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -96,55 +96,35 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
 
-  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[][]> {
-    // chaind only supports refunds on a single token
-    // TODO: Add compatiblity for different refund options
-    const tokenFee = await this.service.tokenFee()
+  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]> {
+    const feeTokens = await this.service.feeTokens()
 
-    logger.info(`[rpc-relayer/gasRefundOptions] using token fee ${JSON.stringify(tokenFee)}`)
+    if (feeTokens.isFeeRequired) {
+      const symbols = feeTokens.tokens.map(token => token.symbol).join(', ')
+      logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are required, accepted tokens are ${symbols}`)
 
-    // No gas refund required
-    if (!tokenFee.isFee || tokenFee.fee === ethers.constants.AddressZero) {
-      return [[]]
-    }
+      const addr = addressOf(config, context)
+      const prevNonce = readSequenceNonce(...transactions)
 
-    const addr = addressOf(config, context)
-    const prevNonce = readSequenceNonce(...transactions)
+      // Set temporal nonce to simulate meta-txn
+      if (prevNonce === undefined) {
+        transactions = appendNonce(transactions, await this.getNonce(config, context))
+      }
 
-    // Set temporal nonce to simulate meta-txn
-    if (prevNonce === undefined) {
-      transactions = appendNonce(transactions, await this.getNonce(config, context))
-    }
+      const coder = ethers.utils.defaultAbiCoder
+      const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
+      const res = await this.service.getMetaTxnNetworkFeeOptions({
+        walletAddress: addr,
+        payload: encoded,
+        signers: config.signers.length
+      })
 
-    const coder = ethers.utils.defaultAbiCoder
-    const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    const res = await this.service.getMetaTxnNetworkFeeOptions({
-      walletAddress: addr,
-      payload: encoded,
-      signers: config.signers.length
-    })
-
-    let decoded: Transaction[][]
-    if (prevNonce === undefined) {
-      decoded = res.options.map(option =>
-        coder.decode([MetaTransactionsType], option)[0].map((txn: TransactionEncoded) => ({
-          ...txn,
-          to: txn.target
-        }))
-      )
+      logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(res.options)}`)
+      return res.options
     } else {
-      decoded = res.options.map(option =>
-        coder.decode([MetaTransactionsType], option)[0].map((txn: TransactionEncoded) => ({
-          ...txn,
-          to: txn.target,
-          nonce: prevNonce
-        }))
-      )
+      logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are not required`)
+      return []
     }
-
-    logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(decoded)}`)
-
-    return decoded
   }
 
   async getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: BlockTag): Promise<number> {

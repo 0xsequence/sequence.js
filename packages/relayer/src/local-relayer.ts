@@ -3,7 +3,7 @@ import { Signer as AbstractSigner, ethers } from 'ethers'
 import { SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
-import { Relayer } from '.'
+import { FeeOption, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
@@ -37,8 +37,8 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     _config: WalletConfig,
     _context: WalletContext,
     ..._transactions: Transaction[]
-  ): Promise<Transaction[][]> {
-    return [[]]
+  ): Promise<FeeOption[]> {
+    return []
   }
 
   async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
