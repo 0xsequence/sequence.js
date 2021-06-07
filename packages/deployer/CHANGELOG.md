@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.22.1
+
+### Patch Changes
+
+- transport session cache
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.22.1
+
 ## 0.22.0
 
 ### Minor Changes

@@ -1,5 +1,25 @@
 # 0xsequence
 
+## 0.22.1
+
+### Patch Changes
+
+- transport session cache
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.22.1
+  - @0xsequence/api@0.22.1
+  - @0xsequence/auth@0.22.1
+  - @0xsequence/chaind@0.22.1
+  - @0xsequence/config@0.22.1
+  - @0xsequence/guard@0.22.1
+  - @0xsequence/multicall@0.22.1
+  - @0xsequence/network@0.22.1
+  - @0xsequence/provider@0.22.1
+  - @0xsequence/relayer@0.22.1
+  - @0xsequence/transactions@0.22.1
+  - @0xsequence/utils@0.22.1
+  - @0xsequence/wallet@0.22.1
+
 ## 0.22.0
 
 ### Minor Changes

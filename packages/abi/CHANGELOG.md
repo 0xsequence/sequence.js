@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.22.1
+
+### Patch Changes
+
+- transport session cache
+
 ## 0.22.0
 
 ### Minor Changes
