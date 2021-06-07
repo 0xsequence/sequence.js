@@ -22,7 +22,7 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
-  
+
   notifyOpen(openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }): void
   notifyClose(error?: ProviderRpcError): void
 
@@ -51,7 +51,7 @@ export type ProviderMessageResponseCallback = (error: any, response?: ProviderMe
 export interface ProviderRpcError extends Error {
   message: string
   code?: number
-  data?: {[key: string]: any}
+  data?: { [key: string]: any }
 }
 
 export interface ProviderMessageRequestHandler {
@@ -81,6 +81,12 @@ export class WindowSessionParams extends URLSearchParams {
   }
 }
 
+export interface TransportSession {
+  sessionId?: string | null
+  networkId?: string | number | null,
+  intent?: OpenWalletIntent,
+}
+
 export enum EventType {
   OPEN = 'open',
   CLOSE = 'close',
@@ -101,10 +107,10 @@ export enum EventType {
 export interface WalletEventTypes {
   'open': (openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }) => void
   'close': (error?: ProviderRpcError) => void
-  
+
   'connect': (connectDetails: ConnectDetails) => void
   'disconnect': (error?: ProviderRpcError) => void
-  
+
   'accountsChanged': (accounts: string[]) => void
   'chainChanged': (chainIdHex: string) => void
 
@@ -210,7 +216,7 @@ export interface WalletSession {
   networks?: NetworkConfig[]
 
   // Caching provider responses for things such as account and chainId
-  providerCache?: {[key: string]: any}
+  providerCache?: { [key: string]: any }
 }
 
 export class ProviderError extends Error {

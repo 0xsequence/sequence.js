@@ -20,6 +20,19 @@ export class ProxyMessageHandler extends BaseWalletTransport {
     this._registered = true
   }
 
+  // note: we can't decide whether to restore the session within register(), because session info is
+  // received asyncronously via EventType.OPEN after register() is executed.
+  // And in the case of a redirect/reload, EventType.OPEN is not sent at all, 
+  // because the wallet is already open.
+  //
+  // call this method from wallet redirect hander when a session restore is needed
+  restoreSession() {
+    const cachedSession = this.getCachedTransportSession()
+    if (cachedSession) {
+      this.open(cachedSession)
+    }
+  }
+
   unregister() {
     // @ts-ignore
     this.port.handleMessage = undefined
