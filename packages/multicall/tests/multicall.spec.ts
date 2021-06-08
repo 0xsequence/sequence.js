@@ -266,7 +266,7 @@ describe('Multicall integration', function () {
   options.map((option) => {
     context(option.name, () => {
       beforeEach(() => {
-        provider = option.provider({ contract: utilsContract.address })
+        provider = option.provider({ contract: utilsContract.address, timeWindow: 500 })
       })
 
       describe("Aggregate calls", async () => {
