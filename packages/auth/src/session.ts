@@ -208,14 +208,26 @@ export class Session {
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
-    // TODO: is authWallet up-to-date?
+    const configFinder = new SequenceUtilsFinder(this.authProvider)
     const authWallet = this.account.authWallet()
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
     const proofString = {
-      proofString: authWallet.wallet.sign(proof.messageDigest()).then(signature => {
-        proof.signature = signature
-        return ethAuth.encodeProof(proof, true)
+      // Fetch latest config 
+      // TODO: Should only search for latest config if necessary to be more efficient.
+      //       Perhaps compare local config hash with on-chain hash before doing
+      //       the search through the logs. Should do this accross sequence.js
+      proofString: configFinder.findCurrentConfig({
+        address: authWallet.wallet.address,
+        provider: this.authProvider,
+        context: authWallet.wallet.context,
+        knownConfigs: [authWallet.wallet.config]
+      }).then(val => {
+        if (!val.config) throw Error("Can't find latest config")
+        return authWallet.wallet.useConfig(val.config!).sign(proof.messageDigest()).then(signature => {
+          proof.signature = signature
+          return ethAuth.encodeProof(proof, true)
+        })
       }).catch(reason => {
         this.proofStrings.delete(key)
         throw reason
@@ -223,7 +235,6 @@ export class Session {
       expiration
     }
     this.proofStrings.set(key, proofString)
-
     return proofString
   }
 
