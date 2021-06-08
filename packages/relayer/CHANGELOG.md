@@ -1,5 +1,17 @@
 # @0xsequence/relayer
 
+## 0.22.2
+
+### Patch Changes
+
+- e1c109e: Fix authProof on expired sessions
+- Updated dependencies [e1c109e]
+  - @0xsequence/abi@0.22.2
+  - @0xsequence/chaind@0.22.2
+  - @0xsequence/config@0.22.2
+  - @0xsequence/transactions@0.22.2
+  - @0xsequence/utils@0.22.2
+
 ## 0.22.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.22.2
+
+### Patch Changes
+
+- e1c109e: Fix authProof on expired sessions
+
 ## 0.22.1
 
 ### Patch Changes
