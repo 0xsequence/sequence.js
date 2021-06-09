@@ -1,5 +1,22 @@
 # @0xsequence/provider
 
+## 0.23.0
+
+### Minor Changes
+
+- - relayer: offer variety of gas fee options from the relayer service"
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.23.0
+  - @0xsequence/auth@0.23.0
+  - @0xsequence/config@0.23.0
+  - @0xsequence/network@0.23.0
+  - @0xsequence/transactions@0.23.0
+  - @0xsequence/utils@0.23.0
+  - @0xsequence/wallet@0.23.0
+
 ## 0.22.2
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/deployer
 
+## 0.23.0
+
+### Minor Changes
+
+- - relayer: offer variety of gas fee options from the relayer service"
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.23.0
+
 ## 0.22.2
 
 ### Patch Changes

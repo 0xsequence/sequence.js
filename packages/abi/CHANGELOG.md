@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.23.0
+
+### Minor Changes
+
+- - relayer: offer variety of gas fee options from the relayer service"
+
 ## 0.22.2
 
 ### Patch Changes
