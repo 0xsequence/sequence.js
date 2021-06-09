@@ -2,6 +2,7 @@ import { providers } from 'ethers'
 import { SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
+import { proto } from './rpc-relayer'
 
 export interface Relayer {
 
@@ -19,7 +20,7 @@ export interface Relayer {
     config: WalletConfig,
     context: WalletContext,
     ...transactions: Transaction[]
-  ): Promise<Transaction[][]>
+  ): Promise<FeeOption[]>
 
   // getNonce returns the transaction count/nonce for a wallet.
   getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: providers.BlockTag): Promise<number>
@@ -36,6 +37,7 @@ export * from './base-relayer'
 export * from './provider-relayer'
 export * from './rpc-relayer'
 export { proto as RpcRelayerProto } from './rpc-relayer'
+export type FeeOption = proto.FeeOption
 
 export function isRelayer(cand: any): cand is Relayer {
   return cand && cand.estimateGasLimits !== undefined && cand.gasRefundOptions !== undefined &&
