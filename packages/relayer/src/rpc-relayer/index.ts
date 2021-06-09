@@ -97,6 +97,9 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   }
 
   async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]> {
+    // NOTE/TODO: for a given `service` the feeTokens will not change between execution, so we should memoize this value
+    // for a short-period of time, perhaps for 1 day or in memory. Perhaps one day we can make this happen automatically
+    // with http cache response for this endpoint and service-worker.. lots of approaches
     const feeTokens = await this.service.feeTokens()
 
     if (feeTokens.isFeeRequired) {
