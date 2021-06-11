@@ -1,9 +1,8 @@
-import { TransactionResponse, Provider, BlockTag } from '@ethersproject/providers'
+import { TransactionResponse, BlockTag } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
 import {
   Transaction,
-  TransactionEncoded,
   readSequenceNonce,
   appendNonce,
   MetaTransactionsType,
