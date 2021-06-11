@@ -8,7 +8,8 @@ import {
   MetaTransactionsType,
   sequenceTxAbiEncode,
   SignedTransactions,
-  computeMetaTxnHash
+  computeMetaTxnHash,
+  packMetaTransactionsData
 } from '@0xsequence/transactions'
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
 import { FeeOption, Relayer } from '..'
@@ -113,12 +114,9 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         transactions = appendNonce(transactions, await this.getNonce(config, context))
       }
 
-      const coder = ethers.utils.defaultAbiCoder
-      const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
       const res = await this.service.getMetaTxnNetworkFeeOptions({
-        walletAddress: addr,
-        payload: encoded,
-        signers: config.signers.length
+        walletConfig: { ...config, address: addr },
+        payload: packMetaTransactionsData(...transactions)
       })
 
       logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(res.options)}`)
