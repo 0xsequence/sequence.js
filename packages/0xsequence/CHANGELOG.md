@@ -1,5 +1,20 @@
 # 0xsequence
 
+## 0.24.0
+
+### Minor Changes
+
+- pass wallet config and nonce to GetMetaTxnNetworkFeeOptions
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.24.0
+  - @0xsequence/relayer@0.24.0
+  - @0xsequence/auth@0.24.0
+  - @0xsequence/wallet@0.24.0
+  - @0xsequence/provider@0.24.0
+
 ## 0.23.0
 
 ### Minor Changes

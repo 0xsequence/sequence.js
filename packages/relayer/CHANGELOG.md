@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 0.24.0
+
+### Minor Changes
+
+- pass wallet config and nonce to GetMetaTxnNetworkFeeOptions
+
 ## 0.23.0
 
 ### Minor Changes
