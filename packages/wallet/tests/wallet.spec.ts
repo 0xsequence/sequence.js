@@ -18,8 +18,10 @@ import { configureLogger, encodeTypedDataDigest } from '@0xsequence/utils'
 
 import * as lib from '../src'
 
-import { isValidSignature, isValidEthSignSignature,
-  isValidSequenceDeployedWalletSignature, isValidSequenceUndeployedWalletSignature,
+import {
+  isValidSignature,
+  isValidEthSignSignature,
+  isValidSequenceUndeployedWalletSignature,
   fetchImageHash,
   isValidContractWalletSignature,
   RemoteSigner
@@ -1294,7 +1296,7 @@ describe('Wallet integration', function () {
       it('Should validate sequence wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, ethnode.chainId)
         await relayer.deployWallet(wallet.config, context)
-        expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject sequence wallet invalid signature', async () => {
         const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
@@ -1335,13 +1337,13 @@ describe('Wallet integration', function () {
         // therefore, first we will do so directly
         {
           const signature = await wallet.sign(digest, true, ethnode.chainId)
-          expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+          expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
         }
 
         // second, we use the signTypedData method directly for convenience
         {
           const signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, ethnode.chainId)
-          expect(await isValidSequenceDeployedWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+          expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
         }
       })
       describe('After updating the owners', () => {
@@ -1370,7 +1372,7 @@ describe('Wallet integration', function () {
 
           wallet2 = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
         })
-        it('Should reject previus wallet configuration signature', async () => {
+        it('Should reject previous wallet configuration signature', async () => {
           const signature = await wallet.signMessage(message, ethnode.chainId)
           expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
         })
