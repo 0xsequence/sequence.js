@@ -20,18 +20,16 @@ export async function isValidSignature(
     isValidEthSignSignature(address, digest, sig)
   ) return true
 
-  const wallets = await Promise.all([
-    isValidContractWalletSignature(address, digest, sig, provider),
-    isValidSequenceDeployedWalletSignature(address, digest, sig, provider)
-  ])
+  // Check if valid deployed smart wallet (via erc1271 check)
+  const erc1271Check = await isValidContractWalletSignature(address, digest, sig, provider)
 
-  // If validity of wallet signature can't be determined
-  // it could be a signature of a non-deployed sequence wallet
-  if (wallets[0] === undefined && wallets[1] === undefined) {
+  if (erc1271Check === undefined) {
+    // If validity of wallet signature can't be determined
+    // it could be a signature of a non-deployed sequence wallet
     return isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId)
   }
 
-  return wallets[0] || wallets[1]
+  return erc1271Check  
 }
 
 export function isValidEIP712Signature(
@@ -93,20 +91,6 @@ export async function isValidContractWalletSignature(
     const wallet = new ethers.Contract(address, walletContracts.erc1271.abi, provider)
     const response = await wallet.isValidSignature(digest, sig)
     return walletContracts.erc1271.returns.isValidSignatureBytes32 === response
-  } catch {
-    return false
-  }
-}
-
-export async function isValidSequenceDeployedWalletSignature(
-  address: string,
-  digest: Uint8Array,
-  sig: string,
-  provider?: Provider
-) {
-  if (!provider) return undefined // Signature validity can't be determined
-  try {
-    return isValidContractWalletSignature(address, digest, sig, provider)
   } catch {
     return false
   }
