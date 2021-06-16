@@ -15,14 +15,6 @@ export interface Transaction {
   nonce?: BigNumberish
 }
 
-export interface TransactionEncoded {
-  delegateCall: boolean
-  revertOnError: boolean
-  gasLimit: BigNumberish
-  target: string
-  value: BigNumberish
-  data: BytesLike
-}
 
 export interface TransactionRequest extends EthersTransactionRequest {
   auxiliary?: Transactionish[]

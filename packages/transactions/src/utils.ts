@@ -1,8 +1,8 @@
-import { ethers, Signer, BigNumberish } from 'ethers'
+import { ethers, Signer, BigNumberish, BytesLike } from 'ethers'
 import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
-import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
+import { Transaction, TransactionRequest, Transactionish, NonceDependency, SignedTransactions } from './types'
 import { subDigestOf } from '@0xsequence/utils'
 
 export const MetaTransactionsType = `tuple(
@@ -124,7 +124,14 @@ export function readSequenceNonce(...txs: Transaction[]): BigNumberish | undefin
   return sample ? sample.nonce : undefined
 }
 
-export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
+export function sequenceTxAbiEncode(txs: Transaction[]): {
+  delegateCall: boolean
+  revertOnError: boolean
+  gasLimit: BigNumberish
+  target: string
+  value: BigNumberish
+  data: BytesLike
+}[] {
   return txs.map(t => ({
     delegateCall: t.delegateCall === true,
     revertOnError: t.revertOnError === true,
