@@ -1,5 +1,12 @@
 # @0xsequence/provider
 
+## 0.24.1
+
+### Patch Changes
+
+- @0xsequence/wallet@0.24.1
+- @0xsequence/auth@0.24.1
+
 ## 0.24.0
 
 ### Patch Changes

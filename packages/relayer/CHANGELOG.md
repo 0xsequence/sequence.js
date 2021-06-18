@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 0.24.1
+
+### Patch Changes
+
+- relayer: wait for queued status instead of unknown
+
 ## 0.24.0
 
 ### Minor Changes
