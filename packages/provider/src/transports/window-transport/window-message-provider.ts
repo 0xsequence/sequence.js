@@ -95,7 +95,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     }
 
     // Open popup window on center of the app window
-    const windowSize = [450, 700]
+    const windowSize = [450, 750]
     const windowPos = [
       Math.abs(window.screenX + window.innerWidth / 2 - windowSize[0] / 2),
       Math.abs(window.screenY + window.innerHeight / 2 - windowSize[1] / 2)
