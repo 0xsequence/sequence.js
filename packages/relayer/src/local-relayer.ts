@@ -55,9 +55,4 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
 
     return this.signer.sendTransaction(txRequest)
   }
-
-  // TODO: Implement by monitoring wallet events
-  wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<TransactionResponse> {
-    throw new Error('Method not implemented.')
-  }
 }
