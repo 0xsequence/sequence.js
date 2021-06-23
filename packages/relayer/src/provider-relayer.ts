@@ -12,13 +12,13 @@ const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
 export interface ProviderRelayerOptions extends BaseRelayerOptions {
   provider: Provider,
-  waitPoolRate?: number,
+  waitPollRate?: number,
   deltaBlocksLog?: number,
   fromBlockLog?: number
 }
 
 export const ProviderRelayerDefaults: Required<Optionals<Mask<ProviderRelayerOptions, BaseRelayerOptions>>> = {
-  waitPoolRate: 1000,
+  waitPollRate: 1000,
   deltaBlocksLog: 12,
   fromBlockLog: -1024
 }
@@ -29,7 +29,7 @@ export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOption
 
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
   public provider: Provider
-  public waitPoolRate: number
+  public waitPollRate: number
   public deltaBlocksLog: number
   public fromBlockLog: number
 
@@ -37,7 +37,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     super(options)
     const opts = { ...ProviderRelayerDefaults, ...options }
     this.provider = opts.provider
-    this.waitPoolRate = opts.waitPoolRate
+    this.waitPollRate = opts.waitPollRate
     this.deltaBlocksLog = opts.deltaBlocksLog
     this.fromBlockLog = opts.fromBlockLog
   }
@@ -165,7 +165,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       }
 
       // Otherwise wait and try again
-      await new Promise(r => setTimeout(r, this.waitPoolRate))
+      await new Promise(r => setTimeout(r, this.waitPollRate))
     }
 
     throw new Error(`Timeout waiting for transaction receipt ${metaTxnId}`)
