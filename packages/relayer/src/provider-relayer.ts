@@ -123,7 +123,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     while (new Date().getTime() < timeoutTime) {
       const block = await this.provider.getBlockNumber()
       const logs = await this.provider.getLogs({
-        fromBlock: Math.max(0, lastBlock - 12),
+        fromBlock: Math.max(0, lastBlock - this.deltaBlocksLog),
         toBlock: block,
         // Nonce change event topic
         topics: ['0x1f180c27086c7a39ea2a7b25239d1ab92348f07ca7bb59d1438fcf527568f881']
@@ -156,7 +156,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       }
 
       // Otherwise wait and try again
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, this.waitPoolRate))
     }
 
     throw new Error(`Timeout waiting for transaction receipt ${metaTxnId}`)
