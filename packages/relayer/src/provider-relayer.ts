@@ -13,12 +13,14 @@ const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 export interface ProviderRelayerOptions extends BaseRelayerOptions {
   provider: Provider,
   waitPoolRate?: number,
-  deltaBlocksLog?: number
+  deltaBlocksLog?: number,
+  fromBlockLog?: number
 }
 
 export const ProviderRelayerDefaults: Required<Optionals<Mask<ProviderRelayerOptions, BaseRelayerOptions>>> = {
   waitPoolRate: 1000,
-  deltaBlocksLog: 12
+  deltaBlocksLog: 12,
+  fromBlockLog: -1024
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
@@ -29,6 +31,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
   public provider: Provider
   public waitPoolRate: number
   public deltaBlocksLog: number
+  public fromBlockLog: number
 
   constructor(options: ProviderRelayerOptions) {
     super(options)
@@ -36,6 +39,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     this.provider = opts.provider
     this.waitPoolRate = opts.waitPoolRate
     this.deltaBlocksLog = opts.deltaBlocksLog
+    this.fromBlockLog = opts.fromBlockLog
   }
 
   abstract gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]>
@@ -116,7 +120,12 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     // Transactions can only get executed on nonce change
     // get all nonce changes and look for metaTxnIds in between logs
     const timeoutTime = new Date().getTime() + timeout
-    let lastBlock: number = 0
+    let lastBlock: number = this.fromBlockLog
+
+    if (lastBlock < 0) {
+      const block = await this.provider.getBlockNumber()
+      lastBlock = block + lastBlock
+    }
 
     const normalMetaTxnId = metaTxnId.replace('0x', '')
 
