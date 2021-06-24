@@ -4,7 +4,7 @@ import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
-import { isBigNumberish } from '@0xsequence/utils'
+import { isBigNumberish, Optionals } from '@0xsequence/utils'
 import { Provider } from "@ethersproject/providers"
 
 
@@ -22,7 +22,7 @@ export function isBaseRelayerOptions(obj: any): obj is BaseRelayerOptions {
   )
 }
 
-export const BaseRelayerDefaults: BaseRelayerOptions = {
+export const BaseRelayerDefaults: Omit<Required<Optionals<BaseRelayerOptions>>, 'provider'> = {
   bundleCreation: true,
   creationGasLimit: ethers.constants.Two.pow(17)
 }
@@ -34,7 +34,7 @@ export class BaseRelayer {
 
   constructor(options?: BaseRelayerOptions) {
     const opts = { ...BaseRelayerDefaults, ...options }
-    this.bundleCreation = !!opts.bundleCreation
+    this.bundleCreation = opts.bundleCreation
     this.provider = opts.provider
     this.creationGasLimit = ethers.BigNumber.from(opts.creationGasLimit)
   }
