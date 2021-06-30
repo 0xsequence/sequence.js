@@ -1,0 +1,31 @@
+{
+  "name": "@0xsequence/estimator",
+  "version": "0.23.0",
+  "description": "estimator sub-package for Sequence",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/estimator",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-estimator.cjs.js",
+  "module": "dist/0xsequence-estimator.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "yarn test:concurrently 'yarn test:run'",
+    "test:run": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:concurrently": "concurrently -k --success first 'yarn start:geth > /dev/null'",
+    "start:geth": "docker run --rm -t -p 10045:8545 ethereum/client-go:v1.10.4 --datadir test_chain --http --dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ethersproject/abstract-signer": "5.0.14",
+    "@ethersproject/properties": "^5.0.9",
+    "ethers": "^5.0.32",
+    "js-base64": "^3.6.0"
+  },
+  "peerDependencies": {},
+  "devDependencies": {},
+  "files": [
+    "src",
+    "dist"
+  ]
+}

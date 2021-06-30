@@ -5,6 +5,8 @@ cache/
 build/
 dist/
 
+test_chain/
+
 *.js.map
 PROD.env
 
