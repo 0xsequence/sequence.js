@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@0xsequence/wallet-contracts": "1.9.1",
     "@ethersproject/abstract-signer": "5.0.14",
     "@ethersproject/properties": "^5.0.9",
     "ethers": "^5.0.32",
