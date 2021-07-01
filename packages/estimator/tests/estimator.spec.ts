@@ -1,4 +1,3 @@
-import { before } from "mocha"
 import { ethers } from "ethers"
 
 import { CallReceiverMock } from '@0xsequence/wallet-contracts'
