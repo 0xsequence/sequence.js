@@ -21,7 +21,11 @@ function txBaseCost(data: ethers.BytesLike): number {
 }
 
 export class OverwriterEstimator {
-  constructor(public rpc: string | ethers.providers.JsonRpcProvider) {}
+  public provider: ethers.providers.JsonRpcProvider
+
+  constructor(public rpc: string | ethers.providers.JsonRpcProvider) {
+    this.provider = typeof(this.rpc) === 'string' ? new ethers.providers.JsonRpcProvider(this.rpc) : this.rpc
+  }
 
   async estimate(args: {
     to: string,
@@ -45,8 +49,6 @@ export class OverwriterEstimator {
     }[],
     blockTag?: string | ethers.BigNumberish
   }): Promise<ethers.BigNumber> {
-    const provider = typeof(this.rpc) === 'string' ? new ethers.providers.JsonRpcProvider(this.rpc) : this.rpc
-
     const blockTag = args.blockTag ? toQuantity(args.blockTag) : "latest"
     const data = args.data ? args.data : []
     const from = args.from ? ethers.utils.getAddress(args.from) : ethers.Wallet.createRandom().address
@@ -79,7 +81,7 @@ export class OverwriterEstimator {
       }
     }
 
-    const response = await provider.send("eth_call", [{
+    const response = await this.provider.send("eth_call", [{
       to: from,
       data: encodedEstimate,
       gasPrice: args.gasPrice,
