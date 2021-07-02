@@ -1,15 +1,17 @@
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, encodeSignature } from '@0xsequence/config'
-import { readSequenceNonce, Transaction } from '@0xsequence/transactions'
+import { WalletConfig, addressOf, encodeSignature, DecodedFullSigner, DecodedEOASigner } from '@0xsequence/config'
+import { readSequenceNonce, sequenceTxAbiEncode, Transaction } from '@0xsequence/transactions'
 import { OverwriterEstimator } from './overwriter-estimator'
 import { Interface } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 import { ethers } from 'ethers'
 
+const MainModuleGasEstimation = require("@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleGasEstimation.sol/MainModuleGasEstimation.json")
+
 export class OverwriterSequenceEstimator {
   constructor(public estimator: OverwriterEstimator) {}
 
-  async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[]> {
+  async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<{ transactions:Transaction[], total: ethers.BigNumber }> {
     const wallet = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
@@ -38,14 +40,14 @@ export class OverwriterSequenceEstimator {
 
     // Generate a fake signature, meant to resemble the final signature of the transaction
     // this "fake" signature is provided to compute a more accurate gas estimation
-    const stubSignature = encodeSignature({ threshold: config.threshold, signers: definedSigners.map((s) => {
+    const stubSignature = encodeSignature({ threshold: config.threshold, signers: await Promise.all(definedSigners.map(async (s) => {
       if (!s.signs) return s
 
       if (s.isEOA) {
         return {
           weight: s.weight,
-          signature: ethers.Wallet.createRandom().signMessage("") + '02'
-        }
+          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02'
+        } as DecodedEOASigner
       }
 
       // Assume a 2/3 nested contract signature
@@ -56,37 +58,53 @@ export class OverwriterSequenceEstimator {
           address: ethers.Wallet.createRandom().address,
           weight: 1
         }, {
-          address: ethers.Wallet.createRandom().signMessage("") + '02',
+          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02',
           weight: 1
         }, {
-          address: ethers.Wallet.createRandom().signMessage("") + '02',
+          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02',
           weight: 1
         }]
       }) + '03'
 
       return {
         weight: s.weight,
+        address: s.address,
         signature: nestedSignature
-      }
-    })})
+      } as DecodedFullSigner
+    }))})
 
     // Use the provided nonce
     // TODO: Maybe ignore if this fails on the MainModuleGasEstimation
     // it could help reduce the edge cases for when the gas estimation fails
     const nonce = readSequenceNonce(...transactions)
+    const encoded = sequenceTxAbiEncode(transactions)
+
+    const sequenceOverwrites = {
+      [context.mainModule]: {
+        code: MainModuleGasEstimation.deployedBytecode
+      },
+      [context.mainModuleUpgradable]: {
+        code: MainModuleGasEstimation.deployedBytecode
+      }
+    }
 
     const estimates = await Promise.all([
-      ...transactions.map(async (_, i) => {
+      ...encoded.map(async (_, i) => {
         return this.estimator.estimate({
           to: wallet,
-          data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [transactions.slice(0, i), nonce, stubSignature])
+          data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded.slice(0, i), nonce, stubSignature]),
+          overwrites: sequenceOverwrites
         })
       }), this.estimator.estimate({
         to: wallet,     // Compute full gas estimation with all transaction
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [transactions, nonce, stubSignature])
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded, nonce, stubSignature]),
+        overwrites: sequenceOverwrites
       })
     ])
 
-    return transactions.map((t, i) => ({ ...t, gasLimit: estimates[i + 1].sub(estimates[i]) }))
+    return {
+      transactions: transactions.map((t, i) => ({ ...t, gasLimit: estimates[i + 1].sub(estimates[i]) })),
+      total: estimates[estimates.length - 1]
+    }
   }
 }
