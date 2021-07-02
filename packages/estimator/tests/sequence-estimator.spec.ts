@@ -188,46 +188,88 @@ describe('Wallet integration', function () {
     
           beforeEach(async () => {
             await relayer.deployWallet(wallet.config, wallet.context)
-            txs = [{
-              delegateCall: false,
-              revertOnError: false,
-              gasLimit: 0,
-              to: callReceiver.address,
-              value: ethers.constants.Zero,
-              data: await encodeData(callReceiver, "testCall", 14442, "0x112233"),
-              nonce: 0
-            }]
           })
 
-          it("should use estimated gas for a single transaction", async () => {
-            const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
-            const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+          describe("a single transaction", () => {
+            beforeEach(async () => {
+              txs = [{
+                delegateCall: false,
+                revertOnError: false,
+                gasLimit: 0,
+                to: callReceiver.address,
+                value: ethers.constants.Zero,
+                data: await encodeData(callReceiver, "testCall", 14442, "0x112233"),
+                nonce: 0
+              }]
+            })
 
-            expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
-            expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
-
-            expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
+            it("should use estimated gas for a single transaction", async () => {
+              const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
+              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+  
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+  
+              expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
+            })
+  
+            it("should predict gas usage for a single transaction", async () => {
+              const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
+              const realTx = await (await wallet.sendTransaction(txs)).wait(1)
+      
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+      
+              expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
+            })
+  
+            it("should use estimated gas for a single failing transaction", async () => {
+              await callReceiver.setRevertFlag(true)
+              const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
+              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+      
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+      
+              expect((await callReceiver.lastValA()).toNumber()).to.equal(0)
+            })
           })
 
-          it("should predict gas usage for a single transaction", async () => {
-            const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
-            const realTx = await (await wallet.sendTransaction(txs)).wait(1)
-    
-            expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
-            expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
-    
-            expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
-          })
+          describe("a batch of transactions", () => {
+            let valB: Uint8Array
 
-          it("should use estimated gas for a single failing transaction", async () => {
-            await callReceiver.setRevertFlag(true)
-            const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
-            const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
-    
-            expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
-            expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
-    
-            expect((await callReceiver.lastValA()).toNumber()).to.equal(0)
+            beforeEach(async () => {
+              await callReceiver.setRevertFlag(true)
+              valB = ethers.utils.randomBytes(99)
+
+              txs = [{
+                delegateCall: false,
+                revertOnError: false,
+                gasLimit: 0,
+                to: callReceiver.address,
+                value: ethers.constants.Zero,
+                data: await encodeData(callReceiver, "setRevertFlag", false),
+                nonce: 0
+              }, {
+                delegateCall: false,
+                revertOnError: true,
+                gasLimit: 0,
+                to: callReceiver.address,
+                value: ethers.constants.Zero,
+                data: await encodeData(callReceiver, "testCall", 2, valB),
+                nonce: 0
+              }]
+            })
+
+            it("should use estimated gas for a batch of transactions", async () => {
+              const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
+              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+  
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 20000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+  
+              expect(ethers.utils.hexlify(await callReceiver.lastValB())).to.equal(ethers.utils.hexlify(valB))
+            })
           })
         })
       })
