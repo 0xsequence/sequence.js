@@ -25,7 +25,7 @@ describe('estimator', function() {
       provider.getSigner()
     ).deploy()) as unknown) as CallReceiverMock
 
-    estimator = new OverwriterEstimator(url)
+    estimator = new OverwriterEstimator({ rpc: url })
   })
 
   beforeEach(async () => {

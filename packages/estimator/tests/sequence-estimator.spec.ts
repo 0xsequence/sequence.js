@@ -100,7 +100,7 @@ describe('Wallet integration', function () {
     relayer = new LocalRelayer({signer: ethnode.signer })
 
     // Create gas estimator
-    estimator = new OverwriterSequenceEstimator(new OverwriterEstimator(ethnode.provider))
+    estimator = new OverwriterSequenceEstimator(new OverwriterEstimator({ rpc: ethnode.provider }))
   })
 
   function sleep(ms: number) {

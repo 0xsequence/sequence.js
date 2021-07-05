@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { isBigNumberish } from '@0xsequence/utils'
+import { isBigNumberish, Optionals } from '@0xsequence/utils'
 
 const GasEstimator = require("@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json")
 
@@ -23,16 +23,31 @@ function toHexNumber(number: ethers.BigNumberish): string {
   return ethers.BigNumber.from(number).toHexString()
 }
 
-function txBaseCost(data: ethers.BytesLike): number {
-  const bytes = ethers.utils.arrayify(data)
-  return bytes.reduce((p, c) => c == 0 ? p.add(4) : p.add(16), ethers.constants.Zero).add(21000).toNumber()
+export type OverwriterEstimatorOptions = {
+  rpc: string | ethers.providers.JsonRpcProvider,
+  dataZeroCost?: number,
+  dataOneCost?: number,
+  baseCost?: number
+}
+
+export const OverwriterEstimatorDefaults: Required<Optionals<OverwriterEstimatorOptions>> = {
+  dataZeroCost: 4,
+  dataOneCost: 16,
+  baseCost: 21000
 }
 
 export class OverwriterEstimator {
   public provider: ethers.providers.JsonRpcProvider
+  public options: Required<OverwriterEstimatorOptions>
 
-  constructor(public rpc: string | ethers.providers.JsonRpcProvider) {
-    this.provider = typeof(this.rpc) === 'string' ? new ethers.providers.JsonRpcProvider(this.rpc) : this.rpc
+  constructor(options: OverwriterEstimatorOptions) {
+    this.provider = typeof(options.rpc) === 'string' ? new ethers.providers.JsonRpcProvider(options.rpc) : options.rpc
+    this.options = { ...OverwriterEstimatorDefaults, ...options }
+  }
+
+  txBaseCost(data: ethers.BytesLike): number {
+    const bytes = ethers.utils.arrayify(data)
+    return bytes.reduce((p, c) => c == 0 ? p.add(this.options.dataZeroCost) : p.add(this.options.dataOneCost), ethers.constants.Zero).add(this.options.baseCost).toNumber()
   }
 
   async estimate(args: {
@@ -104,6 +119,6 @@ export class OverwriterEstimator {
       throw Error(`Failed gas estimation with ${tryDecodeError(decoded.result)}`)
     }
 
-    return ethers.BigNumber.from(decoded.gas).add(txBaseCost(data))
+    return ethers.BigNumber.from(decoded.gas).add(this.txBaseCost(data))
   }
 }
