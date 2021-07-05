@@ -5,10 +5,11 @@ import { OverwriterEstimator } from './overwriter-estimator'
 import { Interface } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 import { ethers } from 'ethers'
+import { Estimator } from './estimator'
 
 const MainModuleGasEstimation = require("@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleGasEstimation.sol/MainModuleGasEstimation.json")
 
-export class OverwriterSequenceEstimator {
+export class OverwriterSequenceEstimator implements Estimator {
   constructor(public estimator: OverwriterEstimator) {}
 
   async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<{ transactions:Transaction[], total: ethers.BigNumber }> {
