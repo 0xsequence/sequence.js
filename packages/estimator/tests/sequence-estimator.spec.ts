@@ -172,6 +172,22 @@ describe('Wallet integration', function () {
         const wallet = new Wallet({ context, config }, ...signers)
         return wallet.connect(ethnode.provider, relayer)
       }
+    }, {
+      name: "asymetrical signers wallet",
+      getWallet: async () => {
+        const signersA = new Array(5).fill(0).map(() => ethers.Wallet.createRandom())
+        const signersB = new Array(6).fill(0).map(() => ethers.Wallet.createRandom())
+
+        const signers = [...signersA, ...signersB]
+
+        const config = {
+          threshold: 5,
+          signers: signers.map((s, i) => ({ weight: (i <= signersA.length ? 1 : 10), address: s.address}))
+        }
+
+        const wallet = new Wallet({ context, config }, ...signersA)
+        return wallet.connect(ethnode.provider, relayer)
+      }
     }
   ]
 
@@ -187,6 +203,7 @@ describe('Wallet integration', function () {
           let txs: Transaction[]
     
           beforeEach(async () => {
+            await callReceiver.testCall(0, [])
             await relayer.deployWallet(wallet.config, wallet.context)
           })
 

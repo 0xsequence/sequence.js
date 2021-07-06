@@ -28,8 +28,10 @@ export class OverwriterSequenceEstimator implements Estimator {
     let weightSum = 0
 
     const definedSigners = signers
-      .sort((a, b) => !a.isEOA && b.isEOA ? -1 : 0) // Contract signers sign first
-      .map((s) => {                                 // Define signers and not signers
+      // Contract signers sign first, then lowest weight signers
+      .sort((a, b) => !a.isEOA && b.isEOA ? -1 : a.isEOA && !b.isEOA ? +1 : a.weight - b.weight)
+      // Define signers and not signers
+      .map((s) => {
         if (weightSum >= config.threshold) {
           return { ...s, signs: false }
         }
