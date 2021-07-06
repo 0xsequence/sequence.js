@@ -224,7 +224,7 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
   
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 10000)
               expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
   
               expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
@@ -234,7 +234,7 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
               const realTx = await (await wallet.sendTransaction(txs)).wait(1)
       
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 10000)
               expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
       
               expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
@@ -245,7 +245,7 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
       
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 5000)
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 10000)
               expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
       
               expect((await callReceiver.lastValA()).toNumber()).to.equal(0)
@@ -282,7 +282,7 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
   
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 20000)
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 30000)
               expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
   
               expect(ethers.utils.hexlify(await callReceiver.lastValB())).to.equal(ethers.utils.hexlify(valB))
