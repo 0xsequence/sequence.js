@@ -11,7 +11,7 @@ import { MulticallExternalProvider, multicallMiddleware, MulticallProvider } fro
 import { SpyProxy } from './utils'
 import { getRandomInt } from '@0xsequence/utils'
 import { JsonRpcMethod } from '../src/constants'
-import { MulticallOptions } from '../src/multicall'
+import { MulticallOptions, Multicall } from '../src/multicall'
 
 const { JsonRpcEngine } = require('json-rpc-engine')
 
@@ -320,6 +320,23 @@ describe('Multicall integration', function () {
 
           if (option.ignoreCount) return
           expect(callCounter).to.equal(2)
+        })
+        it("Should aggregate in three batches :: queue > batch after first run", async () => {
+          const numberOfCalls = (Multicall.DefaultOptions.batchSize * 2) + 2
+          const mid = numberOfCalls / 2 // Split Promise.all to not break RPC calls
+
+          let callMocks = await Promise.all(Array(mid).fill(0).map(() => createCallMock()))
+          callMocks = [...callMocks, ...await Promise.all(Array(mid).fill(0).map(() => createCallMock()))]
+
+          const randomValues = Array(numberOfCalls).fill(0).map(() => ethers.utils.hexlify(ethers.utils.randomBytes(getRandomInt(0, 41))))
+          await Promise.all(randomValues.slice(0, mid).map((v, i) => callMocks[i].testCall(0, v)))
+          await Promise.all(randomValues.slice(mid).map((v, i) => callMocks[i + mid].testCall(0, v)))
+
+          const values = await Promise.all(callMocks.map((c) => c.connect(provider).lastValB()))
+          values.forEach((v, i) => expect(v).to.equal(randomValues[i]))
+
+          if (option.ignoreCount) return
+          expect(callCounter).to.equal(3)
         })
         it("Should call eth_getCode", async () => {
           const code = await Promise.all([

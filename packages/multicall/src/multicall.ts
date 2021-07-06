@@ -57,7 +57,7 @@ export class Multicall {
   private queue = [] as QueueEntry[]
 
   scheduleExecution = () => {
-    if (this.queue.length < this.options.batchSize) {
+    if (this.queue.length > 0) {
       if (this.timeout) clearTimeout(this.timeout)
       this.timeout = setTimeout(this.run, this.options.timeWindow)
     }
