@@ -1,4 +1,4 @@
-import { TransactionResponse, BlockTag } from '@ethersproject/providers'
+import { TransactionResponse } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
 import {
@@ -131,7 +131,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
   }
 
-  async getNonce(config: WalletConfig, context: WalletContext, space?: number, blockTag?: BlockTag): Promise<number> {
+  async getNonce(config: WalletConfig, context: WalletContext, space?: number): Promise<number> {
     const addr = addressOf(config, context)
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
     const resp = await this.service.getMetaTxnNonce({ walletContractAddress: addr })

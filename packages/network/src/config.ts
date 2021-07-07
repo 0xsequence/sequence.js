@@ -1,9 +1,8 @@
 import { BigNumberish } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { Relayer } from '@0xsequence/relayer'
+import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { urlClean } from '@0xsequence/utils'
 import { createNetworkConfig } from './utils'
-import { RpcRelayerOptions } from '@0xsequence/relayer/src/rpc-relayer'
 
 export interface NetworkConfig {
   title?: string
