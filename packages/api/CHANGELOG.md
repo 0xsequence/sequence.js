@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 0.25.0
+
+### Minor Changes
+
+- 10c8af8: Add estimator package
+  Fix multicall few calls bug
+
 ## 0.24.0
 
 ### Minor Changes

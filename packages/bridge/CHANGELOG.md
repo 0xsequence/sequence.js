@@ -1,5 +1,17 @@
 # @0xsequence/bridge
 
+## 0.25.0
+
+### Minor Changes
+
+- 10c8af8: Add estimator package
+  Fix multicall few calls bug
+
+### Patch Changes
+
+- Updated dependencies [10c8af8]
+  - @0xsequence/network@0.25.0
+
 ## 0.23.0
 
 ### Minor Changes
