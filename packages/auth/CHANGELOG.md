@@ -1,5 +1,18 @@
 # @0xsequence/auth
 
+## 0.25.1
+
+### Patch Changes
+
+- Fix build typescrypt issue
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.25.1
+  - @0xsequence/api@0.25.1
+  - @0xsequence/config@0.25.1
+  - @0xsequence/network@0.25.1
+  - @0xsequence/utils@0.25.1
+  - @0xsequence/wallet@0.25.1
+
 ## 0.25.0
 
 ### Minor Changes
