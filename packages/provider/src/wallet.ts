@@ -367,7 +367,7 @@ export class Wallet implements WalletProvider {
         this.transport.cachedProvider!,
       ], new JsonRpcSender(rpcProvider))
 
-      provider = new Web3Provider(router)
+      provider = new Web3Provider(router, network.chainId)
 
     } else {
       // communicating with another chain will bind to that network, but will forward
