@@ -1,7 +1,7 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
   JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
   SigningProvider, EagerProvider, exceptionProviderMiddleware, networkProviderMiddleware, JsonRpcExternalProvider,
-  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, checkNetworkConfig, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
+  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -490,14 +490,6 @@ export class Wallet implements WalletProvider {
   private useNetworks(networks: NetworkConfig[]) {
     // set networks in the session
     if (!this.session) this.session = {}
-
-    // confirm default network is set correctly
-    if (this.config.defaultNetworkId && networks && networks.length > 0) {
-      if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
-        // TODO: what is the correct behaviour here we want for dapps?
-        throw new Error(`expecting defaultNetworkId '${this.config.defaultNetworkId}' but is set to '${networks[0].name}'`)
-      }
-    }
 
     // set networks on session object
     this.session.networks = networks
