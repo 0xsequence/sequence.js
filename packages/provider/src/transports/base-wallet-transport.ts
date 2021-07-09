@@ -364,6 +364,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
           chainId = await this.walletRequestHandler.getChainId()
         }
       } catch (err) {
+        console.error(err)
       }
 
       // Failed to set default network on open -- quit + close
