@@ -189,8 +189,11 @@ export class Wallet extends Signer {
 
   async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
     chainId = await this.getChainIdNumber(chainId)
-    this.config.chainId = chainId
-    return [this.config]
+    const config = {
+      ...this.config,
+      chainId
+    }
+    return [config]
   }
 
   async getWalletState(_?: ChainId): Promise<WalletState[]> {

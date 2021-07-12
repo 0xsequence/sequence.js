@@ -102,7 +102,7 @@ export const tests = async () => {
 
   await test('getWalletConfig', async () => {
     const allWalletConfigs = await wallet.getWalletConfig()
-    assert.equal(allWalletConfigs.length, 1, '1 wallet config for default chain')
+    assert.equal(allWalletConfigs.length, 2, '2 wallet configs (one for each chain)')
 
     const config1 = allWalletConfigs[0]
     assert.true(config1.chainId !== undefined, 'config1, chainId is set')
