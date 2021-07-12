@@ -161,11 +161,11 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
-    return await this.provider.send('sequence_getWalletConfig', [], maybeNetworkId(chainId) || this.defaultChainId)
+    return await this.provider.send('sequence_getWalletConfig', [maybeNetworkId(chainId)], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
   async getWalletState(chainId?: ChainId): Promise<WalletState[]> {
-    return await this.provider.send('sequence_getWalletState', [], maybeNetworkId(chainId) || this.defaultChainId)
+    return await this.provider.send('sequence_getWalletState', [maybeNetworkId(chainId)], maybeNetworkId(chainId) || this.defaultChainId)
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {

@@ -407,12 +407,12 @@ export class Wallet implements WalletProvider {
     return (await this.getAuthProvider()).getSigner()
   }
 
-  getWalletConfig(): Promise<WalletConfig[]> {
-    return this.getSigner().getWalletConfig()
+  getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
+    return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(): Promise<WalletState[]> {
-    return this.getSigner().getWalletState()
+  getWalletState(chainId?: ChainId): Promise<WalletState[]> {
+    return this.getSigner().getWalletState(chainId)
   }
 
   getWalletContext(): Promise<WalletContext> {

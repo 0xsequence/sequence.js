@@ -410,12 +410,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_getWalletConfig': {
+          const [chainId] = request.params!
           response.result = await signer.getWalletConfig(chainId)
           break
         }
 
         // smart wallet method
         case 'sequence_getWalletState': {
+          const [chainId] = request.params!
           response.result = await signer.getWalletState(chainId)
           break
         }
