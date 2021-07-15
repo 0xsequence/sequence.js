@@ -323,7 +323,15 @@ export class Wallet implements WalletProvider {
       throw new Error('connect first')
     }
     
-    this.transport.messageProvider!.openWallet(path, intent, networkId || this.config.defaultNetworkId)
+    let currentNetworkId
+
+    if (!this.networks || this.networks.length < 1) {
+      currentNetworkId = this.config.defaultNetworkId
+    } else {
+      currentNetworkId = await this.getChainId()
+    }
+
+    this.transport.messageProvider!.openWallet(path, intent, networkId || currentNetworkId)
     await this.transport.messageProvider!.waitUntilOpened()
 
     return true
