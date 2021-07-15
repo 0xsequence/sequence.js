@@ -11,6 +11,7 @@ import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyM
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
+import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -65,6 +66,7 @@ export class Wallet implements WalletProvider {
     messageProvider?: MuxMessageProvider
     windowMessageProvider?: WindowMessageProvider
     proxyMessageProvider?: ProxyMessageProvider
+    extensionMessageProvider?: ExtensionMessageProvider
   }
 
   private networks: NetworkConfig[]
@@ -109,6 +111,10 @@ export class Wallet implements WalletProvider {
     if (this.config.transports?.proxyTransport?.enabled) {
       this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort!)
       this.transport.messageProvider.add(this.transport.proxyMessageProvider)
+    }
+    if (this.config.transports?.extensionTransport?.enabled) {
+      this.transport.extensionMessageProvider = new ExtensionMessageProvider()
+      this.transport.messageProvider.add(this.transport.extensionMessageProvider)
     }
     this.transport.messageProvider.register()
 
@@ -566,6 +572,10 @@ export interface ProviderConfig {
       appPort?: ProxyMessageChannelPort
     }
 
+    // Extension transport (optional)
+    extensionTransport?: {
+      enabled: boolean
+    }
   }
 
   // Sequence Wallet Modules Context override. By default (and recommended), the
