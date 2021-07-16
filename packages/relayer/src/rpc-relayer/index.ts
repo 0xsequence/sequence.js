@@ -51,7 +51,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       )
     }
 
-    console.log("waiting for", metaTxnHash)
+    logger.info(`[rpc-relayer/waitReceipt] waiting for ${metaTxnHash}`)
     let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
 
     // TODO: remove check for 'UNKNOWN' status when 'QUEUED' status is supported
@@ -161,7 +161,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       }
     })
 
-    logger.warn(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
+    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
     return this.wait(metaTxn.txnHash)
   }
