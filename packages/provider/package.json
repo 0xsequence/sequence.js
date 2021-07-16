@@ -25,13 +25,10 @@
     "@ethersproject/providers": "^5.0.24",
     "@ethersproject/web": "^5.0.14",
     "ethers": "^5.0.32",
-    "eventemitter3": "^4.0.7",
-    "readable-stream": "^3.6.0"
+    "eventemitter3": "^4.0.7"
   },
   "peerDependencies": {},
-  "devDependencies": {
-    "@types/readable-stream": "^2.3.11"
-  },
+  "devDependencies": {},
   "files": [
     "src",
     "dist"

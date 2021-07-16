@@ -7,7 +7,12 @@ import {
   ProviderMessageRequest,
   ProviderMessageResponse
 } from '../../types'
-import { Duplex } from 'readable-stream'
+
+interface Stream {
+  on(ev: string | symbol, fn: (...args: any[]) => void): void
+  writable: boolean
+  write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean
+}
 
 // to be used on injected window.ethereum EIP1193 proxy
 export abstract class BaseInjectedTransport extends EventEmitter {
@@ -16,7 +21,7 @@ export abstract class BaseInjectedTransport extends EventEmitter {
   private _messageIdx = 0
   protected nextMessageIdx = () => ++this._messageIdx
 
-  constructor(private stream: Duplex) {
+  constructor(private stream: Stream) {
     super()
 
     this.stream.on('data', this.handleMessage)
