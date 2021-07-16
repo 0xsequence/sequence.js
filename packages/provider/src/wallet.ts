@@ -257,7 +257,7 @@ export class Wallet implements WalletProvider {
     return this.session !== undefined &&
       this.session.networks !== undefined && this.session.networks.length > 0 &&
       this.networks !== undefined && this.networks.length > 0 &&
-      this.session.accountAddress!.startsWith('0x')
+      !!this.session.accountAddress && this.session.accountAddress.startsWith('0x')
   }
 
   getSession = (): WalletSession | undefined => {
