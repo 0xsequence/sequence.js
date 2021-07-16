@@ -23,6 +23,10 @@ export abstract class BaseInjectedTransport extends EventEmitter {
   }
 
   private handleMessage = (message: ProviderMessage<JsonRpcResponse>) => {
+    if (!message.type || !message.data) {
+      return
+    }
+
     console.log('[received message]', message)
 
     const requestIdx = message.idx
@@ -51,7 +55,7 @@ export abstract class BaseInjectedTransport extends EventEmitter {
         this.emit(message.type, Number(message.data)) // why is this returned in hex?
         break
       default:
-        console.error('unknown message type')
+        console.error('unknown message type', message)
         break
     }
   }
