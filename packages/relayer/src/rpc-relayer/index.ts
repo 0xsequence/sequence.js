@@ -36,11 +36,11 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
 }
 
 export class RpcRelayer extends BaseRelayer implements Relayer {
-  private readonly service: proto.RelayerService
+  private readonly service: proto.Relayer
 
   constructor(options: RpcRelayerOptions) {
     super(options)
-    this.service = new proto.RelayerService(options.url, fetchPonyfill().fetch)
+    this.service = new proto.Relayer(options.url, fetchPonyfill().fetch)
   }
 
   async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
@@ -85,6 +85,12 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
     const res = await this.service.updateMetaTxnGasLimits({
       walletAddress: addr,
+      walletConfig: {
+        address: addr,
+        signers: config.signers,
+        threshold: config.threshold,
+        chainId: config.chainId,
+      },
       payload: encoded
     })
 
