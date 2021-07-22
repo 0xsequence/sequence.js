@@ -388,8 +388,10 @@ export abstract class BaseWalletTransport implements WalletTransport {
         })
 
         try {
-          const connectDetails = await this.walletRequestHandler.promptConnect()
-          this.walletRequestHandler.notifyConnect(connectDetails)
+          const connectDetails = await this.walletRequestHandler.promptConnect(intent.options)
+          if(connectDetails.connected){
+            this.walletRequestHandler.notifyConnect(connectDetails)
+          }
         } catch (err) {
           logger.warn('promptConnect not connected:', err)
         } finally {

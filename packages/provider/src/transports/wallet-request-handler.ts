@@ -137,10 +137,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       return this.connect(options)
     }
 
-    const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions)
+    const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions).catch(_ => {
+      return { connected: false } as ConnectDetails
+    })
 
     const connectDetails: ConnectDetails = promptConnectDetails
-    if (!connectDetails.session) {
+    if (connectDetails.connected && !connectDetails.session) {
       connectDetails.session = await this.walletSession()
     }
 
