@@ -170,7 +170,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.CLOSE,
-      data: { error }
+      data: error ? { error } : null
     })
   }
 
@@ -186,7 +186,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.DISCONNECT,
-      data: { error }
+      data: error ? { error } : null
     })
   }
 
