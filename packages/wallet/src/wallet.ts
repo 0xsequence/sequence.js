@@ -24,7 +24,8 @@ import {
   makeExpirable,
   makeAfterNonce,
   SignedTransactions,
-  digestOfTransactions
+  digestOfTransactions,
+  decodeNonce
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -266,9 +267,9 @@ export class Wallet extends Signer {
     }]
   }
 
-  // geNonce returns the transaction nonce for this wallet, via the relayer
+  // getNonce returns the transaction nonce for this wallet, via the relayer
   async getNonce(blockTag?: BlockTag): Promise<number> {
-    return this.relayer.getNonce(this.config, this.context, 0, blockTag)
+    return ethers.BigNumber.from(decodeNonce(await this.relayer.getNonce(this.config, this.context, undefined, blockTag))[1]).toNumber()
   }
 
   // getTransactionCount returns the number of transactions (aka nonce)
