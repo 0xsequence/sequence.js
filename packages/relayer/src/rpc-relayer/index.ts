@@ -9,7 +9,8 @@ import {
   sequenceTxAbiEncode,
   SignedTransactions,
   computeMetaTxnHash,
-  packMetaTransactionsData
+  packMetaTransactionsData,
+  decodeNonce
 } from '@0xsequence/transactions'
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
 import { FeeOption, Relayer } from '..'
@@ -136,12 +137,14 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
   }
 
-  async getNonce(config: WalletConfig, context: WalletContext, space?: number): Promise<number> {
+  async getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
     const addr = addressOf(config, context)
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
-    const resp = await this.service.getMetaTxnNonce({ walletContractAddress: addr })
-    const nonce = ethers.BigNumber.from(resp.nonce).toNumber()
-    logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${addr} ${nonce} space: ${space}`)
+    const encodedNonce = space !== undefined ? ethers.BigNumber.from(space).toHexString() : undefined
+    const resp = await this.service.getMetaTxnNonce({ walletContractAddress: addr, space: encodedNonce })
+    const nonce = ethers.BigNumber.from(resp.nonce)
+    const [decodedSpace, decodedNonce] = decodeNonce(nonce)
+    logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${addr} ${decodedNonce} space: ${decodedSpace}`)
     return nonce
   }
 
