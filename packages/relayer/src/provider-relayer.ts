@@ -1,7 +1,7 @@
 import { TransactionResponse, BlockTag, Provider } from '@ethersproject/providers'
 import { ethers, providers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { computeMetaTxnHash, SignedTransactions, Transaction } from '@0xsequence/transactions'
+import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
@@ -91,9 +91,9 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
   async getNonce(
     config: WalletConfig,
     context: WalletContext,
-    space?: number,
+    space?: ethers.BigNumberish,
     blockTag?: BlockTag
-  ): Promise<number> {
+  ): Promise<ethers.BigNumberish> {
     if (!this.provider) {
       throw new Error('provider is not set')
     }
@@ -104,8 +104,13 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       return 0
     }
 
+    if (space === undefined) {
+      space = 0
+    }
+
     const module = new ethers.Contract(addr, walletContracts.mainModule.abi, this.provider)
-    return (await module.readNonce(space ? space : 0, { blockTag: blockTag })).toNumber()
+    const nonce = await module.readNonce(space, { blockTag: blockTag })
+    return encodeNonce(space, nonce)
   }
 
   async wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse & providers.TransactionReceipt> {
