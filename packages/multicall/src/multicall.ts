@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
@@ -113,7 +113,7 @@ export class Multicall {
 
     // Get next candidate
     const next = items[0].next as JsonRpcHandlerFunc
-    let blockTag: BlockTag | null = null
+    let blockTag: BlockTag | undefined
 
     // Partition incompatible calls
     var [items, discartItems] = partition(items, (item) => {
@@ -135,7 +135,7 @@ export class Multicall {
           case JsonRpcMethod.ethGetCode:
             // Mixed blockTags
             const itemBlockTag = parseBlockTag(item.request.params![1])
-            if (blockTag === null) blockTag = itemBlockTag
+            if (blockTag === undefined) blockTag = itemBlockTag
             if (!eqBlockTag(itemBlockTag, blockTag)) return false
         }
 
@@ -233,7 +233,7 @@ export class Multicall {
           to: this.options.contract!,
           value: 0,
           data: encodedCall!
-        }, blockTag!]
+        }, BigNumber.isBigNumber(blockTag) ? blockTag.toNumber() : blockTag]
       // @ts-ignore
       }), (e) => ({
         jsonrpc: JsonRpcVersion!,
