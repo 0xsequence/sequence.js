@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 0.0.0-2021629185236
+
+### Minor Changes
+
+- major changes to relayer interface
+
 ## 0.25.1
 
 ### Patch Changes
