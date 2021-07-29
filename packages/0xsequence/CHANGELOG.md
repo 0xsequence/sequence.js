@@ -1,5 +1,25 @@
 # 0xsequence
 
+## 0.0.0-20217621046
+
+### Patch Changes
+
+- stop explicitly specifying a nonce space of 0
+- Updated dependencies [undefined]
+  - @0xsequence/wallet@0.0.0-20217621046
+  - @0xsequence/auth@0.0.0-20217621046
+  - @0xsequence/provider@0.0.0-20217621046
+
+## 0.0.0-202162919200
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/relayer@0.0.0-202162919200
+  - @0xsequence/wallet@0.0.0-202162919200
+  - @0xsequence/auth@0.0.0-202162919200
+  - @0xsequence/provider@0.0.0-202162919200
+
 ## 0.25.1
 
 ### Patch Changes

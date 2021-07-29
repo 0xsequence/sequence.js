@@ -1,5 +1,22 @@
 # @0xsequence/wallet
 
+## 0.0.0-20217621046
+
+### Patch Changes
+
+- stop explicitly specifying a nonce space of 0
+
+## 0.0.0-202162919200
+
+### Minor Changes
+
+- new relayer
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/relayer@0.0.0-202162919200
+
 ## 0.25.1
 
 ### Patch Changes
