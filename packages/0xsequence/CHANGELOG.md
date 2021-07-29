@@ -1,5 +1,15 @@
 # 0xsequence
 
+## 0.0.0-202162919200
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/relayer@0.0.0-202162919200
+  - @0xsequence/wallet@0.0.0-202162919200
+  - @0xsequence/auth@0.0.0-202162919200
+  - @0xsequence/provider@0.0.0-202162919200
+
 ## 0.25.1
 
 ### Patch Changes
