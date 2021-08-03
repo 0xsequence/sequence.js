@@ -12,6 +12,7 @@ import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, Co
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
+import { LocalStore } from './utils'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -52,6 +53,8 @@ export class Wallet implements WalletProvider {
   private config: ProviderConfig
   private session?: WalletSession
 
+  private connectedSites: LocalStore<string[]>
+
   private transport: {
     // top-level provider which connects all transport layers
     provider?: Web3Provider
@@ -89,6 +92,7 @@ export class Wallet implements WalletProvider {
     this.transport = {}
     this.networks = []
     this.providers = {}
+    this.connectedSites = new LocalStore('@sequence.connectedSites', [])
     this.commands = new WalletCommands(this)
     this.init()
   }
@@ -206,7 +210,14 @@ export class Wallet implements WalletProvider {
     if (options?.refresh === true) {
       this.disconnect()
     }
-    if (this.isConnected() && !!this.session && !options?.authorize && !options?.askForEmail) {
+
+    if (
+      this.isConnected() &&
+      this.isSiteConnected(options?.origin) &&
+      !!this.session &&
+      !options?.authorize &&
+      !options?.askForEmail
+    ) {
       return {
         connected: true,
         session: this.session,
@@ -228,12 +239,47 @@ export class Wallet implements WalletProvider {
     if (connectDetails.connected) {
       if (!!connectDetails.session) {
         this.useSession(connectDetails.session, true)
+        
+        this.addConnectedSite(options?.origin)
       } else {
         throw new Error('impossible state, connect response is missing session')
       }
     }
 
     return connectDetails
+  }
+
+  addConnectedSite(origin: string | undefined) {
+    origin = origin || window.location.origin
+
+    const connectedSites = this.connectedSites.get()
+
+    if (connectedSites) {
+      if (connectedSites.includes(origin)) {
+        return
+      }
+      this.connectedSites.set([...connectedSites, origin])
+    } else {
+      this.connectedSites.set([origin])
+    }
+  }
+
+  removeConnectedSite(origin: string) {
+    const authorized = this.connectedSites.get()
+
+    if(authorized) {
+      this.connectedSites.set(authorized.filter(domain => domain !== origin))
+    }
+  }
+
+  getConnectedSites() {
+    return this.connectedSites.get()
+  }
+
+  private isSiteConnected(origin: string | undefined): boolean {
+    const authorized = this.connectedSites.get()
+
+    return !!authorized && authorized.includes(origin || window.location.origin)
   }
 
   authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
