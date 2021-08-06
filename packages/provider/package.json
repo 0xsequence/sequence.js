@@ -25,7 +25,7 @@
     "@ethersproject/providers": "^5.0.24",
     "@ethersproject/web": "^5.0.14",
     "ethers": "^5.0.32",
-    "eventemitter3": "^4.0.7"
+    "eventemitter2": "^6.4.4"
   },
   "peerDependencies": {},
   "devDependencies": {},

@@ -1,5 +1,5 @@
-import EventEmitter from 'eventemitter3'
-import { ProviderMessage, ProviderMessageTransport, ProviderEventTypes } from '../../types'
+import { EventEmitter2 as EventEmitter } from 'eventemitter2'
+import { ProviderMessage, ProviderMessageTransport, ProviderEventTypes, TypedEventEmitter } from '../../types'
 
 export class ProxyMessageChannel {
   app: ProxyMessageChannelPort
@@ -19,7 +19,8 @@ export class ProxyMessageChannel {
 
 export class ProxyMessageChannelPort implements ProviderMessageTransport {
   conn: ProviderMessageTransport
-  events: EventEmitter<ProxyEventTypes, any> = new EventEmitter()
+  events: TypedEventEmitter<ProxyEventTypes> = new EventEmitter() as TypedEventEmitter<ProxyEventTypes>
+
 
   // handle messages which hit this port
   handleMessage = (message: ProviderMessage<any>): void => {

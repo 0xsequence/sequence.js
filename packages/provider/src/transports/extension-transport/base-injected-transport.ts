@@ -1,5 +1,5 @@
 import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/network'
-import EventEmitter from 'eventemitter3'
+import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 import {
   ProviderMessageResponseCallback,
   ProviderMessage,

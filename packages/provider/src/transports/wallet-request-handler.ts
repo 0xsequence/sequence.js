@@ -1,11 +1,11 @@
-import EventEmitter from 'eventemitter3'
+import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
   ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
   ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   MessageToSign, ProviderRpcError, ConnectOptions, ConnectDetails, PromptConnectDetails, WalletSession,
-  ErrSignedInRequired, ProviderEventTypes
+  ErrSignedInRequired, ProviderEventTypes, TypedEventEmitter
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -37,7 +37,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private _defaultNetworkId?: string | number
   private _chainId?: number
 
-  private events: EventEmitter<ProviderEventTypes, any> = new EventEmitter()
+  private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
   constructor(signer: Signer | null, prompter: WalletUserPrompter | null, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
     this.signer = signer

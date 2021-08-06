@@ -1,4 +1,4 @@
-import EventEmitter from 'eventemitter3'
+import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
   ProviderTransport,
@@ -13,7 +13,8 @@ import {
   ConnectDetails,
   WalletSession,
   ProviderRpcError,
-  InitState
+  InitState,
+  TypedEventEmitter
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -32,8 +33,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   protected state: OpenState
   protected confirmationOnly: boolean = false
-  protected events: EventEmitter<ProviderEventTypes, any> = new EventEmitter()
-  
+  protected events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
+
   protected openPayload: { sessionId?: string; session?: WalletSession } | undefined
   protected connectPayload: ConnectDetails | undefined
   protected accountsChangedPayload: string | undefined
