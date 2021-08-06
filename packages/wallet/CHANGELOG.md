@@ -1,5 +1,13 @@
 # @0xsequence/wallet
 
+## 0.0.0-202176214316
+
+### Patch Changes
+
+- new relayer
+- Updated dependencies [undefined]
+  - @0xsequence/relayer@0.0.0-202176214316
+
 ## 0.25.1
 
 ### Patch Changes
