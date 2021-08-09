@@ -44,7 +44,7 @@ export abstract class BaseInjectedTransport extends EventEmitter {
       case EventType.MESSAGE:
         if (responseCallback) {
           this.emit(EventType.MESSAGE, message)
-          responseCallback(undefined, message)
+          responseCallback(message.data.error, message)
         } else {
           // NOTE: this would occur if 'idx' isn't set, which should never happen
           // or when we register two handler, or duplicate messages with the same idx are sent,
@@ -54,10 +54,8 @@ export abstract class BaseInjectedTransport extends EventEmitter {
         break
       case EventType.DISCONNECT:
       case EventType.ACCOUNTS_CHANGED:
-        this.emit(message.type, message.data)
-        break
       case EventType.CHAIN_CHANGED:
-        this.emit(message.type, Number(message.data)) // why is this returned in hex?
+        this.emit(message.type, message.data)
         break
       default:
         console.error('unknown message type', message)
