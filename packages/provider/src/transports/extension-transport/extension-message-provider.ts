@@ -2,14 +2,13 @@ import { InitState, OpenWalletIntent, ProviderMessage } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 import { CHANNEL_ID } from './extension-message-handler'
 
+import { Runtime } from 'webextension-polyfill-ts'
+
 export class ExtensionMessageProvider extends BaseProviderTransport {
-  constructor() {
+  constructor(runtime: Runtime.Static) {
     super()
 
-    // TODO: check execution context, throw if not an extension
-    // TODO: support other browsers with polyfill
-    //@ts-ignore
-    chrome.runtime.onConnect.addListener(port => {
+    runtime.onConnect.addListener(port => {
       if (port.name === CHANNEL_ID) {
         this._init = InitState.OK
 
@@ -24,7 +23,9 @@ export class ExtensionMessageProvider extends BaseProviderTransport {
     this._registered = true
   }
 
-  sendMessage(message: ProviderMessage<any>) {}
+  sendMessage(message: ProviderMessage<any>) {
+    //noop
+  }
 
   unregister() {
     //noop

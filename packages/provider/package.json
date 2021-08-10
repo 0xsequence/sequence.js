@@ -25,7 +25,8 @@
     "@ethersproject/providers": "^5.0.24",
     "@ethersproject/web": "^5.0.14",
     "ethers": "^5.0.32",
-    "eventemitter2": "^6.4.4"
+    "eventemitter2": "^6.4.4",
+    "webextension-polyfill-ts": "^0.26.0"
   },
   "peerDependencies": {},
   "devDependencies": {},

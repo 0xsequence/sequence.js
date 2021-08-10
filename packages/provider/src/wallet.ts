@@ -14,6 +14,8 @@ import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { LocalStore } from './utils'
 
+import { Runtime } from 'webextension-polyfill-ts'
+
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
   // authorize(options?: ConnectOptions): Promise<ConnectDetails>
@@ -117,7 +119,7 @@ export class Wallet implements WalletProvider {
       this.transport.messageProvider.add(this.transport.proxyMessageProvider)
     }
     if (this.config.transports?.extensionTransport?.enabled) {
-      this.transport.extensionMessageProvider = new ExtensionMessageProvider()
+      this.transport.extensionMessageProvider = new ExtensionMessageProvider(this.config.transports.extensionTransport.runtime)
       this.transport.messageProvider.add(this.transport.extensionMessageProvider)
     }
     this.transport.messageProvider.register()
@@ -631,6 +633,7 @@ export interface ProviderConfig {
     // Extension transport (optional)
     extensionTransport?: {
       enabled: boolean
+      runtime: Runtime.Static
     }
   }
 

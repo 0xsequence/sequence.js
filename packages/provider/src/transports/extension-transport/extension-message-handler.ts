@@ -1,25 +1,21 @@
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
 import { InitState, ProviderMessage } from '../../types'
+import { Runtime } from 'webextension-polyfill-ts'
 
 export const CHANNEL_ID = 'sequence-extension-message-handler'
 
 export class ExtensionMessageHandler extends BaseWalletTransport {
   private port: any
 
-  constructor(walletRequestHandler: WalletRequestHandler) {
+  constructor(walletRequestHandler: WalletRequestHandler, public runtime: Runtime.Static) {
     super(walletRequestHandler)
     this._init = InitState.OK
   }
 
-  // from within extension execution context
   register() {
     this._registered = true
-
-    // TODO: check execution context, throw if not an extension
-    // TODO: support other browsers with polyfill
-    // @ts-ignore
-    this.port = chrome.runtime.connect({ name: CHANNEL_ID })
+    this.port = this.runtime.connect({ name: CHANNEL_ID })
   }
 
   sendMessage(message: ProviderMessage<any>) {
