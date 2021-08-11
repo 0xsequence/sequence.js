@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.26.0
+
+### Minor Changes
+
+- update relayer client bindings
+  provide the wallet's address for calls to SendMetaTxn
+  modify the semantics of Relayer.getNonce() to allow relayers to select nonce spaces for clients
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/wallet@0.26.0
+  - @0xsequence/auth@0.26.0
+
 ## 0.25.1
 
 ### Patch Changes
