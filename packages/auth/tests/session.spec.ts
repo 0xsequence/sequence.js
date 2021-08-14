@@ -18,7 +18,7 @@ const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/c
 const { expect } = chai.use(chaiAsPromised)
 
 import { Session, ValidateSequenceDeployedWalletProof, ValidateSequenceUndeployedWalletProof } from '../src'
-import { compareAddr } from '@0xsequence/config'
+import { compareAddr, SequenceUtilsFinder } from '@0xsequence/config'
 
 import * as mockServer from "mockttp"
 import { ETHAuth } from '@0xsequence/ethauth'
@@ -364,6 +364,40 @@ describe('Wallet integration', function () {
     })
 
     expect(ogSession.account.address).to.not.equal(session.account.address)
+  })
+
+  it("Should fail to open a session by forzing a non-fresh signer", async () => {
+    const referenceSigner = ethers.Wallet.createRandom()
+
+    await Session.open({
+      context: context,
+      networks: networks,
+      referenceSigner: referenceSigner.address,
+      signers: [{ signer: referenceSigner, weight: 1 }],
+      thershold: 1,
+      metadata: {
+        name: "Test"
+      }
+    })
+
+    const configFinder = new SequenceUtilsFinder(networks.find((n) => n.isAuthChain).provider)
+
+    const session = Session.open({
+      context: context,
+      networks: networks,
+      referenceSigner: referenceSigner.address,
+      signers: [{ signer: referenceSigner, weight: 1 }],
+      thershold: 1,
+      metadata: {
+        name: "Test"
+      },
+      configFinder: {
+        ...configFinder,
+        findLastWalletOfInitialSigner: async () => ({})
+      }
+    })
+
+    await expect(session).to.be.rejectedWith()
   })
 
   describe('JWT Auth', () => {
