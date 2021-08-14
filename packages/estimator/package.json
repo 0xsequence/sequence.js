@@ -22,7 +22,7 @@
     "@0xsequence/network": "^0.25.1",
     "@0xsequence/transactions": "^0.25.1",
     "@0xsequence/utils": "^0.25.1",
-    "@0xsequence/wallet-contracts": "1.9.1",
+    "@0xsequence/wallet-contracts": "1.9.5",
     "@ethersproject/abstract-signer": "5.0.14",
     "@ethersproject/properties": "^5.0.9",
     "ethers": "^5.0.32",
