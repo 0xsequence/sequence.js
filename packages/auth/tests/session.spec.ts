@@ -366,7 +366,7 @@ describe('Wallet integration', function () {
     expect(ogSession.account.address).to.not.equal(session.account.address)
   })
 
-  it("Should fail to open a session by forzing a non-fresh signer", async () => {
+  it("Should fail to open a session if using a non-fresh signer", async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     await Session.open({
