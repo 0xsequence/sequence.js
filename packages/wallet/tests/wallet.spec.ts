@@ -89,7 +89,8 @@ describe('Wallet integration', function () {
       mainModule,
       mainModuleUpgradable,
       guestModule,
-      sequenceUtils
+      sequenceUtils,
+      requireFreshSigner
     ] = await deployWalletContext(ethnode.signer)
 
     // Create fixed context obj
@@ -98,7 +99,10 @@ describe('Wallet integration', function () {
       mainModule: mainModule.address,
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
-      sequenceUtils: sequenceUtils.address
+      sequenceUtils: sequenceUtils.address,
+      libs: {
+        requireFreshSigner: requireFreshSigner.address
+      }
     }
 
     // Deploy call receiver mock

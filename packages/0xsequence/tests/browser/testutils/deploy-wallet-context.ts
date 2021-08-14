@@ -17,6 +17,7 @@ import {
   MainModuleUpgradable__factory,
   GuestModule__factory,
   SequenceUtils__factory,
+  RequireFreshSigner__factory,
 } from '@0xsequence/wallet-contracts/gen/typechain'
 
 const deployWalletContextCache: WalletContext[] = []
@@ -47,7 +48,9 @@ export const deployWalletContext = async (...providers: JsonRpcProvider[]): Prom
 
     await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradable__factory, txParams)
     await universalDeployer.deploy('GuestModule', GuestModule__factory, txParams)
-    await universalDeployer.deploy('SequenceUtils', SequenceUtils__factory, txParams, 0, walletFactory.address, mainModule.address)
+
+    const sequenceUtils = await universalDeployer.deploy('SequenceUtils', SequenceUtils__factory, txParams, 0, walletFactory.address, mainModule.address)
+    await universalDeployer.deploy('RequireFreshSignerLib', RequireFreshSigner__factory, txParams, 0, sequenceUtils.address)
 
     const deployment = universalDeployer.getDeployment()
 
@@ -56,7 +59,10 @@ export const deployWalletContext = async (...providers: JsonRpcProvider[]): Prom
       mainModule: deployment['MainModule'].address,
       mainModuleUpgradable: deployment['MainModuleUpgradable'].address,
       guestModule: deployment['GuestModule'].address,
-      sequenceUtils: deployment['SequenceUtils'].address
+      sequenceUtils: deployment['SequenceUtils'].address,
+      libs: {
+        requireFreshSigner: deployment['RequireFreshSignerLib'].address
+      }
     })
   }))
 

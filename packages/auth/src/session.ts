@@ -394,7 +394,10 @@ export class Session {
         context: context
       }, ...fullSigners)
 
-      await account.publishConfig(noIndex ? false : true)
+      // send referenceSigner as "requireFreshSigners"
+      // this ensures the user doesn't end up with multiple accounts if there is a race condition during login
+
+      await account.publishConfig(noIndex ? false : true, [referenceSigner])
 
       const session = new Session(config, context, account, metadata, authProvider)
 

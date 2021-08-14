@@ -50,7 +50,8 @@ describe('Account integration', () => {
       mainModule,
       mainModuleUpgradable,
       guestModule,
-      sequenceUtils
+      sequenceUtils,
+      requireFreshSigner
     ] = await deployWalletContext(provider.getSigner())
 
     // Deploy Sequence context b
@@ -62,7 +63,10 @@ describe('Account integration', () => {
       mainModule: mainModule.address,
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
-      sequenceUtils: sequenceUtils.address
+      sequenceUtils: sequenceUtils.address,
+      libs: {
+        requireFreshSigner: requireFreshSigner.address
+      }
     }
   })
 
