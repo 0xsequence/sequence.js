@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.27.0
+
+### Minor Changes
+
+- Add requireFreshSigner lib to sessions
+
 ## 0.25.1
 
 ### Patch Changes

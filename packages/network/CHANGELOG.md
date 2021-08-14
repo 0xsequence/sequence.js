@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.27.0
+
+### Minor Changes
+
+- Add requireFreshSigner lib to sessions
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.27.0
+
 ## 0.25.1
 
 ### Patch Changes
