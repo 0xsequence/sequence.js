@@ -299,8 +299,8 @@ export class Account extends Signer {
 
   // publishConfig will publish the wallet config to the network via the relayer. Publishing
   // the config will also store the entire object of signers.
-  publishConfig(indexed?: boolean): Promise<TransactionResponse> {
-    return this.authWallet().wallet.publishConfig(indexed)
+  publishConfig(indexed?: boolean, requireFreshSigners: string[] = []): Promise<TransactionResponse> {
+    return this.authWallet().wallet.publishConfig(indexed, undefined, requireFreshSigners)
   }
 
   async isDeployed(target?: Wallet | ChainId): Promise<boolean> {

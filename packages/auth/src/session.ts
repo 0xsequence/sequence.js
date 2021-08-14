@@ -1,5 +1,5 @@
 import { ArcadeumAPIClient } from '@0xsequence/api'
-import { editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from "@0xsequence/config"
+import { ConfigFinder, editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from "@0xsequence/config"
 import { ETHAuth, Proof } from "@0xsequence/ethauth"
 import { NetworkConfig, WalletContext, getAuthNetwork } from "@0xsequence/network"
 import { Account } from "@0xsequence/wallet"
@@ -311,7 +311,8 @@ export class Session {
     metadata: SessionMeta,
     deepSearch?: boolean,
     knownConfigs?: WalletConfig[],
-    noIndex?: boolean
+    noIndex?: boolean,
+    configFinder?: ConfigFinder
   }): Promise<Session> {
     const {
       context,
@@ -326,7 +327,7 @@ export class Session {
     } = args
 
     const authProvider = getAuthProvider(networks)
-    const configFinder = new SequenceUtilsFinder(authProvider)
+    const configFinder = args.configFinder ? args.configFinder : new SequenceUtilsFinder(authProvider)
 
     const solvedSigners = Promise.all(
       signers.map(async s => ({ ...s, address: typeof(s.signer) === 'string' ? s.signer : await s.signer.getAddress() }))
@@ -394,7 +395,10 @@ export class Session {
         context: context
       }, ...fullSigners)
 
-      await account.publishConfig(noIndex ? false : true)
+      // send referenceSigner as "requireFreshSigners"
+      // this ensures the user doesn't end up with multiple accounts if there is a race condition during login
+
+      await account.publishConfig(noIndex ? false : true, [referenceSigner])
 
       const session = new Session(config, context, account, metadata, authProvider)
 

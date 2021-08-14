@@ -6,7 +6,8 @@ import {
   GuestModule,
   MainModule,
   MainModuleUpgradable,
-  SequenceUtils
+  SequenceUtils,
+  RequireFreshSigner
 } from '@0xsequence/wallet-contracts'
 
 const FactoryArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/Factory.sol/Factory.json')
@@ -14,13 +15,15 @@ const GuestModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/cont
 const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModule.sol/MainModule.json')
 const MainModuleUpgradableArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleUpgradable.sol/MainModuleUpgradable.json')
 const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/SequenceUtils.sol/SequenceUtils.json')
+const RequireFreshSignerArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/libs/RequireFreshSigner.sol/RequireFreshSigner.json')
 
 export async function deployWalletContext(provider: Provider): Promise<[
   Factory,
   MainModule,
   MainModuleUpgradable,
   GuestModule,
-  SequenceUtils
+  SequenceUtils,
+  RequireFreshSigner
 ]> {
   const factory = ((await new ethers.ContractFactory(
     FactoryArtifact.abi,
@@ -55,11 +58,20 @@ export async function deployWalletContext(provider: Provider): Promise<[
     mainModule.address
   )) as unknown) as SequenceUtils
 
+  const requireFreshSigner = ((await new ethers.ContractFactory(
+    RequireFreshSignerArtifact.abi,
+    RequireFreshSignerArtifact.bytecode,
+    (provider as any).getSigner()
+  ).deploy(
+    sequenceUtils.address
+  )) as unknown) as RequireFreshSigner
+
   return [
     factory,
     mainModule,
     mainModuleUpgradable,
     guestModule,
-    sequenceUtils
+    sequenceUtils,
+    requireFreshSigner
   ]
 }

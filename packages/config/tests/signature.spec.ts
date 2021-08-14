@@ -56,7 +56,8 @@ describe('Signature tools', function () {
       mainModule,
       mainModuleUpgradable,
       guestModule,
-      sequenceUtils
+      sequenceUtils,
+      requireFreshSigner
     ] = await deployWalletContext(chain.provider)
 
     if (context) {
@@ -72,7 +73,10 @@ describe('Signature tools', function () {
         mainModule: mainModule.address,
         mainModuleUpgradable: mainModuleUpgradable.address,
         guestModule: guestModule.address,
-        sequenceUtils: sequenceUtils.address
+        sequenceUtils: sequenceUtils.address,
+        libs: {
+          requireFreshSigner: requireFreshSigner.address
+        }
       }
     }
 

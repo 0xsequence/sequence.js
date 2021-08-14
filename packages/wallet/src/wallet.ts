@@ -535,8 +535,8 @@ export class Wallet extends Signer {
 
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
-  async publishConfig(indexed?: boolean, nonce?: number): Promise<TransactionResponse> {
-    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, indexed, nonce) : await this.buildPublishSignersTransaction(indexed, nonce))
+  async publishConfig(indexed?: boolean, nonce?: number, requireFreshSigners: string[] = []): Promise<TransactionResponse> {
+    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, indexed, nonce) : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners))
   }
 
   // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
@@ -632,8 +632,10 @@ export class Wallet extends Signer {
     }]
   }
 
-  async buildPublishSignersTransaction(indexed: boolean = true, nonce?: number): Promise<Transaction[]> {
+  async buildPublishSignersTransaction(indexed: boolean = true, nonce?: number, requireFreshSigners: string[] = []): Promise<Transaction[]> {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+    const requireFreshSignersInterface = new Interface(walletContracts.requireFreshSigner.abi)
+
     const message = ethers.utils.randomBytes(32)
 
     const signature = await this.signMessage(message, this.chainId, false)
@@ -656,23 +658,41 @@ export class Wallet extends Signer {
       })
     })
 
-    return [{
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.context.sequenceUtils!,
-      value: ethers.constants.Zero,
-      nonce: nonce,
-      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 
-        [
-          this.address,
-          ethers.utils.keccak256(message),
-          this.config.signers.length,
-          filteredSignature,
-          indexed
-        ]
-      )
-    }]
+    const contextRequireFreshSigner = this.context.libs?.requireFreshSigner
+    if (requireFreshSigners.length > 0 && contextRequireFreshSigner === undefined) {
+      throw Error('requireFreshSigners missing library')
+    }
+
+    return [
+      ...(requireFreshSigners.map((signer) => ({
+        delegateCall: false,
+        revertOnError: true,
+        gasLimit: ethers.constants.Zero,
+        to: contextRequireFreshSigner!,
+        value: ethers.constants.Zero,
+        nonce: nonce,
+        data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner'), 
+          [signer]
+        )
+      }))),
+      {
+        delegateCall: false,
+        revertOnError: true,
+        gasLimit: ethers.constants.Zero,
+        to: this.context.sequenceUtils!,
+        value: ethers.constants.Zero,
+        nonce: nonce,
+        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 
+          [
+            this.address,
+            ethers.utils.keccak256(message),
+            this.config.signers.length,
+            filteredSignature,
+            indexed
+          ]
+        )
+      }
+    ]
   }
 
   // getChainIdFromArgument will return the chainId of the argument, as well as ensure
