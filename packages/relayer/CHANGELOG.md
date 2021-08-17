@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 0.27.1
+
+### Patch Changes
+
+- fix waitReceipt polling logic
+
 ## 0.27.0
 
 ### Minor Changes
