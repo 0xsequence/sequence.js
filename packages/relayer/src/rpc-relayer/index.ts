@@ -55,9 +55,14 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
 
     // TODO: remove check for 'UNKNOWN' status when 'QUEUED' status is supported
+    // TODO: fix backend to not return literal 'null' txnReceipt
     while (
-      (!result.receipt.txnReceipt || result.receipt.txnReceipt === 'null') &&
-      (result.receipt.status === 'UNKNOWN' || result.receipt.status === 'QUEUED')
+      !result.receipt ||
+      !result.receipt.txnReceipt ||
+      result.receipt.txnReceipt === 'null' ||
+      result.receipt.status === 'UNKNOWN' ||
+      result.receipt.status === 'QUEUED' ||
+      result.receipt.status === 'SENT'
     ) {
       await new Promise(r => setTimeout(r, wait))
       result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
