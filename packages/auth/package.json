@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "0.27.0",
+  "version": "0.27.1",
   "description": "auth sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
   "source": "src/index.ts",
@@ -22,7 +22,7 @@
     "@0xsequence/config": "^0.27.0",
     "@0xsequence/ethauth": "^0.4.3",
     "@0xsequence/network": "^0.27.0",
-    "@0xsequence/wallet": "^0.27.0",
+    "@0xsequence/wallet": "^0.27.1",
     "@0xsequence/utils": "^0.27.0",
     "ethers": "^5.0.32"
   },

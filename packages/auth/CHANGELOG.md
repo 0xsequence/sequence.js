@@ -1,5 +1,11 @@
 # @0xsequence/auth
 
+## 0.27.1
+
+### Patch Changes
+
+- @0xsequence/wallet@0.27.1
+
 ## 0.27.0
 
 ### Minor Changes
