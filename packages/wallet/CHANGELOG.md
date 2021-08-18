@@ -1,5 +1,11 @@
 # @0xsequence/wallet
 
+## 0.27.2
+
+### Patch Changes
+
+- add SignedTransactionsCallback
+
 ## 0.27.1
 
 ### Patch Changes
