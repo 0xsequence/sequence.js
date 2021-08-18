@@ -24,6 +24,7 @@ import {
   makeExpirable,
   makeAfterNonce,
   SignedTransactions,
+  computeMetaTxnHash,
   digestOfTransactions,
   decodeNonce
 } from '@0xsequence/transactions'
@@ -54,7 +55,7 @@ import { RemoteSigner } from './remote-signers'
 
 import { resolveArrayProperties } from './utils'
 
-import { isSequenceSigner, Signer } from './signer'
+import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 import { fetchImageHash } from '.'
 
 
@@ -282,13 +283,19 @@ export class Wallet extends Signer {
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
-  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse> {
-    return this.relayer.relay(await this.signTransactions(transaction, chainId, allSigners))
+  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean, callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+    const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
+    if (callback) {
+      const address = addressOf(signedTxs.config, signedTxs.context)
+      const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
+      callback(signedTxs, metaTxnHash)
+    }
+    return this.relayer.relay(signedTxs)
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
-  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners)
+  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true, callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+    return this.sendTransaction(transactions, chainId, allSigners, callback)
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
@@ -518,7 +525,8 @@ export class Wallet extends Signer {
     config?: WalletConfig,
     nonce?: number,
     publish = false,
-    indexed?: boolean
+    indexed?: boolean,
+    callback?: SignedTransactionsCallback
   ): Promise<[WalletConfig, TransactionResponse]> {
     if (!config) config = this.config
 
@@ -529,14 +537,14 @@ export class Wallet extends Signer {
 
     return [
       { address: this.address, ...config },
-      await this.sendTransaction(appendNonce(txs, n))
+      await this.sendTransaction(appendNonce(txs, n), undefined, undefined, callback)
     ]
   }
 
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
-  async publishConfig(indexed?: boolean, nonce?: number, requireFreshSigners: string[] = []): Promise<TransactionResponse> {
-    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, indexed, nonce) : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners))
+  async publishConfig(indexed?: boolean, nonce?: number, requireFreshSigners: string[] = [], callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, indexed, nonce) : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners), undefined, undefined, callback)
   }
 
   // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
