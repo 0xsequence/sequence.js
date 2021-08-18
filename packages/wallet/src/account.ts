@@ -2,7 +2,7 @@ import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } fr
 import { Signer as AbstractSigner, ethers, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
-import { Signer, NotEnoughSigners } from './signer'
+import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
 import { SignedTransactions, Transactionish, Transaction } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import { ChainId, Networks, NetworkConfig, WalletContext, sequenceContext, mainnetNetworks, ensureValidNetworks, sortNetworks, getNetworkId } from '@0xsequence/network'
@@ -209,7 +209,7 @@ export class Account extends Signer {
     return wallet.useConfig(thisConfig!).hasEnoughSigners()
   }
 
-  async sendTransaction(dtransactionish: Deferrable<Transactionish>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
+  async sendTransaction(dtransactionish: Deferrable<Transactionish>, chainId?: ChainId, allSigners: boolean = true, callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
 
@@ -226,7 +226,7 @@ export class Account extends Signer {
 
     // If the wallet is updated, procede to transaction send
     if (isConfigEqual(lastConfig!, thisConfig!)) {
-      return wallet.useConfig(lastConfig!).sendTransaction(transaction)
+      return wallet.useConfig(lastConfig!).sendTransaction(transaction, undefined, undefined, callback)
     }
 
     // Bundle with configuration update
@@ -241,11 +241,11 @@ export class Account extends Signer {
     return wallet.useConfig(thisConfig!).sendTransaction([
       ...await wallet.buildUpdateConfigTransaction(lastConfig!, false),
       ...transactionParts
-    ])
+    ], undefined, undefined, callback)
   }
 
-  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners)
+  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true, callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+    return this.sendTransaction(transactions, chainId, allSigners, callback)
   }
 
   signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
@@ -260,7 +260,7 @@ export class Account extends Signer {
 
   // updateConfig will build an updated config transaction, update the imageHash on-chain and also publish
   // the wallet config to the authChain. Other chains are lazy-updated on-demand as batched transactions.
-  async updateConfig(newConfig?: WalletConfig, index?: boolean): Promise<[WalletConfig, TransactionResponse | undefined]> {
+  async updateConfig(newConfig?: WalletConfig, index?: boolean, callback?: SignedTransactionsCallback): Promise<[WalletConfig, TransactionResponse | undefined]> {
     const authWallet = this.authWallet().wallet
 
     if (!newConfig) {
@@ -274,7 +274,7 @@ export class Account extends Signer {
     if (isConfigEqual(authWallet.config, newConfig)) {
       if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
-        return await authWallet.updateConfig(newConfig, undefined, true, index)
+        return await authWallet.updateConfig(newConfig, undefined, true, index, callback)
       }
     }
 
@@ -289,7 +289,7 @@ export class Account extends Signer {
 
     // Update to new configuration on the authWallet. Other networks will be lazily updated
     // once used. The wallet config is also auto-published to the authChain.
-    const [_, tx] = await authWallet.useConfig(lastConfig!).updateConfig(newConfig, undefined, true, index)
+    const [_, tx] = await authWallet.useConfig(lastConfig!).updateConfig(newConfig, undefined, true, index, callback)
 
     return [{
       ...newConfig,
@@ -299,8 +299,8 @@ export class Account extends Signer {
 
   // publishConfig will publish the wallet config to the network via the relayer. Publishing
   // the config will also store the entire object of signers.
-  publishConfig(indexed?: boolean, requireFreshSigners: string[] = []): Promise<TransactionResponse> {
-    return this.authWallet().wallet.publishConfig(indexed, undefined, requireFreshSigners)
+  publishConfig(indexed?: boolean, requireFreshSigners: string[] = [], callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+    return this.authWallet().wallet.publishConfig(indexed, undefined, requireFreshSigners, callback)
   }
 
   async isDeployed(target?: Wallet | ChainId): Promise<boolean> {

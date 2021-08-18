@@ -61,6 +61,8 @@ export abstract class Signer extends AbstractSigner {
   abstract isDeployed(chainId?: ChainId): Promise<boolean>
 }
 
+export type SignedTransactionsCallback = (signedTxs: SignedTransactions, metaTxnHash: string) => void
+
 export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer
   return cand && cand.updateConfig !== undefined && cand.publishConfig !== undefined &&
