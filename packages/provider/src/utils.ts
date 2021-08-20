@@ -40,7 +40,7 @@ export const recoverWalletConfig = async (
   return config
 }
 
-export const isChromeExtension = (): boolean => window.location.protocol === 'chrome-extension:'
+export const isBrowserExtension = (): boolean => window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
 
 // window.localstorage helper
 export class LocalStore<T extends Object = string> {

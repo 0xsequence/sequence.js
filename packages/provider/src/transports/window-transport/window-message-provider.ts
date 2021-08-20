@@ -1,7 +1,7 @@
 import { OpenWalletIntent, ProviderMessage, InitState, EventType, WindowSessionParams } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 import { logger, base64EncodeObject } from '@0xsequence/utils'
-import { isChromeExtension } from '../../utils'
+import { isBrowserExtension } from '../../utils'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider | undefined
@@ -89,7 +89,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
         // skip setting origin host if we're in an browser extension execution context
         // allow origin that is passed in
-        if (!isChromeExtension()) {
+        if (!isBrowserExtension()) {
           intent.options.origin = window.location.origin
         }
       }

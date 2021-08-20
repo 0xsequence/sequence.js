@@ -12,7 +12,7 @@ import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
-import { isChromeExtension } from '../utils'
+import { isBrowserExtension } from '../utils'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
@@ -318,7 +318,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // Sanity/integrity check the intent payload, and set authorization origin
       // if its been determined as part of the init handshake from earlier.
       if (this.appOrigin && authorizeOptions?.origin) {
-        if (!isChromeExtension()) {
+        if (!isBrowserExtension()) {
           if (authorizeOptions.origin !== this.appOrigin) {
             throw new Error('origin is invalid')
           } else {
