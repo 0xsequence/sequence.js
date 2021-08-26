@@ -46,7 +46,7 @@ export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
 // ProviderMessageCallback is used to respond to ProviderMessage requests. The error
 // argument is for exceptions during the execution, and response is the response payload
 // which may contain the result or an error payload from the wallet.
-export type ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => void
+export type ProviderMessageResponseCallback = (error?: ProviderRpcError, response?: ProviderMessageResponse) => void
 
 export interface ProviderRpcError extends Error {
   message: string

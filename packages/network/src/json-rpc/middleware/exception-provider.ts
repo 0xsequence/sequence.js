@@ -8,7 +8,7 @@ export const exceptionProviderMiddleware: JsonRpcMiddleware = (next: JsonRpcHand
         if (typeof(response.error) === 'string') {
           throw new Error(response.error)
         } else {
-          throw new Error(response.error.data)
+          throw new Error(response.error.message)
         }
       }
 

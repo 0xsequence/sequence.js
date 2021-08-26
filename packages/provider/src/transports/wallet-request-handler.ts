@@ -155,6 +155,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
     return new Promise(resolve => {
       this.sendAsync(message.data, (error: any, response?: JsonRpcResponse) => {
+        // TODO: if response includes data.error, why do we need a separate error argument here?
+
         const responseMessage: ProviderMessageResponse = {
           ...message,
           data: response!
@@ -174,8 +176,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
       id: request.id!,
-      result: null,
-      error: null
+      result: null
     }
 
     try {
@@ -501,12 +502,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     } catch (err) {
       logger.error(err)
 
-      // TODO/XXX: error messages
       // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1193.md#rpc-errors
       response.result = null
       response.error = {
-        code: 4001,
-        data: `${err}`
+        ...new Error(err),
+        code: 4001
       }
     }
 
