@@ -1,5 +1,20 @@
 # @0xsequence/relayer
 
+## 0.28.0
+
+### Minor Changes
+
+- extension provider
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.28.0
+  - @0xsequence/chaind@0.28.0
+  - @0xsequence/config@0.28.0
+  - @0xsequence/transactions@0.28.0
+  - @0xsequence/utils@0.28.0
+
 ## 0.27.1
 
 ### Patch Changes

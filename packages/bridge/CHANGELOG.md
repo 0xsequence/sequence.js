@@ -1,5 +1,16 @@
 # @0xsequence/bridge
 
+## 0.28.0
+
+### Minor Changes
+
+- extension provider
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.28.0
+
 ## 0.27.0
 
 ### Minor Changes
