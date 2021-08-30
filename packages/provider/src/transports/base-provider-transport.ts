@@ -1,4 +1,4 @@
-import EventEmitter from 'eventemitter3'
+import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
   ProviderTransport,
@@ -13,7 +13,8 @@ import {
   ConnectDetails,
   WalletSession,
   ProviderRpcError,
-  InitState
+  InitState,
+  TypedEventEmitter
 } from '../types'
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
@@ -32,8 +33,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   protected state: OpenState
   protected confirmationOnly: boolean = false
-  protected events: EventEmitter<ProviderEventTypes, any> = new EventEmitter()
-  
+  protected events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
+
   protected openPayload: { sessionId?: string; session?: WalletSession } | undefined
   protected connectPayload: ConnectDetails | undefined
   protected accountsChangedPayload: string | undefined
@@ -214,7 +215,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       // Callback to original caller
       if (responseCallback) {
         this.events.emit('message', message)
-        responseCallback(undefined, message)
+        responseCallback((message as ProviderMessageResponse).data.error, message)
         return
       }
     }
@@ -280,7 +281,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         reject(new Error('message idx not set'))
       }
 
-      const responseCallback: ProviderMessageResponseCallback = (error: any, response?: ProviderMessageResponse) => {
+      const responseCallback: ProviderMessageResponseCallback = (error: ProviderRpcError, response?: ProviderMessageResponse) => {
         if (error) {
           reject(error)
         } else if (response) {
@@ -390,7 +391,10 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // flush pending requests and return error to all callbacks
     this.pendingMessageRequests.length = 0
     this.responseCallbacks.forEach(responseCallback => {
-      responseCallback('wallet closed')
+      responseCallback({
+        ...new Error('wallet closed'),
+        code: 4001
+      })
     })
     this.responseCallbacks.clear()
 

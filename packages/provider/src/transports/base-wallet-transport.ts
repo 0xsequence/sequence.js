@@ -12,6 +12,7 @@ import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
+import { isBrowserExtension } from '../utils'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
@@ -170,7 +171,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.CLOSE,
-      data: { error }
+      data: error ? { error } : null
     })
   }
 
@@ -186,7 +187,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.DISCONNECT,
-      data: { error }
+      data: error ? { error } : null
     })
   }
 
@@ -317,10 +318,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // Sanity/integrity check the intent payload, and set authorization origin
       // if its been determined as part of the init handshake from earlier.
       if (this.appOrigin && authorizeOptions?.origin) {
-        if (authorizeOptions.origin !== this.appOrigin) {
-          throw new Error('origin is invalid')
-        } else {
-          // request origin and derived origins match, lets carry on
+        if (!isBrowserExtension()) {
+          if (authorizeOptions.origin !== this.appOrigin) {
+            throw new Error('origin is invalid')
+          } else {
+            // request origin and derived origins match, lets carry on
+          }
         }
       } else if (!this.appOrigin && authorizeOptions?.origin) {
         // ie. when we can't determine the origin in our transport, but dapp provides it to us.
@@ -364,6 +367,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
           chainId = await this.walletRequestHandler.getChainId()
         }
       } catch (err) {
+        console.error(err)
       }
 
       // Failed to set default network on open -- quit + close
@@ -387,8 +391,10 @@ export abstract class BaseWalletTransport implements WalletTransport {
         })
 
         try {
-          const connectDetails = await this.walletRequestHandler.promptConnect()
-          this.walletRequestHandler.notifyConnect(connectDetails)
+          const connectDetails = await this.walletRequestHandler.promptConnect(intent.options)
+          if(connectDetails.connected){
+            this.walletRequestHandler.notifyConnect(connectDetails)
+          }
         } catch (err) {
           logger.warn('promptConnect not connected:', err)
         } finally {

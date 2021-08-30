@@ -130,12 +130,15 @@ export const sortNetworks = (networks: Networks, defaultChainId?: string | numbe
     return a.chainId < b.chainId ? -1 : 1
   })
 
+  // force-convert to a number in case someone sends a number in a string like "1"
+  const defaultChainIdNum = parseInt(defaultChainId as any)
+
   // Set defaultChainId if passed to set default chain
   if (defaultChainId) {
     let found = false
     networks.forEach(n => {
       n.isDefaultChain = false
-      if (n.name === defaultChainId || n.chainId === defaultChainId) {
+      if (n.name === defaultChainId || n.chainId === defaultChainIdNum) {
         found = true
         n.isDefaultChain = true
       }

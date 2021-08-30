@@ -1,6 +1,7 @@
 import { OpenWalletIntent, ProviderMessage, InitState, EventType, WindowSessionParams } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 import { logger, base64EncodeObject } from '@0xsequence/utils'
+import { isBrowserExtension } from '../../utils'
 
 // ..
 let registeredWindowMessageProvider: WindowMessageProvider | undefined
@@ -70,7 +71,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     // Instantiate new walletURL for this call
     const walletURL = new URL(this.walletURL.href)
     const windowSessionParams = new WindowSessionParams()
-    
+
     if (path && path !== '') {
       walletURL.pathname = path.toLowerCase()
     }
@@ -85,7 +86,12 @@ export class WindowMessageProvider extends BaseProviderTransport {
       // on the wallet-side, so if a dapp provides the wrong origin, it will be dropped.
       if (intent.type === 'connect') {
         if (!intent.options) intent.options = {}
-        intent.options.origin = window.location.origin
+
+        // skip setting origin host if we're in an browser extension execution context
+        // allow origin that is passed in
+        if (!isBrowserExtension()) {
+          intent.options.origin = window.location.origin
+        }
       }
       // encode intent as base6 url-encoded param
       windowSessionParams.set('intent', base64EncodeObject(intent))

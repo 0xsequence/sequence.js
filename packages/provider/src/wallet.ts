@@ -1,7 +1,7 @@
 import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
   JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
   SigningProvider, EagerProvider, exceptionProviderMiddleware, networkProviderMiddleware, JsonRpcExternalProvider,
-  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, checkNetworkConfig, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
+  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -11,6 +11,10 @@ import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyM
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
+import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
+import { LocalStore } from './utils'
+
+import { Runtime } from 'webextension-polyfill-ts'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -51,6 +55,8 @@ export class Wallet implements WalletProvider {
   private config: ProviderConfig
   private session?: WalletSession
 
+  private connectedSites: LocalStore<string[]>
+
   private transport: {
     // top-level provider which connects all transport layers
     provider?: Web3Provider
@@ -65,6 +71,7 @@ export class Wallet implements WalletProvider {
     messageProvider?: MuxMessageProvider
     windowMessageProvider?: WindowMessageProvider
     proxyMessageProvider?: ProxyMessageProvider
+    extensionMessageProvider?: ExtensionMessageProvider
   }
 
   private networks: NetworkConfig[]
@@ -87,6 +94,7 @@ export class Wallet implements WalletProvider {
     this.transport = {}
     this.networks = []
     this.providers = {}
+    this.connectedSites = new LocalStore('@sequence.connectedSites', [])
     this.commands = new WalletCommands(this)
     this.init()
   }
@@ -109,6 +117,10 @@ export class Wallet implements WalletProvider {
     if (this.config.transports?.proxyTransport?.enabled) {
       this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort!)
       this.transport.messageProvider.add(this.transport.proxyMessageProvider)
+    }
+    if (this.config.transports?.extensionTransport?.enabled) {
+      this.transport.extensionMessageProvider = new ExtensionMessageProvider(this.config.transports.extensionTransport.runtime)
+      this.transport.messageProvider.add(this.transport.extensionMessageProvider)
     }
     this.transport.messageProvider.register()
 
@@ -200,7 +212,14 @@ export class Wallet implements WalletProvider {
     if (options?.refresh === true) {
       this.disconnect()
     }
-    if (this.isConnected() && !!this.session && !options?.authorize && !options?.askForEmail) {
+
+    if (
+      this.isConnected() &&
+      this.isSiteConnected(options?.origin) &&
+      !!this.session &&
+      !options?.authorize &&
+      !options?.askForEmail
+    ) {
       return {
         connected: true,
         session: this.session,
@@ -215,17 +234,54 @@ export class Wallet implements WalletProvider {
     }
 
     await this.openWallet(undefined, { type: 'connect', options })
-    const connectDetails = await this.transport.messageProvider!.waitUntilConnected()
+    const connectDetails = await this.transport.messageProvider!.waitUntilConnected().catch(_ => {
+      return { connected: false } as ConnectDetails
+    })
 
     if (connectDetails.connected) {
       if (!!connectDetails.session) {
         this.useSession(connectDetails.session, true)
+        
+        this.addConnectedSite(options?.origin)
       } else {
         throw new Error('impossible state, connect response is missing session')
       }
     }
 
     return connectDetails
+  }
+
+  addConnectedSite(origin: string | undefined) {
+    origin = origin || window.location.origin
+
+    const connectedSites = this.connectedSites.get()
+
+    if (connectedSites) {
+      if (connectedSites.includes(origin)) {
+        return
+      }
+      this.connectedSites.set([...connectedSites, origin])
+    } else {
+      this.connectedSites.set([origin])
+    }
+  }
+
+  removeConnectedSite(origin: string) {
+    const authorized = this.connectedSites.get()
+
+    if(authorized) {
+      this.connectedSites.set(authorized.filter(domain => domain !== origin))
+    }
+  }
+
+  getConnectedSites() {
+    return this.connectedSites.get()
+  }
+
+  private isSiteConnected(origin: string | undefined): boolean {
+    const authorized = this.connectedSites.get()
+
+    return !!authorized && authorized.includes(origin || window.location.origin)
   }
 
   authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {
@@ -251,7 +307,7 @@ export class Wallet implements WalletProvider {
     return this.session !== undefined &&
       this.session.networks !== undefined && this.session.networks.length > 0 &&
       this.networks !== undefined && this.networks.length > 0 &&
-      this.session.accountAddress!.startsWith('0x')
+      !!this.session.accountAddress && this.session.accountAddress.startsWith('0x')
   }
 
   getSession = (): WalletSession | undefined => {
@@ -317,7 +373,15 @@ export class Wallet implements WalletProvider {
       throw new Error('connect first')
     }
     
-    this.transport.messageProvider!.openWallet(path, intent, networkId || this.config.defaultNetworkId)
+    let currentNetworkId
+
+    if (!this.networks || this.networks.length < 1) {
+      currentNetworkId = this.config.defaultNetworkId
+    } else {
+      currentNetworkId = await this.getChainId()
+    }
+
+    this.transport.messageProvider!.openWallet(path, intent, networkId || currentNetworkId)
     await this.transport.messageProvider!.waitUntilOpened()
 
     return true
@@ -367,7 +431,7 @@ export class Wallet implements WalletProvider {
         this.transport.cachedProvider!,
       ], new JsonRpcSender(rpcProvider))
 
-      provider = new Web3Provider(router)
+      provider = new Web3Provider(router, network.chainId)
 
     } else {
       // communicating with another chain will bind to that network, but will forward
@@ -407,12 +471,12 @@ export class Wallet implements WalletProvider {
     return (await this.getAuthProvider()).getSigner()
   }
 
-  getWalletConfig(): Promise<WalletConfig[]> {
-    return this.getSigner().getWalletConfig()
+  getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
+    return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(): Promise<WalletState[]> {
-    return this.getSigner().getWalletState()
+  getWalletState(chainId?: ChainId): Promise<WalletState[]> {
+    return this.getSigner().getWalletState(chainId)
   }
 
   getWalletContext(): Promise<WalletContext> {
@@ -491,14 +555,6 @@ export class Wallet implements WalletProvider {
     // set networks in the session
     if (!this.session) this.session = {}
 
-    // confirm default network is set correctly
-    if (this.config.defaultNetworkId && networks && networks.length > 0) {
-      if (!checkNetworkConfig(networks[0], this.config.defaultNetworkId)) {
-        // TODO: what is the correct behaviour here we want for dapps?
-        throw new Error(`expecting defaultNetworkId '${this.config.defaultNetworkId}' but is set to '${networks[0].name}'`)
-      }
-    }
-
     // set networks on session object
     this.session.networks = networks
 
@@ -574,6 +630,11 @@ export interface ProviderConfig {
       appPort?: ProxyMessageChannelPort
     }
 
+    // Extension transport (optional)
+    extensionTransport?: {
+      enabled: boolean
+      runtime: Runtime.Static
+    }
   }
 
   // Sequence Wallet Modules Context override. By default (and recommended), the

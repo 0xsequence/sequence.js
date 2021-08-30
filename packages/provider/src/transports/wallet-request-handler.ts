@@ -1,11 +1,11 @@
-import EventEmitter from 'eventemitter3'
+import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
   ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
   ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   MessageToSign, ProviderRpcError, ConnectOptions, ConnectDetails, PromptConnectDetails, WalletSession,
-  ErrSignedInRequired, ProviderEventTypes
+  ErrSignedInRequired, ProviderEventTypes, TypedEventEmitter
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -37,7 +37,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private _defaultNetworkId?: string | number
   private _chainId?: number
 
-  private events: EventEmitter<ProviderEventTypes, any> = new EventEmitter()
+  private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
   constructor(signer: Signer | null, prompter: WalletUserPrompter | null, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
     this.signer = signer
@@ -137,10 +137,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       return this.connect(options)
     }
 
-    const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions)
+    const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions).catch(_ => {
+      return { connected: false } as ConnectDetails
+    })
 
     const connectDetails: ConnectDetails = promptConnectDetails
-    if (!connectDetails.session) {
+    if (connectDetails.connected && !connectDetails.session) {
       connectDetails.session = await this.walletSession()
     }
 
@@ -153,6 +155,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
     return new Promise(resolve => {
       this.sendAsync(message.data, (error: any, response?: JsonRpcResponse) => {
+        // TODO: if response includes data.error, why do we need a separate error argument here?
+
         const responseMessage: ProviderMessageResponse = {
           ...message,
           data: response!
@@ -172,8 +176,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
       id: request.id!,
-      result: null,
-      error: null
+      result: null
     }
 
     try {
@@ -410,12 +413,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         // smart wallet method
         case 'sequence_getWalletConfig': {
+          const [chainId] = request.params!
           response.result = await signer.getWalletConfig(chainId)
           break
         }
 
         // smart wallet method
         case 'sequence_getWalletState': {
+          const [chainId] = request.params!
           response.result = await signer.getWalletState(chainId)
           break
         }
@@ -497,12 +502,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     } catch (err) {
       logger.error(err)
 
-      // TODO/XXX: error messages
       // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1193.md#rpc-errors
       response.result = null
       response.error = {
-        code: 4001,
-        data: `${err}`
+        ...new Error(err),
+        code: 4001
       }
     }
 
