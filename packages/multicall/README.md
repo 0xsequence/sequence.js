@@ -137,13 +137,14 @@ The utility contract is `0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80`, it has bee
 
 | Network                | Address                                    | Deployed |
 |------------------------|--------------------------------------------|----------|
-| Mainnet                | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Ropsten                | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Rinkeby                | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Kovan                  | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Görli                  | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Matic                  | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Mumbai (Matic testnet) | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
-| Arbitrum testnet       | 0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80 | Yes      |
+| Mainnet                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Ropsten                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Rinkeby                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Kovan                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Görli                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Matic                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Mumbai (Matic testnet) | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum               | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum testnet       | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
 
 It can be deployed on any network that supports the `CREATE2` opcode.
