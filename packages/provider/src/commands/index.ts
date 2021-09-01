@@ -1,6 +1,6 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
-import { WalletContext, ChainId } from '@0xsequence/network'
+import { WalletContext, NetworkQuery } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { Wallet } from '../wallet'
@@ -14,7 +14,7 @@ export class WalletCommands {
   }
 
   // Sign message on a specified chain, or DefaultChain by default
-  signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  signMessage(message: BytesLike, chainId?: NetworkQuery, allSigners?: boolean): Promise<string> {
     const signer = this.wallet.getSigner()
     if (!signer) throw new Error('unable to get signer')
     return signer.signMessage(message, chainId, allSigners)
@@ -32,7 +32,7 @@ export class WalletCommands {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: ChainId,
+    chainId?: NetworkQuery,
     allSigners?: boolean
   ): Promise<string> {
     const signer = this.wallet.getSigner()

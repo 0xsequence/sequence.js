@@ -9,11 +9,10 @@ export type {
   JsonRpcRequestFunc,
   JsonRpcMiddleware,
   JsonRpcMiddlewareHandler,
-
   NetworkConfig,
+  NetworkQuery,
   Networks,
-  ChainId,
+  //ChainId,
   NetworksBuilder,
-
   WalletContext
 } from '@0xsequence/network'

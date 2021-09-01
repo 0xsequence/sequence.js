@@ -1,8 +1,14 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { NetworkConfig, ChainId, WalletContext } from '@0xsequence/network'
+import { NetworkConfig, NetworkQuery, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
-import { SignedTransactions, Transactionish, TransactionRequest, Transaction, TransactionResponse } from '@0xsequence/transactions'
+import {
+  SignedTransactions,
+  Transactionish,
+  TransactionRequest,
+  Transaction,
+  TransactionResponse
+} from '@0xsequence/transactions'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@0xsequence/utils'
@@ -13,13 +19,13 @@ export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
     return isSequenceSigner(cand)
   }
-  
+
   abstract getProvider(chainId?: number): Promise<JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   abstract getWalletContext(): Promise<WalletContext>
-  abstract getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
-  abstract getWalletState(chainId?: ChainId): Promise<WalletState[]>
+  abstract getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]>
+  abstract getWalletState(chainId?: NetworkQuery): Promise<WalletState[]>
 
   abstract getNetworks(): Promise<NetworkConfig[]>
 
@@ -28,24 +34,42 @@ export abstract class Signer extends AbstractSigner {
   abstract getSigners(): Promise<string[]>
 
   // signMessage .....
-  abstract signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean, isDigest?: boolean): Promise<string>
+  abstract signMessage(message: BytesLike, chainId?: NetworkQuery, allSigners?: boolean, isDigest?: boolean): Promise<string>
 
   // signTypedData ..
-  abstract signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string>
+  abstract signTypedData(
+    domain: TypedDataDomain,
+    types: Record<string, Array<TypedDataField>>,
+    message: Record<string, any>,
+    chainId?: NetworkQuery,
+    allSigners?: boolean
+  ): Promise<string>
 
   // sendTransaction takes an unsigned transaction, or list of unsigned transactions, and then has it signed by
-  // the signer, and finally sends it to the relayer for submission to an Ethereum network. 
-  abstract sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse>
+  // the signer, and finally sends it to the relayer for submission to an Ethereum network.
+  abstract sendTransaction(
+    transaction: Deferrable<Transactionish>,
+    chainId?: NetworkQuery,
+    allSigners?: boolean
+  ): Promise<TransactionResponse>
 
   // sendTransactionBatch provides the ability to send an array/batch of transactions as a single native on-chain transaction.
   // This method works identically to sendTransaction but offers a different syntax for convience, readability and type clarity.
-  abstract sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners?: boolean): Promise<TransactionResponse>
+  abstract sendTransactionBatch(
+    transactions: Deferrable<TransactionRequest[] | Transaction[]>,
+    chainId?: NetworkQuery,
+    allSigners?: boolean
+  ): Promise<TransactionResponse>
 
   // Low-level methods to sign and send/relayer signed transactions separately. The combination of these methods
   // is like calling just sendTransaction(..) above. Also note that sendSignedTransactions is identical
   // to calling getRelayer().relay(signedTxs), but included in this interface for convenience.
-  abstract signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions>
-  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse>
+  abstract signTransactions(
+    txs: Deferrable<Transactionish>,
+    chainId?: NetworkQuery,
+    allSigners?: boolean
+  ): Promise<SignedTransactions>
+  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: NetworkQuery): Promise<TransactionResponse>
 
   // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
   // newConfig argument is undefined, then it will use the existing config. Config contents will also be
@@ -58,15 +82,20 @@ export abstract class Signer extends AbstractSigner {
   abstract publishConfig(): Promise<TransactionResponse | undefined>
 
   // isDeployed ..
-  abstract isDeployed(chainId?: ChainId): Promise<boolean>
+  abstract isDeployed(chainId?: NetworkQuery): Promise<boolean>
 }
 
 export type SignedTransactionsCallback = (signedTxs: SignedTransactions, metaTxnHash: string) => void
 
 export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer
-  return cand && cand.updateConfig !== undefined && cand.publishConfig !== undefined &&
-    cand.getWalletContext !== undefined && cand.getWalletConfig !== undefined
+  return (
+    cand &&
+    cand.updateConfig !== undefined &&
+    cand.publishConfig !== undefined &&
+    cand.getWalletContext !== undefined &&
+    cand.getWalletConfig !== undefined
+  )
 }
 
 // TODO: move to error.ts, along with others..
