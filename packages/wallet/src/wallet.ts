@@ -30,7 +30,7 @@ import {
 import { Relayer } from '@0xsequence/relayer'
 
 import {
-  NetworkQuery,
+  ChainIdLike,
   WalletContext,
   JsonRpcSender,
   NetworkConfig,
@@ -196,7 +196,7 @@ export class Wallet extends Signer {
     return this.context
   }
 
-  async getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
     chainId = await this.getChainIdNumber(chainId)
     const config = {
       ...this.config,
@@ -205,7 +205,7 @@ export class Wallet extends Signer {
     return [config]
   }
 
-  async getWalletState(_?: NetworkQuery): Promise<WalletState[]> {
+  async getWalletState(_?: ChainIdLike): Promise<WalletState[]> {
     const [address, chainId, isDeployed] = await Promise.all([this.getAddress(), this.getChainId(), this.isDeployed()])
 
     const state: WalletState = {
@@ -295,7 +295,7 @@ export class Wallet extends Signer {
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
   async sendTransaction(
     transaction: Deferrable<Transactionish>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
@@ -311,7 +311,7 @@ export class Wallet extends Signer {
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
   async sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners: boolean = true,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
@@ -323,7 +323,7 @@ export class Wallet extends Signer {
   // NOTE: the txs argument of type Transactionish can accept one or many transactions.
   async signTransactions(
     txs: Deferrable<Transactionish>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<SignedTransactions> {
     const signChainId = await this.getChainIdNumber(chainId)
@@ -403,7 +403,7 @@ export class Wallet extends Signer {
     }
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: NetworkQuery): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
@@ -414,12 +414,7 @@ export class Wallet extends Signer {
   // signMessage will sign a message for a particular chainId with the wallet signers
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
-  async signMessage(
-    message: BytesLike,
-    chainId?: NetworkQuery,
-    allSigners?: boolean,
-    isDigest: boolean = false
-  ): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, isDigest: boolean = false): Promise<string> {
     const data = typeof message === 'string' && !message.startsWith('0x') ? ethers.utils.toUtf8Bytes(message) : message
     return this.sign(data, isDigest, chainId, allSigners)
   }
@@ -428,7 +423,7 @@ export class Wallet extends Signer {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
@@ -446,19 +441,19 @@ export class Wallet extends Signer {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<string> {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  async subDigest(digest: BytesLike, chainId?: NetworkQuery): Promise<Uint8Array> {
+  async subDigest(digest: BytesLike, chainId?: ChainIdLike): Promise<Uint8Array> {
     const solvedChainId = await this.getChainIdNumber(chainId)
     return ethers.utils.arrayify(subDigestOf(this.address, solvedChainId, digest))
   }
 
   // sign is a helper method to sign a payload with the wallet signers
-  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: NetworkQuery, allSigners?: boolean): Promise<string> {
+  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const digest = isDigest ? msg : ethers.utils.keccak256(msg)
@@ -562,7 +557,7 @@ export class Wallet extends Signer {
     }, ethers.constants.Zero)
   }
 
-  async isDeployed(chainId?: NetworkQuery): Promise<boolean> {
+  async isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     await this.getChainIdNumber(chainId)
     const walletCode = await this.provider.getCode(this.address)
     return !!walletCode && walletCode !== '0x'
@@ -768,7 +763,7 @@ export class Wallet extends Signer {
 
   // getChainIdFromArgument will return the chainId of the argument, as well as ensure
   // we're not providing an invalid chainId that isn't connected to this wallet.
-  private async getChainIdNumber(chainId?: NetworkQuery): Promise<number> {
+  private async getChainIdNumber(chainId?: ChainIdLike): Promise<number> {
     if (!chainId) {
       // it's valid for chainId argument to be undefined, in which case
       // we will use the connected value
@@ -814,7 +809,7 @@ export class Wallet extends Signer {
     return new Wallet({ config, context }, signer)
   }
 
-  async hasEnoughSigners(chainId?: NetworkQuery): Promise<boolean> {
+  async hasEnoughSigners(chainId?: ChainIdLike): Promise<boolean> {
     if (chainId) await this.getChainIdNumber(chainId)
     return (await this.signWeight()).gte(this.config.threshold)
   }

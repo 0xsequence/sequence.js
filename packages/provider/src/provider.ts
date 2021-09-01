@@ -6,7 +6,7 @@ import {
   NetworkConfig,
   Networks,
   WalletContext,
-  NetworkQuery,
+  ChainIdLike,
   JsonRpcHandler,
   JsonRpcHandlerFunc,
   JsonRpcFetchFunc,
@@ -44,7 +44,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   // overridden by passing chainId argument to a specific request
   readonly _defaultChainId?: number
 
-  constructor(provider: JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: NetworkQuery) {
+  constructor(provider: JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainIdLike) {
     const sender = new JsonRpcSender(provider, maybeChainId(defaultChainId))
     provider = sender
 
@@ -183,7 +183,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return this._context
   }
 
-  async getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
     return await this.provider.send(
       'sequence_getWalletConfig',
       [maybeChainId(chainId)],
@@ -191,7 +191,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     )
   }
 
-  async getWalletState(chainId?: NetworkQuery): Promise<WalletState[]> {
+  async getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
     return await this.provider.send(
       'sequence_getWalletState',
       [maybeChainId(chainId)],
@@ -224,7 +224,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  async signMessage(message: BytesLike, chainId?: NetworkQuery, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
 
     const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
@@ -240,7 +240,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<string> {
     // Populate any ENS names (in-place)
@@ -259,7 +259,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // multi-chain support.
   async sendTransaction(
     transaction: Deferrable<TransactionRequest>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<TransactionResponse> {
     const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
@@ -291,7 +291,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // send multiple transaction as a single payload and just one on-chain transaction.
   async sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<TransactionResponse> {
     const batch = await resolveArrayProperties<TransactionRequest[] | Transaction[]>(transactions)
@@ -309,7 +309,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   signTransactions(
     transaction: Deferrable<TransactionRequest>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<SignedTransactions> {
     transaction = shallowCopy(transaction)
@@ -318,7 +318,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return this.provider.send('eth_signTransaction', [transaction], maybeChainId(chainId) || this.defaultChainId)
   }
 
-  sendSignedTransactions(signedTxs: SignedTransactions, chainId?: NetworkQuery): Promise<TransactionResponse> {
+  sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
     // sequence_relay
     throw new Error('TODO')
   }
@@ -348,7 +348,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return provider!._wrapTransaction(tx, tx.hash)
   }
 
-  async isDeployed(chainId?: NetworkQuery): Promise<boolean> {
+  async isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     const provider = await this.getSender(maybeChainId(chainId))
     const walletCode = await provider!.getCode(await this.getAddress())
     return !!walletCode && walletCode !== '0x'
@@ -362,13 +362,13 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<string> {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  async sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: NetworkQuery): Promise<string> {
+  async sendUncheckedTransaction(transaction: Deferrable<TransactionRequest>, chainId?: ChainIdLike): Promise<string> {
     transaction = shallowCopy(transaction)
 
     const fromAddress = this.getAddress()

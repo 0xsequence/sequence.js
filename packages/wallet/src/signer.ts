@@ -1,6 +1,6 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { NetworkConfig, NetworkQuery, WalletContext } from '@0xsequence/network'
+import { NetworkConfig, ChainIdLike, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
 import {
   SignedTransactions,
@@ -24,8 +24,8 @@ export abstract class Signer extends AbstractSigner {
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   abstract getWalletContext(): Promise<WalletContext>
-  abstract getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]>
-  abstract getWalletState(chainId?: NetworkQuery): Promise<WalletState[]>
+  abstract getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
+  abstract getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
 
   abstract getNetworks(): Promise<NetworkConfig[]>
 
@@ -34,14 +34,14 @@ export abstract class Signer extends AbstractSigner {
   abstract getSigners(): Promise<string[]>
 
   // signMessage .....
-  abstract signMessage(message: BytesLike, chainId?: NetworkQuery, allSigners?: boolean, isDigest?: boolean): Promise<string>
+  abstract signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, isDigest?: boolean): Promise<string>
 
   // signTypedData ..
   abstract signTypedData(
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<string>
 
@@ -49,7 +49,7 @@ export abstract class Signer extends AbstractSigner {
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   abstract sendTransaction(
     transaction: Deferrable<Transactionish>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<TransactionResponse>
 
@@ -57,7 +57,7 @@ export abstract class Signer extends AbstractSigner {
   // This method works identically to sendTransaction but offers a different syntax for convience, readability and type clarity.
   abstract sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<TransactionResponse>
 
@@ -66,10 +66,10 @@ export abstract class Signer extends AbstractSigner {
   // to calling getRelayer().relay(signedTxs), but included in this interface for convenience.
   abstract signTransactions(
     txs: Deferrable<Transactionish>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<SignedTransactions>
-  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: NetworkQuery): Promise<TransactionResponse>
+  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse>
 
   // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
   // newConfig argument is undefined, then it will use the existing config. Config contents will also be
@@ -82,7 +82,7 @@ export abstract class Signer extends AbstractSigner {
   abstract publishConfig(): Promise<TransactionResponse | undefined>
 
   // isDeployed ..
-  abstract isDeployed(chainId?: NetworkQuery): Promise<boolean>
+  abstract isDeployed(chainId?: ChainIdLike): Promise<boolean>
 }
 
 export type SignedTransactionsCallback = (signedTxs: SignedTransactions, metaTxnHash: string) => void

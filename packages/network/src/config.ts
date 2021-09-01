@@ -49,7 +49,7 @@ export interface NetworkConfig {
 
 export type Networks = NetworkConfig[]
 
-export type NetworkQuery = NetworkConfig | BigNumberish
+export type ChainIdLike = NetworkConfig | BigNumberish
 
 export type NetworksBuilder = (vars: { [key: string]: any }) => Networks
 

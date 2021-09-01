@@ -1,24 +1,24 @@
 import { ethers, BigNumberish } from 'ethers'
-import { NetworkQuery } from '.'
+import { ChainIdLike } from '.'
 import { NetworkConfig, Networks, NetworksBuilder } from './config'
 
 export function isNetworkConfig(cand: any): cand is NetworkConfig {
   return cand && cand.chainId !== undefined && cand.name !== undefined && cand.rpcUrl !== undefined && cand.relayer !== undefined
 }
 
-export const getChainId = (networkId: NetworkQuery): number => {
-  if (typeof networkId === 'number') {
-    return networkId
+export const getChainId = (chainId: ChainIdLike): number => {
+  if (typeof chainId === 'number') {
+    return chainId
   }
-  if ((<NetworkConfig>networkId).chainId) {
-    return (<NetworkConfig>networkId).chainId
+  if ((<NetworkConfig>chainId).chainId) {
+    return (<NetworkConfig>chainId).chainId
   }
-  return ethers.BigNumber.from(networkId as BigNumberish).toNumber()
+  return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
 }
 
-export const maybeChainId = (networkId?: NetworkQuery): number | undefined => {
-  if (!networkId) return undefined
-  return getChainId(networkId)
+export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
+  if (!chainId) return undefined
+  return getChainId(chainId)
 }
 
 export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undefined => {
@@ -229,27 +229,27 @@ export const createNetworkConfig = (
   return ensureValidNetworks(sortNetworks(config))
 }
 
-export const findNetworkConfig = (networks: NetworkConfig[], networkId: NetworkQuery): NetworkConfig | undefined => {
-  if (typeof networkId === 'string') {
-    if (networkId.startsWith('0x')) {
-      const chainId = ethers.BigNumber.from(networkId).toNumber()
-      return networks.find(n => n.chainId === chainId)
+export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
+  if (typeof chainId === 'string') {
+    if (chainId.startsWith('0x')) {
+      const id = ethers.BigNumber.from(chainId).toNumber()
+      return networks.find(n => n.chainId === id)
     } else {
-      return networks.find(n => n.name === networkId)
+      return networks.find(n => n.name === chainId)
     }
-  } else if (typeof networkId === 'number') {
-    return networks.find(n => n.chainId === networkId)
-  } else if ((<NetworkConfig>networkId).chainId) {
-    return networks.find(n => n.chainId === (<NetworkConfig>networkId).chainId)
+  } else if (typeof chainId === 'number') {
+    return networks.find(n => n.chainId === chainId)
+  } else if ((<NetworkConfig>chainId).chainId) {
+    return networks.find(n => n.chainId === (<NetworkConfig>chainId).chainId)
   } else {
     return undefined
   }
 }
 
-export const checkNetworkConfig = (network: NetworkConfig, networkId: string | number): boolean => {
+export const checkNetworkConfig = (network: NetworkConfig, chainId: string | number): boolean => {
   if (!network) return false
-  if (network.name === networkId) return true
-  if (network.chainId === networkId) return true
+  if (network.name === chainId) return true
+  if (network.chainId === chainId) return true
   return false
 }
 

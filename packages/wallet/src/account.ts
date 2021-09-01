@@ -6,7 +6,7 @@ import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
 import { SignedTransactions, Transactionish, Transaction } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import {
-  NetworkQuery,
+  ChainIdLike,
   Networks,
   NetworkConfig,
   WalletContext,
@@ -79,7 +79,7 @@ export class Account extends Signer {
 
   // getWalletConfig builds a list of WalletConfigs across all networks.
   // This is useful to shows all keys/devices connected to a wallet across networks.
-  async getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
     let wallets: { wallet: Wallet; network: NetworkConfig }[] = []
     if (chainId) {
       const v = this.getWalletByNetwork(chainId)
@@ -92,7 +92,7 @@ export class Account extends Signer {
     return (await Promise.all(wallets.map(w => w.wallet.getWalletConfig()))).flat()
   }
 
-  async getWalletState(chainId?: NetworkQuery): Promise<WalletState[]> {
+  async getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
     let wallets: { wallet: Wallet; network: NetworkConfig }[] = []
     if (chainId) {
       const v = this.getWalletByNetwork(chainId)
@@ -170,7 +170,7 @@ export class Account extends Signer {
 
   async signMessage(
     message: BytesLike,
-    target?: Wallet | NetworkQuery,
+    target?: Wallet | ChainIdLike,
     allSigners: boolean = true,
     isDigest: boolean = false
   ): Promise<string> {
@@ -183,7 +183,7 @@ export class Account extends Signer {
         const chainId = await (<Wallet>target).getChainId()
         return this.getWalletByNetwork(chainId)
       }
-      return this.getWalletByNetwork(target as NetworkQuery)
+      return this.getWalletByNetwork(target as ChainIdLike)
     })()
 
     // Fetch the latest config of the wallet.
@@ -219,7 +219,7 @@ export class Account extends Signer {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners: boolean = true
   ): Promise<string> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
@@ -231,13 +231,13 @@ export class Account extends Signer {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners: boolean = true
   ): Promise<string> {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  async hasEnoughSigners(chainId?: NetworkQuery): Promise<boolean> {
+  async hasEnoughSigners(chainId?: ChainIdLike): Promise<boolean> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     const thisConfig = await this.currentConfig(wallet)
     return wallet.useConfig(thisConfig!).hasEnoughSigners()
@@ -245,7 +245,7 @@ export class Account extends Signer {
 
   async sendTransaction(
     dtransactionish: Deferrable<Transactionish>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners: boolean = true,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
@@ -289,19 +289,19 @@ export class Account extends Signer {
 
   async sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
-    chainId?: NetworkQuery,
+    chainId?: ChainIdLike,
     allSigners: boolean = true,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
     return this.sendTransaction(transactions, chainId, allSigners, callback)
   }
 
-  signTransactions(txs: Deferrable<Transactionish>, chainId?: NetworkQuery, allSigners?: boolean): Promise<SignedTransactions> {
+  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     return wallet.signTransactions(txs, chainId, allSigners)
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: NetworkQuery): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     return wallet.sendSignedTransactions(signedTxs)
   }
@@ -365,7 +365,7 @@ export class Account extends Signer {
     return this.authWallet().wallet.publishConfig(indexed, undefined, requireFreshSigners, callback)
   }
 
-  async isDeployed(target?: Wallet | NetworkQuery): Promise<boolean> {
+  async isDeployed(target?: Wallet | ChainIdLike): Promise<boolean> {
     const wallet = (() => {
       if (!target) return this.authWallet().wallet
       if ((<Wallet>target).address) {
@@ -401,7 +401,7 @@ export class Account extends Signer {
     return this._wallets
   }
 
-  getWalletByNetwork(chainId: NetworkQuery) {
+  getWalletByNetwork(chainId: ChainIdLike) {
     const networkId = getChainId(chainId)
     const network = this._wallets.find(w => w.network.chainId === networkId)
     if (!network) {

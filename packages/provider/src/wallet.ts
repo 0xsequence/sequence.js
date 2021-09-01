@@ -3,7 +3,7 @@ import {
   NetworkConfig,
   WalletContext,
   sequenceContext,
-  NetworkQuery,
+  ChainIdLike,
   getChainId,
   JsonRpcSender,
   JsonRpcRouter,
@@ -48,20 +48,20 @@ export interface WalletProvider {
   getSession(): WalletSession | undefined
 
   getAddress(): Promise<string>
-  getNetworks(chainId?: NetworkQuery): Promise<NetworkConfig[]>
+  getNetworks(chainId?: ChainIdLike): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
 
   openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
 
-  getProvider(chainId?: NetworkQuery): Web3Provider | undefined
-  getSigner(chainId?: NetworkQuery): Web3Signer
+  getProvider(chainId?: ChainIdLike): Web3Provider | undefined
+  getSigner(chainId?: ChainIdLike): Web3Signer
 
   getWalletContext(): Promise<WalletContext>
-  getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]>
-  getWalletState(chainId?: NetworkQuery): Promise<WalletState[]>
-  isDeployed(chainId?: NetworkQuery): Promise<boolean>
+  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
+  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
+  isDeployed(chainId?: ChainIdLike): Promise<boolean>
 
   getProviderConfig(): ProviderConfig
 
@@ -353,7 +353,7 @@ export class Wallet implements WalletProvider {
     return session!.accountAddress!
   }
 
-  getNetworks = async (chainId?: NetworkQuery): Promise<NetworkConfig[]> => {
+  getNetworks = async (chainId?: ChainIdLike): Promise<NetworkConfig[]> => {
     if (!this.isConnected() || !this.networks) {
       throw new Error('connect first')
     }
@@ -419,7 +419,7 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider!.closeWallet()
   }
 
-  getProvider(chainId?: NetworkQuery): Web3Provider | undefined {
+  getProvider(chainId?: ChainIdLike): Web3Provider | undefined {
     // return the top-level provider message transport when chainId is unspecified
     // and user has not logged in
     if (!this.isConnected()) {
@@ -500,7 +500,7 @@ export class Wallet implements WalletProvider {
     return this.providers
   }
 
-  getSigner(chainId?: NetworkQuery): Web3Signer {
+  getSigner(chainId?: ChainIdLike): Web3Signer {
     return this.getProvider(chainId)!.getSigner()
   }
 
@@ -508,11 +508,11 @@ export class Wallet implements WalletProvider {
     return (await this.getAuthProvider()).getSigner()
   }
 
-  getWalletConfig(chainId?: NetworkQuery): Promise<WalletConfig[]> {
+  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
     return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(chainId?: NetworkQuery): Promise<WalletState[]> {
+  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
     return this.getSigner().getWalletState(chainId)
   }
 
@@ -520,7 +520,7 @@ export class Wallet implements WalletProvider {
     return this.getSigner().getWalletContext()
   }
 
-  isDeployed(chainId?: NetworkQuery): Promise<boolean> {
+  isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     return this.getSigner(chainId).isDeployed()
   }
 
