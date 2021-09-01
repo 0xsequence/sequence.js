@@ -1,6 +1,6 @@
 import { ExternalProvider } from '@ethersproject/providers'
 import { Multicall, MulticallOptions } from '../multicall'
-import { JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
+import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export class MulticallExternalProvider implements ExternalProvider {
   private multicall: Multicall
@@ -13,7 +13,7 @@ export class MulticallExternalProvider implements ExternalProvider {
         provider.send!(req, callback)
       }
 
-      (this as any).send = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+      ;(this as any).send = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
         this.multicall.handle(next, request, callback)
       }
     }
@@ -23,7 +23,7 @@ export class MulticallExternalProvider implements ExternalProvider {
         provider.sendAsync!(req, callback)
       }
 
-      (this as any).sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+      ;(this as any).sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
         this.multicall.handle(next, request, callback)
       }
     }

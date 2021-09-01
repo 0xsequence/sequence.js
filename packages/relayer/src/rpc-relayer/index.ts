@@ -21,11 +21,7 @@ import * as proto from './relayer.gen'
 
 export { proto }
 
-const FAILED_STATUSES = [
-  proto.ETHTxnStatus.FAILED,
-  proto.ETHTxnStatus.PARTIALLY_FAILED,
-  proto.ETHTxnStatus.DROPPED
-]
+const FAILED_STATUSES = [proto.ETHTxnStatus.FAILED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.DROPPED]
 
 export interface RpcRelayerOptions extends BaseRelayerOptions {
   url: string
@@ -45,7 +41,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
   async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
-      console.log("computing id", metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
+      console.log('computing id', metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
       return this.waitReceipt(
         computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
       )
@@ -94,7 +90,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         address: addr,
         signers: config.signers,
         threshold: config.threshold,
-        chainId: config.chainId,
+        chainId: config.chainId
       },
       payload: encoded
     })

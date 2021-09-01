@@ -23,7 +23,7 @@ export const createWebpackTestServer = async (port = DEFAULT_PORT) => {
     }
   )
 
-  await testServer.listen(port, '0.0.0.0', function(err) {
+  await testServer.listen(port, '0.0.0.0', function (err) {
     if (err) {
       console.error(err)
     }

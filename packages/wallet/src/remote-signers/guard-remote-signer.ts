@@ -15,7 +15,11 @@ export class GuardRemoteSigner extends RemoteSigner {
   }
 
   async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainId): Promise<string> {
-    const request = { msg: ethers.utils.hexlify(message), auxData: ethers.utils.hexlify(auxData ? auxData : []), chainId: chainId ? BigNumber.from(chainId).toNumber() : this.defaultChainId }
+    const request = {
+      msg: ethers.utils.hexlify(message),
+      auxData: ethers.utils.hexlify(auxData ? auxData : []),
+      chainId: chainId ? BigNumber.from(chainId).toNumber() : this.defaultChainId
+    }
     const res = await this._guardd.sign({ request: request })
 
     // TODO: The guardd service doesn't include the EIP2126 signature type on it's reponse

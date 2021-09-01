@@ -79,9 +79,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // if we're registered, and we have the account details, then we are connected
     const session = this.openPayload?.session
     return (
-      this.registered && session !== undefined &&
-      !!session.accountAddress && session.accountAddress.length === 42 &&
-      !!session.networks && session.networks.length > 0
+      this.registered &&
+      session !== undefined &&
+      !!session.accountAddress &&
+      session.accountAddress.length === 42 &&
+      !!session.networks &&
+      session.networks.length > 0
     )
   }
 
@@ -122,7 +125,6 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   // handleMessage will handle message received from the remote wallet
   handleMessage(message: ProviderMessage<any>) {
-
     // init incoming for initial handshake with transport.
     // always respond to INIT messages, e.g. on popup window reload
     if (message.type === EventType.INIT) {
@@ -320,7 +322,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   }
 
   emit<K extends keyof ProviderEventTypes>(event: K, ...args: Parameters<ProviderEventTypes[K]>): boolean {
-    return this.events.emit(event, ...args as any)
+    return this.events.emit(event, ...(args as any))
   }
 
   waitUntilOpened = async (openTimeout = PROVIDER_OPEN_TIMEOUT): Promise<WalletSession | undefined> => {
@@ -360,7 +362,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         resolve(this.connectPayload)
         return
       }
-      
+
       this.events.once('connect', connectDetails => {
         this.connectPayload = connectDetails
         resolve(connectDetails)
@@ -377,12 +379,12 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       })
     })
 
-    return Promise.race<ConnectDetails>([ connect, closeWallet ])
+    return Promise.race<ConnectDetails>([connect, closeWallet])
   }
 
   protected close(error?: ProviderRpcError) {
     if (this.state === OpenState.CLOSED) return
-    
+
     this.state = OpenState.CLOSED
     this.confirmationOnly = false
     this._sessionId = undefined

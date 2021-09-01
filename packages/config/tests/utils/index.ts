@@ -1,13 +1,12 @@
-
 export function delay(time: number): Promise<void> {
-  return new Promise((solve) => setTimeout(solve, time))
+  return new Promise(solve => setTimeout(solve, time))
 }
 
 /**
  * @param {Date} expected The date to which we want to freeze time
  * @returns {Function} Call to remove Date mocking
  */
-export const mockDate = (expected: Date): () => void => {
+export const mockDate = (expected: Date): (() => void) => {
   const _Date = Date
 
   // If any Date or number is passed to the constructor

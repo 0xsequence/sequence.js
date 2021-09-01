@@ -1,17 +1,33 @@
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
-  ProviderMessage, ProviderMessageRequest, ProviderMessageResponse,
+  ProviderMessage,
+  ProviderMessageRequest,
+  ProviderMessageResponse,
   ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
-  MessageToSign, ProviderRpcError, ConnectOptions, ConnectDetails, PromptConnectDetails, WalletSession,
-  ErrSignedInRequired, ProviderEventTypes, TypedEventEmitter
+  MessageToSign,
+  ProviderRpcError,
+  ConnectOptions,
+  ConnectDetails,
+  PromptConnectDetails,
+  WalletSession,
+  ErrSignedInRequired,
+  ProviderEventTypes,
+  TypedEventEmitter
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
 import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
 
-import { Networks, NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import {
+  Networks,
+  NetworkConfig,
+  JsonRpcHandler,
+  JsonRpcRequest,
+  JsonRpcResponseCallback,
+  JsonRpcResponse
+} from '@0xsequence/network'
 
 import { Signer, Account } from '@0xsequence/wallet'
 import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
@@ -39,7 +55,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
-  constructor(signer: Signer | null, prompter: WalletUserPrompter | null, mainnetNetworks: Networks, testnetNetworks: Networks = []) {
+  constructor(
+    signer: Signer | null,
+    prompter: WalletUserPrompter | null,
+    mainnetNetworks: Networks,
+    testnetNetworks: Networks = []
+  ) {
     this.signer = signer
     this.prompter = prompter
     this.mainnetNetworks = mainnetNetworks
@@ -57,7 +78,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (testnetNetworks && testnetNetworks.length > 0) {
       this.testnetNetworks = testnetNetworks
     }
-    if ((!this.mainnetNetworks || this.mainnetNetworks.length === 0) && (!this.testnetNetworks || this.testnetNetworks.length === 0)) {
+    if (
+      (!this.mainnetNetworks || this.mainnetNetworks.length === 0) &&
+      (!this.testnetNetworks || this.testnetNetworks.length === 0)
+    ) {
       throw new Error('signIn failed as network configuration is empty')
     }
 
@@ -91,7 +115,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   async connect(options?: ConnectOptions): Promise<ConnectDetails> {
     if (!this.signer) {
       return {
-        connected: false, chainId: '0x0', error: 'unable to connect without signed in account',
+        connected: false,
+        chainId: '0x0',
+        error: 'unable to connect without signed in account'
       }
     }
 
@@ -104,7 +130,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       // Perform ethauth eip712 request and construct the ConnectDetails response
       // including the auth proof
       const authOptions: AuthorizationOptions = {
-        app: options.app, origin: options.origin, expiry: options.expiry
+        app: options.app,
+        origin: options.origin,
+        expiry: options.expiry
       }
       // if (typeof(options.authorize) === 'object') {
       //   authOptions = { ...authOptions, ...options.authorize }
@@ -115,7 +143,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       } catch (err) {
         logger.warn(`connect, signAuthorization failed for options: ${JSON.stringify(options)}, due to: ${err.message}`)
         return {
-          connected: false, chainId: '0x0', error: `signAuthorization failed: ${err.message}`
+          connected: false,
+          chainId: '0x0',
+          error: `signAuthorization failed: ${err.message}`
         }
       }
     }
@@ -154,25 +184,27 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   // ProviderMessageResponse to be sent over the transport
   sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
     return new Promise(resolve => {
-      this.sendAsync(message.data, (error: any, response?: JsonRpcResponse) => {
-        // TODO: if response includes data.error, why do we need a separate error argument here?
+      this.sendAsync(
+        message.data,
+        (error: any, response?: JsonRpcResponse) => {
+          // TODO: if response includes data.error, why do we need a separate error argument here?
 
-        const responseMessage: ProviderMessageResponse = {
-          ...message,
-          data: response!
-        }
+          const responseMessage: ProviderMessageResponse = {
+            ...message,
+            data: response!
+          }
 
-        // NOTE: we always resolve here, are the sendAsync call will wrap any exceptions
-        // in the error field of the response to ensure we send back to the user
-        resolve(responseMessage)
-
-      }, message.chainId)
+          // NOTE: we always resolve here, are the sendAsync call will wrap any exceptions
+          // in the error field of the response to ensure we send back to the user
+          resolve(responseMessage)
+        },
+        message.chainId
+      )
     })
   }
 
   // sendAsync implements the JsonRpcHandler interface for sending JsonRpcRequests to the wallet
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
       id: request.id!,
@@ -180,7 +212,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
 
     try {
-
       // only allow public json rpc method to the provider when user is not logged in, aka signer is not set
       if ((!this.signer || this.signer === null) && !permittedJsonRpcMethods.includes(request.method)) {
         // throw new Error(`not logged in. ${request.method} is unavailable`)
@@ -196,7 +227,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
 
       switch (request.method) {
-
         case 'net_version': {
           const result = await provider.send('net_version', [])
           response.result = result
@@ -253,7 +283,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const [signingAddress, typedDataObject] = request.params!
 
           let typedData: TypedData | undefined = undefined
-          if (typeof(typedDataObject) === 'string') {
+          if (typeof typedDataObject === 'string') {
             try {
               typedData = JSON.parse(typedDataObject)
             } catch (e) {}
@@ -311,14 +341,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const [transaction] = request.params!
           const sender = ethers.utils.getAddress(transaction.from)
 
-          if (sender !== await signer.getAddress()) {
+          if (sender !== (await signer.getAddress())) {
             throw new Error('sender address does not match wallet')
           }
 
           if (this.prompter === null) {
             // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
             // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
-            // 
+            //
             // TODO: verify serializing / transporting the SignedTransaction object works as expected, most likely however
             // we will want to resolveProperties the bignumber values to hex strings
             response.result = await signer.signTransactions(transaction, chainId)
@@ -346,7 +376,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getTransactionCount': {
-          const address = ethers.utils.getAddress((request.params![0] as string))
+          const address = ethers.utils.getAddress(request.params![0] as string)
           const tag = request.params![1]
 
           const walletAddress = ethers.utils.getAddress(await signer.getAddress())
@@ -479,7 +509,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         // set default network of wallet
         case 'sequence_setDefaultNetwork': {
           const [defaultNetworkId] = request.params!
-          
+
           if (!defaultNetworkId) {
             throw new Error('invalid request, method argument defaultNetworkId cannot be empty')
           }
@@ -487,7 +517,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (!ok) {
             throw new Error(`unable to set default network ${defaultNetworkId}`)
           }
-      
+
           response.result = await this.getNetworks(true)
           break
         }
@@ -498,7 +528,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           response.result = providerResponse
         }
       }
-
     } catch (err) {
       logger.error(err)
 
@@ -562,7 +591,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         await this.notifyNetworks()
       }
       return defaultChainId
-
     } else {
       return undefined
     }
@@ -590,11 +618,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   async walletSession(): Promise<WalletSession | undefined> {
-    return !this.signer ? undefined : {
-      walletContext: await this.signer.getWalletContext(),
-      accountAddress: await this.signer.getAddress(),
-      networks: await this.getNetworks(true)
-    }
+    return !this.signer
+      ? undefined
+      : {
+          walletContext: await this.signer.getWalletContext(),
+          accountAddress: await this.signer.getAddress(),
+          networks: await this.getNetworks(true)
+        }
   }
 
   notifyConnect(connectDetails: ConnectDetails) {
@@ -611,7 +641,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   async notifyNetworks(networks?: NetworkConfig[]) {
-    const n = networks || await this.getNetworks(true)
+    const n = networks || (await this.getNetworks(true))
     this.events.emit('networks', n)
     if (n && n.length > 0) {
       this.events.emit('chainChanged', ethers.utils.hexlify(n[0].chainId))
@@ -654,9 +684,19 @@ export interface WalletUserPrompter {
 }
 
 const permittedJsonRpcMethods = [
-  'net_version', 'eth_chainId', 'eth_getBalance', 'eth_getTransactionCount',
-  'eth_blockNumber', 'eth_getBlockByNumber', 'eth_getBlockByHash', 'eth_getTransactionByHash',
-  'eth_getCode', 'eth_estimateGas', 'eth_gasPrice',
+  'net_version',
+  'eth_chainId',
+  'eth_getBalance',
+  'eth_getTransactionCount',
+  'eth_blockNumber',
+  'eth_getBlockByNumber',
+  'eth_getBlockByHash',
+  'eth_getTransactionByHash',
+  'eth_getCode',
+  'eth_estimateGas',
+  'eth_gasPrice',
 
-  'sequence_getWalletContext', 'sequence_getNetworks', 'sequence_setDefaultNetwork'
+  'sequence_getWalletContext',
+  'sequence_getNetworks',
+  'sequence_setDefaultNetwork'
 ]

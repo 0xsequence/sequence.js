@@ -1,6 +1,6 @@
-import { TransactionRequest, Provider } from "@ethersproject/providers"
+import { TransactionRequest, Provider } from '@ethersproject/providers'
 import { BytesLike, Signer as AbstractSigner } from 'ethers'
-import { Deferrable } from "ethers/lib/utils"
+import { Deferrable } from 'ethers/lib/utils'
 import { RemoteSigner } from './remote-signer'
 
 export class LocalRemoteSigner extends RemoteSigner {
@@ -18,5 +18,4 @@ export class LocalRemoteSigner extends RemoteSigner {
   getAddress(): Promise<string> {
     return this._signer.getAddress()
   }
-
 }

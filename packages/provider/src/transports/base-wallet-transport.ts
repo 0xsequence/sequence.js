@@ -1,8 +1,17 @@
 import { ethers } from 'ethers'
 import {
-  WalletTransport, ProviderMessage, ProviderMessageRequest,
-  EventType, ProviderMessageResponse, ProviderMessageTransport,
-  ProviderRpcError, InitState, ConnectDetails, OpenWalletIntent, WalletSession, TransportSession
+  WalletTransport,
+  ProviderMessage,
+  ProviderMessageRequest,
+  EventType,
+  ProviderMessageResponse,
+  ProviderMessageTransport,
+  ProviderRpcError,
+  InitState,
+  ConnectDetails,
+  OpenWalletIntent,
+  WalletSession,
+  TransportSession
 } from '../types'
 
 import { WalletRequestHandler } from './wallet-request-handler'
@@ -17,7 +26,6 @@ import { isBrowserExtension } from '../utils'
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
 export abstract class BaseWalletTransport implements WalletTransport {
-
   protected walletRequestHandler: WalletRequestHandler
   protected _sessionId: string
   protected _registered: boolean
@@ -112,7 +120,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
     // handle request
     switch (request.type) {
-
       case EventType.OPEN: {
         if (this._init !== InitState.OK) return
         const session: TransportSession = {
@@ -156,13 +163,16 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
-  notifyOpen(openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }) {
+  notifyOpen(openInfo: { chainId?: string; sessionId?: string; session?: WalletSession; error?: string }) {
     const { chainId, sessionId, session, error } = openInfo
     this.sendMessage({
       idx: -1,
       type: EventType.OPEN,
       data: {
-        chainId, sessionId, session, error
+        chainId,
+        sessionId,
+        session,
+        error
       }
     })
   }
@@ -226,7 +236,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
   protected isValidInitAck(message: ProviderMessage<any>): boolean {
     if (this._init === InitState.OK) {
       // we're already in init state, we shouldn't handle this message
-      logger.warn('isValidInitAck, already in init\'d state, so inquiry is invalid.')
+      logger.warn("isValidInitAck, already in init'd state, so inquiry is invalid.")
       return false
     }
     if (message.type !== EventType.INIT) {
@@ -349,15 +359,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
     // Notify open and proceed to prompt for connection if intended
     if (!this.walletRequestHandler.isSignedIn()) {
-
       // open wallet without a specific connected chainId, as the user is not signed in
       this.notifyOpen({
         sessionId: this._sessionId
       })
       return true
-
     } else {
-
       // Set default network, in case of error chainId will be undefined or 0
       let chainId: number | undefined = undefined
       try {
@@ -384,7 +391,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // upon cancellation by user, the walletRequestHandler will throw an error
 
       if (intent && intent.type === 'connect') {
-
         // notify wallet is opened, without session details
         this.notifyOpen({
           sessionId: this._sessionId
@@ -392,7 +398,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
         try {
           const connectDetails = await this.walletRequestHandler.promptConnect(intent.options)
-          if(connectDetails.connected){
+          if (connectDetails.connected) {
             this.walletRequestHandler.notifyConnect(connectDetails)
           }
         } catch (err) {
@@ -403,9 +409,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
             this.notifyClose()
           }
         }
-
       } else {
-
         // user is already connected, notify session details.
         // TODO: in future, keep list if 'connected' dapps / sessions in the session
         // controller, and only sync with allowed apps
@@ -414,7 +418,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
           chainId: `${chainId}`,
           session: await this.walletRequestHandler.walletSession()
         })
-
       }
     }
 
@@ -429,7 +432,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     const session = window.localStorage.getItem(TRANSPORT_SESSION_LS_KEY)
 
     try {
-      return session ? JSON.parse(session) as TransportSession : null
+      return session ? (JSON.parse(session) as TransportSession) : null
     } catch (err) {
       console.error(`unable to parse transport session: ${session}`)
       return null

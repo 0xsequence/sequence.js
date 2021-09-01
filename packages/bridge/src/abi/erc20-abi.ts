@@ -1,77 +1,76 @@
-
 export const ERC_20_ABI = [
   {
     constant: false,
     inputs: [
       {
-        internalType: "address",
-        name: "recipient",
-        type: "address"
+        internalType: 'address',
+        name: 'recipient',
+        type: 'address'
       },
       {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
       }
     ],
-    name: "transfer",
+    name: 'transfer',
     outputs: [
       {
-        internalType: "bool",
-        name: "",
-        type: "bool"
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
       }
     ],
     payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
+    stateMutability: 'nonpayable',
+    type: 'function'
   },
   {
     constant: false,
     inputs: [
       {
-        internalType: "address",
-        name: "spender",
-        type: "address"
+        internalType: 'address',
+        name: 'spender',
+        type: 'address'
       },
       {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
       }
     ],
-    name: "approve",
+    name: 'approve',
     outputs: [
       {
-        internalType: "bool",
-        name: "",
-        type: "bool"
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
       }
     ],
     payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
+    stateMutability: 'nonpayable',
+    type: 'function'
   },
   {
     anonymous: false,
     inputs: [
       {
         indexed: true,
-        name: "_from",
-        type: "address"
+        name: '_from',
+        type: 'address'
       },
       {
         indexed: true,
-        name: "_to",
-        type: "address"
+        name: '_to',
+        type: 'address'
       },
       {
         indexed: false,
-        name: "_value",
-        type: "uint256"
+        name: '_value',
+        type: 'uint256'
       }
     ],
-    name: "Transfer",
-    type: "event"
+    name: 'Transfer',
+    type: 'event'
   }
 ]

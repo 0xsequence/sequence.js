@@ -4,8 +4,11 @@ const testResults = []
 
 export const test = async (title: string, run: () => void) => {
   const entry = {
-    title: title, pass: null, startTime: performance.now(),
-    error: null, stack: null
+    title: title,
+    pass: null,
+    startTime: performance.now(),
+    error: null,
+    stack: null
   }
   testResults.push(entry)
 
@@ -23,7 +26,7 @@ export const test = async (title: string, run: () => void) => {
 }
 
 export const assert = {
-  true: function(cond: boolean, msg?: string) {
+  true: function (cond: boolean, msg?: string) {
     if (cond !== true) {
       if (msg) {
         throw new Error(`invalid condition, '${msg}'`)
@@ -33,11 +36,11 @@ export const assert = {
     }
   },
 
-  false: function(cond: boolean, msg?: string) {
+  false: function (cond: boolean, msg?: string) {
     return assert.true(!cond, msg)
   },
 
-  equal: function(actual: any, expected: any, msg?: string) {
+  equal: function (actual: any, expected: any, msg?: string) {
     if (actual !== expected) {
       if (msg) {
         throw new Error(`expected '${expected}' but got '${actual}', '${msg}'`)
