@@ -4,7 +4,6 @@ import { Deferrable } from '@ethersproject/properties'
 import { ChainId } from '@0xsequence/network'
 
 export abstract class RemoteSigner extends AbstractSigner {
-
   abstract signMessageWithData(message: BytesLike, data?: BytesLike, chainId?: ChainId): Promise<string>
 
   signMessage(message: BytesLike, chainId?: number): Promise<string> {
@@ -12,19 +11,19 @@ export abstract class RemoteSigner extends AbstractSigner {
   }
 
   sendTransaction(_: TransactionRequest): Promise<TransactionResponse> {
-    throw new Error("sendTransaction method is not supported in RemoteSigner")
+    throw new Error('sendTransaction method is not supported in RemoteSigner')
   }
 
   signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
-    throw new Error("signTransaction method is not supported in RemoteSigner")
+    throw new Error('signTransaction method is not supported in RemoteSigner')
   }
 
   connect(_: Provider): AbstractSigner {
-    throw new Error("connect method is not supported in RemoteSigner")
+    throw new Error('connect method is not supported in RemoteSigner')
   }
 
   static signMessageWithData(signer: AbstractSigner, message: BytesLike, data?: BytesLike, chainId?: number): Promise<string> {
-    if (this.isRemoteSigner(signer)) {
+    if (this.isRemoteSigner(signer)) {
       return (signer as RemoteSigner).signMessageWithData(message, data, chainId)
     }
     return signer.signMessage(message)
@@ -33,5 +32,4 @@ export abstract class RemoteSigner extends AbstractSigner {
   static isRemoteSigner(signer: AbstractSigner): signer is RemoteSigner {
     return (<RemoteSigner>signer).signMessageWithData !== undefined
   }
-
 }

@@ -1,5 +1,3 @@
-export const abi = [
-]
+export const abi = []
 
-export const returns = {
-}
+export const returns = {}

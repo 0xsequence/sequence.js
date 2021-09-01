@@ -1,9 +1,9 @@
-import { ethers , BigNumber } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { Deferrable } from '@ethersproject/properties'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'
-import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from "@0xsequence/network"
+import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export const ProxyMethods = [
   'getNetwork',
@@ -33,9 +33,9 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
     super(provider.getNetwork())
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
 
-    ProxyMethods.forEach((m) => {
+    ProxyMethods.forEach(m => {
       if ((provider as any)[m] !== undefined) {
-        (this as any)[m] = (...args: any) => (provider as any)[m](...args)
+        ;(this as any)[m] = (...args: any) => (provider as any)[m](...args)
       }
     })
   }
@@ -82,15 +82,24 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
     })
   }
 
-  async call(transaction: Deferrable<ethers.providers.TransactionRequest>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<string> {
+  async call(
+    transaction: Deferrable<ethers.providers.TransactionRequest>,
+    blockTag?: string | number | Promise<ethers.providers.BlockTag>
+  ): Promise<string> {
     return this.rpcCall(JsonRpcMethod.ethCall, transaction, blockTag)
   }
 
-  async getCode(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<string> {
+  async getCode(
+    addressOrName: string | Promise<string>,
+    blockTag?: string | number | Promise<ethers.providers.BlockTag>
+  ): Promise<string> {
     return this.rpcCall(JsonRpcMethod.ethGetCode, addressOrName, blockTag)
   }
 
-  async getBalance(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<ethers.providers.BlockTag>): Promise<BigNumber> {
+  async getBalance(
+    addressOrName: string | Promise<string>,
+    blockTag?: string | number | Promise<ethers.providers.BlockTag>
+  ): Promise<BigNumber> {
     return this.rpcCall(JsonRpcMethod.ethGetBalance, addressOrName, blockTag)
   }
 

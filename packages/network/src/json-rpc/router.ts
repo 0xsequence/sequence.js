@@ -1,4 +1,11 @@
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandler, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './types'
+import {
+  JsonRpcHandlerFunc,
+  JsonRpcRequest,
+  JsonRpcResponseCallback,
+  JsonRpcHandler,
+  JsonRpcMiddleware,
+  JsonRpcMiddlewareHandler
+} from './types'
 
 export class JsonRpcRouter implements JsonRpcHandler {
   private sender: JsonRpcHandler
@@ -28,7 +35,10 @@ export class JsonRpcRouter implements JsonRpcHandler {
   // }
 }
 
-export const createJsonRpcMiddlewareStack = (middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>, handler: JsonRpcHandlerFunc): JsonRpcHandlerFunc => {
+export const createJsonRpcMiddlewareStack = (
+  middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>,
+  handler: JsonRpcHandlerFunc
+): JsonRpcHandlerFunc => {
   if (middlewares.length === 0) return handler
 
   const toMiddleware = (v: any): JsonRpcMiddleware => {
@@ -40,7 +50,7 @@ export const createJsonRpcMiddlewareStack = (middlewares: Array<JsonRpcMiddlewar
   }
 
   let chain: JsonRpcHandlerFunc
-  chain = toMiddleware(middlewares[middlewares.length-1])(handler)
+  chain = toMiddleware(middlewares[middlewares.length - 1])(handler)
   for (let i = middlewares.length - 2; i >= 0; i--) {
     chain = toMiddleware(middlewares[i])(chain)
   }
