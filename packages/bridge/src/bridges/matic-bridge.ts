@@ -4,7 +4,7 @@ import { Bridge, BridgeERC1155, BridgeERC20, BridgeNative, Move, MoveERC1155, Mo
 import { ERC_20_ABI } from '../abi/erc20-abi'
 import { MATIC_BRIDGE_ABI } from '../abi/matic-abi'
 import { MaticPOSClient } from '@maticnetwork/maticjs'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { flatten, safeSolve } from '../utils'
 import { ERC_1155_ABI } from '../abi/erc1155-abi'
 
@@ -32,8 +32,8 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
   private static POS_TIME_WITHDRAW = 30 * 60
 
   public static MAINNET_CONF: MaticBridgeConf = {
-    parentId: 1,
-    maticId: 137,
+    parentId: ChainId.MAINNET,
+    maticId: ChainId.POLYGON,
     networkName: 'mainnet',
     sdkVersion: 'v1',
     depositManager: '0x401F6c983eA34274ec46f84D70b31C151321188b',

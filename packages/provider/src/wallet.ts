@@ -1,7 +1,29 @@
-import { Networks, NetworkConfig, WalletContext, sequenceContext, ChainId, getNetworkId, JsonRpcSender,
-  JsonRpcRouter, JsonRpcMiddleware, allowProviderMiddleware, CachedProvider, PublicProvider, loggingProviderMiddleware,
-  SigningProvider, EagerProvider, exceptionProviderMiddleware, networkProviderMiddleware, JsonRpcExternalProvider,
-  JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, findNetworkConfig, updateNetworkConfig, ensureValidNetworks
+import {
+  Networks,
+  NetworkConfig,
+  WalletContext,
+  sequenceContext,
+  ChainIdLike,
+  getChainId,
+  JsonRpcSender,
+  JsonRpcRouter,
+  JsonRpcMiddleware,
+  allowProviderMiddleware,
+  CachedProvider,
+  PublicProvider,
+  loggingProviderMiddleware,
+  SigningProvider,
+  EagerProvider,
+  exceptionProviderMiddleware,
+  networkProviderMiddleware,
+  JsonRpcExternalProvider,
+  JsonRpcHandlerFunc,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  JsonRpcResponseCallback,
+  findNetworkConfig,
+  updateNetworkConfig,
+  ensureValidNetworks
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -26,20 +48,20 @@ export interface WalletProvider {
   getSession(): WalletSession | undefined
 
   getAddress(): Promise<string>
-  getNetworks(chainId?: ChainId): Promise<NetworkConfig[]>
+  getNetworks(chainId?: ChainIdLike): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
 
   openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
 
-  getProvider(chainId?: ChainId): Web3Provider | undefined
-  getSigner(chainId?: ChainId): Web3Signer
+  getProvider(chainId?: ChainIdLike): Web3Provider | undefined
+  getSigner(chainId?: ChainIdLike): Web3Signer
 
   getWalletContext(): Promise<WalletContext>
-  getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]>
-  getWalletState(chainId?: ChainId): Promise<WalletState[]>
-  isDeployed(chainId?: ChainId): Promise<boolean>
+  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
+  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
+  isDeployed(chainId?: ChainIdLike): Promise<boolean>
 
   getProviderConfig(): ProviderConfig
 
@@ -75,8 +97,7 @@ export class Wallet implements WalletProvider {
   }
 
   private networks: NetworkConfig[]
-  private providers: { [chainId: number] : Web3Provider }
-
+  private providers: { [chainId: number]: Web3Provider }
 
   constructor(defaultNetworkId?: string | number, config?: Partial<ProviderConfig>) {
     // config is a Partial, so that we may intersect it with the DefaultProviderConfig,
@@ -98,7 +119,7 @@ export class Wallet implements WalletProvider {
     this.commands = new WalletCommands(this)
     this.init()
   }
-  
+
   private init = () => {
     if (this.transport.provider) {
       // init must have already been called
@@ -142,7 +163,7 @@ export class Wallet implements WalletProvider {
 
       // return the default chainId as we're connected
       return this.networks[0].chainId
-    })    
+    })
 
     // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
     this.transport.cachedProvider = new CachedProvider()
@@ -153,16 +174,18 @@ export class Wallet implements WalletProvider {
     })
 
     // ..
-    this.transport.router = new JsonRpcRouter([
-      loggingProviderMiddleware,
-      this.transport.networkProvider,
-      this.transport.allowProvider,
-      exceptionProviderMiddleware,
-      this.transport.cachedProvider,
-    ], this.transport.messageProvider)
+    this.transport.router = new JsonRpcRouter(
+      [
+        loggingProviderMiddleware,
+        this.transport.networkProvider,
+        this.transport.allowProvider,
+        exceptionProviderMiddleware,
+        this.transport.cachedProvider
+      ],
+      this.transport.messageProvider
+    )
 
     this.transport.provider = new Web3Provider(this.transport.router)
-
 
     // NOTE: we don't listen on 'connect' even here as we handle it within connect() method
     // in more synchronous flow.
@@ -181,7 +204,7 @@ export class Wallet implements WalletProvider {
         this.useSession(session, true)
       }
     })
-    
+
     // below will update the account upon wallet connect/disconnect (aka, login/logout)
     this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
@@ -241,7 +264,7 @@ export class Wallet implements WalletProvider {
     if (connectDetails.connected) {
       if (!!connectDetails.session) {
         this.useSession(connectDetails.session, true)
-        
+
         this.addConnectedSite(options?.origin)
       } else {
         throw new Error('impossible state, connect response is missing session')
@@ -269,7 +292,7 @@ export class Wallet implements WalletProvider {
   removeConnectedSite(origin: string) {
     const authorized = this.connectedSites.get()
 
-    if(authorized) {
+    if (authorized) {
       this.connectedSites.set(authorized.filter(domain => domain !== origin))
     }
   }
@@ -304,10 +327,15 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
-    return this.session !== undefined &&
-      this.session.networks !== undefined && this.session.networks.length > 0 &&
-      this.networks !== undefined && this.networks.length > 0 &&
-      !!this.session.accountAddress && this.session.accountAddress.startsWith('0x')
+    return (
+      this.session !== undefined &&
+      this.session.networks !== undefined &&
+      this.session.networks.length > 0 &&
+      this.networks !== undefined &&
+      this.networks.length > 0 &&
+      !!this.session.accountAddress &&
+      this.session.accountAddress.startsWith('0x')
+    )
   }
 
   getSession = (): WalletSession | undefined => {
@@ -325,7 +353,7 @@ export class Wallet implements WalletProvider {
     return session!.accountAddress!
   }
 
-  getNetworks = async (chainId?: ChainId): Promise<NetworkConfig[]> => {
+  getNetworks = async (chainId?: ChainIdLike): Promise<NetworkConfig[]> => {
     if (!this.isConnected() || !this.networks) {
       throw new Error('connect first')
     }
@@ -372,7 +400,7 @@ export class Wallet implements WalletProvider {
     if (intent?.type !== 'connect' && !this.isConnected()) {
       throw new Error('connect first')
     }
-    
+
     let currentNetworkId
 
     if (!this.networks || this.networks.length < 1) {
@@ -391,7 +419,7 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider!.closeWallet()
   }
 
-  getProvider(chainId?: ChainId): Web3Provider | undefined {
+  getProvider(chainId?: ChainIdLike): Web3Provider | undefined {
     // return the top-level provider message transport when chainId is unspecified
     // and user has not logged in
     if (!this.isConnected()) {
@@ -423,26 +451,35 @@ export class Wallet implements WalletProvider {
 
     if (network.isDefaultChain) {
       // communicating with defaultChain will prioritize the wallet message transport
-      const router = new JsonRpcRouter([
-        loggingProviderMiddleware,
-        exceptionProviderMiddleware,
-        new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext }),
-        new SigningProvider(this.transport!.provider!),
-        this.transport.cachedProvider!,
-      ], new JsonRpcSender(rpcProvider))
+      const router = new JsonRpcRouter(
+        [
+          loggingProviderMiddleware,
+          exceptionProviderMiddleware,
+          new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext }),
+          new SigningProvider(this.transport!.provider!),
+          this.transport.cachedProvider!
+        ],
+        new JsonRpcSender(rpcProvider)
+      )
 
       provider = new Web3Provider(router, network.chainId)
-
     } else {
       // communicating with another chain will bind to that network, but will forward
       // any signing-related requests to the wallet message transport
-      const router = new JsonRpcRouter([
-        loggingProviderMiddleware,
-        exceptionProviderMiddleware,
-        new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext, chainId: network.chainId }),
-        new SigningProvider(this.transport.provider!),
-        new CachedProvider(network.chainId),
-      ], new JsonRpcSender(rpcProvider))
+      const router = new JsonRpcRouter(
+        [
+          loggingProviderMiddleware,
+          exceptionProviderMiddleware,
+          new EagerProvider({
+            accountAddress: this.session!.accountAddress,
+            walletContext: this.session!.walletContext,
+            chainId: network.chainId
+          }),
+          new SigningProvider(this.transport.provider!),
+          new CachedProvider(network.chainId)
+        ],
+        new JsonRpcSender(rpcProvider)
+      )
 
       provider = new Web3Provider(router, network.chainId)
     }
@@ -456,14 +493,14 @@ export class Wallet implements WalletProvider {
   }
 
   async getAuthNetwork(): Promise<NetworkConfig> {
-    return (await this.getNetworks()).find((n) => n.isAuthChain)!
+    return (await this.getNetworks()).find(n => n.isAuthChain)!
   }
 
-  getAllProviders(): { [chainId: number] : Web3Provider } {
+  getAllProviders(): { [chainId: number]: Web3Provider } {
     return this.providers
   }
 
-  getSigner(chainId?: ChainId): Web3Signer {
+  getSigner(chainId?: ChainIdLike): Web3Signer {
     return this.getProvider(chainId)!.getSigner()
   }
 
@@ -471,11 +508,11 @@ export class Wallet implements WalletProvider {
     return (await this.getAuthProvider()).getSigner()
   }
 
-  getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
+  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
     return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(chainId?: ChainId): Promise<WalletState[]> {
+  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
     return this.getSigner().getWalletState(chainId)
   }
 
@@ -483,7 +520,7 @@ export class Wallet implements WalletProvider {
     return this.getSigner().getWalletContext()
   }
 
-  isDeployed(chainId?: ChainId): Promise<boolean> {
+  isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     return this.getSigner(chainId).isDeployed()
   }
 
@@ -608,7 +645,7 @@ export interface ProviderConfig {
   // and settings here take precedence such as overriding a relayer setting, or rpcUrl.
   networks?: Partial<NetworkConfig>[]
 
-  // networkRpcUrl will set the provider rpcUrl of the default network 
+  // networkRpcUrl will set the provider rpcUrl of the default network
   networkRpcUrl?: string
 
   // defaultNetworkId is the primary network of a dapp and the default network a
@@ -618,7 +655,6 @@ export interface ProviderConfig {
 
   // transports for dapp to wallet jron-rpc communication
   transports?: {
-
     // WindowMessage transport (optional)
     windowTransport?: {
       enabled: boolean

@@ -2,19 +2,24 @@ import fetchPonyfill from 'fetch-ponyfill'
 import { BigNumber, ethers, BytesLike } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 import { GuarddService } from '@0xsequence/guard'
-import { ChainId } from '@0xsequence/network'
+import { ChainId, ChainIdLike } from '@0xsequence/network'
 
 export class GuardRemoteSigner extends RemoteSigner {
   private readonly _guardd: GuarddService
   private readonly _address: string
 
-  constructor(address: string, hostname: string, public isSequence: boolean = false, public defaultChainId: number = 1) {
+  constructor(
+    address: string,
+    hostname: string,
+    public isSequence: boolean = false,
+    public defaultChainId: number = ChainId.MAINNET
+  ) {
     super()
     this._guardd = new GuarddService(hostname, fetchPonyfill().fetch)
     this._address = address
   }
 
-  async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainId): Promise<string> {
+  async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainIdLike): Promise<string> {
     const request = {
       msg: ethers.utils.hexlify(message),
       auxData: ethers.utils.hexlify(auxData ? auxData : []),

@@ -1,9 +1,4 @@
-import {
-  Provider,
-  TransactionResponse,
-  BlockTag,
-  JsonRpcProvider
-} from '@ethersproject/providers'
+import { Provider, TransactionResponse, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Interface } from '@ethersproject/abi'
@@ -14,7 +9,10 @@ import { ConnectionInfo } from '@ethersproject/web'
 import { walletContracts } from '@0xsequence/abi'
 
 import {
-  Transaction, Transactionish, TransactionRequest, NonceDependency,
+  Transaction,
+  Transactionish,
+  TransactionRequest,
+  NonceDependency,
   isSequenceTransaction,
   readSequenceNonce,
   appendNonce,
@@ -31,7 +29,15 @@ import {
 
 import { Relayer } from '@0xsequence/relayer'
 
-import { ChainId, WalletContext, JsonRpcSender, NetworkConfig, isJsonRpcProvider, sequenceContext, getNetworkId } from '@0xsequence/network'
+import {
+  ChainIdLike,
+  WalletContext,
+  JsonRpcSender,
+  NetworkConfig,
+  isJsonRpcProvider,
+  sequenceContext,
+  getChainId
+} from '@0xsequence/network'
 
 import {
   WalletConfig,
@@ -58,7 +64,6 @@ import { resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 import { fetchImageHash } from '.'
 
-
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
@@ -70,7 +75,7 @@ import { fetchImageHash } from '.'
 
 export interface WalletOptions {
   // config is the wallet multi-sig configuration. Note: the first config of any wallet
-  // before it is deployed is used to derive it's the account address of the wallet. 
+  // before it is deployed is used to derive it's the account address of the wallet.
   config: WalletConfig
 
   // context is the WalletContext of deployed wallet-contract modules for the Smart Wallet
@@ -147,7 +152,9 @@ export class Wallet extends Signer {
   // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
   connect(provider: Provider, relayer?: Relayer): Wallet {
     if (isJsonRpcProvider(provider)) {
-      return new Wallet({ config: this.config, context: this.context }, ...this._signers).setProvider(provider).setRelayer(relayer!)
+      return new Wallet({ config: this.config, context: this.context }, ...this._signers)
+        .setProvider(provider)
+        .setRelayer(relayer!)
     } else {
       throw new Error('Wallet provider argument is expected to be a JsonRpcProvider')
     }
@@ -189,7 +196,7 @@ export class Wallet extends Signer {
     return this.context
   }
 
-  async getWalletConfig(chainId?: ChainId): Promise<WalletConfig[]> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
     chainId = await this.getChainIdNumber(chainId)
     const config = {
       ...this.config,
@@ -198,12 +205,8 @@ export class Wallet extends Signer {
     return [config]
   }
 
-  async getWalletState(_?: ChainId): Promise<WalletState[]> {
-    const [address, chainId, isDeployed] = await Promise.all([
-      this.getAddress(),
-      this.getChainId(),
-      this.isDeployed()
-    ])
+  async getWalletState(_?: ChainIdLike): Promise<WalletState[]> {
+    const [address, chainId, isDeployed] = await Promise.all([this.getAddress(), this.getChainId(), this.isDeployed()])
 
     const state: WalletState = {
       context: this.context,
@@ -246,7 +249,7 @@ export class Wallet extends Signer {
   // getSigners returns the list of public account addresses to the currently connected
   // signer objects for this wallet. Note: for a complete list of configured signers
   // on the wallet, query getWalletConfig()
-  async getSigners(): Promise<string[]> {
+  async getSigners(): Promise<string[]> {
     if (!this._signers || this._signers.length === 0) {
       return []
     }
@@ -266,9 +269,13 @@ export class Wallet extends Signer {
 
   async getNetworks(): Promise<NetworkConfig[]> {
     const chainId = await this.getChainId()
-    return [{
-      chainId: chainId, name: '', rpcUrl: ''
-    }]
+    return [
+      {
+        chainId: chainId,
+        name: '',
+        rpcUrl: ''
+      }
+    ]
   }
 
   // getNonce returns the transaction nonce for this wallet, via the relayer
@@ -286,7 +293,12 @@ export class Wallet extends Signer {
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
-  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean, callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+  async sendTransaction(
+    transaction: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean,
+    callback?: SignedTransactionsCallback
+  ): Promise<TransactionResponse> {
     const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
     if (callback) {
       const address = addressOf(signedTxs.config, signedTxs.context)
@@ -297,17 +309,26 @@ export class Wallet extends Signer {
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
-  async sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainId, allSigners: boolean = true, callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
+  async sendTransactionBatch(
+    transactions: Deferrable<TransactionRequest[] | Transaction[]>,
+    chainId?: ChainIdLike,
+    allSigners: boolean = true,
+    callback?: SignedTransactionsCallback
+  ): Promise<TransactionResponse> {
     return this.sendTransaction(transactions, chainId, allSigners, callback)
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
   //
-  // NOTE: the txs argument of type Transactionish can accept one or many transactions. 
-  async signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainId, allSigners?: boolean): Promise<SignedTransactions> {
+  // NOTE: the txs argument of type Transactionish can accept one or many transactions.
+  async signTransactions(
+    txs: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean
+  ): Promise<SignedTransactions> {
     const signChainId = await this.getChainIdNumber(chainId)
 
-    const transaction = (await resolveArrayProperties<Transactionish>(txs))
+    const transaction = await resolveArrayProperties<Transactionish>(txs)
 
     if (!this.provider) {
       throw new Error('missing provider')
@@ -340,21 +361,25 @@ export class Wallet extends Signer {
     // append after nonce requirement
     if ((<TransactionRequest>transaction).afterNonce) {
       const after = (<TransactionRequest>transaction).afterNonce
-      stx = makeAfterNonce(this.context, stx,
-        (<NonceDependency>after).address ? {
-          address: (<NonceDependency>after).address,
-          nonce: (<NonceDependency>after).nonce,
-          space: (<NonceDependency>after).space
-        } : {
-          address: this.address,
-          nonce: <BigNumberish>after
-        }
+      stx = makeAfterNonce(
+        this.context,
+        stx,
+        (<NonceDependency>after).address
+          ? {
+              address: (<NonceDependency>after).address,
+              nonce: (<NonceDependency>after).nonce,
+              space: (<NonceDependency>after).space
+            }
+          : {
+              address: this.address,
+              nonce: <BigNumberish>after
+            }
       )
     }
 
     // If a transaction has 0 gasLimit and not revertOnError
     // compute all new gas limits
-    if (stx.find((a) => !a.revertOnError && ethers.BigNumber.from(a.gasLimit || 0).eq(ethers.constants.Zero))) {
+    if (stx.find(a => !a.revertOnError && ethers.BigNumber.from(a.gasLimit || 0).eq(ethers.constants.Zero))) {
       stx = await this.relayer.estimateGasLimits(this.config, this.context, ...stx)
     }
 
@@ -378,7 +403,7 @@ export class Wallet extends Signer {
     }
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainId): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
@@ -389,12 +414,18 @@ export class Wallet extends Signer {
   // signMessage will sign a message for a particular chainId with the wallet signers
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
-  async signMessage(message: BytesLike, chainId?: ChainId, allSigners?: boolean, isDigest: boolean = false): Promise<string> {
-    const data = typeof(message) === 'string' && !message.startsWith('0x') ? ethers.utils.toUtf8Bytes(message) : message
+  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, isDigest: boolean = false): Promise<string> {
+    const data = typeof message === 'string' && !message.startsWith('0x') ? ethers.utils.toUtf8Bytes(message) : message
     return this.sign(data, isDigest, chainId, allSigners)
   }
 
-  async signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  async signTypedData(
+    domain: TypedDataDomain,
+    types: Record<string, Array<TypedDataField>>,
+    message: Record<string, any>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean
+  ): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
@@ -406,17 +437,23 @@ export class Wallet extends Signer {
     return this.sign(hash, true, signChainId, allSigners)
   }
 
-  async _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, message: Record<string, any>, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  async _signTypedData(
+    domain: TypedDataDomain,
+    types: Record<string, Array<TypedDataField>>,
+    message: Record<string, any>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean
+  ): Promise<string> {
     return this.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  async subDigest(digest: BytesLike, chainId?: ChainId): Promise<Uint8Array> {
+  async subDigest(digest: BytesLike, chainId?: ChainIdLike): Promise<Uint8Array> {
     const solvedChainId = await this.getChainIdNumber(chainId)
     return ethers.utils.arrayify(subDigestOf(this.address, solvedChainId, digest))
   }
 
   // sign is a helper method to sign a payload with the wallet signers
-  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainId, allSigners?: boolean): Promise<string> {
+  async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const digest = isDigest ? msg : ethers.utils.keccak256(msg)
@@ -427,64 +464,66 @@ export class Wallet extends Signer {
     // Sign sub-digest using a set of signers and some optional data
     const signWith = async (signers: AbstractSigner[], auxData?: string): Promise<DecodedSignature> => {
       const signersAddr = await Promise.all(signers.map(s => s.getAddress()))
-      const parts = await Promise.all(this.config.signers.map(async (s) => {
-        try {
-          const signer = signers[signersAddr.indexOf(s.address)]
+      const parts = await Promise.all(
+        this.config.signers.map(async s => {
+          try {
+            const signer = signers[signersAddr.indexOf(s.address)]
 
-          // Is not a signer, return config entry as-is
-          if (!signer) {
-            return s
-          }
-
-          // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
-          if (isSequenceSigner(signer)) {
-            if (signer === this) throw Error('Can\'t sign transactions for self')
-            const signature = await signer.signMessage(subDigest, signChainId, allSigners, true) + '03'
-
-            return {
-              ...s,
-              signature: signature
+            // Is not a signer, return config entry as-is
+            if (!signer) {
+              return s
             }
-          }
 
-          // Is remote signer, call and deduce signature type
-          if (RemoteSigner.isRemoteSigner(signer)) {
-            const signature = await signer.signMessageWithData(subDigest, auxData, signChainId)
+            // Is another Sequence wallet as signer, sign and append '03' (ERC1271 type)
+            if (isSequenceSigner(signer)) {
+              if (signer === this) throw Error("Can't sign transactions for self")
+              const signature = (await signer.signMessage(subDigest, signChainId, allSigners, true)) + '03'
 
-            try {
-              // Check if signature can be recovered as EOA signature
-              const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
-
-              if (isEOASignature) {
-                // Exclude address on EOA signatures
-                return {
-                  weight: s.weight,
-                  signature: signature
-                }
+              return {
+                ...s,
+                signature: signature
               }
-            } catch {}
+            }
 
-            // Prepare signature for full encoding
+            // Is remote signer, call and deduce signature type
+            if (RemoteSigner.isRemoteSigner(signer)) {
+              const signature = await signer.signMessageWithData(subDigest, auxData, signChainId)
+
+              try {
+                // Check if signature can be recovered as EOA signature
+                const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
+
+                if (isEOASignature) {
+                  // Exclude address on EOA signatures
+                  return {
+                    weight: s.weight,
+                    signature: signature
+                  }
+                }
+              } catch {}
+
+              // Prepare signature for full encoding
+              return {
+                ...s,
+                signature: signature
+              }
+            }
+
+            // Is EOA signer
             return {
-              ...s,
-              signature: signature
+              weight: s.weight,
+              signature: (await signer.signMessage(subDigest)) + '02'
+            }
+          } catch (err) {
+            if (allSigners) {
+              throw err
+            } else {
+              console.warn(`Skipped signer ${s.address}`)
+              return s
             }
           }
-
-          // Is EOA signer
-          return {
-            weight: s.weight,
-            signature: await signer.signMessage(subDigest) + '02'
-          }
-        } catch (err) {
-          if (allSigners) {
-            throw err
-          } else {
-            console.warn(`Skipped signer ${s.address}`)
-            return s
-          }
-        }
-      }))
+        })
+      )
 
       return {
         threshold: this.config.threshold,
@@ -493,13 +532,16 @@ export class Wallet extends Signer {
     }
 
     // Split local signers and remote signers
-    const localSigners = this._signers.filter((s) => !RemoteSigner.isRemoteSigner(s))
-    const remoteSigners = this._signers.filter((s) => RemoteSigner.isRemoteSigner(s))
+    const localSigners = this._signers.filter(s => !RemoteSigner.isRemoteSigner(s))
+    const remoteSigners = this._signers.filter(s => RemoteSigner.isRemoteSigner(s))
 
     // Sign message first using localSigners
     // include local signatures for remote signers
     const localSignature = await signWith(localSigners, this.packMsgAndSig(digest, [], signChainId))
-    const remoteSignature = await signWith(remoteSigners, this.packMsgAndSig(digest, encodeSignature(localSignature), signChainId))
+    const remoteSignature = await signWith(
+      remoteSigners,
+      this.packMsgAndSig(digest, encodeSignature(localSignature), signChainId)
+    )
 
     // Aggregate both local and remote signatures
     return encodeSignature(joinSignatures(localSignature, remoteSignature))
@@ -509,13 +551,13 @@ export class Wallet extends Signer {
   async signWeight(): Promise<BigNumber> {
     const signers = await this.getSigners()
     return signers.reduce((p, s) => {
-      const sconfig = this.config.signers.find((c) => c.address === s)
+      const sconfig = this.config.signers.find(c => c.address === s)
       if (!sconfig) return p
       return p.add(sconfig.weight)
     }, ethers.constants.Zero)
   }
 
-  async isDeployed(chainId?: ChainId): Promise<boolean> {
+  async isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     await this.getChainIdNumber(chainId)
     const walletCode = await this.provider.getCode(this.address)
     return !!walletCode && walletCode !== '0x'
@@ -533,21 +575,27 @@ export class Wallet extends Signer {
   ): Promise<[WalletConfig, TransactionResponse]> {
     if (!config) config = this.config
 
-    const [txs, n] = await Promise.all([
-      this.buildUpdateConfigTransaction(config, publish, indexed),
-      nonce ?? this.getNonce()
-    ])
+    const [txs, n] = await Promise.all([this.buildUpdateConfigTransaction(config, publish, indexed), nonce ?? this.getNonce()])
 
-    return [
-      { address: this.address, ...config },
-      await this.sendTransaction(appendNonce(txs, n), undefined, undefined, callback)
-    ]
+    return [{ address: this.address, ...config }, await this.sendTransaction(appendNonce(txs, n), undefined, undefined, callback)]
   }
 
   // publishConfig will publish the current wallet config to the network via the relayer.
   // Publishing the config will also store the entire object of signers.
-  async publishConfig(indexed?: boolean, nonce?: number, requireFreshSigners: string[] = [], callback?: SignedTransactionsCallback): Promise<TransactionResponse> {
-    return this.sendTransaction(this.config.address ? this.buildPublishConfigTransaction(this.config, indexed, nonce) : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners), undefined, undefined, callback)
+  async publishConfig(
+    indexed?: boolean,
+    nonce?: number,
+    requireFreshSigners: string[] = [],
+    callback?: SignedTransactionsCallback
+  ): Promise<TransactionResponse> {
+    return this.sendTransaction(
+      this.config.address
+        ? this.buildPublishConfigTransaction(this.config, indexed, nonce)
+        : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners),
+      undefined,
+      undefined,
+      callback
+    )
   }
 
   // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
@@ -559,7 +607,10 @@ export class Wallet extends Signer {
 
     const isUpgradable = await (async () => {
       try {
-        const implementation = await this.provider.getStorageAt(this.address, ethers.utils.defaultAbiCoder.encode(['address'], [this.address]))
+        const implementation = await this.provider.getStorageAt(
+          this.address,
+          ethers.utils.defaultAbiCoder.encode(['address'], [this.address])
+        )
         return compareAddr(implementation, this.context.mainModuleUpgradable) === 0
       } catch {
         return false
@@ -574,16 +625,20 @@ export class Wallet extends Signer {
     // but we're going to play it safe with this instead:
     const gasLimit = 2 * (100000 + 1800 * config.signers.length)
 
-    const preTransaction = isUpgradable ? [] : [{
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), 
-        [this.context.mainModuleUpgradable]
-      )
-    }]
+    const preTransaction = isUpgradable
+      ? []
+      : [
+          {
+            delegateCall: false,
+            revertOnError: true,
+            gasLimit: ethers.constants.Zero,
+            to: this.address,
+            value: ethers.constants.Zero,
+            data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
+              this.context.mainModuleUpgradable
+            ])
+          }
+        ]
 
     const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
 
@@ -593,9 +648,7 @@ export class Wallet extends Signer {
       gasLimit: ethers.constants.Zero,
       to: this.address,
       value: ethers.constants.Zero,
-      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'),
-        [imageHash(config)]
-      )
+      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [imageHash(config)])
     }
 
     const postTransaction = publish ? await this.buildPublishConfigTransaction(config, indexed) : []
@@ -608,42 +661,46 @@ export class Wallet extends Signer {
       return transactions
     }
 
-    return [{
-      delegateCall: false,
-      revertOnError: false,
-      gasLimit: gasLimit,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'),
-        [sequenceTxAbiEncode(transactions)]
-      )
-    }]
+    return [
+      {
+        delegateCall: false,
+        revertOnError: false,
+        gasLimit: gasLimit,
+        to: this.address,
+        value: ethers.constants.Zero,
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [sequenceTxAbiEncode(transactions)])
+      }
+    ]
   }
 
   buildPublishConfigTransaction(config: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
-    return [{
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.context.sequenceUtils!,
-      value: ethers.constants.Zero,
-      nonce: nonce,
-      data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), 
-        [
+    return [
+      {
+        delegateCall: false,
+        revertOnError: true,
+        gasLimit: ethers.constants.Zero,
+        to: this.context.sequenceUtils!,
+        value: ethers.constants.Zero,
+        nonce: nonce,
+        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), [
           this.address,
           config.threshold,
-          sortConfig(config).signers.map((s) => ({
+          sortConfig(config).signers.map(s => ({
             weight: s.weight,
             signer: s.address
           })),
           indexed
-        ]
-      )
-    }]
+        ])
+      }
+    ]
   }
 
-  async buildPublishSignersTransaction(indexed: boolean = true, nonce?: number, requireFreshSigners: string[] = []): Promise<Transaction[]> {
+  async buildPublishSignersTransaction(
+    indexed: boolean = true,
+    nonce?: number,
+    requireFreshSigners: string[] = []
+  ): Promise<Transaction[]> {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     const requireFreshSignersInterface = new Interface(walletContracts.requireFreshSigner.abi)
 
@@ -675,17 +732,17 @@ export class Wallet extends Signer {
     }
 
     return [
-      ...(requireFreshSigners.map((signer) => ({
+      ...requireFreshSigners.map(signer => ({
         delegateCall: false,
         revertOnError: true,
         gasLimit: ethers.constants.Zero,
         to: contextRequireFreshSigner!,
         value: ethers.constants.Zero,
         nonce: nonce,
-        data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner'), 
-          [signer]
-        )
-      }))),
+        data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner'), [
+          signer
+        ])
+      })),
       {
         delegateCall: false,
         revertOnError: true,
@@ -693,29 +750,27 @@ export class Wallet extends Signer {
         to: this.context.sequenceUtils!,
         value: ethers.constants.Zero,
         nonce: nonce,
-        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), 
-          [
-            this.address,
-            ethers.utils.keccak256(message),
-            this.config.signers.length,
-            filteredSignature,
-            indexed
-          ]
-        )
+        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), [
+          this.address,
+          ethers.utils.keccak256(message),
+          this.config.signers.length,
+          filteredSignature,
+          indexed
+        ])
       }
     ]
   }
 
   // getChainIdFromArgument will return the chainId of the argument, as well as ensure
   // we're not providing an invalid chainId that isn't connected to this wallet.
-  private async getChainIdNumber(chainId?: ChainId): Promise<number> {
+  private async getChainIdNumber(chainId?: ChainIdLike): Promise<number> {
     if (!chainId) {
       // it's valid for chainId argument to be undefined, in which case
       // we will use the connected value
       return await this.getChainId()
     }
 
-    const id = getNetworkId(chainId)
+    const id = getChainId(chainId)
 
     if (this.context.nonStrict) {
       // in non-strict mode, just return the chainId from argument
@@ -754,7 +809,7 @@ export class Wallet extends Signer {
     return new Wallet({ config, context }, signer)
   }
 
-  async hasEnoughSigners(chainId?: ChainId): Promise<boolean> {
+  async hasEnoughSigners(chainId?: ChainIdLike): Promise<boolean> {
     if (chainId) await this.getChainIdNumber(chainId)
     return (await this.signWeight()).gte(this.config.threshold)
   }

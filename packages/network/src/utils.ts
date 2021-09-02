@@ -1,13 +1,13 @@
 import { ethers, BigNumberish } from 'ethers'
-import { NetworkConfig, Networks, NetworksBuilder, ChainId } from './config'
+import { ChainIdLike } from '.'
+import { NetworkConfig, Networks, NetworksBuilder } from './config'
 
 export function isNetworkConfig(cand: any): cand is NetworkConfig {
-  return cand && cand.chainId !== undefined && cand.name !== undefined &&
-    cand.rpcUrl !== undefined && cand.relayer !== undefined
+  return cand && cand.chainId !== undefined && cand.name !== undefined && cand.rpcUrl !== undefined && cand.relayer !== undefined
 }
 
-export const getNetworkId = (chainId: ChainId): number => {
-  if (typeof(chainId) === 'number') {
+export const getChainId = (chainId: ChainIdLike): number => {
+  if (typeof chainId === 'number') {
     return chainId
   }
   if ((<NetworkConfig>chainId).chainId) {
@@ -16,9 +16,9 @@ export const getNetworkId = (chainId: ChainId): number => {
   return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
 }
 
-export const maybeNetworkId = (chainId?: ChainId): number | undefined => {
+export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
   if (!chainId) return undefined
-  return getNetworkId(chainId)
+  return getChainId(chainId)
 }
 
 export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undefined => {
@@ -28,7 +28,11 @@ export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undef
   return undefined
 }
 
-export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfig[], raise: boolean = false, skipRelayerCheck: boolean = false): boolean => {
+export const isValidNetworkConfig = (
+  networkConfig: NetworkConfig | NetworkConfig[],
+  raise: boolean = false,
+  skipRelayerCheck: boolean = false
+): boolean => {
   if (!networkConfig) throw new Error(`invalid network config: empty config`)
 
   const configs: NetworkConfig[] = []
@@ -52,7 +56,7 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
   }
 
   // Downcase all network names
-  configs.forEach(c => c.name = c.name.toLowerCase())
+  configs.forEach(c => (c.name = c.name.toLowerCase()))
 
   // Ensure distinct network names
   const names = configs.map(c => c.name).sort()
@@ -68,7 +72,7 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
   // Ensure one auth chain
   let defaultChain = false
   let authChain = false
-  for (let i=0; i < configs.length; i++) {
+  for (let i = 0; i < configs.length; i++) {
     const c = configs[i]
     if ((!c.rpcUrl || c.rpcUrl === '') && !c.provider) {
       if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: rpcUrl or provider must be provided`)
@@ -82,7 +86,8 @@ export const isValidNetworkConfig = (networkConfig: NetworkConfig | NetworkConfi
     }
     if (c.isDefaultChain) {
       if (defaultChain) {
-        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: DefaultChain is already set by another config`)
+        if (raise)
+          throw new Error(`invalid network config for chainId ${c.chainId}: DefaultChain is already set by another config`)
         return false
       }
       defaultChain = true
@@ -199,16 +204,20 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
   // }
 }
 
-export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaultChainId?: number, vars?: {[key: string]: any}): Networks => {
+export const createNetworkConfig = (
+  networks: Networks | NetworksBuilder,
+  defaultChainId?: number,
+  vars?: { [key: string]: any }
+): Networks => {
   let config: NetworkConfig[] = []
-  if (typeof(networks) === 'function' && vars) {
+  if (typeof networks === 'function' && vars) {
     config = networks(vars)
   } else {
     config = networks as Networks
   }
 
   if (defaultChainId) {
-    config.forEach(n => n.isDefaultChain = false)
+    config.forEach(n => (n.isDefaultChain = false))
     const mainNetwork = config.filter(n => n.chainId === defaultChainId)
     if (!mainNetwork || mainNetwork.length === 0) {
       throw new Error(`defaultChainId ${defaultChainId} cannot be found in network list`)
@@ -220,7 +229,7 @@ export const createNetworkConfig = (networks: Networks | NetworksBuilder, defaul
   return ensureValidNetworks(sortNetworks(config))
 }
 
-export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): NetworkConfig | undefined => {
+export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
   if (typeof chainId === 'string') {
     if (chainId.startsWith('0x')) {
       const id = ethers.BigNumber.from(chainId).toNumber()
@@ -237,16 +246,16 @@ export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainId): 
   }
 }
 
-export const checkNetworkConfig = (network: NetworkConfig, networkId: string | number): boolean => {
+export const checkNetworkConfig = (network: NetworkConfig, chainId: string | number): boolean => {
   if (!network) return false
-  if (network.name === networkId) return true
-  if (network.chainId === networkId) return true
+  if (network.name === chainId) return true
+  if (network.chainId === chainId) return true
   return false
 }
 
 export const networksIndex = (networks: NetworkConfig[]): { [key: string]: NetworkConfig } => {
   const index: { [key: string]: NetworkConfig } = {}
-  for (let i=0; i<networks.length; i++) {
+  for (let i = 0; i < networks.length; i++) {
     index[networks[i].name] = networks[i]
   }
   return index
