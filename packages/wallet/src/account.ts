@@ -13,7 +13,6 @@ import {
   sequenceContext,
   mainnetNetworks,
   ensureValidNetworks,
-  sortNetworks,
   getChainId
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
@@ -428,26 +427,9 @@ export class Account extends Signer {
     return found
   }
 
-  setNetworks(providedNetworks: Networks, defaultChainId?: string | number): number {
-    let networks: Networks = []
-
-    // force-convert to a number in case someone sends a number in a string like "1"
-    const defaultChainIdNum = parseInt(defaultChainId as any)
-
-    // find chain between mainnet and testnet network groups, and set that network group.
-    // otherwise use networks without changes
-    if (providedNetworks && providedNetworks.length > 0 && defaultChainId) {
-      const providedNetwork = providedNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (providedNetwork) {
-        providedNetwork.isDefaultChain = true
-        networks = providedNetworks
-      }
-    } else {
-      networks = providedNetworks
-    }
-
+  setNetworks(providedNetworks: Networks): number {
     // assign while validating network list
-    this.options.networks = ensureValidNetworks(sortNetworks(networks, defaultChainId))
+    this.options.networks = ensureValidNetworks(providedNetworks)
 
     // Account/wallet instances using the initial configuration and network list
     //

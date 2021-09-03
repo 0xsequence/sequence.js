@@ -503,6 +503,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (!defaultNetworkId) {
             throw new Error('invalid request, method argument defaultNetworkId cannot be empty')
           }
+
           const ok = await this.setDefaultNetwork(defaultNetworkId)
           if (!ok) {
             throw new Error(`unable to set default network ${defaultNetworkId}`)
@@ -570,6 +571,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return this._defaultNetworkId
   }
 
+  // TODO: This should just tell the wallet-webapp
+  // no need to keep an internal model of the networks / defaultNetworkId
   async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<number | undefined> {
     if (!chainId) return undefined
     this._defaultNetworkId = chainId
@@ -630,6 +633,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.events.emit('disconnect')
   }
 
+  // TODO: This should be called from wallet-webapp, not internally
   async notifyNetworks(networks?: NetworkConfig[]) {
     const n = networks || (await this.getNetworks(true))
     this.events.emit('networks', n)
