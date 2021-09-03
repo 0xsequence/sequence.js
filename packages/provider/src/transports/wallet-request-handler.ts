@@ -1,10 +1,8 @@
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
-  ProviderMessage,
   ProviderMessageRequest,
   ProviderMessageResponse,
-  ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   MessageToSign,
   ProviderRpcError,
@@ -18,7 +16,7 @@ import {
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
-import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 
 import {
   Networks,
@@ -38,49 +36,29 @@ import { logger, TypedData } from '@0xsequence/utils'
 
 export interface WalletSignInOptions {
   connect?: boolean
-  networks?: Networks
-  defaultNetworkId?: string | number
 }
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer | null
   private prompter: WalletUserPrompter | null
-  private networks: NetworkConfig[]
 
   private _connectOptions?: ConnectOptions
-  private _defaultNetworkId?: string | number
-  private _chainId?: number
 
   private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
   constructor(
     signer: Signer | null,
     prompter: WalletUserPrompter | null,
-    networks: Networks
+    private _chainId: () => number
   ) {
     this.signer = signer
     this.prompter = prompter
-    this.networks = networks
   }
 
   async signIn(signer: Signer | null, options: WalletSignInOptions = {}) {
     this.signer = signer
 
-    const { connect, networks, defaultNetworkId } = options
-
-    if (networks && networks.length > 0) {
-      this.networks = networks
-    }
-    if (!this.networks || this.networks.length === 0) {
-      throw new Error('signIn failed as network configuration is empty')
-    }
-
-    const networkId = defaultNetworkId || this._defaultNetworkId
-    if (networkId) {
-      if (!(await this.setDefaultNetwork(networkId, false))) {
-        throw new Error(`WalletRequestHandler setup unable to set defaultNetworkId ${networkId}`)
-      }
-    }
+    const { connect } = options
 
     // Optionally, connect the dapp and wallet. In case connectOptions are provided, we will perform
     // necessary auth request, and then notify the dapp of the 'connect' details.
@@ -550,13 +528,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   async getChainId(): Promise<number> {
-    if (!this.signer) {
-      return 0
-    } else {
-      if (this._chainId) return this._chainId // memoized
-      this._chainId = await this.signer.getChainId()
-      return this._chainId
-    }
+    return this._chainId()
+    // if (!this.signer) {
+    //   return 0
+    // } else {
+    //   // TODO: This should ask the wallet for the current
+    //   // default network
+    //   return this.signer.getChainId()
+    // }
   }
 
   get connectOptions(): ConnectOptions | undefined {
@@ -567,26 +546,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this._connectOptions = options
   }
 
-  get defaultNetworkId(): string | number | undefined {
-    return this._defaultNetworkId
-  }
-
   // TODO: This should just tell the wallet-webapp
   // no need to keep an internal model of the networks / defaultNetworkId
-  async setDefaultNetwork(chainId: string | number, notifyNetworks: boolean = true): Promise<number | undefined> {
-    if (!chainId) return undefined
-    this._defaultNetworkId = chainId
-    this._chainId = undefined
-
-    if (this.signer && (<any>this.signer).setNetworks) {
-      const defaultChainId: number = (<any>this.signer).setNetworks(this.networks, chainId)
-      if (defaultChainId && notifyNetworks) {
-        await this.notifyNetworks()
-      }
-      return defaultChainId
-    } else {
-      return undefined
-    }
+  async setDefaultNetwork(chainId: string | number): Promise<boolean | undefined> {
+    return this.prompter?.promptUseNetwork(chainId)
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
@@ -634,14 +597,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   // TODO: This should be called from wallet-webapp, not internally
-  async notifyNetworks(networks?: NetworkConfig[]) {
-    const n = networks || (await this.getNetworks(true))
-    this.events.emit('networks', n)
-    if (n && n.length > 0) {
-      this.events.emit('chainChanged', ethers.utils.hexlify(n[0].chainId))
-    } else {
-      this.events.emit('chainChanged', '0x0')
-    }
+  async notifyNetworks() {
+    this.events.emit('chainChanged', ethers.utils.hexlify(await this.getChainId()))
   }
 
   async notifyWalletContext() {
@@ -675,6 +632,7 @@ export interface WalletUserPrompter {
   promptSignMessage(message: MessageToSign): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
+  promptUseNetwork(chainId: string | number): Promise<boolean | undefined>
 }
 
 const permittedJsonRpcMethods = [

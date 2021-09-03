@@ -369,7 +369,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
       let chainId: number | undefined = undefined
       try {
         if (networkId) {
-          chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
+          const ok = await this.walletRequestHandler.setDefaultNetwork(networkId)
+          chainId = ok ? await this.walletRequestHandler.getChainId() : 0
         } else {
           chainId = await this.walletRequestHandler.getChainId()
         }

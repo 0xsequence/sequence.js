@@ -371,10 +371,7 @@ export class Wallet implements WalletProvider {
       throw new Error('networks have not been set by session. connect first.')
     }
     // default chain id is first one in the list, by design
-    const network = this.networks[0]
-    if (!network.isDefaultChain) {
-      throw new Error('expecting first network in list to be default chain')
-    }
+    const network = this.networks.find((n) => n.isDefaultChain) ?? this.networks[0]
     return network.chainId
   }
 
@@ -382,18 +379,8 @@ export class Wallet implements WalletProvider {
     if (!this.networks || this.networks.length < 1) {
       throw new Error('networks have not been set by session. connect first.')
     }
-    // auth chain is first or second one in the list, by design
-    const network0 = this.networks[0]
-    if (network0.isAuthChain) {
-      return network0.chainId
-    }
-    if (this.networks.length > 1) {
-      const network1 = this.networks[1]
-      if (network1.isAuthChain) {
-        return network1.chainId
-      }
-    }
-    throw new Error('expecting first or second network in list to be the auth chain')
+
+    return this.networks.find((n) => n.isAuthChain)?.chainId ?? this.networks[0].chainId
   }
 
   openWallet = async (path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
@@ -619,7 +606,9 @@ export class Wallet implements WalletProvider {
 
     // an extra override for convenience
     if (this.config.networkRpcUrl) {
-      this.networks[0].rpcUrl = this.config.networkRpcUrl
+      // TODO: Is this okay? why do we need to overwride the rpc here?
+      const defualtChain = this.networks.find((n) => n.isDefaultChain)
+      if (defualtChain) defualtChain.rpcUrl = this.config.networkRpcUrl
     }
   }
 

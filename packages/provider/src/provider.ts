@@ -90,7 +90,7 @@ export function isSequenceProvider(provider: any): provider is Web3Provider {
 
 export class LocalWeb3Provider extends Web3Provider {
   constructor(signer: Signer, networks?: Networks) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null, networks || [])
+    const walletRequestHandler = new WalletRequestHandler(signer, null, () => networks?.find((n) => n.isDefaultChain)?.chainId ?? 0)
     super(walletRequestHandler)
   }
 }

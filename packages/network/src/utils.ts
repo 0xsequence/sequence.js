@@ -22,10 +22,7 @@ export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
 }
 
 export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undefined => {
-  if (!networks || networks.length === 0) return undefined
-  if (networks[0] && networks[0].isAuthChain) return networks[0]
-  if (networks.length > 1 && networks[1].isAuthChain) return networks[1]
-  return undefined
+  return networks.find((n) => n.isAuthChain) ?? networks[0]
 }
 
 export const isValidNetworkConfig = (
