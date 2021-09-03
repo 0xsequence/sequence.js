@@ -428,34 +428,22 @@ export class Account extends Signer {
     return found
   }
 
-  setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number): number {
+  setNetworks(providedNetworks: Networks, defaultChainId?: string | number): number {
     let networks: Networks = []
 
     // force-convert to a number in case someone sends a number in a string like "1"
     const defaultChainIdNum = parseInt(defaultChainId as any)
 
     // find chain between mainnet and testnet network groups, and set that network group.
-    // otherwise use mainnetNetworks without changes
-    if (testnetNetworks && testnetNetworks.length > 0 && defaultChainId) {
-      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (mainnetNetwork) {
-        mainnetNetwork.isDefaultChain = true
-        networks = mainnetNetworks
-      } else {
-        const testnetNetwork = testnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-        if (testnetNetwork) {
-          testnetNetwork.isDefaultChain = true
-          networks = testnetNetworks
-        }
-      }
-    } else if (mainnetNetworks && mainnetNetworks.length > 0 && defaultChainId) {
-      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (mainnetNetwork) {
-        mainnetNetwork.isDefaultChain = true
-        networks = mainnetNetworks
+    // otherwise use networks without changes
+    if (providedNetworks && providedNetworks.length > 0 && defaultChainId) {
+      const providedNetwork = providedNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
+      if (providedNetwork) {
+        providedNetwork.isDefaultChain = true
+        networks = providedNetworks
       }
     } else {
-      networks = mainnetNetworks
+      networks = providedNetworks
     }
 
     // assign while validating network list

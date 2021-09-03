@@ -38,16 +38,14 @@ import { logger, TypedData } from '@0xsequence/utils'
 
 export interface WalletSignInOptions {
   connect?: boolean
-  mainnetNetworks?: Networks
-  testnetNetworks?: Networks
+  networks?: Networks
   defaultNetworkId?: string | number
 }
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
   private signer: Signer | null
   private prompter: WalletUserPrompter | null
-  private mainnetNetworks: NetworkConfig[]
-  private testnetNetworks: NetworkConfig[]
+  private networks: NetworkConfig[]
 
   private _connectOptions?: ConnectOptions
   private _defaultNetworkId?: string | number
@@ -58,30 +56,22 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   constructor(
     signer: Signer | null,
     prompter: WalletUserPrompter | null,
-    mainnetNetworks: Networks,
-    testnetNetworks: Networks = []
+    networks: Networks
   ) {
     this.signer = signer
     this.prompter = prompter
-    this.mainnetNetworks = mainnetNetworks
-    this.testnetNetworks = testnetNetworks
+    this.networks = networks
   }
 
   async signIn(signer: Signer | null, options: WalletSignInOptions = {}) {
     this.signer = signer
 
-    const { connect, mainnetNetworks, testnetNetworks, defaultNetworkId } = options
+    const { connect, networks, defaultNetworkId } = options
 
-    if (mainnetNetworks && mainnetNetworks.length > 0) {
-      this.mainnetNetworks = mainnetNetworks
+    if (networks && networks.length > 0) {
+      this.networks = networks
     }
-    if (testnetNetworks && testnetNetworks.length > 0) {
-      this.testnetNetworks = testnetNetworks
-    }
-    if (
-      (!this.mainnetNetworks || this.mainnetNetworks.length === 0) &&
-      (!this.testnetNetworks || this.testnetNetworks.length === 0)
-    ) {
+    if (!this.networks || this.networks.length === 0) {
       throw new Error('signIn failed as network configuration is empty')
     }
 
@@ -586,7 +576,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this._chainId = undefined
 
     if (this.signer && (<any>this.signer).setNetworks) {
-      const defaultChainId: number = (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
+      const defaultChainId: number = (<any>this.signer).setNetworks(this.networks, chainId)
       if (defaultChainId && notifyNetworks) {
         await this.notifyNetworks()
       }
