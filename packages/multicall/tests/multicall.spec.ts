@@ -410,7 +410,7 @@ describe('Multicall integration', function () {
 
           const multiCallMockB = callMockB.connect(provider)
 
-          await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejected
+          await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejectedWith('VM Exception while processing transaction: revert CallReceiverMock#testCall: REVERT_FLAG')
 
           if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
@@ -425,7 +425,7 @@ describe('Multicall integration', function () {
           await expect(Promise.all([
             multiCallMockB.callStatic.testCall(1, "0x1122"),
             multiCallMockB.callStatic.testCall(2, "0x1122")
-          ])).to.be.rejected
+          ])).to.be.rejectedWith('VM Exception while processing transaction: revert CallReceiverMock#testCall: REVERT_FLAG')
 
           if (option.ignoreCount) return
           expect(callCounter).to.equal(3)
