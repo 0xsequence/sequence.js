@@ -529,13 +529,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   async getChainId(): Promise<number> {
     return this._chainId()
-    // if (!this.signer) {
-    //   return 0
-    // } else {
-    //   // TODO: This should ask the wallet for the current
-    //   // default network
-    //   return this.signer.getChainId()
-    // }
   }
 
   get connectOptions(): ConnectOptions | undefined {
