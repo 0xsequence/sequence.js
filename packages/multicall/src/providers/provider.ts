@@ -74,7 +74,7 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
   }
 
   private callback(req: JsonRpcRequest, callback: JsonRpcResponseCallback, resp: any, err?: any) {
-    callback(undefined, {
+    callback(err, {
       jsonrpc: JsonRpcVersion,
       id: req.id!,
       result: resp,
