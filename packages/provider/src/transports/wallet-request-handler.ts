@@ -130,7 +130,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       throw new Error('prompter connect options are empty')
     }
 
-    if (!this.prompter) {
+    if (!this.prompter || !this.prompter?.promptConnect) {
       // if prompter is null, we'll auto connect
       return this.connect(options)
     }
@@ -191,7 +191,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       if (!signer) throw new Error('WalletRequestHandler: wallet signer is not configured')
 
       // fetch the provider for the specific chain, or undefined will select defaultChain
-      const provider = await signer.getProvider(chainId)
+      const provider = await signer.getProvider(chainId ?? await this.getChainId())
       if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
 
       switch (request.method) {
@@ -227,7 +227,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let sig = ''
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
-          if (this.prompter === null) {
+          if (this.prompter === null || !this.prompter?.promptSignMessage) {
             // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
@@ -264,7 +264,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           }
 
           let sig = ''
-          if (this.prompter === null) {
+          if (this.prompter === null || !this.prompter?.promptSignMessage) {
             // prompter is null, so we'll sign from here
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
@@ -286,7 +286,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const [transactionParams] = request.params!
 
           let txnHash = ''
-          if (this.prompter === null) {
+          if (this.prompter === null || !this.prompter?.promptSendTransaction) {
             // prompter is null, so we'll send from here
             const txnResponse = await signer.sendTransaction(transactionParams, chainId)
             txnHash = txnResponse.hash
@@ -313,7 +313,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             throw new Error('sender address does not match wallet')
           }
 
-          if (this.prompter === null) {
+          if (this.prompter === null || !this.prompter?.promptSignTransaction) {
             // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
             // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
             //
@@ -549,7 +549,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   // TODO: This should just tell the wallet-webapp
   // no need to keep an internal model of the networks / defaultNetworkId
   async setDefaultNetwork(chainId: string | number): Promise<boolean | undefined> {
-    return this.prompter?.promptUseNetwork(chainId)
+    return this.prompter?.promptUseNetwork && this.prompter.promptUseNetwork(chainId)
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
@@ -628,11 +628,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
-  promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
-  promptSignMessage(message: MessageToSign): Promise<string>
-  promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
-  promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
-  promptUseNetwork(chainId: string | number): Promise<boolean | undefined>
+  promptConnect?(options?: ConnectOptions): Promise<PromptConnectDetails>
+  promptSignMessage?(message: MessageToSign): Promise<string>
+  promptSignTransaction?(txn: TransactionRequest, chaindId?: number): Promise<string>
+  promptSendTransaction?(txn: TransactionRequest, chaindId?: number): Promise<string>
+  promptUseNetwork?(chainId: string | number): Promise<boolean | undefined>
 }
 
 const permittedJsonRpcMethods = [

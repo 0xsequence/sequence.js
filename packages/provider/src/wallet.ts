@@ -364,19 +364,30 @@ export class Wallet implements WalletProvider {
     }
     return this.networks
   }
+  
+  // getDefaultNetwork
+  getDefaultNetwork = () => {
+    // If not then use local state
+    // TODO: Do we need this local state? I think we should delegate all this to the provider
+    if (!this.networks) {
+      throw new Error('networks have not been set by session. connect first.')
+    }
+
+    // So what's the default network? the one defined by defaultNetworkId or the one defined by isDefaultChain?
+    // TODO: We shoulnd't have conflicting properties like those
+    return this.networks.find((n) => n.name === this.config.defaultNetworkId) ?? this.networks.find((n) => n.isDefaultChain) ?? this.networks[0]
+  }
 
   // getChainId returns the default chain id
   getChainId = async (): Promise<number> => {
-    if (!this.networks || this.networks.length < 1) {
-      throw new Error('networks have not been set by session. connect first.')
-    }
-    // default chain id is first one in the list, by design
-    const network = this.networks.find((n) => n.isDefaultChain) ?? this.networks[0]
-    return network.chainId
+    return this.getDefaultNetwork().chainId
   }
 
   getAuthChainId = async (): Promise<number> => {
-    if (!this.networks || this.networks.length < 1) {
+    // TODO: Why is the client making assumptions about the internal configuration of the wallet?
+    // the wallet may be using a different authChain network and the client never gets that information
+
+    if (!this.networks) {
       throw new Error('networks have not been set by session. connect first.')
     }
 
@@ -417,7 +428,7 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    let network: NetworkConfig | undefined = this.networks[0]
+    let network: NetworkConfig | undefined = this.getDefaultNetwork()
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
       if (!network) {

@@ -63,7 +63,6 @@ const main = async () => {
       provider: provider,
       relayer: relayer,
       isDefaultChain: true,
-      // isAuthChain: true
     },
     {
       name: 'hardhat2',
@@ -84,7 +83,13 @@ const main = async () => {
   }, owner)
 
   // the json-rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(account, null, networks)
+  let defaultChainId = networks.find((n) => (n.isDefaultChain)).chainId
+  const walletRequestHandler = new WalletRequestHandler(account, { promptUseNetwork: async (chainId: string | number) => {
+    const found = networks.find((n) => n.chainId === chainId || n.name === chainId)
+    if (!found) return undefined
+    defaultChainId = found.chainId
+    return true
+  }}, () => defaultChainId)
 
   // setup and register window message transport
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
