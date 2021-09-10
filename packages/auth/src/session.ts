@@ -1,4 +1,4 @@
-import { ArcadeumAPIClient } from '@0xsequence/api'
+import { SequenceAPIClient } from '@0xsequence/api'
 import { ConfigFinder, editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from "@0xsequence/config"
 import { ETHAuth, Proof } from "@0xsequence/ethauth"
 import { NetworkConfig, WalletContext, getAuthNetwork } from "@0xsequence/network"
@@ -49,7 +49,7 @@ export const LONG_SESSION_EXPIRATION = 3e7
 const EXPIRATION_JWT_MARGIN = 60 // seconds
 
 export class Session {
-  _initialAuthRequests: Promise<ArcadeumAPIClient>[]
+  _initialAuthRequests: Promise<SequenceAPIClient>[]
 
   // JWTs are indexed by API host
   readonly _jwts: Map<string, SessionJWTPromise> = new Map()
@@ -97,7 +97,7 @@ export class Session {
     this.config = config
   }
 
-  async auth(net: NetworkConfig | number, maxTries: number = 5): Promise<ArcadeumAPIClient> {
+  async auth(net: NetworkConfig | number, maxTries: number = 5): Promise<SequenceAPIClient> {
     const network = await this.getNetwork(net)
 
     const url = network.sequenceApiUrl
@@ -116,10 +116,10 @@ export class Session {
       }
     }
 
-    return new ArcadeumAPIClient(url, jwtAuth)
+    return new SequenceAPIClient(url, jwtAuth)
   }
 
-  async getAPI(net: NetworkConfig | number, tryAuth = true): Promise<ArcadeumAPIClient> {
+  async getAPI(net: NetworkConfig | number, tryAuth = true): Promise<SequenceAPIClient> {
     const network = await this.getNetwork(net)
 
     const url = network.sequenceApiUrl
@@ -127,7 +127,7 @@ export class Session {
 
     const jwtAuth = (await this.getJWT(network, tryAuth)).token
 
-    return new ArcadeumAPIClient(url, jwtAuth)
+    return new SequenceAPIClient(url, jwtAuth)
   }
 
   private async getJWT(network: NetworkConfig, tryAuth: boolean): Promise<SessionJWT> {
@@ -157,7 +157,7 @@ export class Session {
 
     const jwt = {
       token: proofString.then(async proofString => {
-        const api = new ArcadeumAPIClient(url)
+        const api = new SequenceAPIClient(url)
 
         const authResp = await api.getAuthToken({ ewtString: proofString })
 
