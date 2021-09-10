@@ -1,0 +1,22 @@
+{
+  "name": "@0xsequence/indexer",
+  "version": "0.28.0",
+  "description": "indexer sub-package for Sequence",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/indexer",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-indexer.cjs.js",
+  "module": "dist/0xsequence-indexer.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "peerDependencies": {},
+  "devDependencies": {},
+  "files": [
+    "src",
+    "dist"
+  ]
+}

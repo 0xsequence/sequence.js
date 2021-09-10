@@ -33,6 +33,7 @@
     "@0xsequence/chaind": "^0.28.0",
     "@0xsequence/config": "^0.28.0",
     "@0xsequence/guard": "^0.28.0",
+    "@0xsequence/indexer": "^0.28.0",
     "@0xsequence/multicall": "^0.28.0",
     "@0xsequence/network": "^0.28.0",
     "@0xsequence/provider": "^0.28.0",
