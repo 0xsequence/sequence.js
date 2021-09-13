@@ -146,10 +146,8 @@ export class Session {
     }
 
     if (!this.indexerClients.has(network.chainId)) {
-      if (network.indexer) {
-        this.indexerClients.set(network.chainId, network.indexer)
-      } else if (network.indexerUrl) {
-        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl))
+      if (network.indexerUrl) {
+        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl, network.chainId))
       } else {
         throw Error(`No indexer url for chain ${chainId}`)
       }

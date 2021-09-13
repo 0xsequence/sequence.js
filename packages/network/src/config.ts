@@ -28,7 +28,6 @@ export interface NetworkConfig {
   rpcUrl?: string
   provider?: JsonRpcProvider
   indexerUrl?: string
-  indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
 
   // TODO: add list of bridges (and their respective configs) available
