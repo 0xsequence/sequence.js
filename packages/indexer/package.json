@@ -12,7 +12,9 @@
     "test": "echo",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "cross-fetch": "^3.0.6"
+  },
   "peerDependencies": {},
   "devDependencies": {},
   "files": [
