@@ -1,10 +1,12 @@
 import { SequenceAPIClient } from '@0xsequence/api'
 import { ConfigFinder, editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from "@0xsequence/config"
 import { ETHAuth, Proof } from "@0xsequence/ethauth"
-import { NetworkConfig, WalletContext, getAuthNetwork } from "@0xsequence/network"
+import { SequenceIndexerClient } from "@0xsequence/indexer"
+import { SequenceMetadataClient } from "@0xsequence/metadata"
+import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork } from "@0xsequence/network"
+import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from "@0xsequence/wallet"
 import { ethers, Signer as AbstractSigner } from "ethers"
-import { jwtDecodeClaims } from '@0xsequence/utils'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -54,8 +56,14 @@ export class Session {
 
   private onAuthCallbacks: ((result: PromiseSettledResult<void>) => void)[] = []
 
+  private apiClient: SequenceAPIClient | undefined
+  private metadataClient: SequenceMetadataClient | undefined
+  private indexerClients: Map<number, SequenceIndexerClient> = new Map()
+
   constructor(
     public sequenceApiUrl: string,
+    public sequenceMetadataUrl: string,
+    private networks: NetworkConfig[],
     public config: WalletConfig,
     public context: WalletContext,
     public account: Account,
@@ -111,13 +119,43 @@ export class Session {
     return new SequenceAPIClient(url, jwtAuth)
   }
 
-  async getAPI(tryAuth: boolean = true): Promise<SequenceAPIClient> {
-    const url = this.sequenceApiUrl
-    if (!url) throw Error('No chaind url')
+  async getAPIClient(tryAuth: boolean = true): Promise<SequenceAPIClient> {
+    if (!this.apiClient) {
+      const url = this.sequenceApiUrl
+      if (!url) throw Error('No chaind url')
 
-    const jwtAuth = (await this.getJWT(tryAuth)).token
+      const jwtAuth = (await this.getJWT(tryAuth)).token
+      this.apiClient = new SequenceAPIClient(url, jwtAuth)
+    }
 
-    return new SequenceAPIClient(url, jwtAuth)
+    return this.apiClient
+  }
+
+  getMetadataClient(): SequenceMetadataClient {
+    if (!this.metadataClient) {
+      this.metadataClient = new SequenceMetadataClient(this.sequenceMetadataUrl)
+    }
+
+    return this.metadataClient
+  }
+
+  getIndexerClient(chainId: ChainIdLike): SequenceIndexerClient {
+    const network = findNetworkConfig(this.networks, chainId)
+    if (!network) {
+      throw Error(`No network for chain ${chainId}`)
+    }
+
+    if (!this.indexerClients.has(network.chainId)) {
+      if (network.indexer) {
+        this.indexerClients.set(network.chainId, network.indexer)
+      } else if (network.indexerUrl) {
+        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl))
+      } else {
+        throw Error(`No indexer url for chain ${chainId}`)
+      }
+    }
+
+    return this.indexerClients.get(network.chainId)!
   }
 
   private async getJWT(tryAuth: boolean): Promise<SessionJWT> {
@@ -268,6 +306,7 @@ export class Session {
 
   static async open(args: {
     sequenceApiUrl: string,
+    sequenceMetadataUrl: string,
     context: WalletContext,
     networks: NetworkConfig[],
     referenceSigner: string,
@@ -281,6 +320,7 @@ export class Session {
   }): Promise<Session> {
     const {
       sequenceApiUrl,
+      sequenceMetadataUrl,
       context,
       networks,
       referenceSigner,
@@ -328,7 +368,7 @@ export class Session {
         context: context
       }, ...fullSigners)
 
-      const session = new Session(sequenceApiUrl, config, context, account, metadata, authProvider)
+      const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
 
       // Update wallet config on-chain on the authChain
       const [newConfig] = await account.updateConfig(
@@ -366,7 +406,7 @@ export class Session {
 
       await account.publishConfig(noIndex ? false : true, [referenceSigner])
 
-      const session = new Session(sequenceApiUrl, config, context, account, metadata, authProvider)
+      const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
 
       // Fire JWT requests when opening session
       session._initialAuthRequest = session.auth()
@@ -377,14 +417,17 @@ export class Session {
 
   static load(args: {
     sequenceApiUrl: string,
+    sequenceMetadataUrl: string,
     dump: SessionDump,
     signers: AbstractSigner[],
     networks: NetworkConfig[]
   }): Session {
-    const { sequenceApiUrl, dump, signers, networks } = args
+    const { sequenceApiUrl, sequenceMetadataUrl, dump, signers, networks } = args
 
     return new Session(
       sequenceApiUrl,
+      sequenceMetadataUrl,
+      networks,
       dump.config,
       dump.context,
       new Account({

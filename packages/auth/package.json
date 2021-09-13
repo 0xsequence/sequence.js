@@ -21,6 +21,8 @@
     "@0xsequence/api": "^0.28.0",
     "@0xsequence/config": "^0.28.0",
     "@0xsequence/ethauth": "^0.4.3",
+    "@0xsequence/indexer": "^0.28.0",
+    "@0xsequence/metadata": "^0.28.0",
     "@0xsequence/network": "^0.28.0",
     "@0xsequence/wallet": "^0.28.0",
     "@0xsequence/utils": "^0.28.0",

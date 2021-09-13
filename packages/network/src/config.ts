@@ -1,5 +1,6 @@
 import { BigNumberish } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
+import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { urlClean } from '@0xsequence/utils'
 import { createNetworkConfig } from './utils'
@@ -26,11 +27,9 @@ export interface NetworkConfig {
 
   rpcUrl?: string
   provider?: JsonRpcProvider
+  indexerUrl?: string
+  indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
-
-  // TODO:
-  // indexerUrl?: string
-  // indexer?: Indexer
 
   // TODO: add list of bridges (and their respective configs) available
   // for a particular network
