@@ -14,10 +14,6 @@ export type SessionMeta = {
   expiration?: number
 }
 
-export type SessionJWTs = {
-  [url: string]: SessionJWT
-}
-
 export type SessionJWT = {
   token: string
   expiration: number
@@ -36,7 +32,7 @@ type ProofStringPromise = {
 export interface SessionDump {
   config: WalletConfig
   context: WalletContext
-  jwts: SessionJWTs
+  jwt?: SessionJWT
   metadata: SessionMeta
 }
 
@@ -49,10 +45,9 @@ export const LONG_SESSION_EXPIRATION = 3e7
 const EXPIRATION_JWT_MARGIN = 60 // seconds
 
 export class Session {
-  _initialAuthRequests: Promise<SequenceAPIClient>[]
+  _initialAuthRequest: Promise<SequenceAPIClient>
 
-  // JWTs are indexed by API host
-  readonly _jwts: Map<string, SessionJWTPromise> = new Map()
+  _jwt: SessionJWTPromise | undefined
 
   // proof strings are indexed by account address and app name, see getProofStringKey()
   private readonly proofStrings: Map<string, ProofStringPromise> = new Map()
@@ -60,20 +55,19 @@ export class Session {
   private onAuthCallbacks: ((result: PromiseSettledResult<void>) => void)[] = []
 
   constructor(
+    public sequenceApiUrl: string,
     public config: WalletConfig,
     public context: WalletContext,
     public account: Account,
     public metadata: SessionMeta,
     private readonly authProvider: ethers.providers.JsonRpcProvider,
-    jwts?: SessionJWTs,
+    jwt?: SessionJWT
   ) {
-    if (jwts) {
-      Object.entries(jwts).forEach(([url, jwt]) => {
-        this._jwts.set(url, {
-          token: Promise.resolve(jwt.token),
-          expiration: jwt.expiration ?? getJWTExpiration(jwt.token)
-        })
-      })
+    if (jwt) {
+      this._jwt = {
+        token: Promise.resolve(jwt.token),
+        expiration: jwt.expiration ?? getJWTExpiration(jwt.token)
+      }
     }
   }
 
@@ -97,16 +91,14 @@ export class Session {
     this.config = config
   }
 
-  async auth(net: NetworkConfig | number, maxTries: number = 5): Promise<SequenceAPIClient> {
-    const network = await this.getNetwork(net)
-
-    const url = network.sequenceApiUrl
+  async auth(maxTries: number = 5): Promise<SequenceAPIClient> {
+    const url = this.sequenceApiUrl
     if (!url) throw Error('No chaind url')
 
     let jwtAuth: string | undefined
     for (let i = 0; ; i++) {
       try {
-        jwtAuth = (await this.getJWT(network, true)).token
+        jwtAuth = (await this.getJWT(true)).token
         break
       } catch (error) {
         if (i === maxTries - 1) {
@@ -119,25 +111,22 @@ export class Session {
     return new SequenceAPIClient(url, jwtAuth)
   }
 
-  async getAPI(net: NetworkConfig | number, tryAuth = true): Promise<SequenceAPIClient> {
-    const network = await this.getNetwork(net)
-
-    const url = network.sequenceApiUrl
+  async getAPI(tryAuth: boolean = true): Promise<SequenceAPIClient> {
+    const url = this.sequenceApiUrl
     if (!url) throw Error('No chaind url')
 
-    const jwtAuth = (await this.getJWT(network, tryAuth)).token
+    const jwtAuth = (await this.getJWT(tryAuth)).token
 
     return new SequenceAPIClient(url, jwtAuth)
   }
 
-  private async getJWT(network: NetworkConfig, tryAuth: boolean): Promise<SessionJWT> {
-    const url = network.sequenceApiUrl
+  private async getJWT(tryAuth: boolean): Promise<SessionJWT> {
+    const url = this.sequenceApiUrl
     if (!url) throw Error('No chaind url')
 
     // check if we already have or are waiting for a token
-    if (this._jwts.has(url)) {
-      const jwt = this._jwts.get(url)!
-
+    if (this._jwt) {
+      const jwt = this._jwt
       const token = await jwt.token
 
       if (this.now() < jwt.expiration) {
@@ -145,7 +134,7 @@ export class Session {
       }
 
       // token expired, delete it and get a new one
-      this._jwts.delete(url)
+      this._jwt = undefined
     }
 
     if (!tryAuth) {
@@ -170,12 +159,12 @@ export class Session {
           throw new Error('no auth token from server')
         }
       }).catch(reason => {
-        this._jwts.delete(url)
+        this._jwt = undefined
         throw reason
       }),
       expiration
     }
-    this._jwts.set(url, jwt)
+    this._jwt = jwt
 
     jwt.token.then(() => {
       this.onAuthCallbacks.forEach(cb => { try { cb({ status: 'fulfilled', value: undefined }) } catch {} })
@@ -256,46 +245,21 @@ export class Session {
   }
 
   async dump(): Promise<SessionDump> {
-    const jwts: { [index: string]: SessionJWT } = {}
-
-    ;(await Promise.allSettled(
-      Array.from(this._jwts.entries()).map(
-        ([url, jwt]) => jwt.token.then(
-          token => [url, { token, expiration: jwt.expiration }] as [string, SessionJWT]
-        )
-      )
-    )).forEach(result => {
-      if (result.status === 'fulfilled') {
-        const [url, jwt] = result.value
-        jwts[url] = jwt
+    let jwt: SessionJWT | undefined
+    if (this._jwt) {
+      try {
+        const expiration = this._jwt.expiration
+        jwt = { token: await this._jwt.token, expiration }
+      } catch {
       }
-    })
+    }
 
     return {
       config: this.config,
       context: this.context,
       metadata: this.metadata,
-      jwts
+      jwt
     }
-  }
-
-  private async getNetwork(net: NetworkConfig | number): Promise<NetworkConfig> {
-    const networks = await this.account.getNetworks()
-
-    // TODO: ..
-    let network: NetworkConfig | undefined
-    if (typeof net === 'number') {
-      network = networks.find((n) => n.chainId === net)
-    } else {
-      network = networks.find((n) => n.chainId === net.chainId) ? net : undefined
-    }
-    // TODO: should be able to use, however running into an issue
-    // with the network config from this.account.getNetworks()
-    // which does not have chaindUrl set..
-    // const network = findNetworkConfig(networks, net)
-
-    if (!network) throw Error('Network not found')
-    return network
   }
 
   private now(): number {
@@ -303,6 +267,7 @@ export class Session {
   }
 
   static async open(args: {
+    sequenceApiUrl: string,
     context: WalletContext,
     networks: NetworkConfig[],
     referenceSigner: string,
@@ -315,6 +280,7 @@ export class Session {
     configFinder?: ConfigFinder
   }): Promise<Session> {
     const {
+      sequenceApiUrl,
       context,
       networks,
       referenceSigner,
@@ -362,7 +328,7 @@ export class Session {
         context: context
       }, ...fullSigners)
 
-      const session = new Session(config, context, account, metadata, authProvider)
+      const session = new Session(sequenceApiUrl, config, context, account, metadata, authProvider)
 
       // Update wallet config on-chain on the authChain
       const [newConfig] = await account.updateConfig(
@@ -381,7 +347,7 @@ export class Session {
       }, ...fullSigners))
 
       // Fire JWT requests after updating config
-      session._initialAuthRequests = networks.map(n => session.auth(n))
+      session._initialAuthRequest = session.auth()
 
       return session
 
@@ -400,23 +366,25 @@ export class Session {
 
       await account.publishConfig(noIndex ? false : true, [referenceSigner])
 
-      const session = new Session(config, context, account, metadata, authProvider)
+      const session = new Session(sequenceApiUrl, config, context, account, metadata, authProvider)
 
       // Fire JWT requests when opening session
-      session._initialAuthRequests = networks.map(n => session.auth(n))
+      session._initialAuthRequest = session.auth()
 
       return session
     }
   }
 
   static load(args: {
+    sequenceApiUrl: string,
     dump: SessionDump,
     signers: AbstractSigner[],
     networks: NetworkConfig[]
   }): Session {
-    const { dump, signers, networks } = args
+    const { sequenceApiUrl, dump, signers, networks } = args
 
     return new Session(
+      sequenceApiUrl,
       dump.config,
       dump.context,
       new Account({
@@ -426,7 +394,7 @@ export class Session {
       }, ...signers),
       dump.metadata,
       getAuthProvider(networks),
-      dump.jwts
+      dump.jwt
     )
   }
 }
