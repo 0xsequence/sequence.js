@@ -21,7 +21,7 @@ import {
 import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
-import { Deferrable, shallowCopy, resolveProperties } from '@0xsequence/utils'
+import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
 import {
   Transaction,
   TransactionRequest,
@@ -290,13 +290,18 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // sendTransactionBatch is a convenience method to call sendTransaction in a batch format, allowing you to
   // send multiple transaction as a single payload and just one on-chain transaction.
   async sendTransactionBatch(
-    transactions: Deferrable<TransactionRequest[] | Transaction[]>,
+    transactions: Deferrable<Forbid<TransactionRequest, "wait">[]>,
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<TransactionResponse> {
-    const batch = await resolveArrayProperties<TransactionRequest[] | Transaction[]>(transactions)
+    const batch = await resolveArrayProperties<Forbid<TransactionRequest, "wait">[]>(transactions)
     if (!batch || batch.length === 0) {
       throw new Error('cannot send empty batch')
+    }
+
+    // sendTransactionBatch only accepts TransactionRequest, not TransactionResponses
+    if (batch.find((v) => v.wait !== undefined && v.wait !== null)) {
+      throw new Error('transaction request expected for sendTransactionBatch, transaction response found')
     }
 
     const tx: TransactionRequest = { ...batch[0] }
