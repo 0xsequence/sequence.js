@@ -483,6 +483,13 @@ export const tests = async () => {
     assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
   })
 
+  await test('should reject a transaction response on sendTransactionBatch (at runtime)', async () => {
+    const testAccount = getEOAWallet(testAccounts[1].privateKey)
+    const transactionResponse = await testAccount.sendTransaction({ to: ethers.Wallet.createRandom().address }) as any
+    const txnResp = signer.sendTransactionBatch([transactionResponse])
+    await assert.rejected(txnResp)
+  })
+
   await test('sendETH from the sequence smart wallet (authChain)', async () => {
     // multi-chain to send eth on an alternative chain, in this case the authChain
     //

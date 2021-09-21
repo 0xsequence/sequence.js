@@ -48,6 +48,24 @@ export const assert = {
         throw new Error(`expected '${expected}' but got '${actual}'`)
       }
     }
+  },
+
+  rejected: async function (promise: Promise<any>, msg?: string) {
+    let wasRejected = false
+
+    try {
+      await promise
+    } catch {
+      wasRejected = true
+    }
+
+    if (!wasRejected) {
+      if (msg) {
+        throw new Error(`expected to be rejected`)
+      } else {
+        throw new Error(`expected to be rejected, ${msg}`)
+      }
+    }
   }
 }
 
