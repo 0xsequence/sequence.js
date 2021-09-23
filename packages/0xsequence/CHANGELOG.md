@@ -1,5 +1,23 @@
 # 0xsequence
 
+## 0.0.0-2021823181734
+
+### Patch Changes
+
+- next
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.0.0-2021823181734
+  - @0xsequence/auth@0.0.0-2021823181734
+  - @0xsequence/indexer@0.0.0-2021823181734
+  - @0xsequence/metadata@0.0.0-2021823181734
+  - @0xsequence/network@0.0.0-2021823181734
+  - @0xsequence/relayer@0.0.0-2021823181734
+  - @0xsequence/provider@0.0.0-2021823181734
+  - @0xsequence/config@0.0.0-2021823181734
+  - @0xsequence/multicall@0.0.0-2021823181734
+  - @0xsequence/transactions@0.0.0-2021823181734
+  - @0xsequence/wallet@0.0.0-2021823181734
+
 ## 0.28.0
 
 ### Minor Changes
