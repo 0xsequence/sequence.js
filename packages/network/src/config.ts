@@ -34,7 +34,7 @@ export interface NetworkConfig {
   // for a particular network
   // bridges?: any[]
 
-  // isDefaultChain identifies the default network. For example, a dapp may run on the Matic
+  // isDefaultChain identifies the default network. For example, a dapp may run on the Polygon
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
 
@@ -60,8 +60,8 @@ export const mainnetNetworks = createNetworkConfig(
       isDefaultChain: true
     },
     {
-      title: 'Matic',
-      name: 'matic',
+      title: 'Polygon',
+      name: 'polygon',
       chainId: ChainId.POLYGON,
       rpcUrl: 'https://rpc-mainnet.matic.network',
       relayer: { url: urlClean(`${vars.baseRelayerUrl}/matic`) },
