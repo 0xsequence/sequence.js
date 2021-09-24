@@ -1,5 +1,15 @@
 # @0xsequence/wallet
 
+## 0.0.0-202182421357
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.0.0-202182421357
+  - @0xsequence/relayer@0.0.0-202182421357
+  - @0xsequence/config@0.0.0-202182421357
+  - @0xsequence/transactions@0.0.0-202182421357
+
 ## 0.28.0
 
 ### Minor Changes

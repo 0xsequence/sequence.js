@@ -1,5 +1,18 @@
 # @0xsequence/auth
 
+## 0.0.0-202182421357
+
+### Patch Changes
+
+- next
+- Updated dependencies [undefined]
+  - @0xsequence/api@0.0.0-202182421357
+  - @0xsequence/indexer@0.0.0-202182421357
+  - @0xsequence/metadata@0.0.0-202182421357
+  - @0xsequence/network@0.0.0-202182421357
+  - @0xsequence/config@0.0.0-202182421357
+  - @0xsequence/wallet@0.0.0-202182421357
+
 ## 0.28.0
 
 ### Minor Changes
