@@ -416,8 +416,12 @@ export class Session {
         )
       )
 
-      // Fire JWT requests after updating config
-      session._initialAuthRequest = session.auth()
+      if (sequenceApiUrl) {
+        // Fire JWT requests after updating config
+        session._initialAuthRequest = session.auth()
+      } else {
+        session._initialAuthRequest = Promise.reject('no sequence api url')
+      }
 
       return session
     } else {
@@ -440,8 +444,12 @@ export class Session {
 
       const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
 
-      // Fire JWT requests when opening session
-      session._initialAuthRequest = session.auth()
+      if (sequenceApiUrl) {
+        // Fire JWT requests when opening session
+        session._initialAuthRequest = session.auth()
+      } else {
+        session._initialAuthRequest = Promise.reject('no sequence api url')
+      }
 
       return session
     }
