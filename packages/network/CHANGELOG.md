@@ -1,5 +1,11 @@
 # @0xsequence/network
 
+## 0.0.0-2021825162530
+
+### Patch Changes
+
+- next
+
 ## 0.28.0
 
 ### Minor Changes

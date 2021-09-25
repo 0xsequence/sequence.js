@@ -1,5 +1,12 @@
 # @0xsequence/multicall
 
+## 0.0.0-2021825162530
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.0.0-2021825162530
+
 ## 0.28.0
 
 ### Minor Changes
