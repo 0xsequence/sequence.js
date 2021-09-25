@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/deployer",
-  "version": "0.28.0",
+  "version": "0.0.0-202182516517",
   "description": "deployer sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/deployer",
   "source": "src/index.ts",
@@ -17,7 +17,7 @@
     "gen:typings": "rm -f src/typings/contracts/* && typechain --target ethers-v5 --outDir src/typings/contracts './artifacts/contracts/!(build-info)/**/*[^dbg].json'"
   },
   "dependencies": {
-    "@0xsequence/utils": "^0.28.0",
+    "@0xsequence/utils": "^0.0.0-202182516517",
     "@ethersproject/contracts": "^5.0.12",
     "ethers": "^5.0.32",
     "ora": "^5.3.0"

@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.0.0-202182516517
+
+### Patch Changes
+
+- next
+- Updated dependencies [undefined]
+  - @0xsequence/abi@0.0.0-202182516517
+  - @0xsequence/config@0.0.0-202182516517
+  - @0xsequence/transactions@0.0.0-202182516517
+  - @0xsequence/utils@0.0.0-202182516517
+
 ## 0.28.0
 
 ### Minor Changes
