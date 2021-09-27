@@ -82,6 +82,15 @@ package for package versioning across the monorepo, as well as changelogs. See *
 10. Finally, push your git tags, via: `git push --tags --no-verify`
 
 
+## How to do a snapshot release
+
+NOTE: snapshot release is for dev preview, it's similar to the above, but:
+
+1. `yarn changeset`
+2. `yarn changeset version --snapshot`
+3. `yarn changeset publish --tag snapshot`
+
+
 ## NOTES
 
 1. Browser tests can be run with `yarn test` or, separately `yarn test:server` and `yarn test:run`
