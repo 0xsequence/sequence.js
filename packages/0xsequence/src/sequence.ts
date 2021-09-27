@@ -1,7 +1,6 @@
 export * as abi from './abi'
 export * as api from './api'
 export * as auth from './auth'
-export * as chaind from './chaind'
 export * as config from './config'
 export * as guard from './guard'
 export * as indexer from './indexer'

@@ -2,6 +2,7 @@
 # yarn lockfile v1
 
 
+
 "@0xsequence/ethauth@^0.4.3":
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.4.3.tgz#bfb962ed46623c33e0586f271041e3059ac61fc1"
