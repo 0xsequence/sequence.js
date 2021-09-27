@@ -15,7 +15,6 @@ A simple & powerful Ethereum development library and Web-based smart wallet.
 * [api](./packages/api)
 * [auth](./packages/auth)
 * [bridge](./packages/bridge)
-* [chaind](./packages/chaind)
 * [config](./packages/config)
 * [deployer](./packages/deployer)
 * [guard](./packages/guard)
