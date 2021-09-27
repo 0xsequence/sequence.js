@@ -11,6 +11,7 @@
     "strictNullChecks": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
+    "isolatedModules": true,
     "typeRoots": [
       "node_modules/@types"
     ],

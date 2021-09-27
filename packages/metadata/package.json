@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "cross-fetch": "^3.0.6"
+    "cross-fetch": "^3.1.4"
   },
   "peerDependencies": {},
   "devDependencies": {},

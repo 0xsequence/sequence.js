@@ -45,7 +45,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@babel/plugin-transform-runtime": "^7.13.15",
+    "@babel/plugin-transform-runtime": "^7.15.0",
     "babel-loader": "^8.2.1",
     "hardhat": "2.1.2",
     "html-webpack-plugin": "^5.3.1",
