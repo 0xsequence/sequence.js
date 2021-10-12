@@ -1,5 +1,13 @@
 # @0xsequence/api
 
+## 0.29.1
+
+### Patch Changes
+
+- metadata: ContractInfo.decimals is now optional, i.e. may be undefined
+
+  api: new APIs for user storage and isUsingGoogleMail
+
 ## 0.29.0
 
 ### Minor Changes
