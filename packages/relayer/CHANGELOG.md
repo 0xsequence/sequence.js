@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 0.29.2
+
+### Patch Changes
+
+- relayer: don't pass nonce to GetMetaTxnNetworkFeeOptions
+
 ## 0.29.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @0xsequence/wallet
 
+## 0.29.2
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/relayer@0.29.2
+
 ## 0.29.0
 
 ### Minor Changes
