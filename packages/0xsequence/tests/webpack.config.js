@@ -162,4 +162,19 @@ module.exports = {
     inline: false,
     hot: false
   }
+  // TODO: for next version of webpack-dev-server,
+  // devServer: {
+  //   client: {
+  //     logging: 'none'
+  //   },
+  //   open: false,
+  //   host: '0.0.0.0',
+  //   port: port,
+  //   historyApiFallback: true,
+  //   hot: false,
+  //   allowedHosts: 'all',
+  //   static: {
+  //     directory: path.resolve(process.cwd(), 'tests/browser'),
+  //   }
+  // }
 }

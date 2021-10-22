@@ -45,12 +45,12 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@babel/plugin-transform-runtime": "^7.15.0",
-    "babel-loader": "^8.2.1",
-    "hardhat": "2.1.2",
-    "html-webpack-plugin": "^5.3.1",
-    "webpack": "^5.31.0",
-    "webpack-cli": "^4.6.0",
+    "@babel/plugin-transform-runtime": "^7.15.8",
+    "babel-loader": "^8.2.3",
+    "hardhat": "2.6.7",
+    "html-webpack-plugin": "^5.4.0",
+    "webpack": "^5.59.1",
+    "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^3.11.2"
   },
   "keywords": [],
