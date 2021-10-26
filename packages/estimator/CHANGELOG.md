@@ -1,5 +1,12 @@
 # @0xsequence/estimator
 
+## 0.29.5
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/config@0.29.5
+
 ## 0.29.0
 
 ### Patch Changes

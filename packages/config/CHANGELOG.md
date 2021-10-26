@@ -1,5 +1,11 @@
 # @0xsequence/config
 
+## 0.29.5
+
+### Patch Changes
+
+- auth: pass testnetMode flag depending on network
+
 ## 0.29.0
 
 ### Minor Changes

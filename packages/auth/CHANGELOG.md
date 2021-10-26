@@ -1,5 +1,14 @@
 # @0xsequence/auth
 
+## 0.29.5
+
+### Patch Changes
+
+- auth: pass testnetMode flag depending on network
+- Updated dependencies [undefined]
+  - @0xsequence/config@0.29.5
+  - @0xsequence/wallet@0.29.5
+
 ## 0.29.4
 
 ### Patch Changes
