@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.29.4
+
+### Patch Changes
+
+- api: update rpc bindings
+
 ## 0.29.1
 
 ### Patch Changes
