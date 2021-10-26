@@ -1,5 +1,12 @@
 # @0xsequence/relayer
 
+## 0.29.6
+
+### Patch Changes
+
+- @0xsequence/config@0.29.6
+- @0xsequence/transactions@0.29.6
+
 ## 0.29.5
 
 ### Patch Changes

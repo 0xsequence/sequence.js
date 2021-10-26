@@ -1,5 +1,12 @@
 # @0xsequence/transactions
 
+## 0.29.6
+
+### Patch Changes
+
+- Updated dependencies [undefined]
+  - @0xsequence/network@0.29.6
+
 ## 0.29.0
 
 ### Minor Changes
