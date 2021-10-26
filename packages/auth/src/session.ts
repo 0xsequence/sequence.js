@@ -101,7 +101,7 @@ export class Session {
 
   async auth(maxTries: number = 5): Promise<SequenceAPIClient> {
     const url = this.sequenceApiUrl
-    if (!url) throw Error('No chaind url')
+    if (!url) throw Error('No sequence api url')
 
     let jwtAuth: string | undefined
     for (let i = 0; ; i++) {
@@ -117,6 +117,11 @@ export class Session {
     }
 
     return new SequenceAPIClient(url, jwtAuth)
+  }
+
+  get isTestnetMode(): boolean | undefined {
+    if (!this.networks || this.networks.length === 0) return
+    return !!this.networks[0].testnet
   }
 
   async getAPIClient(tryAuth: boolean = true): Promise<SequenceAPIClient> {
@@ -189,7 +194,7 @@ export class Session {
         .then(async proofString => {
           const api = new SequenceAPIClient(url)
 
-          const authResp = await api.getAuthToken({ ewtString: proofString })
+          const authResp = await api.getAuthToken({ ewtString: proofString, testnetMode: this.isTestnetMode })
 
           if (authResp?.status === true && authResp.jwtToken.length !== 0) {
             return authResp.jwtToken

@@ -24,6 +24,7 @@ export interface NetworkConfig {
   name: string
   chainId: number
   ensAddress?: string
+  testnet?: boolean
 
   rpcUrl?: string
   provider?: JsonRpcProvider
@@ -82,6 +83,7 @@ export const testnetNetworks = createNetworkConfig(
       name: 'rinkeby',
       chainId: ChainId.RINKEBY,
       ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+      testnet: true,
       rpcUrl: urlClean(`${vars.baseRpcUrl}/rinkeby`),
       relayer: { url: urlClean(`${vars.baseRelayerUrl}/rinkeby`) },
       isDefaultChain: true
@@ -90,6 +92,7 @@ export const testnetNetworks = createNetworkConfig(
       name: 'goerli',
       chainId: ChainId.GOERLI,
       ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+      testnet: true,
       rpcUrl: urlClean(`${vars.baseRpcUrl}/goerli`),
       relayer: { url: urlClean(`${vars.baseRelayerUrl}/goerli`) },
       isAuthChain: true
