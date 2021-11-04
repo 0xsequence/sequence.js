@@ -43,6 +43,9 @@ export class Account extends Signer {
   // Use getProvider(chainId) to get the provider for the respective network.
   provider: JsonRpcProvider
 
+  // memoized value
+  private _chainId?: number
+
   constructor(options: AccountOptions, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
 
@@ -158,6 +161,14 @@ export class Account extends Signer {
 
   async getNetworks(): Promise<NetworkConfig[]> {
     return this.options.networks!
+  }
+
+  // NOTE: this is copied over on top of ethers, and is memoized
+  async getChainId(): Promise<number> {
+    if (this._chainId) return this._chainId
+    const network = await this.provider.getNetwork()
+    this._chainId = network.chainId
+    return this._chainId
   }
 
   getAuthChainId(): number {
@@ -430,6 +441,7 @@ export class Account extends Signer {
 
   setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number): number {
     let networks: Networks = []
+    this._chainId = undefined // clear memoized value
 
     // force-convert to a number in case someone sends a number in a string like "1"
     const defaultChainIdNum = parseInt(defaultChainId as any)
@@ -493,6 +505,7 @@ export class Account extends Signer {
       }
 
       if (network.isDefaultChain) {
+        this._chainId = network.chainId
         this.provider = wallet.provider
       }
       return {
