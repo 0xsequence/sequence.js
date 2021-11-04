@@ -1,5 +1,11 @@
 # @0xsequence/wallet
 
+## 0.29.7
+
+### Patch Changes
+
+- override ethers getChainId method
+
 ## 0.29.6
 
 ### Patch Changes
