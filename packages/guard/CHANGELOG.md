@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.29.8
+
+### Patch Changes
+
+- update api
+
 ## 0.28.0
 
 ### Minor Changes

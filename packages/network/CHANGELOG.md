@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.29.8
+
+### Patch Changes
+
+- update api
+- Updated dependencies [undefined]
+  - @0xsequence/utils@0.29.8
+
 ## 0.29.6
 
 ### Patch Changes

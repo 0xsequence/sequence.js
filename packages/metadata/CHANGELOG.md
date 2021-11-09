@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.29.8
+
+### Patch Changes
+
+- update api
+
 ## 0.29.1
 
 ### Patch Changes

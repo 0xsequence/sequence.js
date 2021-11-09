@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.29.8
+
+### Patch Changes
+
+- update api
+
 ## 0.29.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.29.8
+
+### Patch Changes
+
+- update api
+
 ## 0.29.0
 
 ### Minor Changes
