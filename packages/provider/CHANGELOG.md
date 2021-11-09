@@ -1,5 +1,11 @@
 # @0xsequence/provider
 
+## 0.29.9
+
+### Patch Changes
+
+- @0xsequence/auth@0.29.9
+
 ## 0.29.8
 
 ### Patch Changes
