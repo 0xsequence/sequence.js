@@ -230,9 +230,10 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
     const address = await this.getAddress()
 
-    // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
-    // NOTE: ethers since 5.5 has switched to using personal_sign, we should review, etc.
-    return await provider!.send('eth_sign', [address, ethers.utils.hexlify(data)])
+    // NOTE: as of ethers v5.5, it switched to using personal_sign, see
+    // https://github.com/ethers-io/ethers.js/pull/1542 and see
+    // https://github.com/WalletConnect/walletconnect-docs/issues/32 for additional info.
+    return await provider!.send('personal_sign', [ethers.utils.hexlify(data), address])
   }
 
   // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
@@ -364,10 +365,15 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // ethers JsonRpcSigner methods
   //
 
-  async _legacySignMessage(message: Bytes | string): Promise<string> {
-    // TODO: review, and perhaps update as ethers has done where signMessage now uses
-    // personal_sign instead of eth_sign
-    return this.signMessage(message)
+  async _legacySignMessage(message: Bytes | string, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
+    const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
+
+    const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
+    const address = await this.getAddress()
+
+    // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
+    // NOTE: ethers since 5.5 has switched to using personal_sign, we should review, etc.
+    return await provider!.send('eth_sign', [address, ethers.utils.hexlify(data)])
   }
 
   async _signTypedData(

@@ -113,7 +113,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     return encodeNonce(space, nonce)
   }
 
-  async wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse & providers.TransactionReceipt> {
+  async wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
       console.log("computing id", metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
       return this.wait(
@@ -164,9 +164,9 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       // If found return that
       if (found) {
         return {
-          ...found,
+          receipt: found,
           ...await this.provider.getTransaction(found.transactionHash)
-        } as providers.TransactionResponse & providers.TransactionReceipt // TODO: why do we have to be so explicit..?
+        }
       }
 
       // Otherwise wait and try again
