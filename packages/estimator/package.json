@@ -25,8 +25,7 @@
     "@0xsequence/wallet-contracts": "1.9.5",
     "@ethersproject/abstract-signer": "5.0.14",
     "@ethersproject/properties": "^5.0.9",
-    "ethers": "^5.0.32",
-    "js-base64": "^3.6.0"
+    "ethers": "^5.0.32"
   },
   "peerDependencies": {},
   "devDependencies": {},
