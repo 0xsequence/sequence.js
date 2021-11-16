@@ -14,6 +14,7 @@
     "lint": "eslint -c .eslintrc.js 'packages/**/src/**/*.{ts,tsx}'",
     "lint:fix": "eslint -c .eslintrc.js --fix 'packages/**/src/**/*.{ts,tsx}'",
     "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
+    "audit:fix": "npx yarn-audit-fix",
     "typecheck": "wsrun -c typecheck",
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
