@@ -166,7 +166,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
         return {
           ...found,
           ...await this.provider.getTransaction(found.transactionHash)
-        }
+        } as providers.TransactionResponse & providers.TransactionReceipt // TODO: why do we have to be so explicit..?
       }
 
       // Otherwise wait and try again

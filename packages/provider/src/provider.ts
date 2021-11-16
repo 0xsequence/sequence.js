@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { BytesLike } from '@ethersproject/bytes'
+import { BytesLike, Bytes } from '@ethersproject/bytes'
 import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, Networkish } from '@ethersproject/providers'
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import {
@@ -231,6 +231,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const address = await this.getAddress()
 
     // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
+    // NOTE: ethers since 5.5 has switched to using personal_sign, we should review, etc.
     return await provider!.send('eth_sign', [address, ethers.utils.hexlify(data)])
   }
 
@@ -362,6 +363,12 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   //
   // ethers JsonRpcSigner methods
   //
+
+  async _legacySignMessage(message: Bytes | string): Promise<string> {
+    // TODO: review, and perhaps update as ethers has done where signMessage now uses
+    // personal_sign instead of eth_sign
+    return this.signMessage(message)
+  }
 
   async _signTypedData(
     domain: TypedDataDomain,

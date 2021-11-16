@@ -16,8 +16,8 @@
     "@0xsequence/abi": "^0.30.0",
     "@0xsequence/network": "^0.30.0",
     "@0xsequence/utils": "^0.30.0",
-    "@ethersproject/providers": "^5.0.24",
-    "ethers": "^5.0.32"
+    "@ethersproject/providers": "^5.5.0",
+    "ethers": "^5.5.1"
   },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "1.9.5",

@@ -41,7 +41,7 @@
     "@0xsequence/transactions": "^0.30.0",
     "@0xsequence/utils": "^0.30.0",
     "@0xsequence/wallet": "^0.30.0",
-    "ethers": "^5.0.32"
+    "ethers": "^5.5.1"
   },
   "peerDependencies": {},
   "devDependencies": {
