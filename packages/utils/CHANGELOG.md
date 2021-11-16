@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.31.0
+
+### Minor Changes
+
+- - upgrading to ethers v5.5
+
 ## 0.30.0
 
 ### Minor Changes

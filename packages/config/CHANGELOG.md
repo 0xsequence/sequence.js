@@ -1,5 +1,18 @@
 # @0xsequence/config
 
+## 0.31.0
+
+### Minor Changes
+
+- - upgrading to ethers v5.5
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.31.0
+  - @0xsequence/network@0.31.0
+  - @0xsequence/utils@0.31.0
+
 ## 0.30.0
 
 ### Minor Changes
