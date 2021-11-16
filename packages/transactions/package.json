@@ -17,8 +17,8 @@
     "@0xsequence/abi": "^0.30.0",
     "@0xsequence/network": "^0.30.0",
     "@0xsequence/utils": "^0.30.0",
-    "@ethersproject/abi": "^5.0.13",
-    "ethers": "^5.0.32"
+    "@ethersproject/abi": "^5.5.0",
+    "ethers": "^5.5.1"
   },
   "peerDependencies": {},
   "devDependencies": {},

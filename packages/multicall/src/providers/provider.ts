@@ -47,6 +47,7 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
 
     if (provider.getResolver) {
       const ogResolver = await provider.getResolver(await name)
+      if (!ogResolver) return null
       return new ethers.providers.Resolver(this as any, ogResolver.address, ogResolver.name)
     }
 

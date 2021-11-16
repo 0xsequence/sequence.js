@@ -252,6 +252,30 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'personal_sign': {
+          // note: message from json-rpc input is in hex format
+          const [message, signingAddress] = request.params!
+
+          let sig = ''
+          // TODO:
+          // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
+          if (this.prompter === null) {
+            // prompter is null, so we'll sign from here
+            sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
+          } else {
+            // prompt user to provide the response
+            sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
+          }
+
+          if (sig && sig.length > 0) {
+            response.result = sig
+          } else {
+            // The user has declined the request when value is null
+            throw new Error('declined by user')
+          }
+          break
+        }
+
         case 'eth_sign': {
           // note: message from json-rpc input is in hex format
           const [signingAddress, message] = request.params!
