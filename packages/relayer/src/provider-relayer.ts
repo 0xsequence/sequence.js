@@ -5,7 +5,7 @@ import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction } from
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
-import { FeeOption, Relayer } from '.'
+import { FeeOption, Relayer, SimulateResult } from '.'
 import { Optionals, Mask } from '@0xsequence/utils'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
@@ -45,14 +45,8 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
   abstract gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]>
   abstract relay(signedTxs: SignedTransactions): Promise<TransactionResponse>
 
-  async estimateGasLimits(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<Transaction[]> {
-    const walletAddr = addressOf(config, context)
-
-    const gasCosts = await Promise.all(transactions.map(async tx => {
+  async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
+    return (await Promise.all(transactions.map(async tx => {
       // Respect gasLimit request of the transaction (as long as its not 0)
       if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
         return tx.gasLimit
@@ -64,7 +58,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       }
 
       // Fee can't be estimated for self-called if wallet hasn't been deployed
-      if (tx.to === walletAddr && !(await this.isWalletDeployed(walletAddr))) {
+      if (tx.to === wallet && !(await this.isWalletDeployed(wallet))) {
         return DEFAULT_GAS_LIMIT
       }
 
@@ -75,17 +69,27 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       // TODO: If the wallet address has been deployed, gas limits can be
       // estimated with more accurately by using self-calls with the batch transactions one by one
       return this.provider.estimateGas({
-        from: walletAddr,
+        from: wallet,
         to: tx.to,
         data: tx.data,
         value: tx.value
       })
+    }))).map(gasLimit => ({
+      executed: true,
+      succeeded: true,
+      gasLimit: ethers.BigNumber.from(gasLimit).toNumber(),
+      gasUsed: ethers.BigNumber.from(gasLimit).toNumber()
     }))
+  }
 
-    return transactions.map((t, i) => {
-      t.gasLimit = gasCosts[i]
-      return t
-    })
+  async estimateGasLimits(
+    config: WalletConfig,
+    context: WalletContext,
+    ...transactions: Transaction[]
+  ): Promise<Transaction[]> {
+    const walletAddr = addressOf(config, context)
+    const results = await this.simulate(walletAddr, ...transactions)
+    return transactions.map((t, i) => ({ ...t, gasLimit: results[i].gasLimit }))
   }
 
   async getNonce(

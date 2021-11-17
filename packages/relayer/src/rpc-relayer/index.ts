@@ -12,7 +12,7 @@ import {
   decodeNonce
 } from '@0xsequence/transactions'
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
-import { FeeOption, Relayer } from '..'
+import { FeeOption, Relayer, SimulateResult } from '..'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -64,6 +64,12 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
 
     return result
+  }
+
+  async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
+    const coder = ethers.utils.defaultAbiCoder
+    const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
+    return (await this.service.simulate({ wallet, transactions: encoded })).results
   }
 
   async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[]> {

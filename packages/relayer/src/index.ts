@@ -5,6 +5,8 @@ import { WalletConfig } from '@0xsequence/config'
 import { proto } from './rpc-relayer'
 
 export interface Relayer {
+  // simulate returns the execution results for a list of transactions.
+  simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]>
 
   // estimateGasLimits will estimate the gas utilization from the transaction
   // before submission.
@@ -39,6 +41,7 @@ export * from './base-relayer'
 export * from './provider-relayer'
 export * from './rpc-relayer'
 export { proto as RpcRelayerProto } from './rpc-relayer'
+export type SimulateResult = proto.SimulateResult
 export type FeeOption = proto.FeeOption
 
 export function isRelayer(cand: any): cand is Relayer {
