@@ -244,7 +244,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       return false
     }
 
-    const { sessionId, nonce } = (message.data as any) as { sessionId: string; nonce: string }
+    const { sessionId, nonce } = message.data as any as { sessionId: string; nonce: string }
     if (!sessionId || sessionId.length === 0 || !nonce || nonce.length === 0) {
       logger.error('invalid init ack')
       return false

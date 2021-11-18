@@ -17,7 +17,7 @@ export const SpyProxy = <T extends Object>(obj: T, ...hooks: SpyProxyHooks<T, (.
               .map(f => f.callback(...p))
               .reduce((p, c) => p || c, false)
           ) {
-            return ((obj[prop] as unknown) as Function)(...p)
+            return (obj[prop] as unknown as Function)(...p)
           }
         }
       }
