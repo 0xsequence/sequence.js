@@ -1080,8 +1080,9 @@ describe('Wallet integration', function () {
 
         const stx = await toSequenceTransaction(wallet, transaction)
         const estimated = await relayer.estimateGasLimits(wallet.config, context, stx)
-        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(60000)
-        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(100000)
+        const gasLimits = estimated.map(transaction => ethers.BigNumber.from(transaction.gasLimit).toNumber())
+        expect(gasLimits[0]).to.be.above(60000)
+        expect(gasLimits[0]).to.be.below(100000)
       })
       it('Should estimate gas for a single big meta-tx', async () => {
         await callReceiver.testCall(0, '0x')
@@ -1098,8 +1099,9 @@ describe('Wallet integration', function () {
 
         const stx = await toSequenceTransaction(wallet, transaction)
         const estimated = await relayer.estimateGasLimits(wallet.config, context, stx)
-        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
-        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
+        const gasLimits = estimated.map(transaction => ethers.BigNumber.from(transaction.gasLimit).toNumber())
+        expect(gasLimits[0]).to.be.above(390000)
+        expect(gasLimits[0]).to.be.below(400000)
       })
       it('Should estimate gas for a batch of meta-txs', async () => {
         await callReceiver.testCall(0, '0x')
@@ -1123,10 +1125,11 @@ describe('Wallet integration', function () {
 
         const stxs = await toSequenceTransactions(wallet, transactions)
         const estimated = await relayer.estimateGasLimits(wallet.config, context, ...stxs)
-        expect((<any>estimated[0].gasLimit).toNumber()).to.be.above(390000)
-        expect((<any>estimated[0].gasLimit).toNumber()).to.be.below(400000)
-        expect((<any>estimated[1].gasLimit).toNumber()).to.be.above(60000)
-        expect((<any>estimated[1].gasLimit).toNumber()).to.be.below(100000)
+        const gasLimits = estimated.map(transaction => ethers.BigNumber.from(transaction.gasLimit).toNumber())
+        expect(gasLimits[0]).to.be.above(390000)
+        expect(gasLimits[0]).to.be.below(400000)
+        expect(gasLimits[1]).to.be.above(60000)
+        expect(gasLimits[1]).to.be.below(100000)
       })
     })
 
