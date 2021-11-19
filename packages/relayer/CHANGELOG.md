@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 0.31.1
+
+### Patch Changes
+
+- relayer: add Relayer.simulate
+
 ## 0.31.0
 
 ### Minor Changes
