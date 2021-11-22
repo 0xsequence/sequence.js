@@ -1,5 +1,11 @@
 # @0xsequence/deployer
 
+## 0.31.2
+
+### Patch Changes
+
+- remove ora
+
 ## 0.31.0
 
 ### Minor Changes
