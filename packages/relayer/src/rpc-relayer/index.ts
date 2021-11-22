@@ -14,7 +14,7 @@ import {
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
 import { FeeOption, Relayer, SimulateResult } from '..'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf } from '@0xsequence/config'
+import { WalletConfig, addressOf, buildStubSignature } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import * as proto from './relayer.gen'
 
@@ -122,23 +122,30 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       const symbols = feeTokens.tokens.map(token => token.symbol).join(', ')
       logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are required, accepted tokens are ${symbols}`)
 
-      const addr = addressOf(config, context)
-      const prevNonce = readSequenceNonce(...transactions)
+      const wallet = addressOf(config, context)
 
-      // Set temporal nonce to simulate meta-txn
-      if (prevNonce === undefined) {
-        transactions = appendNonce(transactions, await this.getNonce(config, context))
+      let nonce = readSequenceNonce(...transactions)
+      if (nonce === undefined) {
+        nonce = await this.getNonce(config, context)
       }
 
-      const coder = ethers.utils.defaultAbiCoder
-      const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-      const res = await this.service.getMetaTxnNetworkFeeOptions({
-        walletConfig: { ...config, address: addr },
-        payload: encoded
+      if (!this.provider) {
+        logger.warn(`[rpc-relayer/gasRefundOptions] provider not set, needed for stub signature`)
+        throw new Error('provider is not set')
+      }
+
+      const { to, data } = await this.prepareSignedTransactions({
+        config,
+        context,
+        transactions,
+        nonce,
+        signature: buildStubSignature(this.provider, config)
       })
 
-      logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(res.options)}`)
-      return res.options
+      const { options } = await this.service.feeOptions({ wallet, to, data })
+
+      logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(options)}`)
+      return options
     } else {
       logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are not required`)
       return []
