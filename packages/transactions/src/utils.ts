@@ -227,3 +227,47 @@ export function isSignedTransactions(cand: any): cand is SignedTransactions {
     (<SignedTransactions>cand).transactions.reduce((p, c) => p && isSequenceTransaction(c), true)
   )
 }
+
+export async function fromTransactionish(context: WalletContext, wallet: string, transaction: Transactionish): Promise<Transaction[]> {
+  let stx: Transaction[] = []
+
+  if (Array.isArray(transaction)) {
+    if (hasSequenceTransactions(transaction)) {
+      stx = transaction as Transaction[]
+    } else {
+      stx = await toSequenceTransactions(wallet, transaction)
+    }
+  } else if (isSequenceTransaction(transaction)) {
+    stx = [transaction]
+  } else {
+    stx = await toSequenceTransactions(wallet, [transaction])
+  }
+
+  // If transaction is marked as expirable
+  // append expirable require
+  if ((<TransactionRequest>transaction).expiration) {
+    stx = makeExpirable(context, stx, (<TransactionRequest>transaction).expiration!)
+  }
+
+  // If transaction depends on another nonce
+  // append after nonce requirement
+  if ((<TransactionRequest>transaction).afterNonce) {
+    const after = (<TransactionRequest>transaction).afterNonce
+    stx = makeAfterNonce(
+      context,
+      stx,
+      (<NonceDependency>after).address
+        ? {
+            address: (<NonceDependency>after).address,
+            nonce: (<NonceDependency>after).nonce,
+            space: (<NonceDependency>after).space
+          }
+        : {
+            address: wallet,
+            nonce: <BigNumberish>after
+          }
+    )
+  }
+
+  return stx
+}
