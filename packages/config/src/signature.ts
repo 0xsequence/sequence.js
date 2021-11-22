@@ -279,3 +279,108 @@ export function mutateSignature(sig: DecodedSignature, config: WalletConfig, dig
     })
   }
 }
+
+export async function buildStubSignature(
+  provider: ethers.providers.Provider,
+  config: WalletConfig
+): Promise<DecodedSignature> {
+  // Pre-load if signers are EOAs or not
+  const signers = await Promise.all(
+    config.signers.map(async (s, i) => {
+      return {
+        ...s,
+        index: i,
+        isEOA: ethers.utils.arrayify((await provider.getCode(s.address))).length === 0
+      }
+    })
+  )
+
+  // Sort signers by weight
+  // and prepare them for selection
+  let sortedSigners: {
+    weight: number,
+    index: number,
+    address: string,
+    isEOA: boolean,
+    willSign?: boolean
+  }[] = signers.sort((a, b) => a.weight - b.weight)
+
+  // Keep track of the total signing power
+  let totalWeight = 0
+
+  // First pick non-eoa signers
+  sortedSigners = sortedSigners.map((s) => {
+    if (totalWeight >= config.threshold || s.isEOA) return s
+
+    totalWeight += s.weight
+    return { ...s, willSign: true }
+  })
+
+  // If we still haven't reached threshold
+  // start picking non-EOA signers
+  if (totalWeight < config.threshold) {
+    sortedSigners = sortedSigners.map((s) => {
+      if (s.willSign || totalWeight >= config.threshold) return s
+
+      totalWeight += s.weight
+      return { ...s, willSign: true }
+    })
+  }
+
+  // Stub signature part
+  // pre-determined signature, tailored for worse-case scenario in gas costs
+  const stubSig = ethers.utils.arrayify("0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a01b02")
+
+  // Re-sort signers by original index
+  const finalSigners = sortedSigners.sort((a, b) => a.index - b.index)
+
+  // Map final signers to signature parts
+  return {
+    threshold: config.threshold,
+    signers: finalSigners.map((s) => {
+      // If wallet shouldn't sign
+      // just return address part
+      if (!s.willSign) {
+        return {
+          address: s.address,
+          weight: s.weight,
+        } as DecodedAddressPart
+      }
+
+      // If wallet is EOA return signature
+      // part is with stubSign
+      if (s.isEOA) {
+        return {
+          weight: s.weight,
+          signature: stubSig,
+        } as DecodedEOASigner
+      }
+
+      // If wallet is a contract
+      // build a stub nested signature
+      return {
+        weight: s.weight,
+        address: s.address,
+        signature: encodeSignature({
+          threshold: 2,
+          signers: [
+            {
+              address: ethers.Wallet.createRandom().address,
+              weight: 1,
+            },
+            {
+              address: ethers.Wallet.createRandom().address,
+              weight: 1,
+              signature: stubSig,
+            },
+            {
+              address: ethers.Wallet.createRandom().address,
+              weight: 1,
+              signature: stubSig
+            }
+          ]
+        })
+      }
+    })
+  }
+}
