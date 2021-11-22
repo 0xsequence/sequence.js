@@ -1,5 +1,5 @@
 import { Provider, TransactionResponse, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, utils } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Interface } from '@ethersproject/abi'
 import { BytesLike } from '@ethersproject/bytes'
@@ -24,7 +24,8 @@ import {
   SignedTransactions,
   computeMetaTxnHash,
   digestOfTransactionsNonce,
-  decodeNonce
+  decodeNonce,
+  fromTransactionish
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -337,45 +338,8 @@ export class Wallet extends Signer {
       throw new Error('missing relayer')
     }
 
-    let stx: Transaction[] = []
-
-    if (Array.isArray(transaction)) {
-      if (hasSequenceTransactions(transaction)) {
-        stx = transaction as Transaction[]
-      } else {
-        stx = await toSequenceTransactions(this, transaction)
-      }
-    } else if (isSequenceTransaction(transaction)) {
-      stx = [transaction]
-    } else {
-      stx = await toSequenceTransactions(this, [transaction])
-    }
-
-    // If transaction is marked as expirable
-    // append expirable require
-    if ((<TransactionRequest>transaction).expiration) {
-      stx = makeExpirable(this.context, stx, (<TransactionRequest>transaction).expiration!)
-    }
-
-    // If transaction depends on another nonce
-    // append after nonce requirement
-    if ((<TransactionRequest>transaction).afterNonce) {
-      const after = (<TransactionRequest>transaction).afterNonce
-      stx = makeAfterNonce(
-        this.context,
-        stx,
-        (<NonceDependency>after).address
-          ? {
-              address: (<NonceDependency>after).address,
-              nonce: (<NonceDependency>after).nonce,
-              space: (<NonceDependency>after).space
-            }
-          : {
-              address: this.address,
-              nonce: <BigNumberish>after
-            }
-      )
-    }
+    // Convert Transactionish into Sequence transactions
+    let stx = await fromTransactionish(this.context, this.address, transaction)
 
     // If a transaction has 0 gasLimit and not revertOnError
     // compute all new gas limits
