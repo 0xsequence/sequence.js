@@ -282,6 +282,21 @@ export class Account extends Signer {
   }
 
   async signTransactions(dtransactionish: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
+    let currentConfig = await this.currentConfig(wallet)
+
+    if (!currentConfig) {
+      currentConfig = await this.currentConfig()
+      if (!currentConfig) {
+        throw new Error('missing auth chain config')
+      }
+    }
+
+    const transactions = await this.prependConfigUpdate(dtransactionish, chainId, allSigners)
+    return wallet.useConfig(currentConfig).signTransactions(transactions)
+  }
+
+  async prependConfigUpdate(dtransactionish: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<Transactionish> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
 
@@ -292,13 +307,13 @@ export class Account extends Signer {
     const weight = await wallet.useConfig(thisConfig!).signWeight()
     if (weight.lt(thisConfig!.threshold) && allSigners) {
       throw new NotEnoughSigners(
-        `sendTransaction(), wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
+        `wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
       )
     }
 
     // If the wallet is updated, just sign as-is
     if (isConfigEqual(lastConfig!, thisConfig!)) {
-      return wallet.useConfig(lastConfig!).signTransactions(transaction)
+      return transaction
     }
 
     // Bundle with configuration update
@@ -310,9 +325,7 @@ export class Account extends Signer {
       }
     })()
 
-    return wallet.useConfig(thisConfig!).signTransactions(
-      [...(await wallet.buildUpdateConfigTransaction(lastConfig!, false)), ...transactionParts]
-    )
+    return [...(await wallet.buildUpdateConfigTransaction(lastConfig!, false)), ...transactionParts]
   }
 
   async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
