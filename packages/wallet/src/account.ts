@@ -3,7 +3,7 @@ import { Signer as AbstractSigner, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
-import { SignedTransactions, Transactionish, Transaction, computeMetaTxnHash } from '@0xsequence/transactions'
+import { SignedTransactions, Transactionish, Transaction, computeMetaTxnHash, fromTransactionish } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, addressOf, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import {
   ChainIdLike,
@@ -18,7 +18,7 @@ import {
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
-import { isRelayer, Relayer, RpcRelayer, isRpcRelayerOptions } from '@0xsequence/relayer'
+import { isRelayer, FeeOption, Relayer, RpcRelayer, isRpcRelayerOptions } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 export interface AccountOptions {
@@ -252,6 +252,23 @@ export class Account extends Signer {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     const thisConfig = await this.currentConfig(wallet)
     return wallet.useConfig(thisConfig!).hasEnoughSigners()
+  }
+
+  async getFeeOptions(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners: boolean = true): Promise<FeeOption[]> {
+    const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
+
+    const context = this.options.context
+    if (!context) {
+      throw new Error(`missing wallet context`)
+    }
+
+    const [config, updatedTransaction] = await Promise.all([this.currentConfig(wallet), this.prependConfigUpdate(transaction, chainId, allSigners)])
+    if (!config) {
+      throw new Error(`missing current config for chain ${chainId}`)
+    }
+
+    const finalTransactions = await fromTransactionish(context, this.address, updatedTransaction)
+    return wallet.relayer.gasRefundOptions(config, context, ...finalTransactions)
   }
 
   async sendTransaction(
