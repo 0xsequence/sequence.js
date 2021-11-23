@@ -1,5 +1,12 @@
 # @0xsequence/auth
 
+## 0.31.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/metadata@0.31.3
+
 ## 0.31.1
 
 ### Patch Changes
