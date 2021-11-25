@@ -254,6 +254,7 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
     from: NetworkConfig,
     to: NetworkConfig,
     token: string,
+    src: string,
     dest: string,
     amount: BigNumberish
   ): Promise<providers.TransactionRequest[]> {
@@ -263,22 +264,46 @@ export class MaticPosBridge implements BridgeNative, BridgeERC20, BridgeERC1155,
     }
 
     if (this.isDeposit(from, to)) {
-      return [
-        {
-          to: token,
-          data: new Interface(ERC_20_ABI).encodeFunctionData('approve', [this.conf.erc20Predicate, amount]),
-          gasLimit: 75000
-        },
-        {
-          to: this.conf.rootChainManager,
-          gasLimit: 300000,
-          data: new Interface(MATIC_BRIDGE_ABI).encodeFunctionData('depositFor', [
-            dest,
-            token,
-            ethers.utils.defaultAbiCoder.encode(['uint256'], [amount])
-          ])
-        }
-      ]
+      const contractInstance = new ethers.Contract(token, ERC_20_ABI, this.parentClient)
+
+      let allowance = ethers.constants.Zero
+      try {
+        allowance = await contractInstance.allowance(src, this.conf.erc20Predicate)
+      } catch {}
+
+      if (allowance.gte(amount)) {
+        return [
+          {
+            to: this.conf.rootChainManager,
+            gasLimit: 300000,
+            data: new Interface(MATIC_BRIDGE_ABI).encodeFunctionData('depositFor', [
+              dest,
+              token,
+              ethers.utils.defaultAbiCoder.encode(['uint256'], [amount])
+            ])
+          }
+        ]
+      } else {
+        return [
+          {
+            to: token,
+            data: new Interface(ERC_20_ABI).encodeFunctionData('approve', [
+              this.conf.erc20Predicate,
+              ethers.constants.MaxUint256
+            ]),
+            gasLimit: 75000
+          },
+          {
+            to: this.conf.rootChainManager,
+            gasLimit: 300000,
+            data: new Interface(MATIC_BRIDGE_ABI).encodeFunctionData('depositFor', [
+              dest,
+              token,
+              ethers.utils.defaultAbiCoder.encode(['uint256'], [amount])
+            ])
+          }
+        ]
+      }
     }
 
     if (this.isWithdraw(from, to)) {

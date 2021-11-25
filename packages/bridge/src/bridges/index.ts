@@ -98,6 +98,7 @@ export interface BridgeERC20 extends Bridge {
     from: NetworkConfig,
     to: NetworkConfig,
     token: string,
+    src: string,
     dest: string,
     amount: BigNumberish
   ): Promise<providers.TransactionRequest[] | undefined>
