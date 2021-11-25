@@ -1,5 +1,11 @@
 # @0xsequence/bridge
 
+## 0.32.0
+
+### Minor Changes
+
+- bridge: only erc-20 approve if necessary
+
 ## 0.31.0
 
 ### Minor Changes
