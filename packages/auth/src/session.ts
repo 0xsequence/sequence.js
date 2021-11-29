@@ -335,7 +335,7 @@ export class Session {
     networks: NetworkConfig[]
     referenceSigner: string
     signers: { signer: AbstractSigner | string; weight: ethers.BigNumberish }[]
-    thershold: ethers.BigNumberish
+    threshold: ethers.BigNumberish
     metadata: SessionMeta
     deepSearch?: boolean
     knownConfigs?: WalletConfig[]
@@ -349,7 +349,7 @@ export class Session {
       networks,
       referenceSigner,
       signers,
-      thershold,
+      threshold,
       deepSearch,
       knownConfigs,
       noIndex,
@@ -403,10 +403,7 @@ export class Session {
 
       // Update wallet config on-chain on the authChain
       const [newConfig] = await account.updateConfig(
-        editConfig(config, {
-          threshold: thershold,
-          set: await solvedSigners
-        }),
+        editConfig(config, { threshold, set: await solvedSigners }),
         noIndex ? false : true
       )
 
@@ -433,7 +430,7 @@ export class Session {
       return session
     } else {
       // fresh account
-      const config = genConfig(thershold, await solvedSigners)
+      const config = genConfig(threshold, await solvedSigners)
 
       const account = new Account(
         {

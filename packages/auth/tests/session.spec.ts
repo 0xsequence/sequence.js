@@ -137,7 +137,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -163,7 +163,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -192,7 +192,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -207,7 +207,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-      thershold: 2,
+      threshold: 2,
       metadata: {
         name: "Test"
       }
@@ -234,7 +234,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -249,7 +249,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner.address, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -278,7 +278,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner.address, weight: 1 }, { signer: newSigner.address, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -297,7 +297,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       },
@@ -313,7 +313,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-      thershold: 2,
+      threshold: 2,
       metadata: {
         name: "Test"
       },
@@ -334,7 +334,7 @@ describe('Wallet integration', function () {
       networks: [{ ...networks[0], isAuthChain: false }],
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -353,7 +353,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       },
@@ -369,7 +369,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-      thershold: 2,
+      threshold: 2,
       metadata: {
         name: "Test"
       },
@@ -390,7 +390,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       }
@@ -405,7 +405,7 @@ describe('Wallet integration', function () {
       networks: networks,
       referenceSigner: referenceSigner.address,
       signers: [{ signer: referenceSigner, weight: 1 }],
-      thershold: 1,
+      threshold: 1,
       metadata: {
         name: "Test"
       },
@@ -502,7 +502,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -524,7 +524,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -539,7 +539,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-        thershold: 2,
+        threshold: 2,
         metadata: {
           name: "Test"
         }
@@ -563,7 +563,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -589,7 +589,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -606,7 +606,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-        thershold: 2,
+        threshold: 2,
         metadata: {
           name: "Test"
         }
@@ -632,7 +632,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -664,7 +664,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -679,7 +679,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-        thershold: 2,
+        threshold: 2,
         metadata: {
           name: "Test"
         }
@@ -710,7 +710,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -736,7 +736,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -751,7 +751,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-        thershold: 2,
+        threshold: 2,
         metadata: {
           name: "Test"
         }
@@ -776,7 +776,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -799,7 +799,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -814,7 +814,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
-        thershold: 2,
+        threshold: 2,
         metadata: {
           name: "Test"
         }
@@ -854,7 +854,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -882,7 +882,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -906,7 +906,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: referenceSigner.address,
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: "Test"
         }
@@ -930,7 +930,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: await referenceSigner.getAddress(),
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: 'Test'
         }
@@ -969,7 +969,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: await referenceSigner.getAddress(),
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: 'Test'
         }
@@ -1003,7 +1003,7 @@ describe('Wallet integration', function () {
         networks: networks,
         referenceSigner: await referenceSigner.getAddress(),
         signers: [{ signer: referenceSigner, weight: 1 }],
-        thershold: 1,
+        threshold: 1,
         metadata: {
           name: 'Test'
         }
@@ -1053,7 +1053,7 @@ describe('Wallet integration', function () {
           networks: networks,
           referenceSigner: referenceSigner.address,
           signers: [{ signer: referenceSigner, weight: 1 }],
-          thershold: 1,
+          threshold: 1,
           metadata: {
             name: "Test",
             expiration: 240
@@ -1092,7 +1092,7 @@ describe('Wallet integration', function () {
           networks: networks,
           referenceSigner: referenceSigner.address,
           signers: [{ signer: referenceSigner, weight: 1 }],
-          thershold: 1,
+          threshold: 1,
           metadata: {
             name: "Test",
             expiration: 1
