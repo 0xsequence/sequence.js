@@ -1,5 +1,11 @@
 # @0xsequence/auth
 
+## 0.33.0
+
+### Minor Changes
+
+- auth: fix spelling of 'thershold' to 'threshold'
+
 ## 0.31.3
 
 ### Patch Changes
