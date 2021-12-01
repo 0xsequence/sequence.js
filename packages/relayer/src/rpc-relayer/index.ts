@@ -87,24 +87,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       transactions = appendNonce(transactions, await this.getNonce(config, context))
     }
 
-    const coder = ethers.utils.defaultAbiCoder
-    const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    const res = await this.service.updateMetaTxnGasLimits({
-      walletAddress: addr,
-      walletConfig: {
-        address: addr,
-        signers: config.signers,
-        threshold: config.threshold,
-        chainId: config.chainId
-      },
-      payload: encoded
-    })
-
-    const decoded = coder.decode([MetaTransactionsType], res.payload)[0]
-    const modTxns = transactions.map((t, i) => ({
-      ...t,
-      gasLimit: decoded[i].gasLimit
-    }))
+    const res = await this.simulate(addr, ...transactions)
+    const modTxns = transactions.map((t, i) => ({ ...t, gasLimit: res[i].gasLimit }))
 
     logger.info(`[rpc-relayer/estimateGasLimits] got transactions with gas limits ${JSON.stringify(modTxns)}`)
 
