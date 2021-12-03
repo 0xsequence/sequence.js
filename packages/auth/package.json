@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "0.33.0",
+  "version": "0.33.1",
   "description": "auth sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
   "source": "src/index.ts",
@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.31.0",
-    "@0xsequence/api": "^0.31.0",
+    "@0xsequence/api": "^0.33.1",
     "@0xsequence/config": "^0.31.0",
     "@0xsequence/ethauth": "^0.4.3",
     "@0xsequence/indexer": "^0.31.0",

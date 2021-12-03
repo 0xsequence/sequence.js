@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.33.1
+
+### Patch Changes
+
+- update bindings
+
 ## 0.31.0
 
 ### Minor Changes

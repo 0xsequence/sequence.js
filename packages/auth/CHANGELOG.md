@@ -1,5 +1,12 @@
 # @0xsequence/auth
 
+## 0.33.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/api@0.33.1
+
 ## 0.33.0
 
 ### Minor Changes
