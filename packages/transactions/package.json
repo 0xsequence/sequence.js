@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/transactions",
-  "version": "0.31.0",
+  "version": "0.33.2",
   "description": "transactions sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/transactions",
   "source": "src/index.ts",

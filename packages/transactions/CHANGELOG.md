@@ -1,5 +1,11 @@
 # @0xsequence/transactions
 
+## 0.33.2
+
+### Patch Changes
+
+- transactions: fix incorrect nonce comparison
+
 ## 0.31.0
 
 ### Minor Changes

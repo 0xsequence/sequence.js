@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/relayer",
-  "version": "0.31.1",
+  "version": "0.33.2",
   "description": "relayer sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/relayer",
   "source": "src/index.ts",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@0xsequence/abi": "^0.31.0",
     "@0xsequence/config": "^0.31.0",
-    "@0xsequence/transactions": "^0.31.0",
+    "@0xsequence/transactions": "^0.33.2",
     "@0xsequence/utils": "^0.31.0",
     "@ethersproject/providers": "^5.5.0",
     "ethers": "^5.5.1",

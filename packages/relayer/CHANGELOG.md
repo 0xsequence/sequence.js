@@ -1,5 +1,12 @@
 # @0xsequence/relayer
 
+## 0.33.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/transactions@0.33.2
+
 ## 0.31.1
 
 ### Patch Changes
