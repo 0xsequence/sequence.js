@@ -118,7 +118,9 @@ export function readSequenceNonce(...txs: Transaction[]): BigNumberish | undefin
   if (!sample) {
     return undefined
   }
-  if (txs.find(t => t.nonce !== undefined && t.nonce !== sample.nonce)) {
+  const sampleNonce = ethers.BigNumber.from(sample.nonce)
+
+  if (txs.find(t => t.nonce !== undefined && !ethers.BigNumber.from(t.nonce).eq(sampleNonce))) {
     throw new Error('Mixed nonces on Sequence transactions')
   }
 
