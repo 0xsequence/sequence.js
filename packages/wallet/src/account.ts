@@ -307,9 +307,38 @@ export class Account extends Signer {
     return this.sendTransaction(transactions, chainId, allSigners, callback)
   }
 
-  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
+  async signTransactions(dtransactionish: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
+    const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
-    return wallet.signTransactions(txs, chainId, allSigners)
+
+    // TODO: Skip this step if wallet is authWallet
+    const [thisConfig, lastConfig] = await Promise.all([this.currentConfig(wallet), this.currentConfig()])
+
+    // See if wallet has enough signer power
+    const weight = await wallet.useConfig(thisConfig!).signWeight()
+    if (weight.lt(thisConfig!.threshold) && allSigners) {
+      throw new NotEnoughSigners(
+        `sendTransaction(), wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
+      )
+    }
+
+    // If the wallet is updated, just sign as-is
+    if (isConfigEqual(lastConfig!, thisConfig!)) {
+      return wallet.useConfig(lastConfig!).signTransactions(transaction)
+    }
+
+    // Bundle with configuration update
+    const transactionParts = (() => {
+      if (Array.isArray(transaction)) {
+        return transaction
+      } else {
+        return [transaction]
+      }
+    })()
+
+    return wallet.useConfig(thisConfig!).signTransactions(
+      [...(await wallet.buildUpdateConfigTransaction(lastConfig!, false)), ...transactionParts]
+    )
   }
 
   async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
