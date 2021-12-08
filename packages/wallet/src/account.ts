@@ -1,10 +1,10 @@
 import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
-import { Signer as AbstractSigner, ethers, BytesLike } from 'ethers'
+import { Signer as AbstractSigner, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
-import { SignedTransactions, Transactionish, Transaction } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
+import { SignedTransactions, Transactionish, Transaction, computeMetaTxnHash } from '@0xsequence/transactions'
+import { WalletConfig, WalletState, addressOf, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import {
   ChainIdLike,
   Networks,
@@ -260,42 +260,16 @@ export class Account extends Signer {
     allSigners: boolean = true,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
+    const signedTxs = await this.signTransactions(dtransactionish, chainId, allSigners)
+
+    if (callback) {
+      const address = addressOf(signedTxs.config, signedTxs.context)
+      const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
+      callback(signedTxs, metaTxnHash)
+    }
+
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
-
-    // TODO: Skip this step if wallet is authWallet
-    const [thisConfig, lastConfig] = await Promise.all([this.currentConfig(wallet), this.currentConfig()])
-
-    // See if wallet has enough signer power
-    const weight = await wallet.useConfig(thisConfig!).signWeight()
-    if (weight.lt(thisConfig!.threshold) && allSigners) {
-      throw new NotEnoughSigners(
-        `sendTransaction(), wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
-      )
-    }
-
-    // If the wallet is updated, procede to transaction send
-    if (isConfigEqual(lastConfig!, thisConfig!)) {
-      return wallet.useConfig(lastConfig!).sendTransaction(transaction, undefined, undefined, callback)
-    }
-
-    // Bundle with configuration update
-    const transactionParts = (() => {
-      if (Array.isArray(transaction)) {
-        return transaction
-      } else {
-        return [transaction]
-      }
-    })()
-
-    return wallet
-      .useConfig(thisConfig!)
-      .sendTransaction(
-        [...(await wallet.buildUpdateConfigTransaction(lastConfig!, false)), ...transactionParts],
-        undefined,
-        undefined,
-        callback
-      )
+    return wallet.sendSignedTransactions(signedTxs, chainId)
   }
 
   async sendTransactionBatch(
