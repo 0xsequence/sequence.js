@@ -1,5 +1,14 @@
 # 0xsequence
 
+## 0.31.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/wallet@0.33.3
+  - @0xsequence/auth@0.33.3
+  - @0xsequence/provider@0.33.3
+
 ## 0.31.5
 
 ### Patch Changes

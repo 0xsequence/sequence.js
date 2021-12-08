@@ -1,5 +1,11 @@
 # @0xsequence/wallet
 
+## 0.33.3
+
+### Patch Changes
+
+- wallet: fix Account.signTransactions
+
 ## 0.33.2
 
 ### Patch Changes
