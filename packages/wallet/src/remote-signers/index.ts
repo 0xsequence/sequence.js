@@ -1,3 +1,5 @@
 export { RemoteSigner } from './remote-signer'
+export { CallbackRemoteSigner } from './callback-remote-signer'
+export type { SignCallback } from './callback-remote-signer'
 export { GuardRemoteSigner } from './guard-remote-signer'
 export { LocalRemoteSigner } from './local-remote-signer'

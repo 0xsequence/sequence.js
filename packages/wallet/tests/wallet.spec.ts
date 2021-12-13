@@ -8,7 +8,7 @@ import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transaction
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext, Networks } from '@0xsequence/network'
+import { ChainIdLike, WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
@@ -19,12 +19,14 @@ import { configureLogger, encodeTypedDataDigest } from '@0xsequence/utils'
 import * as lib from '../src'
 
 import {
+  CallbackRemoteSigner,
   isValidSignature,
   isValidEthSignSignature,
   isValidSequenceUndeployedWalletSignature,
   fetchImageHash,
   isValidContractWalletSignature,
-  RemoteSigner
+  RemoteSigner,
+  SignCallback
 } from '../src'
 
 import { LocalWeb3Provider } from '../../provider/src'
@@ -190,6 +192,31 @@ describe('Wallet integration', function () {
 
         const digestChk2 = ethers.utils.hexlify(encodeTypedDataDigest(typedData))
         expect(digestChk2).to.equal(digest)
+      })
+
+      it('Should be able to sign with a callback', async () => {
+        let wasCalledBack = false
+        const { address, callback } = (() => {
+          const wallet = ethers.Wallet.createRandom()
+          const callback: SignCallback = (message, data, chainId) => {
+            wasCalledBack = true
+            return wallet.signMessage(message)
+          }
+          return { address: wallet.address, callback }
+        })()
+
+        const signer = new CallbackRemoteSigner(address, callback)
+        const wallet = (await lib.Wallet.singleOwner(signer)).connect(ethnode.provider, relayer)
+        const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
+        const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+        const signature = await wallet.signMessage(message)
+        expect(wasCalledBack).to.be.true
+
+        // Contract wallet must be deployed before calling ERC1271
+        await relayer.deployWallet(wallet.config, context)
+
+        const call = isValidSignature(wallet.address, digest, signature)
+        await expect(call).to.be.fulfilled
       })
 
       it('Should sign a typed message', async () => {
