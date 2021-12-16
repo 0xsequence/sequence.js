@@ -283,7 +283,7 @@ describe('Signature tools', function () {
       expect((stub.signers.find((s) => isDecodedFullSigner(s)) as any).address).to.equal(signer3)
       expect(stub.signers.find((s) => isDecodedAddress(s)).weight).to.equal(2)
       expect((stub.signers.find((s) => isDecodedFullSigner(s)) as any).signature.length).to.equal(
-        encodeSignature({
+        (encodeSignature({
           threshold: 2,
           signers: [
             {
@@ -291,17 +291,15 @@ describe('Signature tools', function () {
               weight: 1,
             },
             {
-              address: ethers.Wallet.createRandom().address,
               weight: 1,
               signature: stubSig,
             },
             {
-              address: ethers.Wallet.createRandom().address,
               weight: 1,
               signature: stubSig
             }
           ]
-        }).length
+        }) + '03').length
       )
     })
   })

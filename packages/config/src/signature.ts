@@ -155,6 +155,7 @@ export const decodeSignature = (signature: string | DecodedSignature): DecodedSi
 
 const SIG_TYPE_EIP712 = 1
 const SIG_TYPE_ETH_SIGN = 2
+const SIG_TYPE_WALLET_BYTES32 = 3
 
 export const splitDecodedEOASigner = (sig: DecodedEOASigner): DecodedEOASplitSigner => {
   const signature = ethers.utils.arrayify(sig.signature)
@@ -369,17 +370,15 @@ export async function buildStubSignature(
               weight: 1,
             },
             {
-              address: ethers.Wallet.createRandom().address,
               weight: 1,
               signature: stubSig,
             },
             {
-              address: ethers.Wallet.createRandom().address,
               weight: 1,
               signature: stubSig
             }
           ]
-        })
+        }) + ethers.utils.hexlify(SIG_TYPE_WALLET_BYTES32).substring(2)
       }
     })
   }
