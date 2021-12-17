@@ -284,15 +284,11 @@ describe('Signature tools', function () {
       expect(stub.signers.find((s) => isDecodedAddress(s)).weight).to.equal(2)
       expect((stub.signers.find((s) => isDecodedFullSigner(s)) as any).signature.length).to.equal(
         (encodeSignature({
-          threshold: 2,
+          threshold: 1,
           signers: [
             {
               address: ethers.Wallet.createRandom().address,
               weight: 1,
-            },
-            {
-              weight: 1,
-              signature: stubSig,
             },
             {
               weight: 1,

@@ -363,15 +363,11 @@ export async function buildStubSignature(
         weight: s.weight,
         address: s.address,
         signature: encodeSignature({
-          threshold: 2,
+          threshold: 1,
           signers: [
             {
               address: ethers.Wallet.createRandom().address,
               weight: 1,
-            },
-            {
-              weight: 1,
-              signature: stubSig,
             },
             {
               weight: 1,
