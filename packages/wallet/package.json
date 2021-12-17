@@ -26,13 +26,13 @@
     "@0xsequence/utils": "^0.31.0",
     "@ethersproject/abi": "^5.5.0",
     "@ethersproject/properties": "^5.5.0",
-    "@ethersproject/providers": "^5.5.0",
-    "ethers": "^5.5.1",
+    "@ethersproject/providers": "^5.5.1",
+    "ethers": "^5.5.2",
     "fetch-ponyfill": "^7.1.0"
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "1.9.5",
+    "@0xsequence/wallet-contracts": "1.9.6",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ganache-core": "^2.13.2",
     "web3": "^1.5.1",

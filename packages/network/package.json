@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@0xsequence/utils": "^0.31.0",
-    "@ethersproject/providers": "^5.5.0",
-    "ethers": "^5.5.1"
+    "@ethersproject/providers": "^5.5.1",
+    "ethers": "^5.5.2"
   },
   "peerDependencies": {},
   "devDependencies": {},

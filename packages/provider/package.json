@@ -22,9 +22,9 @@
     "@0xsequence/wallet": "^0.33.3",
     "@ethersproject/abstract-signer": "^5.5.0",
     "@ethersproject/hash": "^5.5.0",
-    "@ethersproject/providers": "^5.5.0",
-    "@ethersproject/web": "^5.5.0",
-    "ethers": "^5.5.1",
+    "@ethersproject/providers": "^5.5.1",
+    "@ethersproject/web": "^5.5.1",
+    "ethers": "^5.5.2",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill-ts": "^0.26.0"
   },
