@@ -1,5 +1,18 @@
 # @0xsequence/transactions
 
+## 0.34.0
+
+### Minor Changes
+
+- - upgrade deps
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.34.0
+  - @0xsequence/network@0.34.0
+  - @0xsequence/utils@0.34.0
+
 ## 0.33.2
 
 ### Patch Changes

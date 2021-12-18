@@ -1,5 +1,18 @@
 # @0xsequence/config
 
+## 0.34.0
+
+### Minor Changes
+
+- - upgrade deps
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.34.0
+  - @0xsequence/network@0.34.0
+  - @0xsequence/utils@0.34.0
+
 ## 0.31.0
 
 ### Minor Changes
