@@ -250,7 +250,6 @@ export class Session {
       address: this.account.address
     })
     proof.claims.app = this.name
-    proof.setIssuedAtNow()
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()

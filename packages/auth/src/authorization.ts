@@ -35,7 +35,6 @@ export const signAuthorization = async (signer: Signer, options: AuthorizationOp
   proof.claims.ogn = options.origin
 
   proof.setExpiryIn(options.expiry ? Math.max(options.expiry, 200) : DEFAULT_SESSION_EXPIRATION)
-  proof.setIssuedAtNow()
 
   const typedData = proof.messageTypedData()
   proof.signature = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
