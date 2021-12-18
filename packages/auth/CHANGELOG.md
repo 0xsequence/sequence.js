@@ -1,5 +1,11 @@
 # @0xsequence/auth
 
+## 0.34.1
+
+### Patch Changes
+
+- upgrade ethauth dep
+
 ## 0.34.0
 
 ### Minor Changes
