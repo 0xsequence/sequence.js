@@ -16,12 +16,22 @@ export const MetaTransactionsType = `tuple(
 
 export function packMetaTransactionsData(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
-  if (nonce === undefined) throw new Error("Computing hash for transactions without defined nonce")
+  if (nonce === undefined) throw new Error("Encoding transactions without defined nonce")
+  return packMetaTransactionsNonceData(nonce, ...txs)
+}
+
+export function packMetaTransactionsNonceData(nonce: BigNumberish, ...txs: Transaction[]): string {
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
 export function digestOfTransactions(...txs: Transaction[]): string {
-  return ethers.utils.keccak256(packMetaTransactionsData(...txs))
+  const nonce = readSequenceNonce(...txs)
+  if (nonce === undefined) throw new Error("Computing hash for transactions without defined nonce")
+  return digestOfTransactionsNonce(nonce, ...txs)
+}
+
+export function digestOfTransactionsNonce(nonce: BigNumberish, ...txs: Transaction[]) {
+  return ethers.utils.keccak256(packMetaTransactionsNonceData(nonce, ...txs))
 }
 
 export function computeMetaTxnHash(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {

@@ -3,7 +3,7 @@ import { Interface } from "ethers/lib/utils"
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
-import { Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
+import { SignedTransactions, Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 import { isBigNumberish, Optionals } from '@0xsequence/utils'
 import { Provider } from "@ethersproject/providers"
 
@@ -58,12 +58,8 @@ export class BaseRelayer {
     }
   }
 
-  async prepareTransactions(
-    config: WalletConfig,
-    context: WalletContext,
-    signature: string | Promise<string> | DecodedSignature | Promise<DecodedSignature>,
-    ...transactions: Transaction[]
-  ): Promise<{ to: string, data: string  }> { //, gasLimit?: ethers.BigNumberish }> {
+  async prepareSignedTransactions(signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>): Promise<{ to: string, data: string  }> {
+    const { config, context, transactions, nonce, signature } = signedTransactions
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
@@ -95,7 +91,7 @@ export class BaseRelayer {
               data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), 
                 [
                   sequenceTxAbiEncode(transactions),
-                  readSequenceNonce(...transactions),
+                  nonce,
                   await encodedSignature
                 ]
               )
@@ -109,11 +105,24 @@ export class BaseRelayer {
         data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
           [
             sequenceTxAbiEncode(transactions),
-            readSequenceNonce(...transactions),
+            nonce,
             await encodedSignature
           ]
         )
       }
     }
+  }
+
+  async prepareTransactions(
+    config: WalletConfig,
+    context: WalletContext,
+    signature: string | Promise<string> | DecodedSignature | Promise<DecodedSignature>,
+    ...transactions: Transaction[]
+  ): Promise<{ to: string, data: string  }> { //, gasLimit?: ethers.BigNumberish }> {
+    const nonce = readSequenceNonce(...transactions)
+    if (!nonce) {
+      throw new Error('Unable to prepare transactions without a defined nonce')
+    }
+    return this.prepareSignedTransactions({ config, context, transactions, nonce, signature })
   }
 }
