@@ -254,7 +254,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // note: message from json-rpc input is in hex format
           let message: any
 
-          // there is difference is the order of the params:
+          // there is a difference in the order of the params:
           // personal_sign: [data, address]
           // eth_sign: [address, data]
           if (request.method === 'personal_sign') {
