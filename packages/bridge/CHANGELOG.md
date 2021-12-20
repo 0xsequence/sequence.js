@@ -1,5 +1,16 @@
 # @0xsequence/bridge
 
+## 0.34.0
+
+### Minor Changes
+
+- - upgrade deps
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/network@0.34.0
+
 ## 0.32.0
 
 ### Minor Changes

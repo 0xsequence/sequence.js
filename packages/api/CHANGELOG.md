@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.34.0
+
+### Minor Changes
+
+- - upgrade deps
+
 ## 0.33.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/utils",
-  "version": "0.31.0",
+  "version": "0.34.0",
   "description": "utils sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/utils",
   "source": "src/index.ts",
@@ -16,7 +16,7 @@
   "dependencies": {
     "@ethersproject/abstract-signer": "^5.5.0",
     "@ethersproject/properties": "^5.5.0",
-    "ethers": "^5.5.1",
+    "ethers": "^5.5.2",
     "js-base64": "^3.7.2"
   },
   "peerDependencies": {},

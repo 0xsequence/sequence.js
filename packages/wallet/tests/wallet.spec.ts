@@ -1498,7 +1498,6 @@ describe('Wallet integration', function () {
         address: wallet.address
       })
 
-      proof.setIssuedAtNow()
       proof.setExpiryIn(3e7) // 1 year
       proof.claims.app = 'SkyWeaver'
   

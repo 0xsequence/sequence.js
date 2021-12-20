@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/multicall",
-  "version": "0.31.0",
+  "version": "0.34.0",
   "description": "multicall sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/multicall",
   "source": "src/index.ts",
@@ -13,14 +13,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.31.0",
-    "@0xsequence/network": "^0.31.0",
-    "@0xsequence/utils": "^0.31.0",
-    "@ethersproject/providers": "^5.5.0",
-    "ethers": "^5.5.1"
+    "@0xsequence/abi": "^0.34.0",
+    "@0xsequence/network": "^0.34.0",
+    "@0xsequence/utils": "^0.34.0",
+    "@ethersproject/providers": "^5.5.1",
+    "ethers": "^5.5.2"
   },
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "1.9.5",
+    "@0xsequence/wallet-contracts": "1.9.6",
     "@types/web3-provider-engine": "^14.0.1",
     "eth-json-rpc-middleware": "^8.0.0",
     "json-rpc-engine": "^6.1.0",
