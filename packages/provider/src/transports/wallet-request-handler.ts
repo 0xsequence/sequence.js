@@ -252,7 +252,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'personal_sign':
         case 'eth_sign': {
           // note: message from json-rpc input is in hex format
-          const [message, signingAddress] = request.params!
+          let message: any
+
+          // there is difference is the order of the params:
+          // personal_sign: [data, address]
+          // eth_sign: [address, data]
+          if (request.method === 'personal_sign') {
+            const [data, address] = request.params!
+            message = data
+          } else {
+            const [address, data] = request.params!
+            message = data
+          }
 
           let sig = ''
 
