@@ -1474,6 +1474,14 @@ describe('Wallet integration', function () {
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
       })      
+      it('Should be able to just deploy a new wallet and have valid signatures', async () => {
+        const pk = ethers.utils.randomBytes(32)
+        const wallet2 = (await lib.Wallet.singleOwner(pk, context)).connect(ethnode.provider, relayer)
+        const signature = await wallet2.sign(message, false, ethnode.chainId)
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.not.be.true
+        await wallet2.sendTransaction([])
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.be.true
+      })
     })
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {

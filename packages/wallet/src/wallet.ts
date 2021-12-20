@@ -23,7 +23,7 @@ import {
   makeAfterNonce,
   SignedTransactions,
   computeMetaTxnHash,
-  digestOfTransactions,
+  digestOfTransactionsNonce,
   decodeNonce
 } from '@0xsequence/transactions'
 
@@ -390,7 +390,7 @@ export class Wallet extends Signer {
     stx = appendNonce(stx, nonce)
 
     // Get transactions digest
-    const digest = digestOfTransactions(...stx)
+    const digest = digestOfTransactionsNonce(nonce, ...stx)
 
     // Bundle with signature
     return {
@@ -399,6 +399,7 @@ export class Wallet extends Signer {
       context: this.context,
       config: this.config,
       transactions: stx,
+      nonce,
       signature: await this.sign(digest, true, chainId, allSigners)
     }
   }

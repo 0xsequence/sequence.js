@@ -46,7 +46,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
-    const txRequest = await this.prepareTransactions(signedTxs.config, signedTxs.context, signedTxs.signature, ...signedTxs.transactions)
+    const txRequest = await this.prepareSignedTransactions(signedTxs)
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
