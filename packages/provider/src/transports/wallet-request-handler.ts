@@ -30,7 +30,7 @@ import { Signer } from '@0xsequence/wallet'
 import { isSignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
-import { isConfigEqual } from '@0xsequence/config'
+
 import { isWalletUpToDate } from '../utils'
 
 export interface WalletSignInOptions {
