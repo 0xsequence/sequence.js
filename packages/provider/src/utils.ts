@@ -1,9 +1,9 @@
 import { BigNumberish, BytesLike } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, DecodedSignature } from '@0xsequence/config'
+import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
 import { packMessageData } from '@0xsequence/utils'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, recoverConfig } from '@0xsequence/wallet'
+import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
 
 export const isValidSignature = async (
   address: string,
@@ -13,15 +13,15 @@ export const isValidSignature = async (
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean | undefined> => {
-  chainId = chainId || await provider.getChainId()
-  walletContext = walletContext || await provider.getSigner().getWalletContext()
+  chainId = chainId || (await provider.getChainId())
+  walletContext = walletContext || (await provider.getSigner().getWalletContext())
   return _isValidSignature(address, digest, sig, provider, walletContext, chainId)
 }
 
 export const recoverWalletConfig = async (
   address: string,
   digest: BytesLike,
-  signature: string | DecodedSignature,
+  signature: string | DecodedSignature,
   chainId: BigNumberish,
   walletContext?: WalletContext
 ): Promise<WalletConfig> => {
@@ -40,7 +40,30 @@ export const recoverWalletConfig = async (
   return config
 }
 
-export const isBrowserExtension = (): boolean => window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
+export const isBrowserExtension = (): boolean =>
+  window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
+
+export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise<boolean> => {
+  const walletState = await signer.getWalletState()
+  const networks = await signer.getNetworks()
+  if (!networks) {
+    throw new Error(`isWalletUpToDate util: could not get networks from signer`)
+  }
+  const authChain = networks.find(network => network.isAuthChain)
+  if (!authChain) {
+    throw new Error(`isWalletUpToDate util: could not get auth chain network information`)
+  }
+  const authChainId = authChain.chainId
+  const authChainConfig = walletState.find(state => state.chainId === authChainId)?.config
+  if (!authChainConfig) {
+    throw new Error(`isWalletUpToDate util: could not get auth chain config`)
+  }
+  const requiredChainConfig = walletState.find(state => state.chainId === chainId)?.config
+  if (!requiredChainConfig) {
+    throw new Error(`isWalletUpToDate util: could not get config for chainId ${chainId}`)
+  }
+  return isConfigEqual(authChainConfig, requiredChainConfig)
+}
 
 // window.localstorage helper
 export class LocalStore<T extends Object = string> {

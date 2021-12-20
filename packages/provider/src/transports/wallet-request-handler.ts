@@ -1,10 +1,8 @@
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
-  ProviderMessage,
   ProviderMessageRequest,
   ProviderMessageResponse,
-  ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   MessageToSign,
   ProviderRpcError,
@@ -18,7 +16,7 @@ import {
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
-import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 
 import {
   Networks,
@@ -28,13 +26,12 @@ import {
   JsonRpcResponseCallback,
   JsonRpcResponse
 } from '@0xsequence/network'
-
-import { Signer, Account } from '@0xsequence/wallet'
-import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
-
+import { Signer } from '@0xsequence/wallet'
+import { isSignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
-
 import { logger, TypedData } from '@0xsequence/utils'
+import { isConfigEqual } from '@0xsequence/config'
+import { isWalletUpToDate } from '../utils'
 
 export interface WalletSignInOptions {
   connect?: boolean
@@ -252,43 +249,55 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        case 'personal_sign': {
+        case 'personal_sign':
+        case 'eth_sign': {
           // note: message from json-rpc input is in hex format
           const [message, signingAddress] = request.params!
 
           let sig = ''
+
+          let isDeployed: boolean
+          let isUpToDate: boolean
+          if (chainId) {
+            // check if the wallet on required chain is deployed
+            const walletState = await signer.getWalletState()
+            const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
+            if (!walletStateForRequiredChain) {
+              throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
+            }
+            isDeployed = walletStateForRequiredChain.deployed
+            // if the wallet is deployed, check if the wallet config is up to date
+            if (isDeployed) {
+              isUpToDate = await isWalletUpToDate(signer, chainId)
+            } else {
+              isUpToDate = false
+            }
+          } else {
+            // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
+            isDeployed = true
+            isUpToDate = true
+          }
+
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
-            // prompter is null, so we'll sign from here
+            // prompter is null, so we'll sign from here if the wallet is deployed and up to date
+            if (!isDeployed) {
+              throw new Error(`WalletRequestHandler: wallet is not deployed for chainId ${chainId}`)
+            }
+            if (!isUpToDate) {
+              throw new Error(`WalletRequestHandler: wallet config is not up to date for chainId ${chainId}`)
+            }
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
-            // prompt user to provide the response
-            sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
-          }
-
-          if (sig && sig.length > 0) {
-            response.result = sig
-          } else {
-            // The user has declined the request when value is null
-            throw new Error('declined by user')
-          }
-          break
-        }
-
-        case 'eth_sign': {
-          // note: message from json-rpc input is in hex format
-          const [signingAddress, message] = request.params!
-
-          let sig = ''
-          // TODO:
-          // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
-          if (this.prompter === null) {
-            // prompter is null, so we'll sign from here
-            sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
-          } else {
-            // prompt user to provide the response
-            sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
+            // check if wallet is deployed and up to date, if not, prompt user to deploy
+            let promptResultForDeployment = true
+            if (!isDeployed || !isUpToDate) {
+              promptResultForDeployment = await this.prompter.promptConfirmWalletDeploy(chainId)
+            }
+            if (promptResultForDeployment) {
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
+            }
           }
 
           if (sig && sig.length > 0) {
@@ -320,12 +329,47 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           }
 
           let sig = ''
+
+          let isDeployed: boolean
+          let isUpToDate: boolean
+          if (chainId) {
+            // check if the wallet on required chain is deployed
+            const walletState = await signer.getWalletState()
+            const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
+            if (!walletStateForRequiredChain) {
+              throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
+            }
+            isDeployed = walletStateForRequiredChain.deployed
+            // if the wallet is deployed, check if the wallet config is up to date
+            if (isDeployed) {
+              isUpToDate = await isWalletUpToDate(signer, chainId)
+            } else {
+              isUpToDate = false
+            }
+          } else {
+            // if no chainId is provided, we'll assume the wallet is auth chain wallet
+            isDeployed = true
+            isUpToDate = true
+          }
+
           if (this.prompter === null) {
-            // prompter is null, so we'll sign from here
+            // prompter is null, so we'll sign from here if the wallet is deployed and up to date
+            if (!isDeployed) {
+              throw new Error(`WalletRequestHandler: wallet is not deployed for chainId ${chainId}`)
+            }
+            if (!isUpToDate) {
+              throw new Error(`WalletRequestHandler: wallet config is not up to date for chainId ${chainId}`)
+            }
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
-            // prompt user to provide the response
-            sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
+            // check if wallet is deployed and up to date, if not, prompt user to deploy
+            let promptResultForDeployment = true
+            if (!isDeployed || !isUpToDate) {
+              promptResultForDeployment = await this.prompter.promptConfirmWalletDeploy(chainId)
+            }
+            if (promptResultForDeployment) {
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
+            }
           }
 
           if (sig && sig.length > 0) {
@@ -701,6 +745,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
+  promptConfirmWalletDeploy(chainId?: number): Promise<boolean>
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
