@@ -271,12 +271,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let isUpToDate: boolean
           if (chainId) {
             // check if the wallet on required chain is deployed
-            const walletState = await signer.getWalletState()
-            const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
-            if (!walletStateForRequiredChain) {
-              throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
-            }
-            isDeployed = walletStateForRequiredChain.deployed
+            isDeployed = await this.isWalletDeployed(signer, chainId)
             // if the wallet is deployed, check if the wallet config is up to date
             if (isDeployed) {
               isUpToDate = await isWalletUpToDate(signer, chainId)
@@ -304,7 +299,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // check if wallet is deployed and up to date, if not, prompt user to deploy
             let promptResultForDeployment = true
             if (!isDeployed || !isUpToDate) {
-              promptResultForDeployment = await this.prompter.promptConfirmWalletDeploy(chainId)
+              const promptResult = await this.prompter.promptConfirmWalletDeploy(chainId)
+              // if client returned true, check again to make sure wallet is deployed and up to date
+              if (promptResult) {
+                const isPromptResultCorrect =
+                  (await this.isWalletDeployed(signer, chainId!)) && (await isWalletUpToDate(signer, chainId!))
+                if (!isPromptResultCorrect) {
+                  promptResultForDeployment = false
+                  throw new Error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
+                } else {
+                  promptResultForDeployment = true
+                }
+              }
             }
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
@@ -345,12 +351,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let isUpToDate: boolean
           if (chainId) {
             // check if the wallet on required chain is deployed
-            const walletState = await signer.getWalletState()
-            const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
-            if (!walletStateForRequiredChain) {
-              throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
-            }
-            isDeployed = walletStateForRequiredChain.deployed
+            isDeployed = await this.isWalletDeployed(signer, chainId)
             // if the wallet is deployed, check if the wallet config is up to date
             if (isDeployed) {
               isUpToDate = await isWalletUpToDate(signer, chainId)
@@ -376,7 +377,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // check if wallet is deployed and up to date, if not, prompt user to deploy
             let promptResultForDeployment = true
             if (!isDeployed || !isUpToDate) {
-              promptResultForDeployment = await this.prompter.promptConfirmWalletDeploy(chainId)
+              const promptResult = await this.prompter.promptConfirmWalletDeploy(chainId)
+              // if client returned true, check again to make sure wallet is deployed and up to date
+              if (promptResult) {
+                const isPromptResultCorrect =
+                  (await this.isWalletDeployed(signer, chainId!)) && (await isWalletUpToDate(signer, chainId!))
+                if (!isPromptResultCorrect) {
+                  promptResultForDeployment = false
+                  throw new Error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
+                } else {
+                  promptResultForDeployment = true
+                }
+              }
             }
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
@@ -752,6 +764,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   setSigner(signer: Signer | null) {
     this.signer = signer
+  }
+
+  private async isWalletDeployed(signer: Signer, chainId: number): Promise<boolean> {
+    const walletState = await signer.getWalletState()
+    const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
+    if (!walletStateForRequiredChain) {
+      throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
+    }
+    return walletStateForRequiredChain.deployed
   }
 }
 
