@@ -58,7 +58,9 @@ export class BaseRelayer {
     }
   }
 
-  async prepareSignedTransactions(signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>): Promise<{ to: string, data: string  }> {
+  async prepareSignedTransactions(
+    signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>
+  ): Promise<{ to: string, data: string  }> {
     const { config, context, transactions, nonce, signature } = signedTransactions
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
