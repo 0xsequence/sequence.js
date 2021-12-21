@@ -273,39 +273,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
-            // check if wallet is deployed and up to date, if not, prompt user to deploy
-            let isDeployed: boolean
-            let isUpToDate: boolean
-            if (chainId) {
-              // check if the wallet on required chain is deployed
-              isDeployed = await this.isWalletDeployed(signer, chainId)
-              // if the wallet is deployed, check if the wallet config is up to date
-              if (isDeployed) {
-                isUpToDate = await isWalletUpToDate(signer, chainId)
-              } else {
-                isUpToDate = false
-              }
-            } else {
-              // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
-              isDeployed = true
-              isUpToDate = true
-            }
-
-            let promptResultForDeployment = true
-            if (!isDeployed || !isUpToDate) {
-              const promptResult = await this.prompter.promptConfirmWalletDeploy(chainId)
-              // if client returned true, check again to make sure wallet is deployed and up to date
-              if (promptResult) {
-                const isPromptResultCorrect =
-                  (await this.isWalletDeployed(signer, chainId!)) && (await isWalletUpToDate(signer, chainId!))
-                if (!isPromptResultCorrect) {
-                  promptResultForDeployment = false
-                  throw new Error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
-                } else {
-                  promptResultForDeployment = true
-                }
-              }
-            }
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
             }
@@ -345,39 +313,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
-            // check if wallet is deployed and up to date, if not, prompt user to deploy
-            let isDeployed: boolean
-            let isUpToDate: boolean
-            if (chainId) {
-              // check if the wallet on required chain is deployed
-              isDeployed = await this.isWalletDeployed(signer, chainId)
-              // if the wallet is deployed, check if the wallet config is up to date
-              if (isDeployed) {
-                isUpToDate = await isWalletUpToDate(signer, chainId)
-              } else {
-                isUpToDate = false
-              }
-            } else {
-              // if no chainId is provided, we'll assume the wallet is auth chain wallet
-              isDeployed = true
-              isUpToDate = true
-            }
-
-            let promptResultForDeployment = true
-            if (!isDeployed || !isUpToDate) {
-              const promptResult = await this.prompter.promptConfirmWalletDeploy(chainId)
-              // if client returned true, check again to make sure wallet is deployed and up to date
-              if (promptResult) {
-                const isPromptResultCorrect =
-                  (await this.isWalletDeployed(signer, chainId!)) && (await isWalletUpToDate(signer, chainId!))
-                if (!isPromptResultCorrect) {
-                  promptResultForDeployment = false
-                  throw new Error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
-                } else {
-                  promptResultForDeployment = true
-                }
-              }
-            }
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
             }
@@ -754,18 +690,37 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.signer = signer
   }
 
-  private async isWalletDeployed(signer: Signer, chainId: number): Promise<boolean> {
-    const walletState = await signer.getWalletState()
-    const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
-    if (!walletStateForRequiredChain) {
-      throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
+  private async handleConfirmWalletDeployPrompt(
+    prompter: WalletUserPrompter,
+    signer: Signer,
+    chainId?: number
+  ): Promise<boolean> {
+    // check if wallet is deployed and up to date, if not, prompt user to deploy
+    // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
+    if (!chainId) {
+      return true
     }
-    return walletStateForRequiredChain.deployed
+    const isUpToDate = await isWalletUpToDate(signer, chainId)
+    if (isUpToDate) {
+      return true
+    }
+    const promptResult = await prompter.promptConfirmWalletDeploy(chainId)
+    // if client returned true, check again to make sure wallet is deployed and up to date
+    if (promptResult) {
+      const isPromptResultCorrect = await isWalletUpToDate(signer, chainId)
+      if (!isPromptResultCorrect) {
+        logger.error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
+        return false
+      } else {
+        return true
+      }
+    }
+    return false
   }
 }
 
 export interface WalletUserPrompter {
-  promptConfirmWalletDeploy(chainId?: number): Promise<boolean>
+  promptConfirmWalletDeploy(chainId: number): Promise<boolean>
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>

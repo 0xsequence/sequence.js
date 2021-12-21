@@ -43,9 +43,24 @@ export const recoverWalletConfig = async (
 export const isBrowserExtension = (): boolean =>
   window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
 
+/**
+ * Returns the status of a signer's wallet on given chain by checking wallet deployment and config status
+ *
+ * @param {Signer} signer
+ * @param {number} chainId
+ * @return {Promise<boolean>} Promise that returns true if the wallet is up to date, false otherwise
+ */
 export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise<boolean> => {
   const walletState = await signer.getWalletState()
   const networks = await signer.getNetworks()
+
+  const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
+  if (!walletStateForRequiredChain) {
+    throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
+  }
+
+  const isDeployed = walletStateForRequiredChain.deployed
+
   if (!networks) {
     throw new Error(`isWalletUpToDate util: could not get networks from signer`)
   }
@@ -58,11 +73,14 @@ export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise
   if (!authChainConfig) {
     throw new Error(`isWalletUpToDate util: could not get auth chain config`)
   }
-  const requiredChainConfig = walletState.find(state => state.chainId === chainId)?.config
+  const requiredChainConfig = walletStateForRequiredChain.config
   if (!requiredChainConfig) {
     throw new Error(`isWalletUpToDate util: could not get config for chainId ${chainId}`)
   }
-  return isConfigEqual(authChainConfig, requiredChainConfig)
+
+  const isUpToDate = isConfigEqual(authChainConfig, requiredChainConfig)
+
+  return isDeployed && isUpToDate
 }
 
 // window.localstorage helper
