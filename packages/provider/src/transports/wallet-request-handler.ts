@@ -1,10 +1,8 @@
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import {
-  ProviderMessage,
   ProviderMessageRequest,
   ProviderMessageResponse,
-  ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   MessageToSign,
   ProviderRpcError,
@@ -18,7 +16,7 @@ import {
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
-import { JsonRpcProvider, ExternalProvider } from '@ethersproject/providers'
+import { ExternalProvider } from '@ethersproject/providers'
 
 import {
   Networks,
@@ -28,13 +26,12 @@ import {
   JsonRpcResponseCallback,
   JsonRpcResponse
 } from '@0xsequence/network'
-
-import { Signer, Account } from '@0xsequence/wallet'
-import { isSignedTransactions, SignedTransactions, TransactionRequest } from '@0xsequence/transactions'
-
+import { Signer } from '@0xsequence/wallet'
+import { isSignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
-
 import { logger, TypedData } from '@0xsequence/utils'
+
+import { isWalletUpToDate } from '../utils'
 
 export interface WalletSignInOptions {
   connect?: boolean
@@ -252,43 +249,34 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
-        case 'personal_sign': {
-          // note: message from json-rpc input is in hex format
-          const [message, signingAddress] = request.params!
-
-          let sig = ''
-          // TODO:
-          // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
-          if (this.prompter === null) {
-            // prompter is null, so we'll sign from here
-            sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
-          } else {
-            // prompt user to provide the response
-            sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
-          }
-
-          if (sig && sig.length > 0) {
-            response.result = sig
-          } else {
-            // The user has declined the request when value is null
-            throw new Error('declined by user')
-          }
-          break
-        }
-
+        case 'personal_sign':
         case 'eth_sign': {
           // note: message from json-rpc input is in hex format
-          const [signingAddress, message] = request.params!
+          let message: any
+
+          // there is a difference in the order of the params:
+          // personal_sign: [data, address]
+          // eth_sign: [address, data]
+          if (request.method === 'personal_sign') {
+            const [data, address] = request.params!
+            message = data
+          } else {
+            const [address, data] = request.params!
+            message = data
+          }
 
           let sig = ''
+
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
-            // prompt user to provide the response
-            sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
+            if (promptResultForDeployment) {
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
+            }
           }
 
           if (sig && sig.length > 0) {
@@ -320,12 +308,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           }
 
           let sig = ''
+
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
-            // prompt user to provide the response
-            sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
+            if (promptResultForDeployment) {
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
+            }
           }
 
           if (sig && sig.length > 0) {
@@ -698,9 +689,38 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   setSigner(signer: Signer | null) {
     this.signer = signer
   }
+
+  private async handleConfirmWalletDeployPrompt(
+    prompter: WalletUserPrompter,
+    signer: Signer,
+    chainId?: number
+  ): Promise<boolean> {
+    // check if wallet is deployed and up to date, if not, prompt user to deploy
+    // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
+    if (!chainId) {
+      return true
+    }
+    const isUpToDate = await isWalletUpToDate(signer, chainId)
+    if (isUpToDate) {
+      return true
+    }
+    const promptResult = await prompter.promptConfirmWalletDeploy(chainId)
+    // if client returned true, check again to make sure wallet is deployed and up to date
+    if (promptResult) {
+      const isPromptResultCorrect = await isWalletUpToDate(signer, chainId)
+      if (!isPromptResultCorrect) {
+        logger.error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
+        return false
+      } else {
+        return true
+      }
+    }
+    return false
+  }
 }
 
 export interface WalletUserPrompter {
+  promptConfirmWalletDeploy(chainId: number): Promise<boolean>
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
