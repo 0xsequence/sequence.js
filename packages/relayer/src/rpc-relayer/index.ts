@@ -165,12 +165,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     }
 
     const addr = addressOf(signedTxs.config, signedTxs.context)
-    const prep = await this.prepareTransactions(
-      signedTxs.config,
-      signedTxs.context,
-      signedTxs.signature,
-      ...signedTxs.transactions
-    )
+    const prep = await this.prepareSignedTransactions(signedTxs)
     const metaTxn = await this.service.sendMetaTxn({
       call: {
         contract: prep.to,

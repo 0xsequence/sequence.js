@@ -43,8 +43,9 @@ export type SignedTransactions = {
   chainId: BigNumberish,
   config: WalletConfig,
   context: WalletContext,
-  signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>,
-  transactions: Transaction[]
+  transactions: Transaction[],
+  nonce: BigNumberish,
+  signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>
 }
 
 export type { TransactionResponse }
