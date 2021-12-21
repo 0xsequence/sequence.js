@@ -267,36 +267,30 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           let sig = ''
 
-          let isDeployed: boolean
-          let isUpToDate: boolean
-          if (chainId) {
-            // check if the wallet on required chain is deployed
-            isDeployed = await this.isWalletDeployed(signer, chainId)
-            // if the wallet is deployed, check if the wallet config is up to date
-            if (isDeployed) {
-              isUpToDate = await isWalletUpToDate(signer, chainId)
-            } else {
-              isUpToDate = false
-            }
-          } else {
-            // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
-            isDeployed = true
-            isUpToDate = true
-          }
-
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
-            // prompter is null, so we'll sign from here if the wallet is deployed and up to date
-            if (!isDeployed) {
-              throw new Error(`WalletRequestHandler: wallet is not deployed for chainId ${chainId}`)
-            }
-            if (!isUpToDate) {
-              throw new Error(`WalletRequestHandler: wallet config is not up to date for chainId ${chainId}`)
-            }
+            // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
             // check if wallet is deployed and up to date, if not, prompt user to deploy
+            let isDeployed: boolean
+            let isUpToDate: boolean
+            if (chainId) {
+              // check if the wallet on required chain is deployed
+              isDeployed = await this.isWalletDeployed(signer, chainId)
+              // if the wallet is deployed, check if the wallet config is up to date
+              if (isDeployed) {
+                isUpToDate = await isWalletUpToDate(signer, chainId)
+              } else {
+                isUpToDate = false
+              }
+            } else {
+              // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
+              isDeployed = true
+              isUpToDate = true
+            }
+
             let promptResultForDeployment = true
             if (!isDeployed || !isUpToDate) {
               const promptResult = await this.prompter.promptConfirmWalletDeploy(chainId)
@@ -347,34 +341,28 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           let sig = ''
 
-          let isDeployed: boolean
-          let isUpToDate: boolean
-          if (chainId) {
-            // check if the wallet on required chain is deployed
-            isDeployed = await this.isWalletDeployed(signer, chainId)
-            // if the wallet is deployed, check if the wallet config is up to date
-            if (isDeployed) {
-              isUpToDate = await isWalletUpToDate(signer, chainId)
-            } else {
-              isUpToDate = false
-            }
-          } else {
-            // if no chainId is provided, we'll assume the wallet is auth chain wallet
-            isDeployed = true
-            isUpToDate = true
-          }
-
           if (this.prompter === null) {
-            // prompter is null, so we'll sign from here if the wallet is deployed and up to date
-            if (!isDeployed) {
-              throw new Error(`WalletRequestHandler: wallet is not deployed for chainId ${chainId}`)
-            }
-            if (!isUpToDate) {
-              throw new Error(`WalletRequestHandler: wallet config is not up to date for chainId ${chainId}`)
-            }
+            // prompter is null, so we'll sign from here
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
             // check if wallet is deployed and up to date, if not, prompt user to deploy
+            let isDeployed: boolean
+            let isUpToDate: boolean
+            if (chainId) {
+              // check if the wallet on required chain is deployed
+              isDeployed = await this.isWalletDeployed(signer, chainId)
+              // if the wallet is deployed, check if the wallet config is up to date
+              if (isDeployed) {
+                isUpToDate = await isWalletUpToDate(signer, chainId)
+              } else {
+                isUpToDate = false
+              }
+            } else {
+              // if no chainId is provided, we'll assume the wallet is auth chain wallet
+              isDeployed = true
+              isUpToDate = true
+            }
+
             let promptResultForDeployment = true
             if (!isDeployed || !isUpToDate) {
               const promptResult = await this.prompter.promptConfirmWalletDeploy(chainId)
