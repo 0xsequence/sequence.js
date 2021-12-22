@@ -1,5 +1,26 @@
 # @0xsequence/transactions
 
+## 0.35.0
+
+### Minor Changes
+
+- - config: add buildStubSignature
+  - provider: add checks to signing cases for wallet deployment and config statuses
+  - provider: add prompt for wallet deployment
+  - relayer: add BaseRelayer.prependWalletDeploy
+  - relayer: add Relayer.feeOptions
+  - relayer: account for wallet deployment in fee estimation
+  - transactions: add fromTransactionish
+  - wallet: add Account.prependConfigUpdate
+  - wallet: add Account.getFeeOptions
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.35.0
+  - @0xsequence/network@0.35.0
+  - @0xsequence/utils@0.35.0
+
 ## 0.34.0
 
 ### Minor Changes
