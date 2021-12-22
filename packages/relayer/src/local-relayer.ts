@@ -1,6 +1,7 @@
 import { TransactionResponse } from '@ethersproject/providers'
 import { Signer as AbstractSigner, ethers } from 'ethers'
-import { SignedTransactions, Transaction } from '@0xsequence/transactions'
+import { walletContracts } from '@0xsequence/abi'
+import { SignedTransactions, Transaction, sequenceTxAbiEncode } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { FeeOption, Relayer } from '.'
@@ -46,13 +47,20 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
-    const txRequest = await this.prepareSignedTransactions(signedTxs)
+    const { to, execute } = await this.prepareSignedTransactions(signedTxs)
+
+    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+      sequenceTxAbiEncode(execute.transactions),
+      execute.nonce,
+      execute.signature
+    ])
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
     // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
     // txRequest.gasLimit = gasLimit
 
-    return this.signer.sendTransaction(txRequest)
+    return this.signer.sendTransaction({ to, data })
   }
 }
