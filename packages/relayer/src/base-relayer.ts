@@ -58,7 +58,7 @@ export class BaseRelayer {
     }
   }
 
-  async prepareSignedTransactions(
+  async prependWalletDeploy(
     signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>
   ): Promise<{ to: string, execute: { transactions: Transaction[], nonce: ethers.BigNumber, signature: string } }> {
     const { config, context, transactions, nonce, signature } = signedTransactions
@@ -125,7 +125,7 @@ export class BaseRelayer {
     if (!nonce) {
       throw new Error('Unable to prepare transactions without a defined nonce')
     }
-    const { to, execute } = await this.prepareSignedTransactions({ config, context, transactions, nonce, signature })
+    const { to, execute } = await this.prependWalletDeploy({ config, context, transactions, nonce, signature })
     const walletInterface = new Interface(walletContracts.mainModule.abi)
     return {
       to, data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [

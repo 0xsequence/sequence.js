@@ -47,7 +47,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }
 
-    const { to, execute } = await this.prepareSignedTransactions(signedTxs)
+    const { to, execute } = await this.prependWalletDeploy(signedTxs)
 
     const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [

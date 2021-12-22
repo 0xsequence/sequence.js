@@ -135,7 +135,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         throw new Error('provider is not set')
       }
 
-      const { to, execute } = await this.prepareSignedTransactions({
+      const { to, execute } = await this.prependWalletDeploy({
         config,
         context,
         transactions,
@@ -179,7 +179,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       throw new Error('provider is not set')
     }
 
-    const { to: contract, execute } = await this.prepareSignedTransactions(signedTxs)
+    const { to: contract, execute } = await this.prependWalletDeploy(signedTxs)
 
     const walletAddress = addressOf(signedTxs.config, signedTxs.context)
     const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
