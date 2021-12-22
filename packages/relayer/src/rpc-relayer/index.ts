@@ -1,6 +1,7 @@
 import { TransactionResponse } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
+import { walletContracts } from '@0xsequence/abi'
 import {
   Transaction,
   readSequenceNonce,
@@ -134,13 +135,20 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         throw new Error('provider is not set')
       }
 
-      const { to, data } = await this.prepareSignedTransactions({
+      const { to, execute } = await this.prepareSignedTransactions({
         config,
         context,
         transactions,
         nonce,
         signature: buildStubSignature(this.provider, config)
       })
+
+      const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+      const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+        sequenceTxAbiEncode(execute.transactions),
+        execute.nonce,
+        execute.signature
+      ])
 
       const { options } = await this.service.feeOptions({ wallet, to, data })
 
@@ -171,15 +179,17 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       throw new Error('provider is not set')
     }
 
-    const addr = addressOf(signedTxs.config, signedTxs.context)
-    const prep = await this.prepareSignedTransactions(signedTxs)
-    const metaTxn = await this.service.sendMetaTxn({
-      call: {
-        contract: prep.to,
-        input: prep.data,
-        walletAddress: addr
-      }
-    })
+    const { to: contract, execute } = await this.prepareSignedTransactions(signedTxs)
+
+    const walletAddress = addressOf(signedTxs.config, signedTxs.context)
+    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+      sequenceTxAbiEncode(execute.transactions),
+      execute.nonce,
+      execute.signature
+    ])
+
+    const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input } })
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 

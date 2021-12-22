@@ -60,7 +60,7 @@ export class BaseRelayer {
 
   async prepareSignedTransactions(
     signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>
-  ): Promise<{ to: string, data: string  }> {
+  ): Promise<{ to: string, execute: { transactions: Transaction[], nonce: ethers.BigNumber, signature: string } }> {
     const { config, context, transactions, nonce, signature } = signedTransactions
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
@@ -75,8 +75,8 @@ export class BaseRelayer {
     if (this.bundleCreation && !(await this.isWalletDeployed(walletAddress))) {
       return {
         to: context.guestModule!,
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
-          sequenceTxAbiEncode([
+        execute: {
+          transactions: [
             {
               ...this.prepareWalletDeploy(config, context),
               delegateCall: false,
@@ -98,19 +98,19 @@ export class BaseRelayer {
                 ]
               )
             }
-          ]), 0, []
-        ])
+          ],
+          nonce: ethers.constants.Zero,
+          signature: '0x'
+        }
       }
     } else {
       return {
         to: walletAddress,
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
-          [
-            sequenceTxAbiEncode(transactions),
-            nonce,
-            await encodedSignature
-          ]
-        )
+        execute: {
+          transactions,
+          nonce: ethers.BigNumber.from(nonce),
+          signature: await encodedSignature
+        }
       }
     }
   }
@@ -125,6 +125,14 @@ export class BaseRelayer {
     if (!nonce) {
       throw new Error('Unable to prepare transactions without a defined nonce')
     }
-    return this.prepareSignedTransactions({ config, context, transactions, nonce, signature })
+    const { to, execute } = await this.prepareSignedTransactions({ config, context, transactions, nonce, signature })
+    const walletInterface = new Interface(walletContracts.mainModule.abi)
+    return {
+      to, data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+        sequenceTxAbiEncode(execute.transactions),
+        execute.nonce,
+        execute.signature
+      ])
+    }
   }
 }
