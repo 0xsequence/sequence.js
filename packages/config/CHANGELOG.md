@@ -1,5 +1,15 @@
 # @0xsequence/config
 
+## 0.35.1
+
+### Patch Changes
+
+- wallet: update config on undeployed too
+- Updated dependencies
+  - @0xsequence/abi@0.35.1
+  - @0xsequence/network@0.35.1
+  - @0xsequence/utils@0.35.1
+
 ## 0.35.0
 
 ### Minor Changes
