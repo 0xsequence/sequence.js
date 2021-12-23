@@ -329,7 +329,7 @@ export class Account extends Signer {
     }
 
     // If the wallet is updated, just sign as-is
-    if (isConfigEqual(lastConfig!, thisConfig!)) {
+    if (await wallet.isDeployed() && isConfigEqual(lastConfig!, thisConfig!)) {
       return transaction
     }
 
