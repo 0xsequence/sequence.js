@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.35.2
+
+### Patch Changes
+
+- - provider: WindowMessageHandler accept optional windowHref
+- Updated dependencies
+  - @0xsequence/abi@0.35.2
+  - @0xsequence/api@0.35.2
+  - @0xsequence/config@0.35.2
+  - @0xsequence/indexer@0.35.2
+  - @0xsequence/metadata@0.35.2
+  - @0xsequence/network@0.35.2
+  - @0xsequence/utils@0.35.2
+  - @0xsequence/wallet@0.35.2
+
 ## 0.35.1
 
 ### Patch Changes

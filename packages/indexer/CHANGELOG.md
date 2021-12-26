@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.35.2
+
+### Patch Changes
+
+- - provider: WindowMessageHandler accept optional windowHref
+
 ## 0.35.1
 
 ### Patch Changes
