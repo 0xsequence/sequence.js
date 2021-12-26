@@ -22,7 +22,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     this._init = InitState.NIL
   }
 
-  register() {
+  register(windowHref?: any) {
     const isPopup = parent.window.opener !== null
     this._isPopup = isPopup
     if (isPopup !== true) {
@@ -30,7 +30,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
 
     // record open details (sessionId + default network) from the window url
-    const { pathname, search: rawParams } = new URL(window.location.href)
+    const { pathname, search: rawParams } = new URL(windowHref || window.location.href)
 
     let session: TransportSession | null = this.getWindowTransportSession(rawParams)
 
