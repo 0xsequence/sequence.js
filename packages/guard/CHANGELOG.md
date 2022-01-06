@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.35.4
+
+### Patch Changes
+
+- - browser extension mode, center window
+
 ## 0.35.3
 
 ### Patch Changes

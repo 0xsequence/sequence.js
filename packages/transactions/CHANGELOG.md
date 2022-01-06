@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.35.4
+
+### Patch Changes
+
+- - browser extension mode, center window
+- Updated dependencies
+  - @0xsequence/abi@0.35.4
+  - @0xsequence/network@0.35.4
+  - @0xsequence/utils@0.35.4
+
 ## 0.35.3
 
 ### Patch Changes

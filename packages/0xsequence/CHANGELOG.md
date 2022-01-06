@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.35.4
+
+### Patch Changes
+
+- - browser extension mode, center window
+- Updated dependencies
+  - @0xsequence/abi@0.35.4
+  - @0xsequence/api@0.35.4
+  - @0xsequence/auth@0.35.4
+  - @0xsequence/config@0.35.4
+  - @0xsequence/guard@0.35.4
+  - @0xsequence/indexer@0.35.4
+  - @0xsequence/metadata@0.35.4
+  - @0xsequence/multicall@0.35.4
+  - @0xsequence/network@0.35.4
+  - @0xsequence/provider@0.35.4
+  - @0xsequence/relayer@0.35.4
+  - @0xsequence/transactions@0.35.4
+  - @0xsequence/utils@0.35.4
+  - @0xsequence/wallet@0.35.4
+
 ## 0.35.3
 
 ### Patch Changes
