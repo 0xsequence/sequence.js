@@ -101,11 +101,23 @@ export class WindowMessageProvider extends BaseProviderTransport {
     }
 
     // Open popup window on center of the app window
-    const windowSize = [450, 750]
-    const windowPos = [
-      Math.abs(window.screenX + window.innerWidth / 2 - windowSize[0] / 2),
-      Math.abs(window.screenY + window.innerHeight / 2 - windowSize[1] / 2)
-    ]
+    let windowSize: number[]
+    let windowPos: number[]
+
+    if (isBrowserExtension()) {
+      windowSize = [450, 750]
+      windowPos = [window.screenX, window.screenY]
+      // windowPos = [
+      //   Math.abs(window.screen.width / 2 - windowSize[0] / 2),
+      //   Math.abs(window.screen.height / 2 - windowSize[1] / 2)
+      // ]
+    } else {
+      windowSize = [450, 750]
+      windowPos = [
+        Math.abs(window.screenX + window.innerWidth / 2 - windowSize[0] / 2),
+        Math.abs(window.screenY + window.innerHeight / 2 - windowSize[1] / 2)
+      ]  
+    }
 
     const windowFeatures =
       `toolbar=0,location=0,menubar=0,scrollbars=yes,status=yes` +
