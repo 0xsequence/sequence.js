@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.35.3
+
+### Patch Changes
+
+- - update window position when in browser extension mode
+- Updated dependencies
+  - @0xsequence/abi@0.35.3
+  - @0xsequence/config@0.35.3
+  - @0xsequence/network@0.35.3
+  - @0xsequence/transactions@0.35.3
+  - @0xsequence/utils@0.35.3
+
 ## 0.35.2
 
 ### Patch Changes

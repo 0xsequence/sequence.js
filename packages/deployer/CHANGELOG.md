@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.35.3
+
+### Patch Changes
+
+- - update window position when in browser extension mode
+- Updated dependencies
+  - @0xsequence/utils@0.35.3
+
 ## 0.35.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.35.3
+
+### Patch Changes
+
+- - update window position when in browser extension mode
+
 ## 0.35.2
 
 ### Patch Changes
