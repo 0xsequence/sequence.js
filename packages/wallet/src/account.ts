@@ -262,7 +262,13 @@ export class Account extends Signer {
       throw new Error(`missing wallet context`)
     }
 
-    const [config, updatedTransaction] = await Promise.all([this.currentConfig(wallet), this.prependConfigUpdate(transaction, chainId, allSigners)])
+    const [
+      config,
+      updatedTransaction
+    ] = await Promise.all([
+      this.currentConfig(wallet),
+      this.prependConfigUpdate(transaction, chainId, allSigners, true)
+    ])
     if (!config) {
       throw new Error(`missing current config for chain ${chainId}`)
     }
@@ -313,19 +319,38 @@ export class Account extends Signer {
     return wallet.useConfig(currentConfig).signTransactions(transactions)
   }
 
-  async prependConfigUpdate(dtransactionish: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<Transactionish> {
+  async prependConfigUpdate(
+    dtransactionish: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean,
+    skipThresholdCheck?: boolean
+  ): Promise<Transactionish> {
     const transaction = await resolveArrayProperties<Transactionish>(dtransactionish)
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
 
     // TODO: Skip this step if wallet is authWallet
     const [thisConfig, lastConfig] = await Promise.all([this.currentConfig(wallet), this.currentConfig()])
 
-    // See if wallet has enough signer power
-    const weight = await wallet.useConfig(thisConfig!).signWeight()
-    if (weight.lt(thisConfig!.threshold) && allSigners) {
-      throw new NotEnoughSigners(
-        `wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
-      )
+    // We have to skip the threshold check during fee estimation because we
+    // might not have the necessary signers until the wallet actually signs the
+    // transactions.
+    //
+    // By design, the Torus login key only exists in memory in Sequence wallet
+    // and cannot generally be assumed to be available. However the Torus login
+    // key might be required in order to transact on other non-auth chains,
+    // because the wallet config might not recognize the current session's
+    // signing key. In these cases, the Torus key is retrieved when the user
+    // confirms the transaction, which happens after fee estimation. So the
+    // wallet might not meet the threshold during fee estimation despite
+    // meeting it at confirmation time.
+    if (!skipThresholdCheck) {
+      // See if wallet has enough signer power
+      const weight = await wallet.useConfig(thisConfig!).signWeight()
+      if (weight.lt(thisConfig!.threshold) && allSigners) {
+        throw new NotEnoughSigners(
+          `wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
+        )
+      }
     }
 
     // If the wallet is updated, just sign as-is
