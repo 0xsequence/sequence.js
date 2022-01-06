@@ -106,11 +106,10 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     if (isBrowserExtension()) {
       windowSize = [450, 750]
-      windowPos = [window.screenX, window.screenY]
-      // windowPos = [
-      //   Math.abs(window.screen.width / 2 - windowSize[0] / 2),
-      //   Math.abs(window.screen.height / 2 - windowSize[1] / 2)
-      // ]
+      windowPos = [
+        Math.abs(window.screen.width / 2 - windowSize[0] / 2),
+        Math.abs(window.screen.height / 2 - windowSize[1] / 2)
+      ]
     } else {
       windowSize = [450, 750]
       windowPos = [
