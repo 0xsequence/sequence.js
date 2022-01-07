@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.35.5
+
+### Patch Changes
+
+- wallet: skip threshold check during fee estimation
+- Updated dependencies
+  - @0xsequence/abi@0.35.5
+  - @0xsequence/config@0.35.5
+  - @0xsequence/network@0.35.5
+  - @0xsequence/transactions@0.35.5
+  - @0xsequence/utils@0.35.5
+
 ## 0.35.4
 
 ### Patch Changes

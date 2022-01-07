@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.35.5
+
+### Patch Changes
+
+- wallet: skip threshold check during fee estimation
+- Updated dependencies
+  - @0xsequence/network@0.35.5
+
 ## 0.35.4
 
 ### Patch Changes

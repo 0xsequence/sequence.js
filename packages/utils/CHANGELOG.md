@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.35.5
+
+### Patch Changes
+
+- wallet: skip threshold check during fee estimation
+
 ## 0.35.4
 
 ### Patch Changes
