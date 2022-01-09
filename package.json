@@ -15,7 +15,7 @@
     "lint:fix": "eslint -c .eslintrc.js --fix 'packages/**/src/**/*.{ts,tsx}'",
     "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
     "audit:fix": "npx yarn-audit-fix",
-    "typecheck": "wsrun -c typecheck",
+    "typecheck": "tsc --noEmit",
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
     "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc yarn test",
