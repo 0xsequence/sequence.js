@@ -262,6 +262,19 @@ export class Account extends Signer {
       throw new Error(`missing wallet context`)
     }
 
+    // TODO: can we avoid calling `this.currentConfig(wallet)` everytime here.. this is an expensive
+    // operations and we shouldn't be doing it so liberally. What is the minimum information we require here..?
+    // and what is the config used for, and how can we optimize..?
+
+    // TODO: prependConfigUpdate also looks like its calling currentConfig() again, so we're doubling this.
+
+    // A few thoughts.. first off, we must add some kind of memoization for this, but with great care, because
+    // the config might change. This make me think we need some king of "ConfigSource" class, or "ConfigXXX" (name?),
+    // which we can ask to give us a wallet config. This config would also be used when we update/change a config,
+    // such that it can memoize, but also since its the sole interface, it will also properly expire or update the config
+    // in cache as necessary. Further to this, I think we need to only get config details for what is required, and try
+    // to optimize by using imageHashes of the config everywhere, as this is a much more inexpensive value to fetch.
+
     const [
       config,
       updatedTransaction
