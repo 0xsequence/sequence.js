@@ -1,3 +1,4 @@
+import * as multicall from '@0xsequence/multicall'
 import { BytesLike, ethers } from "ethers"
 import { WalletConfig } from "."
 
@@ -285,16 +286,7 @@ export async function buildStubSignature(
   provider: ethers.providers.Provider,
   config: WalletConfig
 ): Promise<DecodedSignature> {
-  // TODO: this seems like a very expensive operation which will lead to a lot of calls.
-  // specifically we're calling getCode() here which will hit the node with eth_codeAt.
-  // If a wallet has many signers, this will be a lot of requests. Additionally, I'm not sure
-  // if this is the most reliable way to determine if an address is EOA of Contract, because
-  // what if that contract wallet hasn't been deployed yet..? For now I guess it's the best
-  // check we have, but I just wanted to make that note as well.
-  //
-  // My recommendation is we always assume isEOA to be true for now, as until we add social
-  // recovery, these signers will always be EOAs. But we should add a TODO (social recovery),
-  // to update once we add that into our UI.
+  const multicallProvider = new multicall.providers.MulticallProvider(provider)
 
   // Pre-load if signers are EOAs or not
   const signers = await Promise.all(
@@ -302,7 +294,7 @@ export async function buildStubSignature(
       return {
         ...s,
         index: i,
-        isEOA: ethers.utils.arrayify((await provider.getCode(s.address))).length === 0
+        isEOA: ethers.utils.arrayify((await multicallProvider.getCode(s.address))).length === 0
       }
     })
   )
