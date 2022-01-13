@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.35.5",
+    "@0xsequence/multicall": "^0.35.5",
     "@0xsequence/network": "^0.35.5",
     "@0xsequence/utils": "^0.35.5",
     "ethers": "^5.5.2"
