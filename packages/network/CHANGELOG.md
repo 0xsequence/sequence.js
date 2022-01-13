@@ -1,5 +1,29 @@
 # @0xsequence/network
 
+## 0.35.5
+
+### Patch Changes
+
+- wallet: skip threshold check during fee estimation
+- Updated dependencies
+  - @0xsequence/utils@0.35.5
+
+## 0.35.4
+
+### Patch Changes
+
+- - browser extension mode, center window
+- Updated dependencies
+  - @0xsequence/utils@0.35.4
+
+## 0.35.3
+
+### Patch Changes
+
+- - update window position when in browser extension mode
+- Updated dependencies
+  - @0xsequence/utils@0.35.3
+
 ## 0.35.2
 
 ### Patch Changes
