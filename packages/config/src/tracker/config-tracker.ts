@@ -1,3 +1,4 @@
+import { WalletContext } from '@0xsequence/network'
 import { ethers } from 'ethers'
 import { WalletConfig } from '..'
 
@@ -38,5 +39,15 @@ export abstract class ConfigTracker {
 
   saveWalletConfig: (args: {
     config: WalletConfig
+  }) => Promise<void>
+
+  imageHashOfCounterFactualWallet: (args: {
+    context: WalletContext,
+    wallet: string
+  }) => Promise<string | undefined>
+
+  saveCounterFactualWallet: (args: {
+    imageHash: string,
+    context: WalletContext
   }) => Promise<void>
 }

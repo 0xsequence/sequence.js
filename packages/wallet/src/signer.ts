@@ -24,8 +24,8 @@ export abstract class Signer extends AbstractSigner {
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   abstract getWalletContext(): Promise<WalletContext>
-  abstract getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
-  abstract getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
+  abstract getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig | undefined>
+  abstract getWalletState(chainId?: ChainIdLike): Promise<WalletState>
 
   abstract getNetworks(): Promise<NetworkConfig[]>
 
@@ -71,16 +71,6 @@ export abstract class Signer extends AbstractSigner {
   ): Promise<SignedTransactions>
   abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse>
 
-  // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
-  // newConfig argument is undefined, then it will use the existing config. Config contents will also be
-  // automatically published to the authChain when updating the config image hash.
-  abstract updateConfig(newConfig?: WalletConfig): Promise<[WalletConfig, TransactionResponse | undefined]>
-
-  // publishConfig will store the raw WalletConfig object on-chain, note: this may be expensive,
-  // and is only necessary for config data-availability, in case of Account the contents are published
-  // to the authChain.
-  abstract publishConfig(): Promise<TransactionResponse | undefined>
-
   // isDeployed ..
   abstract isDeployed(chainId?: ChainIdLike): Promise<boolean>
 }
@@ -91,8 +81,6 @@ export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer
   return (
     cand &&
-    cand.updateConfig !== undefined &&
-    cand.publishConfig !== undefined &&
     cand.getWalletContext !== undefined &&
     cand.getWalletConfig !== undefined
   )

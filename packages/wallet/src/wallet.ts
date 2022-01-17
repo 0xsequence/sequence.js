@@ -1,26 +1,16 @@
 import { Provider, TransactionResponse, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, utils } from 'ethers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { Interface } from '@ethersproject/abi'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@ethersproject/properties'
 import { ConnectionInfo } from '@ethersproject/web'
-
-import { walletContracts } from '@0xsequence/abi'
 
 import {
   Transaction,
   Transactionish,
   TransactionRequest,
-  NonceDependency,
-  isSequenceTransaction,
   readSequenceNonce,
   appendNonce,
-  hasSequenceTransactions,
-  toSequenceTransactions,
-  sequenceTxAbiEncode,
-  makeExpirable,
-  makeAfterNonce,
   SignedTransactions,
   computeMetaTxnHash,
   digestOfTransactionsNonce,
@@ -45,25 +35,18 @@ import {
   WalletState,
   addressOf,
   sortConfig,
-  compareAddr,
   imageHash,
   isUsableConfig,
   DecodedSignature,
   encodeSignature,
   joinSignatures,
   recoverEOASigner,
-  decodeSignature,
-  isDecodedFullSigner
 } from '@0xsequence/config'
 
-import { encodeTypedDataDigest, packMessageData, subDigestOf } from '@0xsequence/utils'
-
+import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 import { RemoteSigner } from './remote-signers'
-
 import { resolveArrayProperties } from './utils'
-
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
-import { fetchImageHash } from '.'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
@@ -197,16 +180,16 @@ export class Wallet extends Signer {
     return this.context
   }
 
-  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig> {
     chainId = await this.getChainIdNumber(chainId)
     const config = {
       ...this.config,
       chainId
     }
-    return [config]
+    return config
   }
 
-  async getWalletState(_?: ChainIdLike): Promise<WalletState[]> {
+  async getWalletState(_?: ChainIdLike): Promise<WalletState> {
     const [address, chainId, isDeployed] = await Promise.all([this.getAddress(), this.getChainId(), this.isDeployed()])
 
     const state: WalletState = {
@@ -216,13 +199,9 @@ export class Wallet extends Signer {
       chainId: chainId,
       deployed: isDeployed,
       imageHash: this.imageHash,
-      lastImageHash: isDeployed ? await fetchImageHash(this) : undefined
     }
 
-    // TODO: set published boolean by checking if we have the latest logs
-    // that compute to the same hash as in lastImageHash
-
-    return [state]
+    return state
   }
 
   // connected reports if json-rpc provider has been connected
@@ -526,204 +505,6 @@ export class Wallet extends Signer {
     await this.getChainIdNumber(chainId)
     const walletCode = await this.provider.getCode(this.address)
     return !!walletCode && walletCode !== '0x'
-  }
-
-  // updateConfig will build an updated config transaction and send it to the Ethereum
-  // network via the relayer. Note, the updated wallet config is stored as an image hash,
-  // unlike `publishConfig` which will store the entire WalletConfig object in logs.
-  async updateConfig(
-    config?: WalletConfig,
-    nonce?: number,
-    publish = false,
-    indexed?: boolean,
-    callback?: SignedTransactionsCallback
-  ): Promise<[WalletConfig, TransactionResponse]> {
-    if (!config) config = this.config
-
-    const [txs, n] = await Promise.all([this.buildUpdateConfigTransaction(config, publish, indexed), nonce ?? this.getNonce()])
-
-    return [{ address: this.address, ...config }, await this.sendTransaction(appendNonce(txs, n), undefined, undefined, callback)]
-  }
-
-  // publishConfig will publish the current wallet config to the network via the relayer.
-  // Publishing the config will also store the entire object of signers.
-  async publishConfig(
-    indexed?: boolean,
-    nonce?: number,
-    requireFreshSigners: string[] = [],
-    callback?: SignedTransactionsCallback
-  ): Promise<TransactionResponse> {
-    return this.sendTransaction(
-      this.config.address
-        ? this.buildPublishConfigTransaction(this.config, indexed, nonce)
-        : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners),
-      undefined,
-      undefined,
-      callback
-    )
-  }
-
-  // buildUpdateConfigTransaction creates a transaction to update the imageHash of the wallet's config
-  // on chain. Note, the transaction is not sent to the network by this method.
-  //
-  // The `publish` argument when true will also store the contents of the WalletConfig to a chain's logs.
-  async buildUpdateConfigTransaction(config: WalletConfig, publish = false, indexed?: boolean): Promise<Transaction[]> {
-    if (!this.context.nonStrict && !isUsableConfig(config)) throw new Error('wallet config is not usable (strict mode)')
-
-    const isUpgradable = await (async () => {
-      try {
-        const implementation = await this.provider.getStorageAt(
-          this.address,
-          ethers.utils.defaultAbiCoder.encode(['address'], [this.address])
-        )
-        return compareAddr(implementation, this.context.mainModuleUpgradable) === 0
-      } catch {
-        return false
-      }
-    })()
-
-    const walletInterface = new Interface(walletContracts.mainModule.abi)
-
-    // empirically, this seems to work for the tests:
-    // const gasLimit = 100000 + 1800 * config.signers.length
-    //
-    // but we're going to play it safe with this instead:
-    const gasLimit = 2 * (100000 + 1800 * config.signers.length)
-
-    const preTransaction = isUpgradable
-      ? []
-      : [
-          {
-            delegateCall: false,
-            revertOnError: true,
-            gasLimit: ethers.constants.Zero,
-            to: this.address,
-            value: ethers.constants.Zero,
-            data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
-              this.context.mainModuleUpgradable
-            ])
-          }
-        ]
-
-    const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
-
-    const transaction = {
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [imageHash(config)])
-    }
-
-    const postTransaction = publish ? await this.buildPublishConfigTransaction(config, indexed) : []
-
-    const transactions = [...preTransaction, transaction, ...postTransaction]
-
-    // If update config reguires a single transaction
-    // skip nested selfExecute bundle
-    if (transactions.length === 1) {
-      return transactions
-    }
-
-    return [
-      {
-        delegateCall: false,
-        revertOnError: false,
-        gasLimit: gasLimit,
-        to: this.address,
-        value: ethers.constants.Zero,
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [sequenceTxAbiEncode(transactions)])
-      }
-    ]
-  }
-
-  buildPublishConfigTransaction(config: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
-    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
-    return [
-      {
-        delegateCall: false,
-        revertOnError: true,
-        gasLimit: ethers.constants.Zero,
-        to: this.context.sequenceUtils!,
-        value: ethers.constants.Zero,
-        nonce: nonce,
-        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), [
-          this.address,
-          config.threshold,
-          sortConfig(config).signers.map(s => ({
-            weight: s.weight,
-            signer: s.address
-          })),
-          indexed
-        ])
-      }
-    ]
-  }
-
-  async buildPublishSignersTransaction(
-    indexed: boolean = true,
-    nonce?: number,
-    requireFreshSigners: string[] = []
-  ): Promise<Transaction[]> {
-    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
-    const requireFreshSignersInterface = new Interface(walletContracts.requireFreshSigner.abi)
-
-    const message = ethers.utils.randomBytes(32)
-
-    const signature = await this.signMessage(message, this.chainId, false)
-
-    // TODO: This is only required because RequireUtils doesn't support dynamic signatures
-    // remove this filtering of dynamic once a new version of RequireUtils is deployed
-    const decodedSignature = decodeSignature(signature)
-    const filteredSignature = encodeSignature({
-      threshold: decodedSignature.threshold,
-      signers: decodedSignature.signers.map((s, i) => {
-        if (isDecodedFullSigner(s)) {
-          const a = this.config.signers[i]
-          return {
-            weight: a.weight,
-            address: a.address
-          }
-        }
-
-        return s
-      })
-    })
-
-    const contextRequireFreshSigner = this.context.libs?.requireFreshSigner
-    if (requireFreshSigners.length > 0 && contextRequireFreshSigner === undefined) {
-      throw Error('requireFreshSigners missing library')
-    }
-
-    return [
-      ...requireFreshSigners.map(signer => ({
-        delegateCall: false,
-        revertOnError: true,
-        gasLimit: ethers.constants.Zero,
-        to: contextRequireFreshSigner!,
-        value: ethers.constants.Zero,
-        nonce: nonce,
-        data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner'), [
-          signer
-        ])
-      })),
-      {
-        delegateCall: false,
-        revertOnError: true,
-        gasLimit: ethers.constants.Zero,
-        to: this.context.sequenceUtils!,
-        value: ethers.constants.Zero,
-        nonce: nonce,
-        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), [
-          this.address,
-          ethers.utils.keccak256(message),
-          this.config.signers.length,
-          filteredSignature,
-          indexed
-        ])
-      }
-    ]
   }
 
   // getChainIdFromArgument will return the chainId of the argument, as well as ensure

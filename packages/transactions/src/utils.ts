@@ -24,6 +24,11 @@ export function packMetaTransactionsNonceData(nonce: BigNumberish, ...txs: Trans
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
+export function unpackMetaTransactionData(data: string): Transaction[] {
+  const [txs] = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], data)
+  return txs
+}
+
 export function digestOfTransactions(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
   if (nonce === undefined) throw new Error("Computing hash for transactions without defined nonce")

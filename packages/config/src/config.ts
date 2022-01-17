@@ -29,10 +29,7 @@ export interface WalletState {
   deployed: boolean
   
   // the imageHash of the `config` WalletConfig
-  imageHash: string
-
-  // the last imageHash of a WalletConfig, stored on-chain
-  lastImageHash?: string
+  imageHash?: string
   
   // whether the WalletConfig object itself has been published to logs
   published?: boolean

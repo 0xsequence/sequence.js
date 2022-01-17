@@ -1,3 +1,4 @@
+import { WalletContext } from "@0xsequence/network"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { WalletConfig } from "../config"
 import { PromiseSome } from "../utils"
@@ -72,5 +73,27 @@ export class RedundantConfigTracker implements ConfigTracker {
   }): Promise<void> => {
     // Save config to all childs
     await Promise.allSettled(this.childs.map((c) => c.saveWalletConfig(args)))
+  }
+
+  imageHashOfCounterFactualWallet = async (args: {
+    wallet: string,
+    context: WalletContext
+  }): Promise<string | undefined> => {
+    // Query all childs at the same time
+    // find a promise that doesn't throw and doesn't return undefined
+    const found = await PromiseSome(this.childs.map((c) => c.imageHashOfCounterFactualWallet(args)))
+
+    // Backfeed found config to all other childs
+    if (found) {
+      this.saveCounterFactualWallet({ imageHash: found, context: args.context })
+    }
+
+    // Return found value
+    return found
+  }
+
+  saveCounterFactualWallet = async (args: { imageHash: string; context: WalletContext }): Promise<void> => {
+    // Save config to all childs
+    await Promise.allSettled(this.childs.map((c) => c.saveCounterFactualWallet(args)))
   }
 }

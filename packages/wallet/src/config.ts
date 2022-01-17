@@ -1,4 +1,4 @@
-import { WalletConfig, DecodedSignature, isDecodedEOASigner, isDecodedFullSigner, isDecodedAddress, decodeSignature, recoverEOASigner } from '@0xsequence/config'
+import { WalletConfig, DecodedSignature, isDecodedEOASigner, isDecodedFullSigner, isDecodedAddress, decodeSignature, recoverEOASigner, ConfigTracker } from '@0xsequence/config'
 import { BytesLike, ethers, Contract } from 'ethers'
 import { Signer } from './signer'
 import { walletContracts } from '@0xsequence/abi'
@@ -18,11 +18,24 @@ export interface DecodedSigner {
   weight: number
 }
 
-export const fetchImageHash = async (signer: Signer): Promise<string> => {
+export const fetchImageHash = async (signer: Signer, counterFactualConfig?: { context: WalletContext, tracker: ConfigTracker }): Promise<string | undefined> => {
   const address = await signer.getAddress()
   const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, await signer.getProvider())
   const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => []))  as string[]
-  return currentImageHash && currentImageHash.length > 0 ? currentImageHash[0] : ''
+
+  // If we can read the contract, we just return the value
+  if (currentImageHash && currentImageHash.length > 0) {
+    return currentImageHash[0]
+  }
+
+  // If we can't we can try to get the counter factual state
+  // but that's only possible if counterFactualConfig is provided
+  if (counterFactualConfig) {
+    return counterFactualConfig.tracker.imageHashOfCounterFactualWallet({ context: counterFactualConfig.context, wallet: address })
+  }
+
+  // The imageHash can't be found
+  return undefined
 }
 
 // recoverConfig decodes a WalletConfig from the subDigest and signature combo. Note: the subDigest argument
