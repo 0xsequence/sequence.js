@@ -130,6 +130,9 @@ export class Wallet extends Signer {
 
     this.config = sortConfig(config)
     this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
+
+    // cache wallet config for future imageHash lookups
+    this.imageHash
   }
 
   // useConfig creates a new Wallet instance with the provided config, and uses the current provider

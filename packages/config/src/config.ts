@@ -92,14 +92,29 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
   return addressOf(imageHash(salt), context)
 }
 
+// cached wallet configs indexed by image hash
+// wallet configs must be sorted using sortConfig
+const cachedConfigs: Map<string, WalletConfig> = new Map()
+
+export const getCachedConfig = (imageHash: string): WalletConfig | undefined => cachedConfigs.get(imageHash)
+
 export const imageHash = (config: WalletConfig): string => {
-  let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
-  sortConfig(config).signers.forEach(
-    a =>
-      (imageHash = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, a.weight, a.address])
-      ))
+  config = sortConfig(config)
+
+  const imageHash = config.signers.reduce(
+    (imageHash, signer) => ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        ['bytes32', 'uint8', 'address'],
+        [imageHash, signer.weight, signer.address]
+      )
+    ),
+    ethers.utils.solidityPack(['uint256'], [config.threshold])
   )
+
+  if (!cachedConfigs.has(imageHash)) {
+    cachedConfigs.set(imageHash, copyConfig(config))
+  }
+
   return imageHash
 }
 
@@ -170,4 +185,11 @@ export function genConfig(threshold: ethers.BigNumberish, signers: { weight: eth
     threshold: ethers.BigNumber.from(threshold).toNumber(),
     signers: signers.map((s) => ({ weight: ethers.BigNumber.from(s.weight).toNumber(), address: ethers.utils.getAddress(s.address) }))
   })
+}
+
+function copyConfig(config: WalletConfig): WalletConfig {
+  return {
+    ...config,
+    signers: config.signers.map(signer => ({ ...signer }))
+  }
 }
