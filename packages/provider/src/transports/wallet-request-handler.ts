@@ -10,6 +10,7 @@ import {
   ConnectDetails,
   PromptConnectDetails,
   WalletSession,
+  OpenWalletIntent,
   ErrSignedInRequired,
   ProviderEventTypes,
   TypedEventEmitter
@@ -51,6 +52,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
+  private _openIntent?: OpenWalletIntent
   private _connectOptions?: ConnectOptions
   private _defaultNetworkId?: string | number
   private _chainId?: number
@@ -71,6 +73,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   async signIn(signer: Signer | null, options: WalletSignInOptions = {}) {
     this.setSigner(signer)
+
 
     const { connect, mainnetNetworks, testnetNetworks, defaultNetworkId } = options
 
@@ -193,6 +196,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
 
     const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions).catch(_ => {
+
       return { connected: false } as ConnectDetails
     })
 
@@ -234,6 +238,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       jsonrpc: '2.0',
       id: request.id!,
       result: null
+    }
+
+    if (this.signer === undefined) {
+      await this.signerReady()
     }
 
     try {
@@ -609,6 +617,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       this._chainId = await this.signer.getChainId()
       return this._chainId
     }
+  }
+
+  get openIntent(): OpenWalletIntent | undefined {
+    return this._openIntent
+  }
+
+  setOpenIntent(intent: OpenWalletIntent | undefined) {
+    this._openIntent = intent
   }
 
   get connectOptions(): ConnectOptions | undefined {

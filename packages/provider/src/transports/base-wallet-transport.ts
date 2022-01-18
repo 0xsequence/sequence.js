@@ -319,11 +319,19 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.saveTransportSession({ sessionId, intent, networkId })
     }
 
+    this.walletRequestHandler.setOpenIntent(intent)
+
+    // ensure signer is ready
+    if (this.walletRequestHandler.getSigner() === undefined) {
+      await this.walletRequestHandler.signerReady()
+    }
+
     // init handshake for certain transports, before we can open the communication.
     //
     // for example, with the window-transport, we have to exchange messages to determine the
     // origin host of the dapp.
     await this.init()
+
 
     // Prepare connect options from intent
     if (intent && intent.type === 'connect' && intent.options) {
