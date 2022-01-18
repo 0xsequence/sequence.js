@@ -100,6 +100,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
   handleMessage = async (message: ProviderMessage<any>) => {
     const request = message
 
+    // ensure signer is ready to handle requests
+    if (this.walletRequestHandler.getSigner() === undefined) {
+      await this.walletRequestHandler.signerReady()
+    }
+
     // ensure initial handshake is complete before accepting
     // other kinds of messages.
     if (this._init !== InitState.OK) {

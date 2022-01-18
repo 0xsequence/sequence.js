@@ -84,7 +84,13 @@ const main = async () => {
   }, owner)
 
   // the json-rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(account, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)
+
+  // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour
+  // of the wallet-webapp, so lets ensure the mock wallet does the same thing too.
+  setTimeout(() => {
+    walletRequestHandler.signIn(account)
+  }, 1000)
 
   // setup and register window message transport
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
