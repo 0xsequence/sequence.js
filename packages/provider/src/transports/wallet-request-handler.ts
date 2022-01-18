@@ -10,6 +10,7 @@ import {
   ConnectDetails,
   PromptConnectDetails,
   WalletSession,
+  OpenWalletIntent,
   ErrSignedInRequired,
   ProviderEventTypes,
   TypedEventEmitter
@@ -41,11 +42,17 @@ export interface WalletSignInOptions {
 }
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
-  private signer: Signer | null
+  // signer interface of the wallet. A null value means there is no signer (ie. user not signed in). An undefined
+  // value means the signer state is unknown, usually meaning the wallet app is booting up and initializing. Of course
+  // a Signer value is the actually interface to a signed-in account
+  private signer: Signer | null | undefined
+  private signerReadyCallbacks: Array<() => void> = []
+
   private prompter: WalletUserPrompter | null
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
+  private _openIntent?: OpenWalletIntent
   private _connectOptions?: ConnectOptions
   private _defaultNetworkId?: string | number
   private _chainId?: number
@@ -53,7 +60,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
   constructor(
-    signer: Signer | null,
+    signer: Signer | null | undefined,
     prompter: WalletUserPrompter | null,
     mainnetNetworks: Networks,
     testnetNetworks: Networks = []
@@ -65,7 +72,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   async signIn(signer: Signer | null, options: WalletSignInOptions = {}) {
-    this.signer = signer
+    this.setSigner(signer)
+
 
     const { connect, mainnetNetworks, testnetNetworks, defaultNetworkId } = options
 
@@ -107,6 +115,29 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         this.notifyClose()
       }
     }
+  }
+
+  signOut() {
+    // signed out state
+    this.signer = null
+  }
+
+  signerReset() {
+    // resetting signer puts the wallet in an uninitialized state, which requires the app to
+    // re-initiatize and set the signer either as "null" (ie. no signer) or "Signer" (ie. signed in).
+    this.signer = undefined
+  }
+
+  signerReady() {
+    return new Promise((resolve, reject) => {
+      if (this.signer !== undefined) {
+        resolve(undefined)
+      } else {
+        this.signerReadyCallbacks.push(() => {
+          resolve(undefined)
+        })
+      }
+    })
   }
 
   async connect(options?: ConnectOptions): Promise<ConnectDetails> {
@@ -165,6 +196,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
 
     const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions).catch(_ => {
+
       return { connected: false } as ConnectDetails
     })
 
@@ -206,6 +238,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       jsonrpc: '2.0',
       id: request.id!,
       result: null
+    }
+
+    if (this.signer === undefined) {
+      await this.signerReady()
     }
 
     try {
@@ -583,6 +619,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
+  get openIntent(): OpenWalletIntent | undefined {
+    return this._openIntent
+  }
+
+  setOpenIntent(intent: OpenWalletIntent | undefined) {
+    this._openIntent = intent
+  }
+
   get connectOptions(): ConnectOptions | undefined {
     return this._connectOptions
   }
@@ -682,12 +726,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return !!this.signer
   }
 
-  getSigner(): Signer | null {
+  getSigner(): Signer | null | undefined {
     return this.signer
   }
 
-  setSigner(signer: Signer | null) {
+  setSigner(signer: Signer | null | undefined) {
     this.signer = signer
+
+    if (signer !== undefined) {
+      for (let i=0; i < this.signerReadyCallbacks.length; i++) {
+        this.signerReadyCallbacks[i]()
+      }
+      this.signerReadyCallbacks = []
+    }
   }
 
   private async handleConfirmWalletDeployPrompt(
