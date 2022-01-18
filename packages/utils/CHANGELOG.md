@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.35.6
+
+### Patch Changes
+
+- provider: support async signin of wallet request handler
+
 ## 0.35.5
 
 ### Patch Changes

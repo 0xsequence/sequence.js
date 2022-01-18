@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.35.6
+
+### Patch Changes
+
+- provider: support async signin of wallet request handler
+- Updated dependencies
+  - @0xsequence/abi@0.35.6
+  - @0xsequence/api@0.35.6
+  - @0xsequence/config@0.35.6
+  - @0xsequence/indexer@0.35.6
+  - @0xsequence/metadata@0.35.6
+  - @0xsequence/network@0.35.6
+  - @0xsequence/utils@0.35.6
+  - @0xsequence/wallet@0.35.6
+
 ## 0.35.5
 
 ### Patch Changes
