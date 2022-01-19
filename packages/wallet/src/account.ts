@@ -168,6 +168,11 @@ export class Account extends Signer {
     }
   }
 
+  async isSettled(chainId?: ChainIdLike): Promise<boolean> {
+    const state = await this.getWalletState(chainId)
+    return state.deployed && state.published === true
+  }
+
   getSigners(): Promise<string[]> {
     return Promise.all(this._signers.map((s) => {
       return (ethers.utils.isBytesLike(s) ? new ethers.Wallet(s) : s).getAddress()

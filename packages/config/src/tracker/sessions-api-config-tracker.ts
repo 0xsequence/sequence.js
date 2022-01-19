@@ -1,16 +1,38 @@
 import { BigNumberish, BigNumber, ethers } from "ethers"
-import { WalletConfig } from "../config"
+import { compareAddr, WalletConfig } from "../config"
 import { PromiseSome } from "../utils"
 import fetchPonyfill from 'fetch-ponyfill'
 import { ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 import { Sessions } from "./gen/sessions.gen"
 import { imageHash } from ".."
+import { WalletContext } from "@0xsequence/network"
 
 export class SessionsApiConfigTracker implements ConfigTracker {
   public sessions: Sessions
 
   constructor(url: string) {
     this.sessions = new Sessions(url, fetchPonyfill().fetch)
+  }
+
+  imageHashOfCounterFactualWallet = async (args: {
+    context: WalletContext;
+    wallet: string
+  }): Promise<string | undefined> => {
+    const candidates = await this.sessions.imageHashForWallet({ address: args.wallet })
+
+    // API may return counterfactual wallets for other configs
+    // so we filter looking for the rifgr one
+    return candidates.wallets.find((w) => (
+      compareAddr(w.context.factory, args.context.factory) &&
+      compareAddr(w.context.mainModule, args.context.mainModule)
+    ))?.imageHash
+  }
+
+  saveCounterFactualWallet = async (args: {
+    imageHash: string;
+    context: WalletContext
+  }): Promise<void> => {
+    // TODO: Implement API
   }
 
   loadPresignedConfiguration = async ( args: {
