@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.35.7
+
+### Patch Changes
+
+- config: cache wallet configs
+- Updated dependencies
+  - @0xsequence/abi@0.35.7
+  - @0xsequence/network@0.35.7
+  - @0xsequence/utils@0.35.7
+
 ## 0.35.6
 
 ### Patch Changes

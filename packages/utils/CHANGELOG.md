@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.35.7
+
+### Patch Changes
+
+- config: cache wallet configs
+
 ## 0.35.6
 
 ### Patch Changes
