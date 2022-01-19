@@ -2,8 +2,9 @@ import { ethers, Signer, BigNumberish } from 'ethers'
 import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
-import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
+import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency } from './types'
 import { subDigestOf } from '@0xsequence/utils'
+import { SignedTransactionBundle, TransactionBundle } from '.'
 
 export const MetaTransactionsType = `tuple(
   bool delegateCall,
@@ -220,16 +221,43 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
   return [bnonce.div(shr), bnonce.mod(shr)]
 }
 
-export function isSignedTransactions(cand: any): cand is SignedTransactions {
+export function isTransactionBundle(cand: any): cand is TransactionBundle {
   return (
     cand !== undefined &&
+    cand.from !== undefined &&
     cand.chainId !== undefined &&
-    cand.config !== undefined &&
-    cand.context !== undefined &&
-    cand.signature !== undefined &&
     cand.transactions !== undefined &&
+    cand.nonce !== undefined &&
+    cand.intent !== undefined &&
+    cand.intent.digest !== undefined &&
+    cand.intent.wallet !== undefined &&
     Array.isArray(cand.transactions) &&
-    (<SignedTransactions>cand).transactions.reduce((p, c) => p && isSequenceTransaction(c), true)
+    (<TransactionBundle>cand).transactions.reduce((p, c) => p && isSequenceTransaction(c), true)
+  )
+}
+
+export function isSignedTransactionBundle(cand: any): cand is SignedTransactionBundle {
+  return (
+    cand !== undefined &&
+    cand.signature !== undefined &&
+    isTransactionBundle(cand)
+  )
+}
+
+export function encodeBundleExecData(bundle: TransactionBundle) {
+  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  return walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
+    isSignedTransactionBundle(bundle) ? [
+      // Signed transaction bundle has all 3 parameters
+      bundle.transactions,
+      bundle.nonce,
+      bundle.signature
+    ] : [
+      // Unsigned bundle may be a GuestModule call, so signature and nonce are missing
+      bundle.transactions,
+      0,
+      []
+    ]
   )
 }
 

@@ -1,21 +1,20 @@
 import { TransactionResponse } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
-import { walletContracts } from '@0xsequence/abi'
 import {
   Transaction,
   readSequenceNonce,
   appendNonce,
   MetaTransactionsType,
   sequenceTxAbiEncode,
-  SignedTransactions,
-  computeMetaTxnHash,
-  decodeNonce
+  decodeNonce,
+  TransactionBundle,
+  isSignedTransactionBundle,
+  encodeBundleExecData
 } from '@0xsequence/transactions'
-import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
 import { FeeOption, Relayer, SimulateResult } from '..'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, buildStubSignature } from '@0xsequence/config'
+import { WalletConfig, addressOf } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import * as proto from './relayer.gen'
 
@@ -23,7 +22,8 @@ export { proto }
 
 const FAILED_STATUSES = [proto.ETHTxnStatus.FAILED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.DROPPED]
 
-export interface RpcRelayerOptions extends BaseRelayerOptions {
+export interface RpcRelayerOptions {
+  provider: ethers.providers.Provider,
   url: string
 }
 
@@ -31,20 +31,18 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
   return obj.url !== undefined && typeof obj.url === 'string'
 }
 
-export class RpcRelayer extends BaseRelayer implements Relayer {
+export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer
+  private readonly provider: ethers.providers.Provider
 
   constructor(options: RpcRelayerOptions) {
-    super(options)
     this.service = new proto.Relayer(options.url, fetchPonyfill().fetch)
+    this.provider = options.provider
   }
 
-  async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
+  async waitReceipt(metaTxnHash: string | TransactionBundle, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
-      console.log('computing id', metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
-      return this.waitReceipt(
-        computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
-      )
+      return this.waitReceipt(metaTxnHash.intent.digest, wait)
     }
 
     logger.info(`[rpc-relayer/waitReceipt] waiting for ${metaTxnHash}`)
@@ -113,7 +111,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
 
-  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]> {
+  async gasRefundOptions(config: WalletConfig, context: WalletContext, bundle: TransactionBundle): Promise<FeeOption[]> {
     // NOTE/TODO: for a given `service` the feeTokens will not change between execution, so we should memoize this value
     // for a short-period of time, perhaps for 1 day or in memory. Perhaps one day we can make this happen automatically
     // with http cache response for this endpoint and service-worker.. lots of approaches
@@ -125,32 +123,16 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
       const wallet = addressOf(config, context)
 
-      let nonce = readSequenceNonce(...transactions)
-      if (nonce === undefined) {
-        nonce = await this.getNonce(config, context)
-      }
+      // Is bundle is already signed we can use the provided nonce
+      // otherwise we just use the next nonce for the wallet
+      const nonce = isSignedTransactionBundle(bundle) ? bundle.nonce : await this.getNonce(config, context)
+      const data = encodeBundleExecData(bundle)
 
-      if (!this.provider) {
-        logger.warn(`[rpc-relayer/gasRefundOptions] provider not set, needed for stub signature`)
-        throw new Error('provider is not set')
-      }
-
-      const { to, execute } = await this.prependWalletDeploy({
-        config,
-        context,
-        transactions,
-        nonce,
-        signature: buildStubSignature(this.provider, config)
+      const { options } = await this.service.feeOptions({
+        wallet: bundle.intent.wallet,
+        to: bundle.entrypoint,
+        data: data
       })
-
-      const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-      const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
-        sequenceTxAbiEncode(execute.transactions),
-        execute.nonce,
-        execute.signature
-      ])
-
-      const { options } = await this.service.feeOptions({ wallet, to, data })
 
       logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(options)}`)
       return options
@@ -171,32 +153,24 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return nonce
   }
 
-  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
-    logger.info(`[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)}`)
+  async relay(bundle: TransactionBundle): Promise<TransactionResponse> {
+    logger.info(`[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(bundle)}`)
 
-    if (!this.provider) {
-      logger.warn(`[rpc-relayer/relay] provider not set, failed relay`)
-      throw new Error('provider is not set')
-    }
-
-    const { to: contract, execute } = await this.prependWalletDeploy(signedTxs)
-
-    const walletAddress = addressOf(signedTxs.config, signedTxs.context)
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-    const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
-      sequenceTxAbiEncode(execute.transactions),
-      execute.nonce,
-      execute.signature
-    ])
-
-    const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input } })
+    const data = encodeBundleExecData(bundle)
+    const metaTxn = await this.service.sendMetaTxn({
+      call: {
+        walletAddress: bundle.intent.wallet,
+        contract: bundle.entrypoint,
+        input: data
+      }
+    })
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
     return this.wait(metaTxn.txnHash)
   }
 
-  async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse> {
+  async wait(metaTxnHash: string | TransactionBundle, wait: number = 1000): Promise<TransactionResponse> {
     const { receipt } = await this.waitReceipt(metaTxnHash, wait)
 
     if (!receipt.txnReceipt || FAILED_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
@@ -209,7 +183,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       blockHash: txReceipt.blockHash,
       blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
       confirmations: 1,
-      from: typeof metaTxnHash === 'string' ? undefined : addressOf(metaTxnHash.config, metaTxnHash.context),
+      from: typeof metaTxnHash === 'string' ? undefined : metaTxnHash.intent.wallet,
       hash: txReceipt.transactionHash,
       raw: receipt.txnReceipt,
       wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)

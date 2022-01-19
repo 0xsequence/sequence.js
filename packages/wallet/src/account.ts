@@ -4,7 +4,7 @@ import { Interface } from "ethers/lib/utils"
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { Signer } from './signer'
-import { SignedTransactions, Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode } from '@0xsequence/transactions'
+import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, ConfigTracker, imageHash } from '@0xsequence/config'
 import {
   ChainIdLike,
@@ -289,7 +289,7 @@ export class Account extends Signer {
     return wallet.sendTransactionBatch(transactions, chainId, allSigners)
   }
 
-  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
+  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactionBundle> {
     const wallet = this._getWallet(chainId)
     if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
     return wallet.signTransactions(txs, chainId, allSigners)
@@ -302,10 +302,10 @@ export class Account extends Signer {
     return wallet.signTransaction(transaction)
   }
 
-  sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse> {
     const wallet = this._getWallet(chainId)
     if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.sendSignedTransactions(signedTxs, chainId)
+    return wallet.sendSignedTransactions(signedBundle, chainId)
   }
 
   isDeployed(chainId?: ChainIdLike): Promise<boolean> {

@@ -1,5 +1,5 @@
 import { ethers, providers } from 'ethers'
-import { SignedTransactions, Transaction } from '@0xsequence/transactions'
+import { TransactionBundle, Transaction } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { proto } from './rpc-relayer'
@@ -21,7 +21,7 @@ export interface Relayer {
   gasRefundOptions(
     config: WalletConfig,
     context: WalletContext,
-    ...transactions: Transaction[]
+    bundle: TransactionBundle
   ): Promise<FeeOption[]>
 
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
@@ -30,14 +30,13 @@ export interface Relayer {
   getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
-  relay(signedTxs: SignedTransactions): Promise<providers.TransactionResponse>
+  relay(signedTxs: TransactionBundle): Promise<providers.TransactionResponse>
 
   // wait for transaction confirmation
-  wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse>
+  wait(metaTxnId: string | TransactionBundle, timeout: number): Promise<providers.TransactionResponse>
 }
 
 export * from './local-relayer'
-export * from './base-relayer'
 export * from './provider-relayer'
 export * from './rpc-relayer'
 export { proto as RpcRelayerProto } from './rpc-relayer'

@@ -3,11 +3,11 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainIdLike, WalletContext } from '@0xsequence/network'
 import { Relayer } from '@0xsequence/relayer'
 import {
-  SignedTransactions,
   Transactionish,
   TransactionRequest,
   Transaction,
-  TransactionResponse
+  TransactionResponse,
+  SignedTransactionBundle
 } from '@0xsequence/transactions'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { BytesLike } from '@ethersproject/bytes'
@@ -68,14 +68,14 @@ export abstract class Signer extends AbstractSigner {
     txs: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
     allSigners?: boolean
-  ): Promise<SignedTransactions>
-  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse>
+  ): Promise<SignedTransactionBundle>
+  abstract sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse>
 
   // isDeployed ..
   abstract isDeployed(chainId?: ChainIdLike): Promise<boolean>
 }
 
-export type SignedTransactionsCallback = (signedTxs: SignedTransactions, metaTxnHash: string) => void
+export type SignedTransactionsCallback = (signedBundle: SignedTransactionBundle, metaTxnHash: string) => void
 
 export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer

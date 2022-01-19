@@ -23,11 +23,9 @@ import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
 import {
-  Transaction,
   TransactionRequest,
   TransactionResponse,
-  Transactionish,
-  SignedTransactions
+  SignedTransactionBundle
 } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 
@@ -318,14 +316,14 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     transaction: Deferrable<TransactionRequest>,
     chainId?: ChainIdLike,
     allSigners?: boolean
-  ): Promise<SignedTransactions> {
+  ): Promise<SignedTransactionBundle> {
     transaction = shallowCopy(transaction)
     // TODO: transaction argument..? make sure to resolve any properties and serialize property before sending over
     // the wire.. see sendUncheckedTransaction and resolveProperties
     return this.provider.send('eth_signTransaction', [transaction], maybeChainId(chainId) || this.defaultChainId)
   }
 
-  sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse> {
     // sequence_relay
     throw new Error('TODO')
   }

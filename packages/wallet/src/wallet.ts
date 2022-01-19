@@ -11,11 +11,11 @@ import {
   TransactionRequest,
   readSequenceNonce,
   appendNonce,
-  SignedTransactions,
   computeMetaTxnHash,
   digestOfTransactionsNonce,
   decodeNonce,
-  fromTransactionish
+  fromTransactionish,
+  SignedTransactionBundle
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -279,13 +279,12 @@ export class Wallet extends Signer {
     allSigners?: boolean,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
+    const signedBundle = await this.signTransactions(transaction, chainId, allSigners)
     if (callback) {
-      const address = addressOf(signedTxs.config, signedTxs.context)
-      const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
-      callback(signedTxs, metaTxnHash)
+      const metaTxnHash = computeMetaTxnHash(signedBundle.intent.wallet, signedBundle.chainId, ...signedBundle.transactions)
+      callback(signedBundle, metaTxnHash)
     }
-    return this.relayer.relay(signedTxs)
+    return this.relayer.relay(signedBundle)
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
@@ -305,7 +304,7 @@ export class Wallet extends Signer {
     txs: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
     allSigners?: boolean
-  ): Promise<SignedTransactions> {
+  ): Promise<SignedTransactionBundle> {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const transaction = await resolveArrayProperties<Transactionish>(txs)
@@ -337,22 +336,24 @@ export class Wallet extends Signer {
 
     // Bundle with signature
     return {
-      digest: digest,
-      chainId: signChainId,
-      context: this.context,
-      config: this.config,
+      intent: {
+        digest,
+        wallet: this.address
+      },
+      entrypoint: this.address,
       transactions: stx,
-      nonce,
+      chainId: ethers.BigNumber.from(signChainId),
+      nonce: ethers.BigNumber.from(nonce),
       signature: await this.sign(digest, true, chainId, allSigners)
     }
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
     await this.getChainIdNumber(chainId)
-    return this.relayer.relay(signedTxs)
+    return this.relayer.relay(signedBundle)
   }
 
   // signMessage will sign a message for a particular chainId with the wallet signers

@@ -1,4 +1,4 @@
-import { BigNumberish, BytesLike } from 'ethers'
+import { BigNumberish, BytesLike, ethers } from 'ethers'
 import { TransactionRequest as EthersTransactionRequest, TransactionResponse } from '@ethersproject/providers'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
@@ -38,14 +38,19 @@ export interface NonceDependency {
 
 export type Transactionish = TransactionRequest | TransactionRequest[] | Transaction | Transaction[]
 
-export type SignedTransactions = {
-  digest: string,
-  chainId: BigNumberish,
-  config: WalletConfig,
-  context: WalletContext,
+export type TransactionBundle = {
+  intent: {
+    digest: string,
+    wallet: string
+  },
+  entrypoint: string,
+  chainId: ethers.BigNumber,
   transactions: Transaction[],
-  nonce: BigNumberish,
-  signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>
+}
+
+export type SignedTransactionBundle = TransactionBundle & {
+  signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>,
+  nonce: ethers.BigNumber,
 }
 
 export type { TransactionResponse }

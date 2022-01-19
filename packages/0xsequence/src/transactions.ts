@@ -7,5 +7,4 @@ export type {
   TransactionResponse,
   NonceDependency,
   Transactionish,
-  SignedTransactions,
 } from '@0xsequence/transactions'

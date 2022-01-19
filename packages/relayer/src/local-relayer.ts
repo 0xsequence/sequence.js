@@ -1,7 +1,7 @@
 import { TransactionResponse } from '@ethersproject/providers'
 import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { SignedTransactions, Transaction, sequenceTxAbiEncode } from '@0xsequence/transactions'
+import { Transaction, TransactionBundle, isSignedTransactionBundle, encodeBundleExecData } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { FeeOption, Relayer } from '.'
@@ -24,43 +24,22 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     if (!this.signer.provider) throw new Error("Signer must have a provider")
   }
 
-  async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
-    // NOTE: on hardhat some tests fail on HookCallerMock when not passing gasLimit directly as below,
-    // and using eth_gasEstimate. Perhaps review HookCallerMock.sol and fix it to avoid what looks
-    // like an infinite loop?
-    const walletDeployTxn = this.prepareWalletDeploy(config, context)
-
-    // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate
-    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
-  }
-
   async gasRefundOptions(
     _config: WalletConfig,
     _context: WalletContext,
-    ..._transactions: Transaction[]
+    _bundle: TransactionBundle
   ): Promise<FeeOption[]> {
     return []
   }
 
-  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
-    if (!signedTxs.context.guestModule || signedTxs.context.guestModule.length !== 42) {
-      throw new Error('LocalRelayer requires the context.guestModule address')
-    }
-
-    const { to, execute } = await this.prependWalletDeploy(signedTxs)
-
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
-      sequenceTxAbiEncode(execute.transactions),
-      execute.nonce,
-      execute.signature
-    ])
+  async relay(bundle: TransactionBundle): Promise<TransactionResponse> {
+    const data = encodeBundleExecData(bundle)
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
     // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
     // txRequest.gasLimit = gasLimit
 
-    return this.signer.sendTransaction({ to, data })
+    return this.signer.sendTransaction({ to: bundle.entrypoint, data })
   }
 }
