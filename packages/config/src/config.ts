@@ -1,6 +1,7 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
+import { cacheConfig } from './cache'
 
 // WalletConfig is the configuration of key signers that can access
 // and control the wallet
@@ -92,12 +93,6 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
   return addressOf(imageHash(salt), context)
 }
 
-// cached wallet configs indexed by image hash
-// wallet configs must be sorted using sortConfig
-const cachedConfigs: Map<string, WalletConfig> = new Map()
-
-export const getCachedConfig = (imageHash: string): WalletConfig | undefined => cachedConfigs.get(imageHash)
-
 export const imageHash = (config: WalletConfig): string => {
   config = sortConfig(config)
 
@@ -111,9 +106,7 @@ export const imageHash = (config: WalletConfig): string => {
     ethers.utils.solidityPack(['uint256'], [config.threshold])
   )
 
-  if (!cachedConfigs.has(imageHash)) {
-    cachedConfigs.set(imageHash, copyConfig(config))
-  }
+  cacheConfig(imageHash, config)
 
   return imageHash
 }
@@ -185,11 +178,4 @@ export function genConfig(threshold: ethers.BigNumberish, signers: { weight: eth
     threshold: ethers.BigNumber.from(threshold).toNumber(),
     signers: signers.map((s) => ({ weight: ethers.BigNumber.from(s.weight).toNumber(), address: ethers.utils.getAddress(s.address) }))
   })
-}
-
-function copyConfig(config: WalletConfig): WalletConfig {
-  return {
-    ...config,
-    signers: config.signers.map(signer => ({ ...signer }))
-  }
 }
