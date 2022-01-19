@@ -4,7 +4,7 @@ import { Interface } from "ethers/lib/utils"
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { Signer } from './signer'
-import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle } from '@0xsequence/transactions'
+import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, ConfigTracker, imageHash } from '@0xsequence/config'
 import {
   ChainIdLike,
@@ -174,7 +174,7 @@ export class Account extends Signer {
     }))
   }
 
-  async decorateTransactions(txs: Transaction[], chainId?: ChainIdLike): Promise<{ from: string, transactions: Transaction[] }> {
+  async decorateTransactions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<TransactionBundle> {
     // Get wallet of network
     const cid = maybeChainId(chainId) || this.defaultChainId
     const wallet = this._getWallet(cid)
@@ -185,18 +185,11 @@ export class Account extends Signer {
 
     // If wallet is published and deployed, then we can just send the transactions as-is
     if (state.published && state.deployed) {
-      return { from: this.address, transactions: txs }
+      return bundle
     }
 
     // List of transactions for GuestModule
     const guestTxs: Transaction[] = []
-
-    // If guestModule is not defined
-    // then we can't decorate the transactions like this
-    const guestModule = this._context.guestModule
-    if (!guestModule) {
-      throw new Error('Error decorating transactions - Guest module is not defined')
-    }
 
     // If wallet is not deployed, first we need to bundle the wallet deployment
     if (!state.deployed) {
@@ -261,7 +254,30 @@ export class Account extends Signer {
       })
     }
 
-    return { from: guestModule, transactions: guestTxs }
+    // Append execution of original bundle
+    const data = encodeBundleExecData(bundle)
+    guestTxs.push({
+      to: this.address,
+      data: data,
+      gasLimit: 0,
+      delegateCall: false,
+      revertOnError: true,
+      value: 0
+    })
+
+    // If guestModule is not defined
+    // then we can't decorate the transactions like this
+    const guestModule = this._context.guestModule
+    if (!guestModule) {
+      throw new Error('Error decorating transactions - Guest module is not defined')
+    }
+
+    return {
+      intent: bundle.intent,
+      entrypoint: guestModule,
+      transactions: guestTxs,
+      chainId: ethers.BigNumber.from(cid),
+    }
   }
 
   async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, isDigest?: boolean): Promise<string> {
@@ -273,39 +289,39 @@ export class Account extends Signer {
   signTypedData(domain: TypedDataDomain, types: Record<string, TypedDataField[]>, message: Record<string, any>, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const wallet = this._getWallet(chainId)
     if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
+    // TODO: Append presigned update to signature
+    // that way validation can validate it without querying sequence-sesions
     return wallet.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<TransactionResponse> {
-    const wallet = this._getWallet(chainId)
-    if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.sendTransaction(transaction, chainId, allSigners)
-  }
-
   sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainIdLike, allSigners?: boolean): Promise<TransactionResponse> {
-    // TODO: Decorate transactions
-    const wallet = this._getWallet(chainId)
-    if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.sendTransactionBatch(transactions, chainId, allSigners)
+    return this.sendTransaction(transactions, chainId, allSigners)
   }
 
-  signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactionBundle> {
-    const wallet = this._getWallet(chainId)
-    if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.signTransactions(txs, chainId, allSigners)
+  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<TransactionResponse> {
+    // Sign and send transactions using internal methods
+    // these internal methods will decorate the transactions before relaying them
+    // decoration appens wallet deployment or presigned wallet update
+    const signed = await this.signTransactions(transaction, chainId, allSigners)
+    return this.sendSignedTransactions(signed, chainId)
   }
 
-  async signTransaction(transaction: Deferrable<TransactionRequest>): Promise<string> {
-    const chainId = await Promise.resolve(transaction.chainId)
+  async signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactionBundle> {
     const wallet = this._getWallet(chainId)
     if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.signTransaction(transaction)
+    const signed = await wallet.signTransactions(txs, chainId, allSigners)
+    const decorated = await this.decorateTransactions(signed, chainId)
+
+    // TODO add nonce and signature to comply with SignedTransactionBundle
+    // maybe we need to add a new type for GuestTransactionBundle and maybe details
+    // about the original intent being signed or not
+    return { ...decorated, nonce: ethers.constants.Zero, signature: "" }
   }
 
   sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse> {
     const wallet = this._getWallet(chainId)
     if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.sendSignedTransactions(signedBundle, chainId)
+    return wallet.relayer.relay(signedBundle)
   }
 
   isDeployed(chainId?: ChainIdLike): Promise<boolean> {
@@ -316,6 +332,10 @@ export class Account extends Signer {
 
   connect(provider: Provider): AbstractSigner {
     throw new Error('Method not implemented.')
+  }
+
+  async signTransaction(_transaction: Deferrable<TransactionRequest>): Promise<string> {
+    throw new Error('signTransaction method is not supported in Account, please use signTransactions(...)')
   }
 
   // useSigners(...signers: (BytesLike | AbstractSigner)[]): Account {

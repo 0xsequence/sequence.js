@@ -125,7 +125,6 @@ export class RpcRelayer implements Relayer {
 
       // Is bundle is already signed we can use the provided nonce
       // otherwise we just use the next nonce for the wallet
-      const nonce = isSignedTransactionBundle(bundle) ? bundle.nonce : await this.getNonce(config, context)
       const data = encodeBundleExecData(bundle)
 
       const { options } = await this.service.feeOptions({
