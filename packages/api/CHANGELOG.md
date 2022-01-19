@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.35.8
+
+### Patch Changes
+
+- provider: async wallet sign in improvements
+
 ## 0.35.7
 
 ### Patch Changes

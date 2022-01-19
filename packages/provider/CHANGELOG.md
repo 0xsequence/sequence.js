@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.35.8
+
+### Patch Changes
+
+- provider: async wallet sign in improvements
+- Updated dependencies
+  - @0xsequence/abi@0.35.8
+  - @0xsequence/auth@0.35.8
+  - @0xsequence/config@0.35.8
+  - @0xsequence/network@0.35.8
+  - @0xsequence/transactions@0.35.8
+  - @0xsequence/utils@0.35.8
+  - @0xsequence/wallet@0.35.8
+
 ## 0.35.7
 
 ### Patch Changes
