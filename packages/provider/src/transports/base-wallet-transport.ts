@@ -100,11 +100,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
   handleMessage = async (message: ProviderMessage<any>) => {
     const request = message
 
-    // ensure signer is ready to handle requests
-    if (this.walletRequestHandler.getSigner() === undefined) {
-      await this.walletRequestHandler.signerReady()
-    }
-
     // ensure initial handshake is complete before accepting
     // other kinds of messages.
     if (this._init !== InitState.OK) {
@@ -122,6 +117,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
       }
       return
     }
+
+    // ensure signer is ready to handle requests
+    // if (this.walletRequestHandler.getSigner() === undefined) {
+    //   await this.walletRequestHandler.signerReady()
+    // }
 
     // handle request
     switch (request.type) {
@@ -321,11 +321,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
     this.walletRequestHandler.setOpenIntent(intent)
 
-    // ensure signer is ready
-    if (this.walletRequestHandler.getSigner() === undefined) {
-      await this.walletRequestHandler.signerReady()
-    }
-
     // init handshake for certain transports, before we can open the communication.
     //
     // for example, with the window-transport, we have to exchange messages to determine the
@@ -369,8 +364,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.walletRequestHandler.setConnectOptions(undefined)
     }
 
+    // ensure signer is ready
+    await this.walletRequestHandler.getSigner()
+
     // Notify open and proceed to prompt for connection if intended
-    if (!this.walletRequestHandler.isSignedIn()) {
+    if (!(await this.walletRequestHandler.isSignedIn())) {
       // open wallet without a specific connected chainId, as the user is not signed in
       this.notifyOpen({
         sessionId: this._sessionId

@@ -34,6 +34,8 @@ import { logger, TypedData } from '@0xsequence/utils'
 
 import { isWalletUpToDate } from '../utils'
 
+const SIGNER_READY_TIMEOUT = 10000
+
 export interface WalletSignInOptions {
   connect?: boolean
   mainnetNetworks?: Networks
@@ -118,7 +120,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   signOut() {
     // signed out state
-    this.signer = null
+    this.setSigner(null)
   }
 
   signerReset() {
@@ -127,14 +129,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.signer = undefined
   }
 
-  signerReady() {
+  signerReady(timeout: number = SIGNER_READY_TIMEOUT): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.signer !== undefined) {
-        resolve(undefined)
+        resolve()
       } else {
-        this.signerReadyCallbacks.push(() => {
-          resolve(undefined)
-        })
+        setTimeout(() => {
+          if (this.signer === undefined) {
+            this.signerReadyCallbacks = []
+            reject(`signerReady timed out`)
+          }
+        }, timeout)
+        this.signerReadyCallbacks.push(resolve)
       }
     })
   }
@@ -238,9 +244,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       result: null
     }
 
-    if (this.signer === undefined) {
-      await this.signerReady()
-    }
+    await this.getSigner()
 
     try {
       // only allow public json rpc method to the provider when user is not logged in, aka signer is not set
@@ -720,11 +724,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.events.emit('close', error)
   }
 
-  isSignedIn(): boolean {
+  isSignedIn = async (): Promise<boolean> => {
+    await this.signerReady()
     return !!this.signer
   }
 
-  getSigner(): Signer | null | undefined {
+  getSigner = async (): Promise<Signer | null> => {
+    await this.signerReady()
+    if (this.signer === undefined) {
+      throw new Error('signerReady failed resolve')
+    }
     return this.signer
   }
 
