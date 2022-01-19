@@ -74,7 +74,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   async signIn(signer: Signer | null, options: WalletSignInOptions = {}) {
     this.setSigner(signer)
 
-
     const { connect, mainnetNetworks, testnetNetworks, defaultNetworkId } = options
 
     if (mainnetNetworks && mainnetNetworks.length > 0) {
@@ -196,7 +195,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
 
     const promptConnectDetails = await this.prompter.promptConnect(options || this._connectOptions).catch(_ => {
-
       return { connected: false } as ConnectDetails
     })
 
@@ -734,7 +732,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.signer = signer
 
     if (signer !== undefined) {
-      for (let i=0; i < this.signerReadyCallbacks.length; i++) {
+      for (let i = 0; i < this.signerReadyCallbacks.length; i++) {
         this.signerReadyCallbacks[i]()
       }
       this.signerReadyCallbacks = []

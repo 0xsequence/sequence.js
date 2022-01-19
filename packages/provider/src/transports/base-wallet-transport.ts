@@ -332,7 +332,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
     // origin host of the dapp.
     await this.init()
 
-
     // Prepare connect options from intent
     if (intent && intent.type === 'connect' && intent.options) {
       const connectOptions = intent.options
