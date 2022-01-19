@@ -1,5 +1,6 @@
 import { Contract, ethers } from 'ethers'
-import { addressOf, getCachedConfig, imageHash, WalletConfig } from '..'
+import { addressOf, imageHash, WalletConfig } from '..'
+import { getCachedConfig } from '../cache'
 import { ConfigFinder } from './config-finder'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'

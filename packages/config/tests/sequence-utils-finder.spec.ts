@@ -10,7 +10,8 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { getCachedConfig, imageHash, SequenceUtilsFinder, sortConfig, WalletConfig } from '../src'
+import { imageHash, SequenceUtilsFinder, sortConfig, WalletConfig } from '../src'
+import { getCachedConfig } from '../src/cache'
 
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
 const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/HookCallerMock.sol/HookCallerMock.json')
