@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.35.9
+
+### Patch Changes
+
+- provider: window-transport override event handlers with new wallet instance
+- Updated dependencies
+  - @0xsequence/abi@0.35.9
+  - @0xsequence/config@0.35.9
+  - @0xsequence/transactions@0.35.9
+  - @0xsequence/utils@0.35.9
+
 ## 0.35.8
 
 ### Patch Changes

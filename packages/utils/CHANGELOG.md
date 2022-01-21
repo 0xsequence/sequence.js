@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.35.9
+
+### Patch Changes
+
+- provider: window-transport override event handlers with new wallet instance
+
 ## 0.35.8
 
 ### Patch Changes
