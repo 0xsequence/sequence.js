@@ -17,7 +17,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
   register = () => {
     if (registeredWindowMessageProvider) {
-      throw new Error('A WindowMessageProvider is already registered. There can only be one.')
+      // overriding the registered message provider
+      registeredWindowMessageProvider.unregister()
+      registeredWindowMessageProvider = this
     }
 
     // listen for incoming messages from wallet
