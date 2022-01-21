@@ -401,13 +401,11 @@ export const tests = async () => {
 
     const tx1: TransactionRequest = {
       to: testAccount.address,
-      value: ethAmount1,
-      data: '0x'
+      value: ethAmount1
     }
     const tx2: TransactionRequest = {
       to: testAccount.address,
-      value: ethAmount2,
-      data: '0x'
+      value: ethAmount2
     }
     const txBatched = {
       ...tx1,
@@ -431,14 +429,12 @@ export const tests = async () => {
 
     const tx1: TransactionRequest = {
       to: testAccount.address,
-      value: ethAmount1,
-      data: '0x'
+      value: ethAmount1
     }
 
     const tx2: TransactionRequest = {
       to: testAccount.address,
-      value: ethAmount2,
-      data: '0x'
+      value: ethAmount2
     }
 
     const toBalanceBefore = await provider.getBalance(testAccount.address)
@@ -457,21 +453,21 @@ export const tests = async () => {
     const ethAmount2 = ethers.utils.parseEther('0.456')
 
     const tx1: Transaction = {
-      delegateCall: false,
-      revertOnError: false,
-      gasLimit: '0x55555',
       to: testAccount.address,
-      value: ethAmount1,
-      data: '0x'
+      value: ethAmount1
+      // data: '0x',
+      // gasLimit: '0x55555',
+      // delegateCall: false,
+      // revertOnError: false
     }
 
     const tx2: Transaction = {
-      delegateCall: false,
-      revertOnError: false,
-      gasLimit: '0x55555',
       to: testAccount.address,
       value: ethAmount2,
-      data: '0x'
+      // data: '0x',
+      // gasLimit: '0x55555',
+      // delegateCall: false,
+      // revertOnError: false
     }
 
     const toBalanceBefore = await provider.getBalance(testAccount.address)

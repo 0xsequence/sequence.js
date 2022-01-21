@@ -6,13 +6,13 @@ import { WalletContext } from '@0xsequence/network'
 // Transaction is a Sequence transaction payload. Note, we do not include gasPrice as an option in this form,
 // as we expect the gasPrice to be optimally estimated by the transaction relayer.
 export interface Transaction {
-  delegateCall: boolean
-  revertOnError: boolean
-  gasLimit: BigNumberish
   to: string
-  value: BigNumberish
-  data: BytesLike
+  value?: BigNumberish
+  data?: BytesLike
   nonce?: BigNumberish
+  gasLimit?: BigNumberish
+  delegateCall?: boolean
+  revertOnError?: boolean
 }
 
 export interface TransactionEncoded {
