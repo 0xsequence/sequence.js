@@ -24,7 +24,7 @@
     "@types/web3-provider-engine": "^14.0.1",
     "eth-json-rpc-middleware": "^8.0.0",
     "json-rpc-engine": "^6.1.0",
-    "web3": "^1.6.1",
+    "web3": "^1.7.0",
     "web3-provider-engine": "^16.0.3"
   },
   "files": [
