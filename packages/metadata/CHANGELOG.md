@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.35.10
+
+### Patch Changes
+
+- upgrade deps
+
 ## 0.35.9
 
 ### Patch Changes

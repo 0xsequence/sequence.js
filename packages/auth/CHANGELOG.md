@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.35.10
+
+### Patch Changes
+
+- upgrade deps
+- Updated dependencies
+  - @0xsequence/abi@0.35.10
+  - @0xsequence/api@0.35.10
+  - @0xsequence/config@0.35.10
+  - @0xsequence/indexer@0.35.10
+  - @0xsequence/metadata@0.35.10
+  - @0xsequence/network@0.35.10
+  - @0xsequence/utils@0.35.10
+  - @0xsequence/wallet@0.35.10
+
 ## 0.35.9
 
 ### Patch Changes
