@@ -26,8 +26,6 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "concurrently": "^6.5.0",
-    "hardhat": "2.1.2"
   },
   "files": [
     "src",

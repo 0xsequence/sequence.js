@@ -3,7 +3,8 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "build": "yarn dev && yarn typecheck && preconstruct build",
+    "build": "yarn dev && yarn typecheck && preconstruct build && yarn post-build",
+    "post-build": "node ./scripts/fix-mocha-ref.js",
     "watch": "preconstruct watch",
     "clean": "rimraf ./node_modules",
     "changeset": "changeset",
