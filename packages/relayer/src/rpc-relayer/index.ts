@@ -13,7 +13,7 @@ import {
   decodeNonce
 } from '@0xsequence/transactions'
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
-import { FeeOption, Relayer, SimulateResult } from '..'
+import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, buildStubSignature } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -113,7 +113,11 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
 
-  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]> {
+  async getFeeOptions(
+    config: WalletConfig,
+    context: WalletContext,
+    ...transactions: Transaction[]
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     // NOTE/TODO: for a given `service` the feeTokens will not change between execution, so we should memoize this value
     // for a short-period of time, perhaps for 1 day or in memory. Perhaps one day we can make this happen automatically
     // with http cache response for this endpoint and service-worker.. lots of approaches
@@ -121,7 +125,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     if (feeTokens.isFeeRequired) {
       const symbols = feeTokens.tokens.map(token => token.symbol).join(', ')
-      logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are required, accepted tokens are ${symbols}`)
+      logger.info(`[rpc-relayer/getFeeOptions] relayer fees are required, accepted tokens are ${symbols}`)
 
       const wallet = addressOf(config, context)
 
@@ -131,7 +135,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       }
 
       if (!this.provider) {
-        logger.warn(`[rpc-relayer/gasRefundOptions] provider not set, needed for stub signature`)
+        logger.warn(`[rpc-relayer/getFeeOptions] provider not set, needed for stub signature`)
         throw new Error('provider is not set')
       }
 
@@ -150,14 +154,19 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         execute.signature
       ])
 
-      const { options } = await this.service.feeOptions({ wallet, to, data })
+      const { options, quote } = await this.service.feeOptions({ wallet, to, data })
 
-      logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(options)}`)
-      return options
+      logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options)}`)
+      return { options, quote: { _tag: 'FeeQuote', _quote: quote } }
     } else {
-      logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are not required`)
-      return []
+      logger.info(`[rpc-relayer/getFeeOptions] relayer fees are not required`)
+      return { options: [] }
     }
+  }
+
+  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]> {
+    const { options } = await this.getFeeOptions(config, context, ...transactions)
+    return options
   }
 
   async getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
@@ -171,8 +180,19 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return nonce
   }
 
-  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
-    logger.info(`[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)}`)
+  async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+    logger.info(
+      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
+    )
+
+    let typecheckedQuote: string | undefined
+    if (quote !== undefined) {
+      if (typeof quote._quote === 'string') {
+        typecheckedQuote = quote._quote
+      } else {
+        logger.warn('[rpc-relayer/relay] ignoring invalid fee quote')
+      }
+    }
 
     if (!this.provider) {
       logger.warn(`[rpc-relayer/relay] provider not set, failed relay`)
@@ -189,7 +209,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       execute.signature
     ])
 
-    const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input } })
+    const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input }, quote: typecheckedQuote })
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 

@@ -1,7 +1,7 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainIdLike, WalletContext } from '@0xsequence/network'
-import { Relayer } from '@0xsequence/relayer'
+import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import {
   SignedTransactions,
   Transactionish,
@@ -50,7 +50,8 @@ export abstract class Signer extends AbstractSigner {
   abstract sendTransaction(
     transaction: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    quote?: FeeQuote
   ): Promise<TransactionResponse>
 
   // sendTransactionBatch provides the ability to send an array/batch of transactions as a single native on-chain transaction.
@@ -58,7 +59,8 @@ export abstract class Signer extends AbstractSigner {
   abstract sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    quote?: FeeQuote
   ): Promise<TransactionResponse>
 
   // Low-level methods to sign and send/relayer signed transactions separately. The combination of these methods
@@ -69,7 +71,7 @@ export abstract class Signer extends AbstractSigner {
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<SignedTransactions>
-  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse>
+  abstract sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse>
 
   // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
   // newConfig argument is undefined, then it will use the existing config. Config contents will also be

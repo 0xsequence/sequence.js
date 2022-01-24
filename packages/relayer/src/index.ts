@@ -16,6 +16,14 @@ export interface Relayer {
     ...transactions: Transaction[]
   ): Promise<Transaction[]>
 
+  // getFeeOptions returns the fee options that the relayer will accept as payment.
+  // If a quote is returned, it may be passed back to the relayer for dispatch.
+  getFeeOptions(
+    config: WalletConfig,
+    context: WalletContext,
+    ...transactions: Transaction[]
+  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+
   // gasRefundOptions returns the transactions which can be included to refund a
   // relayer for submitting your transaction to a network.
   gasRefundOptions(
@@ -30,7 +38,8 @@ export interface Relayer {
   getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
-  relay(signedTxs: SignedTransactions): Promise<providers.TransactionResponse>
+  // The quote should be the one returned from getFeeOptions, if any.
+  relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<providers.TransactionResponse>
 
   // wait for transaction confirmation
   wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse>
@@ -44,7 +53,20 @@ export { proto as RpcRelayerProto } from './rpc-relayer'
 export type SimulateResult = proto.SimulateResult
 export type FeeOption = proto.FeeOption
 
+export interface FeeQuote {
+  _tag: 'FeeQuote'
+  _quote: unknown
+}
+
 export function isRelayer(cand: any): cand is Relayer {
-  return cand && cand.estimateGasLimits !== undefined && cand.gasRefundOptions !== undefined &&
-    cand.getNonce !== undefined && cand.relay !== undefined
+  return (
+    typeof cand === 'object' &&
+    typeof cand.simulate === 'function' &&
+    typeof cand.estimateGasLimits === 'function' &&
+    typeof cand.getFeeOptions === 'function' &&
+    typeof cand.gasRefundOptions === 'function' &&
+    typeof cand.getNonce === 'function' &&
+    typeof cand.relay === 'function' &&
+    typeof cand.wait === 'function'
+  )
 }
