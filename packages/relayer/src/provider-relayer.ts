@@ -5,7 +5,7 @@ import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction } from
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
-import { FeeOption, Relayer, SimulateResult } from '.'
+import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { Optionals, Mask } from '@0xsequence/utils'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
@@ -42,8 +42,19 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     this.fromBlockLog = opts.fromBlockLog
   }
 
-  abstract gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]>
-  abstract relay(signedTxs: SignedTransactions): Promise<TransactionResponse>
+  abstract getFeeOptions(
+    config: WalletConfig,
+    context: WalletContext,
+    ...transactions: Transaction[]
+  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+
+  abstract gasRefundOptions(
+    config: WalletConfig,
+    context: WalletContext,
+    ...transactions: Transaction[]
+  ): Promise<FeeOption[]>
+
+  abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse>
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
     return (await Promise.all(transactions.map(async tx => {

@@ -28,7 +28,7 @@ import {
   fromTransactionish
 } from '@0xsequence/transactions'
 
-import { Relayer } from '@0xsequence/relayer'
+import { FeeQuote, Relayer } from '@0xsequence/relayer'
 
 import {
   ChainIdLike,
@@ -301,6 +301,7 @@ export class Wallet extends Signer {
     transaction: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
     allSigners?: boolean,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
     const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
@@ -309,7 +310,7 @@ export class Wallet extends Signer {
       const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
       callback(signedTxs, metaTxnHash)
     }
-    return this.relayer.relay(signedTxs)
+    return this.relayer.relay(signedTxs, quote)
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
@@ -317,9 +318,10 @@ export class Wallet extends Signer {
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
     chainId?: ChainIdLike,
     allSigners: boolean = true,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners, callback)
+    return this.sendTransaction(transactions, chainId, allSigners, quote, callback)
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
@@ -371,12 +373,12 @@ export class Wallet extends Signer {
     }
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
     await this.getChainIdNumber(chainId)
-    return this.relayer.relay(signedTxs)
+    return this.relayer.relay(signedTxs, quote)
   }
 
   // signMessage will sign a message for a particular chainId with the wallet signers
@@ -539,13 +541,14 @@ export class Wallet extends Signer {
     nonce?: number,
     publish = false,
     indexed?: boolean,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<[WalletConfig, TransactionResponse]> {
     if (!config) config = this.config
 
     const [txs, n] = await Promise.all([this.buildUpdateConfigTransaction(config, publish, indexed), nonce ?? this.getNonce()])
 
-    return [{ address: this.address, ...config }, await this.sendTransaction(appendNonce(txs, n), undefined, undefined, callback)]
+    return [{ address: this.address, ...config }, await this.sendTransaction(appendNonce(txs, n), undefined, undefined, quote, callback)]
   }
 
   // publishConfig will publish the current wallet config to the network via the relayer.
@@ -554,6 +557,7 @@ export class Wallet extends Signer {
     indexed?: boolean,
     nonce?: number,
     requireFreshSigners: string[] = [],
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
     return this.sendTransaction(
@@ -562,6 +566,7 @@ export class Wallet extends Signer {
         : await this.buildPublishSignersTransaction(indexed, nonce, requireFreshSigners),
       undefined,
       undefined,
+      quote,
       callback
     )
   }

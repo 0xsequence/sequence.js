@@ -4,7 +4,8 @@ import { walletContracts } from '@0xsequence/abi'
 import { SignedTransactions, Transaction, sequenceTxAbiEncode } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
-import { FeeOption, Relayer } from '.'
+import { logger } from '@0xsequence/utils'
+import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
@@ -34,15 +35,28 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
   }
 
-  async gasRefundOptions(
+  async getFeeOptions(
     _config: WalletConfig,
     _context: WalletContext,
     ..._transactions: Transaction[]
-  ): Promise<FeeOption[]> {
-    return []
+  ): Promise<{ options: FeeOption[] }> {
+    return { options: [] }
   }
 
-  async relay(signedTxs: SignedTransactions): Promise<TransactionResponse> {
+  async gasRefundOptions(
+    config: WalletConfig,
+    context: WalletContext,
+    ...transactions: Transaction[]
+  ): Promise<FeeOption[]> {
+    const { options } = await this.getFeeOptions(config, context, ...transactions)
+    return options
+  }
+
+  async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+    if (quote !== undefined) {
+      logger.warn(`LocalRelayer doesn't accept fee quotes`)
+    }
+
     if (!signedTxs.context.guestModule || signedTxs.context.guestModule.length !== 42) {
       throw new Error('LocalRelayer requires the context.guestModule address')
     }

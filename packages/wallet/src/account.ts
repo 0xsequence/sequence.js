@@ -18,7 +18,7 @@ import {
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
-import { isRelayer, FeeOption, Relayer, RpcRelayer, isRpcRelayerOptions } from '@0xsequence/relayer'
+import { isRelayer, FeeOption, FeeQuote, Relayer, RpcRelayer, isRpcRelayerOptions } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 export interface AccountOptions {
@@ -254,7 +254,7 @@ export class Account extends Signer {
     return wallet.useConfig(thisConfig!).hasEnoughSigners()
   }
 
-  async getFeeOptions(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners: boolean = true): Promise<FeeOption[]> {
+  async getFeeOptions(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners: boolean = true): Promise<{ options: FeeOption[], quote?: FeeQuote }> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
 
     const context = this.options.context
@@ -287,13 +287,14 @@ export class Account extends Signer {
     }
 
     const finalTransactions = await fromTransactionish(context, this.address, updatedTransaction)
-    return wallet.relayer.gasRefundOptions(config, context, ...finalTransactions)
+    return wallet.relayer.getFeeOptions(config, context, ...finalTransactions)
   }
 
   async sendTransaction(
     dtransactionish: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
     allSigners: boolean = true,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
     const signedTxs = await this.signTransactions(dtransactionish, chainId, allSigners)
@@ -305,16 +306,17 @@ export class Account extends Signer {
     }
 
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
-    return wallet.sendSignedTransactions(signedTxs, chainId)
+    return wallet.sendSignedTransactions(signedTxs, chainId, quote)
   }
 
   async sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
     chainId?: ChainIdLike,
     allSigners: boolean = true,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners, callback)
+    return this.sendTransaction(transactions, chainId, allSigners, quote, callback)
   }
 
   async signTransactions(dtransactionish: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
@@ -383,9 +385,9 @@ export class Account extends Signer {
     return [...(await wallet.buildUpdateConfigTransaction(lastConfig!, false)), ...transactionParts]
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
-    return wallet.sendSignedTransactions(signedTxs)
+    return wallet.sendSignedTransactions(signedTxs, undefined, quote)
   }
 
   // updateConfig will build an updated config transaction, update the imageHash on-chain and also publish
@@ -393,6 +395,7 @@ export class Account extends Signer {
   async updateConfig(
     newConfig?: WalletConfig,
     index?: boolean,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<[WalletConfig, TransactionResponse | undefined]> {
     const authWallet = this.authWallet().wallet
@@ -408,7 +411,7 @@ export class Account extends Signer {
     if (isConfigEqual(authWallet.config, newConfig)) {
       if (!(await this.isDeployed())) {
         // Deploy the wallet and publish initial configuration
-        return await authWallet.updateConfig(newConfig, undefined, true, index, callback)
+        return await authWallet.updateConfig(newConfig, undefined, true, index, quote, callback)
       }
     }
 
@@ -426,7 +429,7 @@ export class Account extends Signer {
 
     // Update to new configuration on the authWallet. Other networks will be lazily updated
     // once used. The wallet config is also auto-published to the authChain.
-    const [_, tx] = await authWallet.useConfig(lastConfig!).updateConfig(newConfig, undefined, true, index, callback)
+    const [_, tx] = await authWallet.useConfig(lastConfig!).updateConfig(newConfig, undefined, true, index, quote, callback)
 
     return [
       {
@@ -442,9 +445,10 @@ export class Account extends Signer {
   publishConfig(
     indexed?: boolean,
     requireFreshSigners: string[] = [],
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    return this.authWallet().wallet.publishConfig(indexed, undefined, requireFreshSigners, callback)
+    return this.authWallet().wallet.publishConfig(indexed, undefined, requireFreshSigners, quote, callback)
   }
 
   async isDeployed(target?: Wallet | ChainIdLike): Promise<boolean> {
