@@ -1,5 +1,6 @@
 import { Contract, ethers } from 'ethers'
 import { addressOf, imageHash, WalletConfig } from '..'
+import { getCachedConfig } from '../cache'
 import { ConfigFinder } from './config-finder'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
@@ -15,8 +16,9 @@ export class SequenceUtilsFinder implements ConfigFinder {
     knownConfigs?: WalletConfig[]
     ignoreIndex?: boolean
     requireIndex?: boolean
+    skipCache?: boolean
   }): Promise<{ config: WalletConfig | undefined }> => {
-    const { provider, context, ignoreIndex, requireIndex } = args
+    const { provider, context, ignoreIndex, requireIndex, skipCache } = args
     const address = ethers.utils.getAddress(args.address)
 
     logger.info(`[findCurrentConfig] address:${address}, ignoreIndex:${ignoreIndex}, requireIndex:${requireIndex}`)
@@ -27,11 +29,16 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const knownConfigs = args.knownConfigs ? args.knownConfigs : []
 
     // Get imageHash of wallet
-    const { imageHash, config } = await this.findCurrentImageHash(context, provider, address, knownConfigs)
+    const { imageHash, config } = await this.findCurrentImageHash(context, provider, address, knownConfigs, skipCache)
     if (imageHash === undefined) return { config: undefined }
 
     // Get config for that imageHash
-    const found = await this.findConfigForImageHash(context, imageHash, config ? [config, ...knownConfigs] : knownConfigs)
+    const found = await this.findConfigForImageHash(
+      context,
+      imageHash,
+      config ? [config, ...knownConfigs] : knownConfigs,
+      skipCache
+    )
     const chainId = (await chainIdPromise).chainId
 
     return {
@@ -72,13 +79,22 @@ export class SequenceUtilsFinder implements ConfigFinder {
   findConfigForImageHash = async (
     context: WalletContext,
     image: string,
-    knownConfigs: WalletConfig[] = []
+    knownConfigs: WalletConfig[] = [],
+    skipCache: boolean = false
   ): Promise<WalletConfig | undefined> => {
-    logger.info(`[findConfigForImageHash] image:${image}`)
-
     // Lookup config in known configurations
     const found = knownConfigs.find(kc => imageHash(kc) === image)
     if (found) return found
+
+    // Lookup config in cached configurations
+    if (!skipCache) {
+      const cached = getCachedConfig(image)
+      if (cached) {
+        return cached
+      }
+    }
+
+    logger.info(`[findConfigForImageHash] image:${image}`)
 
     // Load index for last imageHash update
     const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
@@ -107,20 +123,26 @@ export class SequenceUtilsFinder implements ConfigFinder {
       event._signers
     )[0]
 
-    return {
+    const config = {
       threshold: ethers.BigNumber.from(event._threshold).toNumber(),
       signers: signers.map((s: any) => ({
         address: s.signer,
         weight: ethers.BigNumber.from(s.weight).toNumber()
       }))
     }
+
+    // Cache this config
+    imageHash(config)
+
+    return config
   }
 
   findCurrentImageHash = async (
     context: WalletContext,
     provider: ethers.providers.Provider,
     address: string,
-    knownConfigs: WalletConfig[] = []
+    knownConfigs: WalletConfig[] = [],
+    skipCache?: boolean
   ): Promise<{ imageHash?: string; config?: WalletConfig }> => {
     logger.info(`[findCurrentImageHash] address:${address}`)
 
@@ -128,7 +150,12 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const currentImageHash = (await walletContract.functions.imageHash.call([]).catch(() => [])) as string[]
 
     // Wallet is not counterfactual and has a defined imageHash
-    if (currentImageHash[0] !== undefined) return { imageHash: currentImageHash[0] }
+    if (currentImageHash[0] !== undefined) {
+      return {
+        imageHash: currentImageHash[0],
+        config: skipCache ? undefined : getCachedConfig(currentImageHash[0])
+      }
+    }
 
     // Wallet is in counter-factual mode
     // Lookup config in known configurations

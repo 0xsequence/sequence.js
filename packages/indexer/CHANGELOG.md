@@ -1,5 +1,35 @@
 # @0xsequence/indexer
 
+## 0.35.10
+
+### Patch Changes
+
+- upgrade deps
+
+## 0.35.9
+
+### Patch Changes
+
+- provider: window-transport override event handlers with new wallet instance
+
+## 0.35.8
+
+### Patch Changes
+
+- provider: async wallet sign in improvements
+
+## 0.35.7
+
+### Patch Changes
+
+- config: cache wallet configs
+
+## 0.35.6
+
+### Patch Changes
+
+- provider: support async signin of wallet request handler
+
 ## 0.35.5
 
 ### Patch Changes

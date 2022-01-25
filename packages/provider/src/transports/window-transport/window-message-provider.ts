@@ -17,7 +17,9 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
   register = () => {
     if (registeredWindowMessageProvider) {
-      throw new Error('A WindowMessageProvider is already registered. There can only be one.')
+      // overriding the registered message provider
+      registeredWindowMessageProvider.unregister()
+      registeredWindowMessageProvider = this
     }
 
     // listen for incoming messages from wallet
@@ -80,6 +82,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this._init = InitState.NIL
     this._sessionId = `${performance.now()}`
     windowSessionParams.set('sid', this._sessionId)
+    
     if (intent) {
       // for the window-transport, we eagerly/optimistically set the origin host
       // when connecting to the wallet, however, this will be verified and enforced

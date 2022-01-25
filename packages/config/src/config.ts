@@ -1,6 +1,7 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
+import { cacheConfig } from './cache'
 
 // WalletConfig is the configuration of key signers that can access
 // and control the wallet
@@ -90,13 +91,20 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
 }
 
 export const imageHash = (config: WalletConfig): string => {
-  let imageHash = ethers.utils.solidityPack(['uint256'], [config.threshold])
-  sortConfig(config).signers.forEach(
-    a =>
-      (imageHash = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, a.weight, a.address])
-      ))
+  config = sortConfig(config)
+
+  const imageHash = config.signers.reduce(
+    (imageHash, signer) => ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        ['bytes32', 'uint8', 'address'],
+        [imageHash, signer.weight, signer.address]
+      )
+    ),
+    ethers.utils.solidityPack(['uint256'], [config.threshold])
   )
+
+  cacheConfig(imageHash, config)
+
   return imageHash
 }
 

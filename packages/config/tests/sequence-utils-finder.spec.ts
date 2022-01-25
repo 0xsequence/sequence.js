@@ -10,7 +10,8 @@ import { ethers, Signer as AbstractSigner } from 'ethers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
-import { imageHash, SequenceUtilsFinder } from '../src'
+import { imageHash, SequenceUtilsFinder, sortConfig, WalletConfig } from '../src'
+import { getCachedConfig } from '../src/cache'
 
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
 const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/HookCallerMock.sol/HookCallerMock.json')
@@ -342,7 +343,8 @@ describe('Wallet integration', function () {
         {
           address: wallet.address,
           provider: mainChain.provider,
-          context: wallet.context
+          context: wallet.context,
+          skipCache: true
         }
       )
 
@@ -479,11 +481,85 @@ describe('Wallet integration', function () {
         {
           address: wallet.address,
           provider: mainChain.provider,
-          context: wallet.context
+          context: wallet.context,
+          skipCache: true
         }
       )
 
       expect(found.config).to.be.undefined
+    })
+    it('Cache wallet configuration after instantiation or update', async () => {
+      // non-caching version of imageHash for testing
+      const imageHash = (config: WalletConfig): string => {
+        return sortConfig(config).signers.reduce(
+          (imageHash, signer) => ethers.utils.keccak256(
+            ethers.utils.defaultAbiCoder.encode(
+              ['bytes32', 'uint8', 'address'],
+              [imageHash, signer.weight, signer.address]
+            )
+          ),
+          ethers.utils.solidityPack(['uint256'], [config.threshold])
+        )
+      }
+
+      const signer1 = ethers.Wallet.createRandom()
+      const signer2 = ethers.Wallet.createRandom()
+      const signer3 = ethers.Wallet.createRandom()
+
+      const initialConfig = {
+        threshold: 1,
+        signers: [
+          { weight: 1, address: signer1.address }
+        ]
+      }
+
+      const nextConfig = {
+        threshold: 2,
+        signers: [
+          { weight: 1, address: signer1.address },
+          { weight: 1, address: signer2.address }
+        ]
+      }
+
+      const finalConfig = {
+        threshold: 3,
+        signers: [
+          { weight: 1, address: signer1.address },
+          { weight: 1, address: signer2.address },
+          { weight: 1, address: signer3.address }
+        ]
+      }
+
+      // none of these configs are cached
+      expect(getCachedConfig(imageHash(initialConfig))).to.be.undefined
+      expect(getCachedConfig(imageHash(nextConfig))).to.be.undefined
+      expect(getCachedConfig(imageHash(finalConfig))).to.be.undefined
+
+      // create wallet with initialConfig
+      let wallet = new Wallet({ context, config: initialConfig }, signer1)
+      wallet = wallet.connect(authChain.provider, authChain.relayer)
+
+      // only initialConfig should be cached
+      expect(getCachedConfig(imageHash(initialConfig))).to.not.be.undefined
+      expect(getCachedConfig(imageHash(nextConfig))).to.be.undefined
+      expect(getCachedConfig(imageHash(finalConfig))).to.be.undefined
+
+      // update config to nextConfig
+      await wallet.publishConfig(true)
+      await wallet.updateConfig(nextConfig)
+
+      // now nextConfig should also be cached
+      expect(getCachedConfig(imageHash(initialConfig))).to.not.be.undefined
+      expect(getCachedConfig(imageHash(nextConfig))).to.not.be.undefined
+      expect(getCachedConfig(imageHash(finalConfig))).to.be.undefined
+
+      // Wallet.useConfig should also cache
+      wallet = wallet.useConfig(finalConfig)
+
+      // finally finalConfig should be cached
+      expect(getCachedConfig(imageHash(initialConfig))).to.not.be.undefined
+      expect(getCachedConfig(imageHash(nextConfig))).to.not.be.undefined
+      expect(getCachedConfig(imageHash(finalConfig))).to.not.be.undefined
     })
   })
 })

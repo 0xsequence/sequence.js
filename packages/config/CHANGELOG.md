@@ -1,5 +1,60 @@
 # @0xsequence/config
 
+## 0.35.10
+
+### Patch Changes
+
+- upgrade deps
+- Updated dependencies
+  - @0xsequence/abi@0.35.10
+  - @0xsequence/multicall@0.35.10
+  - @0xsequence/network@0.35.10
+  - @0xsequence/utils@0.35.10
+
+## 0.35.9
+
+### Patch Changes
+
+- provider: window-transport override event handlers with new wallet instance
+- Updated dependencies
+  - @0xsequence/abi@0.35.9
+  - @0xsequence/multicall@0.35.9
+  - @0xsequence/network@0.35.9
+  - @0xsequence/utils@0.35.9
+
+## 0.35.8
+
+### Patch Changes
+
+- provider: async wallet sign in improvements
+- Updated dependencies
+  - @0xsequence/abi@0.35.8
+  - @0xsequence/multicall@0.35.8
+  - @0xsequence/network@0.35.8
+  - @0xsequence/utils@0.35.8
+
+## 0.35.7
+
+### Patch Changes
+
+- config: cache wallet configs
+- Updated dependencies
+  - @0xsequence/abi@0.35.7
+  - @0xsequence/multicall@0.35.7
+  - @0xsequence/network@0.35.7
+  - @0xsequence/utils@0.35.7
+
+## 0.35.6
+
+### Patch Changes
+
+- provider: support async signin of wallet request handler
+- Updated dependencies
+  - @0xsequence/abi@0.35.6
+  - @0xsequence/multicall@0.35.6
+  - @0xsequence/network@0.35.6
+  - @0xsequence/utils@0.35.6
+
 ## 0.35.5
 
 ### Patch Changes

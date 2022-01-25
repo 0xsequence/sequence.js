@@ -53,6 +53,11 @@ export function hasImplementationUpdate(presigned: PresignedConfigUpdate[], wall
 
   for (const update of presigned) {
     const decoded = unpackMetaTransactionData(update.body.tx)
+
+    if (!decoded[0] || !decoded[0].data || !decoded[0].value || !decoded[0].gasLimit) {
+      throw new Error("Invalid transaction data")
+    }
+
     const hexData = ethers.utils.hexlify(decoded[0].data)
 
     // Check if is an updateImplementation transaction

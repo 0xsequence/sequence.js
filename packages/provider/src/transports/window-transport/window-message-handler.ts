@@ -47,10 +47,6 @@ export class WindowMessageHandler extends BaseWalletTransport {
       return
     }
 
-    if (session.intent && isNewWindowSession) {
-      window.history.replaceState({ openWalletIntent: true }, document.title, pathname)
-    }
-
     // record parent window instance for communication
     this.parentWindow = parent.window.opener
 

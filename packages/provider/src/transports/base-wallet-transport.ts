@@ -118,6 +118,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
       return
     }
 
+    // ensure signer is ready to handle requests
+    // if (this.walletRequestHandler.getSigner() === undefined) {
+    //   await this.walletRequestHandler.signerReady()
+    // }
+
     // handle request
     switch (request.type) {
       case EventType.OPEN: {
@@ -314,6 +319,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.saveTransportSession({ sessionId, intent, networkId })
     }
 
+    this.walletRequestHandler.setOpenIntent(intent)
+
     // init handshake for certain transports, before we can open the communication.
     //
     // for example, with the window-transport, we have to exchange messages to determine the
@@ -357,8 +364,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.walletRequestHandler.setConnectOptions(undefined)
     }
 
+    // ensure signer is ready
+    await this.walletRequestHandler.getAccount()
+
     // Notify open and proceed to prompt for connection if intended
-    if (!this.walletRequestHandler.isSignedIn()) {
+    if (!(await this.walletRequestHandler.isSignedIn())) {
       // open wallet without a specific connected chainId, as the user is not signed in
       this.notifyOpen({
         sessionId: this._sessionId

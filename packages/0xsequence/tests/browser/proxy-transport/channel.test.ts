@@ -61,9 +61,27 @@ export const tests = async () => {
   const rpcProvider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
+  const networks = [
+    {
+      name: 'hardhat',
+      chainId: 31337,
+      rpcUrl: rpcProvider.connection.url,
+      provider: rpcProvider,
+      relayer: relayer,
+      isDefaultChain: true,
+      // isAuthChain: true
+    }
+  ]
+
   // the rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(wallet, null, [])
-  
+  const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)
+
+  // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour
+  // of the wallet-webapp, so lets ensure the mock wallet does the same thing too.
+  setTimeout(() => {
+    walletRequestHandler.signIn(wallet)
+  }, 1000)
+
   // register wallet message handler, in this case using the ProxyMessage transport.
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   proxyHandler.register()
