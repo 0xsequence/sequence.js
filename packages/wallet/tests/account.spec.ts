@@ -10,7 +10,6 @@ import { isValidConfigSigners, imageHash, SequenceUtilsFinder } from '@0xsequenc
 import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
-import { isWalletUpToDate } from '../../provider/src/utils'
 import { isConfigEqual } from '../../config/src/config'
 
 const { expect } = chai.use(chaiAsPromised)
@@ -51,7 +50,15 @@ describe('Account integration', () => {
 
   before(async () => {
     // Deploy Sequence context
-    const [factory, mainModule, mainModuleUpgradable, guestModule, sequenceUtils, requireFreshSigner] = await deployWalletContext(
+    const [
+      factory,
+      mainModule,
+      mainModuleUpgradable,
+      guestModule,
+      sequenceUtils,
+      requireFreshSigner,
+      sessionUtils
+    ] = await deployWalletContext(
       provider.getSigner()
     )
 
@@ -65,6 +72,7 @@ describe('Account integration', () => {
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
       sequenceUtils: sequenceUtils.address,
+      sessionUtils: sessionUtils.address,
       libs: {
         requireFreshSigner: requireFreshSigner.address
       }
@@ -78,7 +86,7 @@ describe('Account integration', () => {
 
     account = new lib.Account(
       {
-        initialConfig: wallet.config,
+        address: wallet.address,
         networks,
         context
       },

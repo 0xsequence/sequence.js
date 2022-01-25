@@ -32,7 +32,8 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "1.9.6",
+    "//": "TODO: set back wallet-contracts to npm distribuition",
+    "@0xsequence/wallet-contracts": "https://gitpkg.now.sh/0xsequence/wallet-contracts/src?octopus-utils",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ganache-core": "^2.13.2",
     "web3": "^1.7.0"

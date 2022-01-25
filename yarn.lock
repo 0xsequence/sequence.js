@@ -16,6 +16,12 @@
   optionalDependencies:
     ethers "^5.0.32"
 
+"@0xsequence/wallet-contracts@https://gitpkg.now.sh/0xsequence/wallet-contracts/src?octopus-utils":
+  version "1.9.4"
+  resolved "https://gitpkg.now.sh/0xsequence/wallet-contracts/src?octopus-utils#04b8c76fd83e86fd2d36062b9c075013693e393f"
+  optionalDependencies:
+    ethers "^5.0.32"
+
 "@ardatan/aggregate-error@0.0.6":
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/@ardatan/aggregate-error/-/aggregate-error-0.0.6.tgz#fe6924771ea40fc98dc7a7045c2e872dc8527609"
