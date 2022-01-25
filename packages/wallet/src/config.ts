@@ -1,6 +1,5 @@
 import { WalletConfig, DecodedSignature, isDecodedEOASigner, isDecodedFullSigner, isDecodedAddress, decodeSignature, recoverEOASigner, ConfigTracker } from '@0xsequence/config'
 import { BytesLike, ethers, Contract } from 'ethers'
-import { Signer } from './signer'
 import { walletContracts } from '@0xsequence/abi'
 import { isValidSignature } from './validate'
 import { WalletContext } from '@0xsequence/network'
@@ -18,9 +17,8 @@ export interface DecodedSigner {
   weight: number
 }
 
-export const fetchImageHash = async (signer: Signer, counterFactualConfig?: { context: WalletContext, tracker: ConfigTracker }): Promise<string | undefined> => {
-  const address = await signer.getAddress()
-  const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, await signer.getProvider())
+export const fetchImageHash = async (address: string, provider: ethers.providers.Provider, counterFactualConfig?: { context: WalletContext, tracker: ConfigTracker }): Promise<string | undefined> => {
+  const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
   const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => []))  as string[]
 
   // If we can read the contract, we just return the value

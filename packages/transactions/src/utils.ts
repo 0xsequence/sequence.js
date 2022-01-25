@@ -15,14 +15,12 @@ export const MetaTransactionsType = `tuple(
   bytes data
 )[]`
 
-export function packMetaTransactionsData(...txs: Transaction[]): string {
-  const nonce = readSequenceNonce(...txs)
-  if (nonce === undefined) throw new Error("Encoding transactions without defined nonce")
-  return packMetaTransactionsNonceData(nonce, ...txs)
-}
-
 export function packMetaTransactionsNonceData(nonce: BigNumberish, ...txs: Transaction[]): string {
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
+}
+
+export function packMetaTransactionsData(txs: Transaction[]): string {
+  return ethers.utils.defaultAbiCoder.encode([MetaTransactionsType], [sequenceTxAbiEncode(txs)])
 }
 
 export function unpackMetaTransactionData(data: string): Transaction[] {
@@ -201,7 +199,7 @@ export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: 
   ]
 }
 
-export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumberish {
+export function encodeNonce(space: BigNumberish, nonce: BigNumberish): ethers.BigNumber {
   const bspace = ethers.BigNumber.from(space)
   const bnonce = ethers.BigNumber.from(nonce)
 
@@ -214,7 +212,7 @@ export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumber
   return bnonce.add(bspace.mul(shl))
 }
 
-export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
+export function decodeNonce(nonce: BigNumberish): [ethers.BigNumber, ethers.BigNumber] {
   const bnonce = ethers.BigNumber.from(nonce)
   const shr = ethers.constants.Two.pow(ethers.BigNumber.from(96))
 

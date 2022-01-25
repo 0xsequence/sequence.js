@@ -1,12 +1,13 @@
 import { SequenceAPIClient } from '@0xsequence/api'
-import { ConfigFinder, editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from '@0xsequence/config'
+import { addressOf, ConfigFinder, ConfigTracker, editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from '@0xsequence/config'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
 import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner, Wallet } from 'ethers'
+import { network } from '../../0xsequence/src/sequence'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -31,8 +32,20 @@ type ProofStringPromise = {
   expiration: number
 }
 
+export function isSessionDumpV1(cand: SessionDumpV1 | SessionDump): cand is SessionDumpV1 {
+  return (cand as any).version === undefined 
+}
+
+export interface SessionDumpV1 {
+  config: WalletConfig,
+  context: WalletContext
+  jwt?: SessionJWT
+  metadata: SessionMeta
+}
+
 export interface SessionDump {
-  config: WalletConfig
+  version: number
+  address: string
   context: WalletContext
   jwt?: SessionJWT
   metadata: SessionMeta
@@ -45,6 +58,8 @@ export const DEFAULT_SESSION_EXPIRATION = 60 * 60 * 24 * 7
 export const LONG_SESSION_EXPIRATION = 3e7
 
 const EXPIRATION_JWT_MARGIN = 60 // seconds
+
+const SESSION_DUMP_VERSION = 2
 
 export class Session {
   _initialAuthRequest: Promise<SequenceAPIClient>
@@ -64,11 +79,9 @@ export class Session {
     public sequenceApiUrl: string,
     public sequenceMetadataUrl: string,
     private networks: NetworkConfig[],
-    public config: WalletConfig,
     public context: WalletContext,
     public account: Account,
     public metadata: SessionMeta,
-    private readonly authProvider: ethers.providers.JsonRpcProvider,
     jwt?: SessionJWT
   ) {
     if (jwt) {
@@ -89,14 +102,6 @@ export class Session {
 
   onAuth(cb: (result: PromiseSettledResult<void>) => void) {
     this.onAuthCallbacks.push(cb)
-  }
-
-  setAccount(account: Account) {
-    this.account = account
-  }
-
-  setConfig(config: WalletConfig) {
-    this.config = config
   }
 
   async auth(maxTries: number = 5): Promise<SequenceAPIClient> {
@@ -187,7 +192,7 @@ export class Session {
     }
 
     const proofStringKey = this.getProofStringKey()
-    const { proofString, expiration } = this.getProofString(proofStringKey)
+    const { proofString, expiration } = await this.getProofString(proofStringKey)
 
     const jwt = {
       token: proofString
@@ -233,7 +238,7 @@ export class Session {
     return { token, expiration }
   }
 
-  private getProofString(key: string): ProofStringPromise {
+  private async getProofString(key: string): Promise<ProofStringPromise> {
     // check if we already have or are waiting for a proof string
     if (this.proofStrings.has(key)) {
       const proofString = this.proofStrings.get(key)!
@@ -249,42 +254,17 @@ export class Session {
     const proof = new Proof({
       address: this.account.address
     })
+
     proof.claims.app = this.name
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
-    const configFinder = new SequenceUtilsFinder(this.authProvider)
-    const authWallet = this.account.authWallet()
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
-    const proofString = {
-      // Fetch latest config
-      // TODO: Should only search for latest config if necessary to be more efficient.
-      //       Perhaps compare local config hash with on-chain hash before doing
-      //       the search through the logs. Should do this accross sequence.js
-      proofString: configFinder
-        .findCurrentConfig({
-          address: authWallet.wallet.address,
-          provider: this.authProvider,
-          context: authWallet.wallet.context,
-          knownConfigs: [authWallet.wallet.config]
-        })
-        .then(val => {
-          if (!val.config) throw Error("Can't find latest config")
-          return authWallet.wallet
-            .useConfig(val.config!)
-            .sign(proof.messageDigest())
-            .then(signature => {
-              proof.signature = signature
-              return ethAuth.encodeProof(proof, true)
-            })
-        })
-        .catch(reason => {
-          this.proofStrings.delete(key)
-          throw reason
-        }),
-      expiration
-    }
+    // Sign proof message using account
+    proof.signature = await this.account.signMessage(proof.messageDigest())
+    const proofString = { proofString: ethAuth.encodeProof(proof, true), expiration }
+  
     this.proofStrings.set(key, proofString)
     return proofString
   }
@@ -295,10 +275,12 @@ export class Session {
 
   private async isProofStringValid(proofString: string): Promise<boolean> {
     try {
-      const ethAuth = new ETHAuth()
-      ethAuth.provider = this.authProvider
+      // TODO: Check signatures accounting for presigned configurations
 
-      await ethAuth.decodeProof(proofString)
+      // const ethAuth = new ETHAuth()
+      // ethAuth.provider = this.authProvider
+
+      // await ethAuth.decodeProof(proofString)
 
       return true
     } catch {
@@ -316,7 +298,8 @@ export class Session {
     }
 
     return {
-      config: this.config,
+      version: SESSION_DUMP_VERSION,
+      address: this.account.address,
       context: this.context,
       metadata: this.metadata,
       jwt
@@ -328,171 +311,83 @@ export class Session {
   }
 
   static async open(args: {
+    address: string
+    configTracker: ConfigTracker
     sequenceApiUrl: string
     sequenceMetadataUrl: string
     context: WalletContext
     networks: NetworkConfig[]
-    referenceSigner: string
     signers: { signer: AbstractSigner | string; weight: ethers.BigNumberish }[]
     threshold: ethers.BigNumberish
     metadata: SessionMeta
-    deepSearch?: boolean
-    knownConfigs?: WalletConfig[]
-    noIndex?: boolean
-    configFinder?: ConfigFinder
   }): Promise<Session> {
     const {
+      address,
       sequenceApiUrl,
       sequenceMetadataUrl,
       context,
       networks,
-      referenceSigner,
       signers,
       threshold,
-      deepSearch,
-      knownConfigs,
-      noIndex,
-      metadata
+      metadata,
+      configTracker
     } = args
 
-    const authProvider = getAuthProvider(networks)
-    const configFinder = args.configFinder ? args.configFinder : new SequenceUtilsFinder(authProvider)
+    // Prepare signers
+    const solvedSigners = Promise.all(signers.map(async s => ({ ...s, address: typeof s.signer === 'string' ? s.signer : await s.signer.getAddress() })))
+    const fullSigners =  signers.filter(s => typeof s.signer !== 'string').map(s => s.signer)
 
-    const solvedSigners = Promise.all(
-      signers.map(async s => ({ ...s, address: typeof s.signer === 'string' ? s.signer : await s.signer.getAddress() }))
-    )
+    // Create account instance, this is needed to get the previous configuration
+    const account = new Account({ address, configTracker, context, networks }, ...fullSigners)
 
-    const fullSigners = signers.filter(s => typeof s.signer !== 'string').map(s => s.signer)
+    // Add new session key to configuration
+    const config = await account.getWalletConfig()
+    if (!config) throw Error(`No wallet configuration found for ${address}`)
+    const newConfig = editConfig(config, { threshold, set: await solvedSigners })
 
-    const existingWallet = (
-      await configFinder.findLastWalletOfInitialSigner({
-        signer: referenceSigner,
-        context: context,
-        provider: authProvider,
-        requireIndex: deepSearch ? false : true
-      })
-    ).wallet
+    // Update configuration for all networks
+    // TODO: Include future network candidates
+    // (networks we aren't using, but we want to presign transactions anyway)
+    await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, [])))
 
-    if (existingWallet) {
-      // existing account
-
-      // Find prev configuration
-      const config = (
-        await configFinder.findCurrentConfig({
-          address: existingWallet,
-          provider: authProvider,
-          context: context,
-          knownConfigs
-        })
-      ).config
-
-      if (!config) throw Error('Wallet config not found')
-
-      // Load prev account
-      const account = new Account(
-        {
-          initialConfig: config,
-          networks: networks,
-          context: context
-        },
-        ...fullSigners
-      )
-
-      const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
-
-      // Update wallet config on-chain on the authChain
-      const [newConfig] = await account.updateConfig(
-        editConfig(config, { threshold, set: await solvedSigners }),
-        noIndex ? false : true
-      )
-
-      // Session is ready, lets update
-      session.setConfig(newConfig)
-      session.setAccount(
-        new Account(
-          {
-            initialConfig: newConfig,
-            networks: networks,
-            context: context
-          },
-          ...fullSigners
-        )
-      )
-
-      if (sequenceApiUrl) {
-        // Fire JWT requests after updating config
-        session._initialAuthRequest = session.auth()
-      } else {
-        session._initialAuthRequest = Promise.reject('no sequence api url')
-      }
-
-      return session
-    } else {
-      // fresh account
-      const config = genConfig(threshold, await solvedSigners)
-
-      const account = new Account(
-        {
-          initialConfig: config,
-          networks: networks,
-          context: context
-        },
-        ...fullSigners
-      )
-
-      // send referenceSigner as "requireFreshSigners"
-      // this ensures the user doesn't end up with multiple accounts if there is a race condition during login
-
-      await account.publishConfig(noIndex ? false : true, [referenceSigner])
-
-      const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
-
-      if (sequenceApiUrl) {
-        // Fire JWT requests when opening session
-        session._initialAuthRequest = session.auth()
-      } else {
-        session._initialAuthRequest = Promise.reject('no sequence api url')
-      }
-
-      return session
-    }
+    // Create session instance
+    return new Session(sequenceApiUrl, sequenceMetadataUrl, networks, context, account, metadata)
   }
 
   static load(args: {
     sequenceApiUrl: string
     sequenceMetadataUrl: string
-    dump: SessionDump
+    dump: SessionDump | SessionDumpV1
+    configTracker: ConfigTracker
     signers: AbstractSigner[]
     networks: NetworkConfig[]
   }): Session {
-    const { sequenceApiUrl, sequenceMetadataUrl, dump, signers, networks } = args
+    const { sequenceApiUrl, sequenceMetadataUrl, dump, signers, networks, configTracker } = args
+
+    // Get address from dump
+    // old session dumps have the address encoded on the config
+    const address = isSessionDumpV1(dump) ? addressOf(dump.config, dump.context) : dump.address
 
     return new Session(
       sequenceApiUrl,
       sequenceMetadataUrl,
       networks,
-      dump.config,
       dump.context,
       new Account(
         {
-          initialConfig: dump.config,
+          address,
           context: dump.context,
-          networks: networks
+          networks: networks,
+          configTracker
         },
         ...signers
       ),
       dump.metadata,
-      getAuthProvider(networks),
       dump.jwt
     )
   }
 }
 
-function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcProvider {
-  const authChain = getAuthNetwork(networks)
-  if (!authChain) throw Error('Auth chain not found')
-  return authChain.provider ?? new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
-}
 
 function getJWTExpiration(jwt: string): number {
   return jwtDecodeClaims<{ exp: number }>(jwt).exp

@@ -20,8 +20,10 @@
   "dependencies": {
     "@0xsequence/abi": "^0.35.5",
     "@0xsequence/network": "^0.35.5",
+    "@0xsequence/transactions": "^0.35.5",
     "@0xsequence/utils": "^0.35.5",
-    "ethers": "^5.5.2"
+    "ethers": "^5.5.2",
+    "fetch-ponyfill": "^7.1.0"
   },
   "peerDependencies": {},
   "devDependencies": {

@@ -4,6 +4,7 @@ import * as mainModule from './mainModule'
 import * as mainModuleUpgradable from './mainModuleUpgradable'
 import * as sequenceUtils from './sequenceUtils'
 import * as requireFreshSigner from './libs/requireFreshSigners'
+import * as sessionUtils from './libs/sessionUtils'
 
 export const walletContracts = {
   erc1271,
@@ -11,5 +12,6 @@ export const walletContracts = {
   mainModule,
   mainModuleUpgradable,
   sequenceUtils,
-  requireFreshSigner
+  requireFreshSigner,
+  sessionUtils
 }

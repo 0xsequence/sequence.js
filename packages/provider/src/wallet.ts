@@ -59,8 +59,8 @@ export interface WalletProvider {
   getSigner(chainId?: ChainIdLike): Web3Signer
 
   getWalletContext(): Promise<WalletContext>
-  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
-  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
+  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig>
+  getWalletState(chainId?: ChainIdLike): Promise<WalletState>
   isDeployed(chainId?: ChainIdLike): Promise<boolean>
 
   getProviderConfig(): ProviderConfig
@@ -508,11 +508,11 @@ export class Wallet implements WalletProvider {
     return (await this.getAuthProvider()).getSigner()
   }
 
-  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
+  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig> {
     return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
+  getWalletState(chainId?: ChainIdLike): Promise<WalletState> {
     return this.getSigner().getWalletState(chainId)
   }
 

@@ -25,3 +25,13 @@ export async function findLatestLog(provider: ethers.providers.Provider, filter:
     return findLatestLog(provider, { ...filter, fromBlock: fromBlock, toBlock: pivot })
   }
 }
+
+export async function isWalletDeployed(wallet: string, provider: ethers.providers.Provider): Promise<boolean> {
+  const walletCode = await provider.getCode(wallet)
+  return !!walletCode && walletCode !== '0x'
+}
+
+export async function getImplementation(address: string, provider: ethers.providers.Provider): Promise<string> {
+  const slot = await provider.getStorageAt(address, ethers.utils.defaultAbiCoder.encode(['address'], [address]))
+  return ethers.utils.defaultAbiCoder.decode(['address'], slot)[0]
+}

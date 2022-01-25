@@ -18,7 +18,7 @@ import {
   JsonRpcSender,
   isJsonRpcProvider
 } from '@0xsequence/network'
-import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
+import { Account, resolveArrayProperties, Signer } from '@0xsequence/wallet'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
@@ -87,8 +87,8 @@ export function isSequenceProvider(provider: any): provider is Web3Provider {
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(signer: Signer, networks?: Networks) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null, networks || [])
+  constructor(account: Account, networks?: Networks) {
+    const walletRequestHandler = new WalletRequestHandler(account, null, networks || [])
     super(walletRequestHandler)
   }
 }
@@ -181,7 +181,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     return this._context
   }
 
-  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig> {
     return await this.provider.send(
       'sequence_getWalletConfig',
       [maybeChainId(chainId)],
@@ -189,7 +189,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     )
   }
 
-  async getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
+  async getWalletState(chainId?: ChainIdLike): Promise<WalletState> {
     return await this.provider.send(
       'sequence_getWalletState',
       [maybeChainId(chainId)],
@@ -205,19 +205,9 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async getSigners(): Promise<string[]> {
-    const networks = await this.getNetworks()
-
-    const authChainId = networks.find(n => n.isAuthChain)
-    if (!authChainId) {
-      throw new Error('authChainId could not be determined from network list')
-    }
-
-    const walletConfig = await this.getWalletConfig(authChainId)
-    if (!walletConfig || walletConfig.length === 0) {
-      throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
-    }
-
-    return walletConfig[0].signers.map(s => s.address)
+    // TODO: Implement this, according the interface docs it should return
+    // the list of addresses of all available signers for the account
+    throw new Error('TODO - not implemented')
   }
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with

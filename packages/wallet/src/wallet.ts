@@ -45,7 +45,7 @@ import {
 
 import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 import { RemoteSigner } from './remote-signers'
-import { resolveArrayProperties } from './utils'
+import { getImplementation, isWalletDeployed, resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
@@ -88,7 +88,7 @@ export class Wallet extends Signer {
   relayer: Relayer
 
   // chainId is the node network id, used for memoization
-  chainId?: number
+  chainId: number
 
   constructor(options: WalletOptions, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
@@ -155,7 +155,7 @@ export class Wallet extends Signer {
       this.provider = jsonProvider
       this.sender = new JsonRpcSender(jsonProvider)
     }
-    this.chainId = undefined // reset chainId value
+
     return this
   }
 
@@ -504,8 +504,7 @@ export class Wallet extends Signer {
 
   async isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     await this.getChainIdNumber(chainId)
-    const walletCode = await this.provider.getCode(this.address)
-    return !!walletCode && walletCode !== '0x'
+    return isWalletDeployed(this.address, this.provider)
   }
 
   // getChainIdFromArgument will return the chainId of the argument, as well as ensure
@@ -559,5 +558,9 @@ export class Wallet extends Signer {
   async hasEnoughSigners(chainId?: ChainIdLike): Promise<boolean> {
     if (chainId) await this.getChainIdNumber(chainId)
     return (await this.signWeight()).gte(this.config.threshold)
+  }
+
+  async implementation(): Promise<string> {
+    return getImplementation(this.address, this.provider)
   }
 }

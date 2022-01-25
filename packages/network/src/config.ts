@@ -58,7 +58,10 @@ export const mainnetNetworks = createNetworkConfig(
       chainId: ChainId.MAINNET,
       ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
       rpcUrl: urlClean(`${vars.baseRpcUrl}/mainnet`),
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/mainnet`) },
+      relayer: {
+        url: urlClean(`${vars.baseRelayerUrl}/mainnet`),
+        provider: urlClean(`${vars.baseRpcUrl}/mainnet`)
+      },
       isDefaultChain: true
     },
     {
@@ -66,7 +69,10 @@ export const mainnetNetworks = createNetworkConfig(
       name: 'polygon',
       chainId: ChainId.POLYGON,
       rpcUrl: 'https://rpc-mainnet.matic.network',
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/matic`) },
+      relayer: {
+        url: urlClean(`${vars.baseRelayerUrl}/matic`),
+        provider: urlClean(`${vars.baseRpcUrl}/matic`)
+      },
       isAuthChain: true
     }
   ],
@@ -85,7 +91,10 @@ export const testnetNetworks = createNetworkConfig(
       ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
       testnet: true,
       rpcUrl: urlClean(`${vars.baseRpcUrl}/rinkeby`),
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/rinkeby`) },
+      relayer: {
+        url: urlClean(`${vars.baseRelayerUrl}/rinkeby`),
+        provider: urlClean(`${vars.baseRpcUrl}/rinkeby`)
+      },
       isDefaultChain: true
     },
     {
@@ -94,7 +103,10 @@ export const testnetNetworks = createNetworkConfig(
       ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
       testnet: true,
       rpcUrl: urlClean(`${vars.baseRpcUrl}/goerli`),
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/goerli`) },
+      relayer: {
+        url: urlClean(`${vars.baseRelayerUrl}/goerli`),
+        provider: urlClean(`${vars.baseRpcUrl}/goerli`),
+      },
       isAuthChain: true
     }
     // {
