@@ -49,7 +49,7 @@ export type TransactionBundle = {
 }
 
 export type SignedTransactionBundle = TransactionBundle & {
-  signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>,
+  signature: string,
   nonce: ethers.BigNumber,
 }
 

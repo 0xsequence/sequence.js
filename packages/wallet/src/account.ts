@@ -4,7 +4,7 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { SignedTransactionsCallback, Signer } from './signer'
 import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData, packMetaTransactionsData, encodeNonce } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, decodeSignature } from '@0xsequence/config'
+import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE } from '@0xsequence/config'
 import {
   ChainIdLike,
   NetworkConfig,
@@ -241,7 +241,7 @@ export class Account extends Signer {
     }))
   }
 
-  async decorateTransactions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<TransactionBundle> {
+  async buildDeployTransaction(chainId?: ChainIdLike): Promise<Omit<TransactionBundle, "intent"> | undefined> {
     // Get wallet of network
     const cid = maybeChainId(chainId) || this.defaultChainId
 
@@ -250,7 +250,7 @@ export class Account extends Signer {
 
     // If wallet is published and deployed, then we can just send the transactions as-is
     if (state.published && state.deployed) {
-      return bundle
+      return undefined
     }
 
     // List of transactions for GuestModule
@@ -323,17 +323,6 @@ export class Account extends Signer {
       })
     }
 
-    // Append execution of original bundle
-    const data = encodeBundleExecData(bundle)
-    guestTxs.push({
-      to: this.address,
-      data: data,
-      gasLimit: 0,
-      delegateCall: false,
-      revertOnError: true,
-      value: 0
-    })
-
     // If guestModule is not defined
     // then we can't decorate the transactions like this
     const guestModule = this._context.guestModule
@@ -342,10 +331,53 @@ export class Account extends Signer {
     }
 
     return {
-      intent: bundle.intent,
       entrypoint: guestModule,
       transactions: guestTxs,
       chainId: ethers.BigNumber.from(cid),
+    }
+  }
+
+  async deploy(chainId?: ChainIdLike): Promise<TransactionResponse | undefined> {
+    // Get wallet of network
+    const cid = maybeChainId(chainId) || this.defaultChainId
+
+    const deployTx = await this.buildDeployTransaction(chainId)
+    if (!deployTx) return undefined
+
+    const relayer = await this.getRelayer(cid)
+    if (!relayer) throw new Error(`Relayer not available for network ${chainId}`)
+
+    return relayer.relay({ ...deployTx, intent: { digest: 'TODO: compute digest', wallet: this.address } })
+  }
+
+  async decorateTransactions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<TransactionBundle> {
+    // Get wallet of network
+    const cid = maybeChainId(chainId) || this.defaultChainId
+
+    // Get deploy transaction
+    // this will deploy the wallet and update if needed
+    const deployTx = await this.buildDeployTransaction(cid)
+    if (!deployTx) {
+      return bundle
+    }
+
+    // If bundle exist, append intent
+    // and the bundle transactions at the end
+
+    return {
+      ...deployTx,
+      intent: bundle.intent,
+      transactions: [
+        ...deployTx.transactions,
+        {
+          to: this.address,
+          data: await encodeBundleExecData(bundle),
+          gasLimit: 0,
+          delegateCall: false,
+          revertOnError: true,
+          value: 0
+        }
+      ]
     }
   }
 
@@ -529,6 +561,10 @@ export class Account extends Signer {
       fromImageHash: imageHash(lastConfig),
       chainId: getChainId(chainId)
     })
+    if (newConfigFromTracker.length === 0) {
+      throw new Error(`New config not found in config tracker`)
+    }
+
     const lastImageHashFromTracker = newConfigFromTracker[newConfigFromTracker.length - 1].body.newImageHash
     if (lastImageHashFromTracker !== newImageHash) {
       throw new Error(`Error storing presigned transactions on config tracker. Last image hash ${lastImageHashFromTracker} does not match expected ${newImageHash}`)

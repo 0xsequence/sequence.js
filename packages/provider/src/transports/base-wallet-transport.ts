@@ -365,7 +365,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     }
 
     // ensure signer is ready
-    await this.walletRequestHandler.getAccount()
+    await this.walletRequestHandler.getSigner()
 
     // Notify open and proceed to prompt for connection if intended
     if (!(await this.walletRequestHandler.isSignedIn())) {

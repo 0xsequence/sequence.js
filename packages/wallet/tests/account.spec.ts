@@ -271,6 +271,25 @@ describe('Account integration', () => {
       expect(state.config).excluding('address').to.deep.equal(newConfig3)
       expect(await callReceiver.lastValA()).to.deep.equal(ethers.BigNumber.from(222))
     })
+
+    it('should fail to update if not enough signer', async () => {
+      // Generate new signer
+      const newSigner = ethers.Wallet.createRandom()
+      const newConfig = { threshold: 1, signers: [{ address: newSigner.address, weight: 1 }] }
+
+      // Update account to new config
+      await account.updateConfig(newConfig, networks[0])
+
+      // Generate another new config
+      const newSigner2 = ethers.Wallet.createRandom()
+      const newConfig2 = { threshold: 2, signers: [{ address: newSigner2.address, weight: 2 }] }
+
+      // Update account to new config
+      const update = account.updateConfig(newConfig2, networks[0].chainId)
+
+      // Should fail
+      await expect(update).to.be.rejected
+    })
   })
 
   describe('config', () => {

@@ -7,13 +7,13 @@ import {
   TransactionRequest,
   Transaction,
   TransactionResponse,
-  SignedTransactionBundle
+  SignedTransactionBundle,
+  TransactionBundle
 } from '@0xsequence/transactions'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@0xsequence/utils'
 import { WalletConfig, WalletState } from '@0xsequence/config'
-import { DecodedSigner, DecodedOwner } from './config'
 
 export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
@@ -28,6 +28,9 @@ export abstract class Signer extends AbstractSigner {
   abstract getWalletState(chainId?: ChainIdLike): Promise<WalletState>
 
   abstract getNetworks(): Promise<NetworkConfig[]>
+
+  abstract buildDeployTransaction(chainId?: ChainIdLike): Promise<Omit<TransactionBundle, "intent"> | undefined>
+  abstract deploy(chainId?: ChainIdLike): Promise<TransactionResponse | undefined>
 
   // getSigners returns a list of available / attached signers to the interface. Note: you need
   // enough signers in order to meet the signing threshold that satisfies a wallet config.

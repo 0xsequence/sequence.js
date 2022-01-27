@@ -15,7 +15,9 @@ import {
   digestOfTransactionsNonce,
   decodeNonce,
   fromTransactionish,
-  SignedTransactionBundle
+  SignedTransactionBundle,
+  TransactionBundle,
+  encodeBundleExecData
 } from '@0xsequence/transactions'
 
 import { Relayer } from '@0xsequence/relayer'
@@ -27,7 +29,8 @@ import {
   NetworkConfig,
   isJsonRpcProvider,
   sequenceContext,
-  getChainId
+  getChainId,
+  maybeChainId
 } from '@0xsequence/network'
 
 import {
@@ -46,6 +49,8 @@ import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 import { RemoteSigner } from './remote-signers'
 import { getImplementation, isWalletDeployed, resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
+import { Interface } from '@ethersproject/abi'
+import { walletContracts } from '@0xsequence/abi'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
@@ -238,6 +243,84 @@ export class Wallet extends Signer {
     return Promise.all(this._signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
   }
 
+  async buildDeployTransaction(chainId?: ChainIdLike): Promise<Omit<TransactionBundle, "intent"> | undefined> {
+    if (chainId) await this.getChainIdNumber(chainId)
+
+    const isDeployed = await this.isDeployed()
+    if (isDeployed) return undefined
+
+    const factoryInterface = new Interface(walletContracts.factory.abi)
+
+    // Validate the current context + config derive
+    // on the current wallet address
+    const initialAddress = addressOf(this.imageHash, this.context)
+
+    if (initialAddress !== this.address) {
+      throw new Error(`Wallet not configured with initial configuration: ${initialAddress} !== ${this.address}`)
+    }
+
+    if (!this.context.guestModule) {
+      throw new Error('Wallet context is missing guestModule')
+    }
+
+    return {
+      entrypoint: this.context.guestModule,
+      transactions: [
+        {
+          to: this.context.factory,
+          data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'),
+            [this.context.mainModule, this.imageHash]
+          ),
+          gasLimit: 100000,
+          delegateCall: false,
+          revertOnError: true,
+          value: 0
+        }
+      ],
+      chainId: ethers.BigNumber.from(await this.getChainId())
+    }
+  }
+
+  async deploy(chainId?: ChainIdLike): Promise<TransactionResponse | undefined> {
+    const deployTx = await this.buildDeployTransaction(chainId)
+    if (!deployTx) return undefined
+
+    if (!this.relayer) throw new Error(`Relayer not available for network ${chainId}`)
+
+    return this.relayer.relay({ ...deployTx, intent: { digest: 'TODO: compute digest', wallet: this.address } })
+  }
+
+  async decorateTransactions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<TransactionBundle> {
+    // Get wallet of network
+    const cid = maybeChainId(chainId) || await this.getChainId()
+
+    // Get deploy transaction
+    // this will deploy the wallet and update if needed
+    const deployTx = await this.buildDeployTransaction(cid)
+    if (!deployTx) {
+      return bundle
+    }
+
+    // If bundle exist, append intent
+    // and the bundle transactions at the end
+
+    return {
+      ...deployTx,
+      intent: bundle.intent,
+      transactions: [
+        ...deployTx.transactions,
+        {
+          to: this.address,
+          data: await encodeBundleExecData(bundle),
+          gasLimit: 0,
+          delegateCall: false,
+          revertOnError: true,
+          value: 0
+        }
+      ]
+    }
+  }
+
   // chainId returns the network connected to this wallet instance
   async getChainId(): Promise<number> {
     if (this.chainId) return this.chainId
@@ -286,7 +369,7 @@ export class Wallet extends Signer {
       const metaTxnHash = computeMetaTxnHash(signedBundle.intent.wallet, signedBundle.chainId, ...signedBundle.transactions)
       callback(signedBundle, metaTxnHash)
     }
-    return this.relayer.relay(signedBundle)
+    return this.relayer.relay(await this.decorateTransactions(signedBundle))
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
@@ -347,7 +430,7 @@ export class Wallet extends Signer {
       throw new Error('relayer is not set, first connect a relayer')
     }
     await this.getChainIdNumber(chainId)
-    return this.relayer.relay(signedBundle)
+    return this.relayer.relay(await this.decorateTransactions(signedBundle))
   }
 
   // signMessage will sign a message for a particular chainId with the wallet signers

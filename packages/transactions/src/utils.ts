@@ -250,9 +250,8 @@ export function isSignedTransactionBundle(cand: any): cand is SignedTransactionB
   )
 }
 
-export function encodeBundleExecData(bundle: TransactionBundle) {
+export async function encodeBundleExecData(bundle: TransactionBundle): Promise<string> {
   const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-  // console.log("is signed", isSignedTransactionBundle(bundle), bundle)
   return walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
     isSignedTransactionBundle(bundle) ? [
       // Signed transaction bundle has all 3 parameters

@@ -125,7 +125,7 @@ export class RpcRelayer implements Relayer {
 
       // Is bundle is already signed we can use the provided nonce
       // otherwise we just use the next nonce for the wallet
-      const data = encodeBundleExecData(bundle)
+      const data = await encodeBundleExecData(bundle)
 
       const { options } = await this.service.feeOptions({
         wallet: bundle.intent.wallet,
@@ -155,7 +155,7 @@ export class RpcRelayer implements Relayer {
   async relay(bundle: TransactionBundle): Promise<TransactionResponse> {
     logger.info(`[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(bundle)}`)
 
-    const data = encodeBundleExecData(bundle)
+    const data = await encodeBundleExecData(bundle)
     const metaTxn = await this.service.sendMetaTxn({
       call: {
         walletAddress: bundle.intent.wallet,

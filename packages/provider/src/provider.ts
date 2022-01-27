@@ -25,7 +25,8 @@ import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/
 import {
   TransactionRequest,
   TransactionResponse,
-  SignedTransactionBundle
+  SignedTransactionBundle,
+  TransactionBundle
 } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 
@@ -87,7 +88,7 @@ export function isSequenceProvider(provider: any): provider is Web3Provider {
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(account: Account, networks?: Networks) {
+  constructor(account: Signer, networks?: Networks) {
     const walletRequestHandler = new WalletRequestHandler(account, null, networks || [])
     super(walletRequestHandler)
   }
@@ -208,6 +209,14 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     // TODO: Implement this, according the interface docs it should return
     // the list of addresses of all available signers for the account
     throw new Error('TODO - not implemented')
+  }
+
+  buildDeployTransaction(chainId?: ChainIdLike): Promise<Omit<TransactionBundle, 'intent'> | undefined> {
+    throw new Error('Method not implemented.')
+  }
+
+  deploy(chainId?: ChainIdLike): Promise<ethers.providers.TransactionResponse | undefined> {
+    throw new Error('Method not implemented.')
   }
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with

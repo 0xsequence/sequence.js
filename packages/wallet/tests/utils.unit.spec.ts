@@ -33,7 +33,8 @@ describe('Wallet utils', function () {
     const context = {
       factory: '0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F',
       mainModule: '0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf',
-      mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7'
+      mainModuleUpgradable: '0xC7cE8a07f69F226E52AEfF57085d8C915ff265f7',
+      sessionUtils: '0x0332A64A5ff19Bf74035ee59708194836f026A4c'
     }
 
     const expected = '0xF0BA65550F2d1DCCf4B131B774844DC3d801D886'
