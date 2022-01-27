@@ -91,8 +91,6 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
 }
 
 export const imageHash = (config: WalletConfig): string => {
-  config = sortConfig(config)
-
   const imageHash = config.signers.reduce(
     (imageHash, signer) => ethers.utils.keccak256(
       ethers.utils.defaultAbiCoder.encode(

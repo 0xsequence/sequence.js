@@ -34,7 +34,6 @@ import {
   WalletConfig,
   WalletState,
   addressOf,
-  sortConfig,
   imageHash,
   isUsableConfig,
   DecodedSignature,
@@ -111,7 +110,7 @@ export class Wallet extends Signer {
       throw new Error('wallet config is not usable (strict mode)')
     }
 
-    this.config = sortConfig(config)
+    this.config = config
     this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
 
     // cache wallet config for future imageHash lookups
@@ -309,15 +308,7 @@ export class Wallet extends Signer {
     allSigners?: boolean
   ): Promise<SignedTransactionBundle> {
     const signChainId = await this.getChainIdNumber(chainId)
-
     const transaction = await resolveArrayProperties<Transactionish>(txs)
-
-    if (!this.provider) {
-      throw new Error('missing provider')
-    }
-    if (!this.relayer) {
-      throw new Error('missing relayer')
-    }
 
     // Convert Transactionish into Sequence transactions
     let stx = await fromTransactionish(this.context, this.address, transaction)

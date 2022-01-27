@@ -23,10 +23,6 @@ export abstract class ConfigTracker {
     chainId: ethers.BigNumberish
   }) => Promise<PresignedConfigUpdate[]>
 
-  configOfImageHash: (args: {
-    imageHash: string
-  }) => Promise<WalletConfig | undefined>
-
   savePresignedConfiguration: (args: {
     wallet: string,
     config: WalletConfig,
@@ -36,6 +32,10 @@ export abstract class ConfigTracker {
       signature: string
     }[]
   }) => Promise<void>
+
+  configOfImageHash: (args: {
+    imageHash: string
+  }) => Promise<WalletConfig | undefined>
 
   saveWalletConfig: (args: {
     config: WalletConfig

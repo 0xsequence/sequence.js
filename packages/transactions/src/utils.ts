@@ -25,7 +25,14 @@ export function packMetaTransactionsData(txs: Transaction[]): string {
 
 export function unpackMetaTransactionData(data: string): Transaction[] {
   const [txs] = ethers.utils.defaultAbiCoder.decode([MetaTransactionsType], data)
-  return txs
+  return txs.map((t: any) => ({
+    to: t.target,
+    value: t.value,
+    data: t.data,
+    gasLimit: t.gasLimit,
+    delegateCall: t.delegateCall,
+    revertOnError: t.revertOnError,
+  }))
 }
 
 export function digestOfTransactions(...txs: Transaction[]): string {
@@ -222,7 +229,7 @@ export function decodeNonce(nonce: BigNumberish): [ethers.BigNumber, ethers.BigN
 export function isTransactionBundle(cand: any): cand is TransactionBundle {
   return (
     cand !== undefined &&
-    cand.from !== undefined &&
+    cand.entrypoint !== undefined &&
     cand.chainId !== undefined &&
     cand.transactions !== undefined &&
     cand.nonce !== undefined &&
@@ -238,21 +245,23 @@ export function isSignedTransactionBundle(cand: any): cand is SignedTransactionB
   return (
     cand !== undefined &&
     cand.signature !== undefined &&
+    cand.signature !== '' &&
     isTransactionBundle(cand)
   )
 }
 
 export function encodeBundleExecData(bundle: TransactionBundle) {
   const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  // console.log("is signed", isSignedTransactionBundle(bundle), bundle)
   return walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
     isSignedTransactionBundle(bundle) ? [
       // Signed transaction bundle has all 3 parameters
-      bundle.transactions,
+      sequenceTxAbiEncode(bundle.transactions),
       bundle.nonce,
       bundle.signature
     ] : [
       // Unsigned bundle may be a GuestModule call, so signature and nonce are missing
-      bundle.transactions,
+      sequenceTxAbiEncode(bundle.transactions),
       0,
       []
     ]

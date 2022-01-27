@@ -4,7 +4,7 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { SignedTransactionsCallback, Signer } from './signer'
 import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData, packMetaTransactionsData, encodeNonce } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature } from '@0xsequence/config'
+import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, decodeSignature } from '@0xsequence/config'
 import {
   ChainIdLike,
   NetworkConfig,
@@ -32,8 +32,6 @@ export interface AccountOptions {
   networks?: NetworkConfig[]
   context?: WalletContext
 }
-
-const SESSIONS_SPACE = "861879107978547650890364157709704413515112855535"
 
 // Account is an interface to a multi-network smart contract wallet.
 export class Account extends Signer {
@@ -68,6 +66,11 @@ export class Account extends Signer {
     }
   }
 
+  public useSigners(...signers: (BytesLike | AbstractSigner)[]): Account {
+    this._signers = signers
+    return this
+  }
+
   private async _getWallet(chainId?: ChainIdLike): Promise<Wallet | undefined> {
     const cid = maybeChainId(chainId) ?? this.defaultChainId
 
@@ -83,7 +86,7 @@ export class Account extends Signer {
     return new Wallet({
       config,
       context: this._context,
-    }).connect(provider, relayer)
+    }, ...this._signers).connect(provider, relayer)
   }
 
   get defaultChainId(): number {
@@ -161,7 +164,7 @@ export class Account extends Signer {
     const imageHash = await fetchImageHash(this.address, provider, { context: this._context, tracker: this.options.configTracker })
     if (!imageHash) return undefined
 
-    const config = await this.options.configTracker.loadPresignedConfiguration({
+    const presigned = await this.options.configTracker.loadPresignedConfiguration({
       wallet: this.address,
       chainId: cid,
       fromImageHash: imageHash,
@@ -170,13 +173,17 @@ export class Account extends Signer {
     // If no pending presigned configuration
     // then the current imageHash is the latest config
     // and in that case we just need to fetch the config for it
-    if (!config || config.length === 0) {
-      return this.options.configTracker.configOfImageHash({ imageHash })
+    if (!presigned || presigned.length === 0) {
+      const config = await this.options.configTracker.configOfImageHash({ imageHash })
+      if (!config) return undefined
+      return { ...config, address: this.address }
     }
 
     // If there are pending presigned configurations
     // then we take the imageHash of the last step, and map it to a config
-    return this.options.configTracker.configOfImageHash({ imageHash: config[config.length - 1].body.newImageHash })
+    const config = await this.options.configTracker.configOfImageHash({ imageHash: presigned[presigned.length - 1].body.newImageHash })
+    if (!config) return undefined
+    return { ...config, address: this.address }
   }
 
   async getWalletState(chainId?: ChainIdLike): Promise<WalletState> {
@@ -413,60 +420,10 @@ export class Account extends Signer {
     throw new Error('signTransaction method is not supported in Account, please use signTransactions(...)')
   }
 
-
-  // // updateConfig will build an updated config transaction, update the imageHash on-chain and also publish
-  // // the wallet config to the authChain. Other chains are lazy-updated on-demand as batched transactions.
-  // async updateConfig(
-  //   newConfig?: WalletConfig,
-  //   index?: boolean,
-  //   callback?: SignedTransactionsCallback
-  // ): Promise<[WalletConfig, TransactionResponse | undefined]> {
-  //   const authWallet = this.authWallet().wallet
-
-  //   if (!newConfig) {
-  //     newConfig = authWallet.config
-  //   } else {
-  //     // ensure its normalized
-  //     newConfig = sortConfig(newConfig)
-  //   }
-
-  //   // The config is the default config, see if the wallet has been deployed
-  //   if (isConfigEqual(authWallet.config, newConfig)) {
-  //     if (!(await this.isDeployed())) {
-  //       // Deploy the wallet and publish initial configuration
-  //       return await authWallet.updateConfig(newConfig, undefined, true, index, callback)
-  //     }
-  //   }
-
-  //   // Get latest config, update only if neccesary
-  //   const lastConfig = await this.currentConfig()
-  //   if (isConfigEqual(lastConfig!, newConfig)) {
-  //     return [
-  //       {
-  //         ...lastConfig!,
-  //         address: this.address
-  //       },
-  //       undefined
-  //     ]
-  //   }
-
-  //   // Update to new configuration on the authWallet. Other networks will be lazily updated
-  //   // once used. The wallet config is also auto-published to the authChain.
-  //   const [_, tx] = await authWallet.useConfig(lastConfig!).updateConfig(newConfig, undefined, true, index, callback)
-
-  //   return [
-  //     {
-  //       ...newConfig,
-  //       address: this.address
-  //     },
-  //     tx
-  //   ]
-  // }
-
   async updateConfig(
     newConfig: WalletConfig,
     chainId: ChainIdLike,
-    extraChainIds: ChainIdLike[],
+    extraChainIds?: ChainIdLike[],
     callback?: SignedTransactionsCallback
   ): Promise<void> {
     
@@ -500,13 +457,14 @@ export class Account extends Signer {
     }
 
     // Append updateImageHash transaction
+    const newImageHash = imageHash(newConfig)
     transactions.push({
       delegateCall: false,
       revertOnError: true,
       gasLimit: ethers.constants.Zero,
       to: this.address,
       value: ethers.constants.Zero,
-      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [imageHash(newConfig)]),
+      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [newImageHash]),
       nonce: sessionNonce
     })
 
@@ -514,7 +472,7 @@ export class Account extends Signer {
 
     // TODO: We should check the browser timestamp before using it as session nonce
     // otherwise if the user changes the time, the session nonce could become corrupt
-    const unixTimestamp = ethers.BigNumber.from(Math.floor(Date.now() / 1000))
+    const timestamp = ethers.BigNumber.from(Math.floor(Date.now()))
 
     transactions.push({
       delegateCall: true,
@@ -522,7 +480,7 @@ export class Account extends Signer {
       gasLimit: ethers.constants.Zero,
       to: this._context.sessionUtils,
       value: ethers.constants.Zero,
-      data: sessionUtilsInterface.encodeFunctionData(sessionUtilsInterface.getFunction('requireSessionNonce'), [unixTimestamp]),
+      data: sessionUtilsInterface.encodeFunctionData(sessionUtilsInterface.getFunction('requireSessionNonce'), [timestamp]),
       nonce: sessionNonce
     })
 
@@ -530,19 +488,25 @@ export class Account extends Signer {
     const lastConfig = await this.getWalletConfig(chainId)
     if (!lastConfig) throw new Error(`No wallet config found for chainId ${chainId}`)
 
-    const wallet = new Wallet({ config: lastConfig, context: this._context })
+    const wallet = new Wallet({ config: lastConfig, context: this._context, strict: false }, ...this._signers)
     const signed = await wallet.signTransactions(transactions, chainId, true)
 
     const signatures = [signed]
 
     // Now sign the updateConfig transaction for all other chains
     // but using the reference configuration
-    for (const cid of extraChainIds) {
-      const wallet = new Wallet({ config: lastConfig, context: this._context })
-      const signed = await wallet.signTransactions(transactions, cid, true)
+    if (extraChainIds) {
+      for (const cid of extraChainIds) {
+        const wallet = new Wallet({ config: lastConfig, context: this._context, strict: false }, ...this._signers)
+        const signed = await wallet.signTransactions(transactions, cid, true)
 
-      signatures.push(signed)
+        signatures.push(signed)
+      }
     }
+
+    // Save new config and counter-factual address
+    await this.options.configTracker.saveWalletConfig({ config: newConfig })
+    await this.options.configTracker.saveCounterFactualWallet({ context: this._context, imageHash: newImageHash })
 
     // Send presgigned transactions to config tracker
     // new config should be ready now!
@@ -554,10 +518,28 @@ export class Account extends Signer {
         tx: packMetaTransactionsData(transactions),
         newImageHash: imageHash(newConfig),
         nonce: sessionNonce,
-        gapNonce: unixTimestamp,
+        gapNonce: timestamp,
       },
       signatures: await Promise.all(signatures.map(async (s) => ({ signature: encodeSignature(await s.signature), chainId: s.chainId })))
     })
+
+    // Safety check, does the config tracker have the new config?
+    const newConfigFromTracker = await this.options.configTracker.loadPresignedConfiguration({
+      wallet: this.address,
+      fromImageHash: imageHash(lastConfig),
+      chainId: getChainId(chainId)
+    })
+    const lastImageHashFromTracker = newConfigFromTracker[newConfigFromTracker.length - 1].body.newImageHash
+    if (lastImageHashFromTracker !== newImageHash) {
+      throw new Error(`Error storing presigned transactions on config tracker. Last image hash ${lastImageHashFromTracker} does not match expected ${newImageHash}`)
+    }
+
+    // Config tracker should also known the configuration of the new imageHash
+    const configFromTracker = await this.options.configTracker.configOfImageHash({ imageHash: newImageHash })
+    if (!configFromTracker || imageHash(configFromTracker) !== newImageHash) {
+      throw new Error(`Error configuration of new image hash. Config for image hash ${newImageHash} not found`)
+    }
+
   }
 
   async isImplementationUpdated(chainId: ChainIdLike): Promise<boolean> {
