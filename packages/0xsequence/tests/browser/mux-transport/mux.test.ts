@@ -8,7 +8,7 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { Networks, WalletContext } from '@0xsequence/network'
 import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, recoverConfig } from '@0xsequence/wallet'
-import { addressOf } from '@0xsequence/config'
+import { addressOf, MemoryConfigTracker } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
@@ -76,12 +76,14 @@ export const tests = async () => {
     }
   ]
 
+  const memoryCofigTracker = new MemoryConfigTracker()
+
   // Account for managing multi-network wallets
-  const saccount = new SequenceAccount({
-    initialConfig: swallet.config,
+  const saccount = await SequenceAccount.create({
     networks,
-    context: deployedWalletContext
-  }, owner)
+    context: deployedWalletContext,
+    configTracker: memoryCofigTracker
+  }, swallet.config, owner)
 
   // the rpc signer via the wallet
   const walletRequestHandler = new WalletRequestHandler(saccount, null, networks)

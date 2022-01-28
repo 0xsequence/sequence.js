@@ -7,6 +7,7 @@ import { configureLogger } from '@0xsequence/utils'
 
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 import { test, assert } from '../../utils/assert'
+import { MemoryConfigTracker } from '@0xsequence/config'
 
 configureLogger({ logLevel: 'DEBUG' })
 
@@ -72,13 +73,16 @@ const main = async () => {
     }
   ]
 
+  const memoryCofigTracker = new MemoryConfigTracker()
+
   // Account for managing multi-network wallets
   // TODO: make this a 3-key multisig with threshold of 2
-  const account = new Account({
-    initialConfig: wallet.config,
+
+  const account = await Account.create({
     networks,
-    context: deployedWalletContext
-  }, owner)
+    context: deployedWalletContext,
+    configTracker: memoryCofigTracker
+  }, wallet.config, owner)
 
   // the json-rpc signer via the wallet
   const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)
