@@ -66,9 +66,7 @@ export const tests = async () => {
     console.log('=> networks', networks)
 
     assert.true(networks[0].isDefaultChain, 'network0 is defaultChain')
-    assert.true(networks[0].isAuthChain, 'network0 is authChain (as per config)')
     assert.true(!networks[1].isDefaultChain, 'network1 is not defaultChain')
-    assert.true(!networks[1].isAuthChain, 'network1 is not authChain (as per config)')
 
     assert.true(networks[0].chainId === 31338, 'network0 is chainId 31338')
     assert.true(networks[1].chainId === 31337, 'network1 is chainId 31337')

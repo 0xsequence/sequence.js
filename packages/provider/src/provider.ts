@@ -132,6 +132,13 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     throw new Error('unsupported: cannot alter JSON-RPC Signer connection')
   }
 
+  setDefaultNetwork(chainId: ChainIdLike): Promise<void> {
+    return this.provider.send(
+      'sequence_setDefaultNetwork',
+      [maybeChainId(chainId)]
+    )
+  }
+
   //
   // Sequence Signer methods
   //
@@ -206,9 +213,19 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async getSigners(): Promise<string[]> {
-    // TODO: Implement this, according the interface docs it should return
-    // the list of addresses of all available signers for the account
-    throw new Error('TODO - not implemented')
+    // Get all networks
+    const networks = await this.getNetworks()
+
+    // Get all config for all networks
+    const configs = await Promise.all(networks.map(async (network) => this.getWalletConfig(network.chainId)))
+
+    // Get all addresses for all configs
+    const addresses = configs.reduce((acc, config) => {
+      return acc.concat(config.signers.map((s) => s.address))
+    }, [] as string[])
+
+    // Remove duplicates
+    return Array.from(new Set(addresses))
   }
 
   buildDeployTransaction(chainId?: ChainIdLike): Promise<Omit<TransactionBundle, 'intent'> | undefined> {

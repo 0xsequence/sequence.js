@@ -126,6 +126,10 @@ export class Account extends Signer {
     return this._networks.find((n) => n.isDefaultChain)?.chainId || this._defaultChainId ||  this._networks[0].chainId
   }
 
+  async getChainId(): Promise<number> {
+    return this.defaultChainId
+  }
+
   get address(): string {
     return this.options.address
   }
@@ -457,9 +461,14 @@ export class Account extends Signer {
     const signed = await wallet.signTransactions(txs, chainId, allSigners)
     const decorated = await this.decorateTransactions(signed, chainId)
 
+    if (decorated.entrypoint === signed.entrypoint) {
+      return signed
+    }
+
     // TODO add nonce and signature to comply with SignedTransactionBundle
     // maybe we need to add a new type for GuestTransactionBundle and maybe details
     // about the original intent being signed or not
+
     return { ...decorated, nonce: ethers.constants.Zero, signature: "" }
   }
 

@@ -427,6 +427,17 @@ describe('Account integration', () => {
       expect(chain1_2.config).excluding('address').to.deep.equal(newConfig)
       expect(chain2_2.config).excluding('address').to.deep.equal(newConfig)
     })
+
+    it('should send transaction without decorations', async () => {
+      await account.deploy()
+
+      await account.sendTransaction({
+        to: callReceiver.address,
+        data: callReceiver.interface.encodeFunctionData('testCall', [333, []])
+      })
+
+      expect(await callReceiver.lastValA()).to.deep.equal(ethers.BigNumber.from(333))
+    })
   })
 
   // TODO Do we need to be able to change the networks?

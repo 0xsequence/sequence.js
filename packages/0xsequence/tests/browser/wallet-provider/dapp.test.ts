@@ -24,7 +24,7 @@ export const tests = async () => {
   const providerConfig = { ...DefaultProviderConfig }
   providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   providerConfig.networks = [{
-    name: 'hardhat', rpcUrl: 'http://0.0.0.0:8545'
+    name: 'hardhat', rpcUrl: 'http://0.0.0.0:8545', isDefaultChain: true
   }]
   
   const wallet = new Wallet('hardhat', providerConfig)
@@ -101,18 +101,17 @@ export const tests = async () => {
   })
 
   await test('getWalletConfig', async () => {
-    const allWalletConfigs = await wallet.getWalletConfig()
+    const networks = await wallet.getNetworks()
+    const allWalletConfigs = await Promise.all(networks.map((n) => wallet.getWalletConfig(n.chainId)))
     assert.equal(allWalletConfigs.length, 2, '2 wallet configs (one for each chain)')
 
     const config1 = allWalletConfigs[0]
-    assert.true(config1.chainId !== undefined, 'config1, chainId is set')
     assert.true(config1.threshold === 1, 'config1, 1 threshold')
     assert.true(config1.signers.length === 1, 'config1, 1 signer')
     assert.true(config1.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config1, signer address')
     assert.true(config1.signers[0].weight === 1, 'config1, signer weight')
 
     const config2 = allWalletConfigs[0]
-    assert.true(config2.chainId !== undefined, 'config2, chainId is set')
     assert.true(config2.threshold === 1, 'config2, 1 threshold')
     assert.true(config2.signers.length === 1, 'config2, 1 signer')
     assert.true(config2.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config2, signer address')
@@ -120,7 +119,8 @@ export const tests = async () => {
   })
 
   await test('getWalletState', async () => {
-    const allWalletStates = await signer.getWalletState()
+    const networks = await wallet.getNetworks()
+    const allWalletStates = await Promise.all(networks.map((n) => wallet.getWalletState(n.chainId)))
     assert.equal(allWalletStates.length, 2, '2 wallet states (one for each chain)')
 
     // we expect network order to be [defaultChain, authChain, ..], so chain 31337 will be at index 0
@@ -496,9 +496,6 @@ export const tests = async () => {
     const provider2 = wallet.getProvider('hardhat2')
     assert.equal(await provider2.getChainId(), 31338, 'provider is the 2nd chain')
     assert.equal(await provider2.getChainId(), await wallet.getProvider(31338).getChainId(), 'provider2 code path check')
-
-    const authProvider = await wallet.getAuthProvider()
-    assert.equal(await provider2.getChainId(), await authProvider.getChainId(), 'provider2 === authProvider')
 
     const signer2 = provider2.getSigner()
 

@@ -63,6 +63,7 @@ const main = async () => {
       rpcUrl: provider.connection.url,
       provider: provider,
       relayer: relayer,
+      isDefaultChain: true,
     },
     {
       name: 'hardhat2',
