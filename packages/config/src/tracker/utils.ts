@@ -1,10 +1,10 @@
 import { walletContracts } from "@0xsequence/abi"
 import { Transaction } from "@0xsequence/transactions"
-import { Interface } from "@ethersproject/abi"
 import { imageHash, WalletConfig } from ".."
 import { ethers } from "ethers"
-import { startsWith } from "@0xsequence/utils/src/array"
 import { WalletContext } from "@0xsequence/network"
+import { Interface } from 'ethers/lib/utils'
+import { startsWith } from "@0xsequence/utils"
 
 export const SESSIONS_SPACE = "861879107978547650890364157709704413515112855535"
 

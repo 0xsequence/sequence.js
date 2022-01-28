@@ -1,15 +1,13 @@
-import { sequenceContext } from "@0xsequence/network/src";
-import { digestOfTransactionsNonce, encodeNonce, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions";
-import { packMetaTransactionsData } from "@0xsequence/transactions";
-import { BigNumberish, BigNumber, ethers } from "ethers";
+import { sequenceContext, WalletContext } from "@0xsequence/network"
+import { digestOfTransactionsNonce, encodeNonce, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions"
+import { packMetaTransactionsData } from "@0xsequence/transactions"
+import { subDigestOf } from "@0xsequence/utils"
+import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTracker, SESSIONS_SPACE } from "."
-import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedAddress, isDecodedEOASigner, isDecodedEOASplitSigner, recoverEOASigner } from "..";
-import { WalletContext } from "../../../0xsequence/src/network";
-import { config } from "../../../0xsequence/src/sequence";
-import { subDigestOf } from "../../../0xsequence/src/utils";
-import { WalletConfig } from "../config";
-import { PresignedConfigUpdate, TransactionBody } from "./config-tracker";
-import { isValidWalletUpdate } from "./utils";
+import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedAddress, isDecodedEOASigner, isDecodedEOASplitSigner, recoverEOASigner } from ".."
+import { WalletConfig } from "../config"
+import { PresignedConfigUpdate, TransactionBody } from "./config-tracker"
+import { isValidWalletUpdate } from "./utils"
 
 /**
   * @description MemoryConfigTracker is a ConfigTracker that stores all information in memory.
