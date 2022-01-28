@@ -58,7 +58,8 @@ describe('Signature tools', function () {
       mainModuleUpgradable,
       guestModule,
       sequenceUtils,
-      requireFreshSigner
+      requireFreshSigner,
+      sessionUtils
     ] = await deployWalletContext(chain.provider)
 
     if (context) {
@@ -75,6 +76,7 @@ describe('Signature tools', function () {
         mainModuleUpgradable: mainModuleUpgradable.address,
         guestModule: guestModule.address,
         sequenceUtils: sequenceUtils.address,
+        sessionUtils: sessionUtils.address,
         libs: {
           requireFreshSigner: requireFreshSigner.address
         }
@@ -175,14 +177,14 @@ describe('Signature tools', function () {
       }
 
       const ogSig = await wallet.signTransactions(transaction)
-      const subDigest = await wallet.subDigest(ogSig.digest)
+      const subDigest = await wallet.subDigest(ogSig.intent.digest)
 
       const oldSignature = decodeSignature(await ogSig.signature)
 
-      await wallet.updateConfig(newConfig, undefined, false)
+      await wallet.updateConfig(newConfig, undefined)
 
       const newSig = mutateSignature(oldSignature, newConfig, subDigest)
-      await wallet.sendSignedTransactions({ ...ogSig, signature: newSig })
+      await wallet.sendSignedTransactions({ ...ogSig, signature: encodeSignature(newSig) })
 
       expect(await chain.callReceiver.lastValB()).to.equal(data)
     }))
