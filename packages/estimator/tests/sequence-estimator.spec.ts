@@ -71,7 +71,8 @@ describe('Wallet integration', function () {
       mainModuleUpgradable,
       guestModule,
       sequenceUtils,
-      requireFreshSigner
+      requireFreshSigner,
+      sessionUtils
     ] = await deployWalletContext(ethnode.signer)
 
     // Create fixed context obj
@@ -81,6 +82,7 @@ describe('Wallet integration', function () {
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
       sequenceUtils: sequenceUtils.address,
+      sessionUtils: sessionUtils.address,
       libs: {
         requireFreshSigner: requireFreshSigner.address
       }
@@ -162,7 +164,7 @@ describe('Wallet integration', function () {
             signers: signers.map((s) => ({ weight: 1, address: s.address }))
           }
           const wallet = new Wallet({ context: context, config: config }, ...signers.slice(0, 2)).connect(ethnode.provider, relayer)
-          await relayer.deployWallet(wallet.config, wallet.context)
+          await wallet.deploy()
           return wallet.connect(ethnode.provider, relayer)
         }))
 
@@ -208,7 +210,7 @@ describe('Wallet integration', function () {
     
           beforeEach(async () => {
             await callReceiver.testCall(0, [])
-            await relayer.deployWallet(wallet.config, wallet.context)
+            await wallet.deploy()
           })
 
           describe("a single transaction", () => {
