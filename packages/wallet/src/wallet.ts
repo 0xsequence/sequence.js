@@ -290,6 +290,63 @@ export class Wallet extends Signer {
     return this.relayer.relay({ ...deployTx, intent: { digest: 'TODO: compute digest', wallet: this.address } })
   }
 
+  async buildUpdateConfig(
+    newConfig: WalletConfig | string,
+    chainId?: ChainIdLike
+  ): Promise<Omit<TransactionBundle, "intent">> {
+    if (chainId) await this.getChainIdNumber(chainId)
+
+    if (!this.context.nonStrict && typeof newConfig !== 'string' && !isUsableConfig(newConfig)) {
+      throw new Error('Wallet in non-strict mode cannot update to a non-usable config')
+    }
+
+    const implementation = await getImplementation(this.address, this.provider)
+    const transactions: Transaction[] = []
+
+    const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+
+    if (implementation !== this.context.mainModuleUpgradable) {
+      const walletInterface = new Interface(walletContracts.mainModule.abi)
+
+      // If wallet is not updated we first need to append an
+      // updateImplementation presigned transaction
+      transactions.push({
+        delegateCall: false,
+        revertOnError: true,
+        gasLimit: ethers.constants.Zero,
+        to: this.address,
+        value: ethers.constants.Zero,
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
+          this.context.mainModuleUpgradable
+        ])
+      })
+    }
+
+    // Update the new config too
+    const newImageHash = typeof newConfig === 'string' ? newConfig : imageHash(newConfig)
+    transactions.push({
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: ethers.constants.Zero,
+      to: this.address,
+      value: ethers.constants.Zero,
+      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [newImageHash])
+    })
+
+    return {
+      entrypoint: this.address,
+      transactions,
+      chainId: ethers.BigNumber.from(await this.getChainId())
+    }
+  }
+
+  async updateConfig(newConfig: WalletConfig | string, chainId?: ChainIdLike): Promise<TransactionResponse> {
+    if (!this.relayer) throw new Error(`Relayer not available for network ${chainId}`)
+
+    const bundle = await this.buildUpdateConfig(newConfig, chainId)
+    return this.sendTransaction(bundle.transactions)
+  }
+
   async decorateTransactions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<TransactionBundle> {
     // Get wallet of network
     const cid = maybeChainId(chainId) || await this.getChainId()
@@ -540,7 +597,6 @@ export class Wallet extends Signer {
             if (allSigners) {
               throw err
             } else {
-              console.warn(`Skipped signer ${s.address}`)
               return s
             }
           }

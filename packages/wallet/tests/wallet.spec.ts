@@ -1220,692 +1220,632 @@ describe('Wallet integration', function () {
     })
   })
 
-  // describe('Validate signatures', () => {
-  //   const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
-  //   const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+  describe('Validate signatures', () => {
+    const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
+    const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
 
-  //   describe('ethSign', () => {
-  //     it('Should validate ethSign signature', async () => {
-  //       const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const signature = await signer.signMessage(digest)
-  //       expect(await isValidSignature(signer.address, digest, signature)).to.be.true
-  //     })
-  //     it('Should validate ethSign signature using direct method', async () => {
-  //       const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const signature = await signer.signMessage(digest)
-  //       expect(isValidEthSignSignature(signer.address, digest, signature)).to.be.true
-  //     })
-  //     it('Should reject invalid ethSign signature using direct method', async () => {
-  //       const signer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const signer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const signature = await signer1.signMessage(digest)
-  //       expect(await isValidSignature(signer2.address, digest, signature)).to.be.undefined
-  //     })
-  //   })
-  //   describe('deployed sequence wallet sign', async () => {
-  //     it('Should validate sequence wallet signature', async () => {
-  //       const signature = await wallet.sign(message, false, ethnode.chainId)
-  //       await relayer.deployWallet(wallet.config, context)
-  //       expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-  //     })
-  //     it('Should validate sequence wallet signature using direct method', async () => {
-  //       const signature = await wallet.signMessage(message, ethnode.chainId)
-  //       await relayer.deployWallet(wallet.config, context)
-  //       expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-  //     })
-  //     it('Should reject sequence wallet invalid signature', async () => {
-  //       const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
-  //       const signature = await wallet2.signMessage(message, ethnode.chainId)
-  //       await relayer.deployWallet(wallet.config, context)
-  //       expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
-  //     })
-  //     it('Should validate sequence wallet signature via signTypedData', async () => {
-  //       // ensure its deployed, as in our test we're assuming we're testing to a deployed wallet
-  //       await relayer.deployWallet(wallet.config, context)
+    describe('ethSign', () => {
+      it('Should validate ethSign signature', async () => {
+        const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const signature = await signer.signMessage(digest)
+        expect(await isValidSignature(signer.address, digest, signature)).to.be.true
+      })
+      it('Should validate ethSign signature using direct method', async () => {
+        const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const signature = await signer.signMessage(digest)
+        expect(isValidEthSignSignature(signer.address, digest, signature)).to.be.true
+      })
+      it('Should reject invalid ethSign signature using direct method', async () => {
+        const signer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const signer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const signature = await signer1.signMessage(digest)
+        expect(await isValidSignature(signer2.address, digest, signature)).to.be.undefined
+      })
+    })
+    describe('deployed sequence wallet sign', async () => {
+      it('Should validate sequence wallet signature', async () => {
+        const signature = await wallet.sign(message, false, ethnode.chainId)
+        await wallet.deploy()
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+      })
+      it('Should validate sequence wallet signature using direct method', async () => {
+        const signature = await wallet.signMessage(message, ethnode.chainId)
+        await wallet.deploy()
+        expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+      })
+      it('Should reject sequence wallet invalid signature', async () => {
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
+        const signature = await wallet2.signMessage(message, ethnode.chainId)
+        await wallet.deploy()
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+      })
+      it('Should validate sequence wallet signature via signTypedData', async () => {
+        // ensure its deployed, as in our test we're assuming we're testing to a deployed wallet
+        await wallet.deploy()
 
-  //       const typedData = {
-  //         types: {
-  //           Person: [
-  //             { name: "name", type: "string" },
-  //             { name: "wallet", type: "address" },
-  //             { name: 'count', type: 'uint8' }
-  //           ]
-  //         },
-  //         primaryType: 'Person' as const,
-  //         domain: {
-  //           name: 'Ether Mail',
-  //           version: '1',
-  //           chainId: ethnode.chainId,
-  //           verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
-  //         },
-  //         message: {
-  //           'name': 'Bob',
-  //           'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-  //           'count': 4
-  //         }
-  //       }
+        const typedData = {
+          types: {
+            Person: [
+              { name: "name", type: "string" },
+              { name: "wallet", type: "address" },
+              { name: 'count', type: 'uint8' }
+            ]
+          },
+          primaryType: 'Person' as const,
+          domain: {
+            name: 'Ether Mail',
+            version: '1',
+            chainId: ethnode.chainId,
+            verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+          },
+          message: {
+            'name': 'Bob',
+            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            'count': 4
+          }
+        }
 
-  //       const digest = encodeTypedDataDigest(typedData)
-  //       expect(ethers.utils.hexlify(digest)).to.equal('0x69d3381dfd41c0a9cea56d325bcd482eace26dd2e7b95df398cb6d8edc00290c')
+        const digest = encodeTypedDataDigest(typedData)
+        expect(ethers.utils.hexlify(digest)).to.equal('0x69d3381dfd41c0a9cea56d325bcd482eace26dd2e7b95df398cb6d8edc00290c')
 
-  //       // an eip712 signed message is just a 712 object's encoded digest, signed as a message.
-  //       // therefore, first we will do so directly
-  //       {
-  //         const signature = await wallet.sign(digest, true, ethnode.chainId)
-  //         expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-  //       }
+        // an eip712 signed message is just a 712 object's encoded digest, signed as a message.
+        // therefore, first we will do so directly
+        {
+          const signature = await wallet.sign(digest, true, ethnode.chainId)
+          expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        }
 
-  //       // second, we use the signTypedData method directly for convenience
-  //       {
-  //         const signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, ethnode.chainId)
-  //         expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-  //       }
-  //     })
-  //     describe('After updating the owners', () => {
-  //       let wallet2: lib.Wallet
+        // second, we use the signTypedData method directly for convenience
+        {
+          const signature = await wallet.signTypedData(typedData.domain, typedData.types, typedData.message, ethnode.chainId)
+          expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        }
+      })
+      describe('After updating the owners', () => {
+        let wallet2: lib.Wallet
 
-  //       beforeEach(async () => {
-  //         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //         const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        beforeEach(async () => {
+          const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+          const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //         const newConfig = {
-  //           threshold: 2,
-  //           signers: [
-  //             {
-  //               address: s1.address,
-  //               weight: 1
-  //             },
-  //             {
-  //               address: s2.address,
-  //               weight: 1
-  //             }
-  //           ]
-  //         }
+          const newConfig = {
+            address: wallet.address,
+            threshold: 2,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: s2.address,
+                weight: 1
+              }
+            ]
+          }
 
-  //         const [config, tx] = await wallet.updateConfig(newConfig)
-  //         await tx.wait()
+          const tx = await wallet.updateConfig(newConfig)
+          await tx.wait()
 
-  //         wallet2 = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
-  //       })
-  //       it('Should reject previous wallet configuration signature', async () => {
-  //         const signature = await wallet.signMessage(message, ethnode.chainId)
-  //         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
-  //       })
-  //       it('Should validate new wallet configuration signature', async () => {
-  //         const signature = await wallet2.signMessage(message, ethnode.chainId)
-  //         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
-  //       })
-  //     })
-  //   })
-  //   describe('non-deployed sequence wallet sign', async () => {
-  //     it('Should validate sequence wallet signature', async () => {
-  //       const signature = await wallet.signMessage(message)
-  //       expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
-  //     })
-  //     it('Should valdiate sequence wallet multi-signature', async () => {
-  //       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+          wallet2 = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
 
-  //       const newConfig = {
-  //         threshold: 2,
-  //         signers: [
-  //           {
-  //             address: s1.address,
-  //             weight: 1
-  //           },
-  //           {
-  //             address: s2.address,
-  //             weight: 1
-  //           }
-  //         ]
-  //       }
+          // imageHash should be updated
+          expect(await fetchImageHash(wallet.address, wallet.provider)).to.equal(imageHash(newConfig))
+        })
+        it('Should reject previous wallet configuration signature', async () => {
+          const signature = await wallet.signMessage(message, ethnode.chainId)
+          expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+        })
+        it('Should validate new wallet configuration signature', async () => {
+          const signature = await wallet2.signMessage(message, ethnode.chainId)
+          expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
+        })
+      })
+    })
+    describe('non-deployed sequence wallet sign', async () => {
+      it('Should validate sequence wallet signature', async () => {
+        const signature = await wallet.signMessage(message)
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
+      })
+      it('Should valdiate sequence wallet multi-signature', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //       const wallet2 = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
-  //       const signature = await wallet2.signMessage(message)
-  //       expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
-  //     })
-  //     it('Should validate sequence wallet signature using direct method', async () => {
-  //       const signature = await wallet.signMessage(message)
-  //       expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ethnode.provider)).to.be.true
-  //     })
-  //     it('Should reject sequence wallet invalid signature', async () => {
-  //       const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })).setProvider(ethnode.provider)
-  //       const signature = await wallet2.signMessage(message, 1)
-  //       expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
-  //     })
-  //     it('Should reject signature with not enough weight', async () => {
-  //       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            }
+          ]
+        }
 
-  //       const newConfig = {
-  //         threshold: 2,
-  //         signers: [
-  //           {
-  //             address: s1.address,
-  //             weight: 1
-  //           },
-  //           {
-  //             address: s2.address,
-  //             weight: 1
-  //           }
-  //         ]
-  //       }
+        const wallet2 = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
+        const signature = await wallet2.signMessage(message)
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+      })
+      it('Should validate sequence wallet signature using direct method', async () => {
+        const signature = await wallet.signMessage(message)
+        expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ethnode.provider)).to.be.true
+      })
+      it('Should reject sequence wallet invalid signature', async () => {
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })).setProvider(ethnode.provider)
+        const signature = await wallet2.signMessage(message, 1)
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+      })
+      it('Should reject signature with not enough weight', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //       const wallet2 = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
-  //       const signature = await wallet2.signMessage(message)
-  //       expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, 1)).to.be.false
-  //     })
-  //     it('Should reject signature with not enough weight but enough signers', async () => {
-  //       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            }
+          ]
+        }
 
-  //       const newConfig = {
-  //         threshold: 2,
-  //         signers: [
-  //           {
-  //             address: s1.address,
-  //             weight: 0
-  //           },
-  //           {
-  //             address: s2.address,
-  //             weight: 0
-  //           },
-  //           {
-  //             address: s3.address,
-  //             weight: 1
-  //           }
-  //         ]
-  //       }
+        const wallet2 = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
+        const signature = await wallet2.signMessage(message)
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, 1)).to.be.false
+      })
+      it('Should reject signature with not enough weight but enough signers', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s3 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //       const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ethnode.provider, relayer)
-  //       const signature = await wallet2.signMessage(message)
-  //       expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
-  //     })      
-  //     it('Should be able to just deploy a new wallet and have valid signatures', async () => {
-  //       const pk = ethers.utils.randomBytes(32)
-  //       const wallet2 = (await lib.Wallet.singleOwner(pk, context)).connect(ethnode.provider, relayer)
-  //       const signature = await wallet2.sign(message, false, ethnode.chainId)
-  //       expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.not.be.true
-  //       await wallet2.sendTransaction([])
-  //       expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.be.true
-  //     })
-  //   })
-  //   describe('deployed wallet sign', () => {
-  //     it('Should validate wallet signature', async () => {
-  //       const signature = await wallet.signMessage(message)
-  //       await relayer.deployWallet(wallet.config, context)
-  //       expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-  //     })
-  //     it('Should validate wallet signature using direct method', async () => {
-  //       const signature = await wallet.signMessage(message)
-  //       await relayer.deployWallet(wallet.config, context)
-  //       expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
-  //     })
-  //     it('Should reject invalid wallet signature', async () => {
-  //       const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
-  //       const signature = await wallet2.signMessage(message, ethnode.chainId)
-  //       await relayer.deployWallet(wallet.config, context)
-  //       expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
-  //     })
-  //   })
-  //   it('Should sign typed data', async () => {
-  //     const proof = new Proof({
-  //       address: wallet.address
-  //     })
+        const newConfig = {
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 0
+            },
+            {
+              address: s2.address,
+              weight: 0
+            },
+            {
+              address: s3.address,
+              weight: 1
+            }
+          ]
+        }
 
-  //     proof.setExpiryIn(3e7) // 1 year
-  //     proof.claims.app = 'SkyWeaver'
+        const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ethnode.provider, relayer)
+        const signature = await wallet2.signMessage(message)
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
+      })      
+      it('Should be able to just deploy a new wallet and have valid signatures', async () => {
+        const pk = ethers.utils.randomBytes(32)
+        const wallet2 = (await lib.Wallet.singleOwner(pk, context)).connect(ethnode.provider, relayer)
+        const signature = await wallet2.sign(message, false, ethnode.chainId)
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.not.be.true
+        await wallet2.sendTransaction([])
+        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.be.true
+      })
+    })
+    describe('deployed wallet sign', () => {
+      it('Should validate wallet signature', async () => {
+        const signature = await wallet.signMessage(message)
+        await wallet.deploy()
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+      })
+      it('Should validate wallet signature using direct method', async () => {
+        const signature = await wallet.signMessage(message)
+        await wallet.deploy()
+        expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+      })
+      it('Should reject invalid wallet signature', async () => {
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
+        const signature = await wallet2.signMessage(message, ethnode.chainId)
+        await wallet.deploy()
+        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+      })
+    })
+    it('Should sign typed data', async () => {
+      const proof = new Proof({
+        address: wallet.address
+      })
+
+      proof.setExpiryIn(3e7) // 1 year
+      proof.claims.app = 'SkyWeaver'
   
-  //     const messageTypedData = proof.messageTypedData()
+      const messageTypedData = proof.messageTypedData()
   
-  //     const sigResp = await wallet.signTypedData(
-  //       messageTypedData.domain,
-  //       messageTypedData.types,
-  //       messageTypedData.message
-  //     )
+      const sigResp = await wallet.signTypedData(
+        messageTypedData.domain,
+        messageTypedData.types,
+        messageTypedData.message
+      )
 
-  //     await relayer.deployWallet(wallet.config, wallet.context)
+      await wallet.deploy()
 
-  //     expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](proof.messageDigest(), sigResp)).to.equal("0x1626ba7e")
-  //   })
-  //   describe('Broken signers', () => {
-  //     describe('Broken EOA signer', async () => {
-  //       let s1: ethers.Wallet
-  //       let s2: ethers.Wallet
-  //       let config: WalletConfig
+      expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](proof.messageDigest(), sigResp)).to.equal("0x1626ba7e")
+    })
+    describe('Broken signers', () => {
+      describe('Broken EOA signer', async () => {
+        let s1: ethers.Wallet
+        let s2: ethers.Wallet
+        let config: WalletConfig
 
-  //       beforeEach(() => {
-  //         s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //         s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        beforeEach(() => {
+          s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+          s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
     
-  //         s2.signMessage = (() => {
-  //           throw Error('ups')
-  //         }) as any
+          s2.signMessage = (() => {
+            throw Error('ups')
+          }) as any
     
-  //         config = {
-  //           threshold: 1,
-  //           signers: [
-  //             {
-  //               address: s1.address,
-  //               weight: 1
-  //             },
-  //             {
-  //               address: s2.address,
-  //               weight: 1
-  //             }
-  //           ]
-  //         }
-  //       })
+          config = {
+            threshold: 1,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: s2.address,
+                weight: 1
+              }
+            ]
+          }
+        })
 
-  //       it('Should skip broken signer', async () => {
-  //         const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
-  //         const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-  //         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
-  //       })
-  //       it('Should reject broken signer', async () => {
-  //         const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
-  //         const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
-  //         await expect(signature).to.be.rejected
-  //       })
-  //     })
-  //     describe('Broken nested sequence signer', async () => {
-  //       let s1: ethers.Wallet
-  //       let w2: lib.Wallet
-  //       let config: WalletConfig
+        it('Should skip broken signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
+          const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        })
+        it('Should reject broken signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
+          const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
+          await expect(signature).to.be.rejected
+        })
+      })
+      describe('Broken nested sequence signer', async () => {
+        let s1: ethers.Wallet
+        let w2: lib.Wallet
+        let config: WalletConfig
 
-  //       beforeEach(async () => {
-  //         s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        beforeEach(async () => {
+          s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       
-  //         const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
-  //         w2 = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
+          const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
+          w2 = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
   
-  //         // TODO: Bundle deployment with child wallets
-  //         await relayer.deployWallet(walletA.config, walletA.context)
+          // TODO: Bundle deployment with child wallets
+          await wallet.deploy()
   
-  //         w2.sign = (() => {
-  //           throw Error('ups')
-  //         }) as any
+          w2.sign = (() => {
+            throw Error('ups')
+          }) as any
     
-  //         config = {
-  //           threshold: 1,
-  //           signers: [
-  //             {
-  //               address: s1.address,
-  //               weight: 1
-  //             },
-  //             {
-  //               address: w2.address,
-  //               weight: 1
-  //             }
-  //           ]
-  //         }
-  //       })
+          config = {
+            threshold: 1,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: w2.address,
+                weight: 1
+              }
+            ]
+          }
+        })
 
-  //       it('Should skip broken nested signer', async () => {
-  //         const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
-  //         const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-  //         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
-  //       })
-  //       it('Should reject broken nested signer', async () => {
-  //         const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
-  //         const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
-  //         await expect(signature).to.be.rejected
-  //       })
-  //     })
-  //     describe('Broken remote signer', async () => {
-  //       let s1: ethers.Wallet
-  //       let r2: RemoteSigner
-  //       let config: WalletConfig
+        it('Should skip broken nested signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
+          const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        })
+        it('Should reject broken nested signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
+          const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
+          await expect(signature).to.be.rejected
+        })
+      })
+      describe('Broken remote signer', async () => {
+        let s1: ethers.Wallet
+        let r2: RemoteSigner
+        let config: WalletConfig
 
-  //       beforeEach(async () => {
-  //         s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        beforeEach(async () => {
+          s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       
-  //         const r2Addr = ethers.Wallet.createRandom().address
+          const r2Addr = ethers.Wallet.createRandom().address
 
-  //         r2 = {
-  //           _isSigner: true,
-  //           getAddress: async () => r2Addr,
-  //           signMessageWithData: () => { throw Error('Ups') }
-  //         } as any
+          r2 = {
+            _isSigner: true,
+            getAddress: async () => r2Addr,
+            signMessageWithData: () => { throw Error('Ups') }
+          } as any
 
-  //         config = {
-  //           threshold: 1,
-  //           signers: [
-  //             {
-  //               address: s1.address,
-  //               weight: 1
-  //             },
-  //             {
-  //               address: await r2.getAddress(),
-  //               weight: 1
-  //             }
-  //           ]
-  //         }
-  //       })
+          config = {
+            threshold: 1,
+            signers: [
+              {
+                address: s1.address,
+                weight: 1
+              },
+              {
+                address: await r2.getAddress(),
+                weight: 1
+              }
+            ]
+          }
+        })
 
-  //       it('Should skip broken remote signer', async () => {
-  //         const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
-  //         const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-  //         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
-  //       })
-  //       it('Should reject broken remote signer', async () => {
-  //         const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
-  //         const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
-  //         await expect(signature).to.be.rejected
-  //       })
-  //     })
-  //   })
-  // })
-  // describe('Update wallet configuration', () => {
-  //   let transaction: Transactionish
-  //   beforeEach(async () => {
-  //     transaction = {
-  //       from: wallet.address,
-  //       gasPrice: '20000000000',
-  //       to: callReceiver.address,
-  //       value: 0,
-  //       data: await encodeData(callReceiver, "testCall", 123, '0x445566')
-  //     }
-  //   })
-  //   it('Should migrate and update to a new single owner configuration', async () => {
-  //     const address = await wallet.getAddress()
+        it('Should skip broken remote signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
+          const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        })
+        it('Should reject broken remote signer', async () => {
+          const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
+          const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
+          await expect(signature).to.be.rejected
+        })
+      })
+    })
+  })
+  describe('Update wallet configuration', () => {
+    let transaction: Transactionish
+    beforeEach(async () => {
+      transaction = {
+        from: wallet.address,
+        gasPrice: '20000000000',
+        to: callReceiver.address,
+        value: 0,
+        data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+      }
+    })
+    it('Should migrate and update to a new single owner configuration', async () => {
+      const address = await wallet.getAddress()
 
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //     const newConfig = {
-  //       threshold: 1,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
+      const newConfig = {
+        address,
+        threshold: 1,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          }
+        ]
+      }
 
-  //     expect(await wallet.isDeployed()).to.be.false
+      expect(await wallet.isDeployed()).to.be.false
 
-  //     const [updatedConfig, tx] = await wallet.updateConfig(newConfig)
-  //     await tx.wait()
+      const tx = await wallet.updateConfig(newConfig)
+      await tx.wait()
 
-  //     expect(await wallet.isDeployed()).to.be.true
+      expect(await wallet.isDeployed()).to.be.true
 
-  //     const updatedWallet = wallet.useConfig(updatedConfig).useSigners(s1)
-  //     expect(updatedWallet.imageHash).to.equal(await fetchImageHash(updatedWallet))
-  //     expect(await updatedWallet.getAddress()).to.equal(address)
+      const updatedWallet = wallet.useConfig(newConfig).useSigners(s1)
+      expect(updatedWallet.imageHash).to.equal(await fetchImageHash(address, ethnode.provider))
+      expect(await updatedWallet.getAddress()).to.equal(address)
 
-  //     expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
-  //       .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
+        .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
-  //     expect(updatedWallet.address).to.be.equal(wallet.address)
-  //     expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+      expect(updatedWallet.address).to.be.equal(wallet.address)
+      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
 
-  //     await updatedWallet.sendTransaction(transaction)
-  //   })
-  //   it('Should migrate and update to a new multiple owner configuration', async () => {
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //     const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      await updatedWallet.sendTransaction(transaction)
+    })
+    it('Should migrate and update to a new multiple owner configuration', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //     const newConfig = {
-  //       threshold: 2,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         },
-  //         {
-  //           address: s2.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
+      const newConfig = {
+        address: wallet.address,
+        threshold: 2,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
 
-  //     const [config, tx] = await wallet.updateConfig(newConfig)
-  //     await tx.wait()
+      const tx = await wallet.updateConfig(newConfig)
+      await tx.wait()
 
-  //     const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
+      const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
 
-  //     expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
-  //       .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
+        .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
-  //     expect(updatedWallet.address).to.be.equal(wallet.address)
-  //     expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
+      expect(updatedWallet.address).to.be.equal(wallet.address)
+      expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
 
-  //     await updatedWallet.sendTransaction(transaction)
-  //   })
-  //   it('Should skip mainModule implementation upgrade if already up to date', async () => {
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //     const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      await updatedWallet.sendTransaction(transaction)
+    })
+    it('Should skip mainModule implementation upgrade if already up to date', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //     const newConfig = {
-  //       threshold: 2,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         },
-  //         {
-  //           address: s2.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
+      const newConfig = {
+        address: wallet.address,
+        threshold: 2,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
 
-  //     const oldConfig = wallet.config
-  //     const [config, tx] = await wallet.updateConfig(newConfig)
-  //     await tx.wait()
+      const oldConfig = wallet.config
+      const tx = await wallet.updateConfig(newConfig)
+      await tx.wait()
 
-  //     const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
+      const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
+      const updateTx = await updatedWallet.buildUpdateConfig(oldConfig)
 
-  //     const updateTx = await updatedWallet.buildUpdateConfigTransaction(oldConfig, true, true)
+      const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
 
-  //     const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
-  //     const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
-  //     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+      expect(updateTx.transactions.length).to.equal(1)
+      const decoded0 = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', updateTx.transactions[0].data)
+      expect(decoded0).to.not.be.undefined
+      expect(decoded0[0]).to.equal(imageHash(oldConfig))
+    })
 
-  //     expect(updateTx.length).to.equal(1)
+    describe('after migrating and updating', () => {
+      let wallet2: lib.Wallet
 
-  //     const decoded = mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data)[0]
-  //     expect(decoded.length).to.equal(2)
+      beforeEach(async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //     const decoded0 = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', decoded[0].data)
-  //     expect(decoded0).to.not.be.undefined
+        const newConfig = {
+          address: wallet.address,
+          threshold: 1,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            }
+          ]
+        }
 
-  //     const decoded1 = sequenceUtilsInterface.decodeFunctionData('publishConfig', decoded[1].data)
-  //     expect(decoded1).to.not.be.undefined
-  //   })
-  //   it('Should skip selfExecute if update requires a single transaction', async () => {
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //     const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const tx = await wallet.updateConfig(newConfig)
+        await tx.wait()
 
-  //     const newConfig = {
-  //       threshold: 2,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         },
-  //         {
-  //           address: s2.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
+        wallet2 = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
+      })
+      it('Should update to a new single owner configuration', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //     const oldConfig = wallet.config
-  //     const [config, tx] = await wallet.updateConfig(newConfig)
-  //     await tx.wait()
+        const newConfig = {
+          address: wallet.address,
+          threshold: 1,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            }
+          ]
+        }
 
-  //     const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
+        const tx = await wallet2.updateConfig(newConfig)
+        await tx.wait()
 
-  //     const updateTx = await updatedWallet.buildUpdateConfigTransaction(oldConfig, false)
+        const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
 
-  //     const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
-  //     const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
+          .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
-  //     expect(updateTx.length).to.equal(1)
+        expect(updatedWallet.address).to.be.equal(wallet2.address)
+        expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
 
-  //     await expect((async () => mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data))()).to.be.rejected
+        await updatedWallet.sendTransaction(transaction)
+      })
+      it('Should update to a new multiple owner configuration', async () => {
+        const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //     const decoded = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', updateTx[0].data)
-  //     expect(decoded).to.not.be.undefined
-  //   })
-  //   it('Should migrate and publish config', async () => {
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //     const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        const newConfig = {
+          address: wallet.address,
+          threshold: 2,
+          signers: [
+            {
+              address: s1.address,
+              weight: 1
+            },
+            {
+              address: s2.address,
+              weight: 1
+            }
+          ]
+        }
 
-  //     const newConfig = {
-  //       threshold: 2,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         },
-  //         {
-  //           address: s2.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
+        const tx = await wallet2.updateConfig(newConfig)
+        await tx.wait()
 
-  //     const [, tx] = await wallet.updateConfig(newConfig, undefined, true)
-  //     const receipt = await tx.wait()
-  //     expect(receipt.logs[6].data).to.contain(s1.address.slice(2).toLowerCase())
-  //     expect(receipt.logs[6].data).to.contain(s2.address.slice(2).toLowerCase())
-  //   })
-  //   it('Should publish config', async () => {
-  //     const receipt = await (await wallet.publishConfig()).wait()
-  //     expect(receipt.logs[3].data).to.contain(wallet.config.signers[0].address.slice(2).toLowerCase())
-  //   })
-  //   describe('after migrating and updating', () => {
-  //     let wallet2: lib.Wallet
+        const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
 
-  //     beforeEach(async () => {
-  //       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
+          .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
-  //       const newConfig = {
-  //         threshold: 1,
-  //         signers: [
-  //           {
-  //             address: s1.address,
-  //             weight: 1
-  //           }
-  //         ]
-  //       }
+        expect(updatedWallet.address).to.be.equal(wallet2.address)
+        expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
 
-  //       const [config, tx] = await wallet.updateConfig(newConfig)
-  //       await tx.wait()
+        await updatedWallet.sendTransaction(transaction)
+      })
+      it('Should reject transaction of previous owner', async () => {
+        const tx = wallet.sendTransaction(transaction)
+        expect(tx).to.be.rejected
+      })
+    })
+    it('Should reject a non-usable configuration', async () => {
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //       wallet2 = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
-  //     })
-  //     it('Should update to a new single owner configuration', async () => {
-  //       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const newConfig = {
+        address: wallet.address,
+        threshold: 3,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
 
-  //       const newConfig = {
-  //         threshold: 1,
-  //         signers: [
-  //           {
-  //             address: s1.address,
-  //             weight: 1
-  //           }
-  //         ]
-  //       }
+      const prom = wallet.buildUpdateConfig(newConfig)
+      await expect(prom).to.be.rejected
+    })
+    it('Should accept a non-usable configuration in non-strict mode', async () => {
+      const wallet = (await lib.Wallet.singleOwner(
+        new ethers.Wallet(ethers.utils.randomBytes(32)),
+        { ...context, nonStrict: true }
+      )).connect(ethnode.provider, relayer)
 
-  //       const [config, tx] = await wallet2.updateConfig(newConfig)
-  //       await tx.wait()
+      const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
 
-  //       const updatedWallet = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
+      const newConfig = {
+        threshold: 3,
+        signers: [
+          {
+            address: s1.address,
+            weight: 1
+          },
+          {
+            address: s2.address,
+            weight: 1
+          }
+        ]
+      }
 
-  //       expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
-  //         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
-
-  //       expect(updatedWallet.address).to.be.equal(wallet2.address)
-  //       expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
-
-  //       await updatedWallet.sendTransaction(transaction)
-  //     })
-  //     it('Should update to a new multiple owner configuration', async () => {
-  //       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-
-  //       const newConfig = {
-  //         threshold: 2,
-  //         signers: [
-  //           {
-  //             address: s1.address,
-  //             weight: 1
-  //           },
-  //           {
-  //             address: s2.address,
-  //             weight: 1
-  //           }
-  //         ]
-  //       }
-
-  //       const [config, tx] = await wallet2.updateConfig(newConfig)
-  //       await tx.wait()
-
-  //       const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
-
-  //       expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
-  //         .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
-
-  //       expect(updatedWallet.address).to.be.equal(wallet2.address)
-  //       expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context))
-
-  //       await updatedWallet.sendTransaction(transaction)
-  //     })
-  //     it('Should reject transaction of previous owner', async () => {
-  //       const tx = wallet.sendTransaction(transaction)
-  //       expect(tx).to.be.rejected
-  //     })
-  //   })
-  //   it('Should reject a non-usable configuration', async () => {
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //     const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-
-  //     const newConfig = {
-  //       threshold: 3,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         },
-  //         {
-  //           address: s2.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
-
-  //     const prom = wallet.buildUpdateConfigTransaction(newConfig)
-  //     await expect(prom).to.be.rejected
-  //   })
-  //   it('Should accept a non-usable configuration in non-strict mode', async () => {
-  //     const wallet = (await lib.Wallet.singleOwner(
-  //       new ethers.Wallet(ethers.utils.randomBytes(32)),
-  //       { ...context, nonStrict: true }
-  //     )).connect(ethnode.provider, relayer)
-
-  //     const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-  //     const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-
-  //     const newConfig = {
-  //       threshold: 3,
-  //       signers: [
-  //         {
-  //           address: s1.address,
-  //           weight: 1
-  //         },
-  //         {
-  //           address: s2.address,
-  //           weight: 1
-  //         }
-  //       ]
-  //     }
-
-  //     const prom = wallet.buildUpdateConfigTransaction(newConfig)
-  //     await expect(prom).to.be.not.rejected
-  //   })
-  // })
+      const prom = wallet.buildUpdateConfig(newConfig)
+      await expect(prom).to.be.not.rejected
+    })
+  })
 })
