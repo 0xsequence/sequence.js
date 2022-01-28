@@ -458,47 +458,24 @@ export class Account extends Signer {
     extraChainIds?: ChainIdLike[],
     callback?: SignedTransactionsCallback
   ): Promise<void> {
-    
-    // TODO: Should this be part of Account or just part of
-    // a different class that implements the logic for updating configurations?
-
-    const isUpdated = await this.isImplementationUpdated(chainId)
-
-    const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
     const sessionUtilsInterface = new Interface(walletContracts.sessionUtils.abi)
     const sessionNonce = encodeNonce(SESSIONS_SPACE, 0)
 
     const transactions: Transaction[] = []
 
-    if (!isUpdated) {
-      const walletInterface = new Interface(walletContracts.mainModule.abi)
+    // Get latest configuration
+    const lastConfig = await this.getWalletConfig(chainId)
+    if (!lastConfig) throw new Error(`No wallet config found for chainId ${chainId}`)
 
-      // If wallet is not updated we first need to append an
-      // updateImplementation presigned transaction
-      transactions.push({
-        delegateCall: false,
-        revertOnError: true,
-        gasLimit: ethers.constants.Zero,
-        to: this.address,
-        value: ethers.constants.Zero,
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
-          this._context.mainModuleUpgradable
-        ]),
-        nonce: sessionNonce
-      })
-    }
+    // Get transaction update from wallet
+    const wallet = new Wallet({ config: lastConfig, context: this._context, strict: false }, ...this._signers)
 
-    // Append updateImageHash transaction
+    const provider = await this.getProvider(getChainId(chainId))
+    if (!provider) throw new Error(`Provider not available for network ${chainId}`)
+
     const newImageHash = imageHash(newConfig)
-    transactions.push({
-      delegateCall: false,
-      revertOnError: true,
-      gasLimit: ethers.constants.Zero,
-      to: this.address,
-      value: ethers.constants.Zero,
-      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [newImageHash]),
-      nonce: sessionNonce
-    })
+    const updateBundle = await wallet.setProvider(provider).buildUpdateConfig(newImageHash)
+    transactions.push(...updateBundle.transactions)
 
     // Append session utils requireGapNonce (session nonce)
 
@@ -516,13 +493,7 @@ export class Account extends Signer {
       nonce: sessionNonce
     })
 
-    // Get latest configuration
-    const lastConfig = await this.getWalletConfig(chainId)
-    if (!lastConfig) throw new Error(`No wallet config found for chainId ${chainId}`)
-
-    const wallet = new Wallet({ config: lastConfig, context: this._context, strict: false }, ...this._signers)
     const signed = await wallet.signTransactions(transactions, chainId, true)
-
     const signatures = [signed]
 
     // Now sign the updateConfig transaction for all other chains
