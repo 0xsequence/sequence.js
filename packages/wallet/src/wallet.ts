@@ -173,6 +173,10 @@ export class Wallet extends Signer {
     return this
   }
 
+  async setDefaultNetwork(chainId: ChainIdLike): Promise<void> {
+    await this.getChainIdNumber(chainId)
+  }
+
   async getProvider(chainId?: number): Promise<JsonRpcProvider> {
     if (chainId) await this.getChainIdNumber(chainId)
     return this.provider

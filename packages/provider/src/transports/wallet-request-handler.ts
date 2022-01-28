@@ -643,8 +643,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this._defaultNetworkId = chainId
     this._chainId = undefined
 
-    if (this.signer && (<any>this.signer).setNetworks) {
-      const defaultChainId: number = (<any>this.signer).setNetworks(this.mainnetNetworks, this.testnetNetworks, chainId)
+    if (this.signer) {
+      // Find network id among available networks
+      const networks = await this.signer.getNetworks()
+      const maybeNameLowerCase = chainId.toString().toLowerCase()
+      const network = networks.find(n => n.chainId === chainId || n.name.toLowerCase() === maybeNameLowerCase)
+
+      // Can't set network if it doesn't exist in available networks
+      if (!network) return undefined
+
+      await this.signer.setDefaultNetwork(network.chainId)
+      const defaultChainId = network.chainId
+
       if (defaultChainId && notifyNetworks) {
         await this.notifyNetworks()
       }

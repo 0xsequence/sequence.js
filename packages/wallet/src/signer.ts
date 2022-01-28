@@ -32,6 +32,8 @@ export abstract class Signer extends AbstractSigner {
   abstract buildDeployTransaction(chainId?: ChainIdLike): Promise<Omit<TransactionBundle, "intent"> | undefined>
   abstract deploy(chainId?: ChainIdLike): Promise<TransactionResponse | undefined>
 
+  abstract setDefaultNetwork(chainId: ChainIdLike): Promise<void>
+
   // getSigners returns a list of available / attached signers to the interface. Note: you need
   // enough signers in order to meet the signing threshold that satisfies a wallet config.
   abstract getSigners(): Promise<string[]>

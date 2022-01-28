@@ -48,6 +48,8 @@ export class Account extends Signer {
   // Use getProvider(chainId) to get the provider for the respective network.
   provider: JsonRpcProvider
 
+  private _defaultChainId: number | undefined
+
   constructor(options: AccountOptions, ...signers: (BytesLike | AbstractSigner)[]) {
     super()
 
@@ -93,6 +95,15 @@ export class Account extends Signer {
     return this
   }
 
+  async setDefaultNetwork(chainId: ChainIdLike): Promise<void> {
+    // Requested default chainId must be in the network array
+    const network = this._networks.find((n) => n.chainId === maybeChainId(chainId))
+    if (!network) throw new Error(`Invalid default network ${chainId}`)
+
+    // Set default chainId
+    this._defaultChainId = maybeChainId(chainId)
+  }
+
   private async _getWallet(chainId?: ChainIdLike): Promise<Wallet | undefined> {
     const cid = maybeChainId(chainId) ?? this.defaultChainId
 
@@ -112,7 +123,7 @@ export class Account extends Signer {
   }
 
   get defaultChainId(): number {
-    return this._networks.find((n) => n.isDefaultChain)?.chainId || this._networks[0].chainId
+    return this._networks.find((n) => n.isDefaultChain)?.chainId || this._defaultChainId ||  this._networks[0].chainId
   }
 
   get address(): string {
