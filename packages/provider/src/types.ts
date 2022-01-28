@@ -176,7 +176,6 @@ export interface ConnectDetails {
   session?: WalletSession
 
   // proof is a signed typedData (EIP-712) payload using ETHAuth domain.
-  // NOTE: the proof is signed to the `authChainId`, as the canonical auth chain.
   proof?: ETHAuthProof
 
   // email address provided from wallet to the dapp, as request + accepted

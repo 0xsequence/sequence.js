@@ -39,9 +39,6 @@ export interface NetworkConfig {
   // isDefaultChain identifies the default network. For example, a dapp may run on the Polygon
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
-
-  // isAuthChain identifies the network containing wallet config contents.
-  isAuthChain?: boolean
 }
 
 export type Networks = NetworkConfig[]
@@ -62,7 +59,6 @@ export const mainnetNetworks = createNetworkConfig(
         url: urlClean(`${vars.baseRelayerUrl}/mainnet`),
         provider: urlClean(`${vars.baseRpcUrl}/mainnet`)
       },
-      isDefaultChain: true
     },
     {
       title: 'Polygon',
@@ -73,7 +69,6 @@ export const mainnetNetworks = createNetworkConfig(
         url: urlClean(`${vars.baseRelayerUrl}/matic`),
         provider: urlClean(`${vars.baseRpcUrl}/matic`)
       },
-      isAuthChain: true
     }
   ],
   1,
@@ -107,7 +102,6 @@ export const testnetNetworks = createNetworkConfig(
         url: urlClean(`${vars.baseRelayerUrl}/goerli`),
         provider: urlClean(`${vars.baseRpcUrl}/goerli`),
       },
-      isAuthChain: true
     }
     // {
     //   name: 'ropsten',

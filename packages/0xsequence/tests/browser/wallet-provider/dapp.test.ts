@@ -76,24 +76,24 @@ export const tests = async () => {
     assert.equal(chainId, 31337, 'chainId is correct')
   })
 
-  await test('networks', async () => {
-    const networks = await wallet.getNetworks()
+  // await test('networks', async () => {
+  //   const networks = await wallet.getNetworks()
 
-    assert.equal(networks.length, 2, '2 networks')
-    assert.true(networks[0].isDefaultChain, '1st network is DefaultChain')
-    assert.true(!networks[0].isAuthChain, '1st network is not AuthChain')
-    assert.true(!networks[1].isDefaultChain, '1st network is not DefaultChain')
-    assert.true(networks[1].isAuthChain, '2nd network is AuthChain')
-    assert.true(networks[1].chainId === 31338, 'authChainId is correct')
+  //   assert.equal(networks.length, 2, '2 networks')
+  //   assert.true(networks[0].isDefaultChain, '1st network is DefaultChain')
+  //   assert.true(!networks[0].isAuthChain, '1st network is not AuthChain')
+  //   assert.true(!networks[1].isDefaultChain, '1st network is not DefaultChain')
+  //   assert.true(networks[1].isAuthChain, '2nd network is AuthChain')
+  //   assert.true(networks[1].chainId === 31338, 'authChainId is correct')
 
-    const authNetwork = await wallet.getAuthNetwork()
-    assert.equal(networks[1].chainId, authNetwork.chainId, 'authNetwork matches chainId')
+  //   const authNetwork = await wallet.getAuthNetwork()
+  //   assert.equal(networks[1].chainId, authNetwork.chainId, 'authNetwork matches chainId')
 
-    const authProvider = wallet.getProvider(authNetwork)
-    assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
+  //   const authProvider = wallet.getProvider(authNetwork)
+  //   assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
 
-    assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337')
-  })
+  //   assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337')
+  // })
 
   await test('getAccounts', async () => {
     const address = await wallet.getAddress()
@@ -251,46 +251,46 @@ export const tests = async () => {
     assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
-  await test('signAuthMessage', async () => {
-    // NOTE: by definition, signAuthMessage will always be directed at the authChain network
-    const authNetwork = await wallet.getAuthNetwork()
+  // await test('signAuthMessage', async () => {
+  //   // NOTE: by definition, signAuthMessage will always be directed at the authChain network
+  //   const authNetwork = await wallet.getAuthNetwork()
 
-    const address = await wallet.getAddress()
-    const chainId = authNetwork.chainId
-    const authProvider = wallet.getProvider(authNetwork)
+  //   const address = await wallet.getAddress()
+  //   const chainId = authNetwork.chainId
+  //   const authProvider = wallet.getProvider(authNetwork)
 
-    assert.equal(chainId, 31338, 'chainId is 31338 (authChain)')
-    assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
-    assert.equal(await authProvider.getChainId(), await authProvider.getSigner().getChainId(), 'authProvider signer chainId is 31338')
+  //   assert.equal(chainId, 31338, 'chainId is 31338 (authChain)')
+  //   assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
+  //   assert.equal(await authProvider.getChainId(), await authProvider.getSigner().getChainId(), 'authProvider signer chainId is 31338')
 
-    // Sign the message
-    const message = 'hihi'
-    const sig = await signer.signMessage(message, chainId)
-    assert.equal(
-      sig,
-      '0x000100013fd9888b53c7d78755ed5304178a49c18eb15d438c85a5feabedba6eb634901b35c9184821aabbd1bb41be58f13469bc1c6eb21f7cc8f8639cbca9e2e53f78891c02',
-      'signAuthMessage, signature match'
-    )
+  //   // Sign the message
+  //   const message = 'hihi'
+  //   const sig = await signer.signMessage(message, chainId)
+  //   assert.equal(
+  //     sig,
+  //     '0x000100013fd9888b53c7d78755ed5304178a49c18eb15d438c85a5feabedba6eb634901b35c9184821aabbd1bb41be58f13469bc1c6eb21f7cc8f8639cbca9e2e53f78891c02',
+  //     'signAuthMessage, signature match'
+  //   )
 
-    // confirm that authSigner, the chain-bound provider, derived from the authProvider returns the same signature
-    const authSigner = authProvider.getSigner()
-    const sigChk = await authSigner.signMessage(message, chainId)
-    assert.equal(sigChk, sig, 'authSigner.signMessage returns the same sig')
+  //   // confirm that authSigner, the chain-bound provider, derived from the authProvider returns the same signature
+  //   const authSigner = authProvider.getSigner()
+  //   const sigChk = await authSigner.signMessage(message, chainId)
+  //   assert.equal(sigChk, sig, 'authSigner.signMessage returns the same sig')
 
-    const sigChk2 = await wallet.commands.signAuthMessage(message)
-    assert.equal(sigChk2, sig, 'wallet.commands.signAuthMessage returns the same sig')
+  //   const sigChk2 = await wallet.commands.signAuthMessage(message)
+  //   assert.equal(sigChk2, sig, 'wallet.commands.signAuthMessage returns the same sig')
 
-    // Verify the signature
-    const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)
-    assert.true(isValid, 'signAuthMessage, signature is valid')
+  //   // Verify the signature
+  //   const isValid = await wallet.commands.isValidMessageSignature(address, message, sig, chainId)
+  //   assert.true(isValid, 'signAuthMessage, signature is valid')
 
-    // Recover the address / config from the signature
-    const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(address, message, sig, chainId)
-    assert.true(walletConfig.address === address, 'recover address')
+  //   // Recover the address / config from the signature
+  //   const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(address, message, sig, chainId)
+  //   assert.true(walletConfig.address === address, 'recover address')
 
-    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')    
-  })
+  //   const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
+  //   assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')    
+  // })
   
   await test('getBalance', async () => {
     // technically, the mock-wallet's single signer owner has some ETH..

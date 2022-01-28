@@ -21,12 +21,6 @@ export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
   return getChainId(chainId)
 }
 
-export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undefined => {
-  if (!networks || networks.length === 0) return undefined
-  if (networks[0] && networks[0].isAuthChain) return networks[0]
-  if (networks.length > 1 && networks[1].isAuthChain) return networks[1]
-  return undefined
-}
 
 export const isValidNetworkConfig = (
   networkConfig: NetworkConfig | NetworkConfig[],
@@ -71,7 +65,6 @@ export const isValidNetworkConfig = (
   // Ensure one default chain
   // Ensure one auth chain
   let defaultChain = false
-  let authChain = false
   for (let i = 0; i < configs.length; i++) {
     const c = configs[i]
     if ((!c.rpcUrl || c.rpcUrl === '') && !c.provider) {
@@ -92,23 +85,12 @@ export const isValidNetworkConfig = (
       }
       defaultChain = true
     }
-    if (c.isAuthChain) {
-      if (authChain) {
-        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: AuthChain is already set by another config`)
-      }
-      authChain = true
-    }
   }
 
   if (!defaultChain) {
     if (raise) throw new Error(`invalid network config: DefaultChain must be set`)
     return false
   }
-  if (!authChain) {
-    if (raise) throw new Error(`invalid network config: AuthChain must be set`)
-    return false
-  }
-
   return true
 }
 
@@ -127,7 +109,7 @@ export const ensureUniqueNetworks = (networks: NetworkConfig[], raise: boolean =
   return true
 }
 
-// sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
+// sortNetworks orders the network config list by: defaultChain, ..rest by chainId ascending numbers
 export const sortNetworks = (networks: Networks, defaultChainId?: string | number): Networks => {
   if (!networks) return []
   const config = networks.sort((a, b) => {
@@ -153,21 +135,9 @@ export const sortNetworks = (networks: Networks, defaultChainId?: string | numbe
     }
   }
 
-  // // AuthChain goes first
-  // const authConfigIdx = config.findIndex(c => c.isAuthChain)
-  // if (authConfigIdx > 0) config.splice(0, 0, config.splice(authConfigIdx, 1)[0])
-
-  // // DefaultChain goes second
-  // const defaultConfigIdx = config.findIndex(c => c.isDefaultChain && c.isAuthChain !== true)
-  // if (defaultConfigIdx > 0) config.splice(1, 0, config.splice(defaultConfigIdx, 1)[0])
-
   // DefaultChain goes first
   const defaultConfigIdx = config.findIndex(c => c.isDefaultChain)
   if (defaultConfigIdx > 0) config.splice(0, 0, config.splice(defaultConfigIdx, 1)[0])
-
-  // AuthChain goes second
-  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isDefaultChain !== true)
-  if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
 
   return config
 }
@@ -195,13 +165,6 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
   if (src.ensAddress) {
     dest.ensAddress = src.ensAddress
   }
-  // NOTE: we do not set default or auth chain from here
-  // if (src.isDefaultChain) {
-  //   dest.isDefaultChain = src.isDefaultChain
-  // }
-  // if (src.isAuthChain) {
-  //   dest.isAuthChain = src.isAuthChain
-  // }
 }
 
 export const createNetworkConfig = (

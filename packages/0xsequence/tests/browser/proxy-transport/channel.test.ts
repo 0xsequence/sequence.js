@@ -69,7 +69,6 @@ export const tests = async () => {
       provider: rpcProvider,
       relayer: relayer,
       isDefaultChain: true,
-      // isAuthChain: true
     }
   ]
 

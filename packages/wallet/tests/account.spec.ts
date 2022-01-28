@@ -47,7 +47,6 @@ describe('Account integration', () => {
       provider: provider,
       relayer: new LocalRelayer({ signer: provider.getSigner() }),
       isDefaultChain: true,
-      isAuthChain: true
     },
     {
       chainId: 31338,
@@ -56,7 +55,6 @@ describe('Account integration', () => {
       provider: providerB,
       relayer: new LocalRelayer({ signer: signerB }),
       isDefaultChain: false,
-      isAuthChain: false
     }
   ]
 

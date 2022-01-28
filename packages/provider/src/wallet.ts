@@ -50,7 +50,6 @@ export interface WalletProvider {
   getAddress(): Promise<string>
   getNetworks(chainId?: ChainIdLike): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
-  getAuthChainId(): Promise<number>
 
   openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
@@ -378,24 +377,6 @@ export class Wallet implements WalletProvider {
     return network.chainId
   }
 
-  getAuthChainId = async (): Promise<number> => {
-    if (!this.networks || this.networks.length < 1) {
-      throw new Error('networks have not been set by session. connect first.')
-    }
-    // auth chain is first or second one in the list, by design
-    const network0 = this.networks[0]
-    if (network0.isAuthChain) {
-      return network0.chainId
-    }
-    if (this.networks.length > 1) {
-      const network1 = this.networks[1]
-      if (network1.isAuthChain) {
-        return network1.chainId
-      }
-    }
-    throw new Error('expecting first or second network in list to be the auth chain')
-  }
-
   openWallet = async (path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
     if (intent?.type !== 'connect' && !this.isConnected()) {
       throw new Error('connect first')
@@ -488,24 +469,12 @@ export class Wallet implements WalletProvider {
     return provider
   }
 
-  async getAuthProvider(): Promise<Web3Provider> {
-    return this.getProvider((await this.getAuthNetwork()).chainId)!
-  }
-
-  async getAuthNetwork(): Promise<NetworkConfig> {
-    return (await this.getNetworks()).find(n => n.isAuthChain)!
-  }
-
   getAllProviders(): { [chainId: number]: Web3Provider } {
     return this.providers
   }
 
   getSigner(chainId?: ChainIdLike): Web3Signer {
     return this.getProvider(chainId)!.getSigner()
-  }
-
-  async getAuthSigner(): Promise<Web3Signer> {
-    return (await this.getAuthProvider()).getSigner()
   }
 
   getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig> {

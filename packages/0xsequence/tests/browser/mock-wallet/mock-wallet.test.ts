@@ -62,8 +62,6 @@ const main = async () => {
       rpcUrl: provider.connection.url,
       provider: provider,
       relayer: relayer,
-      isDefaultChain: true,
-      // isAuthChain: true
     },
     {
       name: 'hardhat2',
@@ -71,7 +69,6 @@ const main = async () => {
       rpcUrl: provider2.connection.url,
       provider: provider2,
       relayer: relayer2,
-      isAuthChain: true
     }
   ]
 

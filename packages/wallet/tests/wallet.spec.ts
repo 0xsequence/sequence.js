@@ -80,7 +80,6 @@ describe('Wallet integration', function () {
       chainId: ethnode.chainId,
       provider: ethnode.provider,
       isDefaultChain: true,
-      isAuthChain: true
     }]
 
     // Deploy Sequence env
