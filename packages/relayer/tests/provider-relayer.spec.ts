@@ -63,7 +63,8 @@ describe('Wallet integration', function () {
       mainModuleUpgradable,
       guestModule,
       sequenceUtils,
-      requireFreshSigner
+      requireFreshSigner,
+      sessionUtils
     ] = await deployWalletContext(ethnode.provider)
 
     // Create fixed context obj
@@ -73,6 +74,7 @@ describe('Wallet integration', function () {
       mainModuleUpgradable: mainModuleUpgradable.address,
       guestModule: guestModule.address,
       sequenceUtils: sequenceUtils.address,
+      sessionUtils: sessionUtils.address,
       libs: {
         requireFreshSigner: requireFreshSigner.address
       }
@@ -105,7 +107,7 @@ describe('Wallet integration', function () {
 
       beforeEach(async () => {
         wallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(networks[0].provider, relayer)
-        if (c.deployed) await relayer.deployWallet(wallet.config, wallet.context)
+        if (c.deployed) await wallet.deploy()
     
         expect(await wallet.isDeployed()).to.equal(c.deployed)
       })
@@ -220,7 +222,7 @@ describe('Wallet integration', function () {
         it("Find correct receipt between multiple other transactions", async () => {
           // Pre-txs
           const altWallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(networks[0].provider, relayer)
-          await relayer.deployWallet(altWallet.config, altWallet.context)
+          await altWallet.deploy()
           expect(await altWallet.isDeployed()).to.equal(true)
 
           await Promise.all(new Array(8).fill(0).map(async (_, i) => {
@@ -273,7 +275,7 @@ describe('Wallet integration', function () {
         it("Find correct receipt between multiple other failed transactions", async () => {
           // Pre-txs
           const altWallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(networks[0].provider, relayer)
-          await relayer.deployWallet(altWallet.config, altWallet.context)
+          await altWallet.deploy()
           expect(await altWallet.isDeployed()).to.equal(true)
 
           await Promise.all(new Array(8).fill(0).map(async (_, i) => {
@@ -326,7 +328,7 @@ describe('Wallet integration', function () {
         it("Find failed tx receipt between multiple other failed transactions", async () => {
           // Pre-txs
           const altWallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(networks[0].provider, relayer)
-          await relayer.deployWallet(altWallet.config, altWallet.context)
+          await altWallet.deploy()
           expect(await altWallet.isDeployed()).to.equal(true)
 
           await Promise.all(new Array(8).fill(0).map(async (_, i) => {

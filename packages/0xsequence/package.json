@@ -41,6 +41,7 @@
     "@0xsequence/transactions": "^0.35.10",
     "@0xsequence/utils": "^0.35.10",
     "@0xsequence/wallet": "^0.35.10",
+    "@0xsequence/wallet-contracts": "https://gitpkg.now.sh/0xsequence/wallet-contracts/src?octopus-utils",
     "ethers": "^5.5.2"
   },
   "peerDependencies": {},
