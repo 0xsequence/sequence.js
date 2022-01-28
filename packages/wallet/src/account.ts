@@ -4,7 +4,7 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { SignedTransactionsCallback, Signer } from './signer'
 import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData, packMetaTransactionsData, encodeNonce } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE } from '@0xsequence/config'
+import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf } from '@0xsequence/config'
 import {
   ChainIdLike,
   NetworkConfig,
@@ -64,6 +64,28 @@ export class Account extends Signer {
     if (this._networks.length === 0) {
       throw new Error('Empty network array provided')
     }
+  }
+
+  public static async create(
+    options: Omit<AccountOptions, 'address'>,
+    config: WalletConfig,
+    ...signers: (BytesLike | AbstractSigner)[]
+  ): Promise<Account> {
+    // Compute initial address of wallet
+    const context = options.context || sequenceContext
+    const address = addressOf(config, context)
+
+    // Store counter-factual wallet on config tracker
+    await Promise.all([
+      options.configTracker.saveCounterFactualWallet({ context, imageHash: imageHash(config) }),
+      options.configTracker.saveWalletConfig({ config })
+    ])
+
+    // Create account instance
+    return new Account({
+      ...options,
+      address,
+    }, ...signers)
   }
 
   public useSigners(...signers: (BytesLike | AbstractSigner)[]): Account {

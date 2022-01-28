@@ -62,7 +62,7 @@ const EXPIRATION_JWT_MARGIN = 60 // seconds
 const SESSION_DUMP_VERSION = 2
 
 export class Session {
-  _initialAuthRequest: Promise<SequenceAPIClient>
+  private _initialAuthRequest: Promise<SequenceAPIClient>
 
   _jwt: SessionJWTPromise | undefined
 
@@ -102,6 +102,10 @@ export class Session {
 
   onAuth(cb: (result: PromiseSettledResult<void>) => void) {
     this.onAuthCallbacks.push(cb)
+  }
+
+  async authComplete(): Promise<SequenceAPIClient | undefined> {
+    return this._initialAuthRequest
   }
 
   async auth(maxTries: number = 5): Promise<SequenceAPIClient> {
@@ -192,7 +196,7 @@ export class Session {
     }
 
     const proofStringKey = this.getProofStringKey()
-    const { proofString, expiration } = await this.getProofString(proofStringKey)
+    const { proofString, expiration } = this.getProofString(proofStringKey)
 
     const jwt = {
       token: proofString
@@ -238,7 +242,7 @@ export class Session {
     return { token, expiration }
   }
 
-  private async getProofString(key: string): Promise<ProofStringPromise> {
+  private getProofString(key: string): ProofStringPromise {
     // check if we already have or are waiting for a proof string
     if (this.proofStrings.has(key)) {
       const proofString = this.proofStrings.get(key)!
@@ -262,8 +266,13 @@ export class Session {
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
     // Sign proof message using account
-    proof.signature = await this.account.signMessage(proof.messageDigest())
-    const proofString = { proofString: ethAuth.encodeProof(proof, true), expiration }
+    const proofString = {
+      proofString: this.account.signMessage(proof.messageDigest()).then((signature: string) => {
+        proof.signature = signature
+        return ethAuth.encodeProof(proof, true)
+      }),
+      expiration
+    }
   
     this.proofStrings.set(key, proofString)
     return proofString
@@ -311,7 +320,7 @@ export class Session {
   }
 
   static async open(args: {
-    address: string
+    address?: string
     configTracker: ConfigTracker
     sequenceApiUrl: string
     sequenceMetadataUrl: string
@@ -337,21 +346,43 @@ export class Session {
     const solvedSigners = Promise.all(signers.map(async s => ({ ...s, address: typeof s.signer === 'string' ? s.signer : await s.signer.getAddress() })))
     const fullSigners =  signers.filter(s => typeof s.signer !== 'string').map(s => s.signer)
 
-    // Create account instance, this is needed to get the previous configuration
-    const account = new Account({ address, configTracker, context, networks }, ...fullSigners)
+    let account: Account
+    if (address) {
+      // If address is provided we just import the account
+      account = new Account({ address, configTracker, context, networks }, ...fullSigners)
 
-    // Add new session key to configuration
-    const config = await account.getWalletConfig()
-    if (!config) throw Error(`No wallet configuration found for ${address}`)
-    const newConfig = editConfig(config, { threshold, set: await solvedSigners })
+      // Add new session key to configuration
+      const config = await account.getWalletConfig()
+      if (!config) throw Error(`No wallet configuration found for ${address}`)
+      const newConfig = editConfig(config, { threshold, set: await solvedSigners })
 
-    // Update configuration for all networks
-    // TODO: Include future network candidates
-    // (networks we aren't using, but we want to presign transactions anyway)
-    await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, [])))
+      // Update configuration for all networks
+      // TODO: Include future network candidates
+      // (networks we aren't using, but we want to presign transactions anyway)
+      await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, [])))
+
+    } else {
+      // If not we have to create an initial configuration using the provided signers
+      // and then create a new account from that configuration
+      const config: WalletConfig = {
+        threshold: ethers.BigNumber.from(threshold).toNumber(),
+        signers: (await solvedSigners).map((s) => ({
+          address: s.address,
+          weight: ethers.BigNumber.from(s.weight).toNumber()
+        }))
+      }
+      account = await Account.create({ configTracker, context, networks }, config, ...fullSigners)
+    }
 
     // Create session instance
-    return new Session(sequenceApiUrl, sequenceMetadataUrl, networks, context, account, metadata)
+    const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, context, account, metadata)
+    if (sequenceApiUrl) {
+      // Fire JWT requests when opening session
+      session._initialAuthRequest = session.auth()
+    } else {
+      session._initialAuthRequest = Promise.reject('no sequence api url')
+    }
+    return session
   }
 
   static load(args: {
