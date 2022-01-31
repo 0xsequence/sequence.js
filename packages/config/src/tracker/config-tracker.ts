@@ -1,6 +1,6 @@
 import { WalletContext } from '@0xsequence/network'
 import { ethers } from 'ethers'
-import { WalletConfig } from '..'
+import { DecodedSignaturePart, WalletConfig } from '..'
 
 export type TransactionBody = {
   wallet: string,
@@ -16,6 +16,40 @@ export type PresignedConfigUpdate = {
   chainId: ethers.BigNumber
 }
 
+export type PresignedConfigurationPayload = {
+  wallet: string,
+  config: WalletConfig,
+  tx: TransactionBody,
+  signatures: {
+    chainId: ethers.BigNumber,
+    signature: string
+  }[]
+}
+
+export type ConfigDataDump = {
+  configurations: WalletConfig[],
+  wallets: {
+    imageHashe: string,
+    context: WalletContext
+  }[],
+  presignedTransactions: PresignedConfigurationPayload[]
+}
+
+export function asPresignedConfigurationAsPayload(
+  presigned: PresignedConfigUpdate,
+  config: WalletConfig
+): PresignedConfigurationPayload {
+  return {
+    config,
+    wallet: presigned.body.wallet,
+    tx: presigned.body,
+    signatures: [{
+      chainId: presigned.chainId,
+      signature: presigned.signature
+    }]
+  }
+}
+
 export abstract class ConfigTracker {
   loadPresignedConfiguration: (args: {
     wallet: string,
@@ -23,15 +57,7 @@ export abstract class ConfigTracker {
     chainId: ethers.BigNumberish
   }) => Promise<PresignedConfigUpdate[]>
 
-  savePresignedConfiguration: (args: {
-    wallet: string,
-    config: WalletConfig,
-    tx: TransactionBody,
-    signatures: {
-      chainId: ethers.BigNumber,
-      signature: string
-    }[]
-  }) => Promise<void>
+  savePresignedConfiguration: (args: PresignedConfigurationPayload) => Promise<void>
 
   configOfImageHash: (args: {
     imageHash: string
@@ -50,4 +76,8 @@ export abstract class ConfigTracker {
     imageHash: string,
     context: WalletContext
   }) => Promise<void>
+
+  walletsOfSigner: (args: {
+    signer: string
+  }) => Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]>
 }

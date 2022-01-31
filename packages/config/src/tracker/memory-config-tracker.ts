@@ -1,11 +1,10 @@
 import { sequenceContext, WalletContext } from "@0xsequence/network"
-import { digestOfTransactionsNonce, encodeNonce, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions"
-import { packMetaTransactionsData } from "@0xsequence/transactions"
+import { digestOfTransactionsNonce, encodeNonce, Transaction, unpackMetaTransactionData , packMetaTransactionsData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTracker, SESSIONS_SPACE } from "."
 import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedAddress, isDecodedEOASigner, isDecodedEOASplitSigner, recoverEOASigner } from ".."
-import { WalletConfig } from "../config"
+import { isAddrEqual, WalletConfig } from "../config"
 import { PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 import { isValidWalletUpdate } from "./utils"
 
@@ -50,8 +49,7 @@ export class MemoryConfigTracker implements ConfigTracker {
     wallet: string
   }): Promise<string | undefined> => {
     // Find an imageHash that derives to the wallet
-    const walletLowerCase = args.wallet.toLowerCase()
-    const found = this.knownImageHashes.find((w) => addressOf(w.imageHash, w.context).toLowerCase() === walletLowerCase)
+    const found = this.knownImageHashes.find((w) => isAddrEqual(addressOf(w.imageHash, w.context), args.wallet))
     return found?.imageHash
   }
 
@@ -289,6 +287,35 @@ export class MemoryConfigTracker implements ConfigTracker {
     })
 
     return candidates
+  }
+
+  walletsOfSigner = async (args: {
+    signer: string
+  }): Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]> => {
+    // Find signature parts for this signer
+    const parts = this.knownSignatureParts.filter((p) => isAddrEqual(p.signer, args.signer))
+
+    // Find the wallet for each part
+    const txsAndProofs: { wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[] = []
+
+    parts.forEach((p) => {
+      const tx = this.knownTransactions.find((t) => digestOfTransactionsNonce(t.nonce, ...t.txs) === p.digest)
+      if (!tx || tx.txs.length === 0) return
+
+      const wallet = tx.txs[0].to
+      if (txsAndProofs.find((c) => c.wallet === wallet)) return
+
+      txsAndProofs.push({
+        wallet,
+        proof: {
+          digest: p.digest,
+          chainId: p.chainId,
+          signature: p.signature,
+        }
+      })
+    })
+
+    return txsAndProofs
   }
 }
 

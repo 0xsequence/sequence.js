@@ -4,7 +4,7 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { SignedTransactionsCallback, Signer } from './signer'
 import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData, packMetaTransactionsData, encodeNonce } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf } from '@0xsequence/config'
+import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf , hasImplementationUpdate } from '@0xsequence/config'
 import {
   ChainIdLike,
   NetworkConfig,
@@ -18,7 +18,6 @@ import { Wallet } from './wallet'
 import { isRpcRelayerOptions, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { fetchImageHash, getImplementation, isWalletDeployed } from '.'
 import { walletContracts } from '@0xsequence/abi'
-import { hasImplementationUpdate } from '@0xsequence/config'
 import { Interface } from '@ethersproject/abi'
 
 export interface AccountOptions {

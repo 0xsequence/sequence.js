@@ -141,6 +141,10 @@ export const compareAddr = (a: string, b: string): number => {
   }
 }
 
+export const isAddrEqual = (a: string, b: string): boolean => {
+  return compareAddr(a, b) === 0
+}
+
 export function editConfig(config: WalletConfig, args: {
   threshold?: ethers.BigNumberish,
   set?: { weight: ethers.BigNumberish, address: string }[],

@@ -4,7 +4,7 @@ import { PromiseSome } from "../utils"
 import fetchPonyfill from 'fetch-ponyfill'
 import { ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 import { Sessions } from "./gen/sessions.gen"
-import { imageHash } from ".."
+import { DecodedSignaturePart, imageHash } from ".."
 import { WalletContext } from "@0xsequence/network"
 
 export class SessionsApiConfigTracker implements ConfigTracker {
@@ -98,5 +98,11 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     config: WalletConfig
   }): Promise<void> => {
     await this.sessions.saveConfigurations({ configs: [{ ...args.config, imageHash: "" }] })
+  }
+
+  walletsOfSigner = async (args: {
+    signer: string
+  }): Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]> => {
+    throw Error("Not implemented")
   }
 }

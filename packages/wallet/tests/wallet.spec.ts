@@ -12,7 +12,7 @@ import { WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
-import { addressOf, joinSignatures, encodeSignature, imageHash, WalletConfig } from '@0xsequence/config'
+import { addressOf, joinSignatures, encodeSignature, imageHash, WalletConfig, ConfigTracker, MemoryConfigTracker } from '@0xsequence/config'
 
 import { configureLogger, encodeTypedDataDigest } from '@0xsequence/utils'
 
@@ -21,7 +21,6 @@ import * as lib from '../src'
 import {
   isValidSignature,
   isValidEthSignSignature,
-  isValidSequenceUndeployedWalletSignature,
   fetchImageHash,
   isValidContractWalletSignature,
   RemoteSigner
@@ -61,6 +60,8 @@ describe('Wallet integration', function () {
   let context: WalletContext
   let networks: Networks
   let wallet: lib.Wallet
+
+  let configTracker: ConfigTracker
 
   before(async () => {
     // Provider from hardhat without a server instance
@@ -122,6 +123,8 @@ describe('Wallet integration', function () {
 
     // Deploy local relayer
     relayer = new LocalRelayer({signer: ethnode.signer })
+
+    configTracker = new MemoryConfigTracker()
   })
 
   beforeEach(async () => {
@@ -1238,7 +1241,7 @@ describe('Wallet integration', function () {
         const signer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signature = await signer1.signMessage(digest)
-        expect(await isValidSignature(signer2.address, digest, signature)).to.be.undefined
+        expect(await isValidSignature(signer2.address, digest, signature)).to.be.false
       })
     })
     describe('deployed sequence wallet sign', async () => {
@@ -1367,10 +1370,10 @@ describe('Wallet integration', function () {
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
       })
-      it('Should validate sequence wallet signature using direct method', async () => {
-        const signature = await wallet.signMessage(message)
-        expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ethnode.provider)).to.be.true
-      })
+      // it('Should validate sequence wallet signature using direct method', async () => {
+      //   const signature = await wallet.signMessage(message)
+      //   expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ethnode.provider)).to.be.true
+      // })
       it('Should reject sequence wallet invalid signature', async () => {
         const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })).setProvider(ethnode.provider)
         const signature = await wallet2.signMessage(message, 1)
