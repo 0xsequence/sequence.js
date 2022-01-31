@@ -123,7 +123,7 @@ export class Account extends Signer {
   }
 
   get defaultChainId(): number {
-    return this._networks.find((n) => n.isDefaultChain)?.chainId || this._defaultChainId ||  this._networks[0].chainId
+    return this._defaultChainId || this._networks.find((n) => n.isDefaultChain)?.chainId ||  this._networks[0].chainId
   }
 
   async getChainId(): Promise<number> {
@@ -139,6 +139,16 @@ export class Account extends Signer {
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
+    // If explicit defaultChain is set, mutate the array
+    // to define only it as the default network
+    if (this._defaultChainId) {
+      const mutated = this._networks.map((n) => ({ ...n, isDefaultChain: n.chainId === this._defaultChainId }))
+
+      // By-design the default network is always the first one
+      // TODO: Remove this, order of networks should not matter
+      return mutated.sort((a, b) => a.isDefaultChain ? -1 : b.isDefaultChain ? 1 : 0)
+    }
+
     return this._networks
   }
 
