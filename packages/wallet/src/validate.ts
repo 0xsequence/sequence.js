@@ -3,7 +3,7 @@ import { WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
 import { subDigestOf } from '@0xsequence/utils'
-import { decodeSignature, compareAddr, ConfigTracker, WalletConfig, isDecodedSigner, isDecodedEOASigner, isDecodedFullSigner, addressOf } from '@0xsequence/config'
+import { decodeSignature, compareAddr, ConfigTracker, WalletConfig, isDecodedSigner, isDecodedEOASigner, isDecodedFullSigner, addressOf, imageHash as imageHashOf } from '@0xsequence/config'
 import { recoverConfigFromDigest } from './config'
 import { fetchImageHash } from '.'
 
@@ -15,7 +15,7 @@ export async function isValidSignature(
   walletContext?: WalletContext,
   chainId?: number,
   configTracker?: ConfigTracker
-): Promise<boolean | undefined> {
+): Promise<boolean> {
   // Check if valid EOA signature
   if (
     isValidEIP712Signature(address, digest, signature) ||
@@ -32,7 +32,10 @@ export async function isValidSignature(
   // Check if the wallet is deployed
   // and if we can fetch any counter-factual imageHash
   const imageHash = await fetchImageHash(address, provider, configTracker && walletContext && { context: walletContext, tracker: configTracker })
-  const config = imageHash && await configTracker?.configOfImageHash({ imageHash })
+
+  // If we don't have the walletContext
+  // we can't validate custom sequence signatures
+  if (!walletContext) return false
 
   // Now, if the wallet is not deployed and we don't have a config
   // we evaluate the counter-factual state
@@ -40,12 +43,12 @@ export async function isValidSignature(
     return await isValidSequenceUndeployedWalletSignature(address, digest, signature, walletContext, provider, chainId)
   }
 
-  // If we don't have a config or chainid at this point
+  // If we don't have the chainid at this point
   // we can't evaluate the signature
-  if (!config || !chainId) return false
+  if (!chainId) return false
 
-  // If not then we have a configuration, so we can check the signature against it
-  return isValidSignatureForConfig(address, config, digest, signature, chainId, provider, configTracker, walletContext)
+  // Then we evaluate the signature directly
+  return isValidSignatureForImageHash(address, imageHash, digest, signature, chainId, provider, configTracker, walletContext)
 }
 
 export function isValidEIP712Signature(
@@ -116,13 +119,10 @@ export async function isValidSequenceUndeployedWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
-  walletContext?: WalletContext,
+  walletContext: WalletContext,
   provider?: Provider,
   chainId?: number
 ) {
-  if (!provider && !chainId) return undefined // Signature validity can't be determined
-  if (!walletContext) return undefined // Signature validity can't be determined
-
   try {
     const cid = chainId ? chainId : (await provider!.getNetwork()).chainId
     const signature = decodeSignature(sig)
@@ -149,7 +149,15 @@ export async function isValidSignatureForConfig(
   const subDigest = subDigestOf(address, chainId, digest)
 
   // Recover full signature
-  const recovered = await recoverConfigFromDigest(subDigest, decoded, provider, walletContext, chainId, true)
+  const recovered = await recoverConfigFromDigest(
+    subDigest,
+    decoded,
+    provider,
+    walletContext,
+    chainId,
+    true,
+    configTracker
+  )
 
   // Accumulate weight of parts that provided a signatures
   const weight = config.signers.reduce((p, c) => {
@@ -164,4 +172,28 @@ export async function isValidSignatureForConfig(
   }, 0)
 
   return weight >= config.threshold
+}
+
+export async function isValidSignatureForImageHash(
+  address: string,
+  imageHash: string,
+  digest: Uint8Array,
+  signature: string,
+  chainId: number,
+  provider?: Provider,
+  configTracker?: ConfigTracker,
+  walletContext?: WalletContext
+) {
+  const subDigest = subDigestOf(address, chainId, digest)
+  const recovered = await recoverConfigFromDigest(
+    subDigest,
+    signature,
+    provider,
+    walletContext,
+    chainId,
+    true,
+    configTracker
+  )
+
+  return imageHash === imageHashOf(recovered)
 }

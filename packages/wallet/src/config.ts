@@ -61,7 +61,8 @@ export const recoverConfigFromDigest = async (
   provider?: ethers.providers.Provider,
   context?: WalletContext,
   chainId?: number,
-  walletSignersValidation?: boolean
+  walletSignersValidation?: boolean,
+  configTracker?: ConfigTracker
 ): Promise<WalletConfig> => {
   const decoded = (<DecodedSignature>signature).threshold !== undefined ? <DecodedSignature>signature : decodeSignature(signature as string)
 
@@ -84,7 +85,8 @@ export const recoverConfigFromDigest = async (
           ethers.utils.hexlify(s.signature),
           provider,
           context,
-          chainId
+          chainId,
+          configTracker
         ))) throw Error('Invalid signature')
       }
 

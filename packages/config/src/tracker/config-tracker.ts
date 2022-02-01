@@ -35,6 +35,11 @@ export type ConfigDataDump = {
   presignedTransactions: PresignedConfigurationPayload[]
 }
 
+// AssumedWalletConfigs are configs that are assumed to be valid
+// for a given sequence smart contract wallet, this is needed to validate
+// guard signatures statically.
+export type AssumedWalletConfigs = { [key: string]: WalletConfig }
+
 export function asPresignedConfigurationAsPayload(
   presigned: PresignedConfigUpdate,
   config: WalletConfig

@@ -1,6 +1,8 @@
 import * as multicall from '@0xsequence/multicall'
+import { subDigestOf } from '@0xsequence/utils'
 import { BytesLike, ethers } from "ethers"
-import { WalletConfig } from "."
+import { imageHash, WalletConfig } from "."
+import { AssumedWalletConfigs } from './tracker/config-tracker'
 
 export type DecodedSignature = {
   threshold: number
@@ -196,6 +198,73 @@ export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner | Deco
     default:
       throw new Error('Unknown signature')
   }
+}
+
+// This method statically recovers a configuration from a sequence signature
+// notice this method doesn't use any provider, instead it assumes that only wallet-signatures are sequence-wallets
+// and for those wallets it expects to be passed a statically defined configuration
+// NOTICE: if the configuration is missing then it will throw an error
+// TODO: this could be merged with validate.ts on the wallet package
+export const staticRecoverConfig = (
+  subDigest: string,
+  signature: DecodedSignature,
+  chainId: number,
+  walletConfigs: AssumedWalletConfigs = {}
+): { config: WalletConfig, weight: number, parts: { signer: string, signature?: DecodedSignaturePart }[] } => {
+  const config: WalletConfig = { threshold: signature.threshold, signers: [] }
+  const parts: { signer: string, signature?: DecodedSignaturePart }[] = []
+  let weight = 0
+
+  signature.signers.forEach((p) => {
+    // Ignore "address" types
+    // just use them to retrieve the embedded config
+    if (isDecodedAddress(p)) {
+      config.signers.push({ weight: p.weight, address: p.address })
+      parts.push({ signer: p.address })
+      return
+    }
+
+    // Nested signatures are only supported for Sequence wallets
+    // ASSUMED the imageHash of each nested signature is passed as a static argument
+    // EIP1271 are not statically verifiable, so we can't recover them
+    if (isDecodedFullSigner(p)) {
+      // TODO: this will fail to recover EOA signatures
+      // encoded as full signers, handle that
+      if (walletConfigs[p.address] === undefined) {
+        throw new Error(`Missing statically defined config for ${p.address}`)
+      }
+
+      const decoded = decodeSignature(ethers.utils.hexlify(p.signature))
+      const nestedSubDigest = subDigestOf(p.address, chainId, subDigest)
+      const recovered = staticRecoverConfig(nestedSubDigest, decoded, chainId, walletConfigs)
+
+      if (
+        recovered.weight >= walletConfigs[p.address].threshold &&
+        imageHash(recovered.config) === imageHash(walletConfigs[p.address])
+      ) {
+        config.signers.push({ weight: p.weight, address: p.address })
+        parts.push({ signer: p.address, signature: p })
+        weight += p.weight
+        return
+      } else {
+        throw new Error(`Invalid nested sequence signature for ${p.address}`)
+      }
+    }
+
+    // If EOA signature just recover it
+    if (isDecodedEOASigner(p) || isDecodedEOASplitSigner(p)) {
+      const recovered = recoverEOASigner(subDigest, p)
+      config.signers.push({ weight: p.weight, address: recovered })
+      weight += p.weight
+      parts.push({
+        signer: recovered,
+        signature: p
+      })
+      return
+    }
+  })
+
+  return { config, weight, parts }
 }
 
 export const joinSignatures = (...signatures: Array<DecodedSignature | string>): DecodedSignature => {

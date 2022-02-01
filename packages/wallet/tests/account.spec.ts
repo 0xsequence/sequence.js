@@ -7,7 +7,7 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { isValidConfigSigners, imageHash, MemoryConfigTracker, ConfigTracker } from '@0xsequence/config'
+import { imageHash, MemoryConfigTracker, ConfigTracker, UntrustedConfigTracker } from '@0xsequence/config'
 import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
@@ -97,6 +97,10 @@ describe('Account integration', () => {
 
     // Create in-memory config tracker
     configTracker = new MemoryConfigTracker(context)
+
+    // We do trust the config tracker
+    // but we wrap it anyway to test the untrusted wrapper
+    configTracker = new UntrustedConfigTracker(configTracker, networks[0].provider, context)
   })
 
   beforeEach(async () => {
@@ -305,7 +309,7 @@ describe('Account integration', () => {
       configTracker.saveCounterFactualWallet({ context, imageHash: imageHash(config) })
 
       const address = addressOf(config, context)
-      const account = new lib.Account({ address, configTracker }, signer)
+      const account = new lib.Account({ context, address, configTracker }, signer)
 
       expect(await account.getWalletConfig()).excluding('address').to.deep.equal(config)
       expect(await account.getAddress()).to.equal(address)

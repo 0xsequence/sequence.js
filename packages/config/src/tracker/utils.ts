@@ -10,7 +10,7 @@ export const SESSIONS_SPACE = "861879107978547650890364157709704413515112855535"
 
 export function isValidWalletUpdate(args: {
     wallet: string,
-    newConfig: WalletConfig,
+    newConfig: WalletConfig | string,
     context: WalletContext,
     txs: Transaction[],
     gapNonce: ethers.BigNumber,
@@ -77,7 +77,7 @@ export function isUpdateImplementationTx(wallet: string, target: string, tx: Tra
   return true
 }
 
-export function isUpdateImageHashTx(wallet: string, config: WalletConfig, tx: Transaction): boolean {
+export function isUpdateImageHashTx(wallet: string, config: WalletConfig | string, tx: Transaction): boolean {
   const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
 
   // First 4 bytes should be the setImageHash signature
@@ -96,7 +96,7 @@ export function isUpdateImageHashTx(wallet: string, config: WalletConfig, tx: Tr
     if (!decoded) return false
   
     // Decoded image hash should match config
-    if (decoded[0] !== imageHash(config)) {
+    if (decoded[0] !== (typeof config === "string" ? config : imageHash(config))) {
       return false
     }
   } catch {}

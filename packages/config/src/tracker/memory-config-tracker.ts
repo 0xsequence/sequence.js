@@ -3,7 +3,7 @@ import { digestOfTransactionsNonce, encodeNonce, Transaction, unpackMetaTransact
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTracker, SESSIONS_SPACE } from "."
-import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedAddress, isDecodedEOASigner, isDecodedEOASplitSigner, recoverEOASigner } from ".."
+import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedAddress, isDecodedEOASigner, isDecodedEOASplitSigner, recoverEOASigner, staticRecoverConfig } from ".."
 import { isAddrEqual, WalletConfig } from "../config"
 import { PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 import { isValidWalletUpdate } from "./utils"
@@ -49,7 +49,12 @@ export class MemoryConfigTracker implements ConfigTracker {
     wallet: string
   }): Promise<string | undefined> => {
     // Find an imageHash that derives to the wallet
-    const found = this.knownImageHashes.find((w) => isAddrEqual(addressOf(w.imageHash, w.context), args.wallet))
+    const found = this.knownImageHashes.find((w) => { return (
+      isAddrEqual(w.context.factory, args.context.factory) &&
+      isAddrEqual(w.context.mainModule, args.context.mainModule) &&
+      isAddrEqual(addressOf(w.imageHash, w.context), args.wallet)
+    )})
+
     return found?.imageHash
   }
 
@@ -86,40 +91,23 @@ export class MemoryConfigTracker implements ConfigTracker {
     // Process all signatures
     args.signatures.forEach((s) => {
       const subDigest = subDigestOf(args.wallet, s.chainId, digest)
-      const decoded = decodeSignature(s.signature)
-
-      // Decode the configuration embedded in the signature
-      const config: WalletConfig = { threshold: decoded.threshold, signers: [] }
-
-      // Process every part of signature individually
-      // because we could mix and match them in the future
-      decoded.signers.forEach((p) => {
-        // Ignore "address" types
-        // just use them to retrieve the embedded config
-        if (isDecodedAddress(p)) {
-          config.signers.push({ weight: p.weight, address: p.address })
-          return
-        }
-
-        // If EOA signature just recover it
-        if (isDecodedEOASigner(p) || isDecodedEOASplitSigner(p)) {
-          const recovered = recoverEOASigner(subDigest, p)
-          config.signers.push({ weight: p.weight, address: recovered })
-          this.knownSignatureParts.push({
-            signer: recovered,
-            signature: p,
-            digest: digest,
-            chainId: s.chainId,
-          })
-          return
-        }
-
-        // TODO: Handle other types, including nested singautres
-        throw Error(`Unsupported signature type ${JSON.stringify(p)}`)
-      })
+      const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber())
 
       // Save the embeded config
-      this.saveWalletConfig({ config })
+      this.saveWalletConfig({ config: recovered.config })
+
+      // Save signature parts
+      recovered.parts.forEach((p) => {
+        const signature = p.signature
+        if (!signature) return
+
+        this.knownSignatureParts.push({
+          signature,
+          signer: p.signer,
+          digest: digest,
+          chainId: s.chainId
+        })
+      })
     })
   }
 
