@@ -267,7 +267,7 @@ export class Session {
 
     // Sign proof message using account
     const proofString = {
-      proofString: this.account.signMessage(proof.messageDigest()).then((signature: string) => {
+      proofString: this.account.signMessage(proof.messageDigest(), undefined, undefined, true).then((signature: string) => {
         proof.signature = signature
         return ethAuth.encodeProof(proof, true)
       }),
