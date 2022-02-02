@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.35.11
+
+### Patch Changes
+
+- provider/utils: smoother message validation
+- Updated dependencies
+  - @0xsequence/network@0.35.11
+
 ## 0.35.10
 
 ### Patch Changes

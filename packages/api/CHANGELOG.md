@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.35.11
+
+### Patch Changes
+
+- provider/utils: smoother message validation
+
 ## 0.35.10
 
 ### Patch Changes
