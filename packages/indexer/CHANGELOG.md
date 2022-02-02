@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.36.0
+
+### Minor Changes
+
+- relayer, wallet: fee quote support
+
 ## 0.35.12
 
 ### Patch Changes

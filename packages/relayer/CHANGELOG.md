@@ -1,5 +1,19 @@
 # @0xsequence/relayer
 
+## 0.36.0
+
+### Minor Changes
+
+- relayer, wallet: fee quote support
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.36.0
+  - @0xsequence/config@0.36.0
+  - @0xsequence/transactions@0.36.0
+  - @0xsequence/utils@0.36.0
+
 ## 0.35.12
 
 ### Patch Changes

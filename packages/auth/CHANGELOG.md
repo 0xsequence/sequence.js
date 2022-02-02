@@ -1,5 +1,23 @@
 # @0xsequence/auth
 
+## 0.36.0
+
+### Minor Changes
+
+- relayer, wallet: fee quote support
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.36.0
+  - @0xsequence/api@0.36.0
+  - @0xsequence/config@0.36.0
+  - @0xsequence/indexer@0.36.0
+  - @0xsequence/metadata@0.36.0
+  - @0xsequence/network@0.36.0
+  - @0xsequence/utils@0.36.0
+  - @0xsequence/wallet@0.36.0
+
 ## 0.35.12
 
 ### Patch Changes
