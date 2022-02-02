@@ -31,10 +31,10 @@ import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
-import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { LocalStore } from './utils'
+import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
 
@@ -68,11 +68,11 @@ export interface WalletProvider {
   on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
   once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
 
-  commands: WalletCommands
+  utils: WalletUtils
 }
 
 export class Wallet implements WalletProvider {
-  public commands: WalletCommands
+  public utils: WalletUtils
 
   private config: ProviderConfig
   private session?: WalletSession
@@ -116,7 +116,7 @@ export class Wallet implements WalletProvider {
     this.networks = []
     this.providers = {}
     this.connectedSites = new LocalStore('@sequence.connectedSites', [])
-    this.commands = new WalletCommands(this)
+    this.utils = new WalletUtils(this)
     this.init()
   }
 

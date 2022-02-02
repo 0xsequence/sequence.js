@@ -7,7 +7,7 @@ import { Wallet } from '../wallet'
 import { isValidSignature, recoverWalletConfig } from '../utils'
 import { isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
 
-export class WalletCommands {
+export class WalletUtils {
   private wallet: Wallet
 
   constructor(walletProvider: Wallet) {
