@@ -141,7 +141,14 @@ export class Wallet implements WalletProvider {
     }
     if (this.config.transports?.extensionTransport?.enabled) {
       this.transport.extensionMessageProvider = new ExtensionMessageProvider(this.config.transports.extensionTransport.runtime)
-      this.transport.messageProvider.add(this.transport.extensionMessageProvider)
+      this.transport.extensionMessageProvider.register()
+      // NOTE/REVIEW: see note in mux-message-provider
+      //
+      // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
+      // send all requests to the WindowMessageProvider anyways. By allowing it, if browser restarts, it will break
+      // the entire extension because messageProvider.provider will be undefined. So this is a hack to fix it.
+      //
+      // this.transport.messageProvider.add(this.transport.extensionMessageProvider)
     }
     this.transport.messageProvider.register()
 

@@ -488,6 +488,22 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'wallet_switchEthereumChain': {
+          const [switchParams] = request.params!
+          if (!switchParams.chainId || switchParams.chainId.length === 0) {
+            throw new Error('invalid chainId')
+          }
+
+          const chainId = ethers.BigNumber.from(switchParams.chainId)
+
+          const ok = await this.setDefaultNetwork(chainId.toString(), true)
+          if (!ok) {
+            throw new Error(`unable to set chainId ${chainId}`)
+          }
+
+          response.result = null // success
+        }
+
         // smart wallet method
         case 'sequence_getWalletContext': {
           response.result = await signer.getWalletContext()
