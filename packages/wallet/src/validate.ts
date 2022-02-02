@@ -15,6 +15,9 @@ export async function isValidSignature(
   chainId?: number
 ) {
   // Check if valid EOA signature
+  //
+  // TODO: the EOA check here assume its being passed a digest, but its not a correct assumption
+  // as often the message signing is of a string of text and not a digest.
   if (
     isValidEIP712Signature(address, digest, sig) ||
     isValidEthSignSignature(address, digest, sig)
