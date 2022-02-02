@@ -53,6 +53,12 @@ export { proto as RpcRelayerProto } from './rpc-relayer'
 export type SimulateResult = proto.SimulateResult
 export type FeeOption = proto.FeeOption
 
+// A fee quote is simply an opaque value that can be obtained via Relayer.getFeeOptions(), and
+// returned back to the same relayer via Relayer.relay(). Fee quotes should be treated as an
+// implementation detail of the relayer that produces them.
+//
+// This interface exists for type-safety purposes to protect against passing non-FeeQuotes to
+// Relayer.relay(), or any other functions that call it indirectly (e.g. Account.sendTransaction).
 export interface FeeQuote {
   _tag: 'FeeQuote'
   _quote: unknown
