@@ -12,7 +12,7 @@ import { WalletContext, Networks } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
-import { addressOf, joinSignatures, encodeSignature, imageHash, WalletConfig, ConfigTracker, MemoryConfigTracker } from '@0xsequence/config'
+import { addressOf, joinSignatures, encodeSignature, imageHash, WalletConfig, ConfigTracker, LocalConfigTracker } from '@0xsequence/config'
 
 import { configureLogger, encodeTypedDataDigest } from '@0xsequence/utils'
 
@@ -124,7 +124,7 @@ describe('Wallet integration', function () {
     // Deploy local relayer
     relayer = new LocalRelayer({signer: ethnode.signer })
 
-    configTracker = new MemoryConfigTracker()
+    configTracker = new LocalConfigTracker(undefined, context)
   })
 
   beforeEach(async () => {

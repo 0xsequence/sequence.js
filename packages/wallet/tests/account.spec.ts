@@ -7,14 +7,12 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { imageHash, MemoryConfigTracker, ConfigTracker, UntrustedConfigTracker } from '@0xsequence/config'
+import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker } from '@0xsequence/config'
 import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
-import { addressOf, isConfigEqual, sortConfig, WalletConfig } from '../../config/src/config'
-import { network, relayer } from '../../0xsequence/src/sequence'
-import { walletContracts } from '@0xsequence/abi'
-import { decodeNonce, encodeNonce, SignedTransactionBundle } from '@0xsequence/transactions'
+import { addressOf, sortConfig, WalletConfig } from '../../config/src/config'
+import { encodeNonce } from '@0xsequence/transactions'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts'
 
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
@@ -96,7 +94,7 @@ describe('Account integration', () => {
     ).deploy()) as CallReceiverMock
 
     // Create in-memory config tracker
-    configTracker = new MemoryConfigTracker(context)
+    configTracker = new LocalConfigTracker(undefined, context)
 
     // We do trust the config tracker
     // but we wrap it anyway to test the untrusted wrapper

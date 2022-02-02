@@ -107,6 +107,6 @@ export class UntrustedConfigTracker implements ConfigTracker {
     return this.tracker.saveCounterFactualWallet(args)
   }
 
-  walletsOfSigner: (args: { signer: string; }) => Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart; }; }[]>;
+  walletsOfSigner: (args: { signer: string; }) => Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart; }; }[]>
 
 }

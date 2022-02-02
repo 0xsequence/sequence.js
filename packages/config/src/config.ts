@@ -142,7 +142,7 @@ export const compareAddr = (a: string, b: string): number => {
 }
 
 export const isAddrEqual = (a: string, b: string): boolean => {
-  return compareAddr(a, b) === 0
+  return a.toLowerCase() === b.toLowerCase()
 }
 
 export function editConfig(config: WalletConfig, args: {

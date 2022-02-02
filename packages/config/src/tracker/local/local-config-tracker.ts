@@ -1,61 +1,47 @@
 import { sequenceContext, WalletContext } from "@0xsequence/network"
-import { digestOfTransactionsNonce, encodeNonce, Transaction, unpackMetaTransactionData , packMetaTransactionsData } from "@0xsequence/transactions"
+import { digestOfTransactionsNonce, encodeNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
-import { ConfigTracker, SESSIONS_SPACE } from "."
-import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedAddress, isDecodedEOASigner, isDecodedEOASplitSigner, recoverEOASigner, staticRecoverConfig } from ".."
-import { isAddrEqual, WalletConfig } from "../config"
-import { PresignedConfigUpdate, TransactionBody } from "./config-tracker"
-import { isValidWalletUpdate } from "./utils"
+import { ConfigTrackerDatabase } from "."
+import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
+import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, staticRecoverConfig } from "../.."
+import { WalletConfig } from "../../config"
+import { PresignedConfigUpdate, TransactionBody } from "../config-tracker"
+import { isValidWalletUpdate } from "../utils"
 
-/**
-  * @description MemoryConfigTracker is a ConfigTracker that stores all information in memory.
-  * @dev This is useful for testing. Is NOT optimized and is not recommended for production use.
-*/
-export class MemoryConfigTracker implements ConfigTracker {
 
-  private knownConfigs: WalletConfig[] = []
-  private knownImageHashes: { imageHash: string, context: WalletContext }[] = []
-  private knownTransactions: { txs: Transaction[], gapNonce: ethers.BigNumber, nonce: ethers.BigNumber, newImageHash: string }[] = []
-  private knownSignatureParts: { signer: string, signature: DecodedSignaturePart, digest: string, chainId: ethers.BigNumber }[] = []
-
+export class LocalConfigTracker implements ConfigTracker {
   public context: WalletContext
 
-  constructor(context?: WalletContext) {
+  private database: ConfigTrackerDatabase
+
+  constructor(database?: ConfigTrackerDatabase, context?: WalletContext) {
     this.context = context || sequenceContext
+    this.database = database || new MemoryConfigTrackerDb()
   }
 
   saveWalletConfig = async (args: {
     config: WalletConfig
   }): Promise<void> => {
-    // May store duplicates, doesn't matter
-    this.knownConfigs = [...this.knownConfigs, args.config]
+    this.database.saveWalletConfig({ ...args, imageHash: imageHash(args.config) })
   }
 
   configOfImageHash = async (args: { imageHash: string; }): Promise<WalletConfig | undefined> => {
-    return this.knownConfigs.find((c) => imageHash(c) === args.imageHash)
+    return this.database.configOfImageHash(args)
   }
 
   saveCounterFactualWallet = async (args: {
     imageHash: string
     context: WalletContext
   }): Promise<void> => {
-    // This may store, it doesn't matter
-    this.knownImageHashes = [...this.knownImageHashes, { imageHash: args.imageHash, context: args.context }]
+    this.database.saveCounterFactualWallet({ ...args, wallet: addressOf(args.imageHash, args.context, true) })
   }
 
   imageHashOfCounterFactualWallet = async (args: {
     context: WalletContext
     wallet: string
   }): Promise<string | undefined> => {
-    // Find an imageHash that derives to the wallet
-    const found = this.knownImageHashes.find((w) => { return (
-      isAddrEqual(w.context.factory, args.context.factory) &&
-      isAddrEqual(w.context.mainModule, args.context.mainModule) &&
-      isAddrEqual(addressOf(w.imageHash, w.context), args.wallet)
-    )})
-
-    return found?.imageHash
+    return this.database.imageHashOfCounterFactualWallet(args)
   }
 
   savePresignedConfiguration = async (args: {
@@ -82,14 +68,14 @@ export class MemoryConfigTracker implements ConfigTracker {
       throw new Error(`Invalid transaction nonce ${args.tx.nonce.toString()} expected ${expectedNonce.toString()}`)
     }
 
-    // Store known transactions
-    this.knownTransactions.push({ txs, nonce: args.tx.nonce, gapNonce: args.tx.gapNonce, newImageHash: args.tx.newImageHash })
-
     // Get digest of transaction
     const digest = digestOfTransactionsNonce(args.tx.nonce, ...txs)
 
+    // Store known transactions
+    await this.database.savePresignedTransaction({ digest, body: args.tx})
+
     // Process all signatures
-    args.signatures.forEach((s) => {
+    await Promise.all(args.signatures.map(async (s) => {
       const subDigest = subDigestOf(args.wallet, s.chainId, digest)
       const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber())
 
@@ -97,18 +83,18 @@ export class MemoryConfigTracker implements ConfigTracker {
       this.saveWalletConfig({ config: recovered.config })
 
       // Save signature parts
-      recovered.parts.forEach((p) => {
+      await Promise.all(recovered.parts.map(async (p) => {
         const signature = p.signature
         if (!signature) return
 
-        this.knownSignatureParts.push({
+        await this.database.saveSignaturePart({
           signature,
           signer: p.signer,
           digest: digest,
           chainId: s.chainId
         })
-      })
-    })
+      }))
+    }))
   }
 
 
@@ -217,26 +203,28 @@ export class MemoryConfigTracker implements ConfigTracker {
     const weights = new Map<string, ethers.BigNumber>()
 
     // Get all known signatures for every signer on the config
-    fromConfig.signers.forEach((s) => {
-      const signatures = this.knownSignatureParts.filter((p) => p.signer === s.address && p.chainId.eq(args.chainId))
+    await Promise.all(fromConfig.signers.map(async (s) => {
+      const signatures = await this.database.getSignaturePartsForAddress({ signer: s.address, chainId: args.chainId })
       signatures.forEach((signature) => {
         // Get weight of the signer
         const prevWeight = weights.get(signature.signer) ?? ethers.constants.Zero
         weights.set(signature.digest, prevWeight.add(signature.signature.weight))
       })
-    })
+    }))
 
     // Build candidates
     const candidates: ConfigJump[] = []
 
     // Filter out transactions below threshold
     // then build candidates for each one of the remaining transactions
-    weights.forEach((weight, digest) => {
+    await Promise.all(Array.from(weights).map(async (val) => {
+      const [digest, weight] = val
+
       if (weight.lt(fromConfig.threshold)) {
         return
       }
 
-      const tx = this.knownTransactions.find((t) => digestOfTransactionsNonce(t.nonce, ...t.txs) === digest)
+      const tx = await this.database.transactionWithDigest({ digest })
       if (!tx) throw Error(`No transaction found for digest ${digest}`)
 
       // Ignore lower gapNonces
@@ -244,35 +232,33 @@ export class MemoryConfigTracker implements ConfigTracker {
         return
       }
 
-      const signature = fromConfig.signers.map<DecodedSignaturePart>((s) => {
-        const part = this.knownSignatureParts.find((p) => p.digest === digest && p.signer === s.address && p.chainId.eq(args.chainId))
+      const unsortedSignature = await Promise.all(fromConfig.signers.map(async (s, i) => {
+        const part = await this.database.getSignaturePart({ signer: s.address, digest, chainId: args.chainId })
         if (!part) {
-          return { weight: s.weight, address: s.address }
+          return { weight: s.weight, address: s.address, i }
         }
 
-        // TODO: Handle nested signatures
-
-        const npart = { ...part.signature }
+        const npart = { ...part.signature, i }
         npart.weight = s.weight
         return npart
-      })
+      }))
+
+      // Promise may return signatures in any order
+      // so sort them using i and then filter i out
+      const signature = unsortedSignature
+        .sort((a, b) => a.i - b.i)
+        .map((s) => ({ ...s, i: undefined }))
 
       candidates.push({
         transaction: {
-          body: {
-            wallet: args.wallet,
-            tx: packMetaTransactionsData(tx.txs),
-            nonce: tx.nonce,
-            gapNonce: tx.gapNonce,
-            newImageHash: tx.newImageHash
-          },
+          body: tx,
           signature: {
             threshold: fromConfig.threshold,
             signers: signature,
           },
         },
       })
-    })
+    }))
 
     return candidates
   }
@@ -281,27 +267,24 @@ export class MemoryConfigTracker implements ConfigTracker {
     signer: string
   }): Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]> => {
     // Find signature parts for this signer
-    const parts = this.knownSignatureParts.filter((p) => isAddrEqual(p.signer, args.signer))
+    const parts = await this.database.getSignaturePartsForAddress({signer: args.signer })
 
     // Find the wallet for each part
     const txsAndProofs: { wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[] = []
 
-    parts.forEach((p) => {
-      const tx = this.knownTransactions.find((t) => digestOfTransactionsNonce(t.nonce, ...t.txs) === p.digest)
-      if (!tx || tx.txs.length === 0) return
-
-      const wallet = tx.txs[0].to
-      if (txsAndProofs.find((c) => c.wallet === wallet)) return
+    await Promise.all(parts.map(async (p) => {
+      const tx = await this.database.transactionWithDigest({ digest: p.digest })
+      if (!tx || txsAndProofs.find((c) => c.wallet === tx.wallet)) return
 
       txsAndProofs.push({
-        wallet,
+        wallet: tx.wallet,
         proof: {
           digest: p.digest,
           chainId: p.chainId,
           signature: p.signature,
         }
       })
-    })
+    }))
 
     return txsAndProofs
   }

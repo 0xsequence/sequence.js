@@ -1,7 +1,11 @@
 import { expect } from 'chai'
 import { ethers } from 'ethers'
 
-import { imageHash, addressOf } from '@0xsequence/config'
+import { imageHash, addressOf, isAddrEqual } from '@0xsequence/config'
+
+const {
+  performance
+} = require('perf_hooks')
 
 describe('Wallet utils', function () {
   it('should generate image hash', () => {

@@ -1,6 +1,6 @@
 import { walletContracts } from "@0xsequence/abi"
 import { Transaction } from "@0xsequence/transactions"
-import { imageHash, WalletConfig } from ".."
+import { imageHash, isAddrEqual, WalletConfig } from ".."
 import { ethers } from "ethers"
 import { WalletContext } from "@0xsequence/network"
 import { Interface } from 'ethers/lib/utils'
@@ -59,7 +59,7 @@ export function isUpdateImplementationTx(wallet: string, target: string, tx: Tra
   }
 
   // Target of transactions should be the wallet
-  if (tx.to.toLowerCase() !== wallet.toLowerCase()) {
+  if (!isAddrEqual(tx.to, wallet)) {
     return false
   }
 
@@ -69,7 +69,7 @@ export function isUpdateImplementationTx(wallet: string, target: string, tx: Tra
     if (!decoded) return false
   
     // Decoded implementation should match target
-    if (decoded[0].toLowerCase() !== target.toLowerCase()) {
+    if (!isAddrEqual(decoded[0], target)) {
       return false
     }
   } catch {}

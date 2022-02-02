@@ -18,7 +18,7 @@ const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/c
 const { expect } = chai.use(chaiAsPromised)
 
 import { NewSequenceProofValidator, Session} from '../src'
-import { compareAddr, ConfigTracker, MemoryConfigTracker, SequenceUtilsFinder } from '@0xsequence/config'
+import { compareAddr, ConfigTracker, LocalConfigTracker } from '@0xsequence/config'
 
 import * as mockServer from "mockttp"
 import { ETHAuth } from '@0xsequence/ethauth'
@@ -129,7 +129,7 @@ describe('Wallet integration', function () {
       ethnode.signer
     ).deploy()) as HookCallerMock
 
-    configTracker = new MemoryConfigTracker(context)
+    configTracker = new LocalConfigTracker(undefined, context)
   })
 
   it('Should open a new session', async () => {

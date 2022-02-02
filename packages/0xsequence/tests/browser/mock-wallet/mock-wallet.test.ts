@@ -7,7 +7,7 @@ import { configureLogger } from '@0xsequence/utils'
 
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 import { test, assert } from '../../utils/assert'
-import { MemoryConfigTracker } from '@0xsequence/config'
+import { LocalConfigTracker } from '@0xsequence/config'
 
 configureLogger({ logLevel: 'DEBUG' })
 
@@ -74,7 +74,7 @@ const main = async () => {
     }
   ]
 
-  const memoryCofigTracker = new MemoryConfigTracker()
+  const memoryCofigTracker = new LocalConfigTracker(undefined, deployedWalletContext)
 
   // Account for managing multi-network wallets
   // TODO: make this a 3-key multisig with threshold of 2
