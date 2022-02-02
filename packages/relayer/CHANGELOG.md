@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.35.12
+
+### Patch Changes
+
+- provider: rename wallet.commands to wallet.utils
+- Updated dependencies
+  - @0xsequence/abi@0.35.12
+  - @0xsequence/config@0.35.12
+  - @0xsequence/transactions@0.35.12
+  - @0xsequence/utils@0.35.12
+
 ## 0.35.11
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.35.12
+
+### Patch Changes
+
+- provider: rename wallet.commands to wallet.utils
+
 ## 0.35.11
 
 ### Patch Changes
