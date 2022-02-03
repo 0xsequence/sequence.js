@@ -7,7 +7,7 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker } from '@0xsequence/config'
+import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker, decodeSignature } from '@0xsequence/config'
 import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
@@ -289,6 +289,78 @@ describe('Account integration', () => {
 
       // Should fail
       await expect(update).to.be.rejected
+    })
+
+    describe('with nested signers', () => {
+      let configTracker2: ConfigTracker
+      let nestedWallet: lib.Wallet
+      let account: lib.Account
+
+      before(async () => {
+        const signer1 = ethers.Wallet.createRandom()
+        const signer2 = ethers.Wallet.createRandom()
+
+        const config: WalletConfig = {
+          threshold: 1,
+          signers: [{
+            address: signer1.address,
+            weight: 1
+          }, {
+            address: signer2.address,
+            weight: 1
+          }]
+        }
+
+        nestedWallet = new lib.Wallet({ config, context }, signer1)
+          .connect(networks[0].provider, networks[0].relayer as LocalRelayer)
+        await nestedWallet.deploy()
+
+        configTracker2 = new LocalConfigTracker(undefined, context, {
+          [nestedWallet.address]: config
+        })
+
+        const initialConfig = {
+          threshold: 1,
+          signers: [{
+            address: ethers.Wallet.createRandom().address,
+            weight: 1
+          }, {
+            address: nestedWallet.address,
+            weight: 1
+          }]
+        }
+
+        account = await lib.Account.create({ context, configTracker: configTracker2, networks }, initialConfig, nestedWallet)
+      })
+
+      it('should settle configuration after next transaction', async () => {
+        // Force account to deploy wallet
+        await account.sendTransaction({
+          to: ethers.Wallet.createRandom().address,
+          data: []
+        })
+
+        // Generate new config and update account
+        const newSigner = ethers.Wallet.createRandom()
+        const newConfig = { threshold: 1, signers: [{ address: newSigner.address, weight: 10 }, { address: owner.address, weight: 1 }] }
+
+        await account.updateConfig(newConfig, networks[0])
+
+        const naccount = new lib.Account({ address: account.address, configTracker: configTracker2, networks, context }, newSigner)
+        await naccount.sendTransaction({
+          to: callReceiver.address,
+          data: callReceiver.interface.encodeFunctionData('testCall', [5991232, []])
+        })
+
+        // Get state, wallet should be deployed and published
+        expect(await account.getWalletConfig()).excluding('address').to.deep.equal(newConfig)
+
+        const state = await account.getWalletState()
+        expect(state.published).to.be.true
+
+        expect(await callReceiver.lastValA()).to.deep.equal(ethers.BigNumber.from(5991232))
+      })
+
     })
   })
 

@@ -4,7 +4,7 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { SignedTransactionsCallback, Signer } from './signer'
 import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData, packMetaTransactionsData, encodeNonce } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf , hasImplementationUpdate } from '@0xsequence/config'
+import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf , hasImplementationUpdate, decodeSignature } from '@0xsequence/config'
 import {
   ChainIdLike,
   NetworkConfig,
@@ -626,4 +626,7 @@ export class Account extends Signer {
     )
   }
 
+  async hasEnoughSigners(chainId: ChainIdLike): Promise<boolean> {
+    return (await this._getWallet(chainId))?.hasEnoughSigners() ?? false
+  }
 }

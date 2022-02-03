@@ -4,21 +4,18 @@ import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
 import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
-import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, staticRecoverConfig } from "../.."
+import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedFullSigner, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
-import { PresignedConfigUpdate, TransactionBody } from "../config-tracker"
+import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
 import { isValidWalletUpdate } from "../utils"
 
 
 export class LocalConfigTracker implements ConfigTracker {
-  public context: WalletContext
-
-  private database: ConfigTrackerDatabase
-
-  constructor(database?: ConfigTrackerDatabase, context?: WalletContext) {
-    this.context = context || sequenceContext
-    this.database = database || new MemoryConfigTrackerDb()
-  }
+  constructor(
+    private database: ConfigTrackerDatabase = new MemoryConfigTrackerDb(),
+    public context: WalletContext = sequenceContext,
+    public walletConfigs: AssumedWalletConfigs = {}
+  ) {}
 
   saveWalletConfig = async (args: {
     config: WalletConfig
@@ -77,7 +74,7 @@ export class LocalConfigTracker implements ConfigTracker {
     // Process all signatures
     await Promise.all(args.signatures.map(async (s) => {
       const subDigest = subDigestOf(args.wallet, s.chainId, digest)
-      const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber())
+      const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber(), this.walletConfigs)
 
       // Save the embeded config
       this.saveWalletConfig({ config: recovered.config })

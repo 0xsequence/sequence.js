@@ -561,7 +561,6 @@ export class Wallet extends Signer {
             if (isSequenceSigner(signer)) {
               if (signer === this) throw Error("Can't sign transactions for self")
               const signature = (await signer.signMessage(subDigest, signChainId, allSigners, true)) + '03'
-
               return {
                 ...s,
                 signature: signature

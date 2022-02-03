@@ -234,7 +234,15 @@ export const staticRecoverConfig = (
         throw new Error(`Missing statically defined config for ${p.address}`)
       }
 
-      const decoded = decodeSignature(ethers.utils.hexlify(p.signature))
+      // Last byte signals an EIP1271 signature
+      // remove and validate it
+      const rawsig = ethers.utils.arrayify(p.signature)
+      const eip1271 = rawsig[rawsig.length - 1]
+      if (eip1271 !== 0x03) {
+        throw new Error(`Invalid EIP1271 signature ${p.signature}`)
+      }
+
+      const decoded = decodeSignature(ethers.utils.hexlify(rawsig.slice(0, rawsig.length - 1)))
       const nestedSubDigest = subDigestOf(p.address, chainId, subDigest)
       const recovered = staticRecoverConfig(nestedSubDigest, decoded, chainId, walletConfigs)
 
