@@ -204,7 +204,7 @@ export class LocalConfigTracker implements ConfigTracker {
       const signatures = await this.database.getSignaturePartsForAddress({ signer: s.address, chainId: args.chainId })
       signatures.forEach((signature) => {
         // Get weight of the signer
-        const prevWeight = weights.get(signature.signer) ?? ethers.constants.Zero
+        const prevWeight = weights.get(signature.digest) ?? ethers.constants.Zero
         weights.set(signature.digest, prevWeight.add(signature.signature.weight))
       })
     }))

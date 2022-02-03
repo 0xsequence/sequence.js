@@ -272,6 +272,42 @@ describe('Account integration', () => {
       expect(await callReceiver.lastValA()).to.deep.equal(ethers.BigNumber.from(222))
     })
 
+    it('should store high weight signatures', async () => {
+      const newSigner1 = ethers.Wallet.createRandom()
+      const newSigner2 = ethers.Wallet.createRandom()
+
+      const newConfig = {
+        threshold: 10,
+        signers: [{
+          address: newSigner1.address,
+          weight: 7
+        }, {
+          address: newSigner2.address,
+          weight: 5
+        }]
+      }
+
+      await account.updateConfig(newConfig, networks[0])
+      const naccount = new lib.Account({ address: account.address, configTracker, networks, context }, newSigner1, newSigner2)
+
+      const newConfig2 = { threshold: 2, signers: [{ address: newSigner2.address, weight: 2 }] }
+
+      await naccount.updateConfig(newConfig2, networks[0])
+
+      // Send a transaction, it should deploy + update wallet
+      await naccount.sendTransaction({
+        to: callReceiver.address,
+        data: callReceiver.interface.encodeFunctionData('testCall', [512, []])
+      })
+
+      // Should be deployed, published and callReceiver updated
+      const state = await account.getWalletState()
+      expect(state.published).to.be.true
+      expect(state.deployed).to.be.true
+      expect(state.config).excluding('address').to.deep.equal(newConfig2)
+      expect(await callReceiver.lastValA()).to.deep.equal(ethers.BigNumber.from(512))
+    })
+
     it('should fail to update if not enough signer', async () => {
       // Generate new signer
       const newSigner = ethers.Wallet.createRandom()
