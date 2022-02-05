@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.36.1
+
+### Patch Changes
+
+- metadata: update client with more fields
+
 ## 0.36.0
 
 ### Minor Changes

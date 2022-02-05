@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.36.1
+
+### Patch Changes
+
+- metadata: update client with more fields
+- Updated dependencies
+  - @0xsequence/network@0.36.1
+
 ## 0.36.0
 
 ### Minor Changes

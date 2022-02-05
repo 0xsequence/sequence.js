@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.36.1
+
+### Patch Changes
+
+- metadata: update client with more fields
+- Updated dependencies
+  - @0xsequence/abi@0.36.1
+  - @0xsequence/api@0.36.1
+  - @0xsequence/auth@0.36.1
+  - @0xsequence/config@0.36.1
+  - @0xsequence/guard@0.36.1
+  - @0xsequence/indexer@0.36.1
+  - @0xsequence/metadata@0.36.1
+  - @0xsequence/multicall@0.36.1
+  - @0xsequence/network@0.36.1
+  - @0xsequence/provider@0.36.1
+  - @0xsequence/relayer@0.36.1
+  - @0xsequence/transactions@0.36.1
+  - @0xsequence/utils@0.36.1
+  - @0xsequence/wallet@0.36.1
+
 ## 0.36.0
 
 ### Minor Changes
