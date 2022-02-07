@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.36.2
+
+### Patch Changes
+
+- transactions: Setting target to 0x0 when empty to during SequenceTxAbiEncode
+
 ## 0.36.1
 
 ### Patch Changes

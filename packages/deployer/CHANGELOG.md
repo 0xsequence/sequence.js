@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.36.2
+
+### Patch Changes
+
+- transactions: Setting target to 0x0 when empty to during SequenceTxAbiEncode
+- Updated dependencies
+  - @0xsequence/utils@0.36.2
+
 ## 0.36.1
 
 ### Patch Changes

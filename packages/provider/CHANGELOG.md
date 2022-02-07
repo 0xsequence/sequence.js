@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.36.2
+
+### Patch Changes
+
+- transactions: Setting target to 0x0 when empty to during SequenceTxAbiEncode
+- Updated dependencies
+  - @0xsequence/abi@0.36.2
+  - @0xsequence/auth@0.36.2
+  - @0xsequence/config@0.36.2
+  - @0xsequence/network@0.36.2
+  - @0xsequence/transactions@0.36.2
+  - @0xsequence/utils@0.36.2
+  - @0xsequence/wallet@0.36.2
+
 ## 0.36.1
 
 ### Patch Changes
