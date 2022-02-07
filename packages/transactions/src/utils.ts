@@ -16,7 +16,7 @@ export const MetaTransactionsType = `tuple(
 
 export function packMetaTransactionsData(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
-  if (nonce === undefined) throw new Error("Encoding transactions without defined nonce")
+  if (nonce === undefined) throw new Error('Encoding transactions without defined nonce')
   return packMetaTransactionsNonceData(nonce, ...txs)
 }
 
@@ -26,7 +26,7 @@ export function packMetaTransactionsNonceData(nonce: BigNumberish, ...txs: Trans
 
 export function digestOfTransactions(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
-  if (nonce === undefined) throw new Error("Computing hash for transactions without defined nonce")
+  if (nonce === undefined) throw new Error('Computing hash for transactions without defined nonce')
   return digestOfTransactionsNonce(nonce, ...txs)
 }
 
@@ -142,7 +142,7 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
     delegateCall: t.delegateCall === true,
     revertOnError: t.revertOnError === true,
     gasLimit: t.gasLimit !== undefined ? t.gasLimit : ethers.constants.Zero,
-    target: t.to,
+    target: t.to ?? ethers.constants.AddressZero,
     value: t.value !== undefined ? t.value : ethers.constants.Zero,
     data: t.data !== undefined ? t.data : []
   }))
@@ -228,7 +228,11 @@ export function isSignedTransactions(cand: any): cand is SignedTransactions {
   )
 }
 
-export async function fromTransactionish(context: WalletContext, wallet: string, transaction: Transactionish): Promise<Transaction[]> {
+export async function fromTransactionish(
+  context: WalletContext,
+  wallet: string,
+  transaction: Transactionish
+): Promise<Transaction[]> {
   let stx: Transaction[] = []
 
   if (Array.isArray(transaction)) {
