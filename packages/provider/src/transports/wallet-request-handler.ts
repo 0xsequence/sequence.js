@@ -313,7 +313,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           } else {
             const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
             if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message })
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message }, this.connectOptions)
             }
           }
 
@@ -353,7 +353,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           } else {
             const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
             if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData })
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
             }
           }
 
@@ -377,7 +377,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             txnHash = txnResponse.hash
           } else {
             // prompt user to provide the response
-            txnHash = await this.prompter.promptSendTransaction(transactionParams, chainId)
+            txnHash = await this.prompter.promptSendTransaction(transactionParams, chainId, this.connectOptions)
           }
 
           if (txnHash) {
@@ -406,7 +406,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // we will want to resolveProperties the bignumber values to hex strings
             response.result = await signer.signTransactions(transaction, chainId)
           } else {
-            response.result = await this.prompter.promptSignTransaction(transaction, chainId)
+            response.result = await this.prompter.promptSignTransaction(transaction, chainId, this.connectOptions)
           }
 
           break
@@ -762,7 +762,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (isUpToDate) {
       return true
     }
-    const promptResult = await prompter.promptConfirmWalletDeploy(chainId)
+    const promptResult = await prompter.promptConfirmWalletDeploy(chainId, this.connectOptions)
     // if client returned true, check again to make sure wallet is deployed and up to date
     if (promptResult) {
       const isPromptResultCorrect = await isWalletUpToDate(signer, chainId)
@@ -778,11 +778,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
-  promptConfirmWalletDeploy(chainId: number): Promise<boolean>
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
-  promptSignMessage(message: MessageToSign): Promise<string>
-  promptSignTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
-  promptSendTransaction(txn: TransactionRequest, chaindId?: number): Promise<string>
+  promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
+  promptSignTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
+  promptSendTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
+  promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
 }
 
 const permittedJsonRpcMethods = [
