@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.36.3
+
+### Patch Changes
+
+- provider: pass connect options to prompter methods
+
 ## 0.36.2
 
 ### Patch Changes

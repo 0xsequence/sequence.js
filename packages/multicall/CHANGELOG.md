@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.36.3
+
+### Patch Changes
+
+- provider: pass connect options to prompter methods
+- Updated dependencies
+  - @0xsequence/abi@0.36.3
+  - @0xsequence/network@0.36.3
+  - @0xsequence/utils@0.36.3
+
 ## 0.36.2
 
 ### Patch Changes

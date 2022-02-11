@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.36.3
+
+### Patch Changes
+
+- provider: pass connect options to prompter methods
+- Updated dependencies
+  - @0xsequence/utils@0.36.3
+
 ## 0.36.2
 
 ### Patch Changes
