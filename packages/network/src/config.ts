@@ -6,17 +6,39 @@ import { urlClean } from '@0xsequence/utils'
 import { createNetworkConfig } from './utils'
 
 export enum ChainId {
+  // Ethereum
   MAINNET = 1,
   ROPSTEN = 3,
   RINKEBY = 4,
   GOERLI = 5,
   KOVAN = 42,
+
+  // Polygon
   POLYGON = 137,
   POLYGON_MUMBAI = 80001,
+
+  // BSC
+  BSC = 56,
+  BSC_TESTNET = 97,
+
+  // Optimism
+  OPTIMISM = 10,
+  OPTIMISM_TESTNET = 69,
+
+  // Arbitrum
   ARBITRUM = 42161,
   ARBITRUM_TESTNET = 421611,
-  BSC = 56,
-  BSC_TESTNET = 97
+
+  // Avalanche
+  AVALANCHE = 43114,
+  AVALANCHE_TESTNET = 43113,
+
+  // Fantom
+  FANTOM = 250,
+  FANTOM_TESTNET = 4002,
+
+  // Gnosis Chain (XDAI)
+  GNOSIS = 100
 }
 
 export interface NetworkConfig {
