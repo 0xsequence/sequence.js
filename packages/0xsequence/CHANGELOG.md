@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.36.4
+
+### Patch Changes
+
+- Updating list of chain ids to include other ethereum compatible chains
+- Updated dependencies
+  - @0xsequence/abi@0.36.4
+  - @0xsequence/api@0.36.4
+  - @0xsequence/auth@0.36.4
+  - @0xsequence/config@0.36.4
+  - @0xsequence/guard@0.36.4
+  - @0xsequence/indexer@0.36.4
+  - @0xsequence/metadata@0.36.4
+  - @0xsequence/multicall@0.36.4
+  - @0xsequence/network@0.36.4
+  - @0xsequence/provider@0.36.4
+  - @0xsequence/relayer@0.36.4
+  - @0xsequence/transactions@0.36.4
+  - @0xsequence/utils@0.36.4
+  - @0xsequence/wallet@0.36.4
+
 ## 0.36.3
 
 ### Patch Changes

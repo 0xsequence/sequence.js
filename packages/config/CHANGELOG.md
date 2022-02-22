@@ -1,5 +1,16 @@
 # @0xsequence/config
 
+## 0.36.4
+
+### Patch Changes
+
+- Updating list of chain ids to include other ethereum compatible chains
+- Updated dependencies
+  - @0xsequence/abi@0.36.4
+  - @0xsequence/multicall@0.36.4
+  - @0xsequence/network@0.36.4
+  - @0xsequence/utils@0.36.4
+
 ## 0.36.3
 
 ### Patch Changes
