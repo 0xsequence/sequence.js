@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@0xsequence/ethauth@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.6.0.tgz#14635c8ed63a5b0573a4893c8a4f64b127ab9073"
-  integrity sha512-zGIpX5cYxsgQWvCIwWSTs38ubFZXEzkZTJ2QCVw/deX2AX2qF38UtJSp7HzBsqO33kKNsfqgS4BDOfha0xXwsw==
+"@0xsequence/ethauth@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.7.0.tgz#267f164404e1cafbfca534e0683cc4798ba4e8db"
+  integrity sha512-pghfR+OLm82wLMR9Uvvf53f0LniZLhcqw0G4EthFw1ME71/CWUskhR2MIeYKh1t7+OE3TqCbOBJ/p/buv8XynQ==
   dependencies:
     js-base64 "^3.7.2"
 
