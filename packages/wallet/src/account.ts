@@ -172,11 +172,11 @@ export class Account extends Signer {
   }
 
   getAuthChainId(): number {
-    let n = this.options.networks![0]
-    if (n.isAuthChain) return n.chainId
-    n = this.options.networks![1]
-    if (n.isAuthChain) return n.chainId
-    throw new Error('expecting authChain to be the first or second in networks list')
+    try {
+      return this.options.networks!.find(network => network.isAuthChain)!.chainId
+    } catch {
+      throw new Error('no auth network')
+    }
   }
 
   async signMessage(
