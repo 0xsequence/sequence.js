@@ -6,8 +6,7 @@ import { API as BaseSequenceAPI } from './api.gen'
 
 export class SequenceAPIClient extends BaseSequenceAPI {
   constructor(hostname: string, public jwtAuth?: string) {
-    hostname = hostname.endsWith('/') ? hostname.slice(0, -1) : hostname
-    super(hostname, fetch)
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
     this.fetch = this._fetch
   }
 
