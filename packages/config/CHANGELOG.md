@@ -1,5 +1,19 @@
 # @0xsequence/config
 
+## 0.36.5
+
+### Patch Changes
+
+- auth: bump ethauth to 0.7.0
+  network, wallet: don't assume position of auth network in list
+  api/indexer/metadata: trim trailing slash on hostname, and add endpoint urls
+  relayer: Allow to specify local relayer transaction parameters like gas price or gas limit
+- Updated dependencies
+  - @0xsequence/abi@0.36.5
+  - @0xsequence/multicall@0.36.5
+  - @0xsequence/network@0.36.5
+  - @0xsequence/utils@0.36.5
+
 ## 0.36.4
 
 ### Patch Changes
