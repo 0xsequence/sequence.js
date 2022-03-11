@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.36.7
+
+### Patch Changes
+
+- fix missing break
+
 ## 0.36.6
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.36.7
+
+### Patch Changes
+
+- fix missing break
+- Updated dependencies
+  - @0xsequence/abi@0.36.7
+  - @0xsequence/config@0.36.7
+  - @0xsequence/guard@0.36.7
+  - @0xsequence/network@0.36.7
+  - @0xsequence/relayer@0.36.7
+  - @0xsequence/transactions@0.36.7
+  - @0xsequence/utils@0.36.7
+
 ## 0.36.6
 
 ### Patch Changes
