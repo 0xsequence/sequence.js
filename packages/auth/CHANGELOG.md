@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.36.6
+
+### Patch Changes
+
+- wallet_switchEthereumChain support
+- Updated dependencies
+  - @0xsequence/abi@0.36.6
+  - @0xsequence/api@0.36.6
+  - @0xsequence/config@0.36.6
+  - @0xsequence/indexer@0.36.6
+  - @0xsequence/metadata@0.36.6
+  - @0xsequence/network@0.36.6
+  - @0xsequence/utils@0.36.6
+  - @0xsequence/wallet@0.36.6
+
 ## 0.36.5
 
 ### Patch Changes

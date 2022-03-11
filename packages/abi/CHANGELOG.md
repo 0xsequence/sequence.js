@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.36.6
+
+### Patch Changes
+
+- wallet_switchEthereumChain support
+
 ## 0.36.5
 
 ### Patch Changes
