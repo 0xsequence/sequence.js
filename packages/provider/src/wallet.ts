@@ -141,7 +141,9 @@ export class Wallet implements WalletProvider {
     }
     if (this.config.transports?.extensionTransport?.enabled) {
       this.transport.extensionMessageProvider = new ExtensionMessageProvider(this.config.transports.extensionTransport.runtime)
-      this.transport.extensionMessageProvider.register()
+      // this.transport.extensionMessageProvider.register()
+      this.transport.messageProvider.add(this.transport.extensionMessageProvider)
+      
       // NOTE/REVIEW: see note in mux-message-provider
       //
       // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
