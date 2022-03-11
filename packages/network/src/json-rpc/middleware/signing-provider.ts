@@ -6,7 +6,12 @@ export const SignerJsonRpcMethods = [
   
   'sequence_getWalletContext', 'sequence_getWalletConfig', 'sequence_getWalletState', 'sequence_getNetworks',
   'sequence_updateConfig', 'sequence_publishConfig', 'sequence_estimateGasLimits', 'sequence_gasRefundOptions',
-  'sequence_getNonce', 'sequence_relay'
+  'sequence_getNonce', 'sequence_relay',
+
+  'eth_decrypt', 'eth_getEncryptionPublicKey',
+  'wallet_addEthereumChain', 'wallet_switchEthereumChain',
+  'wallet_registerOnboarding', 'wallet_watchAsset',
+  'wallet_scanQRCode'
 ]
 
 export class SigningProvider implements JsonRpcMiddlewareHandler {

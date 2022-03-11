@@ -26,6 +26,10 @@ export class MuxMessageProvider implements ProviderTransport {
       return
     }
 
+    // REVIEW/NOTE: ........ this method does not work for the chrome-extension. The issue becomes
+    // when the browser quits or restarts, the "open" event is never triggered. Perhaps the code here is fine,
+    // or maybe its not. What should happen is when a dapp makes a request, it will call openWallet
+    // below, in which case one of the events will register. So perhaps this is fine.
     this.messageProviders.forEach(m => {
       m.register()
 
