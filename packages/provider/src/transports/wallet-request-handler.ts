@@ -502,6 +502,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           }
 
           response.result = null // success
+          break
         }
 
         // smart wallet method
