@@ -3,15 +3,14 @@ import { digestOfTransactionsNonce, encodeNonce, unpackMetaTransactionData } fro
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTracker, isValidWalletUpdate, SESSIONS_SPACE } from "."
-import { staticRecoverConfig } from ".."
+import { isDecodedEOASigner, staticRecoverConfig } from ".."
 import { addressOf, imageHash, isAddrEqual, WalletConfig } from "../config"
-import { DecodedSignaturePart, decodeSignature } from "../signature"
+import { DecodedSignaturePart, decodeSignature, recoverEOASigner } from "../signature"
 import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
 
 export class UntrustedConfigTracker implements ConfigTracker {
   constructor (
     public tracker: ConfigTracker,
-    public provider: ethers.providers.Provider,
     public context: WalletContext = sequenceContext,
     public walletConfigs: AssumedWalletConfigs = {}
   ) { }
@@ -107,6 +106,26 @@ export class UntrustedConfigTracker implements ConfigTracker {
     return this.tracker.saveCounterFactualWallet(args)
   }
 
-  walletsOfSigner: (args: { signer: string; }) => Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart; }; }[]>
+  walletsOfSigner = async (args: { signer: string; }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart; }; }[]> => {
+    const result = await this.tracker.walletsOfSigner(args)
 
+    // Validate signature
+    result.map((w) => {
+      // Compute subdigest for wallet
+      const subdigest = subDigestOf(w.wallet, w.proof.chainId, w.proof.digest)
+
+      // Proof signature should be EOA
+      if (!isDecodedEOASigner(w.proof.signature) && !isDecodedEOASigner(w.proof.signature)) {
+        throw new Error(`Invalid signature type for wallet ${w.wallet}, signer: ${args.signer}`)
+      }
+
+      // Recover the signer address
+      const recovered = recoverEOASigner(subdigest, w.proof.signature)
+      if (!isAddrEqual(recovered, args.signer)) {
+        throw new Error(`Invalid signature for wallet ${w.wallet}, signer: ${args.signer}`)
+      }
+    })
+
+    return result
+  }
 }

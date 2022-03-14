@@ -6,7 +6,7 @@ import { proto } from './rpc-relayer'
 
 export interface Relayer {
   // simulate returns the execution results for a list of transactions.
-  simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]>
+  simulate(wallet: string, entrypoint: string, ...transactions: Transaction[]): Promise<SimulateResult[]>
 
   // estimateGasLimits will estimate the gas utilization from the transaction
   // before submission.

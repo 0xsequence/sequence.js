@@ -65,10 +65,10 @@ export class RpcRelayer implements Relayer {
     return result
   }
 
-  async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
+  async simulate(wallet: string, entrypoint: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
     const coder = ethers.utils.defaultAbiCoder
     const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
-    return (await this.service.simulate({ wallet, transactions: encoded })).results
+    return (await this.service.simulate({ wallet, entrypoint, transactions: encoded })).results
   }
 
   async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<Transaction[]> {

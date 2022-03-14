@@ -4,7 +4,7 @@ import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
 import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
-import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, isDecodedFullSigner, staticRecoverConfig } from "../.."
+import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
 import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
 import { isValidWalletUpdate } from "../utils"
@@ -77,7 +77,7 @@ export class LocalConfigTracker implements ConfigTracker {
       const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber(), this.walletConfigs)
 
       // Save the embeded config
-      this.saveWalletConfig({ config: recovered.config })
+      await Promise.all(recovered.allConfigs.map((config) => this.saveWalletConfig({ config })))
 
       // Save signature parts
       await Promise.all(recovered.parts.map(async (p) => {

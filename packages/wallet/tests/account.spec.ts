@@ -7,7 +7,7 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker, decodeSignature } from '@0xsequence/config'
+import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker, decodeSignature, DebugConfigTracker } from '@0xsequence/config'
 import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
@@ -95,10 +95,10 @@ describe('Account integration', () => {
 
     // Create in-memory config tracker
     configTracker = new LocalConfigTracker(undefined, context)
-
+    
     // We do trust the config tracker
     // but we wrap it anyway to test the untrusted wrapper
-    configTracker = new UntrustedConfigTracker(configTracker, networks[0].provider, context)
+    configTracker = new UntrustedConfigTracker(configTracker, context)
   })
 
   beforeEach(async () => {
@@ -367,6 +367,27 @@ describe('Account integration', () => {
         }
 
         account = await lib.Account.create({ context, configTracker: configTracker2, networks }, initialConfig, nestedWallet)
+      })
+
+      it.skip('Generate test case for sequence-sessions', async () => {
+        const context2 = { ...context, sessionUtils: '0x300C03193BfC2f64462D0F309666806329d631DB' }
+        const configTracker2 = new DebugConfigTracker(new LocalConfigTracker(undefined, context2, { [nestedWallet.address]: nestedWallet.config }))
+
+        console.info("Assumed nested wallet address: " + nestedWallet.address + " = " + JSON.stringify(nestedWallet.config))
+
+        const initialConfig = {
+          threshold: 1,
+          signers: [{
+            address: ethers.Wallet.createRandom().address,
+            weight: 1
+          }, {
+            address: nestedWallet.address,
+            weight: 1
+          }]
+        }
+
+        const account = await lib.Account.create({ context: context2, configTracker: configTracker2, networks }, initialConfig, nestedWallet)
+        await account.updateConfig({ ...initialConfig, threshold: 22 }, networks[0])
       })
 
       it('should settle configuration after next transaction', async () => {

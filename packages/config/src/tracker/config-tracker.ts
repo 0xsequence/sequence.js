@@ -62,7 +62,9 @@ export abstract class ConfigTracker {
     chainId: ethers.BigNumberish
   }) => Promise<PresignedConfigUpdate[]>
 
-  savePresignedConfiguration: (args: PresignedConfigurationPayload) => Promise<void>
+  savePresignedConfiguration: (
+    args: PresignedConfigurationPayload
+  ) => Promise<void>
 
   configOfImageHash: (args: {
     imageHash: string

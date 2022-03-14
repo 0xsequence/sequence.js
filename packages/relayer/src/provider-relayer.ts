@@ -43,7 +43,7 @@ export abstract class ProviderRelayer implements Relayer {
   abstract gasRefundOptions(config: WalletConfig, context: WalletContext, bundle: TransactionBundle): Promise<FeeOption[]>
   abstract relay(signedTxs: TransactionBundle): Promise<TransactionResponse>
 
-  async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
+  async simulate(wallet: string, entrypoint: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
     return (await Promise.all(transactions.map(async tx => {
       // Respect gasLimit request of the transaction (as long as its not 0)
       if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
@@ -86,7 +86,7 @@ export abstract class ProviderRelayer implements Relayer {
     ...transactions: Transaction[]
   ): Promise<Transaction[]> {
     const walletAddr = addressOf(config, context)
-    const results = await this.simulate(walletAddr, ...transactions)
+    const results = await this.simulate(walletAddr, walletAddr, ...transactions)
     return transactions.map((t, i) => ({ ...t, gasLimit: results[i].gasLimit }))
   }
 

@@ -210,9 +210,12 @@ export const staticRecoverConfig = (
   signature: DecodedSignature,
   chainId: number,
   walletConfigs: AssumedWalletConfigs = {}
-): { config: WalletConfig, weight: number, parts: { signer: string, signature?: DecodedSignaturePart }[] } => {
+): { config: WalletConfig, weight: number, parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[], allConfigs: WalletConfig[] } => {
   const config: WalletConfig = { threshold: signature.threshold, signers: [] }
-  const parts: { signer: string, signature?: DecodedSignaturePart }[] = []
+  const parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[] = []
+
+  const allConfigs: WalletConfig[] = []
+
   let weight = 0
 
   signature.signers.forEach((p) => {
@@ -220,7 +223,7 @@ export const staticRecoverConfig = (
     // just use them to retrieve the embedded config
     if (isDecodedAddress(p)) {
       config.signers.push({ weight: p.weight, address: p.address })
-      parts.push({ signer: p.address })
+      parts.push({ subDigest, signer: p.address })
       return
     }
 
@@ -251,8 +254,12 @@ export const staticRecoverConfig = (
         imageHash(recovered.config) === imageHash(walletConfigs[p.address])
       ) {
         config.signers.push({ weight: p.weight, address: p.address })
-        parts.push({ signer: p.address, signature: p })
         weight += p.weight
+
+        // Push the part and all nested parts too
+        parts.push({ subDigest, signer: p.address, signature: p }, ...recovered.parts)
+        allConfigs.push(...recovered.allConfigs)
+
         return
       } else {
         throw new Error(`Invalid nested sequence signature for ${p.address}`)
@@ -265,6 +272,7 @@ export const staticRecoverConfig = (
       config.signers.push({ weight: p.weight, address: recovered })
       weight += p.weight
       parts.push({
+        subDigest,
         signer: recovered,
         signature: p
       })
@@ -272,7 +280,8 @@ export const staticRecoverConfig = (
     }
   })
 
-  return { config, weight, parts }
+  allConfigs.push(config)
+  return { config, weight, parts, allConfigs }
 }
 
 export const joinSignatures = (...signatures: Array<DecodedSignature | string>): DecodedSignature => {

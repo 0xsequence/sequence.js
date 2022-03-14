@@ -326,6 +326,7 @@ export class Session {
     sequenceMetadataUrl: string
     context: WalletContext
     networks: NetworkConfig[]
+    knownNetworks: number[],
     signers: { signer: AbstractSigner | string; weight: ethers.BigNumberish }[]
     threshold: ethers.BigNumberish
     metadata: SessionMeta
@@ -339,7 +340,8 @@ export class Session {
       signers,
       threshold,
       metadata,
-      configTracker
+      configTracker,
+      knownNetworks
     } = args
 
     // Prepare signers
@@ -357,9 +359,8 @@ export class Session {
       const newConfig = editConfig(config, { threshold, set: await solvedSigners })
 
       // Update configuration for all networks
-      // TODO: Include future network candidates
       // (networks we aren't using, but we want to presign transactions anyway)
-      await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, [])))
+      await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, knownNetworks)))
 
     } else {
       // If not we have to create an initial configuration using the provided signers

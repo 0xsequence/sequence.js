@@ -1,10 +1,9 @@
 import { BigNumberish, BigNumber, ethers } from "ethers"
-import { compareAddr, WalletConfig } from "../config"
-import { PromiseSome } from "../utils"
+import { WalletConfig } from "../config"
 import fetchPonyfill from 'fetch-ponyfill'
 import { ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 import { Sessions } from "./gen/sessions.gen"
-import { DecodedSignaturePart, imageHash } from ".."
+import { addressOf, DecodedSignaturePart, imageHash, isAddrEqual } from ".."
 import { WalletContext } from "@0xsequence/network"
 
 export class SessionsApiConfigTracker implements ConfigTracker {
@@ -23,8 +22,8 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     // API may return counterfactual wallets for other configs
     // so we filter looking for the rifgr one
     return candidates.wallets.find((w) => (
-      compareAddr(w.context.factory, args.context.factory) &&
-      compareAddr(w.context.mainModule, args.context.mainModule)
+      isAddrEqual(w.context.factory, args.context.factory) &&
+      isAddrEqual(w.context.mainModule, args.context.mainModule)
     ))?.imageHash
   }
 
@@ -32,7 +31,8 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     imageHash: string;
     context: WalletContext
   }): Promise<void> => {
-    // TODO: Implement API
+    const address = addressOf(args.imageHash, args.context)
+    await this.sessions.saveWallets({ wallets: [{ address, imageHash: args.imageHash, context: args.context }] })
   }
 
   loadPresignedConfiguration = async ( args: {
@@ -103,6 +103,11 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   walletsOfSigner = async (args: {
     signer: string
   }): Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]> => {
-    throw Error("Not implemented")
+    const res = await this.sessions.walletsOfSigner({ address: args.signer, start: 0, count: 10000 })
+    return res.wallets.map((w) => {
+      const chainId = ethers.BigNumber.from(w.proof.chainId)
+      const signature = { weight: 0, signature: w.proof.signature }
+      return { wallet: w.address, proof: { digest: w.proof.digest, chainId, signature } }
+    })
   }
 }
