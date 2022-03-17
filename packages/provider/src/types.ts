@@ -23,7 +23,7 @@ export interface WalletTransport extends JsonRpcHandler, ProviderMessageTranspor
   register(): void
   unregister(): void
 
-  notifyOpen(openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }): void
+  notifyOpen(openInfo: { chainId?: string; sessionId?: string; session?: WalletSession; error?: string }): void
   notifyClose(error?: ProviderRpcError): void
 
   notifyConnect(connectDetails: ConnectDetails): void
@@ -33,10 +33,10 @@ export interface WalletTransport extends JsonRpcHandler, ProviderMessageTranspor
 }
 
 export interface ProviderMessage<T> {
-  idx: number       // message id number
-  type: string      // message type
-  data: T           // the ethereum json-rpc payload
-  chainId?: number  // chain id which the message is intended
+  idx: number // message id number
+  type: string // message type
+  data: T // the ethereum json-rpc payload
+  chainId?: number // chain id which the message is intended
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
@@ -83,8 +83,8 @@ export class WindowSessionParams extends URLSearchParams {
 
 export interface TransportSession {
   sessionId?: string | null
-  networkId?: string | number | null,
-  intent?: OpenWalletIntent,
+  networkId?: string | number | null
+  intent?: OpenWalletIntent
 }
 
 export enum EventType {
@@ -105,21 +105,21 @@ export enum EventType {
 }
 
 export interface WalletEventTypes {
-  'open': (openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }) => void
-  'close': (error?: ProviderRpcError) => void
+  open: (openInfo: { chainId?: string; sessionId?: string; session?: WalletSession; error?: string }) => void
+  close: (error?: ProviderRpcError) => void
 
-  'connect': (connectDetails: ConnectDetails) => void
-  'disconnect': (error?: ProviderRpcError) => void
+  connect: (connectDetails: ConnectDetails) => void
+  disconnect: (error?: ProviderRpcError) => void
 
-  'accountsChanged': (accounts: string[]) => void
-  'chainChanged': (chainIdHex: string) => void
+  accountsChanged: (accounts: string[]) => void
+  chainChanged: (chainIdHex: string) => void
 
-  'networks': (networks: NetworkConfig[]) => void
-  'walletContext': (walletContext: WalletContext) => void
+  networks: (networks: NetworkConfig[]) => void
+  walletContext: (walletContext: WalletContext) => void
 }
 
 export interface ProviderEventTypes extends WalletEventTypes {
-  'message': (message: ProviderMessageResponse) => void
+  message: (message: ProviderMessageResponse) => void
 }
 
 export enum OpenState {
@@ -162,7 +162,28 @@ export interface ConnectOptions {
   // keepWalletOpened will keep the wallet window opened after connecting. The default
   // is to automatically close the wallet after connecting.
   keepWalletOpened?: boolean
+
+  // Specify a wallet theme, which will also become the default wallet theme.
+  theme?: ThemeOption
+
+  // Specify payment providers to use. If not specified,
+  // all available payment providers will be enabled.
+  includedPaymentProviders?: PaymentProviderOption[]
+
+  // Specify a default currency to use with payment providers.
+  // If not specified, the default is USDC.
+  defaultFundingCurrency?: CurrencyOption
+
+  // If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
+  // providers other than the defaultFundingCurrency.
+  // If false, it allows picking any currency provided by payment providers.
+  // The default is true.
+  lockFundingCurrencyToDefault?: boolean
 }
+
+export type ThemeOption = 'light' | 'dark' | string
+export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
+export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 
 export interface ConnectDetails {
   // chainId (in hex) and error are defined by EIP-1193 expected fields
@@ -187,8 +208,9 @@ export interface ConnectDetails {
 export type PromptConnectDetails = Pick<ConnectDetails, 'chainId' | 'error' | 'connected' | 'proof' | 'email'>
 
 export type OpenWalletIntent =
-  { type: 'connect'; options?: ConnectOptions } |
-  { type: 'jsonRpcRequest'; method: string }
+  | { type: 'connect'; options?: ConnectOptions }
+  | { type: 'openWithOptions'; options?: ConnectOptions }
+  | { type: 'jsonRpcRequest'; method: string }
 
 export interface MessageToSign {
   message?: string
@@ -230,23 +252,21 @@ export const ErrSignedInRequired = new ProviderError('Wallet is not signed in. C
 
 // TODO: lets build some nice error handling tools, prob in /utils ...
 
-export interface TypedEventEmitter<Events>{
-  addListener<E extends keyof Events> (event: E, listener: Events[E]): this
-  on<E extends keyof Events> (event: E, listener: Events[E]): this
-  once<E extends keyof Events> (event: E, listener: Events[E]): this
-  prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
-  prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
+export interface TypedEventEmitter<Events> {
+  addListener<E extends keyof Events>(event: E, listener: Events[E]): this
+  on<E extends keyof Events>(event: E, listener: Events[E]): this
+  once<E extends keyof Events>(event: E, listener: Events[E]): this
+  prependListener<E extends keyof Events>(event: E, listener: Events[E]): this
+  prependOnceListener<E extends keyof Events>(event: E, listener: Events[E]): this
 
   off<E extends keyof Events>(event: E, listener: Events[E]): this
-  removeAllListeners<E extends keyof Events> (event?: E): this
-  removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
+  removeAllListeners<E extends keyof Events>(event?: E): this
+  removeListener<E extends keyof Events>(event: E, listener: Events[E]): this
 
-  emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
-  eventNames (): (keyof Events | string | symbol)[]
-  listeners<E extends keyof Events> (event: E): Function[]
-  listenerCount<E extends keyof Events> (event: E): number
+  emit<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>): boolean
+  eventNames(): (keyof Events | string | symbol)[]
+  listeners<E extends keyof Events>(event: E): Function[]
+  listenerCount<E extends keyof Events>(event: E): number
 }
 
-type Arguments<T> = [T] extends [(...args: infer U) => any]
-  ? U
-  : [T] extends [void] ? [] : [T]
+type Arguments<T> = [T] extends [(...args: infer U) => any] ? U : [T] extends [void] ? [] : [T]
