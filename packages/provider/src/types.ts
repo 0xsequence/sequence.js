@@ -135,49 +135,49 @@ export enum InitState {
 }
 
 export interface ConnectOptions {
-  // networkId specifics the default network a dapp would like to connect to. This field
-  // is optional as it can be provided a number of different ways.
+  /** Specifies the default network a dapp would like to connect to. This field
+  is optional as it can be provided a number of different ways. */
   networkId?: string | number
 
-  // app name of the dapp which will be announced to user on connect screen
+  /** app name of the dapp which will be announced to user on connect screen */
   app?: string
 
-  // origin hint of the dapp's host opening the wallet. This value will automatically
-  // be determined and verified for integrity, and can be omitted.
+  /** origin hint of the dapp's host opening the wallet. This value will automatically
+  be determined and verified for integrity, and can be omitted. */
   origin?: string
 
-  // expiry number (in seconds) to expire connect session. default is 1 week of seconds.
+  /** expiry number (in seconds) to expire connect session. default is 1 week of seconds. */
   expiry?: number
 
-  // authorize will perform an ETHAuth eip712 signing and return the proof to the dapp.
+  /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
   authorize?: boolean
 
-  // askForEmail will prompt to give permission to the dapp to access email address
+  /** *Currently not used* askForEmail will prompt to give permission to the dapp to access email address */
   // TODO: this feature is currently not used as the wallet does not report emails yet
   askForEmail?: boolean
 
-  // refresh flag will force a full re-connect (ie. disconnect then connect again)
+  /** refresh flag will force a full re-connect (ie. disconnect then connect again) */
   refresh?: boolean
 
-  // keepWalletOpened will keep the wallet window opened after connecting. The default
-  // is to automatically close the wallet after connecting.
+  /** keepWalletOpened will keep the wallet window opened after connecting. The default
+  is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
 
-  // Specify a wallet theme, which will also become the default wallet theme.
+  /** Specify a wallet theme, which will also become the default wallet theme. */
   theme?: ThemeOption
 
-  // Specify payment providers to use. If not specified,
-  // all available payment providers will be enabled.
+  /** Specify payment providers to use. If not specified,
+  all available payment providers will be enabled. */
   includedPaymentProviders?: PaymentProviderOption[]
 
-  // Specify a default currency to use with payment providers.
-  // If not specified, the default is USDC.
+  /** Specify a default currency to use with payment providers.
+  If not specified, the default is USDC. */
   defaultFundingCurrency?: CurrencyOption
 
-  // If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
-  // providers other than the defaultFundingCurrency.
-  // If false, it allows picking any currency provided by payment providers.
-  // The default is true.
+  /** If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
+  providers other than the defaultFundingCurrency.
+  If false, it allows picking any currency provided by payment providers.
+  The default is true. */
   lockFundingCurrencyToDefault?: boolean
 }
 
