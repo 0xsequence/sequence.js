@@ -163,24 +163,37 @@ export interface ConnectOptions {
    * is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
 
+  /** Options to further customize the wallet experience. */
+  settings?: Settings
+}
+
+/** Options to further customize the wallet experience. */
+export interface Settings {
   /** Specify a wallet theme, which will also become the default wallet theme.
    * light and dark are the main themes, to use other themes in wallet settings,
    * you can use the camel case version of the name in the wallet settings.
-   * For example: "Blue Dark" on wallet UI can be passed as "blueDark" */
+   * For example: "Blue Dark" on wallet UI can be passed as "blueDark".
+   * Can be persisted with setAsDefault option. */
   theme?: ThemeOption
 
   /** Specify payment providers to use. If not specified,
-   * all available payment providers will be enabled. */
+   * all available payment providers will be enabled.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
   includedPaymentProviders?: PaymentProviderOption[]
 
   /** Specify a default currency to use with payment providers.
-   * If not specified, the default is USDC. */
+   * If not specified, the default is USDC.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
   defaultFundingCurrency?: CurrencyOption
 
   /** If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
    * providers other than the defaultFundingCurrency.
    * If false, it allows picking any currency provided by payment providers.
-   * The default is true. */
+   * The default is true.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
   lockFundingCurrencyToDefault?: boolean
 }
 
