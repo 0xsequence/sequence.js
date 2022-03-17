@@ -169,11 +169,10 @@ export interface ConnectOptions {
 
 /** Options to further customize the wallet experience. */
 export interface Settings {
-  /** Specify a wallet theme, which will also become the default wallet theme.
-   * light and dark are the main themes, to use other themes in wallet settings,
-   * you can use the camel case version of the name in the wallet settings.
+  /** Specify a wallet theme. `light` and `dark` are the main themes, to use other available
+   * themes, you can use the camel case version of the theme names in the wallet settings.
    * For example: "Blue Dark" on wallet UI can be passed as "blueDark".
-   * Can be persisted with setAsDefault option. */
+   * This setting can be persisted with setAsDefault parameter. */
   theme?: ThemeOption
 
   /** Specify payment providers to use. If not specified,
