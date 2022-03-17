@@ -136,14 +136,14 @@ export enum InitState {
 
 export interface ConnectOptions {
   /** Specifies the default network a dapp would like to connect to. This field
-  is optional as it can be provided a number of different ways. */
+   * is optional as it can be provided a number of different ways. */
   networkId?: string | number
 
   /** app name of the dapp which will be announced to user on connect screen */
   app?: string
 
   /** origin hint of the dapp's host opening the wallet. This value will automatically
-  be determined and verified for integrity, and can be omitted. */
+   * be determined and verified for integrity, and can be omitted. */
   origin?: string
 
   /** expiry number (in seconds) to expire connect session. default is 1 week of seconds. */
@@ -160,28 +160,34 @@ export interface ConnectOptions {
   refresh?: boolean
 
   /** keepWalletOpened will keep the wallet window opened after connecting. The default
-  is to automatically close the wallet after connecting. */
+   * is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
 
-  /** Specify a wallet theme, which will also become the default wallet theme. */
+  /** Specify a wallet theme, which will also become the default wallet theme.
+   * light and dark are the main themes, to use other themes in wallet settings,
+   * you can use the camel case version of the name in the wallet settings.
+   * For example: "Blue Dark" on wallet UI can be passed as "blueDark" */
   theme?: ThemeOption
 
   /** Specify payment providers to use. If not specified,
-  all available payment providers will be enabled. */
+   * all available payment providers will be enabled. */
   includedPaymentProviders?: PaymentProviderOption[]
 
   /** Specify a default currency to use with payment providers.
-  If not specified, the default is USDC. */
+   * If not specified, the default is USDC. */
   defaultFundingCurrency?: CurrencyOption
 
   /** If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
-  providers other than the defaultFundingCurrency.
-  If false, it allows picking any currency provided by payment providers.
-  The default is true. */
+   * providers other than the defaultFundingCurrency.
+   * If false, it allows picking any currency provided by payment providers.
+   * The default is true. */
   lockFundingCurrencyToDefault?: boolean
 }
 
-export type ThemeOption = 'light' | 'dark' | string
+/** light and dark are the main themes, to use other themes in wallet settings,
+ * you can use the camel case version of the name in the wallet settings.
+ * For example: "Blue Dark" on wallet UI can be passed as "blueDark" */
+export type ThemeOption = { name: 'light' | 'dark' | string; setAsDefault: boolean }
 export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
 export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 
