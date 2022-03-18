@@ -172,7 +172,8 @@ export interface Settings {
   /** Specify a wallet theme. `light` and `dark` are the main themes, to use other available
    * themes, you can use the camel case version of the theme names in the wallet settings.
    * For example: "Blue Dark" on wallet UI can be passed as "blueDark".
-   * This setting can be persisted with setAsDefault parameter. */
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
   theme?: ThemeOption
 
   /** Specify payment providers to use. If not specified,
@@ -199,7 +200,7 @@ export interface Settings {
 /** light and dark are the main themes, to use other themes in wallet settings,
  * you can use the camel case version of the name in the wallet settings.
  * For example: "Blue Dark" on wallet UI can be passed as "blueDark" */
-export type ThemeOption = { name: 'light' | 'dark' | string; setAsDefault: boolean }
+export type ThemeOption = 'light' | 'dark' | string
 export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
 export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 
