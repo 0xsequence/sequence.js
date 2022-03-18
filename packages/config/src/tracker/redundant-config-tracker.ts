@@ -134,4 +134,24 @@ export class RedundantConfigTracker implements ConfigTracker {
 
     return res
   }
+
+  signaturesOfSigner = async (args: {
+    signer: string
+  }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+    // Call signatures of signer on all childs
+    const res = await Promise.allSettled(this.childs.map((c) => c.signaturesOfSigner(args)))
+
+    // Aggregate all results and filter duplicated digests
+    return res.reduce((p, c) => {
+      if (c.status === "fulfilled" && c.value) {
+        c.value.forEach((v) => {
+          if (p.findIndex((c) => c.digest === v.digest) === -1) {
+            p.push(v)
+          }
+        })
+      }
+
+      return p
+    }, [] as { signature: string, chainid: string, wallet: string, digest: string }[])
+  }
 }

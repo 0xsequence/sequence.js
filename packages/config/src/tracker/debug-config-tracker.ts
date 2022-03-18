@@ -64,4 +64,12 @@ export class DebugConfigTracker implements ConfigTracker {
     console.log(`[config-tracker ${id}] walletsOfSigner(${args.signer}) => ${JSON.stringify(result)}`)
     return result
   }
+
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+    const id = this._getRequest()
+    console.log(`[config-tracker ${id}] signaturesOfSigner(${args.signer})`)
+    const result = await this.tracker.signaturesOfSigner(args)
+    console.log(`[config-tracker ${id}] signaturesOfSigner(${args.signer}) => ${JSON.stringify(result)}`)
+    return result
+  }
 }

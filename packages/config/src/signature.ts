@@ -78,6 +78,73 @@ export enum SignatureType {
   Full = 2
 }
 
+export const decodeSignaturePart = (auxsig: string): { part: DecodedSignaturePart, rindex: number } => {
+  let rindex = 0
+  const signatureType = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber() as SignatureType
+  rindex += 2
+
+  const weight = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+  rindex += 2
+
+  switch (signatureType) {
+    case SignatureType.Address:
+      const addr = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
+      rindex += 40
+
+      return {
+        rindex,
+        part: {
+          weight: weight,
+          address: addr
+        }
+      }
+  
+    case SignatureType.EOA:
+      const sig = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + 132)}`)
+      rindex += 132
+
+      const split = ethers.utils.splitSignature(sig.slice(0, 65))
+      const r = split.r
+      const s = split.s
+      const v = split.v
+
+      const t = ethers.BigNumber.from(sig[sig.length - 1]).toNumber()
+
+      return {
+        rindex,
+        part: {
+          weight: weight,
+          signature: sig,
+          r: r,
+          s: s,
+          v: v,
+          t: t
+        }
+      }
+
+    case SignatureType.Full:
+      const address = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
+      rindex += 40
+
+      const size = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 4)}`).mul(2).toNumber()
+      rindex += 4
+
+      const signature = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + size)}`)
+      rindex += size
+
+      return {
+        rindex,
+        part: {
+          weight: weight,
+          address: address,
+          signature: signature
+        }
+      }
+
+    default:
+      throw Error('Signature type not supported')
+  }
+}
 
 export const decodeSignature = (signature: string | DecodedSignature): DecodedSignature => {
   if (typeof signature !== 'string') return signature
@@ -89,65 +156,9 @@ export const decodeSignature = (signature: string | DecodedSignature): DecodedSi
   const signers: DecodedSignaturePart[] = []
 
   for (let rindex = 4; rindex < auxsig.length; ) {
-    const signatureType = ethers.BigNumber.from(auxsig.slice(rindex, rindex + 2)).toNumber() as SignatureType
-    rindex += 2
-
-    const weight = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
-    rindex += 2
-
-    switch (signatureType) {
-      case SignatureType.Address:
-        const addr = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
-        rindex += 40
-  
-        signers.push({
-          weight: weight,
-          address: addr
-        })
-        break;
-    
-      case SignatureType.EOA:
-        const sig = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + 132)}`)
-        rindex += 132
-
-        const split = ethers.utils.splitSignature(sig.slice(0, 65))
-        const r = split.r
-        const s = split.s
-        const v = split.v
-  
-        const t = ethers.BigNumber.from(sig[sig.length - 1]).toNumber()
-  
-        signers.push({
-          weight: weight,
-          signature: sig,
-          r: r,
-          s: s,
-          v: v,
-          t: t
-        })
-
-        break
-
-      case SignatureType.Full:
-        const address = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
-        rindex += 40
-
-        const size = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 4)}`).mul(2).toNumber()
-        rindex += 4
-
-        const signature = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + size)}`)
-        rindex += size
-
-        signers.push({
-          weight: weight,
-          address: address,
-          signature: signature
-        })
-        break
-
-      default:
-        throw Error('Signature type not supported')
-    }
+    const { part, rindex: rindex2 } = decodeSignaturePart(auxsig.slice(rindex))
+    signers.push(part)
+    rindex += rindex2
   }
 
   return {

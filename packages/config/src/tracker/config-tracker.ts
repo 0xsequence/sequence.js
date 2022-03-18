@@ -87,4 +87,8 @@ export abstract class ConfigTracker {
   walletsOfSigner: (args: {
     signer: string
   }) => Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]>
+
+  signaturesOfSigner: (args: {
+    signer: string
+  }) => Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]>
 }
