@@ -110,4 +110,21 @@ export class SessionsApiConfigTracker implements ConfigTracker {
       return { wallet: w.address, proof: { digest: w.proof.digest, chainId, signature } }
     })
   }
+
+  signaturesOfSigner = async (args: {
+    signer: string
+  }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+    // Call sessions client
+    const res = await this.sessions.knownSignaturesOfSigner({ signer: args.signer, start: 0, count: 10000 })
+
+    // Convert to our format
+    return res.signatures.map((sig) => {
+      return {
+        signature: sig.signature,
+        chainid: sig.chainid,
+        wallet: sig.transaction.wallet,
+        digest: sig.transaction.digest
+      }
+    })
+  }
 }

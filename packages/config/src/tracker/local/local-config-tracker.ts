@@ -285,6 +285,10 @@ export class LocalConfigTracker implements ConfigTracker {
 
     return txsAndProofs
   }
+
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+    throw Error('Not implemented')
+  }
 }
 
 type ConfigJump = {

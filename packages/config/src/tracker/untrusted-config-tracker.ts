@@ -128,4 +128,10 @@ export class UntrustedConfigTracker implements ConfigTracker {
 
     return result
   }
+
+  signaturesOfSigner = async (args: {
+    signer: string
+  }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+    throw new Error("Method not implemented.")
+  }
 }
