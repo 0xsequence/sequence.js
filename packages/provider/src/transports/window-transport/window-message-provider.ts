@@ -82,7 +82,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     this._init = InitState.NIL
     this._sessionId = `${performance.now()}`
     windowSessionParams.set('sid', this._sessionId)
-    
+
     if (intent) {
       // for the window-transport, we eagerly/optimistically set the origin host
       // when connecting to the wallet, however, this will be verified and enforced
@@ -96,7 +96,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
           intent.options.origin = window.location.origin
         }
       }
-      // encode intent as base6 url-encoded param
+      // encode intent as base64 url-encoded param
       windowSessionParams.set('intent', base64EncodeObject(intent))
     }
     if (networkId) {
@@ -109,16 +109,13 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     if (isBrowserExtension()) {
       windowSize = [450, 750]
-      windowPos = [
-        Math.abs(window.screen.width / 2 - windowSize[0] / 2),
-        Math.abs(window.screen.height / 2 - windowSize[1] / 2)
-      ]
+      windowPos = [Math.abs(window.screen.width / 2 - windowSize[0] / 2), Math.abs(window.screen.height / 2 - windowSize[1] / 2)]
     } else {
       windowSize = [450, 750]
       windowPos = [
         Math.abs(window.screenX + window.innerWidth / 2 - windowSize[0] / 2),
         Math.abs(window.screenY + window.innerHeight / 2 - windowSize[1] / 2)
-      ]  
+      ]
     }
 
     const windowFeatures =

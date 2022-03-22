@@ -23,7 +23,7 @@ export interface WalletTransport extends JsonRpcHandler, ProviderMessageTranspor
   register(): void
   unregister(): void
 
-  notifyOpen(openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }): void
+  notifyOpen(openInfo: { chainId?: string; sessionId?: string; session?: WalletSession; error?: string }): void
   notifyClose(error?: ProviderRpcError): void
 
   notifyConnect(connectDetails: ConnectDetails): void
@@ -33,10 +33,10 @@ export interface WalletTransport extends JsonRpcHandler, ProviderMessageTranspor
 }
 
 export interface ProviderMessage<T> {
-  idx: number       // message id number
-  type: string      // message type
-  data: T           // the ethereum json-rpc payload
-  chainId?: number  // chain id which the message is intended
+  idx: number // message id number
+  type: string // message type
+  data: T // the ethereum json-rpc payload
+  chainId?: number // chain id which the message is intended
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
@@ -83,8 +83,8 @@ export class WindowSessionParams extends URLSearchParams {
 
 export interface TransportSession {
   sessionId?: string | null
-  networkId?: string | number | null,
-  intent?: OpenWalletIntent,
+  networkId?: string | number | null
+  intent?: OpenWalletIntent
 }
 
 export enum EventType {
@@ -105,21 +105,21 @@ export enum EventType {
 }
 
 export interface WalletEventTypes {
-  'open': (openInfo: { chainId?: string, sessionId?: string, session?: WalletSession, error?: string }) => void
-  'close': (error?: ProviderRpcError) => void
+  open: (openInfo: { chainId?: string; sessionId?: string; session?: WalletSession; error?: string }) => void
+  close: (error?: ProviderRpcError) => void
 
-  'connect': (connectDetails: ConnectDetails) => void
-  'disconnect': (error?: ProviderRpcError) => void
+  connect: (connectDetails: ConnectDetails) => void
+  disconnect: (error?: ProviderRpcError) => void
 
-  'accountsChanged': (accounts: string[]) => void
-  'chainChanged': (chainIdHex: string) => void
+  accountsChanged: (accounts: string[]) => void
+  chainChanged: (chainIdHex: string) => void
 
-  'networks': (networks: NetworkConfig[]) => void
-  'walletContext': (walletContext: WalletContext) => void
+  networks: (networks: NetworkConfig[]) => void
+  walletContext: (walletContext: WalletContext) => void
 }
 
 export interface ProviderEventTypes extends WalletEventTypes {
-  'message': (message: ProviderMessageResponse) => void
+  message: (message: ProviderMessageResponse) => void
 }
 
 export enum OpenState {
@@ -135,34 +135,74 @@ export enum InitState {
 }
 
 export interface ConnectOptions {
-  // networkId specifics the default network a dapp would like to connect to. This field
-  // is optional as it can be provided a number of different ways.
+  /** Specifies the default network a dapp would like to connect to. This field
+   * is optional as it can be provided a number of different ways. */
   networkId?: string | number
 
-  // app name of the dapp which will be announced to user on connect screen
+  /** app name of the dapp which will be announced to user on connect screen */
   app?: string
 
-  // origin hint of the dapp's host opening the wallet. This value will automatically
-  // be determined and verified for integrity, and can be omitted.
+  /** origin hint of the dapp's host opening the wallet. This value will automatically
+   * be determined and verified for integrity, and can be omitted. */
   origin?: string
 
-  // expiry number (in seconds) to expire connect session. default is 1 week of seconds.
+  /** expiry number (in seconds) to expire connect session. default is 1 week of seconds. */
   expiry?: number
 
-  // authorize will perform an ETHAuth eip712 signing and return the proof to the dapp.
+  /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
   authorize?: boolean
 
-  // askForEmail will prompt to give permission to the dapp to access email address
+  /** *Currently not used* askForEmail will prompt to give permission to the dapp to access email address */
   // TODO: this feature is currently not used as the wallet does not report emails yet
   askForEmail?: boolean
 
-  // refresh flag will force a full re-connect (ie. disconnect then connect again)
+  /** refresh flag will force a full re-connect (ie. disconnect then connect again) */
   refresh?: boolean
 
-  // keepWalletOpened will keep the wallet window opened after connecting. The default
-  // is to automatically close the wallet after connecting.
+  /** keepWalletOpened will keep the wallet window opened after connecting. The default
+   * is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
+
+  /** Options to further customize the wallet experience. */
+  settings?: Settings
 }
+
+/** Options to further customize the wallet experience. */
+export interface Settings {
+  /** Specify a wallet theme. `light` and `dark` are the main themes, to use other available
+   * themes, you can use the camel case version of the theme names in the wallet settings.
+   * For example: "Blue Dark" on wallet UI can be passed as "blueDark".
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
+  theme?: ThemeOption
+
+  /** Specify payment providers to use. If not specified,
+   * all available payment providers will be enabled.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
+  includedPaymentProviders?: PaymentProviderOption[]
+
+  /** Specify a default currency to use with payment providers.
+   * If not specified, the default is USDC.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
+  defaultFundingCurrency?: CurrencyOption
+
+  /** If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
+   * providers other than the defaultFundingCurrency.
+   * If false, it allows picking any currency provided by payment providers.
+   * The default is true.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
+  lockFundingCurrencyToDefault?: boolean
+}
+
+/** light and dark are the main themes, to use other themes in wallet settings,
+ * you can use the camel case version of the name in the wallet settings.
+ * For example: "Blue Dark" on wallet UI can be passed as "blueDark" */
+export type ThemeOption = 'light' | 'dark' | string
+export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
+export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 
 export interface ConnectDetails {
   // chainId (in hex) and error are defined by EIP-1193 expected fields
@@ -187,8 +227,9 @@ export interface ConnectDetails {
 export type PromptConnectDetails = Pick<ConnectDetails, 'chainId' | 'error' | 'connected' | 'proof' | 'email'>
 
 export type OpenWalletIntent =
-  { type: 'connect'; options?: ConnectOptions } |
-  { type: 'jsonRpcRequest'; method: string }
+  | { type: 'connect'; options?: ConnectOptions }
+  | { type: 'openWithOptions'; options?: ConnectOptions }
+  | { type: 'jsonRpcRequest'; method: string }
 
 export interface MessageToSign {
   message?: string
@@ -230,23 +271,21 @@ export const ErrSignedInRequired = new ProviderError('Wallet is not signed in. C
 
 // TODO: lets build some nice error handling tools, prob in /utils ...
 
-export interface TypedEventEmitter<Events>{
-  addListener<E extends keyof Events> (event: E, listener: Events[E]): this
-  on<E extends keyof Events> (event: E, listener: Events[E]): this
-  once<E extends keyof Events> (event: E, listener: Events[E]): this
-  prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
-  prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
+export interface TypedEventEmitter<Events> {
+  addListener<E extends keyof Events>(event: E, listener: Events[E]): this
+  on<E extends keyof Events>(event: E, listener: Events[E]): this
+  once<E extends keyof Events>(event: E, listener: Events[E]): this
+  prependListener<E extends keyof Events>(event: E, listener: Events[E]): this
+  prependOnceListener<E extends keyof Events>(event: E, listener: Events[E]): this
 
   off<E extends keyof Events>(event: E, listener: Events[E]): this
-  removeAllListeners<E extends keyof Events> (event?: E): this
-  removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
+  removeAllListeners<E extends keyof Events>(event?: E): this
+  removeListener<E extends keyof Events>(event: E, listener: Events[E]): this
 
-  emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
-  eventNames (): (keyof Events | string | symbol)[]
-  listeners<E extends keyof Events> (event: E): Function[]
-  listenerCount<E extends keyof Events> (event: E): number
+  emit<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>): boolean
+  eventNames(): (keyof Events | string | symbol)[]
+  listeners<E extends keyof Events>(event: E): Function[]
+  listenerCount<E extends keyof Events>(event: E): number
 }
 
-type Arguments<T> = [T] extends [(...args: infer U) => any]
-  ? U
-  : [T] extends [void] ? [] : [T]
+type Arguments<T> = [T] extends [(...args: infer U) => any] ? U : [T] extends [void] ? [] : [T]
