@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.36.8
+
+### Patch Changes
+
+- more connect options (theme, payment providers, funding currencies)
+- Updated dependencies
+  - @0xsequence/abi@0.36.8
+  - @0xsequence/config@0.36.8
+  - @0xsequence/transactions@0.36.8
+  - @0xsequence/utils@0.36.8
+
 ## 0.36.7
 
 ### Patch Changes

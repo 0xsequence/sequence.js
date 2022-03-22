@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.36.8
+
+### Patch Changes
+
+- more connect options (theme, payment providers, funding currencies)
+
 ## 0.36.7
 
 ### Patch Changes
