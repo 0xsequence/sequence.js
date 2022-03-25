@@ -226,10 +226,17 @@ export interface ConnectDetails {
 
 export type PromptConnectDetails = Pick<ConnectDetails, 'chainId' | 'error' | 'connected' | 'proof' | 'email'>
 
+export interface SwapOptions {
+  chaindId: number | string
+  from?: string
+  to?: string
+}
+
 export type OpenWalletIntent =
   | { type: 'connect'; options?: ConnectOptions }
   | { type: 'openWithOptions'; options?: ConnectOptions }
   | { type: 'jsonRpcRequest'; method: string }
+  | { type: 'swap'; options?: SwapOptions }
 
 export interface MessageToSign {
   message?: string
