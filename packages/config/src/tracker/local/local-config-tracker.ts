@@ -316,6 +316,10 @@ export class LocalConfigTracker implements ConfigTracker {
     // Process (validate and store) signatures
     this.processSignatures({ signatures: args.signatures.map((s) => ({ ...s, chainId: ethers.BigNumber.from(s.chainId)})), wallet: args.wallet, digest: args.digest })
   }
+
+  imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
+    return this.database.imageHashesOfSigner({ signer: args.signer })
+  }
 }
 
 type ConfigJump = {

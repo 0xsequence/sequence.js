@@ -78,4 +78,12 @@ export class DebugConfigTracker implements ConfigTracker {
     console.log(`[config-tracker ${id}] saveWitness(${args.wallet}, ${args.digest}, ${JSON.stringify(args.signatures)})`)
     return this.tracker.saveWitness(args)
   }
+
+  imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
+    const id = this._getRequest()
+    console.log(`[config-tracker ${id}] imageHashesOfSigner(${args.signer})`)
+    const result = await this.tracker.imageHashesOfSigner(args)
+    console.log(`[config-tracker ${id}] imageHashesOfSigner(${args.signer}) => ${JSON.stringify(result)}`)
+    return result
+  }
 }

@@ -100,4 +100,8 @@ export abstract class ConfigTracker {
   signaturesOfSigner: (args: {
     signer: string
   }) => Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]>
+
+  imageHashesOfSigner: (args: {
+    signer: string
+  }) => Promise<string[]>
 }

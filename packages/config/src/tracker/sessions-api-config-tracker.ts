@@ -147,4 +147,9 @@ export class SessionsApiConfigTracker implements ConfigTracker {
       }
     })
   }
+
+  imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
+    const res = await this.sessions.imageHashesForSigner({ address: args.signer, start: 0, count: 10000 })
+    return res.signers.map((r) => r.imageHash)
+  }
 }

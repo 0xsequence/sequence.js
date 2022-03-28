@@ -12,6 +12,8 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
   private readonly _addressToImageHash = new Map<string, string>()
   private readonly _digestToTransaction = new Map<string, TransactionBody>()
 
+  private readonly _signerToImageHashes = new Map<string, string[]>()
+
   private readonly _partKeysForAddressAndChaind = new Map<string, Map<string, string[]>>()
   private readonly _partIndexForDigestAndSigner = new Map<string, SignaturePart>()
 
@@ -46,11 +48,29 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     return this._imageHashToConfig.get(args.imageHash)
   }
 
+  imageHashesOfSigner = async (args: {
+    signer: string
+  }): Promise<string[]> => {
+    return this._signerToImageHashes.get(args.signer) || []
+  }
+
   saveWalletConfig = async (args: {
     imageHash: string,
     config: WalletConfig
   }): Promise<void> => {
     this._imageHashToConfig.set(args.imageHash, args.config)
+
+    args.config.signers.forEach(signer => {
+      const arr = this._signerToImageHashes.get(signer.address)
+      if (!arr) {
+        this._signerToImageHashes.set(signer.address, [args.imageHash])
+      } else {
+        // Skip if already in the array
+        if (arr.indexOf(args.imageHash) === -1) {
+          arr.push(args.imageHash)
+        }
+      }
+    })
   }
 
   transactionWithDigest = async (args: {

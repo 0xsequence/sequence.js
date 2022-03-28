@@ -166,4 +166,22 @@ export class RedundantConfigTracker implements ConfigTracker {
       return p
     }, [] as { signature: string, chainid: string, wallet: string, digest: string }[])
   }
+
+  imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
+    // Call image hashes of signer on all childs
+    const res = await Promise.allSettled(this.childs.map((c) => c.imageHashesOfSigner(args)))
+
+    // Aggregate all results
+    return res.reduce((p, c) => {
+      if (c.status === "fulfilled" && c.value) {
+        c.value.forEach((v) => {
+          if (p.findIndex((c) => c === v) === -1) {
+            p.push(v)
+          }
+        })
+      }
+
+      return p
+    }, [] as string[])
+  }
 }

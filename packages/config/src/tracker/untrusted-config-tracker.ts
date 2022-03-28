@@ -95,7 +95,6 @@ export class UntrustedConfigTracker implements ConfigTracker {
 
     // Validate the counter-factual address matches the given wallet
     if (!isAddrEqual(addressOf(result, args.context), args.wallet)) {
-      console.log("with data", result, args.context)
       throw new Error(`Invalid image hash for wallet - expected: ${args.wallet} got: ${addressOf(result, args.context)}`)
     }
 
@@ -167,5 +166,32 @@ export class UntrustedConfigTracker implements ConfigTracker {
     })
   
     return result
+  }
+
+  imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
+    const result = await this.tracker.imageHashesOfSigner(args)
+  
+    // Validate image-hashes
+    // for this we need to get the config of each image-hash
+    // if the config can't be found, the image-hash is considered invalid
+    // and thus it should be skipped
+    const validated = await Promise.all(result.map(async (imageHash) => {
+      const config = await this.configOfImageHash({ imageHash })
+      if (!config) {
+        console.log(`imageHashesOfSigner: can't find config for image hash ${imageHash}, skipping`)
+        return
+      }
+
+      // If signer is not in config, skip it too
+      if (!config.signers.find((s) => isAddrEqual(s.address, args.signer))) {
+        console.log(`imageHashesOfSigner: signer ${args.signer} not in config for image hash ${imageHash}, skipping`)
+        return
+      }
+
+      return imageHash
+    }))
+
+    // Filter empty and return
+    return validated.filter((c) => c) as string[]
   }
 }

@@ -26,6 +26,10 @@ export interface ConfigTrackerDatabase {
     imageHash: string
   }) => Promise<WalletConfig | undefined>
 
+  imageHashesOfSigner: (args: {
+    signer: string
+  }) => Promise<string[]>
+
   saveWalletConfig: (args: {
     imageHash: string,
     config: WalletConfig
