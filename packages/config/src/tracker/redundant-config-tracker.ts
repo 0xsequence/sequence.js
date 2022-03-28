@@ -1,7 +1,7 @@
 import { WalletContext } from "@0xsequence/network"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { DecodedSignaturePart } from ".."
-import { WalletConfig } from "../config"
+import { isAddrEqual, WalletConfig } from "../config"
 import { PromiseSome } from "../utils"
 import { asPresignedConfigurationAsPayload, ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 
@@ -149,7 +149,7 @@ export class RedundantConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: {
     signer: string
-  }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+  }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call signatures of signer on all childs
     const res = await Promise.allSettled(this.childs.map((c) => c.signaturesOfSigner(args)))
 
@@ -164,7 +164,7 @@ export class RedundantConfigTracker implements ConfigTracker {
       }
 
       return p
-    }, [] as { signature: string, chainid: string, wallet: string, digest: string }[])
+    }, [] as { signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[])
   }
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
@@ -183,5 +183,25 @@ export class RedundantConfigTracker implements ConfigTracker {
 
       return p
     }, [] as string[])
+  }
+
+  signaturesForImageHash = async (args: {
+    imageHash: string
+  }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
+    // Call signatures of signer on all childs
+    const res = await Promise.allSettled(this.childs.map((c) => c.signaturesForImageHash(args)))
+
+    // Aggregate all results and filter duplicated digests
+    return res.reduce((p, c) => {
+      if (c.status === "fulfilled" && c.value) {
+        c.value.forEach((v) => {
+          if (p.findIndex((c) => c.digest === v.digest && isAddrEqual(c.wallet, v.wallet)) === -1) {
+            p.push(v)
+          }
+        })
+      }
+
+      return p
+    }, [] as { signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[])
   }
 }

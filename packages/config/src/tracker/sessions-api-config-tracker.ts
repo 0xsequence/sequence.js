@@ -133,7 +133,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: {
     signer: string
-  }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+  }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call sessions client
     const res = await this.sessions.knownSignaturesOfSigner({ signer: args.signer, start: 0, count: 10000 })
 
@@ -141,7 +141,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     return res.signatures.map((sig) => {
       return {
         signature: sig.signature,
-        chainid: sig.chainid,
+        chainid: ethers.BigNumber.from(sig.chainid),
         wallet: sig.transaction.wallet,
         digest: sig.transaction.digest
       }
@@ -151,5 +151,18 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
     const res = await this.sessions.imageHashesForSigner({ address: args.signer, start: 0, count: 10000 })
     return res.signers.map((r) => r.imageHash)
+  }
+
+  signaturesForImageHash = async (args: {
+    imageHash: string
+  }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
+    const res = await this.sessions.signaturesForImageHash({ imageHash: args.imageHash, start: 0, count: 10000 })
+    return res.signatures.map((sig) => ({
+      signer: sig.signer,
+      signature: sig.signature,
+      chainId: ethers.BigNumber.from(sig.chainid),
+      wallet: sig.transaction.wallet,
+      digest: sig.transaction.digest
+    }))
   }
 }

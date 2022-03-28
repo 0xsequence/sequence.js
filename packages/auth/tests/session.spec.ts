@@ -18,7 +18,7 @@ const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/c
 const { expect } = chai.use(chaiAsPromised)
 
 import { NewSequenceProofValidator, Session} from '../src'
-import { compareAddr, ConfigTracker, LocalConfigTracker } from '@0xsequence/config'
+import { compareAddr, ConfigTracker, imageHash, LocalConfigTracker } from '@0xsequence/config'
 
 import * as mockServer from "mockttp"
 import { ETHAuth } from '@0xsequence/ethauth'
@@ -158,6 +158,16 @@ describe('Wallet integration', function () {
     expect(config.signers[0].weight).to.equal(1)
 
     await session.account.sendTransaction({ to: referenceSigner.address })
+
+    // Config tracker should have a witness
+    const signature1 = await configTracker.signaturesOfSigner({ signer: referenceSigner.address })
+    expect(signature1.length).to.equal(1)
+    expect(signature1[0].wallet).to.equal(session.account.address)
+
+    // Should get imageHash for reference signer
+    const imageHashForSigner = await configTracker.imageHashesOfSigner({ signer: referenceSigner.address })
+    expect(imageHashForSigner.length).to.equal(1)
+    expect(imageHashForSigner[0]).to.equal(imageHash(await session.account.getWalletConfig()))
   })
 
   it("Should dump and load a session", async () => {
@@ -821,8 +831,8 @@ describe('Wallet integration', function () {
         }
       })
 
-      // it starts with zero signatures
-      expect(referenceSigner.signingRequests).to.equal(0)
+      // it starts with one signatures (witness)
+      expect(referenceSigner.signingRequests).to.equal(1)
 
       const signingRequestsBefore = referenceSigner.signingRequests
 
@@ -861,7 +871,8 @@ describe('Wallet integration', function () {
         }
       })
 
-      expect(referenceSigner.signingRequests).to.equal(0)
+      // it starts with one signatures (witness)
+      expect(referenceSigner.signingRequests).to.equal(1)
 
       const signingRequestsBefore = referenceSigner.signingRequests
 

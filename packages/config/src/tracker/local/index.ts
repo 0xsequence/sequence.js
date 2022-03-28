@@ -4,10 +4,12 @@ import { DecodedSignaturePart, WalletConfig } from '../..'
 import { TransactionBody } from '../config-tracker'
 
 export type SignaturePart = {
+  wallet: string,
   signer: string,
   digest: string,
   chainId: ethers.BigNumber,
-  signature: DecodedSignaturePart
+  signature: DecodedSignaturePart,
+  imageHash?: string
 }
 
 export interface ConfigTrackerDatabase {
@@ -45,10 +47,12 @@ export interface ConfigTrackerDatabase {
   }) => Promise<void>
 
   saveSignaturePart: (args: {
+    wallet: string,
     signer: string,
     digest: string,
     chainId: ethers.BigNumberish,
     signature: DecodedSignaturePart,
+    imageHash?: string
   }) => Promise<void>
 
   getSignaturePart: (args: {
@@ -60,6 +64,10 @@ export interface ConfigTrackerDatabase {
   getSignaturePartsForAddress: (args: {
     signer: string,
     chainId?: ethers.BigNumberish
+  }) => Promise<SignaturePart[]>
+
+  getSignaturePartsForImageHash: (args: {
+    imageHash: string,
   }) => Promise<SignaturePart[]>
 }
 

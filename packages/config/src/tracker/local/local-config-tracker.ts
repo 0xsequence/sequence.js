@@ -4,7 +4,7 @@ import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
 import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
-import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, staticRecoverConfig } from "../.."
+import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, encodeSignaturePart, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
 import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
 import { isValidWalletUpdate } from "../utils"
@@ -72,7 +72,7 @@ export class LocalConfigTracker implements ConfigTracker {
     await this.database.savePresignedTransaction({ digest, body: args.tx})
 
     // Process all signatures
-    this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest })
+    this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
   }
 
   processSignatures = async (args: {
@@ -81,7 +81,8 @@ export class LocalConfigTracker implements ConfigTracker {
     signatures: {
       chainId: BigNumber,
       signature: string
-    }[]
+    }[],
+    imageHash?: string
   }): Promise<void> => {
     // Process all signatures
     await Promise.all(args.signatures.map(async (s) => {
@@ -97,10 +98,12 @@ export class LocalConfigTracker implements ConfigTracker {
         if (!signature) return
 
         await this.database.saveSignaturePart({
+          wallet: args.wallet,
           signature,
           signer: p.signer,
           digest: args.digest,
-          chainId: s.chainId
+          chainId: s.chainId,
+          imageHash: args.imageHash
         })
       }))
     }))
@@ -233,8 +236,10 @@ export class LocalConfigTracker implements ConfigTracker {
         return
       }
 
+      // No transaction found for diggest
+      // probably it was created with a witness
       const tx = await this.database.transactionWithDigest({ digest })
-      if (!tx) throw Error(`No transaction found for digest ${digest}`)
+      if (!tx) return
 
       // Ignore lower gapNonces
       if (tx.gapNonce.lte(args.minGapNonce)) {
@@ -298,8 +303,14 @@ export class LocalConfigTracker implements ConfigTracker {
     return txsAndProofs
   }
 
-  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
-    throw Error('Not implemented')
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
+    const res = await this.database.getSignaturePartsForAddress({ signer: args.signer })
+    return res.map((p) => ({
+      signature: encodeSignaturePart(p.signature),
+      chainid: p.chainId,
+      digest: p.digest,
+      wallet: p.wallet
+    }))
   }
 
   saveWitness = async( args : {
@@ -319,6 +330,19 @@ export class LocalConfigTracker implements ConfigTracker {
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
     return this.database.imageHashesOfSigner({ signer: args.signer })
+  }
+
+  signaturesForImageHash = async (args: {
+    imageHash: string
+  }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
+    const res = await this.database.getSignaturePartsForImageHash({ imageHash: args.imageHash })
+    return res.map((p) => ({
+      signer: p.signer,
+      signature: encodeSignaturePart(p.signature),
+      chainId: p.chainId,
+      digest: p.digest,
+      wallet: p.wallet
+    }))
   }
 }
 

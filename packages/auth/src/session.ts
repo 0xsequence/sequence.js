@@ -373,6 +373,13 @@ export class Session {
         }))
       }
       account = await Account.create({ configTracker, context, networks }, config, ...fullSigners)
+
+      // We need to sign a witness message and store it, otherwise the account
+      // can't be detected as created, prefix it with "0xSequence witness:"
+      const witnessMessage = `0xSequence witness: ${ethers.utils.hexlify(ethers.utils.randomBytes(32))}`
+      const witnessDigest = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(witnessMessage))
+      const signed = await account.signMessage(witnessDigest, networks[0].chainId, undefined, true)
+      await configTracker.saveWitness({ wallet: account.address, digest: witnessDigest, signatures: [{ signature: signed, chainId: networks[0].chainId }] })
     }
 
     // Create session instance

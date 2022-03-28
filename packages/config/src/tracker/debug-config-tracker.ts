@@ -65,7 +65,7 @@ export class DebugConfigTracker implements ConfigTracker {
     return result
   }
 
-  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: BigNumber, wallet: string, digest: string }[]> => {
     const id = this._getRequest()
     console.log(`[config-tracker ${id}] signaturesOfSigner(${args.signer})`)
     const result = await this.tracker.signaturesOfSigner(args)
@@ -84,6 +84,14 @@ export class DebugConfigTracker implements ConfigTracker {
     console.log(`[config-tracker ${id}] imageHashesOfSigner(${args.signer})`)
     const result = await this.tracker.imageHashesOfSigner(args)
     console.log(`[config-tracker ${id}] imageHashesOfSigner(${args.signer}) => ${JSON.stringify(result)}`)
+    return result
+  }
+
+  signaturesForImageHash = async (args: {imageHash: string}): Promise<{ signer: string, signature: string, chainId: BigNumber, wallet: string, digest: string }[]> => {
+    const id = this._getRequest()
+    console.log(`[config-tracker ${id}] signaturesForImageHash(${args.imageHash})`)
+    const result = await this.tracker.signaturesForImageHash(args)
+    console.log(`[config-tracker ${id}] signaturesForImageHash(${args.imageHash}) => ${JSON.stringify(result)}`)
     return result
   }
 }

@@ -14,6 +14,7 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
 
   private readonly _signerToImageHashes = new Map<string, string[]>()
 
+  private readonly _imageHashToSignaturePartKey = new Map<string, string[]>()
   private readonly _partKeysForAddressAndChaind = new Map<string, Map<string, string[]>>()
   private readonly _partIndexForDigestAndSigner = new Map<string, SignaturePart>()
 
@@ -87,10 +88,12 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
   }
 
   saveSignaturePart = async (args: {
+    wallet: string,
     signer: string,
     digest: string,
     chainId: ethers.BigNumberish,
     signature: DecodedSignaturePart,
+    imageHash?: string
   }): Promise<void> => {
     const chainId = ethers.BigNumber.from(args.chainId)
     const key = this._toPartIndex(args.signer, args.digest, chainId)
@@ -112,6 +115,14 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     }
 
     partsForAddr.get(chainId.toString())!.push(key)
+
+    if (args.imageHash) {
+      const partsForImageHash = this._imageHashToSignaturePartKey.get(args.imageHash)
+      if (!partsForImageHash) {
+        this._imageHashToSignaturePartKey.set(args.imageHash, [])
+      }
+      this._imageHashToSignaturePartKey.get(args.imageHash)!.push(key)
+    }
   }
 
   getSignaturePart = async (args: {
@@ -144,5 +155,12 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     return keys
       .map((k) => this._partIndexForDigestAndSigner.get(k))
       .filter((v) => v) as SignaturePart[]
+  }
+
+  getSignaturePartsForImageHash = async (args: {
+    imageHash: string,
+  }): Promise<SignaturePart[]> => {
+    const keys = this._imageHashToSignaturePartKey.get(args.imageHash) || []
+    return keys.map((k) => this._partIndexForDigestAndSigner.get(k)).filter((v) => v) as SignaturePart[]
   }
 }

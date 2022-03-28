@@ -141,7 +141,7 @@ export class UntrustedConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: {
     signer: string
-  }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
+  }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
     const result = await this.tracker.signaturesOfSigner(args)
 
     // Validate signature
@@ -193,5 +193,37 @@ export class UntrustedConfigTracker implements ConfigTracker {
 
     // Filter empty and return
     return validated.filter((c) => c) as string[]
+  }
+
+  signaturesForImageHash = async (args: {
+    imageHash: string
+  }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
+    const result = await this.tracker.signaturesForImageHash(args)
+
+    // TODO: Validate that digest matches imageHash update
+    // for this we may need to query the full transaction
+
+    // Validate signature
+    result.map((s) => {
+      // Compute subdigest for wallet
+      const subdigest = subDigestOf(s.wallet, s.chainId, s.digest)
+
+      // Decode signature part
+      const { part } = decodeSignaturePart(s.signature)
+
+      // Recover signature part
+      const recovered = staticRecoverConfigPart(subdigest, part, s.chainId, this.walletConfigs)
+
+      if (!recovered.signature) {
+        throw new Error(`Invalid signature for wallet ${s.wallet}`)
+      }
+
+      // Validate recovered signature
+      if (!isAddrEqual(recovered.signer, s.signer)) {
+        throw new Error(`Invalid signature for wallet ${s.wallet}, signer: ${s.signer}`)
+      }
+    })
+
+    return result
   }
 }

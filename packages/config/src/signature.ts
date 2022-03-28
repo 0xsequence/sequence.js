@@ -371,6 +371,39 @@ export const encodeSignature = (sig: DecodedSignature | string): string => {
   return ethers.utils.solidityPack(['uint16', ...Array(accountBytes.length).fill('bytes')], [sig.threshold, ...accountBytes])
 }
 
+export const encodeSignaturePart = (part: DecodedSignaturePart): string => {
+  if (isDecodedAddress(part)) {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'address'],
+      [SignatureType.Address, part.weight, part.address]
+    )
+  }
+
+  if (isDecodedEOASplitSigner(part)) {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'bytes32', 'bytes32', 'uint8', 'uint8'],
+      [SignatureType.EOA, part.weight, part.r, part.s, part.v, part.t]
+    )
+  }
+
+  if (isDecodedFullSigner(part)) {
+    const signatureSize = ethers.utils.arrayify(part.signature).length
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
+      [SignatureType.Full, part.weight, part.address, signatureSize, part.signature]
+    )
+  }
+
+  if (isDecodedEOASigner(part)) {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'bytes'], 
+      [SignatureType.EOA, part.weight, part.signature]
+    )
+  }
+
+  throw Error('Unkwnown signature part type')
+}
+
 export function signerOf(part: DecodedSignaturePart, digest: BytesLike): string {
   if (isDecodedAddress(part)) {
     return part.address
