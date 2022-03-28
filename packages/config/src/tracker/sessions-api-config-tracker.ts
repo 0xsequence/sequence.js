@@ -66,12 +66,32 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     return res.config
   }
 
+  saveWitness = async (args: {
+    wallet: string,
+    digest: string,
+    signatures: {
+      chainId: BigNumberish,
+      signature: string
+    }[]
+  }): Promise<void> => {
+    await this.sessions.saveWitness({
+      witness: {
+        wallet: args.wallet,
+        digest: args.digest,
+      },
+      signatures: args.signatures.map((s) => ({
+        chainid: s.chainId.toString(),
+        signature: s.signature
+      }))
+    })
+  }
+
   savePresignedConfiguration = async ( args: {
     wallet: string,
     config: WalletConfig,
     tx: TransactionBody,
     signatures: {
-      chainId: BigNumber,
+      chainId: BigNumberish,
       signature: string
     }[]
   }): Promise<void> => {
@@ -82,7 +102,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
       },
       rtx: {
         ...args.tx,
-        gapNonce: args.tx.gapNonce.toNumber(),
+        gapNonce: ethers.BigNumber.from(args.tx.gapNonce).toNumber(),
         nonce: args.tx.nonce.toString()
       },
       signatures: args.signatures.map((sig) => {

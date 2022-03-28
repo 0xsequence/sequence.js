@@ -5,7 +5,7 @@ import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTracker, isValidWalletUpdate, SESSIONS_SPACE } from "."
 import { isDecodedEOASigner, staticRecoverConfig } from ".."
 import { addressOf, imageHash, isAddrEqual, WalletConfig } from "../config"
-import { DecodedSignaturePart, decodeSignature, recoverEOASigner } from "../signature"
+import { DecodedSignaturePart, decodeSignature, decodeSignaturePart, isDecodedAddress, isDecodedFullSigner, recoverEOASigner, staticRecoverConfigPart } from "../signature"
 import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
 
 export class UntrustedConfigTracker implements ConfigTracker {
@@ -106,6 +106,17 @@ export class UntrustedConfigTracker implements ConfigTracker {
     return this.tracker.saveCounterFactualWallet(args)
   }
 
+  saveWitness = async (args: {
+    wallet: string,
+    digest: string,
+    signatures: {
+      chainId: BigNumberish,
+      signature: string
+    }[]
+  }): Promise<void> => {
+    return this.tracker.saveWitness(args)
+  }
+
   walletsOfSigner = async (args: { signer: string; }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart; }; }[]> => {
     const result = await this.tracker.walletsOfSigner(args)
 
@@ -132,6 +143,29 @@ export class UntrustedConfigTracker implements ConfigTracker {
   signaturesOfSigner = async (args: {
     signer: string
   }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
-    throw new Error("Method not implemented.")
+    const result = await this.tracker.signaturesOfSigner(args)
+
+    // Validate signature
+    result.map((s) => {
+      // Compute subdigest for wallet
+      const subdigest = subDigestOf(s.wallet, s.chainid, s.digest)
+
+      // Decode signature part
+      const { part } = decodeSignaturePart(s.signature)
+
+      // Recover signature part
+      const recovered = staticRecoverConfigPart(subdigest, part, s.chainid, this.walletConfigs)
+
+      if (!recovered.signature) {
+        throw new Error(`Invalid signature for wallet ${s.wallet}`)
+      }
+
+      // Validate recovered signature
+      if (!isAddrEqual(recovered.signer, args.signer)) {
+        throw new Error(`Invalid signature for wallet ${s.wallet}, signer: ${args.signer}`)
+      }
+    })
+  
+    return result
   }
 }

@@ -72,8 +72,20 @@ export class LocalConfigTracker implements ConfigTracker {
     await this.database.savePresignedTransaction({ digest, body: args.tx})
 
     // Process all signatures
+    this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest })
+  }
+
+  processSignatures = async (args: {
+    wallet: string,
+    digest: string,
+    signatures: {
+      chainId: BigNumber,
+      signature: string
+    }[]
+  }): Promise<void> => {
+    // Process all signatures
     await Promise.all(args.signatures.map(async (s) => {
-      const subDigest = subDigestOf(args.wallet, s.chainId, digest)
+      const subDigest = subDigestOf(args.wallet, s.chainId, args.digest)
       const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber(), this.walletConfigs)
 
       // Save the embeded config
@@ -87,7 +99,7 @@ export class LocalConfigTracker implements ConfigTracker {
         await this.database.saveSignaturePart({
           signature,
           signer: p.signer,
-          digest: digest,
+          digest: args.digest,
           chainId: s.chainId
         })
       }))
@@ -288,6 +300,21 @@ export class LocalConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: string, wallet: string, digest: string }[]> => {
     throw Error('Not implemented')
+  }
+
+  saveWitness = async( args : {
+    wallet: string,
+    digest: string,
+    signatures: {
+      chainId: BigNumberish,
+      signature: string
+    }[]
+  }): Promise<void> => {
+    // No need to store digests because these
+    // are never used, we just need to store the signature parts
+
+    // Process (validate and store) signatures
+    this.processSignatures({ signatures: args.signatures.map((s) => ({ ...s, chainId: ethers.BigNumber.from(s.chainId)})), wallet: args.wallet, digest: args.digest })
   }
 }
 

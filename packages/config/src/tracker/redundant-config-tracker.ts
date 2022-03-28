@@ -93,6 +93,18 @@ export class RedundantConfigTracker implements ConfigTracker {
     await Promise.allSettled(this.childs.map((c) => c.saveWalletConfig(args)))
   }
 
+  saveWitness = async( args : {
+    wallet: string,
+    digest: string,
+    signatures: {
+      chainId: BigNumberish,
+      signature: string
+    }[]
+  }): Promise<void> => {
+    // Save config to all childs
+    await Promise.allSettled(this.childs.map((c) => c.saveWitness(args)))
+  }
+
   imageHashOfCounterFactualWallet = async (args: {
     wallet: string,
     context: WalletContext

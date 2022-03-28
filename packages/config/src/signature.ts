@@ -219,7 +219,7 @@ export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner | Deco
 export const staticRecoverConfig = (
   subDigest: string,
   signature: DecodedSignature,
-  chainId: number,
+  chainId: ethers.BigNumberish,
   walletConfigs: AssumedWalletConfigs = {}
 ): { config: WalletConfig, weight: number, parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[], allConfigs: WalletConfig[] } => {
   const config: WalletConfig = { threshold: signature.threshold, signers: [] }
@@ -235,6 +235,8 @@ export const staticRecoverConfig = (
     if (recovered.signature) {
       weight += p.weight
     }
+
+    allConfigs.push(...recovered.nested)
 
     config.signers.push({
       weight: p.weight,
@@ -260,7 +262,7 @@ export const staticRecoverConfig = (
 export const staticRecoverConfigPart = (
   subDigest: string,
   part: DecodedSignaturePart,
-  chainId: number,
+  chainId: ethers.BigNumberish,
   walletConfigs: AssumedWalletConfigs = {}
 ): { signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner, nested: WalletConfig[] } => {
   // Ignore "address" types
