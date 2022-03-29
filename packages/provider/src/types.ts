@@ -195,6 +195,10 @@ export interface Settings {
    * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
    * to set when you open the wallet for user. */
   lockFundingCurrencyToDefault?: boolean
+
+  /** Specify auxiliary data
+   */
+  aux?: any
 }
 
 /** light and dark are the main themes, to use other themes in wallet settings,
