@@ -564,6 +564,8 @@ const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
 
 const buildResponse = (res: Response): Promise<any> => {
   return res.text().then(text => {
+    if (text.length === 0) return {}
+
     let data
     try {
       data = JSON.parse(text)

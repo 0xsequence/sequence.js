@@ -7,7 +7,7 @@ import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker, decodeSignature, DebugConfigTracker } from '@0xsequence/config'
+import { imageHash, LocalConfigTracker, ConfigTracker, UntrustedConfigTracker, decodeSignature, DebugConfigTracker, RedundantConfigTracker } from '@0xsequence/config'
 import { configureLogger } from '@0xsequence/utils'
 
 import * as lib from '../src'
@@ -98,6 +98,15 @@ describe('Account integration', () => {
     
     // We do trust the config tracker
     // but we wrap it anyway to test the untrusted wrapper
+    configTracker = new UntrustedConfigTracker(configTracker, context)
+
+    // Create another local config tracker parallel to the first one
+    // to the redundant config tracker
+    const configTracker2 = new LocalConfigTracker(undefined, context)
+    configTracker = new RedundantConfigTracker([configTracker, configTracker2])
+
+    // Wrap redundant config tracker on untrusted again
+    // to further test the quality of it
     configTracker = new UntrustedConfigTracker(configTracker, context)
   })
 

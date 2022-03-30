@@ -78,7 +78,17 @@ export enum SignatureType {
   Full = 2
 }
 
-export const decodeSignaturePart = (auxsig: string): { part: DecodedSignaturePart, rindex: number } => {
+export function trim0x(s: string): string {
+  if (s.startsWith('0x')) {
+    return s.slice(2)
+  }
+
+  return s
+}
+
+export const decodeSignaturePart = (hex: string): { part: DecodedSignaturePart, rindex: number } => {
+  const auxsig = trim0x(hex)
+
   let rindex = 0
   const signatureType = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber() as SignatureType
   rindex += 2

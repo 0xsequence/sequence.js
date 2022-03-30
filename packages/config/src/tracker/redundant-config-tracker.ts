@@ -27,6 +27,9 @@ export class RedundantConfigTracker implements ConfigTracker {
 
     // Find the response with the highest gapNonce
     const found = responses.reduce((p, c) => {
+      if(c.length === 0) return p
+      if(p.length === 0) return c
+
       // Get last gapNonce of previous eval
       const pgn = p[p.length - 1].body.gapNonce
       // Get last gapNonce of current eval
