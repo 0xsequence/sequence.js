@@ -38,7 +38,15 @@ export enum ChainId {
   FANTOM_TESTNET = 4002,
 
   // Gnosis Chain (XDAI)
-  GNOSIS = 100
+  GNOSIS = 100,
+
+  // Harmony ONE (ONE)
+  HARMONY = 1666600000,
+  HARMONY_TESTNET = 1666700000,
+
+  // Aurora
+  AURORA = 1313161554,
+  AURORA_TESTNET = 1313161555
 }
 
 export interface NetworkConfig {
@@ -90,6 +98,18 @@ export const mainnetNetworks = createNetworkConfig(
       rpcUrl: 'https://rpc-mainnet.matic.network',
       relayer: { url: urlClean(`${vars.baseRelayerUrl}/matic`) },
       isAuthChain: true
+    },
+    {
+      title: 'Harmony',
+      name: 'harmony',
+      chainId: ChainId.HARMONY,
+      rpcUrl: 'https://api.harmony.one'
+    },
+    {
+      title: 'Aurora',
+      name: 'aurora',
+      chainId: ChainId.AURORA,
+      rpcUrl: 'https://mainnet.aurora.dev',
     }
   ],
   1,
@@ -118,6 +138,18 @@ export const testnetNetworks = createNetworkConfig(
       rpcUrl: urlClean(`${vars.baseRpcUrl}/goerli`),
       relayer: { url: urlClean(`${vars.baseRelayerUrl}/goerli`) },
       isAuthChain: true
+    },
+    {
+      title: 'Harmony',
+      name: 'harmony',
+      chainId: ChainId.HARMONY,
+      rpcUrl: 'https://api.s0.b.hmny.io'
+    },
+    {
+      title: 'Aurora',
+      name: 'aurora',
+      chainId: ChainId.AURORA,
+      rpcUrl: 'https://testnet.aurora.dev'
     }
     // {
     //   name: 'ropsten',
