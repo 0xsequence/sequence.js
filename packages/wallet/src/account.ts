@@ -584,7 +584,7 @@ export class Account extends Signer {
       chainId: getChainId(chainId)
     })
     if (newConfigFromTracker.length === 0) {
-      throw new Error(`New config not found in config tracker ${getChainId(chainId)}`)
+      throw new Error(`New config not found in config tracker: ${getChainId(chainId)}`)
     }
 
     const lastImageHashFromTracker = newConfigFromTracker[newConfigFromTracker.length - 1].body.newImageHash

@@ -163,11 +163,11 @@ export function editConfig(config: WalletConfig, args: {
     .filter((s) => normDelAddress.indexOf(s.address) === -1 && normSetAddress.indexOf(s.address) === -1)
     .concat(...normSetSigners)
 
-  return sortConfig({
+  return {
     address: config.address,
     threshold: args.threshold ? ethers.BigNumber.from(args.threshold).toNumber() : config.threshold,
     signers: newSigners
-  })
+  }
 }
 
 // TODO: very similar to createWalletConfig, but doesn't allow an AbstractSigner object

@@ -9,7 +9,7 @@ import { WalletContext } from "@0xsequence/network"
 export class SessionsApiConfigTracker implements ConfigTracker {
   public sessions: Sessions
 
-  constructor(url: string) {
+  constructor(url: string, public maxResults = 50) {
     this.sessions = new Sessions(url, fetchPonyfill().fetch)
   }
 
@@ -123,7 +123,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   walletsOfSigner = async (args: {
     signer: string
   }): Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]> => {
-    const res = await this.sessions.walletsOfSigner({ address: args.signer, start: 0, count: 10000 })
+    const res = await this.sessions.walletsOfSigner({ address: args.signer, start: 0, count: this.maxResults })
     return res.wallets.map((w) => {
       const chainId = ethers.BigNumber.from(w.proof.chainId)
       const signature = { weight: 0, signature: w.proof.signature }
@@ -135,7 +135,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     signer: string
   }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call sessions client
-    const res = await this.sessions.knownSignaturesOfSigner({ signer: args.signer, start: 0, count: 10000 })
+    const res = await this.sessions.knownSignaturesOfSigner({ signer: args.signer, start: 0, count: this.maxResults })
 
     // Convert to our format
     return res.signatures.map((sig) => {
@@ -149,14 +149,14 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   }
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
-    const res = await this.sessions.imageHashesForSigner({ address: args.signer, start: 0, count: 10000 })
+    const res = await this.sessions.imageHashesForSigner({ address: args.signer, start: 0, count: this.maxResults })
     return res.signers.map((r) => r.imageHash)
   }
 
   signaturesForImageHash = async (args: {
     imageHash: string
   }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
-    const res = await this.sessions.signaturesForImageHash({ imageHash: args.imageHash, start: 0, count: 10000 })
+    const res = await this.sessions.signaturesForImageHash({ imageHash: args.imageHash, start: 0, count: this.maxResults })
     return res.signatures.map((sig) => ({
       signer: sig.signer,
       signature: sig.signature,

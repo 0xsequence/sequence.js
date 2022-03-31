@@ -1,5 +1,5 @@
 import { SequenceAPIClient } from '@0xsequence/api'
-import { addressOf, ConfigTracker, editConfig, WalletConfig } from '@0xsequence/config'
+import { addressOf, ConfigTracker, editConfig, WalletConfig, imageHash } from '@0xsequence/config'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
@@ -358,10 +358,12 @@ export class Session {
       if (!config) throw Error(`No wallet configuration found for ${address}`)
       const newConfig = editConfig(config, { threshold, set: await solvedSigners })
 
-      // Update configuration for all networks
-      // (networks we aren't using, but we want to presign transactions anyway)
-      await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, knownNetworks ?? [])))
-
+      // If newConfig is different than config, update configuration
+      if (imageHash(newConfig) !== imageHash(config)) {
+        // Update configuration for all networks
+        // (networks we aren't using, but we want to presign transactions anyway)
+        await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, knownNetworks ?? [])))
+      }
     } else {
       // If not we have to create an initial configuration using the provided signers
       // and then create a new account from that configuration
