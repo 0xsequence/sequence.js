@@ -20,7 +20,7 @@ export class LocalConfigTracker implements ConfigTracker {
   saveWalletConfig = async (args: {
     config: WalletConfig
   }): Promise<void> => {
-    this.database.saveWalletConfig({ ...args, imageHash: imageHash(args.config) })
+    return this.database.saveWalletConfig({ ...args, imageHash: imageHash(args.config) })
   }
 
   configOfImageHash = async (args: { imageHash: string; }): Promise<WalletConfig | undefined> => {
@@ -31,7 +31,7 @@ export class LocalConfigTracker implements ConfigTracker {
     imageHash: string
     context: WalletContext
   }): Promise<void> => {
-    this.database.saveCounterFactualWallet({ ...args, wallet: addressOf(args.imageHash, args.context, true) })
+    return this.database.saveCounterFactualWallet({ ...args, wallet: addressOf(args.imageHash, args.context, true) })
   }
 
   imageHashOfCounterFactualWallet = async (args: {
@@ -166,7 +166,6 @@ export class LocalConfigTracker implements ConfigTracker {
         minGapNonce,
       })
 
-
       // Compare each with best candidate and find the best one
       const candidatesWithParents = isConfigJump(parent) ? candidates.map((c) => ({ ...c, parent })) : candidates
       candidatesWithParents.forEach((candidate) => {
@@ -287,11 +286,8 @@ export class LocalConfigTracker implements ConfigTracker {
     const txsAndProofs: { wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[] = []
 
     await Promise.all(parts.map(async (p) => {
-      const tx = await this.database.transactionWithDigest({ digest: p.digest })
-      if (!tx || txsAndProofs.find((c) => c.wallet === tx.wallet)) return
-
       txsAndProofs.push({
-        wallet: tx.wallet,
+        wallet: p.wallet,
         proof: {
           digest: p.digest,
           chainId: p.chainId,
@@ -325,7 +321,7 @@ export class LocalConfigTracker implements ConfigTracker {
     // are never used, we just need to store the signature parts
 
     // Process (validate and store) signatures
-    this.processSignatures({ signatures: args.signatures.map((s) => ({ ...s, chainId: ethers.BigNumber.from(s.chainId)})), wallet: args.wallet, digest: args.digest })
+    return this.processSignatures({ signatures: args.signatures.map((s) => ({ ...s, chainId: ethers.BigNumber.from(s.chainId)})), wallet: args.wallet, digest: args.digest })
   }
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
