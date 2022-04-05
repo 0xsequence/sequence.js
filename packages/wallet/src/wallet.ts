@@ -426,7 +426,7 @@ export class Wallet extends Signer {
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
-    const digest = isDigest ? msg : ethers.utils.keccak256(msg)
+    const digest = isDigest ? msg : ethers.utils.hashMessage(ethers.utils.isHexString(msg) ? ethers.utils.arrayify(msg) : msg)
 
     // Generate sub-digest
     const subDigest = await this.subDigest(digest, chainId)
