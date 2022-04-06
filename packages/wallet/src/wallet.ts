@@ -677,9 +677,8 @@ export class Wallet extends Signer {
     const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     const requireFreshSignersInterface = new Interface(walletContracts.requireFreshSigner.abi)
 
-    const message = ethers.utils.randomBytes(32)
-
-    const signature = await this.signMessage(message, this.chainId, false)
+    const digest = ethers.utils.randomBytes(32)
+    const signature = await this.signMessage(digest, this.chainId, false, true)
 
     // TODO: This is only required because RequireUtils doesn't support dynamic signatures
     // remove this filtering of dynamic once a new version of RequireUtils is deployed
@@ -725,7 +724,7 @@ export class Wallet extends Signer {
         nonce: nonce,
         data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), [
           this.address,
-          ethers.utils.keccak256(message),
+          digest,
           this.config.signers.length,
           filteredSignature,
           indexed
