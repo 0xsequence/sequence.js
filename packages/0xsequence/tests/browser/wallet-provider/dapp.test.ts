@@ -190,7 +190,7 @@ export const tests = async () => {
       const sig = await signer.signMessage(m)
       assert.equal(
         sig,
-        '0x0001000148ac663d58ddee141c0bc98f95d2d3017a5328017e3792a8c431186c66669649369aac41bd649cda1708a5af53d5477fa64106faaed4755cf516e559c0bcf51b1c02',
+        '0x00010001230f8b68557d982f26234c9c7ce4ff35a449392c1e7cbc9a1129268ce2acea40529252535b1caa300e30d53d5c24009cb6f2fafd0e132944016f9472c1a0cc8b1b02',
         'signature match'
       )
       return sig
@@ -268,7 +268,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message, chainId)
     assert.equal(
       sig,
-      '0x000100013fd9888b53c7d78755ed5304178a49c18eb15d438c85a5feabedba6eb634901b35c9184821aabbd1bb41be58f13469bc1c6eb21f7cc8f8639cbca9e2e53f78891c02',
+      '0x00010001bbbabd7be415ffbf6196f17072413bed8f9f59c530357eb479e2fbe7ea210f22428bbb18413f24fed2edc7d4e6c11d588e436a56a54497080c9434fdcfdbb8ed1b02',
       'signAuthMessage, signature match'
     )
 

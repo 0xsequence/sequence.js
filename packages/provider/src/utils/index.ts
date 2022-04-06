@@ -5,7 +5,7 @@ import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequen
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { Wallet } from '../wallet'
 import { isValidSignature, recoverWalletConfig } from '../utils'
-import { isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
+import { hashMessage, isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
 
 export class WalletUtils {
   private wallet: Wallet
@@ -80,7 +80,7 @@ export class WalletUtils {
       isValidEthSignSignature(address, msgDigest, signature)
     ) return true
 
-    return this.isValidSignature(address, encodeMessageDigest(message), signature, chainId, walletContext)
+    return this.isValidSignature(address, msgDigest, signature, chainId, walletContext)
   }
 
   // Verify typedData signature
@@ -115,7 +115,7 @@ export class WalletUtils {
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
     walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(address, encodeMessageDigest(message), signature, chainId, walletContext)
+    return recoverWalletConfig(address, hashMessage(message), signature, chainId, walletContext)
   }
 
   // Recover the WalletConfig from a signature of a typedData object

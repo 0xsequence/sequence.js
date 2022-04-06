@@ -3,9 +3,9 @@ import { ethers } from 'ethers'
 import { Web3Provider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 
-import { isValidSignature, recoverConfig } from '@0xsequence/wallet'
+import { hashMessage, isValidSignature, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
-import { configureLogger, packMessageData } from '@0xsequence/utils'
+import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
 
 import { testWalletContext } from '../testutils'
 
@@ -75,14 +75,14 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x0001000148ac663d58ddee141c0bc98f95d2d3017a5328017e3792a8c431186c66669649369aac41bd649cda1708a5af53d5477fa64106faaed4755cf516e559c0bcf51b1c02',
+      '0x00010001230f8b68557d982f26234c9c7ce4ff35a449392c1e7cbc9a1129268ce2acea40529252535b1caa300e30d53d5c24009cb6f2fafd0e132944016f9472c1a0cc8b1b02',
       'signature match'
     )
 
     //
     // Verify the message signature
     //
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    const messageDigest = ethers.utils.arrayify(hashMessage(message))
     const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
     assert.true(isValid, 'signature is valid')
 
