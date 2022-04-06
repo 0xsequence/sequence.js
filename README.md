@@ -95,6 +95,20 @@ NOTE: snapshot release is for dev preview, it's similar to the above, but:
 2. To run a specific test, run `yarn test:only <test-file-basename>`, ie. `yarn test:only window-transport`
 
 
+## Testing tips
+
+During development, sometimes it convenient to only run tests in a specific spec file. You can do
+this with `yarn test:file` for example:
+
+```shell
+$ cd packages/wallet
+$ yarn test:file ./tests/wallet.spec.ts
+```
+
+You can even go further by renaming a specific test in the spec file from `describe(..` to
+`describe.only(..`, and it also works with `it.only(..`.
+
+
 ## LICENSE
 
 Apache-2.0
