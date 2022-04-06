@@ -299,7 +299,7 @@ describe('Wallet integration', function () {
             // const receipt = await provider.getTransactionReceipt(txn.hash)
             // console.log('status?', receipt.status)
 
-            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, message, signature)
+            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, lib.messageToSign(message), signature)
             await expect(call).to.be.fulfilled
           })
         })
@@ -928,7 +928,7 @@ describe('Wallet integration', function () {
         // Contract wallet must be deployed before calling ERC1271
         await relayer.deployWallet(wallet.config, context)
 
-        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, ethers.utils.toUtf8Bytes(message), signature)
+        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, lib.messageToSign(message), signature)
         await expect(call).to.be.fulfilled
       })
 
@@ -1274,7 +1274,7 @@ describe('Wallet integration', function () {
 
   describe('Validate signatures', () => {
     const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
-    const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    const digest = ethers.utils.arrayify(lib.hashMessage(message))
 
     describe('ethSign', () => {
       it('Should validate ethSign signature', async () => {

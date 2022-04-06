@@ -1,4 +1,4 @@
-import { ethers, BytesLike, BigNumberish } from 'ethers'
+import { ethers, Bytes } from 'ethers'
 import { Deferrable, resolveProperties } from '@ethersproject/properties'
 
 export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
@@ -23,5 +23,30 @@ export async function findLatestLog(provider: ethers.providers.Provider, filter:
     const nhalf = await findLatestLog(provider, { ...filter, fromBlock: pivot, toBlock: toBlock })
     if (nhalf !== undefined) return nhalf
     return findLatestLog(provider, { ...filter, fromBlock: fromBlock, toBlock: pivot })
+  }
+}
+
+export const messagePrefix = "\x19Ethereum Signed Message:\n"
+
+// messageToSign returns the EIP191 prefixed message to sign.
+export function messageToSign(message: Bytes | string): ethers.utils.Bytes {
+  if (typeof(message) === 'string') {
+    message = ethers.utils.toUtf8Bytes(message)
+  }
+  return ethers.utils.concat([
+    ethers.utils.toUtf8Bytes(messagePrefix),
+    ethers.utils.toUtf8Bytes(String(message.length)),
+    message
+  ])
+}
+
+// hashMessage returns the hash of a message pre-image.
+export function hashMessage(message: Bytes | string): string {
+  if (ethers.utils.isHexString(message)) {
+    // signing hexdata
+    return ethers.utils.keccak256(message)
+  } else {
+    // sign EIP191 message
+    return ethers.utils.keccak256(messageToSign(message))
   }
 }
