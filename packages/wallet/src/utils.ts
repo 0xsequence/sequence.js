@@ -26,27 +26,3 @@ export async function findLatestLog(provider: ethers.providers.Provider, filter:
   }
 }
 
-export const messagePrefix = "\x19Ethereum Signed Message:\n"
-
-// messageToSign returns the EIP191 prefixed message to sign.
-export function messageToSign(message: Bytes | string): ethers.utils.Bytes {
-  if (typeof(message) === 'string') {
-    message = ethers.utils.toUtf8Bytes(message)
-  }
-  return ethers.utils.concat([
-    ethers.utils.toUtf8Bytes(messagePrefix),
-    ethers.utils.toUtf8Bytes(String(message.length)),
-    message
-  ])
-}
-
-// hashMessage returns the hash of a message pre-image.
-export function hashMessage(message: Bytes | string): string {
-  if (ethers.utils.isHexString(message)) {
-    // signing hexdata
-    return ethers.utils.keccak256(message)
-  } else {
-    // sign EIP191 message
-    return ethers.utils.keccak256(messageToSign(message))
-  }
-}

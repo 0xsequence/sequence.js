@@ -2,8 +2,8 @@ import { expect } from 'chai'
 
 import * as lib from '../src'
 import { ethers } from 'ethers'
-import { hashMessage, recoverConfig } from '../src'
-import { packMessageData } from "@0xsequence/utils"
+import { recoverConfig } from '../src'
+import { encodeMessageDigest, packMessageData } from "@0xsequence/utils"
 
 describe('Wallet units', function() {
   const context = {
@@ -117,7 +117,7 @@ describe('Wallet units', function() {
       const chainId = 3
 
       const sig = await wallet.signMessage(message, chainId)
-      const digest = packMessageData(wallet.address, chainId, hashMessage(message))
+      const digest = packMessageData(wallet.address, chainId, encodeMessageDigest(message))
       const recovered = await recoverConfig(digest, sig)
 
       expect(recovered.threshold).to.equal(1)
@@ -148,7 +148,7 @@ describe('Wallet units', function() {
       const chainId = 3
 
       const sig = await wallet.signMessage(message, chainId)
-      const digest = packMessageData(wallet.address, chainId, hashMessage(message))
+      const digest = packMessageData(wallet.address, chainId, encodeMessageDigest(message))
       const recovered = await recoverConfig(digest, sig)
 
       expect(recovered.threshold).to.equal(3)

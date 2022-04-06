@@ -1,10 +1,26 @@
-import { ethers } from 'ethers'
+import { Bytes, BytesLike, ethers } from 'ethers'
 
-export const encodeMessageDigest = (message: string | Uint8Array) => {
+export const messagePrefix = "\x19Ethereum Signed Message:\n"
+
+// messageToSign returns the EIP191 prefixed message to sign.
+export function messageToSign(message: Bytes | string): ethers.utils.Bytes {
   if (typeof(message) === 'string') {
-    return ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message)))
-  } else {
+    message = ethers.utils.toUtf8Bytes(message)
+  }
+  return ethers.utils.concat([
+    ethers.utils.toUtf8Bytes(messagePrefix),
+    ethers.utils.toUtf8Bytes(String(message.length)),
+    message
+  ])
+}
+
+export const encodeMessageDigest = (message: BytesLike) => {
+  if (ethers.utils.isHexString(message)) {
+    // signing hexdata
     return ethers.utils.arrayify(ethers.utils.keccak256(message))
+  } else {
+    // sign EIP191 message
+    return ethers.utils.arrayify(ethers.utils.keccak256(messageToSign(message)))
   }
 }
 

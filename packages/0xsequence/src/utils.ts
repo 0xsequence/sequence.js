@@ -18,8 +18,3 @@ export type {
   LogLevel,
   LoggerConfig
 } from '@0xsequence/utils'
-
-export {
-  messageToSign,
-  hashMessage
-} from '@0xsequence/wallet'

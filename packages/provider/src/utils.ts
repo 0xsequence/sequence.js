@@ -36,7 +36,7 @@ export const isValidMessageSignature = async (
     isValidEthSignSignature(address, msgDigest, signature)
   ) return true
 
-  return isValidSignature(address, encodeMessageDigest(message), signature, provider, chainId, walletContext)
+  return isValidSignature(address, ethers.utils.arrayify(encodeMessageDigest(message)), signature, provider, chainId, walletContext)
 }
 
 export const isValidTypedDataSignature = (

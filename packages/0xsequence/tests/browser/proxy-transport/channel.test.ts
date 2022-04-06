@@ -6,7 +6,7 @@ import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, isValidSignature, recoverConfig, hashMessage } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { configureLogger, packMessageData } from '@0xsequence/utils'
+import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet } from '../testutils'
 
 configureLogger({ logLevel: 'DEBUG' })
@@ -143,7 +143,7 @@ export const tests = async () => {
     //
     // Verify the message signature
     //
-    const messageDigest = ethers.utils.arrayify(hashMessage(message))
+    const messageDigest = ethers.utils.arrayify(encodeMessageDigest(message))
     const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, chainId)
     assert.true(isValid, 'signature is valid')
 

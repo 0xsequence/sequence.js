@@ -82,7 +82,7 @@ export const tests = async () => {
     //
     // Verify the message signature
     //
-    const messageDigest = ethers.utils.arrayify(hashMessage(message))
+    const messageDigest = ethers.utils.arrayify(encodeMessageDigest(message))
     const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
     assert.true(isValid, 'signature is valid')
 

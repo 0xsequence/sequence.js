@@ -56,11 +56,11 @@ import {
   isDecodedFullSigner
 } from '@0xsequence/config'
 
-import { encodeTypedDataDigest, packMessageData, subDigestOf } from '@0xsequence/utils'
+import { encodeMessageDigest, encodeTypedDataDigest, packMessageData, subDigestOf } from '@0xsequence/utils'
 
 import { RemoteSigner } from './remote-signers'
 
-import { resolveArrayProperties, hashMessage } from './utils'
+import { resolveArrayProperties } from './utils'
 
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 import { fetchImageHash } from '.'
@@ -426,7 +426,7 @@ export class Wallet extends Signer {
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
-    const digest = isDigest ? msg : hashMessage(msg)
+    const digest = isDigest ? msg : encodeMessageDigest(msg)
 
     // Generate sub-digest
     const subDigest = await this.subDigest(digest, chainId)

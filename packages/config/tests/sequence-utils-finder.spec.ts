@@ -488,7 +488,7 @@ describe('Wallet integration', function () {
 
       expect(found.config).to.be.undefined
     })
-    it('Cache wallet configuration after instantiation or update', async () => {
+    it.only('Cache wallet configuration after instantiation or update', async () => {
       // non-caching version of imageHash for testing
       const imageHash = (config: WalletConfig): string => {
         return sortConfig(config).signers.reduce(
