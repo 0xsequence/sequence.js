@@ -7,7 +7,7 @@ import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testu
 import { Transaction, TransactionRequest } from '@0xsequence/transactions'
 import { configureLogger } from '@0xsequence/utils'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
 

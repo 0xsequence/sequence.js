@@ -9,7 +9,7 @@ import { configureLogger, packMessageData } from '@0xsequence/utils'
 
 import { testWalletContext } from '../testutils'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 const walletProvider = new WindowMessageProvider('http://localhost:9999/mock-wallet/mock-wallet.test.html')
 walletProvider.register()

@@ -9,7 +9,7 @@ import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet } from '../testutils'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
 
