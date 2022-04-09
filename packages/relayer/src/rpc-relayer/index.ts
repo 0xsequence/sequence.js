@@ -242,7 +242,7 @@ class MetaTransactionResponseException {
   constructor(public receipt: proto.MetaTxnReceipt) {}
 }
 
-type RelayerTxReceipt = {
+export type RelayerTxReceipt = {
   blockHash: string
   blockNumber: string
   contractAddress: string
