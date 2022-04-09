@@ -1,9 +1,9 @@
-import { TransactionResponse, TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
+import { TransactionRequest, JsonRpcProvider, Provider } from '@ethersproject/providers'
 import { Signer as AbstractSigner, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
-import { SignedTransactions, Transactionish, Transaction, computeMetaTxnHash, fromTransactionish } from '@0xsequence/transactions'
+import { SignedTransactions, Transactionish, Transaction, computeMetaTxnHash, fromTransactionish, TransactionResponse } from '@0xsequence/transactions'
 import { WalletConfig, WalletState, addressOf, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
 import {
   ChainIdLike,

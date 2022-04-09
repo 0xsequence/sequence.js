@@ -1,5 +1,5 @@
 import { BigNumberish, BytesLike } from 'ethers'
-import { TransactionRequest as EthersTransactionRequest, TransactionResponse } from '@ethersproject/providers'
+import { TransactionRequest as EthersTransactionRequest, TransactionResponse as EthersTransactionResponse } from '@ethersproject/providers'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
 
@@ -48,4 +48,6 @@ export type SignedTransactions = {
   signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>
 }
 
-export type { TransactionResponse }
+export interface TransactionResponse<R = any> extends EthersTransactionResponse {
+  receipt?: R
+}

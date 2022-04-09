@@ -8,7 +8,7 @@ import { configureLogger } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
 import { test, assert } from '../../utils/assert'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 //
 // Wallet, a test wallet

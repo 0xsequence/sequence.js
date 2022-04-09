@@ -19,7 +19,7 @@ const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/c
 
 const { expect } = chai.use(chaiAsPromised)
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 import { Wallet } from '@0xsequence/wallet'
 import { deployWalletContext } from '@0xsequence/wallet/tests/utils/deploy-wallet-context'

@@ -1,4 +1,3 @@
-import { TransactionResponse } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
 import { walletContracts } from '@0xsequence/abi'
@@ -10,7 +9,8 @@ import {
   sequenceTxAbiEncode,
   SignedTransactions,
   computeMetaTxnHash,
-  decodeNonce
+  decodeNonce,
+  TransactionResponse
 } from '@0xsequence/transactions'
 import { BaseRelayer, BaseRelayerOptions } from '../base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
@@ -41,7 +41,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
   async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
-      console.log('computing id', metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
+      logger.info('computing id', metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
       return this.waitReceipt(
         computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
       )
@@ -216,7 +216,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return this.wait(metaTxn.txnHash)
   }
 
-  async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse> {
+  async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse<RelayerTxReceipt>> {
     const { receipt } = await this.waitReceipt(metaTxnHash, wait)
 
     if (!receipt.txnReceipt || FAILED_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
@@ -232,7 +232,8 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       from: typeof metaTxnHash === 'string' ? undefined : addressOf(metaTxnHash.config, metaTxnHash.context),
       hash: txReceipt.transactionHash,
       raw: receipt.txnReceipt,
-      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
+      receipt: txReceipt, // extended type which is Sequence-specific. Contains the decoded metaTxReceipt
+      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations),
     } as TransactionResponse
   }
 }
@@ -241,7 +242,7 @@ class MetaTransactionResponseException {
   constructor(public receipt: proto.MetaTxnReceipt) {}
 }
 
-type RelayerTxReceipt = {
+export type RelayerTxReceipt = {
   blockHash: string
   blockNumber: string
   contractAddress: string
