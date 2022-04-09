@@ -45,6 +45,11 @@ export class Logger {
         this.logLevel = logLevel.INFO
         break
     }
+
+    // undefined silence value will disable the default silence flag
+    if (this.config.silence === undefined) {
+      this.config.silence = false
+    }
   }
 
   debug(message: any, ...optionalParams: any[]) {

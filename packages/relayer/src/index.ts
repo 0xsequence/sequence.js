@@ -1,5 +1,5 @@
 import { ethers, providers } from 'ethers'
-import { SignedTransactions, Transaction } from '@0xsequence/transactions'
+import { SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { proto } from './rpc-relayer'
@@ -39,10 +39,10 @@ export interface Relayer {
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
-  relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<providers.TransactionResponse>
+  relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse>
 
   // wait for transaction confirmation
-  wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse>
+  wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<TransactionResponse>
 }
 
 export * from './local-relayer'
