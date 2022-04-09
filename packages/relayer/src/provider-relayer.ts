@@ -6,7 +6,7 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
-import { Optionals, Mask } from '@0xsequence/utils'
+import { logger, Optionals, Mask } from '@0xsequence/utils'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
@@ -130,7 +130,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
 
   async wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
-      console.log("computing id", metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
+      logger.info("computing id", metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
       return this.wait(
         computeMetaTxnHash(addressOf(metaTxnId.config, metaTxnId.context), metaTxnId.chainId, ...metaTxnId.transactions),
         timeout
