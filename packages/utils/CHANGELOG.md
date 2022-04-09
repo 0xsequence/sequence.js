@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.36.9
+
+### Patch Changes
+
+- minor dev xp improvements
+
 ## 0.36.8
 
 ### Patch Changes

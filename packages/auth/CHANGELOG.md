@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.36.9
+
+### Patch Changes
+
+- minor dev xp improvements
+- Updated dependencies
+  - @0xsequence/abi@0.36.9
+  - @0xsequence/api@0.36.9
+  - @0xsequence/config@0.36.9
+  - @0xsequence/indexer@0.36.9
+  - @0xsequence/metadata@0.36.9
+  - @0xsequence/network@0.36.9
+  - @0xsequence/utils@0.36.9
+  - @0xsequence/wallet@0.36.9
+
 ## 0.36.8
 
 ### Patch Changes

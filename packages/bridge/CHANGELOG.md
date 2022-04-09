@@ -1,5 +1,13 @@
 # @0xsequence/bridge
 
+## 0.36.9
+
+### Patch Changes
+
+- minor dev xp improvements
+- Updated dependencies
+  - @0xsequence/network@0.36.9
+
 ## 0.36.8
 
 ### Patch Changes
