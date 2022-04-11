@@ -71,6 +71,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   }
 
   async getChainId(): Promise<number> {
+    // TODO: is it safe to memoize this?
     const result = await this.send('eth_chainId', [])
     const chainId = ethers.BigNumber.from(result).toNumber()
 

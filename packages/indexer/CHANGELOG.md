@@ -1,5 +1,80 @@
 # @0xsequence/indexer
 
+## 0.36.9
+
+### Patch Changes
+
+- minor dev xp improvements
+
+## 0.36.8
+
+### Patch Changes
+
+- more connect options (theme, payment providers, funding currencies)
+
+## 0.36.7
+
+### Patch Changes
+
+- fix missing break
+
+## 0.36.6
+
+### Patch Changes
+
+- wallet_switchEthereumChain support
+
+## 0.36.5
+
+### Patch Changes
+
+- auth: bump ethauth to 0.7.0
+  network, wallet: don't assume position of auth network in list
+  api/indexer/metadata: trim trailing slash on hostname, and add endpoint urls
+  relayer: Allow to specify local relayer transaction parameters like gas price or gas limit
+
+## 0.36.4
+
+### Patch Changes
+
+- Updating list of chain ids to include other ethereum compatible chains
+
+## 0.36.3
+
+### Patch Changes
+
+- provider: pass connect options to prompter methods
+
+## 0.36.2
+
+### Patch Changes
+
+- transactions: Setting target to 0x0 when empty to during SequenceTxAbiEncode
+
+## 0.36.1
+
+### Patch Changes
+
+- metadata: update client with more fields
+
+## 0.36.0
+
+### Minor Changes
+
+- relayer, wallet: fee quote support
+
+## 0.35.12
+
+### Patch Changes
+
+- provider: rename wallet.commands to wallet.utils
+
+## 0.35.11
+
+### Patch Changes
+
+- provider/utils: smoother message validation
+
 ## 0.35.10
 
 ### Patch Changes

@@ -15,7 +15,7 @@ import {
   maybeChainId
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
-import { isRpcRelayerOptions, Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { FeeOption, FeeQuote, isRpcRelayerOptions, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { fetchImageHash, getImplementation, isWalletDeployed } from '.'
 import { walletContracts } from '@0xsequence/abi'
 import { Interface } from '@ethersproject/abi'
@@ -101,6 +101,15 @@ export class Account extends Signer {
 
     // Set default chainId
     this._defaultChainId = maybeChainId(chainId)
+  }
+
+  async getFeeOptions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<{ options: FeeOption[], quote?: FeeQuote }> {
+    // Decorate bundle in deploy/update
+    const decorated = await this.decorateTransactions(bundle, chainId)
+
+    const cid = maybeChainId(chainId) ?? this.defaultChainId
+    const relayer = await this.getRelayer(cid)
+    return relayer?.getFeeOptions(decorated) ?? { options: [], quote: undefined }
   }
 
   private async _getWallet(chainId?: ChainIdLike): Promise<Wallet | undefined> {
@@ -452,16 +461,16 @@ export class Account extends Signer {
     return wallet.signTypedData(domain, types, message, chainId, allSigners)
   }
 
-  sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainIdLike, allSigners?: boolean): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners)
+  sendTransactionBatch(transactions: Deferrable<TransactionRequest[] | Transaction[]>, chainId?: ChainIdLike, allSigners?: boolean, quote?: FeeQuote): Promise<TransactionResponse> {
+    return this.sendTransaction(transactions, chainId, allSigners, quote)
   }
 
-  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<TransactionResponse> {
+  async sendTransaction(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean, quote?: FeeQuote): Promise<TransactionResponse> {
     // Sign and send transactions using internal methods
     // these internal methods will decorate the transactions before relaying them
     // decoration appens wallet deployment or presigned wallet update
     const signed = await this.signTransactions(transaction, chainId, allSigners)
-    return this.sendSignedTransactions(signed, chainId)
+    return this.sendSignedTransactions(signed, chainId, quote)
   }
 
   async signTransactions(txs: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactionBundle> {
@@ -481,10 +490,10 @@ export class Account extends Signer {
     return { ...decorated, nonce: ethers.constants.Zero, signature: "" }
   }
 
-  async sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
     const wallet = await this._getWallet(chainId)
     if (!wallet) throw new Error(`No wallet found for chainId ${chainId}`)
-    return wallet.relayer.relay(signedBundle)
+    return wallet.relayer.relay(signedBundle, quote)
   }
 
   async isDeployed(chainId?: ChainIdLike): Promise<boolean> {

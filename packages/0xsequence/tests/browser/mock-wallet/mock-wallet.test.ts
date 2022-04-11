@@ -9,7 +9,7 @@ import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } fr
 import { test, assert } from '../../utils/assert'
 import { LocalConfigTracker } from '@0xsequence/config'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 //
 // Wallet, a test wallet

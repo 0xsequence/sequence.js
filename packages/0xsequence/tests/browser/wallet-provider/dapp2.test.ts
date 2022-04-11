@@ -4,7 +4,7 @@ import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
 import { configureLogger } from '@0xsequence/utils'
 import { testWalletContext } from '../testutils'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
 
@@ -78,7 +78,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
 
     // validate
-    const isValid = await wallet.commands.isValidMessageSignature(
+    const isValid = await wallet.utils.isValidMessageSignature(
       await wallet.getAddress(),
       message,
       sig,
@@ -87,7 +87,7 @@ export const tests = async () => {
     assert.true(isValid, 'signMessage sig is valid')
 
     // recover
-    const walletConfig = await wallet.commands.recoverWalletConfigFromMessage(
+    const walletConfig = await wallet.utils.recoverWalletConfigFromMessage(
       await wallet.getAddress(),
       message,
       sig,
@@ -127,11 +127,11 @@ export const tests = async () => {
     )
 
     // Verify typed data
-    const isValid = await wallet.commands.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
+    const isValid = await wallet.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
     assert.true(isValid, 'signature is valid')
 
     // Recover config / address
-    const walletConfig = await wallet.commands.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
+    const walletConfig = await wallet.utils.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
     assert.true(walletConfig.address === address, 'recover address')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner

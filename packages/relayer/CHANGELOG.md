@@ -1,5 +1,143 @@
 # @0xsequence/relayer
 
+## 0.36.9
+
+### Patch Changes
+
+- minor dev xp improvements
+- Updated dependencies
+  - @0xsequence/abi@0.36.9
+  - @0xsequence/config@0.36.9
+  - @0xsequence/transactions@0.36.9
+  - @0xsequence/utils@0.36.9
+
+## 0.36.8
+
+### Patch Changes
+
+- more connect options (theme, payment providers, funding currencies)
+- Updated dependencies
+  - @0xsequence/abi@0.36.8
+  - @0xsequence/config@0.36.8
+  - @0xsequence/transactions@0.36.8
+  - @0xsequence/utils@0.36.8
+
+## 0.36.7
+
+### Patch Changes
+
+- fix missing break
+- Updated dependencies
+  - @0xsequence/abi@0.36.7
+  - @0xsequence/config@0.36.7
+  - @0xsequence/transactions@0.36.7
+  - @0xsequence/utils@0.36.7
+
+## 0.36.6
+
+### Patch Changes
+
+- wallet_switchEthereumChain support
+- Updated dependencies
+  - @0xsequence/abi@0.36.6
+  - @0xsequence/config@0.36.6
+  - @0xsequence/transactions@0.36.6
+  - @0xsequence/utils@0.36.6
+
+## 0.36.5
+
+### Patch Changes
+
+- auth: bump ethauth to 0.7.0
+  network, wallet: don't assume position of auth network in list
+  api/indexer/metadata: trim trailing slash on hostname, and add endpoint urls
+  relayer: Allow to specify local relayer transaction parameters like gas price or gas limit
+- Updated dependencies
+  - @0xsequence/abi@0.36.5
+  - @0xsequence/config@0.36.5
+  - @0xsequence/transactions@0.36.5
+  - @0xsequence/utils@0.36.5
+
+## 0.36.4
+
+### Patch Changes
+
+- Updating list of chain ids to include other ethereum compatible chains
+- Updated dependencies
+  - @0xsequence/abi@0.36.4
+  - @0xsequence/config@0.36.4
+  - @0xsequence/transactions@0.36.4
+  - @0xsequence/utils@0.36.4
+
+## 0.36.3
+
+### Patch Changes
+
+- provider: pass connect options to prompter methods
+- Updated dependencies
+  - @0xsequence/abi@0.36.3
+  - @0xsequence/config@0.36.3
+  - @0xsequence/transactions@0.36.3
+  - @0xsequence/utils@0.36.3
+
+## 0.36.2
+
+### Patch Changes
+
+- transactions: Setting target to 0x0 when empty to during SequenceTxAbiEncode
+- Updated dependencies
+  - @0xsequence/abi@0.36.2
+  - @0xsequence/config@0.36.2
+  - @0xsequence/transactions@0.36.2
+  - @0xsequence/utils@0.36.2
+
+## 0.36.1
+
+### Patch Changes
+
+- metadata: update client with more fields
+- Updated dependencies
+  - @0xsequence/abi@0.36.1
+  - @0xsequence/config@0.36.1
+  - @0xsequence/transactions@0.36.1
+  - @0xsequence/utils@0.36.1
+
+## 0.36.0
+
+### Minor Changes
+
+- relayer, wallet: fee quote support
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.36.0
+  - @0xsequence/config@0.36.0
+  - @0xsequence/transactions@0.36.0
+  - @0xsequence/utils@0.36.0
+
+## 0.35.12
+
+### Patch Changes
+
+- provider: rename wallet.commands to wallet.utils
+- Updated dependencies
+  - @0xsequence/abi@0.35.12
+  - @0xsequence/config@0.35.12
+  - @0xsequence/transactions@0.35.12
+  - @0xsequence/utils@0.35.12
+
+## 0.35.11
+
+### Patch Changes
+
+- provider/utils: smoother message validation
+- Updated dependencies
+  - @0xsequence/abi@0.35.11
+  - @0xsequence/config@0.35.11
+  - @0xsequence/transactions@0.35.11
+  - @0xsequence/utils@0.35.11
+
 ## 0.35.10
 
 ### Patch Changes

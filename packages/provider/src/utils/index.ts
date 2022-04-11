@@ -1,12 +1,13 @@
-import { BigNumberish, BytesLike } from 'ethers'
+import { ethers, BigNumberish, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { WalletContext, ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { Wallet } from '../wallet'
 import { isValidSignature, recoverWalletConfig } from '../utils'
+import { isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
 
-export class WalletCommands {
+export class WalletUtils {
   private wallet: Wallet
 
   constructor(walletProvider: Wallet) {
@@ -47,13 +48,19 @@ export class WalletCommands {
   }
 
   // Verify message signature
-  isValidMessageSignature(
+  async isValidMessageSignature(
     address: string,
     message: string | Uint8Array,
     signature: string,
     chainId: number,
     walletContext?: WalletContext
   ): Promise<boolean | undefined> {
+    const msgDigest = ethers.utils.arrayify(ethers.utils.hashMessage(message))
+    if (
+      isValidEIP712Signature(address, msgDigest, signature) ||
+      isValidEthSignSignature(address, msgDigest, signature)
+    ) return true
+
     return this.isValidSignature(address, encodeMessageDigest(message), signature, chainId, walletContext)
   }
 

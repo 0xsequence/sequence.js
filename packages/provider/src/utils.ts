@@ -1,21 +1,53 @@
-import { BigNumberish, BytesLike } from 'ethers'
+import { ethers, BigNumberish, BytesLike } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
-import { packMessageData } from '@0xsequence/utils'
+import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
+import { isValidSignature as _isValidSignature, recoverConfig, Signer, isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
 
 export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider,
+  provider: Web3Provider | ethers.providers.Web3Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean | undefined> => {
-  chainId = chainId || (await provider.getChainId())
-  walletContext = walletContext || (await provider.getSigner().getWalletContext())
+  if (!chainId) {
+    chainId = (await provider.getNetwork())?.chainId
+  }
+  if (!walletContext && Web3Provider.isSequenceProvider(provider)) {
+    walletContext = await provider.getSigner().getWalletContext()
+  }
   return _isValidSignature(address, digest, sig, provider, walletContext, chainId)
+}
+
+export const isValidMessageSignature = async (
+  address: string,
+  message: string | Uint8Array,
+  signature: string,
+  provider: Web3Provider | ethers.providers.Web3Provider,
+  chainId?: number,
+  walletContext?: WalletContext
+): Promise<boolean | undefined> => {
+  const msgDigest = ethers.utils.arrayify(ethers.utils.hashMessage(message))
+  if (
+    isValidEIP712Signature(address, msgDigest, signature) ||
+    isValidEthSignSignature(address, msgDigest, signature)
+  ) return true
+
+  return isValidSignature(address, encodeMessageDigest(message), signature, provider, chainId, walletContext)
+}
+
+export const isValidTypedDataSignature = (
+  address: string,
+  typedData: TypedData,
+  signature: string,
+  provider: Web3Provider | ethers.providers.Web3Provider,
+  chainId?: number,
+  walletContext?: WalletContext
+): Promise<boolean | undefined> => {
+  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, chainId, walletContext)
 }
 
 export const recoverWalletConfig = async (

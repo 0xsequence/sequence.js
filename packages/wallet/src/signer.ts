@@ -1,7 +1,7 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { NetworkConfig, ChainIdLike, WalletContext } from '@0xsequence/network'
-import { Relayer } from '@0xsequence/relayer'
+import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import {
   Transactionish,
   TransactionRequest,
@@ -55,7 +55,8 @@ export abstract class Signer extends AbstractSigner {
   abstract sendTransaction(
     transaction: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    quote?: FeeQuote
   ): Promise<TransactionResponse>
 
   // sendTransactionBatch provides the ability to send an array/batch of transactions as a single native on-chain transaction.
@@ -63,7 +64,8 @@ export abstract class Signer extends AbstractSigner {
   abstract sendTransactionBatch(
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    quote?: FeeQuote
   ): Promise<TransactionResponse>
 
   // Low-level methods to sign and send/relayer signed transactions separately. The combination of these methods
@@ -74,7 +76,7 @@ export abstract class Signer extends AbstractSigner {
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<SignedTransactionBundle>
-  abstract sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse>
+  abstract sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse>
 
   // isDeployed ..
   abstract isDeployed(chainId?: ChainIdLike): Promise<boolean>

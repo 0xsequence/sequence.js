@@ -17,6 +17,9 @@ export async function isValidSignature(
   configTracker?: ConfigTracker
 ): Promise<boolean> {
   // Check if valid EOA signature
+  //
+  // TODO: the EOA check here assume its being passed a digest, but its not a correct assumption
+  // as often the message signing is of a string of text and not a digest.
   if (
     isValidEIP712Signature(address, digest, signature) ||
     isValidEthSignSignature(address, digest, signature)

@@ -20,7 +20,7 @@ const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts
 const { expect } = chai.use(chaiAsPromised)
 chai.use(chaiExclude)
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 describe('Account integration', () => {
   let context: WalletContext

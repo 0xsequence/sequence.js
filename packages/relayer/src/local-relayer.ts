@@ -1,10 +1,10 @@
-import { TransactionResponse } from '@ethersproject/providers'
-import { Signer as AbstractSigner, ethers } from 'ethers'
-import { walletContracts } from '@0xsequence/abi'
-import { Transaction, TransactionBundle, isSignedTransactionBundle, encodeBundleExecData } from '@0xsequence/transactions'
+import { TransactionRequest } from '@ethersproject/providers'
+import { Signer as AbstractSigner } from 'ethers'
+import { TransactionBundle, encodeBundleExecData, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
-import { FeeOption, Relayer } from '.'
+import { logger } from '@0xsequence/utils'
+import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
@@ -17,6 +17,7 @@ export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
   private signer: AbstractSigner
+  private txnOptions: TransactionRequest
 
   constructor(options: LocalRelayerOptions | AbstractSigner) {
     super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
@@ -24,15 +25,24 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     if (!this.signer.provider) throw new Error("Signer must have a provider")
   }
 
-  async gasRefundOptions(
-    _config: WalletConfig,
-    _context: WalletContext,
+  async getFeeOptions(
     _bundle: TransactionBundle
-  ): Promise<FeeOption[]> {
-    return []
+  ): Promise<{ options: FeeOption[] }> {
+    return { options: [] }
   }
 
-  async relay(bundle: TransactionBundle): Promise<TransactionResponse> {
+  async gasRefundOptions(
+    bundle: TransactionBundle
+  ): Promise<FeeOption[]> {
+    const { options } = await this.getFeeOptions(bundle)
+    return options
+  }
+
+  async relay(bundle: TransactionBundle, quote?: FeeQuote): Promise<TransactionResponse> {
+    if (quote !== undefined) {
+      logger.warn(`LocalRelayer doesn't accept fee quotes`)
+    }
+
     const data = encodeBundleExecData(bundle)
 
     // TODO: think about computing gas limit individually, summing together and passing across
@@ -40,6 +50,6 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
     // txRequest.gasLimit = gasLimit
 
-    return this.signer.sendTransaction({ to: bundle.entrypoint, data })
+    return this.signer.sendTransaction({ to: bundle.entrypoint, data, ...this.txnOptions })
   }
 }

@@ -37,7 +37,7 @@ export function unpackMetaTransactionData(data: string): Transaction[] {
 
 export function digestOfTransactions(...txs: Transaction[]): string {
   const nonce = readSequenceNonce(...txs)
-  if (nonce === undefined) throw new Error("Computing hash for transactions without defined nonce")
+  if (nonce === undefined) throw new Error('Computing hash for transactions without defined nonce')
   return digestOfTransactionsNonce(nonce, ...txs)
 }
 
@@ -153,7 +153,7 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
     delegateCall: t.delegateCall === true,
     revertOnError: t.revertOnError === true,
     gasLimit: t.gasLimit !== undefined ? t.gasLimit : ethers.constants.Zero,
-    target: t.to,
+    target: t.to ?? ethers.constants.AddressZero,
     value: t.value !== undefined ? t.value : ethers.constants.Zero,
     data: t.data !== undefined ? t.data : []
   }))
@@ -267,7 +267,11 @@ export async function encodeBundleExecData(bundle: TransactionBundle): Promise<s
   )
 }
 
-export async function fromTransactionish(context: WalletContext, wallet: string, transaction: Transactionish): Promise<Transaction[]> {
+export async function fromTransactionish(
+  context: WalletContext,
+  wallet: string,
+  transaction: Transactionish
+): Promise<Transaction[]> {
   let stx: Transaction[] = []
 
   if (Array.isArray(transaction)) {

@@ -31,10 +31,10 @@ import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
-import { WalletCommands } from './commands'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { LocalStore } from './utils'
+import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
 
@@ -67,11 +67,11 @@ export interface WalletProvider {
   on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
   once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void
 
-  commands: WalletCommands
+  utils: WalletUtils
 }
 
 export class Wallet implements WalletProvider {
-  public commands: WalletCommands
+  public utils: WalletUtils
 
   private config: ProviderConfig
   private session?: WalletSession
@@ -115,7 +115,7 @@ export class Wallet implements WalletProvider {
     this.networks = []
     this.providers = {}
     this.connectedSites = new LocalStore('@sequence.connectedSites', [])
-    this.commands = new WalletCommands(this)
+    this.utils = new WalletUtils(this)
     this.init()
   }
 
@@ -140,7 +140,16 @@ export class Wallet implements WalletProvider {
     }
     if (this.config.transports?.extensionTransport?.enabled) {
       this.transport.extensionMessageProvider = new ExtensionMessageProvider(this.config.transports.extensionTransport.runtime)
+      // this.transport.extensionMessageProvider.register()
       this.transport.messageProvider.add(this.transport.extensionMessageProvider)
+      
+      // NOTE/REVIEW: see note in mux-message-provider
+      //
+      // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
+      // send all requests to the WindowMessageProvider anyways. By allowing it, if browser restarts, it will break
+      // the entire extension because messageProvider.provider will be undefined. So this is a hack to fix it.
+      //
+      // this.transport.messageProvider.add(this.transport.extensionMessageProvider)
     }
     this.transport.messageProvider.register()
 

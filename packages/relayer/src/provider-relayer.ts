@@ -1,10 +1,10 @@
-import { TransactionResponse, BlockTag, Provider } from '@ethersproject/providers'
+import { BlockTag, Provider } from '@ethersproject/providers'
 import { ethers, providers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { encodeNonce, Transaction, TransactionBundle } from '@0xsequence/transactions'
+import { encodeNonce, TransactionBundle, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
-import { FeeOption, Relayer, SimulateResult } from '.'
+import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { Optionals } from '@0xsequence/utils'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
@@ -40,8 +40,15 @@ export abstract class ProviderRelayer implements Relayer {
     this.fromBlockLog = opts.fromBlockLog
   }
 
-  abstract gasRefundOptions(config: WalletConfig, context: WalletContext, bundle: TransactionBundle): Promise<FeeOption[]>
-  abstract relay(signedTxs: TransactionBundle): Promise<TransactionResponse>
+  abstract getFeeOptions(
+    bundle: TransactionBundle
+  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+
+  abstract gasRefundOptions(
+    bundle: TransactionBundle
+  ): Promise<FeeOption[]>
+
+  abstract relay(signedTxs: TransactionBundle, quote?: FeeQuote): Promise<TransactionResponse>
 
   async simulate(wallet: string, entrypoint: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
     return (await Promise.all(transactions.map(async tx => {

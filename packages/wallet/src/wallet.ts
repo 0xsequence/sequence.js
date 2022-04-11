@@ -1,9 +1,10 @@
 import { Provider, TransactionResponse, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, utils } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@ethersproject/properties'
 import { ConnectionInfo } from '@ethersproject/web'
+import { walletContracts } from '@0xsequence/abi'
 
 import {
   Transaction,
@@ -20,7 +21,7 @@ import {
   encodeBundleExecData
 } from '@0xsequence/transactions'
 
-import { Relayer } from '@0xsequence/relayer'
+import { FeeQuote, Relayer } from '@0xsequence/relayer'
 
 import {
   ChainIdLike,
@@ -50,7 +51,6 @@ import { RemoteSigner } from './remote-signers'
 import { getImplementation, isWalletDeployed, resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 import { Interface } from '@ethersproject/abi'
-import { walletContracts } from '@0xsequence/abi'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
@@ -423,6 +423,7 @@ export class Wallet extends Signer {
     transaction: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
     allSigners?: boolean,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
     const signedBundle = await this.signTransactions(transaction, chainId, allSigners)
@@ -430,7 +431,7 @@ export class Wallet extends Signer {
       const metaTxnHash = computeMetaTxnHash(signedBundle.intent.wallet, signedBundle.chainId, ...signedBundle.transactions)
       callback(signedBundle, metaTxnHash)
     }
-    return this.relayer.relay(await this.decorateTransactions(signedBundle))
+    return this.relayer.relay(await this.decorateTransactions(signedBundle), quote)
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
@@ -438,9 +439,10 @@ export class Wallet extends Signer {
     transactions: Deferrable<TransactionRequest[] | Transaction[]>,
     chainId?: ChainIdLike,
     allSigners: boolean = true,
+    quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners, callback)
+    return this.sendTransaction(transactions, chainId, allSigners, quote, callback)
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
@@ -486,12 +488,12 @@ export class Wallet extends Signer {
     }
   }
 
-  async sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  async sendSignedTransactions(signedBundle: SignedTransactionBundle, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
     await this.getChainIdNumber(chainId)
-    return this.relayer.relay(await this.decorateTransactions(signedBundle))
+    return this.relayer.relay(await this.decorateTransactions(signedBundle), quote)
   }
 
   // signMessage will sign a message for a particular chainId with the wallet signers

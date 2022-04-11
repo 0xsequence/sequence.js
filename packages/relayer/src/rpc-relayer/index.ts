@@ -1,4 +1,3 @@
-import { TransactionResponse } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 import fetchPonyfill from 'fetch-ponyfill'
 import {
@@ -7,12 +6,12 @@ import {
   appendNonce,
   MetaTransactionsType,
   sequenceTxAbiEncode,
-  decodeNonce,
   TransactionBundle,
-  isSignedTransactionBundle,
-  encodeBundleExecData
+  encodeBundleExecData,
+  decodeNonce,
+  TransactionResponse
 } from '@0xsequence/transactions'
-import { FeeOption, Relayer, SimulateResult } from '..'
+import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -111,7 +110,9 @@ export class RpcRelayer implements Relayer {
     return prevNonce === undefined ? modTxns : appendNonce(modTxns, prevNonce)
   }
 
-  async gasRefundOptions(config: WalletConfig, context: WalletContext, bundle: TransactionBundle): Promise<FeeOption[]> {
+  async getFeeOptions(
+    bundle: TransactionBundle
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     // NOTE/TODO: for a given `service` the feeTokens will not change between execution, so we should memoize this value
     // for a short-period of time, perhaps for 1 day or in memory. Perhaps one day we can make this happen automatically
     // with http cache response for this endpoint and service-worker.. lots of approaches
@@ -119,26 +120,29 @@ export class RpcRelayer implements Relayer {
 
     if (feeTokens.isFeeRequired) {
       const symbols = feeTokens.tokens.map(token => token.symbol).join(', ')
-      logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are required, accepted tokens are ${symbols}`)
-
-      const wallet = addressOf(config, context)
+      logger.info(`[rpc-relayer/getFeeOptions] relayer fees are required, accepted tokens are ${symbols}`)
 
       // Is bundle is already signed we can use the provided nonce
       // otherwise we just use the next nonce for the wallet
       const data = await encodeBundleExecData(bundle)
 
-      const { options } = await this.service.feeOptions({
+      const { options, quote } = await this.service.feeOptions({
         wallet: bundle.intent.wallet,
         to: bundle.entrypoint,
         data: data
       })
 
-      logger.info(`[rpc-relayer/gasRefundOptions] got refund options ${JSON.stringify(options)}`)
-      return options
+      logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options)}`)
+      return { options, quote: { _tag: 'FeeQuote', _quote: quote } }
     } else {
-      logger.info(`[rpc-relayer/gasRefundOptions] relayer fees are not required`)
-      return []
+      logger.info(`[rpc-relayer/getFeeOptions] relayer fees are not required`)
+      return { options: [] }
     }
+  }
+
+  async gasRefundOptions(bundle: TransactionBundle): Promise<FeeOption[]> {
+    const { options } = await this.getFeeOptions(bundle)
+    return options
   }
 
   async getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
@@ -169,7 +173,7 @@ export class RpcRelayer implements Relayer {
     return this.wait(metaTxn.txnHash)
   }
 
-  async wait(metaTxnHash: string | TransactionBundle, wait: number = 1000): Promise<TransactionResponse> {
+  async wait(metaTxnHash: string | TransactionBundle, wait: number = 1000): Promise<TransactionResponse<RelayerTxReceipt>> {
     const { receipt } = await this.waitReceipt(metaTxnHash, wait)
 
     if (!receipt.txnReceipt || FAILED_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
@@ -185,7 +189,8 @@ export class RpcRelayer implements Relayer {
       from: typeof metaTxnHash === 'string' ? undefined : metaTxnHash.intent.wallet,
       hash: txReceipt.transactionHash,
       raw: receipt.txnReceipt,
-      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
+      receipt: txReceipt, // extended type which is Sequence-specific. Contains the decoded metaTxReceipt
+      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations),
     } as TransactionResponse
   }
 }
@@ -194,7 +199,7 @@ class MetaTransactionResponseException {
   constructor(public receipt: proto.MetaTxnReceipt) {}
 }
 
-type RelayerTxReceipt = {
+export type RelayerTxReceipt = {
   blockHash: string
   blockNumber: string
   contractAddress: string

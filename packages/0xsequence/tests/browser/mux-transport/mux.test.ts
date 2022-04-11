@@ -13,7 +13,7 @@ import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 
 // Tests simulates a multi-message provider environment by having a wallet available via the
