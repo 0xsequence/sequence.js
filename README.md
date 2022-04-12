@@ -97,8 +97,8 @@ NOTE: snapshot release is for dev preview, it's similar to the above, but:
 
 ## Testing tips
 
-During development, sometimes it convenient to only run tests in a specific spec file. You can do
-this with `yarn test:file` for example:
+During development, sometimes it is convenient to only run tests in a specific spec file. You can do
+this with `yarn test:file`. For example:
 
 ```shell
 $ cd packages/wallet
