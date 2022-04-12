@@ -296,7 +296,8 @@ export class Wallet extends Signer {
 
   async buildUpdateConfig(
     newConfig: WalletConfig | string,
-    chainId?: ChainIdLike
+    chainId?: ChainIdLike,
+    skipUpdateImplementation?: boolean
   ): Promise<Omit<TransactionBundle, "intent">> {
     if (chainId) await this.getChainIdNumber(chainId)
 
@@ -304,26 +305,28 @@ export class Wallet extends Signer {
       throw new Error('Wallet in non-strict mode cannot update to a non-usable config')
     }
 
-    const implementation = await getImplementation(this.address, this.provider)
     const transactions: Transaction[] = []
 
     const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
 
-    if (implementation !== this.context.mainModuleUpgradable) {
-      const walletInterface = new Interface(walletContracts.mainModule.abi)
+    if (!skipUpdateImplementation) {
+      const implementation = await getImplementation(this.address, this.provider)
+      if (implementation !== this.context.mainModuleUpgradable) {
+        const walletInterface = new Interface(walletContracts.mainModule.abi)
 
-      // If wallet is not updated we first need to append an
-      // updateImplementation presigned transaction
-      transactions.push({
-        delegateCall: false,
-        revertOnError: true,
-        gasLimit: ethers.constants.Zero,
-        to: this.address,
-        value: ethers.constants.Zero,
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
-          this.context.mainModuleUpgradable
-        ])
-      })
+        // If wallet is not updated we first need to append an
+        // updateImplementation presigned transaction
+        transactions.push({
+          delegateCall: false,
+          revertOnError: true,
+          gasLimit: ethers.constants.Zero,
+          to: this.address,
+          value: ethers.constants.Zero,
+          data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
+            this.context.mainModuleUpgradable
+          ])
+        })
+      }
     }
 
     // Update the new config too
@@ -344,10 +347,10 @@ export class Wallet extends Signer {
     }
   }
 
-  async updateConfig(newConfig: WalletConfig | string, chainId?: ChainIdLike): Promise<TransactionResponse> {
+  async updateConfig(newConfig: WalletConfig | string, chainId?: ChainIdLike, skipUpdateImplementation?: boolean): Promise<TransactionResponse> {
     if (!this.relayer) throw new Error(`Relayer not available for network ${chainId}`)
 
-    const bundle = await this.buildUpdateConfig(newConfig, chainId)
+    const bundle = await this.buildUpdateConfig(newConfig, chainId, skipUpdateImplementation)
     return this.sendTransaction(bundle.transactions)
   }
 

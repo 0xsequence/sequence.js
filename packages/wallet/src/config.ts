@@ -17,19 +17,48 @@ export interface DecodedSigner {
   weight: number
 }
 
-export const fetchImageHash = async (address: string, provider: ethers.providers.Provider, counterFactualConfig?: { context: WalletContext, tracker: ConfigTracker }): Promise<string | undefined> => {
+export enum ImageHashSource {
+  CounterFactual,
+  Defined
+}
+
+export const fetchImageHash = async (
+  address: string,
+  provider: ethers.providers.Provider,
+  counterFactualConfig?: {
+    context: WalletContext,
+    tracker: ConfigTracker
+  }): Promise<string | undefined> => {
+  const rih = await richFetchImageHash(address, provider, counterFactualConfig)
+  if (rih) {
+    return rih.imageHash
+  }
+
+  return undefined
+}
+
+export const richFetchImageHash = async (
+  address: string,
+  provider: ethers.providers.Provider,
+  counterFactualConfig?: {
+    context: WalletContext,
+    tracker: ConfigTracker
+  }): Promise<{ imageHash: string, source: ImageHashSource } | undefined> => {
   const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
   const currentImageHash = await (walletContract.functions.imageHash.call([]).catch(() => []))  as string[]
 
   // If we can read the contract, we just return the value
   if (currentImageHash && currentImageHash.length > 0) {
-    return currentImageHash[0]
+    return { imageHash: currentImageHash[0], source: ImageHashSource.Defined }
   }
 
   // If we can't we can try to get the counter factual state
   // but that's only possible if counterFactualConfig is provided
   if (counterFactualConfig) {
-    return counterFactualConfig.tracker.imageHashOfCounterFactualWallet({ context: counterFactualConfig.context, wallet: address })
+    const imageHash = await counterFactualConfig.tracker.imageHashOfCounterFactualWallet({ context: counterFactualConfig.context, wallet: address })
+    if (imageHash) {
+      return { imageHash, source: ImageHashSource.CounterFactual }
+    }
   }
 
   // The imageHash can't be found

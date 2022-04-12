@@ -19,6 +19,7 @@ import { FeeOption, FeeQuote, isRpcRelayerOptions, Relayer, RpcRelayer } from '@
 import { fetchImageHash, getImplementation, isWalletDeployed } from '.'
 import { walletContracts } from '@0xsequence/abi'
 import { Interface } from '@ethersproject/abi'
+import { ImageHashSource, richFetchImageHash } from './config'
 
 export interface AccountOptions {
   // The only unique identifier for a wallet is they address
@@ -30,6 +31,12 @@ export interface AccountOptions {
 
   networks?: NetworkConfig[]
   context?: WalletContext
+}
+
+export enum WalletConfigSource {
+  CounterFactual,
+  Defined,
+  PendingUpdate,
 }
 
 // Account is an interface to a multi-network smart contract wallet.
@@ -207,7 +214,7 @@ export class Account extends Signer {
   }
 
   // Return the highest lazy configuration available for the given chainId
-  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig | undefined> {
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig & { source: WalletConfigSource } | undefined> {
     // Get latest config for wallet using the config tracker
     const cid = maybeChainId(chainId) || this.defaultChainId
 
@@ -216,8 +223,9 @@ export class Account extends Signer {
     const provider = await this.getProvider(cid)
     if (!provider) return undefined
 
-    const imageHash = await fetchImageHash(this.address, provider, { context: this._context, tracker: this.options.configTracker })
-    if (!imageHash) return undefined
+    const ihresp = await richFetchImageHash(this.address, provider, { context: this._context, tracker: this.options.configTracker })
+    if (!ihresp) return undefined
+    const { imageHash, source: imageHashSource } = ihresp
 
     const presigned = await this.options.configTracker.loadPresignedConfiguration({
       wallet: this.address,
@@ -231,14 +239,18 @@ export class Account extends Signer {
     if (!presigned || presigned.length === 0) {
       const config = await this.options.configTracker.configOfImageHash({ imageHash })
       if (!config) return undefined
-      return { ...config, address: this.address }
+      return {
+        ...config,
+        address: this.address,
+        source: imageHashSource === ImageHashSource.CounterFactual ? WalletConfigSource.CounterFactual : WalletConfigSource.Defined
+      }
     }
 
     // If there are pending presigned configurations
     // then we take the imageHash of the last step, and map it to a config
     const config = await this.options.configTracker.configOfImageHash({ imageHash: presigned[presigned.length - 1].body.newImageHash })
     if (!config) return undefined
-    return { ...config, address: this.address }
+    return { ...config, address: this.address, source: WalletConfigSource.PendingUpdate }
   }
 
   async getWalletState(chainId?: ChainIdLike): Promise<WalletState> {
@@ -534,7 +546,7 @@ export class Account extends Signer {
     if (!provider) throw new Error(`Provider not available for network ${chainId}`)
 
     const newImageHash = imageHash(newConfig)
-    const updateBundle = await wallet.setProvider(provider).buildUpdateConfig(newImageHash)
+    const updateBundle = await wallet.setProvider(provider).buildUpdateConfig(newImageHash, chainId, lastConfig.source !== WalletConfigSource.CounterFactual)
     transactions.push(...updateBundle.transactions)
 
     // Append session utils requireGapNonce (session nonce)
