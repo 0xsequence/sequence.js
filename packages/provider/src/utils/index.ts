@@ -74,7 +74,7 @@ export class WalletUtils {
     chainId: number,
     walletContext?: WalletContext
   ): Promise<boolean | undefined> {
-    const msgDigest = ethers.utils.arrayify(ethers.utils.hashMessage(message))
+    const msgDigest = ethers.utils.arrayify(encodeMessageDigest(message))
     if (
       isValidEIP712Signature(address, msgDigest, signature) ||
       isValidEthSignSignature(address, msgDigest, signature)
