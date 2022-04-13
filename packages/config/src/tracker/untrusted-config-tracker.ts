@@ -7,6 +7,7 @@ import { isDecodedEOASigner, staticRecoverConfig } from ".."
 import { addressOf, imageHash, isAddrEqual, WalletConfig } from "../config"
 import { DecodedSignaturePart, decodeSignature, decodeSignaturePart, isDecodedAddress, isDecodedFullSigner, recoverEOASigner, staticRecoverConfigPart } from "../signature"
 import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
+import { isUpdateImplementationTx } from "./utils"
 
 export class UntrustedConfigTracker implements ConfigTracker {
   constructor (
@@ -15,7 +16,7 @@ export class UntrustedConfigTracker implements ConfigTracker {
     public walletConfigs: AssumedWalletConfigs = {}
   ) { }
 
-  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; }): Promise<PresignedConfigUpdate[]> => {
+  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; prependUpdate: string[] }): Promise<PresignedConfigUpdate[]> => {
     const result = await this.tracker.loadPresignedConfiguration(args)
     if (result.length === 0) return result
 
@@ -37,6 +38,22 @@ export class UntrustedConfigTracker implements ConfigTracker {
         gapNonce: tx.body.gapNonce
       })) {
         throw new Error("Invalid presigned configuration")
+      }
+
+      // Should prepend update if required
+      if (i === 0 && txs.length > 0 && args.prependUpdate.length > 0) {
+        let found = false
+        for (const update of args.prependUpdate) {
+          if (isUpdateImplementationTx(args.wallet, update, txs[0])) {
+            found = true
+            break
+          }
+        }
+
+        if (!found) {
+          console.log(args.prependUpdate)
+          throw new Error("Invalid presigned configuration, missing prepend update")
+        }
       }
 
       // The nonce should be the expected nonce

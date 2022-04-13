@@ -7,7 +7,7 @@ import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
 import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, encodeSignaturePart, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
 import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
-import { isValidWalletUpdate } from "../utils"
+import { getUpdateImageHashImpl, isUpdateImplementationTx, isValidWalletUpdate } from "../utils"
 
 
 export class LocalConfigTracker implements ConfigTracker {
@@ -58,6 +58,20 @@ export class LocalConfigTracker implements ConfigTracker {
       throw new Error(`Invalid transaction body ${JSON.stringify(args)}`)
     }
 
+    let body = { ...args.tx }
+    const updateImpl = getUpdateImageHashImpl(args.wallet, txs[0])
+    if (updateImpl) {
+      if (args.tx.update) {
+        if (args.tx.update !== updateImpl) {
+          throw new Error(`Invalid transaction body, expected update to ${updateImpl}, got ${args.tx.update}`)
+        }
+      } else {
+        body = { ...body, update: updateImpl }
+      }
+    } else if(args.tx.update) {
+      throw new Error(`Invalid transaction body, update unexpected ${JSON.stringify(args)}`)
+    }
+
     // Transaction nonce should be
     // expected session nonce (SessionSpace and zero)
     const expectedNonce = encodeNonce(SESSIONS_SPACE, 0)
@@ -69,7 +83,7 @@ export class LocalConfigTracker implements ConfigTracker {
     const digest = digestOfTransactionsNonce(args.tx.nonce, ...txs)
 
     // Store known transactions
-    await this.database.savePresignedTransaction({ digest, body: args.tx})
+    await this.database.savePresignedTransaction({ digest, body })
 
     // Process all signatures
     this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
@@ -114,13 +128,15 @@ export class LocalConfigTracker implements ConfigTracker {
     wallet: string
     fromImageHash: string
     chainId: BigNumberish
+    prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
     // Get best config jump
     const configJump = await this.recursiveFindPath({
       parents: [{ imageHash: args.fromImageHash }],
       wallet: args.wallet,
       chainId: ethers.BigNumber.from(args.chainId),
-      minGapNonce: ethers.BigNumber.from(0)
+      minGapNonce: ethers.BigNumber.from(0),
+      prependUpdate: args.prependUpdate
     })
 
     // If no result, just return empty array
@@ -147,6 +163,7 @@ export class LocalConfigTracker implements ConfigTracker {
     chainId: ethers.BigNumber,
     minGapNonce: ethers.BigNumber,
     bestCandidate?: ConfigJump
+    prependUpdate?: string[]
   }): Promise<ConfigJump | undefined> => {
     // Prepare list of new candidates
     const newCandidates: ConfigJump[] = []
@@ -204,6 +221,7 @@ export class LocalConfigTracker implements ConfigTracker {
     wallet: string,
     chainId: ethers.BigNumber,
     minGapNonce: ethers.BigNumber,
+    prependUpdate?: string[]
   }): Promise<ConfigJump[]> => {
     // Get configuration for current imageHash
     const fromConfig = await this.configOfImageHash({ imageHash: args.fromImageHash })
@@ -243,6 +261,12 @@ export class LocalConfigTracker implements ConfigTracker {
       // Ignore lower gapNonces
       if (tx.gapNonce.lte(args.minGapNonce)) {
         return
+      }
+
+      // If prependUpdate is set, check if the transaction is in the list
+      if (args.prependUpdate) {
+        const found = args.prependUpdate.find((update) => update && update === tx.update)
+        if (!found) return
       }
 
       const unsortedSignature = await Promise.all(fromConfig.signers.map(async (s, i) => {

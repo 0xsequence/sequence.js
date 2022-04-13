@@ -209,7 +209,7 @@ describe('Wallet integration', function () {
     await session.account.sendTransaction({ to: referenceSigner.address })
   })
 
-  it("Should open an existing session", async () => {
+  it.only("Should open an existing session", async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const ogSession = await Session.open({
@@ -241,18 +241,16 @@ describe('Wallet integration', function () {
       }
     })
 
-    const [ogSignerId, signerId] = compareAddr(referenceSigner.address, newSigner.address) === 1 ? [1, 0] : [0, 1]
-
     expect(session.account.address).to.equal(ogSession.account.address)
 
     const config = await session.account.getWalletConfig()
     expect(config.address).to.be.equal(session.account.address)
     expect(config.threshold).to.equal(2)
     expect(config.signers.length).to.equal(2)
-    expect(config.signers[ogSignerId].address).to.equal(referenceSigner.address)
-    expect(config.signers[ogSignerId].weight).to.equal(1)
-    expect(config.signers[signerId].address).to.equal(newSigner.address)
-    expect(config.signers[signerId].weight).to.equal(1)
+    expect(config.signers[0].address).to.equal(referenceSigner.address)
+    expect(config.signers[0].weight).to.equal(1)
+    expect(config.signers[1].address).to.equal(newSigner.address)
+    expect(config.signers[1].weight).to.equal(1)
   })
 
   it("Should create a new signer even if all signers are provided as addresses", async () => {

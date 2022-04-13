@@ -132,6 +132,9 @@ export const compareAddr = (a: string, b: string): number => {
   const bigA = ethers.BigNumber.from(a)
   const bigB = ethers.BigNumber.from(b)
 
+  console.log(bigA.toString())
+  console.log(bigB.toString())
+
   if (bigA.lt(bigB)) {
     return -1
   } else if (bigA.eq(bigB)) {

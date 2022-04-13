@@ -213,8 +213,7 @@ export class Account extends Signer {
     return relayer
   }
 
-  // Return the highest lazy configuration available for the given chainId
-  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig & { source: WalletConfigSource } | undefined> {
+  async getRichWalletConfig(chainId?: ChainIdLike): Promise<{ config: WalletConfig, source: WalletConfigSource } | undefined> {
     // Get latest config for wallet using the config tracker
     const cid = maybeChainId(chainId) || this.defaultChainId
 
@@ -231,6 +230,7 @@ export class Account extends Signer {
       wallet: this.address,
       chainId: cid,
       fromImageHash: imageHash,
+      prependUpdate: imageHashSource === ImageHashSource.CounterFactual ? [this._context.mainModuleUpgradable] : []
     })
 
     // If no pending presigned configuration
@@ -240,8 +240,10 @@ export class Account extends Signer {
       const config = await this.options.configTracker.configOfImageHash({ imageHash })
       if (!config) return undefined
       return {
-        ...config,
-        address: this.address,
+        config: {
+          ...config,
+          address: this.address,
+        },
         source: imageHashSource === ImageHashSource.CounterFactual ? WalletConfigSource.CounterFactual : WalletConfigSource.Defined
       }
     }
@@ -250,7 +252,13 @@ export class Account extends Signer {
     // then we take the imageHash of the last step, and map it to a config
     const config = await this.options.configTracker.configOfImageHash({ imageHash: presigned[presigned.length - 1].body.newImageHash })
     if (!config) return undefined
-    return { ...config, address: this.address, source: WalletConfigSource.PendingUpdate }
+    return { config: { ...config, address: this.address }, source: WalletConfigSource.PendingUpdate }
+  }
+
+  // Return the highest lazy configuration available for the given chainId
+  async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig | undefined> {
+    const res = await this.getRichWalletConfig(chainId)
+    return res?.config
   }
 
   async getWalletState(chainId?: ChainIdLike): Promise<WalletState> {
@@ -351,13 +359,15 @@ export class Account extends Signer {
       // TODO: We are fetching the presigned transactions twice
       // it should be better to not use `getWalletState` and instead fetch that info directly
       // so we don't need to do it twice
-      const settledImageHash = await fetchImageHash(this.address, provider, { context: this._context, tracker: this.options.configTracker })
-      if (!settledImageHash) throw new Error('Error decorating transactions - No settled image hash found')
+      const ihinfo = await richFetchImageHash(this.address, provider, { context: this._context, tracker: this.options.configTracker })
+      if (!ihinfo) throw new Error('Error decorating transactions - No settled image hash found')
+      const { imageHash, source: imageHashSource } = ihinfo
 
       const presignedConfig = await this.options.configTracker.loadPresignedConfiguration({
         wallet: this.address,
         chainId: state.chainId,
-        fromImageHash: settledImageHash,
+        fromImageHash: imageHash,
+        prependUpdate: imageHashSource === ImageHashSource.CounterFactual ? [this._context.mainModuleUpgradable] : []
       })
 
       if (!presignedConfig || presignedConfig.length === 0) {
@@ -536,11 +546,11 @@ export class Account extends Signer {
     const transactions: Transaction[] = []
 
     // Get latest configuration
-    const lastConfig = await this.getWalletConfig(chainId)
+    const lastConfig = await this.getRichWalletConfig(chainId)
     if (!lastConfig) throw new Error(`No wallet config found for chainId ${chainId}`)
 
     // Get transaction update from wallet
-    const wallet = new Wallet({ config: lastConfig, context: this._context, strict: false }, ...this._signers)
+    const wallet = new Wallet({ config: lastConfig.config, context: this._context, strict: false }, ...this._signers)
 
     const provider = await this.getProvider(getChainId(chainId))
     if (!provider) throw new Error(`Provider not available for network ${chainId}`)
@@ -572,7 +582,7 @@ export class Account extends Signer {
     // but using the reference configuration
     if (extraChainIds) {
       for (const cid of extraChainIds) {
-        const wallet = new Wallet({ config: lastConfig, context: this._context, strict: false }, ...this._signers)
+        const wallet = new Wallet({ config: lastConfig.config, context: this._context, strict: false }, ...this._signers)
         const signed = await wallet.signTransactions(transactions, cid, true)
 
         signatures.push(signed)
@@ -601,8 +611,9 @@ export class Account extends Signer {
     // Safety check, does the config tracker have the new config?
     const newConfigFromTracker = await this.options.configTracker.loadPresignedConfiguration({
       wallet: this.address,
-      fromImageHash: imageHash(lastConfig),
-      chainId: getChainId(chainId)
+      fromImageHash: imageHash(lastConfig.config),
+      chainId: getChainId(chainId),
+      prependUpdate: []
     })
     if (newConfigFromTracker.length === 0) {
       throw new Error(`New config not found in config tracker: ${getChainId(chainId)}`)
@@ -636,6 +647,7 @@ export class Account extends Signer {
       wallet: this.address,
       chainId: getChainId(chainId),
       fromImageHash: settledImageHash,
+      prependUpdate: []
     })
 
     const implementation = await getImplementation(this.address, provider)

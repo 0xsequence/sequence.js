@@ -38,12 +38,14 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   loadPresignedConfiguration = async ( args: {
     wallet: string,
     fromImageHash: string,
-    chainId: BigNumberish
+    chainId: BigNumberish,
+    prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
     const res = await this.sessions.presignedRouteForWallet({
       wallet: args.wallet,
       fromImageHash: args.fromImageHash,
-      chainid: ethers.BigNumber.from(args.chainId).toString()
+      chainid: ethers.BigNumber.from(args.chainId).toString(),
+      prependUpdate: args.prependUpdate
     })
   
     return res.txs.map((tx) => {
@@ -103,7 +105,9 @@ export class SessionsApiConfigTracker implements ConfigTracker {
       rtx: {
         ...args.tx,
         gapNonce: ethers.BigNumber.from(args.tx.gapNonce).toNumber(),
-        nonce: args.tx.nonce.toString()
+        nonce: args.tx.nonce.toString(),
+        update: "", // Server-side computed
+        digest: ""  // Server-side computed
       },
       signatures: args.signatures.map((sig) => {
         return {

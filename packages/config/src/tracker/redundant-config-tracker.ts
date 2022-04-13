@@ -15,7 +15,8 @@ export class RedundantConfigTracker implements ConfigTracker {
   loadPresignedConfiguration = async ( args: {
     wallet: string,
     chainId: BigNumberish,
-    fromImageHash: string
+    fromImageHash: string,
+    prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
     // Get all presigned configurations for all childs
     const rawResponses = await Promise.allSettled(this.childs.map((c) => c.loadPresignedConfiguration(args)))

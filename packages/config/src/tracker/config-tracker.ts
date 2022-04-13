@@ -7,7 +7,8 @@ export type TransactionBody = {
   tx: string,
   newImageHash: string,
   gapNonce: ethers.BigNumber,
-  nonce: ethers.BigNumber
+  nonce: ethers.BigNumber,
+  update?: string
 }
 
 export type PresignedConfigUpdate = {
@@ -59,7 +60,8 @@ export abstract class ConfigTracker {
   loadPresignedConfiguration: (args: {
     wallet: string,
     fromImageHash: string,
-    chainId: ethers.BigNumberish
+    chainId: ethers.BigNumberish,
+    prependUpdate: string[]
   }) => Promise<PresignedConfigUpdate[]>
 
   savePresignedConfiguration: (

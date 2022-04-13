@@ -15,7 +15,7 @@ export class DebugConfigTracker implements ConfigTracker {
     return this.requests++
   }
 
-  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; }): Promise<PresignedConfigUpdate[]> => {
+  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; prependUpdate: string[] }): Promise<PresignedConfigUpdate[]> => {
     const id = this._getRequest()
     console.log(`[config-tracker ${id}] loadPresignedConfiguration(${args.wallet}, ${args.fromImageHash}, ${args.chainId})`)
     const result = await this.tracker.loadPresignedConfiguration(args)
