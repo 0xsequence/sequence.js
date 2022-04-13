@@ -8,7 +8,7 @@ import { addressOf } from '@0xsequence/config'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
 

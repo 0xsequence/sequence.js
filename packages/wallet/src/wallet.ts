@@ -1,11 +1,10 @@
-import { Provider, TransactionResponse, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
+import { Provider, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, utils } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Interface } from '@ethersproject/abi'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@ethersproject/properties'
 import { ConnectionInfo } from '@ethersproject/web'
-
 import { walletContracts } from '@0xsequence/abi'
 
 import {
@@ -25,7 +24,8 @@ import {
   computeMetaTxnHash,
   digestOfTransactionsNonce,
   decodeNonce,
-  fromTransactionish
+  fromTransactionish,
+  TransactionResponse
 } from '@0xsequence/transactions'
 
 import { FeeQuote, Relayer } from '@0xsequence/relayer'

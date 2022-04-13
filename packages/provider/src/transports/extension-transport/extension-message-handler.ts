@@ -2,6 +2,7 @@ import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
 import { InitState, ProviderMessage } from '../../types'
 import { Runtime } from 'webextension-polyfill-ts'
+import { logger } from '@0xsequence/utils'
 
 export const CHANNEL_ID = 'sequence-extension-message-handler'
 
@@ -19,7 +20,7 @@ export class ExtensionMessageHandler extends BaseWalletTransport {
   }
 
   sendMessage(message: ProviderMessage<any>) {
-    console.log('[ExtensionMessageHandler send]', message)
+    logger.info('[ExtensionMessageHandler send]', message)
     this.port.postMessage(message)
   }
 }

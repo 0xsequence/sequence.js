@@ -1,4 +1,5 @@
 import { JsonRpcRequest, JsonRpcResponse } from '@0xsequence/network'
+import { logger } from '@0xsequence/utils'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 import {
   ProviderMessageResponseCallback,
@@ -32,7 +33,7 @@ export abstract class BaseInjectedTransport extends EventEmitter {
       return
     }
 
-    console.log('[received message]', message)
+    logger.info('[received message]', message)
 
     const requestIdx = message.idx
     const responseCallback = this.responseCallbacks.get(requestIdx)

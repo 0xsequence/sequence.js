@@ -10,6 +10,7 @@ enum logLevel {
 
 export interface LoggerConfig {
   logLevel: LogLevel
+  silence?: boolean
 
   onwarn?: (message: any, ...optionalParams: any[]) => void
   onerror?: (message: any, ...optionalParams: any[]) => void
@@ -44,21 +45,29 @@ export class Logger {
         this.logLevel = logLevel.INFO
         break
     }
+
+    // undefined silence value will disable the default silence flag
+    if (this.config.silence === undefined) {
+      this.config.silence = false
+    }
   }
 
   debug(message: any, ...optionalParams: any[]) {
+    if (this.config.silence === true) return
     if (this.logLevel === logLevel.DEBUG) {
       console.log(message, ...optionalParams)
     }
   }
 
   info(message: any, ...optionalParams: any[]) {
+    if (this.config.silence === true) return
     if (this.logLevel <= logLevel.INFO) {
       console.log(message, ...optionalParams)
     }
   }
 
   warn(message: any, ...optionalParams: any[]) {
+    if (this.config.silence === true) return
     if (this.logLevel <= logLevel.WARN) {
       console.warn(message, ...optionalParams)
       if (this.config.onwarn) {
@@ -68,6 +77,7 @@ export class Logger {
   }
 
   error(message: any, ...optionalParams: any[]) {
+    if (this.config.silence === true) return
     if (this.logLevel <= logLevel.ERROR) {
       console.error(message, ...optionalParams)
       if (this.config.onerror) {
@@ -78,7 +88,11 @@ export class Logger {
 }
 
 export const logger = new Logger({
-  logLevel: 'INFO'
+  logLevel: 'INFO',
+
+  // By default we silence the logger. In tests we should call `configureLogger`
+  // below to set silence: false.
+  silence: true 
 })
 
 export const configureLogger = (config: Partial<LoggerConfig>) => logger.configure(config)

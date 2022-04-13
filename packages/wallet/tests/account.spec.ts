@@ -15,7 +15,7 @@ import { isConfigEqual } from '../../config/src/config'
 
 const { expect } = chai.use(chaiAsPromised)
 
-configureLogger({ logLevel: 'DEBUG' })
+configureLogger({ logLevel: 'DEBUG', silence: false })
 
 describe('Account integration', () => {
   let context: WalletContext
