@@ -176,6 +176,10 @@ export interface Settings {
    * to set when you open the wallet for user. */
   theme?: ThemeOption
 
+  /** Specify a banner image. This image, if provided, will be displayed on the wallet during
+   * the connect/authorize process */
+  bannerUrl?: string
+
   /** Specify payment providers to use. If not specified,
    * all available payment providers will be enabled.
    * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
