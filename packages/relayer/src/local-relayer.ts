@@ -7,6 +7,7 @@ import { WalletConfig } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
+import { SendMetaTxnReturn } from './rpc-relayer/relayer.gen'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
   signer: AbstractSigner
@@ -57,6 +58,15 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     this.txnOptions = transactionRequest
   }
 
+  async sendRelay(_signedTxs: SignedTransactions, _quote?: FeeQuote): Promise<SendMetaTxnReturn> {
+    return {
+      txnHash: '',
+      status: false,
+    }
+  }
+  async send(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+    return this.relay(signedTxs, quote)
+  }
   async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)

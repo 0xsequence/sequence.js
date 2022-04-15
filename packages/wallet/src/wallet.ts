@@ -28,7 +28,7 @@ import {
   TransactionResponse
 } from '@0xsequence/transactions'
 
-import { FeeQuote, Relayer } from '@0xsequence/relayer'
+import { FeeQuote, proto, Relayer } from '@0xsequence/relayer'
 
 import {
   ChainIdLike,
@@ -296,7 +296,25 @@ export class Wallet extends Signer {
     return ethers.BigNumber.from(decodedNonce).toNumber()
   }
 
+  // sendTransactionToRelayer sends the metatransaction to the relayers and returns a meta transaction
+  async sendTransactionToRelayer(
+    transaction: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean,
+    quote?: FeeQuote,
+    callback?: SignedTransactionsCallback
+  ): Promise<proto.SendMetaTxnReturn> {
+    const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
+    if (callback) {
+      const address = addressOf(signedTxs.config, signedTxs.context)
+      const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
+      callback(signedTxs, metaTxnHash)
+    }
+    return this.relayer.sendRelay(signedTxs, quote)
+  }
+
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
+  // it then waits for the transaction to be mined
   async sendTransaction(
     transaction: Deferrable<Transactionish>,
     chainId?: ChainIdLike,
@@ -304,13 +322,19 @@ export class Wallet extends Signer {
     quote?: FeeQuote,
     callback?: SignedTransactionsCallback
   ): Promise<TransactionResponse> {
-    const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
-    if (callback) {
-      const address = addressOf(signedTxs.config, signedTxs.context)
-      const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
-      callback(signedTxs, metaTxnHash)
-    }
-    return this.relayer.relay(signedTxs, quote)
+    const metaTxn = await this.sendTransactionToRelayer(transaction, chainId, allSigners, quote, callback)
+    return await this.relayer.wait(metaTxn.txnHash)
+  }
+
+  // sendTransactionBatch is a sugar for better readability, but is the same as sendTransactionToRelayer
+  async sendTransactionBatchToRelayer(
+    transactions: Deferrable<TransactionRequest[] | Transaction[]>,
+    chainId?: ChainIdLike,
+    allSigners: boolean = true,
+    quote?: FeeQuote,
+    callback?: SignedTransactionsCallback
+  ): Promise<proto.SendMetaTxnReturn> {
+    return this.sendTransactionToRelayer(transactions, chainId, allSigners, quote, callback)
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction

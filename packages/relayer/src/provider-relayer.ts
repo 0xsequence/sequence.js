@@ -7,6 +7,7 @@ import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { logger, Optionals, Mask } from '@0xsequence/utils'
+import { SendMetaTxnReturn } from './rpc-relayer/relayer.gen'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
@@ -53,6 +54,8 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     context: WalletContext,
     ...transactions: Transaction[]
   ): Promise<FeeOption[]>
+
+  abstract sendRelay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<SendMetaTxnReturn>
 
   abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse>
 
@@ -136,7 +139,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
         timeout
       )
     }
-  
+
     // Transactions can only get executed on nonce change
     // get all nonce changes and look for metaTxnIds in between logs
     const timeoutTime = new Date().getTime() + timeout
@@ -172,7 +175,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
           l.topics.length === 1 &&
           // TxFailed event topic
           l.topics[0] === "0x3dbd1590ea96dd3253a91f24e64e3a502e1225d602a5731357bc12643070ccd7" &&
-          l.data.length >= 64 && l.data.replace('0x', '').startsWith(normalMetaTxnId) 
+          l.data.length >= 64 && l.data.replace('0x', '').startsWith(normalMetaTxnId)
         )
       )))
 

@@ -180,7 +180,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return nonce
   }
 
-  async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+  async sendRelay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<proto.SendMetaTxnReturn> {
     logger.info(
       `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
     )
@@ -212,7 +212,11 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input }, quote: typecheckedQuote })
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
+    return metaTxn
+  }
 
+  async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+    const metaTxn = await this.sendRelay(signedTxs, quote)
     return this.wait(metaTxn.txnHash)
   }
 

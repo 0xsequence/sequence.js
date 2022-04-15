@@ -37,12 +37,17 @@ export interface Relayer {
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
   getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
 
-  // relayer will submit the transaction(s) to the network and return the transaction response.
+  // Relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
+  sendRelay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<proto.SendMetaTxnReturn>
+
+  // Relayer will submit the transaction(s) to the network and return the transaction response.
+  // The quote should be the one returned from getFeeOptions, if any.
+  // The meta tx will then be waited upon to be confirmed.
   relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse>
 
   // wait for transaction confirmation
-  wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<TransactionResponse>
+  wait(metaTxnId: string | SignedTransactions, timeout?: number): Promise<TransactionResponse>
 }
 
 export * from './local-relayer'
