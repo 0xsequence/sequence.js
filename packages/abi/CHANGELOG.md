@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.36.10
+
+### Patch Changes
+
+- support bannerUrl on connect
+
 ## 0.36.9
 
 ### Patch Changes

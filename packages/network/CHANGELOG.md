@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.36.10
+
+### Patch Changes
+
+- support bannerUrl on connect
+- Updated dependencies
+  - @0xsequence/utils@0.36.10
+
 ## 0.36.9
 
 ### Patch Changes
