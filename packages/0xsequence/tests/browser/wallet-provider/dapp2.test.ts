@@ -134,11 +134,11 @@ export const tests = async () => {
 
     // Verify typed data
     const isValid = await wallet.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
-    assert.true(isValid, 'signature is valid')
+    assert.true(isValid, 'signature is valid - 4')
 
     // Recover config / address
     const walletConfig = await wallet.utils.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
-    assert.true(walletConfig.address === address, 'recover address')
+    assert.true(walletConfig.address === address, 'recover address - 4')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
