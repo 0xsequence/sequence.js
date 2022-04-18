@@ -1,7 +1,7 @@
 import { test, assert } from '../../utils/assert'
 import { ethers } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
+import { Wallet, DefaultProviderConfig, isValidMessageSignature } from '@0xsequence/provider'
 import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testutils'
 import { Transaction, TransactionRequest } from '@0xsequence/transactions'
@@ -201,6 +201,10 @@ export const tests = async () => {
     const isValid = await wallet.utils.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signature is valid - 2')
 
+    // Verify signature with other util
+    const isValid2 = await isValidMessageSignature(address, message, sig, provider)
+    assert.true(isValid2, 'signature is valid - 2b')
+
     // Recover the address / config from the signature
     const walletConfig = await wallet.utils.recoverWalletConfigFromMessage(address, message, sig, chainId)
     assert.true(walletConfig.address === address, 'recover address - 2')
@@ -283,6 +287,10 @@ export const tests = async () => {
     // Verify the signature
     const isValid = await wallet.utils.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signAuthMessage, signature is valid')
+
+    // Verify signature with other util
+    const isValid2 = await isValidMessageSignature(address, message, sig, authProvider)
+    assert.true(isValid2, 'signAuthMessage, signature is valid')
 
     // Recover the address / config from the signature
     const walletConfig = await wallet.utils.recoverWalletConfigFromMessage(address, message, sig, chainId)

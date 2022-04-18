@@ -7,19 +7,15 @@ import { isValidSignature as _isValidSignature, recoverConfig, Signer, isValidEI
 
 const eip191prefix = ethers.utils.toUtf8Bytes("\x19Ethereum Signed Message:\n")
 
-export const messageToBytes = (message: string | Uint8Array): Uint8Array => {
-  if (typeof message !== 'string') {
-    return message
-  }
-
-  if (ethers.utils.isHexString(message)) {
+export const messageToBytes = (message: BytesLike): Uint8Array => {
+  if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
     return ethers.utils.arrayify(message)
   }
 
   return ethers.utils.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: string | Uint8Array): Uint8Array => {
+export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
   return ethers.utils.concat([
     eip191prefix,

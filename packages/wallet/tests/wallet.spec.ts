@@ -27,7 +27,7 @@ import {
   RemoteSigner
 } from '../src'
 
-import { LocalWeb3Provider } from '../../provider/src'
+import { LocalWeb3Provider, prefixEIP191Message } from '../../provider/src'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -42,7 +42,7 @@ const { expect } = chai.use(chaiAsPromised)
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 import hardhat from 'hardhat'
-import { Interface } from 'ethers/lib/utils'
+import { BytesLike, Interface } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 
 type EthereumInstance = {
@@ -143,11 +143,13 @@ describe('Wallet integration', function () {
     const options = [
       {
         name: 'sequence-wallet',
-        signer: () => wallet
+        signer: () => wallet,
+        prefixMessage: (m: BytesLike) => m
       },
       {
         name: 'ethers-signer',
-        signer: () => provider.getSigner()
+        signer: () => provider.getSigner(),
+        prefixMessage: (m: BytesLike) => prefixEIP191Message(m)
       }
     ]
 
@@ -299,7 +301,7 @@ describe('Wallet integration', function () {
             // const receipt = await provider.getTransactionReceipt(txn.hash)
             // console.log('status?', receipt.status)
 
-            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, message, signature)
+            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, s.prefixMessage(message), signature)
             await expect(call).to.be.fulfilled
           })
         })
@@ -928,7 +930,7 @@ describe('Wallet integration', function () {
         // Contract wallet must be deployed before calling ERC1271
         await relayer.deployWallet(wallet.config, context)
 
-        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, ethers.utils.toUtf8Bytes(message), signature)
+        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, prefixEIP191Message(message), signature)
         await expect(call).to.be.fulfilled
       })
 
