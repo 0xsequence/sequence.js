@@ -173,14 +173,16 @@ export class LocalConfigTracker implements ConfigTracker {
 
     // Find candidates for every parent
     await Promise.all(args.parents.map(async (parent) => {
-      const minGapNonce = isConfigJump(parent) ? parent.transaction.body.gapNonce : args.minGapNonce
+      const isFirst = !isConfigJump(parent)
+      const minGapNonce = isFirst ? args.minGapNonce : parent.transaction.body.gapNonce
 
       // Find all candidates with this parent and min gap nonce
       const candidates = await this.candidatesForJump({
-        fromImageHash: isConfigJump(parent) ? parent.transaction.body.newImageHash : parent.imageHash,
+        fromImageHash: isFirst ? parent.imageHash : parent.transaction.body.newImageHash,
         chainId: args.chainId,
         wallet: args.wallet,
         minGapNonce,
+        prependUpdate: args.prependUpdate
       })
 
       // Compare each with best candidate and find the best one
@@ -265,7 +267,7 @@ export class LocalConfigTracker implements ConfigTracker {
 
       // If prependUpdate is set, check if the transaction is in the list
       if (args.prependUpdate) {
-        const found = args.prependUpdate.find((update) => update && update === tx.update)
+        const found = args.prependUpdate.find((update) => tx.update && update === tx.update)
         if (!found) return
       }
 
