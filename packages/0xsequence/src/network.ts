@@ -10,7 +10,6 @@ export type {
   JsonRpcMiddleware,
   JsonRpcMiddlewareHandler,
   NetworkConfig,
-  Networks,
   ChainId,
   ChainIdLike,
   NetworksBuilder,

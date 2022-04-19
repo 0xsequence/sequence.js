@@ -19,14 +19,7 @@ import {
 import { BigNumber, ethers } from 'ethers'
 import { ExternalProvider } from '@ethersproject/providers'
 
-import {
-  Networks,
-  NetworkConfig,
-  JsonRpcHandler,
-  JsonRpcRequest,
-  JsonRpcResponseCallback,
-  JsonRpcResponse
-} from '@0xsequence/network'
+import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { Signer } from '@0xsequence/wallet'
 import { isSignedTransactions, TransactionRequest } from '@0xsequence/transactions'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
@@ -38,8 +31,8 @@ const SIGNER_READY_TIMEOUT = 10000
 
 export interface WalletSignInOptions {
   connect?: boolean
-  mainnetNetworks?: Networks
-  testnetNetworks?: Networks
+  mainnetNetworks?: NetworkConfig[]
+  testnetNetworks?: NetworkConfig[]
   defaultNetworkId?: string | number
 }
 
@@ -64,8 +57,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   constructor(
     signer: Signer | null | undefined,
     prompter: WalletUserPrompter | null,
-    mainnetNetworks: Networks,
-    testnetNetworks: Networks = []
+    mainnetNetworks: NetworkConfig[],
+    testnetNetworks: NetworkConfig[] = []
   ) {
     this.signer = signer
     this.prompter = prompter

@@ -5,7 +5,7 @@ import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext, Networks, NetworkConfig } from '@0xsequence/network'
+import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
 
@@ -20,12 +20,12 @@ const { expect } = chai.use(chaiAsPromised)
 import { Session, ValidateSequenceDeployedWalletProof, ValidateSequenceUndeployedWalletProof } from '../src'
 import { compareAddr, SequenceUtilsFinder } from '@0xsequence/config'
 
-import * as mockServer from "mockttp"
+import * as mockServer from 'mockttp'
 import { ETHAuth } from '@0xsequence/ethauth'
 
 type EthereumInstance = {
   chainId?: number
-  providerUrl?: string,
+  providerUrl?: string
   provider?: JsonRpcProvider
   signer?: AbstractSigner
 }
@@ -68,7 +68,7 @@ describe('Wallet integration', function () {
   let hookCaller: HookCallerMock
 
   let context: WalletContext
-  let networks: Networks
+  let networks: NetworkConfig[]
 
   before(async () => {
     // Provider from hardhat without a server instance
@@ -81,24 +81,21 @@ describe('Wallet integration', function () {
     // Deploy local relayer
     relayer = new LocalRelayer(ethnode.signer)
 
-    networks = [{
-      name: 'local',
-      chainId: ethnode.chainId,
-      provider: ethnode.provider,
-      isDefaultChain: true,
-      isAuthChain: true,
-      relayer: relayer
-    }] as NetworkConfig[]
+    networks = [
+      {
+        name: 'local',
+        chainId: ethnode.chainId,
+        provider: ethnode.provider,
+        isDefaultChain: true,
+        isAuthChain: true,
+        relayer: relayer
+      }
+    ] as NetworkConfig[]
 
     // Deploy Sequence env
-    const [
-      factory,
-      mainModule,
-      mainModuleUpgradable,
-      guestModule,
-      sequenceUtils,
-      requireFreshSigner
-    ] = await deployWalletContext(ethnode.provider)
+    const [factory, mainModule, mainModuleUpgradable, guestModule, sequenceUtils, requireFreshSigner] = await deployWalletContext(
+      ethnode.provider
+    )
 
     // Create fixed context obj
     context = {
@@ -139,7 +136,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
@@ -153,7 +150,7 @@ describe('Wallet integration', function () {
     await session.account.sendTransaction({ to: referenceSigner.address })
   })
 
-  it("Should dump and load a session", async () => {
+  it('Should dump and load a session', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     let session = await Session.open({
@@ -165,7 +162,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
@@ -182,7 +179,7 @@ describe('Wallet integration', function () {
     await session.account.sendTransaction({ to: referenceSigner.address })
   })
 
-  it("Should open an existing session", async () => {
+  it('Should open an existing session', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const ogSession = await Session.open({
@@ -194,7 +191,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
@@ -206,10 +203,13 @@ describe('Wallet integration', function () {
       context: context,
       networks: networks,
       referenceSigner: referenceSigner.address,
-      signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+      signers: [
+        { signer: referenceSigner, weight: 1 },
+        { signer: newSigner, weight: 1 }
+      ],
       threshold: 2,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
@@ -224,7 +224,7 @@ describe('Wallet integration', function () {
     expect(session.config.signers[signerId].weight).to.equal(1)
   })
 
-  it("Should open an existing session with one signer being an public address", async () => {
+  it('Should open an existing session with one signer being an public address', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const ogSession = await Session.open({
@@ -236,7 +236,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
@@ -248,10 +248,13 @@ describe('Wallet integration', function () {
       context: context,
       networks: networks,
       referenceSigner: referenceSigner.address,
-      signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner.address, weight: 1 }],
+      signers: [
+        { signer: referenceSigner, weight: 1 },
+        { signer: newSigner.address, weight: 1 }
+      ],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
@@ -266,7 +269,7 @@ describe('Wallet integration', function () {
     expect(session.config.signers[signerId].weight).to.equal(1)
   })
 
-  it("Should fail open an existing session with all signers being public addresses", async () => {
+  it('Should fail open an existing session with all signers being public addresses', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const newSigner = ethers.Wallet.createRandom()
@@ -277,17 +280,20 @@ describe('Wallet integration', function () {
       context: context,
       networks: networks,
       referenceSigner: referenceSigner.address,
-      signers: [{ signer: referenceSigner.address, weight: 1 }, { signer: newSigner.address, weight: 1 }],
+      signers: [
+        { signer: referenceSigner.address, weight: 1 },
+        { signer: newSigner.address, weight: 1 }
+      ],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
     expect(sessionPromise).to.be.rejected
   })
 
-  it("Should open session without index and using deepSearch", async () => {
+  it('Should open session without index and using deepSearch', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const ogSession = await Session.open({
@@ -299,7 +305,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       },
       noIndex: true
     })
@@ -312,10 +318,13 @@ describe('Wallet integration', function () {
       context: context,
       networks: networks,
       referenceSigner: referenceSigner.address,
-      signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+      signers: [
+        { signer: referenceSigner, weight: 1 },
+        { signer: newSigner, weight: 1 }
+      ],
       threshold: 2,
       metadata: {
-        name: "Test"
+        name: 'Test'
       },
       noIndex: true,
       deepSearch: true
@@ -324,7 +333,7 @@ describe('Wallet integration', function () {
     expect(ogSession.account.address).to.equal(session.account.address)
   })
 
-  it("Should fail to open session without authChain", async () => {
+  it('Should fail to open session without authChain', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const sessionPromise = Session.open({
@@ -336,14 +345,14 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
     expect(sessionPromise).to.be.rejected
   })
 
-  it("Should open a different session if noIndex and deepSearch are not equal", async () => {
+  it('Should open a different session if noIndex and deepSearch are not equal', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     const ogSession = await Session.open({
@@ -355,7 +364,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       },
       noIndex: true
     })
@@ -368,10 +377,13 @@ describe('Wallet integration', function () {
       context: context,
       networks: networks,
       referenceSigner: referenceSigner.address,
-      signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+      signers: [
+        { signer: referenceSigner, weight: 1 },
+        { signer: newSigner, weight: 1 }
+      ],
       threshold: 2,
       metadata: {
-        name: "Test"
+        name: 'Test'
       },
       noIndex: true,
       deepSearch: false
@@ -380,7 +392,7 @@ describe('Wallet integration', function () {
     expect(ogSession.account.address).to.not.equal(session.account.address)
   })
 
-  it("Should fail to open a session if using a non-fresh signer", async () => {
+  it('Should fail to open a session if using a non-fresh signer', async () => {
     const referenceSigner = ethers.Wallet.createRandom()
 
     await Session.open({
@@ -392,11 +404,11 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       }
     })
 
-    const configFinder = new SequenceUtilsFinder(networks.find((n) => n.isAuthChain).provider)
+    const configFinder = new SequenceUtilsFinder(networks.find(n => n.isAuthChain).provider)
 
     const session = Session.open({
       sequenceApiUrl: '',
@@ -407,7 +419,7 @@ describe('Wallet integration', function () {
       signers: [{ signer: referenceSigner, weight: 1 }],
       threshold: 1,
       metadata: {
-        name: "Test"
+        name: 'Test'
       },
       configFinder: {
         ...configFinder,
@@ -430,7 +442,7 @@ describe('Wallet integration', function () {
 
     let alwaysFail: boolean = false
 
-    const sequenceApiUrl = "http://localhost:8099"
+    const sequenceApiUrl = 'http://localhost:8099'
 
     beforeEach(() => {
       fakeJwt = ethers.utils.hexlify(ethers.utils.randomBytes(64))
@@ -438,13 +450,10 @@ describe('Wallet integration', function () {
       server = mockServer.getLocal()
       server.start(8099)
 
-      server.post('/rpc/API/GetAuthToken').thenCallback(async (request) => {
+      server.post('/rpc/API/GetAuthToken').thenCallback(async request => {
         if (delayMs !== 0) await delay(delayMs)
 
-        const ethauth = new ETHAuth(
-          ValidateSequenceUndeployedWalletProof(context),
-          ValidateSequenceDeployedWalletProof
-        )
+        const ethauth = new ETHAuth(ValidateSequenceUndeployedWalletProof(context), ValidateSequenceDeployedWalletProof)
 
         ethauth.chainId = ethnode.chainId
         ethauth.configJsonRpcProvider(ethnode.providerUrl)
@@ -471,10 +480,10 @@ describe('Wallet integration', function () {
             })
           }
         } catch {
-          if (recoverCount["error"]) {
-            recoverCount["error"]++
+          if (recoverCount['error']) {
+            recoverCount['error']++
           } else {
-            recoverCount["error"] = 1
+            recoverCount['error'] = 1
           }
 
           return {
@@ -492,7 +501,7 @@ describe('Wallet integration', function () {
       alwaysFail = false
     })
 
-    it("Should get JWT token", async () => {
+    it('Should get JWT token', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       const session = await Session.open({
@@ -504,7 +513,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -514,7 +523,7 @@ describe('Wallet integration', function () {
       expect(proofAddress).to.equal(session.account.address)
     })
 
-    it("Should get JWT after updating session", async () => {
+    it('Should get JWT after updating session', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       await Session.open({
@@ -526,7 +535,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -538,10 +547,13 @@ describe('Wallet integration', function () {
         context: context,
         networks: networks,
         referenceSigner: referenceSigner.address,
-        signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+        signers: [
+          { signer: referenceSigner, weight: 1 },
+          { signer: newSigner, weight: 1 }
+        ],
         threshold: 2,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -553,7 +565,7 @@ describe('Wallet integration', function () {
       expect(proofAddress).to.equal(session.account.address)
     })
 
-    it("Should get JWT during first session creation", async () => {
+    it('Should get JWT during first session creation', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       const session = await Session.open({
@@ -565,7 +577,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -577,7 +589,7 @@ describe('Wallet integration', function () {
       expect(await session._jwt?.token).to.equal(fakeJwt)
     })
 
-    it("Should get JWT during session opening", async () => {
+    it('Should get JWT during session opening', async () => {
       delayMs = 500
 
       const referenceSigner = ethers.Wallet.createRandom()
@@ -591,7 +603,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -605,10 +617,13 @@ describe('Wallet integration', function () {
         context: context,
         networks: networks,
         referenceSigner: referenceSigner.address,
-        signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+        signers: [
+          { signer: referenceSigner, weight: 1 },
+          { signer: newSigner, weight: 1 }
+        ],
         threshold: 2,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -622,7 +637,7 @@ describe('Wallet integration', function () {
       expect(await session._jwt?.token).to.equal(fakeJwt)
     })
 
-    it("Should get API with lazy JWT during first session creation", async () => {
+    it('Should get API with lazy JWT during first session creation', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       const session = await Session.open({
@@ -634,7 +649,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -645,7 +660,7 @@ describe('Wallet integration', function () {
 
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
-      server.post('/rpc/API/FriendList').thenCallback(async (request) => {
+      server.post('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization'].includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
@@ -653,7 +668,7 @@ describe('Wallet integration', function () {
       await api.friendList({ page: {} })
     })
 
-    it("Should get API with lazy JWT during session opening", async () => {
+    it('Should get API with lazy JWT during session opening', async () => {
       delayMs = 500
       const referenceSigner = ethers.Wallet.createRandom()
 
@@ -666,7 +681,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -678,10 +693,13 @@ describe('Wallet integration', function () {
         context: context,
         networks: networks,
         referenceSigner: referenceSigner.address,
-        signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+        signers: [
+          { signer: referenceSigner, weight: 1 },
+          { signer: newSigner, weight: 1 }
+        ],
         threshold: 2,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -692,7 +710,7 @@ describe('Wallet integration', function () {
 
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
-      server.post('/rpc/API/FriendList').thenCallback(async (request) => {
+      server.post('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization'].includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
@@ -700,7 +718,7 @@ describe('Wallet integration', function () {
       await api.friendList({ page: {} })
     })
 
-    it("Should call callbacks on JWT token", async () => {
+    it('Should call callbacks on JWT token', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       const session = await Session.open({
@@ -712,7 +730,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -724,7 +742,7 @@ describe('Wallet integration', function () {
       expect(calledCallback).to.equal(1)
     })
 
-    it("Should call callbacks on JWT token (on open only once)", async () => {
+    it('Should call callbacks on JWT token (on open only once)', async () => {
       delayMs = 500
 
       const referenceSigner = ethers.Wallet.createRandom()
@@ -738,7 +756,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -750,10 +768,13 @@ describe('Wallet integration', function () {
         context: context,
         networks: networks,
         referenceSigner: referenceSigner.address,
-        signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+        signers: [
+          { signer: referenceSigner, weight: 1 },
+          { signer: newSigner, weight: 1 }
+        ],
         threshold: 2,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -765,7 +786,7 @@ describe('Wallet integration', function () {
       expect(calledCallback).to.equal(1)
     })
 
-    it("Should retry 5 times retrieving the JWT token", async () => {
+    it('Should retry 5 times retrieving the JWT token', async () => {
       delayMs = 1000
       const referenceSigner = ethers.Wallet.createRandom()
 
@@ -778,7 +799,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -788,7 +809,7 @@ describe('Wallet integration', function () {
       expect(session._jwt).to.be.undefined
     })
 
-    it("Should get API with JWT already present", async () => {
+    it('Should get API with JWT already present', async () => {
       delayMs = 500
       const referenceSigner = ethers.Wallet.createRandom()
 
@@ -801,7 +822,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -813,10 +834,13 @@ describe('Wallet integration', function () {
         context: context,
         networks: networks,
         referenceSigner: referenceSigner.address,
-        signers: [{ signer: referenceSigner, weight: 1 }, { signer: newSigner, weight: 1 }],
+        signers: [
+          { signer: referenceSigner, weight: 1 },
+          { signer: newSigner, weight: 1 }
+        ],
         threshold: 2,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -834,7 +858,7 @@ describe('Wallet integration', function () {
 
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
-      server.post('/rpc/API/FriendList').thenCallback(async (request) => {
+      server.post('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization'].includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
@@ -842,7 +866,7 @@ describe('Wallet integration', function () {
       await api.friendList({ page: {} })
     })
 
-    it("Should fail to get API with false tryAuth and no JWT", async () => {
+    it('Should fail to get API with false tryAuth and no JWT', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       alwaysFail = true
@@ -856,7 +880,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -872,7 +896,7 @@ describe('Wallet integration', function () {
       expect(session._jwt).to.be.undefined
     })
 
-    it("Should fail to get API without api url", async () => {
+    it('Should fail to get API without api url', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       const session = await Session.open({
@@ -884,7 +908,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -896,7 +920,7 @@ describe('Wallet integration', function () {
       expect(session._jwt).to.be.undefined
     })
 
-    it("Should fail to get JWT with no api configured", async () => {
+    it('Should fail to get JWT with no api configured', async () => {
       const referenceSigner = ethers.Wallet.createRandom()
 
       const session = await Session.open({
@@ -908,7 +932,7 @@ describe('Wallet integration', function () {
         signers: [{ signer: referenceSigner, weight: 1 }],
         threshold: 1,
         metadata: {
-          name: "Test"
+          name: 'Test'
         }
       })
 
@@ -1027,7 +1051,7 @@ describe('Wallet integration', function () {
     })
 
     describe('With expiration', () => {
-      let resetDateMock : Function | undefined
+      let resetDateMock: Function | undefined
 
       const setDate = (seconds: number) => {
         if (resetDateMock) resetDateMock()
@@ -1040,7 +1064,7 @@ describe('Wallet integration', function () {
         if (resetDateMock) resetDateMock()
       })
 
-      it("Should request a new JWT after expiration", async () => {
+      it('Should request a new JWT after expiration', async () => {
         const baseTime = 1613579057
         setDate(baseTime)
 
@@ -1055,7 +1079,7 @@ describe('Wallet integration', function () {
           signers: [{ signer: referenceSigner, weight: 1 }],
           threshold: 1,
           metadata: {
-            name: "Test",
+            name: 'Test',
             expiration: 240
           }
         })
@@ -1067,7 +1091,7 @@ describe('Wallet integration', function () {
         expect(session._jwt?.expiration).to.equal(baseTime + 240 - 60)
 
         // Force expire (1 hour)
-        const newBaseTime = baseTime + (60 * 60)
+        const newBaseTime = baseTime + 60 * 60
         setDate(newBaseTime)
 
         fakeJwt = ethers.utils.hexlify(ethers.utils.randomBytes(96))
@@ -1079,7 +1103,7 @@ describe('Wallet integration', function () {
         expect(session._jwt?.expiration).to.equal(newBaseTime + 240 - 60)
       })
 
-      it("Should force min expiration time", async () => {
+      it('Should force min expiration time', async () => {
         const baseTime = 1613579057
         setDate(baseTime)
 
@@ -1094,7 +1118,7 @@ describe('Wallet integration', function () {
           signers: [{ signer: referenceSigner, weight: 1 }],
           threshold: 1,
           metadata: {
-            name: "Test",
+            name: 'Test',
             expiration: 1
           }
         })

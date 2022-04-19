@@ -250,11 +250,9 @@ export const networks: Record<ChainId, NetworkConfig> = {
   }
 }
 
-export type Networks = NetworkConfig[]
-
 export type ChainIdLike = NetworkConfig | BigNumberish
 
-export type NetworksBuilder = (vars: { [key: string]: any }) => Networks
+export type NetworksBuilder = (vars: { [key: string]: any }) => NetworkConfig[]
 
 export const mainnetNetworks = createNetworkConfig(
   (vars: { [key: string]: any }) => [
