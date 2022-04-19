@@ -1,6 +1,6 @@
 import { ethers, BigNumberish } from 'ethers'
 import { ChainIdLike } from '.'
-import { NetworkConfig, Networks, NetworksBuilder } from './config'
+import { NetworkConfig, NetworksBuilder } from './config'
 
 export function isNetworkConfig(cand: any): cand is NetworkConfig {
   return cand && cand.chainId !== undefined && cand.name !== undefined && cand.rpcUrl !== undefined && cand.relayer !== undefined
@@ -125,7 +125,7 @@ export const ensureUniqueNetworks = (networks: NetworkConfig[], raise: boolean =
 }
 
 // sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
-export const sortNetworks = (networks: Networks, defaultChainId?: string | number): Networks => {
+export const sortNetworks = (networks: NetworkConfig[], defaultChainId?: string | number): NetworkConfig[] => {
   if (!networks) return []
   const config = networks.sort((a, b) => {
     if (a.chainId === b.chainId) return 0
@@ -202,15 +202,15 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
 }
 
 export const createNetworkConfig = (
-  networks: Networks | NetworksBuilder,
+  networks: NetworkConfig[] | NetworksBuilder,
   defaultChainId?: number,
   vars?: { [key: string]: any }
-): Networks => {
+): NetworkConfig[] => {
   let config: NetworkConfig[] = []
   if (typeof networks === 'function' && vars) {
     config = networks(vars)
   } else {
-    config = networks as Networks
+    config = networks as NetworkConfig[]
   }
 
   if (defaultChainId) {
