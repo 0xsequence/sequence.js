@@ -540,28 +540,27 @@ export class Account extends Signer {
     let networks: NetworkConfig[] = []
     this._chainId = undefined // clear memoized value
 
-    // force-convert to a number in case someone sends a number in a string like "1"
-    const defaultChainIdNum = parseInt(defaultChainId as any)
-
     // find chain between mainnet and testnet network groups, and set that network group.
     // otherwise use mainnetNetworks without changes
-    if (testnetNetworks && testnetNetworks.length > 0 && defaultChainId) {
-      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (mainnetNetwork) {
-        mainnetNetwork.isDefaultChain = true
-        networks = mainnetNetworks
-      } else {
-        const testnetNetwork = testnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-        if (testnetNetwork) {
-          testnetNetwork.isDefaultChain = true
+    if (defaultChainId) {
+      // force-convert to a number in case someone sends a number in a string like "1"
+      const defaultChainIdNum = parseInt(defaultChainId as any)
+
+      const foundMainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
+      const foundTestnetNetwork = testnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
+
+      if (foundMainnetNetwork || foundTestnetNetwork) {
+        if (foundMainnetNetwork) {
+          mainnetNetworks.forEach(n => (n.isDefaultChain = false))
+          foundMainnetNetwork.isDefaultChain = true
+          networks = mainnetNetworks
+        } else if (foundTestnetNetwork) {
+          testnetNetworks.forEach(n => (n.isDefaultChain = false))
+          foundTestnetNetwork.isDefaultChain = true
           networks = testnetNetworks
         }
-      }
-    } else if (mainnetNetworks && mainnetNetworks.length > 0 && defaultChainId) {
-      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (mainnetNetwork) {
-        mainnetNetwork.isDefaultChain = true
-        networks = mainnetNetworks
+      } else {
+        throw new Error(`unable to set default network as chain '${defaultChainId}' does not exist`)
       }
     } else {
       networks = mainnetNetworks
