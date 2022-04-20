@@ -32,7 +32,7 @@ import { isSignedTransactions, TransactionRequest } from '@0xsequence/transactio
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
 
-import { isWalletUpToDate } from '../utils'
+import { isWalletUpToDate, prefixEIP191Message } from '../utils'
 
 const SIGNER_READY_TIMEOUT = 10000
 
@@ -305,6 +305,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           let sig = ''
 
+          // Message must be prefixed with "\x19Ethereum Signed Message:\n"
+          // as defined by EIP-191
+          message = prefixEIP191Message(message)
+
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
@@ -313,7 +317,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           } else {
             const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
             if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: message }, this.connectOptions)
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, message }, this.connectOptions)
             }
           }
 

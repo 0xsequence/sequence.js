@@ -4,7 +4,7 @@ import { WalletContext, ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { Wallet } from '../wallet'
-import { isValidSignature, recoverWalletConfig } from '../utils'
+import { isValidSignature, prefixEIP191Message, recoverWalletConfig } from '../utils'
 import { isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
 
 export class WalletUtils {
@@ -74,13 +74,11 @@ export class WalletUtils {
     chainId: number,
     walletContext?: WalletContext
   ): Promise<boolean | undefined> {
-    const msgDigest = ethers.utils.arrayify(ethers.utils.hashMessage(message))
-    if (
-      isValidEIP712Signature(address, msgDigest, signature) ||
-      isValidEthSignSignature(address, msgDigest, signature)
-    ) return true
-
-    return this.isValidSignature(address, encodeMessageDigest(message), signature, chainId, walletContext)
+    const provider = this.wallet.getProvider(chainId)
+    if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
+    const prefixed = prefixEIP191Message(message)
+    const digest = encodeMessageDigest(prefixed)
+    return isValidSignature(address, digest, signature, provider, chainId, walletContext)
   }
 
   // Verify typedData signature
@@ -115,7 +113,7 @@ export class WalletUtils {
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
     walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(address, encodeMessageDigest(message), signature, chainId, walletContext)
+    return recoverWalletConfig(address, encodeMessageDigest(prefixEIP191Message(message)), signature, chainId, walletContext)
   }
 
   // Recover the WalletConfig from a signature of a typedData object
