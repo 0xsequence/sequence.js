@@ -64,13 +64,23 @@ export const tests = async () => {
     const networks = await wallet.getNetworks()
     console.log('=> networks', networks)
 
-    assert.true(!networks[0].isDefaultChain, 'network0 is not defaultChain')
-    assert.true(!networks[0].isAuthChain, 'network0 is not authChain (as per config)')
-    assert.true(networks[1].isDefaultChain, 'network1 is defaultChain')
-    assert.true(networks[1].isAuthChain, 'network1 is authChain (as per config)')
+    // There is exactly one default chain
+    assert.equal(networks.filter(network => network.isDefaultChain).length, 1, 'there is exactly one default chain')
 
-    assert.true(networks[0].chainId === 31337, 'network0 is chainId 31337')
-    assert.true(networks[1].chainId === 31338, 'network1 is chainId 31338')
+    // There's exactly one auth chain
+    assert.equal(networks.filter(network => network.isAuthChain).length, 1, 'there is exactly one auth chain')
+
+    // The default chain's chain ID is 31338
+    assert.equal(networks.filter(network => network.isDefaultChain)[0].chainId, 31338, 'default chain id is 31338')
+
+    // The non-default chain's chain ID is 31337
+    assert.equal(networks.filter(network => !network.isDefaultChain)[0].chainId, 31337, 'non-default chain id is 31337')
+
+    // The auth chain's chain ID is 31338
+    assert.equal(networks.filter(network => network.isAuthChain)[0].chainId, 31338, 'auth chain id is 31338')
+
+    // The non-auth chain's chain ID is 31337
+    assert.equal(networks.filter(network => !network.isAuthChain)[0].chainId, 31337, 'non-auth chain id is 31337')
   })
 
   await test('signMessage with our custom defaultChain', async () => {
