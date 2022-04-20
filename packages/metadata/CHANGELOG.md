@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.36.11
+
+### Patch Changes
+
+- Prefix EIP191 message on wallet-request-handler
+
 ## 0.36.10
 
 ### Patch Changes

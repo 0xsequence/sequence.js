@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.36.11
+
+### Patch Changes
+
+- Prefix EIP191 message on wallet-request-handler
+- Updated dependencies
+  - @0xsequence/abi@0.36.11
+  - @0xsequence/network@0.36.11
+  - @0xsequence/utils@0.36.11
+
 ## 0.36.10
 
 ### Patch Changes
