@@ -581,12 +581,11 @@ export class Account extends Signer {
     // Now sign the updateConfig transaction for all other chains
     // but using the reference configuration
     if (extraChainIds) {
-      for (const cid of extraChainIds) {
+      const extraSignatures = await Promise.all(extraChainIds.map((cid) => {
         const wallet = new Wallet({ config: lastConfig.config, context: this._context, strict: false }, ...this._signers)
-        const signed = await wallet.signTransactions(transactions, cid, true)
-
-        signatures.push(signed)
-      }
+        return wallet.signTransactions(transactions, cid, true)
+      }))
+      signatures.push(...extraSignatures)
     }
 
     // Save new config and counter-factual address
