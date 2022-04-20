@@ -124,51 +124,6 @@ export const ensureUniqueNetworks = (networks: NetworkConfig[], raise: boolean =
   return true
 }
 
-// sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
-export const sortNetworks = (networks: NetworkConfig[], defaultChainId?: string | number): NetworkConfig[] => {
-  if (!networks) return []
-  const config = networks.sort((a, b) => {
-    if (a.chainId === b.chainId) return 0
-    return a.chainId < b.chainId ? -1 : 1
-  })
-
-  // force-convert to a number in case someone sends a number in a string like "1"
-  const defaultChainIdNum = parseInt(defaultChainId as any)
-
-  // Set defaultChainId if passed to set default chain
-  if (defaultChainId) {
-    let found = false
-    networks.forEach(n => {
-      n.isDefaultChain = false
-      if (n.name === defaultChainId || n.chainId === defaultChainIdNum) {
-        found = true
-        n.isDefaultChain = true
-      }
-    })
-    if (!found) {
-      throw new Error(`unable to set default network as chain '${defaultChainId}' does not exist`)
-    }
-  }
-
-  // // AuthChain goes first
-  // const authConfigIdx = config.findIndex(c => c.isAuthChain)
-  // if (authConfigIdx > 0) config.splice(0, 0, config.splice(authConfigIdx, 1)[0])
-
-  // // DefaultChain goes second
-  // const defaultConfigIdx = config.findIndex(c => c.isDefaultChain && c.isAuthChain !== true)
-  // if (defaultConfigIdx > 0) config.splice(1, 0, config.splice(defaultConfigIdx, 1)[0])
-
-  // DefaultChain goes first
-  const defaultConfigIdx = config.findIndex(c => c.isDefaultChain)
-  if (defaultConfigIdx > 0) config.splice(0, 0, config.splice(defaultConfigIdx, 1)[0])
-
-  // AuthChain goes second
-  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isDefaultChain !== true)
-  if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
-
-  return config
-}
-
 export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkConfig) => {
   if (!src || !dest) return
 
@@ -223,7 +178,7 @@ export const createNetworkConfig = (
     }
   }
 
-  return ensureValidNetworks(sortNetworks(config))
+  return ensureValidNetworks(config)
 }
 
 export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
