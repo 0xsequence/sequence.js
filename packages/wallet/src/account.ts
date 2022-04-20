@@ -27,7 +27,6 @@ import {
   sequenceContext,
   mainnetNetworks,
   ensureValidNetworks,
-  sortNetworks,
   getChainId
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
@@ -569,7 +568,7 @@ export class Account extends Signer {
     }
 
     // assign while validating network list
-    this.options.networks = ensureValidNetworks(sortNetworks(networks, defaultChainId))
+    this.options.networks = ensureValidNetworks(networks)
 
     // Account/wallet instances using the initial configuration and network list
     //
@@ -613,7 +612,7 @@ export class Account extends Signer {
     })
 
     // return the default chain id as number
-    return this.options.networks[0].chainId
+    return this.options.networks.find(network => network.isDefaultChain)!.chainId
   }
 
   connect(_: Provider): AbstractSigner {

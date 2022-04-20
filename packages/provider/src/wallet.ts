@@ -170,7 +170,7 @@ export class Wallet implements WalletProvider {
       if (!this.networks || this.networks.length === 0) return 0
 
       // return the default chainId as we're connected
-      return this.networks[0].chainId
+      return this.networks.find(network => network.isDefaultChain)!.chainId
     })
 
     // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
@@ -378,11 +378,13 @@ export class Wallet implements WalletProvider {
     if (!this.networks || this.networks.length < 1) {
       throw new Error('networks have not been set by session. connect first.')
     }
-    // default chain id is first one in the list, by design
-    const network = this.networks[0]
-    if (!network.isDefaultChain) {
-      throw new Error('expecting first network in list to be default chain')
+
+    const network = this.networks.find(network => network.isDefaultChain)
+
+    if (!network) {
+      throw new Error('networks must have a default chain specified')
     }
+
     return network.chainId
   }
 
@@ -390,18 +392,14 @@ export class Wallet implements WalletProvider {
     if (!this.networks || this.networks.length < 1) {
       throw new Error('networks have not been set by session. connect first.')
     }
-    // auth chain is first or second one in the list, by design
-    const network0 = this.networks[0]
-    if (network0.isAuthChain) {
-      return network0.chainId
+
+    const network = this.networks.find(network => network.isAuthChain)
+
+    if (!network) {
+      throw new Error('networks must have an auth chain specified')
     }
-    if (this.networks.length > 1) {
-      const network1 = this.networks[1]
-      if (network1.isAuthChain) {
-        return network1.chainId
-      }
-    }
-    throw new Error('expecting first or second network in list to be the auth chain')
+
+    return network.chainId
   }
 
   openWallet = async (path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
@@ -438,7 +436,7 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    let network: NetworkConfig | undefined = this.networks[0]
+    let network: NetworkConfig | undefined = this.networks.find(network => network.isDefaultChain)!
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
       if (!network) {
@@ -627,7 +625,7 @@ export class Wallet implements WalletProvider {
 
     // an extra override for convenience
     if (this.config.networkRpcUrl) {
-      this.networks[0].rpcUrl = this.config.networkRpcUrl
+      this.networks.find(network => network.isDefaultChain)!.rpcUrl = this.config.networkRpcUrl
     }
   }
 

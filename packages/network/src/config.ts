@@ -44,7 +44,7 @@ export enum ChainId {
 export interface NetworkConfig {
   title?: string
   name: string
-  chainId: ChainId
+  chainId: number
   ensAddress?: string
   testnet?: boolean
 
