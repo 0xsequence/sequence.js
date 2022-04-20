@@ -156,7 +156,7 @@ export const networks: Record<ChainId, NetworkConfig> = {
   [ChainId.BSC_TESTNET]: {
     chainId: ChainId.BSC_TESTNET,
     name: 'bsc-testnet',
-    title: 'BSC Testnet',
+    title: 'BNB Smart Chain Testnet',
     testnet: true,
     blockExplorer: {
       name: 'BSCScan (Testnet)',
