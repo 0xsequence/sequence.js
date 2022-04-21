@@ -77,17 +77,17 @@ export function isUpdateImplementationTx(wallet: string, target: string, tx: Tra
   return true
 }
 
-export function getUpdateImageHashImpl(wallet: string, tx: Transaction): string | undefined {
-  const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+export function getUpdateImplementation(tx: Transaction): string | undefined {
+  const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
 
   // First 4 bytes should be the setImageHash signature
-  if (!startsWith(tx.data, mainModuleUpgradableInterface.getSighash("updateImageHash"))) {
+  if (!startsWith(tx.data, mainModuleInterface.getSighash("updateImplementation"))) {
     return undefined
   }
 
   // Decode arguments of method call
   try {
-    const decoded = tx.data && mainModuleUpgradableInterface.decodeFunctionData("updateImageHash", tx.data)
+    const decoded = tx.data && mainModuleInterface.decodeFunctionData("updateImplementation", tx.data)
     if (!decoded) return undefined
   
     return decoded[0]

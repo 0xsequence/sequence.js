@@ -604,7 +604,7 @@ export class Account extends Signer {
         nonce: sessionNonce,
         gapNonce: timestamp,
       },
-      signatures: await Promise.all(signatures.map(async (s) => ({ signature: encodeSignature(await s.signature), chainId: s.chainId })))
+      signatures: await Promise.all(signatures.map(async (s) => ({ signature: encodeSignature(s.signature), chainId: s.chainId })))
     })
 
     // Safety check, does the config tracker have the new config?
@@ -612,7 +612,7 @@ export class Account extends Signer {
       wallet: this.address,
       fromImageHash: imageHash(lastConfig.config),
       chainId: getChainId(chainId),
-      prependUpdate: []
+      prependUpdate: lastConfig.source !== WalletConfigSource.CounterFactual ? [] : [this._context.mainModuleUpgradable]
     })
     if (newConfigFromTracker.length === 0) {
       throw new Error(`New config not found in config tracker: ${getChainId(chainId)}`)

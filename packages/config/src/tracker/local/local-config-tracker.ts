@@ -7,7 +7,7 @@ import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
 import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, encodeSignaturePart, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
 import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
-import { getUpdateImageHashImpl, isUpdateImplementationTx, isValidWalletUpdate } from "../utils"
+import { getUpdateImplementation, isValidWalletUpdate } from "../utils"
 
 
 export class LocalConfigTracker implements ConfigTracker {
@@ -59,7 +59,7 @@ export class LocalConfigTracker implements ConfigTracker {
     }
 
     let body = { ...args.tx }
-    const updateImpl = getUpdateImageHashImpl(args.wallet, txs[0])
+    const updateImpl = getUpdateImplementation(txs[0])
     if (updateImpl) {
       if (args.tx.update) {
         if (args.tx.update !== updateImpl) {
@@ -227,7 +227,10 @@ export class LocalConfigTracker implements ConfigTracker {
   }): Promise<ConfigJump[]> => {
     // Get configuration for current imageHash
     const fromConfig = await this.configOfImageHash({ imageHash: args.fromImageHash })
-    if (!fromConfig) throw Error(`No configuration found for imageHash ${args.fromImageHash}`)
+    if (!fromConfig) {
+      console.warn(`No configuration found for imageHash ${args.fromImageHash}`)
+      return []
+    }
 
     // Track combined weight of all transactions
     // transactions below thershold should be descarded
@@ -258,17 +261,32 @@ export class LocalConfigTracker implements ConfigTracker {
       // No transaction found for diggest
       // probably it was created with a witness
       const tx = await this.database.transactionWithDigest({ digest })
-      if (!tx) return
+      if (!tx) {
+        return
+      }
 
       // Ignore lower gapNonces
       if (tx.gapNonce.lte(args.minGapNonce)) {
         return
       }
 
+      // Ignore wrong wallets
+      if (tx.wallet.toLowerCase() !== args.wallet.toLowerCase()) {
+        return
+      }
+
       // If prependUpdate is set, check if the transaction is in the list
       if (args.prependUpdate) {
-        const found = args.prependUpdate.find((update) => tx.update && update === tx.update)
-        if (!found) return
+        if (args.prependUpdate.length === 0) {
+          // tx update must be empty
+          if (tx.update) return
+        } else {
+          // tx update must be among prepependUpdate array
+          const found = args.prependUpdate.find((update) => tx.update && update === tx.update)
+          if (!found) {
+            return
+          }
+        }
       }
 
       const unsortedSignature = await Promise.all(fromConfig.signers.map(async (s, i) => {
