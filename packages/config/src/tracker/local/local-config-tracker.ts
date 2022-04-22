@@ -1,5 +1,5 @@
 import { sequenceContext, WalletContext } from "@0xsequence/network"
-import { digestOfTransactionsNonce, encodeNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
+import { digestOfTransactionsNonce, encodeNonce, readSequenceNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
@@ -329,7 +329,16 @@ export class LocalConfigTracker implements ConfigTracker {
     // Find the wallet for each part
     const txsAndProofs: { wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[] = []
 
+    // Filter duplicates
+    // notice: if this is too expensive we can add it to the db
+    const seen: { [key: string]: boolean } = {}
+
     await Promise.all(parts.map(async (p) => {
+      if (seen[p.wallet]) {
+        return
+      }
+      seen[p.wallet] = true
+
       txsAndProofs.push({
         wallet: p.wallet,
         proof: {

@@ -126,8 +126,6 @@ export class Account extends Signer {
     if (!provider) return undefined
 
     const relayer = await this.getRelayer(cid)
-    if (!relayer) return undefined
-
     const config = await this.getWalletConfig(cid)
     if (!config) return undefined
     
@@ -543,7 +541,6 @@ export class Account extends Signer {
     const sessionUtilsInterface = new Interface(walletContracts.sessionUtils.abi)
     const sessionNonce = encodeNonce(SESSIONS_SPACE, 0)
 
-    const transactions: Transaction[] = []
 
     // Get latest configuration
     const lastConfig = await this.getRichWalletConfig(chainId)
@@ -557,7 +554,7 @@ export class Account extends Signer {
 
     const newImageHash = imageHash(newConfig)
     const updateBundle = await wallet.setProvider(provider).buildUpdateConfig(newImageHash, chainId, lastConfig.source !== WalletConfigSource.CounterFactual)
-    transactions.push(...updateBundle.transactions)
+    const transactions: Transaction[] = [...updateBundle.transactions]
 
     // Append session utils requireGapNonce (session nonce)
 
