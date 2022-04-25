@@ -88,9 +88,11 @@ describe('Config tracker', function () {
     route: WalletConfig[],
     wallet: string,
     chainId: ethers.BigNumberish,
-    update?: string
+    update?: string,
+    timestamps?: number[],
+    margin?: number
   }) {
-    const { route, wallet, chainId, update } = args
+    const { route, wallet, chainId, update, timestamps, margin } = args
 
     expect(presigns.length).to.equal(route.length - 1)
 
@@ -103,15 +105,17 @@ describe('Config tracker', function () {
         newConfig,
         wallet,
         chainId,
-        update: i === 0 ? update : undefined 
+        timestamp: timestamps ? timestamps[i] : undefined,
+        update: i === 0 ? update : undefined,
+        margin
       })
     }
   }
 
   function expectValidSessionTx(presigned: PresignedConfigUpdate, args: {
     wallet: string,
-    fromConfig: WalletConfig,
-    newConfig: WalletConfig,
+    fromConfig?: WalletConfig,
+    newConfig?: WalletConfig,
     chainId: ethers.BigNumberish,
     update?: string,
     timestamp?: number,
@@ -120,13 +124,13 @@ describe('Config tracker', function () {
     const { wallet, fromConfig, newConfig, chainId, update } = args
 
     // Generic checks
-    const newImageHash = imageHash(newConfig)
+    const newImageHash = newConfig && imageHash(newConfig)
     expect(presigned.chainId.toString()).to.equal(chainId.toString())
     expect(presigned.signature).to.not.equal("")
     expect(presigned.body.wallet).to.equal(wallet)
-    expect(presigned.body.newImageHash).to.deep.equal(newImageHash)
+    if (newImageHash) expect(presigned.body.newImageHash).to.deep.equal(newImageHash)
     expect(presigned.body.gapNonce.toNumber()).to.approximately(args.timestamp || Date.now(), args.margin || 5000)
-    expect(presigned.body.tx).to.include(newImageHash.slice(2))
+    if (newImageHash) expect(presigned.body.tx).to.include(newImageHash.slice(2))
     expect(presigned.body.tx).to.include(sequenceContext.sessionUtils.toLowerCase().slice(2))
     expect(presigned.body.tx).to.include(presigned.body.gapNonce.toHexString().slice(2))
     expect(presigned.body.nonce).to.deep.equal(sessionNonce)
@@ -140,7 +144,7 @@ describe('Config tracker', function () {
     const subDigest = subDigestOf(wallet, chainId, txDigest)
     const decodedSignature = decodeSignature(presigned.signature)
     const { config: recoveredConfig } = staticRecoverConfig(subDigest, decodedSignature, 1)
-    expect(recoveredConfig).to.deep.equal(fromConfig)
+    if (fromConfig) expect(recoveredConfig).to.deep.equal(fromConfig)
 
     // If update it should have 3 txs, otherwise just 2
     expect(unpacked.length).to.eq(update ? 3 : 2)
@@ -171,11 +175,13 @@ describe('Config tracker', function () {
     expect(unpacked[i].value.toString()).to.equal('0')
     expect(unpacked[i].gasLimit.toString()).to.equal('0')
 
-    const data = mainModuleUpgradableInterface.encodeFunctionData(
-      mainModuleUpgradableInterface.getFunction('updateImageHash'), [newImageHash]
-    )
+    if (newImageHash) {
+      const data = mainModuleUpgradableInterface.encodeFunctionData(
+        mainModuleUpgradableInterface.getFunction('updateImageHash'), [newImageHash]
+      )
 
-    expect(unpacked[i].data).to.equal(data)
+      expect(unpacked[i].data).to.equal(data)
+    }
 
     // Last transaction should be requireSessionNonce
     const j = unpacked.length - 1
@@ -933,7 +939,7 @@ describe('Config tracker', function () {
     })
   })
 
-  it("Should handle complex routes", async () => {
+  it.skip("Should handle complex routes (Skip, unsuported local max)", async () => {
     // Wallet A --> Wallet B ---> Wallet C -> Wallet H
     //          \             /
     //           -> Wallet E /
@@ -1863,6 +1869,357 @@ describe('Config tracker', function () {
           route: [config2, config5],
         })
       }))
+    })
+
+    context("Torture ╰(°ㅂ°)╯", () => {
+      // Opening 250 sessions? really?
+      const numsessions = 250
+
+      it(`Should handle opening ${numsessions} sessions with torus + fake guardd (without closing any)`, async () => {  
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const firstSession = ethers.Wallet.createRandom()
+  
+        const initConfig: WalletConfig = {
+          threshold: 3,
+          signers: [{
+            address: torus.address,
+            weight: 2
+          }, {
+            address: guard.address,
+            weight: 2
+          }, {
+            address: firstSession.address,
+            weight: 1
+          }]
+        }
+  
+        const sessions = new Array(numsessions).fill(0).map(() => ethers.utils.getAddress(ethers.utils.hexlify(ethers.utils.randomBytes(20))))
+        const allConfigs = [initConfig]
+  
+        const account = await Account.create(options, initConfig, torus, guard)
+  
+        for (let i = 0; i < sessions.length; i++) {
+          const prevConfig = allConfigs[allConfigs.length - 1]
+          const session = sessions[i]
+          const nextConfig = {
+            ...prevConfig,
+            signers: [...prevConfig.signers, {
+              address: session,
+              weight: 1
+            }]
+          }
+
+          allConfigs.push(nextConfig)
+          await account.updateConfig(nextConfig, defaultChainId, KnownNetworkIds)
+        }
+
+        // Presigned configuration for all networks should take to
+        // the last one with just 2 jumps (1 update and 1 regular jump)
+        await Promise.all((KnownNetworkIds).map(async (chainId) => {
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(initConfig),
+            chainId: chainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+      
+          expect(res.length).to.equal(2)
+          expectValidRoute(res, {
+            wallet: account.address,
+            route: [allConfigs[0], allConfigs[1], allConfigs[allConfigs.length - 1]],
+            margin: 60 * 10 * 1000,
+            chainId,
+            update: sequenceContext.mainModuleUpgradable
+          })
+        }))
+      })
+
+      it(`Should handle opening ${numsessions} sessions with torus + fake guardd (close after open another)`, async () => {  
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const firstSession = ethers.Wallet.createRandom()
+  
+        const initConfig: WalletConfig = {
+          threshold: 3,
+          signers: [{
+            address: torus.address,
+            weight: 2
+          }, {
+            address: guard.address,
+            weight: 2
+          }, {
+            address: firstSession.address,
+            weight: 1
+          }]
+        }
+  
+        const sessions = new Array(numsessions).fill(0).map(() => ethers.utils.getAddress(ethers.utils.hexlify(ethers.utils.randomBytes(20))))
+        const allConfigs = [initConfig]
+  
+        const account = await Account.create(options, initConfig, torus, guard)
+  
+        for (let i = 0; i < sessions.length; i++) {
+          const session = sessions[i]
+          const nextConfig = {
+            ...initConfig,
+            signers: [...initConfig.signers, {
+              address: session,
+              weight: 1
+            }]
+          }
+
+          allConfigs.push(nextConfig)
+          await account.updateConfig(nextConfig, defaultChainId, KnownNetworkIds)
+        }
+
+        // Presigned configuration for all networks should take to
+        // the last one with just 2 jumps (1 update and 1 regular jump)
+        await Promise.all((KnownNetworkIds).map(async (chainId) => {
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(initConfig),
+            chainId: chainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+      
+          expect(res.length).to.equal(2)
+          expectValidRoute(res, {
+            wallet: account.address,
+            route: [allConfigs[0], allConfigs[1], allConfigs[allConfigs.length - 1]],
+            margin: 60 * 10 * 1000,
+            chainId,
+            update: sequenceContext.mainModuleUpgradable
+          })
+        }))
+      })
+      it(`Should handle opening ${numsessions} sessions with (session | torus) + fake guardd (close after open another)`, async () => {  
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const firstSession = ethers.Wallet.createRandom()
+  
+        const initConfig: WalletConfig = {
+          threshold: 3,
+          signers: [{
+            address: torus.address,
+            weight: 2
+          }, {
+            address: guard.address,
+            weight: 2
+          }, {
+            address: firstSession.address,
+            weight: 1
+          }]
+        }
+  
+        const sessions = new Array(numsessions).fill(0).map(() => ethers.Wallet.createRandom())
+        const allConfigs = [initConfig]
+  
+        const account = await Account.create(options, initConfig, torus, guard)
+  
+        for (let i = 0; i < sessions.length; i++) {
+          const session = sessions[i]
+          const nextConfig = {
+            ...initConfig,
+            signers: [...initConfig.signers, {
+              address: session.address,
+              weight: 1
+            }]
+          }
+
+          allConfigs.push(nextConfig)
+
+          if (Math.random() > 0.5) {
+            account.useSigners(torus, guard)
+          } else {
+            account.useSigners(i === 0 ? firstSession : sessions[i - 1], guard)
+          }
+
+          await account.updateConfig(nextConfig, defaultChainId, KnownNetworkIds)
+        }
+
+        // Presigned configuration for all networks should take to
+        // the last one with just 2 jumps (1 update and 1 regular jump)
+        await Promise.all((KnownNetworkIds).map(async (chainId) => {
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(initConfig),
+            chainId: chainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+
+          expect(res.length).to.be.above(1)
+
+          expectValidSessionTx(res[0], {
+            wallet: account.address,
+            fromConfig: initConfig,
+            margin: 60 * 10 * 1000,
+            chainId,
+            update: sequenceContext.mainModuleUpgradable
+          })
+      
+          expectValidSessionTx(res[res.length - 1], {
+            wallet: account.address,
+            newConfig: allConfigs[allConfigs.length - 1],
+            margin: 60 * 10 * 1000,
+            chainId
+          })
+        }))
+      })
+      it("Should handle opening 200 sessions with session + fake guardd (close after open another)", async () => {  
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const firstSession = ethers.Wallet.createRandom()
+  
+        const initConfig: WalletConfig = {
+          threshold: 3,
+          signers: [{
+            address: torus.address,
+            weight: 2
+          }, {
+            address: guard.address,
+            weight: 2
+          }, {
+            address: firstSession.address,
+            weight: 1
+          }]
+        }
+  
+        const sessions = new Array(200).fill(0).map(() => ethers.Wallet.createRandom())
+        const allConfigs = [initConfig]
+  
+        const account = await Account.create(options, initConfig, torus, guard)
+  
+        for (let i = 0; i < sessions.length; i++) {
+          const session = sessions[i]
+          const nextConfig = {
+            ...initConfig,
+            signers: [...initConfig.signers, {
+              address: session.address,
+              weight: 1
+            }]
+          }
+
+          allConfigs.push(nextConfig)
+
+          account.useSigners(i === 0 ? firstSession : sessions[i - 1], guard)
+          await account.updateConfig(nextConfig, defaultChainId, KnownNetworkIds)
+        }
+
+        // Presigned configuration for all networks should take to
+        // the last one with just 2 jumps (1 update and 1 regular jump)
+        await Promise.all((KnownNetworkIds).map(async (chainId) => {
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(initConfig),
+            chainId: chainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+
+          expect(res.length).to.be.equal(allConfigs.length - 1)
+
+          expectValidRoute(res, {
+            wallet: account.address,
+            route: allConfigs,
+            margin: 60 * 10 * 1000,
+            chainId,
+            update: sequenceContext.mainModuleUpgradable
+          })
+        }))
+      })
+      it(`Should handle opening ${numsessions} sessions with (session | torus) + fake guardd (keep ~50 sessions open)`, async () => {  
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const firstSession = ethers.Wallet.createRandom()
+  
+        const initConfig: WalletConfig = {
+          threshold: 3,
+          signers: [{
+            address: torus.address,
+            weight: 2
+          }, {
+            address: guard.address,
+            weight: 2
+          }, {
+            address: firstSession.address,
+            weight: 1
+          }]
+        }
+  
+        const sessions = new Array(numsessions).fill(0).map(() => ethers.Wallet.createRandom())
+        const allConfigs = [initConfig]
+
+        let openSessions = [firstSession]
+  
+        const account = await Account.create(options, initConfig, torus, guard)
+
+        for (let i = 0; i < sessions.length; i++) {
+          const prevConfig = i === 0 ? initConfig : allConfigs[allConfigs.length - 1]
+          const session = sessions[i]
+          const nextConfig = {
+            ...prevConfig,
+            signers: [...prevConfig.signers, {
+              address: session.address,
+              weight: 1
+            }]
+          }
+
+          allConfigs.push(nextConfig)
+
+          if (Math.random() > 0.5) {
+            account.useSigners(torus, guard)
+          } else {
+            account.useSigners(openSessions[Math.floor(Math.random() * openSessions.length)], guard)
+          }
+
+          await account.updateConfig(nextConfig, defaultChainId, KnownNetworkIds)
+          openSessions.push(session)
+
+          if (openSessions.length > 50) {
+            const numClose = Math.floor(Math.random() * (openSessions.length - 10)) + 1
+            const ramdomSessions = openSessions.sort(() => Math.random() - 0.5).slice(0, numClose)
+            const randomSessionsAddr = ramdomSessions.map((s) => s.address)
+
+            openSessions = openSessions.filter(s => !randomSessionsAddr.includes(s.address))
+
+            const closeSesssionNewConfig = {
+              ...initConfig,
+              signers: nextConfig.signers.filter((s) => !randomSessionsAddr.includes(s.address))
+            }
+
+            await account.updateConfig(closeSesssionNewConfig, defaultChainId, KnownNetworkIds)
+            allConfigs.push(closeSesssionNewConfig)
+          }
+        }
+
+        // Presigned configuration for all networks should take to
+        // the last one with just 2 jumps (1 update and 1 regular jump)
+        await Promise.all((KnownNetworkIds).map(async (chainId) => {
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(initConfig),
+            chainId: chainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+
+          expect(res.length).to.be.above(1)
+
+          expectValidSessionTx(res[0], {
+            wallet: account.address,
+            fromConfig: initConfig,
+            margin: 60 * 10 * 1000,
+            chainId,
+            update: sequenceContext.mainModuleUpgradable
+          })
+      
+          expectValidSessionTx(res[res.length - 1], {
+            wallet: account.address,
+            newConfig: allConfigs[allConfigs.length - 1],
+            margin: 60 * 10 * 1000,
+            chainId
+          })
+        }))
+      })
     })
   })
 })
