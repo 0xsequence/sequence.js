@@ -1,7 +1,7 @@
 import { ethers, Signer as AbstractSigner } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
-import { cacheConfig } from './cache'
+import { keccak_256 } from "js-sha3"
 
 // WalletConfig is the configuration of key signers that can access
 // and control the wallet
@@ -91,19 +91,45 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
 }
 
 export const imageHash = (config: WalletConfig): string => {
-  const imageHash = config.signers.reduce(
-    (imageHash, signer) => ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        ['bytes32', 'uint8', 'address'],
-        [imageHash, signer.weight, signer.address]
-      )
-    ),
-    ethers.utils.solidityPack(['uint256'], [config.threshold])
-  )
+  const work = new Array(96).fill(0)
 
-  cacheConfig(imageHash, config)
+  // Threshold uses 2 bytes max
+  if (config.threshold < 256) {
+    work[31] = config.threshold
+  } else {
+    const t = config.threshold % 256
+    work[31] = t % 256
+    work[30] = (config.threshold - t) / 256
+  }
 
-  return imageHash
+  let next: number[] | undefined = undefined
+  for (let x = 0; x < config.signers.length; x++) {
+    const signer = config.signers[x]
+
+    // Weight is just one byte
+    // so we can copy it on the spot
+    work[63] = signer.weight
+
+    // Copy address
+    let p = 76
+    for (let i = 2; i < 42; i += 2) {
+      work[p] = parseInt(signer.address.slice(i, i + 2), 16)
+      p++
+    }
+
+    next = keccak_256.array(work)
+
+    // Copy next bank into work
+    for (let i = 0; i < 32; i++) {
+      work[i] = next[i]
+    }
+  }
+
+  if (!next) {
+    next = work.slice(0, 32)
+  }
+
+  return ethers.utils.hexlify(next)
 }
 
 // sortConfig normalizes the list of signer addreses in a WalletConfig

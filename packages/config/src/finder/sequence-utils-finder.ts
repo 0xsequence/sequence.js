@@ -1,6 +1,5 @@
 import { Contract, ethers } from 'ethers'
 import { addressOf, imageHash, WalletConfig } from '..'
-import { getCachedConfig } from '../cache'
 import { ConfigFinder } from './config-finder'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
@@ -86,14 +85,6 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const found = knownConfigs.find(kc => imageHash(kc) === image)
     if (found) return found
 
-    // Lookup config in cached configurations
-    if (!skipCache) {
-      const cached = getCachedConfig(image)
-      if (cached) {
-        return cached
-      }
-    }
-
     logger.info(`[findConfigForImageHash] image:${image}`)
 
     // Load index for last imageHash update
@@ -153,7 +144,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     if (currentImageHash[0] !== undefined) {
       return {
         imageHash: currentImageHash[0],
-        config: skipCache ? undefined : getCachedConfig(currentImageHash[0])
+        config: await this.findConfigForImageHash(context, currentImageHash[0], knownConfigs, skipCache)
       }
     }
 

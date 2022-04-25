@@ -11,7 +11,7 @@
   "scripts": {
     "test": "yarn test:concurrently 'yarn test:run'",
     "test:run": "yarn test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 600000",
     "test:concurrently": "concurrently -k --success first 'yarn start:hardhat_b > /dev/null' 'yarn start:hardhat_a > /dev/null' ",
     "start:hardhat_a": "yarn run hardhat node --port 7547",
     "start:hardhat_b": "yarn run hardhat node --port 7548",
@@ -24,7 +24,8 @@
     "@0xsequence/transactions": "^0.36.9",
     "@0xsequence/utils": "^0.36.9",
     "ethers": "^5.5.2",
-    "fetch-ponyfill": "^7.1.0"
+    "fetch-ponyfill": "^7.1.0",
+    "js-sha3": "^0.8.0"
   },
   "peerDependencies": {},
   "devDependencies": {},
