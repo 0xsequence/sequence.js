@@ -12,10 +12,10 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
   private readonly _addressToImageHash = new Map<string, string>()
   private readonly _digestToTransaction = new Map<string, TransactionBody>()
 
-  private readonly _signerToImageHashes = new Map<string, string[]>()
+  private readonly _signerToImageHashes = new Map<string, Set<string>>()
+  private readonly _imageHashToSignaturePartKey = new Map<string, Set<string>>()
 
-  private readonly _imageHashToSignaturePartKey = new Map<string, string[]>()
-  private readonly _partKeysForAddressAndChaind = new Map<string, Map<string, string[]>>()
+  private readonly _partKeysForAddressAndChaind = new Map<string, Map<string, Set<string>>>()
   private readonly _partIndexForDigestAndSigner = new Map<string, SignaturePart>()
 
   private _toImageHashKey(address: string, context: WalletContext) {
@@ -52,7 +52,9 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
   imageHashesOfSigner = async (args: {
     signer: string
   }): Promise<string[]> => {
-    return this._signerToImageHashes.get(args.signer) || []
+    const set = this._signerToImageHashes.get(args.signer)
+    if (!set) return []
+    return [...set.keys()]
   }
 
   saveWalletConfig = async (args: {
@@ -64,12 +66,9 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     args.config.signers.forEach(signer => {
       const arr = this._signerToImageHashes.get(signer.address)
       if (!arr) {
-        this._signerToImageHashes.set(signer.address, [args.imageHash])
+        this._signerToImageHashes.set(signer.address, new Set([args.imageHash]))
       } else {
-        // Skip if already in the array
-        if (arr.indexOf(args.imageHash) === -1) {
-          arr.push(args.imageHash)
-        }
+        arr.add(args.imageHash)
       }
     })
   }
@@ -111,17 +110,17 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
 
     const partsForAddr = this._partKeysForAddressAndChaind.get(signerLowerCase)!
     if (!partsForAddr.has(chainId.toString())) {
-      partsForAddr.set(chainId.toString(), [])
+      partsForAddr.set(chainId.toString(), new Set())
     }
 
-    partsForAddr.get(chainId.toString())!.push(key)
+    partsForAddr.get(chainId.toString())!.add(key)
 
     if (args.imageHash) {
       const partsForImageHash = this._imageHashToSignaturePartKey.get(args.imageHash)
       if (!partsForImageHash) {
-        this._imageHashToSignaturePartKey.set(args.imageHash, [])
+        this._imageHashToSignaturePartKey.set(args.imageHash, new Set())
       }
-      this._imageHashToSignaturePartKey.get(args.imageHash)!.push(key)
+      this._imageHashToSignaturePartKey.get(args.imageHash)!.add(key)
     }
   }
 
@@ -146,7 +145,12 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
 
     let keys: string[]
     if (args.chainId) {
-      keys = partsForAddr.get(ethers.BigNumber.from(args.chainId).toString()) || []
+      const set = partsForAddr.get(ethers.BigNumber.from(args.chainId).toString())
+      if (set) {
+        keys = [...set.keys()]
+      } else {
+        keys = []
+      }
     } else {
       keys = []
       partsForAddr.forEach((v) => keys.push(...v))
@@ -160,7 +164,17 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
   getSignaturePartsForImageHash = async (args: {
     imageHash: string,
   }): Promise<SignaturePart[]> => {
-    const keys = this._imageHashToSignaturePartKey.get(args.imageHash) || []
-    return keys.map((k) => this._partIndexForDigestAndSigner.get(k)).filter((v) => v) as SignaturePart[]
+    const keys = this._imageHashToSignaturePartKey.get(args.imageHash)?.keys()
+    if (!keys) return []
+
+    const parts: SignaturePart[] = []
+    for (const key of keys) {
+      const part = this._partIndexForDigestAndSigner.get(key)
+      if (part) {
+        parts.push(part)
+      }
+    }
+
+    return parts
   }
 }
