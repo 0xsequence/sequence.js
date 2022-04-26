@@ -16,6 +16,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
   }
 
   register = () => {
+    /* eslint-disable */
     if (registeredWindowMessageProvider) {
       // overriding the registered message provider
       registeredWindowMessageProvider.unregister()
@@ -25,6 +26,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
     // listen for incoming messages from wallet
     window.addEventListener('message', this.onWindowEvent)
     registeredWindowMessageProvider = this
+    /* eslint-enable */
 
     // open heartbeat
     this.on('open', () => {
