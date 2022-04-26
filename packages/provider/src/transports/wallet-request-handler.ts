@@ -750,7 +750,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   notifyDisconnect(origin?: string) {
     this.events.emit('accountsChanged', [], origin)
-    // this.events.emit('networks', [])
     this.events.emit('disconnect')
   }
 

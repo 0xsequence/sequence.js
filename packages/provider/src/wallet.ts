@@ -22,13 +22,14 @@ import { logger } from '@0xsequence/utils'
 import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
-import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
+import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails, ProviderRpcError } from './types'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
 import { isDappConnected, isBrowserExtension } from './utils'
+import { ERROR_MESSAGES } from './constants'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -229,6 +230,12 @@ export class Wallet implements WalletProvider {
     // below will update the wallet context automatically
     this.transport.messageProvider.on('walletContext', (walletContext: WalletContext) => {
       this.useSession({ walletContext: walletContext }, true)
+    })
+
+    this.transport.messageProvider.on('disconnect', (error?: ProviderRpcError) => {
+      if (error?.toString() === ERROR_MESSAGES.DAPP_NOT_CONNECTED) {
+        this.clearSession()
+      }
     })
 
     // Load existing session from localStorage

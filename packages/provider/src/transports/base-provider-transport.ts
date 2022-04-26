@@ -20,6 +20,7 @@ import {
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
+import { ERROR_MESSAGES } from '../constants'
 
 export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
 
@@ -169,10 +170,13 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         return
       }
 
-      // check if open error occured due to invalid defaultNetworkId
+      // check if open error occured due to invalid defaultNetworkId or not connected dapp
       if (message.data?.error) {
         const err = new Error(`opening wallet failed: received ${message.data?.error}`)
         logger.error(err)
+        if (message.data?.error === ERROR_MESSAGES.DAPP_NOT_CONNECTED) {
+          this.events.emit('disconnect', message.data?.error)
+        }
         this.close()
         throw err
       }

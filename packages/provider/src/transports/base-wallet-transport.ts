@@ -20,7 +20,7 @@ import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
 import { isBrowserExtension, isDappConnected } from '../utils'
-import { LOCAL_STORAGE_KEYS } from '../constants'
+import { LOCAL_STORAGE_KEYS, ERROR_MESSAGES } from '../constants'
 
 export abstract class BaseWalletTransport implements WalletTransport {
   protected walletRequestHandler: WalletRequestHandler
@@ -431,8 +431,9 @@ export abstract class BaseWalletTransport implements WalletTransport {
         } else {
           this.notifyOpen({
             sessionId: this._sessionId,
-            error: `dapp with origin '${this.appOrigin}' is not connected`
+            error: ERROR_MESSAGES.DAPP_NOT_CONNECTED
           })
+          logger.error(`dapp origin ${this.appOrigin} not found in connected dapps`)
           return false
         }
       }
