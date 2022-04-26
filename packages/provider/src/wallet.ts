@@ -1,26 +1,18 @@
 import {
-  Networks,
   NetworkConfig,
   WalletContext,
-  sequenceContext,
   ChainIdLike,
-  getChainId,
   JsonRpcSender,
   JsonRpcRouter,
   JsonRpcMiddleware,
   allowProviderMiddleware,
   CachedProvider,
-  PublicProvider,
   loggingProviderMiddleware,
   SigningProvider,
   EagerProvider,
   exceptionProviderMiddleware,
   networkProviderMiddleware,
-  JsonRpcExternalProvider,
-  JsonRpcHandlerFunc,
   JsonRpcRequest,
-  JsonRpcResponse,
-  JsonRpcResponseCallback,
   findNetworkConfig,
   updateNetworkConfig,
   ensureValidNetworks
@@ -33,10 +25,10 @@ import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyM
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
-import { LocalStore } from './utils'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
+import { isDappConnected, isBrowserExtension } from './utils'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -77,8 +69,6 @@ export class Wallet implements WalletProvider {
   private config: ProviderConfig
   private session?: WalletSession
 
-  private connectedSites: LocalStore<string[]>
-
   private transport: {
     // top-level provider which connects all transport layers
     provider?: Web3Provider
@@ -115,7 +105,6 @@ export class Wallet implements WalletProvider {
     this.transport = {}
     this.networks = []
     this.providers = {}
-    this.connectedSites = new LocalStore('@sequence.connectedSites', [])
     this.utils = new WalletUtils(this)
     this.init()
   }
@@ -143,7 +132,7 @@ export class Wallet implements WalletProvider {
       this.transport.extensionMessageProvider = new ExtensionMessageProvider(this.config.transports.extensionTransport.runtime)
       // this.transport.extensionMessageProvider.register()
       this.transport.messageProvider.add(this.transport.extensionMessageProvider)
-      
+
       // NOTE/REVIEW: see note in mux-message-provider
       //
       // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
@@ -214,8 +203,17 @@ export class Wallet implements WalletProvider {
       }
     })
 
-    // below will update the account upon wallet connect/disconnect (aka, login/logout)
-    this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
+    // below will update the account upon wallet connect/disconnect - aka, login/logout.
+    // if an origin is provided, this operation should be performed only on that origin
+    // and shouldn't affect the session of the wallet.
+    this.transport.messageProvider.on('accountsChanged', (accounts: string[], origin?: string) => {
+      if (origin) {
+        if (accounts.length > 0) {
+          this.useSession({ accountAddress: accounts[0] }, true)
+        }
+        return
+      }
+
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
         this.clearSession()
       } else {
@@ -245,13 +243,11 @@ export class Wallet implements WalletProvider {
       this.disconnect()
     }
 
-    if (
-      this.isConnected() &&
-      this.isSiteConnected(options?.origin) &&
-      !!this.session &&
-      !options?.authorize &&
-      !options?.askForEmail
-    ) {
+    // Check only for extension as window transport communication won't be able to check localStorage,
+    // and checking session is actually enough to determine if we're connected or not in that case.
+    const isDappConnectedInExtension = isBrowserExtension() ? isDappConnected(options?.origin) : true
+
+    if (this.isConnected() && !!this.session && isDappConnectedInExtension && !options?.authorize && !options?.askForEmail) {
       return {
         connected: true,
         session: this.session,
@@ -273,47 +269,12 @@ export class Wallet implements WalletProvider {
     if (connectDetails.connected) {
       if (!!connectDetails.session) {
         this.useSession(connectDetails.session, true)
-
-        this.addConnectedSite(options?.origin)
       } else {
         throw new Error('impossible state, connect response is missing session')
       }
     }
 
     return connectDetails
-  }
-
-  addConnectedSite(origin: string | undefined) {
-    origin = origin || window.location.origin
-
-    const connectedSites = this.connectedSites.get()
-
-    if (connectedSites) {
-      if (connectedSites.includes(origin)) {
-        return
-      }
-      this.connectedSites.set([...connectedSites, origin])
-    } else {
-      this.connectedSites.set([origin])
-    }
-  }
-
-  removeConnectedSite(origin: string) {
-    const authorized = this.connectedSites.get()
-
-    if (authorized) {
-      this.connectedSites.set(authorized.filter(domain => domain !== origin))
-    }
-  }
-
-  getConnectedSites() {
-    return this.connectedSites.get()
-  }
-
-  private isSiteConnected(origin: string | undefined): boolean {
-    const authorized = this.connectedSites.get()
-
-    return !!authorized && authorized.includes(origin || window.location.origin)
   }
 
   authorize = async (options?: ConnectOptions): Promise<ConnectDetails> => {

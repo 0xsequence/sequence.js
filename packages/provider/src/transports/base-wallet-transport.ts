@@ -5,11 +5,9 @@ import {
   ProviderMessageRequest,
   EventType,
   ProviderMessageResponse,
-  ProviderMessageTransport,
   ProviderRpcError,
   InitState,
   ConnectDetails,
-  OpenWalletIntent,
   WalletSession,
   TransportSession
 } from '../types'
@@ -21,9 +19,8 @@ import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
-import { isBrowserExtension } from '../utils'
-
-const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
+import { isBrowserExtension, isDappConnected } from '../utils'
+import { LOCAL_STORAGE_KEYS } from '../constants'
 
 export abstract class BaseWalletTransport implements WalletTransport {
   protected walletRequestHandler: WalletRequestHandler
@@ -55,9 +52,9 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.notifyDisconnect(error)
     })
 
-    this.walletRequestHandler.on('accountsChanged', (accounts: string[]) => {
+    this.walletRequestHandler.on('accountsChanged', (accounts: string[], origin?: string) => {
       if (!this.registered) return
-      this.notifyAccountsChanged(accounts)
+      this.notifyAccountsChanged(accounts, origin)
     })
 
     this.walletRequestHandler.on('networks', (networks: NetworkConfig[]) => {
@@ -206,11 +203,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  notifyAccountsChanged(accounts: string[]) {
+  notifyAccountsChanged(accounts: string[], origin?: string) {
     this.sendMessage({
       idx: -1,
       type: EventType.ACCOUNTS_CHANGED,
-      data: accounts
+      data: { accounts: accounts, origin: origin }
     })
   }
 
@@ -409,7 +406,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
         try {
           const connectDetails = await this.walletRequestHandler.promptConnect(intent.options)
           if (connectDetails.connected) {
-            this.walletRequestHandler.notifyConnect(connectDetails)
+            this.walletRequestHandler.notifyConnect(connectDetails, intent.options?.origin)
           }
         } catch (err) {
           logger.warn('promptConnect not connected:', err)
@@ -420,14 +417,24 @@ export abstract class BaseWalletTransport implements WalletTransport {
           }
         }
       } else {
-        // user is already connected, notify session details.
-        // TODO: in future, keep list if 'connected' dapps / sessions in the session
-        // controller, and only sync with allowed apps
-        this.notifyOpen({
-          sessionId: this._sessionId,
-          chainId: `${chainId}`,
-          session: await this.walletRequestHandler.walletSession()
-        })
+        // if user is already connected and origin is in connected dapps, notify session details.
+        if (
+          isDappConnected(this.appOrigin) ||
+          this.appOrigin?.includes('chrome-extension') ||
+          !this.walletRequestHandler.prompter
+        ) {
+          this.notifyOpen({
+            sessionId: this._sessionId,
+            chainId: `${chainId}`,
+            session: await this.walletRequestHandler.walletSession()
+          })
+        } else {
+          this.notifyOpen({
+            sessionId: this._sessionId,
+            error: `dapp with origin '${this.appOrigin}' is not connected`
+          })
+          return false
+        }
       }
     }
 
@@ -435,11 +442,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
   }
 
   private saveTransportSession = (session: TransportSession) => {
-    window.localStorage.setItem(TRANSPORT_SESSION_LS_KEY, JSON.stringify(session))
+    window.localStorage.setItem(LOCAL_STORAGE_KEYS.TRANSPORT_SESSION, JSON.stringify(session))
   }
 
   protected getCachedTransportSession = (): TransportSession | null => {
-    const session = window.localStorage.getItem(TRANSPORT_SESSION_LS_KEY)
+    const session = window.localStorage.getItem(LOCAL_STORAGE_KEYS.TRANSPORT_SESSION)
 
     try {
       return session ? (JSON.parse(session) as TransportSession) : null

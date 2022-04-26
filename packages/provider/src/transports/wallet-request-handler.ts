@@ -7,6 +7,7 @@ import {
   MessageToSign,
   ProviderRpcError,
   ConnectOptions,
+  ConnectedDapp,
   ConnectDetails,
   PromptConnectDetails,
   WalletSession,
@@ -32,7 +33,8 @@ import { isSignedTransactions, TransactionRequest } from '@0xsequence/transactio
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
 
-import { isWalletUpToDate, prefixEIP191Message } from '../utils'
+import { isBrowserExtension, isWalletUpToDate, prefixEIP191Message } from '../utils'
+import { LOCAL_STORAGE_KEYS } from '../constants'
 
 const SIGNER_READY_TIMEOUT = 10000
 
@@ -50,7 +52,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private signer: Signer | null | undefined
   private signerReadyCallbacks: Array<() => void> = []
 
-  private prompter: WalletUserPrompter | null
+  readonly prompter: WalletUserPrompter | null
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
@@ -110,7 +112,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       const connectOptions = this._connectOptions
 
       const connectDetails = await this.connect(connectOptions)
-      this.notifyConnect(connectDetails)
+      this.notifyConnect(connectDetails, connectOptions?.origin)
 
       if (!connectOptions || connectOptions.keepWalletOpened !== true) {
         this.notifyClose()
@@ -207,6 +209,21 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const connectDetails: ConnectDetails = promptConnectDetails
     if (connectDetails.connected && !connectDetails.session) {
       connectDetails.session = await this.walletSession()
+    }
+
+    if (connectDetails.connected && options) {
+      if (options.origin === undefined) {
+        throw new Error('promptConnect options must include an origin')
+      }
+      this.saveConnectedDapp({
+        app: options.app ?? options.origin,
+        origin: options.origin,
+        connectionType: !!options.walletConnectConnection
+          ? 'WALLET_CONNECT'
+          : isBrowserExtension()
+          ? 'BROWSER_EXTENSION'
+          : 'SEQUENCE_INTEGRATION'
+      })
     }
 
     return promptConnectDetails
@@ -709,16 +726,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
   }
 
-  notifyConnect(connectDetails: ConnectDetails) {
+  notifyConnect(connectDetails: ConnectDetails, origin?: string) {
     this.events.emit('connect', connectDetails)
     if (connectDetails.session?.accountAddress) {
-      this.events.emit('accountsChanged', [connectDetails.session?.accountAddress])
+      this.events.emit('accountsChanged', [connectDetails.session?.accountAddress], origin)
     }
   }
 
-  notifyDisconnect() {
-    this.events.emit('accountsChanged', [])
-    this.events.emit('networks', [])
+  notifyDisconnect(origin?: string) {
+    this.events.emit('accountsChanged', [], origin)
+    // this.events.emit('networks', [])
     this.events.emit('disconnect')
   }
 
@@ -795,6 +812,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
     return false
+  }
+
+  private saveConnectedDapp(connectedDapp: ConnectedDapp) {
+    console.log('save connected dapp', connectedDapp)
+    const connectedDappsKey = LOCAL_STORAGE_KEYS.CONNECTED_DAPPS
+    const data = window.localStorage.getItem(connectedDappsKey)
+    const connectedDapps: ConnectedDapp[] = data ? JSON.parse(data) : []
+    if (!connectedDapps.map(dapp => dapp.origin).includes(connectedDapp.origin)) {
+      connectedDapps.push(connectedDapp)
+      window.localStorage.setItem(connectedDappsKey, JSON.stringify(connectedDapps))
+    } else {
+      logger.warn(`Dapp ${connectedDapp.origin} is already connected`)
+    }
   }
 }
 

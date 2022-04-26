@@ -3,9 +3,11 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
 import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, recoverConfig, Signer, isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
+import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
+import { LOCAL_STORAGE_KEYS } from './constants'
+import { ConnectedDapp } from './types'
 
-const eip191prefix = ethers.utils.toUtf8Bytes("\x19Ethereum Signed Message:\n")
+const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
 export const messageToBytes = (message: BytesLike): Uint8Array => {
   if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
@@ -17,11 +19,7 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
 
 export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
-  return ethers.utils.concat([
-    eip191prefix,
-    ethers.utils.toUtf8Bytes(String(messageBytes.length)),
-    messageBytes
-  ])
+  return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
 }
 
 export const isValidSignature = async (
@@ -161,4 +159,12 @@ export class LocalStore<T extends Object = string> {
   del() {
     window.localStorage.removeItem(this.key)
   }
+}
+
+export const isDappConnected = (origin: string | undefined): boolean => {
+  if (!origin) return false
+  const connectedDappsKey = LOCAL_STORAGE_KEYS.CONNECTED_DAPPS
+  const data = window.localStorage.getItem(connectedDappsKey)
+  const connectedDapps: ConnectedDapp[] = data ? JSON.parse(data) : []
+  return connectedDapps.map(dapp => dapp.origin).includes(origin)
 }
