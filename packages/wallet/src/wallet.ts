@@ -1,5 +1,5 @@
 import { Provider, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, utils } from 'ethers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Interface } from '@ethersproject/abi'
 import { BytesLike } from '@ethersproject/bytes'
@@ -11,15 +11,9 @@ import {
   Transaction,
   Transactionish,
   TransactionRequest,
-  NonceDependency,
-  isSequenceTransaction,
   readSequenceNonce,
   appendNonce,
-  hasSequenceTransactions,
-  toSequenceTransactions,
   sequenceTxAbiEncode,
-  makeExpirable,
-  makeAfterNonce,
   SignedTransactions,
   computeMetaTxnHash,
   digestOfTransactionsNonce,
@@ -57,7 +51,7 @@ import {
   isDecodedFullSigner
 } from '@0xsequence/config'
 
-import { encodeTypedDataDigest, packMessageData, subDigestOf } from '@0xsequence/utils'
+import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 
 import { RemoteSigner } from './remote-signers'
 
