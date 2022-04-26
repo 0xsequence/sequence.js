@@ -368,7 +368,11 @@ export class Wallet extends Signer {
     }
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
+  async sendSignedTransactions(
+    signedTxs: SignedTransactions,
+    chainId?: ChainIdLike,
+    quote?: FeeQuote
+  ): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
@@ -548,7 +552,10 @@ export class Wallet extends Signer {
 
     const [txs, n] = await Promise.all([this.buildUpdateConfigTransaction(config, publish, indexed), nonce ?? this.getNonce()])
 
-    return [{ address: this.address, ...config }, await this.sendTransaction(appendNonce(txs, n), undefined, undefined, quote, callback)]
+    return [
+      { address: this.address, ...config },
+      await this.sendTransaction(appendNonce(txs, n), undefined, undefined, quote, callback)
+    ]
   }
 
   // publishConfig will publish the current wallet config to the network via the relayer.
