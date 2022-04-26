@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 0.36.12
+
+### Patch Changes
+
+- wallet: skip remote signers if not needed
+- auth: check that signature meets threshold before requesting auth token
+
 ## 0.36.11
 
 ### Patch Changes
