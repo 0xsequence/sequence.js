@@ -114,6 +114,21 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       const connectDetails = await this.connect(connectOptions)
       this.notifyConnect(connectDetails, connectOptions?.origin)
 
+      if (connectDetails.connected && connectOptions) {
+        if (connectOptions.origin === undefined) {
+          throw new Error('promptConnect options must include an origin')
+        }
+        this.saveConnectedDapp({
+          app: connectOptions.app ?? connectOptions.origin,
+          origin: connectOptions.origin,
+          connectionType: !!connectOptions.walletConnectConnection
+            ? 'WALLET_CONNECT'
+            : isBrowserExtension()
+            ? 'BROWSER_EXTENSION'
+            : 'SEQUENCE_INTEGRATION'
+        })
+      }
+
       if (!connectOptions || connectOptions.keepWalletOpened !== true) {
         this.notifyClose()
       }
