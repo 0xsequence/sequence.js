@@ -541,7 +541,6 @@ export class Account extends Signer {
     const sessionUtilsInterface = new Interface(walletContracts.sessionUtils.abi)
     const sessionNonce = encodeNonce(SESSIONS_SPACE, 0)
 
-
     // Get latest configuration
     const lastConfig = await this.getRichWalletConfig(chainId)
     if (!lastConfig) throw new Error(`No wallet config found for chainId ${chainId}`)

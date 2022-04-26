@@ -91,6 +91,22 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
 }
 
 export const imageHash = (config: WalletConfig): string => {
+  /*
+
+    This method is equivalent to:
+
+    return config.signers.reduce(
+      (imageHash, signer) => {
+        const encoded = ethers.utils.defaultAbiCoder.encode(
+          ['bytes32', 'uint8', 'address'],
+          [imageHash, signer.weight, signer.address]
+        )
+        return ethers.utils.keccak256(encoded)
+      },
+      ethers.utils.solidityPack(['uint256'], [config.threshold])
+    )
+
+  */
   const work = new Array(96).fill(0)
 
   // Threshold uses 2 bytes max

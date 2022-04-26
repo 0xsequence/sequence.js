@@ -106,14 +106,15 @@ export class LocalConfigTracker implements ConfigTracker {
     // Process all signatures
     await Promise.all(args.signatures.map(async (s, i) => {
       const subDigest = subDigestOf(args.wallet, s.chainId, args.digest)
-      const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber(), this.walletConfigs)
+      const decoded = decodeSignature(s.signature)
+      const recovered = staticRecoverConfig(subDigest, decoded, s.chainId, this.walletConfigs)
 
       // Save the embeded config
       await Promise.all(recovered.allConfigs.map(async (config) => {
         const ih = imageHash(config)
         if (!savedConfigs.has(ih)) {
           savedConfigs.add(ih)
-          await this.saveWalletConfig({ config })
+          await this.database.saveWalletConfig({ config, imageHash: ih })
         }
       }))
 

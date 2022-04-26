@@ -578,7 +578,7 @@ export class Wallet extends Signer {
 
               try {
                 // Check if signature can be recovered as EOA signature
-                const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
+                const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature:signature }) === s.address
 
                 if (isEOASignature) {
                   // Exclude address on EOA signatures
