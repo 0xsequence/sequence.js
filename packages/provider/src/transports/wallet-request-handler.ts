@@ -830,7 +830,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   private saveConnectedDapp(connectedDapp: ConnectedDapp) {
-    console.log('save connected dapp', connectedDapp)
     const connectedDappsKey = LOCAL_STORAGE_KEYS.CONNECTED_DAPPS
     const data = window.localStorage.getItem(connectedDappsKey)
     const connectedDapps: ConnectedDapp[] = data ? JSON.parse(data) : []
