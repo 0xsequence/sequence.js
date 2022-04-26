@@ -53,6 +53,7 @@ import {
   joinSignatures,
   recoverEOASigner,
   decodeSignature,
+  isDecodedSigner,
   isDecodedFullSigner
 } from '@0xsequence/config'
 
@@ -501,13 +502,18 @@ export class Wallet extends Signer {
       }
     }
 
-    // Split local signers and remote signers
-    const localSigners = this._signers.filter(s => !RemoteSigner.isRemoteSigner(s))
-    const remoteSigners = this._signers.filter(s => RemoteSigner.isRemoteSigner(s))
-
     // Sign message first using localSigners
-    // include local signatures for remote signers
+    const localSigners = this._signers.filter(s => !RemoteSigner.isRemoteSigner(s))
     const localSignature = await signWith(localSigners, this.packMsgAndSig(digest, [], signChainId))
+
+    // Skip remote signers if we already meet threshold
+    const totalWeight = localSignature.signers.filter(isDecodedSigner).reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
+    if (totalWeight >= this.config.threshold) {
+      return encodeSignature(localSignature)
+    }
+
+    // include local signatures for remote signers
+    const remoteSigners = this._signers.filter(s => RemoteSigner.isRemoteSigner(s))
     const remoteSignature = await signWith(
       remoteSigners,
       this.packMsgAndSig(digest, encodeSignature(localSignature), signChainId)
