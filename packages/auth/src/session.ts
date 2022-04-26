@@ -1,5 +1,13 @@
 import { SequenceAPIClient } from '@0xsequence/api'
-import { ConfigFinder, editConfig, genConfig, SequenceUtilsFinder, WalletConfig } from '@0xsequence/config'
+import {
+  ConfigFinder,
+  SequenceUtilsFinder,
+  WalletConfig,
+  decodeSignature,
+  editConfig,
+  genConfig,
+  isDecodedSigner
+} from '@0xsequence/config'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
@@ -275,6 +283,12 @@ export class Session {
             .useConfig(val.config!)
             .sign(proof.messageDigest())
             .then(signature => {
+              const decodedSignature = decodeSignature(signature)
+              const totalWeight = decodedSignature.signers.filter(isDecodedSigner).reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
+              if (totalWeight < decodedSignature.threshold) {
+                throw Error(`insufficient signing power, need ${decodedSignature.threshold}, have ${totalWeight}`)
+              }
+
               proof.signature = signature
               return ethAuth.encodeProof(proof, true)
             })
