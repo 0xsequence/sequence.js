@@ -7,7 +7,6 @@ import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig } from '@0
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
 import { ethers, Signer as AbstractSigner, Wallet } from 'ethers'
-import { network } from '../../0xsequence/src/sequence'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -274,7 +273,7 @@ export class Session {
 
     // Sign proof message using account
     const proofString = {
-      proofString: this.account.signMessage(proof.messageDigest(), undefined, undefined, true).then((signature: string) => {
+      proofString: this.account.signMessage(proof.messageDigest(), undefined, true, true).then((signature: string) => {
         proof.signature = signature
         return ethAuth.encodeProof(proof, true)
       }),

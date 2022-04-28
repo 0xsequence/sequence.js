@@ -1,11 +1,11 @@
-import { WindowMessageProvider } from '@0xsequence/provider'
+import { prefixEIP191Message, WindowMessageProvider } from '@0xsequence/provider'
 import { ethers } from 'ethers'
 import { Web3Provider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 
 import { isValidSignature, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
-import { configureLogger, packMessageData } from '@0xsequence/utils'
+import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
 
 import { testWalletContext } from '../testutils'
 
@@ -75,16 +75,16 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x0001000148ac663d58ddee141c0bc98f95d2d3017a5328017e3792a8c431186c66669649369aac41bd649cda1708a5af53d5477fa64106faaed4755cf516e559c0bcf51b1c02',
+      '0x00010001230f8b68557d982f26234c9c7ce4ff35a449392c1e7cbc9a1129268ce2acea40529252535b1caa300e30d53d5c24009cb6f2fafd0e132944016f9472c1a0cc8b1b02',
       'signature match'
     )
 
     //
     // Verify the message signature
     //
-    const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    const messageDigest = encodeMessageDigest(prefixEIP191Message(message))
     const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
-    assert.true(isValid, 'signature is valid')
+    assert.true(isValid, 'signature is valid - 5')
 
     // also compute the subDigest of the message, to be provided to the end-user
     // in order to recover the config properly, the subDigest + sig is required.
@@ -97,7 +97,7 @@ export const tests = async () => {
     const walletConfig = await recoverConfig(subDigest, sig)
 
     const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress === address, 'recover address')
+    assert.true(recoveredWalletAddress === address, 'recover address - 5')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
@@ -163,7 +163,7 @@ export const tests = async () => {
     const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
     const messageDigest = ethers.utils.arrayify(messageHash)
     const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
-    assert.true(isValid, 'signature is valid')
+    assert.true(isValid, 'signature is valid - 6')
 
     // also compute the subDigest of the message, to be provided to the end-user
     // in order to recover the config properly, the subDigest + sig is required.
@@ -176,7 +176,7 @@ export const tests = async () => {
     const walletConfig = await recoverConfig(subDigest, sig)
 
     const recoveredWalletAddress = addressOf(walletConfig, testWalletContext)
-    assert.true(recoveredWalletAddress === address, 'recover address')
+    assert.true(recoveredWalletAddress === address, 'recover address - 6')
 
     const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
     assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')

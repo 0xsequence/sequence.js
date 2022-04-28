@@ -1,5 +1,40 @@
 # @0xsequence/relayer
 
+## 0.36.12
+
+### Patch Changes
+
+- wallet: skip remote signers if not needed
+- auth: check that signature meets threshold before requesting auth token
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.36.12
+  - @0xsequence/config@0.36.12
+  - @0xsequence/transactions@0.36.12
+  - @0xsequence/utils@0.36.12
+
+## 0.36.11
+
+### Patch Changes
+
+- Prefix EIP191 message on wallet-request-handler
+- Updated dependencies
+  - @0xsequence/abi@0.36.11
+  - @0xsequence/config@0.36.11
+  - @0xsequence/transactions@0.36.11
+  - @0xsequence/utils@0.36.11
+
+## 0.36.10
+
+### Patch Changes
+
+- support bannerUrl on connect
+- Updated dependencies
+  - @0xsequence/abi@0.36.10
+  - @0xsequence/config@0.36.10
+  - @0xsequence/transactions@0.36.10
+  - @0xsequence/utils@0.36.10
+
 ## 0.36.9
 
 ### Patch Changes

@@ -26,7 +26,7 @@ import {
   RemoteSigner
 } from '../src'
 
-import { LocalWeb3Provider } from '../../provider/src'
+import { LocalWeb3Provider, prefixEIP191Message } from '../../provider/src'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -41,7 +41,7 @@ const { expect } = chai.use(chaiAsPromised)
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 import hardhat from 'hardhat'
-import { Interface } from 'ethers/lib/utils'
+import { BytesLike, Interface } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 
 type EthereumInstance = {
@@ -147,11 +147,13 @@ describe('Wallet integration', function () {
     const options = [
       {
         name: 'sequence-wallet',
-        signer: () => wallet
+        signer: () => wallet,
+        prefixMessage: (m: BytesLike) => m
       },
       {
         name: 'ethers-signer',
-        signer: () => provider.getSigner()
+        signer: () => provider.getSigner(),
+        prefixMessage: (m: BytesLike) => prefixEIP191Message(m)
       }
     ]
 
@@ -304,7 +306,7 @@ describe('Wallet integration', function () {
             // const receipt = await provider.getTransactionReceipt(txn.hash)
             // console.log('status?', receipt.status)
 
-            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, message, signature)
+            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, s.prefixMessage(message), signature)
             await expect(call).to.be.fulfilled
           })
         })
@@ -878,7 +880,7 @@ describe('Wallet integration', function () {
         // Force wallet deployment
         await wallet.sendTransaction({ to: wallet.address, value: 0 })
 
-        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, ethers.utils.toUtf8Bytes(message), signature)
+        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, prefixEIP191Message(message), signature)
         await expect(call).to.be.fulfilled
       })
 
@@ -1596,7 +1598,7 @@ describe('Wallet integration', function () {
           expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
         })
         it('Should reject broken remote signer', async () => {
-          const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
+          const wallet2 = new lib.Wallet({ config: config, context }, r2).connect(ethnode.provider, relayer)
           const signature = wallet2.signMessage(message, await wallet2.getChainId(), true)
           await expect(signature).to.be.rejected
         })
