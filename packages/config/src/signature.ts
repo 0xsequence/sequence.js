@@ -295,7 +295,7 @@ export const staticRecoverConfigPart = (
       throw new Error(`Invalid EIP1271 signature ${part.signature}`)
     }
 
-    const decoded = decodeSignature(part.signature)
+    const decoded = decodeSignature(part.signature.slice(0, -2))
     const nestedSubDigest = subDigestOf(part.address, chainId, subDigest)
     const recovered = staticRecoverConfig(nestedSubDigest, decoded, chainId, walletConfigs)
 
