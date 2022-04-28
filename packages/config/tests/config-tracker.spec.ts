@@ -1,7 +1,7 @@
 import { ChainIdLike, WalletContext, sequenceContext } from "@0xsequence/network"
 import { Account, AccountOptions, Wallet } from "@0xsequence/wallet"
 import { BigNumber, ethers, Signer } from "ethers"
-import { addressOf, ConfigTracker, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, IndexedDBLocalTracker, LocalConfigTracker, RedundantConfigTracker, SESSIONS_SPACE, staticRecoverConfig, staticRecoverConfigPart, UnreliableConfigTracker, UntrustedConfigTracker, WalletConfig } from "../src"
+import { addressOf, ConfigTracker, DecodedSignaturePart, decodeSignature, encodeSignature, imageHash, IndexedDBLocalTracker, LocalConfigTracker, RedundantConfigTracker, SessionsApiConfigTracker, SESSIONS_SPACE, staticRecoverConfig, staticRecoverConfigPart, UnreliableConfigTracker, UntrustedConfigTracker, WalletConfig } from "../src"
 import { walletContracts } from "@0xsequence/abi"
 import { Interface } from "ethers/lib/utils"
 import { digestOfTransactionsNonce, encodeNonce, packMetaTransactionsData, SignedTransactionBundle, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions"
@@ -372,8 +372,27 @@ describe.only('Config tracker', function () {
     expect(unpacked[j].data).to.equal(data2)
   }
 
-
   ([
+    ...(
+      process.env.TEST_CONFIG_TRACKER_URL && process.env.TEST_CONFIG_TRACKER_URL !== "" ? [
+        {
+          name: `Remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
+          configTracker: new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL),
+          torture: true,
+          tortureSize: 250,
+        }, {
+          name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
+          configTracker: new UntrustedConfigTracker(new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)),
+          torture: true,
+          tortureSize: 15
+        }, {
+          name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL} + LocalConfigTracker`,
+          configTracker: new RedundantConfigTracker([new UntrustedConfigTracker(new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)), new LocalConfigTracker()]),
+          torture: true,
+          tortureSize: 15
+        }
+      ] : []
+    ),
     {
       configTracker: new LocalConfigTracker(),
       name: "Local config tracker",
@@ -502,7 +521,7 @@ describe.only('Config tracker', function () {
 
       it("Should save configurations", async () => {
         const config = randomConfig()
-        configTracker.saveWalletConfig({ config: config })
+        await configTracker.saveWalletConfig({ config: config })
 
         const resconfig = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
         expect(resconfig).to.be.deep.equal(config)
@@ -511,8 +530,8 @@ describe.only('Config tracker', function () {
       it("Should save the same configuration twice", async () => {
         const config = randomConfig()
 
-        configTracker.saveWalletConfig({ config })
-        configTracker.saveWalletConfig({ config })
+        await configTracker.saveWalletConfig({ config })
+        await configTracker.saveWalletConfig({ config })
 
         const resconfig = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
         expect(config).to.be.deep.equal(resconfig)

@@ -18,6 +18,9 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     wallet: string
   }): Promise<string | undefined> => {
     const candidates = await this.sessions.imageHashForWallet({ address: args.wallet })
+    if (!candidates?.wallets) {
+      return undefined
+    }
 
     // API may return counterfactual wallets for other configs
     // so we filter looking for the rifgr one
@@ -65,7 +68,10 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     imageHash: string
   }): Promise<WalletConfig | undefined> => {
     const res = await this.sessions.configurationForImageHash({ imageHash: args.imageHash })
-    return res.config
+    return res?.config ? {
+      threshold: res.config.threshold,
+      signers: res.config.signers
+    } : undefined
   }
 
   saveWitness = async (args: {
