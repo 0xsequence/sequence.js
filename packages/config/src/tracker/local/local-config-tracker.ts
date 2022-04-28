@@ -87,7 +87,7 @@ export class LocalConfigTracker implements ConfigTracker {
     await this.database.savePresignedTransaction({ digest, body })
 
     // Process all signatures
-    await this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
+    return this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
   }
 
   processSignatures = async (args: {
@@ -98,13 +98,13 @@ export class LocalConfigTracker implements ConfigTracker {
       signature: string
     }[],
     imageHash?: string
-  }): Promise<void> => {
+  }): Promise<any> => {
     // All recovered configs are probably the same thing
     // so we keep track of the ones we saved to avoid doing it twice
     const savedConfigs = new Set()
 
     // Process all signatures
-    await Promise.all(args.signatures.map(async (s, i) => {
+    return Promise.all(args.signatures.map(async (s, i) => {
       const subDigest = subDigestOf(args.wallet, s.chainId, args.digest)
       const decoded = decodeSignature(s.signature)
       const recovered = staticRecoverConfig(subDigest, decoded, s.chainId, this.walletConfigs)
@@ -119,16 +119,16 @@ export class LocalConfigTracker implements ConfigTracker {
       }))
 
       // Save signature parts
-      await Promise.all(recovered.parts.filter((p) => p.signature).map(async (p) => {
-        await this.database.saveSignaturePart({
-          wallet: args.wallet,
-          signature: p.signature!,
-          signer: p.signer,
-          digest: args.digest,
-          chainId: s.chainId,
-          imageHash: args.imageHash
-        })
-      }))
+      await this.database.saveSignatureParts({
+        wallet: args.wallet,
+        digest: args.digest,
+        chainId: s.chainId,
+        imageHash: args.imageHash,
+        signatures: recovered.parts.filter((p) => p.signature).map((p) => ({
+          part: p.signature!,
+          signer: p.signer
+        }))
+      })
     }))
   }
 

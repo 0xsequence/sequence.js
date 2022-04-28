@@ -46,12 +46,14 @@ export interface ConfigTrackerDatabase {
     body: TransactionBody
   }) => Promise<void>
 
-  saveSignaturePart: (args: {
+  saveSignatureParts: (args: {
     wallet: string,
-    signer: string,
     digest: string,
-    chainId: ethers.BigNumberish,
-    signature: DecodedSignaturePart,
+    chainId: ethers.BigNumber,
+    signatures: {
+      part: DecodedSignaturePart,
+      signer: string,
+    }[],
     imageHash?: string
   }) => Promise<void>
 
@@ -73,3 +75,4 @@ export interface ConfigTrackerDatabase {
 
 export * from './local-config-tracker'
 export * from './memory-config-tracker-db'
+export * from './indexed-config-tracker-db'

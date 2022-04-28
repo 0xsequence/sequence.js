@@ -19,12 +19,12 @@ export class RedundantConfigTracker implements ConfigTracker {
     prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
     // Get all presigned configurations for all childs
-    const rawResponses = await Promise.allSettled(this.childs.map((c) => c.loadPresignedConfiguration(args)))
+    const responses = await Promise.all(this.childs.map((c) => c.loadPresignedConfiguration(args)))
 
     // Filter empty responses or rejected promises
-    const responses = rawResponses
-      .filter((r) => r.status === "fulfilled" && r.value?.length > 0)
-      .map((r: PromiseFulfilledResult<PresignedConfigUpdate[]>) => r.value)
+    // const responses = rawResponses
+    //   .filter((r) => r.status === "fulfilled" && r.value?.length > 0)
+    //   .map((r: PromiseFulfilledResult<PresignedConfigUpdate[]>) => r.value)
 
     // Find the response with the highest gapNonce
     const found = responses.reduce((p, c) => {
@@ -87,14 +87,14 @@ export class RedundantConfigTracker implements ConfigTracker {
     }[]
   }): Promise<void> => {
     // Save config to all childs
-    await Promise.allSettled(this.childs.map((c) => c.savePresignedConfiguration(args)))
+    await Promise.all(this.childs.map((c) => c.savePresignedConfiguration(args)))
   }
 
   saveWalletConfig = async ( args: {
     config: WalletConfig
   }): Promise<void> => {
     // Save config to all childs
-    await Promise.allSettled(this.childs.map((c) => c.saveWalletConfig(args)))
+    await Promise.all(this.childs.map((c) => c.saveWalletConfig(args)))
   }
 
   saveWitness = async( args : {
@@ -106,7 +106,7 @@ export class RedundantConfigTracker implements ConfigTracker {
     }[]
   }): Promise<void> => {
     // Save config to all childs
-    await Promise.allSettled(this.childs.map((c) => c.saveWitness(args)))
+    await Promise.all(this.childs.map((c) => c.saveWitness(args)))
   }
 
   imageHashOfCounterFactualWallet = async (args: {
@@ -128,24 +128,22 @@ export class RedundantConfigTracker implements ConfigTracker {
 
   saveCounterFactualWallet = async (args: { imageHash: string; context: WalletContext }): Promise<void> => {
     // Save config to all childs
-    await Promise.allSettled(this.childs.map((c) => c.saveCounterFactualWallet(args)))
+    await Promise.all(this.childs.map((c) => c.saveCounterFactualWallet(args)))
   }
 
   walletsOfSigner = async (args: {
     signer: string
   }): Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]> => {
-    const found = await Promise.allSettled(this.childs.map((c) => c.walletsOfSigner(args)))
+    const found = await Promise.all(this.childs.map((c) => c.walletsOfSigner(args)))
 
     // Combine all found values
     const res: { wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart } }[] = []
     found.forEach((f) => {
-      if (f.status === "fulfilled" && f.value) {
-        f.value.forEach((v) => {
-          if (res.findIndex((c) => c.wallet === v.wallet) === -1) {
-            res.push(v)
-          }
-        })
-      }
+      f.forEach((v) => {
+        if (res.findIndex((c) => c.wallet === v.wallet) === -1) {
+          res.push(v)
+        }
+      })
     })
 
     return res
@@ -155,17 +153,15 @@ export class RedundantConfigTracker implements ConfigTracker {
     signer: string
   }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call signatures of signer on all childs
-    const res = await Promise.allSettled(this.childs.map((c) => c.signaturesOfSigner(args)))
+    const res = await Promise.all(this.childs.map((c) => c.signaturesOfSigner(args)))
 
     // Aggregate all results and filter duplicated digests
     return res.reduce((p, c) => {
-      if (c.status === "fulfilled" && c.value) {
-        c.value.forEach((v) => {
-          if (p.findIndex((c) => c.digest === v.digest) === -1) {
-            p.push(v)
-          }
-        })
-      }
+      c.forEach((v) => {
+        if (p.findIndex((c) => c.digest === v.digest) === -1) {
+          p.push(v)
+        }
+      })
 
       return p
     }, [] as { signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[])
@@ -173,17 +169,15 @@ export class RedundantConfigTracker implements ConfigTracker {
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
     // Call image hashes of signer on all childs
-    const res = await Promise.allSettled(this.childs.map((c) => c.imageHashesOfSigner(args)))
+    const res = await Promise.all(this.childs.map((c) => c.imageHashesOfSigner(args)))
 
     // Aggregate all results
     return res.reduce((p, c) => {
-      if (c.status === "fulfilled" && c.value) {
-        c.value.forEach((v) => {
-          if (p.findIndex((c) => c === v) === -1) {
-            p.push(v)
-          }
-        })
-      }
+      c.forEach((v) => {
+        if (p.findIndex((c) => c === v) === -1) {
+          p.push(v)
+        }
+      })
 
       return p
     }, [] as string[])
@@ -193,17 +187,15 @@ export class RedundantConfigTracker implements ConfigTracker {
     imageHash: string
   }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call signatures of signer on all childs
-    const res = await Promise.allSettled(this.childs.map((c) => c.signaturesForImageHash(args)))
+    const res = await Promise.all(this.childs.map((c) => c.signaturesForImageHash(args)))
 
     // Aggregate all results and filter duplicated digests
     return res.reduce((p, c) => {
-      if (c.status === "fulfilled" && c.value) {
-        c.value.forEach((v) => {
-          if (p.findIndex((c) => c.digest === v.digest && isAddrEqual(c.wallet, v.wallet)) === -1) {
-            p.push(v)
-          }
-        })
-      }
+      c.forEach((v) => {
+        if (p.findIndex((c) => c.digest === v.digest && isAddrEqual(c.wallet, v.wallet)) === -1) {
+          p.push(v)
+        }
+      })
 
       return p
     }, [] as { signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[])

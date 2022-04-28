@@ -86,41 +86,55 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     this._digestToTransaction.set(args.digest, args.body)
   }
 
-  saveSignaturePart = async (args: {
+  saveSignatureParts = async (args: {
     wallet: string,
-    signer: string,
     digest: string,
-    chainId: ethers.BigNumberish,
-    signature: DecodedSignaturePart,
+    chainId: ethers.BigNumber,
+    signatures: {
+      part: DecodedSignaturePart,
+      signer: string,
+    }[],
     imageHash?: string
   }): Promise<void> => {
     const chainId = ethers.BigNumber.from(args.chainId)
-    const key = this._toPartIndex(args.signer, args.digest, chainId)
 
-    if (this._partIndexForDigestAndSigner.get(key)) {
-      return
-    }
-
-    this._partIndexForDigestAndSigner.set(key, { ...args, chainId })
-
-    const signerLowerCase = args.signer.toLowerCase()
-    if (!this._partKeysForAddressAndChaind.has(signerLowerCase)) {
-      this._partKeysForAddressAndChaind.set(signerLowerCase, new Map())
-    }
-
-    const partsForAddr = this._partKeysForAddressAndChaind.get(signerLowerCase)!
-    if (!partsForAddr.has(chainId.toString())) {
-      partsForAddr.set(chainId.toString(), new Set())
-    }
-
-    partsForAddr.get(chainId.toString())!.add(key)
-
-    if (args.imageHash) {
-      const partsForImageHash = this._imageHashToSignaturePartKey.get(args.imageHash)
-      if (!partsForImageHash) {
-        this._imageHashToSignaturePartKey.set(args.imageHash, new Set())
+    for (let i = 0; i < args.signatures.length; i ++) {
+      const signature = args.signatures[i]
+      const key = this._toPartIndex(signature.signer, args.digest, chainId)
+  
+      if (this._partIndexForDigestAndSigner.get(key)) {
+        return
       }
-      this._imageHashToSignaturePartKey.get(args.imageHash)!.add(key)
+  
+      this._partIndexForDigestAndSigner.set(key, {
+        wallet: args.wallet,
+        digest: args.digest,
+        chainId,
+        signature: signature.part,
+        signer: signature.signer,
+        imageHash: args.imageHash
+      })
+  
+      const signerLowerCase = signature.signer.toLowerCase()
+      if (!this._partKeysForAddressAndChaind.has(signerLowerCase)) {
+        this._partKeysForAddressAndChaind.set(signerLowerCase, new Map())
+      }
+  
+      const partsForAddr = this._partKeysForAddressAndChaind.get(signerLowerCase)!
+      if (!partsForAddr.has(chainId.toString())) {
+        partsForAddr.set(chainId.toString(), new Set())
+      }
+  
+      partsForAddr.get(chainId.toString())!.add(key)
+
+      if (args.imageHash) {
+        const partsForImageHash = this._imageHashToSignaturePartKey.get(args.imageHash)
+        if (!partsForImageHash) {
+          this._imageHashToSignaturePartKey.set(args.imageHash, new Set())
+        }
+  
+        this._imageHashToSignaturePartKey.get(args.imageHash)!.add(key)
+      }
     }
   }
 

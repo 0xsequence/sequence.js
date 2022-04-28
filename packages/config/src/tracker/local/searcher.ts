@@ -231,7 +231,9 @@ export class Searcher {
       if (args.prependUpdate) {
         if (args.prependUpdate.length === 0) {
           // tx update must be empty
-          if (tx.update) return
+          if (tx.update) {
+            return
+          }
         } else {
           // tx update must be among prepependUpdate array
           const found = args.prependUpdate.find((update) => tx.update && update === tx.update)
