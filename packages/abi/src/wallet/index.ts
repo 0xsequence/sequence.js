@@ -9,6 +9,9 @@ import * as sequenceUtils from './sequenceUtils'
 import * as requireFreshSigner from './libs/requireFreshSigners'
 import * as walletProxyHook from './walletProxyHook'
 
+/**
+ * @deprecated import directly from @0xsequence/abi/* instead, omitting "walletContracts"
+ */
 export const walletContracts = {
   erc6492,
   erc5719,

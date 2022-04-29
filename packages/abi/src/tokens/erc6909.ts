@@ -1,9 +1,30 @@
-// @openzeppelin/contracts@5.0.0/token/ERC1155/ERC1155.sol
-export const ERC1155_ABI = [
+// @openzeppelin/contracts@5.0.0/token/ERC6909/ERC6909.sol
+export const ERC6909_ABI = [
   {
-    inputs: [],
-    stateMutability: 'nonpayable',
-    type: 'constructor'
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'spender',
+        type: 'address'
+      },
+      {
+        internalType: 'uint256',
+        name: 'allowance',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'needed',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      }
+    ],
+    name: 'ERC6909InsufficientAllowance',
+    type: 'error'
   },
   {
     inputs: [
@@ -24,11 +45,11 @@ export const ERC1155_ABI = [
       },
       {
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'id',
         type: 'uint256'
       }
     ],
-    name: 'ERC1155InsufficientBalance',
+    name: 'ERC6909InsufficientBalance',
     type: 'error'
   },
   {
@@ -39,34 +60,7 @@ export const ERC1155_ABI = [
         type: 'address'
       }
     ],
-    name: 'ERC1155InvalidApprover',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'idsLength',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'valuesLength',
-        type: 'uint256'
-      }
-    ],
-    name: 'ERC1155InvalidArrayLength',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'operator',
-        type: 'address'
-      }
-    ],
-    name: 'ERC1155InvalidOperator',
+    name: 'ERC6909InvalidApprover',
     type: 'error'
   },
   {
@@ -77,7 +71,7 @@ export const ERC1155_ABI = [
         type: 'address'
       }
     ],
-    name: 'ERC1155InvalidReceiver',
+    name: 'ERC6909InvalidReceiver',
     type: 'error'
   },
   {
@@ -88,23 +82,18 @@ export const ERC1155_ABI = [
         type: 'address'
       }
     ],
-    name: 'ERC1155InvalidSender',
+    name: 'ERC6909InvalidSender',
     type: 'error'
   },
   {
     inputs: [
       {
         internalType: 'address',
-        name: 'operator',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: 'owner',
+        name: 'spender',
         type: 'address'
       }
     ],
-    name: 'ERC1155MissingApprovalForAll',
+    name: 'ERC6909InvalidSpender',
     type: 'error'
   },
   {
@@ -113,13 +102,44 @@ export const ERC1155_ABI = [
       {
         indexed: true,
         internalType: 'address',
-        name: 'account',
+        name: 'owner',
         type: 'address'
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'operator',
+        name: 'spender',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'Approval',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'owner',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'spender',
         type: 'address'
       },
       {
@@ -129,69 +149,32 @@ export const ERC1155_ABI = [
         type: 'bool'
       }
     ],
-    name: 'ApprovalForAll',
+    name: 'OperatorSet',
     type: 'event'
   },
   {
     anonymous: false,
     inputs: [
       {
-        indexed: true,
-        internalType: 'address',
-        name: 'operator',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'from',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'to',
-        type: 'address'
-      },
-      {
         indexed: false,
-        internalType: 'uint256[]',
-        name: 'ids',
-        type: 'uint256[]'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256[]',
-        name: 'values',
-        type: 'uint256[]'
-      }
-    ],
-    name: 'TransferBatch',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
         internalType: 'address',
-        name: 'operator',
+        name: 'caller',
         type: 'address'
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'from',
+        name: 'sender',
         type: 'address'
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'to',
+        name: 'receiver',
         type: 'address'
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: 'uint256',
         name: 'id',
         type: 'uint256'
@@ -199,37 +182,76 @@ export const ERC1155_ABI = [
       {
         indexed: false,
         internalType: 'uint256',
-        name: 'value',
+        name: 'amount',
         type: 'uint256'
       }
     ],
-    name: 'TransferSingle',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'string',
-        name: 'value',
-        type: 'string'
-      },
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'id',
-        type: 'uint256'
-      }
-    ],
-    name: 'URI',
+    name: 'Transfer',
     type: 'event'
   },
   {
     inputs: [
       {
         internalType: 'address',
-        name: 'account',
+        name: 'owner',
+        type: 'address'
+      },
+      {
+        internalType: 'address',
+        name: 'spender',
+        type: 'address'
+      },
+      {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      }
+    ],
+    name: 'allowance',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'spender',
+        type: 'address'
+      },
+      {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'approve',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'owner',
         type: 'address'
       },
       {
@@ -252,41 +274,17 @@ export const ERC1155_ABI = [
   {
     inputs: [
       {
-        internalType: 'address[]',
-        name: 'accounts',
-        type: 'address[]'
-      },
-      {
-        internalType: 'uint256[]',
-        name: 'ids',
-        type: 'uint256[]'
-      }
-    ],
-    name: 'balanceOfBatch',
-    outputs: [
-      {
-        internalType: 'uint256[]',
-        name: '',
-        type: 'uint256[]'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
         internalType: 'address',
-        name: 'account',
+        name: 'owner',
         type: 'address'
       },
       {
         internalType: 'address',
-        name: 'operator',
+        name: 'spender',
         type: 'address'
       }
     ],
-    name: 'isApprovedForAll',
+    name: 'isOperator',
     outputs: [
       {
         internalType: 'bool',
@@ -301,73 +299,7 @@ export const ERC1155_ABI = [
     inputs: [
       {
         internalType: 'address',
-        name: 'from',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: 'to',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256[]',
-        name: 'ids',
-        type: 'uint256[]'
-      },
-      {
-        internalType: 'uint256[]',
-        name: 'values',
-        type: 'uint256[]'
-      },
-      {
-        internalType: 'bytes',
-        name: 'data',
-        type: 'bytes'
-      }
-    ],
-    name: 'safeBatchTransferFrom',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'from',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: 'to',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: 'id',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'value',
-        type: 'uint256'
-      },
-      {
-        internalType: 'bytes',
-        name: 'data',
-        type: 'bytes'
-      }
-    ],
-    name: 'safeTransferFrom',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'operator',
+        name: 'spender',
         type: 'address'
       },
       {
@@ -376,8 +308,14 @@ export const ERC1155_ABI = [
         type: 'bool'
       }
     ],
-    name: 'setApprovalForAll',
-    outputs: [],
+    name: 'setOperator',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
     stateMutability: 'nonpayable',
     type: 'function'
   },
@@ -403,20 +341,64 @@ export const ERC1155_ABI = [
   {
     inputs: [
       {
+        internalType: 'address',
+        name: 'receiver',
+        type: 'address'
+      },
+      {
         internalType: 'uint256',
-        name: '',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'amount',
         type: 'uint256'
       }
     ],
-    name: 'uri',
+    name: 'transfer',
     outputs: [
       {
-        internalType: 'string',
+        internalType: 'bool',
         name: '',
-        type: 'string'
+        type: 'bool'
       }
     ],
-    stateMutability: 'view',
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'sender',
+        type: 'address'
+      },
+      {
+        internalType: 'address',
+        name: 'receiver',
+        type: 'address'
+      },
+      {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'transferFrom',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'nonpayable',
     type: 'function'
   }
 ] as const
