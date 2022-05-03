@@ -417,7 +417,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
           }
         }
       } else {
-        // if user is already connected and origin is in connected dapps, notify session details.
+        // Main condition: if user is already connected and origin is in connected dapps, notify session details.
+        // Other conditions: if origin is the browser extension, or wallet request handler doesn't have a prompter,
+        // we can notify open because extension checks for connected origin. And for the case when where is no
+        // prompter in wallet request handler it means this is a direct usage of sequence.js without UI prompts
+        // and connectedDapps isn't used in this flow.
+        // See `mock-wallet.test.ts` in 0xsequence package tests for an example of this usage without prompter.
         if (
           isDappConnected(this.appOrigin) ||
           this.appOrigin?.includes('chrome-extension') ||
