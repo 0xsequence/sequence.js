@@ -14,7 +14,8 @@ import {
   OpenWalletIntent,
   ErrSignedInRequired,
   ProviderEventTypes,
-  TypedEventEmitter
+  TypedEventEmitter,
+  DappConnectionType
 } from '../types'
 
 import { BigNumber, ethers } from 'ethers'
@@ -122,10 +123,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           app: connectOptions.app ?? connectOptions.origin,
           origin: connectOptions.origin,
           connectionType: !!connectOptions.walletConnectConnection
-            ? 'WALLET_CONNECT'
+            ? DappConnectionType.WALLET_CONNECT
             : isBrowserExtension()
-            ? 'BROWSER_EXTENSION'
-            : 'SEQUENCE_INTEGRATION'
+            ? DappConnectionType.BROWSER_EXTENSION
+            : DappConnectionType.SEQUENCE_INTEGRATION
         })
       }
 
@@ -234,10 +235,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         app: options.app ?? options.origin,
         origin: options.origin,
         connectionType: !!options.walletConnectConnection
-          ? 'WALLET_CONNECT'
+          ? DappConnectionType.WALLET_CONNECT
           : isBrowserExtension()
-          ? 'BROWSER_EXTENSION'
-          : 'SEQUENCE_INTEGRATION'
+          ? DappConnectionType.BROWSER_EXTENSION
+          : DappConnectionType.SEQUENCE_INTEGRATION
       })
     }
 

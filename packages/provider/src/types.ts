@@ -242,7 +242,11 @@ export type OpenWalletIntent =
   | { type: 'openWithOptions'; options?: ConnectOptions }
   | { type: 'jsonRpcRequest'; method: string }
 
-export type DappConnectionType = 'WALLET_CONNECT' | 'BROWSER_EXTENSION' | 'SEQUENCE_INTEGRATION'
+export enum DappConnectionType {
+  WALLET_CONNECT,
+  BROWSER_EXTENSION,
+  SEQUENCE_INTEGRATION
+}
 
 export interface ConnectedDapp {
   app: string
