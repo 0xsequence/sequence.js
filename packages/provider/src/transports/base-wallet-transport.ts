@@ -425,7 +425,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
         // See `mock-wallet.test.ts` in 0xsequence package tests for an example of this usage without prompter.
         if (
           isDappConnected(this.appOrigin) ||
-          this.appOrigin?.includes('chrome-extension') ||
+          this.appOrigin?.includes('chrome-extension:') ||
           !this.walletRequestHandler.prompter
         ) {
           this.notifyOpen({
