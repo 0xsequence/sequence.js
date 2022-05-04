@@ -229,14 +229,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // ACCOUNTS_CHANGED -- when a user logs in, logs out or disconnects an app
     if (message.type === EventType.ACCOUNTS_CHANGED) {
       this.accountsChangedPayload = { accounts: [] }
-      if (message.data && (message.data.length > 0 || message.data.accounts?.length > 0)) {
+      if (message.data && message.data.length > 0) {
         this.accountsChangedPayload = {
-          accounts: [ethers.utils.getAddress(message.data[0] || message.data.accounts[0])],
-          origin: message.data.origin
+          accounts: [ethers.utils.getAddress(message.data[0])],
+          origin: message.origin
         }
         this.events.emit('accountsChanged', this.accountsChangedPayload.accounts, this.accountsChangedPayload.origin)
       } else {
-        this.events.emit('accountsChanged', [], message.data?.origin)
+        this.events.emit('accountsChanged', [], message.origin)
       }
       return
     }

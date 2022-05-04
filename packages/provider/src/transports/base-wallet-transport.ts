@@ -207,7 +207,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.ACCOUNTS_CHANGED,
-      data: { accounts: accounts, origin: origin }
+      data: accounts,
+      origin: origin
     })
   }
 
