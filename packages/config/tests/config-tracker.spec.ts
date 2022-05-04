@@ -6,7 +6,7 @@ import { walletContracts } from "@0xsequence/abi"
 import { Interface } from "ethers/lib/utils"
 import { digestOfTransactionsNonce, encodeNonce, packMetaTransactionsData, SignedTransactionBundle, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
-import { PresignedConfigUpdate, PresignedConfigurationPayload } from "../src/tracker/config-tracker"
+import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "../src/tracker/config-tracker"
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -265,7 +265,8 @@ describe.only('Config tracker', function () {
     chainId: ethers.BigNumberish,
     update?: string,
     timestamps?: number[],
-    margin?: number
+    margin?: number,
+    assumedConfigs?: AssumedWalletConfigs,
   }) {
     const { route, wallet, chainId, update, timestamps, margin } = args
 
@@ -282,7 +283,8 @@ describe.only('Config tracker', function () {
         chainId,
         timestamp: timestamps ? timestamps[i] : undefined,
         update: i === 0 ? update : undefined,
-        margin
+        margin,
+        assumedConfigs
       })
     }
   }
@@ -294,7 +296,8 @@ describe.only('Config tracker', function () {
     chainId: ethers.BigNumberish,
     update?: string,
     timestamp?: number,
-    margin?: number
+    margin?: number,
+    assumedConfigs?: AssumedWalletConfigs
   }) {
     const { wallet, fromConfig, newConfig, chainId, update } = args
 
@@ -318,7 +321,7 @@ describe.only('Config tracker', function () {
     const txDigest = digestOfTransactionsNonce(sessionNonce, ...unpacked)
     const subDigest = subDigestOf(wallet, chainId, txDigest)
     const decodedSignature = decodeSignature(presigned.signature)
-    const { config: recoveredConfig } = staticRecoverConfig(subDigest, decodedSignature, 1)
+    const { config: recoveredConfig } = staticRecoverConfig(subDigest, decodedSignature, chainId, assumedConfigs)
     if (fromConfig) expect(recoveredConfig).to.deep.equal(fromConfig)
 
     // If update it should have 3 txs, otherwise just 2
@@ -372,7 +375,28 @@ describe.only('Config tracker', function () {
     expect(unpacked[j].data).to.equal(data2)
   }
 
-  ([
+  // Nested configuration
+  const nestedSigner1 = ethers.Wallet.createRandom()
+  const nestedSigner2 = ethers.Wallet.createRandom()
+  const nestedSigner3 = ethers.Wallet.createRandom()
+  const nestedConfig: WalletConfig = {
+    threshold: 3,
+    signers: [{
+      address: nestedSigner1.address,
+      weight: 2
+    }, {
+      address: nestedSigner2.address,
+      weight: 2
+    }, {
+      address: nestedSigner3.address,
+      weight: 4
+    }]
+  }
+
+  const nestedAddress = addressOf(nestedConfig, sequenceContext)
+  const assumedConfigs = { [nestedAddress]: nestedConfig }
+
+  ;([
     ...(
       process.env.TEST_CONFIG_TRACKER_URL && process.env.TEST_CONFIG_TRACKER_URL !== "" ? [
         {
@@ -382,58 +406,138 @@ describe.only('Config tracker', function () {
           tortureSize: 250,
         }, {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
-          configTracker: new UntrustedConfigTracker(new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)),
+          configTracker: new UntrustedConfigTracker(
+            new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)
+          ),
           torture: true,
           tortureSize: 15
         }, {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL} + LocalConfigTracker`,
-          configTracker: new RedundantConfigTracker([new UntrustedConfigTracker(new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)), new LocalConfigTracker()]),
+          configTracker: new RedundantConfigTracker([
+            new UntrustedConfigTracker(
+              new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)
+            ),
+            new LocalConfigTracker()
+          ]),
           torture: true,
           tortureSize: 15
         }
       ] : []
     ),
     {
-      configTracker: new LocalConfigTracker(),
+      configTracker: new LocalConfigTracker(undefined, undefined, assumedConfigs),
+      nested: true,
       name: "Local config tracker",
       torture: true,
       tortureSize: 200
     }, {
-      configTracker: new UntrustedConfigTracker(new LocalConfigTracker(new IndexedDBLocalTracker("test"))),
+      configTracker: new UntrustedConfigTracker(
+        new LocalConfigTracker(
+          new IndexedDBLocalTracker("test"),
+          undefined,
+          assumedConfigs
+        ),
+        undefined,
+        assumedConfigs
+      ),
+      nested: true,
       name: "Local config tracker (with indexed-db)",
       torture: true,
       tortureSize: 25
     }, {
-      configTracker: new UntrustedConfigTracker(new LocalConfigTracker()),
+      configTracker: new UntrustedConfigTracker(
+        new LocalConfigTracker(undefined, undefined, assumedConfigs),
+        undefined,
+        assumedConfigs
+      ),
+      nested: true,
       name: "Untrusted local config tracker",
       torture: true,
       tortureSize: 100
     }, {
-      configTracker: new UnreliableConfigTracker(new LocalConfigTracker()),
+      configTracker: new UnreliableConfigTracker(
+        new LocalConfigTracker(undefined, undefined, assumedConfigs)
+      ),
+      nested: true,
       name: "UnreliableConfigTracker local config tracker",
       skipBad: true
     }, {
-      configTracker: new UnreliableConfigTracker(new UnreliableConfigTracker(new LocalConfigTracker())),
+      configTracker: new UnreliableConfigTracker(
+        new UntrustedConfigTracker(
+          new LocalConfigTracker(undefined, undefined, assumedConfigs),
+          undefined,
+          assumedConfigs
+        ),
+      ),
+      nested: true,
       name: "UnreliableConfigTracker & untrusted local config tracker",
       skipBad: true
     }, {
-      configTracker: new RedundantConfigTracker([new LocalConfigTracker(), new LocalConfigTracker()]),
+      configTracker: new RedundantConfigTracker([
+        new LocalConfigTracker(undefined, undefined, assumedConfigs),
+        new LocalConfigTracker(undefined, undefined, assumedConfigs)
+      ]),
+      nested: true,
       name: "Redudant config tracker with 2 local config trackers"
     }, {
-      configTracker: new UntrustedConfigTracker(new RedundantConfigTracker([new LocalConfigTracker(), new LocalConfigTracker()])),
+      configTracker: new UntrustedConfigTracker(
+        new RedundantConfigTracker([
+          new LocalConfigTracker(undefined, undefined, assumedConfigs),
+          new LocalConfigTracker(undefined, undefined, assumedConfigs)
+        ]),
+        undefined,
+        assumedConfigs
+      ),
+      nested: true,
       name: "Untrusted config tracker with 2 local config trackers"
     }, {
-      configTracker: new RedundantConfigTracker([new LocalConfigTracker(), new LocalConfigTracker(), new LocalConfigTracker()]),
+      configTracker: new RedundantConfigTracker([
+        new LocalConfigTracker(undefined, undefined, assumedConfigs),
+        new LocalConfigTracker(undefined, undefined, assumedConfigs),
+        new LocalConfigTracker(undefined, undefined, assumedConfigs)
+      ]),
+      nested: true,
       name: "Untrusted config tracker with 3 local config trackers"
     }, {
-      configTracker: new RedundantConfigTracker([new UnreliableConfigTracker(new BrokenConfigTracker()), new LocalConfigTracker()]),
+      configTracker: new RedundantConfigTracker([
+        new UnreliableConfigTracker(
+          new BrokenConfigTracker()
+        ),
+        new LocalConfigTracker(undefined, undefined, assumedConfigs)
+      ]),
+      nested: true,
       name: "Redundant config tracker with 1 local config trackers and 1 (unreliable) broken config tracker"
     }, {
       name: "Redundant config tracker with 1 local config trackers and 1 (unreliable) erratic config tracker",
-      configTracker: new RedundantConfigTracker([new UnreliableConfigTracker(new UntrustedConfigTracker(new ErraticConfigTracker())), new LocalConfigTracker()])
+      configTracker: new RedundantConfigTracker([
+        new UnreliableConfigTracker(
+          new UntrustedConfigTracker(
+            new ErraticConfigTracker()
+          )
+        ),
+        new LocalConfigTracker(undefined, undefined, assumedConfigs)
+      ]),
+      nested: true
     }, {
       name: "Redundant config tracker with 1 local config trackers, 1 local config tracker (indexed-db) and 1 (unreliable) erratic config tracker",
-      configTracker: new RedundantConfigTracker([new UnreliableConfigTracker(new UntrustedConfigTracker(new ErraticConfigTracker())), new LocalConfigTracker(new IndexedDBLocalTracker("test-2")), new LocalConfigTracker()]),
+      configTracker: new RedundantConfigTracker([
+        new UnreliableConfigTracker(
+          new UntrustedConfigTracker(
+            new ErraticConfigTracker()
+          )
+        ),
+        new LocalConfigTracker(
+          new IndexedDBLocalTracker("test-2"),
+          undefined,
+          assumedConfigs
+        ),
+        new LocalConfigTracker(
+          undefined,
+          undefined,
+          assumedConfigs
+        )
+      ]),
+      nested: true,
       torture: true,
       tortureSize: 25
     }
@@ -441,9 +545,10 @@ describe.only('Config tracker', function () {
     configTracker: ConfigTracker,
     name: string,
     skipBad?: boolean,
+    nested?: boolean,
     torture?: boolean,
     tortureSize?: number
-  }[]).map((o) => {
+  }[]).map((o, i) => {
     let configTracker: ConfigTracker
     let options: Omit<AccountOptions, 'address'>
 
@@ -1148,8 +1253,10 @@ describe.only('Config tracker', function () {
       })
 
       it("Should handle circular route (with fork)", async () => {
-        //  Wallet A --> Wallet A --> Wallet B --> Wallet C --> Wallet D --> Wallet A --> Wallet E
         //
+        //  T + G        T + G (U)    T+G+S1       T+G+S1+S2    T+G+S2       T + G        G+S4
+        //  Config A --> Config A --> Config B --> Config C --> Config D --> Config A --> Config E
+        //  Mainnet                                                                       Polygon
 
         const { config: configA, signers: signersA } = randomConfigWithSigners(3, 5)
         const { config: configB, signers: signersB } = randomConfigWithSigners(2, 1)
@@ -1895,6 +2002,117 @@ describe.only('Config tracker', function () {
         })
       })
 
+      const describeNested = o.nested ? describe : describe.skip
+      describeNested("Nested signers", () => {
+        let configA: WalletConfig
+        let signersA: ethers.Signer[]
+        let account: Account
+
+        beforeEach(async () => {
+          const extraSigner = ethers.Wallet.createRandom()
+          const nestedWallet = new Wallet({ config: nestedConfig, strict: false }, nestedSigner1, nestedSigner2)
+
+          signersA = [extraSigner, nestedSigner2]
+          configA = {
+            threshold: 2,
+            signers: [{
+              address: nestedWallet.address,
+              weight: 1
+            }, {
+              address: extraSigner.address,
+              weight: 1
+            }]
+          }
+
+          account = await Account.create(options, configA, nestedWallet, extraSigner)
+        })
+
+        it("Should sign a single jump with a nested signer", async () => {
+          const { config: configB } = randomConfigWithSigners(2, 1)
+
+          await account.updateConfig(configB, defaultChainId)
+
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(configA),
+            chainId: defaultChainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+
+
+          expect(res.length).to.equal(1)
+          expectValidRoute(res, {
+            wallet: account.address,
+            chainId: defaultChainId,
+            route: [configA, configB],
+            update: sequenceContext.mainModuleUpgradable,
+            assumedConfigs: assumedConfigs
+          })
+        })
+
+        it("Should sign multiple jumps with a nested signer", async () => {
+          const { config: configB2, signers: signersB2 } = randomConfigWithSigners(2, 1)
+          const { config: configC } = randomConfigWithSigners(2, 1)
+
+          const confibB: WalletConfig = {
+            threshold: configA.threshold + configB2.threshold,
+            signers: [...configA.signers, ...configB2.signers]
+          }
+
+          await account.updateConfig(confibB, defaultChainId)
+          await account.useSigners(...[...signersA, ...signersB2]).updateConfig(configC, defaultChainId)
+
+          const res = await configTracker.loadPresignedConfiguration({
+            wallet: account.address,
+            fromImageHash: imageHash(configA),
+            chainId: defaultChainId,
+            prependUpdate: [sequenceContext.mainModuleUpgradable]
+          })
+
+
+          expect(res.length).to.equal(2)
+          expectValidRoute(res, {
+            wallet: account.address,
+            chainId: defaultChainId,
+            route: [configA, confibB, configC],
+            update: sequenceContext.mainModuleUpgradable,
+            assumedConfigs: assumedConfigs
+          })
+        })
+
+        it("Should update multiples networks with a nested signer", async () => {
+          const { config: configB2, signers: signersB2 } = randomConfigWithSigners(2, 1)
+          const { config: configC } = randomConfigWithSigners(2, 1)
+
+          const confibB: WalletConfig = {
+            threshold: configA.threshold + configB2.threshold,
+            signers: [...configA.signers, ...configB2.signers]
+          }
+
+          const networks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+          await account.updateConfig(confibB, defaultChainId, networks)
+          await account.useSigners(...[...signersA, ...signersB2]).updateConfig(configC, defaultChainId, networks)
+
+          for (let network of networks) {
+            const res = await configTracker.loadPresignedConfiguration({
+              wallet: account.address,
+              fromImageHash: imageHash(configA),
+              chainId: network,
+              prependUpdate: [sequenceContext.mainModuleUpgradable]
+            })
+  
+            expect(res.length).to.equal(2)
+            expectValidRoute(res, {
+              wallet: account.address,
+              chainId: network,
+              route: [configA, confibB, configC],
+              update: sequenceContext.mainModuleUpgradable,
+              assumedConfigs: assumedConfigs
+            })
+          }
+        })
+      })
 
       describe("Sequence wallet", () => {
         const KnownNetworkIds = [
