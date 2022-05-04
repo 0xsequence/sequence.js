@@ -63,7 +63,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       if (!networks || networks.length === 0) {
         this.notifyChainChanged('0x0')
       } else {
-        this.notifyChainChanged(ethers.utils.hexlify(networks[0].chainId))
+        this.notifyChainChanged(ethers.utils.hexlify(networks.find(network => network.isDefaultChain)!.chainId))
       }
     })
 

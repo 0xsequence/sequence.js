@@ -3,17 +3,30 @@ import { Signer as AbstractSigner, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
-import { SignedTransactions, Transactionish, Transaction, computeMetaTxnHash, fromTransactionish, TransactionResponse } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, addressOf, isConfigEqual, sortConfig, ConfigFinder, SequenceUtilsFinder } from '@0xsequence/config'
+import {
+  SignedTransactions,
+  Transactionish,
+  Transaction,
+  computeMetaTxnHash,
+  fromTransactionish,
+  TransactionResponse
+} from '@0xsequence/transactions'
+import {
+  WalletConfig,
+  WalletState,
+  addressOf,
+  isConfigEqual,
+  sortConfig,
+  ConfigFinder,
+  SequenceUtilsFinder
+} from '@0xsequence/config'
 import {
   ChainIdLike,
-  Networks,
   NetworkConfig,
   WalletContext,
   sequenceContext,
   mainnetNetworks,
   ensureValidNetworks,
-  sortNetworks,
   getChainId
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
@@ -254,7 +267,11 @@ export class Account extends Signer {
     return wallet.useConfig(thisConfig!).hasEnoughSigners()
   }
 
-  async getFeeOptions(transaction: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners: boolean = true): Promise<{ options: FeeOption[], quote?: FeeQuote }> {
+  async getFeeOptions(
+    transaction: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners: boolean = true
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
 
     const context = this.options.context
@@ -275,10 +292,7 @@ export class Account extends Signer {
     // in cache as necessary. Further to this, I think we need to only get config details for what is required, and try
     // to optimize by using imageHashes of the config everywhere, as this is a much more inexpensive value to fetch.
 
-    const [
-      config,
-      updatedTransaction
-    ] = await Promise.all([
+    const [config, updatedTransaction] = await Promise.all([
       this.currentConfig(wallet),
       this.prependConfigUpdate(transaction, chainId, allSigners, true)
     ])
@@ -319,7 +333,11 @@ export class Account extends Signer {
     return this.sendTransaction(transactions, chainId, allSigners, quote, callback)
   }
 
-  async signTransactions(dtransactionish: Deferrable<Transactionish>, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
+  async signTransactions(
+    dtransactionish: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean
+  ): Promise<SignedTransactions> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     let currentConfig = await this.currentConfig(wallet)
 
@@ -369,7 +387,7 @@ export class Account extends Signer {
     }
 
     // If the wallet is updated, just sign as-is
-    if (await wallet.isDeployed() && isConfigEqual(lastConfig!, thisConfig!)) {
+    if ((await wallet.isDeployed()) && isConfigEqual(lastConfig!, thisConfig!)) {
       return transaction
     }
 
@@ -385,7 +403,11 @@ export class Account extends Signer {
     return [...(await wallet.buildUpdateConfigTransaction(lastConfig!, false)), ...transactionParts]
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
+  async sendSignedTransactions(
+    signedTxs: SignedTransactions,
+    chainId?: ChainIdLike,
+    quote?: FeeQuote
+  ): Promise<TransactionResponse> {
     const wallet = chainId ? this.getWalletByNetwork(chainId).wallet : this.mainWallet().wallet
     return wallet.sendSignedTransactions(signedTxs, undefined, quote)
   }
@@ -514,39 +536,38 @@ export class Account extends Signer {
     return found
   }
 
-  setNetworks(mainnetNetworks: Networks, testnetNetworks: Networks = [], defaultChainId?: string | number): number {
-    let networks: Networks = []
+  setNetworks(mainnetNetworks: NetworkConfig[], testnetNetworks: NetworkConfig[] = [], defaultChainId?: string | number): number {
+    let networks: NetworkConfig[] = []
     this._chainId = undefined // clear memoized value
-
-    // force-convert to a number in case someone sends a number in a string like "1"
-    const defaultChainIdNum = parseInt(defaultChainId as any)
 
     // find chain between mainnet and testnet network groups, and set that network group.
     // otherwise use mainnetNetworks without changes
-    if (testnetNetworks && testnetNetworks.length > 0 && defaultChainId) {
-      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (mainnetNetwork) {
-        mainnetNetwork.isDefaultChain = true
-        networks = mainnetNetworks
-      } else {
-        const testnetNetwork = testnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-        if (testnetNetwork) {
-          testnetNetwork.isDefaultChain = true
+    if (defaultChainId) {
+      // force-convert to a number in case someone sends a number in a string like "1"
+      const defaultChainIdNum = parseInt(defaultChainId as any)
+
+      const foundMainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
+      const foundTestnetNetwork = testnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
+
+      if (foundMainnetNetwork || foundTestnetNetwork) {
+        if (foundMainnetNetwork) {
+          mainnetNetworks.forEach(n => (n.isDefaultChain = false))
+          foundMainnetNetwork.isDefaultChain = true
+          networks = mainnetNetworks
+        } else if (foundTestnetNetwork) {
+          testnetNetworks.forEach(n => (n.isDefaultChain = false))
+          foundTestnetNetwork.isDefaultChain = true
           networks = testnetNetworks
         }
-      }
-    } else if (mainnetNetworks && mainnetNetworks.length > 0 && defaultChainId) {
-      const mainnetNetwork = mainnetNetworks.find(n => n.name === defaultChainId || n.chainId === defaultChainIdNum)
-      if (mainnetNetwork) {
-        mainnetNetwork.isDefaultChain = true
-        networks = mainnetNetworks
+      } else {
+        throw new Error(`unable to set default network as chain '${defaultChainId}' does not exist`)
       }
     } else {
       networks = mainnetNetworks
     }
 
     // assign while validating network list
-    this.options.networks = ensureValidNetworks(sortNetworks(networks, defaultChainId))
+    this.options.networks = ensureValidNetworks(networks)
 
     // Account/wallet instances using the initial configuration and network list
     //
@@ -590,7 +611,7 @@ export class Account extends Signer {
     })
 
     // return the default chain id as number
-    return this.options.networks[0].chainId
+    return this.options.networks.find(network => network.isDefaultChain)!.chainId
   }
 
   connect(_: Provider): AbstractSigner {

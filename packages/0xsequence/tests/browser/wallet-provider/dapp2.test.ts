@@ -11,7 +11,6 @@ import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sen
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
-
   //
   // Deploy Sequence WalletContext (deterministic). We skip deployment
   // as we rely on mock-wallet to deploy it.
@@ -24,14 +23,14 @@ export const tests = async () => {
   //
   const providerConfig = { ...DefaultProviderConfig }
   providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
-  
+
   const wallet = new Wallet('hardhat2', providerConfig)
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain
   const provider = wallet.getProvider()
   const signer = wallet.getSigner()
-  
+
   // clear it in case we're testing in browser session
   wallet.disconnect()
 
@@ -65,13 +64,23 @@ export const tests = async () => {
     const networks = await wallet.getNetworks()
     console.log('=> networks', networks)
 
-    assert.true(networks[0].isDefaultChain, 'network0 is defaultChain')
-    assert.true(networks[0].isAuthChain, 'network0 is authChain (as per config)')
-    assert.true(!networks[1].isDefaultChain, 'network1 is not defaultChain')
-    assert.true(!networks[1].isAuthChain, 'network1 is not authChain (as per config)')
+    // There is exactly one default chain
+    assert.equal(networks.filter(network => network.isDefaultChain).length, 1, 'there is exactly one default chain')
 
-    assert.true(networks[0].chainId === 31338, 'network0 is chainId 31338')
-    assert.true(networks[1].chainId === 31337, 'network1 is chainId 31337')
+    // There's exactly one auth chain
+    assert.equal(networks.filter(network => network.isAuthChain).length, 1, 'there is exactly one auth chain')
+
+    // The default chain's chain ID is 31338
+    assert.equal(networks.filter(network => network.isDefaultChain)[0].chainId, 31338, 'default chain id is 31338')
+
+    // The non-default chain's chain ID is 31337
+    assert.equal(networks.filter(network => !network.isDefaultChain)[0].chainId, 31337, 'non-default chain id is 31337')
+
+    // The auth chain's chain ID is 31338
+    assert.equal(networks.filter(network => network.isAuthChain)[0].chainId, 31338, 'auth chain id is 31338')
+
+    // The non-auth chain's chain ID is 31337
+    assert.equal(networks.filter(network => !network.isAuthChain)[0].chainId, 31337, 'non-auth chain id is 31337')
   })
 
   await test('signMessage with our custom defaultChain', async () => {
@@ -84,12 +93,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
 
     // validate
-    const isValid = await wallet.utils.isValidMessageSignature(
-      await wallet.getAddress(),
-      message,
-      sig,
-      await signer.getChainId()
-    )
+    const isValid = await wallet.utils.isValidMessageSignature(await wallet.getAddress(), message, sig, await signer.getChainId())
     assert.true(isValid, 'signMessage sig is valid')
 
     // recover
@@ -113,16 +117,16 @@ export const tests = async () => {
       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
     }
 
-    const types: {[key: string] : TypedDataField[]} = {
-      'Person': [
-        {name: "name", type: "string"},
-        {name: "wallet", type: "address"}
+    const types: { [key: string]: TypedDataField[] } = {
+      Person: [
+        { name: 'name', type: 'string' },
+        { name: 'wallet', type: 'address' }
       ]
     }
 
     const message = {
-      'name': 'Bob',
-      'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+      name: 'Bob',
+      wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
     }
 
     const sig = await signer.signTypedData(domain, types, message)

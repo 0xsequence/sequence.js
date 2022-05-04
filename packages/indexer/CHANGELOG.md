@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.36.13
+
+### Patch Changes
+
+- api: update bindings with new price endpoints
+
 ## 0.36.12
 
 ### Patch Changes

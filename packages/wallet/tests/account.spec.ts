@@ -12,6 +12,7 @@ import { configureLogger } from '@0xsequence/utils'
 import * as lib from '../src'
 import { isWalletUpToDate } from '../../provider/src/utils'
 import { isConfigEqual } from '../../config/src/config'
+import { describe } from 'mocha'
 
 const { expect } = chai.use(chaiAsPromised)
 
@@ -521,9 +522,13 @@ describe('Account integration', () => {
 
   describe('networks', () => {
     it('should set valid default network', async () => {
-      expect(() => {
-        account.setNetworks(networks, [], 31337)
-      }).to.not.throw
+      // expect(() => {
+      //   account.setNetworks(networks, [], 31337)
+      // }).to.not.throw
+
+      account.setNetworks(networks, [], 31338)
+
+      expect(await account.getChainId()).to.equal(31338)
     })
 
     it('should fail to set invalid default network', async () => {
