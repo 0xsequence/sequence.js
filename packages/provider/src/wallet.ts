@@ -191,16 +191,19 @@ export class Wallet implements WalletProvider {
 
     // below will update the wallet session object and persist it. In case the session
     // is undefined, we consider the session to have been removed by the user, so we clear it.
+    // -- except if browser extension, which can have a session if another dapp is already connected.
     this.transport.messageProvider.on('open', (openInfo: { session?: WalletSession }) => {
       const { session } = openInfo
-      if (!session) {
-        if (this.session && this.session.accountAddress) {
-          // emit disconnect even if previously we had a session, and now we don't.
-          this.transport.messageProvider!.emit('disconnect')
+      if (!isBrowserExtension()) {
+        if (!session) {
+          if (this.session && this.session.accountAddress) {
+            // emit disconnect even if previously we had a session, and now we don't.
+            this.transport.messageProvider!.emit('disconnect')
+          }
+          this.clearSession()
+        } else {
+          this.useSession(session, true)
         }
-        this.clearSession()
-      } else {
-        this.useSession(session, true)
       }
     })
 
