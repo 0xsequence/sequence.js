@@ -178,7 +178,7 @@ export const createNetworkConfig = (
     }
   }
 
-  return ensureValidNetworks(config)
+  return ensureValidNetworks(sortNetworks(config))
 }
 
 export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
@@ -211,4 +211,27 @@ export const networksIndex = (networks: NetworkConfig[]): { [key: string]: Netwo
     index[networks[i].name] = networks[i]
   }
   return index
+}
+
+// TODO: we should remove sortNetworks in the future but this is a breaking change for dapp integrations on older versions <-> wallet
+// sortNetworks orders the network config list by: defaultChain, authChain, ..rest by chainId ascending numbers
+export const sortNetworks = (networks: NetworkConfig[]): NetworkConfig[] => {
+  if (!networks) {
+    return []
+  }
+
+  const config = networks.sort((a, b) => {
+    if (a.chainId === b.chainId) return 0
+    return a.chainId < b.chainId ? -1 : 1
+  })
+
+  // DefaultChain goes first
+  const defaultConfigIdx = config.findIndex(c => c.isDefaultChain)
+  if (defaultConfigIdx > 0) config.splice(0, 0, config.splice(defaultConfigIdx, 1)[0])
+
+  // AuthChain goes second
+  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isDefaultChain !== true)
+  if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
+
+  return config
 }
