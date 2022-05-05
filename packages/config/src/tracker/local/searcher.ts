@@ -1,7 +1,8 @@
 import { ethers } from "ethers"
 import { ConfigTrackerDatabase, SignaturePart } from "."
 import { DecodedSignature } from "../.."
-import { ConfigTracker, TransactionBody } from "../config-tracker"
+import { DecodedAddressPart, DecodedEOASigner, DecodedFullSigner, DecodedSignaturePart, encodeSignature, encodeSignaturePart } from "../../signature"
+import { AssumedWalletConfigs, ConfigTracker, TransactionBody } from "../config-tracker"
 
 function isConfigJump(cand: any): cand is ConfigJump {
   return (
@@ -32,7 +33,8 @@ export class Searcher {
     public tracker: Pick<ConfigTracker, 'configOfImageHash'>,
     public wallet: string,
     public chainId: ethers.BigNumber,
-    public useCache: boolean
+    public useCache: boolean,
+    public walletConfigs: AssumedWalletConfigs
   ) {}
 
   imageHashHitmapKey(imageHash: string, update: string) {
@@ -54,10 +56,10 @@ export class Searcher {
   }
 
   async signaturesOfSigner(signer: string, minGapNonce: ethers.BigNumber): Promise<SignaturePart[]> {
-    if (!this.useCache) return this.db.getSignaturePartsForAddress({ signer, chainId: this.chainId })
+    if (!this.useCache) return this.signaturesOfSignerFromDb(signer)
 
     if (!this.signerCache.get(signer)) {
-      const res = await this.db.getSignaturePartsForAddress({ signer, chainId: this.chainId })
+      const res = await this.signaturesOfSignerFromDb(signer)
 
       // TODO Remove this when moved to DB, but filter by min gap nonce
       // const fres = res.filter((r) => minGapNonce.lte(r.))
@@ -67,13 +69,74 @@ export class Searcher {
         parts: res
       })
 
-
       return res
     }
 
     // TODO Filter by minGapNonce
     const res = this.signerCache.get(signer)?.parts
     return res ?? []
+  }
+
+  async signaturesOfSignerFromDb(signer: string): Promise<SignaturePart[]> {
+    // If no assumed wallet config, signer must be an EOA
+    // so just return all known parts for it
+    if (!this.walletConfigs[signer]) {
+      return this.db.getSignaturePartsForAddress({ signer, chainId: this.chainId })
+    }
+
+    // Otherwise, we need to get all parts for each sub-signer
+    // and then filter out the ones that don't reach the threshold
+    const parts: { [key: string]: SignaturePart[] } = {}
+    const weights: { [key: string]: number } = {}
+
+    for (const subSigner of this.walletConfigs[signer].signers) {
+      const subParts = await this.signaturesOfSignerFromDb(subSigner.address)
+      for (const part of subParts) {
+        if (!parts[part.digest]) parts[part.digest] = []
+        parts[part.digest].push(part)
+
+        if (!weights[part.digest]) weights[part.digest] = 0
+        weights[part.digest] += subSigner.weight
+      }
+    }
+
+    // Filter out parts that don't reach the threshold
+    const res: SignaturePart[] = []
+    for (const digest of Object.keys(parts)) {
+      if (weights[digest] >= this.walletConfigs[signer].threshold) {
+        const digestParts = parts[digest]
+
+        // Map parts to signers
+        const signers: { [key: string]: SignaturePart } = {}
+        for (const part of digestParts) {
+          signers[part.signer] = part
+        }
+
+        // Push encoded signatures into res array
+        const fp = this.walletConfigs[signer].signers.map((subSigner) => {
+          if (!signers[subSigner.address]) return subSigner as DecodedAddressPart
+          return { ...signers[subSigner.address].signature, weight: subSigner.weight }
+        })
+
+        const encoded = encodeSignature({
+          threshold: this.walletConfigs[signer].threshold,
+          signers: fp
+        }) + '03'
+
+        res.push({
+          signer,
+          wallet: this.wallet,
+          signature: {
+            address: signer,
+            signature: encoded
+          } as DecodedFullSigner,
+          digest,
+          chainId: this.chainId
+        })
+      }
+    }
+
+    return res
   }
 
   async bestRouteFrom(imageHash: string, gapNonce: ethers.BigNumberish, prependUpdate: string[]): Promise<ConfigJump | undefined> {
@@ -187,6 +250,7 @@ export class Searcher {
     // Track combined weight of all transactions
     // transactions below thershold should be descarded
     const weights = new Map<string, ethers.BigNumber>()
+    const parts = new Map<string, SignaturePart>()
 
     // Get all known signatures for every signer on the config
     await Promise.all(fromConfig.signers.map(async (s) => {
@@ -194,7 +258,8 @@ export class Searcher {
       signatures.forEach((signature) => {
         // Get weight of the signer
         const prevWeight = weights.get(signature.digest) ?? ethers.constants.Zero
-        weights.set(signature.digest, prevWeight.add(signature.signature.weight))
+        weights.set(signature.digest, prevWeight.add(s.weight))
+        parts.set(`${signature.digest}-${signature.signer}`, signature)
       })
     }))
 
@@ -244,8 +309,7 @@ export class Searcher {
       }
 
       const unsortedSignature = await Promise.all(fromConfig.signers.map(async (s, i) => {
-        // TODO: WHAT
-        const part = await this.db.getSignaturePart({ signer: s.address, digest, chainId: args.chainId })
+        const part = parts.get(`${digest}-${s.address}`)
         if (!part) {
           return { weight: s.weight, address: s.address, i }
         }

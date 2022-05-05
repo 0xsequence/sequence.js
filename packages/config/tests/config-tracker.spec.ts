@@ -321,8 +321,9 @@ describe.only('Config tracker', function () {
     const txDigest = digestOfTransactionsNonce(sessionNonce, ...unpacked)
     const subDigest = subDigestOf(wallet, chainId, txDigest)
     const decodedSignature = decodeSignature(presigned.signature)
-    const { config: recoveredConfig } = staticRecoverConfig(subDigest, decodedSignature, chainId, assumedConfigs)
+    const { config: recoveredConfig, weight } = staticRecoverConfig(subDigest, decodedSignature, chainId, assumedConfigs)
     if (fromConfig) expect(recoveredConfig).to.deep.equal(fromConfig)
+    expect(weight).to.be.greaterThanOrEqual(recoveredConfig.threshold)
 
     // If update it should have 3 txs, otherwise just 2
     expect(unpacked.length).to.eq(update ? 3 : 2)

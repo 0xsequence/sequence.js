@@ -140,7 +140,7 @@ export class LocalConfigTracker implements ConfigTracker {
     prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
     // Create new searcher
-    const searcher = new Searcher(this.database, this, args.wallet, ethers.BigNumber.from(args.chainId), true)
+    const searcher = new Searcher(this.database, this, args.wallet, ethers.BigNumber.from(args.chainId), true, this.walletConfigs)
 
     // Get best config jump
     const configJump = await searcher.bestRouteFrom(args.fromImageHash, 0, args.prependUpdate)

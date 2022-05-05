@@ -172,7 +172,7 @@ export class UntrustedConfigTracker implements ConfigTracker {
       // Recover signature part
       const recovered = staticRecoverConfigPart(subdigest, part, s.chainid, this.walletConfigs)
 
-      if (!recovered.signature) {
+      if (!recovered.parts || recovered.parts.length === 0) {
         throw new Error(`Invalid signature for wallet ${s.wallet}`)
       }
 
@@ -231,7 +231,7 @@ export class UntrustedConfigTracker implements ConfigTracker {
       // Recover signature part
       const recovered = staticRecoverConfigPart(subdigest, part, s.chainId, this.walletConfigs)
 
-      if (!recovered.signature) {
+      if (!recovered.parts || recovered.parts.length === 0) {
         throw new Error(`Invalid signature for wallet ${s.wallet}`)
       }
 

@@ -218,6 +218,12 @@ export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner | Deco
   }
 }
 
+export type RecoveredConfigPart = {
+  signer: string,
+  subDigest: string,
+  signature?: DecodedEOASplitSigner | DecodedEOASigner,
+}
+
 // This method statically recovers a configuration from a sequence signature
 // notice this method doesn't use any provider, instead it assumes that only wallet-signatures are sequence-wallets
 // and for those wallets it expects to be passed a statically defined configuration
@@ -228,9 +234,9 @@ export const staticRecoverConfig = (
   signature: DecodedSignature,
   chainId: ethers.BigNumberish,
   walletConfigs: AssumedWalletConfigs = {}
-): { config: WalletConfig, weight: number, parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[], allConfigs: WalletConfig[] } => {
+): { config: WalletConfig, weight: number, parts: RecoveredConfigPart[], allConfigs: WalletConfig[] } => {
   const config: WalletConfig = { threshold: signature.threshold, signers: [] }
-  const parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[] = []
+  const parts: RecoveredConfigPart[] = []
 
   const allConfigs: WalletConfig[] = []
 
@@ -238,23 +244,16 @@ export const staticRecoverConfig = (
 
   signature.signers.forEach((p) => {
     const recovered = staticRecoverConfigPart(subDigest, p, chainId, walletConfigs)
+    weight += recovered.weight
 
-    if (recovered.signature) {
-      weight += p.weight
-    }
-
-    allConfigs.push(...recovered.nested)
+    allConfigs.push(...recovered.configs)
 
     config.signers.push({
       weight: p.weight,
       address: recovered.signer
     })
 
-    parts.push({
-      subDigest,
-      signer: recovered.signer,
-      signature: recovered.signature
-    })
+    parts.push(...recovered.parts)
   })
 
   allConfigs.push(config)
@@ -271,23 +270,17 @@ export const staticRecoverConfigPart = (
   part: DecodedSignaturePart,
   chainId: ethers.BigNumberish,
   walletConfigs: AssumedWalletConfigs = {}
-): { signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner, nested: WalletConfig[] } => {
+): { signer: string, parts: RecoveredConfigPart[], configs: WalletConfig[], weight: number } => {
   // Ignore "address" types
   // just use them to retrieve the embedded config
   if (isDecodedAddress(part)) {
-    return { signer: part.address, nested: [] }
+    return { signer: part.address, parts: [], configs: [], weight: 0 }
   }
 
   // Nested signatures are only supported for Sequence wallets
   // ASSUMED the imageHash of each nested signature is passed as a static argument
   // EIP1271 are not statically verifiable, so we can't recover them
   if (isDecodedFullSigner(part)) {
-    // TODO: this will fail to recover EOA signatures
-    // encoded as full signers, handle that
-    if (walletConfigs[part.address] === undefined) {
-      throw new Error(`Missing statically defined config for ${part.address}`)
-    }
-
     // Last byte signals an EIP1271 signature
     // remove and validate it
     const eip1271 = part.signature.slice(-2)
@@ -299,18 +292,21 @@ export const staticRecoverConfigPart = (
     const nestedSubDigest = subDigestOf(part.address, chainId, subDigest)
     const recovered = staticRecoverConfig(nestedSubDigest, decoded, chainId, walletConfigs)
 
-    if (
+    // Signature validity can only be determined if we have an assumed configuration
+    // if we don't then we can still recover the signature, but we can't count the weight
+    // ... if the recovered weight is not high enough, or if the recovered config is not valid
+    // we can still recover the parts of the signatures, but again we can't count the weight
+    const weight = (
+      walletConfigs[part.address] &&
       recovered.weight >= walletConfigs[part.address].threshold &&
       imageHash(recovered.config) === imageHash(walletConfigs[part.address])
-    ) {
-      // Push the part and all nested parts too
-      return {
-        signer: part.address,
-        signature: part,
-        nested: recovered.allConfigs
-      }
-    } else {
-      throw new Error(`Invalid nested sequence signature for ${part.address}`)
+    ) ? recovered.weight : 0
+
+    return {
+      signer: part.address,
+      parts: recovered.parts,
+      configs: recovered.allConfigs,
+      weight
     }
   }
 
@@ -319,8 +315,9 @@ export const staticRecoverConfigPart = (
     const recovered = recoverEOASigner(subDigest, part)
     return {
       signer: recovered,
-      signature: part,
-      nested: []
+      parts: [{ signer: recovered, signature: part, subDigest }],
+      configs: [],
+      weight: part.weight
     }
   }
 
