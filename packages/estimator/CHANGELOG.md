@@ -1,5 +1,22 @@
 # @0xsequence/estimator
 
+## 0.37.0
+
+### Minor Changes
+
+- network related fixes and improvements
+- api: bindings: exchange rate lookups
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.37.0
+  - @0xsequence/config@0.37.0
+  - @0xsequence/network@0.37.0
+  - @0xsequence/transactions@0.37.0
+  - @0xsequence/utils@0.37.0
+
 ## 0.36.13
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @0xsequence/metadata
 
+## 0.37.0
+
+### Minor Changes
+
+- network related fixes and improvements
+- api: bindings: exchange rate lookups
+
 ## 0.36.13
 
 ### Patch Changes
