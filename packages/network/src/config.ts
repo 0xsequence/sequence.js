@@ -56,10 +56,6 @@ export interface NetworkConfig {
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
 
-  // TODO: add list of bridges (and their respective configs) available
-  // for a particular network
-  // bridges?: any[]
-
   // isDefaultChain identifies the default network. For example, a dapp may run on the Polygon
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
