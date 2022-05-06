@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.37.1
+
+### Patch Changes
+
+- Add back sortNetworks - Removing sorting was a breaking change for dapps on older versions which directly integrate sequence.
+- Updated dependencies
+  - @0xsequence/abi@0.37.1
+  - @0xsequence/api@0.37.1
+  - @0xsequence/config@0.37.1
+  - @0xsequence/indexer@0.37.1
+  - @0xsequence/metadata@0.37.1
+  - @0xsequence/network@0.37.1
+  - @0xsequence/utils@0.37.1
+  - @0xsequence/wallet@0.37.1
+
 ## 0.37.0
 
 ### Minor Changes

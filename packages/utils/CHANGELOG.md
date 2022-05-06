@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.37.1
+
+### Patch Changes
+
+- Add back sortNetworks - Removing sorting was a breaking change for dapps on older versions which directly integrate sequence.
+
 ## 0.37.0
 
 ### Minor Changes
