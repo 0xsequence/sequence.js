@@ -27,7 +27,8 @@ import {
   sequenceContext,
   mainnetNetworks,
   ensureValidNetworks,
-  getChainId
+  getChainId,
+  sortNetworks
 } from '@0xsequence/network'
 import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
@@ -567,7 +568,8 @@ export class Account extends Signer {
     }
 
     // assign while validating network list
-    this.options.networks = ensureValidNetworks(networks)
+    // TODO - we should remove sortNetworks in the future but this is a breaking change
+    this.options.networks = ensureValidNetworks(sortNetworks(networks))
 
     // Account/wallet instances using the initial configuration and network list
     //
