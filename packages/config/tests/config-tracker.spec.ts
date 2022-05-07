@@ -597,6 +597,32 @@ describe.only('Config tracker', function () {
         expect(bres2).to.be.undefined
       })
 
+      it("Should not store address with config", async () => {
+        const config = randomConfig()
+        const configWithAddress = { ...config, address: addressOf(config, sequenceContext) }
+
+        await configTracker.saveWalletConfig({ config: configWithAddress })
+        const got = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
+
+        expect(got).to.deep.equal(config)
+        expect(got.address).to.be.undefined
+        expect(got.chainId).to.be.undefined
+        expect(got).to.not.deep.equal(configWithAddress)
+      })
+
+      it("Should not store chainid with config", async () => {
+        const config = randomConfig()
+        const configWithAddress = { ...config, chainId: 23123 }
+
+        await configTracker.saveWalletConfig({ config: configWithAddress })
+        const got = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
+
+        expect(got).to.deep.equal(config)
+        expect(got.address).to.be.undefined
+        expect(got.chainId).to.be.undefined
+        expect(got).to.not.deep.equal(configWithAddress)
+      })
+
       it("Should return undefined if config is not registered", async () => {
         const imageHash = "0xaf786307f2980ed0d0c78df4c2de3948907d5fefc008567a05d47a3dbb095f3b"
         const config = await configTracker.configOfImageHash({ imageHash })

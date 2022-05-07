@@ -21,11 +21,15 @@ export class LocalConfigTracker implements ConfigTracker {
   saveWalletConfig = async (args: {
     config: WalletConfig
   }): Promise<void> => {
-    return this.database.saveWalletConfig({ ...args, imageHash: imageHash(args.config) })
+    return this.database.saveWalletConfig({ config: { threshold: args.config.threshold, signers: args.config.signers }, imageHash: imageHash(args.config) })
   }
 
   configOfImageHash = async (args: { imageHash: string; }): Promise<WalletConfig | undefined> => {
-    return this.database.configOfImageHash(args)
+    const config = await this.database.configOfImageHash(args)
+    return config ? {
+      threshold: config?.threshold,
+      signers: config?.signers
+    } : undefined
   }
 
   saveCounterFactualWallet = async (args: {
