@@ -368,7 +368,10 @@ export class Session {
       if (imageHash(newConfig) !== imageHash(config)) {
         // Update configuration for all networks
         // (networks we aren't using, but we want to presign transactions anyway)
-        await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, knownNetworks ?? [])))
+
+        // Notice: we don't pass known networks for all networks, otherwise we end up signing
+        // knownNetworks x networks transactions, which is not needed
+        await Promise.all(networks.map((n, i) => account.updateConfig(newConfig, n.chainId, knownNetworks && i === 0 ? knownNetworks : [])))
       }
     } else {
       // If not we have to create an initial configuration using the provided signers
