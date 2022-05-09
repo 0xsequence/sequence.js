@@ -39,11 +39,6 @@ export class RedundantConfigTracker implements ConfigTracker {
       return res
     }))
 
-    // Filter empty responses or rejected promises
-    // const responses = rawResponses
-    //   .filter((r) => r.status === "fulfilled" && r.value?.length > 0)
-    //   .map((r: PromiseFulfilledResult<PresignedConfigUpdate[]>) => r.value)
-
     // Find the response with the highest gapNonce
     const found = responses.reduce((p, c) => {
       if(c.length === 0) return p
@@ -63,8 +58,6 @@ export class RedundantConfigTracker implements ConfigTracker {
     // to avoid blocking the other responses
     const skipIndexes = provided[keyOf(found)]
     new Promise(() => {
-      // TODO: filter providers
-      // who initially responded with the same data
       found.map(async (r) => {
         try {
           const config = await this.configOfImageHash({ imageHash: r.body.newImageHash })
@@ -82,14 +75,21 @@ export class RedundantConfigTracker implements ConfigTracker {
   configOfImageHash = async ( args : {
     imageHash: string
   }): Promise<WalletConfig | undefined> => {
+    // Keep track of which child returned a result
+    // so we don't backfeed the same result to them
+    const provided: number[] = []
+
     // Query all childs at the same time
     // find a promise that doesn't throw and doesn't return undefined
-    const found = await PromiseSome(this.childs.map((c) => c.configOfImageHash(args)))
+    const found = await PromiseSome(this.childs.map(async (c, i) => {
+      const res = await c.configOfImageHash(args)
+      if (res) provided.push(i)
+      return res
+    }))
 
     // Backfeed found config to all childs
-    // TODO: filter equal responses
     if (found !== undefined) {
-      this.saveWalletConfig({ config: found })
+      this.saveWalletConfig({ config: found, skipIndexes: provided })
     }
 
     // Return found value
@@ -114,10 +114,14 @@ export class RedundantConfigTracker implements ConfigTracker {
   }
 
   saveWalletConfig = async ( args: {
-    config: WalletConfig
+    config: WalletConfig,
+    skipIndexes?: number[]
   }): Promise<void> => {
     // Save config to all childs
-    await Promise.all(this.childs.map((c) => c.saveWalletConfig(args)))
+    await Promise.all(this.childs.map((c, i) => {
+      if (args.skipIndexes?.includes(i)) return
+      return c.saveWalletConfig(args)
+    }))
   }
 
   saveWitness = async( args : {
