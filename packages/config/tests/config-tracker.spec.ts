@@ -402,26 +402,33 @@ describe.only('Config tracker', function () {
       process.env.TEST_CONFIG_TRACKER_URL && process.env.TEST_CONFIG_TRACKER_URL !== "" ? [
         {
           name: `Remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
-          configTracker: new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL),
+          configTracker: new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL, undefined, assumedConfigs),
           torture: true,
-          tortureSize: 250,
+          tortureSize: 50,
+          nested: true
         }, {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
           configTracker: new UntrustedConfigTracker(
-            new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)
+            new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL, undefined, assumedConfigs),
+            undefined,
+            assumedConfigs
           ),
           torture: true,
-          tortureSize: 15
+          tortureSize: 15,
+          nested: true
         }, {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL} + LocalConfigTracker`,
           configTracker: new RedundantConfigTracker([
             new UntrustedConfigTracker(
-              new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL)
+              new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL, undefined, assumedConfigs),
+              undefined,
+              assumedConfigs
             ),
-            new LocalConfigTracker()
+            new LocalConfigTracker(undefined, undefined, assumedConfigs)
           ]),
           torture: true,
-          tortureSize: 15
+          tortureSize: 15,
+          nested: true
         }
       ] : []
     ),
@@ -545,6 +552,7 @@ describe.only('Config tracker', function () {
   ] as {
     configTracker: ConfigTracker,
     name: string,
+    only?: boolean,
     skipBad?: boolean,
     nested?: boolean,
     torture?: boolean,
@@ -553,7 +561,8 @@ describe.only('Config tracker', function () {
     let configTracker: ConfigTracker
     let options: Omit<AccountOptions, 'address'>
 
-    context(o.name, () => {
+    const contextCase = o.only ? context.only : context
+    contextCase(o.name, () => {
       before(() => {
         configTracker = o.configTracker
 
