@@ -21,6 +21,7 @@ import { AuthorizationOptions } from '@0xsequence/auth'
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
 import { isBrowserExtension, isDappConnected } from '../utils'
 import { LOCAL_STORAGE_KEYS, ERROR_MESSAGES } from '../constants'
+import { ProxyMessageHandler } from './proxy-transport/proxy-message-handler'
 
 export abstract class BaseWalletTransport implements WalletTransport {
   protected walletRequestHandler: WalletRequestHandler
@@ -418,14 +419,17 @@ export abstract class BaseWalletTransport implements WalletTransport {
           }
         }
       } else {
-        // Main condition: if user is already connected and origin is in connected dapps, notify session details.
-        // Other conditions: if origin is the browser extension, or wallet request handler doesn't have a prompter,
-        // we can notify open because extension checks for connected origin. And for the case when where is no
-        // prompter in wallet request handler it means this is a direct usage of sequence.js without UI prompts
+        // If user is already connected and origin is in connected dapps, notify session details.
+        // This is a check for the window transport, where appOrigin will be set correctly.
+        // Other conditions:
+        // 1. If there is no origin, it means we are using proxy transport
+        // 2. If origin is the browser extension, we can notify since extension checks for connected origin
+        // 3. If there is no prompter it means this is a direct usage of sequence.js without UI prompts and
         // and connectedDapps isn't used in this flow.
         // See `mock-wallet.test.ts` in 0xsequence package tests for an example of this usage without prompter.
         if (
           isDappConnected(this.appOrigin) ||
+          this.appOrigin === undefined ||
           this.appOrigin?.includes('chrome-extension:') ||
           !this.walletRequestHandler.prompter
         ) {

@@ -110,17 +110,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
       if (connectDetails.connected && connectOptions) {
         if (connectOptions.origin === undefined) {
-          throw new Error('promptConnect options must include an origin')
+          console.log('connectOptions.origin is undefined, probably using proxy transport')
+        } else {
+          this.saveConnectedDapp({
+            app: connectOptions.app ?? connectOptions.origin,
+            origin: connectOptions.origin,
+            connectionType: !!connectOptions.walletConnectConnection
+              ? DappConnectionType.WALLET_CONNECT
+              : isBrowserExtension()
+              ? DappConnectionType.BROWSER_EXTENSION
+              : DappConnectionType.SEQUENCE_INTEGRATION
+          })
         }
-        this.saveConnectedDapp({
-          app: connectOptions.app ?? connectOptions.origin,
-          origin: connectOptions.origin,
-          connectionType: !!connectOptions.walletConnectConnection
-            ? DappConnectionType.WALLET_CONNECT
-            : isBrowserExtension()
-            ? DappConnectionType.BROWSER_EXTENSION
-            : DappConnectionType.SEQUENCE_INTEGRATION
-        })
       }
 
       if (!connectOptions || connectOptions.keepWalletOpened !== true) {
@@ -222,17 +223,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     if (connectDetails.connected && options) {
       if (options.origin === undefined) {
-        throw new Error('promptConnect options must include an origin')
+        console.log('connectOptions.origin is undefined, probably using proxy transport')
+      } else {
+        this.saveConnectedDapp({
+          app: options.app ?? options.origin,
+          origin: options.origin,
+          connectionType: !!options.walletConnectConnection
+            ? DappConnectionType.WALLET_CONNECT
+            : isBrowserExtension()
+            ? DappConnectionType.BROWSER_EXTENSION
+            : DappConnectionType.SEQUENCE_INTEGRATION
+        })
       }
-      this.saveConnectedDapp({
-        app: options.app ?? options.origin,
-        origin: options.origin,
-        connectionType: !!options.walletConnectConnection
-          ? DappConnectionType.WALLET_CONNECT
-          : isBrowserExtension()
-          ? DappConnectionType.BROWSER_EXTENSION
-          : DappConnectionType.SEQUENCE_INTEGRATION
-      })
     }
 
     return promptConnectDetails

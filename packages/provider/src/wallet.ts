@@ -253,8 +253,8 @@ export class Wallet implements WalletProvider {
       this.disconnect()
     }
 
-    // Check only for extension as window transport communication won't be able to check localStorage,
-    // and checking session is actually enough to determine if we're connected or not in that case.
+    // Check only for extension as window transport communication won't be able to check localStorage at this point,
+    // and in that case checking session is enough to determine if we're connected or not.
     const isDappConnectedInExtension = isBrowserExtension() ? isDappConnected(options?.origin) : true
 
     if (this.isConnected() && !!this.session && isDappConnectedInExtension && !options?.authorize && !options?.askForEmail) {

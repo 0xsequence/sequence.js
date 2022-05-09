@@ -10,7 +10,7 @@ import {
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/utils'
+import { logger, base64DecodeObject } from '@0xsequence/utils'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -143,7 +143,8 @@ export class WindowMessageHandler extends BaseWalletTransport {
       this.parentWindow.postMessage(message, '*')
     } else {
       // open message transmission
-      if (this.appOrigin && this.appOrigin.length > 4) { // just above '.com'
+      if (this.appOrigin && this.appOrigin.length > 4) {
+        // just above '.com'
         this.parentWindow.postMessage(message, this.appOrigin)
       } else {
         logger.error('unable to postMessage as parentOrigin is invalid')
