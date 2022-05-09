@@ -140,22 +140,37 @@ export class RedundantConfigTracker implements ConfigTracker {
     wallet: string,
     context: WalletContext
   }): Promise<string | undefined> => {
+    // Keep track of which child returned a result
+    // so we don't backfeed the same result to them
+    const provided: number[] = []
+
     // Query all childs at the same time
     // find a promise that doesn't throw and doesn't return undefined
-    const found = await PromiseSome(this.childs.map((c) => c.imageHashOfCounterFactualWallet(args)))
+    const found = await PromiseSome(this.childs.map(async (c, i) => {
+      const res = await c.imageHashOfCounterFactualWallet(args)
+      if (res) provided.push(i)
+      return res
+    }))
 
     // Backfeed found config to all other childs
     if (found) {
-      this.saveCounterFactualWallet({ imageHash: found, context: args.context })
+      this.saveCounterFactualWallet({ imageHash: found, context: args.context, skipIndexes: provided })
     }
 
     // Return found value
     return found
   }
 
-  saveCounterFactualWallet = async (args: { imageHash: string; context: WalletContext }): Promise<void> => {
+  saveCounterFactualWallet = async (args: {
+    imageHash: string,
+    context: WalletContext,
+    skipIndexes?: number[]
+  }): Promise<void> => {
     // Save config to all childs
-    await Promise.all(this.childs.map((c) => c.saveCounterFactualWallet(args)))
+    await Promise.all(this.childs.map((c, i) => {
+      if (args.skipIndexes?.includes(i)) return
+      return c.saveCounterFactualWallet(args)
+    }))
   }
 
   walletsOfSigner = async (args: {
