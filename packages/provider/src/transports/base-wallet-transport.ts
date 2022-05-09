@@ -425,7 +425,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
         // 1. If there is no origin, it means we are using proxy transport
         // 2. If origin is the browser extension, we can notify since extension checks for connected origin
         // 3. If there is no prompter it means this is a direct usage of sequence.js without UI prompts and
-        // and connectedDapps isn't used in this flow.
+        // connectedDapps isn't used in this flow.
         // See `mock-wallet.test.ts` in 0xsequence package tests for an example of this usage without prompter.
         if (
           isDappConnected(this.appOrigin) ||
