@@ -18,8 +18,26 @@ export class RedundantConfigTracker implements ConfigTracker {
     fromImageHash: string,
     prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
+    // Track which child returned each result
+    // so we don't backfeed the same result to them
+    const provided: { [key: string]: number[] } = {}
+    const keyOf = (update: PresignedConfigUpdate[]): string => {
+      if (update.length === 0) return ""
+      return update.length + "-" + update[update.length-1].body.newImageHash
+    } 
+
     // Get all presigned configurations for all childs
-    const responses = await Promise.all(this.childs.map((c) => c.loadPresignedConfiguration(args)))
+    const responses = await Promise.all(this.childs.map(async (c, i) => {
+      const res = await c.loadPresignedConfiguration(args)
+      const key = keyOf(res)
+      if (!provided[key]) {
+        provided[key] = [i]
+      } else {
+        provided[key].push(i)
+      }
+
+      return res
+    }))
 
     // Filter empty responses or rejected promises
     // const responses = rawResponses
@@ -43,6 +61,7 @@ export class RedundantConfigTracker implements ConfigTracker {
     // Convert response back to presigned configuration payload
     // and feed that back to other providers, use a new promise
     // to avoid blocking the other responses
+    const skipIndexes = provided[keyOf(found)]
     new Promise(() => {
       // TODO: filter providers
       // who initially responded with the same data
@@ -52,7 +71,7 @@ export class RedundantConfigTracker implements ConfigTracker {
           if (!config) return
 
           const payload = asPresignedConfigurationAsPayload(r, config)
-          this.savePresignedConfiguration(payload)
+          this.savePresignedConfiguration({ ...payload, skipIndexes })
         } catch {}
       })
     })
@@ -84,10 +103,14 @@ export class RedundantConfigTracker implements ConfigTracker {
     signatures: {
       chainId: BigNumber,
       signature: string
-    }[]
+    }[],
+    skipIndexes?: number[]
   }): Promise<void> => {
     // Save config to all childs
-    await Promise.all(this.childs.map((c) => c.savePresignedConfiguration(args)))
+    await Promise.all(this.childs.map((c, i) => {
+      if (args.skipIndexes?.includes(i)) return
+      return c.savePresignedConfiguration(args)
+    }))
   }
 
   saveWalletConfig = async ( args: {

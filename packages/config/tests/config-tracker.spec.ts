@@ -184,7 +184,7 @@ class ErraticConfigTracker implements ConfigTracker {
   }
 }
 
-describe.only('Config tracker', function () {
+describe('Config tracker', function () {
   const defaultChainId = 31337
 
   let provider: ethers.providers.JsonRpcProvider
