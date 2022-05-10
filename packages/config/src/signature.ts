@@ -18,7 +18,7 @@ export type DecodedAddressPart = {
 
 export type DecodedEOASigner = {
   weight: number
-  signature: ethers.BytesLike
+  signature: string
 }
 
 export type DecodedEOASplitSigner = {
@@ -32,7 +32,7 @@ export type DecodedEOASplitSigner = {
 export type DecodedFullSigner = {
   weight: number
   address: string
-  signature: ethers.BytesLike
+  signature: string
 }
 
 export function isDecodedAddress(cand: DecodedSignaturePart): cand is DecodedAddressPart {
@@ -90,10 +90,10 @@ export const decodeSignaturePart = (hex: string): { part: DecodedSignaturePart, 
   const auxsig = trim0x(hex)
 
   let rindex = 0
-  const signatureType = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber() as SignatureType
+  const signatureType = parseInt(auxsig.slice(rindex, rindex + 2), 16) as SignatureType
   rindex += 2
 
-  const weight = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 2)}`).toNumber()
+  const weight = parseInt(auxsig.slice(rindex, rindex + 2), 16)
   rindex += 2
 
   switch (signatureType) {
@@ -110,15 +110,15 @@ export const decodeSignaturePart = (hex: string): { part: DecodedSignaturePart, 
       }
   
     case SignatureType.EOA:
-      const sig = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + 132)}`)
+      const sig = `0x${auxsig.slice(rindex, rindex + 132)}`
       rindex += 132
 
-      const split = ethers.utils.splitSignature(sig.slice(0, 65))
+      const split = ethers.utils.splitSignature(sig.slice(0, -2))
       const r = split.r
       const s = split.s
       const v = split.v
 
-      const t = ethers.BigNumber.from(sig[sig.length - 1]).toNumber()
+      const t = parseInt(sig.slice(-2), 16)
 
       return {
         rindex,
@@ -136,10 +136,10 @@ export const decodeSignaturePart = (hex: string): { part: DecodedSignaturePart, 
       const address = ethers.utils.getAddress(auxsig.slice(rindex, rindex + 40))
       rindex += 40
 
-      const size = ethers.BigNumber.from(`0x${auxsig.slice(rindex, rindex + 4)}`).mul(2).toNumber()
+      const size = parseInt(auxsig.slice(rindex, rindex + 4), 16) * 2
       rindex += 4
 
-      const signature = ethers.utils.arrayify(`0x${auxsig.slice(rindex, rindex + size)}`)
+      const signature = `0x${auxsig.slice(rindex, rindex + size)}`
       rindex += size
 
       return {
@@ -159,9 +159,8 @@ export const decodeSignaturePart = (hex: string): { part: DecodedSignaturePart, 
 export const decodeSignature = (signature: string | DecodedSignature): DecodedSignature => {
   if (typeof signature !== 'string') return signature
 
-  const auxsig = signature.replace('0x', '')
-
-  const threshold = ethers.BigNumber.from(`0x${auxsig.slice(0, 4)}`).toNumber()
+  const auxsig = trim0x(signature)
+  const threshold = parseInt(auxsig.slice(0, 4), 16)
 
   const signers: DecodedSignaturePart[] = []
 
@@ -193,9 +192,10 @@ export const splitDecodedEOASigner = (sig: DecodedEOASigner): DecodedEOASplitSig
   }
 }
 
+const prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n32')
+
 export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner | DecodedEOASplitSigner) => {
   const signature = isDecodedEOASplitSigner(sig) ? sig : splitDecodedEOASigner(sig)
-
   switch (signature.t) {
     case SIG_TYPE_EIP712:
       return ethers.utils.recoverAddress(digest, {
@@ -205,10 +205,7 @@ export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner | Deco
       })
     case SIG_TYPE_ETH_SIGN:
       const subDigest = ethers.utils.keccak256(
-        ethers.utils.solidityPack(
-          ['string', 'bytes32'],
-          ['\x19Ethereum Signed Message:\n32', digest]
-        )
+        ethers.utils.concat([prefix, ethers.utils.arrayify(digest)])
       )
 
       return ethers.utils.recoverAddress(subDigest, {
@@ -221,6 +218,12 @@ export const recoverEOASigner = (digest: BytesLike, sig: DecodedEOASigner | Deco
   }
 }
 
+export type RecoveredConfigPart = {
+  signer: string,
+  subDigest: string,
+  signature?: DecodedEOASplitSigner | DecodedEOASigner,
+}
+
 // This method statically recovers a configuration from a sequence signature
 // notice this method doesn't use any provider, instead it assumes that only wallet-signatures are sequence-wallets
 // and for those wallets it expects to be passed a statically defined configuration
@@ -231,9 +234,9 @@ export const staticRecoverConfig = (
   signature: DecodedSignature,
   chainId: ethers.BigNumberish,
   walletConfigs: AssumedWalletConfigs = {}
-): { config: WalletConfig, weight: number, parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[], allConfigs: WalletConfig[] } => {
+): { config: WalletConfig, weight: number, parts: RecoveredConfigPart[], allConfigs: WalletConfig[] } => {
   const config: WalletConfig = { threshold: signature.threshold, signers: [] }
-  const parts: { subDigest: string, signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner }[] = []
+  const parts: RecoveredConfigPart[] = []
 
   const allConfigs: WalletConfig[] = []
 
@@ -241,23 +244,16 @@ export const staticRecoverConfig = (
 
   signature.signers.forEach((p) => {
     const recovered = staticRecoverConfigPart(subDigest, p, chainId, walletConfigs)
+    weight += recovered.weight
 
-    if (recovered.signature) {
-      weight += p.weight
-    }
-
-    allConfigs.push(...recovered.nested)
+    allConfigs.push(...recovered.configs)
 
     config.signers.push({
       weight: p.weight,
       address: recovered.signer
     })
 
-    parts.push({
-      subDigest,
-      signer: recovered.signer,
-      signature: recovered.signature
-    })
+    parts.push(...recovered.parts)
   })
 
   allConfigs.push(config)
@@ -274,58 +270,54 @@ export const staticRecoverConfigPart = (
   part: DecodedSignaturePart,
   chainId: ethers.BigNumberish,
   walletConfigs: AssumedWalletConfigs = {}
-): { signer: string, signature?: DecodedEOASplitSigner | DecodedEOASigner, nested: WalletConfig[] } => {
+): { signer: string, parts: RecoveredConfigPart[], configs: WalletConfig[], weight: number } => {
   // Ignore "address" types
   // just use them to retrieve the embedded config
   if (isDecodedAddress(part)) {
-    return { signer: part.address, nested: [] }
+    return { signer: part.address, parts: [], configs: [], weight: 0 }
   }
 
   // Nested signatures are only supported for Sequence wallets
   // ASSUMED the imageHash of each nested signature is passed as a static argument
   // EIP1271 are not statically verifiable, so we can't recover them
   if (isDecodedFullSigner(part)) {
-    // TODO: this will fail to recover EOA signatures
-    // encoded as full signers, handle that
-    if (walletConfigs[part.address] === undefined) {
-      throw new Error(`Missing statically defined config for ${part.address}`)
-    }
-
     // Last byte signals an EIP1271 signature
     // remove and validate it
-    const rawsig = ethers.utils.arrayify(part.signature)
-    const eip1271 = rawsig[rawsig.length - 1]
-    if (eip1271 !== 0x03) {
+    const eip1271 = part.signature.slice(-2)
+    if (eip1271 !== '03') {
       throw new Error(`Invalid EIP1271 signature ${part.signature}`)
     }
 
-    const decoded = decodeSignature(ethers.utils.hexlify(rawsig.slice(0, rawsig.length - 1)))
+    const decoded = decodeSignature(part.signature.slice(0, -2))
     const nestedSubDigest = subDigestOf(part.address, chainId, subDigest)
     const recovered = staticRecoverConfig(nestedSubDigest, decoded, chainId, walletConfigs)
 
-    if (
+    // Signature validity can only be determined if we have an assumed configuration
+    // if we don't then we can still recover the signature, but we can't count the weight
+    // ... if the recovered weight is not high enough, or if the recovered config is not valid
+    // we can still recover the parts of the signatures, but again we can't count the weight
+    const weight = (
+      walletConfigs[part.address] &&
       recovered.weight >= walletConfigs[part.address].threshold &&
       imageHash(recovered.config) === imageHash(walletConfigs[part.address])
-    ) {
+    ) ? recovered.weight : 0
 
-      // Push the part and all nested parts too
-      return {
-        signer: part.address,
-        signature: part,
-        nested: recovered.allConfigs
-      }
-    } else {
-      throw new Error(`Invalid nested sequence signature for ${part.address}`)
+    return {
+      signer: part.address,
+      parts: recovered.parts,
+      configs: recovered.allConfigs,
+      weight
     }
   }
 
   // If EOA signature just recover it
-  if (isDecodedEOASigner(part) || isDecodedEOASplitSigner(part)) {
+  if (isDecodedEOASplitSigner(part) || isDecodedEOASigner(part)) {
     const recovered = recoverEOASigner(subDigest, part)
     return {
       signer: recovered,
-      signature: part,
-      nested: []
+      parts: [{ signer: recovered, signature: part, subDigest }],
+      configs: [],
+      weight: part.weight
     }
   }
 
@@ -501,7 +493,7 @@ export async function buildStubSignature(
 
   // Stub signature part
   // pre-determined signature, tailored for worse-case scenario in gas costs
-  const stubSig = ethers.utils.arrayify("0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a01b02")
+  const stubSig = "0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a01b02"
 
   // Re-sort signers by original index
   const finalSigners = sortedSigners.sort((a, b) => a.index - b.index)

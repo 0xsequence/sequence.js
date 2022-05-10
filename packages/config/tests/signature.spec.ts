@@ -275,7 +275,7 @@ describe('Signature tools', function () {
 
       const stub = await buildStubSignature(chain.provider, config)
 
-      const stubSig = ethers.utils.arrayify("0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a01b02")
+      const stubSig = "0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a01b02"
 
       expect(stub.signers.length).to.equal(3)
       expect(stub.threshold).to.equal(16)

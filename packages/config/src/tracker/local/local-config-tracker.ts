@@ -1,5 +1,5 @@
 import { sequenceContext, WalletContext } from "@0xsequence/network"
-import { digestOfTransactionsNonce, encodeNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
+import { digestOfTransactionsNonce, encodeNonce, readSequenceNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
@@ -7,7 +7,8 @@ import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
 import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, encodeSignaturePart, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
 import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
-import { getUpdateImageHashImpl, isUpdateImplementationTx, isValidWalletUpdate } from "../utils"
+import { getUpdateImplementation, isValidWalletUpdate } from "../utils"
+import { Searcher } from "./searcher"
 
 
 export class LocalConfigTracker implements ConfigTracker {
@@ -20,11 +21,15 @@ export class LocalConfigTracker implements ConfigTracker {
   saveWalletConfig = async (args: {
     config: WalletConfig
   }): Promise<void> => {
-    return this.database.saveWalletConfig({ ...args, imageHash: imageHash(args.config) })
+    return this.database.saveWalletConfig({ config: { threshold: args.config.threshold, signers: args.config.signers }, imageHash: imageHash(args.config) })
   }
 
   configOfImageHash = async (args: { imageHash: string; }): Promise<WalletConfig | undefined> => {
-    return this.database.configOfImageHash(args)
+    const config = await this.database.configOfImageHash(args)
+    return config ? {
+      threshold: config?.threshold,
+      signers: config?.signers
+    } : undefined
   }
 
   saveCounterFactualWallet = async (args: {
@@ -59,7 +64,7 @@ export class LocalConfigTracker implements ConfigTracker {
     }
 
     let body = { ...args.tx }
-    const updateImpl = getUpdateImageHashImpl(args.wallet, txs[0])
+    const updateImpl = getUpdateImplementation(txs[0])
     if (updateImpl) {
       if (args.tx.update) {
         if (args.tx.update !== updateImpl) {
@@ -86,7 +91,7 @@ export class LocalConfigTracker implements ConfigTracker {
     await this.database.savePresignedTransaction({ digest, body })
 
     // Process all signatures
-    this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
+    return this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
   }
 
   processSignatures = async (args: {
@@ -97,29 +102,37 @@ export class LocalConfigTracker implements ConfigTracker {
       signature: string
     }[],
     imageHash?: string
-  }): Promise<void> => {
+  }): Promise<any> => {
+    // All recovered configs are probably the same thing
+    // so we keep track of the ones we saved to avoid doing it twice
+    const savedConfigs = new Set()
+
     // Process all signatures
-    await Promise.all(args.signatures.map(async (s) => {
+    return Promise.all(args.signatures.map(async (s, i) => {
       const subDigest = subDigestOf(args.wallet, s.chainId, args.digest)
-      const recovered = staticRecoverConfig(subDigest, decodeSignature(s.signature), s.chainId.toNumber(), this.walletConfigs)
+      const decoded = decodeSignature(s.signature)
+      const recovered = staticRecoverConfig(subDigest, decoded, s.chainId, this.walletConfigs)
 
       // Save the embeded config
-      await Promise.all(recovered.allConfigs.map((config) => this.saveWalletConfig({ config })))
+      await Promise.all(recovered.allConfigs.map(async (config) => {
+        const ih = imageHash(config)
+        if (!savedConfigs.has(ih)) {
+          savedConfigs.add(ih)
+          await this.database.saveWalletConfig({ config, imageHash: ih })
+        }
+      }))
 
       // Save signature parts
-      await Promise.all(recovered.parts.map(async (p) => {
-        const signature = p.signature
-        if (!signature) return
-
-        await this.database.saveSignaturePart({
-          wallet: args.wallet,
-          signature,
-          signer: p.signer,
-          digest: args.digest,
-          chainId: s.chainId,
-          imageHash: args.imageHash
-        })
-      }))
+      await this.database.saveSignatureParts({
+        wallet: args.wallet,
+        digest: args.digest,
+        chainId: s.chainId,
+        imageHash: args.imageHash,
+        signatures: recovered.parts.filter((p) => p.signature).map((p) => ({
+          part: p.signature!,
+          signer: p.signer
+        }))
+      })
     }))
   }
 
@@ -130,14 +143,11 @@ export class LocalConfigTracker implements ConfigTracker {
     chainId: BigNumberish
     prependUpdate: string[]
   }): Promise<PresignedConfigUpdate[]> => {
+    // Create new searcher
+    const searcher = new Searcher(this.database, this, args.wallet, ethers.BigNumber.from(args.chainId), true, this.walletConfigs)
+
     // Get best config jump
-    const configJump = await this.recursiveFindPath({
-      parents: [{ imageHash: args.fromImageHash }],
-      wallet: args.wallet,
-      chainId: ethers.BigNumber.from(args.chainId),
-      minGapNonce: ethers.BigNumber.from(0),
-      prependUpdate: args.prependUpdate
-    })
+    const configJump = await searcher.bestRouteFrom(args.fromImageHash, 0, args.prependUpdate)
 
     // If no result, just return empty array
     if (!configJump) return []
@@ -156,151 +166,6 @@ export class LocalConfigTracker implements ConfigTracker {
     // Reverse the array
     return txs.reverse()
   }
-  
-  private recursiveFindPath = async (args: {
-    parents: ConfigJump[] | { imageHash: string }[],
-    wallet: string,
-    chainId: ethers.BigNumber,
-    minGapNonce: ethers.BigNumber,
-    bestCandidate?: ConfigJump
-    prependUpdate?: string[]
-  }): Promise<ConfigJump | undefined> => {
-    // Prepare list of new candidates
-    const newCandidates: ConfigJump[] = []
-
-    // Track best possible candidate
-    let bestCandidate = args.bestCandidate
-
-    // Find candidates for every parent
-    await Promise.all(args.parents.map(async (parent) => {
-      const isFirst = !isConfigJump(parent)
-      const minGapNonce = isFirst ? args.minGapNonce : parent.transaction.body.gapNonce
-
-      // Find all candidates with this parent and min gap nonce
-      const candidates = await this.candidatesForJump({
-        fromImageHash: isFirst ? parent.imageHash : parent.transaction.body.newImageHash,
-        chainId: args.chainId,
-        wallet: args.wallet,
-        minGapNonce,
-        prependUpdate: args.prependUpdate
-      })
-
-      // Compare each with best candidate and find the best one
-      const candidatesWithParents = isConfigJump(parent) ? candidates.map((c) => ({ ...c, parent })) : candidates
-      candidatesWithParents.forEach((candidate) => {
-        if (!bestCandidate) {
-          bestCandidate = candidate
-        } else {
-          const bgp = bestCandidate.transaction?.body.gapNonce
-          const cgp = candidate.transaction?.body.gapNonce
-          if (bgp && cgp && cgp.gt(bgp)) {
-            bestCandidate = candidate
-          }
-        }
-      })
-
-      // Add parents to candidates
-      newCandidates.push(...candidatesWithParents)
-    }))
-
-    // If no more candidates just return best candidate
-    if (newCandidates.length === 0) {
-      return bestCandidate
-    }
-
-    // Recurse
-    return this.recursiveFindPath({
-      parents: newCandidates,
-      wallet: args.wallet,
-      chainId: args.chainId,
-      minGapNonce: args.minGapNonce,
-      bestCandidate,
-    })
-  }
-
-  private candidatesForJump = async (args: {
-    fromImageHash: string,
-    wallet: string,
-    chainId: ethers.BigNumber,
-    minGapNonce: ethers.BigNumber,
-    prependUpdate?: string[]
-  }): Promise<ConfigJump[]> => {
-    // Get configuration for current imageHash
-    const fromConfig = await this.configOfImageHash({ imageHash: args.fromImageHash })
-    if (!fromConfig) throw Error(`No configuration found for imageHash ${args.fromImageHash}`)
-
-    // Track combined weight of all transactions
-    // transactions below thershold should be descarded
-    const weights = new Map<string, ethers.BigNumber>()
-
-    // Get all known signatures for every signer on the config
-    await Promise.all(fromConfig.signers.map(async (s) => {
-      const signatures = await this.database.getSignaturePartsForAddress({ signer: s.address, chainId: args.chainId })
-      signatures.forEach((signature) => {
-        // Get weight of the signer
-        const prevWeight = weights.get(signature.digest) ?? ethers.constants.Zero
-        weights.set(signature.digest, prevWeight.add(signature.signature.weight))
-      })
-    }))
-
-    // Build candidates
-    const candidates: ConfigJump[] = []
-
-    // Filter out transactions below threshold
-    // then build candidates for each one of the remaining transactions
-    await Promise.all(Array.from(weights).map(async (val) => {
-      const [digest, weight] = val
-
-      if (weight.lt(fromConfig.threshold)) {
-        return
-      }
-
-      // No transaction found for diggest
-      // probably it was created with a witness
-      const tx = await this.database.transactionWithDigest({ digest })
-      if (!tx) return
-
-      // Ignore lower gapNonces
-      if (tx.gapNonce.lte(args.minGapNonce)) {
-        return
-      }
-
-      // If prependUpdate is set, check if the transaction is in the list
-      if (args.prependUpdate) {
-        const found = args.prependUpdate.find((update) => tx.update && update === tx.update)
-        if (!found) return
-      }
-
-      const unsortedSignature = await Promise.all(fromConfig.signers.map(async (s, i) => {
-        const part = await this.database.getSignaturePart({ signer: s.address, digest, chainId: args.chainId })
-        if (!part) {
-          return { weight: s.weight, address: s.address, i }
-        }
-
-        const npart = { ...part.signature, i }
-        npart.weight = s.weight
-        return npart
-      }))
-
-      // Promise may return signatures in any order
-      // so sort them using i and then filter i out
-      const signature = unsortedSignature
-        .sort((a, b) => a.i - b.i)
-        .map((s) => ({ ...s, i: undefined }))
-
-      candidates.push({
-        transaction: {
-          body: tx,
-          signature: {
-            threshold: fromConfig.threshold,
-            signers: signature,
-          },
-        },
-      })
-    }))
-
-    return candidates
-  }
 
   walletsOfSigner = async (args: {
     signer: string
@@ -311,7 +176,16 @@ export class LocalConfigTracker implements ConfigTracker {
     // Find the wallet for each part
     const txsAndProofs: { wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[] = []
 
+    // Filter duplicates
+    // notice: if this is too expensive we can add it to the db
+    const seen: { [key: string]: boolean } = {}
+
     await Promise.all(parts.map(async (p) => {
+      if (seen[p.wallet]) {
+        return
+      }
+      seen[p.wallet] = true
+
       txsAndProofs.push({
         wallet: p.wallet,
         proof: {

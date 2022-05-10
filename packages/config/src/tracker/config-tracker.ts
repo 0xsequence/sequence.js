@@ -61,7 +61,8 @@ export abstract class ConfigTracker {
     wallet: string,
     fromImageHash: string,
     chainId: ethers.BigNumberish,
-    prependUpdate: string[]
+    prependUpdate: string[],
+    assumedConfigs?: AssumedWalletConfigs
   }) => Promise<PresignedConfigUpdate[]>
 
   savePresignedConfiguration: (

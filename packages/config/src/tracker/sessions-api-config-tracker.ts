@@ -1,16 +1,25 @@
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { WalletConfig } from "../config"
 import fetchPonyfill from 'fetch-ponyfill'
-import { ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
-import { Sessions } from "./gen/sessions.gen"
+import { AssumedWalletConfigs, ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
+import { Sessions, Config } from "./gen/sessions.gen"
 import { addressOf, DecodedSignaturePart, imageHash, isAddrEqual } from ".."
 import { WalletContext } from "@0xsequence/network"
 
 export class SessionsApiConfigTracker implements ConfigTracker {
   public sessions: Sessions
+  public protoWalletConfigs: {[key: string]: Config} = {}
 
-  constructor(url: string, public maxResults = 50) {
+  constructor(url: string, public maxResults = 50, public walletConfigs: AssumedWalletConfigs = {}) {
     this.sessions = new Sessions(url, fetchPonyfill().fetch)
+
+    for (const address of Object.keys(walletConfigs)) {
+      const config = walletConfigs[address]
+      this.protoWalletConfigs[address] = {
+        ...config,
+        imageHash: imageHash(config),
+      }
+    }
   }
 
   imageHashOfCounterFactualWallet = async (args: {
@@ -18,6 +27,9 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     wallet: string
   }): Promise<string | undefined> => {
     const candidates = await this.sessions.imageHashForWallet({ address: args.wallet })
+    if (!candidates?.wallets) {
+      return undefined
+    }
 
     // API may return counterfactual wallets for other configs
     // so we filter looking for the rifgr one
@@ -45,7 +57,8 @@ export class SessionsApiConfigTracker implements ConfigTracker {
       wallet: args.wallet,
       fromImageHash: args.fromImageHash,
       chainid: ethers.BigNumber.from(args.chainId).toString(),
-      prependUpdate: args.prependUpdate
+      prependUpdate: args.prependUpdate,
+      assumedConfigs: this.protoWalletConfigs
     })
   
     return res.txs.map((tx) => {
@@ -65,7 +78,10 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     imageHash: string
   }): Promise<WalletConfig | undefined> => {
     const res = await this.sessions.configurationForImageHash({ imageHash: args.imageHash })
-    return res.config
+    return res?.config ? {
+      threshold: res.config.threshold,
+      signers: res.config.signers
+    } : undefined
   }
 
   saveWitness = async (args: {

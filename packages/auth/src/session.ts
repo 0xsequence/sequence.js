@@ -7,7 +7,6 @@ import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig } from '@0
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
 import { ethers, Signer as AbstractSigner, Wallet } from 'ethers'
-import { network } from '../../0xsequence/src/sequence'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -34,6 +33,13 @@ type ProofStringPromise = {
 
 export function isSessionDumpV1(cand: SessionDumpV1 | SessionDump): cand is SessionDumpV1 {
   return (cand as any).version === undefined 
+}
+
+export function isSessionDump(cand: SessionDumpV1 | SessionDump): cand is SessionDump {
+  return (
+    (cand as any).version !== undefined &&
+    (cand as any).version === SESSION_DUMP_VERSION
+  )
 }
 
 export interface SessionDumpV1 {
@@ -267,7 +273,7 @@ export class Session {
 
     // Sign proof message using account
     const proofString = {
-      proofString: this.account.signMessage(proof.messageDigest(), undefined, undefined, true).then((signature: string) => {
+      proofString: this.account.signMessage(proof.messageDigest(), undefined, true, true).then((signature: string) => {
         proof.signature = signature
         return ethAuth.encodeProof(proof, true)
       }),
@@ -362,7 +368,10 @@ export class Session {
       if (imageHash(newConfig) !== imageHash(config)) {
         // Update configuration for all networks
         // (networks we aren't using, but we want to presign transactions anyway)
-        await Promise.all(networks.map((n) => account.updateConfig(newConfig, n.chainId, knownNetworks ?? [])))
+
+        // Notice: we don't pass known networks for all networks, otherwise we end up signing
+        // knownNetworks x networks transactions, which is not needed
+        await Promise.all(networks.map((n, i) => account.updateConfig(newConfig, n.chainId, knownNetworks && i === 0 ? knownNetworks : [])))
       }
     } else {
       // If not we have to create an initial configuration using the provided signers

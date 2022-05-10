@@ -126,8 +126,6 @@ export class Account extends Signer {
     if (!provider) return undefined
 
     const relayer = await this.getRelayer(cid)
-    if (!relayer) return undefined
-
     const config = await this.getWalletConfig(cid)
     if (!config) return undefined
     
@@ -543,8 +541,6 @@ export class Account extends Signer {
     const sessionUtilsInterface = new Interface(walletContracts.sessionUtils.abi)
     const sessionNonce = encodeNonce(SESSIONS_SPACE, 0)
 
-    const transactions: Transaction[] = []
-
     // Get latest configuration
     const lastConfig = await this.getRichWalletConfig(chainId)
     if (!lastConfig) throw new Error(`No wallet config found for chainId ${chainId}`)
@@ -557,7 +553,7 @@ export class Account extends Signer {
 
     const newImageHash = imageHash(newConfig)
     const updateBundle = await wallet.setProvider(provider).buildUpdateConfig(newImageHash, chainId, lastConfig.source !== WalletConfigSource.CounterFactual)
-    transactions.push(...updateBundle.transactions)
+    const transactions: Transaction[] = [...updateBundle.transactions]
 
     // Append session utils requireGapNonce (session nonce)
 
@@ -581,12 +577,11 @@ export class Account extends Signer {
     // Now sign the updateConfig transaction for all other chains
     // but using the reference configuration
     if (extraChainIds) {
-      for (const cid of extraChainIds) {
+      const extraSignatures = await Promise.all(extraChainIds.map((cid) => {
         const wallet = new Wallet({ config: lastConfig.config, context: this._context, strict: false }, ...this._signers)
-        const signed = await wallet.signTransactions(transactions, cid, true)
-
-        signatures.push(signed)
-      }
+        return wallet.signTransactions(transactions, cid, true)
+      }))
+      signatures.push(...extraSignatures)
     }
 
     // Save new config and counter-factual address
@@ -605,7 +600,7 @@ export class Account extends Signer {
         nonce: sessionNonce,
         gapNonce: timestamp,
       },
-      signatures: await Promise.all(signatures.map(async (s) => ({ signature: encodeSignature(await s.signature), chainId: s.chainId })))
+      signatures: await Promise.all(signatures.map(async (s) => ({ signature: encodeSignature(s.signature), chainId: s.chainId })))
     })
 
     // Safety check, does the config tracker have the new config?
@@ -613,7 +608,7 @@ export class Account extends Signer {
       wallet: this.address,
       fromImageHash: imageHash(lastConfig.config),
       chainId: getChainId(chainId),
-      prependUpdate: []
+      prependUpdate: lastConfig.source !== WalletConfigSource.CounterFactual ? [] : [this._context.mainModuleUpgradable]
     })
     if (newConfigFromTracker.length === 0) {
       throw new Error(`New config not found in config tracker: ${getChainId(chainId)}`)

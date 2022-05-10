@@ -12,13 +12,26 @@ export class UnreliableConfigTracker implements ConfigTracker {
     public name?: string,
   ) { }
 
+  private logError(e: Error) {
+    if (this.verbose) {
+      console.warn(`${this.name || "UnreliableConfigTracker"} ${name} error: ${e.message}`)
+    }
+  }
+
   private tryExecuteMethod = async <T, Y>(name: string, method: ((args: Y) => Promise<T>), args: Y, fallback: T): Promise<T> => {
-    const res = await method(args).catch((e) => {
-      if (this.verbose) {
-        console.warn(`${this.name || "UnreliableConfigTracker"} ${name} error: ${e.message}`)
+    return new Promise((resolve) => {
+      try {
+        method(args).then((result) => {
+          resolve(result || fallback)
+        }).catch((e) => {
+          this.logError(e)
+          resolve(fallback)
+        })
+      } catch (e) {
+        this.logError(e)
+        resolve(fallback)
       }
     })
-    return res || fallback
   }
 
   loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; }): Promise<PresignedConfigUpdate[]> => {

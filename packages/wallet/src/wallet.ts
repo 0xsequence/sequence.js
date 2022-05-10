@@ -1,5 +1,5 @@
-import { Provider, TransactionResponse, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner, utils } from 'ethers'
+import { Provider, BlockTag, JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
+import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@ethersproject/properties'
@@ -44,9 +44,11 @@ import {
   encodeSignature,
   joinSignatures,
   recoverEOASigner,
+  isDecodedSigner,
 } from '@0xsequence/config'
 
 import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
+
 import { RemoteSigner } from './remote-signers'
 import { getImplementation, isWalletDeployed, resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
@@ -578,7 +580,7 @@ export class Wallet extends Signer {
 
               try {
                 // Check if signature can be recovered as EOA signature
-                const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature: signature }) === s.address
+                const isEOASignature = recoverEOASigner(subDigest, { weight: s.weight, signature:signature }) === s.address
 
                 if (isEOASignature) {
                   // Exclude address on EOA signatures
@@ -617,13 +619,18 @@ export class Wallet extends Signer {
       }
     }
 
-    // Split local signers and remote signers
-    const localSigners = this._signers.filter(s => !RemoteSigner.isRemoteSigner(s))
-    const remoteSigners = this._signers.filter(s => RemoteSigner.isRemoteSigner(s))
-
     // Sign message first using localSigners
-    // include local signatures for remote signers
+    const localSigners = this._signers.filter(s => !RemoteSigner.isRemoteSigner(s))
     const localSignature = await signWith(localSigners, this.packMsgAndSig(digest, [], signChainId))
+
+    // Skip remote signers if we already meet threshold
+    const totalWeight = localSignature.signers.filter(isDecodedSigner).reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
+    if (totalWeight >= this.config.threshold) {
+      return encodeSignature(localSignature)
+    }
+
+    // include local signatures for remote signers
+    const remoteSigners = this._signers.filter(s => RemoteSigner.isRemoteSigner(s))
     const remoteSignature = await signWith(
       remoteSigners,
       this.packMsgAndSig(digest, encodeSignature(localSignature), signChainId)

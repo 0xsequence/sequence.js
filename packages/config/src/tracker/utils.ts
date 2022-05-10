@@ -47,11 +47,32 @@ export function isValidWalletUpdate(args: {
       return false
   }
 
+  // Common checks for all txs
+  for (const tx of txs) {
+    if (
+      !tx.revertOnError ||
+      !ethers.BigNumber.from(tx.gasLimit).isZero() ||
+      !ethers.BigNumber.from(tx.value).isZero()
+    ) {
+      return false
+    }
+  }
+
   return true
 }
 
 export function isUpdateImplementationTx(wallet: string, target: string, tx: Transaction): boolean {
   const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
+
+  // Delegate call should be false
+  if (tx.delegateCall) {
+    return false
+  }
+
+  // Data length should be 4 + 32
+  if (!tx.data || ethers.utils.arrayify(tx.data).length !== 36) {
+    return false
+  }
 
   // First 4 bytes should be the updateImplementation signature
   if (!startsWith(tx.data, mainModuleInterface.getSighash("updateImplementation"))) {
@@ -77,17 +98,17 @@ export function isUpdateImplementationTx(wallet: string, target: string, tx: Tra
   return true
 }
 
-export function getUpdateImageHashImpl(wallet: string, tx: Transaction): string | undefined {
-  const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+export function getUpdateImplementation(tx: Transaction): string | undefined {
+  const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
 
   // First 4 bytes should be the setImageHash signature
-  if (!startsWith(tx.data, mainModuleUpgradableInterface.getSighash("updateImageHash"))) {
+  if (!startsWith(tx.data, mainModuleInterface.getSighash("updateImplementation"))) {
     return undefined
   }
 
   // Decode arguments of method call
   try {
-    const decoded = tx.data && mainModuleUpgradableInterface.decodeFunctionData("updateImageHash", tx.data)
+    const decoded = tx.data && mainModuleInterface.decodeFunctionData("updateImplementation", tx.data)
     if (!decoded) return undefined
   
     return decoded[0]
@@ -98,6 +119,16 @@ export function getUpdateImageHashImpl(wallet: string, tx: Transaction): string 
 
 export function isUpdateImageHashTx(wallet: string, config: WalletConfig | string, tx: Transaction): boolean {
   const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+
+  // Delegate call should be false
+  if (tx.delegateCall) {
+    return false
+  }
+
+  // Data length should be 4 + 32
+  if (!tx.data || ethers.utils.arrayify(tx.data).length !== 36) {
+    return false
+  }
 
   // First 4 bytes should be the setImageHash signature
   if (!startsWith(tx.data, mainModuleUpgradableInterface.getSighash("updateImageHash"))) {
@@ -125,6 +156,16 @@ export function isUpdateImageHashTx(wallet: string, config: WalletConfig | strin
 
 export function isSessionNonceTx(nonce: ethers.BigNumberish, context: WalletContext, tx: Transaction): boolean {
   const sessionInterface = new Interface(walletContracts.sessionUtils.abi)
+
+  // Delegate call should be true
+  if (!tx.delegateCall) {
+    return false
+  }
+
+  // Data length should be 4 + 32
+  if (!tx.data || ethers.utils.arrayify(tx.data).length !== 36) {
+    return false
+  }
 
   // First 4 bytes should be requireSessionNonce signature
   if (!startsWith(tx.data, sessionInterface.getSighash("requireSessionNonce"))) {

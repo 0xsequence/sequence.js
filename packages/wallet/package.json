@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/wallet",
-  "version": "0.36.9",
+  "version": "0.36.13",
   "description": "wallet sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/wallet",
   "source": "src/index.ts",
@@ -17,13 +17,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.36.9",
-    "@0xsequence/config": "^0.36.9",
-    "@0xsequence/guard": "^0.36.9",
-    "@0xsequence/network": "^0.36.9",
-    "@0xsequence/relayer": "^0.36.9",
-    "@0xsequence/transactions": "^0.36.9",
-    "@0xsequence/utils": "^0.36.9",
+    "@0xsequence/abi": "^0.36.13",
+    "@0xsequence/config": "^0.36.13",
+    "@0xsequence/guard": "^0.36.13",
+    "@0xsequence/network": "^0.36.13",
+    "@0xsequence/relayer": "^0.36.13",
+    "@0xsequence/transactions": "^0.36.13",
+    "@0xsequence/utils": "^0.36.13",
     "@ethersproject/abi": "^5.5.0",
     "@ethersproject/properties": "^5.5.0",
     "@ethersproject/providers": "^5.5.1",
