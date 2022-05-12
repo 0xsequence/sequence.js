@@ -35,7 +35,7 @@ export class GuardRemoteSigner extends RemoteSigner {
   scheduleExecution = () => {
     if (this.queue.length > 0) {
       if (this.timeout) clearTimeout(this.timeout)
-      this.timeout = setTimeout(this.run, 50)
+      this.timeout = setTimeout(() => this.run(), 250)
     }
   }
 
@@ -44,47 +44,48 @@ export class GuardRemoteSigner extends RemoteSigner {
     const queue = [...this.queue]
     this.queue = []
 
-    // Partition queue into batches with same message
-    const batches = {} as { [key: string]: QueueEntry[] }
+    const batches: {[key: string]: QueueEntry[]} = {}
+
+    // Group queue entries by same msg + wallet
     for (const entry of queue) {
-      const key = ethers.utils.hexlify(entry.message)
-      if (!batches[key]) batches[key] = []
-      batches[key].push(entry)
+      // Decode auxData
+
+      // TODO: this could be simplified by
+      // adding these values directly on the remote signer interface
+      // for the sake of simplicity, we'll just decode it here
+
+      const decodedAux = ethers.utils.defaultAbiCoder.decode(['address', 'uint256', 'bytes'], entry.auxData)
+      const address = decodedAux[0]
+      const message = decodedAux[2]
+
+      const key = `${address}${message}`
+      if (!batches[key]) {
+        batches[key] = [entry]
+      } else {
+        batches[key].push(entry)
+      }
     }
 
-    // Send batches to guardd
-    for (const entries of Object.values(batches)) {
-      // If there is only one entry, just send it
-      if (entries.length === 1) {
-        const entry = entries[0]
-        const request = {
+    // Process every batch at the same time
+    await Promise.all(Object.values(batches).map(async (batch) => {
+      try {
+        // Convert into SignRequest
+        const requests = batch.map((entry) => ({
           msg: entry.message,
           auxData: entry.auxData,
           chainId: entry.chainId.toNumber()
-        }
+        }))
 
-        const res = await this._guardd.sign({ request })
-        entry.resolve(this.isSequence ? res.sig : res.sig + '02')
-      } else {
-        // If not, sign in batch
-        // Sort by chainId from lowest to highest
-        const sortedEntries = entries.sort((a, b) => a.chainId.lt(b.chainId) ? -1 : 1)
-
-        // Send request with auxData of the first chainId
-        const request = {
-          msg: sortedEntries[0].message,
-          auxData: sortedEntries[0].auxData,
-        }
-
-        const chainIds = sortedEntries.map(entry => entry.chainId.toString())
-        const res = await this._guardd.batchSign({ request, chainIds })
-
-        // Resolve all entries, responses are provided in the same order
-        for (const [i, entry] of sortedEntries.entries()) {
-          entry.resolve(this.isSequence ? res.sig[i] : res.sig[i] + '02')
-        }
+        const responses = await this._guardd.batchSign({ requests })
+        batch.forEach((item, i) => {
+          item.resolve(responses.sig[i])
+        })
+      } catch (e) {
+        batch.forEach((item) => {
+          item.reject(e)
+        })
       }
-    }
+    }))
   }
 
   async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainIdLike): Promise<string> {
@@ -97,6 +98,7 @@ export class GuardRemoteSigner extends RemoteSigner {
         resolve,
         reject
       })
+      this.scheduleExecution()
     })
   }
 
