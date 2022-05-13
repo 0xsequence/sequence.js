@@ -1,5 +1,33 @@
 # 0xsequence
 
+## 0.38.0
+
+### Minor Changes
+
+- api: update bindings, change TokenPrice interface
+- bridge: remove @0xsequence/bridge package
+- api: update bindings, rename ContractCallArg to TupleComponent
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.38.0
+  - @0xsequence/api@0.38.0
+  - @0xsequence/auth@0.38.0
+  - @0xsequence/config@0.38.0
+  - @0xsequence/guard@0.38.0
+  - @0xsequence/indexer@0.38.0
+  - @0xsequence/metadata@0.38.0
+  - @0xsequence/multicall@0.38.0
+  - @0xsequence/network@0.38.0
+  - @0xsequence/provider@0.38.0
+  - @0xsequence/relayer@0.38.0
+  - @0xsequence/transactions@0.38.0
+  - @0xsequence/utils@0.38.0
+  - @0xsequence/wallet@0.38.0
+
 ## 0.37.1
 
 ### Patch Changes
