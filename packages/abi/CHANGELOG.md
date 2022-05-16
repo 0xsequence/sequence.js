@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.38.1
+
+### Patch Changes
+
+- update api and metadata rpc bindings
+
 ## 0.38.0
 
 ### Minor Changes

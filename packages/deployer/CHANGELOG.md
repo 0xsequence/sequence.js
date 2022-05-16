@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.38.1
+
+### Patch Changes
+
+- update api and metadata rpc bindings
+- Updated dependencies
+  - @0xsequence/utils@0.38.1
+
 ## 0.38.0
 
 ### Minor Changes

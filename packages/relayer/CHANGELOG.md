@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.38.1
+
+### Patch Changes
+
+- update api and metadata rpc bindings
+- Updated dependencies
+  - @0xsequence/abi@0.38.1
+  - @0xsequence/config@0.38.1
+  - @0xsequence/transactions@0.38.1
+  - @0xsequence/utils@0.38.1
+
 ## 0.38.0
 
 ### Minor Changes
