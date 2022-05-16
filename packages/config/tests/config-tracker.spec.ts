@@ -1590,6 +1590,151 @@ describe('Config tracker', function () {
         })
       })
 
+      it("Should return longest path (with update)", async () => {
+        // Wallet A --> Wallet B --> Wallet C --> Wallet D
+        //          \                            /
+        //            ---------------------------
+
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const sessionA = ethers.Wallet.createRandom()
+        const sessionB = ethers.Wallet.createRandom()
+        const sessionC = ethers.Wallet.createRandom()
+        const sessionD = ethers.Wallet.createRandom()
+
+        // Initial config
+        const signers = [torus, guard]
+        const baseConfig = [{ address: torus.address, weight: 2 }, { address: guard.address, weight: 2 }]
+        const configA: WalletConfig = { threshold: 3, signers: [...baseConfig, { address: sessionA.address, weight: 1}]}
+        const configB: WalletConfig = { threshold: 3, signers: [...configA.signers, { address: sessionB.address, weight: 1}]}
+        const configC: WalletConfig = { threshold: 3, signers: [...configB.signers, { address: sessionC.address, weight: 1}]}
+        const configD: WalletConfig = { threshold: 3, signers: [...configC.signers, { address: sessionD.address, weight: 1}]}
+
+        const account = await Account.create(options, configA, ...signers)
+        await account.updateConfig(configB, defaultChainId)
+        await account.updateConfig(configC, defaultChainId)
+        await account.updateConfig(configD, defaultChainId)
+
+        // The shortest path with update should be A -> B (update) -> D
+        const res1 = await configTracker.loadPresignedConfiguration({
+          wallet: account.address,
+          chainId: defaultChainId,
+          fromImageHash: imageHash(configA),
+          prependUpdate: [sequenceContext.mainModuleUpgradable]
+        })
+        expect(res1.length).to.equal(2)
+        expectValidRoute(res1, {
+          wallet: account.address,
+          chainId: defaultChainId,
+          route: [configA, configB, configD],
+          update: sequenceContext.mainModuleUpgradable,
+        })
+
+        // Explicit ("false" arg) should return the same
+        const res2 = await configTracker.loadPresignedConfiguration({
+          wallet: account.address,
+          chainId: defaultChainId,
+          fromImageHash: imageHash(configA),
+          prependUpdate: [sequenceContext.mainModuleUpgradable],
+          longestPath: false
+        })
+        expect(res2.length).to.equal(2)
+        expectValidRoute(res2, {
+          wallet: account.address,
+          chainId: defaultChainId,
+          route: [configA, configB, configD],
+          update: sequenceContext.mainModuleUpgradable,
+        })
+        expect(res2).to.deep.equal(res1)
+
+        // Longest path should return A -> B -> C -> D
+        const res3 = await configTracker.loadPresignedConfiguration({
+          wallet: account.address,
+          chainId: defaultChainId,
+          fromImageHash: imageHash(configA),
+          prependUpdate: [sequenceContext.mainModuleUpgradable],
+          longestPath: true
+        })
+        expect(res3.length).to.equal(3)
+        expectValidRoute(res3, {
+          wallet: account.address,
+          chainId: defaultChainId,
+          route: [configA, configB, configC, configD],
+          update: sequenceContext.mainModuleUpgradable,
+        })
+      })
+
+      it("Should return longest path (without update)", async () => {
+        // Wallet A --> Wallet B --> Wallet C --> Wallet D
+        //          \                            /
+        //            ---------------------------
+
+        const torus = ethers.Wallet.createRandom()
+        const guard = ethers.Wallet.createRandom()
+        const sessionA = ethers.Wallet.createRandom()
+        const sessionB = ethers.Wallet.createRandom()
+        const sessionC = ethers.Wallet.createRandom()
+        const sessionD = ethers.Wallet.createRandom()
+
+        // Initial config
+        const signers = [torus, guard]
+        const baseConfig = [{ address: torus.address, weight: 2 }, { address: guard.address, weight: 2 }]
+        const configA: WalletConfig = { threshold: 3, signers: [...baseConfig, { address: sessionA.address, weight: 1}]}
+        const configB: WalletConfig = { threshold: 3, signers: [...configA.signers, { address: sessionB.address, weight: 1}]}
+        const configC: WalletConfig = { threshold: 3, signers: [...configB.signers, { address: sessionC.address, weight: 1}]}
+        const configD: WalletConfig = { threshold: 3, signers: [...configC.signers, { address: sessionD.address, weight: 1}]}
+
+        const account = await Account.create(options, configA, ...signers)
+        await account.updateConfig(configB, defaultChainId)
+        await account.updateConfig(configC, defaultChainId)
+        await account.updateConfig(configD, defaultChainId)
+
+        // The shortest path with update should be B -> D
+        const res1 = await configTracker.loadPresignedConfiguration({
+          wallet: account.address,
+          chainId: defaultChainId,
+          fromImageHash: imageHash(configB),
+          prependUpdate: []
+        })
+        expect(res1.length).to.equal(1)
+        expectValidRoute(res1, {
+          wallet: account.address,
+          chainId: defaultChainId,
+          route: [configB, configD],
+        })
+
+        // Explicit ("false" arg) should return the same
+        const res2 = await configTracker.loadPresignedConfiguration({
+          wallet: account.address,
+          chainId: defaultChainId,
+          fromImageHash: imageHash(configB),
+          prependUpdate: [],
+          longestPath: false
+        })
+        expect(res2.length).to.equal(1)
+        expectValidRoute(res2, {
+          wallet: account.address,
+          chainId: defaultChainId,
+          route: [configB, configD],
+        })
+        expect(res2).to.deep.equal(res1)
+
+        // Longest path should return B -> C -> D
+        const res3 = await configTracker.loadPresignedConfiguration({
+          wallet: account.address,
+          chainId: defaultChainId,
+          fromImageHash: imageHash(configB),
+          prependUpdate: [],
+          longestPath: true
+        })
+        expect(res3.length).to.equal(2)
+        expectValidRoute(res3, {
+          wallet: account.address,
+          chainId: defaultChainId,
+          route: [configB, configC, configD],
+        })
+      })
+
       // Repeat many times to find possible race condition
       it("Should find highest gap nonce when longest path (25 times)", async () => {
         for (let i = 0; i < 25; i++) {

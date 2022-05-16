@@ -34,7 +34,7 @@ export class UnreliableConfigTracker implements ConfigTracker {
     })
   }
 
-  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; }): Promise<PresignedConfigUpdate[]> => {
+  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; longestPath?: boolean }): Promise<PresignedConfigUpdate[]> => {
     return await this.tryExecuteMethod("loadPresignedConfiguration", this.tracker.loadPresignedConfiguration, args, [])
   }
 

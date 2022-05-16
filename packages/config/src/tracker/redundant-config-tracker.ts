@@ -16,7 +16,8 @@ export class RedundantConfigTracker implements ConfigTracker {
     wallet: string,
     chainId: BigNumberish,
     fromImageHash: string,
-    prependUpdate: string[]
+    prependUpdate: string[],
+    longestPath?: boolean
   }): Promise<PresignedConfigUpdate[]> => {
     // Track which child returned each result
     // so we don't backfeed the same result to them

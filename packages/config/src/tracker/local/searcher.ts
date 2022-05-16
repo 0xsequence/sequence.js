@@ -139,97 +139,70 @@ export class Searcher {
     return res
   }
 
-  async bestRouteFrom(imageHash: string, gapNonce: ethers.BigNumberish, prependUpdate: string[]): Promise<ConfigJump | undefined> {
+  async bestRouteFrom(imageHash: string, gapNonce: ethers.BigNumberish, prependUpdate: string[], longestPath?: boolean): Promise<ConfigJump | undefined> {
     const res = await this.recursiveFindPath({
-      parents: [{ imageHash }],
+      fromImageHash: imageHash,
       minGapNonce: ethers.BigNumber.from(gapNonce),
-      prependUpdate
+      prependUpdate,
+      longestPath
     })
     return res
   }
 
   private recursiveFindPath = async (args: {
-    parents: ConfigJump[] | { imageHash: string }[],
+    fromImageHash?: string,
     minGapNonce: ethers.BigNumber,
-    bestCandidate?: ConfigJump
-    prependUpdate?: string[]
+    bestCandidate?: ConfigJump,
+    prependUpdate?: string[],
+    longestPath?: boolean
   }): Promise<ConfigJump | undefined> => {
-    // Prepare list of new candidates
-    const newCandidates: ConfigJump[] = []
+    if (args.fromImageHash && args.bestCandidate) {
+      throw new Error('Cannot specify both fromImageHash and bestCandidate')
+    } else if (!args.fromImageHash && !args.bestCandidate) {
+      throw new Error('Must specify either fromImageHash or bestCandidate')
+    }
 
-    // Track best possible candidate
-    let bestCandidate = args.bestCandidate
+    const minGapNonce = !args.bestCandidate ? args.minGapNonce : args.bestCandidate.transaction.body.gapNonce
+    const fromImageHash = !args.bestCandidate ? args.fromImageHash : args.bestCandidate.transaction.body.newImageHash
+    if (!fromImageHash) throw new Error('fromImageHash expected')
 
-    // Find candidates for every parent
-    await Promise.all(args.parents.map(async (parent) => {
-      const isFirst = !isConfigJump(parent)
-      const minGapNonce = isFirst ? args.minGapNonce : parent.transaction.body.gapNonce
-      const fromImageHash = isFirst ? parent.imageHash : parent.transaction.body.newImageHash
+    // Find all candidates with this parent and min gap nonce
+    const candidates = await this.candidatesForJump({
+      fromImageHash,
+      chainId: this.chainId,
+      wallet: this.wallet,
+      minGapNonce,
+      prependUpdate: args.prependUpdate
+    })
 
-      // Prepend update key sufix
-      const updateSufix = args.prependUpdate?.join(',') ?? ''
+    // If no candidates, we're done
+    if (candidates.length === 0) return args.bestCandidate
 
-      // Don't eval same imageHash multiple times
-      const key = this.imageHashHitmapKey(fromImageHash, updateSufix)
-      if (this.imageHashHitmap.has(key)) {
-        return
-      }
+    // If we're looking for the longest path, we need to find the longest candidate
+    const candidatesWithParent = args.bestCandidate ? candidates.map((c) => ({ ...c, parent: args.bestCandidate })) : candidates
+    let bestCandidate = candidatesWithParent[0]
 
-      this.imageHashHitmap.add(key)
-
-      // Find all candidates with this parent and min gap nonce
-      const candidates = await this.candidatesForJump({
-        fromImageHash,
-        chainId: this.chainId,
-        wallet: this.wallet,
-        minGapNonce,
-        prependUpdate: args.prependUpdate
-      })
-
-      // Compare each with best candidate and find the best one
-      const candidatesWithParents = isConfigJump(parent) ? candidates.map((c) => ({ ...c, parent })) : candidates
-      candidatesWithParents.forEach((candidate) => {
-        if (!bestCandidate) {
+    if (!args.longestPath) {
+      for (let i = 0; i < candidatesWithParent.length; i++) {
+        const candidate = candidatesWithParent[i]
+        if (candidate.transaction.body.gapNonce.gt(bestCandidate.transaction.body.gapNonce)) {
           bestCandidate = candidate
-        } else {
-          const bgp = bestCandidate.transaction?.body.gapNonce
-          const cgp = candidate.transaction?.body.gapNonce
-          if (bgp && cgp && cgp.gt(bgp)) {
-            bestCandidate = candidate
-          }
         }
-      })
-
-      // Only add highest candidate
-      // this will not find the shortest path, but it will
-      // reduce the search space considerably.
-      if (candidatesWithParents.length > 0) {
-        let higher = candidatesWithParents[0]
-        for (let i = 0; i < candidatesWithParents.length; i++) {
-          const c = candidatesWithParents[i]
-          if (c.transaction.body.gapNonce > higher.transaction.body.gapNonce) {
-            higher = c
-          }
-        }
-
-        newCandidates.push(higher)
       }
-
-      // Add parents to candidates
-      // NOTICE: Disabled due to performance reasons 
-      // newCandidates.push(...candidatesWithParents)
-    }))
-
-    // If no more candidates just return best candidate
-    if (newCandidates.length === 0) {
-      return bestCandidate
+    } else {
+      for (let i = 0; i < candidatesWithParent.length; i++) {
+        const candidate = candidatesWithParent[i]
+        if (candidate.transaction.body.gapNonce.lt(bestCandidate.transaction.body.gapNonce)) {
+          bestCandidate = candidate
+        }
+      }
     }
 
     // Recurse
     return this.recursiveFindPath({
-      parents: newCandidates,
       minGapNonce: args.minGapNonce,
       bestCandidate,
+      longestPath: args.longestPath
     })
   }
 

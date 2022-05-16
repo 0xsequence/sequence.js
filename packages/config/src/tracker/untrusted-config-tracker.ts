@@ -16,7 +16,7 @@ export class UntrustedConfigTracker implements ConfigTracker {
     public walletConfigs: AssumedWalletConfigs = {}
   ) { }
 
-  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; prependUpdate: string[] }): Promise<PresignedConfigUpdate[]> => {
+  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; prependUpdate: string[], longestPath?: boolean }): Promise<PresignedConfigUpdate[]> => {
     const result = await this.tracker.loadPresignedConfiguration(args)
     if (result.length === 0) return result
 
