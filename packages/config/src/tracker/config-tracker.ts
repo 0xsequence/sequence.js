@@ -30,7 +30,7 @@ export type PresignedConfigurationPayload = {
 export type ConfigDataDump = {
   configurations: WalletConfig[],
   wallets: {
-    imageHashe: string,
+    imageHash: string,
     context: WalletContext
   }[],
   presignedTransactions: PresignedConfigurationPayload[]
