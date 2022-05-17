@@ -74,7 +74,7 @@ export class UnreliableConfigTracker implements ConfigTracker {
     return await this.tryExecuteMethod("walletsOfSigner", this.tracker.walletsOfSigner, args, [])
   }
 
-  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
     return await this.tryExecuteMethod("signaturesOfSigner", this.tracker.signaturesOfSigner, args, [])
   }
 

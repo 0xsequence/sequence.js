@@ -43,7 +43,7 @@ class BrokenConfigTracker implements ConfigTracker {
   walletsOfSigner = (args: { signer: string }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart } }[]> => {
     throw new Error("Method not implemented.")
   }
-  signaturesOfSigner = (args: { signer: string }): Promise<{ signature: string; chainid: BigNumber; wallet: string; digest: string }[]> => {
+  signaturesOfSigner = (args: { signer: string }): Promise<{ signature: string; chainId: BigNumber; wallet: string; digest: string }[]> => {
     throw new Error("Method not implemented.")
   }
   imageHashesOfSigner = (args: { signer: string }): Promise<string[]> => {
@@ -138,7 +138,7 @@ class ErraticConfigTracker implements ConfigTracker {
     return res
   }
 
-  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string; chainid: BigNumber; wallet: string; digest: string }[]> => {
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string; chainId: BigNumber; wallet: string; digest: string }[]> => {
     const res = await this.base.signaturesOfSigner(args)
 
     // If any results, change last byte of digest
@@ -672,7 +672,7 @@ describe('Config tracker', function () {
         expect(got).to.not.deep.equal(configWithAddress)
       })
 
-      it("Should not store chainid with config", async () => {
+      it("Should not store chainId with config", async () => {
         const config = randomConfig()
         const configWithAddress = { ...config, chainId: 23123 }
 

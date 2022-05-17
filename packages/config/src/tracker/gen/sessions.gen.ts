@@ -61,13 +61,13 @@ export interface TransactionBody {
 }
 
 export interface Signature {
-  chainid: string
+  chainId: string
   signature: string
 }
 
 export interface StoredSignature {
   subdigest: string
-  chainid: string
+  chainId: string
   signer: string
   signature: string
   type: number
@@ -241,7 +241,7 @@ export interface PresignedTransactionForImageHashArgs {
   imageHash: string
   fromImageHash: string
   wallet: string
-  chainid: string
+  chainId: string
 }
 
 export interface PresignedTransactionForImageHashReturn {
@@ -252,7 +252,7 @@ export interface PresignedRouteForImageHashArgs {
   imageHash: string
   fromImageHash: string
   wallet: string
-  chainid: string
+  chainId: string
   prependUpdate: Array<string>
   assumedConfigs?: {[key: string]: Config}
   longestPath: boolean
@@ -265,7 +265,7 @@ export interface PresignedRouteForImageHashReturn {
 export interface PresignedRouteForWalletArgs {
   fromImageHash: string
   wallet: string
-  chainid: string
+  chainId: string
   prependUpdate: Array<string>
   assumedConfigs?: {[key: string]: Config}
   longestPath: boolean

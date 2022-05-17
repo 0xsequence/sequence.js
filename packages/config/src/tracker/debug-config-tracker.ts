@@ -86,7 +86,7 @@ export class DebugConfigTracker implements ConfigTracker {
     return result
   }
 
-  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: BigNumber, wallet: string, digest: string }[]> => {
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainId: BigNumber, wallet: string, digest: string }[]> => {
     const id = this._getRequest()
     const start = Date.now()
     console.log(`[config-tracker ${id}] signaturesOfSigner(${args.signer})`)

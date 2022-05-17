@@ -104,7 +104,7 @@ export abstract class ConfigTracker {
 
   signaturesOfSigner: (args: {
     signer: string
-  }) => Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]>
+  }) => Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]>
 
   imageHashesOfSigner: (args: {
     signer: string

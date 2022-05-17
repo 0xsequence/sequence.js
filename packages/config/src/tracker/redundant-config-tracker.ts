@@ -196,7 +196,7 @@ export class RedundantConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: {
     signer: string
-  }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
+  }): Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call signatures of signer on all childs
     const res = await Promise.all(this.childs.map((c) => c.signaturesOfSigner(args)))
 
@@ -209,7 +209,7 @@ export class RedundantConfigTracker implements ConfigTracker {
       })
 
       return p
-    }, [] as { signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[])
+    }, [] as { signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[])
   }
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {

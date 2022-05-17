@@ -166,19 +166,19 @@ export class UntrustedConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: {
     signer: string
-  }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
+  }): Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
     const result = await this.tracker.signaturesOfSigner(args)
 
     // Validate signature
     result.map((s) => {
       // Compute subdigest for wallet
-      const subdigest = subDigestOf(s.wallet, s.chainid, s.digest)
+      const subdigest = subDigestOf(s.wallet, s.chainId, s.digest)
 
       // Decode signature part
       const { part } = decodeSignaturePart(s.signature)
 
       // Recover signature part
-      const recovered = staticRecoverConfigPart(subdigest, part, s.chainid, this.walletConfigs)
+      const recovered = staticRecoverConfigPart(subdigest, part, s.chainId, this.walletConfigs)
 
       if (!recovered.parts || recovered.parts.length === 0) {
         throw new Error(`Invalid signature for wallet ${s.wallet}`)

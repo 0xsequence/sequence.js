@@ -38,7 +38,7 @@ export interface LocalTrackerDBSchema extends DBSchema {
       chainId: string,
       imageHash: string | undefined
     },
-    key: string, // signer + digest + chainid,
+    key: string, // signer + digest + chainId,
     indexes: {
       'signer': string,
       'imagehash': string

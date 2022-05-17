@@ -71,7 +71,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     const res = await this.sessions.presignedRouteForWallet({
       wallet: args.wallet,
       fromImageHash: args.fromImageHash,
-      chainid: ethers.BigNumber.from(args.chainId).toString(),
+      chainId: ethers.BigNumber.from(args.chainId).toString(),
       prependUpdate: args.prependUpdate,
       assumedConfigs: this.protoWalletConfigs,
       longestPath: args.longestPath || false,
@@ -80,7 +80,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   
     return res.txs.map((tx) => {
       return {
-        chainId: ethers.BigNumber.from(tx.signature.chainid),
+        chainId: ethers.BigNumber.from(tx.signature.chainId),
         signature: tx.signature.signature,
         body: {
           ...tx.tx,
@@ -115,7 +115,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
         digest: args.digest,
       },
       signatures: args.signatures.map((s) => ({
-        chainid: s.chainId.toString(),
+        chainId: s.chainId.toString(),
         signature: s.signature
       }))
     })
@@ -144,7 +144,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
       },
       signatures: args.signatures.map((sig) => {
         return {
-          chainid: sig.chainId.toString(),
+          chainId: sig.chainId.toString(),
           signature: sig.signature
         }
       })
@@ -170,7 +170,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
 
   signaturesOfSigner = async (args: {
     signer: string
-  }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
+  }): Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
     // Call sessions client
     const res = await this.sessions.knownSignaturesOfSigner({ signer: args.signer, start: 0, count: this.maxResults })
 
@@ -178,7 +178,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     return res.signatures.map((sig) => {
       return {
         signature: sig.signature,
-        chainid: ethers.BigNumber.from(sig.chainid),
+        chainId: ethers.BigNumber.from(sig.chainId),
         wallet: sig.transaction.wallet,
         digest: sig.transaction.digest
       }
@@ -197,7 +197,7 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     return res.signatures.map((sig) => ({
       signer: sig.signer,
       signature: sig.signature,
-      chainId: ethers.BigNumber.from(sig.chainid),
+      chainId: ethers.BigNumber.from(sig.chainId),
       wallet: sig.transaction.wallet,
       digest: sig.transaction.digest
     }))

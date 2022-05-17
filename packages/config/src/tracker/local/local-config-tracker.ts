@@ -205,11 +205,11 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
     return txsAndProofs
   }
 
-  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainid: ethers.BigNumber, wallet: string, digest: string }[]> => {
+  signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
     const res = await this.database.getSignaturePartsForAddress({ signer: args.signer })
     return res.map((p) => ({
       signature: encodeSignaturePart(p.signature),
-      chainid: p.chainId,
+      chainId: p.chainId,
       digest: p.digest,
       wallet: p.wallet
     }))
