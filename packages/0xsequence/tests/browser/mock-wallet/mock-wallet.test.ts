@@ -70,7 +70,7 @@ const main = async () => {
     }
   ]
 
-  const memoryCofigTracker = new LocalConfigTracker(undefined, deployedWalletContext)
+  const memoryConfigTracker = new LocalConfigTracker(undefined, deployedWalletContext)
 
   // Account for managing multi-network wallets
   // TODO: make this a 3-key multisig with threshold of 2
@@ -78,7 +78,7 @@ const main = async () => {
   const account = await Account.create({
     networks,
     context: deployedWalletContext,
-    configTracker: memoryCofigTracker
+    configTracker: memoryConfigTracker
   }, wallet.config, owner)
 
   // the json-rpc signer via the wallet

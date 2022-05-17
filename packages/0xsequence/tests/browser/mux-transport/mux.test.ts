@@ -77,13 +77,13 @@ export const tests = async () => {
     }
   ]
 
-  const memoryCofigTracker = new LocalConfigTracker(undefined, deployedWalletContext)
+  const memoryConfigTracker = new LocalConfigTracker(undefined, deployedWalletContext)
 
   // Account for managing multi-network wallets
   const saccount = await SequenceAccount.create({
     networks,
     context: deployedWalletContext,
-    configTracker: memoryCofigTracker
+    configTracker: memoryConfigTracker
   }, swallet.config, owner)
 
   // the rpc signer via the wallet
