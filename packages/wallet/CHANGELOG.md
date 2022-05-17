@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.38.2
+
+### Patch Changes
+
+- provider: add Settings.defaultPurchaseAmount
+- Updated dependencies
+  - @0xsequence/abi@0.38.2
+  - @0xsequence/config@0.38.2
+  - @0xsequence/guard@0.38.2
+  - @0xsequence/network@0.38.2
+  - @0xsequence/relayer@0.38.2
+  - @0xsequence/transactions@0.38.2
+  - @0xsequence/utils@0.38.2
+
 ## 0.38.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.38.2
+
+### Patch Changes
+
+- provider: add Settings.defaultPurchaseAmount
+- Updated dependencies
+  - @0xsequence/abi@0.38.2
+  - @0xsequence/network@0.38.2
+  - @0xsequence/utils@0.38.2
+
 ## 0.38.1
 
 ### Patch Changes

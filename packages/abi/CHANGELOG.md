@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.38.2
+
+### Patch Changes
+
+- provider: add Settings.defaultPurchaseAmount
+
 ## 0.38.1
 
 ### Patch Changes

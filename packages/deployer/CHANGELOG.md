@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.38.2
+
+### Patch Changes
+
+- provider: add Settings.defaultPurchaseAmount
+- Updated dependencies
+  - @0xsequence/utils@0.38.2
+
 ## 0.38.1
 
 ### Patch Changes
