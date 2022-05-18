@@ -3,9 +3,9 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
 import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, recoverConfig, Signer, isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
+import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
 
-const eip191prefix = ethers.utils.toUtf8Bytes("\x19Ethereum Signed Message:\n")
+const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
 export const messageToBytes = (message: BytesLike): Uint8Array => {
   if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
@@ -17,11 +17,7 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
 
 export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
-  return ethers.utils.concat([
-    eip191prefix,
-    ethers.utils.toUtf8Bytes(String(messageBytes.length)),
-    messageBytes
-  ])
+  return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
 }
 
 export const isValidSignature = async (
@@ -130,6 +126,33 @@ export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise
   return isDeployed && isUpToDate
 }
 
+export interface LocalStorage {
+  getItem(key: string): Promise<string | null>
+  setItem(key: string, value: string): Promise<void>
+  removeItem(key: string): Promise<void>
+}
+
+export class Storage {
+  private static _instance: LocalStorage
+
+  private constructor() {}
+
+  static getInstance(): LocalStorage {
+    if (!Storage._instance) {
+      Storage._instance = {
+        getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
+        setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
+        removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
+      }
+    }
+    return this._instance
+  }
+
+  static swap(instance: LocalStorage) {
+    Storage._instance = instance
+  }
+}
+
 // window.localstorage helper
 export class LocalStore<T extends Object = string> {
   readonly key: string
@@ -138,8 +161,8 @@ export class LocalStore<T extends Object = string> {
     this.key = key
   }
 
-  get(): T | undefined {
-    const val = window.localStorage.getItem(this.key)
+  async get(): Promise<T | undefined> {
+    const val = await Storage.getInstance().getItem(this.key)
 
     if (val === null) {
       return this.def
@@ -155,10 +178,10 @@ export class LocalStore<T extends Object = string> {
   }
 
   set(val: T | undefined) {
-    val ? window.localStorage.setItem(this.key, JSON.stringify(val)) : window.localStorage.removeItem(this.key)
+    val ? Storage.getInstance().setItem(this.key, JSON.stringify(val)) : Storage.getInstance().removeItem(this.key)
   }
 
   del() {
-    window.localStorage.removeItem(this.key)
+    Storage.getInstance().removeItem(this.key)
   }
 }
