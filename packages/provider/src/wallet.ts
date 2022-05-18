@@ -1,25 +1,18 @@
 import {
   NetworkConfig,
   WalletContext,
-  sequenceContext,
   ChainIdLike,
-  getChainId,
   JsonRpcSender,
   JsonRpcRouter,
   JsonRpcMiddleware,
   allowProviderMiddleware,
   CachedProvider,
-  PublicProvider,
   loggingProviderMiddleware,
   SigningProvider,
   EagerProvider,
   exceptionProviderMiddleware,
   networkProviderMiddleware,
-  JsonRpcExternalProvider,
-  JsonRpcHandlerFunc,
   JsonRpcRequest,
-  JsonRpcResponse,
-  JsonRpcResponseCallback,
   findNetworkConfig,
   updateNetworkConfig,
   ensureValidNetworks
@@ -32,7 +25,7 @@ import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyM
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
-import { LocalStore } from './utils'
+import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
@@ -109,6 +102,10 @@ export class Wallet implements WalletProvider {
       this.config.defaultNetworkId = defaultNetworkId
     } else if (!this.config.defaultNetworkId) {
       this.config.defaultNetworkId = 'mainnet'
+    }
+
+    if (config?.localStorage) {
+      LocalStorage.use(config.localStorage)
     }
 
     this.transport = {}
@@ -233,10 +230,11 @@ export class Wallet implements WalletProvider {
     })
 
     // Load existing session from localStorage
-    const session = this.loadSession()
-    if (session) {
-      this.useSession(session, false)
-    }
+    this.loadSession().then(session => {
+      if (session) {
+        this.useSession(session, false)
+      }
+    })
   }
 
   connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
@@ -282,10 +280,10 @@ export class Wallet implements WalletProvider {
     return connectDetails
   }
 
-  addConnectedSite(origin: string | undefined) {
+  async addConnectedSite(origin: string | undefined) {
     origin = origin || window.location.origin
 
-    const connectedSites = this.connectedSites.get()
+    const connectedSites = await this.connectedSites.get()
 
     if (connectedSites) {
       if (connectedSites.includes(origin)) {
@@ -297,8 +295,8 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  removeConnectedSite(origin: string) {
-    const authorized = this.connectedSites.get()
+  async removeConnectedSite(origin: string) {
+    const authorized = await this.connectedSites.get()
 
     if (authorized) {
       this.connectedSites.set(authorized.filter(domain => domain !== origin))
@@ -309,8 +307,8 @@ export class Wallet implements WalletProvider {
     return this.connectedSites.get()
   }
 
-  private isSiteConnected(origin: string | undefined): boolean {
-    const authorized = this.connectedSites.get()
+  private async isSiteConnected(origin: string | undefined): Promise<boolean> {
+    const authorized = await this.connectedSites.get()
 
     return !!authorized && authorized.includes(origin || window.location.origin)
   }
@@ -538,8 +536,8 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider!.once(event, fn)
   }
 
-  private loadSession = (): WalletSession | undefined => {
-    const data = window.localStorage.getItem('@sequence.session')
+  private loadSession = async (): Promise<WalletSession | undefined> => {
+    const data = await LocalStorage.getInstance().getItem('@sequence.session')
     if (!data || data === '') {
       return undefined
     }
@@ -555,7 +553,7 @@ export class Wallet implements WalletProvider {
   private saveSession = (session: WalletSession) => {
     logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
-    window.localStorage.setItem('@sequence.session', data)
+    LocalStorage.getInstance().setItem('@sequence.session', data)
   }
 
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
@@ -631,7 +629,7 @@ export class Wallet implements WalletProvider {
 
   private clearSession(): void {
     logger.debug('wallet provider: clearing session')
-    window.localStorage.removeItem('@sequence.session')
+    LocalStorage.getInstance().removeItem('@sequence.session')
     this.session = undefined
     this.networks = []
     this.providers = {}
@@ -640,6 +638,10 @@ export class Wallet implements WalletProvider {
 }
 
 export interface ProviderConfig {
+  // The local storage dependency for the wallet provider, defaults to window.localStorage.
+  // For example, this option should be used when using React Native since window.localStorage is not available.
+  localStorage?: ItemStore
+
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string
 

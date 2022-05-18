@@ -21,7 +21,7 @@ import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
-import { isBrowserExtension } from '../utils'
+import { isBrowserExtension, LocalStorage } from '../utils'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
@@ -435,11 +435,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
   }
 
   private saveTransportSession = (session: TransportSession) => {
-    window.localStorage.setItem(TRANSPORT_SESSION_LS_KEY, JSON.stringify(session))
+    LocalStorage.getInstance().setItem(TRANSPORT_SESSION_LS_KEY, JSON.stringify(session))
   }
 
-  protected getCachedTransportSession = (): TransportSession | null => {
-    const session = window.localStorage.getItem(TRANSPORT_SESSION_LS_KEY)
+  protected getCachedTransportSession = async (): Promise<TransportSession | null> => {
+    const session = await LocalStorage.getInstance().getItem(TRANSPORT_SESSION_LS_KEY)
 
     try {
       return session ? (JSON.parse(session) as TransportSession) : null

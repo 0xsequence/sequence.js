@@ -22,7 +22,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     this._init = InitState.NIL
   }
 
-  register(windowHref?: any) {
+  async register(windowHref?: any) {
     const isPopup = parent.window.opener !== null
     this._isPopup = isPopup
     if (isPopup !== true) {
@@ -39,7 +39,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
 
     // attempt to restore previous session in the case of a redirect or window reload
     if (!isNewWindowSession) {
-      session = this.getCachedTransportSession()
+      session = await this.getCachedTransportSession()
     }
 
     if (!session) {
@@ -143,7 +143,8 @@ export class WindowMessageHandler extends BaseWalletTransport {
       this.parentWindow.postMessage(message, '*')
     } else {
       // open message transmission
-      if (this.appOrigin && this.appOrigin.length > 4) { // just above '.com'
+      if (this.appOrigin && this.appOrigin.length > 4) {
+        // just above '.com'
         this.parentWindow.postMessage(message, this.appOrigin)
       } else {
         logger.error('unable to postMessage as parentOrigin is invalid')
