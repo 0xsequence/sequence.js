@@ -1,5 +1,19 @@
 # @0xsequence/relayer
 
+## 0.39.0
+
+### Minor Changes
+
+- abstract window.localStorage to interface type
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.39.0
+  - @0xsequence/config@0.39.0
+  - @0xsequence/transactions@0.39.0
+  - @0xsequence/utils@0.39.0
+
 ## 0.38.2
 
 ### Patch Changes

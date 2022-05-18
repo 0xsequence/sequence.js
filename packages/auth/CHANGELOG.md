@@ -1,5 +1,23 @@
 # @0xsequence/auth
 
+## 0.39.0
+
+### Minor Changes
+
+- abstract window.localStorage to interface type
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.39.0
+  - @0xsequence/api@0.39.0
+  - @0xsequence/config@0.39.0
+  - @0xsequence/indexer@0.39.0
+  - @0xsequence/metadata@0.39.0
+  - @0xsequence/network@0.39.0
+  - @0xsequence/utils@0.39.0
+  - @0xsequence/wallet@0.39.0
+
 ## 0.38.2
 
 ### Patch Changes

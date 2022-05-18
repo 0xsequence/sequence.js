@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.39.0
+
+### Minor Changes
+
+- abstract window.localStorage to interface type
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/utils@0.39.0
+
 ## 0.38.2
 
 ### Patch Changes

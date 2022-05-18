@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.39.0
+
+### Minor Changes
+
+- abstract window.localStorage to interface type
+
 ## 0.38.2
 
 ### Patch Changes
