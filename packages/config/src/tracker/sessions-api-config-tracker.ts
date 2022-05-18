@@ -51,14 +51,16 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     wallet: string,
     fromImageHash: string,
     chainId: BigNumberish,
-    prependUpdate: string[]
+    prependUpdate: string[],
+    longestPath?: boolean
   }): Promise<PresignedConfigUpdate[]> => {
     const res = await this.sessions.presignedRouteForWallet({
       wallet: args.wallet,
       fromImageHash: args.fromImageHash,
       chainid: ethers.BigNumber.from(args.chainId).toString(),
       prependUpdate: args.prependUpdate,
-      assumedConfigs: this.protoWalletConfigs
+      assumedConfigs: this.protoWalletConfigs,
+      longestPath: args.longestPath || false,
     })
   
     return res.txs.map((tx) => {
