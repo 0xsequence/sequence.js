@@ -25,7 +25,7 @@ import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyM
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
-import { LocalStore, LocalStorage, Storage } from './utils'
+import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
@@ -105,7 +105,7 @@ export class Wallet implements WalletProvider {
     }
 
     if (config?.localStorage) {
-      Storage.swap(config.localStorage)
+      LocalStorage.use(config.localStorage)
     }
 
     this.transport = {}
@@ -537,7 +537,7 @@ export class Wallet implements WalletProvider {
   }
 
   private loadSession = async (): Promise<WalletSession | undefined> => {
-    const data = await Storage.getInstance().getItem('@sequence.session')
+    const data = await LocalStorage.getInstance().getItem('@sequence.session')
     if (!data || data === '') {
       return undefined
     }
@@ -553,7 +553,7 @@ export class Wallet implements WalletProvider {
   private saveSession = (session: WalletSession) => {
     logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
-    Storage.getInstance().setItem('@sequence.session', data)
+    LocalStorage.getInstance().setItem('@sequence.session', data)
   }
 
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
@@ -629,7 +629,7 @@ export class Wallet implements WalletProvider {
 
   private clearSession(): void {
     logger.debug('wallet provider: clearing session')
-    Storage.getInstance().removeItem('@sequence.session')
+    LocalStorage.getInstance().removeItem('@sequence.session')
     this.session = undefined
     this.networks = []
     this.providers = {}
@@ -638,9 +638,9 @@ export class Wallet implements WalletProvider {
 }
 
 export interface ProviderConfig {
-  // The localStorage dependency for the wallet provider, defaults to window.localStorage
-  // For example, can be used with React Native since window.localStorage is not available
-  localStorage?: LocalStorage
+  // The local storage dependency for the wallet provider, defaults to window.localStorage.
+  // For example, this option should be used when using React Native since window.localStorage is not available.
+  localStorage?: ItemStore
 
   // Sequence Wallet App URL, default: https://sequence.app
   walletAppURL: string

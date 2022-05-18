@@ -126,20 +126,20 @@ export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise
   return isDeployed && isUpToDate
 }
 
-export interface LocalStorage {
+export interface ItemStore {
   getItem(key: string): Promise<string | null>
   setItem(key: string, value: string): Promise<void>
   removeItem(key: string): Promise<void>
 }
 
-export class Storage {
-  private static _instance: LocalStorage
+export class LocalStorage {
+  private static _instance: ItemStore
 
   private constructor() {}
 
-  static getInstance(): LocalStorage {
-    if (!Storage._instance) {
-      Storage._instance = {
+  static getInstance(): ItemStore {
+    if (!LocalStorage._instance) {
+      LocalStorage._instance = {
         getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
         setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
         removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
@@ -148,8 +148,8 @@ export class Storage {
     return this._instance
   }
 
-  static swap(instance: LocalStorage) {
-    Storage._instance = instance
+  static use(instance: ItemStore) {
+    LocalStorage._instance = instance
   }
 }
 
@@ -162,7 +162,7 @@ export class LocalStore<T extends Object = string> {
   }
 
   async get(): Promise<T | undefined> {
-    const val = await Storage.getInstance().getItem(this.key)
+    const val = await LocalStorage.getInstance().getItem(this.key)
 
     if (val === null) {
       return this.def
@@ -178,10 +178,10 @@ export class LocalStore<T extends Object = string> {
   }
 
   set(val: T | undefined) {
-    val ? Storage.getInstance().setItem(this.key, JSON.stringify(val)) : Storage.getInstance().removeItem(this.key)
+    val ? LocalStorage.getInstance().setItem(this.key, JSON.stringify(val)) : LocalStorage.getInstance().removeItem(this.key)
   }
 
   del() {
-    Storage.getInstance().removeItem(this.key)
+    LocalStorage.getInstance().removeItem(this.key)
   }
 }
