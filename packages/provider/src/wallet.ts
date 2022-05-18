@@ -638,7 +638,7 @@ export class Wallet implements WalletProvider {
 }
 
 export interface ProviderConfig {
-  // The localStorage dependency for the wallet provider, defaults to localStorage
+  // The localStorage dependency for the wallet provider, defaults to window.localStorage
   // For example, can be used with React Native since window.localStorage is not available
   localStorage?: LocalStorage
 
