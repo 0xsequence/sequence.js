@@ -3,7 +3,7 @@ import { BigNumberish, BigNumber, ethers } from "ethers"
 import { DecodedSignaturePart } from ".."
 import { isAddrEqual, WalletConfig } from "../config"
 import { PromiseSome } from "../utils"
-import { asPresignedConfigurationAsPayload, ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
+import { asPresignedConfigurationAsPayload, AssumedWalletConfigs, ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 
 export class RedundantConfigTracker implements ConfigTracker {
   public childs: ConfigTracker[]
@@ -14,10 +14,12 @@ export class RedundantConfigTracker implements ConfigTracker {
 
   loadPresignedConfiguration = async ( args: {
     wallet: string,
-    chainId: BigNumberish,
     fromImageHash: string,
+    chainId: BigNumberish,
     prependUpdate: string[],
-    longestPath?: boolean
+    assumedConfigs?: AssumedWalletConfigs,
+    longestPath?: boolean,
+    gapNonce?: BigNumberish
   }): Promise<PresignedConfigUpdate[]> => {
     // Track which child returned each result
     // so we don't backfeed the same result to them

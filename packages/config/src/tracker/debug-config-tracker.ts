@@ -2,7 +2,7 @@ import { WalletContext } from "@0xsequence/network"
 import { BigNumber, BigNumberish } from "ethers"
 import { ConfigTracker } from "."
 import { DecodedSignaturePart, WalletConfig } from ".."
-import { PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
+import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
 
 export class DebugConfigTracker implements ConfigTracker {
   public requests = 0
@@ -15,7 +15,15 @@ export class DebugConfigTracker implements ConfigTracker {
     return this.requests++
   }
 
-  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; prependUpdate: string[] }): Promise<PresignedConfigUpdate[]> => {
+  loadPresignedConfiguration = async (args: {
+    wallet: string,
+    fromImageHash: string,
+    chainId: BigNumberish,
+    prependUpdate: string[],
+    assumedConfigs?: AssumedWalletConfigs,
+    longestPath?: boolean,
+    gapNonce?: BigNumberish
+  }): Promise<PresignedConfigUpdate[]> => {
     const id = this._getRequest()
     const start = Date.now()
     console.log(`[config-tracker ${id}] loadPresignedConfiguration(${args.wallet}, ${args.fromImageHash}, ${args.chainId})`)

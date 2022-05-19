@@ -3,7 +3,7 @@ import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTracker } from "."
 import { imageHash, WalletConfig } from "../config"
 import { DecodedSignaturePart } from "../signature"
-import { PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
+import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "./config-tracker"
 
 export class UnreliableConfigTracker implements ConfigTracker {
   constructor (
@@ -34,7 +34,15 @@ export class UnreliableConfigTracker implements ConfigTracker {
     })
   }
 
-  loadPresignedConfiguration = async (args: { wallet: string; fromImageHash: string; chainId: BigNumberish; longestPath?: boolean }): Promise<PresignedConfigUpdate[]> => {
+  loadPresignedConfiguration = async (args: {
+    wallet: string,
+    fromImageHash: string,
+    chainId: BigNumberish,
+    prependUpdate: string[],
+    assumedConfigs?: AssumedWalletConfigs,
+    longestPath?: boolean,
+    gapNonce?: BigNumberish
+  }): Promise<PresignedConfigUpdate[]> => {
     return await this.tryExecuteMethod("loadPresignedConfiguration", this.tracker.loadPresignedConfiguration, args, [])
   }
 

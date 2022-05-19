@@ -142,13 +142,15 @@ export class LocalConfigTracker implements ConfigTracker {
     fromImageHash: string,
     chainId: BigNumberish,
     prependUpdate: string[],
-    longestPath?: boolean
+    longestPath?: boolean,
+    gapNonce?: ethers.BigNumberish
   }): Promise<PresignedConfigUpdate[]> => {
     // Create new searcher
     const searcher = new Searcher(this.database, this, args.wallet, ethers.BigNumber.from(args.chainId), true, this.walletConfigs)
 
     // Get best config jump
-    const configJump = await searcher.bestRouteFrom(args.fromImageHash, 0, args.prependUpdate, args.longestPath)
+    const gapNonce = args.gapNonce ? ethers.BigNumber.from(args.gapNonce) : ethers.constants.Zero
+    const configJump = await searcher.bestRouteFrom(args.fromImageHash, gapNonce, args.prependUpdate, args.longestPath)
 
     // If no result, just return empty array
     if (!configJump) return []

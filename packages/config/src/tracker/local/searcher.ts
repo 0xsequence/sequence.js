@@ -139,10 +139,10 @@ export class Searcher {
     return res
   }
 
-  async bestRouteFrom(imageHash: string, gapNonce: ethers.BigNumberish, prependUpdate: string[], longestPath?: boolean): Promise<ConfigJump | undefined> {
+  async bestRouteFrom(imageHash: string, gapNonce: ethers.BigNumber, prependUpdate: string[], longestPath?: boolean): Promise<ConfigJump | undefined> {
     const res = await this.recursiveFindPath({
       fromImageHash: imageHash,
-      minGapNonce: ethers.BigNumber.from(gapNonce),
+      minGapNonce: gapNonce,
       prependUpdate,
       longestPath
     })
