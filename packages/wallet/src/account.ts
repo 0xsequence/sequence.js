@@ -259,6 +259,56 @@ export class Account extends Signer {
     return res?.config
   }
 
+  // Returns the combined configuration of all steps on the presigned
+  // transaction list, this should include all the configs of the longest path
+  // for reaching the highest gap-nonce
+  async getPendingConfigs(chainId?: ChainIdLike): Promise<{ configs: WalletConfig[], failed: string[] }> {
+    const cid = maybeChainId(chainId) || this.defaultChainId
+    if (!cid) throw new Error('chainId is required')
+
+    // Get latest imageHash for wallet
+    // if not available then we can't get the latest walletConfig either
+    const provider = await this.getProvider(cid)
+    if (!provider) throw new Error('provider is required')
+
+    const ihresp = await richFetchImageHash(this.address, provider, { context: this._context, tracker: this.options.configTracker })
+    if (!ihresp) throw new Error('imageHash cannot be fetched')
+    const { imageHash, source: imageHashSource } = ihresp
+
+    const presigned = await this.options.configTracker.loadPresignedConfiguration({
+      wallet: this.address,
+      chainId: cid,
+      prependUpdate: imageHashSource === ImageHashSource.CounterFactual ? [this._context.mainModuleUpgradable] : [],
+      fromImageHash: imageHash
+    })
+
+    // If a single presigned configuration to the
+    // current imageHash is returned, then we return nothing
+    // TODO: The config tracker should not return anything in this case
+    // this happens because the config tracker doesn't know about the current gap nonce
+    if (presigned.length === 1 && presigned[0].body.newImageHash === imageHash) {
+      return { configs: [], failed: [] }
+    }
+
+    const imageHashes = presigned.map((p) => p.body.newImageHash)
+    const results = await Promise.all(imageHashes.map((ih) => this.options.configTracker.configOfImageHash({ imageHash: ih })))
+
+    // If we failed to fetch the config then we need to add
+    // the image hash to the failed list
+    const failed = []
+    const configs = []
+    for (let i = 0; i < imageHashes.length; i++) {
+      const config = results[i]
+      if (config) {
+        configs.push({ ...config, address: this.address })
+      } else {
+        failed.push(imageHashes[i])
+      }
+    }
+
+    return { configs, failed }
+  }
+
   async getWalletState(chainId?: ChainIdLike): Promise<WalletState> {
     // Get wallet of network
     const cid = maybeChainId(chainId) || this.defaultChainId
