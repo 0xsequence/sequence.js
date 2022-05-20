@@ -7,6 +7,7 @@ import { Interface } from 'ethers/lib/utils'
 import { startsWith } from "@0xsequence/utils"
 
 export const SESSIONS_SPACE = "861879107978547650890364157709704413515112855535"
+export const GAP_SESSION_STORAGE_SLOT = "46838849952272232302478153234172971266193462109477288968624912779597926766042"
 
 export function isValidWalletUpdate(args: {
     wallet: string,

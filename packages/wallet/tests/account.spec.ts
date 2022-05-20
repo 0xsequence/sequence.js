@@ -579,7 +579,7 @@ describe('Account integration', () => {
       expect(await callReceiver.lastValA()).to.deep.equal(ethers.BigNumber.from(333))
     })
 
-    describe.only('all pending configs', async () => {
+    describe('all pending configs', async () => {
       it("should return no pending configs for a new wallet", async () => {
         const { configs, failed } = await account.getPendingConfigs()
         expect(configs.length).to.equal(0)
@@ -688,7 +688,7 @@ describe('Account integration', () => {
         expect(configs[1]).excluding('address').to.deep.equal(newConfig2)
       })
 
-      it.only("should return new pending config after sending a transaction and updating again", async () => {
+      it.skip("should return new pending config after sending a transaction and updating again", async () => {
         const newSigner1 = ethers.Wallet.createRandom()
         const newSigner2 = ethers.Wallet.createRandom()
         const newConfig1 = { threshold: config.threshold, signers: [...config.signers, { address: newSigner1.address, weight: 10 }] }

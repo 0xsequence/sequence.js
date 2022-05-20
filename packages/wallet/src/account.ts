@@ -4,7 +4,7 @@ import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
 import { Deferrable } from '@ethersproject/properties'
 import { SignedTransactionsCallback, Signer } from './signer'
 import { Transactionish, Transaction, TransactionRequest, unpackMetaTransactionData, sequenceTxAbiEncode, SignedTransactionBundle, TransactionBundle, encodeBundleExecData, packMetaTransactionsData, encodeNonce } from '@0xsequence/transactions'
-import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf , hasImplementationUpdate, decodeSignature } from '@0xsequence/config'
+import { WalletConfig, WalletState, ConfigTracker, imageHash, encodeSignature, SESSIONS_SPACE, addressOf , hasImplementationUpdate, decodeSignature, GAP_SESSION_STORAGE_SLOT } from '@0xsequence/config'
 import {
   ChainIdLike,
   NetworkConfig,
@@ -108,6 +108,14 @@ export class Account extends Signer {
 
     // Set default chainId
     this._defaultChainId = maybeChainId(chainId)
+  }
+
+  async getGapNonce(chainId?: ChainIdLike): Promise<ethers.BigNumber | undefined> {
+    const provider = await this.getProvider(maybeChainId(chainId))
+    if (!provider) return undefined
+
+    const slot = await provider.getStorageAt(this.address, GAP_SESSION_STORAGE_SLOT)
+    return ethers.BigNumber.from(slot)
   }
 
   async getFeeOptions(bundle: TransactionBundle, chainId?: ChainIdLike): Promise<{ options: FeeOption[], quote?: FeeQuote }> {
@@ -275,11 +283,16 @@ export class Account extends Signer {
     if (!ihresp) throw new Error('imageHash cannot be fetched')
     const { imageHash, source: imageHashSource } = ihresp
 
+    const gapNonce = await this.getGapNonce(cid)
+    if (!gapNonce) throw new Error('gapNonce cannot be fetched')
+
     const presigned = await this.options.configTracker.loadPresignedConfiguration({
       wallet: this.address,
       chainId: cid,
       prependUpdate: imageHashSource === ImageHashSource.CounterFactual ? [this._context.mainModuleUpgradable] : [],
-      fromImageHash: imageHash
+      fromImageHash: imageHash,
+      longestPath: true,
+      gapNonce
     })
 
     // If a single presigned configuration to the
@@ -411,11 +424,17 @@ export class Account extends Signer {
       if (!ihinfo) throw new Error('Error decorating transactions - No settled image hash found')
       const { imageHash, source: imageHashSource } = ihinfo
 
+      // TODO: We may simplify the process by not checking the current state of the wallet
+      // the current gapNonce should be enough to get only the latest trail of the path
+      const gapNonce = await this.getGapNonce(cid)
+      if (!gapNonce) throw new Error('No gap nonce found')
+
       const presignedConfig = await this.options.configTracker.loadPresignedConfiguration({
         wallet: this.address,
         chainId: state.chainId,
         fromImageHash: imageHash,
-        prependUpdate: imageHashSource === ImageHashSource.CounterFactual ? [this._context.mainModuleUpgradable] : []
+        prependUpdate: imageHashSource === ImageHashSource.CounterFactual ? [this._context.mainModuleUpgradable] : [],
+        gapNonce
       })
 
       if (!presignedConfig || presignedConfig.length === 0) {

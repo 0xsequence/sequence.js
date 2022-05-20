@@ -2275,7 +2275,7 @@ describe('Config tracker', function () {
           await account.updateConfig(confibB, defaultChainId, networks)
           await account.useSigners(...[...signersA, ...signersB2]).updateConfig(configC, defaultChainId, networks)
 
-          for (let network of networks) {
+          for (const network of networks) {
             const res = await configTracker.loadPresignedConfiguration({
               wallet: account.address,
               fromImageHash: imageHash(configA),
