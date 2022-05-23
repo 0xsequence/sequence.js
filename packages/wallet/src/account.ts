@@ -295,14 +295,6 @@ export class Account extends Signer {
       gapNonce
     })
 
-    // If a single presigned configuration to the
-    // current imageHash is returned, then we return nothing
-    // TODO: The config tracker should not return anything in this case
-    // this happens because the config tracker doesn't know about the current gap nonce
-    if (presigned.length === 1 && presigned[0].body.newImageHash === imageHash) {
-      return { configs: [], failed: [] }
-    }
-
     const imageHashes = presigned.map((p) => p.body.newImageHash)
     const results = await Promise.all(imageHashes.map((ih) => this.options.configTracker.configOfImageHash({ imageHash: ih })))
 

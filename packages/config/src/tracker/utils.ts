@@ -7,7 +7,9 @@ import { Interface } from 'ethers/lib/utils'
 import { startsWith } from "@0xsequence/utils"
 
 export const SESSIONS_SPACE = "861879107978547650890364157709704413515112855535"
-export const GAP_SESSION_STORAGE_SLOT = "46838849952272232302478153234172971266193462109477288968624912779597926766042"
+
+//           GAP_SESSION_STORAGE_SLOT = writeBytes32Map(keccak256("org.sequence.module.gapnonce.nonce"), SESSIONS_SPACE)
+export const GAP_SESSION_STORAGE_SLOT = "0x678dd97f574772f80eef33a20b9b92882a9bdb8ae7b434904a7a6ff9c56615da"
 
 export function isValidWalletUpdate(args: {
     wallet: string,
