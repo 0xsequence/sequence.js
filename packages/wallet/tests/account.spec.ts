@@ -587,6 +587,8 @@ describe('Account integration', () => {
       })
 
       it("should return a single pending wallet config", async () => {
+        const oldConfig = await account.getWalletConfig()
+
         const newSigner = ethers.Wallet.createRandom()
         const newConfig = { threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }
 
@@ -595,10 +597,12 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs()
         expect(configs.length).to.equal(1)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
       })
 
       it("should return a single pending config for a different chain id", async () => {
+        const oldConfig = await account.getWalletConfig()
+
         const newSigner = ethers.Wallet.createRandom()
         const newConfig = { threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }
 
@@ -607,7 +611,7 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs(networks[1])
         expect(configs.length).to.equal(1)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
       })
 
       it("should return no pending config if the chain id wasn't updated", async () => {
@@ -622,6 +626,8 @@ describe('Account integration', () => {
       })
 
       it("should return two pending configs", async () => {
+        const oldConfig = await account.getWalletConfig()
+
         const newSigner1 = ethers.Wallet.createRandom()
         const newSigner2 = ethers.Wallet.createRandom()
         const newConfig1 = { threshold: config.threshold, signers: [...config.signers, { address: newSigner1.address, weight: 10 }] }
@@ -633,11 +639,13 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs()
         expect(configs.length).to.equal(2)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig1)
-        expect(configs[1]).excluding('address').to.deep.equal(newConfig2)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
+        expect(configs[1]).excluding('address').to.deep.equal(newConfig1)
       })
 
       it("should return two pending configs for a different network", async () => {
+        const oldConfig = await account.getWalletConfig()
+
         const newSigner1 = ethers.Wallet.createRandom()
         const newSigner2 = ethers.Wallet.createRandom()
         const newConfig1 = { threshold: config.threshold, signers: [...config.signers, { address: newSigner1.address, weight: 10 }] }
@@ -649,8 +657,8 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs(networks[1])
         expect(configs.length).to.equal(2)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig1)
-        expect(configs[1]).excluding('address').to.deep.equal(newConfig2)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
+        expect(configs[1]).excluding('address').to.deep.equal(newConfig1)
       })
 
       it("should not return pending configs if wallet sent a transaction", async () => {
@@ -671,6 +679,8 @@ describe('Account integration', () => {
       })
 
       it("should still return pending configs if wallet sent a transaction (on another network)", async () => {
+        const oldConfig = await account.getWalletConfig()
+
         const newSigner1 = ethers.Wallet.createRandom()
         const newSigner2 = ethers.Wallet.createRandom()
         const newConfig1 = { threshold: config.threshold, signers: [...config.signers, { address: newSigner1.address, weight: 10 }] }
@@ -684,8 +694,8 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs(networks[1])
         expect(configs.length).to.equal(2)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig1)
-        expect(configs[1]).excluding('address').to.deep.equal(newConfig2)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
+        expect(configs[1]).excluding('address').to.deep.equal(newConfig1)
       })
 
       it("should return new pending config after sending a transaction and updating again", async () => {
@@ -706,10 +716,12 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs()
         expect(configs.length).to.equal(1)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig3)
+        expect(configs[0]).excluding('address').to.deep.equal(newConfig2)
       })
 
       it("should return all pending configs after updating on another network", async () => {
+        const oldConfig = await account.getWalletConfig()
+
         const newSigner1 = ethers.Wallet.createRandom()
         const newSigner2 = ethers.Wallet.createRandom()
         const newConfig1 = { threshold: config.threshold, signers: [...config.signers, { address: newSigner1.address, weight: 10 }] }
@@ -727,9 +739,23 @@ describe('Account integration', () => {
         const { configs, failed } = await account.getPendingConfigs(networks[1])
         expect(configs.length).to.equal(3)
         expect(failed.length).to.equal(0)
-        expect(configs[0]).excluding('address').to.deep.equal(newConfig1)
-        expect(configs[1]).excluding('address').to.deep.equal(newConfig2)
-        expect(configs[2]).excluding('address').to.deep.equal(newConfig3)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
+        expect(configs[1]).excluding('address').to.deep.equal(newConfig1)
+        expect(configs[2]).excluding('address').to.deep.equal(newConfig2)
+      })
+
+      it("should return counterfactual config as pending", async () => {
+        const oldConfig = await account.getWalletConfig()
+
+        const newSigner = ethers.Wallet.createRandom()
+        const newConfig = { threshold: 1, signers: [{ address: newSigner.address, weight: 1 }] }
+
+        await account.updateConfig(newConfig, networks[0], [networks[1]])
+        const { configs, failed } = await account.getPendingConfigs()
+
+        expect(configs.length).to.equal(1)
+        expect(failed.length).to.equal(0)
+        expect(configs[0]).excluding('address').to.deep.equal(oldConfig)
       })
     })
   })

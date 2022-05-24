@@ -295,7 +295,11 @@ export class Account extends Signer {
       gapNonce
     })
 
-    const imageHashes = presigned.map((p) => p.body.newImageHash)
+    // If no pending update it should return nothing
+    if (presigned.length === 0) return { configs: [], failed: [] }
+
+    // Remove last imageHash and add current imageHash
+    const imageHashes = [ihresp.imageHash, ...presigned.slice(0, -1).map((p) => p.body.newImageHash)]
     const results = await Promise.all(imageHashes.map((ih) => this.options.configTracker.configOfImageHash({ imageHash: ih })))
 
     // If we failed to fetch the config then we need to add
