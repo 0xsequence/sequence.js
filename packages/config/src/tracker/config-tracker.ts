@@ -117,7 +117,7 @@ export abstract class ConfigTracker {
 
 export type ExporteConfigTrackerData = {
   version: number,
-  contexts: { factory: string, mainModule: string }[],
+  contexts: WalletContext[],
   configs: WalletConfig[],
   wallets: {
     imageHash: string,

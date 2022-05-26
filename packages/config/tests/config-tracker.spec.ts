@@ -6,7 +6,7 @@ import { walletContracts } from "@0xsequence/abi"
 import { Interface } from "ethers/lib/utils"
 import { digestOfTransactionsNonce, encodeNonce, packMetaTransactionsData, SignedTransactionBundle, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
-import { AssumedWalletConfigs, PresignedConfigUpdate, PresignedConfigurationPayload } from "../src/tracker/config-tracker"
+import { AssumedWalletConfigs, ExportableConfigTracker, isExportableConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../src/tracker/config-tracker"
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -439,6 +439,33 @@ describe('Config tracker', function () {
       torture: true,
       tortureSize: 200
     }, {
+      configTracker: new LocalConfigTracker(undefined, undefined, assumedConfigs),
+      nested: true,
+      name: "Local config tracker with export & import",
+      torture: true,
+      tortureSize: 10,
+      exportAndImport: async (tracker: ConfigTracker) => {
+        // return tracker
+        if (!isExportableConfigTracker(tracker)) return
+        const exported = await tracker.export()
+        const newTracker = new LocalConfigTracker(undefined, undefined, assumedConfigs)
+        await newTracker.import(exported)
+        return newTracker
+      }
+    }, {
+      configTracker: new LocalConfigTracker(new IndexedDBLocalTracker("test-3"), undefined, assumedConfigs),
+      nested: true,
+      name: "Local config tracker (with indexed-db) with export & import",
+      torture: true,
+      tortureSize: 10,
+      exportAndImport: async (tracker: ConfigTracker) => {
+        if (!isExportableConfigTracker(tracker)) return
+        const exported = await tracker.export()
+        const newTracker = new LocalConfigTracker(new IndexedDBLocalTracker(`test-4-${Math.floor(Date.now())}`), undefined, assumedConfigs)
+        await newTracker.import(exported)
+        return newTracker
+      }
+    }, {
       configTracker: new UntrustedConfigTracker(
         new LocalConfigTracker(
           new IndexedDBLocalTracker("test"),
@@ -556,7 +583,8 @@ describe('Config tracker', function () {
     skipBad?: boolean,
     nested?: boolean,
     torture?: boolean,
-    tortureSize?: number
+    tortureSize?: number,
+    exportAndImport?: (tracker: ConfigTracker) => Promise<ConfigTracker>
   }[]).map((o, i) => {
     let configTracker: ConfigTracker
     let options: Omit<AccountOptions, 'address'>
@@ -578,6 +606,22 @@ describe('Config tracker', function () {
         }
       })
 
+      const maybeExportAndImport = async () => {
+        if (o.exportAndImport) {
+          configTracker = await o.exportAndImport(configTracker)
+          options = {
+            configTracker,
+            networks: [
+              {
+                name: 'local',
+                chainId: 31337,
+                provider
+              }
+            ]
+          }
+        }
+      }
+
       it("Should return undefined if config is not registered", async () => {
         const imageHash = "0xaf786307f2980ed0d0c78df4c2de3948907d5fefc008567a05d47a3dbb095f3b"
         const config = await configTracker.configOfImageHash({ imageHash })
@@ -590,6 +634,8 @@ describe('Config tracker', function () {
         const context = sequenceContext
 
         await configTracker.saveCounterFactualWallet({ imageHash: ih, context })
+
+        await maybeExportAndImport()
 
         const wallet = addressOf(ih, context)
         const rih = await configTracker.imageHashOfCounterFactualWallet({ context, wallet })
@@ -611,6 +657,9 @@ describe('Config tracker', function () {
         const configWithAddress = { ...config, address: addressOf(config, sequenceContext) }
 
         await configTracker.saveWalletConfig({ config: configWithAddress })
+
+        await maybeExportAndImport()
+
         const got = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
 
         expect(got).to.deep.equal(config)
@@ -624,6 +673,8 @@ describe('Config tracker', function () {
         const configWithAddress = { ...config, chainId: 23123 }
 
         await configTracker.saveWalletConfig({ config: configWithAddress })
+        await maybeExportAndImport()
+
         const got = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
 
         expect(got).to.deep.equal(config)
@@ -645,6 +696,8 @@ describe('Config tracker', function () {
 
         await configTracker.saveCounterFactualWallet({ imageHash: ih, context })
 
+        await maybeExportAndImport()
+
         const wallet = addressOf(ih, context)
         const rih = await configTracker.imageHashOfCounterFactualWallet({ context, wallet })
         expect(rih).to.be.equal(ih)
@@ -664,6 +717,8 @@ describe('Config tracker', function () {
         const config = randomConfig()
         await configTracker.saveWalletConfig({ config: config })
 
+        await maybeExportAndImport()
+
         const resconfig = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
         expect(resconfig).to.be.deep.equal(config)
       })
@@ -672,7 +727,10 @@ describe('Config tracker', function () {
         const config = randomConfig()
 
         await configTracker.saveWalletConfig({ config })
+        await maybeExportAndImport()
+
         await configTracker.saveWalletConfig({ config })
+        await maybeExportAndImport()
 
         const resconfig = await configTracker.configOfImageHash({ imageHash: imageHash(config) })
         expect(config).to.be.deep.equal(resconfig)
@@ -684,6 +742,8 @@ describe('Config tracker', function () {
         const wallet = addressOf(ih, sequenceContext)
 
         await configTracker.saveCounterFactualWallet({ imageHash: ih, context: sequenceContext })
+
+        await maybeExportAndImport()
 
         const res = await configTracker.imageHashOfCounterFactualWallet({ wallet, context: sequenceContext })
         expect(res).to.be.equal(ih)
@@ -705,6 +765,8 @@ describe('Config tracker', function () {
 
         const account = await Account.create(options, config, signer)
         await account.updateConfig(newConfig, defaultChainId)
+
+        await maybeExportAndImport()
 
         const res1 = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -773,10 +835,11 @@ describe('Config tracker', function () {
         const fromImageHash = imageHash(config)
 
         const newConfig = randomConfig()
-        const newImageHash = imageHash(newConfig)
 
         const account = await Account.create(options, config, signer)
         await account.updateConfig(newConfig, defaultChainId, [2, 3, 4, 100])
+
+        await maybeExportAndImport()
 
         await Promise.all(([defaultChainId, 2, 3, 4, 100]).map(async (chainId) => {
           const res = await configTracker.loadPresignedConfiguration({
@@ -857,6 +920,8 @@ describe('Config tracker', function () {
         const account = await Account.create(options, config, signer1, signer2)
         await account.updateConfig(newConfig, defaultChainId)
 
+        await maybeExportAndImport()
+
         // Generate alternative "from" config
         // but with enough signers anyway
         const altConfig = {
@@ -920,6 +985,8 @@ describe('Config tracker', function () {
         const account = await Account.create(options, config, signer1, signer2)
         await account.updateConfig(newConfig2, defaultChainId)
 
+        await maybeExportAndImport()
+
         const res1 = await configTracker.walletsOfSigner({ signer: signer1.address })
         expect(res1.length).to.equal(1)
         expect(res1[0].wallet).to.equal(account.address)
@@ -970,6 +1037,8 @@ describe('Config tracker', function () {
         const witnessDigest = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(witnessMessage))
         const signed = await account.signMessage(witnessDigest, defaultChainId, undefined, true)
         await configTracker.saveWitness({ wallet: account.address, digest: witnessDigest, signatures: [{ signature: signed, chainId: defaultChainId }] })
+
+        await maybeExportAndImport()
 
         const res1 = await configTracker.walletsOfSigner({ signer: signer1.address })
         expect(res1.length).to.equal(1)
@@ -1044,6 +1113,8 @@ describe('Config tracker', function () {
         await account.updateConfig(config2, defaultChainId)
         await account.useSigners(signer4, signer5, signer7).updateConfig(config3, defaultChainId)
 
+        await maybeExportAndImport()
+
         const res = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
           chainId: defaultChainId,
@@ -1109,6 +1180,8 @@ describe('Config tracker', function () {
         await account2.updateConfig(configE, defaultChainId)
         await account2.useSigners(...signersE).updateConfig(configD, defaultChainId)
 
+        await maybeExportAndImport()
+
         // Send alternative presigned configuration to main configTracker
         const pre = await tmpConfigTracker.loadPresignedConfiguration({
           wallet: account2.address,
@@ -1129,6 +1202,8 @@ describe('Config tracker', function () {
           }]
         })
 
+        await maybeExportAndImport()
+
         await configTracker.savePresignedConfiguration({
           wallet: account2.address,
           config: configD,
@@ -1138,6 +1213,8 @@ describe('Config tracker', function () {
             signature: pre[1].signature
           }]
         })
+
+        await maybeExportAndImport()
 
         const res1 = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -1256,6 +1333,8 @@ describe('Config tracker', function () {
         await account.useSigners(...signersC).updateConfig(configD, defaultChainId)
         await account.useSigners(...signersD).updateConfig(configA, defaultChainId)
 
+        await maybeExportAndImport()
+
         // Route from A should lead to A but with 4 jumps
         const res1 = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -1308,6 +1387,8 @@ describe('Config tracker', function () {
         await account.useSigners(...signersC).updateConfig(configD, defaultChainId)
         await account.useSigners(...signersD).updateConfig(configA, defaultChainId)
         await account.useSigners(...signersA).updateConfig(configE, defaultChainId)
+
+        await maybeExportAndImport()
 
         // Route from A should lead to E but with just 1 jump
         const res1 = await configTracker.loadPresignedConfiguration({
@@ -1527,6 +1608,8 @@ describe('Config tracker', function () {
         await account.useSigners(...signersC).updateConfig(configD, defaultChainId)
         await account.useSigners(...signersD).updateConfig(configE, defaultChainId)
 
+        await maybeExportAndImport()
+
         // Returns long path, A -> B doesn't exist
         const res1 = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -1574,6 +1657,8 @@ describe('Config tracker', function () {
           })
         }
 
+        await maybeExportAndImport()
+
         // Now the highest gapNonce path is just A -> B
         const res2 = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -1614,6 +1699,8 @@ describe('Config tracker', function () {
         await account.updateConfig(configB, defaultChainId)
         await account.updateConfig(configC, defaultChainId)
         await account.updateConfig(configD, defaultChainId)
+
+        await maybeExportAndImport()
 
         // The shortest path with update should be A -> B (update) -> D
         const res1 = await configTracker.loadPresignedConfiguration({
@@ -1689,6 +1776,8 @@ describe('Config tracker', function () {
         await account.updateConfig(configC, defaultChainId)
         await account.updateConfig(configD, defaultChainId)
 
+        await maybeExportAndImport()
+
         // The shortest path with update should be B -> D
         const res1 = await configTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -1758,6 +1847,8 @@ describe('Config tracker', function () {
         await account.useSigners(...signersC).updateConfig(configD, defaultChainId)
         await account.useSigners(...signersD).updateConfig(configE, defaultChainId)
 
+        await maybeExportAndImport()
+
         // Feed tmp to configTracker
         const feed = await tmpConfigTracker.loadPresignedConfiguration({
           wallet: account.address,
@@ -1776,6 +1867,8 @@ describe('Config tracker', function () {
             }]
           })
         }
+
+        await maybeExportAndImport()
 
         // Now the highest gapNonce path is still A -> C -> D -> E
         const res1 = await configTracker.loadPresignedConfiguration({
@@ -2213,13 +2306,14 @@ describe('Config tracker', function () {
 
           await account.updateConfig(configB, defaultChainId)
 
+          await maybeExportAndImport()
+
           const res = await configTracker.loadPresignedConfiguration({
             wallet: account.address,
             fromImageHash: imageHash(configA),
             chainId: defaultChainId,
             prependUpdate: [sequenceContext.mainModuleUpgradable]
           })
-
 
           expect(res.length).to.equal(1)
           expectValidRoute(res, {
@@ -2243,13 +2337,14 @@ describe('Config tracker', function () {
           await account.updateConfig(confibB, defaultChainId)
           await account.useSigners(...[...signersA, ...signersB2]).updateConfig(configC, defaultChainId)
 
+          await maybeExportAndImport()
+
           const res = await configTracker.loadPresignedConfiguration({
             wallet: account.address,
             fromImageHash: imageHash(configA),
             chainId: defaultChainId,
             prependUpdate: [sequenceContext.mainModuleUpgradable]
           })
-
 
           expect(res.length).to.equal(2)
           expectValidRoute(res, {
@@ -2274,6 +2369,8 @@ describe('Config tracker', function () {
 
           await account.updateConfig(confibB, defaultChainId, networks)
           await account.useSigners(...[...signersA, ...signersB2]).updateConfig(configC, defaultChainId, networks)
+
+          await maybeExportAndImport()
 
           for (const network of networks) {
             const res = await configTracker.loadPresignedConfiguration({

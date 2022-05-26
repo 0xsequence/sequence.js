@@ -90,6 +90,9 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
     // Store known transactions
     await this.database.savePresignedTransaction({ digest, body })
 
+    // Process new config
+    await this.saveWalletConfig({ config: args.config })
+
     // Process all signatures
     return this.processSignatures({ wallet: args.wallet, signatures: args.signatures, digest, imageHash: args.tx.newImageHash })
   }
@@ -253,13 +256,13 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
     const signatures = await this.database.allSignatures()
 
     // Group wallet contexts
-    const contexts: { factory: string, mainModule: string }[] = []
+    const contexts: WalletContext[] = []
     const contextToIndex = new Map<string, number>()
     const wallets = counterFactuals.map((w) => {
       const key = `${w.context.factory}${w.context.mainModule}`
       if (!contextToIndex.has(key)) {
         const index = contexts.length
-        contexts.push({ factory: w.context.factory, mainModule: w.context.mainModule })
+        contexts.push(w.context)
         contextToIndex.set(key, index)
       }
       return {
@@ -349,7 +352,10 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
         wallet: signatureParts[0].wallet,
         digest,
         signatures: signatureParts.map((s) => ({
-          signature: encodeSignaturePart(s.signature),
+          signature: encodeSignature({
+            threshold: 1,
+            signers: [s.signature]
+          }),
           chainId: s.chainId.toString(),
         }))
       })
@@ -365,7 +371,51 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
     }
   }
 
-  import: (data: ExporteConfigTrackerData) => Promise<void>
+  import = async (data: ExporteConfigTrackerData): Promise<void> => {
+    const { contexts: indexToContext, configs, wallets, transactions, witnesses } = data
+
+    // Import all configs
+    for (const config of configs) {
+      await this.saveWalletConfig({ config })
+    }
+
+    // Import all wallets
+    for (const wallet of wallets) {
+      await this.saveCounterFactualWallet({ imageHash: wallet.imageHash, context: indexToContext[wallet.context] })
+    }
+
+    // Import all transactions
+    for (const tx of transactions) {
+      await this.savePresignedConfiguration({
+        wallet: tx.wallet,
+        config: tx.config,
+        tx: {
+          wallet: tx.tx.wallet,
+          tx: tx.tx.tx,
+          newImageHash: tx.tx.newImageHash,
+          gapNonce: ethers.BigNumber.from(tx.tx.gapNonce),
+          nonce: ethers.BigNumber.from(tx.tx.nonce),
+          update: tx.tx.update
+        },
+        signatures: tx.signatures.map((s) => ({
+          signature: s.signature,
+          chainId: ethers.BigNumber.from(s.chainId)
+        }))
+      })
+    }
+
+    // Import all witnesses
+    for (const witness of witnesses) {
+      await this.saveWitness({
+        wallet: witness.wallet,
+        digest: witness.digest,
+        signatures: witness.signatures.map((s) => ({
+          signature: s.signature,
+          chainId: ethers.BigNumber.from(s.chainId)
+        }))
+      })
+    }
+  }
 }
 
 type ConfigJump = {

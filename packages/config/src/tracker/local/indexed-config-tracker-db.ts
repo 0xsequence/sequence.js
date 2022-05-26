@@ -94,7 +94,7 @@ export class IndexedDBLocalTracker implements ConfigTrackerDatabase {
     return db.getAll('configs')
   }
 
-  async allCounterFactualWallets(): Promise<{ context: { factory: string, mainModule: string }; imageHash: string }[]> {
+  async allCounterFactualWallets(): Promise<{ context: WalletContext; imageHash: string }[]> {
     const db = await this.getDb()
     return db.getAll('wallets')
   }

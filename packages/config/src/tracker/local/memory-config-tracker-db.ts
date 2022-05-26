@@ -1,4 +1,4 @@
-import { WalletContext } from "@0xsequence/network"
+import { sequenceContext, WalletContext } from "@0xsequence/network"
 import { ethers } from "ethers"
 import { ConfigTrackerDatabase, SignaturePart } from "."
 import { imageHash } from "../.."
@@ -35,10 +35,15 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     return Promise.resolve(Array.from(this._imageHashToConfig.values()))
   }
 
-  allCounterFactualWallets(): Promise<{ context: { factory: string, mainModule: string }; imageHash: string }[]> {
+  allCounterFactualWallets(): Promise<{ context: WalletContext; imageHash: string }[]> {
+    // Assume mainModuleUpgradable and sessionUtils to be the defaults
+    // this is no relevant for computing the counter factual wallet anyway
+    // TODO: Create parent type of WalletContext with only factory + mainModule
+    const { sessionUtils, mainModuleUpgradable } = sequenceContext
+
     return Promise.resolve(Array.from(this._addressToImageHash.entries()).map(value => {
       const { factory, mainModule } = this._fromImageHashKey(value[0])
-      return { context: { factory, mainModule }, imageHash: value[1] }
+      return { context: { factory, mainModule, mainModuleUpgradable, sessionUtils }, imageHash: value[1] }
     }))
   }
 
