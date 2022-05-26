@@ -291,6 +291,19 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
       imageHashToConfig.set(imageHash(c), c)
     }
 
+    // map signers of known configs to parent wallets
+    const knownSignerToWallet = new Map<string, string>()
+    for (const wallet of Object.keys(this.walletConfigs)) {
+      const config = this.walletConfigs[wallet]
+      for (const signer of config.signers) {
+        if (knownSignerToWallet.has(signer.address)) {
+          throw new Error(`signer ${signer.address} is known to multiple wallets`)
+        }
+
+        knownSignerToWallet.set(signer.address, wallet)
+      }
+    }
+
     // Mark used digest
     // not used signatures should become witnesses
     const usedDigests = new Set<string>()
@@ -323,14 +336,31 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
           wallet: tx.wallet,
           tx: tx.tx,
           newImageHash: tx.newImageHash,
-          gapNonce: tx.gapNonce.toString(),
-          nonce: tx.nonce.toString(),
+          gapNonce: ethers.BigNumber.from(tx.gapNonce).toString(),
+          nonce: ethers.BigNumber.from(tx.nonce).toString(),
           update: tx.update
         },
-        signatures: signatures.map((s) => ({
-          signature: encodeSignaturePart(s.signature),
-          chainId: s.chainId.toString(),
-        }))
+        signatures: signatures.map((s) => {
+          // If signer is in known configs
+          // then we must bundle the signature as a full part
+          // with information about the parent wallet
+          const part = knownSignerToWallet.has(s.signer) ? {
+            weight: 1, // Weight is not relevant
+            signature: encodeSignature({
+              threshold: 1,
+              signers: [s.signature]
+            }) + '03',
+            address: knownSignerToWallet.get(s.signer)!
+          } : s.signature
+          
+          return {
+            signature: encodeSignature({
+              threshold: 1,
+              signers: [part]
+            }),
+            chainId: ethers.BigNumber.from(s.chainId).toString(),
+          }
+        })
       }
     })
 
@@ -351,13 +381,27 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
       witnesses.push({
         wallet: signatureParts[0].wallet,
         digest,
-        signatures: signatureParts.map((s) => ({
-          signature: encodeSignature({
-            threshold: 1,
-            signers: [s.signature]
-          }),
-          chainId: s.chainId.toString(),
-        }))
+        signatures: signatureParts.map((s) => {
+          // If signer is in known configs
+          // then we must bundle the signature as a full part
+          // with information about the parent wallet
+          const part = knownSignerToWallet.has(s.signer) ? {
+            weight: 1, // Weight is not relevant
+            signature: encodeSignature({
+              threshold: 1,
+              signers: [s.signature]
+            }) + '03',
+            address: knownSignerToWallet.get(s.signer)!
+          } : s.signature
+
+          return {
+            signature: encodeSignature({
+              threshold: 1,
+              signers: [part]
+            }),
+            chainId: ethers.BigNumber.from(s.chainId).toString(),
+          }
+        })
       })
     }
 

@@ -442,27 +442,25 @@ describe('Config tracker', function () {
       configTracker: new LocalConfigTracker(undefined, undefined, assumedConfigs),
       nested: true,
       name: "Local config tracker with export & import",
-      torture: true,
-      tortureSize: 10,
+      torture: false,
       exportAndImport: async (tracker: ConfigTracker) => {
         // return tracker
         if (!isExportableConfigTracker(tracker)) return
-        const exported = await tracker.export()
+        const exported = JSON.stringify(await tracker.export())
         const newTracker = new LocalConfigTracker(undefined, undefined, assumedConfigs)
-        await newTracker.import(exported)
+        await newTracker.import(JSON.parse(exported))
         return newTracker
       }
     }, {
       configTracker: new LocalConfigTracker(new IndexedDBLocalTracker("test-3"), undefined, assumedConfigs),
       nested: true,
       name: "Local config tracker (with indexed-db) with export & import",
-      torture: true,
-      tortureSize: 10,
+      torture: false,
       exportAndImport: async (tracker: ConfigTracker) => {
         if (!isExportableConfigTracker(tracker)) return
-        const exported = await tracker.export()
+        const exported = JSON.stringify(await tracker.export())
         const newTracker = new LocalConfigTracker(new IndexedDBLocalTracker(`test-4-${Math.floor(Date.now())}`), undefined, assumedConfigs)
-        await newTracker.import(exported)
+        await newTracker.import(JSON.parse(exported))
         return newTracker
       }
     }, {
