@@ -13,6 +13,11 @@ export type SignaturePart = {
 }
 
 export interface ConfigTrackerDatabase {
+  allConfigs(): Promise<WalletConfig[]>
+  allCounterFactualWallets(): Promise<{ imageHash: string, context: { factory: string, mainModule: string } }[]>
+  allTransactions(): Promise<(TransactionBody & { digest: string })[]>
+  allSignatures(): Promise<SignaturePart[]>
+
   imageHashOfCounterFactualWallet: (args: {
     context: WalletContext,
     wallet: string

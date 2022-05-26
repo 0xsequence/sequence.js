@@ -22,8 +22,34 @@ export class MemoryConfigTrackerDb implements ConfigTrackerDatabase {
     return `${address.toLowerCase()}-${context.factory.toLowerCase()}-${context.mainModule.toLowerCase()}`
   }
 
+  private _fromImageHashKey(key: string) {
+    const [address, factory, mainModule] = key.split("-")
+    return { address, factory, mainModule }
+  }
+
   private _toPartIndex(signer: string, digest: string, chainId: ethers.BigNumber) {
     return `${signer.toLowerCase()}-${digest}-${chainId.toString()}`
+  }
+
+  allConfigs(): Promise<WalletConfig[]> {
+    return Promise.resolve(Array.from(this._imageHashToConfig.values()))
+  }
+
+  allCounterFactualWallets(): Promise<{ context: { factory: string, mainModule: string }; imageHash: string }[]> {
+    return Promise.resolve(Array.from(this._addressToImageHash.entries()).map(value => {
+      const { factory, mainModule } = this._fromImageHashKey(value[0])
+      return { context: { factory, mainModule }, imageHash: value[1] }
+    }))
+  }
+
+  allTransactions(): Promise<(TransactionBody & { digest: string })[]> {
+    const vals = Array.from(this._digestToTransaction.values())
+    const keys = Array.from(this._digestToTransaction.keys())
+    return Promise.resolve(vals.map((value, index) => ({ ...value, digest: keys[index] })))
+  }
+
+  allSignatures(): Promise<SignaturePart[]> {
+    return Promise.resolve(Array.from(this._partIndexForDigestAndSigner.values()))
   }
 
   imageHashOfCounterFactualWallet = async (args: {

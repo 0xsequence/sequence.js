@@ -3,15 +3,15 @@ import { digestOfTransactionsNonce, encodeNonce, readSequenceNonce, unpackMetaTr
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
-import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE } from ".."
+import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE, SignaturePart } from ".."
 import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, encodeSignaturePart, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
-import { AssumedWalletConfigs, PresignedConfigUpdate, TransactionBody } from "../config-tracker"
+import { AssumedWalletConfigs, ExportableConfigTracker, ExporteConfigTrackerData, PresignedConfigUpdate, PresignedConfigurationPayload, TransactionBody } from "../config-tracker"
 import { getUpdateImplementation, isValidWalletUpdate } from "../utils"
 import { Searcher } from "./searcher"
 
 
-export class LocalConfigTracker implements ConfigTracker {
+export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracker {
   constructor(
     private database: ConfigTrackerDatabase = new MemoryConfigTrackerDb(),
     public context: WalletContext = sequenceContext,
@@ -243,6 +243,129 @@ export class LocalConfigTracker implements ConfigTracker {
       wallet: p.wallet
     }))
   }
+
+  isExportable = () => true
+
+  export = async (): Promise<ExporteConfigTrackerData> => {
+    const configs = await this.database.allConfigs()
+    const counterFactuals = await this.database.allCounterFactualWallets()
+    const rawTransactions = await this.database.allTransactions()
+    const signatures = await this.database.allSignatures()
+
+    // Group wallet contexts
+    const contexts: { factory: string, mainModule: string }[] = []
+    const contextToIndex = new Map<string, number>()
+    const wallets = counterFactuals.map((w) => {
+      const key = `${w.context.factory}${w.context.mainModule}`
+      if (!contextToIndex.has(key)) {
+        const index = contexts.length
+        contexts.push({ factory: w.context.factory, mainModule: w.context.mainModule })
+        contextToIndex.set(key, index)
+      }
+      return {
+        imageHash: w.imageHash,
+        context: contextToIndex.get(key)!
+      }
+    })
+
+    // Group transactions
+    // for this we take every transaction and we append
+    // all signatures for it
+
+    // first we need to map digest -> signature
+    const digestToSignature = new Map<string, SignaturePart[]>()
+    for (const s of signatures) {
+      if (!digestToSignature.has(s.digest)) {
+        digestToSignature.set(s.digest, [])
+      }
+      digestToSignature.get(s.digest)!.push(s)
+    }
+
+    // map all imageHashes to their configs
+    const imageHashToConfig = new Map<string, WalletConfig>()
+    for (const c of configs) {
+      // TODO: Return imageHash directly for performance reasons
+      imageHashToConfig.set(imageHash(c), c)
+    }
+
+    // Mark used digest
+    // not used signatures should become witnesses
+    const usedDigests = new Set<string>()
+    const transactions: {
+      wallet: string,
+      config: WalletConfig,
+      tx: {
+        wallet: string,
+        tx: string,
+        newImageHash: string,
+        gapNonce: string,
+        nonce: string,
+        update?: string
+      },
+      signatures: {
+        chainId: string,
+        signature: string
+      }[]
+    }[] = rawTransactions.map((tx) => {
+      const signatures = digestToSignature.get(tx.digest) || []
+      usedDigests.add(tx.digest)
+      const config = imageHashToConfig.get(tx.newImageHash)
+      if (!config) {
+        throw new Error(`Could not find config for image hash ${tx.newImageHash}`)
+      }
+      return {
+        wallet: tx.wallet,
+        config: imageHashToConfig.get(tx.newImageHash)!,
+        tx: {
+          wallet: tx.wallet,
+          tx: tx.tx,
+          newImageHash: tx.newImageHash,
+          gapNonce: tx.gapNonce.toString(),
+          nonce: tx.nonce.toString(),
+          update: tx.update
+        },
+        signatures: signatures.map((s) => ({
+          signature: encodeSignaturePart(s.signature),
+          chainId: s.chainId.toString(),
+        }))
+      }
+    })
+
+    // Convert unused signatures into witnesses
+    const witnesses: {
+      wallet: string,
+      digest: string,
+      signatures: {
+        chainId: string,
+        signature: string
+      }[]
+    }[] = []
+
+    for (const [digest, signatureParts] of digestToSignature) {
+      if (usedDigests.has(digest) || signatureParts.length === 0) {
+        continue
+      }
+      witnesses.push({
+        wallet: signatureParts[0].wallet,
+        digest,
+        signatures: signatureParts.map((s) => ({
+          signature: encodeSignaturePart(s.signature),
+          chainId: s.chainId.toString(),
+        }))
+      })
+    }
+
+    return {
+      version: 1,
+      contexts,
+      configs,
+      wallets,
+      transactions,
+      witnesses
+    }
+  }
+
+  import: (data: ExporteConfigTrackerData) => Promise<void>
 }
 
 type ConfigJump = {

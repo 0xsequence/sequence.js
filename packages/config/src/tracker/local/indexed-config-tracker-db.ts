@@ -89,6 +89,39 @@ export class IndexedDBLocalTracker implements ConfigTrackerDatabase {
     return this._lazyDb
   }
 
+  async allConfigs(): Promise<WalletConfig[]> {
+    const db = await this.getDb()
+    return db.getAll('configs')
+  }
+
+  async allCounterFactualWallets(): Promise<{ context: { factory: string, mainModule: string }; imageHash: string }[]> {
+    const db = await this.getDb()
+    return db.getAll('wallets')
+  }
+
+  async allTransactions(): Promise<(TransactionBody & { digest: string })[]> {
+    const db = await this.getDb()
+    const tx = db.transaction('transactions', 'readonly')
+    const store = tx.objectStore('transactions')
+
+    let cursor = await store.openCursor()
+
+    const res = []
+    while (cursor) {
+      const { value, key } = cursor
+      res.push({ ...value, digest: key })
+      cursor = await cursor.continue()
+    }
+
+    return res
+  }
+
+  async allSignatures(): Promise<SignaturePart[]> {
+    const db = await this.getDb()
+    const sigs = await db.getAll('signatures')
+    return sigs.map((s) => ({ ...s, chainId: ethers.BigNumber.from(s.chainId) }))
+  }
+
   saveWalletConfig: (args: { imageHash: string; config: WalletConfig }) => Promise<void> = async (args) => {
     const db = await this.getDb()
 
