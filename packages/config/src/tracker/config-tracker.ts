@@ -163,7 +163,7 @@ export function isExportableConfigTracker(
 }
 
 export function isExportedConfigTrackerData(data: any): data is ExportableConfigTracker {
-  if (!data.version || data.version !== 0) return false
+  if (!data.version || data.version !== 1) return false
 
   if (!data.contexts || !Array.isArray(data.contexts)) return false
   if (!data.configs || !Array.isArray(data.configs)) return false

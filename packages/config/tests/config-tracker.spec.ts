@@ -449,7 +449,7 @@ describe('Config tracker', function () {
         const exported = JSON.stringify(await tracker.export())
         const newTracker = new LocalConfigTracker(undefined, undefined, assumedConfigs)
         const parsed = JSON.parse(exported)
-        // expect(isExportedConfigTrackerData(parsed)).to.equal(true)
+        expect(isExportedConfigTrackerData(parsed)).to.equal(true)
         await newTracker.import(parsed)
         return newTracker
       }
@@ -463,7 +463,7 @@ describe('Config tracker', function () {
         const exported = JSON.stringify(await tracker.export())
         const newTracker = new LocalConfigTracker(new IndexedDBLocalTracker(`test-4-${Math.floor(Date.now())}`), undefined, assumedConfigs)
         const parsed = JSON.parse(exported)
-        // expect(isExportedConfigTrackerData(parsed)).to.equal(true)
+        expect(isExportedConfigTrackerData(parsed)).to.equal(true)
         await newTracker.import(parsed)
         return newTracker
       }
