@@ -115,7 +115,7 @@ export abstract class ConfigTracker {
   }) => Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]>
 }
 
-export type ExporteConfigTrackerData = {
+export type ExportedConfigTrackerData = {
   version: number,
   contexts: WalletContext[],
   configs: WalletConfig[],
@@ -152,8 +152,8 @@ export type ExporteConfigTrackerData = {
 export interface ExportableConfigTracker {
   isExportable: () => boolean
 
-  export: () => Promise<ExporteConfigTrackerData>
-  import: (data: ExporteConfigTrackerData) => Promise<void>
+  export: () => Promise<ExportedConfigTrackerData>
+  import: (data: ExportedConfigTrackerData) => Promise<void>
 }
 
 export function isExportableConfigTracker(
@@ -162,7 +162,7 @@ export function isExportableConfigTracker(
   return ((tracker as any).isExportable)?.() ?? false
 }
 
-export function isExportedConfigTrackerData(data: any): data is ExportableConfigTracker {
+export function isExportedConfigTrackerData(data: any): data is ExportedConfigTrackerData {
   if (!data.version || data.version !== 1) return false
 
   if (!data.contexts || !Array.isArray(data.contexts)) return false

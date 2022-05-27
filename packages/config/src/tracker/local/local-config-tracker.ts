@@ -1,12 +1,12 @@
 import { sequenceContext, WalletContext } from "@0xsequence/network"
-import { digestOfTransactionsNonce, encodeNonce, readSequenceNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
+import { digestOfTransactionsNonce, encodeNonce, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { ConfigTrackerDatabase } from "."
 import { ConfigTracker, MemoryConfigTrackerDb, SESSIONS_SPACE, SignaturePart } from ".."
 import { addressOf, DecodedSignature, DecodedSignaturePart, decodeSignature, encodeSignature, encodeSignaturePart, imageHash, staticRecoverConfig } from "../.."
 import { WalletConfig } from "../../config"
-import { AssumedWalletConfigs, ExportableConfigTracker, ExporteConfigTrackerData, PresignedConfigUpdate, PresignedConfigurationPayload, TransactionBody } from "../config-tracker"
+import { AssumedWalletConfigs, ExportableConfigTracker, ExportedConfigTrackerData, PresignedConfigUpdate, PresignedConfigurationPayload, TransactionBody } from "../config-tracker"
 import { getUpdateImplementation, isValidWalletUpdate } from "../utils"
 import { Searcher } from "./searcher"
 
@@ -249,7 +249,7 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
 
   isExportable = () => true
 
-  export = async (): Promise<ExporteConfigTrackerData> => {
+  export = async (): Promise<ExportedConfigTrackerData> => {
     const configs = await this.database.allConfigs()
     const counterFactuals = await this.database.allCounterFactualWallets()
     const rawTransactions = await this.database.allTransactions()
@@ -413,7 +413,7 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
     }
   }
 
-  import = async (data: ExporteConfigTrackerData): Promise<void> => {
+  import = async (data: ExportedConfigTrackerData): Promise<void> => {
     const { contexts: indexToContext, configs, wallets, transactions, witnesses } = data
 
     // Import all configs
