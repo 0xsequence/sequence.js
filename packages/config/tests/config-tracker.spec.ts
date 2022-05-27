@@ -6,7 +6,7 @@ import { walletContracts } from "@0xsequence/abi"
 import { Interface } from "ethers/lib/utils"
 import { digestOfTransactionsNonce, encodeNonce, packMetaTransactionsData, SignedTransactionBundle, Transaction, unpackMetaTransactionData } from "@0xsequence/transactions"
 import { subDigestOf } from "@0xsequence/utils"
-import { AssumedWalletConfigs, ExportableConfigTracker, isExportableConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../src/tracker/config-tracker"
+import { AssumedWalletConfigs, ExportableConfigTracker, isExportableConfigTracker, isExportedConfigTrackerData, PresignedConfigUpdate, PresignedConfigurationPayload } from "../src/tracker/config-tracker"
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -448,7 +448,9 @@ describe('Config tracker', function () {
         if (!isExportableConfigTracker(tracker)) return
         const exported = JSON.stringify(await tracker.export())
         const newTracker = new LocalConfigTracker(undefined, undefined, assumedConfigs)
-        await newTracker.import(JSON.parse(exported))
+        const parsed = JSON.parse(exported)
+        // expect(isExportedConfigTrackerData(parsed)).to.equal(true)
+        await newTracker.import(parsed)
         return newTracker
       }
     }, {
@@ -460,7 +462,9 @@ describe('Config tracker', function () {
         if (!isExportableConfigTracker(tracker)) return
         const exported = JSON.stringify(await tracker.export())
         const newTracker = new LocalConfigTracker(new IndexedDBLocalTracker(`test-4-${Math.floor(Date.now())}`), undefined, assumedConfigs)
-        await newTracker.import(JSON.parse(exported))
+        const parsed = JSON.parse(exported)
+        // expect(isExportedConfigTrackerData(parsed)).to.equal(true)
+        await newTracker.import(parsed)
         return newTracker
       }
     }, {

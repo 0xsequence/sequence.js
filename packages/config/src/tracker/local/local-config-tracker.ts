@@ -292,16 +292,53 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
     }
 
     // map signers of known configs to parent wallets
-    const knownSignerToWallet = new Map<string, string>()
+    const knownSignerToWallet = new Map<string, string[]>()
     for (const wallet of Object.keys(this.walletConfigs)) {
       const config = this.walletConfigs[wallet]
       for (const signer of config.signers) {
-        if (knownSignerToWallet.has(signer.address)) {
-          throw new Error(`signer ${signer.address} is known to multiple wallets`)
+        if (!knownSignerToWallet.has(signer.address)) {
+          knownSignerToWallet.set(signer.address, [wallet])
+        } else {
+          knownSignerToWallet.get(signer.address)!.push(wallet)
+        }
+      }
+    }
+
+    const encodeSignatures = (signatures: SignaturePart[]) => {
+      // Encode all signatures
+      // signatures that are assumed to be part of multiple wallets
+      // are going to be encoded multiple times
+      const encodedSignatuers: { signature: string, chainId: string }[] = []
+      for (const s of signatures) {
+        if (knownSignerToWallet.has(s.signer)) {
+          for (const wallet of knownSignerToWallet.get(s.signer)!) {
+            encodedSignatuers.push({
+              signature: encodeSignature({
+                threshold: 1,
+                signers: [{
+                  weight: 1, // Weight is not relevant
+                  signature: encodeSignature({
+                    threshold: 1,
+                    signers: [s.signature]
+                  }) + '03',
+                  address: wallet
+                }]
+              }),
+              chainId: ethers.BigNumber.from(s.chainId).toString()
+            })
+          }
         }
 
-        knownSignerToWallet.set(signer.address, wallet)
+        encodedSignatuers.push({
+          signature: encodeSignature({
+            threshold: 1,
+            signers: [s.signature]
+          }),
+          chainId: ethers.BigNumber.from(s.chainId).toString()
+        })
       }
+
+      return encodedSignatuers
     }
 
     // Mark used digest
@@ -329,6 +366,7 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
       if (!config) {
         throw new Error(`Could not find config for image hash ${tx.newImageHash}`)
       }
+
       return {
         wallet: tx.wallet,
         config: imageHashToConfig.get(tx.newImageHash)!,
@@ -340,27 +378,7 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
           nonce: ethers.BigNumber.from(tx.nonce).toString(),
           update: tx.update
         },
-        signatures: signatures.map((s) => {
-          // If signer is in known configs
-          // then we must bundle the signature as a full part
-          // with information about the parent wallet
-          const part = knownSignerToWallet.has(s.signer) ? {
-            weight: 1, // Weight is not relevant
-            signature: encodeSignature({
-              threshold: 1,
-              signers: [s.signature]
-            }) + '03',
-            address: knownSignerToWallet.get(s.signer)!
-          } : s.signature
-          
-          return {
-            signature: encodeSignature({
-              threshold: 1,
-              signers: [part]
-            }),
-            chainId: ethers.BigNumber.from(s.chainId).toString(),
-          }
-        })
+        signatures: encodeSignatures(signatures)
       }
     })
 
@@ -381,27 +399,7 @@ export class LocalConfigTracker implements ConfigTracker, ExportableConfigTracke
       witnesses.push({
         wallet: signatureParts[0].wallet,
         digest,
-        signatures: signatureParts.map((s) => {
-          // If signer is in known configs
-          // then we must bundle the signature as a full part
-          // with information about the parent wallet
-          const part = knownSignerToWallet.has(s.signer) ? {
-            weight: 1, // Weight is not relevant
-            signature: encodeSignature({
-              threshold: 1,
-              signers: [s.signature]
-            }) + '03',
-            address: knownSignerToWallet.get(s.signer)!
-          } : s.signature
-
-          return {
-            signature: encodeSignature({
-              threshold: 1,
-              signers: [part]
-            }),
-            chainId: ethers.BigNumber.from(s.chainId).toString(),
-          }
-        })
+        signatures: encodeSignatures(signatures)
       })
     }
 

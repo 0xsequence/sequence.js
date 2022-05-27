@@ -161,3 +161,17 @@ export function isExportableConfigTracker(
 ): tracker is ConfigTracker & ExportableConfigTracker {
   return ((tracker as any).isExportable)?.() ?? false
 }
+
+export function isExportedConfigTrackerData(data: any): data is ExportableConfigTracker {
+  if (!data.version || data.version !== 0) return false
+
+  if (!data.contexts || !Array.isArray(data.contexts)) return false
+  if (!data.configs || !Array.isArray(data.configs)) return false
+  if (!data.wallets || !Array.isArray(data.wallets)) return false
+  if (!data.transactions || !Array.isArray(data.transactions)) return false
+  if (!data.witnesses || !Array.isArray(data.witnesses)) return false
+
+  // TODO: Maybe add more validations?
+
+  return true
+}
