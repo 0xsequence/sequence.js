@@ -192,6 +192,12 @@ export interface Settings {
    * to set when you open the wallet for user. */
   defaultFundingCurrency?: CurrencyOption
 
+  /** Specify default purchase amount as an integer, for prefilling the funding amount.
+   * If not specified, the default is 100.
+   * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
+   * to set when you open the wallet for user. */
+  defaultPurchaseAmount?: number
+
   /** If true, lockFundingCurrencyToDefault disables picking any currency provided by payment
    * providers other than the defaultFundingCurrency.
    * If false, it allows picking any currency provided by payment providers.

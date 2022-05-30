@@ -190,7 +190,7 @@ export class RpcRelayer implements Relayer {
       hash: txReceipt.transactionHash,
       raw: receipt.txnReceipt,
       receipt: txReceipt, // extended type which is Sequence-specific. Contains the decoded metaTxReceipt
-      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations),
+      wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
     } as TransactionResponse
   }
 }

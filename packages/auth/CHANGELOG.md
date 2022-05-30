@@ -1,5 +1,110 @@
 # @0xsequence/auth
 
+## 0.39.0
+
+### Minor Changes
+
+- abstract window.localStorage to interface type
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.39.0
+  - @0xsequence/api@0.39.0
+  - @0xsequence/config@0.39.0
+  - @0xsequence/indexer@0.39.0
+  - @0xsequence/metadata@0.39.0
+  - @0xsequence/network@0.39.0
+  - @0xsequence/utils@0.39.0
+  - @0xsequence/wallet@0.39.0
+
+## 0.38.2
+
+### Patch Changes
+
+- provider: add Settings.defaultPurchaseAmount
+- Updated dependencies
+  - @0xsequence/abi@0.38.2
+  - @0xsequence/api@0.38.2
+  - @0xsequence/config@0.38.2
+  - @0xsequence/indexer@0.38.2
+  - @0xsequence/metadata@0.38.2
+  - @0xsequence/network@0.38.2
+  - @0xsequence/utils@0.38.2
+  - @0xsequence/wallet@0.38.2
+
+## 0.38.1
+
+### Patch Changes
+
+- update api and metadata rpc bindings
+- Updated dependencies
+  - @0xsequence/abi@0.38.1
+  - @0xsequence/api@0.38.1
+  - @0xsequence/config@0.38.1
+  - @0xsequence/indexer@0.38.1
+  - @0xsequence/metadata@0.38.1
+  - @0xsequence/network@0.38.1
+  - @0xsequence/utils@0.38.1
+  - @0xsequence/wallet@0.38.1
+
+## 0.38.0
+
+### Minor Changes
+
+- api: update bindings, change TokenPrice interface
+- bridge: remove @0xsequence/bridge package
+- api: update bindings, rename ContractCallArg to TupleComponent
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.38.0
+  - @0xsequence/api@0.38.0
+  - @0xsequence/config@0.38.0
+  - @0xsequence/indexer@0.38.0
+  - @0xsequence/metadata@0.38.0
+  - @0xsequence/network@0.38.0
+  - @0xsequence/utils@0.38.0
+  - @0xsequence/wallet@0.38.0
+
+## 0.37.1
+
+### Patch Changes
+
+- Add back sortNetworks - Removing sorting was a breaking change for dapps on older versions which directly integrate sequence.
+- Updated dependencies
+  - @0xsequence/abi@0.37.1
+  - @0xsequence/api@0.37.1
+  - @0xsequence/config@0.37.1
+  - @0xsequence/indexer@0.37.1
+  - @0xsequence/metadata@0.37.1
+  - @0xsequence/network@0.37.1
+  - @0xsequence/utils@0.37.1
+  - @0xsequence/wallet@0.37.1
+
+## 0.37.0
+
+### Minor Changes
+
+- network related fixes and improvements
+- api: bindings: exchange rate lookups
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.37.0
+  - @0xsequence/api@0.37.0
+  - @0xsequence/config@0.37.0
+  - @0xsequence/indexer@0.37.0
+  - @0xsequence/metadata@0.37.0
+  - @0xsequence/network@0.37.0
+  - @0xsequence/utils@0.37.0
+  - @0xsequence/wallet@0.37.0
+
 ## 0.36.13
 
 ### Patch Changes

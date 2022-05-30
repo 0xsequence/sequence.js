@@ -16,11 +16,10 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { ExternalProvider } from '@ethersproject/providers'
 
 import {
-  Networks,
   NetworkConfig,
   JsonRpcHandler,
   JsonRpcRequest,
@@ -38,8 +37,8 @@ const SIGNER_READY_TIMEOUT = 10000
 
 export interface WalletSignInOptions {
   connect?: boolean
-  mainnetNetworks?: Networks
-  testnetNetworks?: Networks
+  mainnetNetworks?: NetworkConfig[]
+  testnetNetworks?: NetworkConfig[]
   defaultNetworkId?: string | number
 }
 
@@ -64,8 +63,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   constructor(
     signer: Signer | null | undefined,
     prompter: WalletUserPrompter | null,
-    mainnetNetworks: Networks,
-    testnetNetworks: Networks = []
+    mainnetNetworks: NetworkConfig[],
+    testnetNetworks: NetworkConfig[] = []
   ) {
     this.signer = signer
     this.prompter = prompter
@@ -734,8 +733,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   async notifyNetworks(networks?: NetworkConfig[]) {
     const n = networks || (await this.getNetworks(true))
     this.events.emit('networks', n)
-    if (n && n.length > 0) {
-      this.events.emit('chainChanged', ethers.utils.hexlify(n[0].chainId))
+    if (n.length > 0) {
+      const defaultNetwork = n.find(network => network.isDefaultChain)
+      if (defaultNetwork) {
+        this.events.emit('chainChanged', ethers.utils.hexlify(defaultNetwork.chainId))
+      }
     } else {
       this.events.emit('chainChanged', '0x0')
     }

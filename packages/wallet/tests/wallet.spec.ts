@@ -1,5 +1,5 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
-import { encodeData } from './utils'
+import { encodeData } from './utils'
 import { Proof } from '@0xsequence/ethauth'
 
 import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
@@ -8,7 +8,7 @@ import { toSequenceTransaction, toSequenceTransactions, encodeNonce, Transaction
 
 import { LocalRelayer } from '@0xsequence/relayer'
 
-import { WalletContext, Networks } from '@0xsequence/network'
+import { WalletContext, NetworkConfig } from '@0xsequence/network'
 import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
 
@@ -58,7 +58,7 @@ describe('Wallet integration', function () {
   let hookCaller: HookCallerMock
 
   let context: WalletContext
-  let networks: Networks
+  let networks: NetworkConfig[]
   let wallet: lib.Wallet
 
   let configTracker: ConfigTracker
@@ -123,7 +123,6 @@ describe('Wallet integration', function () {
 
     // Deploy local relayer
     relayer = new LocalRelayer({signer: ethnode.signer })
-
     configTracker = new LocalConfigTracker(undefined, context)
   })
 
@@ -172,8 +171,8 @@ describe('Wallet integration', function () {
         const typedData = {
           types: {
             Person: [
-              { name: "name", type: "string" },
-              { name: "wallet", type: "address" },
+              { name: 'name', type: 'string' },
+              { name: 'wallet', type: 'address' },
               { name: 'count', type: 'uint8' }
             ]
           },
@@ -185,9 +184,9 @@ describe('Wallet integration', function () {
             verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
           },
           message: {
-            'name': 'Bob',
-            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-            'count': 4
+            name: 'Bob',
+            wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            count: 4
           }
         }
 
@@ -202,8 +201,8 @@ describe('Wallet integration', function () {
         const typedData = {
           types: {
             Person: [
-              { name: "name", type: "string" },
-              { name: "wallet", type: "address" },
+              { name: 'name', type: 'string' },
+              { name: 'wallet', type: 'address' },
               { name: 'count', type: 'uint8' }
             ]
           },
@@ -215,9 +214,9 @@ describe('Wallet integration', function () {
             verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
           },
           message: {
-            'name': 'Bob',
-            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-            'count': 4
+            name: 'Bob',
+            wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            count: 4
           }
         }
 
@@ -265,7 +264,7 @@ describe('Wallet integration', function () {
         })
 
         it('Should deploy contract', async () => {
-          (await new ethers.ContractFactory(
+          ;(await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             signer
@@ -318,25 +317,17 @@ describe('Wallet integration', function () {
               ethnode.signer
             ).deploy()) as CallReceiverMock
 
-            const receiver = new ethers.Contract(
-              callReceiver1.address,
-              CallReceiverMockArtifact.abi,
-              signer
-            )
+            const receiver = new ethers.Contract(callReceiver1.address, CallReceiverMockArtifact.abi, signer)
 
-            const tx = await receiver.functions.testCall(2, "0x030233", {
+            const tx = await receiver.functions.testCall(2, '0x030233', {
               gasLimit: ethers.BigNumber.from(1048575)
             })
 
-            expect(tx.data).to.contain("00fffff")
+            expect(tx.data).to.contain('00fffff')
           })
 
           it('Should estimate gas for transaction with 0 gasLimit and revertOnError false', async () => {
-            await new ethers.ContractFactory(
-              MainModuleArtifact.abi,
-              MainModuleArtifact.bytecode,
-              signer
-            ).deploy(wallet.address)
+            await new ethers.ContractFactory(MainModuleArtifact.abi, MainModuleArtifact.bytecode, signer).deploy(wallet.address)
           })
         })
       })
@@ -359,13 +350,13 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, "0x112233"),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
             auxiliary: [
               {
                 gas: '121000',
                 to: callReceiver2.address,
                 value: 0,
-                data: await encodeData(callReceiver, "testCall", 2, "0x445566")
+                data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
               }
             ]
           }
@@ -394,16 +385,16 @@ describe('Wallet integration', function () {
               gas: '121000',
               to: callReceiver1.address,
               value: 0,
-              data: await encodeData(callReceiver, "testCall", 1, "0x112233"),
+              data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
             },
             {
               gas: '121000',
               to: callReceiver2.address,
               value: 0,
-              data: await encodeData(callReceiver, "testCall", 2, "0x445566")
+              data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
             }
           ]
- 
+
           await wallet.sendTransactionBatch(transactions)
 
           expect(await callReceiver1.lastValB()).to.equal('0x112233')
@@ -421,7 +412,7 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015361')
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015361')
           }
 
           await wallet.sendTransaction(transaction)
@@ -451,19 +442,19 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
             auxiliary: [
               {
                 gas: '100000',
                 to: callReceiver2.address,
                 value: 0,
-                data: await encodeData(callReceiver, "testCall", 2, '0x445566')
+                data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
               },
               {
                 gas: '70000',
                 to: callReceiver3.address,
                 value: 0,
-                data: await encodeData(callReceiver, "testCall", 2, '0x778899')
+                data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
               }
             ]
           }
@@ -499,19 +490,19 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
             auxiliary: [
               {
                 gas: '100000',
                 to: callReceiver2.address,
                 value: 0,
-                data: await encodeData(callReceiver, "testCall", 2, '0x445566'),
+                data: await encodeData(callReceiver, 'testCall', 2, '0x445566'),
                 auxiliary: [
                   {
                     gas: '70000',
                     to: callReceiver3.address,
                     value: 0,
-                    data: await encodeData(callReceiver, "testCall", 2, '0x778899')
+                    data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
                   }
                 ]
               }
@@ -538,8 +529,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) + (86400 * 90)
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) + 86400 * 90
           }
 
           await wallet.sendTransaction(transaction)
@@ -556,8 +547,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) - (86400 * 90)
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) - 86400 * 90
           }
 
           const tx = wallet.sendTransaction(transaction)
@@ -585,8 +576,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) + (86400 * 90)
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) + 86400 * 90
           }
 
           const tx = wallet1.sendTransaction(transaction)
@@ -601,7 +592,7 @@ describe('Wallet integration', function () {
             revertOnError: true,
             to: wallet.address,
             value: 0,
-            data: "0x",
+            data: '0x',
             nonce: encodeNonce(5, 0)
           })
 
@@ -615,8 +606,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) + 86400 * 90,
             afterNonce: encodeNonce(5, 1),
             nonce: encodeNonce(6, 0)
           }
@@ -635,8 +626,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) + 86400 * 90,
             afterNonce: encodeNonce(5, 1),
             nonce: encodeNonce(6, 0)
           }
@@ -655,7 +646,7 @@ describe('Wallet integration', function () {
             revertOnError: true,
             to: wallet.address,
             value: 0,
-            data: "0x",
+            data: '0x',
             nonce: encodeNonce(5, 0)
           })
 
@@ -669,8 +660,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) + 86400 * 90,
             afterNonce: {
               address: wallet2.address,
               nonce: 1,
@@ -697,8 +688,8 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x015561'),
-            expiration: Math.floor(Date.now() / 1000) + (86400 * 90),
+            data: await encodeData(callReceiver, 'testCall', 1, '0x015561'),
+            expiration: Math.floor(Date.now() / 1000) + 86400 * 90,
             afterNonce: {
               address: wallet2.address,
               nonce: 1,
@@ -733,14 +724,14 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x112233')
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
           },
           {
             gasPrice: '20000000000',
             gas: '121000',
             to: callReceiver2.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 2, '0x445566')
+            data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
           }
         ]
 
@@ -774,19 +765,19 @@ describe('Wallet integration', function () {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 1, '0x112233')
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
           },
           {
             gas: '100000',
             to: callReceiver2.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 2, '0x445566')
+            data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
           },
           {
             gas: '70000',
             to: callReceiver3.address,
             value: 0,
-            data: await encodeData(callReceiver, "testCall", 2, '0x778899')
+            data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
           }
         ]
 
@@ -804,7 +795,7 @@ describe('Wallet integration', function () {
     let w3: any
 
     beforeEach(async () => {
-      provider = (new LocalWeb3Provider(wallet)).provider
+      provider = new LocalWeb3Provider(wallet).provider
       w3 = new Web3(provider)
     })
 
@@ -891,7 +882,7 @@ describe('Wallet integration', function () {
           gas: '121000',
           to: callReceiver.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+          data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
         })
 
         const tx = await w3.eth.sendSignedTransaction(signed)
@@ -940,7 +931,7 @@ describe('Wallet integration', function () {
           gas: '121000',
           to: callReceiver.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+          data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
         }
 
         const signed_1 = await w3_1.eth.signTransaction(transaction)
@@ -998,7 +989,7 @@ describe('Wallet integration', function () {
           gas: '121000',
           to: callReceiver.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+          data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
         }
 
         const signed_1 = await w3_1.eth.signTransaction(transaction)
@@ -1027,7 +1018,7 @@ describe('Wallet integration', function () {
           gasLimit: 0,
           to: callReceiver.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+          data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
         }
 
         const stx = await toSequenceTransaction(wallet, transaction)
@@ -1046,7 +1037,7 @@ describe('Wallet integration', function () {
           gasLimit: 0,
           to: callReceiver.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 23, data)
+          data: await encodeData(callReceiver, 'testCall', 23, data)
         }
 
         const stx = await toSequenceTransaction(wallet, transaction)
@@ -1059,21 +1050,24 @@ describe('Wallet integration', function () {
         await callReceiver.testCall(0, '0x')
 
         const data = ethers.utils.randomBytes(512)
-        const transactions = [{
-          from: wallet.address,
-          gasPrice: '20000000000',
-          gasLimit: 0,
-          to: callReceiver.address,
-          value: 0,
-          data: await encodeData(callReceiver, "testCall", 123, data)
-        }, {
-          from: wallet.address,
-          gasPrice: '20000000000',
-          gasLimit: 0,
-          to: callReceiver.address,
-          value: 0,
-          data: await encodeData(callReceiver, "testCall", 123, '0x445566')
-        }]
+        const transactions = [
+          {
+            from: wallet.address,
+            gasPrice: '20000000000',
+            gasLimit: 0,
+            to: callReceiver.address,
+            value: 0,
+            data: await encodeData(callReceiver, 'testCall', 123, data)
+          },
+          {
+            from: wallet.address,
+            gasPrice: '20000000000',
+            gasLimit: 0,
+            to: callReceiver.address,
+            value: 0,
+            data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
+          }
+        ]
 
         const stxs = await toSequenceTransactions(wallet, transactions)
         const estimated = await relayer.estimateGasLimits(wallet.config, context, ...stxs)
@@ -1104,13 +1098,13 @@ describe('Wallet integration', function () {
           gas: '121000',
           to: callReceiver1.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
+          data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
           auxiliary: [
             {
               gas: '121000',
               to: callReceiver2.address,
               value: 0,
-              data: await encodeData(callReceiver, "testCall", 2, '0x445566')
+              data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
             }
           ]
         }
@@ -1146,19 +1140,19 @@ describe('Wallet integration', function () {
           gas: '121000',
           to: callReceiver1.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
+          data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
           auxiliary: [
             {
               gas: '100000',
               to: callReceiver2.address,
               value: 0,
-              data: await encodeData(callReceiver, "testCall", 2, '0x445566')
+              data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
             },
             {
               gas: '70000',
               to: callReceiver3.address,
               value: 0,
-              data: await encodeData(callReceiver, "testCall", 2, '0x778899')
+              data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
             }
           ]
         }
@@ -1195,19 +1189,19 @@ describe('Wallet integration', function () {
           gas: '121000',
           to: callReceiver1.address,
           value: 0,
-          data: await encodeData(callReceiver, "testCall", 1, '0x112233'),
+          data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
           auxiliary: [
             {
               gas: '100000',
               to: callReceiver2.address,
               value: 0,
-              data: await encodeData(callReceiver, "testCall", 2, '0x445566'),
+              data: await encodeData(callReceiver, 'testCall', 2, '0x445566'),
               auxiliary: [
                 {
                   gas: '70000',
                   to: callReceiver3.address,
                   value: 0,
-                  data: await encodeData(callReceiver, "testCall", 2, '0x778899')
+                  data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
                 }
               ]
             }
@@ -1258,7 +1252,9 @@ describe('Wallet integration', function () {
         expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject sequence wallet invalid signature', async () => {
-        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(
+          ethnode.provider
+        )
         const signature = await wallet2.signMessage(message, ethnode.chainId)
         await wallet.deploy()
         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
@@ -1270,8 +1266,8 @@ describe('Wallet integration', function () {
         const typedData = {
           types: {
             Person: [
-              { name: "name", type: "string" },
-              { name: "wallet", type: "address" },
+              { name: 'name', type: 'string' },
+              { name: 'wallet', type: 'address' },
               { name: 'count', type: 'uint8' }
             ]
           },
@@ -1283,9 +1279,9 @@ describe('Wallet integration', function () {
             verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
           },
           message: {
-            'name': 'Bob',
-            'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-            'count': 4
+            name: 'Bob',
+            wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            count: 4
           }
         }
 
@@ -1377,7 +1373,9 @@ describe('Wallet integration', function () {
       //   expect(await isValidSequenceUndeployedWalletSignature(wallet.address, digest, signature, context, ethnode.provider)).to.be.true
       // })
       it('Should reject sequence wallet invalid signature', async () => {
-        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })).setProvider(ethnode.provider)
+        const wallet2 = (
+          await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })
+        ).setProvider(ethnode.provider)
         const signature = await wallet2.signMessage(message, 1)
         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
       })
@@ -1429,7 +1427,7 @@ describe('Wallet integration', function () {
         const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
         expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
-      })      
+      })
       it('Should be able to just deploy a new wallet and have valid signatures', async () => {
         const pk = ethers.utils.randomBytes(32)
         const wallet2 = (await lib.Wallet.singleOwner(pk, context)).connect(ethnode.provider, relayer)
@@ -1451,7 +1449,9 @@ describe('Wallet integration', function () {
         expect(await isValidContractWalletSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
       })
       it('Should reject invalid wallet signature', async () => {
-        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(ethnode.provider)
+        const wallet2 = (await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), context)).setProvider(
+          ethnode.provider
+        )
         const signature = await wallet2.signMessage(message, ethnode.chainId)
         await wallet.deploy()
         expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
@@ -1464,18 +1464,19 @@ describe('Wallet integration', function () {
 
       proof.setExpiryIn(3e7) // 1 year
       proof.claims.app = 'SkyWeaver'
-  
+
       const messageTypedData = proof.messageTypedData()
-  
-      const sigResp = await wallet.signTypedData(
-        messageTypedData.domain,
-        messageTypedData.types,
-        messageTypedData.message
-      )
+
+      const sigResp = await wallet.signTypedData(messageTypedData.domain, messageTypedData.types, messageTypedData.message)
 
       await wallet.deploy()
 
-      expect(await (new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider))['isValidSignature(bytes32,bytes)'](proof.messageDigest(), sigResp)).to.equal("0x1626ba7e")
+      expect(
+        await new Contract(wallet.address, MainModuleArtifact.abi, wallet.provider)['isValidSignature(bytes32,bytes)'](
+          proof.messageDigest(),
+          sigResp
+        )
+      ).to.equal('0x1626ba7e')
     })
     describe('Broken signers', () => {
       describe('Broken EOA signer', async () => {
@@ -1486,11 +1487,11 @@ describe('Wallet integration', function () {
         beforeEach(() => {
           s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
           s2 = new ethers.Wallet(ethers.utils.randomBytes(32))
-    
+
           s2.signMessage = (() => {
             throw Error('ups')
           }) as any
-    
+
           config = {
             threshold: 1,
             signers: [
@@ -1509,7 +1510,8 @@ describe('Wallet integration', function () {
         it('Should skip broken signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
           const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be
+            .true
         })
         it('Should reject broken signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
@@ -1524,17 +1526,17 @@ describe('Wallet integration', function () {
 
         beforeEach(async () => {
           s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-      
+
           const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
           w2 = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
-  
+
           // TODO: Bundle deployment with child wallets
           await wallet.deploy()
   
           w2.sign = (() => {
             throw Error('ups')
           }) as any
-    
+
           config = {
             threshold: 1,
             signers: [
@@ -1553,7 +1555,8 @@ describe('Wallet integration', function () {
         it('Should skip broken nested signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
           const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be
+            .true
         })
         it('Should reject broken nested signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
@@ -1568,13 +1571,15 @@ describe('Wallet integration', function () {
 
         beforeEach(async () => {
           s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
-      
+
           const r2Addr = ethers.Wallet.createRandom().address
 
           r2 = {
             _isSigner: true,
             getAddress: async () => r2Addr,
-            signMessageWithData: () => { throw Error('Ups') }
+            signMessageWithData: () => {
+              throw Error('Ups')
+            }
           } as any
 
           config = {
@@ -1595,7 +1600,8 @@ describe('Wallet integration', function () {
         it('Should skip broken remote signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
           const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be
+            .true
         })
         it('Should reject broken remote signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, r2).connect(ethnode.provider, relayer)
@@ -1613,7 +1619,7 @@ describe('Wallet integration', function () {
         gasPrice: '20000000000',
         to: callReceiver.address,
         value: 0,
-        data: await encodeData(callReceiver, "testCall", 123, '0x445566')
+        data: await encodeData(callReceiver, 'testCall', 123, '0x445566')
       }
     })
     it('Should migrate and update to a new single owner configuration', async () => {
@@ -1643,8 +1649,9 @@ describe('Wallet integration', function () {
       expect(updatedWallet.imageHash).to.equal(await fetchImageHash(address, ethnode.provider))
       expect(await updatedWallet.getAddress()).to.equal(address)
 
-      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
-        .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+      expect(
+        ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0]
+      ).to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
       expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
@@ -1675,8 +1682,9 @@ describe('Wallet integration', function () {
 
       const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
 
-      expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0])
-        .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+      expect(
+        ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0]
+      ).to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
       expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
@@ -1758,8 +1766,12 @@ describe('Wallet integration', function () {
 
         const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
 
-        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
-          .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+        expect(
+          ethers.utils.defaultAbiCoder.decode(
+            ['address'],
+            await ethnode.provider.getStorageAt(wallet2.address, wallet2.address)
+          )[0]
+        ).to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
         expect(updatedWallet.address).to.be.equal(wallet2.address)
         expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
@@ -1790,8 +1802,12 @@ describe('Wallet integration', function () {
 
         const updatedWallet = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
 
-        expect(ethers.utils.defaultAbiCoder.decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0])
-          .to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
+        expect(
+          ethers.utils.defaultAbiCoder.decode(
+            ['address'],
+            await ethnode.provider.getStorageAt(wallet2.address, wallet2.address)
+          )[0]
+        ).to.equal(ethers.utils.getAddress(context.mainModuleUpgradable))
 
         expect(updatedWallet.address).to.be.equal(wallet2.address)
         expect(updatedWallet.address).to.not.be.equal(addressOf(newConfig, context, true))
@@ -1826,10 +1842,9 @@ describe('Wallet integration', function () {
       await expect(prom).to.be.rejected
     })
     it('Should accept a non-usable configuration in non-strict mode', async () => {
-      const wallet = (await lib.Wallet.singleOwner(
-        new ethers.Wallet(ethers.utils.randomBytes(32)),
-        { ...context, nonStrict: true }
-      )).connect(ethnode.provider, relayer)
+      const wallet = (
+        await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })
+      ).connect(ethnode.provider, relayer)
 
       const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
       const s2 = new ethers.Wallet(ethers.utils.randomBytes(32))

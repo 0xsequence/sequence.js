@@ -4,7 +4,6 @@ import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, 
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import {
   NetworkConfig,
-  Networks,
   WalletContext,
   ChainIdLike,
   JsonRpcHandler,
@@ -89,7 +88,7 @@ export function isSequenceProvider(provider: any): provider is Web3Provider {
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(account: Signer, networks?: Networks) {
+  constructor(account: Signer, networks?: NetworkConfig[]) {
     const walletRequestHandler = new WalletRequestHandler(account, null, networks || [])
     super(walletRequestHandler)
   }
@@ -307,17 +306,17 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // sendTransactionBatch is a convenience method to call sendTransaction in a batch format, allowing you to
   // send multiple transaction as a single payload and just one on-chain transaction.
   async sendTransactionBatch(
-    transactions: Deferrable<Forbid<TransactionRequest, "wait">[]>,
+    transactions: Deferrable<Forbid<TransactionRequest, 'wait'>[]>,
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<TransactionResponse> {
-    const batch = await resolveArrayProperties<Forbid<TransactionRequest, "wait">[]>(transactions)
+    const batch = await resolveArrayProperties<Forbid<TransactionRequest, 'wait'>[]>(transactions)
     if (!batch || batch.length === 0) {
       throw new Error('cannot send empty batch')
     }
 
     // sendTransactionBatch only accepts TransactionRequest, not TransactionResponses
-    if (batch.find((v) => v.wait !== undefined && v.wait !== null)) {
+    if (batch.find(v => v.wait !== undefined && v.wait !== null)) {
       throw new Error('transaction request expected for sendTransactionBatch, transaction response found')
     }
 
