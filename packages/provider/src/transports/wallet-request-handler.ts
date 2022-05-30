@@ -669,7 +669,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       // Find network id among available networks
       const networks = await this.signer.getNetworks()
       const maybeNameLowerCase = chainId.toString().toLowerCase()
-      const network = networks.find(n => n.chainId === chainId || n.name.toLowerCase() === maybeNameLowerCase)
+      const cidString = chainId.toString()
+      const network = networks.find(n => n.chainId.toString() === cidString || n.name.toLowerCase() === maybeNameLowerCase)
 
       // Can't set network if it doesn't exist in available networks
       if (!network) return undefined

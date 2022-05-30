@@ -2,7 +2,7 @@ import { ethers, BigNumberish, BytesLike } from 'ethers'
 import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { WalletContext, ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
-import { DecodedSignature, WalletConfig } from '@0xsequence/config'
+import { ConfigTracker, DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { Wallet } from '../wallet'
 import { isValidSignature, prefixEIP191Message, recoverWalletConfig } from '../utils'
 import { isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
@@ -40,11 +40,12 @@ export class WalletUtils {
     digest: Uint8Array,
     signature: string,
     chainId: number,
-    walletContext?: WalletContext
+    walletContext?: WalletContext,
+    configTracker?: ConfigTracker
   ): Promise<boolean | undefined> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
-    return isValidSignature(address, digest, signature, provider, chainId, walletContext)
+    return isValidSignature(address, digest, signature, provider, chainId, walletContext, configTracker)
   }
 
   // Verify message signature
@@ -53,13 +54,14 @@ export class WalletUtils {
     message: string | Uint8Array,
     signature: string,
     chainId: number,
-    walletContext?: WalletContext
+    walletContext?: WalletContext,
+    configTracker?: ConfigTracker
   ): Promise<boolean | undefined> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
     const prefixed = prefixEIP191Message(message)
     const digest = encodeMessageDigest(prefixed)
-    return isValidSignature(address, digest, signature, provider, chainId, walletContext)
+    return isValidSignature(address, digest, signature, provider, chainId, walletContext, configTracker)
   }
 
   // Verify typedData signature
@@ -68,9 +70,10 @@ export class WalletUtils {
     typedData: TypedData,
     signature: string,
     chainId: number,
-    walletContext?: WalletContext
+    walletContext?: WalletContext,
+    configTracker?: ConfigTracker
   ): Promise<boolean | undefined> {
-    return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
+    return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext, configTracker)
   }
 
   // Recover the WalletConfig from a signature + digest combo

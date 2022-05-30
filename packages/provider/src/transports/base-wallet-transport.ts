@@ -391,7 +391,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       if (!chainId || chainId <= 0) {
         this.notifyOpen({
           sessionId: this._sessionId,
-          error: `failed to open wallet on network ${networkId}`
+          error: `failed to open wallet on network`
         })
         return false
       }
