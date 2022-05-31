@@ -43,46 +43,46 @@ export class UnreliableConfigTracker implements ConfigTracker {
     longestPath?: boolean,
     gapNonce?: BigNumberish
   }): Promise<PresignedConfigUpdate[]> => {
-    return await this.tryExecuteMethod("loadPresignedConfiguration", this.tracker.loadPresignedConfiguration, args, [])
+    return this.tryExecuteMethod("loadPresignedConfiguration", this.tracker.loadPresignedConfiguration, args, [])
   }
 
   savePresignedConfiguration = async (args: PresignedConfigurationPayload): Promise<void> => {
-    return await this.tryExecuteMethod("savePresignedConfiguration", this.tracker.savePresignedConfiguration, args, undefined)
+    return this.tryExecuteMethod("savePresignedConfiguration", this.tracker.savePresignedConfiguration, args, undefined)
   }
 
   configOfImageHash = async (args: { imageHash: string; }): Promise<WalletConfig | undefined> => {
-    return await this.tryExecuteMethod("configOfImageHash", this.tracker.configOfImageHash, args, undefined)
+    return this.tryExecuteMethod("configOfImageHash", this.tracker.configOfImageHash, args, undefined)
   }
 
   saveWalletConfig = async (args: { config: WalletConfig; }): Promise<void> => {
-    return await this.tryExecuteMethod("saveWalletConfig", this.tracker.saveWalletConfig, args, undefined)
+    return this.tryExecuteMethod("saveWalletConfig", this.tracker.saveWalletConfig, args, undefined)
   }
 
   imageHashOfCounterFactualWallet = async (args: { context: WalletContext; wallet: string; }): Promise<string | undefined> => {
-    return await this.tryExecuteMethod("imageHashOfCounterFactualWallet", this.tracker.imageHashOfCounterFactualWallet, args, undefined)
+    return this.tryExecuteMethod("imageHashOfCounterFactualWallet", this.tracker.imageHashOfCounterFactualWallet, args, undefined)
   }
 
   saveCounterFactualWallet = async (args: { imageHash: string; context: WalletContext; }): Promise<void> => {
-    return await this.tryExecuteMethod("saveCounterFactualWallet", this.tracker.saveCounterFactualWallet, args, undefined)
+    return this.tryExecuteMethod("saveCounterFactualWallet", this.tracker.saveCounterFactualWallet, args, undefined)
   }
 
   saveWitness = async (args: { wallet: string, digest: string, signatures: { chainId: BigNumberish, signature: string }[] }): Promise<void> => {
-    return await this.tryExecuteMethod("saveWitness", this.tracker.saveWitness, args, undefined)
+    return this.tryExecuteMethod("saveWitness", this.tracker.saveWitness, args, undefined)
   }
 
   walletsOfSigner = async (args: { signer: string; }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: DecodedSignaturePart; }; }[]> => {
-    return await this.tryExecuteMethod("walletsOfSigner", this.tracker.walletsOfSigner, args, [])
+    return this.tryExecuteMethod("walletsOfSigner", this.tracker.walletsOfSigner, args, [])
   }
 
   signaturesOfSigner = async (args: { signer: string }): Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
-    return await this.tryExecuteMethod("signaturesOfSigner", this.tracker.signaturesOfSigner, args, [])
+    return this.tryExecuteMethod("signaturesOfSigner", this.tracker.signaturesOfSigner, args, [])
   }
 
   imageHashesOfSigner = async (args: { signer: string }): Promise<string[]> => {
-    return await this.tryExecuteMethod("imageHashesOfSigner", this.tracker.imageHashesOfSigner, args, [])
+    return this.tryExecuteMethod("imageHashesOfSigner", this.tracker.imageHashesOfSigner, args, [])
   }
 
   signaturesForImageHash = async (args: { imageHash: string }): Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]> => {
-    return await this.tryExecuteMethod("signaturesForImageHash", this.tracker.signaturesForImageHash, args, [])
+    return this.tryExecuteMethod("signaturesForImageHash", this.tracker.signaturesForImageHash, args, [])
   }
 }

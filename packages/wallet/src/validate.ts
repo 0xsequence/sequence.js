@@ -97,7 +97,7 @@ export async function isValidSignature(args: ValidSignatureArgs): Promise<boolea
   // Now, if the wallet is not deployed and we don't have a config
   // we evaluate the counter-factual state
   if (!imageHash) {
-    return await isValidSequenceUndeployedWalletSignature(args)
+    return isValidSequenceUndeployedWalletSignature(args)
   }
 
   // Then we evaluate the signature directly
