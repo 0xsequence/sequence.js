@@ -1,9 +1,9 @@
-import { Web3Provider, ProxyMessageProvider, WalletSession, WalletRequestHandler, ProxyMessageChannel, ProxyMessageHandler, prefixEIP191Message } from '@0xsequence/provider'
-import { ethers, Wallet as EOAWallet } from 'ethers'
+import { Web3Provider, ProxyMessageProvider, WalletSession, WalletRequestHandler, ProxyMessageChannel, ProxyMessageHandler } from '@0xsequence/provider'
+import { ethers } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
-import { sequenceContext, testnetNetworks } from '@0xsequence/network'
-import { Wallet, isValidSignature, recoverConfig } from '@0xsequence/wallet'
+import { sequenceContext } from '@0xsequence/network'
+import { Wallet, isValidSignature, recoverConfig, prefixEIP191Message } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
@@ -144,7 +144,14 @@ export const tests = async () => {
     //
     // const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
     const messageDigest = encodeMessageDigest(prefixEIP191Message(message))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, chainId)
+    const isValid = await isValidSignature({
+      address,
+      digest: messageDigest,
+      signature: sig,
+      provider,
+      context: sequenceContext,
+      chainId
+    })
     assert.true(isValid, 'signature is valid - 1')
 
     // also compute the subDigest of the message, to be provided to the end-user

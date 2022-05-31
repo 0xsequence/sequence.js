@@ -26,12 +26,11 @@ import {
   JsonRpcResponseCallback,
   JsonRpcResponse
 } from '@0xsequence/network'
-import { Account, isUpgradableSigner, Signer } from '@0xsequence/wallet'
+import { isUpgradableSigner, prefixEIP191Message, Signer } from '@0xsequence/wallet'
 import { isSignedTransactionBundle, TransactionRequest } from '@0xsequence/transactions'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
-
-import { prefixEIP191Message } from '../utils'
+import { SessionsApiConfigTrackerOptions } from '@0xsequence/config/src/tracker/sessions-api-config-tracker'
 
 const SIGNER_READY_TIMEOUT = 10000
 
@@ -521,6 +520,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         // smart wallet method
+        case 'sequence_getConfigTracker': {
+          response.result = await this.prompter?.getShareableConfigTrackerData()
+          break
+        }
+
+        // smart wallet method
         case 'sequence_getWalletState': {
           const [chainId] = request.params!
           response.result = await signer.getWalletState(chainId)
@@ -820,6 +825,8 @@ export interface WalletUserPrompter {
   promptSignTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
+
+  getShareableConfigTrackerData(): Promise<SessionsApiConfigTrackerOptions>
 }
 
 const permittedJsonRpcMethods = [

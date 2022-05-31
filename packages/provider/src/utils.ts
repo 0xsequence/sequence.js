@@ -1,78 +1,28 @@
-import { ethers, BigNumberish, BytesLike } from 'ethers'
-import { WalletContext } from '@0xsequence/network'
+import { BigNumberish, BytesLike, ethers } from 'ethers'
+import { sequenceContext, WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature, ConfigTracker } from '@0xsequence/config'
-import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
-import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
-
-const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
-
-export const messageToBytes = (message: BytesLike): Uint8Array => {
-  if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
-    return ethers.utils.arrayify(message)
-  }
-
-  return ethers.utils.toUtf8Bytes(message)
-}
-
-export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
-  const messageBytes = messageToBytes(message)
-  return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
-}
-
-export const isValidSignature = async (
-  address: string,
-  digest: Uint8Array,
-  sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  chainId?: number,
-  walletContext?: WalletContext,
-  configTracker?: ConfigTracker
-): Promise<boolean | undefined> => {
-  if (!chainId) {
-    chainId = (await provider.getNetwork())?.chainId
-  }
-  if (!walletContext && Web3Provider.isSequenceProvider(provider)) {
-    walletContext = await provider.getSigner().getWalletContext()
-  }
-  return _isValidSignature(address, digest, sig, provider, walletContext, chainId, configTracker)
-}
-
-export const isValidMessageSignature = async (
-  address: string,
-  message: string | Uint8Array,
-  signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  chainId?: number,
-  walletContext?: WalletContext,
-  configTracker?: ConfigTracker
-): Promise<boolean | undefined> => {
-  const prefixed = prefixEIP191Message(message)
-  const digest = encodeMessageDigest(prefixed)
-  return isValidSignature(address, digest, signature, provider, chainId, walletContext, configTracker)
-}
-
-export const isValidTypedDataSignature = (
-  address: string,
-  typedData: TypedData,
-  signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  chainId?: number,
-  walletContext?: WalletContext,
-  configTracker?: ConfigTracker
-): Promise<boolean | undefined> => {
-  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, chainId, walletContext, configTracker)
-}
+import { packMessageData } from '@0xsequence/utils'
+import { isValidSignature as _isValidSignature, recoverConfig } from '@0xsequence/wallet'
 
 export const recoverWalletConfig = async (
   address: string,
   digest: BytesLike,
   signature: string | DecodedSignature,
   chainId: BigNumberish,
-  walletContext?: WalletContext
+  provider: ethers.providers.Provider,
+  configTracker?: ConfigTracker,
+  walletContext?: WalletContext,
 ): Promise<WalletConfig> => {
   const subDigest = packMessageData(address, chainId, digest)
-  const config = await recoverConfig(subDigest, signature)
+  const config = await recoverConfig(
+    subDigest,
+    signature,
+    provider,
+    walletContext || sequenceContext,
+    ethers.BigNumber.from(chainId).toNumber(),
+    true,
+    configTracker
+  )
 
   if (walletContext) {
     const recoveredWalletAddress = addressOf(config, walletContext)

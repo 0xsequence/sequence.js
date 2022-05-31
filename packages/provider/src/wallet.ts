@@ -17,9 +17,9 @@ import {
   updateNetworkConfig,
   ensureValidNetworks
 } from '@0xsequence/network'
-import { WalletConfig, WalletState } from '@0xsequence/config'
+import { ConfigTracker, SessionsApiConfigTracker, WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
-import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
@@ -53,6 +53,8 @@ export interface WalletProvider {
   getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig>
   getWalletState(chainId?: ChainIdLike): Promise<WalletState>
   isDeployed(chainId?: ChainIdLike): Promise<boolean>
+
+  getConfigTracker(): Promise<ConfigTracker | undefined>
 
   getProviderConfig(): ProviderConfig
 
@@ -499,6 +501,11 @@ export class Wallet implements WalletProvider {
 
   isDeployed(chainId?: ChainIdLike): Promise<boolean> {
     return this.getSigner(chainId).isDeployed()
+  }
+
+  async getConfigTracker(): Promise<ConfigTracker | undefined> {
+    const options = await this.getSigner().getConfigTracker()
+    return options && new SessionsApiConfigTracker(options)
   }
 
   on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {

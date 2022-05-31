@@ -9,13 +9,15 @@ export function NewSequenceProofValidator(context: WalletContext, configTracker:
     // Compute eip712 message digest from the proof claims
     const digest = proof.messageDigest()
 
-    const isValid = await isValidSignature(
-      proof.address,
-      digest, proof.signature,
-      provider, context,
+    const isValid = await isValidSignature({
+      address: proof.address,
+      digest,
+      signature: proof.signature,
+      provider,
+      context,
       chainId,
       configTracker
-    )
+    })
   
     return { isValid }
   }

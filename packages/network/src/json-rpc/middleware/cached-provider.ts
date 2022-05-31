@@ -4,7 +4,8 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
 
   private cachableJsonRpcMethods = [
     'net_version', 'eth_chainId', 'eth_accounts',
-    'sequence_getWalletContext', 'sequence_getNetworks'
+    'sequence_getWalletContext', 'sequence_getNetworks',
+    'sequence_getConfigTracker'
   ]
 
   private cache: {[key: string]: any}

@@ -7,18 +7,14 @@ import {
   WalletContext,
   ChainIdLike,
   JsonRpcHandler,
-  JsonRpcHandlerFunc,
   JsonRpcFetchFunc,
   JsonRpcRequest,
   JsonRpcResponseCallback,
-  JsonRpcResponse,
   maybeChainId,
-  JsonRpcVersion,
   JsonRpcSender,
-  isJsonRpcProvider
 } from '@0xsequence/network'
 import { Account, resolveArrayProperties, Signer } from '@0xsequence/wallet'
-import { WalletConfig, WalletState } from '@0xsequence/config'
+import { SessionsApiConfigTracker, WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
 import {
@@ -28,6 +24,7 @@ import {
   TransactionBundle
 } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
+import { SessionsApiConfigTrackerOptions } from '@0xsequence/config/src/tracker/sessions-api-config-tracker'
 
 export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   static isSequenceProvider(cand: any): cand is Web3Provider {
@@ -187,6 +184,10 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       this._context = await this.provider.send('sequence_getWalletContext', [])
     }
     return this._context
+  }
+
+  async getConfigTracker(): Promise<SessionsApiConfigTrackerOptions | undefined> {
+    return this.provider.send('sequence_getConfigTracker', [])
   }
 
   async getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig> {

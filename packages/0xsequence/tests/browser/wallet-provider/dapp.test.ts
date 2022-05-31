@@ -1,11 +1,12 @@
 import { test, assert } from '../../utils/assert'
 import { ethers } from 'ethers'
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { Wallet, DefaultProviderConfig, isValidMessageSignature } from '@0xsequence/provider'
+import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
 import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testutils'
 import { Transaction, TransactionRequest } from '@0xsequence/transactions'
 import { configureLogger } from '@0xsequence/utils'
+import { isValidMessageSignature } from '@0xsequence/wallet'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -202,7 +203,13 @@ export const tests = async () => {
     assert.true(isValid, 'signature is valid - 2')
 
     // Verify signature with other util
-    const isValid2 = await isValidMessageSignature(address, message, sig, provider)
+    const isValid2 = await isValidMessageSignature(message, {
+      address,
+      signature: sig,
+      chainId,
+      provider: provider
+    })
+
     assert.true(isValid2, 'signature is valid - 2b')
 
     // Recover the address / config from the signature

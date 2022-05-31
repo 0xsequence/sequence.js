@@ -23,10 +23,11 @@ import {
   isValidEthSignSignature,
   fetchImageHash,
   isValidContractWalletSignature,
-  RemoteSigner
+  RemoteSigner,
+  prefixEIP191Message
 } from '../src'
 
-import { LocalWeb3Provider, prefixEIP191Message } from '../../provider/src'
+import { LocalWeb3Provider } from '../../provider/src'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -1222,11 +1223,21 @@ describe('Wallet integration', function () {
     const message = ethers.utils.toUtf8Bytes('Hi! this is a test message')
     const digest = ethers.utils.arrayify(ethers.utils.keccak256(message))
 
+    let validateArgs: any 
+
+    before(() => {
+      validateArgs = {
+        configTracker: configTracker,
+        provider: ethnode.provider,
+        chainId: ethnode.chainId,
+      }
+    })
+
     describe('ethSign', () => {
       it('Should validate ethSign signature', async () => {
         const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signature = await signer.signMessage(digest)
-        expect(await isValidSignature(signer.address, digest, signature)).to.be.true
+        expect(await isValidSignature({ address: signer.address, digest, signature, ...validateArgs })).to.be.true
       })
       it('Should validate ethSign signature using direct method', async () => {
         const signer = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1237,14 +1248,14 @@ describe('Wallet integration', function () {
         const signer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signature = await signer1.signMessage(digest)
-        expect(await isValidSignature(signer2.address, digest, signature)).to.be.false
+        expect(await isValidSignature({ address: signer2.address, digest, signature, ...validateArgs })).to.be.false
       })
     })
     describe('deployed sequence wallet sign', async () => {
       it('Should validate sequence wallet signature', async () => {
         const signature = await wallet.sign(message, false, ethnode.chainId)
         await wallet.deploy()
-        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        expect(await isValidSignature({ address: wallet.address, digest, signature, ...validateArgs })).to.be.true
       })
       it('Should validate sequence wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message, ethnode.chainId)
@@ -1257,7 +1268,7 @@ describe('Wallet integration', function () {
         )
         const signature = await wallet2.signMessage(message, ethnode.chainId)
         await wallet.deploy()
-        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+        expect(await isValidSignature({ address: wallet.address, digest, signature, context, ...validateArgs })).to.be.false
       })
       it('Should validate sequence wallet signature via signTypedData', async () => {
         // ensure its deployed, as in our test we're assuming we're testing to a deployed wallet
@@ -1333,18 +1344,18 @@ describe('Wallet integration', function () {
         })
         it('Should reject previous wallet configuration signature', async () => {
           const signature = await wallet.signMessage(message, ethnode.chainId)
-          expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+          expect(await isValidSignature({ address: wallet.address, digest, signature, context, ...validateArgs })).to.be.false
         })
         it('Should validate new wallet configuration signature', async () => {
           const signature = await wallet2.signMessage(message, ethnode.chainId)
-          expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
+          expect(await isValidSignature({ address: wallet.address, digest, signature, context, ...validateArgs })).to.be.true
         })
       })
     })
     describe('non-deployed sequence wallet sign', async () => {
       it('Should validate sequence wallet signature', async () => {
         const signature = await wallet.signMessage(message)
-        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.true
+        expect(await isValidSignature({ address: wallet.address, digest, signature, context, ...validateArgs })).to.be.true
       })
       it('Should valdiate sequence wallet multi-signature', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1366,7 +1377,7 @@ describe('Wallet integration', function () {
 
         const wallet2 = new lib.Wallet({ config: newConfig, context }, s1, s2).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
-        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.true
+        expect(await isValidSignature({ address: wallet2.address, digest, signature, context, ...validateArgs})).to.be.true
       })
       // it('Should validate sequence wallet signature using direct method', async () => {
       //   const signature = await wallet.signMessage(message)
@@ -1377,7 +1388,7 @@ describe('Wallet integration', function () {
           await lib.Wallet.singleOwner(new ethers.Wallet(ethers.utils.randomBytes(32)), { ...context, nonStrict: true })
         ).setProvider(ethnode.provider)
         const signature = await wallet2.signMessage(message, 1)
-        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+        expect(await isValidSignature({ address: wallet.address, digest, signature, context, ...validateArgs })).to.be.false
       })
       it('Should reject signature with not enough weight', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1399,7 +1410,7 @@ describe('Wallet integration', function () {
 
         const wallet2 = new lib.Wallet({ config: newConfig, context }, s1).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
-        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, 1)).to.be.false
+        expect(await isValidSignature({ address: wallet2.address, digest, signature, context, ...validateArgs, chainId: 1 })).to.be.false
       })
       it('Should reject signature with not enough weight but enough signers', async () => {
         const s1 = new ethers.Wallet(ethers.utils.randomBytes(32))
@@ -1426,22 +1437,22 @@ describe('Wallet integration', function () {
 
         const wallet2 = new lib.Wallet({ config: newConfig, context, strict: false }, s1, s2).connect(ethnode.provider, relayer)
         const signature = await wallet2.signMessage(message)
-        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be.false
+        expect(await isValidSignature({ address: wallet2.address, digest, signature, context, ...validateArgs })).to.be.false
       })
       it('Should be able to just deploy a new wallet and have valid signatures', async () => {
         const pk = ethers.utils.randomBytes(32)
         const wallet2 = (await lib.Wallet.singleOwner(pk, context)).connect(ethnode.provider, relayer)
         const signature = await wallet2.sign(message, false, ethnode.chainId)
-        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.not.be.true
+        expect(await isValidSignature({ address: wallet2.address, digest, signature, ...validateArgs })).to.not.be.true
         await wallet2.sendTransaction([])
-        expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider)).to.be.true
+        expect(await isValidSignature({ address: wallet2.address, digest, signature, ...validateArgs })).to.be.true
       })
     })
     describe('deployed wallet sign', () => {
       it('Should validate wallet signature', async () => {
         const signature = await wallet.signMessage(message)
         await wallet.deploy()
-        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider)).to.be.true
+        expect(await isValidSignature({ address: wallet.address, digest, signature, ...validateArgs })).to.be.true
       })
       it('Should validate wallet signature using direct method', async () => {
         const signature = await wallet.signMessage(message)
@@ -1454,7 +1465,7 @@ describe('Wallet integration', function () {
         )
         const signature = await wallet2.signMessage(message, ethnode.chainId)
         await wallet.deploy()
-        expect(await isValidSignature(wallet.address, digest, signature, ethnode.provider, context)).to.be.false
+        expect(await isValidSignature({ address: wallet.address, digest, signature, ...validateArgs})).to.be.false
       })
     })
     it('Should sign typed data', async () => {
@@ -1510,7 +1521,7 @@ describe('Wallet integration', function () {
         it('Should skip broken signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, s2).connect(ethnode.provider, relayer)
           const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be
+          expect(await isValidSignature({ address: wallet2.address, digest, signature, context, ...validateArgs })).to.be
             .true
         })
         it('Should reject broken signer', async () => {
@@ -1555,7 +1566,7 @@ describe('Wallet integration', function () {
         it('Should skip broken nested signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, w2).connect(ethnode.provider, relayer)
           const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be
+          expect(await isValidSignature({ address: wallet2.address, digest, signature, context, ...validateArgs })).to.be
             .true
         })
         it('Should reject broken nested signer', async () => {
@@ -1600,7 +1611,7 @@ describe('Wallet integration', function () {
         it('Should skip broken remote signer', async () => {
           const wallet2 = new lib.Wallet({ config: config, context }, s1, r2).connect(ethnode.provider, relayer)
           const signature = await wallet2.signMessage(message, await wallet2.getChainId(), false)
-          expect(await isValidSignature(wallet2.address, digest, signature, ethnode.provider, context, ethnode.chainId)).to.be
+          expect(await isValidSignature({ address: wallet2.address, digest, signature, context, ...validateArgs })).to.be
             .true
         })
         it('Should reject broken remote signer', async () => {

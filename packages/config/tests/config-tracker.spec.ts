@@ -397,19 +397,21 @@ describe('Config tracker', function () {
   const nestedAddress = addressOf(nestedConfig, sequenceContext)
   const assumedConfigs = { [nestedAddress]: nestedConfig }
 
+  const defaultRemoteApiConfig = { url: process.env.TEST_CONFIG_TRACKER_URL, walletConfigs: assumedConfigs }
+
   ;([
     ...(
       process.env.TEST_CONFIG_TRACKER_URL && process.env.TEST_CONFIG_TRACKER_URL !== "" ? [
         {
           name: `Remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
-          configTracker: new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL, undefined, assumedConfigs),
+          configTracker: new SessionsApiConfigTracker(defaultRemoteApiConfig),
           torture: true,
           tortureSize: 50,
           nested: true
         }, {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
           configTracker: new UntrustedConfigTracker(
-            new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL, undefined, assumedConfigs),
+            new SessionsApiConfigTracker(defaultRemoteApiConfig),
             undefined,
             assumedConfigs
           ),
@@ -420,7 +422,7 @@ describe('Config tracker', function () {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL} + LocalConfigTracker`,
           configTracker: new RedundantConfigTracker([
             new UntrustedConfigTracker(
-              new SessionsApiConfigTracker(process.env.TEST_CONFIG_TRACKER_URL, undefined, assumedConfigs),
+              new SessionsApiConfigTracker(defaultRemoteApiConfig),
               undefined,
               assumedConfigs
             ),

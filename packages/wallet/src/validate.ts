@@ -1,21 +1,82 @@
-import { ethers } from 'ethers'
-import { WalletContext } from '@0xsequence/network'
+import { BytesLike, ethers } from 'ethers'
+import { sequenceContext, WalletContext } from '@0xsequence/network'
 import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
-import { subDigestOf } from '@0xsequence/utils'
-import { decodeSignature, compareAddr, ConfigTracker, WalletConfig, isDecodedSigner, isDecodedEOASigner, isDecodedFullSigner, addressOf, imageHash as imageHashOf } from '@0xsequence/config'
+import { encodeMessageDigest, encodeTypedDataDigest, subDigestOf, TypedData } from '@0xsequence/utils'
+import { decodeSignature, compareAddr, ConfigTracker, WalletConfig, isDecodedSigner, isDecodedEOASigner, isDecodedFullSigner, addressOf, imageHash as imageHashOf, DecodedSignature } from '@0xsequence/config'
 import { recoverConfigFromDigest } from './config'
 import { fetchImageHash } from '.'
 
-export async function isValidSignature(
+export type ValidSignatureArgs = {
   address: string,
   digest: Uint8Array,
   signature: string,
-  provider?: Provider,
-  walletContext?: WalletContext,
-  chainId?: number,
+  chainId: number
+  provider: Provider
+  context?: WalletContext
   configTracker?: ConfigTracker
-): Promise<boolean> {
+}
+
+const defaults = {
+  context: sequenceContext,
+}
+
+function _recoverConfigFromDigest(
+  subDigest: string,
+  args: Pick<ValidSignatureArgs, 'provider' | 'signature' | 'context' | 'chainId' | 'configTracker'>,
+  decoded?: DecodedSignature
+) {
+
+  return recoverConfigFromDigest(
+    subDigest,
+    decoded || args.signature,
+    args.provider,
+    args.context || defaults.context,
+    args.chainId,
+    true,
+    args.configTracker
+  )
+}
+
+const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
+
+export const messageToBytes = (message: BytesLike): Uint8Array => {
+  if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
+    return ethers.utils.arrayify(message)
+  }
+
+  return ethers.utils.toUtf8Bytes(message)
+}
+
+export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
+  const messageBytes = messageToBytes(message)
+  return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+}
+
+export const isValidMessageSignature = async (message: BytesLike, args: Omit<ValidSignatureArgs, 'digest'>): Promise<boolean | undefined> => {
+  const prefixed = prefixEIP191Message(message)
+  const digest = encodeMessageDigest(prefixed)
+  return isValidSignature({ ...args, digest })
+}
+
+export const isValidTypedDataSignature = (
+  typedData: TypedData,
+  args: Omit<ValidSignatureArgs, 'digest'>
+): Promise<boolean | undefined> => {
+  const encoded = encodeTypedDataDigest(typedData)
+  return isValidSignature({ ...args, digest: encoded })
+}
+
+export async function isValidSignature(args: ValidSignatureArgs): Promise<boolean> {
+  const {
+    address,
+    digest,
+    signature,
+    provider,
+    context,
+    configTracker,
+  } = args
+
   // Check if valid EOA signature
   //
   // TODO: the EOA check here assume its being passed a digest, but its not a correct assumption
@@ -29,41 +90,30 @@ export async function isValidSignature(
   const erc1271Check = await isValidContractWalletSignature(address, digest, signature, provider)
   if (erc1271Check) return true
 
-  // If the provider is not defined, we can't keep going
-  if (!provider) return false
-
   // Check if the wallet is deployed
   // and if we can fetch any counter-factual imageHash
-  const imageHash = await fetchImageHash(address, provider, configTracker && walletContext && { context: walletContext, tracker: configTracker })
-
-  // If we don't have the walletContext
-  // we can't validate custom sequence signatures
-  if (!walletContext) return false
+  const imageHash = await fetchImageHash(address, provider, configTracker && { context: context || defaults.context, tracker: configTracker })
 
   // Now, if the wallet is not deployed and we don't have a config
   // we evaluate the counter-factual state
   if (!imageHash) {
-    return await isValidSequenceUndeployedWalletSignature(address, digest, signature, walletContext, provider, chainId)
+    return await isValidSequenceUndeployedWalletSignature(args)
   }
 
-  // If we don't have the chainid at this point
-  // we can't evaluate the signature
-  if (!chainId) return false
-
   // Then we evaluate the signature directly
-  return isValidSignatureForImageHash(address, imageHash, digest, signature, chainId, provider, configTracker, walletContext)
+  return isValidSignatureForImageHash(imageHash, args)
 }
 
 export function isValidEIP712Signature(
   address: string,
   digest: Uint8Array,
-  sig: string
+  signature: string
 ): boolean {
   try {
     return compareAddr(
       ethers.utils.recoverAddress(
         digest,
-        ethers.utils.splitSignature(sig)
+        ethers.utils.splitSignature(signature)
       ),
       address
     ) === 0
@@ -75,7 +125,7 @@ export function isValidEIP712Signature(
 export function isValidEthSignSignature(
   address: string,
   digest: Uint8Array,
-  sig: string
+  signature: string
 ): boolean {
   try {
     const subDigest = ethers.utils.keccak256(
@@ -87,7 +137,7 @@ export function isValidEthSignSignature(
     return compareAddr(
       ethers.utils.recoverAddress(
         subDigest,
-        ethers.utils.splitSignature(sig)
+        ethers.utils.splitSignature(signature)
       ),
       address
     ) === 0
@@ -100,67 +150,39 @@ export function isValidEthSignSignature(
 export async function isValidContractWalletSignature(
   address: string,
   digest: Uint8Array,
-  sig: string,
-  provider?: Provider
+  signature: string,
+  provider: Provider
 ) {
-  if (!provider) return undefined
   try {
-    if ((await provider.getCode(address)) === '0x') {
+    const code = await provider.getCode(address)
+    if (code.length === 0 || code === '0x') {
       // Signature validity can't be determined
       return undefined
     }
 
     const wallet = new ethers.Contract(address, walletContracts.erc1271.abi, provider)
-    const response = await wallet.isValidSignature(digest, sig)
+    const response = await wallet.isValidSignature(digest, signature)
     return walletContracts.erc1271.returns.isValidSignatureBytes32 === response
   } catch {
     return false
   }
 }
 
-export async function isValidSequenceUndeployedWalletSignature(
-  address: string,
-  digest: Uint8Array,
-  sig: string,
-  walletContext: WalletContext,
-  provider?: Provider,
-  chainId?: number
-) {
+export async function isValidSequenceUndeployedWalletSignature(args: ValidSignatureArgs) {
   try {
-    const cid = chainId ? chainId : (await provider!.getNetwork()).chainId
-    const signature = decodeSignature(sig)
-    const subDigest = subDigestOf(address, cid, digest)
-    const config = await recoverConfigFromDigest(subDigest, signature, provider, walletContext, chainId, true)
-    const weight = signature.signers.reduce((v, s) => isDecodedEOASigner(s) || isDecodedFullSigner(s) ? v + s.weight : v, 0)
-    return compareAddr(addressOf(config, walletContext), address) === 0 && weight >= signature.threshold
+    const subDigest = subDigestOf(args.address, args.chainId, args.digest)
+    const decoded = decodeSignature(args.signature)
+    const config = await _recoverConfigFromDigest(subDigest, args, decoded)
+    const weight = decoded.signers.reduce((v, s) => isDecodedEOASigner(s) || isDecodedFullSigner(s) ? v + s.weight : v, 0)
+    return compareAddr(addressOf(config, args.context || defaults.context), args.address) === 0 && weight >= decoded.threshold
   } catch {
     return false
   }
 }
 
-export async function isValidSignatureForConfig(
-  address: string,
-  config: WalletConfig,
-  digest: Uint8Array,
-  signature: string,
-  chainId: number,
-  provider?: Provider,
-  configTracker?: ConfigTracker,
-  walletContext?: WalletContext
-) {
-  const decoded = decodeSignature(signature)
-  const subDigest = subDigestOf(address, chainId, digest)
-
-  // Recover full signature
-  const recovered = await recoverConfigFromDigest(
-    subDigest,
-    decoded,
-    provider,
-    walletContext,
-    chainId,
-    true,
-    configTracker
-  )
+export async function isValidSignatureForConfig(config: WalletConfig, args: ValidSignatureArgs) {
+  const subDigest = subDigestOf(args.address, args.chainId, args.digest)
+  const recovered = await _recoverConfigFromDigest(subDigest, args)
 
   // Accumulate weight of parts that provided a signatures
   const weight = config.signers.reduce((p, c) => {
@@ -177,26 +199,9 @@ export async function isValidSignatureForConfig(
   return weight >= config.threshold
 }
 
-export async function isValidSignatureForImageHash(
-  address: string,
-  imageHash: string,
-  digest: Uint8Array,
-  signature: string,
-  chainId: number,
-  provider?: Provider,
-  configTracker?: ConfigTracker,
-  walletContext?: WalletContext
-) {
-  const subDigest = subDigestOf(address, chainId, digest)
-  const recovered = await recoverConfigFromDigest(
-    subDigest,
-    signature,
-    provider,
-    walletContext,
-    chainId,
-    true,
-    configTracker
-  )
+export async function isValidSignatureForImageHash(imageHash: string, args: ValidSignatureArgs) {
+  const subDigest = subDigestOf(args.address, args.chainId, args.digest)
+  const recovered = await _recoverConfigFromDigest(subDigest, args)
 
   return imageHash === imageHashOf(recovered)
 }

@@ -6,12 +6,25 @@ import { Sessions, Config } from "./gen/sessions.gen"
 import { addressOf, DecodedSignaturePart, imageHash, isAddrEqual } from ".."
 import { WalletContext } from "@0xsequence/network"
 
+export type SessionsApiConfigTrackerOptions = {
+  url: string,
+  maxResults?: number,
+  walletConfigs?: AssumedWalletConfigs,
+}
+
 export class SessionsApiConfigTracker implements ConfigTracker {
   public sessions: Sessions
   public protoWalletConfigs: {[key: string]: Config} = {}
 
-  constructor(url: string, public maxResults = 50, public walletConfigs: AssumedWalletConfigs = {}) {
-    this.sessions = new Sessions(url, fetchPonyfill().fetch)
+  public url: string
+  public maxResults: number
+
+  constructor(public options: SessionsApiConfigTrackerOptions) {
+    this.url = options.url
+    this.maxResults = options.maxResults || 50
+    const walletConfigs = options.walletConfigs || {}
+
+    this.sessions = new Sessions(this.url, fetchPonyfill().fetch)
 
     for (const address of Object.keys(walletConfigs)) {
       const config = walletConfigs[address]

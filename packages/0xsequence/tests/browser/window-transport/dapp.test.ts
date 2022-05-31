@@ -1,9 +1,9 @@
-import { prefixEIP191Message, WindowMessageProvider } from '@0xsequence/provider'
+import { WindowMessageProvider } from '@0xsequence/provider'
 import { ethers } from 'ethers'
 import { Web3Provider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 
-import { isValidSignature, recoverConfig } from '@0xsequence/wallet'
+import { isValidSignature, prefixEIP191Message, recoverConfig } from '@0xsequence/wallet'
 import { addressOf } from '@0xsequence/config'
 import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
 
@@ -83,7 +83,14 @@ export const tests = async () => {
     // Verify the message signature
     //
     const messageDigest = encodeMessageDigest(prefixEIP191Message(message))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
+    const isValid = await isValidSignature({
+      address,
+      digest: messageDigest,
+      signature: sig,
+      provider,
+      context: testWalletContext,
+      chainId: await signer.getChainId()
+    })
     assert.true(isValid, 'signature is valid - 5')
 
     // also compute the subDigest of the message, to be provided to the end-user
@@ -162,7 +169,14 @@ export const tests = async () => {
 
     const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
     const messageDigest = ethers.utils.arrayify(messageHash)
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext, await signer.getChainId())
+    const isValid = await isValidSignature({
+      address,
+      digest: messageDigest,
+      signature: sig,
+      provider,
+      context: testWalletContext,
+      chainId: await signer.getChainId()
+    })
     assert.true(isValid, 'signature is valid - 6')
 
     // also compute the subDigest of the message, to be provided to the end-user

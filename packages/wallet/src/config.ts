@@ -70,23 +70,23 @@ export const richFetchImageHash = async (
 //
 // subDigest = packMessageData(wallet.address, chainId, ethers.utils.keccak256(message))
 export const recoverConfig = async (
-  subDigest:
-  BytesLike,
-  signature: string | DecodedSignature,
+  subDigest: BytesLike,
+  signature: string | DecodedSignature,
   provider?: ethers.providers.Provider,
   context?: WalletContext,
   chainId?: number,
-  walletSignersValidation?: boolean
+  walletSignersValidation?: boolean,
+  configTracker?: ConfigTracker
 ): Promise<WalletConfig> => {
   const digest = ethers.utils.arrayify(ethers.utils.keccak256(subDigest))
-  return recoverConfigFromDigest(digest, signature, provider, context, chainId, walletSignersValidation)
+  return recoverConfigFromDigest(digest, signature, provider, context, chainId, walletSignersValidation, configTracker)
 }
 
 // recoverConfigFromDigest decodes a WalletConfig from a digest and signature combo. Note: the digest
 // is the keccak256 of the subDigest, see `recoverConfig` method.
 export const recoverConfigFromDigest = async (
   digest: BytesLike,
-  signature: string | DecodedSignature,
+  signature: string | DecodedSignature,
   provider?: ethers.providers.Provider,
   context?: WalletContext,
   chainId?: number,
@@ -108,15 +108,20 @@ export const recoverConfigFromDigest = async (
       }
     } else if (isDecodedFullSigner(s)) {
       if (walletSignersValidation) {
-        if (!(await isValidSignature(
-          s.address,
-          ethers.utils.arrayify(digest),
-          ethers.utils.hexlify(s.signature),
+        if (!provider) throw new Error('provider is required to validate wallet signers')
+        if (!context) throw new Error('context is required to validate wallet signers')
+        if (!chainId) throw new Error('chainId is required to validate wallet signers')
+        if (!configTracker) throw new Error('configTracker is required to validate wallet signers')
+
+        if (!(await isValidSignature({
+          address: s.address,
+          digest: ethers.utils.arrayify(digest),
+          signature: ethers.utils.hexlify(s.signature),
           provider,
           context,
           chainId,
           configTracker
-        ))) throw Error('Invalid signature')
+        }))) throw Error('Invalid signature')
       }
 
       return {
