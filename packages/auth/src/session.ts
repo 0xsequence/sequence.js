@@ -36,10 +36,7 @@ export function isSessionDumpV1(cand: SessionDumpV1 | SessionDump): cand is Sess
 }
 
 export function isSessionDump(cand: SessionDumpV1 | SessionDump): cand is SessionDump {
-  return (
-    (cand as any).version !== undefined &&
-    (cand as any).version === SESSION_DUMP_VERSION
-  )
+  return (cand as any).version === SESSION_DUMP_VERSION
 }
 
 export interface SessionDumpV1 {
