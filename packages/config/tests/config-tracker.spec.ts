@@ -409,6 +409,12 @@ describe('Config tracker', function () {
           tortureSize: 50,
           nested: true
         }, {
+          name: `Remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL} (skip repeated)`,
+          configTracker: new SessionsApiConfigTracker({ ...defaultRemoteApiConfig, skipRepeated: true }),
+          torture: true,
+          tortureSize: 5,
+          nested: true,
+        }, {
           name: `Untrusted remote sessions API with ${process.env.TEST_CONFIG_TRACKER_URL}`,
           configTracker: new UntrustedConfigTracker(
             new SessionsApiConfigTracker(defaultRemoteApiConfig),

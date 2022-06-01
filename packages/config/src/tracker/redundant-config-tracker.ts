@@ -2,7 +2,6 @@ import { WalletContext } from "@0xsequence/network"
 import { BigNumberish, BigNumber, ethers } from "ethers"
 import { DecodedSignaturePart } from ".."
 import { isAddrEqual, WalletConfig } from "../config"
-import { PromiseSome } from "../utils"
 import { asPresignedConfigurationAsPayload, AssumedWalletConfigs, ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 
 export class RedundantConfigTracker implements ConfigTracker {
@@ -78,25 +77,17 @@ export class RedundantConfigTracker implements ConfigTracker {
   configOfImageHash = async ( args : {
     imageHash: string
   }): Promise<WalletConfig | undefined> => {
-    // Keep track of which child returned a result
-    // so we don't backfeed the same result to them
-    const provided: number[] = []
-
-    // Query all childs at the same time
-    // find a promise that doesn't throw and doesn't return undefined
-    const found = await PromiseSome(this.childs.map(async (c, i) => {
-      const res = await c.configOfImageHash(args)
-      if (res) provided.push(i)
-      return res
-    }))
-
-    // Backfeed found config to all childs
-    if (found !== undefined) {
-      this.saveWalletConfig({ config: found, skipIndexes: provided })
+    // Execute in childs one by one until we found something
+    for (let i = 0; i < this.childs.length; i++) {
+      const config = await this.childs[i].configOfImageHash(args)
+      if (config) {
+        // Backfeed to other childs, but not to self
+        this.saveWalletConfig({ config, skipIndexes: [i] })
+        return config
+      }
     }
 
-    // Return found value
-    return found
+    return undefined
   }
 
   savePresignedConfiguration = async ( args: {
@@ -143,25 +134,17 @@ export class RedundantConfigTracker implements ConfigTracker {
     wallet: string,
     context: WalletContext
   }): Promise<string | undefined> => {
-    // Keep track of which child returned a result
-    // so we don't backfeed the same result to them
-    const provided: number[] = []
-
-    // Query all childs at the same time
-    // find a promise that doesn't throw and doesn't return undefined
-    const found = await PromiseSome(this.childs.map(async (c, i) => {
-      const res = await c.imageHashOfCounterFactualWallet(args)
-      if (res) provided.push(i)
-      return res
-    }))
-
-    // Backfeed found config to all other childs
-    if (found) {
-      this.saveCounterFactualWallet({ imageHash: found, context: args.context, skipIndexes: provided })
+    // Execute in childs one by one until we found something
+    for (let i = 0; i < this.childs.length; i++) {
+      const imageHash = await this.childs[i].imageHashOfCounterFactualWallet(args)
+      if (imageHash) {
+        // Backfeed to other childs, but not to self
+        this.saveCounterFactualWallet({ imageHash, context: args.context, skipIndexes: [i] })
+        return imageHash
+      }
     }
 
-    // Return found value
-    return found
+    return undefined
   }
 
   saveCounterFactualWallet = async (args: {

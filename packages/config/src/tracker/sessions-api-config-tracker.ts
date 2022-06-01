@@ -1,15 +1,15 @@
 import { BigNumberish, BigNumber, ethers } from "ethers"
-import { WalletConfig } from "../config"
 import fetchPonyfill from 'fetch-ponyfill'
 import { AssumedWalletConfigs, ConfigTracker, PresignedConfigUpdate, TransactionBody } from "./config-tracker"
 import { Sessions, Config } from "./gen/sessions.gen"
-import { addressOf, DecodedSignaturePart, imageHash, isAddrEqual } from ".."
+import { WalletConfig, addressOf, DecodedSignaturePart, imageHash, isAddrEqual } from ".."
 import { WalletContext } from "@0xsequence/network"
 
 export type SessionsApiConfigTrackerOptions = {
   url: string,
   maxResults?: number,
   walletConfigs?: AssumedWalletConfigs,
+  skipRepeated?: boolean,
 }
 
 export class SessionsApiConfigTracker implements ConfigTracker {
@@ -18,6 +18,9 @@ export class SessionsApiConfigTracker implements ConfigTracker {
 
   public url: string
   public maxResults: number
+
+  private configHitmap = new Set<string>()
+  private walletsHitmap = new Set<string>()
 
   constructor(public options: SessionsApiConfigTrackerOptions) {
     this.url = options.url
@@ -57,7 +60,11 @@ export class SessionsApiConfigTracker implements ConfigTracker {
     context: WalletContext
   }): Promise<void> => {
     const address = addressOf(args.imageHash, args.context)
+    if (this.options.skipRepeated && this.configHitmap.has(address)) return
+
     await this.sessions.saveWallets({ wallets: [{ address, imageHash: args.imageHash, context: args.context }] })
+
+    if (this.options.skipRepeated) this.configHitmap.add(address)
   }
 
   loadPresignedConfiguration = async ( args: {
@@ -154,7 +161,12 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   saveWalletConfig = async ( args: {
     config: WalletConfig
   }): Promise<void> => {
-    await this.sessions.saveConfigurations({ configs: [{ ...args.config, imageHash: "" }] })
+    const ih = imageHash(args.config)
+    if (this.options.skipRepeated && this.walletsHitmap.has(ih)) return
+
+    await this.sessions.saveConfigurations({ configs: [{ ...args.config, imageHash: ih }] })
+
+    if (this.options.skipRepeated) this.walletsHitmap.add(ih)
   }
 
   walletsOfSigner = async (args: {
