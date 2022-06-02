@@ -37,7 +37,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   protected openPayload: { sessionId?: string; session?: WalletSession } | undefined
   protected connectPayload: ConnectDetails | undefined
-  protected accountsChangedPayload: string | undefined
+  protected accountsChangedPayload: { accounts: string[]; origin?: string } | undefined
   protected networksPayload: NetworkConfig[] | undefined
   protected walletContextPayload: WalletContext | undefined
 
@@ -224,12 +224,15 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // ACCOUNTS_CHANGED -- when a user logs in or out
     if (message.type === EventType.ACCOUNTS_CHANGED) {
-      this.accountsChangedPayload = undefined
+      this.accountsChangedPayload = { accounts: [] }
       if (message.data && message.data.length > 0) {
-        this.accountsChangedPayload = ethers.utils.getAddress(message.data[0])
-        this.events.emit('accountsChanged', [this.accountsChangedPayload])
+        this.accountsChangedPayload = {
+          accounts: [ethers.utils.getAddress(message.data[0])],
+          origin: message.origin
+        }
+        this.events.emit('accountsChanged', this.accountsChangedPayload.accounts, this.accountsChangedPayload.origin)
       } else {
-        this.events.emit('accountsChanged', [])
+        this.events.emit('accountsChanged', [], message.origin)
       }
       return
     }
