@@ -210,8 +210,17 @@ export class Wallet implements WalletProvider {
       }
     })
 
-    // below will update the account upon wallet connect/disconnect (aka, login/logout)
-    this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
+    // below will update the account upon wallet connect/disconnect - aka, login/logout.
+    // if an origin is provided, this operation should be performed only on that origin
+    // and shouldn't affect the session of the wallet.
+    this.transport.messageProvider.on('accountsChanged', (accounts: string[], origin?: string) => {
+      if (origin) {
+        if (accounts.length > 0) {
+          this.useSession({ accountAddress: accounts[0] }, true)
+        }
+        return
+      }
+
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
         this.clearSession()
       } else {
