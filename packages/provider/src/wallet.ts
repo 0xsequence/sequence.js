@@ -316,7 +316,7 @@ export class Wallet implements WalletProvider {
     return this.connectedSites.get()
   }
 
-  private async isSiteConnected(origin: string | undefined): Promise<boolean> {
+  async isSiteConnected(origin: string | undefined): Promise<boolean> {
     const authorized = await this.connectedSites.get()
 
     return !!authorized && authorized.includes(origin || window.location.origin)
