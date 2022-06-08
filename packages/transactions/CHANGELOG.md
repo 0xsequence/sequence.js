@@ -1,5 +1,17 @@
 # @0xsequence/transactions
 
+## 0.39.1
+
+### Patch Changes
+
+- add Aurora network
+- add origin info for accountsChanged event to handle it per dapp
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.39.1
+  - @0xsequence/network@0.39.1
+  - @0xsequence/utils@0.39.1
+
 ## 0.39.0
 
 ### Minor Changes
