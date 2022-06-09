@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.39.2
+
+### Patch Changes
+
+- update umd name
+
 ## 0.39.1
 
 ### Patch Changes

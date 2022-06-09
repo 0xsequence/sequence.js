@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.39.2
+
+### Patch Changes
+
+- update umd name
+- Updated dependencies
+  - @0xsequence/abi@0.39.2
+  - @0xsequence/auth@0.39.2
+  - @0xsequence/config@0.39.2
+  - @0xsequence/network@0.39.2
+  - @0xsequence/transactions@0.39.2
+  - @0xsequence/utils@0.39.2
+  - @0xsequence/wallet@0.39.2
+
 ## 0.39.1
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.39.2
+
+### Patch Changes
+
+- update umd name
+- Updated dependencies
+  - @0xsequence/abi@0.39.2
+  - @0xsequence/config@0.39.2
+  - @0xsequence/transactions@0.39.2
+  - @0xsequence/utils@0.39.2
+
 ## 0.39.1
 
 ### Patch Changes
