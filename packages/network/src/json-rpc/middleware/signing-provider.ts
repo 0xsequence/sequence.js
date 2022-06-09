@@ -6,7 +6,7 @@ export const SignerJsonRpcMethods = [
   
   'sequence_getWalletContext', 'sequence_getWalletConfig', 'sequence_getWalletState', 'sequence_getNetworks',
   'sequence_updateConfig', 'sequence_publishConfig', 'sequence_estimateGasLimits', 'sequence_gasRefundOptions',
-  'sequence_getNonce', 'sequence_relay', 'sequence_getConfigTracker',
+  'sequence_getNonce', 'sequence_relay', 'sequence_getConfigTracker', 'sequence_sign', 'sequence_signTypedData_v4',
 
   'eth_decrypt', 'eth_getEncryptionPublicKey',
   'wallet_addEthereumChain', 'wallet_switchEthereumChain',

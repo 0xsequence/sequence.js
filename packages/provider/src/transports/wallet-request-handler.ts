@@ -285,20 +285,29 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'eth_sign':
         case 'personal_sign':
-        case 'eth_sign': {
+        case 'sequence_sign': {
           // note: message from json-rpc input is in hex format
           let message: any
+          let options: any
 
           // there is a difference in the order of the params:
-          // personal_sign: [data, address]
           // eth_sign: [address, data]
-          if (request.method === 'personal_sign') {
-            const [data, address] = request.params!
-            message = data
-          } else {
-            const [address, data] = request.params!
-            message = data
+          // personal_sign: [data, address]
+          // sequence_sign: [data, address, options]
+
+          switch (request.method) {
+            case 'eth_sign':
+              message = request.params?.[1]
+              break
+            case 'personal_sign':
+              message = request.params?.[0]
+              break
+            case 'sequence_sign':
+              message = request.params?.[0]
+              options = request.params?.[2]
+              break
           }
 
           let sig = ''
@@ -313,9 +322,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
-            if (promptResultForDeployment) {
+            if (typeof options === 'object' && options.counterfactual === true) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, message }, this.connectOptions)
+            } else {
+              const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
+              if (promptResultForDeployment) {
+                sig = await this.prompter.promptSignMessage({ chainId: chainId, message }, this.connectOptions)
+              }
             }
           }
 
@@ -329,10 +342,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_signTypedData':
-        case 'eth_signTypedData_v4': {
+        case 'eth_signTypedData_v4':
+        case 'sequence_signTypedData_v4': {
           // note: signingAddress from json-rpc input is in hex format, and typedDataObject
           // should be an object, but in some instances may be double string encoded
-          const [signingAddress, typedDataObject] = request.params!
+          const typedDataObject = request.params?.[1]
+
+          let options: any
+          switch (request.method) {
+            case 'sequence_signTypedData_v4':
+              options = request.params?.[2]
+              break
+          }
 
           let typedData: TypedData | undefined = undefined
           if (typeof typedDataObject === 'string') {
@@ -353,9 +374,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
-            if (promptResultForDeployment) {
+            if (typeof options === 'object' && options.counterfactual === true) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
+            } else {
+              const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
+              if (promptResultForDeployment) {
+                sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
+              }
             }
           }
 

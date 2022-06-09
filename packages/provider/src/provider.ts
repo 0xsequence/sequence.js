@@ -239,16 +239,23 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, counterfactual?: boolean): Promise<string> {
     const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
+    if (!provider) {
+      throw new Error(`no provider for chain id ${maybeChainId(chainId) || this.defaultChainId}`)
+    }
 
     const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
     const address = await this.getAddress()
 
-    // NOTE: as of ethers v5.5, it switched to using personal_sign, see
-    // https://github.com/ethers-io/ethers.js/pull/1542 and see
-    // https://github.com/WalletConnect/walletconnect-docs/issues/32 for additional info.
-    return await provider!.send('personal_sign', [ethers.utils.hexlify(data), address])
+    if (counterfactual) {
+      return provider.send('sequence_sign', [ethers.utils.hexlify(data), address, { counterfactual: true }])
+    } else {
+      // NOTE: as of ethers v5.5, it switched to using personal_sign, see
+      // https://github.com/ethers-io/ethers.js/pull/1542 and see
+      // https://github.com/WalletConnect/walletconnect-docs/issues/32 for additional info.
+      return provider.send('personal_sign', [ethers.utils.hexlify(data), address])
+    }
   }
 
   // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
@@ -258,18 +265,27 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    counterfactual?: boolean
   ): Promise<string> {
     // Populate any ENS names (in-place)
     // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
     //   return this.provider.resolveName(name)
     // })
 
-    return await this.provider.send(
-      'eth_signTypedData_v4',
-      [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
-      maybeChainId(chainId) || this.defaultChainId
-    )
+    if (counterfactual) {
+      return this.provider.send(
+        'sequence_signTypedData_v4',
+        [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message), { counterfactual: true }],
+        maybeChainId(chainId) || this.defaultChainId
+      )
+    } else {
+      return this.provider.send(
+        'eth_signTypedData_v4',
+        [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
+        maybeChainId(chainId) || this.defaultChainId
+      )
+    }
   }
 
   // sendTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
