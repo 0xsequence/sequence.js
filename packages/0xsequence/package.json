@@ -55,7 +55,7 @@
   },
   "keywords": [],
   "preconstruct": {
-    "umdName": "0xsequence"
+    "umdName": "sequence"
   },
   "files": [
     "src",
