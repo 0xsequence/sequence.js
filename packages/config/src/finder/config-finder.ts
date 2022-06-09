@@ -3,13 +3,14 @@ import { ethers } from 'ethers'
 import { WalletConfig } from '..'
 
 export abstract class ConfigFinder {
-  findCurrentConfig: (args: {
+  abstract findCurrentConfig: (args: {
     address: string
     provider: ethers.providers.Provider
     context: WalletContext
     knownConfigs?: WalletConfig[]
   }) => Promise<{ config: WalletConfig | undefined }>
-  findLastWalletOfInitialSigner: (args: {
+
+  abstract findLastWalletOfInitialSigner: (args: {
     signer: string
     provider: ethers.providers.Provider
     context: WalletContext
