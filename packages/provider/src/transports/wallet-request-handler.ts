@@ -723,16 +723,15 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
   }
 
-  notifyConnect(connectDetails: ConnectDetails) {
+  notifyConnect(connectDetails: ConnectDetails, origin?: string) {
     this.events.emit('connect', connectDetails)
     if (connectDetails.session?.accountAddress) {
-      this.events.emit('accountsChanged', [connectDetails.session?.accountAddress])
+      this.events.emit('accountsChanged', [connectDetails.session?.accountAddress], origin)
     }
   }
 
-  notifyDisconnect() {
-    this.events.emit('accountsChanged', [])
-    this.events.emit('networks', [])
+  notifyDisconnect(origin?: string) {
+    this.events.emit('accountsChanged', [], origin)
     this.events.emit('disconnect')
   }
 

@@ -9,7 +9,7 @@ import {
   ProviderMessageResponse
 } from '../../types'
 
-interface Stream {
+export interface Stream {
   on(ev: string | symbol, fn: (...args: any[]) => void): void
   writable: boolean
   write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean
