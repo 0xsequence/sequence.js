@@ -87,7 +87,8 @@ export class SessionsApiConfigTracker implements ConfigTracker {
   
     return res.txs.map((tx) => {
       return {
-        chainId: ethers.BigNumber.from(tx.signature.chainId),
+        // TODO: chainId sometimes comes as chainid, not sure why
+        chainId: ethers.BigNumber.from(tx.signature.chainId || (tx.signature as any).chainid),
         signature: tx.signature.signature,
         body: {
           ...tx.tx,
