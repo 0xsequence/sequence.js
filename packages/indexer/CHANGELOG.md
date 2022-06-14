@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.39.3
+
+### Patch Changes
+
+- add request method on Web3Provider
+
 ## 0.39.2
 
 ### Patch Changes

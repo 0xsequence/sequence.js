@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.39.3
+
+### Patch Changes
+
+- add request method on Web3Provider
+- Updated dependencies
+  - @0xsequence/abi@0.39.3
+  - @0xsequence/auth@0.39.3
+  - @0xsequence/config@0.39.3
+  - @0xsequence/network@0.39.3
+  - @0xsequence/transactions@0.39.3
+  - @0xsequence/utils@0.39.3
+  - @0xsequence/wallet@0.39.3
+
 ## 0.39.2
 
 ### Patch Changes
