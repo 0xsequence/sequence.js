@@ -66,6 +66,10 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
     return this._sender.send(method, params, chainId)
   }
 
+  request(request: { method: string; params?: Array<any>, chainId?: number }): Promise<any> {
+    return this.send(request.method, request.params || [], request.chainId)
+  }
+
   getSigner(): Web3Signer {
     return new Web3Signer(this, this._defaultChainId)
   }
