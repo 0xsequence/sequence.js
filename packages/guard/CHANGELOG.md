@@ -1,5 +1,18 @@
 # @0xsequence/guard
 
+## 0.39.2
+
+### Patch Changes
+
+- update umd name
+
+## 0.39.1
+
+### Patch Changes
+
+- add Aurora network
+- add origin info for accountsChanged event to handle it per dapp
+
 ## 0.39.0
 
 ### Minor Changes

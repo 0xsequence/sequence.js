@@ -106,7 +106,7 @@ export class IndexedDBLocalTracker implements ConfigTrackerDatabase {
 
     let cursor = await store.openCursor()
 
-    const res = []
+    const res: Array<TransactionBody & { digest: string }> = []
     while (cursor) {
       const { value, key } = cursor
       res.push({ ...value, digest: key })

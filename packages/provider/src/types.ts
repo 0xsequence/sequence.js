@@ -37,6 +37,7 @@ export interface ProviderMessage<T> {
   type: string // message type
   data: T // the ethereum json-rpc payload
   chainId?: number // chain id which the message is intended
+  origin?: string // origin of the message
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
@@ -111,7 +112,7 @@ export interface WalletEventTypes {
   connect: (connectDetails: ConnectDetails) => void
   disconnect: (error?: ProviderRpcError) => void
 
-  accountsChanged: (accounts: string[]) => void
+  accountsChanged: (accounts: string[], origin?: string) => void
   chainChanged: (chainIdHex: string) => void
 
   networks: (networks: NetworkConfig[]) => void

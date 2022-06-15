@@ -57,7 +57,7 @@ export function asPresignedConfigurationAsPayload(
 }
 
 export abstract class ConfigTracker {
-  loadPresignedConfiguration: (args: {
+  abstract loadPresignedConfiguration: (args: {
     wallet: string,
     fromImageHash: string,
     chainId: ethers.BigNumberish,
@@ -67,11 +67,11 @@ export abstract class ConfigTracker {
     gapNonce?: ethers.BigNumberish
   }) => Promise<PresignedConfigUpdate[]>
 
-  savePresignedConfiguration: (
+  abstract savePresignedConfiguration: (
     args: PresignedConfigurationPayload
   ) => Promise<void>
 
-  saveWitness: ( args: {
+  abstract saveWitness: ( args: {
     wallet: string,
     digest: string,
     signatures: {
@@ -80,37 +80,37 @@ export abstract class ConfigTracker {
     }[],
   }) => Promise<void>
 
-  configOfImageHash: (args: {
+  abstract configOfImageHash: (args: {
     imageHash: string
   }) => Promise<WalletConfig | undefined>
 
-  saveWalletConfig: (args: {
+  abstract saveWalletConfig: (args: {
     config: WalletConfig
   }) => Promise<void>
 
-  imageHashOfCounterFactualWallet: (args: {
+  abstract imageHashOfCounterFactualWallet: (args: {
     context: WalletContext,
     wallet: string
   }) => Promise<string | undefined>
 
-  saveCounterFactualWallet: (args: {
+  abstract saveCounterFactualWallet: (args: {
     imageHash: string,
     context: WalletContext
   }) => Promise<void>
 
-  walletsOfSigner: (args: {
+  abstract walletsOfSigner: (args: {
     signer: string
   }) => Promise<{ wallet: string, proof: { digest: string, chainId: ethers.BigNumber, signature: DecodedSignaturePart }}[]>
 
-  signaturesOfSigner: (args: {
+  abstract signaturesOfSigner: (args: {
     signer: string
   }) => Promise<{ signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]>
 
-  imageHashesOfSigner: (args: {
+  abstract imageHashesOfSigner: (args: {
     signer: string
   }) => Promise<string[]>
 
-  signaturesForImageHash: (args: {
+  abstract signaturesForImageHash: (args: {
     imageHash: string
   }) => Promise<{ signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]>
 }

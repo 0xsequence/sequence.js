@@ -12,9 +12,9 @@ export class UnreliableConfigTracker implements ConfigTracker {
     public name?: string,
   ) { }
 
-  private logError(e: Error) {
+  private logError(e: any) {
     if (this.verbose) {
-      console.warn(`${this.name || "UnreliableConfigTracker"} ${name} error: ${e.message}`)
+      console.warn(`${this.name || "UnreliableConfigTracker"} ${name} error: ${e.message ?? e}`)
     }
   }
 

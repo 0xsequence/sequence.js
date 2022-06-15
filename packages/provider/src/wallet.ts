@@ -211,8 +211,17 @@ export class Wallet implements WalletProvider {
       }
     })
 
-    // below will update the account upon wallet connect/disconnect (aka, login/logout)
-    this.transport.messageProvider.on('accountsChanged', (accounts: string[]) => {
+    // below will update the account upon wallet connect/disconnect - aka, login/logout.
+    // if an origin is provided, this operation should be performed only on that origin
+    // and shouldn't affect the session of the wallet.
+    this.transport.messageProvider.on('accountsChanged', (accounts: string[], origin?: string) => {
+      if (origin) {
+        if (accounts.length > 0) {
+          this.useSession({ accountAddress: accounts[0] }, true)
+        }
+        return
+      }
+
       if (!accounts || accounts.length === 0 || accounts[0] === '') {
         this.clearSession()
       } else {
@@ -245,7 +254,7 @@ export class Wallet implements WalletProvider {
 
     if (
       this.isConnected() &&
-      this.isSiteConnected(options?.origin) &&
+      (await this.isSiteConnected(options?.origin)) &&
       !!this.session &&
       !options?.authorize &&
       !options?.askForEmail
@@ -308,7 +317,7 @@ export class Wallet implements WalletProvider {
     return this.connectedSites.get()
   }
 
-  private async isSiteConnected(origin: string | undefined): Promise<boolean> {
+  async isSiteConnected(origin: string | undefined): Promise<boolean> {
     const authorized = await this.connectedSites.get()
 
     return !!authorized && authorized.includes(origin || window.location.origin)

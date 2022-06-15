@@ -38,7 +38,11 @@ export enum ChainId {
   FANTOM_TESTNET = 4002,
 
   // Gnosis Chain (XDAI)
-  GNOSIS = 100
+  GNOSIS = 100,
+
+  // AURORA
+  AURORA = 1313161554,
+  AURORA_TESTNET = 1313161556
 }
 
 export interface NetworkConfig {
@@ -239,6 +243,24 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Gnosis Chain Explorer',
       rootUrl: 'https://blockscout.com/xdai/mainnet/'
+    }
+  },
+  [ChainId.AURORA]: {
+    chainId: ChainId.AURORA,
+    name: 'aurora',
+    title: 'Aurora',
+    blockExplorer: {
+      name: 'Aurora Explorer',
+      rootUrl: 'https://aurorascan.dev/'
+    }
+  },
+  [ChainId.AURORA_TESTNET]: {
+    chainId: ChainId.AURORA_TESTNET,
+    name: 'aurora-testnet',
+    title: 'Aurora Testnet',
+    blockExplorer: {
+      name: 'Aurora Explorer (Testnet)',
+      rootUrl: 'https://testnet.aurorascan.dev/'
     }
   }
 }
