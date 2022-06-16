@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.39.4
+
+### Patch Changes
+
+- api: update client bindings
+- Updated dependencies
+  - @0xsequence/abi@0.39.4
+  - @0xsequence/api@0.39.4
+  - @0xsequence/auth@0.39.4
+  - @0xsequence/config@0.39.4
+  - @0xsequence/guard@0.39.4
+  - @0xsequence/indexer@0.39.4
+  - @0xsequence/metadata@0.39.4
+  - @0xsequence/multicall@0.39.4
+  - @0xsequence/network@0.39.4
+  - @0xsequence/provider@0.39.4
+  - @0xsequence/relayer@0.39.4
+  - @0xsequence/transactions@0.39.4
+  - @0xsequence/utils@0.39.4
+  - @0xsequence/wallet@0.39.4
+
 ## 0.39.3
 
 ### Patch Changes

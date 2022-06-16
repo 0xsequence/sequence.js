@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.39.4
+
+### Patch Changes
+
+- api: update client bindings
+
 ## 0.39.3
 
 ### Patch Changes
