@@ -619,6 +619,9 @@ export class Wallet implements WalletProvider {
       return
     }
 
+    // init networks
+    this.networks = networks
+
     // combine custom network config with networks in the session
     if (this.config.networks) {
       this.networks = networks.map(n => ({ ...n })) // copy
@@ -632,7 +635,10 @@ export class Wallet implements WalletProvider {
 
     // an extra override for convenience
     if (this.config.networkRpcUrl) {
-      this.networks.find(network => network.isDefaultChain)!.rpcUrl = this.config.networkRpcUrl
+      const network = this.networks.find(network => network.isDefaultChain)
+      if (network) {
+        network.rpcUrl = this.config.networkRpcUrl
+      }
     }
   }
 
