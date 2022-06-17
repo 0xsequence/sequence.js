@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.39.5
+
+### Patch Changes
+
+- provider: fix networkRpcUrl config option
+- Updated dependencies
+  - @0xsequence/abi@0.39.5
+  - @0xsequence/auth@0.39.5
+  - @0xsequence/config@0.39.5
+  - @0xsequence/network@0.39.5
+  - @0xsequence/transactions@0.39.5
+  - @0xsequence/utils@0.39.5
+  - @0xsequence/wallet@0.39.5
+
 ## 0.39.4
 
 ### Patch Changes

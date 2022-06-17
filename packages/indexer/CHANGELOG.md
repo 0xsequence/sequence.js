@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.39.5
+
+### Patch Changes
+
+- provider: fix networkRpcUrl config option
+
 ## 0.39.4
 
 ### Patch Changes
