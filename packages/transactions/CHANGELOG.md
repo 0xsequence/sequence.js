@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.39.6
+
+### Patch Changes
+
+- indexer: update client bindings
+- Updated dependencies
+  - @0xsequence/abi@0.39.6
+  - @0xsequence/network@0.39.6
+  - @0xsequence/utils@0.39.6
+
 ## 0.39.5
 
 ### Patch Changes

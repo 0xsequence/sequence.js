@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.39.6
+
+### Patch Changes
+
+- indexer: update client bindings
+
 ## 0.39.5
 
 ### Patch Changes

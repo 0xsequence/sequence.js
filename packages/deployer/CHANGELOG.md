@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.39.6
+
+### Patch Changes
+
+- indexer: update client bindings
+- Updated dependencies
+  - @0xsequence/utils@0.39.6
+
 ## 0.39.5
 
 ### Patch Changes
