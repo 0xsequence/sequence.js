@@ -334,6 +334,9 @@ export class Wallet implements WalletProvider {
     this.clearSession()
   }
 
+  // TODO: add switchNetwork(network: string | number) which will call wallet_switchEthereumChain
+  // and on successful response, will update the provider info here, etc.
+
   getProviderConfig(): ProviderConfig {
     return this.config
   }
@@ -717,17 +720,17 @@ export const DefaultProviderConfig: ProviderConfig = {
 
 let walletInstance: Wallet | undefined
 
-export const getWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
+export const initWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
+  if (walletInstance && walletInstance.isOpened()) {
+    walletInstance.closeWallet()
+  }
+  walletInstance = new Wallet(network, config)
+  return walletInstance
+}
+
+export const getWallet = () => {
   if (!walletInstance) {
-    walletInstance = new Wallet(network, config)
+    throw new Error('Wallet has not been initialized, call sequence.initWallet(network, config) first.')
   }
   return walletInstance
-}
-
-export const useWallet = () => {
-  return walletInstance
-}
-
-export const resetWallet = () => {
-  walletInstance = undefined
 }
