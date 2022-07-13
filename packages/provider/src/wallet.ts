@@ -334,6 +334,9 @@ export class Wallet implements WalletProvider {
     this.clearSession()
   }
 
+  // TODO: add switchNetwork(network: string | number) which will call wallet_switchEthereumChain
+  // and on successful response, will update the provider info here, etc.
+
   getProviderConfig(): ProviderConfig {
     return this.config
   }
@@ -718,6 +721,9 @@ export const DefaultProviderConfig: ProviderConfig = {
 let walletInstance: Wallet | undefined
 
 export const configWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
+  if (walletInstance) {
+    walletInstance.disconnect()
+  }
   walletInstance = new Wallet(network, config)
 }
 
@@ -725,10 +731,6 @@ export const getWallet = (network?: string | number, config?: Partial<ProviderCo
   if (!walletInstance) {
     walletInstance = new Wallet(network, config)
   }
-  return walletInstance
-}
-
-export const useWallet = () => {
   return walletInstance
 }
 
@@ -741,11 +743,4 @@ export const connectWallet = async (network?: string | number, options?: Connect
   }
   const connectDetails = await walletInstance.connect(options)
   return { wallet: walletInstance, connectDetails }
-}
-
-export const disconnectWallet = () => {
-  if (!walletInstance) {
-    return
-  }
-  walletInstance.disconnect()
 }
