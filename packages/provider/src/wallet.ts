@@ -731,6 +731,8 @@ export const getWallet = (network?: string | number, config?: Partial<ProviderCo
   if (!walletInstance) {
     walletInstance = new Wallet(network, config)
   }
+  // TODO: if network is different then what we had before, we should probably throw an error
+  // telling the user to call wallet.switchNetwork(network)
   return walletInstance
 }
 
