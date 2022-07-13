@@ -740,7 +740,7 @@ export const connectWallet = async (network?: string | number, options?: Connect
     options.networkId = network
   }
   const connectDetails = await walletInstance.connect(options)
-  return connectDetails
+  return { wallet: walletInstance, connectDetails }
 }
 
 export const disconnectWallet = () => {
