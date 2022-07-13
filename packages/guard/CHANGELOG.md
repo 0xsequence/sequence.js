@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.40.1
+
+### Patch Changes
+
+- export sequence.initWallet and sequence.getWallet
+
 ## 0.40.0
 
 ### Minor Changes

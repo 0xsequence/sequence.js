@@ -1,5 +1,16 @@
 # @0xsequence/config
 
+## 0.40.1
+
+### Patch Changes
+
+- export sequence.initWallet and sequence.getWallet
+- Updated dependencies
+  - @0xsequence/abi@0.40.1
+  - @0xsequence/multicall@0.40.1
+  - @0xsequence/network@0.40.1
+  - @0xsequence/utils@0.40.1
+
 ## 0.40.0
 
 ### Minor Changes
