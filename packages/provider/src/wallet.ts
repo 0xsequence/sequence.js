@@ -717,6 +717,10 @@ export const DefaultProviderConfig: ProviderConfig = {
 
 let walletInstance: Wallet | undefined
 
+export const configWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
+  walletInstance = new Wallet(network, config)
+}
+
 export const getWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
   if (!walletInstance) {
     walletInstance = new Wallet(network, config)
@@ -728,6 +732,18 @@ export const useWallet = () => {
   return walletInstance
 }
 
-export const resetWallet = () => {
-  walletInstance = undefined
+export const connectWallet = async (network?: string | number, options?: ConnectOptions & { walletConfig?: Partial<ProviderConfig> }) => {
+  if (!walletInstance) {
+    walletInstance = getWallet(network, options?.walletConfig)
+  }
+
+  const connectDetails = await walletInstance.connect(options)
+  return connectDetails
+}
+
+export const disconnectWallet = () => {
+  if (!walletInstance) {
+    return
+  }
+  walletInstance.disconnect()
 }
