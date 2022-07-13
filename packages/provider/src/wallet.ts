@@ -96,9 +96,7 @@ export class Wallet implements WalletProvider {
     // config is a Partial, so that we may intersect it with the DefaultProviderConfig,
     // which allows easy overriding and control of the config.
     this.config = { ...DefaultProviderConfig }
-    if (config) {
-      this.config = { ...this.config, ...config }
-    }
+    this.updateConfig(config)
     if (network) {
       this.config.defaultNetworkId = network
     } else if (!this.config.defaultNetworkId) {
@@ -115,6 +113,15 @@ export class Wallet implements WalletProvider {
     this.connectedSites = new LocalStore('@sequence.connectedSites', [])
     this.utils = new WalletUtils(this)
     this.init()
+  }
+
+  /**
+   * Note: setting the transport here has no effect.
+   */
+  updateConfig(config?: Partial<ProviderConfig>) {
+    if (config) {
+      this.config = { ...this.config, ...config }
+    }
   }
 
   private init = () => {
@@ -717,17 +724,18 @@ export const DefaultProviderConfig: ProviderConfig = {
 
 let walletInstance: Wallet | undefined
 
+/**
+ * Note: setting the transport in the config only has an effect the first time you call this function
+ */
 export const getWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
   if (!walletInstance) {
     walletInstance = new Wallet(network, config)
+  } else {
+    const configUpdate = {
+      ...config,
+      ...(network !== undefined ? { defaultNetworkId: network } : {})
+    }
+    walletInstance.updateConfig(configUpdate)
   }
   return walletInstance
-}
-
-export const useWallet = () => {
-  return walletInstance
-}
-
-export const resetWallet = () => {
-  walletInstance = undefined
 }
