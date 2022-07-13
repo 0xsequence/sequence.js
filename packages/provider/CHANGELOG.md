@@ -1,5 +1,22 @@
 # @0xsequence/provider
 
+## 0.40.0
+
+### Minor Changes
+
+- add sequence.initWallet(network, config) and sequence.getWallet() helper methods
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.40.0
+  - @0xsequence/auth@0.40.0
+  - @0xsequence/config@0.40.0
+  - @0xsequence/network@0.40.0
+  - @0xsequence/transactions@0.40.0
+  - @0xsequence/utils@0.40.0
+  - @0xsequence/wallet@0.40.0
+
 ## 0.39.6
 
 ### Patch Changes

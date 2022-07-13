@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.40.0
+
+### Minor Changes
+
+- add sequence.initWallet(network, config) and sequence.getWallet() helper methods
+
 ## 0.39.6
 
 ### Patch Changes
