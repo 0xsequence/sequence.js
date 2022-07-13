@@ -29,6 +29,7 @@ import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
+import { sequence } from '../../0xsequence/src'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -91,15 +92,15 @@ export class Wallet implements WalletProvider {
   private networks: NetworkConfig[]
   private providers: { [chainId: number]: Web3Provider }
 
-  constructor(defaultNetworkId?: string | number, config?: Partial<ProviderConfig>) {
+  constructor(network?: string | number, config?: Partial<ProviderConfig>) {
     // config is a Partial, so that we may intersect it with the DefaultProviderConfig,
     // which allows easy overriding and control of the config.
     this.config = { ...DefaultProviderConfig }
     if (config) {
       this.config = { ...this.config, ...config }
     }
-    if (defaultNetworkId) {
-      this.config.defaultNetworkId = defaultNetworkId
+    if (network) {
+      this.config.defaultNetworkId = network
     } else if (!this.config.defaultNetworkId) {
       this.config.defaultNetworkId = 'mainnet'
     }
@@ -712,4 +713,21 @@ export const DefaultProviderConfig: ProviderConfig = {
     windowTransport: { enabled: true },
     proxyTransport: { enabled: false }
   }
+}
+
+let walletInstance: Wallet | undefined
+
+export const getWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
+  if (!walletInstance) {
+    walletInstance = new Wallet(network, config)
+  }
+  return walletInstance
+}
+
+export const useWallet = () => {
+  return walletInstance
+}
+
+export const resetWallet = () => {
+  walletInstance = undefined
 }
