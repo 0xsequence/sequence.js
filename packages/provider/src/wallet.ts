@@ -736,7 +736,9 @@ export const connectWallet = async (network?: string | number, options?: Connect
   if (!walletInstance) {
     walletInstance = getWallet(network, options?.walletConfig)
   }
-
+  if (network && options) {
+    options.networkId = network
+  }
   const connectDetails = await walletInstance.connect(options)
   return connectDetails
 }
