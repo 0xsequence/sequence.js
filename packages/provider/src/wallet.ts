@@ -29,22 +29,20 @@ import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill-ts'
-import { sequence } from '../../0xsequence/src'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
-  // authorize(options?: ConnectOptions): Promise<ConnectDetails>
   disconnect(): void
 
-  isOpened(): boolean
   isConnected(): boolean
   getSession(): WalletSession | undefined
-
+ 
   getAddress(): Promise<string>
   getNetworks(chainId?: ChainIdLike): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
-
+  
+  isOpened(): boolean
   openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
 
@@ -238,13 +236,23 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider.on('walletContext', (walletContext: WalletContext) => {
       this.useSession({ walletContext: walletContext }, true)
     })
+  }
 
-    // Load existing session from localStorage
-    this.loadSession().then(session => {
+  loadSession = async (): Promise<WalletSession | undefined> => {
+    const data = await LocalStorage.getInstance().getItem('@sequence.session')
+    if (!data || data === '') {
+      return undefined
+    }
+    try {
+      const session = JSON.parse(data) as WalletSession
       if (session) {
         this.useSession(session, false)
       }
-    })
+      return session
+    } catch (err) {
+      logger.warn('loadSession failed, unable to parse session payload from storage.')
+      return undefined
+    }
   }
 
   connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
@@ -549,24 +557,10 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider!.once(event, fn)
   }
 
-  private loadSession = async (): Promise<WalletSession | undefined> => {
-    const data = await LocalStorage.getInstance().getItem('@sequence.session')
-    if (!data || data === '') {
-      return undefined
-    }
-    try {
-      const session = JSON.parse(data) as WalletSession
-      return session
-    } catch (err) {
-      logger.warn('loadSession failed, unable to parse session payload from localStorage.')
-      return undefined
-    }
-  }
-
-  private saveSession = (session: WalletSession) => {
+  private saveSession = async (session: WalletSession) => {
     logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
-    LocalStorage.getInstance().setItem('@sequence.session', data)
+    await LocalStorage.getInstance().setItem('@sequence.session', data)
   }
 
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
@@ -720,11 +714,12 @@ export const DefaultProviderConfig: ProviderConfig = {
 
 let walletInstance: Wallet | undefined
 
-export const initWallet = (network?: string | number, config?: Partial<ProviderConfig>) => {
+export const initWallet = async (network?: string | number, config?: Partial<ProviderConfig>) => {
   if (walletInstance && walletInstance.isOpened()) {
     walletInstance.closeWallet()
   }
   walletInstance = new Wallet(network, config)
+  await walletInstance.loadSession()
   return walletInstance
 }
 
