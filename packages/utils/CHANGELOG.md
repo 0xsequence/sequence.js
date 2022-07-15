@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.40.2
+
+### Patch Changes
+
+- Wallet provider, loadSession method
+
 ## 0.40.1
 
 ### Patch Changes

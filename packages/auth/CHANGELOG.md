@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.40.2
+
+### Patch Changes
+
+- Wallet provider, loadSession method
+- Updated dependencies
+  - @0xsequence/abi@0.40.2
+  - @0xsequence/api@0.40.2
+  - @0xsequence/config@0.40.2
+  - @0xsequence/indexer@0.40.2
+  - @0xsequence/metadata@0.40.2
+  - @0xsequence/network@0.40.2
+  - @0xsequence/utils@0.40.2
+  - @0xsequence/wallet@0.40.2
+
 ## 0.40.1
 
 ### Patch Changes
