@@ -19,9 +19,15 @@ import {
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
-import { JsonRpcProvider, JsonRpcSigner, ExternalProvider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
-import { MuxMessageProvider, WindowMessageProvider, ProxyMessageProvider, ProxyMessageChannelPort } from './transports'
+import {
+  MuxMessageProvider,
+  WindowMessageProvider,
+  ProxyMessageProvider,
+  ProxyMessageChannelPort,
+  UnrealMessageProvider
+} from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { ethers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
@@ -36,12 +42,12 @@ export interface WalletProvider {
 
   isConnected(): boolean
   getSession(): WalletSession | undefined
- 
+
   getAddress(): Promise<string>
   getNetworks(chainId?: ChainIdLike): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
   getAuthChainId(): Promise<number>
-  
+
   isOpened(): boolean
   openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
   closeWallet(): void
@@ -85,6 +91,7 @@ export class Wallet implements WalletProvider {
     windowMessageProvider?: WindowMessageProvider
     proxyMessageProvider?: ProxyMessageProvider
     extensionMessageProvider?: ExtensionMessageProvider
+    unrealMessageProvider?: UnrealMessageProvider
   }
 
   private networks: NetworkConfig[]
@@ -146,6 +153,10 @@ export class Wallet implements WalletProvider {
       // the entire extension because messageProvider.provider will be undefined. So this is a hack to fix it.
       //
       // this.transport.messageProvider.add(this.transport.extensionMessageProvider)
+    }
+    if (this.config.transports?.unrealTransport?.enabled) {
+      this.transport.unrealMessageProvider = new UnrealMessageProvider(this.config.walletAppURL)
+      this.transport.messageProvider.add(this.transport.unrealMessageProvider)
     }
     this.transport.messageProvider.register()
 
@@ -691,6 +702,11 @@ export interface ProviderConfig {
     extensionTransport?: {
       enabled: boolean
       runtime: Runtime.Static
+    }
+
+    // Unreal Engine transport (optional)
+    unrealTransport?: {
+      enabled: boolean
     }
   }
 
