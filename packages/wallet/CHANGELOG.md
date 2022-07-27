@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.40.3
+
+### Patch Changes
+
+- provider: fix MessageToSign message type
+- Updated dependencies
+  - @0xsequence/abi@0.40.3
+  - @0xsequence/config@0.40.3
+  - @0xsequence/guard@0.40.3
+  - @0xsequence/network@0.40.3
+  - @0xsequence/relayer@0.40.3
+  - @0xsequence/transactions@0.40.3
+  - @0xsequence/utils@0.40.3
+
 ## 0.40.2
 
 ### Patch Changes
