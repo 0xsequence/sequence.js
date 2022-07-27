@@ -247,7 +247,7 @@ export type OpenWalletIntent =
   | { type: 'jsonRpcRequest'; method: string }
 
 export interface MessageToSign {
-  message?: string
+  message?: Uint8Array
   typedData?: TypedData
   chainId?: number
 }
