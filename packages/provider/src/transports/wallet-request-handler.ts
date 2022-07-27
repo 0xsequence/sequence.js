@@ -300,17 +300,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           // Message must be prefixed with "\x19Ethereum Signed Message:\n"
           // as defined by EIP-191
-          message = prefixEIP191Message(message)
+          const prefixedMessage = prefixEIP191Message(message)
 
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await signer.signMessage(ethers.utils.arrayify(message), chainId)
+            sig = await signer.signMessage(prefixedMessage, chainId)
           } else {
             const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, signer, chainId)
             if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, message }, this.connectOptions)
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, this.connectOptions)
             }
           }
 
