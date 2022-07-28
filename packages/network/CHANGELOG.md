@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.40.4
+
+### Patch Changes
+
+- add unreal transport
+- Updated dependencies
+  - @0xsequence/utils@0.40.4
+
 ## 0.40.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.40.4
+
+### Patch Changes
+
+- add unreal transport
+
 ## 0.40.3
 
 ### Patch Changes

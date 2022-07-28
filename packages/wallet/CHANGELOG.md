@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.40.4
+
+### Patch Changes
+
+- add unreal transport
+- Updated dependencies
+  - @0xsequence/abi@0.40.4
+  - @0xsequence/config@0.40.4
+  - @0xsequence/guard@0.40.4
+  - @0xsequence/network@0.40.4
+  - @0xsequence/relayer@0.40.4
+  - @0xsequence/transactions@0.40.4
+  - @0xsequence/utils@0.40.4
+
 ## 0.40.3
 
 ### Patch Changes
