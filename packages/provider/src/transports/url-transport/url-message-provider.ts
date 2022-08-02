@@ -40,7 +40,7 @@ export class UrlMessageProvider extends BaseProviderTransport {
   unregister = () => {}
 
   openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
-    console.log('url message handler......... openWallet', path, intent)
+    console.log('url message provider......... openWallet', path, intent)
 
     this._sessionId = `${performance.now()}`
 
@@ -79,7 +79,13 @@ export class UrlMessageProvider extends BaseProviderTransport {
   //   })
   // }
 
-  private buildWalletOpenUrl(sessionId: string, path?: string, intent?: OpenWalletIntent, networkId?: string | number) {
+  private buildWalletOpenUrl(
+    sessionId: string,
+    path?: string,
+    intent?: OpenWalletIntent,
+    networkId?: string | number,
+    request?: string
+  ): URL {
     const walletURL = new URL(this._walletBaseUrl)
     if (path && path !== '') {
       walletURL.pathname = path.toLowerCase()
@@ -87,8 +93,13 @@ export class UrlMessageProvider extends BaseProviderTransport {
 
     // Make sure at least the app name is forced on Mobile SDK and intent is never undefined
     walletURL.searchParams.set('sid', sessionId)
-    walletURL.searchParams.set('intent', base64EncodeObject(intent))
+    if (intent) {
+      walletURL.searchParams.set('intent', base64EncodeObject(intent))
+    }
     walletURL.searchParams.set('redirectUrl', this._redirectUrl)
+    if (request) {
+      walletURL.searchParams.set('request', request)
+    }
 
     if (networkId) {
       walletURL.searchParams.set('net', `${networkId}`)
@@ -99,14 +110,18 @@ export class UrlMessageProvider extends BaseProviderTransport {
     return walletURL
   }
 
-  // sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-  //   await this.sendMessageRequest({
-  //     idx: nextMessageIdx(),
-  //     type: EventType.MESSAGE,
-  //     data: request,
-  //     chainId: chainId
-  //   })
-  // }
+  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+    console.log('... url message provider......... sendAsync', request)
+    const encodedRequest = base64EncodeObject({
+      idx: nextMessageIdx(),
+      type: EventType.MESSAGE,
+      data: request,
+      chainId: chainId
+    })
+
+    const openUrl = this.buildWalletOpenUrl(this._sessionId!, undefined, undefined, chainId, encodedRequest)
+    this._hooks.openWallet(openUrl.href)
+  }
 
   // // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
   // sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {

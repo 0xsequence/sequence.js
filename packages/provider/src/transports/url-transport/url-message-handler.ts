@@ -35,9 +35,12 @@ export class UrlMessageHandler extends BaseWalletTransport {
     const params = new URLSearchParams(rawParams)
     const redirectUrl = params.get('redirectUrl')
     const intent = base64DecodeObject(params.get('intent')) as OpenWalletIntent
+    const request = base64DecodeObject(params.get('request')) as ProviderMessage<any>
     this._redirectUrl = redirectUrl!
 
     console.log('intent', intent)
+    console.log('request', request)
+    console.log('request data', request?.data)
 
     // TODO: ensure we have both of these, otherwise just return and skip,
     // maybe though console.warn
@@ -65,12 +68,20 @@ export class UrlMessageHandler extends BaseWalletTransport {
       // redirect?
       // window.close()
     })
+
+    if (request) {
+      const response = await this.sendMessageRequest(request)
+      this.sendMessage(response)
+      console.log('... sendMessageRequest response ...', response)
+      console.log('... sendMessageRequest response data ...', JSON.stringify(response, null, 2))
+    }
   }
 
   unregister() {}
 
   sendMessage(message: ProviderMessage<any>) {
     console.log('... sendMessage in url-message-handler ...', message)
+    console.log('... sendMessage data ...', message.data)
 
     this._messages.push(message)
     this._lastMessageAt = Date.now()
@@ -81,9 +92,12 @@ export class UrlMessageHandler extends BaseWalletTransport {
         return
       } else {
         this._lastMessageAt = 0
-        const connect = this._messages.find(m => m.type === EventType.CONNECT)
+        const connectMessage = this._messages.find(m => m.type === EventType.CONNECT)
+        const lastMessage = this._messages[this._messages.length - 1]
         const redirectUrl = new URL(this._redirectUrl)
-        redirectUrl.searchParams.set('response', base64EncodeObject(connect))
+
+        redirectUrl.searchParams.set('response', base64EncodeObject(connectMessage ?? lastMessage))
+
         window.location.href = redirectUrl.href
       }
     }, 1000)

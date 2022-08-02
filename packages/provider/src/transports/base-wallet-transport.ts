@@ -98,6 +98,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
   }
 
   handleMessage = async (message: ProviderMessage<any>) => {
+    console.log('... base-wallet-transport ... handleMessage ...', message)
+
     const request = message
 
     // ensure initial handshake is complete before accepting
@@ -161,6 +163,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
   // sendMessageRequest sends a ProviderMessageRequest to the wallet post-message transport
   sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {
+    console.log('... base-wallet-transport ... sendMessageRequest ...', message)
     return this.walletRequestHandler.sendMessageRequest(message)
   }
 
@@ -170,6 +173,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
   notifyOpen(openInfo: { chainId?: string; sessionId?: string; session?: WalletSession; error?: string }) {
     const { chainId, sessionId, session, error } = openInfo
+    console.log('... base-wallet-transport ... notifyOpen ... error?', openInfo.error)
     this.sendMessage({
       idx: -1,
       type: EventType.OPEN,
@@ -372,6 +376,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
 
     // Notify open and proceed to prompt for connection if intended
     if (!(await this.walletRequestHandler.isSignedIn())) {
+      console.log('... not signed in???')
       // open wallet without a specific connected chainId, as the user is not signed in
       this.notifyOpen({
         sessionId: this._sessionId
@@ -399,6 +404,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
         if (!chainId || chainId <= 0) {
           console.log('Failed to set default network on open')
         }
+
+        console.log('intent connect ????')
 
         // notify wallet is opened, without session details
         this.notifyOpen({
@@ -443,6 +450,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
         // user is already connected, notify session details.
         // TODO: in future, keep list if 'connected' dapps / sessions in the session
         // controller, and only sync with allowed apps
+        console.log('... already connected')
         this.notifyOpen({
           sessionId: this._sessionId,
           chainId: `${chainId}`,

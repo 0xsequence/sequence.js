@@ -39,51 +39,49 @@ export const tests = async () => {
   const provider = wallet.getProvider()
   const signer = wallet.getSigner()
 
-  const windowURL = new URL(window.location.href)
-  const response = windowURL.searchParams.get('response')
-  if (response) {
-    const decoded = base64DecodeObject(response) as ProviderMessage<any>
-    console.log('... we have a response...', decoded)
-    wallet.finalizeConnect(decoded.data as ConnectDetails)
+  const session = localStorage.getItem('@sequence.session')
 
-    await test('isConnected', async () => {
-      console.log('d isConnected', wallet.isConnected())
+  // If we have a session, test getting config
+  if (session) {
+    const sessionObj = JSON.parse(session)
+    const connectDetails: ConnectDetails = {
+      connected: true,
+      chainId: sessionObj.providerCache.eth_chainId,
+      session: sessionObj
+    }
+    wallet.finalizeConnect(connectDetails)
 
-      assert.true(wallet.isConnected(), 'is connected')
+    await test('getWalletConfig', async () => {
+      console.log('... getWalletConfig test')
+      const allWalletConfigs = await wallet.getWalletConfig()
+      console.log('allWalletConfigs', allWalletConfigs)
     })
 
-    await test('getAddress', async () => {
-      console.log('getAddress start')
-      console.log('wallet.getAddress', await wallet.getAddress())
-      const address = await signer.getAddress()
-      console.log('signer.getAddress', address)
-      assert.equal(address, ethers.utils.getAddress('0xa91Ab3C5390A408DDB4a322510A4290363efcEE9'), 'wallet address')
-    })
-
-    // await test('getWalletConfig', async () => {
-    //   console.log('start f')
-    //   const allWalletConfigs = await wallet.getWalletConfig()
-    //   console.log('allWalletConfigs')
-    // })
     return
   }
 
-  // clear it in case we're testing in browser session
-  wallet.disconnect()
+  const windowURL = new URL(window.location.href)
+  const response = windowURL.searchParams.get('response')
 
-  await test('is logged out', async () => {
-    // console.log('a')
-    assert.false(wallet.isConnected(), 'is logged out')
-  })
+  if (response) {
+    const decoded = base64DecodeObject(response) as ProviderMessage<any>
+    console.log('... we have a response...', decoded)
+    console.log('... data', JSON.stringify(decoded.data, null, 2))
 
-  await test('is disconnected', async () => {
-    // console.log('b')
-    assert.false(wallet.isConnected(), 'is disconnnected')
-  })
+    if (decoded.type === 'connect') {
+      wallet.finalizeConnect(decoded.data as ConnectDetails)
+
+      await test('isConnected', async () => {
+        console.log('d isConnected', wallet.isConnected())
+
+        assert.true(wallet.isConnected(), 'is connected')
+      })
+    }
+
+    return
+  }
 
   await test('connect / login', async () => {
-    // console.log('c')
-
     const { connected } = await wallet.connect({
       keepWalletOpened: true
     })
@@ -92,16 +90,4 @@ export const tests = async () => {
 
     assert.true(connected, 'is connected')
   })
-
-  // await test('sending a json-rpc request', async () => {
-  //   await walletProvider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
-  //     assert.true(!err, 'error is empty')
-  //     assert.true(!!resp, 'response successful')
-  //     assert.true(resp.result[0] === address, 'response address check')
-  //   })
-
-  //   const resp = await provider.send('eth_accounts', [])
-  //   assert.true(!!resp, 'response successful')
-  //   assert.true(resp[0] === address, 'response address check')
-  // })
 }
