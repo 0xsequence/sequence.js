@@ -390,6 +390,9 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
+    // log all checks below
+    console.log('this.session', this.session)
+    console.log('this.networks', this.networks)
     return (
       this.session !== undefined &&
       this.session.networks !== undefined &&
