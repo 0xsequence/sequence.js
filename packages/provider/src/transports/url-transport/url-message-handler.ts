@@ -40,7 +40,7 @@ export class UrlMessageHandler extends BaseWalletTransport {
 
     console.log('intent', intent)
     console.log('request', request)
-    console.log('request data', request?.data)
+    console.log('request data', JSON.stringify(request?.data, null, 2))
 
     // TODO: ensure we have both of these, otherwise just return and skip,
     // maybe though console.warn

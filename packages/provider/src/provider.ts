@@ -242,7 +242,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    address?: string
   ): Promise<string> {
     // Populate any ENS names (in-place)
     // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
@@ -251,7 +252,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
     return await this.provider.send(
       'eth_signTypedData_v4',
-      [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
+      [address ?? (await this.getAddress()), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
       maybeChainId(chainId) || this.defaultChainId
     )
   }
