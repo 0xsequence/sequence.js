@@ -26,7 +26,9 @@ import {
   WindowMessageProvider,
   ProxyMessageProvider,
   ProxyMessageChannelPort,
-  UnrealMessageProvider
+  UnrealMessageProvider,
+  UrlMessageProvider,
+  UrlMessageProviderHooks
 } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { ethers } from 'ethers'
@@ -89,6 +91,7 @@ export class Wallet implements WalletProvider {
     // message communication
     messageProvider?: MuxMessageProvider
     windowMessageProvider?: WindowMessageProvider
+    urlMessageProvider?: UrlMessageProvider
     proxyMessageProvider?: ProxyMessageProvider
     extensionMessageProvider?: ExtensionMessageProvider
     unrealMessageProvider?: UnrealMessageProvider
@@ -136,6 +139,14 @@ export class Wallet implements WalletProvider {
     if (this.config.transports?.windowTransport?.enabled) {
       this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
       this.transport.messageProvider.add(this.transport.windowMessageProvider)
+    }
+    if (this.config.transports?.urlTransport?.enabled) {
+      this.transport.urlMessageProvider = new UrlMessageProvider(
+        this.config.walletAppURL,
+        this.config.transports?.urlTransport?.redirectUrl,
+        this.config.transports?.urlTransport?.hooks
+      )
+      this.transport.messageProvider.add(this.transport.urlMessageProvider)
     }
     if (this.config.transports?.proxyTransport?.enabled) {
       this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort!)
@@ -690,6 +701,12 @@ export interface ProviderConfig {
     // WindowMessage transport (optional)
     windowTransport?: {
       enabled: boolean
+    }
+
+    urlTransport?: {
+      enabled: boolean
+      redirectUrl: string
+      hooks: UrlMessageProviderHooks
     }
 
     // ProxyMessage transport (optional)
