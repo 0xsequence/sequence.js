@@ -340,6 +340,20 @@ export class Wallet implements WalletProvider {
     return connectDetails
   }
 
+  finalizeConnect(connectDetails: ConnectDetails) {
+    if (connectDetails.connected) {
+      if (!!connectDetails.session) {
+        this.useSession(connectDetails.session, true)
+
+        // this.addConnectedSite(options?.origin)
+      } else {
+        throw new Error('impossible state, connect response is missing session')
+      }
+    }
+
+    return connectDetails
+  }
+
   async addConnectedSite(origin: string | undefined) {
     origin = origin || window.location.origin
 
@@ -727,8 +741,8 @@ export interface ProviderConfig {
 
     urlTransport?: {
       enabled: boolean
-      redirectUrl: string
-      hooks: UrlMessageProviderHooks
+      redirectUrl?: string
+      hooks?: UrlMessageProviderHooks
     }
 
     // ProxyMessage transport (optional)
@@ -763,7 +777,8 @@ export const DefaultProviderConfig: ProviderConfig = {
 
   transports: {
     windowTransport: { enabled: true },
-    proxyTransport: { enabled: false }
+    proxyTransport: { enabled: false },
+    urlTransport: { enabled: false }
   }
 }
 
