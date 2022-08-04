@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
+import { WalletRequestHandler, WindowMessageHandler, UrlMessageHandler } from '@0xsequence/provider'
 import { Wallet, Account } from '@0xsequence/wallet'
 import { NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
@@ -11,7 +11,7 @@ import { test, assert } from '../../utils/assert'
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 //
-// Wallet, a test wallet
+// Wallet, a test wallet, just like a super lightweight wallet-webapp
 //
 
 const main = async () => {
@@ -94,6 +94,10 @@ const main = async () => {
   // setup and register window message transport
   const windowHandler = new WindowMessageHandler(walletRequestHandler)
   windowHandler.register()
+
+  // setup and register url message transport
+  const urlMessageHandler = new UrlMessageHandler(walletRequestHandler, '/mock-wallet/mock-wallet.test.html')
+  urlMessageHandler.register()
 }
 
 main()
