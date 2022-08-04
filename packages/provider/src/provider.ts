@@ -66,7 +66,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
     return this._sender.send(method, params, chainId)
   }
 
-  request(request: { method: string; params?: Array<any>, chainId?: number }): Promise<any> {
+  request(request: { method: string; params?: Array<any>; chainId?: number }): Promise<any> {
     return this.send(request.method, request.params || [], request.chainId)
   }
 
@@ -247,7 +247,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    address?: string
   ): Promise<string> {
     // Populate any ENS names (in-place)
     // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
@@ -256,7 +257,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
     return await this.provider.send(
       'eth_signTypedData_v4',
-      [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
+      [address ?? (await this.getAddress()), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
       maybeChainId(chainId) || this.defaultChainId
     )
   }
