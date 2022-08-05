@@ -41,12 +41,13 @@ export const tests = async () => {
 
   const windowURL = new URL(window.location.href)
   const response = windowURL.searchParams.get('response')
+  const continueTest = windowURL.searchParams.get('continue')
   const decodedResponse = base64DecodeObject(response) as ProviderMessage<any>
 
   const session = localStorage.getItem('@sequence.session')
 
-  // If we have a session, test getting config
-  if (session) {
+  // If we have a session, continue with tests
+  if ((session && continueTest) || (session && response)) {
     const sessionObj = JSON.parse(session)
     const connectDetails: ConnectDetails = {
       connected: true,
@@ -54,12 +55,6 @@ export const tests = async () => {
       session: sessionObj
     }
     wallet.finalizeConnect(connectDetails)
-
-    // await test('getWalletConfig', async () => {
-    //   console.log('... getWalletConfig test')
-    //   const allWalletConfigs = await wallet.getWalletConfig()
-    //   console.log('allWalletConfigs', allWalletConfigs)
-    // })
 
     // signTypedData on defaultChain test prep
     console.log('... signTypedData on defaultChain ... prep step')
@@ -119,32 +114,33 @@ export const tests = async () => {
     return
   }
 
-  // Connect test
-  // if (response) {
+  if (!session) {
+    // Finalize connect if there is already response
+    if (response) {
+      console.log('... we have a response...', decodedResponse)
+      console.log('... data', JSON.stringify(decodedResponse.data, null, 2))
 
-  //   console.log('... we have a response...', decoded)
-  //   console.log('... data', JSON.stringify(decoded.data, null, 2))
+      if (decodedResponse.type === 'connect') {
+        wallet.finalizeConnect(decodedResponse.data as ConnectDetails)
 
-  //   if (decoded.type === 'connect') {
-  //     wallet.finalizeConnect(decoded.data as ConnectDetails)
+        await test('isConnected', async () => {
+          assert.true(wallet.isConnected(), 'is connected')
+        })
+      }
 
-  //     await test('isConnected', async () => {
-  //       console.log('d isConnected', wallet.isConnected())
+      // reset url, start with next test
+      window.location.href = windowURL.href.split(/[?#]/)[0] + '?continue=true'
 
-  //       assert.true(wallet.isConnected(), 'is connected')
-  //     })
-  //   }
-
-  //   return
-  // }
-
-  await test('connect / login', async () => {
-    const { connected } = await wallet.connect({
-      keepWalletOpened: true
-    })
-
-    console.log('sup???')
-
-    assert.true(connected, 'is connected')
-  })
+      return
+    } else {
+      // Start connect
+      await wallet.connect({ keepWalletOpened: true })
+    }
+  }
 }
+
+// await test('getWalletConfig', async () => {
+//   console.log('... getWalletConfig test')
+//   const allWalletConfigs = await wallet.getWalletConfig()
+//   console.log('allWalletConfigs', allWalletConfigs)
+// })
