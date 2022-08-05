@@ -39,6 +39,10 @@ export const tests = async () => {
   const provider = wallet.getProvider()
   const signer = wallet.getSigner()
 
+  const windowURL = new URL(window.location.href)
+  const response = windowURL.searchParams.get('response')
+  const decodedResponse = base64DecodeObject(response) as ProviderMessage<any>
+
   const session = localStorage.getItem('@sequence.session')
 
   // If we have a session, test getting config
@@ -57,75 +61,82 @@ export const tests = async () => {
     //   console.log('allWalletConfigs', allWalletConfigs)
     // })
 
-    await test('signTypedData on defaultChain', async () => {
-      const address = await wallet.getAddress()
-      console.log('... signTypedData on defaultChain ... getAddress', address)
-      const chainId = await wallet.getChainId()
-      console.log('... signTypedData on defaultChain ... getChainId', chainId)
+    // signTypedData on defaultChain test prep
+    console.log('... signTypedData on defaultChain ... prep step')
 
-      const domain: TypedDataDomain = {
-        name: 'Ether Mail',
-        version: '1',
-        chainId: chainId,
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
-      }
+    const address = await wallet.getAddress()
+    console.log('... signTypedData on defaultChain ... getAddress', address)
+    const chainId = await wallet.getChainId()
+    console.log('... signTypedData on defaultChain ... getChainId', chainId)
 
-      const types: { [key: string]: TypedDataField[] } = {
-        Person: [
-          { name: 'name', type: 'string' },
-          { name: 'wallet', type: 'address' }
-        ]
-      }
+    const domain: TypedDataDomain = {
+      name: 'Ether Mail',
+      version: '1',
+      chainId: chainId,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+    }
 
-      const message = {
-        name: 'Bob',
-        wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
-      }
+    const types: { [key: string]: TypedDataField[] } = {
+      Person: [
+        { name: 'name', type: 'string' },
+        { name: 'wallet', type: 'address' }
+      ]
+    }
 
+    const message = {
+      name: 'Bob',
+      wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+    }
+
+    if (!response) {
       console.log('... signTypedData on defaultChain ... sig step')
+      await signer.signTypedData(domain, types, message, undefined, undefined, address)
+    }
 
-      const sig = await signer.signTypedData(domain, types, message, undefined, undefined, address)
-      assert.equal(
-        sig,
-        '0x00010001c25b59035ea662350e08f41b5087fc49a98b94936826b61a226f97e400c6ce290b8dfa09e3b0df82288fbc599d5b1a023a864bbd876bc67ec1f94c5f2fc4e6101b02',
-        'signature match typed-data'
-      )
+    const sig = decodedResponse.data.result
 
-      // // Verify typed data
-      // const isValid = await wallet.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
-      // assert.true(isValid, 'signature is valid - 3')
+    if (sig) {
+      await test('signTypedData on defaultChain', async () => {
+        assert.equal(
+          sig,
+          '0x00010001c25b59035ea662350e08f41b5087fc49a98b94936826b61a226f97e400c6ce290b8dfa09e3b0df82288fbc599d5b1a023a864bbd876bc67ec1f94c5f2fc4e6101b02',
+          'signature match typed-data'
+        )
 
-      // // Recover config / address
-      // const walletConfig = await wallet.utils.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
-      // assert.true(walletConfig.address === address, 'recover address - 3')
+        // // Verify typed data
+        // const isValid = await wallet.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
+        // assert.true(isValid, 'signature is valid - 3')
 
-      // const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-      // assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
-    })
+        // // Recover config / address
+        // const walletConfig = await wallet.utils.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
+        // assert.true(walletConfig.address === address, 'recover address - 3')
 
-    return
-  }
-
-  const windowURL = new URL(window.location.href)
-  const response = windowURL.searchParams.get('response')
-
-  if (response) {
-    const decoded = base64DecodeObject(response) as ProviderMessage<any>
-    console.log('... we have a response...', decoded)
-    console.log('... data', JSON.stringify(decoded.data, null, 2))
-
-    if (decoded.type === 'connect') {
-      wallet.finalizeConnect(decoded.data as ConnectDetails)
-
-      await test('isConnected', async () => {
-        console.log('d isConnected', wallet.isConnected())
-
-        assert.true(wallet.isConnected(), 'is connected')
+        // const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
+        // assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
       })
     }
 
     return
   }
+
+  // Connect test
+  // if (response) {
+
+  //   console.log('... we have a response...', decoded)
+  //   console.log('... data', JSON.stringify(decoded.data, null, 2))
+
+  //   if (decoded.type === 'connect') {
+  //     wallet.finalizeConnect(decoded.data as ConnectDetails)
+
+  //     await test('isConnected', async () => {
+  //       console.log('d isConnected', wallet.isConnected())
+
+  //       assert.true(wallet.isConnected(), 'is connected')
+  //     })
+  //   }
+
+  //   return
+  // }
 
   await test('connect / login', async () => {
     const { connected } = await wallet.connect({

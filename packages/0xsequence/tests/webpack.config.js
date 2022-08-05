@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const port = process.env['PORT'] || 9999
 
 const appDirectory = fs.realpathSync(process.cwd())
-const resolveCwd = (relativePath) => path.resolve(appDirectory, relativePath)
+const resolveCwd = relativePath => path.resolve(appDirectory, relativePath)
 
 const resolvePackages = () => {
   const pkgs = path.resolve(fs.realpathSync(process.cwd()), '..')
@@ -21,7 +21,7 @@ const resolvePackages = () => {
 
 // Include extra sources for compilation.
 //
-// NOTE: if you experience an error in your webpack builder such as, 
+// NOTE: if you experience an error in your webpack builder such as,
 // Module parse failed: Unexpected token (11:20)
 // You may need an appropriate loader to handle this file type, currently no loaders are
 // configured to process this file. See https://webpack.js.org/concepts#loaders
@@ -34,13 +34,13 @@ const resolveExtras = [
   resolveCwd('../../node_modules/@0xsequence/wallet-contracts/gen')
 ]
 
-const resolveTestEntries = (location) => {
+const resolveTestEntries = location => {
   return fs.readdirSync(location).reduce((list, f) => {
     const n = path.join(location, f)
     if (fs.lstatSync(n).isDirectory()) {
       list.push(...resolveTestEntries(n))
     } else {
-      if (n.endsWith(".test.ts") > 0) list.push(n)
+      if (n.endsWith('.test.ts') > 0) list.push(n)
     }
     return list
   }, [])
@@ -48,26 +48,28 @@ const resolveTestEntries = (location) => {
 
 const resolveEntry = () => {
   const browserTestRoot = fs.realpathSync(path.join(process.cwd(), 'tests', 'browser'))
-  const entry = { 'lib': './src/index.ts' }
+  const entry = { lib: './src/index.ts' }
   const testEntries = resolveTestEntries(browserTestRoot)
-  testEntries.forEach(v => entry[v.slice(browserTestRoot.length+1, v.length-3)] = v)
+  testEntries.forEach(v => (entry[v.slice(browserTestRoot.length + 1, v.length - 3)] = v))
   return entry
 }
 
-const resolveHtmlPlugins = (entry) => {
+const resolveHtmlPlugins = entry => {
   const plugins = []
   for (let k in entry) {
     if (k === 'lib') continue
-    plugins.push(new HtmlWebpackPlugin({
-      inject: false,
-      filename: `${k}.html`,
-      templateContent: htmlTemplate(k)
-    }))
+    plugins.push(
+      new HtmlWebpackPlugin({
+        inject: false,
+        filename: `${k}.html`,
+        templateContent: htmlTemplate(k)
+      })
+    )
   }
   return plugins
 }
 
-const htmlTemplate = (k) => `<!doctype html>
+const htmlTemplate = k => `<!doctype html>
 <html lang="">
 <head>
   <meta charset="utf-8">
@@ -84,7 +86,19 @@ const htmlTemplate = (k) => `<!doctype html>
 <script src="/lib.js"></script>
 <script src="/${k}.js"></script>
 <script>
-  const testButton = document.getElementById('testButton')
+  const checkForResponseAndStartTest = async () => {
+    const testButton = document.getElementById('testButton')
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('response')) {
+      if (lib.tests) {
+        await lib.tests()
+        console.table(window.__testResults)
+      }
+    }
+  }
+
+  checkForResponseAndStartTest()
+
   testButton.onclick = async (e) => {
     e.preventDefault()
     if (lib.tests) {
@@ -118,12 +132,10 @@ module.exports = {
         loader: require.resolve('babel-loader'),
         options: {
           presets: ['@babel/preset-typescript'],
-          plugins: [
-            [require.resolve('@babel/plugin-proposal-class-properties'), { loose: true }]
-          ],
+          plugins: [[require.resolve('@babel/plugin-proposal-class-properties'), { loose: true }]],
           cacheCompression: false,
-          compact: false,
-        },
+          compact: false
+        }
       },
       {
         test: /\.(jpe?g|png|gif|svg)$/i,
