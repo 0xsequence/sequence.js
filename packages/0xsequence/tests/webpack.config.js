@@ -89,7 +89,7 @@ const htmlTemplate = k => `<!doctype html>
   const checkForResponseAndStartTest = async () => {
     const testButton = document.getElementById('testButton')
     const params = new URLSearchParams(window.location.search)
-    if (params.has('response')) {
+    if (params.has('response') || params.has('continue')) {
       if (lib.tests) {
         await lib.tests()
         console.table(window.__testResults)
