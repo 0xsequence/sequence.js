@@ -141,12 +141,12 @@ export class Wallet implements WalletProvider {
       this.transport.messageProvider.add(this.transport.windowMessageProvider)
     }
     if (this.config.transports?.urlTransport?.enabled) {
-      this.transport.urlMessageProvider = new UrlMessageProvider(
-        this.config.walletAppURL,
-        this.config.transports?.urlTransport?.redirectUrl,
-        this.config.transports?.urlTransport?.hooks
-      )
-      this.transport.messageProvider.add(this.transport.urlMessageProvider)
+      const redirectUrl = this.config.transports?.urlTransport?.redirectUrl
+      const hooks = this.config.transports?.urlTransport?.hooks
+      if (redirectUrl && hooks) {
+        this.transport.urlMessageProvider = new UrlMessageProvider(this.config.walletAppURL, redirectUrl, hooks)
+        this.transport.messageProvider.add(this.transport.urlMessageProvider)
+      }
     }
     if (this.config.transports?.proxyTransport?.enabled) {
       this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort!)
