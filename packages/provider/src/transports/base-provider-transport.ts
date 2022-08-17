@@ -125,6 +125,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   // handleMessage will handle message received from the remote wallet
   handleMessage(message: ProviderMessage<any>) {
+    console.log('handleMessage', message.type)
     // init incoming for initial handshake with transport.
     // always respond to INIT messages, e.g. on popup window reload
     if (message.type === EventType.INIT) {
@@ -207,19 +208,19 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         }, 500) // TODO: be smarter about timer as we're processing the response callbacks..
       }
 
-      if (!responseCallback) {
-        // NOTE: this would occur if 'idx' isn't set, which should never happen
-        // or when we register two handler, or duplicate messages with the same idx are sent,
-        // all of which should be prevented prior to getting to this point
-        throw new Error('impossible state')
-      }
+      // if (!responseCallback) {
+      //   // NOTE: this would occur if 'idx' isn't set, which should never happen
+      //   // or when we register two handler, or duplicate messages with the same idx are sent,
+      //   // all of which should be prevented prior to getting to this point
+      //   throw new Error('impossible state, no response callback for message')
+      // }
 
       // Callback to original caller
-      if (responseCallback) {
-        this.events.emit('message', message)
-        responseCallback((message as ProviderMessageResponse).data.error, message)
-        return
-      }
+      // if (responseCallback) {
+      this.events.emit('message', message)
+      // responseCallback((message as ProviderMessageResponse).data.error, message)
+      return
+      // }
     }
 
     // ACCOUNTS_CHANGED -- when a user logs in or out
@@ -266,6 +267,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // NOTIFY CONNECT -- when wallet instructs we've connected
     if (message.type === EventType.CONNECT) {
+      console.log('message.type === EventType.CONNECT')
       this.connectPayload = message.data
       this.events.emit('connect', this.connectPayload!)
     }

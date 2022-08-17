@@ -50,7 +50,7 @@ export abstract class BaseInjectedTransport extends EventEmitter {
           // NOTE: this would occur if 'idx' isn't set, which should never happen
           // or when we register two handler, or duplicate messages with the same idx are sent,
           // all of which should be prevented prior to getting to this point
-          throw new Error('impossible state')
+          throw new Error('impossible state, no response callback for message')
         }
         break
       case EventType.DISCONNECT:

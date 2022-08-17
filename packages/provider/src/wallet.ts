@@ -284,7 +284,7 @@ export class Wallet implements WalletProvider {
 
     if (
       this.isConnected() &&
-      (await this.isSiteConnected(options?.origin)) &&
+      // (await this.isSiteConnected(options?.origin)) &&
       !!this.session &&
       !options?.authorize &&
       !options?.askForEmail

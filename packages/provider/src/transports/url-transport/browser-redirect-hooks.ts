@@ -10,14 +10,5 @@ export class BrowserRedirectMessageHooks implements UrlMessageProviderHooks {
     // which will call InAppBrowser.open() etc.........
   }
 
-  // listenResponseFromRedirectUrl(callback: (response: ProviderMessage<any>) => void): void {
-  //   console.log('listenResponseFromRedirectUrl', window.location.href)
-  //   // callback({
-  //   //   idx: 1,
-  //   //   type: 'something',
-  //   //   data: {},
-  //   //   chainId: undefined,
-  //   //   origin: undefined
-  //   // })
-  // }
+  responseFromRedirectUrl = (callback: (response: string) => void): void => {}
 }

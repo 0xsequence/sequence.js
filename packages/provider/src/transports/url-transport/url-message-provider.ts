@@ -1,20 +1,12 @@
 import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
-import {
-  ProviderMessage,
-  OpenWalletIntent,
-  ProviderRpcError,
-  ProviderMessageResponse,
-  EventType,
-  ProviderMessageRequest
-} from '../../types'
-import { base64EncodeObject } from '@0xsequence/utils'
+import { ProviderMessage, OpenWalletIntent, EventType, WalletSession, InitState } from '../../types'
+import { base64DecodeObject, base64EncodeObject } from '@0xsequence/utils'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export interface UrlMessageProviderHooks {
   openWallet(walletUrl: string): void
 
-  // TODO: this is not quite right.......
-  // listenResponseFromRedirectUrl(callback: (response: ProviderMessage<any>) => void): void
+  responseFromRedirectUrl(callback: (response: string) => void): void
 }
 
 export class UrlMessageProvider extends BaseProviderTransport {
@@ -24,15 +16,18 @@ export class UrlMessageProvider extends BaseProviderTransport {
 
   constructor(walletBaseUrl: string, redirectUrl: string, hooks: UrlMessageProviderHooks) {
     super()
+    this._init = InitState.OK
     this._walletBaseUrl = walletBaseUrl
     this._redirectUrl = redirectUrl
     this._hooks = hooks
   }
 
   register = async () => {
-    // TODO: setup listener on the redirect url... so we can handle the response back....
-    // ......... handleRedirectResponse()
-    // on the deep-link which matches
+    this._hooks.responseFromRedirectUrl((response: string) => {
+      const decodedResponse = base64DecodeObject(response) as ProviderMessage<any>
+      console.log('... we have a response...', decodedResponse)
+      this.handleMessage(decodedResponse)
+    })
 
     this._registered = true
   }
@@ -69,15 +64,6 @@ export class UrlMessageProvider extends BaseProviderTransport {
 
     this._hooks.openWallet(walletUrl.toString())
   }
-
-  // sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number | undefined) => Promise<void> {
-  //   this.sendMessageRequest({
-  //     idx: nextMessageIdx(),
-  //     type: EventType.MESSAGE,
-  //     data: request,
-  //     chainId: chainId
-  //   })
-  // }
 
   private buildWalletOpenUrl(
     sessionId: string,
@@ -121,6 +107,10 @@ export class UrlMessageProvider extends BaseProviderTransport {
 
     const openUrl = this.buildWalletOpenUrl(this._sessionId!, undefined, undefined, chainId, encodedRequest)
     this._hooks.openWallet(openUrl.href)
+  }
+
+  waitUntilOpened = async (openTimeout = 0): Promise<WalletSession | undefined> => {
+    return undefined
   }
 
   // // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
