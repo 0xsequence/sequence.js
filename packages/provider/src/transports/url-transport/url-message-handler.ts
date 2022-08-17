@@ -26,9 +26,10 @@ export class UrlMessageHandler extends BaseWalletTransport {
 
   async register() {
     const { pathname, search: rawParams } = new URL(window.location.href)
-    if (pathname !== this._pathname) {
-      return
-    }
+    // TODO: do we need this?
+    // if (pathname !== this._pathname) {
+    //   return
+    // }
 
     console.log('... url message handler register ...')
 
@@ -37,7 +38,6 @@ export class UrlMessageHandler extends BaseWalletTransport {
     const intent = base64DecodeObject(params.get('intent')) as OpenWalletIntent
     const request = base64DecodeObject(params.get('request')) as ProviderMessage<any>
     this._redirectUrl = redirectUrl!
-
     console.log('intent', intent)
     console.log('request', request)
     console.log('request data', JSON.stringify(request?.data, null, 2))
@@ -100,7 +100,7 @@ export class UrlMessageHandler extends BaseWalletTransport {
 
         window.location.href = redirectUrl.href
       }
-    }, 1000)
+    }, 3000)
   }
 
   private getWindowTransportSession = (windowParams: string | undefined): TransportSession => {
