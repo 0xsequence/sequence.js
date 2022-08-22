@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/network",
-  "version": "0.40.5",
+  "version": "0.40.6",
   "description": "network sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/network",
   "source": "src/index.ts",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/utils": "^0.40.5",
+    "@0xsequence/utils": "^0.40.6",
     "@ethersproject/providers": "^5.5.1",
     "ethers": "^5.5.2"
   },

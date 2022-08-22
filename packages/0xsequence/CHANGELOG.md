@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.40.6
+
+### Patch Changes
+
+- add arbitrum-nova chain
+- Updated dependencies
+  - @0xsequence/abi@0.40.6
+  - @0xsequence/api@0.40.6
+  - @0xsequence/auth@0.40.6
+  - @0xsequence/config@0.40.6
+  - @0xsequence/guard@0.40.6
+  - @0xsequence/indexer@0.40.6
+  - @0xsequence/metadata@0.40.6
+  - @0xsequence/multicall@0.40.6
+  - @0xsequence/network@0.40.6
+  - @0xsequence/provider@0.40.6
+  - @0xsequence/relayer@0.40.6
+  - @0xsequence/transactions@0.40.6
+  - @0xsequence/utils@0.40.6
+  - @0xsequence/wallet@0.40.6
+
 ## 0.40.5
 
 ### Patch Changes

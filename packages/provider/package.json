@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/provider",
-  "version": "0.40.5",
+  "version": "0.40.6",
   "description": "provider sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/provider",
   "source": "src/index.ts",
@@ -13,13 +13,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.40.5",
-    "@0xsequence/auth": "^0.40.5",
-    "@0xsequence/config": "^0.40.5",
-    "@0xsequence/network": "^0.40.5",
-    "@0xsequence/transactions": "^0.40.5",
-    "@0xsequence/utils": "^0.40.5",
-    "@0xsequence/wallet": "^0.40.5",
+    "@0xsequence/abi": "^0.40.6",
+    "@0xsequence/auth": "^0.40.6",
+    "@0xsequence/config": "^0.40.6",
+    "@0xsequence/network": "^0.40.6",
+    "@0xsequence/transactions": "^0.40.6",
+    "@0xsequence/utils": "^0.40.6",
+    "@0xsequence/wallet": "^0.40.6",
     "@ethersproject/abstract-signer": "^5.5.0",
     "@ethersproject/hash": "^5.5.0",
     "@ethersproject/providers": "^5.5.1",
