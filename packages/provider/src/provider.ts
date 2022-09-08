@@ -66,7 +66,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
     return this._sender.send(method, params, chainId)
   }
 
-  request(request: { method: string; params?: Array<any>, chainId?: number }): Promise<any> {
+  request(request: { method: string; params?: Array<any>; chainId?: number }): Promise<any> {
     return this.send(request.method, request.params || [], request.chainId)
   }
 
@@ -429,7 +429,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
         },
         error => {
           // return checkError("sendTransaction", error, hexTx)
-          throw new Error(`sendTransaction ${error}`)
+          throw error
         }
       )
     })
