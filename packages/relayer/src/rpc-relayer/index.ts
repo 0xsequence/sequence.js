@@ -21,7 +21,14 @@ import * as proto from './relayer.gen'
 
 export { proto }
 
-const FAILED_STATUSES = [proto.ETHTxnStatus.FAILED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.DROPPED]
+const FINAL_STATUSES = [
+  proto.ETHTxnStatus.DROPPED,
+  proto.ETHTxnStatus.SUCCEEDED,
+  proto.ETHTxnStatus.PARTIALLY_FAILED,
+  proto.ETHTxnStatus.FAILED
+]
+
+const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions extends BaseRelayerOptions {
   url: string
@@ -39,32 +46,50 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     this.service = new proto.Relayer(options.url, fetchPonyfill().fetch)
   }
 
-  async waitReceipt(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<proto.GetMetaTxnReceiptReturn> {
+  async waitReceipt(
+    metaTxnHash: string | SignedTransactions,
+    wait: number = 1000,
+    maxFails: number = 5
+  ): Promise<proto.GetMetaTxnReceiptReturn> {
     if (typeof metaTxnHash !== 'string') {
       logger.info('computing id', metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
-      return this.waitReceipt(
-        computeMetaTxnHash(addressOf(metaTxnHash.config, metaTxnHash.context), metaTxnHash.chainId, ...metaTxnHash.transactions)
+
+      metaTxnHash = computeMetaTxnHash(
+        addressOf(metaTxnHash.config, metaTxnHash.context),
+        metaTxnHash.chainId,
+        ...metaTxnHash.transactions
       )
     }
 
     logger.info(`[rpc-relayer/waitReceipt] waiting for ${metaTxnHash}`)
-    let result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
 
-    // TODO: remove check for 'UNKNOWN' status when 'QUEUED' status is supported
-    // TODO: fix backend to not return literal 'null' txnReceipt
-    while (
-      !result.receipt ||
-      !result.receipt.txnReceipt ||
-      result.receipt.txnReceipt === 'null' ||
-      result.receipt.status === 'UNKNOWN' ||
-      result.receipt.status === 'QUEUED' ||
-      result.receipt.status === 'SENT'
-    ) {
-      await new Promise(r => setTimeout(r, wait))
-      result = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
+    let fails = 0
+
+    while (true) {
+      try {
+        const { receipt } = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
+
+        if (!receipt) {
+          throw new Error('missing expected receipt')
+        }
+
+        if (!receipt.txnReceipt) {
+          throw new Error('missing expected transaction receipt')
+        }
+
+        if (FINAL_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
+          return { receipt }
+        }
+      } catch (e) {
+        fails++
+
+        if (fails === maxFails) {
+          throw e
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, wait))
     }
-
-    return result
   }
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
@@ -216,8 +241,12 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return this.wait(metaTxn.txnHash)
   }
 
-  async wait(metaTxnHash: string | SignedTransactions, wait: number = 1000): Promise<TransactionResponse<RelayerTxReceipt>> {
-    const { receipt } = await this.waitReceipt(metaTxnHash, wait)
+  async wait(
+    metaTxnHash: string | SignedTransactions,
+    wait: number = 1000,
+    maxFails: number = 5
+  ): Promise<TransactionResponse<RelayerTxReceipt>> {
+    const { receipt } = await this.waitReceipt(metaTxnHash, wait, maxFails)
 
     if (!receipt.txnReceipt || FAILED_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
       throw new MetaTransactionResponseException(receipt)
