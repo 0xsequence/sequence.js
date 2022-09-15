@@ -128,66 +128,132 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     return encodeNonce(space, nonce)
   }
 
-  async wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
+  async wait(
+    metaTxnId: string | SignedTransactions,
+    timeout?: number,
+    delay: number = this.waitPollRate,
+    maxFails: number = 5
+  ): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
-      logger.info("computing id", metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
-      return this.wait(
-        computeMetaTxnHash(addressOf(metaTxnId.config, metaTxnId.context), metaTxnId.chainId, ...metaTxnId.transactions),
-        timeout
-      )
-    }
-  
-    // Transactions can only get executed on nonce change
-    // get all nonce changes and look for metaTxnIds in between logs
-    const timeoutTime = new Date().getTime() + timeout
-    let lastBlock: number = this.fromBlockLog
+      logger.info('computing id', metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
 
-    if (lastBlock < 0) {
-      const block = await this.provider.getBlockNumber()
-      lastBlock = block + lastBlock
+      metaTxnId = computeMetaTxnHash(addressOf(metaTxnId.config, metaTxnId.context), metaTxnId.chainId, ...metaTxnId.transactions)
     }
 
-    const normalMetaTxnId = metaTxnId.replace('0x', '')
+    let timedOut = false
 
-    while (new Date().getTime() < timeoutTime) {
-      const block = await this.provider.getBlockNumber()
-      const logs = await this.provider.getLogs({
-        fromBlock: Math.max(0, lastBlock - this.deltaBlocksLog),
-        toBlock: block,
-        // Nonce change event topic
-        topics: ['0x1f180c27086c7a39ea2a7b25239d1ab92348f07ca7bb59d1438fcf527568f881']
-      })
+    const retry = async <T>(f: () => Promise<T>, errorMessage: string): Promise<T> => {
+      let fails = 0
 
-      lastBlock = block
+      while (!timedOut) {
+        try {
+          return await f()
+        } catch (error) {
+          fails++
 
-      // Get receipts of all transactions
-      const txs = await Promise.all(logs.map((l) => this.provider.getTransactionReceipt(l.transactionHash)))
+          if (maxFails !== undefined && fails >= maxFails) {
+            logger.error(`giving up after ${fails} failed attempts${errorMessage ? `: ${errorMessage}` : ''}`, error)
+            throw error
+          } else {
+            logger.warn(`attempt #${fails} failed${errorMessage ? `: ${errorMessage}` : ''}`, error)
+          }
+        }
 
-      // Find a transaction with a TxExecuted log
-      const found = txs.find((tx) => tx.logs.find((l) => (
-        (
-          l.topics.length === 0 &&
-          l.data.replace('0x', '') === normalMetaTxnId
-        ) || (
-          l.topics.length === 1 &&
-          // TxFailed event topic
-          l.topics[0] === "0x3dbd1590ea96dd3253a91f24e64e3a502e1225d602a5731357bc12643070ccd7" &&
-          l.data.length >= 64 && l.data.replace('0x', '').startsWith(normalMetaTxnId) 
-        )
-      )))
-
-      // If found return that
-      if (found) {
-        return {
-          receipt: found,
-          ...await this.provider.getTransaction(found.transactionHash)
+        if (delay > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay))
         }
       }
 
-      // Otherwise wait and try again
-      await new Promise(r => setTimeout(r, this.waitPollRate))
+      throw new Error(`timed out after ${fails} failed attempts${errorMessage ? `: ${errorMessage}` : ''}`)
     }
 
-    throw new Error(`Timeout waiting for transaction receipt ${metaTxnId}`)
+    const waitReceipt = async (): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> => {
+      // Transactions can only get executed on nonce change
+      // get all nonce changes and look for metaTxnIds in between logs
+      let lastBlock: number = this.fromBlockLog
+
+      if (lastBlock < 0) {
+        const block = await retry(() => this.provider.getBlockNumber(), 'unable to get latest block number')
+        lastBlock = block + lastBlock
+      }
+
+      if (typeof metaTxnId !== 'string') {
+        throw new Error('impossible')
+      }
+
+      const normalMetaTxnId = metaTxnId.replace('0x', '')
+
+      while (!timedOut) {
+        const block = await retry(() => this.provider.getBlockNumber(), 'unable to get latest block number')
+
+        const logs = await retry(
+          () =>
+            this.provider.getLogs({
+              fromBlock: Math.max(0, lastBlock - this.deltaBlocksLog),
+              toBlock: block,
+              // Nonce change event topic
+              topics: ['0x1f180c27086c7a39ea2a7b25239d1ab92348f07ca7bb59d1438fcf527568f881']
+            }),
+          `unable to get NonceChange logs for blocks ${Math.max(0, lastBlock - this.deltaBlocksLog)} to ${block}`
+        )
+
+        lastBlock = block
+
+        // Get receipts of all transactions
+        const txs = await Promise.all(
+          logs.map(l =>
+            retry(
+              () => this.provider.getTransactionReceipt(l.transactionHash),
+              `unable to get receipt for transaction ${l.transactionHash}`
+            )
+          )
+        )
+
+        // Find a transaction with a TxExecuted log
+        const found = txs.find(tx =>
+          tx.logs.find(
+            l =>
+              (l.topics.length === 0 && l.data.replace('0x', '') === normalMetaTxnId) ||
+              (l.topics.length === 1 &&
+                // TxFailed event topic
+                l.topics[0] === '0x3dbd1590ea96dd3253a91f24e64e3a502e1225d602a5731357bc12643070ccd7' &&
+                l.data.length >= 64 &&
+                l.data.replace('0x', '').startsWith(normalMetaTxnId))
+          )
+        )
+
+        // If found return that
+        if (found) {
+          return {
+            receipt: found,
+            ...(await retry(
+              () => this.provider.getTransaction(found.transactionHash),
+              `unable to get transaction ${found.transactionHash}`
+            ))
+          }
+        }
+
+        // Otherwise wait and try again
+        if (!timedOut) {
+          await new Promise(r => setTimeout(r, delay))
+        }
+      }
+
+      throw new Error(`Timeout waiting for transaction receipt ${metaTxnId}`)
+    }
+
+    if (timeout !== undefined) {
+      return Promise.race([
+        waitReceipt(),
+        new Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }>((_, reject) =>
+          setTimeout(() => {
+            timedOut = true
+            reject(`Timeout waiting for transaction receipt ${metaTxnId}`)
+          }, timeout)
+        )
+      ])
+    } else {
+      return waitReceipt()
+    }
   }
 }

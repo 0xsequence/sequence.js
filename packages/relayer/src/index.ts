@@ -42,7 +42,10 @@ export interface Relayer {
   relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse>
 
   // wait for transaction confirmation
-  wait(metaTxnId: string | SignedTransactions, timeout: number): Promise<TransactionResponse>
+  // timeout is the maximum time to wait for the transaction response
+  // delay is the polling interval, i.e. the time to wait between requests
+  // maxFails is the maximum number of hard failures to tolerate before giving up
+  wait(metaTxnId: string | SignedTransactions, timeout?: number, delay?: number, maxFails?: number): Promise<TransactionResponse>
 }
 
 export * from './local-relayer'

@@ -47,27 +47,24 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   }
 
   async waitReceipt(
-    metaTxnHash: string | SignedTransactions,
-    wait: number = 1000,
-    maxFails: number = 5
+    metaTxnId: string | SignedTransactions,
+    delay: number = 1000,
+    maxFails: number = 5,
+    isCancelled?: () => boolean
   ): Promise<proto.GetMetaTxnReceiptReturn> {
-    if (typeof metaTxnHash !== 'string') {
-      logger.info('computing id', metaTxnHash.config, metaTxnHash.context, metaTxnHash.chainId, ...metaTxnHash.transactions)
+    if (typeof metaTxnId !== 'string') {
+      logger.info('computing id', metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
 
-      metaTxnHash = computeMetaTxnHash(
-        addressOf(metaTxnHash.config, metaTxnHash.context),
-        metaTxnHash.chainId,
-        ...metaTxnHash.transactions
-      )
+      metaTxnId = computeMetaTxnHash(addressOf(metaTxnId.config, metaTxnId.context), metaTxnId.chainId, ...metaTxnId.transactions)
     }
 
-    logger.info(`[rpc-relayer/waitReceipt] waiting for ${metaTxnHash}`)
+    logger.info(`[rpc-relayer/waitReceipt] waiting for ${metaTxnId}`)
 
     let fails = 0
 
-    while (true) {
+    while (isCancelled === undefined || !isCancelled()) {
       try {
-        const { receipt } = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnHash })
+        const { receipt } = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnId })
 
         if (!receipt) {
           throw new Error('missing expected receipt')
@@ -88,8 +85,12 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, wait))
+      if (isCancelled === undefined || !isCancelled()) {
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
     }
+
+    throw new Error(`Cancelled waiting for transaction receipt ${metaTxnId}`)
   }
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
@@ -242,11 +243,24 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   }
 
   async wait(
-    metaTxnHash: string | SignedTransactions,
-    wait: number = 1000,
+    metaTxnId: string | SignedTransactions,
+    timeout?: number,
+    delay: number = 1000,
     maxFails: number = 5
   ): Promise<TransactionResponse<RelayerTxReceipt>> {
-    const { receipt } = await this.waitReceipt(metaTxnHash, wait, maxFails)
+    let timedOut = false
+
+    const { receipt } = await (timeout !== undefined
+      ? Promise.race([
+          this.waitReceipt(metaTxnId, delay, maxFails, () => timedOut),
+          new Promise<proto.GetMetaTxnReceiptReturn>((_, reject) =>
+            setTimeout(() => {
+              timedOut = true
+              reject(`Timeout waiting for transaction receipt ${metaTxnId}`)
+            }, timeout)
+          )
+        ])
+      : this.waitReceipt(metaTxnId, delay, maxFails))
 
     if (!receipt.txnReceipt || FAILED_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
       throw new MetaTransactionResponseException(receipt)
@@ -258,7 +272,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       blockHash: txReceipt.blockHash,
       blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
       confirmations: 1,
-      from: typeof metaTxnHash === 'string' ? undefined : addressOf(metaTxnHash.config, metaTxnHash.context),
+      from: typeof metaTxnId === 'string' ? undefined : addressOf(metaTxnId.config, metaTxnId.context),
       hash: txReceipt.transactionHash,
       raw: receipt.txnReceipt,
       receipt: txReceipt, // extended type which is Sequence-specific. Contains the decoded metaTxReceipt
