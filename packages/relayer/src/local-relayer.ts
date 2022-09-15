@@ -1,4 +1,4 @@
-import { TransactionRequest } from '@ethersproject/providers'
+import { TransactionReceipt, TransactionRequest } from '@ethersproject/providers'
 import { Signer as AbstractSigner, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { SignedTransactions, Transaction, sequenceTxAbiEncode, TransactionResponse } from '@0xsequence/transactions'
@@ -57,7 +57,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     this.txnOptions = transactionRequest
   }
 
-  async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+  async relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
@@ -80,6 +80,14 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
     // txRequest.gasLimit = gasLimit
 
-    return this.signer.sendTransaction({ to, data, ...this.txnOptions })
+    const responsePromise = this.signer.sendTransaction({ to, data, ...this.txnOptions })
+
+    if (waitForReceipt) {
+      const response: TransactionResponse = await responsePromise
+      response.receipt = await response.wait()
+      return response
+    } else {
+      return responsePromise
+    }
   }
 }

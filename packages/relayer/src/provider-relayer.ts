@@ -54,7 +54,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     ...transactions: Transaction[]
   ): Promise<FeeOption[]>
 
-  abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse>
+  abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
     return (await Promise.all(transactions.map(async tx => {
