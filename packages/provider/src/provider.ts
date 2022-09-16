@@ -498,6 +498,12 @@ const hexlifyTransaction = (
     }
     result[key] = ethers.utils.hexlify((<any>transaction)[key])
   })
+  ;['delegateCall', 'revertOnError'].forEach(key => {
+    const value = (transaction as any)[key]
+    if (value !== undefined && value !== null) {
+      result[key] = value
+    }
+  })
 
   const auxiliary = <any>transaction['auxiliary']
   if (auxiliary && auxiliary.length > 0) {
