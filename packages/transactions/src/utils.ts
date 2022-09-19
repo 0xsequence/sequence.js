@@ -237,12 +237,12 @@ export async function fromTransactionish(
 
   if (Array.isArray(transaction)) {
     if (hasSequenceTransactions(transaction)) {
-      stx = transaction as Transaction[]
+      stx = flattenAuxTransactions(transaction) as Transaction[]
     } else {
       stx = await toSequenceTransactions(wallet, transaction)
     }
   } else if (isSequenceTransaction(transaction)) {
-    stx = [transaction]
+    stx = flattenAuxTransactions([transaction]) as Transaction[]
   } else {
     stx = await toSequenceTransactions(wallet, [transaction])
   }
