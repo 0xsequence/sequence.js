@@ -206,7 +206,11 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return nonce
   }
 
-  async relay(signedTxs: SignedTransactions, quote?: FeeQuote): Promise<TransactionResponse> {
+  async relay(
+    signedTxs: SignedTransactions,
+    quote?: FeeQuote,
+    waitForReceipt: boolean = true
+  ): Promise<TransactionResponse<RelayerTxReceipt>> {
     logger.info(
       `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
     )
@@ -239,7 +243,37 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
-    return this.wait(metaTxn.txnHash)
+    if (waitForReceipt) {
+      return this.wait(metaTxn.txnHash)
+    } else {
+      const response = {
+        hash: metaTxn.txnHash,
+        confirmations: 0,
+        from: walletAddress,
+        wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+      }
+
+      const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
+        if (!this.provider) {
+          throw new Error('cannot wait for receipt, relayer has no provider set')
+        }
+
+        const waitResponse = await this.wait(metaTxn.txnHash)
+        const transactionHash = waitResponse.receipt?.transactionHash
+
+        if (!transactionHash) {
+          throw new Error('cannot wait for receipt, unknown native transaction hash')
+        }
+
+        Object.assign(response, waitResponse)
+
+        return this.provider.waitForTransaction(transactionHash, confirmations)
+      }
+
+      response.wait = wait
+
+      return response as TransactionResponse
+    }
   }
 
   async wait(
