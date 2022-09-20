@@ -1,5 +1,30 @@
 # @0xsequence/metadata
 
+## 0.41.0
+
+### Minor Changes
+
+- relayer: fix Relayer.wait() interface
+
+  The interface for calling Relayer.wait() has changed. Instead of a single optional ill-defined timeout/delay parameter, there are three optional parameters, in order:
+
+  - timeout: the maximum time to wait for the transaction receipt
+  - delay: the polling interval, i.e. the time to wait between requests
+  - maxFails: the maximum number of hard failures to tolerate before giving up
+
+  Please update your codebase accordingly.
+
+- relayer: add optional waitForReceipt parameter to Relayer.relay
+
+  The behaviour of Relayer.relay() was not well-defined with respect to whether or not it waited for a receipt.
+  This change allows the caller to specify whether to wait or not, with the default behaviour being to wait.
+
+### Patch Changes
+
+- relayer: wait receipt retry logic
+- fix wrapped object error
+- provider: forward delegateCall and revertOnError transaction fields
+
 ## 0.40.6
 
 ### Patch Changes
