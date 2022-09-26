@@ -2,8 +2,7 @@ import { BigNumberish } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
-import { urlClean } from '@0xsequence/utils'
-import { createNetworkConfig } from './utils'
+import { stringTemplate } from './utils'
 
 export enum ChainId {
   // Ethereum
@@ -77,6 +76,10 @@ export type BlockExplorerConfig = {
   addressUrl?: string
   txnHashUrl?: string
 }
+
+export const indexerURL = (network: string) => stringTemplate('https://${network}-indexer.sequence.app', { network: network })
+export const relayerURL = (network: string) => stringTemplate('https://${network}-relayer.sequence.app', { network: network })
+export const nodesURL = (network: string) => stringTemplate('https://nodes.sequence.app/${network}', { network: network })
 
 export const networks: Record<ChainId, NetworkConfig> = {
   [ChainId.MAINNET]: {
@@ -282,51 +285,73 @@ export const networks: Record<ChainId, NetworkConfig> = {
 
 export type ChainIdLike = NetworkConfig | BigNumberish
 
-export type NetworksBuilder = (vars: { [key: string]: any }) => NetworkConfig[]
-
-export const mainnetNetworks = createNetworkConfig(
-  (vars: { [key: string]: any }) => [
-    {
-      ...networks[ChainId.MAINNET],
-      ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-      rpcUrl: urlClean(`${vars.baseRpcUrl}/mainnet`),
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/mainnet`) },
-      isDefaultChain: true
-    },
-    {
-      ...networks[ChainId.POLYGON],
-      rpcUrl: 'https://rpc-mainnet.matic.network',
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/matic`) },
-      isAuthChain: true
-    }
-  ],
-  1,
+export const mainnetNetworks = [
   {
-    baseRpcUrl: 'https://nodes.sequence.app',
-    baseRelayerUrl: 'https://relayers.sequence.app'
-  }
-)
-
-export const testnetNetworks = createNetworkConfig(
-  (vars: { [key: string]: any }) => [
-    {
-      ...networks[ChainId.RINKEBY],
-      ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-      rpcUrl: urlClean(`${vars.baseRpcUrl}/rinkeby`),
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/rinkeby`) },
-      isDefaultChain: true
-    },
-    {
-      ...networks[ChainId.GOERLI],
-      ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-      rpcUrl: urlClean(`${vars.baseRpcUrl}/goerli`),
-      relayer: { url: urlClean(`${vars.baseRelayerUrl}/goerli`) },
-      isAuthChain: true
-    }
-  ],
-  undefined,
+    ...networks[ChainId.MAINNET],
+    rpcUrl: nodesURL('mainnet'),
+    relayer: { url: relayerURL('mainnet') },
+    indexerUrl: indexerURL('mainnet')
+  },
   {
-    baseRpcUrl: 'https://nodes.sequence.app',
-    baseRelayerUrl: 'https://relayers.sequence.app'
+    ...networks[ChainId.POLYGON],
+    rpcUrl: nodesURL('polygon'),
+    relayer: { url: relayerURL('polygon') },
+    indexerUrl: indexerURL('polygon'),
+    isDefaultChain: true,
+    isAuthChain: true
+  },
+  {
+    ...networks[ChainId.BSC],
+    rpcUrl: nodesURL('bsc'),
+    indexerUrl: indexerURL('bsc'),
+    relayer: { url: relayerURL('bsc') }
+  },
+  {
+    ...networks[ChainId.AVALANCHE],
+    rpcUrl: nodesURL('avalanche'),
+    indexerUrl: indexerURL('avalanche'),
+    relayer: { url: relayerURL('avalanche') }
+  },
+  {
+    ...networks[ChainId.ARBITRUM],
+    rpcUrl: nodesURL('arbitrum'),
+    indexerUrl: indexerURL('arbitrum'),
+    relayer: { url: relayerURL('arbitrum') }
+  },
+  {
+    ...networks[ChainId.ARBITRUM_NOVA],
+    rpcUrl: nodesURL('arbitrum-nova'),
+    indexerUrl: indexerURL('arbitrum-nova'),
+    relayer: { url: relayerURL('arbitrum-nova') }
+  },
+  {
+    ...networks[ChainId.OPTIMISM],
+    rpcUrl: nodesURL('optimism'),
+    indexerUrl: indexerURL('optimism'),
+    relayer: { url: relayerURL('optimism') }
   }
-)
+]
+
+export const testnetNetworks = [
+  {
+    ...networks[ChainId.RINKEBY],
+    chainId: ChainId.RINKEBY,
+    rpcUrl: nodesURL('rinkeby'),
+    relayer: { url: relayerURL('rinkeby') },
+    indexerUrl: indexerURL('rinkeby')
+  },
+  {
+    ...networks[ChainId.POLYGON_MUMBAI],
+    rpcUrl: nodesURL('mumbai'),
+    relayer: { url: relayerURL('mumbai') },
+    indexerUrl: indexerURL('mumbai'),
+    isDefaultChain: true,
+    isAuthChain: true
+  },
+  {
+    ...networks[ChainId.BSC_TESTNET],
+    rpcUrl: nodesURL('bsc-testnet'),
+    relayer: { url: relayerURL('bsc-testnet') },
+    indexerUrl: indexerURL('bsc-testnet')
+  }
+]

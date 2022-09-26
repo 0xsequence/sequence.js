@@ -12,6 +12,5 @@ export type {
   NetworkConfig,
   ChainId,
   ChainIdLike,
-  NetworksBuilder,
   WalletContext
 } from '@0xsequence/network'

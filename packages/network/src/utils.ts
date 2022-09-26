@@ -1,6 +1,6 @@
 import { ethers, BigNumberish } from 'ethers'
 import { ChainIdLike } from '.'
-import { NetworkConfig, NetworksBuilder } from './config'
+import { NetworkConfig } from './config'
 
 export function isNetworkConfig(cand: any): cand is NetworkConfig {
   return cand && cand.chainId !== undefined && cand.name !== undefined && cand.rpcUrl !== undefined && cand.relayer !== undefined
@@ -156,21 +156,10 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
   // }
 }
 
-export const createNetworkConfig = (
-  networks: NetworkConfig[] | NetworksBuilder,
-  defaultChainId?: number,
-  vars?: { [key: string]: any }
-): NetworkConfig[] => {
-  let config: NetworkConfig[] = []
-  if (typeof networks === 'function' && vars) {
-    config = networks(vars)
-  } else {
-    config = networks as NetworkConfig[]
-  }
-
+export const createNetworkConfig = (networks: NetworkConfig[], defaultChainId?: number): NetworkConfig[] => {
   if (defaultChainId) {
-    config.forEach(n => (n.isDefaultChain = false))
-    const mainNetwork = config.filter(n => n.chainId === defaultChainId)
+    networks.forEach(n => (n.isDefaultChain = false))
+    const mainNetwork = networks.filter(n => n.chainId === defaultChainId)
     if (!mainNetwork || mainNetwork.length === 0) {
       throw new Error(`defaultChainId ${defaultChainId} cannot be found in network list`)
     } else {
@@ -178,7 +167,7 @@ export const createNetworkConfig = (
     }
   }
 
-  return ensureValidNetworks(sortNetworks(config))
+  return ensureValidNetworks(sortNetworks(networks))
 }
 
 export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
@@ -234,4 +223,24 @@ export const sortNetworks = (networks: NetworkConfig[]): NetworkConfig[] => {
   if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
 
   return config
+}
+
+export const stringTemplate = (sTemplate: string, mData: any) => {
+  if (typeof sTemplate === 'string') {
+    mData = mData ? mData : {}
+    return sTemplate.replace(/\$\{\s*([$#@\-\d\w]+)\s*\}/gim, function (fullMath, grp) {
+      let val = mData[grp]
+      if (typeof val === 'function') {
+        val = val()
+      } else if (val === null || val === undefined) {
+        val = ''
+      } else if (typeof val === 'object' || typeof val === 'symbol') {
+        val = val.toString()
+      } else {
+        val = val.valueOf()
+      }
+      return val
+    })
+  }
+  return ''
 }
