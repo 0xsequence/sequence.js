@@ -51,7 +51,6 @@ export interface NetworkConfig {
   title?: string
   name: string
   chainId: number
-  ensAddress?: string
   testnet?: boolean
 
   blockExplorer?: BlockExplorerConfig

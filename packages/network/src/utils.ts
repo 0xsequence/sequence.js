@@ -144,9 +144,6 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
   if (src.relayer) {
     dest.relayer = src.relayer
   }
-  if (src.ensAddress) {
-    dest.ensAddress = src.ensAddress
-  }
   // NOTE: we do not set default or auth chain from here
   // if (src.isDefaultChain) {
   //   dest.isDefaultChain = src.isDefaultChain
