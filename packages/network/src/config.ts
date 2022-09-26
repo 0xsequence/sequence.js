@@ -2,7 +2,7 @@ import { BigNumberish } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
-import { stringTemplate } from './utils'
+import { stringTemplate, validateAndSortNetworks } from './utils'
 
 export enum ChainId {
   // Ethereum
@@ -285,7 +285,7 @@ export const networks: Record<ChainId, NetworkConfig> = {
 
 export type ChainIdLike = NetworkConfig | BigNumberish
 
-export const mainnetNetworks = [
+export const mainnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.MAINNET],
     rpcUrl: nodesURL('mainnet'),
@@ -330,9 +330,9 @@ export const mainnetNetworks = [
     indexerUrl: indexerURL('optimism'),
     relayer: { url: relayerURL('optimism') }
   }
-]
+])
 
-export const testnetNetworks = [
+export const testnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.RINKEBY],
     chainId: ChainId.RINKEBY,
@@ -354,4 +354,4 @@ export const testnetNetworks = [
     relayer: { url: relayerURL('bsc-testnet') },
     indexerUrl: indexerURL('bsc-testnet')
   }
-]
+])

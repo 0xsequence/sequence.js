@@ -156,17 +156,7 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
   // }
 }
 
-export const createNetworkConfig = (networks: NetworkConfig[], defaultChainId?: number): NetworkConfig[] => {
-  if (defaultChainId) {
-    networks.forEach(n => (n.isDefaultChain = false))
-    const mainNetwork = networks.filter(n => n.chainId === defaultChainId)
-    if (!mainNetwork || mainNetwork.length === 0) {
-      throw new Error(`defaultChainId ${defaultChainId} cannot be found in network list`)
-    } else {
-      mainNetwork[0].isDefaultChain = true
-    }
-  }
-
+export const validateAndSortNetworks = (networks: NetworkConfig[]) => {
   return ensureValidNetworks(sortNetworks(networks))
 }
 
