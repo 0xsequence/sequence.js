@@ -334,10 +334,15 @@ export const mainnetNetworks = validateAndSortNetworks([
 export const testnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.RINKEBY],
-    chainId: ChainId.RINKEBY,
     rpcUrl: nodesURL('rinkeby'),
     relayer: { url: relayerURL('rinkeby') },
     indexerUrl: indexerURL('rinkeby')
+  },
+  {
+    ...networks[ChainId.GOERLI],
+    rpcUrl: nodesURL('goerli'),
+    relayer: { url: relayerURL('goerli') },
+    indexerUrl: indexerURL('goerli')
   },
   {
     ...networks[ChainId.POLYGON_MUMBAI],
