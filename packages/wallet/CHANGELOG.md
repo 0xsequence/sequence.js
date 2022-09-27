@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.41.2
+
+### Patch Changes
+
+- api bindings update
+- Updated dependencies
+  - @0xsequence/abi@0.41.2
+  - @0xsequence/config@0.41.2
+  - @0xsequence/guard@0.41.2
+  - @0xsequence/network@0.41.2
+  - @0xsequence/relayer@0.41.2
+  - @0xsequence/transactions@0.41.2
+  - @0xsequence/utils@0.41.2
+
 ## 0.41.1
 
 ### Patch Changes

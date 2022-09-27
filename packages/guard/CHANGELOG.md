@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.41.2
+
+### Patch Changes
+
+- api bindings update
+
 ## 0.41.1
 
 ### Patch Changes
