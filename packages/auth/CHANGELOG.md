@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.41.1
+
+### Patch Changes
+
+- update default networks
+- Updated dependencies
+  - @0xsequence/abi@0.41.1
+  - @0xsequence/api@0.41.1
+  - @0xsequence/config@0.41.1
+  - @0xsequence/indexer@0.41.1
+  - @0xsequence/metadata@0.41.1
+  - @0xsequence/network@0.41.1
+  - @0xsequence/utils@0.41.1
+  - @0xsequence/wallet@0.41.1
+
 ## 0.41.0
 
 ### Minor Changes

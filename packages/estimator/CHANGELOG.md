@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.41.1
+
+### Patch Changes
+
+- update default networks
+- Updated dependencies
+  - @0xsequence/abi@0.41.1
+  - @0xsequence/config@0.41.1
+  - @0xsequence/network@0.41.1
+  - @0xsequence/transactions@0.41.1
+  - @0xsequence/utils@0.41.1
+
 ## 0.41.0
 
 ### Minor Changes

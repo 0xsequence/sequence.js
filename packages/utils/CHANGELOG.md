@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.41.1
+
+### Patch Changes
+
+- update default networks
+
 ## 0.41.0
 
 ### Minor Changes
