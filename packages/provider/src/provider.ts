@@ -173,7 +173,6 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   getRelayer(chainId?: number): Promise<Relayer | undefined> {
     // TODO: JsonRpcRelayer ......? or, Web3Relayer.. or SequenceRelayer?
-    // sequence_estimateGasLimits
     // sequence_gasRefundOptions
     // sequence_getNonce
     // sequence_relay

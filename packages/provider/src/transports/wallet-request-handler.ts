@@ -550,12 +550,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         // relayer method
-        case 'sequence_estimateGasLimits': {
-          // TODO
-          break
-        }
-
-        // relayer method
         case 'sequence_gasRefundOptions': {
           // TODO
           break

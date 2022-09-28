@@ -88,19 +88,9 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     }))).map(gasLimit => ({
       executed: true,
       succeeded: true,
-      gasLimit: ethers.BigNumber.from(gasLimit).toNumber(),
-      gasUsed: ethers.BigNumber.from(gasLimit).toNumber()
+      gasUsed: ethers.BigNumber.from(gasLimit).toNumber(),
+      gasLimit: ethers.BigNumber.from(gasLimit).toNumber()
     }))
-  }
-
-  async estimateGasLimits(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<Transaction[]> {
-    const walletAddr = addressOf(config, context)
-    const results = await this.simulate(walletAddr, ...transactions)
-    return transactions.map((t, i) => ({ ...t, gasLimit: results[i].gasLimit }))
   }
 
   async getNonce(

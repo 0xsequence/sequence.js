@@ -1076,8 +1076,8 @@ describe('Wallet integration', function () {
         }
 
         const stx = await toSequenceTransaction(wallet, transaction)
-        const estimated = await relayer.estimateGasLimits(wallet.config, context, stx)
-        const gasLimits = estimated.map(transaction => ethers.BigNumber.from(transaction.gasLimit).toNumber())
+        const results = await relayer.simulate(wallet.address, stx)
+        const gasLimits = results.map(result => result.gasLimit)
         expect(gasLimits[0]).to.be.above(60000)
         expect(gasLimits[0]).to.be.below(100000)
       })
@@ -1095,8 +1095,8 @@ describe('Wallet integration', function () {
         }
 
         const stx = await toSequenceTransaction(wallet, transaction)
-        const estimated = await relayer.estimateGasLimits(wallet.config, context, stx)
-        const gasLimits = estimated.map(transaction => ethers.BigNumber.from(transaction.gasLimit).toNumber())
+        const results = await relayer.simulate(wallet.address, stx)
+        const gasLimits = results.map(result => result.gasLimit)
         expect(gasLimits[0]).to.be.above(390000)
         expect(gasLimits[0]).to.be.below(400000)
       })
@@ -1124,8 +1124,8 @@ describe('Wallet integration', function () {
         ]
 
         const stxs = await toSequenceTransactions(wallet, transactions)
-        const estimated = await relayer.estimateGasLimits(wallet.config, context, ...stxs)
-        const gasLimits = estimated.map(transaction => ethers.BigNumber.from(transaction.gasLimit).toNumber())
+        const results = await relayer.simulate(wallet.address, ...stxs)
+        const gasLimits = results.map(result => result.gasLimit)
         expect(gasLimits[0]).to.be.above(390000)
         expect(gasLimits[0]).to.be.below(400000)
         expect(gasLimits[1]).to.be.above(60000)
