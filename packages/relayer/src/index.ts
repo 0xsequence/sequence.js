@@ -8,14 +8,6 @@ export interface Relayer {
   // simulate returns the execution results for a list of transactions.
   simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]>
 
-  // estimateGasLimits will estimate the gas utilization from the transaction
-  // before submission.
-  estimateGasLimits(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<Transaction[]>
-
   // getFeeOptions returns the fee options that the relayer will accept as payment.
   // If a quote is returned, it may be passed back to the relayer for dispatch.
   getFeeOptions(
@@ -72,7 +64,6 @@ export function isRelayer(cand: any): cand is Relayer {
   return (
     typeof cand === 'object' &&
     typeof cand.simulate === 'function' &&
-    typeof cand.estimateGasLimits === 'function' &&
     typeof cand.getFeeOptions === 'function' &&
     typeof cand.gasRefundOptions === 'function' &&
     typeof cand.getNonce === 'function' &&

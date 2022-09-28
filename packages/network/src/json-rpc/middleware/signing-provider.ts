@@ -5,7 +5,7 @@ export const SignerJsonRpcMethods = [
   'eth_sendTransaction', 'eth_sendRawTransaction',
   
   'sequence_getWalletContext', 'sequence_getWalletConfig', 'sequence_getWalletState', 'sequence_getNetworks',
-  'sequence_updateConfig', 'sequence_publishConfig', 'sequence_estimateGasLimits', 'sequence_gasRefundOptions',
+  'sequence_updateConfig', 'sequence_publishConfig', 'sequence_gasRefundOptions',
   'sequence_getNonce', 'sequence_relay',
 
   'eth_decrypt', 'eth_getEncryptionPublicKey',

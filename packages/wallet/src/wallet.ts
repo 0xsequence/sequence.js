@@ -341,10 +341,14 @@ export class Wallet extends Signer {
     // Convert Transactionish into Sequence transactions
     let stx = await fromTransactionish(this.context, this.address, transaction)
 
-    // If a transaction has 0 gasLimit and not revertOnError
-    // compute all new gas limits
-    if (stx.find(a => !a.revertOnError && ethers.BigNumber.from(a.gasLimit || 0).eq(ethers.constants.Zero))) {
-      stx = await this.relayer.estimateGasLimits(this.config, this.context, ...stx)
+    // Fill missing gas limits via simulation if needed
+    if (stx.some(transaction => transaction.gasLimit === undefined)) {
+      const results = await this.relayer.simulate(this.address, ...stx)
+      for (const i in stx) {
+        if (stx[i].gasLimit === undefined) {
+          stx[i].gasLimit = results[i].gasLimit
+        }
+      }
     }
 
     // If provided nonce append it to all other transactions
