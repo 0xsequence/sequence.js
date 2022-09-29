@@ -350,6 +350,24 @@ jobs:
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/relayer/ && yarn test
 
+  tests-simulator:
+    name: Run simulator tests
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - uses: actions/cache@master
+        id: yarn-cache
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
+      - run: yarn dev && cd packages/simulator/ && yarn test
+
   tests-transactions:
     name: Run transactions tests
     runs-on: ubuntu-latest
