@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.41.3
+
+### Patch Changes
+
+- api bindings update
+
 ## 0.41.2
 
 ### Patch Changes

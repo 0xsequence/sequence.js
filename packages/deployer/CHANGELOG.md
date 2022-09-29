@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.41.3
+
+### Patch Changes
+
+- api bindings update
+- Updated dependencies
+  - @0xsequence/utils@0.41.3
+
 ## 0.41.2
 
 ### Patch Changes
