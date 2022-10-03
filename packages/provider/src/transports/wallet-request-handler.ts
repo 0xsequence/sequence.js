@@ -367,6 +367,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // https://eth.wiki/json-rpc/API#eth_sendtransaction
           const [transactionParams] = request.params!
 
+          // eth_sendTransaction uses 'gas'
+          // ethers and sequence use 'gasLimit'
+          if ('gas' in transactionParams && transactionParams.gasLimit === undefined) {
+            transactionParams.gasLimit = transactionParams.gas
+            delete transactionParams.gas
+          }
+
           let txnHash = ''
           if (this.prompter === null) {
             // prompter is null, so we'll send from here
