@@ -56,19 +56,25 @@ export async function toSequenceTransactions(
   return Promise.all(allTxs.map(tx => toSequenceTransaction(wallet, tx, revertOnError, gasLimit, nonce)))
 }
 
-export function flattenAuxTransactions(txs: (Transactionish | Transactionish)[]): (TransactionRequest | Transaction)[] {
-  if (!Array.isArray(txs)) return flattenAuxTransactions([txs])
-  return txs.reduce(function (p: Transactionish[], c: Transactionish) {
-    if (Array.isArray(c)) {
-      return p.concat(flattenAuxTransactions(c))
-    }
+export function flattenAuxTransactions(txs: Transactionish | Transactionish[]): (TransactionRequest | Transaction)[] {
+  if (!Array.isArray(txs)) {
+    if ('auxiliary' in txs) {
+      const aux = txs.auxiliary
 
-    if ((<TransactionRequest>c).auxiliary) {
-      return p.concat([c, ...flattenAuxTransactions((<TransactionRequest>c).auxiliary!)])
-    }
+      const tx = { ...txs }
+      delete tx.auxiliary
 
-    return p.concat(c)
-  }, []) as (TransactionRequest | Transaction)[]
+      if (aux) {
+        return [tx, ...flattenAuxTransactions(aux)]
+      } else {
+        return [tx]
+      }
+    } else {
+      return [txs]
+    }
+  }
+
+  return txs.flatMap(flattenAuxTransactions)
 }
 
 export async function toSequenceTransaction(
