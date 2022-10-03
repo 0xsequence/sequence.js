@@ -482,14 +482,15 @@ const hexlifyTransaction = (
 
   // Some nodes (INFURA ropsten; INFURA mainnet is fine) do not like leading zeros.
   ;['gasLimit', 'gasPrice', 'nonce', 'value'].forEach(key => {
-    if (!(<any>transaction)[key]) {
+    const value = (transaction as any)[key]
+    if (value === null || value === undefined) {
       return
     }
-    const value = ethers.utils.hexValue((<any>transaction)[key])
+    const hexValue = ethers.utils.hexValue(value)
     if (key === 'gasLimit') {
       key = 'gas'
     }
-    result[key] = value
+    result[key] = hexValue
   })
   ;['from', 'to', 'data'].forEach(key => {
     if (!(<any>transaction)[key]) {
