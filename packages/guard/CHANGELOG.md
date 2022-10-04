@@ -1,5 +1,18 @@
 # @0xsequence/guard
 
+## 0.42.0
+
+### Minor Changes
+
+- relayer: estimateGasLimits -> simulate
+- add simulator package
+
+### Patch Changes
+
+- transactions: fix flattenAuxTransactions
+- provider: only filter nullish values
+- provider: re-map transaction 'gas' back to 'gasLimit'
+
 ## 0.41.3
 
 ### Patch Changes
