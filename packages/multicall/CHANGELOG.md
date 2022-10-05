@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.42.1
+
+### Patch Changes
+
+- wallet: optional waitForReceipt parameter
+- Updated dependencies
+  - @0xsequence/abi@0.42.1
+  - @0xsequence/network@0.42.1
+  - @0xsequence/utils@0.42.1
+
 ## 0.42.0
 
 ### Minor Changes

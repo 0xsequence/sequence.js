@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.42.1
+
+### Patch Changes
+
+- wallet: optional waitForReceipt parameter
+- Updated dependencies
+  - @0xsequence/abi@0.42.1
+  - @0xsequence/api@0.42.1
+  - @0xsequence/config@0.42.1
+  - @0xsequence/indexer@0.42.1
+  - @0xsequence/metadata@0.42.1
+  - @0xsequence/network@0.42.1
+  - @0xsequence/utils@0.42.1
+  - @0xsequence/wallet@0.42.1
+
 ## 0.42.0
 
 ### Minor Changes
