@@ -297,7 +297,8 @@ export class Wallet extends Signer {
     chainId?: ChainIdLike,
     allSigners?: boolean,
     quote?: FeeQuote,
-    callback?: SignedTransactionsCallback
+    callback?: SignedTransactionsCallback,
+    waitForReceipt?: boolean
   ): Promise<TransactionResponse> {
     const signedTxs = await this.signTransactions(transaction, chainId, allSigners)
     if (callback) {
@@ -305,7 +306,7 @@ export class Wallet extends Signer {
       const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
       callback(signedTxs, metaTxnHash)
     }
-    return this.relayer.relay(signedTxs, quote)
+    return this.relayer.relay(signedTxs, quote, waitForReceipt)
   }
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
@@ -314,9 +315,10 @@ export class Wallet extends Signer {
     chainId?: ChainIdLike,
     allSigners: boolean = true,
     quote?: FeeQuote,
-    callback?: SignedTransactionsCallback
+    callback?: SignedTransactionsCallback,
+    waitForReceipt?: boolean
   ): Promise<TransactionResponse> {
-    return this.sendTransaction(transactions, chainId, allSigners, quote, callback)
+    return this.sendTransaction(transactions, chainId, allSigners, quote, callback, waitForReceipt)
   }
 
   // signTransactions will sign a Sequence transaction with the wallet signers
@@ -546,13 +548,17 @@ export class Wallet extends Signer {
     publish = false,
     indexed?: boolean,
     quote?: FeeQuote,
-    callback?: SignedTransactionsCallback
+    callback?: SignedTransactionsCallback,
+    waitForReceipt?: boolean
   ): Promise<[WalletConfig, TransactionResponse]> {
     if (!config) config = this.config
 
     const [txs, n] = await Promise.all([this.buildUpdateConfigTransaction(config, publish, indexed), nonce ?? this.getNonce()])
 
-    return [{ address: this.address, ...config }, await this.sendTransaction(appendNonce(txs, n), undefined, undefined, quote, callback)]
+    return [
+      { address: this.address, ...config },
+      await this.sendTransaction(appendNonce(txs, n), undefined, undefined, quote, callback, waitForReceipt)
+    ]
   }
 
   // publishConfig will publish the current wallet config to the network via the relayer.
@@ -562,7 +568,8 @@ export class Wallet extends Signer {
     nonce?: number,
     requireFreshSigners: string[] = [],
     quote?: FeeQuote,
-    callback?: SignedTransactionsCallback
+    callback?: SignedTransactionsCallback,
+    waitForReceipt?: boolean
   ): Promise<TransactionResponse> {
     return this.sendTransaction(
       this.config.address
@@ -571,7 +578,8 @@ export class Wallet extends Signer {
       undefined,
       undefined,
       quote,
-      callback
+      callback,
+      waitForReceipt
     )
   }
 
