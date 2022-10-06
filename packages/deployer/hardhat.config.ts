@@ -23,8 +23,8 @@ module.exports = {
     tests: './src/tests'
   },
   networks: {
-    rinkeby: networkConfig('rinkeby'),
-    kovan: networkConfig('kovan'),
+    // rinkeby: networkConfig('rinkeby'),
+    // kovan: networkConfig('kovan'),
     goerli: networkConfig('goerli'),
     mumbai: networkConfig('mumbai'),
     matic: networkConfig('matic'),

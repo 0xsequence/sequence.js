@@ -67,6 +67,9 @@ export interface NetworkConfig {
 
   // isAuthChain identifies the network containing wallet config contents.
   isAuthChain?: boolean
+
+  // Disabled / deprecated chain
+  disabled?: boolean
 }
 
 export type BlockExplorerConfig = {
@@ -108,7 +111,8 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Etherscan (Rinkeby)',
       rootUrl: 'https://rinkeby.etherscan.io/'
-    }
+    },
+    disabled: true
   },
   [ChainId.GOERLI]: {
     chainId: ChainId.GOERLI,
