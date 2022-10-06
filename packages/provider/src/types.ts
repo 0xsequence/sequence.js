@@ -143,6 +143,9 @@ export interface ConnectOptions {
   /** app name of the dapp which will be announced to user on connect screen */
   app?: string
 
+  /** custom protocol for auth redirect (unity/unreal) */
+  appProtocol?: string
+
   /** origin hint of the dapp's host opening the wallet. This value will automatically
    * be determined and verified for integrity, and can be omitted. */
   origin?: string
