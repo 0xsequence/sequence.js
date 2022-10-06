@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.42.2
+
+### Patch Changes
+
+- disable rinkeby network
+
 ## 0.42.1
 
 ### Patch Changes

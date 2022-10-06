@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.42.2
+
+### Patch Changes
+
+- disable rinkeby network
+- Updated dependencies
+  - @0xsequence/utils@0.42.2
+
 ## 0.42.1
 
 ### Patch Changes

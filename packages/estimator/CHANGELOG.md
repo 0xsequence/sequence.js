@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.42.2
+
+### Patch Changes
+
+- disable rinkeby network
+- Updated dependencies
+  - @0xsequence/abi@0.42.2
+  - @0xsequence/config@0.42.2
+  - @0xsequence/network@0.42.2
+  - @0xsequence/transactions@0.42.2
+  - @0xsequence/utils@0.42.2
+
 ## 0.42.1
 
 ### Patch Changes

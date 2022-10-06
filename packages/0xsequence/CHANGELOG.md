@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.42.2
+
+### Patch Changes
+
+- disable rinkeby network
+- Updated dependencies
+  - @0xsequence/abi@0.42.2
+  - @0xsequence/api@0.42.2
+  - @0xsequence/auth@0.42.2
+  - @0xsequence/config@0.42.2
+  - @0xsequence/guard@0.42.2
+  - @0xsequence/indexer@0.42.2
+  - @0xsequence/metadata@0.42.2
+  - @0xsequence/multicall@0.42.2
+  - @0xsequence/network@0.42.2
+  - @0xsequence/provider@0.42.2
+  - @0xsequence/relayer@0.42.2
+  - @0xsequence/transactions@0.42.2
+  - @0xsequence/utils@0.42.2
+  - @0xsequence/wallet@0.42.2
+
 ## 0.42.1
 
 ### Patch Changes
