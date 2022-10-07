@@ -42,7 +42,7 @@ export async function toSequenceTransactions(
   wallet: Signer | string,
   txs: (Transaction | TransactionRequest)[],
   revertOnError: boolean = false,
-  gasLimit: BigNumberish = ethers.constants.Zero
+  gasLimit?: BigNumberish
 ): Promise<Transaction[]> {
   // Bundles all transactions, including the auxiliary ones
   const allTxs = flattenAuxTransactions(txs)
@@ -81,7 +81,7 @@ export async function toSequenceTransaction(
   wallet: Signer | string,
   tx: TransactionRequest | Transaction,
   revertOnError: boolean = false,
-  gasLimit: BigNumberish = ethers.constants.Zero,
+  gasLimit?: BigNumberish,
   nonce?: BigNumberish
 ): Promise<Transaction> {
   if (isSequenceTransaction(tx)) {
