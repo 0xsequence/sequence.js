@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.42.5
+
+### Patch Changes
+
+- relayer: don't treat missing receipt as hard failure
+- Updated dependencies
+  - @0xsequence/utils@0.42.5
+
 ## 0.42.4
 
 ### Patch Changes

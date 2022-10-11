@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.42.5
+
+### Patch Changes
+
+- relayer: don't treat missing receipt as hard failure
+
 ## 0.42.4
 
 ### Patch Changes
