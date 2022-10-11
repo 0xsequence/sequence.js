@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.42.3
+
+### Patch Changes
+
+- update api bindings
+- Updated dependencies
+  - @0xsequence/abi@0.42.3
+  - @0xsequence/network@0.42.3
+  - @0xsequence/utils@0.42.3
+
 ## 0.42.2
 
 ### Patch Changes
