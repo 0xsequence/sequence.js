@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.42.4
+
+### Patch Changes
+
+- provider: add custom app protocol to connect options
+
 ## 0.42.3
 
 ### Patch Changes

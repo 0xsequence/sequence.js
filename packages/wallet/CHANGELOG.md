@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.42.4
+
+### Patch Changes
+
+- provider: add custom app protocol to connect options
+- Updated dependencies
+  - @0xsequence/abi@0.42.4
+  - @0xsequence/config@0.42.4
+  - @0xsequence/guard@0.42.4
+  - @0xsequence/network@0.42.4
+  - @0xsequence/relayer@0.42.4
+  - @0xsequence/transactions@0.42.4
+  - @0xsequence/utils@0.42.4
+
 ## 0.42.3
 
 ### Patch Changes
