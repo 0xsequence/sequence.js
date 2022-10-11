@@ -66,15 +66,12 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       try {
         const { receipt } = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnId })
 
-        if (!receipt) {
-          throw new Error('missing expected receipt')
-        }
-
-        if (!receipt.txnReceipt) {
-          throw new Error('missing expected transaction receipt')
-        }
-
-        if (FINAL_STATUSES.includes(receipt.status as proto.ETHTxnStatus)) {
+        if (
+          receipt &&
+          receipt.txnReceipt &&
+          receipt.txnReceipt !== 'null' &&
+          FINAL_STATUSES.includes(receipt.status as proto.ETHTxnStatus)
+        ) {
           return { receipt }
         }
       } catch (e) {
