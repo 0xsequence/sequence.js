@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.42.6
+
+### Patch Changes
+
+- api bindings update
+
 ## 0.42.5
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.42.6
+
+### Patch Changes
+
+- api bindings update
+- Updated dependencies
+  - @0xsequence/transactions@0.42.6
+
 ## 0.42.5
 
 ### Patch Changes

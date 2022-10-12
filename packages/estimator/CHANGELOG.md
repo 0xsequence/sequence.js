@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.42.6
+
+### Patch Changes
+
+- api bindings update
+- Updated dependencies
+  - @0xsequence/abi@0.42.6
+  - @0xsequence/config@0.42.6
+  - @0xsequence/network@0.42.6
+  - @0xsequence/transactions@0.42.6
+  - @0xsequence/utils@0.42.6
+
 ## 0.42.5
 
 ### Patch Changes
