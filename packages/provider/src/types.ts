@@ -210,6 +210,16 @@ export interface Settings {
    * to set when you open the wallet for user. */
   lockFundingCurrencyToDefault?: boolean
 
+  /** Specify an email address to allow user automatically sign in with the email option.
+   * Will be ignored if user is already signed in.
+   */
+  signInWithEmail?: string
+
+  /** Specify which sign in options are allowed.
+   * Will be ignored if user is already signed in.
+   */
+  signInOptions?: SignInOption[]
+
   /** Specify auxiliary data
    */
   aux?: any
@@ -221,6 +231,7 @@ export interface Settings {
 export type ThemeOption = 'light' | 'dark' | string
 export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
 export type CurrencyOption = 'usdc' | 'eth' | 'matic'
+export type SignInOption = 'email' | 'google' | 'apple' | 'facebook' | 'discord' | 'twitch'
 
 export interface ConnectDetails {
   // chainId (in hex) and error are defined by EIP-1193 expected fields
