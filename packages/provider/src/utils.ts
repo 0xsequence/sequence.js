@@ -86,6 +86,8 @@ export const recoverWalletConfig = async (
 export const isBrowserExtension = (): boolean =>
   window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
 
+export const isUnityPlugin = (): boolean => !!navigator.userAgent.match(/UnitySequence/i)
+
 /**
  * Returns the status of a signer's wallet on given chain by checking wallet deployment and config status
  *
