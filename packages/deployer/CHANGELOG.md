@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.42.7
+
+### Patch Changes
+
+- Add sign in options to connection settings
+- Updated dependencies
+  - @0xsequence/utils@0.42.7
+
 ## 0.42.6
 
 ### Patch Changes

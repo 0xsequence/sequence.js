@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.42.7
+
+### Patch Changes
+
+- Add sign in options to connection settings
+
 ## 0.42.6
 
 ### Patch Changes
