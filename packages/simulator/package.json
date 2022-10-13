@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/simulator",
-  "version": "0.42.7",
+  "version": "0.42.8",
   "description": "simulator sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/simulator",
   "source": "src/index.ts",
@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/transactions": "^0.42.7",
+    "@0xsequence/transactions": "^0.42.8",
     "@0xsequence/wallet-contracts": "1.9.6",
     "@ethersproject/abi": "^5.5.0",
     "@ethersproject/bignumber": "^5.5.0",

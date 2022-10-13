@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.42.8
+
+### Patch Changes
+
+- provider: skip setting intent origin if we're unity plugin
+- Updated dependencies
+  - @0xsequence/utils@0.42.8
+
 ## 0.42.7
 
 ### Patch Changes

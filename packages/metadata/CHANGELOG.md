@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.42.8
+
+### Patch Changes
+
+- provider: skip setting intent origin if we're unity plugin
+
 ## 0.42.7
 
 ### Patch Changes

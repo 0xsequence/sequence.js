@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.42.8
+
+### Patch Changes
+
+- provider: skip setting intent origin if we're unity plugin
+- Updated dependencies
+  - @0xsequence/abi@0.42.8
+  - @0xsequence/api@0.42.8
+  - @0xsequence/auth@0.42.8
+  - @0xsequence/config@0.42.8
+  - @0xsequence/guard@0.42.8
+  - @0xsequence/indexer@0.42.8
+  - @0xsequence/metadata@0.42.8
+  - @0xsequence/multicall@0.42.8
+  - @0xsequence/network@0.42.8
+  - @0xsequence/provider@0.42.8
+  - @0xsequence/relayer@0.42.8
+  - @0xsequence/transactions@0.42.8
+  - @0xsequence/utils@0.42.8
+  - @0xsequence/wallet@0.42.8
+
 ## 0.42.7
 
 ### Patch Changes
