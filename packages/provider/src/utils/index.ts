@@ -76,7 +76,7 @@ export class WalletUtils {
   ): Promise<boolean | undefined> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
-    const prefixed = prefixEIP191Message(message)
+    const prefixed = prefixEIP191Message(message, undefined)
     const digest = encodeMessageDigest(prefixed)
     return isValidSignature(address, digest, signature, provider, chainId, walletContext)
   }
@@ -113,7 +113,13 @@ export class WalletUtils {
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
     walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(address, encodeMessageDigest(prefixEIP191Message(message)), signature, chainId, walletContext)
+    return recoverWalletConfig(
+      address,
+      encodeMessageDigest(prefixEIP191Message(message, undefined)),
+      signature,
+      chainId,
+      walletContext
+    )
   }
 
   // Recover the WalletConfig from a signature of a typedData object
