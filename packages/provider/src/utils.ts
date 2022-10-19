@@ -4,6 +4,7 @@ import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xseq
 import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { Web3Provider } from './provider'
 import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
+import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
@@ -15,9 +16,13 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
   return ethers.utils.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
+export const prefixEIP191Message = (message: BytesLike, origin: string | undefined): Uint8Array => {
   const messageBytes = messageToBytes(message)
-  return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+  if (messageIsExemptFromEIP191Prefix(messageBytes, origin)) {
+    return messageBytes
+  } else {
+    return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+  }
 }
 
 export const isValidSignature = async (
@@ -45,7 +50,7 @@ export const isValidMessageSignature = async (
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean | undefined> => {
-  const prefixed = prefixEIP191Message(message)
+  const prefixed = prefixEIP191Message(message, undefined)
   const digest = encodeMessageDigest(prefixed)
   return isValidSignature(address, digest, signature, provider, chainId, walletContext)
 }
