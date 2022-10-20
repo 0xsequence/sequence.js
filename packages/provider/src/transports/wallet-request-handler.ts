@@ -300,7 +300,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           // Message must be prefixed with "\x19Ethereum Signed Message:\n"
           // as defined by EIP-191
-          const prefixedMessage = prefixEIP191Message(message, this.connectOptions?.origin)
+          const prefixedMessage = prefixEIP191Message(message)
 
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {

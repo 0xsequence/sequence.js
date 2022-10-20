@@ -16,9 +16,9 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
   return ethers.utils.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: BytesLike, origin: string | undefined): Uint8Array => {
+export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
-  if (messageIsExemptFromEIP191Prefix(messageBytes, origin)) {
+  if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes
   } else {
     return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
@@ -50,7 +50,7 @@ export const isValidMessageSignature = async (
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean | undefined> => {
-  const prefixed = prefixEIP191Message(message, undefined)
+  const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
   return isValidSignature(address, digest, signature, provider, chainId, walletContext)
 }
