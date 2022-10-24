@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.42.9
+
+### Patch Changes
+
+- provider: add eip-191 exceptions
+
 ## 0.42.8
 
 ### Patch Changes

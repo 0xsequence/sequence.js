@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.42.9
+
+### Patch Changes
+
+- provider: add eip-191 exceptions
+- Updated dependencies
+  - @0xsequence/abi@0.42.9
+  - @0xsequence/api@0.42.9
+  - @0xsequence/config@0.42.9
+  - @0xsequence/indexer@0.42.9
+  - @0xsequence/metadata@0.42.9
+  - @0xsequence/network@0.42.9
+  - @0xsequence/utils@0.42.9
+  - @0xsequence/wallet@0.42.9
+
 ## 0.42.8
 
 ### Patch Changes

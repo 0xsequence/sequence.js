@@ -1,5 +1,15 @@
 # @0xsequence/transactions
 
+## 0.42.9
+
+### Patch Changes
+
+- provider: add eip-191 exceptions
+- Updated dependencies
+  - @0xsequence/abi@0.42.9
+  - @0xsequence/network@0.42.9
+  - @0xsequence/utils@0.42.9
+
 ## 0.42.8
 
 ### Patch Changes
