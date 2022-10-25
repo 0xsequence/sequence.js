@@ -24,7 +24,9 @@
     "@0xsequence/utils": "^0.42.10",
     "ethers": "^5.5.2"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {},
   "files": [
     "src",

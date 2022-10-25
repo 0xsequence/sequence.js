@@ -29,7 +29,9 @@
     "eventemitter2": "^6.4.5",
     "webextension-polyfill-ts": "^0.26.0"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {},
   "files": [
     "src",

@@ -21,7 +21,9 @@
     "@ethersproject/contracts": "^5.5.0",
     "ethers": "^5.5.2"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-web3": "^2.0.0",

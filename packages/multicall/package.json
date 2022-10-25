@@ -19,6 +19,9 @@
     "@ethersproject/providers": "^5.5.1",
     "ethers": "^5.5.2"
   },
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "1.9.6",
     "@types/web3-provider-engine": "^14.0.1",

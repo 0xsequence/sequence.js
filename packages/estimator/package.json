@@ -24,10 +24,11 @@
     "@0xsequence/utils": "^0.42.10",
     "@0xsequence/wallet-contracts": "1.9.6",
     "@ethersproject/abstract-signer": "^5.5.0",
-    "@ethersproject/properties": "^5.5.0",
-    "ethers": "^5.5.2"
+    "@ethersproject/properties": "^5.5.0"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {},
   "files": [
     "src",

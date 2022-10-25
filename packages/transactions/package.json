@@ -20,7 +20,9 @@
     "@ethersproject/abi": "^5.5.0",
     "ethers": "^5.5.2"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {},
   "files": [
     "src",

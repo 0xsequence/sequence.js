@@ -17,7 +17,9 @@
     "@ethersproject/providers": "^5.5.1",
     "ethers": "^5.5.2"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {},
   "files": [
     "src",

@@ -30,7 +30,9 @@
     "ethers": "^5.5.2",
     "fetch-ponyfill": "^7.1.0"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5.2"
+  },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "1.9.6",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
