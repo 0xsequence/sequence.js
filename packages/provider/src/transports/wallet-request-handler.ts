@@ -16,8 +16,7 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { BigNumber, ethers } from 'ethers'
-import { ExternalProvider } from '@ethersproject/providers'
+import { BigNumber, ethers, providers } from 'ethers'
 
 import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { Signer } from '@0xsequence/wallet'
@@ -26,6 +25,8 @@ import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
 
 import { isWalletUpToDate, prefixEIP191Message } from '../utils'
+
+type ExternalProvider = providers.ExternalProvider
 
 const SIGNER_READY_TIMEOUT = 10000
 

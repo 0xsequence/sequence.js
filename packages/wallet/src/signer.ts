@@ -1,5 +1,4 @@
-import { ethers, Signer as AbstractSigner } from 'ethers'
-import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
+import { BytesLike, Signer as AbstractSigner, providers, TypedDataDomain, TypedDataField } from 'ethers'
 import { NetworkConfig, ChainIdLike, WalletContext } from '@0xsequence/network'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import {
@@ -9,18 +8,15 @@ import {
   Transaction,
   TransactionResponse
 } from '@0xsequence/transactions'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { BytesLike } from '@ethersproject/bytes'
 import { Deferrable } from '@0xsequence/utils'
 import { WalletConfig, WalletState } from '@0xsequence/config'
-import { DecodedSigner, DecodedOwner } from './config'
 
 export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
     return isSequenceSigner(cand)
   }
 
-  abstract getProvider(chainId?: number): Promise<JsonRpcProvider | undefined>
+  abstract getProvider(chainId?: number): Promise<providers.JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   abstract getWalletContext(): Promise<WalletContext>

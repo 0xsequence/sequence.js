@@ -5,8 +5,7 @@ import { Transaction } from '@0xsequence/transactions'
 import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner, providers } from 'ethers'
 
 import { configureLogger } from '@0xsequence/utils'
 
@@ -27,7 +26,7 @@ import { encodeData } from '@0xsequence/wallet/tests/utils'
 
 type EthereumInstance = {
   chainId: number
-  provider: JsonRpcProvider
+  provider: providers.JsonRpcProvider
   signer: AbstractSigner
 }
 
@@ -44,7 +43,7 @@ describe('Wallet integration', function () {
   before(async () => {
     // Provider from hardhat without a server instance
     const url = 'http://127.0.0.1:10045/'
-    const provider = new JsonRpcProvider(url)
+    const provider = new providers.JsonRpcProvider(url)
 
     ethnode = {
       chainId: (await provider.getNetwork()).chainId,

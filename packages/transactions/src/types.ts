@@ -1,7 +1,9 @@
-import { BigNumberish, BytesLike } from 'ethers'
-import { TransactionRequest as EthersTransactionRequest, TransactionResponse as EthersTransactionResponse } from '@ethersproject/providers'
+import { BigNumberish, BytesLike, providers } from 'ethers'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
+
+type EthersTransactionRequest = providers.TransactionRequest
+type EthersTransactionResponse = providers.TransactionResponse
 
 // Transaction is a Sequence transaction payload. Note, we do not include gasPrice as an option in this form,
 // as we expect the gasPrice to be optimally estimated by the transaction relayer.

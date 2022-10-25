@@ -1,5 +1,4 @@
-import { ethers, Signer, BigNumberish } from 'ethers'
-import { Interface } from '@ethersproject/abi'
+import { ethers, Signer, BigNumberish, utils } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
@@ -101,7 +100,7 @@ export async function toSequenceTransaction(
       nonce: nonce ? nonce : await tx.nonce
     }
   } else {
-    const walletInterface = new Interface(walletContracts.mainModule.abi)
+    const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
     const address = typeof wallet === 'string' ? wallet : wallet.getAddress()
 
@@ -159,7 +158,7 @@ export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transactio
 }
 
 export function makeExpirable(context: WalletContext, txs: Transaction[], expiration: BigNumberish): Transaction[] {
-  const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
+  const sequenceUtils = new utils.Interface(walletContracts.sequenceUtils.abi)
 
   if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
@@ -179,7 +178,7 @@ export function makeExpirable(context: WalletContext, txs: Transaction[], expira
 }
 
 export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: NonceDependency): Transaction[] {
-  const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
+  const sequenceUtils = new utils.Interface(walletContracts.sequenceUtils.abi)
 
   if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')

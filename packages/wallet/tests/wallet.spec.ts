@@ -15,8 +15,7 @@ import {
 import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { ExternalProvider, Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
-import { Contract, ethers, Signer as AbstractSigner } from 'ethers'
+import { Contract, ethers, Signer as AbstractSigner, providers } from 'ethers'
 
 import { addressOf, joinSignatures, encodeSignature, imageHash, WalletConfig } from '@0xsequence/config'
 
@@ -53,7 +52,7 @@ import { walletContracts } from '@0xsequence/abi'
 
 type EthereumInstance = {
   chainId?: number
-  provider?: JsonRpcProvider
+  provider?: providers.JsonRpcProvider
   signer?: AbstractSigner
 }
 
@@ -70,7 +69,7 @@ describe('Wallet integration', function () {
 
   before(async () => {
     // Provider from hardhat without a server instance
-    ethnode.provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
+    ethnode.provider = new providers.Web3Provider(hardhat.network.provider.send)
 
     // NOTE: if you'd like to test with ganache or hardhat in server mode, just uncomment the line below
     // and make sure your ganache or hardhat instance is running separately
@@ -113,14 +112,14 @@ describe('Wallet integration', function () {
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ethnode.signer
-    ).deploy()) as CallReceiverMock
+    ).deploy()) as unknown as CallReceiverMock
 
     // Deploy hook caller mock
     hookCaller = (await new ethers.ContractFactory(
       HookCallerMockArtifact.abi,
       HookCallerMockArtifact.bytecode,
       ethnode.signer
-    ).deploy()) as HookCallerMock
+    ).deploy()) as unknown as HookCallerMock
 
     // Deploy local relayer
     relayer = new LocalRelayer({ signer: ethnode.signer })
@@ -130,7 +129,7 @@ describe('Wallet integration', function () {
     // Create wallet
     const pk = ethers.utils.randomBytes(32)
     wallet = await lib.Wallet.singleOwner(pk, context)
-    wallet = wallet.connect(ethnode.provider, relayer)
+    wallet = wallet.connect(ethnode.provider!, relayer)
   })
 
   after(async () => {
@@ -140,8 +139,8 @@ describe('Wallet integration', function () {
   })
 
   describe('with ethers.js', () => {
-    let w3provider: ExternalProvider
-    let provider: Web3Provider
+    // let w3provider: providers.ExternalProvider
+    let provider: providers.Web3Provider
 
     const options = [
       {
@@ -235,8 +234,8 @@ describe('Wallet integration', function () {
     })
     describe('Nested wallets', async () => {
       it('Should use wallet as wallet signer', async () => {
-        const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider, relayer)
-        const walletB = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider, relayer)
+        const walletA = (await lib.Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(ethnode.provider!, relayer)
+        const walletB = (await lib.Wallet.singleOwner(walletA, context)).connect(ethnode.provider!, relayer)
 
         // TODO: Bundle deployment with child wallets
         await relayer.deployWallet(walletA.config, walletA.context)
@@ -267,7 +266,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             signer
-          ).deploy()) as CallReceiverMock
+          ).deploy()) as unknown as CallReceiverMock
         })
 
         it('Should perform multiple transactions', async () => {
@@ -314,7 +313,7 @@ describe('Wallet integration', function () {
               CallReceiverMockArtifact.abi,
               CallReceiverMockArtifact.bytecode,
               ethnode.signer
-            ).deploy()) as CallReceiverMock
+            ).deploy()) as unknown as CallReceiverMock
 
             const receiver = new ethers.Contract(callReceiver1.address, CallReceiverMockArtifact.abi, signer)
 
@@ -390,25 +389,25 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy()) as unknown as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy()) as unknown as CallReceiverMock
 
           const transaction = {
             gas: '121000',
             to: callReceiver1.address,
             value: 0,
-            data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
+            data: await encodeData(callReceiver as any, 'testCall', 1, '0x112233'),
             auxiliary: [
               {
                 gas: '121000',
                 to: callReceiver2.address,
                 value: 0,
-                data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
+                data: await encodeData(callReceiver as any, 'testCall', 2, '0x445566')
               }
             ]
           }

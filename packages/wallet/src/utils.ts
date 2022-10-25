@@ -1,13 +1,12 @@
-import { ethers, BytesLike, BigNumberish } from 'ethers'
-import { Deferrable, resolveProperties } from '@ethersproject/properties'
+import { ethers, utils } from 'ethers'
 
-export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
+export async function resolveArrayProperties<T>(object: Readonly<utils.Deferrable<T>> | Readonly<utils.Deferrable<T>>[]): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
-    return Promise.all(object.map((o) => resolveProperties(o))) as any
+    return Promise.all(object.map((o) => utils.resolveProperties(o))) as any
   }
 
-  return resolveProperties(object)
+  return utils.resolveProperties(object)
 }
 
 export async function findLatestLog(provider: ethers.providers.Provider, filter: ethers.providers.Filter): Promise<ethers.providers.Log | undefined> {

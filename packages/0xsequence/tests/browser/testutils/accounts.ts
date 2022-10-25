@@ -1,5 +1,4 @@
-import { ethers, Wallet as EOAWallet } from 'ethers'
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { ethers, Wallet as EOAWallet, providers } from 'ethers'
 
 // testAccounts with 10000 ETH each
 export const testAccounts = [
@@ -38,7 +37,7 @@ export const getEOAWallet = (privateKey: string, provider?: string | ethers.prov
   const wallet = new EOAWallet(privateKey)
 
   if (typeof provider === 'string') {
-    return wallet.connect(new JsonRpcProvider(provider))
+    return wallet.connect(new providers.JsonRpcProvider(provider))
   } else {
     return wallet.connect(provider)
   }

@@ -1,7 +1,10 @@
-import { BytesLike, Signer as AbstractSigner } from 'ethers'
-import { TransactionRequest, TransactionResponse, Provider } from '@ethersproject/providers'
-import { Deferrable } from '@ethersproject/properties'
+import { BytesLike, Signer as AbstractSigner, providers, utils } from 'ethers'
 import { ChainIdLike } from '@0xsequence/network'
+
+type Provider = providers.Provider
+type TransactionRequest = providers.TransactionRequest
+type TransactionResponse = providers.TransactionResponse
+type Deferrable<T> = utils.Deferrable<T>
 
 export abstract class RemoteSigner extends AbstractSigner {
   abstract signMessageWithData(message: BytesLike, data?: BytesLike, chainId?: ChainIdLike): Promise<string>

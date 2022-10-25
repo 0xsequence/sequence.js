@@ -1,5 +1,4 @@
-import { TransactionReceipt, TransactionRequest } from '@ethersproject/providers'
-import { Signer as AbstractSigner, ethers } from 'ethers'
+import { Signer as AbstractSigner, ethers, providers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { SignedTransactions, Transaction, sequenceTxAbiEncode, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
@@ -18,7 +17,7 @@ export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
   private signer: AbstractSigner
-  private txnOptions: TransactionRequest
+  private txnOptions: providers.TransactionRequest
 
   constructor(options: LocalRelayerOptions | AbstractSigner) {
     super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
@@ -53,11 +52,11 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     return options
   }
 
-  setTransactionOptions(transactionRequest: TransactionRequest) {
+  setTransactionOptions(transactionRequest: providers.TransactionRequest) {
     this.txnOptions = transactionRequest
   }
 
-  async relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<TransactionReceipt>> {
+  async relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<providers.TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }

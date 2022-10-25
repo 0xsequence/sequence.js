@@ -1,5 +1,4 @@
-import { ethers, BigNumberish, BytesLike } from 'ethers'
-import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
+import { BigNumberish, BytesLike, TypedDataDomain, TypedDataField } from 'ethers'
 import { WalletContext, ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'

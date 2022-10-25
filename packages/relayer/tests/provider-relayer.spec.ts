@@ -6,8 +6,7 @@ import { Wallet } from '@0xsequence/wallet'
 import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner, providers } from 'ethers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -22,7 +21,7 @@ import { computeMetaTxnHash, encodeNonce } from '@0xsequence/transactions'
 type EthereumInstance = {
   chainId?: number
   providerUrl?: string
-  provider?: JsonRpcProvider
+  provider?: providers.JsonRpcProvider
   signer?: AbstractSigner
 }
 
