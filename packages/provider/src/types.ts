@@ -156,8 +156,7 @@ export interface ConnectOptions {
   /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
   authorize?: boolean
 
-  /** *Currently not used* askForEmail will prompt to give permission to the dapp to access email address */
-  // TODO: this feature is currently not used as the wallet does not report emails yet
+  /** askForEmail will prompt to give permission to the dapp to access email address */
   askForEmail?: boolean
 
   /** refresh flag will force a full re-connect (ie. disconnect then connect again) */
