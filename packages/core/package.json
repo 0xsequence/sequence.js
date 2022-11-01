@@ -1,0 +1,23 @@
+{
+  "name": "@0xsequence/core",
+  "version": "0.42.9",
+  "description": "core primitives for interacting with the sequence wallet contracts",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/core",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-core.cjs.js",
+  "module": "dist/0xsequence-core.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "yarn test:file tests/**/*.spec.ts"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2"
+  },
+  "peerDependencies": {},
+  "devDependencies": {},
+  "files": [
+    "src",
+    "dist"
+  ]
+}
