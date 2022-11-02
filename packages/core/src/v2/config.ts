@@ -96,7 +96,7 @@ export function hashNode(node: Node | Leaf): string {
   )
 }
 
-export function rightSlice(topology: Topology): Topology[] {
+export function leftFace(topology: Topology): Topology[] {
   const stack: Topology[] = []
 
   let prev = topology
@@ -104,6 +104,8 @@ export function rightSlice(topology: Topology): Topology[] {
     stack.unshift(prev.right)
     prev = prev.left
   }
+
+  stack.unshift(prev)
 
   return stack
 }
@@ -193,7 +195,7 @@ export function topologyToMembers(tree: Topology): SimpleConfigMember[] {
   ]
 }
 
-function toSimpleWalletConfig(config: WalletConfig): SimpleWalletConfig {
+export function toSimpleWalletConfig(config: WalletConfig): SimpleWalletConfig {
   return {
     threshold: config.threshold,
     checkpoint: config.checkpoint,
