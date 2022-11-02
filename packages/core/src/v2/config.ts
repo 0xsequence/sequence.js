@@ -7,7 +7,8 @@ import { BigNumberish, ethers } from "ethers"
 
 export type SignerLeaf = {
   address: string,
-  weight: BigNumberish
+  weight: BigNumberish,
+  signature?: string
 }
 
 export type SubdigestLeaf = {
@@ -20,7 +21,14 @@ export type NestedLeaf = {
   threshold: BigNumberish
 }
 
-export type Leaf = SignerLeaf | SubdigestLeaf | NestedLeaf
+// This is an unknown node
+// it means the tree has a branch
+// but we don't know what the content
+export type NodeLeaf = {
+  nodeHash: string
+}
+
+export type Leaf = SignerLeaf | SubdigestLeaf | NestedLeaf | NodeLeaf
 
 export function isSignerLeaf(leaf: any): leaf is SignerLeaf {
   return (
@@ -41,8 +49,12 @@ export function isNestedLeaf(leaf: any): leaf is NestedLeaf {
   )
 }
 
+export function isNodeLeaf(leaf: any): leaf is NodeLeaf {
+  return (leaf as NodeLeaf).nodeHash !== undefined
+}
+
 export function isLeaf(leaf: any): leaf is Leaf {
-  return isSignerLeaf(leaf) || isSubdigestLeaf(leaf) || isNestedLeaf(leaf)
+  return isSignerLeaf(leaf) || isSubdigestLeaf(leaf) || isNestedLeaf(leaf) || isNodeLeaf(leaf)
 }
 
 //
@@ -88,6 +100,10 @@ export function hashNode(node: Node | Leaf): string {
       ['string', 'bytes32', 'uint256', 'uint256'],
       ['Sequence nested config:\n', nested, node.threshold, node.weight]
     )
+  }
+
+  if (isNodeLeaf(node)) {
+    return node.nodeHash
   }
 
   return ethers.utils.solidityKeccak256(
@@ -189,10 +205,28 @@ export function topologyToMembers(tree: Topology): SimpleConfigMember[] {
     }]
   }
 
+  if (isNodeLeaf(tree)) {
+    // we don't know the content of this node
+    // so we omit it
+    return []
+  }
+
   return [
     ...topologyToMembers(tree.left),
     ...topologyToMembers(tree.right)
   ]
+}
+
+export function hasUknownNodes(tree: Topology): boolean {
+  if (isNodeLeaf(tree)) {
+    return true
+  }
+
+  if (isNode(tree)) {
+    return hasUknownNodes(tree.left) || hasUknownNodes(tree.right)
+  }
+
+  return false
 }
 
 export function toSimpleWalletConfig(config: WalletConfig): SimpleWalletConfig {
