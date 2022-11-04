@@ -1,4 +1,12 @@
-import { Web3Provider, ProxyMessageProvider, WalletSession, WalletRequestHandler, ProxyMessageChannel, ProxyMessageHandler, prefixEIP191Message } from '@0xsequence/provider'
+import {
+  Web3Provider,
+  ProxyMessageProvider,
+  WalletSession,
+  WalletRequestHandler,
+  ProxyMessageChannel,
+  ProxyMessageHandler,
+  prefixEIP191Message
+} from '@0xsequence/provider'
 import { ethers, Wallet as EOAWallet } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
@@ -12,7 +20,6 @@ import { testAccounts, getEOAWallet } from '../testutils'
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
-
   // ProxyMessageChannel object is to be instantiated by the app coordinating
   // the channel, ie. such as the mobile application itself.
   //
@@ -22,7 +29,7 @@ export const tests = async () => {
   // Sending messages to the wallet port will go through channel and get received by the app.
   const ch = new ProxyMessageChannel()
 
-  ch.app.on('open', (openInfo) => {
+  ch.app.on('open', openInfo => {
     console.log('app, wallet opened.', openInfo)
   })
   ch.app.on('close', () => {
@@ -68,13 +75,13 @@ export const tests = async () => {
       rpcUrl: rpcProvider.connection.url,
       provider: rpcProvider,
       relayer: relayer,
-      isDefaultChain: true,
+      isDefaultChain: true
       // isAuthChain: true
     }
   ]
 
   // the rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(undefined, null, null, networks)
 
   // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour
   // of the wallet-webapp, so lets ensure the mock wallet does the same thing too.
@@ -85,7 +92,6 @@ export const tests = async () => {
   // register wallet message handler, in this case using the ProxyMessage transport.
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)
   proxyHandler.register()
-
 
   //
   // App Provider
@@ -137,7 +143,6 @@ export const tests = async () => {
       'signature match'
     )
 
-
     const chainId = await signer.getChainId()
 
     //
@@ -152,7 +157,6 @@ export const tests = async () => {
     // in order to recover the config properly, the subDigest + sig is required.
     const subDigest = packMessageData(address, chainId, messageDigest)
 
-
     //
     // Recover config / address
     //
@@ -166,5 +170,4 @@ export const tests = async () => {
   })
 
   walletProvider.closeWallet()
-
 }

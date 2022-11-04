@@ -90,7 +90,7 @@ export const tests = async () => {
   )
 
   // the rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(saccount, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(saccount, null, null, networks)
 
   // register wallet message handler, in this case using the ProxyMessage transport.
   const proxyHandler = new ProxyMessageHandler(walletRequestHandler, ch.wallet)

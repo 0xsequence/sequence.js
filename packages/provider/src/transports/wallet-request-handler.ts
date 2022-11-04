@@ -44,6 +44,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private signerReadyCallbacks: Array<() => void> = []
 
   private prompter: WalletUserPrompter | null
+  private auxDataProvider: AuxDataProvider | null
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
@@ -57,11 +58,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   constructor(
     signer: Signer | null | undefined,
     prompter: WalletUserPrompter | null,
+    auxDataProvider: AuxDataProvider | null,
     mainnetNetworks: NetworkConfig[],
     testnetNetworks: NetworkConfig[] = []
   ) {
     this.signer = signer
     this.prompter = prompter
+    this.auxDataProvider = auxDataProvider
     this.mainnetNetworks = mainnetNetworks
     this.testnetNetworks = testnetNetworks
   }
@@ -150,6 +153,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const connectDetails: ConnectDetails = {
       connected: true,
       chainId: ethers.utils.hexlify(await this.getChainId())
+    }
+
+    if (options && options.askForEmail) {
+      const email = await this.auxDataProvider?.get('email')
+      if (email) {
+        connectDetails.email = email
+      }
     }
 
     if (options && options.authorize) {
@@ -800,6 +810,10 @@ export interface WalletUserPrompter {
   promptSignTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
+}
+
+export interface AuxDataProvider {
+  get(key: string): Promise<any>
 }
 
 const permittedJsonRpcMethods = [
