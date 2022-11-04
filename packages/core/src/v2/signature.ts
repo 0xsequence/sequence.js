@@ -1,7 +1,14 @@
 
 import { BigNumberish, ethers } from "ethers"
-import { recoverSigner } from "../signer"
-import { Leaf, SignerLeaf, Topology } from "./config"
+import { isValidSignature, recoverSigner } from "../commons/signer"
+import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology } from "./config"
+
+export enum SignatureType {
+  Legacy = 0,
+  Dynamic = 1,
+  NoChaindDynamic = 2,
+  Chained = 3
+}
 
 export enum SignaturePartType {
   Signature = 0,
@@ -177,25 +184,45 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
   return pointer.left
 }
 
-export function recoverTopology(unrecovered: UnrecoveredTopology, subdigest: string): Topology {
+export class InvalidSignatureLeafError extends Error {
+  constructor(public leaf: UnrecoveredLeaf) {
+    super(`Invalid signature leaf: ${JSON.stringify(leaf)}`)
+  }
+}
+
+export async function recoverTopology(
+  unrecovered: UnrecoveredTopology,
+  subdigest: string,
+  provider: ethers.providers.Provider
+): Promise<Topology> {
   if (isUnrecoveredNode(unrecovered)) {
-    return {
-      left: recoverTopology(unrecovered.left, subdigest),
-      right: recoverTopology(unrecovered.right, subdigest)
-    }
+    const [left, right] = await Promise.all([
+      recoverTopology(unrecovered.left, subdigest, provider),
+      recoverTopology(unrecovered.right, subdigest, provider)
+    ])
+
+    return { left, right }
   }
 
   if (isUnrecoveredNestedLeaf(unrecovered)) {
     return {
       weight: unrecovered.weight,
       threshold: unrecovered.threshold,
-      tree: recoverTopology(unrecovered.tree, subdigest)
+      tree: await recoverTopology(unrecovered.tree, subdigest, provider)
     }
   }
 
   if (isUnrecoveredSignatureLeaf(unrecovered)) {
     if (unrecovered.isDynamic) {
-      console.warn('RECOVERING DYNAMIC SIGNATURES IS NOT IMPLEMENTED')
+      if (!unrecovered.address) {
+        throw new Error('Dynamic signature leaf without address')
+      }
+
+      const isValid = await isValidSignature(unrecovered.address, subdigest, unrecovered.signature, provider)
+      if (!isValid) {
+        throw new InvalidSignatureLeafError(unrecovered)
+      }
+
       return {
         weight: unrecovered.weight,
         address: unrecovered.address!,
@@ -214,3 +241,278 @@ export function recoverTopology(unrecovered: UnrecoveredTopology, subdigest: str
 
   return unrecovered
 }
+
+export const partEncoder = {
+  node: (nodeHash: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    return ethers.utils.solidityPack(
+      ['uint8', 'bytes32'],
+      [SignaturePartType.Node, nodeHash, sufix]
+    )
+  },
+  branch: (tree: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    const arr = ethers.utils.arrayify(tree)
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint24', 'bytes', 'bytes'],
+      [SignaturePartType.Branch, arr.length, arr, sufix]
+    )
+  },
+  nested: (weight: ethers.BigNumberish, threshold: ethers.BigNumberish, tree: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    const arr = ethers.utils.arrayify(tree)
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'uint16', 'uint24', 'bytes', 'bytes'],
+      [SignaturePartType.Nested, weight, threshold, arr.length, arr, sufix]
+    )
+  },
+  subdigest: (subdigest: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    return ethers.utils.solidityPack(
+      ['uint8', 'bytes32', 'bytes'],
+      [SignaturePartType.Subdigest, subdigest, sufix]
+    )
+  },
+  signature: (weight: ethers.BigNumberish, signature: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'bytes', 'bytes'],
+      [SignaturePartType.Signature, weight, signature, sufix]
+    )
+  },
+  dynamicSignature: (weight: ethers.BigNumberish, address: ethers.BytesLike, signature: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'address', 'uint24', 'bytes', 'bytes'],
+      [SignaturePartType.DynamicSignature, weight, address, signature.length, signature, sufix]
+    )
+  },
+  address: (weight: ethers.BigNumberish, address: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'address', 'bytes'],
+      [SignaturePartType.Address, weight, address, sufix]
+    )
+  }
+}
+
+export type EncodingOptions = {
+  forceDynamicEncoding?: boolean,
+  signatureType?: SignatureType,
+  disableTrim?: boolean
+}
+
+export function encodeSigners(
+  topology: Topology,
+  parts: SignatureLeaf[] | Map<string, SignatureLeaf>,
+  subdigests: string[],
+  options: EncodingOptions = {}
+): { encoded: string, weight: ethers.BigNumber } {
+  // If parts is an array, convert it to a map
+  if (Array.isArray(parts)) {
+    const partOfSigner = new Map<string, SignatureLeaf>()
+    parts.forEach((p) => partOfSigner.set(p.address, p))
+    return encodeSigners(topology, partOfSigner, subdigests)
+  }
+
+  const trim = !options.disableTrim
+
+  if (isNode(topology)) {
+    const left = encodeSigners(topology.left, parts, subdigests)
+    const right = encodeSigners(topology.right, parts, subdigests)
+
+    if (trim && left.weight.eq(0) && right.weight.eq(0)) {
+      return {
+        encoded: partEncoder.node(hashNode(topology)),
+        weight: ethers.constants.Zero
+      }
+    }
+
+    if (trim && right.weight.eq(0)) {
+      return {
+        encoded: partEncoder.node(hashNode(topology.right), left.encoded),
+        weight: left.weight
+      }
+    }
+
+    return {
+      encoded: partEncoder.branch(right.encoded, left.encoded),
+      weight: left.weight.add(right.weight)
+    }
+  }
+
+  if (isNestedLeaf(topology)) {
+    const tree = encodeSigners(topology.tree, parts, subdigests)
+
+    if (trim && tree.weight.eq(0)) {
+      return {
+        encoded: partEncoder.node(hashNode(topology)),
+        weight: ethers.constants.Zero
+      }
+    }
+
+    return {
+      encoded: partEncoder.nested(topology.weight, topology.threshold, tree.encoded),
+      weight: tree.weight
+    }
+  }
+
+  if (isNodeLeaf(topology)) {
+    return {
+      encoded: partEncoder.node(hashNode(topology)),
+      weight: ethers.constants.Zero
+    }
+  }
+
+  if (isSubdigestLeaf(topology)) {
+    const include = subdigests.includes(topology.subdigest)
+    return {
+      encoded: partEncoder.node(hashNode(topology)),
+      weight: include ? ethers.constants.MaxUint256 : ethers.constants.Zero
+    }
+  }
+
+  if (isSignerLeaf(topology)) {
+    const include = parts.has(topology.address)
+
+    if (include) {
+      const part = parts.get(topology.address)!
+      const signature = part.signature
+
+      if (options.forceDynamicEncoding || part.isDynamic) {
+        return {
+          encoded: partEncoder.dynamicSignature(part.weight, part.address, signature),
+          weight: ethers.BigNumber.from(part.weight)
+        }
+      } else {
+        return {
+          encoded: partEncoder.signature(part.weight, signature),
+          weight: ethers.BigNumber.from(part.weight)
+        }
+      }
+
+    } else {
+      return {
+        encoded: partEncoder.address(topology.weight, topology.address),
+        weight: ethers.constants.Zero
+      }
+    }
+  }
+
+  throw new Error(`Invalid topology - unknown error: ${JSON.stringify(topology)}`)
+}
+
+export type UnrecoveredSignature = {
+  type: SignatureType,
+  topology: UnrecoveredTopology
+}
+
+export type Signature = {
+  type: SignatureType,
+  config: WalletConfig,
+  subdigest: string,
+  message?: ethers.BytesLike
+}
+
+export type UnrecoveredChainedSignature = {
+  type: SignatureType,
+  chain: (UnrecoveredSignature | UnrecoveredChainedSignature)[]
+}
+
+export type ChainedSignature = {
+  type: SignatureType,
+  chain: (Signature | ChainedSignature)[]
+}
+
+export type SignedPayload = {
+  message?: ethers.BytesLike,
+  digest: string,
+  chainid: ethers.BigNumber,
+  address: string
+}
+
+export function subdigestOf(payload: SignedPayload) {
+  return ethers.utils.solidityKeccak256(
+    ['bytes', 'uint256', 'address', 'bytes32'],
+    ['0x1901', payload.chainid, payload.address, payload.digest]
+  )
+}
+
+export function isUnrecoveredSignature(sig: any): sig is UnrecoveredSignature {
+  return sig.type !== undefined && sig.topology !== undefined
+}
+
+export function isUnrecoveredChainedSignature(sig: any): sig is UnrecoveredChainedSignature {
+  return sig.chain !== undefined && Array.isArray(sig.chain) && sig.chain.every(isUnrecoveredSignature)
+}
+
+export function isSignature(sig: any): sig is Signature {
+  return sig.type !== undefined && sig.config !== undefined && sig.digest !== undefined
+}
+
+export function isChainedSignature(sig: any): sig is ChainedSignature {
+  return sig.chain !== undefined && Array.isArray(sig.chain) && sig.chain.every(isSignature)
+}
+
+export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignature | UnrecoveredChainedSignature {
+  const bytes = ethers.utils.arrayify(signature)
+  const type = bytes[0]
+
+  switch (type) {
+    case SignatureType.Legacy:
+      return { type: SignatureType.Legacy, topology: decodeSignatureTree(bytes) }
+
+    case SignatureType.Dynamic:
+      return { type: SignatureType.Dynamic, topology: decodeSignatureTree(bytes.slice(1)) }
+
+    case SignatureType.NoChaindDynamic:
+      return { type: SignatureType.NoChaindDynamic, topology: decodeSignatureTree(bytes.slice(1)) }
+
+    case SignatureType.Chained:
+      return decodeChainedSignature(bytes)
+
+    default:
+      throw new Error(`Invalid signature type: ${type}`)
+  }
+}
+
+export function decodeChainedSignature(signature: ethers.BytesLike): UnrecoveredChainedSignature {
+  const arr = ethers.utils.arrayify(signature)
+  const type = arr[0]
+
+  if (type !== SignatureType.Chained) {
+    throw new Error(`Expected chained signature type: ${type}`)
+  }
+
+  const chain: (UnrecoveredSignature | UnrecoveredChainedSignature)[] = []
+  let index = 1
+
+  while (index < arr.length) {
+    const size = arr[index] << 16 | arr[index + 1] << 8 | arr[index + 2]
+    index += 3
+
+    const sig = decodeSignature(arr.slice(index, index + size))
+    chain.push(sig)
+
+    index += size
+  }
+
+  return { type: SignatureType.Chained, chain }
+}
+
+// export async function recoverSignature(
+//   signature: UnrecoveredSignature,
+//   config: WalletConfig,
+//   payload: SignedPayload | { subdigest: string },
+//   provider: ethers.providers.Provider
+// ): Promise<Signature | ChainedSignature> {
+//   const signedPayload = (payload as { subdigest: string}).subdigest === undefined ? payload as SignedPayload : undefined
+//   const subdigest = signedPayload ? subdigestOf(signedPayload) : (payload as { subdigest: string }).subdigest
+
+//   if (isUnrecoveredSignature(signature)) {
+//     const tree = await recoverTopology(signature.topology, subdigest, provider)
+//     return { ...signature, subdigest, config: { ...config, tree } }
+//   }
+
+//   for (const sig of signature.chain) {
+//     if (isUnrecoveredSignature(sig)) {
+//       const tree = await recoverTopology(sig.topology, subdigest, provider)
+//       sig.config = { ...config, tree }
+//     } else {
+//       await recoverSignature(sig, config, payload, provider)
+//     }
+//   }
+// }
