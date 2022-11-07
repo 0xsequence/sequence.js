@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.42.10
+
+### Patch Changes
+
+- add auxDataProvider
+
 ## 0.42.9
 
 ### Patch Changes

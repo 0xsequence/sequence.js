@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.42.10
+
+### Patch Changes
+
+- add auxDataProvider
+- Updated dependencies
+  - @0xsequence/abi@0.42.10
+  - @0xsequence/config@0.42.10
+  - @0xsequence/transactions@0.42.10
+  - @0xsequence/utils@0.42.10
+
 ## 0.42.9
 
 ### Patch Changes

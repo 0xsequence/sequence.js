@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.42.10
+
+### Patch Changes
+
+- add auxDataProvider
+- Updated dependencies
+  - @0xsequence/utils@0.42.10
+
 ## 0.42.9
 
 ### Patch Changes
