@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
 import * as path from 'path'
-import { HttpNetworkConfig } from 'hardhat/types/config'
+import { HttpNetworkConfig, HttpNetworkHDAccountsConfig } from 'hardhat/types/config'
 import { ethers } from 'ethers'
 
 type EthereumNetworksTypes = 'rinkeby' | 'ropsten' | 'kovan' | 'goerli' | 'mainnet' | 'mumbai' | 'matic'
@@ -37,7 +37,7 @@ export const networkConfig = (network: EthereumNetworksTypes): HttpNetworkConfig
       initialIndex: 0,
       count: 10,
       path: `m/44'/60'/0'/0`
-    },
+    } as HttpNetworkHDAccountsConfig,
     gas: 'auto',
     gasPrice: 'auto',
     gasMultiplier: 1,

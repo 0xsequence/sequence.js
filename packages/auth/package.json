@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "concurrently": "^6.5.0",
-    "hardhat": "2.1.2",
+    "hardhat": "2.12.1",
     "mockttp": "^2.4.0"
   },
   "files": [

@@ -21,7 +21,7 @@ export const signAuthorization = async (signer: Signer, options: AuthorizationOp
   const chainId = await signer.getChainId()
 
   const address = ethers.utils.getAddress(await signer.getAddress())
-  if (!address || address === '' || address === '0x') {
+  if (!address || address === '0x') {
     throw ErrAccountIsRequired
   }
 

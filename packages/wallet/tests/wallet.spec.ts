@@ -1,8 +1,9 @@
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { encodeData } from './utils'
 import { Proof } from '@0xsequence/ethauth'
+import { getContract, Hash } from '@wagmi/core'
 
-import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
+// import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
 import {
   toSequenceTransaction,
@@ -51,17 +52,195 @@ import { BytesLike, Interface } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
 
 type EthereumInstance = {
-  chainId?: number
-  provider?: providers.JsonRpcProvider
-  signer?: AbstractSigner
+  chainId: number
+  provider: providers.JsonRpcProvider
+  signer: AbstractSigner
 }
 
+const callReceiverMockArtifactAbi = [
+  {
+    "inputs": [],
+    "stateMutability": "payable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "lastValA",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastValB",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_revertFlag",
+        "type": "bool"
+      }
+    ],
+    "name": "setRevertFlag",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_valA",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_valB",
+        "type": "bytes"
+      }
+    ],
+    "name": "testCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+] as const
+
+const hookCallerMockArtifactAbi = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "callERC1155BatchReceived",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "callERC1155Received",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "callERC1271isValidSignatureData",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_hash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "callERC1271isValidSignatureHash",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "callERC223Received",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "callERC721Received",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const
+
 describe('Wallet integration', function () {
-  const ethnode: EthereumInstance = {}
+  const ethnode: EthereumInstance = {} as any
 
   let relayer: LocalRelayer
-  let callReceiver: CallReceiverMock
-  let hookCaller: HookCallerMock
+  // let callReceiver: CallReceiverMock
+  // let hookCaller: HookCallerMock
+
+  let callReceiver = getContract({
+    address: '0x0',
+    abi: callReceiverMockArtifactAbi,
+    signerOrProvider: new providers.Web3Provider(hardhat.network.provider.send)
+  })
+
+  let hookCaller = getContract({
+    address: '0x0',
+    abi: hookCallerMockArtifactAbi,
+    signerOrProvider: new providers.Web3Provider(hardhat.network.provider.send)
+  })
 
   let context: WalletContext
   let networks: NetworkConfig[]
@@ -108,18 +287,36 @@ describe('Wallet integration', function () {
     }
 
     // Deploy call receiver mock
-    callReceiver = (await new ethers.ContractFactory(
+    const deployCallReceiver = (await new ethers.ContractFactory(
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ethnode.signer
-    ).deploy()) as unknown as CallReceiverMock
+    ).deploy())
+
+    callReceiver = getContract({
+      address: deployCallReceiver.address,
+      abi: callReceiverMockArtifactAbi,
+      signerOrProvider: ethnode.signer
+    })
+
+    // callReceiver.address = deployCallReceiver.address as any
+    // callReceiver.connect(ethnode.provider)
 
     // Deploy hook caller mock
-    hookCaller = (await new ethers.ContractFactory(
+    const deployHookCaller = (await new ethers.ContractFactory(
       HookCallerMockArtifact.abi,
       HookCallerMockArtifact.bytecode,
       ethnode.signer
-    ).deploy()) as unknown as HookCallerMock
+    ).deploy())
+
+    hookCaller = getContract({
+      address: deployHookCaller.address,
+      abi: hookCallerMockArtifactAbi,
+      signerOrProvider: ethnode.signer
+    })
+
+    // hookCaller.address = deployHookCaller.address as any
+    // hookCaller.connect(ethnode.provider)
 
     // Deploy local relayer
     relayer = new LocalRelayer({ signer: ethnode.signer })
@@ -129,7 +326,7 @@ describe('Wallet integration', function () {
     // Create wallet
     const pk = ethers.utils.randomBytes(32)
     wallet = await lib.Wallet.singleOwner(pk, context)
-    wallet = wallet.connect(ethnode.provider!, relayer)
+    wallet = wallet.connect(ethnode.provider, relayer)
   })
 
   after(async () => {
@@ -228,7 +425,7 @@ describe('Wallet integration', function () {
         expect(sig).to.not.equal('')
 
         await relayer.deployWallet(wallet.config, context)
-        const call = hookCaller.callERC1271isValidSignatureHash(wallet.address, ethers.utils.arrayify(digest), sig)
+        const call = hookCaller.callERC1271isValidSignatureHash(wallet.address as any, ethers.utils.arrayify(digest) as any, sig as any)
         await expect(call).to.be.fulfilled
       })
     })
@@ -240,9 +437,9 @@ describe('Wallet integration', function () {
         // TODO: Bundle deployment with child wallets
         await relayer.deployWallet(walletA.config, walletA.context)
 
-        const contractWithSigner = callReceiver.connect(walletB) as CallReceiverMock
+        const contractWithSigner = callReceiver.connect(walletB)// as CallReceiverMock
 
-        await contractWithSigner.testCall(412313, '0x12222334')
+        await contractWithSigner.testCall(ethers.BigNumber.from(412313), '0x12222334')
         expect(await contractWithSigner.lastValB()).to.equal('0x12222334')
       })
     })
@@ -255,9 +452,9 @@ describe('Wallet integration', function () {
         })
 
         it('Should call contract method', async () => {
-          const contractWithSigner = callReceiver.connect(signer) as CallReceiverMock
+          const contractWithSigner = callReceiver.connect(signer) //as CallReceiverMock
 
-          await contractWithSigner.testCall(412313, '0x11222334')
+          await contractWithSigner.testCall(ethers.BigNumber.from(412313), '0x11222334')
           expect(await contractWithSigner.lastValB()).to.equal('0x11222334')
         })
 
@@ -266,28 +463,28 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy()) //as unknown as CallReceiverMock
         })
 
         it('Should perform multiple transactions', async () => {
-          const contractWithSigner = callReceiver.connect(signer) as CallReceiverMock
+          const contractWithSigner = callReceiver.connect(signer) //as CallReceiverMock
 
-          await contractWithSigner.testCall(412313, '0x11222334')
-          await contractWithSigner.testCall(11111, '0x')
+          await contractWithSigner.testCall(ethers.BigNumber.from(412313), '0x11222334')
+          await contractWithSigner.testCall(ethers.BigNumber.from(11111), '0x')
         })
 
         it('Should return transaction count', async () => {
-          const contractWithSigner = callReceiver.connect(signer) as CallReceiverMock
+          const contractWithSigner = callReceiver.connect(signer) //as CallReceiverMock
 
           expect(await provider.getTransactionCount(wallet.address)).to.equal(0)
 
-          await contractWithSigner.testCall(1, '0x')
+          await contractWithSigner.testCall(ethers.BigNumber.from(1), '0x')
           expect(await provider.getTransactionCount(wallet.address)).to.equal(1)
 
-          await contractWithSigner.testCall(2, '0x')
+          await contractWithSigner.testCall(ethers.BigNumber.from(2), '0x')
           expect(await provider.getTransactionCount(wallet.address)).to.equal(2)
 
-          await contractWithSigner.testCall(3, '0x')
+          await contractWithSigner.testCall(ethers.BigNumber.from(3), '0x')
           expect(await provider.getTransactionCount(wallet.address)).to.equal(3)
         })
 
@@ -303,7 +500,7 @@ describe('Wallet integration', function () {
             // const receipt = await provider.getTransactionReceipt(txn.hash)
             // console.log('status?', receipt.status)
 
-            const call = hookCaller.callERC1271isValidSignatureData(wallet.address, s.prefixMessage(message), signature)
+            const call = hookCaller.callERC1271isValidSignatureData(wallet.address as any, s.prefixMessage(message) as any, signature as any)
             await expect(call).to.be.fulfilled
           })
         })
@@ -313,7 +510,7 @@ describe('Wallet integration', function () {
               CallReceiverMockArtifact.abi,
               CallReceiverMockArtifact.bytecode,
               ethnode.signer
-            ).deploy()) as unknown as CallReceiverMock
+            ).deploy())// as unknown as CallReceiverMock
 
             const receiver = new ethers.Contract(callReceiver1.address, CallReceiverMockArtifact.abi, signer)
 
@@ -389,13 +586,13 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy())// as unknown as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as unknown as CallReceiverMock
+          ).deploy())// as unknown as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -423,13 +620,13 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transactions = [
             {
@@ -457,7 +654,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -475,19 +672,19 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const callReceiver3 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -522,19 +719,19 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const callReceiver2 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const callReceiver3 = (await new ethers.ContractFactory(
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             from: wallet.address,
@@ -574,7 +771,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -592,7 +789,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -621,7 +818,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -651,7 +848,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -671,7 +868,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -705,7 +902,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -733,7 +930,7 @@ describe('Wallet integration', function () {
             CallReceiverMockArtifact.abi,
             CallReceiverMockArtifact.bytecode,
             ethnode.signer
-          ).deploy()) as CallReceiverMock
+          ).deploy())// as CallReceiverMock
 
           const transaction = {
             gas: '121000',
@@ -761,13 +958,13 @@ describe('Wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const transaction = [
           {
@@ -797,19 +994,19 @@ describe('Wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const transaction = [
           {
@@ -842,7 +1039,7 @@ describe('Wallet integration', function () {
   })
 
   describe('with web3', () => {
-    let provider: ExternalProvider
+    let provider: providers.ExternalProvider
     let w3: any
 
     beforeEach(async () => {
@@ -924,7 +1121,7 @@ describe('Wallet integration', function () {
         // Contract wallet must be deployed before calling ERC1271
         await relayer.deployWallet(wallet.config, context)
 
-        const call = hookCaller.callERC1271isValidSignatureData(wallet.address, prefixEIP191Message(message), signature)
+        const call = hookCaller.callERC1271isValidSignatureData(wallet.address as any, prefixEIP191Message(message) as any, signature)
         await expect(call).to.be.fulfilled
       })
 
@@ -1063,7 +1260,7 @@ describe('Wallet integration', function () {
 
     describe('estimate gas', async () => {
       it('Should estimate gas for a single meta-tx', async () => {
-        await callReceiver.testCall(0, '0x')
+        await callReceiver.testCall(ethers.BigNumber.from(0), '0x')
 
         const transaction = {
           from: wallet.address,
@@ -1081,7 +1278,7 @@ describe('Wallet integration', function () {
         expect(gasLimits[0]).to.be.below(100000)
       })
       it('Should estimate gas for a single big meta-tx', async () => {
-        await callReceiver.testCall(0, '0x')
+        await callReceiver.testCall(ethers.BigNumber.from(0), '0x')
 
         const data = ethers.utils.randomBytes(512)
         const transaction = {
@@ -1097,10 +1294,10 @@ describe('Wallet integration', function () {
         const results = await relayer.simulate(wallet.address, stx)
         const gasLimits = results.map(result => result.gasLimit)
         expect(gasLimits[0]).to.be.above(390000)
-        expect(gasLimits[0]).to.be.below(400000)
+        expect(gasLimits[0]).to.be.below(450000)
       })
       it('Should estimate gas for a batch of meta-txs', async () => {
-        await callReceiver.testCall(0, '0x')
+        await callReceiver.testCall(ethers.BigNumber.from(0), '0x')
 
         const data = ethers.utils.randomBytes(512)
         const transactions = [
@@ -1126,7 +1323,7 @@ describe('Wallet integration', function () {
         const results = await relayer.simulate(wallet.address, ...stxs)
         const gasLimits = results.map(result => result.gasLimit)
         expect(gasLimits[0]).to.be.above(390000)
-        expect(gasLimits[0]).to.be.below(400000)
+        expect(gasLimits[0]).to.be.below(450000)
         expect(gasLimits[1]).to.be.above(60000)
         expect(gasLimits[1]).to.be.below(100000)
       })
@@ -1138,13 +1335,13 @@ describe('Wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const transaction = {
           from: wallet.address,
@@ -1174,19 +1371,19 @@ describe('Wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const transaction = {
           from: wallet.address,
@@ -1223,19 +1420,19 @@ describe('Wallet integration', function () {
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver2 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const callReceiver3 = (await new ethers.ContractFactory(
           CallReceiverMockArtifact.abi,
           CallReceiverMockArtifact.bytecode,
           ethnode.signer
-        ).deploy()) as CallReceiverMock
+        ).deploy())// as CallReceiverMock
 
         const transaction = {
           from: wallet.address,
@@ -1771,7 +1968,7 @@ describe('Wallet integration', function () {
 
       expect(updateTx.length).to.equal(1)
 
-      const decoded = mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data)[0]
+      const decoded = mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data!)[0]
       expect(decoded.length).to.equal(2)
 
       const decoded0 = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', decoded[0].data)
@@ -1811,9 +2008,9 @@ describe('Wallet integration', function () {
 
       expect(updateTx.length).to.equal(1)
 
-      await expect((async () => mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data))()).to.be.rejected
+      await expect((async () => mainModuleInterface.decodeFunctionData('selfExecute', updateTx[0].data!))()).to.be.rejected
 
-      const decoded = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', updateTx[0].data)
+      const decoded = mainModuleUpgradableInterface.decodeFunctionData('updateImageHash', updateTx[0].data!)
       expect(decoded).to.not.be.undefined
     })
     it('Should migrate and publish config', async () => {
