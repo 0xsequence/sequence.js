@@ -1,7 +1,7 @@
 
 import { expect } from "chai"
 import { ethers } from "ethers"
-import { decodeSignature, SignaturePartType, SignatureType } from "../../src/v2/signature"
+import { decodeSignature, encodeSignature, SignaturePartType, SignatureType } from "../../src/v2/signature"
 
 const sampleSignature1 = '0x0001636911b800019fa7b7e8ed25088c413074818ac10ab3bbcddb120bbec85083f3ba254e5547d953fe615a6474fd365326244dedd7afa3911ad39c956ca096d721064d6b29055d1b02'
 const sampleSignature2 = '0x000263691389034a062f86183c9d46e129f0331f2a42f6ba22a3525a46ecd197fa23d177d75f2d040000a0033fce59919d0a4ee44a8066a3b1d0083760d89a06ae89edadf8a58e0e5c5ac5040400007b01016ffeccf6f31e0a469d55dede5651d34a6ecd9fc500017052a0438a13da22242bcd20c219630d839c364cd2b6042add1bee32774c37d72ba2ace8b7a79c95a536d4c0fed3fe05883c6e1188a4191a91623a903e4ec21c1b0203ad5831467806b6edd059ff5ac9809f2bb6e80512ceb5d466a67251ffb842fae1040000c50314b729622595218cdbef06c630daeea028e25e8ca048d97bc170d75feb9066ad0400007f030c8c0bb7e8c5ec8eed444ae25f3a1796597bcfacf5f6b758ae4fadd6fc416f560400005a0001e7618f1b7b012d7fc48f518f498bb6823dc2a8308984287501873cb535b6d5bf526fb91a220297f461ac5a2434d0e8e768c3bf166c329366ddc885bf2e1676271c0201014ef7ec718f66ae3920ea119b9d7ddf39337601f703fdea4c5fb23fb3cc2b2360057abef1ff7e7195acbdc4db555c27cc588a4585a6'
@@ -524,6 +524,57 @@ describe.only('v2 signature utils', () => {
       const invalidSignature = '0x0001ffffffff'
 
       expect(() => decodeSignature(invalidSignature)).to.throw('Empty signature tree')
+    })
+  })
+
+  describe('Encode signatures', () => {
+    describe('Encode decoded signatures', () => {
+      it('Re-encode simple signature', () => {
+        const decoded = decodeSignature(sampleSignature1)
+        const reEncoded = encodeSignature(decoded)
+        expect(reEncoded).to.equal(sampleSignature1)
+        expect(decoded).to.deep.equal(decodeSignature(reEncoded))
+      })
+
+      it('Re-encode trimmed 2/N with 31 signers', () => {
+        const decoded = decodeSignature(sampleSignature2)
+        const reEncoded = encodeSignature(decoded)
+
+        expect(decoded).to.deep.equal(decodeSignature(reEncoded))
+        expect(reEncoded).to.equal(sampleSignature2)
+      })
+
+      it('Re-encode non-trimmed 3/N with 16 signers', () => {
+        const decoded = decodeSignature(sampleSignature3)
+        const reEncoded = encodeSignature(decoded)
+
+        expect(decoded).to.deep.equal(decodeSignature(reEncoded))
+        expect(reEncoded).to.equal(sampleSignature3)
+      })
+
+      it('Re-encode signature with nested trees', () => {
+        const decoded = decodeSignature(sampleSignature4)
+        const reEncoded = encodeSignature(decoded)
+
+        expect(decoded).to.deep.equal(decodeSignature(reEncoded))
+        expect(reEncoded).to.equal(sampleSignature4)
+      })
+
+      it('Re-encode static subdigests signature', () => {
+        const decoded = decodeSignature(sampleSignature5)
+        const reEncoded = encodeSignature(decoded)
+
+        expect(decoded).to.deep.equal(decodeSignature(reEncoded))
+        expect(reEncoded).to.equal(sampleSignature5)
+      })
+
+      it('Re-encode dynamic signatures', () => {
+        const decoded = decodeSignature(sampleSignature6)
+        const reEncoded = encodeSignature(decoded)
+
+        expect(decoded).to.deep.equal(decodeSignature(reEncoded))
+        expect(reEncoded).to.equal(sampleSignature6)
+      })
     })
   })
 })
