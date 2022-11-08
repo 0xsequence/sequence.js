@@ -1,7 +1,7 @@
 
 import { BigNumberish, ethers } from "ethers"
 import { isValidSignature, recoverSigner } from "../commons/signer"
-import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash } from "./config"
+import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash, isLeaf } from "./config"
 
 export enum SignatureType {
   Legacy = 0,
@@ -19,6 +19,8 @@ export enum SignaturePartType {
   Subdigest = 5,
   Nested = 6
 }
+
+export const SignaturePartTypeLength = 66
 
 export type SignatureLeaf = SignerLeaf & {
   signature: string,
@@ -88,7 +90,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
     switch (type) {
       case SignaturePartType.Signature: {
         const weight = arr[0]
-        const signature = ethers.utils.hexlify(arr.slice(1, 67))
+        const signature = ethers.utils.hexlify(arr.slice(1, SignaturePartTypeLength + 1))
 
         pointer = append(pointer, {
           signature,
@@ -96,7 +98,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
           unrecovered: true,
           isDynamic: false
         })
-        arr = arr.slice(67)
+        arr = arr.slice(SignaturePartTypeLength + 1)
 
       } break
 
@@ -569,4 +571,111 @@ export async function recoverSignature(
   }
 
   return { type: signature.type, chain: result }
+}
+
+export function encodeSignature(decoded: UnrecoveredChainedSignature | UnrecoveredSignature | Signature): string {
+  if (isUnrecoveredChainedSignature(decoded)) {
+    throw new Error(`TODO NOT IMPLEMENTED`)
+  }
+
+  const body = isUnrecoveredSignature(decoded) ? decoded.decoded : decoded.config
+
+  switch (decoded.type) {
+    case SignatureType.Legacy:
+      if (body.threshold > 255) {
+        throw new Error(`Legacy signature threshold is too large: ${body.threshold} (max 255)`)
+      }
+
+      return encodeSignatureBody(body)
+
+    case SignatureType.NoChaindDynamic:
+    case SignatureType.Dynamic:
+      return ethers.utils.solidityPack(
+        ['uint8', 'bytes'],
+        [decoded.type, encodeSignatureBody(body)]
+      )
+
+
+    case SignatureType.Chained:
+      throw new Error(`TODO NOT IMPLEMENTED`)
+
+    default:
+      throw new Error(`Invalid signature type: ${decoded.type}`)
+  }
+}
+
+export function encodeSignatureBody(decoded: WalletConfig | UnrecoveredConfig): string {
+  return ethers.utils.solidityPack(
+    ['uint16', 'uint32', 'bytes'],
+    [decoded.threshold, decoded.checkpoint, encodeSignatureTree(decoded.tree)]
+  )
+}
+
+export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): string {
+  if (isNode(tree) || isUnrecoveredNode(tree)) {
+    const encodedRight = ethers.utils.arrayify(encodeSignatureTree(tree.right))
+    const encodedLeft = ethers.utils.arrayify(encodeSignatureTree(tree.left))
+    const isBranching = isNode(tree.right) || isUnrecoveredNode(tree.right)
+
+    if (isBranching) {
+      return ethers.utils.solidityPack(
+        ['bytes', 'uint8', 'uint24', 'bytes'],
+        [encodedLeft, SignaturePartType.Branch, encodedRight.length, encodedRight]
+      )
+    } else {
+      return ethers.utils.solidityPack(
+        ['bytes', 'bytes'],
+        [encodedLeft, encodedRight]
+      )
+    }
+  }
+
+  if (isNestedLeaf(tree) || isUnrecoveredNestedLeaf(tree)) {
+    const nested = ethers.utils.arrayify(encodeSignatureTree(tree.tree))
+
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'uint16', 'uint24', 'bytes'],
+      [SignaturePartType.Nested, tree.weight, tree.threshold, nested.length, nested]
+    )
+  }
+
+  if (isUnrecoveredSignatureLeaf(tree) || (isSignerLeaf(tree) && tree.signature !== undefined)) {
+    const signature = ethers.utils.arrayify(tree.signature!)
+
+    if ((tree as { isDynamic?: boolean }).isDynamic || signature.length !== SignaturePartTypeLength) {
+      if (!tree.address) throw new Error(`Dynamic signature leaf must have address`)
+      return ethers.utils.solidityPack(
+        ['uint8', 'uint8', 'address', 'uint24', 'bytes'],
+        [SignaturePartType.DynamicSignature, tree.weight, tree.address, signature.length, signature]
+      )
+    } else {
+      return ethers.utils.solidityPack(
+        ['uint8', 'uint8', 'bytes'],
+        [SignaturePartType.Signature, tree.weight, signature]
+      )
+    }
+  }
+
+  if (isSignerLeaf(tree)) {
+    return ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'address'],
+      [SignaturePartType.Address, tree.weight, tree.address]
+    )
+  }
+
+  if (isNodeLeaf(tree)) {
+    return ethers.utils.solidityPack(
+      ['uint8', 'bytes32'],
+      [SignaturePartType.Node, tree.nodeHash]
+    )
+  }
+
+  if (isSubdigestLeaf(tree)) {
+    return ethers.utils.solidityPack(
+      ['uint8', 'bytes32'],
+      [SignaturePartType.Subdigest, tree.subdigest]
+    )
+  }
+
+  throw new Error(`Unknown signature tree type: ${tree}`)
 }
