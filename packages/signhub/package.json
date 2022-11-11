@@ -1,0 +1,28 @@
+{
+  "name": "@0xsequence/signhub",
+  "version": "0.42.9",
+  "description": "orchestrates a series of signers, provides visibility into the signing process, and to the signers themselves",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/signhub",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-signhub.cjs.js",
+  "module": "dist/0xsequence-signhub.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:coverage": "nyc yarn test"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "nyc": "^15.1.0"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
