@@ -19,8 +19,10 @@
   "dependencies": {
     "@0xsequence/abi": "^0.43.4",
     "@0xsequence/config": "^0.43.4",
+    "@0xsequence/core": "^0.42.9",
     "@0xsequence/guard": "^0.43.4",
     "@0xsequence/network": "^0.43.4",
+    "@0xsequence/signhub": "^0.42.9",
     "@0xsequence/relayer": "^0.43.4",
     "@0xsequence/transactions": "^0.43.4",
     "@0xsequence/utils": "^0.43.4"
