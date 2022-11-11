@@ -1,7 +1,8 @@
 
 import { BigNumberish, ethers } from "ethers"
 import { isValidSignature, recoverSigner } from "../commons/signer"
-import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash, isLeaf } from "./config"
+import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash } from "./config"
+import * as base from '../commons/signature'
 
 export enum SignatureType {
   Legacy = 0,
@@ -301,17 +302,13 @@ export type EncodingOptions = {
 
 export function encodeSigners(
   topology: Topology,
-  parts: SignatureLeaf[] | Map<string, SignatureLeaf>,
+  parts: Map<string, base.SignaturePart>,
   subdigests: string[],
   options: EncodingOptions = {}
-): { encoded: string, weight: ethers.BigNumber } {
-  // If parts is an array, convert it to a map
-  if (Array.isArray(parts)) {
-    const partOfSigner = new Map<string, SignatureLeaf>()
-    parts.forEach((p) => partOfSigner.set(p.address, p))
-    return encodeSigners(topology, partOfSigner, subdigests)
-  }
-
+): {
+  encoded: string,
+  weight: ethers.BigNumber
+} {
   const trim = !options.disableTrim
 
   if (isNode(topology)) {
@@ -378,13 +375,13 @@ export function encodeSigners(
 
       if (options.forceDynamicEncoding || part.isDynamic) {
         return {
-          encoded: partEncoder.dynamicSignature(part.weight, part.address, signature),
-          weight: ethers.BigNumber.from(part.weight)
+          encoded: partEncoder.dynamicSignature(topology.weight, topology.address, signature),
+          weight: ethers.BigNumber.from(topology.weight)
         }
       } else {
         return {
-          encoded: partEncoder.signature(part.weight, signature),
-          weight: ethers.BigNumber.from(part.weight)
+          encoded: partEncoder.signature(topology.weight, signature),
+          weight: ethers.BigNumber.from(topology.weight)
         }
       }
 
@@ -405,64 +402,52 @@ export type UnrecoveredConfig = {
   checkpoint: ethers.BigNumberish
 }
 
-export type UnrecoveredSignature = {
+export type UnrecoveredSignature = base.UnrecoveredSignature & {
   type: SignatureType,
   decoded: UnrecoveredConfig
 }
 
-export type Signature = {
-  type: SignatureType,
-  config: WalletConfig,
-  subdigest: string,
-  payload?: SignedPayload
+export type Signature = base.Signature<WalletConfig> & {
+  type: SignatureType
 }
 
-export type UnrecoveredChainedSignature = {
-  type: SignatureType,
-  chain: (UnrecoveredSignature | UnrecoveredChainedSignature)[]
+export type UnrecoveredChainedSignature = UnrecoveredSignature & {
+  sufix: (UnrecoveredSignature | UnrecoveredChainedSignature)[]
 }
 
-export type ChainedSignature = {
-  type: SignatureType,
-  chain: (Signature | ChainedSignature)[]
-}
-
-export type SignedPayload = {
-  message?: ethers.BytesLike,
-  digest: string,
-  chainid: ethers.BigNumber,
-  address: string
+export type ChainedSignature = Signature & {
+  sufix: (Signature | ChainedSignature)[]
 }
 
 export function deepestConfigOfSignature(signature: Signature | ChainedSignature): WalletConfig {
-  return isChainedSignature(signature) ? deepestConfigOfSignature(signature.chain[signature.chain.length - 1]) : signature.config
-}
-
-export function subdigestOf(payload: SignedPayload) {
-  return ethers.utils.solidityKeccak256(
-    ['bytes', 'uint256', 'address', 'bytes32'],
-    ['0x1901', payload.chainid, payload.address, payload.digest]
-  )
+  return isChainedSignature(signature) ? deepestConfigOfSignature(signature.sufix[signature.sufix.length - 1]) : signature.config
 }
 
 export function isUnrecoveredSignature(sig: any): sig is UnrecoveredSignature {
-  return sig.type !== undefined && sig.decoded !== undefined
+  return (
+    sig.type !== undefined &&
+    sig.decoded !== undefined &&
+    sig.version !== undefined &&
+    sig.version === 2
+  )
 }
 
 export function isUnrecoveredChainedSignature(sig: any): sig is UnrecoveredChainedSignature {
-  return sig.chain !== undefined && Array.isArray(sig.chain) && sig.chain.every(isUnrecoveredSignature)
+  return sig.sufix !== undefined && Array.isArray(sig.sufix) && sig.sufix.every(isUnrecoveredSignature)
 }
 
 export function isSignature(sig: any): sig is Signature {
-  return sig.type !== undefined && sig.config !== undefined && sig.digest !== undefined
+  return (
+    sig.type !== undefined &&
+    sig.config !== undefined &&
+    sig.digest !== undefined &&
+    sig.version !== undefined &&
+    sig.version === 2
+  )
 }
 
 export function isChainedSignature(sig: any): sig is ChainedSignature {
   return sig.chain !== undefined && Array.isArray(sig.chain) && sig.chain.every(isSignature)
-}
-
-export function isSignedPayload(payload: any): payload is SignedPayload {
-  return payload.digest !== undefined && payload.chainid !== undefined && payload.address !== undefined
 }
 
 export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignature | UnrecoveredChainedSignature {
@@ -471,13 +456,13 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
 
   switch (type) {
     case SignatureType.Legacy:
-      return { type: SignatureType.Legacy, decoded: decodeSignatureBody(bytes) }
+      return { version: 2, type: SignatureType.Legacy, decoded: decodeSignatureBody(bytes) }
 
     case SignatureType.Dynamic:
-      return { type: SignatureType.Dynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
+      return { version: 2, type: SignatureType.Dynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
 
     case SignatureType.NoChaindDynamic:
-      return { type: SignatureType.NoChaindDynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
+      return { version: 2, type: SignatureType.NoChaindDynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
 
     case SignatureType.Chained:
       return decodeChainedSignature(bytes)
@@ -519,7 +504,14 @@ export function decodeChainedSignature(signature: ethers.BytesLike): Unrecovered
     index += size
   }
 
-  return { type: SignatureType.Chained, chain }
+  const main = chain[0]
+  if (isUnrecoveredChainedSignature(main)) {
+    throw new Error(`Expected first link of chained signature to be a simple signature (not chained)`)
+  }
+
+  const sufix = chain.slice(1)
+
+  return { ...main, sufix }
 }
 
 export function setImagehashStruct(imagehash: string) {
@@ -531,11 +523,11 @@ export function setImagehashStruct(imagehash: string) {
 
 export async function recoverSignature(
   signature: UnrecoveredSignature | UnrecoveredChainedSignature,
-  payload: SignedPayload | { subdigest: string },
+  payload: base.SignedPayload | { subdigest: string },
   provider: ethers.providers.Provider
 ): Promise<Signature | ChainedSignature> {
-  const signedPayload = (payload as { subdigest: string}).subdigest === undefined ? payload as SignedPayload : undefined
-  const subdigest = signedPayload ? subdigestOf(signedPayload) : (payload as { subdigest: string }).subdigest
+  const signedPayload = (payload as { subdigest: string}).subdigest === undefined ? payload as base.SignedPayload : undefined
+  const subdigest = signedPayload ? base.subdigestOf(signedPayload) : (payload as { subdigest: string }).subdigest
 
   // if payload chainid is 0 then it must be encoded with "no chainid" encoding
   // and if it is encoded with "no chainid" encoding then it must have chainid 0
@@ -543,19 +535,19 @@ export async function recoverSignature(
     throw new Error(`Invalid signature type-chainid combination: ${signature.type}-${signedPayload.chainid.toString()}`)
   }
 
-  if (isUnrecoveredSignature(signature)) {
+  if (!isUnrecoveredChainedSignature(signature)) {
     const tree = await recoverTopology(signature.decoded.tree, subdigest, provider)
-    return { type: signature.type, subdigest, config: { ...signature.decoded, tree } }
+    return { version: 2, type: signature.type, subdigest, config: { version: 2, ...signature.decoded, tree } }
   }
 
-  if (!isSignedPayload(signedPayload)) {
+  if (!base.isSignedPayload(signedPayload)) {
     throw new Error(`Chained signature recovery requires detailed signed payload, subdigest is not enough`)
   }
-
+  
   const result: (Signature | ChainedSignature)[] = []
   let mutatedPayload = signedPayload
 
-  for (const sig of signature.chain) {
+  for (const sig of [signature, ...signature.sufix]) {
     const recovered = await recoverSignature(sig, mutatedPayload, provider)
     result.unshift(recovered)
 
@@ -570,11 +562,14 @@ export async function recoverSignature(
     }
   }
 
-  return { type: signature.type, chain: result }
+  const main = result[0]
+  const sufix = result.slice(1)
+
+  return { ...main, sufix }
 }
 
 export function encodeSignature(decoded: UnrecoveredChainedSignature | UnrecoveredSignature | Signature): string {
-  if (isUnrecoveredChainedSignature(decoded)) {
+  if (isUnrecoveredChainedSignature(decoded) || isChainedSignature(decoded)) {
     throw new Error(`TODO NOT IMPLEMENTED`)
   }
 
@@ -678,4 +673,51 @@ export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): strin
   }
 
   throw new Error(`Unknown signature tree type: ${tree}`)
+}
+
+export class SignatureCoder implements base.SignatureCoder<
+  Signature,
+  WalletConfig,
+  UnrecoveredChainedSignature | UnrecoveredSignature
+> {
+  decode = (data: string): UnrecoveredSignature => {
+    return decodeSignature(data)
+  }
+
+  encode = (data: Signature | UnrecoveredSignature): string => {
+    return encodeSignature(data)
+  }
+
+  recover = (
+    data: UnrecoveredSignature | UnrecoveredChainedSignature,
+    payload: base.SignedPayload,
+    provider: ethers.providers.Provider
+  ): Promise<Signature> => {
+    return recoverSignature(data, payload, provider)
+  }
+
+  encodeSigners = (
+    config: WalletConfig,
+    signatures: Map<string, base.SignaturePart>,
+    subdigests: string[],
+    chainId: ethers.BigNumberish
+  ): {
+    encoded: string,
+    weight: ethers.BigNumber
+  } => {
+    if (ethers.BigNumber.from(chainId).isZero()) {
+      return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.NoChaindDynamic })
+    }
+
+    if (config.threshold > 255) {
+      return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.Dynamic })
+    }
+
+    return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.Legacy })
+  }
+
+  hasEnoughSigningPower = (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
+    const { weight } = this.encodeSigners(config, signatures, [], 0)
+    return weight.gte(config.threshold)
+  }
 }
