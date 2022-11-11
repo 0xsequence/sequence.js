@@ -1,5 +1,6 @@
 
-import { BigNumberish, ethers } from "ethers"
+import { ethers } from "ethers"
+import * as base from "../commons/config"
 
 //
 // Tree typings - leaves
@@ -7,7 +8,7 @@ import { BigNumberish, ethers } from "ethers"
 
 export type SignerLeaf = {
   address: string,
-  weight: BigNumberish,
+  weight: ethers.BigNumberish,
   signature?: string
 }
 
@@ -17,8 +18,8 @@ export type SubdigestLeaf = {
 
 export type NestedLeaf = {
   tree: Topology,
-  weight: BigNumberish,
-  threshold: BigNumberish
+  weight: ethers.BigNumberish,
+  threshold: ethers.BigNumberish
 }
 
 // This is an unknown node
@@ -130,9 +131,9 @@ export function leftFace(topology: Topology): Topology[] {
 // Wallet config types
 //
 
-export type WalletConfig = {
-  threshold: BigNumberish,
-  checkpoint: BigNumberish,
+export type WalletConfig = base.Config & {
+  threshold: ethers.BigNumberish,
+  checkpoint: ethers.BigNumberish,
   tree: Topology
 }
 
@@ -140,7 +141,9 @@ export function isWalletConfig(config: any): config is WalletConfig {
   return (
     (config as WalletConfig).threshold !== undefined &&
     (config as WalletConfig).checkpoint !== undefined &&
-    (config as WalletConfig).tree !== undefined
+    (config as WalletConfig).tree !== undefined &&
+    (config as WalletConfig).version !== undefined &&
+    (config as WalletConfig).version === 2
   )
 }
 
@@ -171,16 +174,16 @@ export function imageHash(config: WalletConfig): string {
 //
 
 export type SimpleNestedMember = {
-  threshold: BigNumberish,
-  weight: BigNumberish,
+  threshold: ethers.BigNumberish,
+  weight: ethers.BigNumberish,
   members: SimpleConfigMember[]
 }
 
 export type SimpleConfigMember = SubdigestLeaf | SignerLeaf | SimpleNestedMember
 
 export type SimpleWalletConfig = {
-  threshold: BigNumberish,
-  checkpoint: BigNumberish,
+  threshold: ethers.BigNumberish,
+  checkpoint: ethers.BigNumberish,
   members: SimpleConfigMember[]
 }
 
@@ -304,9 +307,35 @@ export function toWalletConfig(
   simpleWalletConfig: SimpleWalletConfig,
   builder: TopologyBuilder = optimized2SignersTopologyBuilder
 ): WalletConfig {
+
   return {
+    version: 2,
     threshold: simpleWalletConfig.threshold,
     checkpoint: simpleWalletConfig.checkpoint,
     tree: builder(simpleWalletConfig.members)
   }
+}
+
+export function hasSubdigest(tree: Topology, subdigest: string): boolean {
+  if (isSubdigestLeaf(tree)) {
+    return tree.subdigest === subdigest
+  }
+
+  if (isNode(tree)) {
+    return hasSubdigest(tree.left, subdigest) || hasSubdigest(tree.right, subdigest)
+  }
+
+  return false
+}
+
+export class ConfigCoder implements base.ConfigCoder<WalletConfig> {
+  imageHashOf = (config: WalletConfig): string => {
+    return imageHash(config)
+  }
+
+  hasSubdigest = (config: WalletConfig, subdigest: string): boolean => {
+    return hasSubdigest(config.tree, subdigest)
+  }
+
+  // isValid = (config: WalletConfig): boolean {}
 }
