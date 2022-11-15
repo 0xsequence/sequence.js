@@ -1,6 +1,8 @@
 
 import { ethers } from "ethers"
-import * as base from "../commons/config"
+import { Interface } from '@ethersproject/abi'
+import * as base from "../commons"
+import { walletContracts } from "@0xsequence/abi"
 
 //
 // Tree typings - leaves
@@ -131,7 +133,7 @@ export function leftFace(topology: Topology): Topology[] {
 // Wallet config types
 //
 
-export type WalletConfig = base.Config & {
+export type WalletConfig = base.config.Config & {
   threshold: ethers.BigNumberish,
   checkpoint: ethers.BigNumberish,
   tree: Topology
@@ -328,7 +330,7 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
   return false
 }
 
-export class ConfigCoder implements base.ConfigCoder<WalletConfig> {
+export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
   imageHashOf = (config: WalletConfig): string => {
     return imageHash(config)
   }
@@ -338,4 +340,37 @@ export class ConfigCoder implements base.ConfigCoder<WalletConfig> {
   }
 
   // isValid = (config: WalletConfig): boolean {}
+
+  /**
+   * 
+   * Notice: context and kind are ignored because v2
+   * doesn't need to manually update the implementation before
+   * a configuration update, it's automatically done by the contract.
+   * 
+   */
+  public update = {
+    isKindUsed: true,
+
+    buildTransaction: (
+      wallet: string,
+      config: WalletConfig,
+      _context: base.context.WalletContext,
+      _kind?: 'first' | 'later' | undefined
+    ): base.transaction.TransactionBundle => {
+      const module = new Interface(walletContracts.mainModuleUpgradable.abi)
+  
+      return {
+        entrypoint: wallet,
+        transactions: [{
+          to: wallet,
+          data: module.encodeFunctionData(module.getFunction('updateImageHash'), [
+            this.imageHashOf(config)
+          ]),
+          gasLimit: 0,
+          delegateCall: false,
+          revertOnError: true,
+        }]
+      }
+    }
+  }
 }
