@@ -1,4 +1,3 @@
-import fetchPonyfill from 'fetch-ponyfill'
 import { BigNumber, ethers, BytesLike } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 import { GuarddService } from '@0xsequence/guard'
@@ -15,7 +14,7 @@ export class GuardRemoteSigner extends RemoteSigner {
     public defaultChainId: number = ChainId.MAINNET
   ) {
     super()
-    this._guardd = new GuarddService(hostname, fetchPonyfill().fetch)
+    this._guardd = new GuarddService(hostname, (a, b) => global.fetch(a, b))
     this._address = address
   }
 

@@ -1,7 +1,5 @@
 export * from './indexer.gen'
 
-import fetch from 'cross-fetch'
-
 import { Indexer as BaseSequenceIndexer } from './indexer.gen'
 
 export enum SequenceIndexerServices {
@@ -25,7 +23,7 @@ export enum SequenceIndexerServices {
 
 export class SequenceIndexerClient extends BaseSequenceIndexer {
   constructor(hostname: string, public jwtAuth?: string) {
-    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, (a, b) => global.fetch(a, b))
     this.fetch = this._fetch
   }
 

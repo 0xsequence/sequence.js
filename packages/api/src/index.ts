@@ -1,13 +1,11 @@
 export * from './api.gen'
 
-import fetch from 'cross-fetch'
-
 import { API as BaseSequenceAPI } from './api.gen'
 
 export class SequenceAPIClient extends BaseSequenceAPI {
   constructor(hostname: string, public jwtAuth?: string) {
-    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
-    this.fetch = this._fetch
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, global.fetch)
+    this.fetch = (a, b) => this._fetch(a, b)
   }
 
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
