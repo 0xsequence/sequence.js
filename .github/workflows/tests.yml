@@ -36,6 +36,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            ~/.cache/puppeteer/chrome
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && yarn typecheck
 
@@ -113,6 +114,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            ~/.cache/puppeteer/chrome
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/0xsequence/ && yarn test
 
