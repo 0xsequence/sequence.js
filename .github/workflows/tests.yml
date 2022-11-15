@@ -17,6 +17,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            ~/.cache/puppeteer
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn install --network-concurrency 1
         if: ${{ steps.yarn-cache.outputs.cache-hit != 'true' }}
@@ -33,9 +34,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && yarn typecheck
 
@@ -51,9 +49,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && yarn lint
 
@@ -69,9 +64,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && yarn build
 
@@ -87,9 +79,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/0xsequence/ && yarn test
 
@@ -105,9 +94,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/abi/ && yarn test
 
@@ -123,9 +109,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/api/ && yarn test
 
@@ -141,9 +124,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/auth/ && yarn test
 
@@ -159,9 +139,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/config/ && yarn test
 
@@ -177,9 +154,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/deployer/ && yarn test
 
@@ -195,9 +169,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/estimator/ && yarn test
 
@@ -213,9 +184,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/guard/ && yarn test
 
@@ -231,9 +199,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/indexer/ && yarn test
 
@@ -249,9 +214,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/metadata/ && yarn test
 
@@ -267,9 +229,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/multicall/ && yarn test
 
@@ -285,9 +244,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/network/ && yarn test
 
@@ -303,9 +259,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/provider/ && yarn test
 
@@ -321,9 +274,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/relayer/ && yarn test
 
@@ -339,9 +289,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/simulator/ && yarn test
 
@@ -357,9 +304,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/transactions/ && yarn test
 
@@ -375,9 +319,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/utils/ && yarn test
 
@@ -393,9 +334,6 @@ jobs:
       - uses: actions/cache@v3
         id: yarn-cache
         with:
-          path: |
-            node_modules
-            */*/node_modules
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/wallet/ && yarn test
 
