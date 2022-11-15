@@ -112,13 +112,7 @@ export class WalletUtils {
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
     walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(
-      address,
-      encodeMessageDigest(prefixEIP191Message(message)),
-      signature,
-      chainId,
-      walletContext
-    )
+    return recoverWalletConfig(address, encodeMessageDigest(prefixEIP191Message(message)), signature, chainId, walletContext)
   }
 
   // Recover the WalletConfig from a signature of a typedData object
