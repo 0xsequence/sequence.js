@@ -21,7 +21,7 @@ export type UnrecoveredSignature = {
 export type SignedPayload = {
   message?: ethers.BytesLike,
   digest: string,
-  chainid: ethers.BigNumber,
+  chainid: ethers.BigNumberish,
   address: string
 }
 
