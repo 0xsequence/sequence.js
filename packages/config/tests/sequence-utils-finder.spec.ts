@@ -38,11 +38,11 @@ describe('Wallet integration', function () {
   let context: WalletContext
 
   before(async () => {
-    const nodeA = "http://localhost:7547/"
+    const nodeA = "http://127.0.0.1:7547/"
     const providerA = new ethers.providers.JsonRpcProvider(nodeA)
     const signerA = providerA.getSigner()
 
-    const nodeB = "http://localhost:7548/"
+    const nodeB = "http://127.0.0.1:7548/"
     const providerB = new ethers.providers.JsonRpcProvider(nodeB)
     const signerB = providerB.getSigner()
 
@@ -130,7 +130,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
+      expect(imageHash(found.config!)).to.equal(imageHash(wallet.config))
     })
     it('Fail to find counterfactual wallet without known configs', async () => {
       const wallet = await Wallet.singleOwner(ethers.Wallet.createRandom(), context)
@@ -154,7 +154,7 @@ describe('Wallet integration', function () {
       const wallet = new Wallet({ context, config: { threshold: 2, signers: [{ weight: 3, address: ethers.Wallet.createRandom().address }, { weight: 1, address: ethers.Wallet.createRandom().address }] }})
       const finder = new SequenceUtilsFinder(authChain.provider)
 
-      await mainChain.relayer.deployWallet(wallet.config, wallet.context)
+      await mainChain.relayer!.deployWallet(wallet.config, wallet.context)
 
       const found = await finder.findCurrentConfig(
         { address: wallet.address,
@@ -169,13 +169,13 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
+      expect(imageHash(found.config!)).to.equal(imageHash(wallet.config))
     })
     it('Find counterfactual wallet after deployment on authChain', async () => {
       const wallet = new Wallet({ context, config: { threshold: 2, signers: [{ weight: 3, address: ethers.Wallet.createRandom().address }, { weight: 1, address: ethers.Wallet.createRandom().address }] }})
       const finder = new SequenceUtilsFinder(authChain.provider)
 
-      await authChain.relayer.deployWallet(wallet.config, wallet.context)
+      await authChain.relayer!.deployWallet(wallet.config, wallet.context)
 
       const found = await finder.findCurrentConfig(
         { address: wallet.address,
@@ -190,7 +190,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
+      expect(imageHash(found.config!)).to.equal(imageHash(wallet.config))
     })
     it('Find counterfactual wallet after deployment and update on authChain (indexed)', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -216,7 +216,7 @@ describe('Wallet integration', function () {
       )
 
       expect(found).to.not.be.undefined
-      expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
+      expect(imageHash(found.config!)).to.equal(imageHash(wallet.config))
     })
     it('Find counterfactual wallet after deployment and update on authChain (not-indexed)', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -242,7 +242,7 @@ describe('Wallet integration', function () {
       )
 
       expect(found?.config).to.not.be.undefined
-      expect(imageHash(found.config)).to.equal(imageHash(wallet.config))
+      expect(imageHash(found.config!)).to.equal(imageHash(wallet.config))
     })
     it('Fail to find counterfactual wallet after deployment and update on authChain if og config is not published', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -276,8 +276,8 @@ describe('Wallet integration', function () {
 
       const finder = new SequenceUtilsFinder(authChain.provider)
 
-      await authChain.relayer.deployWallet(wallet.config, wallet.context)
-      await mainChain.relayer.deployWallet(wallet.config, wallet.context)
+      await authChain.relayer!.deployWallet(wallet.config, wallet.context)
+      await mainChain.relayer!.deployWallet(wallet.config, wallet.context)
 
       const newConfig = { threshold: 1, signers: [{ weight: 2, address: ethers.Wallet.createRandom().address }] }
 
@@ -293,7 +293,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(newConfig))
+      expect(imageHash(found.config!)).to.equal(imageHash(newConfig))
     })
     it('Find wallet configuration after update on both chains (not-indexed)', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -303,8 +303,8 @@ describe('Wallet integration', function () {
 
       const finder = new SequenceUtilsFinder(authChain.provider)
 
-      await authChain.relayer.deployWallet(wallet.config, wallet.context)
-      await mainChain.relayer.deployWallet(wallet.config, wallet.context)
+      await authChain.relayer!.deployWallet(wallet.config, wallet.context)
+      await mainChain.relayer!.deployWallet(wallet.config, wallet.context)
 
       const newConfig = { threshold: 1, signers: [{ weight: 2, address: ethers.Wallet.createRandom().address }] }
 
@@ -320,7 +320,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(newConfig))
+      expect(imageHash(found.config!)).to.equal(imageHash(newConfig))
     })
     it('Fail to find wallet configuration after update on both chains (not-published)', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -330,8 +330,8 @@ describe('Wallet integration', function () {
 
       const finder = new SequenceUtilsFinder(authChain.provider)
 
-      await authChain.relayer.deployWallet(wallet.config, wallet.context)
-      await mainChain.relayer.deployWallet(wallet.config, wallet.context)
+      await authChain.relayer!.deployWallet(wallet.config, wallet.context)
+      await mainChain.relayer!.deployWallet(wallet.config, wallet.context)
 
       const newConfig = { threshold: 1, signers: [{ weight: 2, address: ethers.Wallet.createRandom().address }] }
 
@@ -381,7 +381,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(newConfigA))
+      expect(imageHash(found.config!)).to.equal(imageHash(newConfigA))
     })
     it('Find wallet configuration after asymetric update on both chains (not-indexed)', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -414,7 +414,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(newConfigA))
+      expect(imageHash(found.config!)).to.equal(imageHash(newConfigA))
     })
     it('Find wallet configuration after asymetric update on both chains (not published, from known configs)', async () => {
       const signer1 = ethers.Wallet.createRandom()
@@ -452,7 +452,7 @@ describe('Wallet integration', function () {
         }
       )
 
-      expect(imageHash(found.config)).to.equal(imageHash(newConfigA))
+      expect(imageHash(found.config!)).to.equal(imageHash(newConfigA))
     })
     it('Fail to find wallet configuration after asymetric update on both chains if config is not published', async () => {
       const signer1 = ethers.Wallet.createRandom()

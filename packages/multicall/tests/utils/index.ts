@@ -1,5 +1,3 @@
-import { ethers } from 'ethers'
-
 export type SpyProxyHooks<K, T extends (...args: any[]) => any> = {
   prop: keyof K
   func: T

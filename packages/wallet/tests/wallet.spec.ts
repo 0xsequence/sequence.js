@@ -1,3 +1,7 @@
+import hardhat from 'hardhat'
+import chaiAsPromised from 'chai-as-promised'
+import * as chai from 'chai'
+
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { encodeData } from './utils'
 import { Proof } from '@0xsequence/ethauth'
@@ -39,8 +43,8 @@ import {
 
 import { LocalWeb3Provider, prefixEIP191Message } from '../../provider/src'
 
-import chaiAsPromised from 'chai-as-promised'
-import * as chai from 'chai'
+import { BytesLike, Interface } from 'ethers/lib/utils'
+import { walletContracts } from '@0xsequence/abi'
 
 const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModule.sol/MainModule.json')
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
@@ -49,10 +53,6 @@ const Web3 = require('web3')
 const { expect } = chai.use(chaiAsPromised)
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
-
-import hardhat from 'hardhat'
-import { BytesLike, Interface } from 'ethers/lib/utils'
-import { walletContracts } from '@0xsequence/abi'
 
 type EthereumInstance = {
   chainId: number
@@ -79,7 +79,7 @@ describe('Wallet integration', function () {
     // and make sure your ganache or hardhat instance is running separately
     // NOTE2: ganache will fail at getStorageAt(), as hardhat and ganache treat it a bit differently,
     // which is strange. Hardhat is at fault here IMHO.
-    // ethnode.provider = new ethers.providers.JsonRpcProvider(`http://localhost:8545/`)
+    // ethnode.provider = new ethers.providers.JsonRpcProvider(`http://127.0.0.1:8545/`)
 
     ethnode.signer = ethnode.provider.getSigner()
     ethnode.chainId = 31337

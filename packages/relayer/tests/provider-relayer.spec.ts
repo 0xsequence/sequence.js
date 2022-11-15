@@ -37,7 +37,7 @@ describe('Wallet integration', function () {
 
   before(async () => {
     // Provider from hardhat without a server instance
-    ethnode.providerUrl = `http://localhost:9547/`
+    ethnode.providerUrl = `http://127.0.0.1:9547/`
     ethnode.provider = new ethers.providers.JsonRpcProvider(ethnode.providerUrl)
 
     ethnode.signer = ethnode.provider.getSigner()

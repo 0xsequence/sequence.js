@@ -72,7 +72,7 @@ describe('Wallet integration', function () {
 
   before(async () => {
     // Provider from hardhat without a server instance
-    ethnode.providerUrl = `http://localhost:9546/`
+    ethnode.providerUrl = `http://127.0.0.1:9546/`
     ethnode.provider = new ethers.providers.JsonRpcProvider(ethnode.providerUrl)
 
     ethnode.signer = ethnode.provider.getSigner()
@@ -408,7 +408,7 @@ describe('Wallet integration', function () {
       }
     })
 
-    const configFinder = new SequenceUtilsFinder(networks.find(n => n.isAuthChain).provider)
+    const configFinder = new SequenceUtilsFinder(networks.find(n => n.isAuthChain)!.provider!)
 
     const session = Session.open({
       sequenceApiUrl: '',
@@ -442,7 +442,7 @@ describe('Wallet integration', function () {
 
     let alwaysFail: boolean = false
 
-    const sequenceApiUrl = 'http://localhost:8099'
+    const sequenceApiUrl = 'http://127.0.0.1:8099'
 
     beforeEach(() => {
       fakeJwt = ethers.utils.hexlify(ethers.utils.randomBytes(64))
@@ -455,8 +455,8 @@ describe('Wallet integration', function () {
 
         const ethauth = new ETHAuth(ValidateSequenceUndeployedWalletProof(context), ValidateSequenceDeployedWalletProof)
 
-        ethauth.chainId = ethnode.chainId
-        ethauth.configJsonRpcProvider(ethnode.providerUrl)
+        ethauth.chainId = ethnode.chainId!
+        ethauth.configJsonRpcProvider(ethnode.providerUrl!)
 
         totalCount++
 
@@ -661,7 +661,7 @@ describe('Wallet integration', function () {
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
       server.post('/rpc/API/FriendList').thenCallback(async request => {
-        const hasToken = request.headers['authorization'].includes(fakeJwt)
+        const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
 
@@ -711,7 +711,7 @@ describe('Wallet integration', function () {
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
       server.post('/rpc/API/FriendList').thenCallback(async request => {
-        const hasToken = request.headers['authorization'].includes(fakeJwt)
+        const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
 
@@ -859,7 +859,7 @@ describe('Wallet integration', function () {
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
       server.post('/rpc/API/FriendList').thenCallback(async request => {
-        const hasToken = request.headers['authorization'].includes(fakeJwt)
+        const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
 
@@ -971,7 +971,7 @@ describe('Wallet integration', function () {
       totalCount = 0
 
       // Create a bunch of API clients concurrently
-      const requests = []
+      const requests: any[] = []
       while (requests.length < 10) {
         requests.push(session.getAPIClient())
       }

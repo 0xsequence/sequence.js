@@ -1,6 +1,6 @@
 
 import { ethers, providers, Signer } from 'ethers'
-import * as Ganache from 'ganache-cli'
+import * as Ganache from 'ganache'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts'
 import { JsonRpcRouter, JsonRpcExternalProvider } from '@0xsequence/network'
 
@@ -59,8 +59,10 @@ describe('Multicall integration', function () {
     // Deploy Ganache test env
     ganache.chainId = 1337
     ganache.server = Ganache.server({
-      _chainIdRpc: ganache.chainId,
-      _chainId: ganache.chainId,
+      chain: {
+        chainId: ganache.chainId,
+        networkId: ganache.chainId
+      },
       mnemonic: "ripple axis someone ridge uniform wrist prosper there frog rate olympic knee",
       accounts: accounts
     })
@@ -68,7 +70,7 @@ describe('Multicall integration', function () {
     // TODO: use hardhat instead like in wallet/wallet.spec.ts
 
     await ganache.server.listen(GANACHE_PORT)
-    ganache.serverUri = `http://localhost:${GANACHE_PORT}/`
+    ganache.serverUri = `http://127.0.0.1:${GANACHE_PORT}/`
     ganache.provider = new providers.JsonRpcProvider(ganache.serverUri)
     ganache.signer = ganache.provider.getSigner()
 
@@ -409,7 +411,8 @@ describe('Multicall integration', function () {
 
           const multiCallMockB = callMockB.connect(provider)
 
-          await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejectedWith('VM Exception while processing transaction: revert CallReceiverMock#testCall: REVERT_FLAG')
+          // await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejectedWith('VM Exception while processing transaction: revert CallReceiverMock#testCall: REVERT_FLAG')
+          await expect(multiCallMockB.callStatic.testCall(1, "0x1122")).to.be.rejectedWith(/Transaction reverted/)
 
           if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
@@ -421,10 +424,14 @@ describe('Multicall integration', function () {
 
           const multiCallMockB = callMockB.connect(provider)
 
+          // await expect(Promise.all([
+          //   multiCallMockB.callStatic.testCall(1, "0x1122"),
+          //   multiCallMockB.callStatic.testCall(2, "0x1122")
+          // ])).to.be.rejectedWith('VM Exception while processing transaction: revert CallReceiverMock#testCall: REVERT_FLAG')
           await expect(Promise.all([
             multiCallMockB.callStatic.testCall(1, "0x1122"),
             multiCallMockB.callStatic.testCall(2, "0x1122")
-          ])).to.be.rejectedWith('VM Exception while processing transaction: revert CallReceiverMock#testCall: REVERT_FLAG')
+          ])).to.be.rejectedWith(/Transaction reverted/)
 
           if (option.ignoreCount) return
           expect(callCounter).to.equal(3)
