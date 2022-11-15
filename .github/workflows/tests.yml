@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -27,7 +27,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -36,7 +36,6 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-            ~/.cache/puppeteer/chrome
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && yarn typecheck
 
@@ -46,7 +45,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -64,7 +63,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -82,7 +81,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -91,7 +90,6 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-            ~/.cache/puppeteer/chrome
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && cd packages/0xsequence/ && yarn test
 
@@ -101,7 +99,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -119,7 +117,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -137,7 +135,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -155,7 +153,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -173,7 +171,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -191,7 +189,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -209,7 +207,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -227,7 +225,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -245,7 +243,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -263,7 +261,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -281,7 +279,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -299,7 +297,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -317,7 +315,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -335,7 +333,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -353,7 +351,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -371,7 +369,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -389,7 +387,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
       - uses: actions/cache@v3
@@ -407,7 +405,7 @@ jobs:
   #   needs: [install]
   #   steps:
   #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v2
+  #     - uses: actions/setup-node@v3
   #       with:
   #         node-version: 18
   #     - uses: actions/cache@v3
