@@ -28,8 +28,6 @@ export interface TransactionEncoded {
 
 export interface TransactionRequest extends EthersTransactionRequest {
   auxiliary?: Transactionish[]
-  expiration?: BigNumberish
-  afterNonce?: NonceDependency | BigNumberish
 }
 
 export interface NonceDependency {
@@ -48,6 +46,21 @@ export type SignedTransactions = {
   transactions: Transaction[],
   nonce: BigNumberish,
   signature: string | DecodedSignature | Promise<string> | Promise<DecodedSignature>
+}
+
+export type TransactionBundle = {
+  intent: {
+    digest: string,
+    wallet: string
+  },
+  entrypoint: string,
+  chainId: BigNumberish,
+  transactions: Transaction[],
+}
+
+export type SignedTransactionBundle = TransactionBundle & {
+  signature: string,
+  nonce: BigNumberish,
 }
 
 export interface TransactionResponse<R = any> extends EthersTransactionResponse {

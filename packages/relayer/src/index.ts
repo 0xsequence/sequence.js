@@ -1,5 +1,5 @@
 import { ethers, providers } from 'ethers'
-import { SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
+import { SignedTransactionBundle, SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { proto } from './rpc-relayer'
@@ -32,7 +32,7 @@ export interface Relayer {
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
   // waitForReceipt must default to true.
-  relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
+  relay(signedTxs: SignedTransactionBundle, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
 
   // wait for transaction confirmation
   // timeout is the maximum time to wait for the transaction response
