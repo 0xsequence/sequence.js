@@ -37,6 +37,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            ~/.cache/puppeteer
           key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/yarn.lock') }}
       - run: yarn dev && yarn typecheck
 
