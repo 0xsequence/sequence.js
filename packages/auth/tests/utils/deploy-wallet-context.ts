@@ -1,5 +1,4 @@
 import { ethers } from 'ethers'
-import { Provider } from '@ethersproject/providers'
 
 import {
   Factory,
@@ -18,7 +17,7 @@ const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/co
 const RequireFreshSignerArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/libs/RequireFreshSigner.sol/RequireFreshSigner.json')
 
 export async function deployWalletContext(
-  provider: Provider
+  provider: ethers.providers.Provider
 ): Promise<[Factory, MainModule, MainModuleUpgradable, GuestModule, SequenceUtils, RequireFreshSigner]> {
   const factory = (await new ethers.ContractFactory(
     FactoryArtifact.abi,

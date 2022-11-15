@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "concurrently": "^7.5.0",
+    "ethers": "^5.7.2",
     "hardhat": "^2.12.2",
     "mockttp": "^2.4.0"
   },

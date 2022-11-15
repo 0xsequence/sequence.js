@@ -19,7 +19,9 @@
   "peerDependencies": {
     "ethers": ">=5.5"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "ethers": "^5.7.2"
+  },
   "files": [
     "src",
     "dist"

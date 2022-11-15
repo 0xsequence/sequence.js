@@ -1,6 +1,5 @@
 import { prefixEIP191Message, WindowMessageProvider } from '@0xsequence/provider'
 import { ethers } from 'ethers'
-import { Web3Provider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 
 import { isValidSignature, recoverConfig } from '@0xsequence/wallet'
@@ -27,7 +26,7 @@ export const tests = async () => {
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
   // ..
-  const provider = new Web3Provider(walletProvider)
+  const provider = new ethers.providers.Web3Provider(walletProvider)
   const signer = provider.getSigner()
   const address = await signer.getAddress()
   const chainId = await signer.getChainId()

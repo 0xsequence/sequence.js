@@ -1,6 +1,5 @@
 import { test, assert } from '../../utils/assert'
-import { ethers } from 'ethers'
-import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
+import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { Wallet, DefaultProviderConfig, isValidMessageSignature } from '@0xsequence/provider'
 import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testutils'

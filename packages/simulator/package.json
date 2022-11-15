@@ -18,16 +18,14 @@
   },
   "dependencies": {
     "@0xsequence/transactions": "^0.42.10",
-    "@0xsequence/wallet-contracts": "1.10.0",
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2"
+    "@0xsequence/wallet-contracts": "1.10.0"
   },
   "peerDependencies": {
     "ethers": ">=5.5"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "ethers": "^5.7.2"
+  },
   "files": [
     "src",
     "dist"

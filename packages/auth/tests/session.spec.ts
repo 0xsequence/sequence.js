@@ -6,7 +6,6 @@ import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { ethers, Signer as AbstractSigner } from 'ethers'
 
 import chaiAsPromised from 'chai-as-promised'
@@ -26,7 +25,7 @@ import { ETHAuth } from '@0xsequence/ethauth'
 type EthereumInstance = {
   chainId?: number
   providerUrl?: string
-  provider?: JsonRpcProvider
+  provider?: ethers.providers.JsonRpcProvider
   signer?: AbstractSigner
 }
 
