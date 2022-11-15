@@ -28,7 +28,7 @@
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@typechain/ethers-v5": "^10.1.1",
-    "dotenv": "^10.0.0",
+    "dotenv": "^16.0.3",
     "typechain": "^8.1.1"
   },
   "files": [
