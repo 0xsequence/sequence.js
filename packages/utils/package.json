@@ -17,7 +17,7 @@
     "js-base64": "^3.7.2"
   },
   "peerDependencies": {
-    "ethers": ">=5.5.2"
+    "ethers": ">=5.5"
   },
   "devDependencies": {},
   "files": [

@@ -34,11 +34,11 @@
     "@0xsequence/wallet": "^0.42.10"
   },
   "peerDependencies": {
-    "ethers": ">=5.5.2"
+    "ethers": ">=5.5"
   },
   "devDependencies": {
     "concurrently": "^6.5.0",
-    "hardhat": "2.12.1",
+    "hardhat": "^2.12.2",
     "mockttp": "^2.4.0"
   },
   "files": [

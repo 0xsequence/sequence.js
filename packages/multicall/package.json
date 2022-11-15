@@ -16,18 +16,18 @@
     "@0xsequence/abi": "^0.42.10",
     "@0xsequence/network": "^0.42.10",
     "@0xsequence/utils": "^0.42.10",
-    "@ethersproject/providers": "^5.5.1",
-    "ethers": "^5.5.2"
+    "@ethersproject/providers": "^5.7.2",
+    "ethers": "^5.7.2"
   },
   "peerDependencies": {
-    "ethers": ">=5.5.2"
+    "ethers": ">=5.5"
   },
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "1.9.6",
+    "@0xsequence/wallet-contracts": "1.10.0",
     "@types/web3-provider-engine": "^14.0.1",
     "eth-json-rpc-middleware": "^8.0.0",
     "json-rpc-engine": "^6.1.0",
-    "web3": "^1.8.0",
+    "web3": "^1.8.1",
     "web3-provider-engine": "^16.0.4"
   },
   "files": [

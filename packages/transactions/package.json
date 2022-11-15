@@ -17,11 +17,11 @@
     "@0xsequence/abi": "^0.42.10",
     "@0xsequence/network": "^0.42.10",
     "@0xsequence/utils": "^0.42.10",
-    "@ethersproject/abi": "^5.5.0",
-    "ethers": "^5.5.2"
+    "@ethersproject/abi": "^5.7.0",
+    "ethers": "^5.7.2"
   },
   "peerDependencies": {
-    "ethers": ">=5.5.2"
+    "ethers": ">=5.5"
   },
   "devDependencies": {},
   "files": [

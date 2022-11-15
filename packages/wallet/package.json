@@ -24,20 +24,19 @@
     "@0xsequence/relayer": "^0.42.10",
     "@0xsequence/transactions": "^0.42.10",
     "@0xsequence/utils": "^0.42.10",
-    "@ethersproject/abi": "^5.5.0",
-    "@ethersproject/properties": "^5.5.0",
-    "@ethersproject/providers": "^5.5.1",
-    "ethers": "^5.5.2",
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/properties": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
+    "ethers": "^5.7.2",
     "fetch-ponyfill": "^7.1.0"
   },
   "peerDependencies": {
-    "ethers": ">=5.5.2"
+    "ethers": ">=5.5"
   },
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "1.9.6",
+    "@0xsequence/wallet-contracts": "1.10.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@wagmi/core": "^0.6.8",
-    "web3": "^1.8.0"
+    "web3": "^1.8.1"
   },
   "files": [
     "src",

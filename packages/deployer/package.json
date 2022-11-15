@@ -18,18 +18,18 @@
   },
   "dependencies": {
     "@0xsequence/utils": "^0.42.10",
-    "@ethersproject/contracts": "^5.5.0",
-    "ethers": "^5.5.2"
+    "@ethersproject/contracts": "^5.7.0",
+    "ethers": "^5.7.2"
   },
   "peerDependencies": {
-    "ethers": ">=5.5.2"
+    "ethers": ">=5.5"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@typechain/ethers-v5": "^10.1.0",
+    "@typechain/ethers-v5": "^10.1.1",
     "dotenv": "^10.0.0",
-    "typechain": "^8.1.0"
+    "typechain": "^8.1.1"
   },
   "files": [
     "src",
