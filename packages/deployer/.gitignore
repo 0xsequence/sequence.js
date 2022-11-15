@@ -1,4 +1,4 @@
-./config/PROD.env
-./cache
-./artifacts/build-info
-./artifacts/**/*.dbg.json
+config/PROD.env
+cache
+artifacts/build-info
+artifacts/**/*.dbg.json
