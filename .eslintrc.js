@@ -25,6 +25,7 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/no-this-alias': 'off',
 
     'import/no-unresolved': 'off',
     'import/no-default-export': 2,
