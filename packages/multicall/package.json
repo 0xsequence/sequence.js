@@ -24,7 +24,7 @@
     "@0xsequence/wallet-contracts": "1.10.0",
     "@ethersproject/providers": "^5.7.2",
     "@types/web3-provider-engine": "^14.0.1",
-    "eth-json-rpc-middleware": "^8.0.0",
+    "eth-json-rpc-middleware": "^9.0.1",
     "ethers": "^5.7.2",
     "json-rpc-engine": "^6.1.0",
     "web3": "^1.8.1",

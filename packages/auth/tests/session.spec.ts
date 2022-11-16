@@ -448,8 +448,7 @@ describe('Wallet integration', function () {
 
       server = mockServer.getLocal()
       server.start(8099)
-
-      server.post('/rpc/API/GetAuthToken').thenCallback(async request => {
+      server.forPost('/rpc/API/GetAuthToken').thenCallback(async request => {
         if (delayMs !== 0) await delay(delayMs)
 
         const ethauth = new ETHAuth(ValidateSequenceUndeployedWalletProof(context), ValidateSequenceDeployedWalletProof)
@@ -462,7 +461,7 @@ describe('Wallet integration', function () {
         if (alwaysFail) return { statusCode: 400 }
 
         try {
-          const proof = await ethauth.decodeProof(request.body.json['ewtString'])
+          const proof = await ethauth.decodeProof((await request.body.getJson())!['ewtString'])
           proofAddress = ethers.utils.getAddress(proof.address)
 
           if (recoverCount[proofAddress]) {
@@ -659,7 +658,7 @@ describe('Wallet integration', function () {
 
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
-      server.post('/rpc/API/FriendList').thenCallback(async request => {
+      server.forPost('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
@@ -709,7 +708,7 @@ describe('Wallet integration', function () {
 
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
-      server.post('/rpc/API/FriendList').thenCallback(async request => {
+      server.forPost('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
@@ -857,7 +856,7 @@ describe('Wallet integration', function () {
 
       expect(await session._jwt?.token).to.equal(fakeJwt)
 
-      server.post('/rpc/API/FriendList').thenCallback(async request => {
+      server.forPost('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
@@ -1037,7 +1036,7 @@ describe('Wallet integration', function () {
       const api = await session.getAPIClient()
 
       const okResponses = [true]
-      server.post('/rpc/API/FriendList').thenCallback(async () => {
+      server.forPost('/rpc/API/FriendList').thenCallback(async () => {
         return { statusCode: okResponses.shift() ? 200 : 401, body: JSON.stringify({}) }
       })
 
