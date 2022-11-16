@@ -94,14 +94,14 @@ const uniTotalSupply = await uniTotalSupplyPromise
 
 The following JSON-RPC methods are supported for call aggregation:
 
-+------------------------------------------------------------------------------------------------------------------+
+--------------------------------------------------------------------------------------------------------------------
 | Method          | Supported | Implemented | Notes                                                                |
 |-----------------|-----------|-------------|----------------------------------------------------------------------|
 | eth_call        | Yes       | Yes         | Requests containing `from`, `gasPrice` or `value` aren't aggregated. |
 | eth_getBalance  | Yes       | Yes         |                                                                      |
 | eth_getCode     | Yes       | Yes         |                                                                      |
 | eth_blockNumber | Yes       | No          |                                                                      |
-+------------------------------------------------------------------------------------------------------------------+
+--------------------------------------------------------------------------------------------------------------------
 
 All other RPC methods that are part of the standard are forwarded to the parent provider without any modifications.
 
@@ -135,13 +135,13 @@ DEFAULT_CONF = {
   contract: "0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80"
 }
 ```
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Parameter  | Required | Description                                                                                                                                          |
 |------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
 | batchSize  | Yes      | Defines the maximum number of calls to batch into a single JSON-RPC call.                                                                            |
 | timeWindow | Yes      | Defines the time each call is held on buffer waiting for subsequent calls before aggregation, use 0 for "next js tick".                              |
 | contract   | Yes      | Instance of MultiCallUtils contract, see: https://github.com/0xsequence/wallet-contracts/blob/master/src/contracts/modules/utils/MultiCallUtils.sol  |
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 ### Supported networks
@@ -149,19 +149,21 @@ DEFAULT_CONF = {
 The utility contract is `0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80`, it has been deployed using
 an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa018e2572031) and it uses the same address on all networks. It can be used on any of these chains without configuration changes.
 
-+--------------------------------------------------------------------------------+
-| Network                | Address                                    | Deployed |
-|------------------------|--------------------------------------------|----------|
-| Mainnet                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Ropsten                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Rinkeby                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Kovan                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Görli                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Matic                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Mumbai (Matic testnet) | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Arbitrum               | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Arbitrum testnet       | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Arbitrum Görli testnet | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-+--------------------------------------------------------------------------------+
+------------------------------------------------------------------------------------
+| Network                  | Address                                    | Deployed |
+|:-------------------------|:-------------------------------------------|:---------|
+| Mainnet                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Görli                    | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Ropsten                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Rinkeby                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Kovan                    | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Polygon                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Mumbai (Polygon testnet) | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum One             | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum testnet         | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum Görli testnet   | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Avalanche                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| BSC                      | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+------------------------------------------------------------------------------------
 
-It can be deployed on any network that supports the `CREATE2` opcode.
+It can be deployed on any network that supports the `CREATE2` opcode. See https://blockscan.com/address/0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E for live list.
