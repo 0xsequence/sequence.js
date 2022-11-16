@@ -356,10 +356,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
       }
 
       // Set connect options on the walletRequestHandler as our primary
-      // wallet controller
+      // wallet controller, and fall back to networkId if necessary
       this.walletRequestHandler.setConnectOptions(connectOptions)
       if (connectOptions.networkId) {
         networkId = connectOptions.networkId
+      } else if (networkId) {
+        connectOptions.networkId = networkId
       }
     } else {
       this.walletRequestHandler.setConnectOptions(undefined)
@@ -376,27 +378,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
       })
       return true
     } else {
-      // Set default network, in case of error chainId will be undefined or 0
-      let chainId: number | undefined = undefined
-      try {
-        if (networkId) {
-          chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
-        } else {
-          chainId = await this.walletRequestHandler.getChainId()
-        }
-      } catch (err) {
-        console.error(err)
-      }
-
-      // Failed to set default network on open -- quit + close
-      if (!chainId || chainId <= 0) {
-        this.notifyOpen({
-          sessionId: this._sessionId,
-          error: `failed to open wallet on network ${networkId}`
-        })
-        return false
-      }
-
       // prompt user with a connect request. the options will be used as previously set above.
       // upon success, the walletRequestHandler will notify the dapp with the ConnectDetails.
       // upon cancellation by user, the walletRequestHandler will throw an error
@@ -421,6 +402,27 @@ export abstract class BaseWalletTransport implements WalletTransport {
           }
         }
       } else {
+        // Set default network, in case of error chainId will be undefined or 0
+        let chainId: number | undefined = undefined
+        try {
+          if (networkId) {
+            chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
+          } else {
+            chainId = await this.walletRequestHandler.getChainId()
+          }
+        } catch (err) {
+          console.error(err)
+        }
+
+        // Failed to set default network on open -- quit + close
+        if (!chainId || chainId <= 0) {
+          this.notifyOpen({
+            sessionId: this._sessionId,
+            error: `failed to open wallet on network ${networkId}`
+          })
+          return false
+        }
+
         // user is already connected, notify session details.
         // TODO: in future, keep list if 'connected' dapps / sessions in the session
         // controller, and only sync with allowed apps
