@@ -1,7 +1,7 @@
 0xsequence
 ==========
 
-[Sequence](https://sequence.xyz): simple & powerful Ethereum development stack and smart wallet.
+[Sequence](https://sequence.xyz): a modular web3 stack and smart wallet for Ethereum chains
 
 ## Usage
 
