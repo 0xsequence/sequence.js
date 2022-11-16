@@ -132,7 +132,7 @@ the networks: Mainnet, Ropsten, Kovan, Rinkeby, Görli, and Matic (Mainnet).
 DEFAULT_CONF = {
   batchSize: 50,
   timeWindow: 50, // ms
-  contract: "0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80"
+  contract: "0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E"
 }
 ```
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -146,8 +146,7 @@ DEFAULT_CONF = {
 
 ### Supported networks
 
-The utility contract is `0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80`, it has been deployed using
-an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa018e2572031) and it uses the same address on all networks. It can be used on any of these chains without configuration changes.
+The utility contract is `0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E`, it has been deployed using an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa018e2572031) and it uses the same address on all networks. It can be used on any of these chains without configuration changes.
 
 ------------------------------------------------------------------------------------
 | Network                  | Address                                    | Deployed |
@@ -167,3 +166,4 @@ an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa0
 ------------------------------------------------------------------------------------
 
 It can be deployed on any network that supports the `CREATE2` opcode. See https://blockscan.com/address/0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E for live list.
+
