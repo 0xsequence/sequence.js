@@ -43,7 +43,7 @@ import {
 
 import { LocalWeb3Provider, prefixEIP191Message } from '../../provider/src'
 
-import { BytesLike, Interface } from 'ethers/lib/utils'
+import { BytesLike, utils } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 
 const MainModuleArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModule.sol/MainModule.json')
@@ -1618,9 +1618,9 @@ describe('Wallet integration', function () {
 
       const updateTx = await updatedWallet.buildUpdateConfigTransaction(oldConfig, true, true)
 
-      const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
-      const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
-      const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+      const mainModuleInterface = new utils.Interface(walletContracts.mainModule.abi)
+      const mainModuleUpgradableInterface = new utils.Interface(walletContracts.mainModuleUpgradable.abi)
+      const sequenceUtilsInterface = new utils.Interface(walletContracts.sequenceUtils.abi)
 
       expect(updateTx.length).to.equal(1)
 
@@ -1659,8 +1659,8 @@ describe('Wallet integration', function () {
 
       const updateTx = await updatedWallet.buildUpdateConfigTransaction(oldConfig, false)
 
-      const mainModuleInterface = new Interface(walletContracts.mainModule.abi)
-      const mainModuleUpgradableInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+      const mainModuleInterface = new utils.Interface(walletContracts.mainModule.abi)
+      const mainModuleUpgradableInterface = new utils.Interface(walletContracts.mainModuleUpgradable.abi)
 
       expect(updateTx.length).to.equal(1)
 

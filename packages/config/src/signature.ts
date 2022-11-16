@@ -1,5 +1,5 @@
 import * as multicall from '@0xsequence/multicall'
-import { BytesLike, ethers } from "ethers"
+import { BytesLike, ethers } from 'ethers'
 import { WalletConfig } from "."
 
 export type DecodedSignature = {
