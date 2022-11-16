@@ -41,13 +41,15 @@
     "@0xsequence/relayer": "^0.42.10",
     "@0xsequence/transactions": "^0.42.10",
     "@0xsequence/utils": "^0.42.10",
-    "@0xsequence/wallet": "^0.42.10",
-    "ethers": "^5.7.2"
+    "@0xsequence/wallet": "^0.42.10"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
   "devDependencies": {
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
+    "ethers": "^5.7.2",
     "ganache": "^7.5.0",
     "hardhat": "^2.12.2",
     "html-webpack-plugin": "^5.3.1",
