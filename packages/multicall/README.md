@@ -1,7 +1,8 @@
 @0xsequence/multicall
 =====================
 
-An Ethereum provider wrapper that aggregates multiple operations in one, reducing the network load on clients and servers. The project aims to be plug-and-play with existing ether.js integrations.
+An Ethereum provider wrapper that aggregates multiple operations in one, reducing the network load
+on clients and servers. The project aims to be plug-and-play with existing ether.js integrations.
 
 For more info see [0xsequence project page](https://github.com/0xsequence/sequence.js).
 
@@ -17,7 +18,8 @@ or
 
 ## Usage
 
-Sequence Multicall works by implementing `ethers.Provider` and wrapping an existing `ethers.Provider`; this wrapped provider can transparently aggregate supported JSON-RPC calls.
+Sequence Multicall works by implementing `ethers.Provider` and wrapping an existing `ethers.Provider`; this
+wrapped provider can transparently aggregate supported JSON-RPC calls.
 
 ```ts
 import { providers } from '@0xsequence/multicall'
@@ -30,7 +32,8 @@ const provider = new providers.MulticallProvider(new ethersProviders.JsonRpcProv
 
 ### Making aggregated calls
 
-Multicall leverages RPC calls' asynchronous nature to perform the aggregation; it implements a buffer with a configurable 50ms delay and aggregates all operations received within that window.
+Multicall leverages RPC calls' asynchronous nature to perform the aggregation; it implements a buffer
+with a configurable 50ms delay and aggregates all operations received within that window.
 
 Explicit usage of the functionality can be forced by making multiple calls using `Promise.all`.
 
@@ -59,7 +62,8 @@ const supply = await supplyPromise
 
 ## Using the provider
 
-The `MulticallProvider` instance can be used in any context where an ethers.Provider is expected, including contract interfaces, middlewares, or libraries; all calls to the same provider are candidates for aggregation.
+The `MulticallProvider` instance can be used in any context where an ethers.Provider is expected, including
+contract interfaces, middlewares, or libraries; all calls to the same provider are candidates for aggregation.
 
 ```ts
 // Uses a single JSON-RPC call
@@ -85,27 +89,31 @@ const [totalSupply, balance, daiSymbol, uniSymbol] = await Promise.all([
 const uniTotalSupply = await uniTotalSupplyPromise
 ```
 
+
 ### Supported methods
 
 The following JSON-RPC methods are supported for call aggregation:
 
+--------------------------------------------------------------------------------------------------------------------
 | Method          | Supported | Implemented | Notes                                                                |
 |-----------------|-----------|-------------|----------------------------------------------------------------------|
 | eth_call        | Yes       | Yes         | Requests containing `from`, `gasPrice` or `value` aren't aggregated. |
 | eth_getBalance  | Yes       | Yes         |                                                                      |
 | eth_getCode     | Yes       | Yes         |                                                                      |
 | eth_blockNumber | Yes       | No          |                                                                      |
+--------------------------------------------------------------------------------------------------------------------
 
 All other RPC methods that are part of the standard are forwarded to the parent provider without any modifications.
 
 > ⚠️ Using mixed blocktags will make some calls skip aggregation.
 
+
 ### Error handling
 
-The multicall wrapper is designed to work with any exiting ether.js integration transparently; this includes error handling for cases when multicall fails, is wrongly configured, or the contract does not support it.
+The multicall wrapper is designed to work with any exiting ether.js integration transparently; this includes error
+handling for cases when multicall fails, is wrongly configured, or the contract does not support it.
 
 JSON-RPC Calls are forwarded to the parent provider on any of the following cases:
-
 - Multicall contract is not deployed on the given network
 - Individual call fails (only failed calls are forwarded)
 - Batch call fails (all calls are forwarded)
@@ -114,9 +122,11 @@ JSON-RPC Calls are forwarded to the parent provider on any of the following case
 - Unsupported special parameters (see supported methods)
 - Unsupported method
 
+
 ## Configuration
 
-The MulticallProvider comes with a pre-defined configuration; it's ready to work out-of-the-box on the networks: Mainnet, Ropsten, Kovan, Rinkeby, Görli, and Matic (Mainnet).
+The MulticallProvider comes with a pre-defined configuration; it's ready to work out-of-the-box on
+the networks: Mainnet, Ropsten, Kovan, Rinkeby, Görli, and Matic (Mainnet).
 
 ```ts
 DEFAULT_CONF = {
@@ -125,27 +135,35 @@ DEFAULT_CONF = {
   contract: "0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E"
 }
 ```
-| Parameter  | Required | Description                                                                                                                                  |
-|------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| batchSize  | Yes      | Defines the maximum number of calls to batch into a single JSON-RPC call.                                                                    |
-| timeWindow | Yes      | Defines the time each call is held on buffer waiting for subsequent calls before aggregation, use 0 for "next js tick".                      |
-| contract   | Yes      | Instance of MultiCallUtils contract, see: https://github.com/0xsequence/wallet-contracts/blob/master/src/contracts/modules/utils/MultiCallUtils.sol. |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Parameter  | Required | Description                                                                                                                                          |
+|------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| batchSize  | Yes      | Defines the maximum number of calls to batch into a single JSON-RPC call.                                                                            |
+| timeWindow | Yes      | Defines the time each call is held on buffer waiting for subsequent calls before aggregation, use 0 for "next js tick".                              |
+| contract   | Yes      | Instance of MultiCallUtils contract, see: https://github.com/0xsequence/wallet-contracts/blob/master/src/contracts/modules/utils/MultiCallUtils.sol  |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 ### Supported networks
 
 The utility contract is `0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E`, it has been deployed using an [Universal Deployer](https://gist.github.com/Agusx1211/de05dabf918d448d315aa018e2572031) and it uses the same address on all networks. It can be used on any of these chains without configuration changes.
 
-| Network                | Address                                    | Deployed |
-|------------------------|--------------------------------------------|----------|
-| Mainnet                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Ropsten                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Rinkeby                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Kovan                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Görli                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Matic                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Mumbai (Matic testnet) | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Arbitrum               | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Arbitrum testnet       | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
-| Arbitrum Görli testnet | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+------------------------------------------------------------------------------------
+| Network                  | Address                                    | Deployed |
+|:-------------------------|:-------------------------------------------|:---------|
+| Mainnet                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Görli                    | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Ropsten                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Rinkeby                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Kovan                    | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Polygon                  | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Mumbai (Polygon testnet) | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum One             | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum testnet         | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Arbitrum Görli testnet   | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| Avalanche                | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+| BSC                      | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
+------------------------------------------------------------------------------------
 
-It can be deployed on any network that supports the `CREATE2` opcode.
+It can be deployed on any network that supports the `CREATE2` opcode. See https://blockscan.com/address/0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E for live list.
+

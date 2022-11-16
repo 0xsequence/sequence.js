@@ -1,5 +1,4 @@
 import { ethers } from 'ethers'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { UniversalDeployer } from '@0xsequence/deployer'
 import { WalletContext } from '@0xsequence/network'
 import { testAccounts, getEOAWallet } from './accounts'
@@ -24,9 +23,9 @@ const deployWalletContextCache: WalletContext[] = []
 
 // deployWalletContext will deploy the Sequence WalletContext via the UniversalDeployer
 // which will return deterministic contract addresses between calls.
-export const deployWalletContext = async (...providers: JsonRpcProvider[]): Promise<WalletContext> => {
+export const deployWalletContext = async (...providers: ethers.providers.JsonRpcProvider[]): Promise<WalletContext> => {
   if (!providers || providers.length === 0) {
-    providers.push(new JsonRpcProvider('http://localhost:8545'))
+    providers.push(new ethers.providers.JsonRpcProvider('http://localhost:8545'))
   }
   
   // Memoize the result. Even though its universal/deterministic, caching the result
@@ -40,17 +39,17 @@ export const deployWalletContext = async (...providers: JsonRpcProvider[]): Prom
     const wallet = getEOAWallet(testAccounts[0].privateKey, provider)
 
     // Universal deployer for deterministic contract addresses
-    const universalDeployer = new UniversalDeployer('local', wallet.provider as JsonRpcProvider)
+    const universalDeployer = new UniversalDeployer('local', wallet.provider as ethers.providers.JsonRpcProvider)
     const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
 
-    const walletFactory = await universalDeployer.deploy('WalletFactory', Factory__factory, txParams)
-    const mainModule = await universalDeployer.deploy('MainModule', MainModule__factory, txParams, 0, walletFactory.address)
+    const walletFactory = await universalDeployer.deploy('WalletFactory', Factory__factory as any, txParams)
+    const mainModule = await universalDeployer.deploy('MainModule', MainModule__factory as any, txParams, 0, walletFactory.address)
 
-    await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradable__factory, txParams)
-    await universalDeployer.deploy('GuestModule', GuestModule__factory, txParams)
+    await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradable__factory as any, txParams)
+    await universalDeployer.deploy('GuestModule', GuestModule__factory as any, txParams)
 
-    const sequenceUtils = await universalDeployer.deploy('SequenceUtils', SequenceUtils__factory, txParams, 0, walletFactory.address, mainModule.address)
-    await universalDeployer.deploy('RequireFreshSignerLib', RequireFreshSigner__factory, txParams, 0, sequenceUtils.address)
+    const sequenceUtils = await universalDeployer.deploy('SequenceUtils', SequenceUtils__factory as any, txParams, 0, walletFactory.address, mainModule.address)
+    await universalDeployer.deploy('RequireFreshSignerLib', RequireFreshSigner__factory as any, txParams, 0, sequenceUtils.address)
 
     const deployment = universalDeployer.getDeployment()
 

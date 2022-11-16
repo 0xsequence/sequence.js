@@ -1,5 +1,4 @@
-import { BigNumber, BigNumberish } from "ethers";
-import { isBytes, isHexString } from "ethers/lib/utils";
+import { BigNumber, BigNumberish, utils } from 'ethers'
 
 // ethers implement this method but doesn't exports it
 export function isBigNumberish(value: any): value is BigNumberish {
@@ -7,8 +6,8 @@ export function isBigNumberish(value: any): value is BigNumberish {
       BigNumber.isBigNumber(value) ||
       (typeof(value) === "number" && (value % 1) === 0) ||
       (typeof(value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-      isHexString(value) ||
+      utils.isHexString(value) ||
       (typeof(value) === "bigint") ||
-      isBytes(value)
+      utils.isBytes(value)
   )
 }

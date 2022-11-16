@@ -10,8 +10,7 @@ import {
   Web3Provider,
   WindowMessageHandler
 } from '@0xsequence/provider'
-import { ethers, Wallet as EOAWallet } from 'ethers'
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { providers } from 'ethers'
 import { test, assert } from '../../utils/assert'
 import { NetworkConfig, WalletContext } from '@0xsequence/network'
 import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, recoverConfig } from '@0xsequence/wallet'
@@ -19,6 +18,8 @@ import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
+
+const { JsonRpcProvider } = providers
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -165,6 +166,8 @@ export const tests = async () => {
 
   await test('getChainId for other chain', async () => {
     const p = wallet.getProvider(31338)
-    assert.equal(await p.getChainId(), 31338, 'chainId of other chain is 31338')
+    if (p) {
+      assert.equal(await p.getChainId(), 31338, 'chainId of other chain is 31338')
+    }
   })
 }

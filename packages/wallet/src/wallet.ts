@@ -1,10 +1,13 @@
-import { Provider, BlockTag, JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, BigNumberish, ethers, Signer as AbstractSigner } from 'ethers'
-import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
-import { Interface } from '@ethersproject/abi'
-import { BytesLike } from '@ethersproject/bytes'
-import { Deferrable } from '@ethersproject/properties'
-import { ConnectionInfo } from '@ethersproject/web'
+import {
+  BytesLike,
+  BigNumber, BigNumberish,
+  ethers,
+  Signer as AbstractSigner,
+  providers,
+  utils,
+  TypedDataDomain, TypedDataField,
+} from 'ethers'
+
 import { walletContracts } from '@0xsequence/abi'
 
 import {
@@ -60,6 +63,10 @@ import { resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 import { fetchImageHash } from '.'
 
+type BlockTag = providers.BlockTag
+type ConnectionInfo = utils.ConnectionInfo
+type Deferrable<T> = utils.Deferrable<T>
+
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
 // Wallet allows managing the account/wallet sub-keys, wallet address, signing
@@ -89,7 +96,7 @@ export class Wallet extends Signer {
 
   // provider is an Ethereum Json RPC provider that is connected to a particular network (aka chain)
   // and access to the signer for signing transactions.
-  provider: JsonRpcProvider
+  provider: providers.JsonRpcProvider
 
   // sender is a minimal Json RPC sender interface. It's here for convenience for other web3
   // interfaces to use.
@@ -149,7 +156,7 @@ export class Wallet extends Signer {
   // connect is a short-hand to create an Account instance and set the provider and relayer.
   //
   // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
-  connect(provider: Provider, relayer?: Relayer): Wallet {
+  connect(provider: providers.Provider, relayer?: Relayer): Wallet {
     if (isJsonRpcProvider(provider)) {
       return new Wallet({ config: this.config, context: this.context }, ...this._signers)
         .setProvider(provider)
@@ -160,13 +167,13 @@ export class Wallet extends Signer {
   }
 
   // setProvider assigns a json-rpc provider to this wallet instance
-  setProvider(provider: JsonRpcProvider | ConnectionInfo | string): Wallet {
+  setProvider(provider: providers.JsonRpcProvider | ConnectionInfo | string): Wallet {
     if (provider === undefined) return this
-    if (Provider.isProvider(provider)) {
+    if (providers.Provider.isProvider(provider)) {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
     } else {
-      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider)
+      const jsonProvider = new providers.JsonRpcProvider(<ConnectionInfo | string>provider)
       this.provider = jsonProvider
       this.sender = new JsonRpcSender(jsonProvider)
     }
@@ -181,7 +188,7 @@ export class Wallet extends Signer {
     return this
   }
 
-  async getProvider(chainId?: number): Promise<JsonRpcProvider> {
+  async getProvider(chainId?: number): Promise<providers.JsonRpcProvider> {
     if (chainId) await this.getChainIdNumber(chainId)
     return this.provider
   }
@@ -602,7 +609,7 @@ export class Wallet extends Signer {
       }
     })()
 
-    const walletInterface = new Interface(walletContracts.mainModule.abi)
+    const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
 
     // empirically, this seems to work for the tests:
     // const gasLimit = 100000 + 1800 * config.signers.length
@@ -625,7 +632,7 @@ export class Wallet extends Signer {
           }
         ]
 
-    const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
+    const mainModuleInterface = new utils.Interface(walletContracts.mainModuleUpgradable.abi)
 
     const transaction = {
       delegateCall: false,
@@ -659,7 +666,7 @@ export class Wallet extends Signer {
   }
 
   buildPublishConfigTransaction(config: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
-    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+    const sequenceUtilsInterface = new utils.Interface(walletContracts.sequenceUtils.abi)
     return [
       {
         delegateCall: false,
@@ -686,8 +693,8 @@ export class Wallet extends Signer {
     nonce?: number,
     requireFreshSigners: string[] = []
   ): Promise<Transaction[]> {
-    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
-    const requireFreshSignersInterface = new Interface(walletContracts.requireFreshSigner.abi)
+    const sequenceUtilsInterface = new utils.Interface(walletContracts.sequenceUtils.abi)
+    const requireFreshSignersInterface = new utils.Interface(walletContracts.requireFreshSigner.abi)
 
     const message = ethers.utils.randomBytes(32)
 

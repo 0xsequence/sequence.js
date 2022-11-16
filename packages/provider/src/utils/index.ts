@@ -1,5 +1,4 @@
-import { ethers, BigNumberish, BytesLike } from 'ethers'
-import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
+import { BigNumberish, BytesLike, TypedDataDomain, TypedDataField } from 'ethers'
 import { WalletContext, ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { DecodedSignature, WalletConfig } from '@0xsequence/config'
@@ -113,13 +112,7 @@ export class WalletUtils {
     walletContext?: WalletContext
   ): Promise<WalletConfig> => {
     walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(
-      address,
-      encodeMessageDigest(prefixEIP191Message(message)),
-      signature,
-      chainId,
-      walletContext
-    )
+    return recoverWalletConfig(address, encodeMessageDigest(prefixEIP191Message(message)), signature, chainId, walletContext)
   }
 
   // Recover the WalletConfig from a signature of a typedData object

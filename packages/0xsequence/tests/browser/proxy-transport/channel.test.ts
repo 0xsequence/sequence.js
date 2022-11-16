@@ -8,7 +8,6 @@ import {
   prefixEIP191Message
 } from '@0xsequence/provider'
 import { ethers, Wallet as EOAWallet } from 'ethers'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { test, assert } from '../../utils/assert'
 import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, isValidSignature, recoverConfig } from '@0xsequence/wallet'
@@ -65,7 +64,7 @@ export const tests = async () => {
   const relayer = new LocalRelayer(owner)
 
   // wallet account address: 0xa91Ab3C5390A408DDB4a322510A4290363efcEE9 based on the chainId
-  const rpcProvider = new JsonRpcProvider('http://localhost:8545')
+  const rpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
   const networks = [
@@ -115,7 +114,7 @@ export const tests = async () => {
     await walletProvider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
       assert.true(!err, 'error is empty')
       assert.true(!!resp, 'response successful')
-      assert.true(resp.result == address, 'response address check')
+      assert.true(resp!.result == address, 'response address check')
     })
   })
 

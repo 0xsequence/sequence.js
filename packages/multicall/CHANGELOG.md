@@ -1,5 +1,18 @@
 # @0xsequence/multicall
 
+## 0.43.0
+
+### Minor Changes
+
+- move ethers to a peer dependency
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.43.0
+  - @0xsequence/network@0.43.0
+  - @0xsequence/utils@0.43.0
+
 ## 0.42.10
 
 ### Patch Changes

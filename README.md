@@ -9,19 +9,20 @@ A simple & powerful Ethereum development library for Sequence Smart Contract Wal
 ## Packages
 
 - [0xsequence](./packages/0xsequence)
-- [abi](./packages/abi)
-- [api](./packages/api)
-- [auth](./packages/auth)
-- [config](./packages/config)
-- [deployer](./packages/deployer)
-- [guard](./packages/guard)
-- [multicall](./packages/multicall)
-- [network](./packages/network)
-- [provider](./packages/provider)
-- [relayer](./packages/relayer)
-- [transactions](./packages/transactions)
-- [utils](./packages/utils)
-- [wallet](./packages/wallet)
+- [@0xsequence/abi](./packages/abi)
+- [@0xsequence/api](./packages/api)
+- [@0xsequence/auth](./packages/auth)
+- [@0xsequence/config](./packages/config)
+- [@0xsequence/deployer](./packages/deployer)
+- [@0xsequence/guard](./packages/guard)
+- [@0xsequence/multicall](./packages/multicall)
+- [@0xsequence/network](./packages/network)
+- [@0xsequence/provider](./packages/provider)
+- [@0xsequence/relayer](./packages/relayer)
+- [@0xsequence/transactions](./packages/transactions)
+- [@0xsequence/utils](./packages/utils)
+- [@0xsequence/wallet](./packages/wallet)
+
 
 ## Development Environment
 
@@ -55,6 +56,7 @@ and enjoyable.
 7. **Versioning** -- this repository uses the handy [changesets](https://github.com/atlassian/changesets)
    package for package versioning across the monorepo, as well as changelogs. See _Releasing_ section below.
 
+
 ## Releasing to NPM
 
 0xsequence uses changesets to do versioning. This makes releasing really easy and changelogs are automatically generated.
@@ -75,6 +77,7 @@ and enjoyable.
     with a new code, only the packages that were not published will be published.
 11. Finally, push your git tags, via: `git push --tags --no-verify`
 
+
 ## How to do a snapshot release
 
 NOTE: snapshot release is for dev preview, it's similar to the above, but:
@@ -83,10 +86,18 @@ NOTE: snapshot release is for dev preview, it's similar to the above, but:
 2. `yarn changeset version --snapshot`
 3. `yarn changeset publish --tag snapshot`
 
+
 ## NOTES
 
 1. Browser tests can be run with `yarn test` or, separately `yarn test:server` and `yarn test:run`
 2. To run a specific test, run `yarn test:only <test-file-basename>`, ie. `yarn test:only window-transport`
+
+
+## TIPS
+
+* If you're using node v18+ and you hit the error `Error: error:0308010C:digital envelope routines::unsupported`,
+  make sure to first set, `export NODE_OPTIONS=--openssl-legacy-provider`
+
 
 ## LICENSE
 

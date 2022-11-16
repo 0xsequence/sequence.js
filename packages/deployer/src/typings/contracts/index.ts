@@ -3,6 +3,6 @@
 /* eslint-disable */
 export type { NanoUniversalDeployer } from "./NanoUniversalDeployer";
 export type { UniversalDeployer2 } from "./UniversalDeployer2";
-
+export * as factories from "./factories";
 export { NanoUniversalDeployer__factory } from "./factories/NanoUniversalDeployer__factory";
 export { UniversalDeployer2__factory } from "./factories/UniversalDeployer2__factory";

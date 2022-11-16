@@ -1,52 +1,54 @@
+import hardhat from 'hardhat'
+import chaiAsPromised from 'chai-as-promised'
+import * as chai from 'chai'
+
 import { deployWalletContext } from './utils/deploy-wallet-context'
 
-import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
+import {
+  CallReceiverMock,
+  HookCallerMock,
+  CallReceiverMock__factory,
+  HookCallerMock__factory
+} from '@0xsequence/wallet-contracts'
 
 import { LocalRelayer } from '@0xsequence/relayer'
 import { Wallet } from '@0xsequence/wallet'
 import { WalletContext } from '@0xsequence/network'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner, providers } from 'ethers'
 
-import chaiAsPromised from 'chai-as-promised'
-import * as chai from 'chai'
-import { buildStubSignature, decodeSignature, isDecodedEOASigner, isDecodedSigner, mutateSignature, WalletConfig } from '../src'
+import {
+  buildStubSignature, decodeSignature, isDecodedEOASigner, mutateSignature, WalletConfig,
+  encodeSignature, isDecodedAddress, isDecodedFullSigner
+} from '../src'
+
 import { encodeData } from '@0xsequence/wallet/tests/utils'
 import { encodeNonce } from '@0xsequence/transactions'
-import { encodeSignature, isDecodedAddress, isDecodedFullSigner } from '../dist/0xsequence-config.cjs'
-
-const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
-const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/HookCallerMock.sol/HookCallerMock.json')
 
 const { expect } = chai.use(chaiAsPromised)
 
-
 type EthereumInstance = {
   chainId: number
-  providerUrl: string
-  provider: JsonRpcProvider
+  provider: providers.JsonRpcProvider
   signer: AbstractSigner
-  relayer?: LocalRelayer
-  callReceiver?: CallReceiverMock
-  hookCaller?: HookCallerMock
+  relayer: LocalRelayer
+  callReceiver: CallReceiverMock
+  hookCaller: HookCallerMock
 }
 
 describe('Signature tools', function () {
-  let chain: EthereumInstance
+  let chain: EthereumInstance = {} as any
 
   let context: WalletContext
 
   before(async () => {
-    const nodeA = "http://localhost:7547/"
-    const providerA = new ethers.providers.JsonRpcProvider(nodeA)
+    const providerA = new ethers.providers.Web3Provider(hardhat.network.provider.send)
     const signerA = providerA.getSigner()
 
     chain = {
-      providerUrl: nodeA,
       chainId: 31337,
       provider: providerA,
       signer: signerA
-    }
+    } as any
 
     // Deploy local relayer
     chain.relayer = new LocalRelayer(chain.signer)
@@ -82,18 +84,10 @@ describe('Signature tools', function () {
     }
 
     // Deploy call receiver mock
-    chain.callReceiver = (await new ethers.ContractFactory(
-      CallReceiverMockArtifact.abi,
-      CallReceiverMockArtifact.bytecode,
-      chain.signer
-    ).deploy()) as CallReceiverMock
+    chain.callReceiver = await (new CallReceiverMock__factory()).connect(chain.signer).deploy()
 
     // Deploy hook caller mock
-    chain.hookCaller = (await new ethers.ContractFactory(
-      HookCallerMockArtifact.abi,
-      HookCallerMockArtifact.bytecode,
-      chain.signer
-    ).deploy()) as HookCallerMock
+    chain.hookCaller = await (new HookCallerMock__factory()).connect(chain.signer).deploy()
   })
 
   describe("Change signature configuration", () => {
@@ -207,8 +201,8 @@ describe('Signature tools', function () {
       const stub = await buildStubSignature(chain.provider, config)
       expect(stub.signers.length).to.equal(2)
       expect(stub.threshold).to.equal(2)
-      expect(stub.signers.find((s) => isDecodedAddress(s)).weight).to.equal(3)
-      expect(stub.signers.find((s) => isDecodedEOASigner(s)).weight).to.equal(2)
+      expect(stub.signers.find((s) => isDecodedAddress(s))!.weight).to.equal(3)
+      expect(stub.signers.find((s) => isDecodedEOASigner(s))!.weight).to.equal(2)
     })
 
     it("Should generate stub signature with 4 signers with lower weight", async () => {
@@ -255,7 +249,7 @@ describe('Signature tools', function () {
     it("Should generate signature with nested configuration", async () => {
       const signer1 = ethers.Wallet.createRandom().address
       const signer2 = ethers.Wallet.createRandom().address
-      const signer3 = context.guestModule
+      const signer3 = context.guestModule!
 
       const config: WalletConfig = {
         threshold: 16,
@@ -281,7 +275,7 @@ describe('Signature tools', function () {
       expect(stub.signers.filter((s) => isDecodedEOASigner(s)).length).to.equal(1)
       expect(stub.signers.filter((s) => isDecodedFullSigner(s)).length).to.equal(1)
       expect((stub.signers.find((s) => isDecodedFullSigner(s)) as any).address).to.equal(signer3)
-      expect(stub.signers.find((s) => isDecodedAddress(s)).weight).to.equal(2)
+      expect(stub.signers.find((s) => isDecodedAddress(s))!.weight).to.equal(2)
       expect((stub.signers.find((s) => isDecodedFullSigner(s)) as any).signature.length).to.equal(
         (encodeSignature({
           threshold: 1,

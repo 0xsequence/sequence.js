@@ -1,6 +1,5 @@
-import { ethers } from 'ethers'
+import { ethers, providers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
-import { Provider } from '@ethersproject/providers'
 import { walletContracts } from '@0xsequence/abi'
 import { packMessageData } from '@0xsequence/utils'
 import { isDecodedEOASigner, isDecodedFullSigner, decodeSignature, compareAddr, addressOf } from '@0xsequence/config'
@@ -10,7 +9,7 @@ export async function isValidSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider?: Provider,
+  provider?: providers.Provider,
   walletContext?: WalletContext,
   chainId?: number
 ) {
@@ -82,7 +81,7 @@ export async function isValidContractWalletSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider?: Provider
+  provider?: providers.Provider
 ) {
   if (!provider) return undefined
   try {
@@ -104,7 +103,7 @@ export async function isValidSequenceUndeployedWalletSignature(
   digest: Uint8Array,
   sig: string,
   walletContext?: WalletContext,
-  provider?: Provider,
+  provider?: providers.Provider,
   chainId?: number
 ) {
   if (!provider && !chainId) return undefined // Signature validity can't be determined

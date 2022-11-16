@@ -1,4 +1,3 @@
-import { BlockTag, Provider } from '@ethersproject/providers'
 import { ethers, providers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
@@ -11,7 +10,7 @@ import { logger, Optionals, Mask } from '@0xsequence/utils'
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
 export interface ProviderRelayerOptions extends BaseRelayerOptions {
-  provider: Provider,
+  provider: providers.Provider,
   waitPollRate?: number,
   deltaBlocksLog?: number,
   fromBlockLog?: number
@@ -24,11 +23,11 @@ export const ProviderRelayerDefaults: Required<Optionals<Mask<ProviderRelayerOpt
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return obj.provider !== undefined && Provider.isProvider(obj.provider)
+  return obj.provider !== undefined && providers.Provider.isProvider(obj.provider)
 }
 
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
-  public provider: Provider
+  public provider: providers.Provider
   public waitPollRate: number
   public deltaBlocksLog: number
   public fromBlockLog: number
@@ -97,7 +96,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     config: WalletConfig,
     context: WalletContext,
     space?: ethers.BigNumberish,
-    blockTag?: BlockTag
+    blockTag?: providers.BlockTag
   ): Promise<ethers.BigNumberish> {
     if (!this.provider) {
       throw new Error('provider is not set')

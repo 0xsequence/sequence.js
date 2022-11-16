@@ -1,4 +1,10 @@
-import { Deferrable, defineReadOnly, getStatic, resolveProperties, checkProperties, shallowCopy, deepCopy } from '@ethersproject/properties'
+import { utils } from 'ethers'
+
+type Deferrable<T> = utils.Deferrable<T>
+
+const {
+  defineReadOnly, getStatic, resolveProperties, checkProperties, shallowCopy, deepCopy
+} = utils
 
 export type { Deferrable }
 

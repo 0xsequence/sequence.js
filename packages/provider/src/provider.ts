@@ -1,36 +1,27 @@
-import { ethers } from 'ethers'
-import { BytesLike, Bytes } from '@ethersproject/bytes'
-import { Web3Provider as EthersWeb3Provider, ExternalProvider, JsonRpcProvider, Networkish } from '@ethersproject/providers'
-import { TypedDataDomain, TypedDataField, TypedDataSigner } from '@ethersproject/abstract-signer'
+import { ethers, BytesLike, Bytes, providers, TypedDataDomain, TypedDataField } from 'ethers'
 import {
   NetworkConfig,
   WalletContext,
   ChainIdLike,
   JsonRpcHandler,
-  JsonRpcHandlerFunc,
   JsonRpcFetchFunc,
   JsonRpcRequest,
   JsonRpcResponseCallback,
-  JsonRpcResponse,
   maybeChainId,
-  JsonRpcVersion,
-  JsonRpcSender,
-  isJsonRpcProvider
+  JsonRpcSender
 } from '@0xsequence/network'
 import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
 import {
-  Transaction,
   TransactionRequest,
   TransactionResponse,
-  Transactionish,
   SignedTransactions
 } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 
-export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
+export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
   static isSequenceProvider(cand: any): cand is Web3Provider {
     return isSequenceProvider(cand)
   }
@@ -43,7 +34,7 @@ export class Web3Provider extends EthersWeb3Provider implements JsonRpcHandler {
   // overridden by passing chainId argument to a specific request
   readonly _defaultChainId?: number
 
-  constructor(provider: JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainIdLike) {
+  constructor(provider: providers.JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainIdLike) {
     const sender = new JsonRpcSender(provider, maybeChainId(defaultChainId))
     provider = sender
 
@@ -97,6 +88,11 @@ export class LocalWeb3Provider extends Web3Provider {
     const walletRequestHandler = new WalletRequestHandler(signer, null, null, networks || [])
     super(walletRequestHandler)
   }
+}
+
+// TODO: in the future with ethers v6 we can remove/change this type name
+interface TypedDataSigner {
+  _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>): Promise<string>;
 }
 
 export class Web3Signer extends Signer implements TypedDataSigner {

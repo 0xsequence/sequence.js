@@ -6,8 +6,7 @@ import { Wallet } from '@0xsequence/wallet'
 import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers, Signer as AbstractSigner, providers } from 'ethers'
 
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
@@ -20,14 +19,14 @@ const { expect } = chai.use(chaiAsPromised)
 import { computeMetaTxnHash, encodeNonce } from '@0xsequence/transactions'
 
 type EthereumInstance = {
-  chainId?: number
+  chainId: number
   providerUrl?: string
-  provider?: JsonRpcProvider
-  signer?: AbstractSigner
+  provider: providers.JsonRpcProvider
+  signer: AbstractSigner
 }
 
 describe('Wallet integration', function () {
-  const ethnode: EthereumInstance = {}
+  const ethnode: EthereumInstance = {} as any
 
   let relayer: LocalRelayer
   let callReceiver: CallReceiverMock
@@ -38,7 +37,7 @@ describe('Wallet integration', function () {
 
   before(async () => {
     // Provider from hardhat without a server instance
-    ethnode.providerUrl = `http://localhost:9547/`
+    ethnode.providerUrl = `http://127.0.0.1:9547/`
     ethnode.provider = new ethers.providers.JsonRpcProvider(ethnode.providerUrl)
 
     ethnode.signer = ethnode.provider.getSigner()
@@ -104,7 +103,7 @@ describe('Wallet integration', function () {
       let wallet: Wallet
 
       beforeEach(async () => {
-        wallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(networks[0].provider, relayer)
+        wallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(networks[0].provider!, relayer)
         if (c.deployed) await relayer.deployWallet(wallet.config, wallet.context)
 
         expect(await wallet.isDeployed()).to.equal(c.deployed)
@@ -226,7 +225,7 @@ describe('Wallet integration', function () {
         it('Find correct receipt between multiple other transactions', async () => {
           // Pre-txs
           const altWallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(
-            networks[0].provider,
+            networks[0].provider!,
             relayer
           )
           await relayer.deployWallet(altWallet.config, altWallet.context)
@@ -286,7 +285,7 @@ describe('Wallet integration', function () {
         it('Find correct receipt between multiple other failed transactions', async () => {
           // Pre-txs
           const altWallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(
-            networks[0].provider,
+            networks[0].provider!,
             relayer
           )
           await relayer.deployWallet(altWallet.config, altWallet.context)
@@ -346,7 +345,7 @@ describe('Wallet integration', function () {
         it('Find failed tx receipt between multiple other failed transactions', async () => {
           // Pre-txs
           const altWallet = (await Wallet.singleOwner(ethers.Wallet.createRandom(), context)).connect(
-            networks[0].provider,
+            networks[0].provider!,
             relayer
           )
           await relayer.deployWallet(altWallet.config, altWallet.context)

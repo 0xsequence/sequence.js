@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { providers } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 import { SignerJsonRpcMethods } from './signing-provider'
 import { logger } from '@0xsequence/utils'
@@ -9,7 +9,7 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
     'net_version', 'eth_chainId', 'eth_accounts', ...SignerJsonRpcMethods
   ]
 
-  private provider?: JsonRpcProvider
+  private provider?: providers.JsonRpcProvider
   private rpcUrl?: string
  
   constructor(rpcUrl?: string) {
@@ -48,7 +48,7 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
       this.provider = undefined
     } else {
       this.rpcUrl = rpcUrl
-      this.provider = new JsonRpcProvider(rpcUrl)
+      this.provider = new providers.JsonRpcProvider(rpcUrl)
     }
   }
 

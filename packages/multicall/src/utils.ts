@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish } from "ethers"
+import { BigNumber, BigNumberish } from 'ethers'
 
 export async function safeSolve<T>(promise: Promise<T>, def: T | ((e: any) => T)): Promise<T> {
   try {

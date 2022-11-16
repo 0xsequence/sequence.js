@@ -1,14 +1,12 @@
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber'
-import { BytesLike, Hexable, hexlify, isHexString } from '@ethersproject/bytes'
-import { BlockTag, Formatter, JsonRpcProvider, TransactionRequest } from '@ethersproject/providers'
+import { BigNumber, BigNumberish, BytesLike, utils, providers } from 'ethers'
 
 export async function gethCall(
-  provider: JsonRpcProvider,
-  transaction: TransactionRequest,
-  block?: BlockTag,
+  provider: providers.JsonRpcProvider,
+  transaction: providers.TransactionRequest,
+  block?: providers.BlockTag,
   overrides?: Overrides
 ) {
-  const formatter = JsonRpcProvider.getFormatter()
+  const formatter = providers.JsonRpcProvider.getFormatter()
 
   return provider.send('eth_call', [
     formatter.transactionRequest(transaction),
@@ -21,7 +19,7 @@ export interface Overrides {
   [address: string]: {
     balance?: BigNumberish
     nonce?: BigNumberish
-    code?: BytesLike | Hexable | number | bigint
+    code?: BytesLike | utils.Hexable | number | bigint
     state?: StorageOverrides
     stateDiff?: StorageOverrides
   }
@@ -39,9 +37,9 @@ function formatOverrides(overrides: any): Overrides {
   const formatted: Overrides = {}
 
   for (const [key, value] of Object.entries(overrides)) {
-    if (isHexString(key, 20)) {
+    if (utils.isHexString(key, 20)) {
       try {
-        formatted[key] = Formatter.check(overridesFormat, value)
+        formatted[key] = providers.Formatter.check(overridesFormat, value)
       } catch {}
     }
   }
@@ -52,7 +50,7 @@ function formatOverrides(overrides: any): Overrides {
 const overridesFormat = {
   balance: skipNullish(BigNumber.from),
   nonce: skipNullish(BigNumber.from),
-  code: skipNullish(hexlify),
+  code: skipNullish(utils.hexlify),
   state: skipNullish(formatStorageOverrides),
   stateDiff: skipNullish(formatStorageOverrides)
 }
@@ -65,10 +63,10 @@ function formatStorageOverrides(overrides: any): StorageOverrides {
   const formatted: StorageOverrides = {}
 
   for (const [key, value] of Object.entries(overrides)) {
-    if (isHexString(key, 32)) {
+    if (utils.isHexString(key, 32)) {
       try {
-        const hash = hexlify(value as any)
-        if (isHexString(hash, 32)) {
+        const hash = utils.hexlify(value as any)
+        if (utils.isHexString(hash, 32)) {
           formatted[key] = hash
         }
       } catch {}

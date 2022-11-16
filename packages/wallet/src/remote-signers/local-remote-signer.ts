@@ -1,6 +1,4 @@
-import { TransactionRequest, Provider } from '@ethersproject/providers'
-import { BytesLike, Signer as AbstractSigner } from 'ethers'
-import { Deferrable } from 'ethers/lib/utils'
+import { BytesLike, Signer as AbstractSigner, providers, utils } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 
 export class LocalRemoteSigner extends RemoteSigner {

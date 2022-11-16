@@ -1,5 +1,4 @@
 import { ethers } from 'ethers'
-import fetchPonyfill from 'fetch-ponyfill'
 import { walletContracts } from '@0xsequence/abi'
 import {
   Transaction,
@@ -43,7 +42,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
   constructor(options: RpcRelayerOptions) {
     super(options)
-    this.service = new proto.Relayer(options.url, fetchPonyfill().fetch)
+    this.service = new proto.Relayer(options.url, global.fetch)
   }
 
   async waitReceipt(
