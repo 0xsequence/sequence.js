@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.43.1
+
+### Patch Changes
+
+- update to latest ethauth dep
+- Updated dependencies
+  - @0xsequence/abi@0.43.1
+  - @0xsequence/config@0.43.1
+  - @0xsequence/guard@0.43.1
+  - @0xsequence/network@0.43.1
+  - @0xsequence/relayer@0.43.1
+  - @0xsequence/transactions@0.43.1
+  - @0xsequence/utils@0.43.1
+
 ## 0.43.0
 
 ### Minor Changes

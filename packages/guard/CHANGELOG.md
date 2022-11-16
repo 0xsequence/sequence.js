@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.43.1
+
+### Patch Changes
+
+- update to latest ethauth dep
+
 ## 0.43.0
 
 ### Minor Changes
