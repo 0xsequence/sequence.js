@@ -1,5 +1,23 @@
 # @0xsequence/auth
 
+## 0.43.0
+
+### Minor Changes
+
+- move ethers to a peer dependency
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@0.43.0
+  - @0xsequence/api@0.43.0
+  - @0xsequence/config@0.43.0
+  - @0xsequence/indexer@0.43.0
+  - @0xsequence/metadata@0.43.0
+  - @0xsequence/network@0.43.0
+  - @0xsequence/utils@0.43.0
+  - @0xsequence/wallet@0.43.0
+
 ## 0.42.10
 
 ### Patch Changes

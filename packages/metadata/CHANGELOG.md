@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.0
+
+### Minor Changes
+
+- move ethers to a peer dependency
+
 ## 0.42.10
 
 ### Patch Changes
