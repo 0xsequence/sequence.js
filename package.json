@@ -74,7 +74,10 @@
   "preconstruct": {
     "packages": [
       "packages/*"
-    ]
+    ],
+    "globals": {
+      "ethers": "ethers"
+    }
   },
   "dependencies": {}
 }
