@@ -1,6 +1,7 @@
-# 0xsequence.js
+0xsequence
+==========
 
-A simple & powerful Ethereum development library for Sequence Smart Contract Wallets.
+[Sequence](https://sequence.xyz): simple & powerful Ethereum development stack and smart wallet.
 
 ## Usage
 
