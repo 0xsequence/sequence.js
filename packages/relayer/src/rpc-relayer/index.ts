@@ -42,7 +42,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
   constructor(options: RpcRelayerOptions) {
     super(options)
-    this.service = new proto.Relayer(options.url, (a, b) => global.fetch(a, b))
+    this.service = new proto.Relayer(options.url, global.fetch)
   }
 
   async waitReceipt(
