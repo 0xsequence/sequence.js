@@ -4,7 +4,16 @@ A simple & powerful Ethereum development library for Sequence Smart Contract Wal
 
 ## Usage
 
-`yarn add 0xsequence`
+`npm install 0xsequence ethers`
+
+or
+
+`pnpm install 0xsequence ethers`
+
+or
+
+`yarn add 0xsequence ethers`
+
 
 ## Packages
 
