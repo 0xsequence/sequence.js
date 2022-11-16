@@ -20,7 +20,7 @@
     "@0xsequence/abi": "^0.43.0",
     "@0xsequence/api": "^0.43.0",
     "@0xsequence/config": "^0.43.0",
-    "@0xsequence/ethauth": "^0.7.0",
+    "@0xsequence/ethauth": "^0.8.0",
     "@0xsequence/indexer": "^0.43.0",
     "@0xsequence/metadata": "^0.43.0",
     "@0xsequence/network": "^0.43.0",
