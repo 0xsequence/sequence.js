@@ -1,4 +1,4 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 
 // Ethereum personal sign: Hello, World!
 export const message1 = new Uint8Array([

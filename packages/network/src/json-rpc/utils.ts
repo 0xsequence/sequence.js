@@ -1,7 +1,7 @@
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { providers } from 'ethers'
 import { JsonRpcHandler } from './types'
 
-export function isJsonRpcProvider(cand: any): cand is JsonRpcProvider {
+export function isJsonRpcProvider(cand: any): cand is providers.JsonRpcProvider {
   return (
     cand !== undefined &&
     cand.send !== undefined &&

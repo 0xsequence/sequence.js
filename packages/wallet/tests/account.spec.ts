@@ -1,9 +1,9 @@
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 
-import { ethers } from 'ethers'
+import { ethers, providers } from 'ethers'
 import hardhat from 'hardhat'
-import { WalletContext, NetworkConfig } from '@0xsequence/network'
+import { WalletContext, NetworkConfig as _NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
 import { deployWalletContext } from './utils/deploy-wallet-context'
 import { isValidConfigSigners, imageHash, SequenceUtilsFinder } from '@0xsequence/config'
@@ -18,6 +18,10 @@ const { expect } = chai.use(chaiAsPromised)
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
+interface NetworkConfig extends _NetworkConfig {
+  provider: providers.JsonRpcProvider
+}
+
 describe('Account integration', () => {
   let context: WalletContext
   let account: lib.Account
@@ -25,7 +29,7 @@ describe('Account integration', () => {
 
   const provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
 
-  const nodeB = 'http://localhost:7047/'
+  const nodeB = 'http://127.0.0.1:7047/'
   const providerB = new ethers.providers.JsonRpcProvider(nodeB)
   const signerB = providerB.getSigner()
 
@@ -100,7 +104,7 @@ describe('Account integration', () => {
       const found = await new SequenceUtilsFinder(networks[0].provider).findLastWalletOfInitialSigner({
         signer: owner.address,
         context: context,
-        provider: networks[0].provider
+        provider: networks[0].provider!
       })
 
       expect(found.wallet).to.equal(wallet.address)
@@ -200,18 +204,18 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
-      expect(currentConfig.address).to.equal(await account2.getAddress())
-      expect(currentConfig.signers.length).to.equal(1)
-      expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await newSigner.getAddress())
-      expect(currentConfig.chainId).to.equal(await account2.getChainId())
+      expect(currentConfig!.address).to.equal(await account2.getAddress())
+      expect(currentConfig!.signers.length).to.equal(1)
+      expect(currentConfig!.signers[0].weight).to.equal(1)
+      expect(currentConfig!.signers[0].address).to.equal(await newSigner.getAddress())
+      expect(currentConfig!.chainId).to.equal(await account2.getChainId())
 
       // wallet state
       const state = (await account2.getWalletState())[0]
-      expect(state.config.address).to.equal(await account2.getAddress())
+      expect(state.config!.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.not.equal(state.lastImageHash)
-      expect(state.lastImageHash).to.equal(imageHash(currentConfig))
+      expect(state.lastImageHash).to.equal(imageHash(currentConfig!))
     })
 
     it('should update config and get current config from chain, not indexed', async () => {
@@ -241,18 +245,18 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
-      expect(currentConfig.address).to.equal(await account2.getAddress())
-      expect(currentConfig.signers.length).to.equal(1)
-      expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await newSigner.getAddress())
-      expect(currentConfig.chainId).to.equal(await account2.getChainId())
+      expect(currentConfig!.address).to.equal(await account2.getAddress())
+      expect(currentConfig!.signers.length).to.equal(1)
+      expect(currentConfig!.signers[0].weight).to.equal(1)
+      expect(currentConfig!.signers[0].address).to.equal(await newSigner.getAddress())
+      expect(currentConfig!.chainId).to.equal(await account2.getChainId())
 
       // wallet state
       const state = (await account2.getWalletState())[0]
-      expect(state.config.address).to.equal(await account2.getAddress())
+      expect(state.config!.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.not.equal(state.lastImageHash)
-      expect(state.lastImageHash).to.equal(imageHash(currentConfig))
+      expect(state.lastImageHash).to.equal(imageHash(currentConfig!))
     })
 
     it('should find current config from published config on counter-factual wallet', async () => {
@@ -280,15 +284,15 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
-      expect(currentConfig.address).to.equal(await account2.getAddress())
-      expect(currentConfig.signers.length).to.equal(1)
-      expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await owner.getAddress())
-      expect(currentConfig.chainId).to.equal(await account2.getChainId())
+      expect(currentConfig!.address).to.equal(await account2.getAddress())
+      expect(currentConfig!.signers.length).to.equal(1)
+      expect(currentConfig!.signers[0].weight).to.equal(1)
+      expect(currentConfig!.signers[0].address).to.equal(await owner.getAddress())
+      expect(currentConfig!.chainId).to.equal(await account2.getChainId())
 
       // wallet state
       const state = (await account2.getWalletState())[0]
-      expect(state.config.address).to.equal(await account2.getAddress())
+      expect(state.config!.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.not.equal(state.lastImageHash)
       expect(state.lastImageHash).to.equal('')
@@ -319,15 +323,15 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account2.currentConfig()
-      expect(currentConfig.address).to.equal(await account2.getAddress())
-      expect(currentConfig.signers.length).to.equal(1)
-      expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await owner.getAddress())
-      expect(currentConfig.chainId).to.equal(await account2.getChainId())
+      expect(currentConfig!.address).to.equal(await account2.getAddress())
+      expect(currentConfig!.signers.length).to.equal(1)
+      expect(currentConfig!.signers[0].weight).to.equal(1)
+      expect(currentConfig!.signers[0].address).to.equal(await owner.getAddress())
+      expect(currentConfig!.chainId).to.equal(await account2.getChainId())
 
       // wallet state
       const state = (await account2.getWalletState())[0]
-      expect(state.config.address).to.equal(await account2.getAddress())
+      expect(state.config!.address).to.equal(await account2.getAddress())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.not.equal(state.lastImageHash)
       expect(state.lastImageHash).to.equal('')
@@ -349,18 +353,18 @@ describe('Account integration', () => {
 
       // currentConfig which fetches wallet details from the authChain
       const currentConfig = await account.currentConfig()
-      expect(currentConfig.address).to.equal(await account.getAddress())
-      expect(currentConfig.signers.length).to.equal(1)
-      expect(currentConfig.signers[0].weight).to.equal(1)
-      expect(currentConfig.signers[0].address).to.equal(await owner.getAddress())
-      expect(currentConfig.chainId).to.equal(await account.getChainId())
+      expect(currentConfig!.address).to.equal(await account.getAddress())
+      expect(currentConfig!.signers.length).to.equal(1)
+      expect(currentConfig!.signers[0].weight).to.equal(1)
+      expect(currentConfig!.signers[0].address).to.equal(await owner.getAddress())
+      expect(currentConfig!.chainId).to.equal(await account.getChainId())
 
       // wallet state
       const state = (await account.getWalletState())[0]
-      expect(state.config.address).to.equal(await account.getAddress())
+      expect(state.config!.address).to.equal(await account.getAddress())
       expect(state.deployed).to.equal(true)
       expect(state.imageHash).to.equal(state.lastImageHash)
-      expect(state.imageHash).to.equal(imageHash(currentConfig))
+      expect(state.imageHash).to.equal(imageHash(currentConfig!))
     })
 
     it('should return different configs for different chains (indexed)', async () => {
@@ -371,15 +375,15 @@ describe('Account integration', () => {
       const authState = state[0].config
       const altState = state[1].config
 
-      expect(authState.threshold).to.equal(3)
-      expect(authState.signers.length).to.equal(1)
-      expect(authState.signers[0].weight).to.equal(10)
-      expect(authState.signers[0].address).to.equal(newSigner.address)
+      expect(authState!.threshold).to.equal(3)
+      expect(authState!.signers.length).to.equal(1)
+      expect(authState!.signers[0].weight).to.equal(10)
+      expect(authState!.signers[0].address).to.equal(newSigner.address)
 
-      expect(altState.threshold).to.equal(1)
-      expect(altState.signers.length).to.equal(1)
-      expect(altState.signers[0].weight).to.equal(1)
-      expect(altState.signers[0].address).to.equal(owner.address)
+      expect(altState!.threshold).to.equal(1)
+      expect(altState!.signers.length).to.equal(1)
+      expect(altState!.signers[0].weight).to.equal(1)
+      expect(altState!.signers[0].address).to.equal(owner.address)
     })
 
     it('should return different configs for different chains (not-indexed)', async () => {
@@ -390,15 +394,15 @@ describe('Account integration', () => {
       const authState = state[0].config
       const altState = state[1].config
 
-      expect(authState.threshold).to.equal(3)
-      expect(authState.signers.length).to.equal(1)
-      expect(authState.signers[0].weight).to.equal(10)
-      expect(authState.signers[0].address).to.equal(newSigner.address)
+      expect(authState!.threshold).to.equal(3)
+      expect(authState!.signers.length).to.equal(1)
+      expect(authState!.signers[0].weight).to.equal(10)
+      expect(authState!.signers[0].address).to.equal(newSigner.address)
 
-      expect(altState.threshold).to.equal(1)
-      expect(altState.signers.length).to.equal(1)
-      expect(altState.signers[0].weight).to.equal(1)
-      expect(altState.signers[0].address).to.equal(owner.address)
+      expect(altState!.threshold).to.equal(1)
+      expect(altState!.signers.length).to.equal(1)
+      expect(altState!.signers[0].weight).to.equal(1)
+      expect(altState!.signers[0].address).to.equal(owner.address)
     })
 
     it('should return different configs for different chains after reload auth config (indexed)', async () => {
@@ -418,15 +422,15 @@ describe('Account integration', () => {
       const authState = state[0].config
       const altState = state[1].config
 
-      expect(authState.threshold).to.equal(3)
-      expect(authState.signers.length).to.equal(1)
-      expect(authState.signers[0].weight).to.equal(10)
-      expect(authState.signers[0].address).to.equal(newSigner.address)
+      expect(authState!.threshold).to.equal(3)
+      expect(authState!.signers.length).to.equal(1)
+      expect(authState!.signers[0].weight).to.equal(10)
+      expect(authState!.signers[0].address).to.equal(newSigner.address)
 
-      expect(altState.threshold).to.equal(1)
-      expect(altState.signers.length).to.equal(1)
-      expect(altState.signers[0].weight).to.equal(1)
-      expect(altState.signers[0].address).to.equal(owner.address)
+      expect(altState!.threshold).to.equal(1)
+      expect(altState!.signers.length).to.equal(1)
+      expect(altState!.signers[0].weight).to.equal(1)
+      expect(altState!.signers[0].address).to.equal(owner.address)
     })
 
     it('should return different configs for different chains after reload auth config (not-indexed)', async () => {
@@ -446,15 +450,15 @@ describe('Account integration', () => {
       const authState = state[0].config
       const altState = state[1].config
 
-      expect(authState.threshold).to.equal(3)
-      expect(authState.signers.length).to.equal(1)
-      expect(authState.signers[0].weight).to.equal(10)
-      expect(authState.signers[0].address).to.equal(newSigner.address)
+      expect(authState!.threshold).to.equal(3)
+      expect(authState!.signers.length).to.equal(1)
+      expect(authState!.signers[0].weight).to.equal(10)
+      expect(authState!.signers[0].address).to.equal(newSigner.address)
 
-      expect(altState.threshold).to.equal(1)
-      expect(altState.signers.length).to.equal(1)
-      expect(altState.signers[0].weight).to.equal(1)
-      expect(altState.signers[0].address).to.equal(owner.address)
+      expect(altState!.threshold).to.equal(1)
+      expect(altState!.signers.length).to.equal(1)
+      expect(altState!.signers[0].weight).to.equal(1)
+      expect(altState!.signers[0].address).to.equal(owner.address)
     })
 
     it('should return different configs for different chains after reload alt config (indexed)', async () => {
@@ -477,15 +481,15 @@ describe('Account integration', () => {
       const authState = state[0].config
       const altState = state[1].config
 
-      expect(authState.threshold).to.equal(3)
-      expect(authState.signers.length).to.equal(1)
-      expect(authState.signers[0].weight).to.equal(10)
-      expect(authState.signers[0].address).to.equal(newSigner.address)
+      expect(authState!.threshold).to.equal(3)
+      expect(authState!.signers.length).to.equal(1)
+      expect(authState!.signers[0].weight).to.equal(10)
+      expect(authState!.signers[0].address).to.equal(newSigner.address)
 
-      expect(altState.threshold).to.equal(1)
-      expect(altState.signers.length).to.equal(1)
-      expect(altState.signers[0].weight).to.equal(1)
-      expect(altState.signers[0].address).to.equal(owner.address)
+      expect(altState!.threshold).to.equal(1)
+      expect(altState!.signers.length).to.equal(1)
+      expect(altState!.signers[0].weight).to.equal(1)
+      expect(altState!.signers[0].address).to.equal(owner.address)
     })
 
     it('should return different configs for different chains after reload alt config (not-indexed)', async () => {
@@ -508,15 +512,15 @@ describe('Account integration', () => {
       const authState = state[0].config
       const altState = state[1].config
 
-      expect(authState.threshold).to.equal(3)
-      expect(authState.signers.length).to.equal(1)
-      expect(authState.signers[0].weight).to.equal(10)
-      expect(authState.signers[0].address).to.equal(newSigner.address)
+      expect(authState!.threshold).to.equal(3)
+      expect(authState!.signers.length).to.equal(1)
+      expect(authState!.signers[0].weight).to.equal(10)
+      expect(authState!.signers[0].address).to.equal(newSigner.address)
 
-      expect(altState.threshold).to.equal(1)
-      expect(altState.signers.length).to.equal(1)
-      expect(altState.signers[0].weight).to.equal(1)
-      expect(altState.signers[0].address).to.equal(owner.address)
+      expect(altState!.threshold).to.equal(1)
+      expect(altState!.signers.length).to.equal(1)
+      expect(altState!.signers[0].weight).to.equal(1)
+      expect(altState!.signers[0].address).to.equal(owner.address)
     })
   })
 

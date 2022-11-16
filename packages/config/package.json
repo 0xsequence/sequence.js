@@ -21,11 +21,14 @@
     "@0xsequence/abi": "^0.42.10",
     "@0xsequence/multicall": "^0.42.10",
     "@0xsequence/network": "^0.42.10",
-    "@0xsequence/utils": "^0.42.10",
-    "ethers": "^5.5.2"
+    "@0xsequence/utils": "^0.42.10"
   },
-  "peerDependencies": {},
-  "devDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "devDependencies": {
+    "ethers": "^5.7.2"
+  },
   "files": [
     "src",
     "dist"

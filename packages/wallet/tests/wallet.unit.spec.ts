@@ -153,8 +153,8 @@ describe('Wallet units', function() {
 
       expect(recovered.threshold).to.equal(3)
       expect(recovered.signers.length).to.equal(2)
-      expect(recovered.signers.find((s) => s.address === signer1.address).weight).to.equal(2)
-      expect(recovered.signers.find((s) => s.address === signer2.address).weight).to.equal(5)
+      expect(recovered.signers.find((s) => s.address === signer1.address)!.weight).to.equal(2)
+      expect(recovered.signers.find((s) => s.address === signer2.address)!.weight).to.equal(5)
     })
   })
 

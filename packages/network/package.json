@@ -13,12 +13,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/utils": "^0.42.10",
-    "@ethersproject/providers": "^5.5.1",
-    "ethers": "^5.5.2"
+    "@0xsequence/utils": "^0.42.10"
   },
-  "peerDependencies": {},
-  "devDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "devDependencies": {
+    "ethers": "^5.7.2"
+  },
   "files": [
     "src",
     "dist"

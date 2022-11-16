@@ -2,9 +2,8 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, encodeSignature, DecodedFullSigner, DecodedEOASigner } from '@0xsequence/config'
 import { readSequenceNonce, sequenceTxAbiEncode, Transaction } from '@0xsequence/transactions'
 import { OverwriterEstimator } from './overwriter-estimator'
-import { Interface } from 'ethers/lib/utils'
 import { walletContracts } from '@0xsequence/abi'
-import { ethers } from 'ethers'
+import { ethers, utils } from 'ethers'
 import { Estimator } from './estimator'
 
 const MainModuleGasEstimation = require("@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleGasEstimation.sol/MainModuleGasEstimation.json")
@@ -14,7 +13,7 @@ export class OverwriterSequenceEstimator implements Estimator {
 
   async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<{ transactions:Transaction[], total: ethers.BigNumber }> {
     const wallet = addressOf(config, context)
-    const walletInterface = new Interface(walletContracts.mainModule.abi)
+    const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
 
     // Get non-eoa signers
     // required for computing worse case scenario

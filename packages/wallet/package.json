@@ -13,7 +13,7 @@
     "test:run": "yarn test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
     "test:concurrently": "concurrently -k --success first 'yarn start:hardhat2 > /dev/null'",
-    "start:hardhat2": "yarn run hardhat node --port 7047 --config ./hardhat2.config.js",
+    "start:hardhat2": "yarn run hardhat node --hostname 0.0.0.0 --port 7047 --config ./hardhat2.config.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -23,19 +23,16 @@
     "@0xsequence/network": "^0.42.10",
     "@0xsequence/relayer": "^0.42.10",
     "@0xsequence/transactions": "^0.42.10",
-    "@0xsequence/utils": "^0.42.10",
-    "@ethersproject/abi": "^5.5.0",
-    "@ethersproject/properties": "^5.5.0",
-    "@ethersproject/providers": "^5.5.1",
-    "ethers": "^5.5.2",
-    "fetch-ponyfill": "^7.1.0"
+    "@0xsequence/utils": "^0.42.10"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
   "devDependencies": {
-    "@0xsequence/wallet-contracts": "1.9.6",
+    "@0xsequence/wallet-contracts": "1.10.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ganache-core": "^2.13.2",
-    "web3": "^1.7.0"
+    "ethers": "^5.7.2",
+    "web3": "^1.8.1"
   },
   "files": [
     "src",

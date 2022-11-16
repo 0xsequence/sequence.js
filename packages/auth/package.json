@@ -25,14 +25,16 @@
     "@0xsequence/metadata": "^0.42.10",
     "@0xsequence/network": "^0.42.10",
     "@0xsequence/wallet": "^0.42.10",
-    "@0xsequence/utils": "^0.42.10",
-    "ethers": "^5.5.2"
+    "@0xsequence/utils": "^0.42.10"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
   "devDependencies": {
-    "concurrently": "^6.5.0",
-    "hardhat": "2.1.2",
-    "mockttp": "^2.4.0"
+    "concurrently": "^7.5.0",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.12.2",
+    "mockttp": "^3.6.0"
   },
   "files": [
     "src",

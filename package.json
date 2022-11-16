@@ -3,8 +3,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "build": "yarn dev && yarn typecheck && preconstruct build && yarn post-build",
-    "post-build": "node ./scripts/fix-mocha-ref.js",
+    "build": "yarn dev && yarn typecheck && preconstruct build",
     "watch": "preconstruct watch",
     "clean": "rimraf ./node_modules",
     "changeset": "changeset",
@@ -14,6 +13,8 @@
     "test:parallel": "wsrun -c test",
     "lint": "eslint -c .eslintrc.js 'packages/**/src/**/*.{ts,tsx}'",
     "lint:fix": "eslint -c .eslintrc.js --fix 'packages/**/src/**/*.{ts,tsx}'",
+    "lint:tests": "eslint -c .eslintrc.js 'packages/**/tests/**/*.{ts,tsx}'",
+    "lint:tests:fix": "eslint -c .eslintrc.js 'packages/**/tests/**/*.{ts,tsx}'",
     "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
     "audit:fix": "npx yarn-audit-fix",
     "typecheck": "tsc --noEmit",
@@ -31,51 +32,52 @@
     }
   },
   "devDependencies": {
-    "@babel/core": "^7.16.12",
-    "@babel/plugin-proposal-class-properties": "^7.16.7",
-    "@babel/preset-env": "^7.16.11",
-    "@babel/preset-typescript": "^7.16.7",
-    "@babel/runtime": "^7.16.7",
-    "@changesets/changelog-github": "^0.4.2",
-    "@changesets/cli": "^2.19.0",
-    "@preconstruct/cli": "^2.1.5",
+    "@babel/core": "^7.20.2",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.18.6",
+    "@babel/runtime": "^7.20.1",
+    "@changesets/changelog-github": "^0.4.7",
+    "@changesets/cli": "^2.25.2",
+    "@preconstruct/cli": "^2.2.2",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
-    "@types/mocha": "^9.1.0",
-    "@typescript-eslint/eslint-plugin": "^5.7.0",
-    "@typescript-eslint/parser": "^5.7.0",
+    "@types/mocha": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.43.0",
+    "@typescript-eslint/parser": "^5.43.0",
     "ava": "^3.15.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
-    "concurrently": "^6.5.0",
-    "eslint": "^8.4.1",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-import": "^2.25.3",
-    "eslint-plugin-prettier": "^4.0.0",
-    "express": "^4.17.2",
-    "ganache-cli": "^6.12.2",
-    "hardhat": "2.1.2",
+    "concurrently": "^7.5.0",
+    "eslint": "^8.27.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "ethers": "^5.7.2",
+    "express": "^4.18.2",
+    "hardhat": "^2.12.2",
     "husky": "4.3.8",
-    "mocha": "^9.1.4",
+    "mocha": "^10.1.0",
     "nyc": "^15.1.0",
-    "prettier": "^2.5.1",
-    "puppeteer": "^11.0.0",
+    "prettier": "^2.7.1",
+    "puppeteer": "^19.2.2",
     "rimraf": "^3.0.2",
-    "ts-node": "^10.4.0",
-    "typescript": "^4.5.5",
-    "wait-on": "^6.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "~4.8.4",
+    "wait-on": "^6.0.1",
     "wsrun": "^5.2.4"
   },
-  "resolutions": {
-    "node-fetch": "^2.6.7"
-  },
+  "resolutions": {},
   "workspaces": [
     "packages/*"
   ],
   "preconstruct": {
     "packages": [
       "packages/*"
-    ]
+    ],
+    "globals": {
+      "ethers": "ethers"
+    }
   },
   "dependencies": {}
 }

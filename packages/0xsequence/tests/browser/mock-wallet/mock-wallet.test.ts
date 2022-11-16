@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { ethers } from 'ethers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
 import { Wallet, Account } from '@0xsequence/wallet'
 import { NetworkConfig } from '@0xsequence/network'
@@ -18,8 +18,8 @@ const main = async () => {
   //
   // Providers
   //
-  const provider = new JsonRpcProvider('http://localhost:8545')
-  const provider2 = new JsonRpcProvider('http://localhost:9545')
+  const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
 
   //
   // Deploy Sequence WalletContext (deterministic)

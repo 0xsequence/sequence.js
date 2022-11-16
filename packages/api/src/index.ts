@@ -1,12 +1,10 @@
 export * from './api.gen'
 
-import fetch from 'cross-fetch'
+import { API as ApiRpc } from './api.gen'
 
-import { API as BaseSequenceAPI } from './api.gen'
-
-export class SequenceAPIClient extends BaseSequenceAPI {
+export class SequenceAPIClient extends ApiRpc {
   constructor(hostname: string, public jwtAuth?: string) {
-    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, global.fetch)
     this.fetch = this._fetch
   }
 
@@ -21,6 +19,6 @@ export class SequenceAPIClient extends BaseSequenceAPI {
     // before the request is made
     init!.headers = { ...init!.headers, ...headers }
 
-    return fetch(input, init)
+    return global.fetch(input, init)
   }
 }

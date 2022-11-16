@@ -1,5 +1,4 @@
-import { ethers } from 'ethers'
-import { TypedDataDomain, TypedDataField }  from '@ethersproject/abstract-signer'
+import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 
 export interface TypedData {
   domain: TypedDataDomain

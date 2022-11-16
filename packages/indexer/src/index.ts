@@ -1,9 +1,8 @@
 export * from './indexer.gen'
 
-import fetch from 'cross-fetch'
+import { Indexer as IndexerRpc } from './indexer.gen'
 
-import { Indexer as BaseSequenceIndexer } from './indexer.gen'
-
+// TODO: rename to SequenceIndexerNetworks
 export enum SequenceIndexerServices {
   MAINNET = 'https://mainnet-indexer.sequence.app',
 
@@ -23,9 +22,9 @@ export enum SequenceIndexerServices {
   GOERLI = 'https://goerli-indexer.sequence.app'
 }
 
-export class SequenceIndexerClient extends BaseSequenceIndexer {
+export class SequenceIndexerClient extends IndexerRpc {
   constructor(hostname: string, public jwtAuth?: string) {
-    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, global.fetch)
     this.fetch = this._fetch
   }
 
@@ -40,7 +39,7 @@ export class SequenceIndexerClient extends BaseSequenceIndexer {
     // before the request is made
     init!.headers = { ...init!.headers, ...headers }
 
-    return fetch(input, init)
+    return global.fetch(input, init)
   }
 }
 

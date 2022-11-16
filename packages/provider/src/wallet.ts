@@ -19,7 +19,6 @@ import {
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { Web3Provider, Web3Signer } from './provider'
 import {
   MuxMessageProvider,
@@ -29,7 +28,7 @@ import {
   UnrealMessageProvider
 } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
-import { ethers } from 'ethers'
+import { ethers, providers } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
@@ -483,7 +482,7 @@ export class Wallet implements WalletProvider {
     let provider: Web3Provider
 
     // network.provider may be set by the ProviderConfig override
-    const rpcProvider = network.provider ? network.provider : new JsonRpcProvider(network.rpcUrl, network.chainId)
+    const rpcProvider = network.provider ? network.provider : new providers.JsonRpcProvider(network.rpcUrl, network.chainId)
 
     if (network.isDefaultChain) {
       // communicating with defaultChain will prioritize the wallet message transport

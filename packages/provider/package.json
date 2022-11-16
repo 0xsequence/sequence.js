@@ -21,16 +21,15 @@
     "@0xsequence/transactions": "^0.42.10",
     "@0xsequence/utils": "^0.42.10",
     "@0xsequence/wallet": "^0.42.10",
-    "@ethersproject/abstract-signer": "^5.5.0",
-    "@ethersproject/hash": "^5.5.0",
-    "@ethersproject/providers": "^5.5.1",
-    "@ethersproject/web": "^5.5.1",
-    "ethers": "^5.5.2",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill-ts": "^0.26.0"
   },
-  "peerDependencies": {},
-  "devDependencies": {},
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "devDependencies": {
+    "ethers": "^5.7.2"
+  },
   "files": [
     "src",
     "dist"

@@ -1,5 +1,4 @@
-import { ethers, BigNumber } from 'ethers'
-import { Deferrable } from '@ethersproject/properties'
+import { ethers, BigNumber, utils } from 'ethers'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcMethod } from '../constants'
@@ -84,7 +83,7 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
   }
 
   async call(
-    transaction: Deferrable<ethers.providers.TransactionRequest>,
+    transaction: utils.Deferrable<ethers.providers.TransactionRequest>,
     blockTag?: string | number | Promise<ethers.providers.BlockTag>
   ): Promise<string> {
     return this.rpcCall(JsonRpcMethod.ethCall, transaction, blockTag)
