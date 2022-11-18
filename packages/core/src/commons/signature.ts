@@ -35,6 +35,8 @@ export interface SignatureCoder<
 
   recover: (data: Z, payload: SignedPayload, provider: ethers.providers.Provider) => Promise<T>
 
+  supportsNoChainId: boolean
+
   encodeSigners: (
     config: Y,
     signatures: Map<string, SignaturePart>,

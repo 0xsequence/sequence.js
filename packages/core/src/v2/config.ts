@@ -330,14 +330,22 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
   return false
 }
 
-export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
-  imageHashOf = (config: WalletConfig): string => {
-    return imageHash(config)
-  }
+export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
+  isWalletConfig: (config: base.config.Config): config is WalletConfig => {
+    return (
+      config.version === 2 &&
+      (config as WalletConfig).threshold !== undefined &&
+      (config as WalletConfig).tree !== undefined
+    )
+  },
 
-  hasSubdigest = (config: WalletConfig, subdigest: string): boolean => {
+  imageHashOf: (config: WalletConfig): string => {
+    return imageHash(config)
+  },
+
+  hasSubdigest: (config: WalletConfig, subdigest: string): boolean => {
     return hasSubdigest(config.tree, subdigest)
-  }
+  },
 
   // isValid = (config: WalletConfig): boolean {}
 
@@ -348,7 +356,7 @@ export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
    * a configuration update, it's automatically done by the contract.
    * 
    */
-  public update = {
+  update: {
     isKindUsed: true,
 
     buildTransaction: (
@@ -364,7 +372,7 @@ export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
         transactions: [{
           to: wallet,
           data: module.encodeFunctionData(module.getFunction('updateImageHash'), [
-            this.imageHashOf(config)
+            ConfigCoder.imageHashOf(config)
           ]),
           gasLimit: 0,
           delegateCall: false,

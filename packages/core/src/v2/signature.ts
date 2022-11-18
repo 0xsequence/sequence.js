@@ -688,6 +688,8 @@ export class SignatureCoder implements base.SignatureCoder<
     return encodeSignature(data)
   }
 
+  supportsNoChainId = false
+
   recover = (
     data: UnrecoveredSignature | UnrecoveredChainedSignature,
     payload: base.SignedPayload,
