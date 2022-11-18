@@ -5,3 +5,5 @@ export * from './signer'
 export * from './utils'
 export * from './validate'
 export * from './wallet'
+
+export * as walletV2 from './v2/wallet'
