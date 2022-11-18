@@ -1,0 +1,58 @@
+import { ethers } from "ethers"
+import { commons } from '@0xsequence/core'
+import { isValidVersionedContext, VersionedContext } from "./context"
+
+export async function versionOf(
+  address: string,
+  firstImageHash: string,
+  contexts: VersionedContext,
+  reader: commons.reader.Reader
+): Promise<number> {
+  if (!isValidVersionedContext(contexts)) {
+    throw new Error("Invalid versioned context")
+  }
+
+  const versions = Object.values(contexts)
+
+  // if not deployed we need to check to which version
+  // the counterfactual address belongs to
+  if (!(await reader.isDeployed())) {
+    for (let i = 0; i < versions.length; i++) {
+      if (commons.context.addressOf(versions[i], firstImageHash) === address) {
+        return versions[i].version
+      }
+    }
+
+    // if we can't find the version then either the address is invalid,
+    // the version is not in VersionedContext, or the firstImageHash is not correct
+    throw new Error('Could not find version for counterfactual address')
+  }
+
+  // if deployed we need to check the implementation address
+  const implementation = await reader.implementation()
+  if (!implementation || implementation === ethers.constants.AddressZero) {
+    throw new Error('Invalid implementation address')
+  }
+
+  for (let i = 0; i < versions.length; i++) {
+    if (versions[i].mainModule === implementation || versions[i].mainModuleUpgradable === implementation) {
+      return versions[i].version
+    }
+  }
+
+  // If we can't find the version then either the address is invalid,
+  // or the version is not in VersionedContext
+  throw new Error('Could not find version for deployed address')
+}
+
+export interface Version<
+  C extends commons.config.Config,
+  S extends commons.signature.Signature<C>,
+  U extends commons.signature.UnrecoveredSignature
+> {
+  version: number,
+  coders: {
+    config: commons.config.ConfigCoder<C>,
+    signature: commons.signature.SignatureCoder<S, C, U>
+  }
+}

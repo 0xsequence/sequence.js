@@ -15,8 +15,16 @@ export type WalletConfig = base.config.Config & {
   signers: AddressMember[]
 }
 
-export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
-  imageHashOf = (config: WalletConfig): string => {
+export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
+  isWalletConfig: (config: base.config.Config): config is WalletConfig => {
+    return (
+      config.version === 1 &&
+      (config as WalletConfig).threshold !== undefined &&
+      (config as WalletConfig).signers !== undefined
+    )
+  },
+
+  imageHashOf: (config: WalletConfig): string => {
     return config.signers.reduce(
       (imageHash, signer) => ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(
@@ -26,14 +34,14 @@ export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
       ),
       ethers.utils.solidityPack(['uint256'], [config.threshold])
     )
-  }
+  },
 
-  hasSubdigest = (_walletConfig: WalletConfig, _subdigest: string): boolean => {
+  hasSubdigest: (_walletConfig: WalletConfig, _subdigest: string): boolean => {
     // v1 does not support explicit subdigests
     return false
-  }
+  },
 
-  public update = {
+  update: {
     isKindUsed: true,
 
     buildTransaction: (
@@ -61,7 +69,7 @@ export class ConfigCoder implements base.config.ConfigCoder<WalletConfig> {
       transactions.push({
         to: wallet,
         data: module.encodeFunctionData(module.getFunction('updateImageHash'), [
-          this.imageHashOf(config)
+          ConfigCoder.imageHashOf(config)
         ]),
         gasLimit: 0,
         delegateCall: false,
