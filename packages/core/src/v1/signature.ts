@@ -225,6 +225,8 @@ export class SignatureCoder implements base.SignatureCoder<
     return encodeSignature(data)
   }
 
+  supportsNoChainId = true
+
   recover = (
     data: UnrecoveredSignature,
     payload: base.SignedPayload,

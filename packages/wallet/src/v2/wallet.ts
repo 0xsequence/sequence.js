@@ -3,69 +3,10 @@ import { commons } from "@0xsequence/core"
 import { isSignerStatusSigned, Orchestrator, Status } from "@0xsequence/signhub"
 import { Deferrable, subDigestOf } from "@0xsequence/utils"
 import { FeeQuote, Relayer } from "@0xsequence/relayer"
-import { resolveArrayProperties } from "../utils"
 import { walletContracts } from '@0xsequence/abi'
-import { TransactionResponse } from "@ethersproject/providers"
-import { Interface } from '@ethersproject/abi'
 import { addressOf } from "@0xsequence/config"
 
-/**
- * The OnChainWallet class fetches on-chain data from a wallet.
- * It is used to understand the "real" state of the wallet contract on-chain.
- */
- export class OnChainWallet {
-  public readonly module: ethers.Contract
-
-  constructor(
-    public readonly address: string,
-    public readonly provider: ethers.providers.Provider
-  ) {
-    this.module = new ethers.Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
-  }
-
-  async isDeployed(): Promise<boolean> {
-    const code = await this.provider.getCode(this.address).then((c) => ethers.utils.arrayify(c))
-    return code.length !== 0
-  }
-
-  async implementation(): Promise<string | undefined> {
-    const position = ethers.utils.defaultAbiCoder.encode(['address'], [this.address])
-    const val = await this.provider.getStorageAt(this.address, position).then((c) => ethers.utils.arrayify(c))
-
-    if (val.length === 20) {
-      return ethers.utils.getAddress(ethers.utils.hexlify(val))
-    }
-
-    if (val.length === 32) {
-      return ethers.utils.defaultAbiCoder.decode(['address'], val)[0]
-    }
-
-    return undefined
-  }
-
-  async imageHash(): Promise<string | undefined> {
-    try {
-      const imageHash = await this.module.imageHash()
-      return imageHash
-    } catch {}
-
-    return undefined
-  }
-
-  async nonce(space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
-    try {
-      const nonce = await this.module.nonce(space)
-      return nonce
-    } catch (e) {
-      if (!this.isDeployed()) {
-        return 0
-      }
-
-      throw e
-    }
-  }
-}
-
+import { resolveArrayProperties } from "../utils"
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -85,7 +26,7 @@ export type WalletOptions<
   address: string
 
   orchestrator: Orchestrator
-  onChainWallet?: OnChainWallet
+  reader?: commons.reader.Reader
 }
 
 const statusToSignatureParts = (status: Status) => {
@@ -130,23 +71,29 @@ export class Wallet<
   }
 
   private orchestrator: Orchestrator
-  private statusProvider?: OnChainWallet
+  private _reader?: commons.reader.Reader
 
-  constructor(options: WalletOptions<T, Y, Z>) {
+  constructor(options: WalletOptions<T, Y, Z>) {  
+    if (ethers.constants.Zero.eq(options.chainId) && !options.coders.signature.supportsNoChainId) {
+      throw new Error(`Sequence version ${options.config.version} doesn't support chainId 0`)
+    }
+
     super()
-  
+
     this.context = options.context
     this.config = options.config
     this.orchestrator = options.orchestrator
     this.coders = options.coders
     this.address = options.address
     this.chainId = options.chainId
+  
+    this._reader = options.reader
   }
 
-  status(): OnChainWallet {
-    if (this.statusProvider) return this.statusProvider
+  reader(): commons.reader.Reader {
+    if (this._reader) return this._reader
     if (!this.provider) throw new Error("Wallet status provider requires a provider")
-    return new OnChainWallet(this.address, this.provider)
+    return new commons.reader.OnChainReader(this.address, this.provider)
   }
 
   setConfig(config: Y) {
@@ -170,7 +117,7 @@ export class Wallet<
   }
 
   async decorateTransactions(bundle: commons.transaction.IntendedTransactionBundle): Promise<commons.transaction.IntendedTransactionBundle> {
-    if (await this.status().isDeployed()) return bundle
+    if (await this.reader().isDeployed()) return bundle
 
     const deployTx = this.buildDeployTransaction()
 
@@ -193,7 +140,7 @@ export class Wallet<
   }
 
   buildDeployTransaction(): commons.transaction.TransactionBundle {
-    const factoryInterface = new Interface(walletContracts.factory.abi)
+    const factoryInterface = new ethers.utils.Interface(walletContracts.factory.abi)
 
     const imageHash = this.coders.config.imageHashOf(this.config)
     const initialAddress = addressOf(imageHash, this.context)
@@ -219,7 +166,7 @@ export class Wallet<
 
   async buildUpdateConfigurationTransaction(config: Y): Promise<commons.transaction.TransactionBundle> {
     if (this.coders.config.update.isKindUsed) {
-      const implementation = await this.status().implementation()
+      const implementation = await this.reader().implementation()
       const isLaterUpdate = implementation && implementation === this.context.mainModuleUpgradable
       return this.coders.config.update.buildTransaction(this.address, config, this.context, isLaterUpdate ? 'later' : 'first')
     }
@@ -251,6 +198,14 @@ export class Wallet<
     return this.signDigest(ethers.utils.keccak256(message))
   }
 
+  signTransactionBundle(bundle: commons.transaction.TransactionBundle): Promise<commons.transaction.SignedTransactionBundle> {
+    if (bundle.entrypoint !== this.address) {
+      throw new Error(`Invalid entrypoint: ${bundle.entrypoint} !== ${this.address}`)
+    }
+
+    return this.signTransactions(bundle.transactions)
+  }
+
   async signTransactions(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
 
@@ -258,7 +213,7 @@ export class Wallet<
 
     let nonce: ethers.BigNumberish | undefined = commons.transaction.readSequenceNonce(...stx)
     if (nonce === undefined) {
-      nonce = await this.status().nonce()
+      nonce = await this.reader().nonce(0)
       if (nonce === undefined) throw new Error("Unable to determine nonce")
       stx = commons.transaction.appendNonce(stx, nonce)
     }
@@ -282,7 +237,7 @@ export class Wallet<
   async sendSignedTransaction(
     signedBundle: commons.transaction.SignedTransactionBundle,
     quote?: FeeQuote
-  ): Promise<TransactionResponse> {
+  ): Promise<ethers.providers.TransactionResponse> {
     if (!this.relayer) throw new Error("Wallet sendTransaction requires a relayer")
     return this.relayer.relay(signedBundle, quote)
   }
@@ -290,7 +245,7 @@ export class Wallet<
   async sendTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
     quote?: FeeQuote
-  ): Promise<TransactionResponse> {
+  ): Promise<ethers.providers.TransactionResponse> {
     const signed = await this.signTransactions(txs)
     return this.sendSignedTransaction(signed, quote)
   }
