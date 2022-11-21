@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.43.2
+
+### Patch Changes
+
+- provider: implement connectUnchecked
+
 ## 0.43.1
 
 ### Patch Changes

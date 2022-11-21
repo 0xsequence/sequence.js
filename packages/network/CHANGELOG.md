@@ -1,5 +1,13 @@
 # @0xsequence/network
 
+## 0.43.2
+
+### Patch Changes
+
+- provider: implement connectUnchecked
+- Updated dependencies
+  - @0xsequence/utils@0.43.2
+
 ## 0.43.1
 
 ### Patch Changes

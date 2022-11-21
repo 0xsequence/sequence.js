@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.2
+
+### Patch Changes
+
+- provider: implement connectUnchecked
+- Updated dependencies
+  - @0xsequence/transactions@0.43.2
+
 ## 0.43.1
 
 ### Patch Changes

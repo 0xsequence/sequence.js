@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.43.2
+
+### Patch Changes
+
+- provider: implement connectUnchecked
+- Updated dependencies
+  - @0xsequence/abi@0.43.2
+  - @0xsequence/api@0.43.2
+  - @0xsequence/config@0.43.2
+  - @0xsequence/indexer@0.43.2
+  - @0xsequence/metadata@0.43.2
+  - @0xsequence/network@0.43.2
+  - @0xsequence/utils@0.43.2
+  - @0xsequence/wallet@0.43.2
+
 ## 0.43.1
 
 ### Patch Changes
