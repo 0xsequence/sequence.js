@@ -1,4 +1,4 @@
-import { ethers, BytesLike, Bytes, providers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers, BytesLike, Bytes, providers, TypedDataDomain, TypedDataField, BigNumber } from 'ethers'
 import {
   NetworkConfig,
   WalletContext,
@@ -14,11 +14,7 @@ import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
-import {
-  TransactionRequest,
-  TransactionResponse,
-  SignedTransactions
-} from '@0xsequence/transactions'
+import { TransactionRequest, TransactionResponse, SignedTransactions } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 
 export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
@@ -92,7 +88,11 @@ export class LocalWeb3Provider extends Web3Provider {
 
 // TODO: in the future with ethers v6 we can remove/change this type name
 interface TypedDataSigner {
-  _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>): Promise<string>;
+  _signTypedData(
+    domain: TypedDataDomain,
+    types: Record<string, Array<TypedDataField>>,
+    value: Record<string, any>
+  ): Promise<string>
 }
 
 export class Web3Signer extends Signer implements TypedDataSigner {
@@ -431,7 +431,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   connectUnchecked(): ethers.providers.JsonRpcSigner {
-    throw new Error('connectUnchecked is unsupported')
+    return new UncheckedJsonRpcSigner(this.provider, this.defaultChainId)
   }
 
   async unlock(password: string): Promise<boolean> {
@@ -510,4 +510,23 @@ const hexlifyTransaction = (
   }
 
   return result
+}
+
+class UncheckedJsonRpcSigner extends Web3Signer {
+  sendTransaction(transaction: Deferrable<TransactionRequest>): Promise<TransactionResponse> {
+    return this.sendUncheckedTransaction(transaction).then(hash => {
+      return <TransactionResponse>{
+        chainId: 0,
+        confirmations: 0,
+        data: '',
+        from: '',
+        gasLimit: ethers.constants.Zero,
+        gasPrice: ethers.constants.Zero,
+        hash,
+        nonce: 0,
+        value: ethers.constants.Zero,
+        wait: (confirmations?: number) => this.provider.waitForTransaction(hash, confirmations)
+      }
+    })
+  }
 }
