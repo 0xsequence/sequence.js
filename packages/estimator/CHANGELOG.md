@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.43.3
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.3
+  - @0xsequence/config@0.43.3
+  - @0xsequence/network@0.43.3
+  - @0xsequence/transactions@0.43.3
+  - @0xsequence/utils@0.43.3
+
 ## 0.43.2
 
 ### Patch Changes

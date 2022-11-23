@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.43.3
+
+### Patch Changes
+
+- metadata: update bindings
+
 ## 0.43.2
 
 ### Patch Changes

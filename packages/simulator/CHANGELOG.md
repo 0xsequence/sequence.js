@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.3
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/transactions@0.43.3
+
 ## 0.43.2
 
 ### Patch Changes

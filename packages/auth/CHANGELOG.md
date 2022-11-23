@@ -1,5 +1,20 @@
 # @0xsequence/auth
 
+## 0.43.3
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.3
+  - @0xsequence/api@0.43.3
+  - @0xsequence/config@0.43.3
+  - @0xsequence/indexer@0.43.3
+  - @0xsequence/metadata@0.43.3
+  - @0xsequence/network@0.43.3
+  - @0xsequence/utils@0.43.3
+  - @0xsequence/wallet@0.43.3
+
 ## 0.43.2
 
 ### Patch Changes
