@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.43.4
+
+### Patch Changes
+
+- no-change version bump to fix incorrectly tagged snapshot build
+
 ## 0.43.3
 
 ### Patch Changes

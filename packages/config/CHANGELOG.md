@@ -1,5 +1,16 @@
 # @0xsequence/config
 
+## 0.43.4
+
+### Patch Changes
+
+- no-change version bump to fix incorrectly tagged snapshot build
+- Updated dependencies
+  - @0xsequence/abi@0.43.4
+  - @0xsequence/multicall@0.43.4
+  - @0xsequence/network@0.43.4
+  - @0xsequence/utils@0.43.4
+
 ## 0.43.3
 
 ### Patch Changes
