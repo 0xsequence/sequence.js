@@ -103,7 +103,9 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
   return { version: 1, threshold, signers }
 }
 
-export function encodeSignature(signature: Signature | UnrecoveredSignature): string {
+export function encodeSignature(signature: Signature | UnrecoveredSignature | ethers.BytesLike): string {
+  if (ethers.utils.isBytesLike(signature)) return ethers.utils.hexlify(signature)
+
   const { signers, threshold } = isUnrecoveredSignature(signature) ? signature : signature.config
 
   const encodedSigners = signers.map((s) => {
@@ -212,30 +214,30 @@ export function encodeSigners(
   return { encoded, weight }
 }
 
-export class SignatureCoder implements base.SignatureCoder<
-  Signature,
+export const SignatureCoder: base.SignatureCoder<
   WalletConfig,
+  Signature,
   UnrecoveredSignature
-> {
-  decode = (data: string): UnrecoveredSignature => {
+> = {
+  decode:(data: string): UnrecoveredSignature => {
     return decodeSignature(data)
-  }
+  },
 
-  encode = (data: Signature | UnrecoveredSignature): string => {
+  encode: (data: Signature | UnrecoveredSignature | ethers.BytesLike): string => {
     return encodeSignature(data)
-  }
+  },
 
-  supportsNoChainId = true
+  supportsNoChainId: true,
 
-  recover = (
+  recover: (
     data: UnrecoveredSignature,
     payload: base.SignedPayload,
     provider: ethers.providers.Provider
   ): Promise<Signature> => {
     return recoverSignature(data, payload, provider)
-  }
+  },
 
-  encodeSigners = (
+  encodeSigners: (
     config: WalletConfig,
     signatures: Map<string, base.SignaturePart>,
     subdigests: string[],
@@ -245,10 +247,17 @@ export class SignatureCoder implements base.SignatureCoder<
     weight: ethers.BigNumber
   } => {
     return encodeSigners(config, signatures, subdigests, chainId)
-  }
+  },
 
-  hasEnoughSigningPower = (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
-    const { weight } = this.encodeSigners(config, signatures, [], 0)
+  hasEnoughSigningPower: (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
+    const { weight } = SignatureCoder.encodeSigners(config, signatures, [], 0)
     return weight.gte(config.threshold)
+  },
+
+  chainSignatures: (
+    _main: Signature | UnrecoveredSignature | ethers.BytesLike,
+    _sufix: (Signature | UnrecoveredSignature | ethers.BytesLike)[]
+  ): string => {
+    throw new Error('Signature chaining not supported on v1')
   }
 }

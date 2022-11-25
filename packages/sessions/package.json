@@ -1,0 +1,30 @@
+{
+  "name": "@0xsequence/sessions",
+  "version": "0.42.9",
+  "description": "tools for migrating sequence wallets to new versions",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/sessions",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-sessions.cjs.js",
+  "module": "dist/0xsequence-sessions.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:coverage": "nyc yarn test"
+  },
+  "dependencies": {
+    "@0xsequence/core": "^0.42.9",
+    "ethers": "^5.5.2"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "@0xsequence/core": "^0.42.9",
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "nyc": "^15.1.0"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
