@@ -26,12 +26,12 @@ export type SignedPayload = {
 }
 
 export interface SignatureCoder<
-  T extends Signature<Y>,
-  Y extends config.Config,
-  Z extends UnrecoveredSignature
+  Y extends config.Config = config.Config,
+  T extends Signature<Y> = Signature<Y>,
+  Z extends UnrecoveredSignature = UnrecoveredSignature
 > {
   decode: (data: string) => Z,
-  encode: (data: T | Z) => string,
+  encode: (data: T | Z | ethers.BytesLike) => string,
 
   recover: (data: Z, payload: SignedPayload, provider: ethers.providers.Provider) => Promise<T>
 
@@ -51,6 +51,11 @@ export interface SignatureCoder<
     config: Y,
     signatures: Map<string, SignaturePart>
   ) => boolean
+
+  chainSignatures: (
+    main: T | Z | ethers.BytesLike,
+    sufixes: (T | Z | ethers.BytesLike)[]
+  ) => string
 }
 
 export function subdigestOf(payload: SignedPayload) {

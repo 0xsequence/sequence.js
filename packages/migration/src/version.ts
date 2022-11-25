@@ -17,15 +17,7 @@ export async function versionOf(
   // if not deployed we need to check to which version
   // the counterfactual address belongs to
   if (!(await reader.isDeployed())) {
-    for (let i = 0; i < versions.length; i++) {
-      if (commons.context.addressOf(versions[i], firstImageHash) === address) {
-        return versions[i].version
-      }
-    }
-
-    // if we can't find the version then either the address is invalid,
-    // the version is not in VersionedContext, or the firstImageHash is not correct
-    throw new Error('Could not find version for counterfactual address')
+    return counterfactualVersion(address, firstImageHash, versions)
   }
 
   // if deployed we need to check the implementation address
@@ -45,6 +37,22 @@ export async function versionOf(
   throw new Error('Could not find version for deployed address')
 }
 
+export function counterfactualVersion(
+  address: string,
+  firstImageHash: string,
+  versions: commons.context.WalletContext[]
+): number {
+  for (let i = 0; i < versions.length; i++) {
+    if (commons.context.addressOf(versions[i], firstImageHash) === address) {
+      return versions[i].version
+    }
+  }
+
+  // if we can't find the version then either the address is invalid,
+  // the version is not in VersionedContext, or the firstImageHash is not correct
+  throw new Error('Could not find version for counterfactual address')
+}
+
 export interface Version<
   C extends commons.config.Config,
   S extends commons.signature.Signature<C>,
@@ -53,6 +61,6 @@ export interface Version<
   version: number,
   coders: {
     config: commons.config.ConfigCoder<C>,
-    signature: commons.signature.SignatureCoder<S, C, U>
+    signature: commons.signature.SignatureCoder<C, S, U>
   }
 }

@@ -3,6 +3,7 @@ import { BigNumberish, ethers } from "ethers"
 import { isValidSignature, recoverSigner } from "../commons/signer"
 import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash } from "./config"
 import * as base from '../commons/signature'
+import { chainId } from "wagmi"
 
 export enum SignatureType {
   Legacy = 0,
@@ -531,7 +532,7 @@ export async function recoverSignature(
 
   // if payload chainid is 0 then it must be encoded with "no chainid" encoding
   // and if it is encoded with "no chainid" encoding then it must have chainid 0
-  if (signedPayload && signedPayload.chainid.eq(0) !== (signature.type === SignatureType.NoChaindDynamic)) {
+  if (signedPayload && ethers.constants.Zero.eq(signedPayload.chainid) !== (signature.type === SignatureType.NoChaindDynamic)) {
     throw new Error(`Invalid signature type-chainid combination: ${signature.type}-${signedPayload.chainid.toString()}`)
   }
 
@@ -568,9 +569,31 @@ export async function recoverSignature(
   return { ...main, sufix }
 }
 
-export function encodeSignature(decoded: UnrecoveredChainedSignature | UnrecoveredSignature | Signature): string {
+export function encodeChain(main: ethers.BytesLike, sufix: ethers.BytesLike[]): string {
+  const allSignatures = [main, ...(sufix || [])]
+  const encodedMap = allSignatures.map((s) => ethers.utils.arrayify(encodeSignature(s)))
+
+  const body = ethers.utils.solidityPack(
+    encodedMap.map(() => ['uint24', 'bytes']).flat(),
+    encodedMap.map((s) => [s.length, s]).flat()
+  )
+
+  return ethers.utils.solidityPack(
+    ['uint8', 'bytes'],
+    [SignatureType.Chained, body]
+  )
+}
+
+export function encodeSignature(
+  decoded: UnrecoveredChainedSignature | ChainedSignature | UnrecoveredSignature | Signature | ethers.BytesLike
+): string {
+  if (ethers.utils.isBytesLike(decoded)) return ethers.utils.hexlify(decoded)
+
   if (isUnrecoveredChainedSignature(decoded) || isChainedSignature(decoded)) {
-    throw new Error(`TODO NOT IMPLEMENTED`)
+    return encodeChain(
+      encodeSignature(decoded),
+      (decoded.sufix || []).map(encodeSignature)
+    )
   }
 
   const body = isUnrecoveredSignature(decoded) ? decoded.decoded : decoded.config
@@ -592,7 +615,7 @@ export function encodeSignature(decoded: UnrecoveredChainedSignature | Unrecover
 
 
     case SignatureType.Chained:
-      throw new Error(`TODO NOT IMPLEMENTED`)
+      throw new Error(`Unreachable code: Chained signature should be handled above`)
 
     default:
       throw new Error(`Invalid signature type: ${decoded.type}`)
@@ -675,36 +698,36 @@ export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): strin
   throw new Error(`Unknown signature tree type: ${tree}`)
 }
 
-export class SignatureCoder implements base.SignatureCoder<
-  Signature,
+export const SignatureCoder: base.SignatureCoder<
   WalletConfig,
+  Signature,
   UnrecoveredChainedSignature | UnrecoveredSignature
-> {
-  decode = (data: string): UnrecoveredSignature => {
+> = {
+  decode: (data: string): UnrecoveredSignature => {
     return decodeSignature(data)
-  }
+  },
 
-  encode = (data: Signature | UnrecoveredSignature): string => {
+  encode: (data: Signature | UnrecoveredSignature): string => {
     return encodeSignature(data)
-  }
+  },
 
-  supportsNoChainId = false
+  supportsNoChainId: false,
 
-  recover = (
+  recover: (
     data: UnrecoveredSignature | UnrecoveredChainedSignature,
     payload: base.SignedPayload,
     provider: ethers.providers.Provider
   ): Promise<Signature> => {
     return recoverSignature(data, payload, provider)
-  }
+  },
 
-  encodeSigners = (
+  encodeSigners: (
     config: WalletConfig,
     signatures: Map<string, base.SignaturePart>,
     subdigests: string[],
     chainId: ethers.BigNumberish
   ): {
-    encoded: string,
+    encoded: string
     weight: ethers.BigNumber
   } => {
     if (ethers.BigNumber.from(chainId).isZero()) {
@@ -716,10 +739,19 @@ export class SignatureCoder implements base.SignatureCoder<
     }
 
     return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.Legacy })
-  }
+  },
 
-  hasEnoughSigningPower = (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
-    const { weight } = this.encodeSigners(config, signatures, [], 0)
+  hasEnoughSigningPower: (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
+    const { weight } = SignatureCoder.encodeSigners(config, signatures, [], 0)
     return weight.gte(config.threshold)
+  },
+
+  chainSignatures: (
+    main: Signature | UnrecoveredSignature | UnrecoveredChainedSignature | ethers.BytesLike,
+    sufix: (Signature | UnrecoveredSignature | UnrecoveredChainedSignature | ethers.BytesLike)[]
+  ): string => {
+    const mraw = ethers.utils.isBytesLike(main) ? main : encodeSignature(main)
+    const sraw = sufix.map(s => (ethers.utils.isBytesLike(s) ? s : encodeSignature(s)))
+    return encodeChain(mraw, sraw)
   }
 }
