@@ -1,4 +1,5 @@
 
+import { ethers } from 'ethers'
 import { WalletContext } from './context'
 import * as transaction from './transaction'
 
@@ -6,11 +7,13 @@ export type Config = {
   version: number
 }
 
-export interface ConfigCoder<T extends Config> {
+export interface ConfigCoder<T extends Config = Config> {
   imageHashOf: (config: T) => string
   hasSubdigest: (config: T, subdigest: string) => boolean
 
   isWalletConfig: (config: Config) => config is T
+
+  checkpointOf: (config: T) => ethers.BigNumber
 
   // isValid: (config: T) => boolean
 

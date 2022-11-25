@@ -23,6 +23,13 @@ export interface Migration<
     address: string,
     newConfig: C
   }
+
+  configCoder: commons.config.ConfigCoder<C>
+  signatureCoder: commons.signature.SignatureCoder<
+    C,
+    commons.signature.Signature<C>,
+    commons.signature.UnrecoveredSignature
+  >
 }
 
 export * as v1v2 from './migration_01_02'
