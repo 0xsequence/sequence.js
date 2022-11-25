@@ -1,8 +1,8 @@
 
 import { ethers } from "ethers"
 import { Interface } from '@ethersproject/abi'
-import * as base from "../commons"
 import { walletContracts } from "@0xsequence/abi"
+import { commons } from ".."
 
 //
 // Tree typings - leaves
@@ -133,7 +133,7 @@ export function leftFace(topology: Topology): Topology[] {
 // Wallet config types
 //
 
-export type WalletConfig = base.config.Config & {
+export type WalletConfig = commons.config.Config & {
   threshold: ethers.BigNumberish,
   checkpoint: ethers.BigNumberish,
   tree: Topology
@@ -330,8 +330,8 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
   return false
 }
 
-export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
-  isWalletConfig: (config: base.config.Config): config is WalletConfig => {
+export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
+  isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
     return (
       config.version === 2 &&
       (config as WalletConfig).threshold !== undefined &&
@@ -347,14 +347,17 @@ export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
     return hasSubdigest(config.tree, subdigest)
   },
 
-  // isValid = (config: WalletConfig): boolean {}
+  checkpointOf: (config: WalletConfig): ethers.BigNumber => {
+    return ethers.BigNumber.from(config.checkpoint)
+  },
 
+  // isValid = (config: WalletConfig): boolean {}
   /**
-   * 
+   *
    * Notice: context and kind are ignored because v2
    * doesn't need to manually update the implementation before
    * a configuration update, it's automatically done by the contract.
-   * 
+   *
    */
   update: {
     isKindUsed: true,
@@ -362,11 +365,11 @@ export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
     buildTransaction: (
       wallet: string,
       config: WalletConfig,
-      _context: base.context.WalletContext,
+      _context: commons.context.WalletContext,
       _kind?: 'first' | 'later' | undefined
-    ): base.transaction.TransactionBundle => {
+    ): commons.transaction.TransactionBundle => {
       const module = new Interface(walletContracts.mainModuleUpgradable.abi)
-  
+
       return {
         entrypoint: wallet,
         transactions: [{
@@ -379,6 +382,9 @@ export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
           revertOnError: true,
         }]
       }
+    },
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: WalletConfig; kind: "first" | "later" | undefined}  {
+      throw new Error("Function not implemented.")
     }
   }
 }

@@ -16,7 +16,7 @@ export type WalletOptions<
   // Sequence version configurator
   coders: {
     config: commons.config.ConfigCoder<Y>,
-    signature: commons.signature.SignatureCoder<T, Y, Z>
+    signature: commons.signature.SignatureCoder<Y, T, Z>
   }
 
   context: commons.context.WalletContext,
@@ -53,9 +53,9 @@ const statusToSignatureParts = (status: Status) => {
  * 
  */
 export class Wallet<
-  T extends commons.signature.Signature<Y>,
-  Y extends commons.config.Config,
-  Z extends commons.signature.UnrecoveredSignature
+  Y extends commons.config.Config = commons.config.Config,
+  T extends commons.signature.Signature<Y> = commons.signature.Signature<Y>,
+  Z extends commons.signature.UnrecoveredSignature = commons.signature.UnrecoveredSignature
 > extends ethers.Signer {
   public context: commons.context.WalletContext
   public config: Y
@@ -66,7 +66,7 @@ export class Wallet<
   public relayer?: Relayer
 
   public coders: {
-    signature: commons.signature.SignatureCoder<T, Y, Z>
+    signature: commons.signature.SignatureCoder<Y, T, Z>
     config: commons.config.ConfigCoder<Y>
   }
 
@@ -116,13 +116,18 @@ export class Wallet<
     return this.address
   }
 
-  async decorateTransactions(bundle: commons.transaction.IntendedTransactionBundle): Promise<commons.transaction.IntendedTransactionBundle> {
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
     if (await this.reader().isDeployed()) return bundle
 
     const deployTx = this.buildDeployTransaction()
 
+    // TODO: If entrypoint is guestModule we can flatten the bundle
+    // and avoid calling guestModule twice
+
     return {
-      entrypoint: deployTx.entrypoint,
+      entrypoint: this.context.guestModule,
       chainId: this.chainId,
       intent: bundle.intent,
       transactions: [
@@ -140,21 +145,27 @@ export class Wallet<
   }
 
   buildDeployTransaction(): commons.transaction.TransactionBundle {
-    const factoryInterface = new ethers.utils.Interface(walletContracts.factory.abi)
-
     const imageHash = this.coders.config.imageHashOf(this.config)
-    const initialAddress = addressOf(imageHash, this.context)
 
-    if (initialAddress !== this.address) {
-      throw new Error(`Wallet not configured with initial configuration: ${initialAddress} !== ${this.address}`)
+    if (addressOf(imageHash, this.context) !== this.address) {
+      throw new Error(`First address of config ${imageHash} doesn't match wallet address ${this.address}`)
     }
 
+    return Wallet.buildDeployTransaction(this.context, imageHash)
+  }
+
+  static buildDeployTransaction(
+    context: commons.context.WalletContext,
+    imageHash: string,
+  ): commons.transaction.TransactionBundle {
+    const factoryInterface = new ethers.utils.Interface(walletContracts.factory.abi)
+
     return {
-      entrypoint: this.context.guestModule,
+      entrypoint: context.guestModule,
       transactions: [{
-        to: this.context.factory,
+        to: context.factory,
         data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'),
-          [this.context.mainModule, imageHash]
+          [context.mainModule, imageHash]
         ),
         gasLimit: 100000,
         delegateCall: false,
@@ -250,7 +261,7 @@ export class Wallet<
     return this.sendSignedTransaction(signed, quote)
   }
 
-  connect(provider: ethers.providers.Provider, relayer?: Relayer): Wallet<T, Y, Z> {
+  connect(provider: ethers.providers.Provider, relayer?: Relayer): Wallet<Y, T, Z> {
     this.provider = provider
     this.relayer = relayer
     return this

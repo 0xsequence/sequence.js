@@ -17,3 +17,8 @@ export function isValidVersionedContext(contexts: VersionedContext): boolean {
 
   return true
 }
+
+export function latestContext(contexts: VersionedContext): commons.context.WalletContext {
+  const versions = Object.keys(context).length
+  return contexts[versions]
+}

@@ -5,86 +5,89 @@ import { ethers } from 'ethers'
 import { VersionedContext } from './context'
 import { Migration } from "./migrations"
 
+export type SignedMigration = {
+  tx: commons.transaction.SignedTransactionBundle,
+  toImageHash: string,
+  toConfig: commons.config.Config
+}
+
 export interface PresignedMigrationTracker {
   getMigration(
     address: string,
-    fromConfig: commons.config.Config,
+    fromImageHash: string,
     fromVersion: number,
     chainId: ethers.BigNumberish
-  ): Promise<commons.transaction.SignedTransactionBundle | undefined>
+  ): Promise<SignedMigration | undefined>
 
   saveMigration(
     address: string,
     fromConfig: commons.config.Config,
     fromVersion: number,
     chainId: ethers.BigNumberish,
-    tx: commons.transaction.SignedTransactionBundle
+    signed: SignedMigration
   ): Promise<void>
 }
+
+export type Migrations = { [version: number]: Migration<commons.config.Config, commons.config.Config> }
 
 export class Migrator {
   constructor(
     public readonly tracker: PresignedMigrationTracker,
-    public readonly migrations: { [version: number]: Migration<commons.config.Config, commons.config.Config> },
+    public readonly migrations: Migrations,
     public readonly contexts: VersionedContext
   ) {}
 
-  async getNextMigratePresignedTransaction(
-    address: string,
-    fromConfig: commons.config.Config,
-    fromVersion: number,
-    chainId: ethers.BigNumberish
-  ): Promise<commons.transaction.SignedTransactionBundle | undefined> {
-    if (fromVersion !== fromConfig.version) {
-      throw new Error(`Config version ${fromConfig.version} does not match fromVersion ${fromVersion}`)
-    }
-
-    return this.tracker.getMigration(address, fromConfig, fromVersion, chainId)
+  lastMigration(): Migration<commons.config.Config, commons.config.Config> {
+    const versions = Object.values(this.migrations)
+    return versions[versions.length - 1]
   }
 
-  async getAllMigratePresignedTransaction(
+  async getAllMigratePresignedTransaction(args: {
     address: string,
-    fromConfig: commons.config.Config,
+    fromImageHash: string,
     fromVersion: number,
     chainId: ethers.BigNumberish
-  ): Promise<{ txs: commons.transaction.SignedTransactionBundle[], missing: boolean }> {
-    let fconfig = fromConfig
+  }): Promise<{
+    lastVersion: number,
+    lastImageHash: string,
+    signedMigrations: SignedMigration[],
+    missing: boolean
+  }> {
+    const { address, fromImageHash, fromVersion, chainId } = args
+
+    let fih = fromImageHash
     let fversion = fromVersion
 
     const versions = Object.values(this.contexts)
-    const txs: commons.transaction.SignedTransactionBundle[] = []
+    const migs: SignedMigration[] = []
 
     for (let i = 0; i < versions.length; i++) {
-      const tx = await this.tracker.getMigration(address, fconfig, fversion, chainId)
-      if (!tx) return { txs, missing: true }
+      const mig = await this.tracker.getMigration(address, fih, fversion, chainId)
+      if (!mig) return { signedMigrations: migs, missing: true, lastImageHash: fih, lastVersion: fversion }
 
-      txs.push(tx)
+      migs.push(mig)
 
       const migration = this.migrations[fversion + 1]
       if (!migration) {
         throw new Error(`No migration found for version ${fversion + 1}`)
       }
 
-      const decoded = migration.decodeTransaction(tx, this.contexts)
+      const decoded = migration.decodeTransaction(mig.tx, this.contexts)
       if (decoded.address !== address) {
         throw new Error(`Migration transaction address does not match expected address`)
       }
 
-      fconfig = decoded.newConfig
-      fversion = fconfig.version
+      fih = migration.configCoder.imageHashOf(decoded.newConfig)
+      fversion = decoded.newConfig.version
     }
 
-    return { txs, missing: false }
+    return { signedMigrations: migs, missing: false, lastImageHash: fih, lastVersion: fversion }
   }
 
   async signMissingMigrations(
     address: string,
     existing: commons.transaction.SignedTransactionBundle[],
-    wallet: walletV2.Wallet<
-      commons.signature.Signature<commons.config.Config>,
-      commons.config.Config,
-      commons.signature.UnrecoveredSignature
-    >,
+    wallet: walletV2.Wallet,
   ): Promise<commons.transaction.SignedTransactionBundle[]> {
     const versions = Object.values(this.contexts)
     const txs: commons.transaction.SignedTransactionBundle[] = [...existing]
