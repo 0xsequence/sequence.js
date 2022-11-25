@@ -2,21 +2,21 @@
 import { ethers } from 'ethers'
 import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
+import { commons } from '..'
 
-import * as base from '../commons'
 
 export type AddressMember = {
   weight: ethers.BigNumberish,
   address: string
 }
 
-export type WalletConfig = base.config.Config & {
+export type WalletConfig = commons.config.Config & {
   threshold: ethers.BigNumberish,
   signers: AddressMember[]
 }
 
-export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
-  isWalletConfig: (config: base.config.Config): config is WalletConfig => {
+export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
+  isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
     return (
       config.version === 1 &&
       (config as WalletConfig).threshold !== undefined &&
@@ -41,18 +41,22 @@ export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
     return false
   },
 
+  checkpointOf: (config: WalletConfig): ethers.BigNumber => {
+    return ethers.BigNumber.from(0)
+  },
+
   update: {
     isKindUsed: true,
 
     buildTransaction: (
       wallet: string,
       config: WalletConfig,
-      context: base.context.WalletContext,
+      context: commons.context.WalletContext,
       kind?: 'first' | 'later' | undefined
-    ): base.transaction.TransactionBundle => {
+    ): commons.transaction.TransactionBundle => {
       const module = new Interface(walletContracts.mainModuleUpgradable.abi)
-      const transactions: base.transaction.Transaction[] = []
-  
+      const transactions: commons.transaction.Transaction[] = []
+
       if (!kind || kind === 'first') {
         transactions.push({
           to: wallet,
@@ -80,6 +84,9 @@ export const ConfigCoder: base.config.ConfigCoder<WalletConfig> = {
         entrypoint: wallet,
         transactions
       }
+    },
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: T; kind: "first" | "later" | undefined } {
+      throw new Error("Function not implemented.")
     }
   }
 }

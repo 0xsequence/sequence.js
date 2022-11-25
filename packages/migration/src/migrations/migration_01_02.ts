@@ -11,6 +11,9 @@ export class Migration_v1v2 implements Migration<
 > {
   version = 2
 
+  configCoder = v2.config.ConfigCoder
+  signatureCoder = v2.signature.SignatureCoder
+
   buildTransaction(
     address: string,
     contexts: VersionedContext,
