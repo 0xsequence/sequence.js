@@ -1,5 +1,17 @@
 # @0xsequence/multicall
 
+## 0.43.5
+
+### Patch Changes
+
+- provider: do not set default network for connect messages
+- provider: forward missing error message
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.43.5
+  - @0xsequence/network@0.43.5
+  - @0xsequence/utils@0.43.5
+
 ## 0.43.4
 
 ### Patch Changes

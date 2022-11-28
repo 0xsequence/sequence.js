@@ -1,5 +1,15 @@
 # @0xsequence/deployer
 
+## 0.43.5
+
+### Patch Changes
+
+- provider: do not set default network for connect messages
+- provider: forward missing error message
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/utils@0.43.5
+
 ## 0.43.4
 
 ### Patch Changes

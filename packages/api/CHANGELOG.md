@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 0.43.5
+
+### Patch Changes
+
+- provider: do not set default network for connect messages
+- provider: forward missing error message
+
 ## 0.43.4
 
 ### Patch Changes
