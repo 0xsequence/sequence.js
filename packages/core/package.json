@@ -13,10 +13,9 @@
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
     "test:coverage": "nyc yarn test"
   },
-  "dependencies": {
-    "ethers": "^5.5.2"
+  "peerDependencies": {
+    "ethers": ">=5.5"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "nyc": "^15.1.0"
