@@ -383,6 +383,23 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // upon cancellation by user, the walletRequestHandler will throw an error
 
       if (intent && intent.type === 'connect') {
+        let chainId: number | undefined = undefined
+        try {
+          if (networkId) {
+            chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
+          } else {
+            chainId = await this.walletRequestHandler.getChainId()
+          }
+        } catch (err) {
+          console.error(err)
+        }
+        // Failed to set default network on open
+        // Fail silently here so we can continue with connect flow and ask
+        // user to connect on a different network if necessary
+        if (!chainId || chainId <= 0) {
+          console.log('Failed to set default network on open')
+        }
+
         // notify wallet is opened, without session details
         this.notifyOpen({
           sessionId: this._sessionId
