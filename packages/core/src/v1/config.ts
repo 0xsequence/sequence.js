@@ -41,8 +41,24 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return false
   },
 
-  checkpointOf: (config: WalletConfig): ethers.BigNumber => {
+  checkpointOf: (_config: WalletConfig): ethers.BigNumber => {
     return ethers.BigNumber.from(0)
+  },
+
+  fromSimple: (config: {
+    threshold: ethers.BigNumberish;
+    checkpoint: ethers.BigNumberish;
+    signers: { address: string; weight: ethers.BigNumberish }[]
+  }): WalletConfig => {
+    if (!ethers.constants.Zero.eq(config.checkpoint)) {
+      throw new Error('v1 wallet config does not support checkpoint')
+    }
+
+    return {
+      version: 1,
+      threshold: config.threshold,
+      signers: config.signers
+    }
   },
 
   update: {
@@ -69,7 +85,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
           value: 0
         })
       }
-  
+
       transactions.push({
         to: wallet,
         data: module.encodeFunctionData(module.getFunction('updateImageHash'), [
@@ -79,13 +95,13 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         delegateCall: false,
         revertOnError: true,
       })
-  
+
       return {
         entrypoint: wallet,
         transactions
       }
     },
-    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: T; kind: "first" | "later" | undefined } {
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: WalletConfig; kind: "first" | "later" | undefined}  {
       throw new Error("Function not implemented.")
     }
   }

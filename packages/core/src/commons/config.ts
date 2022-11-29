@@ -15,6 +15,12 @@ export interface ConfigCoder<T extends Config = Config> {
 
   checkpointOf: (config: T) => ethers.BigNumber
 
+  fromSimple: (config: {
+    threshold: ethers.BigNumberish,
+    checkpoint: ethers.BigNumberish,
+    signers: { address: string, weight: ethers.BigNumberish }[]
+  }) => T
+
   // isValid: (config: T) => boolean
 
   // TODO: This may not be the best place for this
