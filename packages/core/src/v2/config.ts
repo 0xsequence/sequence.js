@@ -351,6 +351,23 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return ethers.BigNumber.from(config.checkpoint)
   },
 
+  fromSimple: (config: {
+    threshold: ethers.BigNumberish;
+    checkpoint: ethers.BigNumberish;
+    signers: { address: string; weight: ethers.BigNumberish }[]
+  }): WalletConfig => {
+    return toWalletConfig({
+      threshold: config.threshold,
+      checkpoint: config.checkpoint,
+      members: config.signers.map((signer) => {
+        return {
+          address: signer.address,
+          weight: signer.weight
+        }
+      })
+    })
+  },
+
   // isValid = (config: WalletConfig): boolean {}
   /**
    *

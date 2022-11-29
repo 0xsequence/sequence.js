@@ -1,11 +1,11 @@
 import { Signer as AbstractSigner, ethers, providers } from 'ethers'
-import { walletContracts } from '@0xsequence/abi'
-import { SignedTransactions, Transaction, sequenceTxAbiEncode, TransactionResponse } from '@0xsequence/transactions'
+import { Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
+import { commons } from '@0xsequence/core'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
   signer: AbstractSigner
@@ -56,30 +56,24 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     this.txnOptions = transactionRequest
   }
 
-  async relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<providers.TransactionReceipt>> {
+  async relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<providers.TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
-
-    if (!signedTxs.context.guestModule || signedTxs.context.guestModule.length !== 42) {
-      throw new Error('LocalRelayer requires the context.guestModule address')
-    }
-
-    const { to, execute } = await this.prependWalletDeploy(signedTxs)
-
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
-      sequenceTxAbiEncode(execute.transactions),
-      execute.nonce,
-      execute.signature
-    ])
+  
+    const data = commons.transaction.encodeBundleExecData(signedTxs)
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
     // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
     // txRequest.gasLimit = gasLimit
 
-    const responsePromise = this.signer.sendTransaction({ to, data, ...this.txnOptions })
+    const responsePromise = this.signer.sendTransaction({
+      to: signedTxs.entrypoint,
+      data,
+      ...this.txnOptions,
+      gasLimit: 9000000
+    })
 
     if (waitForReceipt) {
       const response: TransactionResponse = await responsePromise

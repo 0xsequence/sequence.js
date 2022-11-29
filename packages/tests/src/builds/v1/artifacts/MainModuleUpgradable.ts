@@ -1,4 +1,4 @@
-{
+export const mainModuleUpgradable = {
   "_format": "hh-sol-artifact-1",
   "contractName": "MainModuleUpgradable",
   "sourceName": "contracts/modules/MainModuleUpgradable.sol",

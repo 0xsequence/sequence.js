@@ -22,7 +22,11 @@ export interface Reader {
     public readonly address: string,
     public readonly provider: ethers.providers.Provider
   ) {
-    this.module = new ethers.Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
+    this.module = new ethers.Contract(
+      address,
+      [...walletContracts.mainModuleUpgradable.abi, ...walletContracts.mainModule.abi],
+      provider
+    )
   }
 
   async isDeployed(): Promise<boolean> {
@@ -56,10 +60,10 @@ export interface Reader {
 
   async nonce(space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
     try {
-      const nonce = await this.module.nonce(space)
+      const nonce = await this.module.readNonce(space)
       return nonce
     } catch (e) {
-      if (!this.isDeployed()) {
+      if (!(await this.isDeployed())) {
         return 0
       }
 

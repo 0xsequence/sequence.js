@@ -19,10 +19,11 @@
   "dependencies": {
     "@0xsequence/abi": "^0.43.14",
     "@0xsequence/config": "^0.43.14",
+    "@0xsequence/core": "^0.42.9",
     "@0xsequence/guard": "^0.43.14",
     "@0xsequence/network": "^0.43.14",
+    "@0xsequence/signhub": "^0.42.9",
     "@0xsequence/relayer": "^0.43.14",
-    "@0xsequence/transactions": "^0.43.14",
     "@0xsequence/utils": "^0.43.14"
   },
   "peerDependencies": {
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@0xsequence/ethauth": "^0.8.0",
+    "@0xsequence/tests": "^0.43.4",
     "@0xsequence/wallet-contracts": "1.10.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ethers": "^5.7.2",

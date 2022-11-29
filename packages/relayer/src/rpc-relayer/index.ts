@@ -17,6 +17,7 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, buildStubSignature } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import * as proto from './relayer.gen'
+import { commons } from '@0xsequence/core'
 
 export { proto }
 
@@ -163,73 +164,75 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   }
 
   async relay(
-    signedTxs: SignedTransactions,
+    signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
     waitForReceipt: boolean = true
   ): Promise<TransactionResponse<RelayerTxReceipt>> {
-    logger.info(
-      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
-    )
+    throw new Error('not implemented')
 
-    let typecheckedQuote: string | undefined
-    if (quote !== undefined) {
-      if (typeof quote._quote === 'string') {
-        typecheckedQuote = quote._quote
-      } else {
-        logger.warn('[rpc-relayer/relay] ignoring invalid fee quote')
-      }
-    }
+    // logger.info(
+    //   `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
+    // )
 
-    if (!this.provider) {
-      logger.warn(`[rpc-relayer/relay] provider not set, failed relay`)
-      throw new Error('provider is not set')
-    }
+    // let typecheckedQuote: string | undefined
+    // if (quote !== undefined) {
+    //   if (typeof quote._quote === 'string') {
+    //     typecheckedQuote = quote._quote
+    //   } else {
+    //     logger.warn('[rpc-relayer/relay] ignoring invalid fee quote')
+    //   }
+    // }
 
-    const { to: contract, execute } = await this.prependWalletDeploy(signedTxs)
+    // if (!this.provider) {
+    //   logger.warn(`[rpc-relayer/relay] provider not set, failed relay`)
+    //   throw new Error('provider is not set')
+    // }
 
-    const walletAddress = addressOf(signedTxs.config, signedTxs.context)
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-    const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
-      sequenceTxAbiEncode(execute.transactions),
-      execute.nonce,
-      execute.signature
-    ])
+    // const { to: contract, execute } = await this.prependWalletDeploy(signedTxs)
 
-    const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input }, quote: typecheckedQuote })
+    // const walletAddress = addressOf(signedTxs.config, signedTxs.context)
+    // const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    // const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+    //   sequenceTxAbiEncode(execute.transactions),
+    //   execute.nonce,
+    //   execute.signature
+    // ])
 
-    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
+    // const metaTxn = await this.service.sendMetaTxn({ call: { walletAddress, contract, input }, quote: typecheckedQuote })
 
-    if (waitForReceipt) {
-      return this.wait(metaTxn.txnHash)
-    } else {
-      const response = {
-        hash: metaTxn.txnHash,
-        confirmations: 0,
-        from: walletAddress,
-        wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
-      }
+    // logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
-      const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
-        if (!this.provider) {
-          throw new Error('cannot wait for receipt, relayer has no provider set')
-        }
+    // if (waitForReceipt) {
+    //   return this.wait(metaTxn.txnHash)
+    // } else {
+    //   const response = {
+    //     hash: metaTxn.txnHash,
+    //     confirmations: 0,
+    //     from: walletAddress,
+    //     wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+    //   }
 
-        const waitResponse = await this.wait(metaTxn.txnHash)
-        const transactionHash = waitResponse.receipt?.transactionHash
+    //   const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
+    //     if (!this.provider) {
+    //       throw new Error('cannot wait for receipt, relayer has no provider set')
+    //     }
 
-        if (!transactionHash) {
-          throw new Error('cannot wait for receipt, unknown native transaction hash')
-        }
+    //     const waitResponse = await this.wait(metaTxn.txnHash)
+    //     const transactionHash = waitResponse.receipt?.transactionHash
 
-        Object.assign(response, waitResponse)
+    //     if (!transactionHash) {
+    //       throw new Error('cannot wait for receipt, unknown native transaction hash')
+    //     }
 
-        return this.provider.waitForTransaction(transactionHash, confirmations)
-      }
+    //     Object.assign(response, waitResponse)
 
-      response.wait = wait
+    //     return this.provider.waitForTransaction(transactionHash, confirmations)
+    //   }
 
-      return response as TransactionResponse
-    }
+    //   response.wait = wait
+
+    //   return response as TransactionResponse
+    // }
   }
 
   async wait(
