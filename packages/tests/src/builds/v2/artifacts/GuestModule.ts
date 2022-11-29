@@ -1,4 +1,4 @@
-{
+export const guestModule = {
   "_format": "hh-sol-artifact-1",
   "contractName": "GuestModule",
   "sourceName": "contracts/modules/GuestModule.sol",

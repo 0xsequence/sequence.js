@@ -11,10 +11,17 @@ export type WalletContext = {
 }
 
 export function addressOf(context: WalletContext, imageHash: ethers.BytesLike) {
+  const codeHash = ethers.utils.keccak256(
+    ethers.utils.solidityPack(
+      ['bytes', 'bytes32'],
+      [context.walletCreationCode, ethers.utils.hexZeroPad(context.mainModule, 32)]
+    )
+  )
+
   const hash = ethers.utils.keccak256(
     ethers.utils.solidityPack(
       ['bytes1', 'address', 'bytes32', 'bytes32'],
-      ['0xff', context.factory, imageHash, context.walletCreationCode]
+      ['0xff', context.factory, imageHash, codeHash]
     )
   )
 

@@ -1,4 +1,4 @@
-{
+export const factory = {
   "_format": "hh-sol-artifact-1",
   "contractName": "Factory",
   "sourceName": "contracts/Factory.sol",

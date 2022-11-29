@@ -6,6 +6,7 @@ import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { logger, Optionals, Mask } from '@0xsequence/utils'
+import { commons } from '@0xsequence/core'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
@@ -53,7 +54,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     ...transactions: Transaction[]
   ): Promise<FeeOption[]>
 
-  abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
+  abstract relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
     return (await Promise.all(transactions.map(async tx => {

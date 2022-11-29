@@ -142,7 +142,6 @@ export async function recoverSignature(
   provider: ethers.providers.Provider
 ): Promise<Signature> {
   const subdigest = base.subdigestOf(payload)
-
   const signers = await Promise.all(data.signers.map(async (s) => {
     if (isAddressMember(s)) {
       return s
@@ -156,7 +155,7 @@ export async function recoverSignature(
 
       return { address: s.address, weight: s.weight }
     } else {
-      const address = recoverSigner(s.signature, subdigest)
+      const address = recoverSigner(subdigest, s.signature)
       return { address, weight: s.weight }
     }
   }))

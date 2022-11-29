@@ -15,7 +15,7 @@ export class SignerWrapper implements SapientSigner {
     onRejection: (error: string) => void;
     onStatus: (situation: string) => void
   }): Promise<boolean> {
-    callbacks.onSignature(await this.signer.signMessage(message))    
+    callbacks.onSignature(await this.signer.signMessage(message))
     return true
   }
 
