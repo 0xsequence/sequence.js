@@ -3,11 +3,11 @@ import { v1 } from '../builds'
 import { deployContract } from "../utils"
 
 export async function deployV1Context(signer: ethers.Signer) {
-  const factory = await deployContract(signer, v1.Factory)
-  const mainModule = await deployContract(signer, v1.MainModule, factory.address)
-  const mainModuleUpgradable = await deployContract(signer, v1.MainModuleUpgradable)
-  const guestModule = await deployContract(signer, v1.GuestModule)
-  const multiCallUtils = await deployContract(signer, v1.MultiCallUtils)
+  const factory = await deployContract(signer, v1.factory)
+  const mainModule = await deployContract(signer, v1.mainModule, factory.address)
+  const mainModuleUpgradable = await deployContract(signer, v1.mainModuleUpgradable)
+  const guestModule = await deployContract(signer, v1.guestModule)
+  const multiCallUtils = await deployContract(signer, v1.multiCallUtils)
 
   return {
     version: 1,

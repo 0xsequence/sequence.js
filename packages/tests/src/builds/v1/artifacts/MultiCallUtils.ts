@@ -1,4 +1,4 @@
-{
+export const multiCallUtils = {
   "_format": "hh-sol-artifact-1",
   "contractName": "MultiCallUtils",
   "sourceName": "contracts/modules/utils/MultiCallUtils.sol",
