@@ -1,4 +1,4 @@
-{
+export const sequenceUtils = {
   "_format": "hh-sol-artifact-1",
   "contractName": "SequenceUtils",
   "sourceName": "contracts/modules/utils/SequenceUtils.sol",

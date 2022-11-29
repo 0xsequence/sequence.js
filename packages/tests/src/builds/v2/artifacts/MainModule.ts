@@ -1,4 +1,4 @@
-{
+export const mainModule = {
   "_format": "hh-sol-artifact-1",
   "contractName": "MainModule",
   "sourceName": "contracts/modules/MainModule.sol",
