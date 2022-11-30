@@ -297,11 +297,51 @@ export const partEncoder = {
 
 export type EncodingOptions = {
   forceDynamicEncoding?: boolean,
-  signatureType?: SignatureType,
   disableTrim?: boolean
 }
 
 export function encodeSigners(
+  config: WalletConfig,
+  parts: Map<string, base.SignaturePart>,
+  subdigests: string[],
+  chainId: ethers.BigNumberish,
+  options: EncodingOptions = {}
+): {
+  encoded: string,
+  weight: ethers.BigNumber
+} {
+  const tree = encodeTree(config.tree, parts, subdigests, options)
+
+  if (ethers.BigNumber.from(chainId).isZero()) {
+    return {
+      encoded: ethers.utils.solidityPack(
+        ['uint8', 'uint16', 'uint32', 'bytes'],
+        [SignatureType.NoChaindDynamic, config.threshold, config.checkpoint, tree.encoded]
+      ),
+      weight: tree.weight
+    }
+  }
+
+  if (config.threshold > 255) {
+    return {
+      encoded: ethers.utils.solidityPack(
+        ['uint8', 'uint16', 'uint32', 'bytes'],
+        [SignatureType.Dynamic, config.threshold, config.checkpoint, tree.encoded]
+      ),
+      weight: tree.weight
+    }
+  }
+
+  return {
+    encoded: ethers.utils.solidityPack(
+      ['uint8', 'uint8', 'uint32', 'bytes'],
+      [SignatureType.Legacy, config.threshold, config.checkpoint, tree.encoded]
+    ),
+    weight: tree.weight
+  }
+}
+
+export function encodeTree(
   topology: Topology,
   parts: Map<string, base.SignaturePart>,
   subdigests: string[],
@@ -313,8 +353,8 @@ export function encodeSigners(
   const trim = !options.disableTrim
 
   if (isNode(topology)) {
-    const left = encodeSigners(topology.left, parts, subdigests)
-    const right = encodeSigners(topology.right, parts, subdigests)
+    const left = encodeTree(topology.left, parts, subdigests)
+    const right = encodeTree(topology.right, parts, subdigests)
 
     if (trim && left.weight.eq(0) && right.weight.eq(0)) {
       return {
@@ -337,7 +377,7 @@ export function encodeSigners(
   }
 
   if (isNestedLeaf(topology)) {
-    const tree = encodeSigners(topology.tree, parts, subdigests)
+    const tree = encodeTree(topology.tree, parts, subdigests)
 
     if (trim && tree.weight.eq(0)) {
       return {
@@ -730,15 +770,7 @@ export const SignatureCoder: base.SignatureCoder<
     encoded: string
     weight: ethers.BigNumber
   } => {
-    if (ethers.BigNumber.from(chainId).isZero()) {
-      return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.NoChaindDynamic })
-    }
-
-    if (config.threshold > 255) {
-      return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.Dynamic })
-    }
-
-    return encodeSigners(config.tree, signatures, subdigests, { signatureType: SignatureType.Legacy })
+    return encodeSigners(config, signatures, subdigests, chainId)
   },
 
   hasEnoughSigningPower: (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {

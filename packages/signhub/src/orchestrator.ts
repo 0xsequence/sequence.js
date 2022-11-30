@@ -74,14 +74,18 @@ export class Orchestrator {
       const status: Status = { ended: false, message, signers: {} }
 
       const onStatusUpdate = () => {
-        this.notifyObservers(status)
-
-        const pending = Object.entries(status.signers).filter(([_, s]) => isSignerStatusPending(s))
-        if ((callback && callback(status)) || pending.length === 0) {
-          status.ended = true
-          resolve(status)
+        try {
           this.notifyObservers(status)
-          return
+
+          const pending = Object.entries(status.signers).filter(([_, s]) => isSignerStatusPending(s))
+          if ((callback && callback(status)) || pending.length === 0) {
+            status.ended = true
+            resolve(status)
+            this.notifyObservers(status)
+            return
+          }
+        } catch (e) {
+          console.error("Error while notifying observers", e)
         }
       }
 
@@ -110,6 +114,7 @@ export class Orchestrator {
         const promise = accepted[i]
 
         if (promise.status === "rejected" || promise.value === false) {
+          console.warn(`Signer ${await signer.getAddress()} rejected the request ${(promise as any).reason}`)
           status.signers[await signer.getAddress()] = { rejected: true }
         }
       }
