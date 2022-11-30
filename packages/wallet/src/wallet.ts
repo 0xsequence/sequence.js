@@ -26,6 +26,9 @@ export type WalletOptions<
 
   orchestrator: Orchestrator
   reader?: commons.reader.Reader
+
+  provider?: ethers.providers.Provider
+  relayer?: Relayer
 }
 
 const statusToSignatureParts = (status: Status) => {
@@ -93,8 +96,19 @@ export class Wallet<
     this.coders = options.coders
     this.address = options.address
     this.chainId = options.chainId
-  
+    this.provider = options.provider
+    this.relayer = options.relayer
+
     this._reader = options.reader
+  }
+
+  static newWallet<
+    Y extends commons.config.Config = commons.config.Config,
+    T extends commons.signature.Signature<Y> = commons.signature.Signature<Y>,
+    Z extends commons.signature.UnrecoveredSignature = commons.signature.UnrecoveredSignature
+  >(options: Omit<WalletOptions<T, Y, Z>, 'address'>): Wallet<Y, T, Z> {
+    const address = commons.context.addressOf(options.context, options.coders.config.imageHashOf(options.config))
+    return new Wallet({ ...options, address })
   }
 
   reader(): commons.reader.Reader {
