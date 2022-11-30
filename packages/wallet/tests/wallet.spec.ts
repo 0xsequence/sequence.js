@@ -2,13 +2,12 @@
 import hardhat from 'hardhat'
 import * as chai from 'chai'
 
-import { v1, v2, commons } from "@0xsequence/core"
+import { v1, v2 } from "@0xsequence/core"
 import { context } from "@0xsequence/tests"
 import { ethers } from 'ethers'
 import { Wallet } from '../src/index'
 import { Orchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { subDigestOf } from '@0xsequence/utils'
 
 const { expect } = chai
 
@@ -35,28 +34,82 @@ describe('Wallet (primitive)', () => {
   }]).map(({ version, coders }) => {
     describe(`Using v${version} version`, () => {
       it('Should deploy a new wallet', async () => {
-        const signer = new ethers.Wallet('0xd621cdee0f5776495d8cfe2700c2e327199a07660600971b9f3f305d502824c3')
+        const signer = ethers.Wallet.createRandom()
 
-        const config = coders.config.fromSimple({ threshold: 1, checkpoint: 0, signers: [{ address: signer.address, weight: 1 }] })
-        const address = commons.context.addressOf(contexts[version], coders.config.imageHashOf(config as any))
+        const config = coders.config.fromSimple({
+          threshold: 1,
+          checkpoint: 0,
+          signers: [{ address: signer.address, weight: 1 }]
+        })
 
-        const wallet = new Wallet({
+        const wallet = Wallet.newWallet({
           coders: coders as any,
           context: contexts[version],
           config,
-          address,
           orchestrator: new Orchestrator([new hubsigners.SignerWrapper(signer)]),
-          chainId: provider.network.chainId
+          chainId: provider.network.chainId,
+          provider
         })
 
-        wallet.connect(provider, relayer)
-
-        await wallet.sendTransaction([{
-          to: '0x1bfb63F428E33Ec8561e3Bd6b78bDc3290b79CC4',
-          revertOnError: true
-        }])
+        const deployTx = wallet.buildDeployTransaction()
+        await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
+            digest: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+            wallet: wallet.address
+          }
+        })
 
         expect(await wallet.reader().isDeployed()).to.be.true
+      });
+
+      ([{
+        name: 'After deployment',
+        setup: async (wallet: Wallet) => {
+          const deployTx = wallet.buildDeployTransaction()
+          await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
+              digest: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+              wallet: wallet.address
+            }
+          })
+        }
+      }, {
+        name: 'Before deployment',
+        setup: async (_: Wallet) => { }
+      }]).map(({ name, setup }) => {
+        describe(name, () => {
+          let wallet: Wallet
+
+          beforeEach(async () => {
+            const signer = ethers.Wallet.createRandom()
+
+            const config = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ address: signer.address, weight: 1 }]
+            })
+    
+            wallet = Wallet.newWallet({
+              coders: coders as any,
+              context: contexts[version],
+              config,
+              orchestrator: new Orchestrator([new hubsigners.SignerWrapper(signer)]),
+              chainId: provider.network.chainId,
+              provider,
+              relayer
+            }) as any as Wallet
+
+            await setup(wallet)
+          })
+
+          it('Should send an empty list of transactions', async () => {
+            await wallet.sendTransaction([])
+          })
+
+          it('Should send a transaction with an empty call', async () => {
+            await wallet.sendTransaction([{
+              to: ethers.Wallet.createRandom().address
+            }])
+          })
+        })
       })
     })
   })
