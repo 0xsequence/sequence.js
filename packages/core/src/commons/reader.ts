@@ -9,6 +9,10 @@ export interface Reader {
   implementation(): Promise<string | undefined>
   imageHash(): Promise<string | undefined>
   nonce(space: ethers.BigNumberish): Promise<ethers.BigNumberish>
+  isValidSignature(
+    digest: ethers.BytesLike,
+    signature: ethers.BytesLike
+  ): Promise<boolean>
 }
 
 /**
@@ -24,7 +28,11 @@ export interface Reader {
   ) {
     this.module = new ethers.Contract(
       address,
-      [...walletContracts.mainModuleUpgradable.abi, ...walletContracts.mainModule.abi],
+      [
+        ...walletContracts.mainModuleUpgradable.abi,
+        ...walletContracts.mainModule.abi,
+        ...walletContracts.erc1271.abi
+      ],
       provider
     )
   }
@@ -65,6 +73,22 @@ export interface Reader {
     } catch (e) {
       if (!(await this.isDeployed())) {
         return 0
+      }
+
+      throw e
+    }
+  }
+
+  async isValidSignature(
+    digest: ethers.BytesLike,
+    signature: ethers.BytesLike
+  ): Promise<boolean> {
+    try {
+      const isValid = await this.module.isValidSignature(digest, signature)
+      return isValid === '0x1626ba7e' // as defined in ERC1271
+    } catch (e) {
+      if (!(await this.isDeployed())) {
+        throw new Error('Wallet must be deployed to validate signature')
       }
 
       throw e
