@@ -70,7 +70,11 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       context: commons.context.WalletContext,
       kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new Interface(walletContracts.mainModuleUpgradable.abi)
+      const module = new Interface([
+        ...walletContracts.mainModule.abi,
+        ...walletContracts.mainModuleUpgradable.abi
+      ])
+
       const transactions: commons.transaction.Transaction[] = []
 
       if (!kind || kind === 'first') {
@@ -94,6 +98,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         gasLimit: 0,
         delegateCall: false,
         revertOnError: true,
+        value: 0
       })
 
       return {
