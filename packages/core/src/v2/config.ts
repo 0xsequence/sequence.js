@@ -397,6 +397,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
           gasLimit: 0,
           delegateCall: false,
           revertOnError: true,
+          value: 0
         }]
       }
     },
