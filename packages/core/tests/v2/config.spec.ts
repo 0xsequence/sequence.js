@@ -219,6 +219,7 @@ describe('v2 config utils', () => {
   describe('Simplify configurations', () => {
     it('Should simplify configuration', () => {
       const simplifiedConfig1 = config.toSimpleWalletConfig({
+        version: 2,
         tree: sampleTree1,
         threshold: 11,
         checkpoint: 999999
@@ -236,6 +237,7 @@ describe('v2 config utils', () => {
       })
 
       const simplifiedConfig2 = config.toSimpleWalletConfig({
+        version: 2,
         tree: sampleTree2,
         threshold: 1,
         checkpoint: 2
@@ -257,6 +259,7 @@ describe('v2 config utils', () => {
       })
 
       const simplifiedConfig3 = config.toSimpleWalletConfig({
+        version: 2,
         tree: sampleTree3,
         threshold: 2,
         checkpoint: 3

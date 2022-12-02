@@ -238,7 +238,7 @@ export async function recoverTopology(
     } else {
       return {
         weight: unrecovered.weight,
-        address: recoverSigner(unrecovered.signature, subdigest),
+        address: recoverSigner(subdigest, unrecovered.signature),
         signature: unrecovered.signature,
         subdigest
       }
@@ -248,49 +248,54 @@ export async function recoverTopology(
   return unrecovered
 }
 
+// TODO: It should be possible to re-use encodeSignatureTree
+// and avoid duplicating this logic
 export const partEncoder = {
-  node: (nodeHash: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  concat: (a: ethers.BytesLike, b: ethers.BytesLike) => {
+    return ethers.utils.solidityPack(['bytes', 'bytes'], [a, b])
+  },
+  node: (nodeHash: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(
       ['uint8', 'bytes32'],
-      [SignaturePartType.Node, nodeHash, sufix]
+      [SignaturePartType.Node, nodeHash]
     )
   },
-  branch: (tree: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  branch: (tree: ethers.BytesLike): string => {
     const arr = ethers.utils.arrayify(tree)
     return ethers.utils.solidityPack(
-      ['uint8', 'uint24', 'bytes', 'bytes'],
-      [SignaturePartType.Branch, arr.length, arr, sufix]
+      ['uint8', 'uint24', 'bytes'],
+      [SignaturePartType.Branch, arr.length, arr]
     )
   },
-  nested: (weight: ethers.BigNumberish, threshold: ethers.BigNumberish, tree: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  nested: (weight: ethers.BigNumberish, threshold: ethers.BigNumberish, tree: ethers.BytesLike): string => {
     const arr = ethers.utils.arrayify(tree)
     return ethers.utils.solidityPack(
-      ['uint8', 'uint8', 'uint16', 'uint24', 'bytes', 'bytes'],
-      [SignaturePartType.Nested, weight, threshold, arr.length, arr, sufix]
+      ['uint8', 'uint8', 'uint16', 'uint24', 'bytes'],
+      [SignaturePartType.Nested, weight, threshold, arr.length, arr]
     )
   },
-  subdigest: (subdigest: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  subdigest: (subdigest: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(
-      ['uint8', 'bytes32', 'bytes'],
-      [SignaturePartType.Subdigest, subdigest, sufix]
+      ['uint8', 'bytes32'],
+      [SignaturePartType.Subdigest, subdigest]
     )
   },
-  signature: (weight: ethers.BigNumberish, signature: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  signature: (weight: ethers.BigNumberish, signature: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(
-      ['uint8', 'uint8', 'bytes', 'bytes'],
-      [SignaturePartType.Signature, weight, signature, sufix]
+      ['uint8', 'uint8', 'bytes'],
+      [SignaturePartType.Signature, weight, signature]
     )
   },
-  dynamicSignature: (weight: ethers.BigNumberish, address: ethers.BytesLike, signature: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  dynamicSignature: (weight: ethers.BigNumberish, address: ethers.BytesLike, signature: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(
-      ['uint8', 'uint8', 'address', 'uint24', 'bytes', 'bytes'],
-      [SignaturePartType.DynamicSignature, weight, address, signature.length, signature, sufix]
+      ['uint8', 'uint8', 'address', 'uint24', 'bytes'],
+      [SignaturePartType.DynamicSignature, weight, address, signature.length, signature]
     )
   },
-  address: (weight: ethers.BigNumberish, address: ethers.BytesLike, sufix: ethers.BytesLike = []): string => {
+  address: (weight: ethers.BigNumberish, address: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(
-      ['uint8', 'uint8', 'address', 'bytes'],
-      [SignaturePartType.Address, weight, address, sufix]
+      ['uint8', 'uint8', 'address'],
+      [SignaturePartType.Address, weight, address]
     )
   }
 }
@@ -358,6 +363,8 @@ export function encodeTree(
 
     if (trim && left.weight.eq(0) && right.weight.eq(0)) {
       return {
+        // We don't need to include anything for this node
+        // just the hash will be enough
         encoded: partEncoder.node(hashNode(topology)),
         weight: ethers.constants.Zero
       }
@@ -365,13 +372,36 @@ export function encodeTree(
 
     if (trim && right.weight.eq(0)) {
       return {
-        encoded: partEncoder.node(hashNode(topology.right), left.encoded),
+        // The right node doesn't have any weight
+        // but we still need to include the left node encoded
+        encoded: partEncoder.concat(
+          left.encoded,
+          partEncoder.node(hashNode(topology.right))
+        ),
         weight: left.weight
       }
     }
 
+    if (trim && left.weight.eq(0)) {
+      return {
+        // The left node doesn't have any weight
+        // we can just append its hash, but for the right node
+        // we need to create a new "branch"
+        encoded: partEncoder.concat(
+          partEncoder.node(hashNode(topology.left)),
+          partEncoder.branch(right.encoded)
+        ),
+        weight: right.weight
+      }
+    }
+
     return {
-      encoded: partEncoder.branch(right.encoded, left.encoded),
+      // Both nodes have weight, we need to include both
+      // the right one must be a branch
+      encoded: partEncoder.concat(
+        left.encoded,
+        partEncoder.branch(right.encoded)
+      ),
       weight: left.weight.add(right.weight)
     }
   }
