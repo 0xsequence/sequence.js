@@ -16,6 +16,7 @@ describe.only('v2 signature utils', () => {
       const decoded = decodeSignature(sampleSignature1)
 
       expect(decoded).to.deep.equal({
+        version: 2,
         type: SignatureType.Legacy,
         decoded: {
           threshold: 1,
@@ -98,6 +99,7 @@ describe.only('v2 signature utils', () => {
       const decoded = decodeSignature(sampleSignature2)
 
       expect(decoded).to.deep.equal({
+        version: 2,
         type: SignatureType.Legacy,
         decoded: {
           threshold: 2,
@@ -202,6 +204,7 @@ describe.only('v2 signature utils', () => {
       const decoded = decodeSignature(sampleSignature3)
 
       expect(decoded).to.deep.equal({
+        version: 2,
         type: SignatureType.Legacy,
         decoded: {
           checkpoint: 1667831412,
@@ -338,6 +341,7 @@ describe.only('v2 signature utils', () => {
       const decoded = decodeSignature(sampleSignature4)
 
       expect(decoded).to.deep.equal({
+        version: 2,
         type: SignatureType.Legacy,
         decoded: {
           threshold: 1,
@@ -413,6 +417,7 @@ describe.only('v2 signature utils', () => {
       const decoded = decodeSignature(sampleSignature5)
 
       expect(decoded).to.deep.equal({
+        version: 2,
         type: SignatureType.NoChaindDynamic,
         decoded: {
           threshold: 1,
@@ -475,6 +480,7 @@ describe.only('v2 signature utils', () => {
       const decoded = decodeSignature(sampleSignature6)
 
       expect(decoded).to.deep.equal({
+        version: 2,
         type: SignatureType.Dynamic,
         decoded: {
           threshold: 2,

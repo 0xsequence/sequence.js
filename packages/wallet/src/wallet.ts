@@ -242,14 +242,15 @@ export class Wallet<
   async signTransactions(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
 
-    let { nonce, transactions } = commons.transaction.fromTransactionish(this.address, transaction)
-    
-    if (nonce === undefined) {
-      nonce = await this.reader().nonce(0)
-      if (nonce === undefined) throw new Error("Unable to determine nonce")
+    const { nonce, transactions } = commons.transaction.fromTransactionish(this.address, transaction)
+
+    let defaultedNonce = nonce
+    if (defaultedNonce === undefined) {
+      defaultedNonce = await this.reader().nonce(0)
+      if (defaultedNonce === undefined) throw new Error("Unable to determine nonce")
     }
 
-    const digest = commons.transaction.digestOfTransactions(nonce, transactions)
+    const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
     const signature = await this.signDigest(digest)
 
     return {
@@ -260,7 +261,7 @@ export class Wallet<
       chainId: this.chainId,
       transactions,
       entrypoint: this.address,
-      nonce,
+      nonce: defaultedNonce,
       signature
     }
   }
