@@ -15,8 +15,8 @@ export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
   private signer: ethers.Signer
 
-  constructor(public networkName: string, public provider: ethers.providers.JsonRpcProvider) {
-    this.signer = provider.getSigner()
+  constructor(public networkName: string, public provider: ethers.providers.JsonRpcProvider, public signerOverride?: ethers.Signer) {
+    this.signer = signerOverride || provider.getSigner()
   }
 
   deploy = async <T extends ContractFactory>(
