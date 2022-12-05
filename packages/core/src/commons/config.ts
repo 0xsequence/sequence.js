@@ -21,6 +21,9 @@ export interface ConfigCoder<T extends Config = Config> {
     signers: { address: string, weight: ethers.BigNumberish }[]
   }) => T
 
+  toJSON: (config: T) => string
+  fromJSON: (json: string) => T
+
   // isValid: (config: T) => boolean
 
   // TODO: This may not be the best place for this

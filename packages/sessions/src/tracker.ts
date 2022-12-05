@@ -36,7 +36,7 @@ export function asPresignedConfigurationAsPayload(
 }
 
 export abstract class ConfigTracker {
-  abstract loadPresignedConfiguration: (args: {
+  loadPresignedConfiguration: (args: {
     wallet: string,
     fromImageHash: string,
     checkpoint: ethers.BigNumberish,
@@ -44,26 +44,26 @@ export abstract class ConfigTracker {
     longestPath?: boolean
   }) => Promise<PresignedConfigUpdate[]>
 
-  abstract savePresignedConfiguration: (
+  savePresignedConfiguration: (
     args: PresignedConfigurationPayload
   ) => Promise<void>
 
-  abstract saveWitness: ( args: {
+  saveWitness: ( args: {
     wallet: string,
     digest: string,
     chainId: ethers.BigNumberish,
     signature: string
   }) => Promise<void>
 
-  abstract configOfImageHash: (args: {
+  configOfImageHash: (args: {
     imageHash: string
   }) => Promise<commons.config.Config | undefined>
 
-  abstract saveWalletConfig: (args: {
+  saveWalletConfig: (args: {
     config: commons.config.Config
   }) => Promise<void>
 
-  abstract imageHashOfCounterFactualWallet: (args: {
+  imageHashOfCounterFactualWallet: (args: {
     context: commons.context.WalletContext[],
     wallet: string
   }) => Promise<{
@@ -71,12 +71,12 @@ export abstract class ConfigTracker {
     context: commons.context.WalletContext
   } | undefined>
 
-  abstract saveCounterFactualWallet: (args: {
+  saveCounterFactualWallet: (args: {
     imageHash: string,
     context: commons.context.WalletContext[]
   }) => Promise<void>
 
-  abstract walletsOfSigner: (args: {
+  walletsOfSigner: (args: {
     signer: string
   }) => Promise<{
     wallet: string,
@@ -86,21 +86,4 @@ export abstract class ConfigTracker {
       signature: commons.signature.SignaturePart
     }
   }[]>
-
-  // abstract signaturesOfSigner: (args: {
-  //   signer: string
-  // }) => Promise<{
-  //   signature: string,
-  //   chainId: ethers.BigNumber,
-  //   wallet: string,
-  //   digest: string
-  // }[]>
-
-  // abstract imageHashesOfSigner: (args: {
-  //   signer: string
-  // }) => Promise<string[]>
-
-  // abstract signaturesForImageHash: (args: {
-  //   imageHash: string
-  // }) => Promise<{signer: string, signature: string, chainId: ethers.BigNumber, wallet: string, digest: string }[]>
 }
