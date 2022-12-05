@@ -352,9 +352,9 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   fromSimple: (config: {
-    threshold: ethers.BigNumberish;
-    checkpoint: ethers.BigNumberish;
-    signers: { address: string; weight: ethers.BigNumberish }[]
+    threshold: ethers.BigNumberish
+    checkpoint: ethers.BigNumberish
+    signers: { address: string; weight: ethers.BigNumberish} []
   }): WalletConfig => {
     return toWalletConfig({
       threshold: config.threshold,
@@ -404,5 +404,13 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: WalletConfig; kind: "first" | "later" | undefined}  {
       throw new Error("Function not implemented.")
     }
+  },
+
+  toJSON: function (config: WalletConfig): string {
+    throw new Error("Function not implemented.")
+  },
+
+  fromJSON: function (json: string): WalletConfig {
+    throw new Error("Function not implemented.")
   }
 }

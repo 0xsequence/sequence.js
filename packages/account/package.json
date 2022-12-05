@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/account",
-  "version": "0.42.9",
+  "version": "0.43.4",
   "description": "tools for migrating sequence wallets to new versions",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/account",
   "source": "src/index.ts",
@@ -14,16 +14,15 @@
     "test:coverage": "nyc yarn test"
   },
   "dependencies": {
-    "@0xsequence/core": "^0.42.9",
-    "@0xsequence/sessions": "^0.42.9",
-    "@0xsequence/migration": "^0.42.9",
-    "@0xsequence/network": "^0.42.9",
-    "@0xsequence/wallet": "^0.42.9",
+    "@0xsequence/core": "^0.43.4",
+    "@0xsequence/sessions": "^0.43.4",
+    "@0xsequence/migration": "^0.43.4",
+    "@0xsequence/network": "^0.43.4",
+    "@0xsequence/wallet": "^0.43.4",
     "ethers": "^5.5.2"
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/core": "^0.42.9",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "nyc": "^15.1.0"
   },
