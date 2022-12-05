@@ -46,9 +46,9 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   fromSimple: (config: {
-    threshold: ethers.BigNumberish;
-    checkpoint: ethers.BigNumberish;
-    signers: { address: string; weight: ethers.BigNumberish }[]
+    threshold: ethers.BigNumberish
+    checkpoint: ethers.BigNumberish
+    signers: { address: string; weight: ethers.BigNumberish} []
   }): WalletConfig => {
     if (!ethers.constants.Zero.eq(config.checkpoint)) {
       throw new Error('v1 wallet config does not support checkpoint')
@@ -108,6 +108,38 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     },
     decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: WalletConfig; kind: "first" | "later" | undefined}  {
       throw new Error("Function not implemented.")
+    }
+  },
+
+  toJSON: function (config: WalletConfig): string {
+    const plainMembers = config.signers.map((signer) => {
+      return {
+        weight: ethers.BigNumber.from(signer.weight).toString(),
+        address: signer.address
+      }
+    })
+
+    return JSON.stringify({
+      version: config.version,
+      threshold: ethers.BigNumber.from(config.threshold).toString(),
+      signers: plainMembers
+    })
+  },
+
+  fromJSON: function (json: string): WalletConfig {
+    const parsed = JSON.parse(json)
+
+    const signers = parsed.signers.map((signer: any) => {
+      return {
+        weight: ethers.BigNumber.from(signer.weight),
+        address: signer.address
+      }
+    })
+
+    return {
+      version: parsed.version,
+      threshold: ethers.BigNumber.from(parsed.threshold),
+      signers
     }
   }
 }
