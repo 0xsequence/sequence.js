@@ -19,7 +19,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@0xsequence/core": "^0.42.9",
+    "@0xsequence/tests": "^0.42.9",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "nyc": "^15.1.0"
   },

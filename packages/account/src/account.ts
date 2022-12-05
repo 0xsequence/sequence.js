@@ -6,8 +6,8 @@ import { NetworkConfig } from '@0xsequence/network'
 import { ethers } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
 import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
-import { walletV2 } from '@0xsequence/wallet'
 import { counterfactualVersion } from '@0xsequence/migration/src/version'
+import { Wallet } from '@0xsequence/wallet'
 
 export type AccountStatus = {
   original: {
@@ -122,8 +122,8 @@ export class Account {
     context: commons.context.WalletContext,
     config: commons.config.Config,
     coders: typeof this.coders
-  ): walletV2.Wallet {
-    return new walletV2.Wallet({
+  ): Wallet {
+    return new Wallet({
       config,
       context,
       chainId,
@@ -326,7 +326,7 @@ export class Account {
     if (!status.onChain.deployed) {
       // Wallet deployment will vary depending on the version
       // so we need to use the context to get the correct deployment
-      const deployTransaction = walletV2.Wallet.buildDeployTransaction(
+      const deployTransaction = Wallet.buildDeployTransaction(
         status.original.context,
         status.original.imageHash
       )
