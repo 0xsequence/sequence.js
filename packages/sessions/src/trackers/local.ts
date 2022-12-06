@@ -168,6 +168,39 @@ export class LocalConfigTracker implements ConfigTracker {
     throw new Error(`Unknown config type: ${protoConfig}`)
   }
 
+  saveCounterFactualWallet = async (args: {
+    imageHash: string,
+    context: commons.context.WalletContext[]
+  }): Promise<void> => {
+    const { imageHash, context } = args
+    for (const ctx of context) {
+      const address = commons.context.addressOf(ctx, imageHash)
+
+      await this.store.set(address, JSON.stringify({
+        imageHash,
+        context: ctx
+      }))
+    }
+  }
+
+  imageHashOfCounterFactualWallet = async (args: {
+    wallet: string
+  }): Promise<{
+    imageHash: string,
+    context: commons.context.WalletContext
+  } | undefined> => {
+    const { wallet } = args
+    const result = await this.store.get(wallet)
+
+    if (!result) return undefined
+    const parsed = JSON.parse(result)
+
+    return {
+      imageHash: parsed.imageHash,
+      context: parsed.context
+    }
+  }
+
   loadPresignedConfiguration = (args: {
     wallet: string,
     fromImageHash: string,
@@ -189,23 +222,6 @@ export class LocalConfigTracker implements ConfigTracker {
     digest: string,
     chainId: ethers.BigNumberish,
     signature: string
-  }): Promise<void> => {
-    throw Error('not implemented')
-  }
-
-  imageHashOfCounterFactualWallet = (args: {
-    context: commons.context.WalletContext[],
-    wallet: string
-  }): Promise<{
-    imageHash: string,
-    context: commons.context.WalletContext
-  } | undefined> => {
-    throw Error('not implemented')
-  }
-
-  saveCounterFactualWallet = (args: {
-    imageHash: string,
-    context: commons.context.WalletContext[]
   }): Promise<void> => {
     throw Error('not implemented')
   }
