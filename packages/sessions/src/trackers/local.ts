@@ -21,14 +21,14 @@ type PlainNode = {
 }
 
 type PlainNested = {
-  weight: number,
-  threshold: number,
+  weight: string,
+  threshold: string,
   tree: string
 }
 
 type PlainV2Config = {
   version: 2,
-  threshold: number,
+  threshold: string,
   checkpoint: string,
   tree: string
 }
@@ -52,7 +52,7 @@ export class LocalConfigTracker implements ConfigTracker {
     const plain = await this.store.get(hash)
     if (!plain || plain === 'undefined' || plain === '') return { nodeHash: hash }
 
-    const parsed = JSON.parse(plain) as PlainNode | PlainNested | v2.config.SubdigestLeaf | v2.config.SignerLeaf
+    const parsed = JSON.parse(plain)
 
     if (isPlainNode(parsed)) {
       return {
@@ -63,13 +63,13 @@ export class LocalConfigTracker implements ConfigTracker {
 
     if (isPlainNested(parsed)) {
       return {
-        weight: parsed.weight,
-        threshold: parsed.threshold,
+        weight: ethers.BigNumber.from(parsed.weight),
+        threshold: ethers.BigNumber.from(parsed.threshold),
         tree: await this.loadTopology(parsed.tree)
       }
     }
 
-    return parsed
+    return v2.config.topologyFromJSON(parsed)
   }
 
   private saveTopology = async (node: v2.config.Topology): Promise<void> => {
@@ -95,8 +95,8 @@ export class LocalConfigTracker implements ConfigTracker {
       const saveTree = this.saveTopology(node.tree)
 
       await Promise.all([saveTree, this.store.set(hash, JSON.stringify({
-        weight: node.weight,
-        threshold: node.threshold,
+        weight: ethers.BigNumber.from(node.weight).toString(),
+        threshold: ethers.BigNumber.from(node.threshold).toString(),
         tree: v2.config.hashNode(node.tree)
       } as PlainNested))])
 
@@ -108,7 +108,7 @@ export class LocalConfigTracker implements ConfigTracker {
       v2.config.isSignerLeaf(node) ||
       v2.config.isSubdigestLeaf(node)
     ) {
-      await this.store.set(hash, JSON.stringify(node))
+      return this.store.set(hash, v2.config.topologyToJSON(node))
     }
 
     throw new Error(`Unknown topology type: ${node}`)
@@ -133,7 +133,7 @@ export class LocalConfigTracker implements ConfigTracker {
         v2.config.ConfigCoder.imageHashOf(config),
         JSON.stringify({
           version: 2,
-          threshold: ethers.BigNumber.from(config.threshold).toNumber(),
+          threshold: ethers.BigNumber.from(config.threshold).toString(),
           checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
           tree: v2.config.hashNode(config.tree)
       } as PlainV2Config))])
