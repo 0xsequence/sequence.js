@@ -64,7 +64,6 @@ export abstract class ConfigTracker {
   }) => Promise<void>
 
   imageHashOfCounterFactualWallet: (args: {
-    context: commons.context.WalletContext[],
     wallet: string
   }) => Promise<{
     imageHash: string,

@@ -3,7 +3,7 @@ import * as chai from 'chai'
 import * as utils from '@0xsequence/tests'
 
 import { trackers, tracker } from '../src/index'
-import { universal, v2 } from '@0xsequence/core'
+import { commons, universal, v2 } from '@0xsequence/core'
 import { ethers } from 'ethers'
 
 const { expect } = chai
@@ -101,6 +101,18 @@ const ConfigCases = [{
     } as v2.config.WalletConfig
   }
 }]
+
+const randomContext = () => {
+  return {
+    version: Math.floor(Math.random() * 10) + 1,
+    factory: ethers.Wallet.createRandom().address,
+    mainModule: ethers.Wallet.createRandom().address,
+    mainModuleUpgradable: ethers.Wallet.createRandom().address,
+    guestModule: ethers.Wallet.createRandom().address,
+
+    walletCreationCode: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+  }
+}
 
 describe('Local config tracker', () => {
   ([{
@@ -213,6 +225,37 @@ describe('Local config tracker', () => {
         it('Should return undefined for unknown imageHash', async () => {
           const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
           expect(await tracker.configOfImageHash({ imageHash })).to.be.undefined
+        })
+      })
+
+      describe('Counter factual address', () => {
+        it('Should set and get address', async () => {
+          const context = randomContext()
+          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+
+          const wallet = commons.context.addressOf(context, imageHash)
+          await tracker.saveCounterFactualWallet({ context: [context], imageHash })
+          const res = await tracker.imageHashOfCounterFactualWallet({ wallet })
+
+          expect(res).to.deep.equal({ imageHash, context })
+        })
+
+        it('Should set address for multiple configs', async () => {
+          const contexts = new Array(5).fill(0).map(() => randomContext())
+          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+
+          const wallets = contexts.map((c) => commons.context.addressOf(c, imageHash))
+          await tracker.saveCounterFactualWallet({ context: contexts, imageHash })
+
+          for (let i = 0; i < wallets.length; i++) {
+            const res = await tracker.imageHashOfCounterFactualWallet({ wallet: wallets[i] })
+            expect(res).to.deep.equal({ imageHash, context: contexts[i] })
+          }
+        })
+
+        it('Should return undefined for unknown wallet', async () => {
+          const wallet = ethers.Wallet.createRandom().address
+          expect(await tracker.imageHashOfCounterFactualWallet({ wallet })).to.be.undefined
         })
       })
     })
