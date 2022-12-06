@@ -44,6 +44,60 @@ export function isSubdigestLeaf(leaf: any): leaf is SubdigestLeaf {
   return (leaf as SubdigestLeaf).subdigest !== undefined
 }
 
+export function topologyToJSON(tree: Topology): string {
+  if (isNode(tree)) {
+    return JSON.stringify({
+      left: topologyToJSON(tree.left),
+      right: topologyToJSON(tree.right)
+    })
+  }
+
+  if (isNestedLeaf(tree)) {
+    return JSON.stringify({
+      weight: ethers.BigNumber.from(tree.weight).toString(),
+      threshold: ethers.BigNumber.from(tree.threshold).toString(),
+      tree: topologyToJSON(tree.tree)
+    })
+  }
+
+  if (isSignerLeaf(tree)) {
+    return JSON.stringify({
+      address: tree.address,
+      weight: ethers.BigNumber.from(tree.weight).toString()
+    })
+  }
+
+  return JSON.stringify(tree)
+}
+
+export function topologyFromJSON(json: string | Object): Topology {
+  const parsed = typeof json === 'string' ? JSON.parse(json) : json
+
+  if (parsed.left !== undefined && parsed.right !== undefined) {
+    return {
+      left: topologyFromJSON(parsed.left),
+      right: topologyFromJSON(parsed.right)
+    }
+  }
+
+  if (parsed.weight !== undefined && parsed.threshold !== undefined && parsed.tree !== undefined) {
+    return {
+      weight: ethers.BigNumber.from(parsed.weight),
+      threshold: ethers.BigNumber.from(parsed.threshold),
+      tree: topologyFromJSON(parsed.tree)
+    }
+  }
+
+  if (parsed.address !== undefined && parsed.weight !== undefined) {
+    return {
+      address: parsed.address,
+      weight: ethers.BigNumber.from(parsed.weight)
+    }
+  }
+
+  return parsed
+}
+
 export function isNestedLeaf(leaf: any): leaf is NestedLeaf {
   return (
     (leaf as NestedLeaf).tree !== undefined &&
@@ -407,10 +461,21 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   toJSON: function (config: WalletConfig): string {
-    throw new Error("Function not implemented.")
+    return JSON.stringify({
+      version: config.version,
+      threshold: ethers.BigNumber.from(config.threshold).toString(),
+      checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
+      tree: topologyToJSON(config.tree)
+    })
   },
 
   fromJSON: function (json: string): WalletConfig {
-    throw new Error("Function not implemented.")
+    const config = JSON.parse(json)
+    return {
+      version: config.version,
+      threshold: ethers.BigNumber.from(config.threshold),
+      checkpoint: ethers.BigNumber.from(config.checkpoint),
+      tree: topologyFromJSON(config.tree)
+    }
   }
 }
