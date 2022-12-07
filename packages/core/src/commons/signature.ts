@@ -33,7 +33,11 @@ export interface SignatureCoder<
   decode: (data: string) => Z,
   encode: (data: T | Z | ethers.BytesLike) => string,
 
-  recover: (data: Z, payload: SignedPayload, provider: ethers.providers.Provider) => Promise<T>
+  recover: (
+    data: Z,
+    payload: SignedPayload,
+    provider: ethers.providers.Provider
+  ) => Promise<T>
 
   supportsNoChainId: boolean
 

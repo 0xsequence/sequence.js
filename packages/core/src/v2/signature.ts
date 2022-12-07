@@ -52,12 +52,16 @@ export function isUnrecoveredNode(node: UnrecoveredTopology): node is Unrecovere
   return (node as UnrecoveredNode).left !== undefined && (node as UnrecoveredNode).right !== undefined
 }
 
-export function isUnrecoveredNestedLeaf(leaf: UnrecoveredLeaf): leaf is UnrecoveredNestedLeaf {
+export function isUnrecoveredNestedLeaf(leaf: UnrecoveredTopology): leaf is UnrecoveredNestedLeaf {
   return (leaf as UnrecoveredNestedLeaf).tree !== undefined
 }
 
-export function isUnrecoveredSignatureLeaf(leaf: UnrecoveredLeaf): leaf is UnrecoveredSignatureLeaf {
-  return (leaf as UnrecoveredSignatureLeaf).unrecovered
+export function isUnrecoveredSignatureLeaf(leaf: UnrecoveredTopology): leaf is UnrecoveredSignatureLeaf {
+  return (
+    (leaf as UnrecoveredSignatureLeaf).unrecovered &&
+    (leaf as UnrecoveredSignatureLeaf).signature !== undefined &&
+    (leaf as UnrecoveredSignatureLeaf).isDynamic !== undefined
+  )
 }
 
 export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology {
@@ -766,6 +770,22 @@ export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): strin
   }
 
   throw new Error(`Unknown signature tree type: ${tree}`)
+}
+
+export function signaturesOf(topology: Topology): { address: string, signature: string }[] {
+  if (isNode(topology)) {
+    return [...signaturesOf(topology.left), ...signaturesOf(topology.right)]
+  }
+
+  if (isNestedLeaf(topology)) {
+    return signaturesOf(topology.tree)
+  }
+
+  if (isSignerLeaf(topology) && topology.signature) {
+    return [{ address: topology.address, signature: topology.signature }]
+  }
+
+  return []
 }
 
 export const SignatureCoder: base.SignatureCoder<

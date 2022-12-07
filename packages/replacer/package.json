@@ -1,0 +1,30 @@
+{
+  "name": "@0xsequence/replacer",
+  "version": "0.43.4",
+  "description": "EIP-5719 client implementation",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/replacer",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-replacer.cjs.js",
+  "module": "dist/0xsequence-replacer.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "yarn test:concurrently 'yarn test:run'",
+    "test:run": "yarn test:file tests/**/*.spec.ts",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:concurrently": "concurrently -k --success first 'yarn start:hardhat2 > /dev/null'",
+    "start:hardhat2": "yarn run hardhat node --hostname 0.0.0.0 --port 7047 --config ./hardhat2.config.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "0.43.5"
+  },
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "devDependencies": {},
+  "files": [
+    "src",
+    "dist"
+  ]
+}
