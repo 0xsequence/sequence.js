@@ -384,6 +384,22 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
   return false
 }
 
+export function signersOf(tree: Topology): string[] {
+  if (isNestedLeaf(tree)) {
+    return signersOf(tree.tree)
+  }
+
+  if (isNode(tree)) {
+    return [...signersOf(tree.left), ...signersOf(tree.right)]
+  }
+
+  if (isSignerLeaf(tree)) {
+    return [tree.address]
+  }
+
+  return []
+}
+
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
     return (
