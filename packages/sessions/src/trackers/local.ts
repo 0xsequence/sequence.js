@@ -1,18 +1,30 @@
 
 import { commons, v1, v2 } from "@0xsequence/core"
 import { ethers } from "ethers"
+import { runByEIP5719 } from "../../../replacer/src"
 import { AssumedWalletConfigs, ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
 
 export interface KeyValueStore {
   get: (key: string) => Promise<string | undefined>
   set: (key: string, value: string) => Promise<void>
+
+  setMany: (key: string, value: string) => Promise<void>
+  getMany: (key: string) => Promise<string[]>
 }
 
 export class MemoryStore implements KeyValueStore {
   private store: { [key: string]: string } = {}
+  private manyStore: { [key: string]: string[] } = {}
 
   get = async (key: string) => this.store[key]
   set = async (key: string, value: string) => { this.store[key] = value }
+
+  setMany = async (key: string, value: string) => {
+    if (!this.manyStore[key]) this.manyStore[key] = []
+    this.manyStore[key].push(value)
+  }
+
+  getMany = async (key: string) => this.manyStore[key] || []
 }
 
 type PlainNode = {
@@ -46,7 +58,10 @@ function isPlainV2Config(config: any): config is PlainV2Config {
 }
 
 export class LocalConfigTracker implements ConfigTracker {
-  constructor(private store: KeyValueStore = new MemoryStore()) {}
+  constructor(
+    private store: KeyValueStore = new MemoryStore(),
+    public provider: ethers.providers.Provider
+  ) {}
 
   private loadTopology = async (hash: string): Promise<v2.config.Topology> => {
     const plain = await this.store.get(hash)
@@ -201,20 +216,155 @@ export class LocalConfigTracker implements ConfigTracker {
     }
   }
 
-  loadPresignedConfiguration = (args: {
+  savePresignedConfiguration = async (
+    args: PresignedConfigurationPayload
+  ): Promise<void> => {
+    // Presigned configurations only work with v2 (for now)
+    // so we can assume that the signature is for a v2 configuration
+    const decoded = v2.signature.SignatureCoder.decode(args.signature)
+    const message = v2.chained.messageSetImageHash(args.nextImageHash)
+    const digest = ethers.utils.keccak256(message)
+    const recovered = await v2.signature.SignatureCoder.recover(decoded, {
+      message,
+      address: args.wallet,
+      chainid: 0,
+      digest
+    }, this.provider)
+
+    // Save all signature parts
+    const signatures = v2.signature.signaturesOf(recovered.config.tree)
+    await Promise.all(signatures.map(async (sig) => {
+      // digest:address -> signature
+      const key = `${recovered.subdigest}:${sig.address}`
+      await this.store.set(key, sig.signature)
+
+      // address -> subdigest[]
+      return this.store.setMany(sig.address, recovered.subdigest)
+    }))
+
+    // Save the recovered configuration
+    await this.saveWalletConfig({ config: recovered.config })
+  }
+
+  savePayload = async (args: {
+    payload: commons.signature.SignedPayload
+  }): Promise<void> => {
+    const { payload } = args
+
+    const subdigest = commons.signature.subdigestOf(payload)
+    return this.store.set(subdigest, JSON.stringify({
+      ...payload,
+      chainid: ethers.BigNumber.from(payload.chainid).toString()
+    }))
+  }
+
+  payloadOfSubdigest = async (args: {
+    subdigest: string
+  }): Promise<commons.signature.SignedPayload | undefined> => {
+    const { subdigest } = args
+
+    const result = await this.store.get(subdigest)
+    if (!result) return undefined
+
+    const parsed = JSON.parse(result)
+    return {
+      ...parsed,
+      chainid: ethers.BigNumber.from(parsed.chainid)
+    }
+  }
+
+  loadPresignedConfiguration = async (args: {
     wallet: string,
     fromImageHash: string,
     checkpoint: ethers.BigNumberish,
-    assumedConfigs?: AssumedWalletConfigs,
     longestPath?: boolean
   }): Promise<PresignedConfigUpdate[]> => {
-    throw Error('not implemented')
-  }
+    const { wallet, fromImageHash, checkpoint, longestPath } = args
 
-  savePresignedConfiguration = (
-    args: PresignedConfigurationPayload
-  ): Promise<void> => {
-    throw Error('not implemented')
+    const fromConfig = await this.configOfImageHash({ imageHash: fromImageHash })
+    if (!fromConfig) throw new Error(`Unknown image hash: ${fromImageHash}`)
+    if (!v2.config.ConfigCoder.isWalletConfig(fromConfig)) throw new Error(`Not a v2 wallet config: ${fromConfig}`)
+
+    // Get all subdigests for the config members
+    const signers = [...new Set(v2.config.signersOf(fromConfig.tree))]
+    const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
+    const subdigests = subdigestsOfSigner.flat()
+
+    // Get all unique payloads
+    const payloads = await Promise.all([...new Set(subdigests)]
+      .map((s) => ({ ...this.payloadOfSubdigest({ subdigest: s }), subdigest: s })))
+
+    // Get all possible next imageHashes based on the payloads
+    const nextImageHashes = payloads
+      .filter((p) => p?.message)
+      .map((p) => ({ payload: p, nextImageHash: v2.chained.decodeMessageSetImageHash(p!.message!) }))
+      .filter((p) => p?.nextImageHash) as { payload: commons.signature.SignedPayload & { subdigest: string }, nextImageHash: string }[]
+
+    // Build a signature for each next imageHash
+    // and filter out the ones that don't have enough weight
+    let bestCandidate: {
+      nextImageHash: string,
+      checkpoint: ethers.BigNumber,
+      signature: string,
+    } | undefined
+
+    for (const { payload, nextImageHash } of nextImageHashes) {
+      // Get config of next imageHash
+      const nextConfig = await this.configOfImageHash({ imageHash: nextImageHash })
+      if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) continue
+
+      if (longestPath) {
+        if (!bestCandidate || bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
+      } else {
+        if (!bestCandidate || bestCandidate.checkpoint.lt(nextConfig.checkpoint)) continue
+      }
+
+      // Get all signatures (for all signers) for this subdigest
+      const signatures = await Promise.all(signers.map(async (s) => {
+        const res = await this.store.get(`${payload.subdigest}:${s}`)
+        return { signer: s, signature: res, subdigest: payload.subdigest }
+      }))
+
+      // TODO: we don't know here if signatures have to be encoded as dynamic or not, so we encode them as dynamic to be sure
+      // but we can add another method that takes a signature with dynamically encoded signers and tries to find a static encoding candidates
+      const mappedSignatures: Map<string, commons.signature.SignaturePart> = new Map()
+      for (const sig of signatures) {
+        if (!sig.signature) continue
+
+        // TODO: Use Promise.all for EIP-5719
+        const replacedSignature = await runByEIP5719(sig.signature, this.provider, sig.subdigest, sig.signature)
+          .then((s) => ethers.utils.hexlify(s))
+
+        mappedSignatures.set(sig.signer, { isDynamic: true, signature: replacedSignature })
+      }
+
+      // Encode the full signature
+      const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, mappedSignatures, [], 0)
+      if (encoded.weight < nextConfig.threshold) continue
+
+      // Save the new best candidate
+      bestCandidate = {
+        nextImageHash,
+        checkpoint: ethers.BigNumber.from(nextConfig.checkpoint),
+        signature: encoded.encoded
+      }
+    }
+
+    if (!bestCandidate) return []
+
+    // Get the next step
+    const nextStep = await this.loadPresignedConfiguration({
+      wallet,
+      fromImageHash: bestCandidate.nextImageHash,
+      checkpoint: bestCandidate.checkpoint,
+      longestPath
+    })
+
+    return [{
+      wallet,
+      nextImageHash: bestCandidate.nextImageHash,
+      signature: bestCandidate.signature
+    }, ...nextStep]
   }
 
   saveWitness = ( args: {

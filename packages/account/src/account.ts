@@ -146,7 +146,6 @@ export class Account {
   }> {
     // First we need to use the tracker to get the counter-factual imageHash
     const firstImageHash = await this.tracker.imageHashOfCounterFactualWallet({
-      context: Object.values(this.contexts),
       wallet: this.address
     })
 
