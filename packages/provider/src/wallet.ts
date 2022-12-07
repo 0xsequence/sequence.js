@@ -258,7 +258,7 @@ export class Wallet implements WalletProvider {
     try {
       const session = JSON.parse(data) as WalletSession
       if (session) {
-        // Setting preferredNetwork as default network is it's in session.networks
+        // Setting preferredNetwork as default network if it's in session.networks
         if (preferredNetwork !== undefined) {
           const preferredNetworkIdNum = parseInt(preferredNetwork as any)
           const preferredNetworkInConfig = session.networks?.find(
