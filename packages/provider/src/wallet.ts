@@ -16,7 +16,7 @@ import {
   findNetworkConfig,
   updateNetworkConfig,
   ensureValidNetworks,
-  validateAndSortNetworks
+  sortNetworks
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -254,17 +254,19 @@ export class Wallet implements WalletProvider {
     if (!data || data === '') {
       return undefined
     }
+
     try {
       const session = JSON.parse(data) as WalletSession
       if (session) {
+        // Setting preferredNetwork as default network is it's in session.networks
         if (preferredNetwork !== undefined) {
           const preferredNetworkIdNum = parseInt(preferredNetwork as any)
-          const preferredNetworkInSessions = session.networks?.find(
+          const preferredNetworkInConfig = session.networks?.find(
             n => n.name === preferredNetwork || n.chainId === preferredNetworkIdNum
           )
-          const isAlreadyDefaultChain = preferredNetworkInSessions?.isDefaultChain
+          const isAlreadyDefaultChain = preferredNetworkInConfig?.isDefaultChain
 
-          if (session.networks && preferredNetworkInSessions && !isAlreadyDefaultChain) {
+          if (session.networks && preferredNetworkInConfig && !isAlreadyDefaultChain) {
             const updatedNetworks = session.networks.map(n => {
               n.isDefaultChain = false
               if (n.name === preferredNetwork || n.chainId === preferredNetworkIdNum) {
@@ -272,8 +274,8 @@ export class Wallet implements WalletProvider {
               }
               return n
             })
-            const validatedAndSortedNetworks = validateAndSortNetworks(updatedNetworks)
-            session.networks = validatedAndSortedNetworks
+            session.networks = sortNetworks(updatedNetworks)
+            session.providerCache = undefined
           }
         }
 
@@ -622,6 +624,8 @@ export class Wallet implements WalletProvider {
     // setup provider cache
     if (session.providerCache) {
       this.transport.cachedProvider!.setCache(session.providerCache)
+    } else {
+      this.transport.cachedProvider!.clearCache()
     }
 
     // persist
