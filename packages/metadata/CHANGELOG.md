@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.6
+
+### Patch Changes
+
+- metadatata: update rpc bindings
+
 ## 0.43.5
 
 ### Patch Changes

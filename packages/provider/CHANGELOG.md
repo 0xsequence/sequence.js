@@ -1,5 +1,19 @@
 # @0xsequence/provider
 
+## 0.43.6
+
+### Patch Changes
+
+- metadatata: update rpc bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.6
+  - @0xsequence/auth@0.43.6
+  - @0xsequence/config@0.43.6
+  - @0xsequence/network@0.43.6
+  - @0xsequence/transactions@0.43.6
+  - @0xsequence/utils@0.43.6
+  - @0xsequence/wallet@0.43.6
+
 ## 0.43.5
 
 ### Patch Changes
