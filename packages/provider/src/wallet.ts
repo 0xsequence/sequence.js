@@ -260,20 +260,13 @@ export class Wallet implements WalletProvider {
       if (session) {
         // Setting preferredNetwork as default network if it's in session.networks
         if (preferredNetwork !== undefined) {
-          const preferredNetworkIdNum = parseInt(preferredNetwork as any)
-          const preferredNetworkInConfig = session.networks?.find(
-            n => n.name === preferredNetwork || n.chainId === preferredNetworkIdNum
-          )
+          const preferredNetworkIdNum = typeof preferredNetwork === 'string' ? parseInt(preferredNetwork) : preferredNetwork
+          const isPreferredNetwork = (n: NetworkConfig) => n.name === preferredNetwork || n.chainId === preferredNetworkIdNum
+          const preferredNetworkInConfig = session.networks?.find(isPreferredNetwork)
           const isAlreadyDefaultChain = preferredNetworkInConfig?.isDefaultChain
 
           if (session.networks && preferredNetworkInConfig && !isAlreadyDefaultChain) {
-            const updatedNetworks = session.networks.map(n => {
-              n.isDefaultChain = false
-              if (n.name === preferredNetwork || n.chainId === preferredNetworkIdNum) {
-                n.isDefaultChain = true
-              }
-              return n
-            })
+            const updatedNetworks = session.networks.map(n => ({ ...n, isDefaultChain: isPreferredNetwork(n) }))
             session.networks = sortNetworks(updatedNetworks)
             session.providerCache = undefined
           }
