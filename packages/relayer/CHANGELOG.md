@@ -1,5 +1,16 @@
 # @0xsequence/relayer
 
+## 0.43.7
+
+### Patch Changes
+
+- provider: fix wallet network init
+- Updated dependencies
+  - @0xsequence/abi@0.43.7
+  - @0xsequence/config@0.43.7
+  - @0xsequence/transactions@0.43.7
+  - @0xsequence/utils@0.43.7
+
 ## 0.43.6
 
 ### Patch Changes

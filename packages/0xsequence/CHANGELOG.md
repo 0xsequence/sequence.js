@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.43.7
+
+### Patch Changes
+
+- provider: fix wallet network init
+- Updated dependencies
+  - @0xsequence/abi@0.43.7
+  - @0xsequence/api@0.43.7
+  - @0xsequence/auth@0.43.7
+  - @0xsequence/config@0.43.7
+  - @0xsequence/guard@0.43.7
+  - @0xsequence/indexer@0.43.7
+  - @0xsequence/metadata@0.43.7
+  - @0xsequence/multicall@0.43.7
+  - @0xsequence/network@0.43.7
+  - @0xsequence/provider@0.43.7
+  - @0xsequence/relayer@0.43.7
+  - @0xsequence/transactions@0.43.7
+  - @0xsequence/utils@0.43.7
+  - @0xsequence/wallet@0.43.7
+
 ## 0.43.6
 
 ### Patch Changes

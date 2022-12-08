@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.7
+
+### Patch Changes
+
+- provider: fix wallet network init
+
 ## 0.43.6
 
 ### Patch Changes

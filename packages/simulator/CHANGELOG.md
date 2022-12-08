@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.7
+
+### Patch Changes
+
+- provider: fix wallet network init
+- Updated dependencies
+  - @0xsequence/transactions@0.43.7
+
 ## 0.43.6
 
 ### Patch Changes
