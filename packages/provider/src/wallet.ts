@@ -15,7 +15,8 @@ import {
   JsonRpcRequest,
   findNetworkConfig,
   updateNetworkConfig,
-  ensureValidNetworks
+  ensureValidNetworks,
+  sortNetworks
 } from '@0xsequence/network'
 import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
@@ -248,15 +249,30 @@ export class Wallet implements WalletProvider {
     })
   }
 
-  loadSession = async (): Promise<WalletSession | undefined> => {
+  loadSession = async (preferredNetwork?: string | number): Promise<WalletSession | undefined> => {
     const data = await LocalStorage.getInstance().getItem('@sequence.session')
     if (!data || data === '') {
       return undefined
     }
+
     try {
       const session = JSON.parse(data) as WalletSession
       if (session) {
-        this.useSession(session, false)
+        // Setting preferredNetwork as default network if it's in session.networks
+        if (preferredNetwork !== undefined) {
+          const preferredNetworkIdNum = typeof preferredNetwork === 'string' ? parseInt(preferredNetwork) : preferredNetwork
+          const isPreferredNetwork = (n: NetworkConfig) => n.name === preferredNetwork || n.chainId === preferredNetworkIdNum
+          const preferredNetworkInConfig = session.networks?.find(isPreferredNetwork)
+          const isAlreadyDefaultChain = preferredNetworkInConfig?.isDefaultChain
+
+          if (session.networks && preferredNetworkInConfig && !isAlreadyDefaultChain) {
+            const updatedNetworks = session.networks.map(n => ({ ...n, isDefaultChain: isPreferredNetwork(n) }))
+            session.networks = sortNetworks(updatedNetworks)
+            session.providerCache = undefined
+          }
+        }
+
+        this.useSession(session, true)
       }
       return session
     } catch (err) {
@@ -601,6 +617,8 @@ export class Wallet implements WalletProvider {
     // setup provider cache
     if (session.providerCache) {
       this.transport.cachedProvider!.setCache(session.providerCache)
+    } else {
+      this.transport.cachedProvider!.clearCache()
     }
 
     // persist
@@ -739,7 +757,7 @@ export const initWallet = async (network?: string | number, config?: Partial<Pro
     walletInstance.closeWallet()
   }
   walletInstance = new Wallet(network, config)
-  await walletInstance.loadSession()
+  await walletInstance.loadSession(network)
   return walletInstance
 }
 
