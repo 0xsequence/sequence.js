@@ -20,6 +20,8 @@ export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesL
 
   const splitSignature = { r, s, v }
 
+  console.log('recoverSigner', type, r, s, v, digest)
+
   if (type === SigType.EIP712) {
     return ethers.utils.recoverAddress(digest, splitSignature)
   }
@@ -33,7 +35,7 @@ export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesL
 
 export function isValidSignature(
   address: string,
-  digest: string,
+  digest: ethers.BytesLike,
   signature: ethers.BytesLike,
   provider: ethers.providers.Provider
 ) {
@@ -47,7 +49,7 @@ export function isValidSignature(
   }
 
   if (type === SigType.WALLET_BYTES32) {
-    return isValidEIP1271Signature(address, digest, bytes.slice(0, -1), provider)
+    return isValidEIP1271Signature(address, ethers.utils.hexlify(digest), bytes.slice(0, -1), provider)
   }
 
   throw new Error(`Unsupported signature type: ${type}`)
