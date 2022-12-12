@@ -1,10 +1,13 @@
 
+import hardhat from 'hardhat'
 import * as chai from 'chai'
 import * as utils from '@0xsequence/tests'
 
 import { trackers, tracker } from '../src/index'
 import { commons, universal, v2 } from '@0xsequence/core'
 import { ethers } from 'ethers'
+import { Wallet } from '@0xsequence/wallet'
+import { Orchestrator } from '@0xsequence/signhub'
 
 const { expect } = chai
 
@@ -115,6 +118,12 @@ const randomContext = () => {
 }
 
 describe('Local config tracker', () => {
+  let provider: ethers.providers.Web3Provider
+
+  before(async () => {
+    provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
+  });
+
   ([{
     name: 'Using memory store',
     store: () => new trackers.local.MemoryStore()
@@ -123,7 +132,7 @@ describe('Local config tracker', () => {
       let tracker: tracker.ConfigTracker
 
       beforeEach(() => {
-        tracker = new trackers.local.LocalConfigTracker(store())
+        tracker = new trackers.local.LocalConfigTracker(store(), provider)
       })
 
       describe('Configuration', () => {
@@ -256,6 +265,49 @@ describe('Local config tracker', () => {
         it('Should return undefined for unknown wallet', async () => {
           const wallet = ethers.Wallet.createRandom().address
           expect(await tracker.imageHashOfCounterFactualWallet({ wallet })).to.be.undefined
+        })
+      })
+
+      describe('Chained configurations', () => {
+        let context: commons.context.WalletContext
+
+        before(async () => {
+          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then((c) => c[2])
+        })
+
+        it('Should return return empty chained configuration if config is now known', async () => {
+          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash, checkpoint: 0 })
+          expect(res).to.deep.equal([])
+        })
+
+        it('Should return no chained configuration if no presigned transactions', async () => {
+          const config = utils.configs.random.genRandomV2Config()
+          const imageHash = v2.config.imageHash(config)
+          await tracker.saveWalletConfig({ config })
+          const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash, checkpoint: 0 })
+          expect(res).to.deep.equal([])
+        })
+
+        it.only('Should return single presigned step', async () => {
+          const signer = ethers.Wallet.createRandom()
+          console.log('signer', signer.address)
+          const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+          const imageHash = v2.config.imageHash(config)
+          const address = commons.context.addressOf(context, imageHash)
+          const wallet = new Wallet({ config, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+          const nextConfig = utils.configs.random.genRandomV2Config()
+          const nextImageHash = v2.config.imageHash(nextConfig)
+
+          const digest = v2.chained.hashSetImageHash(nextImageHash)
+          const signature = await wallet.signMessage(ethers.utils.arrayify(digest))
+
+          await tracker.saveWalletConfig({ config })
+          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature, config })
+
+          const res = await tracker.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash, checkpoint: 0 })
+          expect(res.length).to.equal(1)
         })
       })
     })
