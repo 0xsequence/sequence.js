@@ -209,6 +209,7 @@ export class Wallet<
   async signDigest(digest: ethers.utils.BytesLike): Promise<string> {
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
+    console.log('sign subdigestOf', this.address, this.chainId, digest)
     const subdigest = subDigestOf(this.address, this.chainId, digest)
     if (this.coders.config.hasSubdigest(this.config, subdigest)) {
       return this.coders.signature.encodeSigners(this.config, new Map(), [subdigest], this.chainId).encoded
@@ -217,6 +218,7 @@ export class Wallet<
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
     // to reach the threshold we returns true, that means the orchestrator will stop asking
     // and we can encode the final signature
+    console.log('signSubdigest', subdigest)
     const subdigestBytes = ethers.utils.arrayify(subdigest)
     const signature = await this.orchestrator.signMessage(subdigestBytes, (status: Status): boolean => {
       const parts = statusToSignatureParts(status)
