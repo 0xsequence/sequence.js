@@ -216,36 +216,6 @@ export class LocalConfigTracker implements ConfigTracker {
     }
   }
 
-  savePresignedConfiguration = async (
-    args: PresignedConfigurationPayload
-  ): Promise<void> => {
-    // Presigned configurations only work with v2 (for now)
-    // so we can assume that the signature is for a v2 configuration
-    const decoded = v2.signature.SignatureCoder.decode(args.signature)
-    const message = v2.chained.messageSetImageHash(args.nextImageHash)
-    const digest = ethers.utils.keccak256(message)
-    const recovered = await v2.signature.SignatureCoder.recover(decoded, {
-      message,
-      address: args.wallet,
-      chainid: 0,
-      digest
-    }, this.provider)
-
-    // Save all signature parts
-    const signatures = v2.signature.signaturesOf(recovered.config.tree)
-    await Promise.all(signatures.map(async (sig) => {
-      // digest:address -> signature
-      const key = `${recovered.subdigest}:${sig.address}`
-      await this.store.set(key, sig.signature)
-
-      // address -> subdigest[]
-      return this.store.setMany(sig.address, recovered.subdigest)
-    }))
-
-    // Save the recovered configuration
-    await this.saveWalletConfig({ config: recovered.config })
-  }
-
   savePayload = async (args: {
     payload: commons.signature.SignedPayload
   }): Promise<void> => {
@@ -273,6 +243,39 @@ export class LocalConfigTracker implements ConfigTracker {
     }
   }
 
+  savePresignedConfiguration = async (
+    args: PresignedConfigurationPayload
+  ): Promise<void> => {
+    // Presigned configurations only work with v2 (for now)
+    // so we can assume that the signature is for a v2 configuration
+    const decoded = v2.signature.SignatureCoder.decode(args.signature)
+    const message = v2.chained.messageSetImageHash(args.nextImageHash)
+    const digest = ethers.utils.keccak256(message)
+    const recovered = await v2.signature.SignatureCoder.recover(decoded, {
+      message,
+      address: args.wallet,
+      chainid: 0,
+      digest
+    }, this.provider)
+
+    console.log('recovered', recovered)
+
+    // Save all signature parts
+    const signatures = v2.signature.signaturesOf(recovered.config.tree)
+    await Promise.all(signatures.map(async (sig) => {
+      // digest:address -> signature
+      const key = `${recovered.subdigest}:${sig.address}`
+      await this.store.set(key, sig.signature)
+
+      // address -> subdigest[]
+      console.log(`Saving ${sig.address} -> ${recovered.subdigest}`)
+      return this.store.setMany(sig.address, recovered.subdigest)
+    }))
+
+    // Save the recovered configuration
+    await this.saveWalletConfig({ config: recovered.config })
+  }
+
   loadPresignedConfiguration = async (args: {
     wallet: string,
     fromImageHash: string,
@@ -282,12 +285,18 @@ export class LocalConfigTracker implements ConfigTracker {
     const { wallet, fromImageHash, checkpoint, longestPath } = args
 
     const fromConfig = await this.configOfImageHash({ imageHash: fromImageHash })
-    if (!fromConfig) throw new Error(`Unknown image hash: ${fromImageHash}`)
-    if (!v2.config.ConfigCoder.isWalletConfig(fromConfig)) throw new Error(`Not a v2 wallet config: ${fromConfig}`)
+    if (!fromConfig || !v2.config.ConfigCoder.isWalletConfig(fromConfig)) {
+      console.warn(`loadPresignedConfiguration: no config / not v2 for imageHash ${fromImageHash}`)
+      return []
+    }
+
+    console.log('fromConfig', fromConfig)
 
     // Get all subdigests for the config members
     const signers = [...new Set(v2.config.signersOf(fromConfig.tree))]
+    console.log(signers)
     const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
+    console.log(subdigestsOfSigner)
     const subdigests = subdigestsOfSigner.flat()
 
     // Get all unique payloads
@@ -312,6 +321,11 @@ export class LocalConfigTracker implements ConfigTracker {
       // Get config of next imageHash
       const nextConfig = await this.configOfImageHash({ imageHash: nextImageHash })
       if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) continue
+      const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
+
+      // If next config doesn't have a higher checkpoint, skip
+      const bestCheckpoint = bestCandidate?.checkpoint ?? checkpoint
+      if (!nextCheckpoint.gt(bestCheckpoint)) continue
 
       if (longestPath) {
         if (!bestCandidate || bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
@@ -367,7 +381,7 @@ export class LocalConfigTracker implements ConfigTracker {
     }, ...nextStep]
   }
 
-  saveWitness = ( args: {
+  saveWitness = (args: {
     wallet: string,
     digest: string,
     chainId: ethers.BigNumberish,
