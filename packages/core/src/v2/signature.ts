@@ -602,6 +602,7 @@ export async function recoverSignature(
   provider: ethers.providers.Provider
 ): Promise<Signature | ChainedSignature> {
   const signedPayload = (payload as { subdigest: string}).subdigest === undefined ? payload as base.SignedPayload : undefined
+  console.log('recover subidgestOf', signedPayload)
   const subdigest = signedPayload ? base.subdigestOf(signedPayload) : (payload as { subdigest: string }).subdigest
 
   // if payload chainid is 0 then it must be encoded with "no chainid" encoding
@@ -801,7 +802,7 @@ export const SignatureCoder: base.SignatureCoder<
     return encodeSignature(data)
   },
 
-  supportsNoChainId: false,
+  supportsNoChainId: true,
 
   recover: (
     data: UnrecoveredSignature | UnrecoveredChainedSignature,

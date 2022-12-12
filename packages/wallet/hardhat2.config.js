@@ -1,9 +1,5 @@
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
-module.exports = {
-  solidity: '0.7.6',
 
+module.exports = {
   networks: {
     hardhat: {
       chainId: 31338,
