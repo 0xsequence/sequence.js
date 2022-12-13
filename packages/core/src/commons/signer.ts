@@ -9,6 +9,7 @@ export enum SigType {
 
 export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesLike) {
   const bytes = ethers.utils.arrayify(signature)
+  const digestBytes = ethers.utils.arrayify(digest)
 
   // type is last byte
   const type = bytes[bytes.length - 1]
@@ -20,14 +21,12 @@ export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesL
 
   const splitSignature = { r, s, v }
 
-  console.log('recoverSigner', type, r, s, v, digest)
-
   if (type === SigType.EIP712) {
-    return ethers.utils.recoverAddress(digest, splitSignature)
+    return ethers.utils.recoverAddress(digestBytes, splitSignature)
   }
 
   if (type === SigType.ETH_SIGN) {
-    return ethers.utils.recoverAddress(ethers.utils.hashMessage(digest), splitSignature)
+    return ethers.utils.recoverAddress(ethers.utils.hashMessage(digestBytes), splitSignature)
   }
 
   throw new Error(`Unsupported signature type: ${type}`)
@@ -53,4 +52,18 @@ export function isValidSignature(
   }
 
   throw new Error(`Unsupported signature type: ${type}`)
+}
+
+export function tryRecoverSigner(
+  digest: ethers.BytesLike,
+  signature: ethers.BytesLike
+): string | undefined {
+  const bytes = ethers.utils.arrayify(signature)
+  if (bytes.length !== 66) return undefined
+
+  try {
+    return recoverSigner(digest, bytes)
+  } catch {}
+
+  return undefined
 }

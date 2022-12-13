@@ -289,9 +289,8 @@ describe('Local config tracker', () => {
           expect(res).to.deep.equal([])
         })
 
-        it.only('Should return single presigned step', async () => {
+        it('Should return single presigned step', async () => {
           const signer = ethers.Wallet.createRandom()
-          console.log('signer', signer.address)
           const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
           const imageHash = v2.config.imageHash(config)
           const address = commons.context.addressOf(context, imageHash)
@@ -301,13 +300,17 @@ describe('Local config tracker', () => {
           const nextImageHash = v2.config.imageHash(nextConfig)
 
           const digest = v2.chained.hashSetImageHash(nextImageHash)
-          const signature = await wallet.signMessage(ethers.utils.arrayify(digest))
+          const signature = await wallet.signDigest(digest)
 
           await tracker.saveWalletConfig({ config })
+          await tracker.saveWalletConfig({ config: nextConfig })
           await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature, config })
 
           const res = await tracker.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash, checkpoint: 0 })
           expect(res.length).to.equal(1)
+          expect(res[0].nextImageHash).to.equal(nextImageHash)
+          expect(res[0].wallet).to.equal(wallet.address)
+          expect(res[0].signature).to.equal(signature)
         })
       })
     })
