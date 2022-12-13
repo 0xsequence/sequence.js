@@ -23,10 +23,6 @@ export type ConfigDataDump = {
   presignedTransactions: PresignedConfigurationPayload[]
 }
 
-// AssumedWalletConfigs are configs that are assumed to be valid
-// for a given sequence smart contract wallet, this is needed to validate
-// guard signatures statically.
-export type AssumedWalletConfigs = { [key: string]: commons.config.Config }
 
 export function asPresignedConfigurationAsPayload(
   presigned: PresignedConfigUpdate,
@@ -40,7 +36,6 @@ export abstract class ConfigTracker {
     wallet: string,
     fromImageHash: string,
     checkpoint: ethers.BigNumberish,
-    assumedConfigs?: AssumedWalletConfigs,
     longestPath?: boolean
   }) => Promise<PresignedConfigUpdate[]>
 

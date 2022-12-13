@@ -1,8 +1,9 @@
 
 import { commons, v1, v2 } from "@0xsequence/core"
+import { tryRecoverSigner } from "@0xsequence/core/src/commons/signer"
 import { ethers } from "ethers"
 import { runByEIP5719 } from "../../../replacer/src"
-import { AssumedWalletConfigs, ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
+import { ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
 
 export interface KeyValueStore {
   get: (key: string) => Promise<string | undefined>
@@ -251,14 +252,15 @@ export class LocalConfigTracker implements ConfigTracker {
     const decoded = v2.signature.SignatureCoder.decode(args.signature)
     const message = v2.chained.messageSetImageHash(args.nextImageHash)
     const digest = ethers.utils.keccak256(message)
-    const recovered = await v2.signature.SignatureCoder.recover(decoded, {
+    const payload = {
       message,
       address: args.wallet,
       chainid: 0,
       digest
-    }, this.provider)
+    }
 
-    console.log('recovered', recovered)
+    await this.savePayload({ payload })
+    const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
 
     // Save all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)
@@ -268,7 +270,6 @@ export class LocalConfigTracker implements ConfigTracker {
       await this.store.set(key, sig.signature)
 
       // address -> subdigest[]
-      console.log(`Saving ${sig.address} -> ${recovered.subdigest}`)
       return this.store.setMany(sig.address, recovered.subdigest)
     }))
 
@@ -290,18 +291,14 @@ export class LocalConfigTracker implements ConfigTracker {
       return []
     }
 
-    console.log('fromConfig', fromConfig)
-
     // Get all subdigests for the config members
     const signers = [...new Set(v2.config.signersOf(fromConfig.tree))]
-    console.log(signers)
     const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
-    console.log(subdigestsOfSigner)
     const subdigests = subdigestsOfSigner.flat()
 
     // Get all unique payloads
     const payloads = await Promise.all([...new Set(subdigests)]
-      .map((s) => ({ ...this.payloadOfSubdigest({ subdigest: s }), subdigest: s })))
+      .map(async (s) => ({ ...(await this.payloadOfSubdigest({ subdigest: s })), subdigest: s })))
 
     // Get all possible next imageHashes based on the payloads
     const nextImageHashes = payloads
@@ -328,9 +325,9 @@ export class LocalConfigTracker implements ConfigTracker {
       if (!nextCheckpoint.gt(bestCheckpoint)) continue
 
       if (longestPath) {
-        if (!bestCandidate || bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
+        if (bestCandidate && bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
       } else {
-        if (!bestCandidate || bestCandidate.checkpoint.lt(nextConfig.checkpoint)) continue
+        if (bestCandidate && bestCandidate.checkpoint.lt(nextConfig.checkpoint)) continue
       }
 
       // Get all signatures (for all signers) for this subdigest
@@ -339,22 +336,21 @@ export class LocalConfigTracker implements ConfigTracker {
         return { signer: s, signature: res, subdigest: payload.subdigest }
       }))
 
-      // TODO: we don't know here if signatures have to be encoded as dynamic or not, so we encode them as dynamic to be sure
-      // but we can add another method that takes a signature with dynamically encoded signers and tries to find a static encoding candidates
       const mappedSignatures: Map<string, commons.signature.SignaturePart> = new Map()
       for (const sig of signatures) {
         if (!sig.signature) continue
 
         // TODO: Use Promise.all for EIP-5719
-        const replacedSignature = await runByEIP5719(sig.signature, this.provider, sig.subdigest, sig.signature)
+        const replacedSignature = await runByEIP5719(sig.signer, this.provider, sig.subdigest, sig.signature)
           .then((s) => ethers.utils.hexlify(s))
 
-        mappedSignatures.set(sig.signer, { isDynamic: true, signature: replacedSignature })
+        const isDynamic = tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
+        mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
       }
 
       // Encode the full signature
       const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, mappedSignatures, [], 0)
-      if (encoded.weight < nextConfig.threshold) continue
+      if (encoded.weight.lt(fromConfig.threshold)) continue
 
       // Save the new best candidate
       bestCandidate = {
