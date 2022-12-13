@@ -68,7 +68,7 @@ export abstract class ConfigTracker {
     proof: {
       digest: string,
       chainId: ethers.BigNumber,
-      signature: commons.signature.SignaturePart
+      signature: string
     }
   }[]>
 }
