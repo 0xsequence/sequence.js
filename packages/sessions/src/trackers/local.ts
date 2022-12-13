@@ -302,7 +302,7 @@ export class LocalConfigTracker implements ConfigTracker {
 
     // Get all possible next imageHashes based on the payloads
     const nextImageHashes = payloads
-      .filter((p) => p?.message)
+      .filter((p) => p?.message && p?.address && p.address === wallet)
       .map((p) => ({ payload: p, nextImageHash: v2.chained.decodeMessageSetImageHash(p!.message!) }))
       .filter((p) => p?.nextImageHash) as { payload: commons.signature.SignedPayload & { subdigest: string }, nextImageHash: string }[]
 
@@ -325,9 +325,9 @@ export class LocalConfigTracker implements ConfigTracker {
       if (!nextCheckpoint.gt(bestCheckpoint)) continue
 
       if (longestPath) {
-        if (bestCandidate && bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
-      } else {
         if (bestCandidate && bestCandidate.checkpoint.lt(nextConfig.checkpoint)) continue
+      } else {
+        if (bestCandidate && bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
       }
 
       // Get all signatures (for all signers) for this subdigest
