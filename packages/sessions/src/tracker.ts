@@ -9,7 +9,6 @@ export type PresignedConfigUpdate = {
 
 export type PresignedConfigurationPayload = {
   wallet: string,
-  config: commons.config.Config,
   nextImageHash: string,
   signature: string
 }
@@ -21,14 +20,6 @@ export type ConfigDataDump = {
     context: commons.context.WalletContext
   }[],
   presignedTransactions: PresignedConfigurationPayload[]
-}
-
-
-export function asPresignedConfigurationAsPayload(
-  presigned: PresignedConfigUpdate,
-  config: commons.config.Config
-): PresignedConfigurationPayload {
-  return { config, ...presigned }
 }
 
 export abstract class ConfigTracker {
