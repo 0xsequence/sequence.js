@@ -519,6 +519,135 @@ describe('Local config tracker', () => {
           expect(resb[1].nextImageHash).to.equal(imageHash3)
           expect(resb[0].signature).to.equal(signature1)
           expect(resb[1].signature).to.equal(signature2)
+
+          // Should return wallets of signer1 and signer2
+          const wallets1 = await tracker.walletsOfSigner({ signer: signer1.address })
+          expect(wallets1.length).to.equal(1)
+          expect(wallets1[0].wallet).to.equal(address)
+
+          const wallets2 = await tracker.walletsOfSigner({ signer: signer2.address })
+          expect(wallets2.length).to.equal(1)
+          expect(wallets2[0].wallet).to.equal(address)
+        })
+      })
+
+      describe('Handle witnesses', async () => {
+        let context: commons.context.WalletContext
+
+        before(async () => {
+          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then((c) => c[2])
+        })
+
+        it('Should retrieve no witness for never used signer', async () => {
+          const signer = ethers.Wallet.createRandom().address
+          const witness = await tracker.walletsOfSigner({ signer })
+          expect(witness.length).to.equal(0)
+        })
+
+        it('Should save a witness for a signer', async () => {
+          const signer = ethers.Wallet.createRandom()
+          const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+          const imageHash = v2.config.imageHash(config)
+          const address = commons.context.addressOf(context, imageHash)
+          const wallet = new Wallet({ config, chainId: 1, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+          const digest = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const signature = await wallet.signDigest(digest)
+
+          const decoded = v2.signature.SignatureCoder.decode(signature)
+          await tracker.saveWitness({
+            wallet: address,
+            digest,
+            chainId: 1,
+            signature: (decoded.decoded.tree as v2.signature.SignatureLeaf).signature
+          })
+
+          const witness = await tracker.walletsOfSigner({ signer: signer.address })
+          expect(witness.length).to.equal(1)
+          expect(witness[0].wallet).to.equal(address)
+          expect(witness[0].proof.chainId.toNumber()).to.equal(1)
+          expect(witness[0].proof.digest).to.equal(digest)
+          expect(witness[0].proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
+
+          // Adding a second witness should not change anything
+          const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const signature2 = await wallet.signDigest(digest2)
+          const decoded2 = v2.signature.SignatureCoder.decode(signature2)
+          await tracker.saveWitness({
+            wallet: address,
+            digest: digest2,
+            chainId: 1,
+            signature: (decoded2.decoded.tree as v2.signature.SignatureLeaf).signature
+          })
+
+          const witness2 = await tracker.walletsOfSigner({ signer: signer.address })
+          expect(witness2.length).to.equal(1)
+
+          // Adding a witness for a different chain should not change anything
+          const digest3 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const wallet2 = new Wallet({ config, chainId: 2, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+          const signature3 = await wallet2.signDigest(digest3)
+          const decoded3 = v2.signature.SignatureCoder.decode(signature3)
+          await tracker.saveWitness({
+            wallet: address,
+            digest: digest3,
+            chainId: 2,
+            signature: (decoded3.decoded.tree as v2.signature.SignatureLeaf).signature
+          })
+
+          const witness3 = await tracker.walletsOfSigner({ signer: signer.address })
+          expect(witness3.length).to.equal(1)
+        })
+
+        it('It should save witnesses for multiple wallets', async () => {
+          const signer = ethers.Wallet.createRandom()
+          const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+          const imageHash = v2.config.imageHash(config)
+          const address = commons.context.addressOf(context, imageHash)
+          const wallet = new Wallet({ config, chainId: 1, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+          const digest = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const signature = await wallet.signDigest(digest)
+
+          const decoded = v2.signature.SignatureCoder.decode(signature)
+          await tracker.saveWitness({
+            wallet: address,
+            digest,
+            chainId: 1,
+            signature: (decoded.decoded.tree as v2.signature.SignatureLeaf).signature
+          })
+
+          const config2 = { version: 2, threshold: 2, checkpoint: 0, tree: { address: signer.address, weight: 2 } }
+          const imageHash2 = v2.config.imageHash(config2)
+          const address2 = commons.context.addressOf(context, imageHash2)
+          const wallet2 = new Wallet({ config: config2, chainId: 1, coders: v2.coders, address: address2, context, orchestrator: new Orchestrator([signer]) })
+
+          const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const signature2 = await wallet2.signDigest(digest2)
+
+          const decoded2 = v2.signature.SignatureCoder.decode(signature2)
+          await tracker.saveWitness({
+            wallet: address2,
+            digest: digest2,
+            chainId: 1,
+            signature: (decoded2.decoded.tree as v2.signature.SignatureLeaf).signature
+          })
+
+          const witness = await tracker.walletsOfSigner({ signer: signer.address })
+          expect(witness.length).to.equal(2)
+
+          const wallet1Result = witness.find((w) => w.wallet === address)
+          const wallet2Result = witness.find((w) => w.wallet === address2)
+          expect(wallet1Result).to.not.be.undefined
+          expect(wallet2Result).to.not.be.undefined
+
+          expect(wallet1Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet1Result?.proof.digest).to.equal(digest)
+          expect(wallet1Result?.proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
+
+          expect(wallet2Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet2Result?.proof.digest).to.equal(digest2)
+          expect(wallet2Result?.proof.signature).to.equal((decoded2.decoded.tree as v2.signature.SignatureLeaf).signature)
         })
       })
     })

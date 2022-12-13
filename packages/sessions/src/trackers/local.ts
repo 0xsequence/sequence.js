@@ -1,5 +1,6 @@
 
 import { commons, v1, v2 } from "@0xsequence/core"
+import { SignedPayload } from "@0xsequence/core/src/commons/signature"
 import { tryRecoverSigner } from "@0xsequence/core/src/commons/signer"
 import { ethers } from "ethers"
 import { runByEIP5719 } from "../../../replacer/src"
@@ -264,14 +265,12 @@ export class LocalConfigTracker implements ConfigTracker {
 
     // Save all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)
-    await Promise.all(signatures.map(async (sig) => {
-      // digest:address -> signature
-      const key = `${recovered.subdigest}:${sig.address}`
-      await this.store.set(key, sig.signature)
-
-      // address -> subdigest[]
-      return this.store.setMany(sig.address, recovered.subdigest)
-    }))
+    await Promise.all(signatures.map((sig) => this.saveSubdigest({
+      wallet: args.wallet,
+      subdigest: recovered.subdigest,
+      signer: sig.address,
+      signature: sig.signature
+    })))
 
     // Save the recovered configuration
     await this.saveWalletConfig({ config: recovered.config })
@@ -377,25 +376,85 @@ export class LocalConfigTracker implements ConfigTracker {
     }, ...nextStep]
   }
 
-  saveWitness = (args: {
+  saveWitness = async (args: {
     wallet: string,
     digest: string,
     chainId: ethers.BigNumberish,
     signature: string
   }): Promise<void> => {
-    throw Error('not implemented')
+    const payload = {
+      digest: args.digest,
+      address: args.wallet,
+      chainid: args.chainId,
+    }
+
+    const subdigest = commons.signature.subdigestOf(payload)
+    const signer = commons.signer.recoverSigner(subdigest, args.signature)
+
+    await Promise.all([
+      this.savePayload({ payload }),
+      this.saveSubdigest({ wallet: args.wallet, signer, subdigest, signature: args.signature }),
+    ])
   }
 
-  walletsOfSigner = (args: {
+  private saveSubdigest = async (args: {
+    wallet: string,
+    signer: string,
+    subdigest: string,
+    signature: string
+  }) => {
+    // subdigest:address -> signature
+    const key = `${args.subdigest}:${args.signer}`
+    const saveSignature = this.store.set(key, args.signature)
+
+    // address -> subdigest[]
+    const saveSubdigests = this.store.setMany(args.signer, args.subdigest)
+
+    await Promise.all([saveSignature, saveSubdigests])
+  }
+
+  walletsOfSigner = async (args: {
     signer: string
   }): Promise<{
     wallet: string,
     proof: {
       digest: string,
       chainId: ethers.BigNumber,
-      signature: commons.signature.SignaturePart
+      signature: string
     }
   }[]> => {
-    throw Error('not implemented')
+    const subdigests = await this.store.getMany(args.signer)
+    const payloads = await Promise.all(subdigests.map((s) => this.payloadOfSubdigest({ subdigest: s })))
+      .then((p) => p.filter((p) => p !== undefined) as commons.signature.SignedPayload[])
+
+    // filter unique wallets, and provide a proof for each wallet
+    const result: {
+      wallet: string,
+      proof: {
+        digest: string,
+        chainId: ethers.BigNumber,
+        signature: string
+      }
+    }[] = []
+
+    for (const payload of payloads) {
+      const wallet = payload.address
+      if (result.find((r) => r.wallet === wallet)) continue
+
+      const subdigest = commons.signature.subdigestOf(payload)
+      const signature = await this.store.get(`${subdigest}:${args.signer}`)
+      if (!signature) continue
+
+      result.push({
+        wallet,
+        proof: {
+          digest: payload.digest,
+          chainId: ethers.BigNumber.from(payload.chainid),
+          signature
+        }
+      })
+    }
+
+    return result
   }
 }
