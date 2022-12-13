@@ -1,9 +1,8 @@
 
 import { BigNumberish, ethers } from "ethers"
-import { isValidSignature, recoverSigner } from "../commons/signer"
+import { isValidSignature, recoverSigner, tryRecoverSigner } from "../commons/signer"
 import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash } from "./config"
 import * as base from '../commons/signature'
-import { chainId } from "wagmi"
 
 export enum SignatureType {
   Legacy = 0,
@@ -602,7 +601,6 @@ export async function recoverSignature(
   provider: ethers.providers.Provider
 ): Promise<Signature | ChainedSignature> {
   const signedPayload = (payload as { subdigest: string}).subdigest === undefined ? payload as base.SignedPayload : undefined
-  console.log('recover subidgestOf', signedPayload)
   const subdigest = signedPayload ? base.subdigestOf(signedPayload) : (payload as { subdigest: string }).subdigest
 
   // if payload chainid is 0 then it must be encoded with "no chainid" encoding
