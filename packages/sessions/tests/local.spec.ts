@@ -275,7 +275,7 @@ describe('Local config tracker', () => {
           context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then((c) => c[2])
         })
 
-        it('Should return return empty chained configuration if config is now known', async () => {
+        it('Should return return empty chained configuration if config is not known', async () => {
           const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
           const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash, checkpoint: 0 })
           expect(res).to.deep.equal([])
@@ -304,13 +304,221 @@ describe('Local config tracker', () => {
 
           await tracker.saveWalletConfig({ config })
           await tracker.saveWalletConfig({ config: nextConfig })
-          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature, config })
+          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
 
           const res = await tracker.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash, checkpoint: 0 })
           expect(res.length).to.equal(1)
           expect(res[0].nextImageHash).to.equal(nextImageHash)
           expect(res[0].wallet).to.equal(wallet.address)
           expect(res[0].signature).to.equal(signature)
+        })
+
+        it('Should return empty for wrong wallet', async () => {
+          const signer = ethers.Wallet.createRandom()
+          const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+          const imageHash = v2.config.imageHash(config)
+          const address = commons.context.addressOf(context, imageHash)
+          const wallet = new Wallet({ config, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+          const nextConfig = utils.configs.random.genRandomV2Config()
+          const nextImageHash = v2.config.imageHash(nextConfig)
+
+          const digest = v2.chained.hashSetImageHash(nextImageHash)
+          const signature = await wallet.signDigest(digest)
+
+          await tracker.saveWalletConfig({ config })
+          await tracker.saveWalletConfig({ config: nextConfig })
+          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+
+          const wrongWallet = ethers.Wallet.createRandom().address
+          const res = await tracker.loadPresignedConfiguration({ wallet: wrongWallet, fromImageHash: imageHash, checkpoint: 0 })
+          expect(res.length).to.equal(0)
+        })
+
+        it('Should return two steps', async () => {
+          // Step 1
+          const signer = ethers.Wallet.createRandom()
+          const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+          const imageHash = v2.config.imageHash(config)
+
+          const address = commons.context.addressOf(context, imageHash)
+          const wallet1 = new Wallet({ config, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+          const signer2a = ethers.Wallet.createRandom()
+          const signer2b = ethers.Wallet.createRandom()
+          const nextConfig1 = { version: 2, threshold: 6, checkpoint: 2, tree: {
+              right: {
+                address: signer2a.address, weight: 3
+              },
+              left: {
+                address: signer2b.address, weight: 3
+              }
+            }
+          }
+
+          const nextImageHash1 = v2.config.imageHash(nextConfig1)
+
+          const digest1 = v2.chained.hashSetImageHash(nextImageHash1)
+          const signature1 = await wallet1.signDigest(digest1)
+
+          // Step 2
+          const nextConfig2 = { ...utils.configs.random.genRandomV2Config(), checkpoint: 3 }
+          const nextImageHash2 = v2.config.imageHash(nextConfig2)
+
+          const digest2 = v2.chained.hashSetImageHash(nextImageHash2)
+          const wallet2 = new Wallet({
+            config: nextConfig1,
+            chainId: 0,
+            coders: v2.coders,
+            address,
+            context,
+            orchestrator: new Orchestrator([signer2a, signer2b])
+          })
+
+          const signature2 = await wallet2.signDigest(digest2)
+
+          // Saving only signature2 should lead to empty path
+          // becuase there is no route from initial config to config1
+          await tracker.saveWalletConfig({ config })
+          await tracker.saveWalletConfig({ config: nextConfig1 })
+          await tracker.saveWalletConfig({ config: nextConfig2 })
+          await tracker.savePresignedConfiguration({
+            wallet: address,
+            nextImageHash: nextImageHash2,
+            signature: signature2
+          })
+
+          const route0_2a = await tracker.loadPresignedConfiguration({
+            wallet: address,
+            fromImageHash: imageHash,
+            checkpoint: 0
+          })
+
+          expect(route0_2a.length).to.equal(0)
+
+          // But starting from imageHash1 should give us a link
+          const result1_2a = await tracker.loadPresignedConfiguration({
+            wallet: address,
+            fromImageHash:  nextImageHash1,
+            checkpoint: 0
+          })
+
+          expect(result1_2a.length).to.equal(1)
+          expect(result1_2a[0].nextImageHash).to.equal(nextImageHash2)
+          expect(result1_2a[0].signature).to.equal(signature2)
+          expect(result1_2a[0].wallet).to.equal(address)
+
+          // Unless the checkpoint is equal to config2
+          const result1_2b = await tracker.loadPresignedConfiguration({
+            wallet: address,
+            fromImageHash:  nextImageHash1,
+            checkpoint: 3
+          })
+
+          expect(result1_2b.length).to.equal(0)
+
+          // Adding the 0_1 step should give us a full chain to 2
+          await tracker.savePresignedConfiguration({
+            wallet: address,
+            nextImageHash: nextImageHash1,
+            signature: signature1
+          })
+
+          const result0_2b = await tracker.loadPresignedConfiguration({
+            wallet: address,
+            fromImageHash: imageHash,
+            checkpoint: 0
+          })
+
+          expect(result0_2b.length).to.equal(2)
+          expect(result0_2b[0].wallet).to.equal(address)
+          expect(result0_2b[1].wallet).to.equal(address)
+          expect(result0_2b[0].nextImageHash).to.equal(nextImageHash1)
+          expect(result0_2b[1].nextImageHash).to.equal(nextImageHash2)
+          expect(result0_2b[0].signature).to.equal(signature1)
+          expect(result0_2b[1].signature).to.equal(signature2)
+        })
+
+        it('Should skip step if it uses the same signers', async () => {
+          const signer1 = ethers.Wallet.createRandom()
+          const config1 = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer1.address, weight: 1 } }
+          const imageHash1 = v2.config.imageHash(config1)
+          const address = commons.context.addressOf(context, imageHash1)
+          const wallet = new Wallet({ config: config1, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer1]) })
+
+          const signer2 = ethers.Wallet.createRandom()
+          const config2 = {
+            version: 2,
+            threshold: 3,
+            checkpoint: 1,
+            tree: {
+              left: {
+                address: signer1.address,
+                weight: 3
+              },
+              right: {
+                address: signer2.address,
+                weight: 4
+              }
+            }
+          }
+
+          const imageHash2 = v2.config.imageHash(config2)
+
+          const digest1 = v2.chained.hashSetImageHash(imageHash2)
+          const signature1 = await wallet.signDigest(digest1)
+
+          const config3 = utils.configs.random.genRandomV2Config()
+          const imageHash3 = v2.config.imageHash(config3)
+
+          const digest2 = v2.chained.hashSetImageHash(imageHash3)
+          const wallet2 = new Wallet({
+            config: config2,
+            chainId: 0,
+            coders: v2.coders,
+            address,
+            context,
+            orchestrator: new Orchestrator([signer1, signer2])
+          })
+
+          const signature2 = await wallet2.signDigest(digest2)
+
+          await tracker.saveWalletConfig({ config: config1 })
+          await tracker.saveWalletConfig({ config: config2 })
+          await tracker.saveWalletConfig({ config: config3 })
+          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash: imageHash2, signature: signature1 })
+          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash: imageHash3, signature: signature2 })
+
+          // Going from 1 to 3 should give us 1 jump
+          const resa = await tracker.loadPresignedConfiguration({
+            wallet: address,
+            fromImageHash: imageHash1,
+            checkpoint: 0
+          })
+
+          expect(resa.length).to.equal(1)
+          expect(resa[0].wallet).to.equal(address)
+          expect(resa[0].nextImageHash).to.equal(imageHash3)
+          // This is equivalent to having signed the update
+          // with only signer1 (because that's what we have in imageHash1)
+          expect(resa[0].signature).to.equal(await wallet.signDigest(digest2))
+
+          // Unless we ask for the longest path, then we should find
+          // both jumps
+          const resb = await tracker.loadPresignedConfiguration({
+            wallet: address,
+            fromImageHash: imageHash1,
+            checkpoint: 0,
+            longestPath: true
+          })
+
+          expect(resb.length).to.equal(2)
+          expect(resb[0].wallet).to.equal(address)
+          expect(resb[1].wallet).to.equal(address)
+          expect(resb[0].nextImageHash).to.equal(imageHash2)
+          expect(resb[1].nextImageHash).to.equal(imageHash3)
+          expect(resb[0].signature).to.equal(signature1)
+          expect(resb[1].signature).to.equal(signature2)
         })
       })
     })
