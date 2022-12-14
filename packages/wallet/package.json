@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@0xsequence/ethauth": "^0.8.0",
+    "@0xsequence/tests": "^0.43.4",
     "@0xsequence/wallet-contracts": "1.10.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ethers": "^5.7.2",

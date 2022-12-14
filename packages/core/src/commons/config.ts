@@ -7,6 +7,12 @@ export type Config = {
   version: number
 }
 
+export type SimpleConfig = {
+  threshold: ethers.BigNumberish,
+  checkpoint: ethers.BigNumberish,
+  signers: { address: string, weight: ethers.BigNumberish }[]
+}
+
 export interface ConfigCoder<T extends Config = Config> {
   imageHashOf: (config: T) => string
   hasSubdigest: (config: T, subdigest: string) => boolean
@@ -15,11 +21,7 @@ export interface ConfigCoder<T extends Config = Config> {
 
   checkpointOf: (config: T) => ethers.BigNumber
 
-  fromSimple: (config: {
-    threshold: ethers.BigNumberish,
-    checkpoint: ethers.BigNumberish,
-    signers: { address: string, weight: ethers.BigNumberish }[]
-  }) => T
+  fromSimple: (config: SimpleConfig) => T
 
   toJSON: (config: T) => string
   fromJSON: (json: string) => T
