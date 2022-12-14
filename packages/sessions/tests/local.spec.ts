@@ -132,7 +132,7 @@ describe('Local config tracker', () => {
       let tracker: tracker.ConfigTracker
 
       beforeEach(() => {
-        tracker = new trackers.local.LocalConfigTracker(store(), provider)
+        tracker = new trackers.local.LocalConfigTracker(provider, store())
       })
 
       describe('Configuration', () => {
