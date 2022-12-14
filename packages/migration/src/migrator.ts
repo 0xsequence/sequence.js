@@ -1,5 +1,5 @@
 import { commons } from '@0xsequence/core'
-import { walletV2 } from '@0xsequence/wallet'
+import { Wallet } from '@0xsequence/wallet'
 import { ethers } from 'ethers'
 
 import { VersionedContext } from './context'
@@ -87,7 +87,7 @@ export class Migrator {
   async signMissingMigrations(
     address: string,
     existing: commons.transaction.SignedTransactionBundle[],
-    wallet: walletV2.Wallet,
+    wallet: Wallet,
   ): Promise<commons.transaction.SignedTransactionBundle[]> {
     const versions = Object.values(this.contexts)
     const txs: commons.transaction.SignedTransactionBundle[] = [...existing]

@@ -2,86 +2,11 @@
 # yarn lockfile v1
 
 
-"@0xsequence/abi@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/abi/-/abi-0.42.10.tgz#76f76b66e9cc02ab8cfd954aa1298ccebe336b5b"
-  integrity sha512-0oA1iWQUtVcBN/8yrkb+j8H8RyUqksxwPKdJrpFuFrB+FVVjJkAlEIMcFeYa/h9JG2u/UekyPaSmplZ9ncqduQ==
-
-"@0xsequence/config@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/config/-/config-0.42.10.tgz#72cade35446bf7b5e70a683af911a10d48ff961e"
-  integrity sha512-UhyvFoV/rweoHFLjUepJ9thrvBoAfs2pRJs+fJewpUDQN3b6gGvNbyC/hhqnVNo3Fz9CnQkWF5lpITAD0RBkbQ==
-  dependencies:
-    "@0xsequence/abi" "^0.42.10"
-    "@0xsequence/multicall" "^0.42.10"
-    "@0xsequence/network" "^0.42.10"
-    "@0xsequence/utils" "^0.42.10"
-    ethers "^5.5.2"
-
 "@0xsequence/ethauth@^0.8.0":
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/@0xsequence/ethauth/-/ethauth-0.8.1.tgz#9b97a17e74ca9559b79a93a8e39ca77baaccc943"
   integrity sha512-P21cxRSS+2mDAqFVAJt0lwQFtbObX+Ewlj8DMyDELp81+QbfHFh6LCyu8dTXNdBx6UbmRFOCSBno5Txd50cJPQ==
   dependencies:
-    js-base64 "^3.7.2"
-
-"@0xsequence/guard@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/guard/-/guard-0.42.10.tgz#c114938f15794fd00c8d266229cb39b803c23d71"
-  integrity sha512-p182ocHeZElLW/SUVUJDbmkBwXga1f4xizVC/jXdf69vAI/ABo2coooXiXamOCBTRbEFoshawbBIsL407W+rKw==
-
-"@0xsequence/multicall@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/multicall/-/multicall-0.42.10.tgz#b0216125a0873002bb5b1242a0121e280e9a692e"
-  integrity sha512-ufZMGHP5MgLAZxaUJSiq4BBGrokaI2CP9MabSVEzbiO/YFioarKP40gtgtTgoi+nV1nm18J/Hg3ztX0JBZrlhA==
-  dependencies:
-    "@0xsequence/abi" "^0.42.10"
-    "@0xsequence/network" "^0.42.10"
-    "@0xsequence/utils" "^0.42.10"
-    "@ethersproject/providers" "^5.5.1"
-    ethers "^5.5.2"
-
-"@0xsequence/network@^0.42.10", "@0xsequence/network@^0.42.9":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/network/-/network-0.42.10.tgz#de1848e032223753a1abbfb77a8dbdb6b796e7a5"
-  integrity sha512-f/NWUuEpqy/ShKp/YWUmXck0AuLdXeD93Qb4663r7/Rue3IRU6Py6XFhtof/zN+UO29ZQohLIXjfoGTRaKhVHw==
-  dependencies:
-    "@0xsequence/utils" "^0.42.10"
-    "@ethersproject/providers" "^5.5.1"
-    ethers "^5.5.2"
-
-"@0xsequence/relayer@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/relayer/-/relayer-0.42.10.tgz#6d7e6abfae5b34d368045e5ab1e653f72b4f77f1"
-  integrity sha512-tAGcNPpSGqZjcvyyCgKu/sh9hC6Et7hkGHcaFzxrlYRlz29LjPSsMBZhu4bM7gkJZgt0l1RmDmhedST5YFVSyg==
-  dependencies:
-    "@0xsequence/abi" "^0.42.10"
-    "@0xsequence/config" "^0.42.10"
-    "@0xsequence/transactions" "^0.42.10"
-    "@0xsequence/utils" "^0.42.10"
-    "@ethersproject/providers" "^5.5.1"
-    ethers "^5.5.2"
-    fetch-ponyfill "^7.1.0"
-
-"@0xsequence/transactions@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/transactions/-/transactions-0.42.10.tgz#24798881818737a994b8c49abf918fada4869066"
-  integrity sha512-w7P8iUS4xPN5dazdvCXhcdCV6XnykULzKsEfgD9GjXtHRpTaOfY87bAjSWeJhTk9t28dKy7CFLLYVs0YlQ0sfg==
-  dependencies:
-    "@0xsequence/abi" "^0.42.10"
-    "@0xsequence/network" "^0.42.10"
-    "@0xsequence/utils" "^0.42.10"
-    "@ethersproject/abi" "^5.5.0"
-    ethers "^5.5.2"
-
-"@0xsequence/utils@^0.42.10":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/utils/-/utils-0.42.10.tgz#be173b1a7ebfa43af2478c1b6056c802637cd084"
-  integrity sha512-UHNiwnW9qv1ylKwYmHMMgv2w1mJfNEAnkGigxt9QeogGnmgWeENW/5SeEYUPt14Ie4lgBU1rcJjcOsDEnwN1cg==
-  dependencies:
-    "@ethersproject/abstract-signer" "^5.5.0"
-    "@ethersproject/properties" "^5.5.0"
-    ethers "^5.5.2"
     js-base64 "^3.7.2"
 
 "@0xsequence/wallet-contracts@1.10.0":
@@ -92,24 +17,6 @@
     "@ethersproject/abi" "^5.7.0"
     "@ethersproject/providers" "^5.7.2"
     ethers "^5.7.2"
-
-"@0xsequence/wallet@^0.42.9":
-  version "0.42.10"
-  resolved "https://registry.yarnpkg.com/@0xsequence/wallet/-/wallet-0.42.10.tgz#ae1adf4bf6eb442a4dea2eabaadabfd5f7e1b506"
-  integrity sha512-uwSq6QJK42nuPCSl8oRR4AFnoOQn3IWqbiIcd8CySzSNjSItHkNrJYhRdA2yLugqTEWf+ZGmRAMLDZyuSqrqgQ==
-  dependencies:
-    "@0xsequence/abi" "^0.42.10"
-    "@0xsequence/config" "^0.42.10"
-    "@0xsequence/guard" "^0.42.10"
-    "@0xsequence/network" "^0.42.10"
-    "@0xsequence/relayer" "^0.42.10"
-    "@0xsequence/transactions" "^0.42.10"
-    "@0xsequence/utils" "^0.42.10"
-    "@ethersproject/abi" "^5.5.0"
-    "@ethersproject/properties" "^5.5.0"
-    "@ethersproject/providers" "^5.5.1"
-    ethers "^5.5.2"
-    fetch-ponyfill "^7.1.0"
 
 "@ampproject/remapping@^2.1.0":
   version "2.2.0"
@@ -1342,7 +1249,7 @@
     async "^3.2.4"
     ethereum-cryptography "^1.1.2"
 
-"@ethersproject/abi@5.7.0", "@ethersproject/abi@^5.1.2", "@ethersproject/abi@^5.5.0", "@ethersproject/abi@^5.6.3", "@ethersproject/abi@^5.7.0":
+"@ethersproject/abi@5.7.0", "@ethersproject/abi@^5.1.2", "@ethersproject/abi@^5.6.3", "@ethersproject/abi@^5.7.0":
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/abi/-/abi-5.7.0.tgz#b3f3e045bbbeed1af3947335c247ad625a44e449"
   integrity sha512-351ktp42TiRcYB3H1OP8yajPeAQstMW/yCFokj/AthP9bLHzQFPlOrxOcwYEDkUAICmOHljvN4K39OMTMUa9RA==
@@ -1370,7 +1277,7 @@
     "@ethersproject/transactions" "^5.7.0"
     "@ethersproject/web" "^5.7.0"
 
-"@ethersproject/abstract-signer@5.7.0", "@ethersproject/abstract-signer@^5.5.0", "@ethersproject/abstract-signer@^5.7.0":
+"@ethersproject/abstract-signer@5.7.0", "@ethersproject/abstract-signer@^5.7.0":
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/abstract-signer/-/abstract-signer-5.7.0.tgz#13f4f32117868452191a4649723cb086d2b596b2"
   integrity sha512-a16V8bq1/Cz+TGCkE2OPMTOUDLS3grCpdjoJCYNnVBbdYEMSgKrU0+B90s8b6H+ByYTBZN7a3g76jdIJi7UfKQ==
@@ -1526,14 +1433,14 @@
     "@ethersproject/bytes" "^5.7.0"
     "@ethersproject/sha2" "^5.7.0"
 
-"@ethersproject/properties@5.7.0", "@ethersproject/properties@^5.5.0", "@ethersproject/properties@^5.7.0":
+"@ethersproject/properties@5.7.0", "@ethersproject/properties@^5.7.0":
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/properties/-/properties-5.7.0.tgz#a6e12cb0439b878aaf470f1902a176033067ed30"
   integrity sha512-J87jy8suntrAkIZtecpxEPxY//szqr1mlBaYlQ0r4RCaiD2hjheqF9s1LVE8vVuJCXisjIP+JgtK/Do54ej4Sw==
   dependencies:
     "@ethersproject/logger" "^5.7.0"
 
-"@ethersproject/providers@5.7.2", "@ethersproject/providers@^5.5.1", "@ethersproject/providers@^5.7.2":
+"@ethersproject/providers@5.7.2", "@ethersproject/providers@^5.7.2":
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/@ethersproject/providers/-/providers-5.7.2.tgz#f8b1a4f275d7ce58cf0a2eec222269a08beb18cb"
   integrity sha512-g34EWZ1WWAVgr4aptGlVBF8mhl3VWjv+8hoAnzStu8Ah22VHBsuGzP17eb6xDVRzw895G4W7vvx60lFFur/1Rg==
@@ -6299,13 +6206,6 @@ fd-slicer@~1.1.0:
   dependencies:
     pend "~1.2.0"
 
-fetch-ponyfill@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/fetch-ponyfill/-/fetch-ponyfill-7.1.0.tgz#4266ed48b4e64663a50ab7f7fcb8e76f990526d0"
-  integrity sha512-FhbbL55dj/qdVO3YNK7ZEkshvj3eQ7EuIGV2I6ic/2YiocvyWv+7jg2s4AyS0wdRU75s3tA8ZxI/xPigb0v5Aw==
-  dependencies:
-    node-fetch "~2.6.1"
-
 figures@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/figures/-/figures-3.2.0.tgz#625c18bd293c604dc4a8ddb2febf0c88341746af"
@@ -9233,7 +9133,7 @@ node-addon-api@^2.0.0:
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-2.0.2.tgz#432cfa82962ce494b132e9d72a15b29f71ff5d32"
   integrity sha512-Ntyt4AIXyaLIuMHF6IOoTakB3K+RWxwtsHNRxllEoA6vPwP9o4866g6YWDLUdnucilZhmkxiHwHr11gAENw+QA==
 
-node-fetch@2.6.7, node-fetch@^2.5.0, node-fetch@^2.6.0, node-fetch@^2.6.1, node-fetch@^2.6.7, node-fetch@~2.6.1:
+node-fetch@2.6.7, node-fetch@^2.5.0, node-fetch@^2.6.0, node-fetch@^2.6.1, node-fetch@^2.6.7:
   version "2.6.7"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.7.tgz#24de9fba827e3b4ae44dc8b20256a379160052ad"
   integrity sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==
