@@ -73,7 +73,46 @@ export class Account {
     this.orchestrator = options.orchestrator
 
     this.migrations = options.migrations || defaults.DefaultMigrations
-    this.migrator = new migrator.Migrator(options.tracker, {}, this.contexts)
+    this.migrator = new migrator.Migrator(options.tracker, this.migrations, this.contexts)
+  }
+
+  static async new(options: {
+    config: commons.config.SimpleConfig,
+    tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker,
+    contexts: context.VersionedContext,
+    orchestrator: Orchestrator,
+    networks: NetworkConfig[],
+    migrations?: migrator.Migrations
+  }): Promise<Account> {
+    const mig = new migrator.Migrator(
+      options.tracker,
+      options.migrations ?? defaults.DefaultMigrations,
+      options.contexts
+    )
+
+    const lastMigration = mig.lastMigration()
+    const lastCoder = lastMigration.configCoder
+
+    const config = lastCoder.fromSimple(options.config)
+    const imageHash = lastCoder.imageHashOf(config)
+    const context = options.contexts[lastMigration.version]
+    const address = commons.context.addressOf(context, imageHash)
+
+    await Promise.all([
+      options.tracker.saveWalletConfig({ config }),
+      options.tracker.saveCounterFactualWallet({
+        context: Object.values(options.contexts),
+        imageHash
+      })
+    ])
+
+    return new Account({
+      address,
+      tracker: options.tracker,
+      contexts: options.contexts,
+      networks: options.networks,
+      orchestrator: options.orchestrator
+    })
   }
 
   get version(): number {

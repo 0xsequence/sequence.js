@@ -61,8 +61,11 @@ function isPlainV2Config(config: any): config is PlainV2Config {
 
 export class LocalConfigTracker implements ConfigTracker {
   constructor(
-    private store: KeyValueStore = new MemoryStore(),
-    public provider: ethers.providers.Provider
+    // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
+    // but when reconstructing a presigned transaction we should do the replacement once per chain.
+    // For now, it's recommended to use Mainnet as the provider.
+    public provider: ethers.providers.Provider,
+    private store: KeyValueStore = new MemoryStore()
   ) {}
 
   private loadTopology = async (hash: string): Promise<v2.config.Topology> => {
