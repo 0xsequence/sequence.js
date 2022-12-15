@@ -3,6 +3,7 @@ import { BigNumberish, ethers } from "ethers"
 import { isValidSignature, recoverSigner, tryRecoverSigner } from "../commons/signer"
 import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash } from "./config"
 import * as base from '../commons/signature'
+import { hashSetImageHash } from "./chained"
 
 export enum SignatureType {
   Legacy = 0,
@@ -834,5 +835,9 @@ export const SignatureCoder: base.SignatureCoder<
     const mraw = ethers.utils.isBytesLike(main) ? main : encodeSignature(main)
     const sraw = sufix.map(s => (ethers.utils.isBytesLike(s) ? s : encodeSignature(s)))
     return encodeChain(mraw, sraw)
+  },
+
+  hashSetImageHash: function (imageHash: string): string {
+    return hashSetImageHash(imageHash)
   }
 }

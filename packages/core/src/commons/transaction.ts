@@ -57,6 +57,19 @@ export const MetaTransactionsType = `tuple(
   bytes data
 )[]`
 
+export function intendTransactionBundle(
+  bundle: TransactionBundle,
+  wallet: string,
+  chainId: BigNumberish,
+  digest: string
+): IntendedTransactionBundle {
+  return {
+    ...bundle,
+    chainId,
+    intent: { digest, wallet }
+  }
+}
+
 export function packMetaTransactionsData(nonce: ethers.BigNumberish, txs: Transaction[]): string {
   return packMetaTransactionsNonceData(nonce, txs)
 }
