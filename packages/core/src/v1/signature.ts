@@ -218,7 +218,7 @@ export const SignatureCoder: base.SignatureCoder<
   Signature,
   UnrecoveredSignature
 > = {
-  decode:(data: string): UnrecoveredSignature => {
+  decode: (data: string): UnrecoveredSignature => {
     return decodeSignature(data)
   },
 
@@ -242,7 +242,7 @@ export const SignatureCoder: base.SignatureCoder<
     subdigests: string[],
     chainId: ethers.BigNumberish
   ): {
-    encoded: string,
+    encoded: string
     weight: ethers.BigNumber
   } => {
     return encodeSigners(config, signatures, subdigests, chainId)
@@ -258,5 +258,9 @@ export const SignatureCoder: base.SignatureCoder<
     _sufix: (Signature | UnrecoveredSignature | ethers.BytesLike)[]
   ): string => {
     throw new Error('Signature chaining not supported on v1')
+  },
+
+  hashSetImageHash: function (_imageHash: string): string {
+    throw new Error('Image hash not supported on v1')
   }
 }

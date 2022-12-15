@@ -8,6 +8,8 @@ import { commons, universal } from '@0xsequence/core'
 import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
 import { counterfactualVersion } from '@0xsequence/migration/src/version'
 import { Wallet } from '@0xsequence/wallet'
+import { FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { intendTransactionBundle } from '@0xsequence/core/src/commons/transaction'
 
 export type AccountStatus = {
   original: {
@@ -27,6 +29,7 @@ export type AccountStatus = {
   presignedConfigurations: PresignedConfigUpdate[],
   imageHash: string,
   config: commons.config.Config,
+  canOnchainValidate: boolean,
 }
 
 export type AccountOptions = {
@@ -62,7 +65,7 @@ export class Account {
   public readonly migrator: migrator.Migrator
   public readonly migrations: migrator.Migrations
 
-  private readonly orchestrator: Orchestrator
+  private orchestrator: Orchestrator
 
   constructor(options: AccountOptions) {
     this.address = ethers.utils.getAddress(options.address)
@@ -150,10 +153,35 @@ export class Account {
     return new commons.reader.OnChainReader(this.address, this.provider(chainId))
   }
 
+  relayer(chainId: ethers.BigNumberish): Relayer {
+    const found = this.network(chainId)
+    if (!found.relayer) throw new Error(`Relayer not found for chainId ${chainId}`)
+    if (isRelayer(found.relayer)) return found.relayer
+    return new RpcRelayer(found.relayer)
+  }
+
+  setOrchestrator(orchestrator: Orchestrator) {
+    this.orchestrator = orchestrator
+  }
+
   contextFor(version: number): commons.context.WalletContext {
     const ctx = this.contexts[version]
     if (!ctx) throw new Error(`Context not found for version ${version}`)
     return ctx
+  }
+
+  walletForStatus(
+    chainId: ethers.BigNumberish,
+    status: AccountStatus
+  ): Wallet {
+    const coder = universal.coderFor(status.version)
+
+    return this.walletFor(
+      chainId,
+      this.contextFor(status.version),
+      status.config,
+      coder
+    )
   }
 
   walletFor(
@@ -220,7 +248,14 @@ export class Account {
     const isDeployedPromise = this.reader(chainId).isDeployed()
     const onChainVersionInfoPromise = this.onchainVersionInfo(chainId)
 
-    const onChainImageHash = await this.reader(chainId).imageHash()
+    let onChainImageHash = await this.reader(chainId).imageHash()
+    if (!onChainImageHash) {
+      const counterFactualImageHash = await this.tracker.imageHashOfCounterFactualWallet({
+        wallet: this.address
+      })
+
+      onChainImageHash = counterFactualImageHash?.imageHash
+    }
 
     if (!onChainImageHash) {
       throw new Error(`On-chain imageHash not found for wallet ${this.address}`)
@@ -267,20 +302,32 @@ export class Account {
       throw new Error(`Config not found for imageHash ${imageHash}`)
     }
 
+    const isDeployed = await isDeployedPromise
+
     return {
       original: onChainFirstInfo,
       onChain: {
         imageHash: onChainImageHash,
         config: onChainConfig,
         version: onChainVersion,
-        deployed: await isDeployedPromise
+        deployed: isDeployed
       },
       fullyMigrated: version === this.version,
       signedMigrations,
       version,
       presignedConfigurations: presigned,
       imageHash,
-      config
+      config,
+      canOnchainValidate: (
+        version === this.version &&
+        isDeployed
+      )
+    }
+  }
+
+  private mustBeFullyMigrated(status: AccountStatus) {
+    if (!status.fullyMigrated) {
+      throw new Error(`Wallet ${this.address} is not fully migrated`)
     }
   }
 
@@ -328,20 +375,44 @@ export class Account {
 
   async signDigest(
     digest: ethers.BytesLike,
-    chainId: ethers.BigNumberish
+    chainId: ethers.BigNumberish,
+    decorate: boolean = true
   ): Promise<string> {
     const status = await this.status(chainId)
+    this.mustBeFullyMigrated(status)
 
-    if (!status.fullyMigrated) {
-      throw new Error(`Wallet ${this.address} is not fully migrated`)
-    }
-
-    const context = this.contextFor(status.version)
-    const coder = universal.coderFor(status.version)
-    const wallet = this.walletFor(chainId, context, status.config, coder)
+    const wallet = this.walletForStatus(chainId, status)
     const signature = await wallet.signDigest(digest)
 
-    return this.decorateSignature(signature, status)
+    return decorate ? this.decorateSignature(signature, status) : signature
+  }
+
+  async updateConfig(
+    config: commons.config.Config
+  ): Promise<void> {
+    // config should be for the current version of the wallet
+    if (!this.coders.config.isWalletConfig(config)) {
+      throw new Error(`Invalid config for wallet ${this.address}`)
+    }
+
+    const nextImageHash = this.coders.config.imageHashOf(config)
+
+    // sign an update config struct
+    const updateStruct = this.coders.signature.hashSetImageHash(nextImageHash)
+
+    // sign the update struct, using chain id 0
+    const signature = await this.signDigest(updateStruct, 0, false)
+
+    // save both the new config and the presigned transaction
+    // to the sessions tracker
+    await Promise.all([
+      this.tracker.saveWalletConfig({ config }),
+      this.tracker.savePresignedConfiguration({
+        nextImageHash,
+        signature,
+        wallet: this.address
+      })
+    ])
   }
 
   /**
@@ -393,5 +464,75 @@ export class Account {
   ): Promise<commons.transaction.TransactionBundle> {
     const status = await this.status(chainId)
     return this.buildBootstrapTransactions(status)
+  }
+
+  async doBootstrap(
+    chainId: ethers.BigNumberish,
+    feeQuote?: FeeQuote
+  ) {
+    const bootstrapTxs = await this.bootstrapTransactions(chainId)
+    const intended = intendTransactionBundle(
+      bootstrapTxs,
+      this.address,
+      chainId,
+      ethers.utils.hexlify(ethers.utils.randomBytes(32))
+    )
+
+    return this.relayer(chainId).relay(intended, feeQuote)
+  }
+
+  signMessage(message: ethers.BytesLike, chainId: ethers.BigNumberish): Promise<string> {
+    return this.signDigest(ethers.utils.keccak256(message), chainId)
+  }
+
+  async signTransactions(
+    txs: commons.transaction.Transactionish,
+    chainId: ethers.BigNumberish
+  ): Promise<commons.transaction.SignedTransactionBundle> {
+    const status = await this.status(chainId)
+    this.mustBeFullyMigrated(status)
+
+    const wallet = this.walletForStatus(chainId, status)
+    const signed = await wallet.signTransactions(txs)
+
+    return {
+      ...signed,
+      signature: this.decorateSignature(signed.signature, status)
+    }
+  }
+
+  async sendSignedTransactions(
+    signedBundle: commons.transaction.IntendedTransactionBundle,
+    chainId: ethers.BigNumberish,
+    quote?: FeeQuote
+  ): Promise<ethers.providers.TransactionResponse> {
+    const status = await this.status(signedBundle.chainId)
+    this.mustBeFullyMigrated(status)
+
+    const decoratedBundle = this.decorateTransactions(signedBundle, status)
+    return this.relayer(chainId).relay(decoratedBundle, quote)
+  }
+
+  async sendTransaction(
+    txs: commons.transaction.Transactionish,
+    chainId: ethers.BigNumberish,
+    quote?: FeeQuote,
+    skipLazyUpdate: boolean = false
+  ): Promise<ethers.providers.TransactionResponse> {
+    if (!skipLazyUpdate) {
+      // if onchain wallet config is not up to date
+      // then we should append an extra transaction that updates it
+      // to the latest "lazy" state
+      const status = await this.status(chainId)
+
+      if (status.onChain.imageHash !== status.imageHash) {
+        const wallet = this.walletForStatus(chainId, status)
+        const updateConfig = await wallet.buildUpdateConfigurationTransaction(status.config)
+        txs = [(Array.isArray(txs) ? txs : [txs]), updateConfig.transactions].flat()
+      }
+    }
+
+    const signed = await this.signTransactions(txs, chainId)
+    return this.sendSignedTransactions(signed, chainId, quote)
   }
 }

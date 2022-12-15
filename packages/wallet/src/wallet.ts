@@ -227,7 +227,7 @@ export class Wallet<
     return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
   }
 
-  async signMessage(message: ethers.BytesLike): Promise<string> {
+  signMessage(message: ethers.BytesLike): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message))
   }
 

@@ -60,6 +60,10 @@ export interface SignatureCoder<
     main: T | Z | ethers.BytesLike,
     sufixes: (T | Z | ethers.BytesLike)[]
   ) => string
+
+  hashSetImageHash: (
+    imageHash: string
+  ) => string
 }
 
 export function subdigestOf(payload: SignedPayload) {
