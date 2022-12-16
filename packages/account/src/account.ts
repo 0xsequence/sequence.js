@@ -4,7 +4,7 @@ import { migrator, context, defaults, version } from '@0xsequence/migration'
 import { Orchestrator } from '@0xsequence/signhub'
 import { NetworkConfig } from '@0xsequence/network'
 import { ethers } from 'ethers'
-import { commons, universal } from '@0xsequence/core'
+import { commons, universal, v2 } from '@0xsequence/core'
 import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
 import { counterfactualVersion } from '@0xsequence/migration/src/version'
 import { Wallet } from '@0xsequence/wallet'
@@ -29,6 +29,7 @@ export type AccountStatus = {
   presignedConfigurations: PresignedConfigUpdate[],
   imageHash: string,
   config: commons.config.Config,
+  checkpoint: ethers.BigNumber,
   canOnchainValidate: boolean,
 }
 
@@ -175,7 +176,6 @@ export class Account {
     status: AccountStatus
   ): Wallet {
     const coder = universal.coderFor(status.version)
-
     return this.walletFor(
       chainId,
       this.contextFor(status.version),
@@ -318,6 +318,7 @@ export class Account {
       presignedConfigurations: presigned,
       imageHash,
       config,
+      checkpoint: this.coders.config.checkpointOf(config),
       canOnchainValidate: (
         version === this.version &&
         isDeployed
