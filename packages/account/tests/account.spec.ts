@@ -196,7 +196,7 @@ describe('Account', () => {
         signer1 = ethers.Wallet.createRandom()
         const simpleConfig1 = {
           threshold: 1,
-          checkpoint: Math.floor(Date.now() / 1000),
+          checkpoint: Math.floor(Date.now() / 1000) + 1,
           signers: [{ address: signer1.address, weight: 1 }]
         }
 
@@ -211,7 +211,7 @@ describe('Account', () => {
 
         const simpleConfig2 = {
           threshold: 4,
-          checkpoint: Math.floor(Date.now() / 1000) + 1,
+          checkpoint: await account.status(0).then((s) => s.checkpoint.add(1)),
           signers: [{
             address: signer2a.address,
             weight: 2
@@ -286,6 +286,79 @@ describe('Account', () => {
           const canOnchainValidate = await account.status(networks[0].chainId).then((s) => s.canOnchainValidate)
           expect(canOnchainValidate).to.be.false
           await account.doBootstrap(networks[0].chainId)
+
+          const valid = await commons.EIP1271.isValidEIP1271Signature(
+            account.address,
+            ethers.utils.keccak256(msg),
+            sig,
+            networks[0].provider!
+          )
+
+          expect(valid).to.be.true
+        })
+      })
+
+      describe('After updating the config again', () => {
+        let signer3a: ethers.Wallet
+        let signer3b: ethers.Wallet
+        let signer3c: ethers.Wallet
+
+        let config3: v2.config.WalletConfig
+
+        beforeEach(async () => {
+          signer3a = ethers.Wallet.createRandom()
+          signer3b = ethers.Wallet.createRandom()
+          signer3c = ethers.Wallet.createRandom()
+
+          const simpleConfig3 = {
+            threshold: 5,
+            checkpoint: await account.status(0).then((s) => s.checkpoint.add(1)),
+            signers: [{
+              address: signer3a.address,
+              weight: 2
+            }, {
+              address: signer3b.address,
+              weight: 2
+            }, {
+              address: signer3c.address,
+              weight: 1
+            }]
+          }
+
+          config3 = v2.config.ConfigCoder.fromSimple(simpleConfig3)
+
+          await account.updateConfig(config3)
+          account.setOrchestrator(new Orchestrator([signer3a, signer3b, signer3c]))
+        })
+
+        it('Should update account status', async () => {
+          const status = await account.status(networks[0].chainId)
+          expect(status.fullyMigrated).to.be.true
+          expect(status.onChain.deployed).to.be.false
+          expect(status.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(config3))
+          expect(status.presignedConfigurations.length).to.equal(2)
+        })
+
+        it('Should send a transaction', async () => {
+          const tx = await account.sendTransaction([], networks[0].chainId)
+          expect(tx).to.not.be.undefined
+
+          const status = await account.status(networks[0].chainId)
+          expect(status.fullyMigrated).to.be.true
+          expect(status.onChain.deployed).to.be.true
+          expect(status.onChain.imageHash).to.equal(status.imageHash)
+        })
+
+        it('Should sign a message', async () => {
+          const msg = ethers.utils.toUtf8Bytes('Hello World')
+          const sig = await account.signMessage(msg, networks[0].chainId)
+
+          const canOnchainValidate = await account.status(networks[0].chainId).then((s) => s.canOnchainValidate)
+          expect(canOnchainValidate).to.be.false
+          await account.doBootstrap(networks[0].chainId)
+
+          const status = await account.status(networks[0].chainId)
+          expect(status.onChain.imageHash).to.not.equal(status.imageHash)
 
           const valid = await commons.EIP1271.isValidEIP1271Signature(
             account.address,
