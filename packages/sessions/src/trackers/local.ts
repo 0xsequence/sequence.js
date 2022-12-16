@@ -296,7 +296,7 @@ export class LocalConfigTracker implements ConfigTracker {
     // Get all subdigests for the config members
     const signers = [...new Set(v2.config.signersOf(fromConfig.tree))]
     const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
-    const subdigests = subdigestsOfSigner.flat()
+    const subdigests = [...new Set(subdigestsOfSigner.flat())]
 
     // Get all unique payloads
     const payloads = await Promise.all([...new Set(subdigests)]
