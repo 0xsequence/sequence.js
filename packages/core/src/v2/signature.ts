@@ -832,8 +832,11 @@ export const SignatureCoder: base.SignatureCoder<
     main: Signature | UnrecoveredSignature | UnrecoveredChainedSignature | ethers.BytesLike,
     sufix: (Signature | UnrecoveredSignature | UnrecoveredChainedSignature | ethers.BytesLike)[]
   ): string => {
+    // Notice: v2 expects suffix to be reversed
+    // that being: from signed to current imageHash
+    const reversed = sufix.reverse()
     const mraw = ethers.utils.isBytesLike(main) ? main : encodeSignature(main)
-    const sraw = sufix.map(s => (ethers.utils.isBytesLike(s) ? s : encodeSignature(s)))
+    const sraw = reversed.map(s => (ethers.utils.isBytesLike(s) ? s : encodeSignature(s)))
     return encodeChain(mraw, sraw)
   },
 
