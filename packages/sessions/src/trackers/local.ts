@@ -1,7 +1,10 @@
 
-import { commons, v1, v2 } from "@0xsequence/core"
+import { commons, universal, v1, v2 } from "@0xsequence/core"
 import { SignedPayload } from "@0xsequence/core/src/commons/signature"
 import { tryRecoverSigner } from "@0xsequence/core/src/commons/signer"
+import { migration } from "@0xsequence/migration"
+import { VersionedContext } from "@0xsequence/migration/src/context"
+import { PresignedMigrationTracker, SignedMigration } from "@0xsequence/migration/src/migrator"
 import { ethers } from "ethers"
 import { runByEIP5719 } from "../../../replacer/src"
 import { ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
@@ -59,7 +62,7 @@ function isPlainV2Config(config: any): config is PlainV2Config {
   return config.version === 2 && config.threshold !== undefined && config.checkpoint !== undefined && config.tree !== undefined
 }
 
-export class LocalConfigTracker implements ConfigTracker {
+export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTracker {
   constructor(
     // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
@@ -294,7 +297,7 @@ export class LocalConfigTracker implements ConfigTracker {
     }
 
     // Get all subdigests for the config members
-    const signers = [...new Set(v2.config.signersOf(fromConfig.tree))]
+    const signers = v2.config.signersOf(fromConfig.tree)
     const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
     const subdigests = [...new Set(subdigestsOfSigner.flat())]
 
@@ -459,5 +462,124 @@ export class LocalConfigTracker implements ConfigTracker {
     }
 
     return result
+  }
+
+  async saveMigration(
+    address: string,
+    fromVersion: number,
+    chainid: ethers.BigNumberish,
+    signed: SignedMigration
+  ): Promise<void> {
+    // TODO: Pass this as a parameter
+    const contexts: VersionedContext = {}
+
+    if (fromVersion !== 1) throw new Error("Migration not supported")
+    if (!v2.config.isWalletConfig(signed.toConfig)) throw new Error("Invalid to config")
+
+    // Validate migration transaction
+    const { newConfig, address: decodedAddress } = migration.v1v2.decodeTransaction(signed.tx, contexts)
+    if (decodedAddress !== address) throw new Error("Invalid migration transaction - address")
+    if (
+      v2.config.ConfigCoder.imageHashOf(signed.toConfig) !=
+      v2.config.ConfigCoder.imageHashOf(newConfig)
+    ) throw new Error("Invalid migration transaction - config")
+
+    // Split signature and save each part
+    const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
+    const digest = ethers.utils.keccak256(message)
+    const payload = { chainid, message, address, digest }
+
+    await this.savePayload({ payload })
+
+    const decoded = v2.signature.SignatureCoder.decode(signed.tx.signature)
+    const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
+
+    // Save all signature parts
+    const signatures = v2.signature.signaturesOf(recovered.config.tree)
+    await Promise.all(signatures.map((sig) => this.saveSubdigest({
+      wallet: address,
+      subdigest: recovered.subdigest,
+      signer: sig.address,
+      signature: sig.signature
+    })))
+
+    // Save the recovered config
+    await this.saveWalletConfig({
+      config: recovered.config
+    })
+
+    // Save the migrate transaction
+    const subdigest = commons.signature.subdigestOf(payload)
+    await this.store.setMany(`migrate:${address}:${fromVersion}:${fromVersion + 1}`, subdigest)
+  }
+
+  async getMigration(
+    address: string,
+    fromImageHash: string,
+    fromVersion: number,
+    chainId: ethers.BigNumberish
+  ): Promise<SignedMigration | undefined> {
+    // Get the current config and all possible migration payloads
+    const [currentConfig, subdigests] = await Promise.all([
+      this.configOfImageHash({ imageHash: fromImageHash }),
+      this.store.getMany(`migrate:${address}:${fromVersion}:${fromVersion + 1}`)
+    ])
+
+    const coder = universal.coderFor(fromVersion)
+    if (!currentConfig) throw new Error("Invalid from config")
+    if (!coder.config.isWalletConfig(currentConfig)) throw new Error("Invalid from config")
+
+    // We need to process every migration candidate individually
+    // and see which one has enough signers to be valid (for the current config)
+    const candidates = await Promise.all(subdigests.map(async (subdigest) => {
+      const payload = await this.payloadOfSubdigest({ subdigest })
+      if (!payload || !payload.message) return undefined
+
+      const signers = coder.config.signersOf(currentConfig as any)
+
+      // Get all signatures (for all signers) for this subdigest
+      const signatures = await Promise.all(signers.map(async (s) => {
+        const res = await this.store.get(`${subdigest}:${s}`)
+        return { signer: s, signature: res, subdigest }
+      }))
+
+      const mappedSignatures: Map<string, commons.signature.SignaturePart> = new Map()
+      for (const sig of signatures) {
+        if (!sig.signature) continue
+
+        // TODO: Use Promise.all for EIP-5719
+        const replacedSignature = await runByEIP5719(sig.signer, this.provider, sig.subdigest, sig.signature)
+          .then((s) => ethers.utils.hexlify(s))
+
+        const isDynamic = tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
+        mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
+      }
+
+      // Encode signature parts into a single signature
+      const encoded = coder.signature.encodeSigners(currentConfig as any, mappedSignatures, [], chainId)
+      if (!encoded || encoded.weight < currentConfig.threshold) return undefined
+
+      // Unpack payload (it should have transactions)
+      const [nonce, transactions] = commons.transaction.unpackMetaTransactionsData(payload.message)
+
+      return {
+        tx: {
+          entrypoint: address,
+          transactions: commons.transaction.fromTxAbiEncode(transactions),
+          chainId: chainId,
+          nonce: nonce,
+          signature: encoded.encoded,
+          intent: {
+            digest: ethers.utils.keccak256(payload.message),
+            wallet: address,
+          }
+        },
+        toImageHash: coder.config.imageHashOf(currentConfig as any),
+        toConfig: currentConfig
+      } as SignedMigration
+    })).then((c) => c.filter((c) => c !== undefined))
+
+    // Return the first valid candidate
+    return candidates[0]
   }
 }

@@ -1,5 +1,6 @@
 import { commons } from "@0xsequence/core"
 import { VersionedContext } from "../context"
+import { Migration_v1v2 } from "./migration_01_02"
 
 //                                 = uint160(keccak256("org.sequence.sdk.migration.space.nonce"))
 export const MIGRATION_NONCE_SPACE = "0xa04263acf755e8bd19c0d7e20eea39a9ff3729eb"
@@ -32,4 +33,4 @@ export interface Migration<
   >
 }
 
-export * as v1v2 from './migration_01_02'
+export const v1v2 = new Migration_v1v2()

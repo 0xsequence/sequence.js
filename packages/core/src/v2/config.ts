@@ -385,19 +385,23 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
 }
 
 export function signersOf(tree: Topology): string[] {
-  if (isNestedLeaf(tree)) {
-    return signersOf(tree.tree)
+  const stack: Topology[] = [tree]
+  const signers = new Set<string>()
+
+  while (stack.length > 0) {
+    const node = stack.pop()
+
+    if (isNestedLeaf(node)) {
+      stack.push(node.tree)
+    } else if (isNode(node)) {
+      stack.push(node.left)
+      stack.push(node.right)
+    } else if (isSignerLeaf(node)) {
+      signers.add(node.address)
+    }
   }
 
-  if (isNode(tree)) {
-    return [...signersOf(tree.left), ...signersOf(tree.right)]
-  }
-
-  if (isSignerLeaf(tree)) {
-    return [tree.address]
-  }
-
-  return []
+  return Array.from(signers)
 }
 
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
@@ -419,6 +423,10 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
   checkpointOf: (config: WalletConfig): ethers.BigNumber => {
     return ethers.BigNumber.from(config.checkpoint)
+  },
+
+  signersOf: (config: WalletConfig): string[] => {
+    return signersOf(config.tree)
   },
 
   fromSimple: (config: {
