@@ -45,6 +45,10 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return ethers.BigNumber.from(0)
   },
 
+  signersOf: (config: WalletConfig): string[] => {
+    return config.signers.map((signer) => signer.address)
+  },
+
   fromSimple: (config: {
     threshold: ethers.BigNumberish
     checkpoint: ethers.BigNumberish
