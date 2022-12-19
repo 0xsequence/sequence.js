@@ -56,6 +56,28 @@ export type AccountOptions = {
   networks: NetworkConfig[]
 }
 
+class Chain0Reader implements commons.reader.Reader {
+  async isDeployed(): Promise<boolean> {
+    return false
+  }
+
+  async implementation(): Promise<string | undefined> {
+    return undefined
+  }
+
+  async imageHash(): Promise<string | undefined> {
+    return undefined
+  }
+
+  async nonce(_space: ethers.BigNumberish): Promise<ethers.BigNumberish> {
+    return ethers.constants.Zero
+  }
+
+  async isValidSignature(_digest: ethers.utils.BytesLike, _signature: ethers.utils.BytesLike): Promise<boolean> {
+    throw new Error('Method not supported.')
+  }
+}
+
 export class Account {
   public readonly address: string
 
@@ -137,7 +159,7 @@ export class Account {
 
   network(chainId: ethers.BigNumberish): NetworkConfig {
     const tcid = ethers.BigNumber.from(chainId)
-    const found = this.networks.find(n => tcid.eq(chainId))
+    const found = this.networks.find((n) => tcid.eq(n.chainId))
     if (!found) throw new Error(`Network not found for chainId ${chainId}`)
     return found
   }
@@ -149,6 +171,8 @@ export class Account {
   }
 
   reader(chainId: ethers.BigNumberish): commons.reader.Reader {
+    if (ethers.constants.Zero.eq(chainId)) return new Chain0Reader()
+
     // TODO: Networks should be able to provide a reader directly
     // and we should default to the on-chain reader
     return new commons.reader.OnChainReader(this.address, this.provider(chainId))
