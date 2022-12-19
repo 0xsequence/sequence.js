@@ -70,16 +70,18 @@ export function intendTransactionBundle(
   }
 }
 
-export function packMetaTransactionsData(nonce: ethers.BigNumberish, txs: Transaction[]): string {
-  return packMetaTransactionsNonceData(nonce, txs)
+export function unpackMetaTransactionsData(data: BytesLike): [ethers.BigNumber, TransactionEncoded[]] {
+  const res = ethers.utils.defaultAbiCoder.decode(['uint256', MetaTransactionsType], data)
+  if (res.length !== 2 || !res[0] || !res[1]) throw new Error('Invalid meta transaction data')
+  return [res[0], res[1]]
 }
 
-export function packMetaTransactionsNonceData(nonce: BigNumberish, txs: Transaction[]): string {
+export function packMetaTransactionsData(nonce: ethers.BigNumberish, txs: Transaction[]): string {
   return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
 export function digestOfTransactions(nonce: BigNumberish, txs: Transaction[]) {
-  return ethers.utils.keccak256(packMetaTransactionsNonceData(nonce, txs))
+  return ethers.utils.keccak256(packMetaTransactionsData(nonce, txs))
 }
 
 export function subidgestOfTransactions(address: string, chainid: BigNumberish, nonce: ethers.BigNumberish, txs: Transaction[]): string {
@@ -156,6 +158,17 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
     target: t.to ?? ethers.constants.AddressZero,
     value: t.value !== undefined ? t.value : ethers.constants.Zero,
     data: t.data !== undefined ? t.data : []
+  }))
+}
+
+export function fromTxAbiEncode(txs: TransactionEncoded[]): Transaction[] {
+  return txs.map(t => ({
+    delegateCall: t.delegateCall,
+    revertOnError: t.revertOnError,
+    gasLimit: t.gasLimit,
+    to: t.target,
+    value: t.value,
+    data: t.data
   }))
 }
 
