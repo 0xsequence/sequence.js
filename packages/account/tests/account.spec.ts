@@ -90,6 +90,35 @@ describe('Account', () => {
       expect(status.onChain.version).to.equal(2)
     })
 
+    it('Should send transactions on multiple networks', async () => {
+      const signer = ethers.Wallet.createRandom()
+      const config = {
+        threshold: 1,
+        checkpoint: Math.floor(Date.now() / 1000),
+        signers: [{ address: signer.address, weight: 1 }]
+      }
+
+      const account = await Account.new({
+        ...defaultArgs,
+        config,
+        orchestrator: new Orchestrator([signer]),
+      })
+
+      await account.sendTransaction([], networks[0].chainId)
+      await account.sendTransaction([], networks[1].chainId)
+
+      const status1 = await account.status(networks[0].chainId)
+      const status2 = await account.status(networks[1].chainId)
+
+      expect(status1.fullyMigrated).to.be.true
+      expect(status1.onChain.deployed).to.be.true
+      expect(status1.onChain.version).to.equal(2)
+
+      expect(status2.fullyMigrated).to.be.true
+      expect(status2.onChain.deployed).to.be.true
+      expect(status2.onChain.version).to.equal(2)
+    })
+
     it('Should create a new account with many signers', async () => {
       const signers = new Array(24).fill(0).map(() => ethers.Wallet.createRandom())
       const config = {
@@ -260,6 +289,16 @@ describe('Account', () => {
         await expect(tx).to.be.rejected
       })
 
+      it('Should send a transaction on a different network', async () => {
+        const tx = await account.sendTransaction([], networks[1].chainId)
+        expect(tx).to.not.be.undefined
+
+        const status = await account.status(networks[1].chainId)
+        expect(status.fullyMigrated).to.be.true
+        expect(status.onChain.deployed).to.be.true
+        expect(status.onChain.imageHash).to.equal(status.imageHash)
+      })
+
       describe('After reloading the account', () => {
         beforeEach(async () => {
           account = new Account({
@@ -368,6 +407,68 @@ describe('Account', () => {
           )
 
           expect(valid).to.be.true
+        })
+      })
+
+      describe('After sending a transaction', () => {
+        beforeEach(async () => {
+          await account.sendTransaction([], networks[0].chainId)
+        })
+
+        it('Should send a transaction in a different network', async () => {
+          const tx = await account.sendTransaction([], networks[1].chainId)
+          expect(tx).to.not.be.undefined
+
+          const status = await account.status(networks[1].chainId)
+          expect(status.fullyMigrated).to.be.true
+          expect(status.onChain.deployed).to.be.true
+          expect(status.onChain.imageHash).to.equal(status.imageHash)
+        })
+
+        it('Should send a second transaction', async () => {
+          const tx = await account.sendTransaction([], networks[0].chainId)
+          expect(tx).to.not.be.undefined
+        })
+
+        it('Should update the configuration again', async () => {
+          const signer2a = ethers.Wallet.createRandom()
+          const signer2b = ethers.Wallet.createRandom()
+          const signer2c = ethers.Wallet.createRandom()
+
+          const simpleConfig2 = {
+            threshold: 6,
+            checkpoint: await account.status(0).then((s) => s.checkpoint.add(1)),
+            signers: [{
+              address: signer2a.address,
+              weight: 3
+            }, {
+              address: signer2b.address,
+              weight: 3
+            }, {
+              address: signer2c.address,
+              weight: 3
+            }]
+          }
+
+          const ogOnchainImageHash = await account.status(0).then((s) => s.onChain.imageHash)
+          const imageHash1 = await account.status(0).then((s) => s.imageHash)
+          const config2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
+
+          await account.updateConfig(config2)
+          const status1 = await account.status(networks[0].chainId)
+          const status2 = await account.status(networks[1].chainId)
+
+          expect(status1.fullyMigrated).to.be.true
+          expect(status1.onChain.deployed).to.be.true
+          expect(status1.onChain.imageHash).to.equal(imageHash1)
+          expect(status1.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(config2))
+          expect(status1.presignedConfigurations.length).to.equal(1)
+
+          expect(status2.fullyMigrated).to.be.true
+          expect(status2.onChain.deployed).to.be.false
+          expect(status2.onChain.imageHash).to.equal(ogOnchainImageHash)
+          expect(status2.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(config2))
+          expect(status2.presignedConfigurations.length).to.equal(2)
         })
       })
     })
