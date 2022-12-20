@@ -5,10 +5,16 @@ import { ethers } from 'ethers'
 import { VersionedContext } from './context'
 import { Migration } from "./migrations"
 
-export type SignedMigration = {
-  tx: commons.transaction.SignedTransactionBundle,
+export type UnsignedMigration = {
+  tx: commons.transaction.TransactionBundle,
+  fromVersion: number,
+  toVersion: number,
   toImageHash: string,
   toConfig: commons.config.Config
+}
+
+export type SignedMigration = Omit<UnsignedMigration, 'tx'> & {
+  tx: commons.transaction.SignedTransactionBundle
 }
 
 export interface PresignedMigrationTracker {
@@ -87,11 +93,12 @@ export class Migrator {
     address: string,
     existing: commons.transaction.SignedTransactionBundle[],
     wallet: Wallet,
-  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+  ): Promise<SignedMigration[]> {
     const versions = Object.values(this.contexts)
-    const txs: commons.transaction.SignedTransactionBundle[] = [...existing]
 
-    for (let i = txs.length; i < versions.length; i++) {
+    const result: SignedMigration[] = []
+
+    for (let i = existing.length; i < versions.length; i++) {
       const version = i + 1
       const migration = this.migrations[version]
 
@@ -99,12 +106,15 @@ export class Migrator {
         throw new Error(`No migration found for version ${version}`)
       }
 
-      const tx = migration.buildTransaction(address, this.contexts, wallet.config)
-      const signed = await wallet.signTransactionBundle(tx)
+      const unsignedMigration = migration.buildTransaction(address, this.contexts, wallet.config)
+      const signedBundle = await wallet.signTransactionBundle(unsignedMigration.tx)
 
-      txs.push(signed)
+      result.push({
+        ...unsignedMigration,
+        tx: signedBundle
+      })
     }
 
-    return txs
+    return result
   }
 }
