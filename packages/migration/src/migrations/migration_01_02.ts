@@ -70,7 +70,7 @@ export class Migration_v1v2 implements Migration<
     contexts: VersionedContext
   ): {
     address: string,
-    newConfig: v2.config.WalletConfig
+    newImageHash: string
   } {
     const address = tx.entrypoint
 
@@ -112,9 +112,6 @@ export class Migration_v1v2 implements Migration<
       throw new Error('Invalid transaction bundle address')
     }
 
-    return {
-      address,
-      newConfig: decoded2.newConfig
-    }
+    return decoded2
   }
 }

@@ -44,7 +44,7 @@ export interface ConfigCoder<T extends Config = Config> {
 
     decodeTransaction: (tx: transaction.TransactionBundle) => {
       address: string,
-      newConfig: T,
+      newImageHash: string,
       kind: 'first' | 'later' | undefined
     }
   }
