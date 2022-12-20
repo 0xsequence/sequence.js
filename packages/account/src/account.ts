@@ -320,13 +320,14 @@ export class Account {
       checkpoint: universal.genericCoderFor(onChainConfig.version).config.checkpointOf(onChainConfig),
     })
 
-    const imageHash = presigned && presigned.length > 0 ? presigned[presigned.length - 1].nextImageHash : onChainImageHash
-    const config = imageHash !== onChainImageHash ? await this.tracker.configOfImageHash({ imageHash }) : onChainConfig
+    const imageHash = presigned && presigned.length > 0 ? presigned[presigned.length - 1].nextImageHash : fromImageHash
+    const config = await this.tracker.configOfImageHash({ imageHash })
     if (!config) {
       throw new Error(`Config not found for imageHash ${imageHash}`)
     }
 
     const isDeployed = await isDeployedPromise
+    const checkpoint = universal.coderFor(version).config.checkpointOf(config as any)
 
     return {
       original: onChainFirstInfo,
@@ -342,7 +343,7 @@ export class Account {
       presignedConfigurations: presigned,
       imageHash,
       config,
-      checkpoint: this.coders.config.checkpointOf(config),
+      checkpoint,
       canOnchainValidate: (
         version === this.version &&
         isDeployed
@@ -533,18 +534,20 @@ export class Account {
     const wallet = this.walletForStatus(chainId, status)
     const signed = await this.migrator.signMissingMigrations(
       this.address,
-      status.signedMigrations.map((s) => s.tx),
+      status.version,
       wallet
     )
 
-    await Promise.all(signed.map((migration) => this.tracker.saveMigration(
-      this.address,
-      migration.fromVersion,
-      chainId,
-      migration
-    )))
+    await Promise.all(signed.map((migration) => Promise.all([
+      this.tracker.saveMigration(this.address, migration.fromVersion, chainId, migration, this.contexts),
+      this.tracker.saveWalletConfig({ config: migration.toConfig })
+    ])))
 
     return signed.length
+  }
+
+  async signAllMigrations() {
+    return Promise.all(this.networks.map((n) => this.signMigrations(n.chainId)))
   }
 
   async sendSignedTransactions(
@@ -556,6 +559,7 @@ export class Account {
     this.mustBeFullyMigrated(status)
 
     const decoratedBundle = this.decorateTransactions(signedBundle, status)
+
     return this.relayer(chainId).relay(decoratedBundle, quote)
   }
 

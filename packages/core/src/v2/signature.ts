@@ -842,5 +842,9 @@ export const SignatureCoder: base.SignatureCoder<
 
   hashSetImageHash: function (imageHash: string): string {
     return hashSetImageHash(imageHash)
+  },
+
+  signaturesOf(config: WalletConfig): { address: string, signature: string }[] {
+    return signaturesOf(config.tree)
   }
 }
