@@ -575,7 +575,9 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
           }
         },
         toImageHash: coder.config.imageHashOf(currentConfig as any),
-        toConfig: currentConfig
+        toConfig: currentConfig,
+        fromVersion,
+        toVersion: fromVersion + 1
       } as SignedMigration
     })).then((c) => c.filter((c) => c !== undefined))
 
