@@ -2,8 +2,7 @@
 import { commons, universal, v1, v2 } from "@0xsequence/core"
 import { SignedPayload } from "@0xsequence/core/src/commons/signature"
 import { tryRecoverSigner } from "@0xsequence/core/src/commons/signer"
-import { migration } from "@0xsequence/migration"
-import { VersionedContext } from "@0xsequence/migration/src/context"
+import { migration, context } from "@0xsequence/migration"
 import { PresignedMigrationTracker, SignedMigration } from "@0xsequence/migration/src/migrator"
 import { ethers } from "ethers"
 import { runByEIP5719 } from "../../../replacer/src"
@@ -292,7 +291,6 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     const fromConfig = await this.configOfImageHash({ imageHash: fromImageHash })
     if (!fromConfig || !v2.config.ConfigCoder.isWalletConfig(fromConfig)) {
-      console.warn(`loadPresignedConfiguration: no config / not v2 for imageHash ${fromImageHash}`)
       return []
     }
 
@@ -468,20 +466,18 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     address: string,
     fromVersion: number,
     chainid: ethers.BigNumberish,
-    signed: SignedMigration
+    signed: SignedMigration,
+    contexts: context.VersionedContext
   ): Promise<void> {
-    // TODO: Pass this as a parameter
-    const contexts: VersionedContext = {}
-
     if (fromVersion !== 1) throw new Error("Migration not supported")
     if (!v2.config.isWalletConfig(signed.toConfig)) throw new Error("Invalid to config")
 
     // Validate migration transaction
-    const { newConfig, address: decodedAddress } = migration.v1v2.decodeTransaction(signed.tx, contexts)
+    const { newImageHash, address: decodedAddress } = migration.v1v2.decodeTransaction(signed.tx, contexts)
     if (decodedAddress !== address) throw new Error("Invalid migration transaction - address")
     if (
       v2.config.ConfigCoder.imageHashOf(signed.toConfig) !=
-      v2.config.ConfigCoder.imageHashOf(newConfig)
+      newImageHash
     ) throw new Error("Invalid migration transaction - config")
 
     // Split signature and save each part
@@ -491,11 +487,11 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     await this.savePayload({ payload })
 
-    const decoded = v2.signature.SignatureCoder.decode(signed.tx.signature)
-    const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
+    const decoded = v1.signature.SignatureCoder.decode(signed.tx.signature)
+    const recovered = await v1.signature.SignatureCoder.recover(decoded, payload, this.provider)
 
     // Save all signature parts
-    const signatures = v2.signature.signaturesOf(recovered.config.tree)
+    const signatures = v1.signature.SignatureCoder.signaturesOf(recovered.config)
     await Promise.all(signatures.map((sig) => this.saveSubdigest({
       wallet: address,
       subdigest: recovered.subdigest,
@@ -527,7 +523,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     const coder = universal.coderFor(fromVersion)
     if (!currentConfig) throw new Error("Invalid from config")
-    if (!coder.config.isWalletConfig(currentConfig)) throw new Error("Invalid from config")
+    if (!coder.config.isWalletConfig(currentConfig)) throw new Error("Invalid from config - version")
 
     // We need to process every migration candidate individually
     // and see which one has enough signers to be valid (for the current config)

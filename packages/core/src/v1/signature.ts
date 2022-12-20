@@ -153,10 +153,10 @@ export async function recoverSignature(
         throw new Error(`Invalid dynamic signature part ${s.address}`)
       }
 
-      return { address: s.address, weight: s.weight }
+      return { address: s.address, weight: s.weight, signature: s.signature }
     } else {
       const address = recoverSigner(subdigest, s.signature)
-      return { address, weight: s.weight }
+      return { address, weight: s.weight, signature: s.signature }
     }
   }))
 
@@ -262,5 +262,11 @@ export const SignatureCoder: base.SignatureCoder<
 
   hashSetImageHash: function (_imageHash: string): string {
     throw new Error('Image hash not supported on v1')
+  },
+
+  signaturesOf(config: WalletConfig): { address: string, signature: string }[] {
+    return config.signers
+      .filter((s) => s.signature !== undefined)
+      .map((s) => ({ address: s.address, signature: s.signature! }))
   }
 }

@@ -10,7 +10,7 @@ import { context, migrator } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
 import { tracker, trackers } from '@0xsequence/sessions'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { commons, v2 } from '@0xsequence/core'
+import { commons, v1, v2 } from '@0xsequence/core'
 import chaiAsPromised from 'chai-as-promised'
 
 const { expect } = chai.use(chaiAsPromised)
@@ -18,6 +18,9 @@ const { expect } = chai.use(chaiAsPromised)
 describe('Account', () => {
   let provider1: ethers.providers.JsonRpcProvider
   let provider2: ethers.providers.JsonRpcProvider
+
+  let signer1: ethers.Signer
+  let signer2: ethers.Signer
 
   let contexts: context.VersionedContext
   let networks: NetworkConfig[]
@@ -49,8 +52,8 @@ describe('Account', () => {
       relayer: new LocalRelayer(provider2.getSigner())
     }]
 
-    const signer1 = provider1.getSigner()
-    const signer2 = provider2.getSigner()
+    signer1 = provider1.getSigner()
+    signer2 = provider2.getSigner()
 
     contexts = await utils.context.deploySequenceContexts(signer1)
     const context2 = await utils.context.deploySequenceContexts(signer2)
@@ -475,6 +478,53 @@ describe('Account', () => {
   })
 
   describe('Migrated wallet', () => {
-    
+    it('Should migrate undeployed account', async () => {
+      // Old account may be an address that's not even deployed
+      const signer1 = ethers.Wallet.createRandom()
+
+      const config = v1.config.ConfigCoder.fromSimple({
+        threshold: 1,
+        checkpoint: 0,
+        signers: [{
+          address: signer1.address,
+          weight: 1
+        }]
+      })
+
+      const imageHash = v1.config.ConfigCoder.imageHashOf(config)
+      const address = commons.context.addressOf(contexts[1], imageHash)
+
+      // Sessions server MUST have information about the old wallet
+      // in production this is retrieved from SequenceUtils contract
+      await tracker.saveCounterFactualWallet({ imageHash, context: [contexts[1]] })
+      await tracker.saveWalletConfig({ config })
+
+      // Importing the account should work!
+      const account = new Account({ ...defaultArgs, address, orchestrator: new Orchestrator([signer1]) })
+
+      const status = await account.status(0)
+      expect(status.fullyMigrated).to.be.false
+      expect(status.onChain.deployed).to.be.false
+      expect(status.onChain.imageHash).to.equal(imageHash)
+      expect(status.imageHash).to.equal(imageHash)
+
+      // Sending a transaction should fail (not fully migrated)
+      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
+
+      // Should sign migration using the account
+      await account.signAllMigrations()
+
+      const status2 = await account.status(0)
+      expect(status2.fullyMigrated).to.be.true
+      expect(status2.onChain.deployed).to.be.false
+
+      // Should send a transaction
+      const tx = await account.sendTransaction([], networks[0].chainId)
+      expect(tx).to.not.be.undefined
+
+      const status3 = await account.status(0)
+      expect(status3.fullyMigrated).to.be.true
+      expect(status3.onChain.deployed).to.be.true
+    })
   })
 })
