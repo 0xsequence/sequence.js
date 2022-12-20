@@ -479,8 +479,48 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         }]
       }
     },
-    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: WalletConfig; kind: "first" | "later" | undefined}  {
-      throw new Error("Function not implemented.")
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newImageHash: string; kind: "first" | "later" | undefined}  {
+      const module = new Interface(walletContracts.mainModuleUpgradable.abi)
+
+      if (tx.transactions.length !== 1) {
+        throw new Error('Invalid transaction bundle, expected 1 transaction')
+      }
+
+      const data = tx.transactions[0].data
+      if (!data) {
+        throw new Error('Invalid transaction bundle, expected data')
+      }
+
+      const decoded = module.decodeFunctionData(module.getFunction('updateImageHash'), data)
+      if (!decoded) {
+        throw new Error('Invalid transaction bundle, expected valid data')
+      }
+
+      if (tx.transactions[0].to !== tx.entrypoint) {
+        throw new Error('Invalid transaction bundle, expected to be sent to entrypoint')
+      }
+
+      if (tx.transactions[0].delegateCall) {
+        throw new Error('Invalid transaction bundle, expected not to be a delegateCall')
+      }
+
+      if (!tx.transactions[0].revertOnError) {
+        throw new Error('Invalid transaction bundle, expected revertOnError')
+      }
+
+      if (!ethers.constants.Zero.eq(tx.transactions[0]?.value ?? 0)) {
+        throw new Error('Invalid transaction bundle, expected value to be 0')
+      }
+
+      if (!ethers.constants.Zero.eq(tx.transactions[0]?.gasLimit ?? 0)) {
+        throw new Error('Invalid transaction bundle, expected value to be 0')
+      }
+
+      return {
+        address: tx.entrypoint,
+        newImageHash: decoded[0],
+        kind: undefined
+      }
     }
   },
 
