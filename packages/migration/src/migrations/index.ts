@@ -1,5 +1,6 @@
 import { commons } from "@0xsequence/core"
 import { VersionedContext } from "../context"
+import { UnsignedMigration } from "../migrator"
 import { Migration_v1v2 } from "./migration_01_02"
 
 //                                 = uint160(keccak256("org.sequence.sdk.migration.space.nonce"))
@@ -15,7 +16,7 @@ export interface Migration<
     address: string,
     contexts: VersionedContext,
     newConfig: P | C
-  ) => commons.transaction.TransactionBundle
+  ) => UnsignedMigration
 
   decodeTransaction: (
     tx: commons.transaction.TransactionBundle,

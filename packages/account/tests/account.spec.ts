@@ -473,4 +473,8 @@ describe('Account', () => {
       })
     })
   })
+
+  describe('Migrated wallet', () => {
+    
+  })
 })
