@@ -64,6 +64,10 @@ export interface SignatureCoder<
   hashSetImageHash: (
     imageHash: string
   ) => string
+
+  signaturesOf: (
+    config: Y,
+  ) => { address: string, signature: string }[]
 }
 
 export function subdigestOf(payload: SignedPayload) {

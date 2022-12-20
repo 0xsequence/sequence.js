@@ -7,7 +7,8 @@ import { commons } from '..'
 
 export type AddressMember = {
   weight: ethers.BigNumberish,
-  address: string
+  address: string,
+  signature?: string
 }
 
 export type WalletConfig = commons.config.Config & {
@@ -110,7 +111,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         transactions
       }
     },
-    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newConfig: WalletConfig; kind: "first" | "later" | undefined}  {
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newImageHash: string; kind: "first" | "later" | undefined}  {
       throw new Error("Function not implemented.")
     }
   },

@@ -29,7 +29,8 @@ export interface PresignedMigrationTracker {
     address: string,
     fromVersion: number,
     chainid: ethers.BigNumberish,
-    signed: SignedMigration
+    signed: SignedMigration,
+    contexts: VersionedContext
   ): Promise<void>
 }
 
@@ -66,15 +67,15 @@ export class Migrator {
     const versions = Object.values(this.contexts)
     const migs: SignedMigration[] = []
 
-    for (let i = 0; i < versions.length; i++) {
+    for (let i = 1; i < versions.length; i++) {
       const mig = await this.tracker.getMigration(address, fih, fversion, chainId)
       if (!mig) return { signedMigrations: migs, missing: true, lastImageHash: fih, lastVersion: fversion }
 
       migs.push(mig)
 
-      const migration = this.migrations[fversion + 1]
+      const migration = this.migrations[fversion]
       if (!migration) {
-        throw new Error(`No migration found for version ${fversion + 1}`)
+        throw new Error(`No migration found for version ${fversion}`)
       }
 
       const decoded = migration.decodeTransaction(mig.tx, this.contexts)
@@ -82,8 +83,8 @@ export class Migrator {
         throw new Error(`Migration transaction address does not match expected address`)
       }
 
-      fih = migration.configCoder.imageHashOf(decoded.newConfig)
-      fversion = decoded.newConfig.version
+      fih = decoded.newImageHash
+      fversion += 1
     }
 
     return { signedMigrations: migs, missing: false, lastImageHash: fih, lastVersion: fversion }
@@ -91,19 +92,18 @@ export class Migrator {
 
   async signMissingMigrations(
     address: string,
-    existing: commons.transaction.SignedTransactionBundle[],
+    fromVersion: number,
     wallet: Wallet,
   ): Promise<SignedMigration[]> {
     const versions = Object.values(this.contexts)
 
     const result: SignedMigration[] = []
 
-    for (let i = existing.length; i < versions.length; i++) {
-      const version = i + 1
-      const migration = this.migrations[version]
+    for (let i = fromVersion; i < versions.length; i++) {
+      const migration = this.migrations[i]
 
       if (!migration) {
-        throw new Error(`No migration found for version ${version}`)
+        throw new Error(`No migration found for version ${i}`)
       }
 
       const unsignedMigration = migration.buildTransaction(address, this.contexts, wallet.config)

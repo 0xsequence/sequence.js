@@ -23,7 +23,7 @@ export interface Migration<
     contexts: VersionedContext
   ) => {
     address: string,
-    newConfig: C
+    newImageHash: string
   }
 
   configCoder: commons.config.ConfigCoder<C>
