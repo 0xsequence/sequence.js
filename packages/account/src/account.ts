@@ -526,6 +526,27 @@ export class Account {
     }
   }
 
+  async signMigrations(chainId: ethers.BigNumberish): Promise<number> {
+    const status = await this.status(chainId)
+    if (status.fullyMigrated) return 0
+
+    const wallet = this.walletForStatus(chainId, status)
+    const signed = await this.migrator.signMissingMigrations(
+      this.address,
+      status.signedMigrations.map((s) => s.tx),
+      wallet
+    )
+
+    await Promise.all(signed.map((migration) => this.tracker.saveMigration(
+      this.address,
+      migration.fromVersion,
+      chainId,
+      migration
+    )))
+
+    return signed.length
+  }
+
   async sendSignedTransactions(
     signedBundle: commons.transaction.IntendedTransactionBundle,
     chainId: ethers.BigNumberish,

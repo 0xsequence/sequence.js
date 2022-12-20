@@ -4,6 +4,7 @@ import { ethers } from "ethers"
 import { Migration } from "."
 import { walletContracts } from "../../../0xsequence/src/abi"
 import { VersionedContext } from "../context"
+import { UnsignedMigration } from "../migrator"
 
 export class Migration_v1v2 implements Migration<
   v1.config.WalletConfig,
@@ -18,7 +19,7 @@ export class Migration_v1v2 implements Migration<
     address: string,
     contexts: VersionedContext,
     newConfig: v1.config.WalletConfig | v2.config.WalletConfig
-  ): commons.transaction.TransactionBundle {
+  ): UnsignedMigration {
     // If new config is not v2, then we need to convert it to v2
     if (!v2.config.ConfigCoder.isWalletConfig(newConfig)) {
       const v2Config = v2.config.toWalletConfig({
@@ -38,7 +39,7 @@ export class Migration_v1v2 implements Migration<
 
     const updateBundle = v2.config.ConfigCoder.update.buildTransaction(address, newConfig, context, 'first')
 
-    return {
+    const tx = {
       entrypoint: address,
       transactions: [
         {
@@ -53,6 +54,14 @@ export class Migration_v1v2 implements Migration<
         },
         ...updateBundle.transactions
       ]
+    }
+
+    return {
+      tx,
+      fromVersion: this.version - 1,
+      toVersion: this.version,
+      toConfig: newConfig,
+      toImageHash: v2.config.ConfigCoder.imageHashOf(newConfig)
     }
   }
 
