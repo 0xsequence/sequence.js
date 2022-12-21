@@ -200,7 +200,7 @@ export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: 
   ]
 }
 
-export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumberish {
+export function encodeNonce(space: BigNumberish, nonce: BigNumberish): ethers.BigNumber {
   const bspace = ethers.BigNumber.from(space)
   const bnonce = ethers.BigNumber.from(nonce)
 

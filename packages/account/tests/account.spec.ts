@@ -455,9 +455,10 @@ describe('Account', () => {
 
           const ogOnchainImageHash = await account.status(0).then((s) => s.onChain.imageHash)
           const imageHash1 = await account.status(0).then((s) => s.imageHash)
-          const config2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
 
+          const config2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
           await account.updateConfig(config2)
+
           const status1 = await account.status(networks[0].chainId)
           const status2 = await account.status(networks[1].chainId)
 
@@ -482,14 +483,17 @@ describe('Account', () => {
       // Old account may be an address that's not even deployed
       const signer1 = ethers.Wallet.createRandom()
 
-      const config = v1.config.ConfigCoder.fromSimple({
+      const simpleConfig = {
         threshold: 1,
         checkpoint: 0,
         signers: [{
           address: signer1.address,
           weight: 1
         }]
-      })
+      }
+
+      const config = v1.config.ConfigCoder.fromSimple(simpleConfig)
+      const configv2 = v2.config.ConfigCoder.fromSimple(simpleConfig)
 
       const imageHash = v1.config.ConfigCoder.imageHashOf(config)
       const address = commons.context.addressOf(contexts[1], imageHash)
@@ -507,6 +511,7 @@ describe('Account', () => {
       expect(status.onChain.deployed).to.be.false
       expect(status.onChain.imageHash).to.equal(imageHash)
       expect(status.imageHash).to.equal(imageHash)
+      expect(status.version).to.equal(1)
 
       // Sending a transaction should fail (not fully migrated)
       await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
@@ -517,14 +522,22 @@ describe('Account', () => {
       const status2 = await account.status(0)
       expect(status2.fullyMigrated).to.be.true
       expect(status2.onChain.deployed).to.be.false
+      expect(status2.onChain.imageHash).to.equal(imageHash)
+      expect(status2.onChain.version).to.equal(1)
+      expect(status2.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status2.version).to.equal(2)
 
-      // Should send a transaction
+      // Send a transaction
       const tx = await account.sendTransaction([], networks[0].chainId)
       expect(tx).to.not.be.undefined
 
-      const status3 = await account.status(0)
+      const status3 = await account.status(networks[0].chainId)
       expect(status3.fullyMigrated).to.be.true
       expect(status3.onChain.deployed).to.be.true
+      expect(status3.onChain.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status3.onChain.version).to.equal(2)
+      expect(status3.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status3.version).to.equal(2)
     })
   })
 })

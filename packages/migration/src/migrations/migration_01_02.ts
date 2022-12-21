@@ -1,7 +1,8 @@
 import { commons, v1, v2 } from "@0xsequence/core"
+import { encodeNonce } from "@0xsequence/transactions"
 import { ethers } from "ethers"
 
-import { Migration } from "."
+import { Migration, MIGRATION_NONCE_SPACE } from "."
 import { walletContracts } from "../../../0xsequence/src/abi"
 import { VersionedContext } from "../context"
 import { UnsignedMigration } from "../migrator"
@@ -41,6 +42,7 @@ export class Migration_v1v2 implements Migration<
 
     const tx = {
       entrypoint: address,
+      nonce: encodeNonce(MIGRATION_NONCE_SPACE, 0),
       transactions: [
         {
           to: address,
@@ -76,6 +78,10 @@ export class Migration_v1v2 implements Migration<
 
     if (tx.transactions.length < 2) {
       throw new Error('Invalid transaction bundle size')
+    }
+
+    if (!tx.nonce || !encodeNonce(MIGRATION_NONCE_SPACE, 0).eq(tx.nonce)) {
+      throw new Error('Invalid transaction bundle nonce')
     }
 
     if(
