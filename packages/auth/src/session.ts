@@ -135,7 +135,7 @@ export class Session {
   async getAPIClient(tryAuth: boolean = true): Promise<SequenceAPIClient> {
     if (!this.apiClient) {
       const url = this.sequenceApiUrl
-      if (!url) throw Error('No chaind url')
+      if (!url) throw Error('No sequence api url')
 
       const jwtAuth = (await this.getJWT(tryAuth)).token
       this.apiClient = new SequenceAPIClient(url, jwtAuth)
@@ -175,7 +175,7 @@ export class Session {
 
   private async getJWT(tryAuth: boolean): Promise<SessionJWT> {
     const url = this.sequenceApiUrl
-    if (!url) throw Error('No chaind url')
+    if (!url) throw Error('No sequence api url')
 
     // check if we already have or are waiting for a token
     if (this._jwt) {
