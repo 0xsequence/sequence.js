@@ -4,13 +4,11 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { SignedTransactions, Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 import { isBigNumberish, Optionals } from '@0xsequence/utils'
-import { Provider } from "@ethersproject/providers"
-
 
 export interface BaseRelayerOptions {
   bundleCreation?: boolean
   creationGasLimit?: ethers.BigNumberish
-  provider?: Provider
+  provider?: ethers.providers.Provider
 }
 
 export function isBaseRelayerOptions(obj: any): obj is BaseRelayerOptions {
@@ -43,23 +41,18 @@ export class BaseRelayer {
     return (await this.provider.getCode(walletAddress)) !== '0x'
   }
 
-  prepareWalletDeploy(
-    config: WalletConfig,
-    context: WalletContext
-  ): { to: string, data: string} {
+  prepareWalletDeploy(config: WalletConfig, context: WalletContext): { to: string; data: string } {
     const factoryInterface = new utils.Interface(walletContracts.factory.abi)
 
     return {
       to: context.factory,
-      data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'),
-        [context.mainModule, imageHash(config)]
-      )
+      data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'), [context.mainModule, imageHash(config)])
     }
   }
 
   async prependWalletDeploy(
     signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>
-  ): Promise<{ to: string, execute: { transactions: Transaction[], nonce: ethers.BigNumber, signature: string } }> {
+  ): Promise<{ to: string; execute: { transactions: Transaction[]; nonce: ethers.BigNumber; signature: string } }> {
     const { config, context, transactions, nonce, signature } = signedTransactions
     const walletAddress = addressOf(config, context)
     const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
@@ -89,13 +82,11 @@ export class BaseRelayer {
               gasLimit: ethers.constants.Zero,
               to: walletAddress,
               value: ethers.constants.Zero,
-              data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), 
-                [
-                  sequenceTxAbiEncode(transactions),
-                  nonce,
-                  await encodedSignature
-                ]
-              )
+              data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+                sequenceTxAbiEncode(transactions),
+                nonce,
+                await encodedSignature
+              ])
             }
           ],
           nonce: ethers.constants.Zero,
@@ -119,7 +110,8 @@ export class BaseRelayer {
     context: WalletContext,
     signature: string | Promise<string> | DecodedSignature | Promise<DecodedSignature>,
     ...transactions: Transaction[]
-  ): Promise<{ to: string, data: string  }> { //, gasLimit?: ethers.BigNumberish }> {
+  ): Promise<{ to: string; data: string }> {
+    //, gasLimit?: ethers.BigNumberish }> {
     const nonce = readSequenceNonce(...transactions)
     if (!nonce) {
       throw new Error('Unable to prepare transactions without a defined nonce')
@@ -127,7 +119,8 @@ export class BaseRelayer {
     const { to, execute } = await this.prependWalletDeploy({ config, context, transactions, nonce, signature })
     const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
     return {
-      to, data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+      to,
+      data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
         sequenceTxAbiEncode(execute.transactions),
         execute.nonce,
         execute.signature
