@@ -6,7 +6,7 @@ export function deployContract(signer: ethers.Signer, artifact: Artifact, ...arg
   return factory.deploy(...args)
 }
 
-export function randomBignumber(
+export function randomBigNumber(
   min: ethers.BigNumberish = 0,
   max: ethers.BigNumberish = ethers.constants.MaxUint256
 ): ethers.BigNumber {
