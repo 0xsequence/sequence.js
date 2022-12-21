@@ -4,13 +4,12 @@ import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
 import { SignedTransactions, Transaction, sequenceTxAbiEncode, readSequenceNonce } from '@0xsequence/transactions'
 import { isBigNumberish, Optionals } from '@0xsequence/utils'
-import { Provider } from "@ethersproject/providers"
 
 
 export interface BaseRelayerOptions {
   bundleCreation?: boolean
   creationGasLimit?: ethers.BigNumberish
-  provider?: Provider
+  provider?: ethers.providers.Provider
 }
 
 export function isBaseRelayerOptions(obj: any): obj is BaseRelayerOptions {
