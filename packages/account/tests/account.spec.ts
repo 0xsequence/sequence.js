@@ -519,7 +519,7 @@ describe('Account', () => {
       // Should sign migration using the account
       await account.signAllMigrations()
 
-      const status2 = await account.status(0)
+      const status2 = await account.status(networks[0].chainId)
       expect(status2.fullyMigrated).to.be.true
       expect(status2.onChain.deployed).to.be.false
       expect(status2.onChain.imageHash).to.equal(imageHash)
@@ -538,6 +538,18 @@ describe('Account', () => {
       expect(status3.onChain.version).to.equal(2)
       expect(status3.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
       expect(status3.version).to.equal(2)
+
+      // Send another transaction on another chain
+      const tx2 = await account.sendTransaction([], networks[1].chainId)
+      expect(tx2).to.not.be.undefined
+
+      const status4 = await account.status(networks[1].chainId)
+      expect(status4.fullyMigrated).to.be.true
+      expect(status4.onChain.deployed).to.be.true
+      expect(status4.onChain.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status4.onChain.version).to.equal(2)
+      expect(status4.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status4.version).to.equal(2)
     })
   })
 })
