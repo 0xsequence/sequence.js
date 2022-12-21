@@ -9,6 +9,7 @@ importers:
       '@0xsequence/auth': workspace:*
       '@0xsequence/config': workspace:*
       '@0xsequence/deployer': workspace:*
+      '@0xsequence/estimator': workspace:*
       '@0xsequence/guard': workspace:*
       '@0xsequence/indexer': workspace:*
       '@0xsequence/metadata': workspace:*
@@ -16,6 +17,7 @@ importers:
       '@0xsequence/network': workspace:*
       '@0xsequence/provider': workspace:*
       '@0xsequence/relayer': workspace:*
+      '@0xsequence/simulator': workspace:*
       '@0xsequence/transactions': workspace:*
       '@0xsequence/utils': workspace:*
       '@0xsequence/wallet': workspace:*
@@ -60,6 +62,7 @@ importers:
       '@0xsequence/auth': link:packages/auth
       '@0xsequence/config': link:packages/config
       '@0xsequence/deployer': link:packages/deployer
+      '@0xsequence/estimator': link:packages/estimator
       '@0xsequence/guard': link:packages/guard
       '@0xsequence/indexer': link:packages/indexer
       '@0xsequence/metadata': link:packages/metadata
@@ -67,6 +70,7 @@ importers:
       '@0xsequence/network': link:packages/network
       '@0xsequence/provider': link:packages/provider
       '@0xsequence/relayer': link:packages/relayer
+      '@0xsequence/simulator': link:packages/simulator
       '@0xsequence/transactions': link:packages/transactions
       '@0xsequence/utils': link:packages/utils
       '@0xsequence/wallet': link:packages/wallet
