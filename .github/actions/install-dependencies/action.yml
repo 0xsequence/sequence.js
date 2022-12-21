@@ -32,4 +32,5 @@ runs:
         node-version: 18
 
     - name: Install dependencies
+      shell: bash
       run: pnpm install --frozen-lockfile
