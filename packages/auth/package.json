@@ -11,9 +11,9 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat > /dev/null' ",
-    "start:hardhat": "pnpm hardhat node --port 9546",
+    "start:hardhat": "hardhat node --port 9546",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
