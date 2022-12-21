@@ -1,17 +1,17 @@
 import { v1, v2 } from "@0xsequence/core"
 import { ethers } from "ethers"
-import { maxForBits, randomBignumber, randomBool } from "../utils"
+import { maxForBits, randomBigNumber, randomBool } from "../utils"
 
 export function genRandomV1Config(
-  threshold: ethers.BigNumberish = randomBignumber(0, maxForBits(16)),
-  numSigners: ethers.BigNumberish = randomBignumber(1, 24)
+  threshold: ethers.BigNumberish = randomBigNumber(0, maxForBits(16)),
+  numSigners: ethers.BigNumberish = randomBigNumber(1, 24)
 ): v1.config.WalletConfig {
   const signers: v1.config.AddressMember[] = []
 
   for (let i = ethers.constants.Zero; i.lt(numSigners); i = i.add(1)) {
     signers.push({
       address: ethers.Wallet.createRandom().address,
-      weight: randomBignumber(0, maxForBits(8))
+      weight: randomBigNumber(0, maxForBits(8))
     })
   }
 
@@ -19,17 +19,17 @@ export function genRandomV1Config(
 }
 
 export function genRandomV2Config(
-  threshold: ethers.BigNumberish = randomBignumber(0, maxForBits(16)),
-  checkpoint: ethers.BigNumberish = randomBignumber(0, maxForBits(32)),
-  numSigners: ethers.BigNumberish = randomBignumber(1, 24),
-  numSubdigests: ethers.BigNumberish = randomBignumber(0, 24),
+  threshold: ethers.BigNumberish = randomBigNumber(0, maxForBits(16)),
+  checkpoint: ethers.BigNumberish = randomBigNumber(0, maxForBits(32)),
+  numSigners: ethers.BigNumberish = randomBigNumber(1, 24),
+  numSubdigests: ethers.BigNumberish = randomBigNumber(0, 24),
   useMerkleTopology: boolean = randomBool()
 ): v2.config.WalletConfig {
   const signers: v2.config.SignerLeaf[] = []
   for (let i = ethers.constants.Zero; i.lt(numSigners); i = i.add(1)) {
     signers.push({
       address: ethers.Wallet.createRandom().address,
-      weight: randomBignumber(0, maxForBits(8))
+      weight: randomBigNumber(0, maxForBits(8))
     })
   }
 
