@@ -58,7 +58,7 @@ export interface SignatureCoder<
 
   chainSignatures: (
     main: T | Z | ethers.BytesLike,
-    sufixes: (T | Z | ethers.BytesLike)[]
+    suffixes: (T | Z | ethers.BytesLike)[]
   ) => string
 
   hashSetImageHash: (
