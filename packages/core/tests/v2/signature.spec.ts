@@ -418,7 +418,7 @@ describe.only('v2 signature utils', () => {
 
       expect(decoded).to.deep.equal({
         version: 2,
-        type: SignatureType.NoChaindDynamic,
+        type: SignatureType.NoChainIdDynamic,
         decoded: {
           threshold: 1,
           checkpoint: 1667902589,
