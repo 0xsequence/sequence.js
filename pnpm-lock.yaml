@@ -202,6 +202,7 @@ importers:
       '@0xsequence/multicall': ^0.43.7
       '@0xsequence/network': ^0.43.7
       '@0xsequence/utils': ^0.43.7
+      '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
       '@0xsequence/abi': link:../abi
@@ -209,6 +210,7 @@ importers:
       '@0xsequence/network': link:../network
       '@0xsequence/utils': link:../utils
     devDependencies:
+      '@0xsequence/wallet-contracts': 1.10.0
       ethers: 5.7.2
 
   packages/deployer:
@@ -3069,6 +3071,14 @@ packages:
   /@tootallnate/once/1.1.2:
     resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
     engines: {node: '>= 6'}
+    dev: true
+
+  /@trufflesuite/bigint-buffer/1.1.10:
+    resolution: {integrity: sha512-pYIQC5EcMmID74t26GCC67946mgTJFiLXOT/BYozgrd4UEY2JHEGLhWi9cMiQCt5BSqFEvKkCHNnoj82SRjiEw==}
+    engines: {node: '>= 14.0.0'}
+    requiresBuild: true
+    dependencies:
+      node-gyp-build: 4.4.0
     dev: true
 
   /@tsconfig/node10/1.0.9:
@@ -7581,6 +7591,7 @@ packages:
     resolution: {integrity: sha512-WPQeD50AMGtWkHsexUT3XfHDoz0NI0NklUbIqVtRQhC0zfPypHr12T3TlnnylpfP6ATe8IJMBX/XARMM8B22BQ==}
     hasBin: true
     dependencies:
+      '@trufflesuite/bigint-buffer': 1.1.10
       '@types/bn.js': 5.1.1
       '@types/lru-cache': 5.1.1
       '@types/seedrandom': 3.0.1
@@ -7588,6 +7599,9 @@ packages:
       abstract-leveldown: 7.2.0
       async-eventemitter: 0.2.4
       emittery: 0.10.0
+      keccak: 3.0.2
+      leveldown: 6.1.0
+      secp256k1: 4.0.3
     optionalDependencies:
       bufferutil: 4.0.5
       utf-8-validate: 5.0.7
@@ -9321,7 +9335,7 @@ packages:
     dependencies:
       inherits: 2.0.4
       level-errors: 1.0.5
-      readable-stream: 1.0.34
+      readable-stream: 1.1.14
       xtend: 4.0.2
     dev: true
 
@@ -9356,6 +9370,16 @@ packages:
     dependencies:
       browser-level: 1.0.1
       classic-level: 1.2.0
+    dev: true
+
+  /leveldown/6.1.0:
+    resolution: {integrity: sha512-8C7oJDT44JXxh04aSSsfcMI8YiaGRhOFI9/pMEL7nWJLVsWajDPTRxsSHTM2WcTVY5nXM+SuRHzPPi0GbnDX+w==}
+    engines: {node: '>=10.12.0'}
+    requiresBuild: true
+    dependencies:
+      abstract-leveldown: 7.2.0
+      napi-macros: 2.0.0
+      node-gyp-build: 4.5.0
     dev: true
 
   /levelup/1.3.9:
@@ -10161,6 +10185,11 @@ packages:
   /node-forge/1.3.1:
     resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
     engines: {node: '>= 6.13.0'}
+    dev: true
+
+  /node-gyp-build/4.4.0:
+    resolution: {integrity: sha512-amJnQCcgtRVw9SvoebO3BKGESClrfXGCUTX9hSn1OuGQTQBOZmVd0Z0OlecpuRksKvbsUqALE8jls/ErClAPuQ==}
+    hasBin: true
     dev: true
 
   /node-gyp-build/4.5.0:
