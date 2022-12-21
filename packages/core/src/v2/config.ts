@@ -276,13 +276,13 @@ export function topologyToMembers(tree: Topology): SimpleConfigMember[] {
   ]
 }
 
-export function hasUknownNodes(tree: Topology): boolean {
+export function hasUnknownNodes(tree: Topology): boolean {
   if (isNodeLeaf(tree)) {
     return true
   }
 
   if (isNode(tree)) {
-    return hasUknownNodes(tree.left) || hasUknownNodes(tree.right)
+    return hasUnknownNodes(tree.left) || hasUnknownNodes(tree.right)
   }
 
   return false
