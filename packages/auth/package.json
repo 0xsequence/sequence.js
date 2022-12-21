@@ -31,6 +31,7 @@
     "ethers": ">=5.5"
   },
   "devDependencies": {
+    "@0xsequence/wallet-contracts": "1.10.0",
     "concurrently": "^7.5.0",
     "ethers": "^5.7.2",
     "hardhat": "^2.12.2",
