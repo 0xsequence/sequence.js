@@ -5,7 +5,7 @@ import { AddressMember, WalletConfig } from './config'
 import { isValidSignature, recoverSigner } from "../commons/signer"
 
 export enum SignaturePartType {
-  EOASiganture = 0,
+  EOASignature = 0,
   Address = 1,
   DynamicSignature = 2
 }
@@ -60,7 +60,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
     const weight = bytes[i++]
 
     switch (type) {
-      case SignaturePartType.EOASiganture:
+      case SignaturePartType.EOASignature:
         signers.push({
           unrecovered: true,
           weight,
@@ -126,7 +126,7 @@ export function encodeSignature(signature: Signature | UnrecoveredSignature | et
 
     return ethers.utils.solidityPack(
       ['uint8', 'uint8', 'bytes'], 
-      [SignaturePartType.EOASiganture, s.weight, s.signature]
+      [SignaturePartType.EOASignature, s.weight, s.signature]
     )
   })
 
