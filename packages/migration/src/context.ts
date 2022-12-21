@@ -8,7 +8,7 @@ export function isValidVersionedContext(contexts: VersionedContext): boolean {
   const versions = Object.keys(context).length
 
   // check that all versions exist and are valid
-  for (let i = 1; i < versions; i++) {
+  for (let i = 1; i <= versions; i++) {
     const context = contexts[i]
     if (!context || context.version !== i) {
       return false
