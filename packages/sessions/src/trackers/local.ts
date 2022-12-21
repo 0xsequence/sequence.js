@@ -530,6 +530,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const candidates = await Promise.all(subdigests.map(async (subdigest) => {
       const payload = await this.payloadOfSubdigest({ subdigest })
       if (!payload || !payload.message) return undefined
+      if (!ethers.BigNumber.from(chainId).eq(payload.chainid)) return undefined
 
       const signers = coder.config.signersOf(currentConfig as any)
 
