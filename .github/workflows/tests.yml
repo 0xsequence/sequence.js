@@ -77,7 +77,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'pnpm'
       - run: pnpm install
       - run: pnpm dev && cd packages/0xsequence/ && pnpm test
 
