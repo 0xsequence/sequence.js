@@ -33,62 +33,53 @@ jobs:
       - run: pnpm install
       - run: pnpm dev && pnpm typecheck
 
-  # lint:
-  #   name: Run lint
-  #   runs-on: ubuntu-latest
-  #   needs: [install]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18
-  #     - uses: actions/cache@v3
-  #       id: pnpm-cache
-  #       with:
-  #         path: |
-  #           node_modules
-  #           */*/node_modules
-  #           ~/.cache/puppeteer
-  #         key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/pnpm.lock') }}
-  #     - run: pnpm dev && pnpm lint
+  lint:
+    name: Run lint
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+     - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm dev && pnpm lint
 
-  # build:
-  #   name: Run build
-  #   runs-on: ubuntu-latest
-  #   needs: [install]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18
-  #     - uses: actions/cache@v3
-  #       id: pnpm-cache
-  #       with:
-  #         path: |
-  #           node_modules
-  #           */*/node_modules
-  #           ~/.cache/puppeteer
-  #         key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/pnpm.lock') }}
-  #     - run: pnpm dev && pnpm build
+  build:
+    name: Run build
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+     - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm dev && pnpm build
 
-  # tests-0xsequence:
-  #   name: Run 0xsequence tests
-  #   runs-on: ubuntu-latest
-  #   needs: [install]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18
-  #     - uses: actions/cache@v3
-  #       id: pnpm-cache
-  #       with:
-  #         path: |
-  #           node_modules
-  #           */*/node_modules
-  #           ~/.cache/puppeteer
-  #         key: ${{ runner.os }}-install-${{ hashFiles('**/package.json', '**/pnpm.lock') }}
-  #     - run: pnpm dev && cd packages/0xsequence/ && pnpm test
+  tests-0xsequence:
+    name: Run 0xsequence tests
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+     - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm dev && cd packages/0xsequence/ && pnpm test
 
   # tests-abi:
   #   name: Run abi tests
