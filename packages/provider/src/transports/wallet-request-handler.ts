@@ -808,8 +808,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 export interface WalletUserPrompter {
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
-  promptSignTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
-  promptSendTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
+  promptSignTransaction(txn: TransactionRequest, chainId?: number, options?: ConnectOptions): Promise<string>
+  promptSendTransaction(txn: TransactionRequest, chainId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
 }
 
