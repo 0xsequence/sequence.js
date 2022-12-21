@@ -9,7 +9,7 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000 tests/**/*.spec.ts",
+    "test": "NODE_OPTIONS='--loader tsx' mocha --timeout 60000 tests/**/*.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
