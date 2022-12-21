@@ -589,10 +589,10 @@ export function decodeChainedSignature(signature: ethers.BytesLike): Unrecovered
   return { ...main, suffix }
 }
 
-export function setImagehashStruct(imagehash: string) {
+export function setImageHashStruct(imageHash: string) {
   return ethers.utils.solidityPack(
     ['bytes32', 'bytes32'],
-    [ethers.utils.solidityKeccak256(['string'], ['SetImageHash(bytes32 imageHash)']), imagehash]
+    [ethers.utils.solidityKeccak256(['string'], ['SetImageHash(bytes32 imageHash)']), imageHash]
   )
 }
 
@@ -626,7 +626,7 @@ export async function recoverSignature(
     const recovered = await recoverSignature(sig, mutatedPayload, provider)
     result.unshift(recovered)
 
-    const nextMessage = setImagehashStruct(
+    const nextMessage = setImageHashStruct(
       imageHash(deepestConfigOfSignature(recovered))
     )
 
