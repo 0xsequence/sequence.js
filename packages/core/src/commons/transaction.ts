@@ -31,6 +31,7 @@ export interface TransactionResponse<R = any> extends EthersTransactionResponse 
 export type TransactionBundle = {
   entrypoint: string,
   transactions: Transaction[],
+  nonce?: BigNumberish
 }
 
 export type IntendedTransactionBundle = TransactionBundle & {
@@ -43,7 +44,7 @@ export type IntendedTransactionBundle = TransactionBundle & {
 
 export type SignedTransactionBundle = IntendedTransactionBundle & {
   signature: string,
-  nonce: BigNumberish,
+  nonce: BigNumberish
 }
 
 export type RelayReadyTransactionBundle = SignedTransactionBundle | IntendedTransactionBundle
@@ -199,26 +200,19 @@ export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
 export function fromTransactionish(
   wallet: string,
   transaction: Transactionish
-): { transactions: Transaction[], nonce?: ethers.BigNumberish } {
+): Transaction[] {
   if (Array.isArray(transaction)) {
     if (hasSequenceTransactions(transaction)) {
-      return { transactions: transaction }
+      return transaction
     } else {
       const stx = toSequenceTransactions(wallet, transaction)
-
-      // all nonces must be the same
-      const nonce = stx.length > 0 ? stx[0].nonce : undefined
-      if (stx.find(t => t.nonce !== nonce)) {
-        throw new Error('Mixed nonces on Transaction requests')
-      }
-
-      return { transactions: stx.map(t => t.transaction), nonce }
+      return stx.map(t => t.transaction)
     }
   } else if (isSequenceTransaction(transaction)) {
-    return { transactions: [transaction] }
+    return [transaction]
   } else {
     const stx = toSequenceTransaction(wallet, transaction).transaction
-    return { transactions: [] }
+    return []
   }
 }
 
