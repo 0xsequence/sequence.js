@@ -17,7 +17,7 @@ import {
   GuestModule__factory,
   SequenceUtils__factory,
   RequireFreshSigner__factory,
-} from '@0xsequence/wallet-contracts/gen/typechain'
+} from '@0xsequence/wallet-contracts'
 
 const deployWalletContextCache: WalletContext[] = []
 

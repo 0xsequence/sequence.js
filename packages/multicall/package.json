@@ -9,7 +9,8 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000 tests/**/*.spec.ts",
+    "test": "echo 'note, run local-test script instead, as test command is flakey'",
+    "local-test": "NODE_OPTIONS='--loader tsx' mocha --timeout 10000 tests/**/*.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "@types/web3-provider-engine": "^14.0.1",
     "eth-json-rpc-middleware": "^9.0.1",
     "ethers": "^5.7.2",
+    "ganache": "^7.5.0",
     "json-rpc-engine": "^6.1.0",
     "web3": "^1.8.1",
     "web3-provider-engine": "^16.0.4"

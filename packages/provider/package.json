@@ -9,8 +9,8 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "yarn test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test": "pnpm test:file tests/**/*.spec.ts",
+    "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -18,6 +18,7 @@
     "@0xsequence/auth": "^0.43.7",
     "@0xsequence/config": "^0.43.7",
     "@0xsequence/network": "^0.43.7",
+    "@0xsequence/relayer": "^0.43.7",
     "@0xsequence/transactions": "^0.43.7",
     "@0xsequence/utils": "^0.43.7",
     "@0xsequence/wallet": "^0.43.7",

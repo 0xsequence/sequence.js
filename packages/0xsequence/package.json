@@ -9,21 +9,21 @@
   "umd:main": "dist/0xsequence.umd.min.js",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "yarn test:concurrently 'yarn test:run'",
-    "test:run": "TS_NODE_PROJECT=../../tsconfig.test.json ava --serial --fail-fast --timeout 5m",
-    "test:only": "yarn test:run --match",
-    "test:watch": "yarn test:run --watch",
+    "test": "pnpm test:concurrently 'pnpm test:run'",
+    "test:run": "NODE_OPTIONS='--loader tsx' ava --serial --fail-fast --timeout 5m",
+    "test:only": "pnpm test:run --match",
+    "test:watch": "pnpm test:run --watch",
     "test:server": "webpack serve --config tests/webpack.config.js",
     "test:server2": "PORT=8888 webpack serve --config tests/webpack.config.js",
-    "test:concurrently": "concurrently -k --success first 'yarn test:server' 'yarn start:hardhat' 'yarn start:hardhat2'",
-    "start:hardhat": "yarn run hardhat node --hostname 0.0.0.0",
-    "start:hardhat:verbose": "yarn run hardhat --verbose node --hostname 0.0.0.0",
-    "start:hardhat2": "yarn run hardhat --config hardhat2.config.js node --hostname 0.0.0.0 --port 9545",
-    "start:hardhat2:verbose": "yarn run hardhat --config hardhat2.config.js --verbose node --hostname 0.0.0.0 --port 9545",
+    "test:concurrently": "concurrently -k --success first 'pnpm test:server' 'pnpm start:hardhat' 'pnpm start:hardhat2'",
+    "start:hardhat": "hardhat node --hostname 0.0.0.0",
+    "start:hardhat:verbose": "hardhat --verbose node --hostname 0.0.0.0",
+    "start:hardhat2": "hardhat --config hardhat2.config.js node --hostname 0.0.0.0 --port 9545",
+    "start:hardhat2:verbose": "hardhat --config hardhat2.config.js --verbose node --hostname 0.0.0.0 --port 9545",
     "start:ganache": "ganache --chain.chainId ${npm_package_config_ganacheChainID} --chain.networkId ${npm_package_config_ganacheChainID} --server.port ${npm_package_config_ganachePort} --miner.blockGasLimit ${npm_package_config_ganacheGasLimit} --miner.defaultGasPrice ${npm_package_config_ganacheGasPrice} --wallet.defaultBalance ${npm_package_config_etherBalance} --wallet.mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
-    "start:ganache:verbose": "yarn run start:ganache --verbose",
+    "start:ganache:verbose": "pnpm start:ganache --verbose",
     "start:ganache2": "ganache --chain.chainId 31338 --chain.networkId 31338 --server.port 9545 --miner.blockGasLimit ${npm_package_config_ganacheGasLimit} --miner.defaultGasPrice ${npm_package_config_ganacheGasPrice} --wallet.defaultBalance ${npm_package_config_etherBalance} --wallet.mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
-    "start:ganache2:verbose": "yarn run start:ganache2 --verbose",
+    "start:ganache2:verbose": "pnpm start:ganache2 --verbose",
     "stop:ganache": "ps aux | grep ganache | grep -v grep | awk '{print $2}' | xargs kill -9",
     "typecheck": "tsc --noEmit"
   },
@@ -47,6 +47,7 @@
     "ethers": ">=5.5"
   },
   "devDependencies": {
+    "@0xsequence/wallet-contracts": "1.10.0",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
     "ethers": "^5.7.2",
@@ -66,9 +67,7 @@
     "dist"
   ],
   "ava": {
-    "require": [
-      "ts-node/register"
-    ],
+    "require": [],
     "files": [
       "tests/**/*.spec.ts"
     ],

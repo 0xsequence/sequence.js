@@ -4,7 +4,7 @@ import webpackTestConfig from '../webpack.config'
 
 export const DEFAULT_PORT = 9999
 
-// NOTE: currently not in use, instead we run the server as a separate process via `yarn test:server`
+// NOTE: currently not in use, instead we run the server as a separate process via `pnpm test:server`
 
 export const createWebpackTestServer = async (port = DEFAULT_PORT) => {
   const testServer = new WebpackDevServer(
