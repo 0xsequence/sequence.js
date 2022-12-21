@@ -344,6 +344,7 @@ importers:
       '@0xsequence/network': ^0.43.7
       '@0xsequence/transactions': ^0.43.7
       '@0xsequence/utils': ^0.43.7
+      '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
       '@0xsequence/abi': link:../abi
@@ -352,6 +353,7 @@ importers:
       '@0xsequence/transactions': link:../transactions
       '@0xsequence/utils': link:../utils
     devDependencies:
+      '@0xsequence/wallet-contracts': 1.10.0
       ethers: 5.7.2
 
   packages/simulator:
