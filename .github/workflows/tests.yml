@@ -7,15 +7,7 @@ jobs:
     name: Install dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup-dependencies
 
   typecheck:
     name: Run typecheck
@@ -23,14 +15,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && pnpm typecheck
 
   lint:
@@ -39,14 +24,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && pnpm lint
 
   build:
@@ -55,14 +33,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && pnpm build
 
   tests-0xsequence:
@@ -71,13 +42,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/0xsequence/ && pnpm test
 
   tests-abi:
@@ -86,14 +51,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/abi/ && pnpm test
 
   tests-api:
@@ -102,14 +60,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/api/ && pnpm test
 
   tests-auth:
@@ -118,14 +69,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/auth/ && pnpm test
 
   tests-config:
@@ -134,14 +78,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/config/ && pnpm test
 
   tests-deployer:
@@ -150,14 +87,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/deployer/ && pnpm test
 
   tests-estimator:
@@ -166,14 +96,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/estimator/ && pnpm test
 
   tests-guard:
@@ -182,14 +105,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/guard/ && pnpm test
 
   tests-indexer:
@@ -198,14 +114,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/indexer/ && pnpm test
 
   tests-metadata:
@@ -214,14 +123,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/metadata/ && pnpm test
 
   tests-multicall:
@@ -230,14 +132,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/multicall/ && pnpm test
 
   tests-network:
@@ -246,14 +141,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/network/ && pnpm test
 
   tests-provider:
@@ -262,14 +150,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/provider/ && pnpm test
 
   tests-relayer:
@@ -278,14 +159,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/relayer/ && pnpm test
 
   tests-simulator:
@@ -294,14 +168,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/simulator/ && pnpm test
 
   tests-transactions:
@@ -310,14 +177,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/transactions/ && pnpm test
 
   tests-utils:
@@ -326,14 +186,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/utils/ && pnpm test
 
   tests-wallet:
@@ -342,14 +195,7 @@ jobs:
     needs: [install]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 7
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
+      - uses: ./.github/actions/setup-dependencies
       - run: pnpm dev && cd packages/wallet/ && pnpm test
 
   # coverage:
