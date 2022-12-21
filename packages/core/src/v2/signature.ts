@@ -8,7 +8,7 @@ import { hashSetImageHash } from "./chained"
 export enum SignatureType {
   Legacy = 0,
   Dynamic = 1,
-  NoChaindDynamic = 2,
+  NoChainIdDynamic = 2,
   Chained = 3
 }
 
@@ -325,7 +325,7 @@ export function encodeSigners(
     return {
       encoded: ethers.utils.solidityPack(
         ['uint8', 'uint16', 'uint32', 'bytes'],
-        [SignatureType.NoChaindDynamic, config.threshold, config.checkpoint, tree.encoded]
+        [SignatureType.NoChainIdDynamic, config.threshold, config.checkpoint, tree.encoded]
       ),
       weight: tree.weight
     }
@@ -536,8 +536,8 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
     case SignatureType.Dynamic:
       return { version: 2, type: SignatureType.Dynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
 
-    case SignatureType.NoChaindDynamic:
-      return { version: 2, type: SignatureType.NoChaindDynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
+    case SignatureType.NoChainIdDynamic:
+      return { version: 2, type: SignatureType.NoChainIdDynamic, decoded: decodeSignatureBody(bytes.slice(1)) }
 
     case SignatureType.Chained:
       return decodeChainedSignature(bytes)
@@ -606,7 +606,7 @@ export async function recoverSignature(
 
   // if payload chainid is 0 then it must be encoded with "no chainid" encoding
   // and if it is encoded with "no chainid" encoding then it must have chainid 0
-  if (signedPayload && ethers.constants.Zero.eq(signedPayload.chainid) !== (signature.type === SignatureType.NoChaindDynamic)) {
+  if (signedPayload && ethers.constants.Zero.eq(signedPayload.chainid) !== (signature.type === SignatureType.NoChainIdDynamic)) {
     throw new Error(`Invalid signature type-chainid combination: ${signature.type}-${signedPayload.chainid.toString()}`)
   }
 
@@ -680,7 +680,7 @@ export function encodeSignature(
 
       return encodeSignatureBody(body)
 
-    case SignatureType.NoChaindDynamic:
+    case SignatureType.NoChainIdDynamic:
     case SignatureType.Dynamic:
       return ethers.utils.solidityPack(
         ['uint8', 'bytes'],
