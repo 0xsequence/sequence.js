@@ -255,7 +255,7 @@ export const SignatureCoder: base.SignatureCoder<
 
   chainSignatures: (
     _main: Signature | UnrecoveredSignature | ethers.BytesLike,
-    _sufix: (Signature | UnrecoveredSignature | ethers.BytesLike)[]
+    _suffix: (Signature | UnrecoveredSignature | ethers.BytesLike)[]
   ): string => {
     throw new Error('Signature chaining not supported on v1')
   },
