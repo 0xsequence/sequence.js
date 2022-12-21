@@ -64,7 +64,12 @@ describe('Multicall integration', function () {
         networkId: ganache.chainId
       },
       mnemonic: 'ripple axis someone ridge uniform wrist prosper there frog rate olympic knee',
-      accounts: accounts
+      accounts: accounts,
+      logging: {
+        verbose: false,
+        debug: false,
+        logger: undefined
+      },
     })
 
     // TODO: use hardhat instead like in wallet/wallet.spec.ts

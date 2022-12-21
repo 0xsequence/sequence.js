@@ -9,7 +9,8 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "NODE_OPTIONS='--loader tsx' mocha --timeout 60000 tests/**/*.spec.ts",
+    "test": "echo 'note, run local-test script instead, as test command is flakey'",
+    "local-test": "NODE_OPTIONS='--loader tsx' mocha --timeout 10000 tests/**/*.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
