@@ -1,11 +1,12 @@
 import { ethers } from "ethers"
-import { commons } from "@0xsequence/core"
+import { commons, v2 } from "@0xsequence/core"
 import { isSignerStatusSigned, Orchestrator, Status } from "@0xsequence/signhub"
 import { Deferrable, subDigestOf } from "@0xsequence/utils"
 import { FeeQuote, Relayer } from "@0xsequence/relayer"
 import { walletContracts } from '@0xsequence/abi'
 
 import { resolveArrayProperties } from "./utils"
+import { decodeNonce } from "@0xsequence/transactions"
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -236,13 +237,13 @@ export class Wallet<
       throw new Error(`Invalid entrypoint: ${bundle.entrypoint} !== ${this.address}`)
     }
 
-    return this.signTransactions(bundle.transactions)
+    return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async signTransactions(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SignedTransactionBundle> {
+  async signTransactions(txs: Deferrable<commons.transaction.Transactionish>, nonce?: ethers.BigNumberish): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
 
-    const { nonce, transactions } = commons.transaction.fromTransactionish(this.address, transaction)
+    const transactions = commons.transaction.fromTransactionish(this.address, transaction)
 
     let defaultedNonce = nonce
     if (defaultedNonce === undefined) {
@@ -276,9 +277,10 @@ export class Wallet<
 
   async sendTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
+    nonce?: ethers.BigNumberish,
     quote?: FeeQuote
   ): Promise<ethers.providers.TransactionResponse> {
-    const signed = await this.signTransactions(txs)
+    const signed = await this.signTransactions(txs, nonce)
     const decorated = await this.decorateTransactions(signed)
     return this.sendSignedTransaction(decorated, quote)
   }
