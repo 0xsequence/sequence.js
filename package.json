@@ -36,6 +36,7 @@
     "@0xsequence/api": "workspace:*",
     "@0xsequence/auth": "workspace:*",
     "@0xsequence/config": "workspace:*",
+    "@0xsequence/deployer": "workspace:*",
     "@0xsequence/guard": "workspace:*",
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
