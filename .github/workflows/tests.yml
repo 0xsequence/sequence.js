@@ -35,7 +35,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
@@ -47,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/0xsequence/ && pnpm test
+      - run: pnpm --filter 0xsequence test
 
   tests-abi:
     name: Run abi tests
@@ -56,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/abi/ && pnpm test
+      - run: pnpm --filter abi test
 
   tests-api:
     name: Run api tests
@@ -65,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/api/ && pnpm test
+      - run: pnpm --filter api test
 
   tests-auth:
     name: Run auth tests
@@ -74,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/auth/ && pnpm test
+      - run: pnpm --filter auth test
 
   tests-config:
     name: Run config tests
@@ -83,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/config/ && pnpm test
+      - run: pnpm --filter config test
 
   tests-deployer:
     name: Run deployer tests
@@ -92,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/deployer/ && pnpm test
+      - run: pnpm --filter deployer test
 
   tests-estimator:
     name: Run estimator tests
@@ -101,7 +100,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/estimator/ && pnpm test
+      - run: pnpm --filter estimator test
 
   tests-guard:
     name: Run guard tests
@@ -110,7 +109,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/guard/ && pnpm test
+      - run: pnpm --filter guard test
 
   tests-indexer:
     name: Run indexer tests
@@ -119,7 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/indexer/ && pnpm test
+      - run: pnpm --filter indexer test
 
   tests-metadata:
     name: Run metadata tests
@@ -128,7 +127,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/metadata/ && pnpm test
+      - run: pnpm --filter metadata test
 
   tests-multicall:
     name: Run multicall tests
@@ -137,7 +136,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/multicall/ && pnpm test
+      - run: pnpm --filter multicall test
 
   tests-network:
     name: Run network tests
@@ -146,7 +145,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/network/ && pnpm test
+      - run: pnpm --filter network test
 
   tests-provider:
     name: Run provider tests
@@ -155,7 +154,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/provider/ && pnpm test
+      - run: pnpm --filter provider test
 
   tests-relayer:
     name: Run relayer tests
@@ -164,7 +163,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/relayer/ && pnpm test
+      - run: pnpm --filter relayer test
 
   tests-simulator:
     name: Run simulator tests
@@ -173,7 +172,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/simulator/ && pnpm test
+      - run: pnpm --filter simulator test
 
   tests-transactions:
     name: Run transactions tests
@@ -182,7 +181,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/transactions/ && pnpm test
+      - run: pnpm --filter transactions test
 
   tests-utils:
     name: Run utils tests
@@ -191,7 +190,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/utils/ && pnpm test
+      - run: pnpm --filter utils test
 
   tests-wallet:
     name: Run wallet tests
@@ -200,7 +199,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
-      - run: pnpm dev && cd packages/wallet/ && pnpm test
+      - run: pnpm --filter wallet test
 
   # coverage:
   #   name: Run coverage

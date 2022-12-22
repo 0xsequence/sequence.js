@@ -21,8 +21,6 @@ runs:
       with:
         path: |
           ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          node_modules
-          */*/node_modules
           ~/.cache/puppeteer
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
@@ -36,4 +34,7 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
-      if: ${{ steps.pnpm-cache.outputs.cache-hit != 'true' }}
+
+    - name: Preconstruct packages
+      shell: bash
+      run: pnpm dev
