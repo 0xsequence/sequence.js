@@ -16,7 +16,7 @@
     "lint:tests": "eslint -c .eslintrc.js 'packages/**/tests/**/*.{ts,tsx}'",
     "lint:tests:fix": "eslint -c .eslintrc.js 'packages/**/tests/**/*.{ts,tsx}'",
     "format": "prettier --write packages/**/src/**/*.ts packages/**/tests/**/*.ts",
-    "audit:fix": "npx yarn-audit-fix",
+    "audit:fix": "pnpm audit --fix",
     "typecheck": "tsc --noEmit",
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
