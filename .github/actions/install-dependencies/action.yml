@@ -38,6 +38,6 @@ runs:
       run: pnpm install --frozen-lockfile
       if: ${{ steps.pnpm-cache.outputs.cache-hit != 'true' }}
 
-    - name: Preconstruct packages
-      shell: bash
-      run: pnpm dev
+    # - name: Preconstruct packages
+    #   shell: bash
+    #   run: pnpm dev
