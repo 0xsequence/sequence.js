@@ -43,7 +43,7 @@ jobs:
   tests-0xsequence:
     name: Run 0xsequence tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -52,7 +52,7 @@ jobs:
   tests-abi:
     name: Run abi tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -61,7 +61,7 @@ jobs:
   tests-api:
     name: Run api tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -70,7 +70,7 @@ jobs:
   tests-auth:
     name: Run auth tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -79,7 +79,7 @@ jobs:
   tests-config:
     name: Run config tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -88,7 +88,7 @@ jobs:
   tests-deployer:
     name: Run deployer tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -97,7 +97,7 @@ jobs:
   tests-estimator:
     name: Run estimator tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -106,7 +106,7 @@ jobs:
   tests-guard:
     name: Run guard tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -115,7 +115,7 @@ jobs:
   tests-indexer:
     name: Run indexer tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -124,7 +124,7 @@ jobs:
   tests-metadata:
     name: Run metadata tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -133,7 +133,7 @@ jobs:
   tests-multicall:
     name: Run multicall tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -142,7 +142,7 @@ jobs:
   tests-network:
     name: Run network tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -151,7 +151,7 @@ jobs:
   tests-provider:
     name: Run provider tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -160,7 +160,7 @@ jobs:
   tests-relayer:
     name: Run relayer tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -169,7 +169,7 @@ jobs:
   tests-simulator:
     name: Run simulator tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -178,7 +178,7 @@ jobs:
   tests-transactions:
     name: Run transactions tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -187,7 +187,7 @@ jobs:
   tests-utils:
     name: Run utils tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
@@ -196,7 +196,7 @@ jobs:
   tests-wallet:
     name: Run wallet tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-dependencies
