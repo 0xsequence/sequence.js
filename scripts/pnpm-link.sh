@@ -23,10 +23,14 @@ case "$option" in
     ;;
 esac
 
-packages=(./packages/*)
+repo_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && cd .. && pwd)
+
+packages=($repo_dir/packages/*)
 for p in "${packages[@]}"
 do
-  (cd $p && yarn $option)
+  x=$(realpath $p)
+  # echo $x
+  pnpm link $x
 done
 
 exit $?

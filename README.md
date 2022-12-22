@@ -39,29 +39,29 @@ or
 Below are notes and instructions on how to get your development environment up and running,
 and enjoyable.
 
-1. **Install dependencies** -- we use yarn workspaces, so please use yarn instead of npm.
-   Run, `yarn install`
+1. **Install dependencies**
+   Run, `pnpm install`
 
 2. **Workflow** -- we use the amazing [preconstruct](https://github.com/preconstruct/preconstruct)
    package to handle our monorepo build system.
 
 3. **Local dev** -- when you're working on the code in this repository, you can safely run
-   `yarn dev` at the root-level, which will link all packages/** together, so that when a
+   `pnpm dev` at the root-level, which will link all packages/** together, so that when a
    local dependency from packages/** is used by another, it will automatically be linked
-   without having to run a build command. Just remember: run `yarn dev` anytime you developing
-   in this repo. Note, that when you run `yarn build` it will clear the dev environment, so
-   you will need to run `yarn dev` again after a build. However, `yarn build` should only be
+   without having to run a build command. Just remember: run `pnpm dev` anytime you developing
+   in this repo. Note, that when you run `pnpm build` it will clear the dev environment, so
+   you will need to run `pnpm dev` again after a build. However, `pnpm build` should only be
    used when making a release.
 
-4. **Testing** -- to test the system, you can run `yarn test` at the top-level or at an individual
+4. **Testing** -- to test the system, you can run `pnpm test` at the top-level or at an individual
    package-level.
 
-5. **Type-checking** -- to typecheck the system you can run `yarn typecheck` at any level.
+5. **Type-checking** -- to typecheck the system you can run `pnpm typecheck` at any level.
 
-6. **Building** -- to _compile_ the project to dist files for a release, run `yarn build` at
+6. **Building** -- to _compile_ the project to dist files for a release, run `pnpm build` at
    the root-level. Note building packages repeatedly during development is unnecessary with
-   `preconstruct`. During local development run `yarn dev` and when building to make a release,
-   run `yarn build`.
+   `preconstruct`. During local development run `pnpm dev` and when building to make a release,
+   run `pnpm build`.
 
 7. **Versioning** -- this repository uses the handy [changesets](https://github.com/atlassian/changesets)
    package for package versioning across the monorepo, as well as changelogs. See _Releasing_ section below.
@@ -73,17 +73,17 @@ and enjoyable.
 
 ### How to do a release
 
-1. Run `yarn` to make sure everything is up to date
+1. Run `pnpm` to make sure everything is up to date
 2. Code.. do your magic
-3. Run `yarn changeset` to generate a new .changeset/ entry explaining the code changes
+3. Run `pnpm changeset` to generate a new .changeset/ entry explaining the code changes
 4. Version bump all packages regardless of them having changes or not
 5. Commit and submit your changes as a PR for review
 6. Once merged and you're ready to make a release, continue to the next step. If you're not
    ready to make a release, then go back to step 2.
-7. Run `yarn build && yarn test` to double check all tests pass
-8. Run `yarn version-packages` to bump versions of the packages
+7. Run `pnpm build && pnpm test` to double check all tests pass
+8. Run `pnpm version-packages` to bump versions of the packages
 9. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
-10. Run `yarn release`. If the 2FA code timesout while publishing, run the command again
+10. Run `pnpm release`. If the 2FA code timesout while publishing, run the command again
     with a new code, only the packages that were not published will be published.
 11. Finally, push your git tags, via: `git push --tags --no-verify`
 
@@ -92,15 +92,15 @@ and enjoyable.
 
 NOTE: snapshot release is for dev preview, it's similar to the above, but:
 
-1. `yarn changeset`
-2. `yarn changeset version --snapshot`
-3. `yarn changeset publish --tag snapshot`
+1. `pnpm changeset`
+2. `pnpm changeset version --snapshot`
+3. `pnpm changeset publish --tag snapshot`
 
 
 ## NOTES
 
-1. Browser tests can be run with `yarn test` or, separately `yarn test:server` and `yarn test:run`
-2. To run a specific test, run `yarn test:only <test-file-basename>`, ie. `yarn test:only window-transport`
+1. Browser tests can be run with `pnpm test` or, separately `pnpm test:server` and `pnpm test:run`
+2. To run a specific test, run `pnpm test:only <test-file-basename>`, ie. `pnpm test:only window-transport`
 
 
 ## TIPS
