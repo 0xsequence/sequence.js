@@ -32,7 +32,7 @@ export const isValidSignature = async (
   provider: Web3Provider | ethers.providers.Web3Provider,
   chainId?: number,
   walletContext?: WalletContext
-): Promise<boolean | undefined> => {
+): Promise<boolean> => {
   if (!chainId) {
     chainId = (await provider.getNetwork())?.chainId
   }
@@ -49,7 +49,7 @@ export const isValidMessageSignature = async (
   provider: Web3Provider | ethers.providers.Web3Provider,
   chainId?: number,
   walletContext?: WalletContext
-): Promise<boolean | undefined> => {
+): Promise<boolean> => {
   const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
   return isValidSignature(address, digest, signature, provider, chainId, walletContext)
@@ -62,7 +62,7 @@ export const isValidTypedDataSignature = (
   provider: Web3Provider | ethers.providers.Web3Provider,
   chainId?: number,
   walletContext?: WalletContext
-): Promise<boolean | undefined> => {
+): Promise<boolean> => {
   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, chainId, walletContext)
 }
 

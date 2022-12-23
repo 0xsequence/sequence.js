@@ -1143,7 +1143,7 @@ describe('Wallet integration', function () {
         const signer1 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signer2 = new ethers.Wallet(ethers.utils.randomBytes(32))
         const signature = await signer1.signMessage(digest)
-        expect(await isValidSignature(signer2.address, digest, signature)).to.be.undefined
+        expect(await isValidSignature(signer2.address, digest, signature)).to.be.false
       })
     })
     describe('deployed sequence wallet sign', async () => {

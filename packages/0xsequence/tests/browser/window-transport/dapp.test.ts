@@ -39,7 +39,7 @@ export const tests = async () => {
     await walletProvider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
       assert.true(!err, 'error is empty')
       assert.true(!!resp, 'response successful')
-      assert.true(resp.result[0] === address, 'response address check')
+      assert.true(resp!.result[0] === address, 'response address check')
     })
 
     const resp = await provider.send('eth_accounts', [])

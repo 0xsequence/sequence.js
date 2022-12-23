@@ -12,7 +12,7 @@ export async function isValidSignature(
   provider?: providers.Provider,
   walletContext?: WalletContext,
   chainId?: number
-) {
+): Promise<boolean> {
   // Check if valid EOA signature
   //
   // TODO: the EOA check here assume its being passed a digest, but its not a correct assumption
@@ -28,7 +28,7 @@ export async function isValidSignature(
   if (erc1271Check === undefined) {
     // If validity of wallet signature can't be determined
     // it could be a signature of a non-deployed sequence wallet
-    return isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId)
+    return !!(await isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId))
   }
 
   return erc1271Check  

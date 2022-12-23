@@ -30,7 +30,7 @@ export const tests = async () => {
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain
-  const provider = wallet.getProvider()
+  const provider = wallet.getProvider()!
   const signer = wallet.getSigner()
   
   // clear it in case we're testing in browser session
@@ -50,7 +50,8 @@ export const tests = async () => {
 
   await test('connect', async () => {
     const { connected } = await wallet.connect({
-      keepWalletOpened: true
+      keepWalletOpened: true,
+      redirectMode: true,
     })
     assert.true(connected, 'is connected')
   })
@@ -79,16 +80,16 @@ export const tests = async () => {
     const networks = await wallet.getNetworks()
 
     assert.equal(networks.length, 2, '2 networks')
-    assert.true(networks[0].isDefaultChain, '1st network is DefaultChain')
+    assert.true(networks[0].isDefaultChain!, '1st network is DefaultChain')
     assert.true(!networks[0].isAuthChain, '1st network is not AuthChain')
     assert.true(!networks[1].isDefaultChain, '1st network is not DefaultChain')
-    assert.true(networks[1].isAuthChain, '2nd network is AuthChain')
+    assert.true(networks[1].isAuthChain!, '2nd network is AuthChain')
     assert.true(networks[1].chainId === 31338, 'authChainId is correct')
 
     const authNetwork = await wallet.getAuthNetwork()
     assert.equal(networks[1].chainId, authNetwork.chainId, 'authNetwork matches chainId')
 
-    const authProvider = wallet.getProvider(authNetwork)
+    const authProvider = wallet.getProvider(authNetwork)!
     assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
 
     assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337')
@@ -125,8 +126,8 @@ export const tests = async () => {
     // we expect network order to be [defaultChain, authChain, ..], so chain 31337 will be at index 0
     const state1 = allWalletStates[0]
     assert.true(state1.chainId === 31337, 'state1, chainId is 31337')
-    assert.true(state1.config.threshold === 1, 'state1, threshold')
-    assert.true(state1.config.signers.length === 1, 'state1, 1 signer')
+    assert.true(state1.config!.threshold === 1, 'state1, threshold')
+    assert.true(state1.config!.signers.length === 1, 'state1, 1 signer')
     assert.true(state1.address === await wallet.getAddress(), 'state1, address')
     // assert.true(state1.deployed, 'state1, deployed')
     // assert.true(state1.publishedLatest, 'state1, publishedLatest')
@@ -152,7 +153,7 @@ export const tests = async () => {
 
     // chainId 31338
     {
-      const provider2 = await wallet.getProvider(31338)
+      const provider2 = await wallet.getProvider(31338)!
       assert.equal(await provider2.getChainId(), 31338, '2nd chain, chainId is 31338')
 
       const network = await provider2.getNetwork()
@@ -260,7 +261,7 @@ export const tests = async () => {
 
     const address = await wallet.getAddress()
     const chainId = authNetwork.chainId
-    const authProvider = wallet.getProvider(authNetwork)
+    const authProvider = wallet.getProvider(authNetwork)!
 
     assert.equal(chainId, 31338, 'chainId is 31338 (authChain)')
     assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
@@ -500,9 +501,9 @@ export const tests = async () => {
     // so we can have overlapping addresses and keys for ease of use duringtesting
 
     // get provider of the 2nd chain (the authChain)
-    const provider2 = wallet.getProvider('hardhat2')
+    const provider2 = wallet.getProvider('hardhat2')!
     assert.equal(await provider2.getChainId(), 31338, 'provider is the 2nd chain')
-    assert.equal(await provider2.getChainId(), await wallet.getProvider(31338).getChainId(), 'provider2 code path check')
+    assert.equal(await provider2.getChainId(), await wallet.getProvider(31338)!.getChainId(), 'provider2 code path check')
 
     const authProvider = await wallet.getAuthProvider()
     assert.equal(await provider2.getChainId(), await authProvider.getChainId(), 'provider2 === authProvider')

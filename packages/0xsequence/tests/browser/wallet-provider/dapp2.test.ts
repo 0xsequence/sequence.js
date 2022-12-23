@@ -1,6 +1,5 @@
 import { test, assert } from '../../utils/assert'
-import { ethers, Wallet as EOAWallet } from 'ethers'
-import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer'
+import { TypedDataDomain, TypedDataField } from 'ethers'
 import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext, sendETH } from '../testutils'
@@ -25,7 +24,7 @@ export const tests = async () => {
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain
-  const provider = wallet.getProvider()
+  const provider = wallet.getProvider()!
   const signer = wallet.getSigner()
 
   // clear it in case we're testing in browser session
