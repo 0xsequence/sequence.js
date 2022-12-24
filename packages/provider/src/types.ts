@@ -166,6 +166,9 @@ export interface ConnectOptions {
    * is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
 
+  /**  */
+  redirectMode?: boolean
+
   /** Options to further customize the wallet experience. */
   settings?: Settings
 }

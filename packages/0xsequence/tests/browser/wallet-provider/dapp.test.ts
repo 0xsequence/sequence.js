@@ -1,3 +1,6 @@
+// NOTE: run `pnpm test:server` and open browser at http://localhost:9999/wallet-provider/dapp.test.html
+// to run tests from this file directly from your Web Browser.
+
 import { test, assert } from '../../utils/assert'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { Wallet, DefaultProviderConfig, isValidMessageSignature } from '@0xsequence/provider'
@@ -51,7 +54,6 @@ export const tests = async () => {
   await test('connect', async () => {
     const { connected } = await wallet.connect({
       keepWalletOpened: true,
-      redirectMode: true,
     })
     assert.true(connected, 'is connected')
   })

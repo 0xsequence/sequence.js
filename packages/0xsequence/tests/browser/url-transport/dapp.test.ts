@@ -1,10 +1,10 @@
+// NOTE: run `pnpm test:server` and open browser at http://localhost:9999/url-transport/dapp.test.html
+// to run tests from this file directly from your Web Browser.
+
 import { test, assert } from '../../utils/assert'
-import { Wallet, DefaultProviderConfig, BrowserRedirectMessageHooks, ProviderMessage } from '@0xsequence/provider'
-import { configureLogger, TypedDataDomain, TypedDataField } from '@0xsequence/utils'
+import { Wallet, DefaultProviderConfig, BrowserRedirectMessageHooks, ProviderMessage, ConnectDetails } from '@0xsequence/provider'
+import { configureLogger, TypedDataDomain, TypedDataField, base64DecodeObject } from '@0xsequence/utils'
 import { testWalletContext } from '../testutils'
-import { ethers } from 'ethers'
-import { base64DecodeObject } from '../../../../utils/src/base64'
-import { ConnectDetails } from '../../../../provider/src/types'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 

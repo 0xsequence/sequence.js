@@ -1,3 +1,6 @@
+// NOTE: run `pnpm test:server` and open browser at http://localhost:9999/window-transport/dapp.test.html
+// to run tests from this file directly from your Web Browser.
+
 import { prefixEIP191Message, WindowMessageProvider } from '@0xsequence/provider'
 import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
