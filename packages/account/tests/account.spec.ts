@@ -649,5 +649,179 @@ describe('Account', () => {
       const status2b = await account.status(networks[1].chainId)
       expect(status2b).to.be.deep.equal(status1b)
     })
+
+    it('Should migrate an upgraded wallet', async () => {
+      const signer1 = ethers.Wallet.createRandom()
+      const signer2 = ethers.Wallet.createRandom()
+      const signer3 = ethers.Wallet.createRandom()
+      const signer4 = ethers.Wallet.createRandom()
+
+      const simpleConfig1a = {
+        threshold: 3,
+        checkpoint: 0,
+        signers: [{
+          address: signer1.address,
+          weight: 2
+        }, {
+          address: signer2.address,
+          weight: 2
+        }, {
+          address: signer3.address,
+          weight: 2
+        }]
+      }
+
+      const config1a = v1.config.ConfigCoder.fromSimple(simpleConfig1a)
+      const imageHash1a = v1.config.ConfigCoder.imageHashOf(config1a)
+      const address = commons.context.addressOf(contexts[1], imageHash1a)
+
+      const simpleConfig1b = {
+        threshold: 3,
+        checkpoint: 0,
+        signers: [{
+          address: signer1.address,
+          weight: 2
+        }, {
+          address: signer2.address,
+          weight: 2
+        }, {
+          address: signer4.address,
+          weight: 2
+        }]
+      }
+
+      const config1b = v1.config.ConfigCoder.fromSimple(simpleConfig1b)
+      const imageHash1b = v1.config.ConfigCoder.imageHashOf(config1b)
+
+      // Update wallet to config 1b (on network 0)
+      const wallet = new Wallet({
+        coders: {
+          signature: v1.signature.SignatureCoder,
+          config: v1.config.ConfigCoder
+        },
+        context: contexts[1],
+        config: config1a,
+        chainId: networks[0].chainId,
+        address,
+        orchestrator: new Orchestrator([signer1, signer3]),
+        relayer: (networks[0].relayer as Relayer)!,
+        provider: networks[0].provider!
+      })
+
+      const utx = await wallet.buildUpdateConfigurationTransaction(config1b)
+      const signed = await wallet.signTransactionBundle(utx)
+      const decorated = await wallet.decorateTransactions(signed)
+      await (networks[0].relayer as Relayer).relay(decorated)
+
+      // Importing the account should work!
+      const account = new Account({
+        ...defaultArgs,
+        address,
+        orchestrator: new Orchestrator([signer1, signer3])
+      })
+
+      // Feed the tracker with all the data
+      await tracker.saveCounterFactualWallet({ imageHash: imageHash1a, context: [contexts[1]] })
+      await tracker.saveWalletConfig({ config: config1b })
+      await tracker.saveWalletConfig({ config: config1a })
+
+      // Status on network 0 should be deployed, network 1 not
+      // and the configuration on network 0 should be the B one
+      const status1 = await account.status(networks[0].chainId)
+      expect(status1.fullyMigrated).to.be.false
+      expect(status1.onChain.deployed).to.be.true
+      expect(status1.onChain.imageHash).to.equal(imageHash1b)
+      expect(status1.onChain.version).to.equal(1)
+      expect(status1.imageHash).to.equal(imageHash1b)
+
+      const status2 = await account.status(networks[1].chainId)
+      expect(status2.fullyMigrated).to.be.false
+      expect(status2.onChain.deployed).to.be.false
+      expect(status2.onChain.imageHash).to.equal(imageHash1a)
+      expect(status2.onChain.version).to.equal(1)
+      expect(status2.imageHash).to.equal(imageHash1a)
+
+      // Signing transactions (on both networks) and signing messages should fail
+      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
+      await expect(account.sendTransaction([], networks[1].chainId)).to.be.rejected
+      await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
+      await expect(account.signMessage('0x00', networks[1].chainId)).to.be.rejected
+
+      // Sign all migrations should only have signers1 and 2
+      // so the migration should only be available on network 1 (the one not updated)
+      await account.signAllMigrations()
+
+      const config2a = v2.config.ConfigCoder.fromSimple(simpleConfig1a)
+      const config2b = v2.config.ConfigCoder.fromSimple(simpleConfig1b)
+      const imageHash2a = v2.config.ConfigCoder.imageHashOf(config2a)
+
+      const status1b = await account.status(networks[0].chainId)
+      expect(status1b.fullyMigrated).to.be.false
+      expect(status1b.onChain.deployed).to.be.true
+      expect(status1b.onChain.imageHash).to.equal(imageHash1b)
+      expect(status1b.onChain.version).to.equal(1)
+      expect(status1b.imageHash).to.equal(imageHash1b)
+      expect(status1b.version).to.equal(1)
+
+      const status2b = await account.status(networks[1].chainId)
+      expect(status2b.fullyMigrated).to.be.true
+      expect(status2b.onChain.deployed).to.be.false
+      expect(status2b.onChain.imageHash).to.equal(imageHash1a)
+      expect(status2b.onChain.version).to.equal(1)
+      expect(status2b.imageHash).to.equal(imageHash2a)
+      expect(status2b.version).to.equal(2)
+
+      // Sending a transaction should work for network 1
+      // but fail for network 0, same with signing messages
+      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
+      await expect(account.sendTransaction([], networks[1].chainId)).to.be.fulfilled
+
+      await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
+      await expect(account.signMessage('0x00', networks[1].chainId)).to.be.fulfilled
+
+      // Signing another migration with signers1 and 2 should put both in sync
+      account.setOrchestrator(new Orchestrator([signer1, signer2]))
+      await account.signAllMigrations()
+
+      await expect(account.sendTransaction([], networks[0].chainId)).to.be.fulfilled
+      await expect(account.sendTransaction([], networks[1].chainId)).to.be.fulfilled
+
+      await expect(account.signMessage('0x00', networks[0].chainId)).to.be.fulfilled
+      await expect(account.signMessage('0x00', networks[1].chainId)).to.be.fulfilled
+
+      const status1c = await account.status(networks[0].chainId)
+      const status2c = await account.status(networks[1].chainId)
+
+      expect(status1c.fullyMigrated).to.be.true
+      expect(status2c.fullyMigrated).to.be.true
+
+      // Configs are still different!
+      expect(status1c.imageHash).to.not.equal(status2c.imageHash)
+
+      const simpleConfig4 = {
+        threshold: 2,
+        checkpoint: 1,
+        signers: [{
+          address: signer1.address,
+          weight: 1
+        }, {
+          address: signer2.address,
+          weight: 1
+        }, {
+          address: signer4.address,
+          weight: 1
+        }]
+      }
+
+      const config4 = v2.config.ConfigCoder.fromSimple(simpleConfig4)
+
+      await account.updateConfig(config4)
+
+      const status1d = await account.status(networks[0].chainId)
+      const status2d = await account.status(networks[1].chainId)
+
+      // Configs are now the same!
+      expect(status1d.imageHash).to.be.equal(status2d.imageHash)
+    })
   })
 })

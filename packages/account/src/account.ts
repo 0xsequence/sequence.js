@@ -404,7 +404,16 @@ export class Account {
     chainId: ethers.BigNumberish,
     decorate: boolean = true
   ): Promise<string> {
-    const status = await this.status(chainId)
+    // If we are signing a digest for chainId zero then we can never be fully migrated
+    // because Sequence v1 doesn't allow for signing a message on "all chains"
+
+    // So we ignore the state on "chain zero" and instead use one of the states of the networks
+    // wallet-webapp should ensure the wallet is as migrated as possible, trying to mimic
+    // the behaviour of being migrated on all chains
+
+    const chainRef = ethers.constants.Zero.eq(chainId) ? this.networks[0].chainId : chainId
+    const status = await this.status(chainRef)
+
     this.mustBeFullyMigrated(status)
 
     const wallet = this.walletForStatus(chainId, status)
