@@ -178,6 +178,7 @@ importers:
       '@0xsequence/migration': ^0.43.4
       '@0xsequence/network': ^0.43.4
       '@0xsequence/sessions': ^0.43.4
+      '@0xsequence/signhub': ^0.43.7
       '@0xsequence/tests': ^0.43.4
       '@0xsequence/wallet': ^0.43.4
       '@istanbuljs/nyc-config-typescript': ^1.0.2
@@ -191,6 +192,7 @@ importers:
       '@0xsequence/wallet': link:../wallet
       ethers: 5.7.2
     devDependencies:
+      '@0xsequence/signhub': link:../signhub
       '@0xsequence/tests': link:../tests
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       nyc: 15.1.0

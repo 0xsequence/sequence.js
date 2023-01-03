@@ -26,6 +26,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
+    "@0xsequence/signhub": "^0.43.7",
     "@0xsequence/tests": "^0.43.4",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "nyc": "^15.1.0"
