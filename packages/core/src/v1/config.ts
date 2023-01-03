@@ -1,6 +1,5 @@
 
 import { ethers } from 'ethers'
-import { Interface } from '@ethersproject/abi'
 import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 
@@ -75,7 +74,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       context: commons.context.WalletContext,
       kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new Interface([
+      const module = new ethers.utils.Interface([
         ...walletContracts.mainModule.abi,
         ...walletContracts.mainModuleUpgradable.abi
       ])
