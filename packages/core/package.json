@@ -9,7 +9,7 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "yarn test:file tests/**/*.spec.ts",
+    "test": "pnpm test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
     "test:coverage": "nyc yarn test"
   },
