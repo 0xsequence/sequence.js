@@ -12,7 +12,8 @@
     "test": "echo 'TODO: replacer tests'"
   },
   "dependencies": {
-    "@0xsequence/abi": "0.43.5"
+    "@0xsequence/abi": "0.43.5",
+    "@0xsequence/core": "^0.43.4"
   },
   "peerDependencies": {
     "ethers": ">=5.5"
