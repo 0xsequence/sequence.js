@@ -9,12 +9,12 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "yarn test:concurrently 'yarn test:run'",
-    "test:run": "yarn test:file tests/**/*.spec.ts",
+    "test": "pnpm test:concurrently 'pnpm test:run'",
+    "test:run": "pnpm test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
-    "test:concurrently": "concurrently -k --success first 'yarn start:hardhat2 > /dev/null'",
-    "start:hardhat2": "yarn run hardhat node --hostname 0.0.0.0 --port 7147 --config ./hardhat2.config.js",
-    "test:coverage": "nyc yarn test"
+    "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat2 > /dev/null'",
+    "start:hardhat2": "hardhat node --hostname 0.0.0.0 --port 7147 --config ./hardhat2.config.js",
+    "test:coverage": "nyc pnpm test"
   },
   "dependencies": {
     "@0xsequence/core": "^0.43.4",
