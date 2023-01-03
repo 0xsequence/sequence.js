@@ -1,5 +1,4 @@
 import { BigNumberish, BytesLike, ethers } from "ethers"
-import { TransactionRequest, TransactionResponse as EthersTransactionResponse } from '@ethersproject/providers'
 import { subdigestOf } from "./signature"
 import { Interface } from "ethers/lib/utils"
 import { walletContracts } from "@0xsequence/abi"
@@ -22,9 +21,9 @@ export interface TransactionEncoded {
   data: BytesLike
 }
 
-export type Transactionish = TransactionRequest | TransactionRequest[] | Transaction | Transaction[]
+export type Transactionish = ethers.providers.TransactionRequest | ethers.providers.TransactionRequest[] | Transaction | Transaction[]
 
-export interface TransactionResponse<R = any> extends EthersTransactionResponse {
+export interface TransactionResponse<R = any> extends ethers.providers.TransactionResponse {
   receipt?: R
 }
 
@@ -91,14 +90,14 @@ export function subdigestOfTransactions(address: string, chainid: BigNumberish, 
 
 export function toSequenceTransactions(
   wallet: string,
-  txs: (Transaction | TransactionRequest)[]
+  txs: (Transaction | ethers.providers.TransactionRequest)[]
 ): { nonce?: ethers.BigNumberish, transaction: Transaction }[] {
   return txs.map(tx => toSequenceTransaction(wallet, tx))
 }
 
 export function toSequenceTransaction(
   wallet: string,
-  tx: TransactionRequest
+  tx: ethers.providers.TransactionRequest
 ): { nonce?: ethers.BigNumberish, transaction: Transaction } {
   if (tx.to) {
     return {
