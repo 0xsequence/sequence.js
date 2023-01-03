@@ -332,6 +332,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     // origin host of the dapp.
     await this.init()
 
+    console.log('waaa?', intent)
+
     // Prepare connect options from intent
     if (intent && intent.type === 'connect' && intent.options) {
       const connectOptions = intent.options
@@ -374,6 +376,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     // ensure signer is ready
     await this.walletRequestHandler.getSigner()
 
+    console.log('wazzzzzzzzzzup???????????????????????????????????????')
+    
     // Notify open and proceed to prompt for connection if intended
     if (!(await this.walletRequestHandler.isSignedIn())) {
       console.log('... not signed in???')

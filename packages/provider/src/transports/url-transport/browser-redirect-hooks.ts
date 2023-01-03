@@ -3,6 +3,7 @@ import { UrlMessageProviderHooks } from './url-message-provider'
 
 export class BrowserRedirectMessageHooks implements UrlMessageProviderHooks {
   openWallet = (walletBaseUrl: string): void => {
+    console.log('BrowserRedirectMessageHooks ....???... here...?')
     console.log('BrowserRedirectMessageHooks openWallet', walletBaseUrl)
     window.location.href = walletBaseUrl
 
@@ -10,5 +11,6 @@ export class BrowserRedirectMessageHooks implements UrlMessageProviderHooks {
     // which will call InAppBrowser.open() etc.........
   }
 
-  responseFromRedirectUrl = (callback: (response: string) => void): void => {}
+  // responseFromRedirectUrl = (callback: (response: string) => void): void => {}
+  responseFromRedirectUrl = (response: string) => {}
 }

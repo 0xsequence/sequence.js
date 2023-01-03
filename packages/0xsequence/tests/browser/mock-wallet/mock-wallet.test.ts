@@ -88,7 +88,8 @@ const main = async () => {
   // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour
   // of the wallet-webapp, so lets ensure the mock wallet does the same thing too.
   setTimeout(() => {
-    walletRequestHandler.signIn(account)
+    console.log('mock wallet signing into account...', account)
+    walletRequestHandler.signIn(account, { connect: true }) // TODO: review how we use this connect param in practice..?
   }, 1000)
 
   // setup and register window message transport

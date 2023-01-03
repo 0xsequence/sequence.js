@@ -1,38 +1,87 @@
 import { BaseProviderTransport, nextMessageIdx } from '../base-provider-transport'
-import { ProviderMessage, OpenWalletIntent, EventType, WalletSession, InitState } from '../../types'
+import { Wallet } from '../../wallet'
+import { ProviderMessage, OpenWalletIntent, EventType, WalletSession, InitState, ConnectDetails, ProviderEventTypes } from '../../types'
 import { base64DecodeObject, base64EncodeObject } from '@0xsequence/utils'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
 export interface UrlMessageProviderHooks {
   openWallet(walletUrl: string): void
 
-  responseFromRedirectUrl(callback: (response: string) => void): void
+  // responseFromRedirectUrl(callback: (response: string) => void): void
+  responseFromRedirectUrl(response: string): void
 }
 
 export class UrlMessageProvider extends BaseProviderTransport {
+  private _wallet: Wallet
   private _walletBaseUrl: string
   private _redirectUrl: string
   private _hooks: UrlMessageProviderHooks
+  private _connectDetails: ConnectDetails | undefined
 
-  constructor(walletBaseUrl: string, redirectUrl: string, hooks: UrlMessageProviderHooks) {
+  constructor(wallet: Wallet, walletBaseUrl: string, redirectUrl: string, hooks: UrlMessageProviderHooks) {
     super()
+    console.log('UrlMessageProvider walletBaseUrl:', walletBaseUrl)
     this._init = InitState.OK
+    this._wallet = wallet
     this._walletBaseUrl = walletBaseUrl
     this._redirectUrl = redirectUrl
     this._hooks = hooks
   }
 
-  register = async () => {
-    this._hooks.responseFromRedirectUrl((response: string) => {
-      const decodedResponse = base64DecodeObject(response) as ProviderMessage<any>
-      console.log('... we have a response...', decodedResponse)
-      this.handleMessage(decodedResponse)
-    })
-
-    this._registered = true
+  on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
+    this.events.on(event, fn as any)
+    if (event === 'connect' && this._connectDetails) {
+        this.events.emit('connect', this._connectDetails)
+    }
   }
 
-  unregister = () => {}
+  once<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]) {
+    this.events.once(event, fn as any)
+    if (event === 'connect' && this._connectDetails) {
+        this.events.emit('connect', this._connectDetails)
+    }
+  }
+
+  register = async () => {
+    console.log('... URL MESSAGE PROVIDER ... register...????')
+
+    this.events.on('connect', connectDetails => {
+      console.log('url messagep provider got connect, connectDetails..', connectDetails)
+      this._connectDetails = connectDetails
+
+      if (connectDetails.connected) {
+        if (!!connectDetails.session) {
+          this._wallet.useSession(connectDetails.session, true)  
+          // this.addConnectedSite(options?.origin)
+        } else {
+          throw new Error('impossible state, connect response is missing session')
+        }
+      }
+    })
+
+    this._hooks.responseFromRedirectUrl = (response: string) => {
+      const decodedResponse = base64DecodeObject(response) as ProviderMessage<any>
+      console.log('... we have a response...zzzzzz', decodedResponse)
+      this.handleMessage(decodedResponse)
+    }
+
+    this._registered = true
+
+    // const windowURL = new URL(window.location.href)
+    const prefix = '#response='
+    console.log('sup....??? lalala', window.location.hash)
+    if (window.location.hash.startsWith(prefix)) {
+      const response = window.location.hash.substring(prefix.length)
+      console.log('=> response', response)
+      window.location.hash = ''
+      this._hooks.responseFromRedirectUrl(response)
+    }
+  }
+
+  unregister = () => {
+    this._registered = false
+    // this._hooks ..?
+  }
 
   openWallet = (path?: string, intent?: OpenWalletIntent, networkId?: string | number): void => {
     console.log('url message provider......... openWallet', path, intent)
@@ -110,39 +159,8 @@ export class UrlMessageProvider extends BaseProviderTransport {
   }
 
   waitUntilOpened = async (openTimeout = 0): Promise<WalletSession | undefined> => {
+    // noop
     return undefined
   }
 
-  // // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet
-  // sendMessageRequest = async (message: ProviderMessageRequest): Promise<ProviderMessageResponse> => {
-  //   return new Promise((resolve, reject) => {
-  //     if ((!message.idx || message.idx <= 0) && message.type !== 'init') {
-  //       reject(new Error('message idx not set'))
-  //     }
-
-  //     // const responseCallback: ProviderMessageResponseCallback = (error: ProviderRpcError, response?: ProviderMessageResponse) => {
-  //     //   if (error) {
-  //     //     reject(error)
-  //     //   } else if (response) {
-  //     //     resolve(response)
-  //     //   } else {
-  //     //     throw new Error('no valid response to return')
-  //     //   }
-  //     // }
-
-  //     // const idx = message.idx
-  //     // if (!this.responseCallbacks.get(idx)) {
-  //     //   this.responseCallbacks.set(idx, responseCallback)
-  //     // } else {
-  //     //   reject(new Error('duplicate message idx, should never happen'))
-  //     // }
-
-  //     // if (!this.isOpened()) {
-  //     //   logger.debug('pushing to pending requests', message)
-  //     //   this.pendingMessageRequests.push(message)
-  //     // } else {
-  //     this.sendMessage(message)
-  //     // }
-  //   })
-  // }
 }

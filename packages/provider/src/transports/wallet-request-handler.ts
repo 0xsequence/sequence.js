@@ -103,6 +103,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // for this dapp, so its safe to authorize in the connect() method without the prompt.
     //
     // NOTE: signIn can optionally connect and notify dapp at this time for new signIn flows
+    console.log('...? sup...? connect?', connect)
     if (connect) {
       const connectOptions = this._connectOptions
 
@@ -715,6 +716,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   notifyConnect(connectDetails: ConnectDetails, origin?: string) {
+    console.log('hess........ notifyCOnnect from wallet-request-handler', connectDetails)
     this.events.emit('connect', connectDetails)
     if (connectDetails.session?.accountAddress) {
       this.events.emit('accountsChanged', [connectDetails.session?.accountAddress], origin)

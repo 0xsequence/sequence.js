@@ -75,26 +75,38 @@ const htmlTemplate = k => `<!doctype html>
   <meta charset="utf-8">
   <title>test</title>
 </head>
+<style>
+body { color: #CCCCCC; background-color: #111111; }
+</style>
 <body>
   <h1>${k}</h1>
 
   <div>
     <button id="testButton">TEST</button>
+    <button id="resetButton">RESET</button>
   </div>
 </body>
 
 <script src="/lib.js"></script>
 <script src="/${k}.js"></script>
 <script>
+  // TODO: rename this function..
   const checkForResponseAndStartTest = async () => {
     const testButton = document.getElementById('testButton')
-    const params = new URLSearchParams(window.location.search)
-    if (params.has('response') || params.has('continue')) {
+    const redirectResponse = window.location.hash.startsWith('#response=')
+    if (redirectResponse) {
       if (lib.tests) {
         await lib.tests()
         console.table(window.__testResults)
       }
     }
+    // const params = new URLSearchParams(window.location.search)
+    // if (params.has('response') || params.has('continue')) {
+    //   if (lib.tests) {
+    //     await lib.tests()
+    //     console.table(window.__testResults)
+    //   }
+    // }
   }
 
   checkForResponseAndStartTest()
@@ -107,6 +119,13 @@ const htmlTemplate = k => `<!doctype html>
     } else {
       console.warn('=> tests() is undefined. skipping..')
     }
+  }
+
+  resetButton.onclick = async (e) => {
+    e.preventDefault()
+    localStorage.clear()
+    window.location.hash = ''
+    window.location.search = ''
   }
 </script>
 </html>
