@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/tests",
-  "version": "0.43.4",
+  "version": "0.43.7",
   "description": "test tools for sequence.js",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/tests",
   "source": "src/index.ts",
@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/core": "^0.43.4"
+    "@0xsequence/core": "^0.43.7"
   },
   "peerDependencies": {
     "ethers": ">=5.5"
