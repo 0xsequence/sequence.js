@@ -404,9 +404,10 @@ importers:
       ethers: 5.7.2
 
   packages/relayer:
-    specifiers5
+    specifiers:
       '@0xsequence/abi': ^0.43.15
       '@0xsequence/config': ^0.43.15
+      '@0xsequence/core': ^0.43.7
       '@0xsequence/network': ^0.43.15
       '@0xsequence/transactions': ^0.43.15
       '@0xsequence/utils': ^0.43.15
@@ -415,6 +416,7 @@ importers:
     dependencies:
       '@0xsequence/abi': link:../abi
       '@0xsequence/config': link:../config
+      '@0xsequence/core': link:../core
       '@0xsequence/network': link:../network
       '@0xsequence/transactions': link:../transactions
       '@0xsequence/utils': link:../utils
@@ -425,20 +427,26 @@ importers:
   packages/replacer:
     specifiers:
       '@0xsequence/abi': 0.43.5
+      '@0xsequence/core': ^0.43.4
     dependencies:
       '@0xsequence/abi': 0.43.5
+      '@0xsequence/core': link:../core
 
   packages/sessions:
     specifiers:
       '@0xsequence/core': ^0.43.4
+      '@0xsequence/migration': ^0.43.4
+      '@0xsequence/signhub': ^0.43.7
       '@0xsequence/tests': ^0.43.4
       '@istanbuljs/nyc-config-typescript': ^1.0.2
       ethers: ^5.5.2
       nyc: ^15.1.0
     dependencies:
       '@0xsequence/core': link:../core
+      '@0xsequence/migration': link:../migration
       ethers: 5.7.2
     devDependencies:
+      '@0xsequence/signhub': link:../signhub
       '@0xsequence/tests': link:../tests
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       nyc: 15.1.0
