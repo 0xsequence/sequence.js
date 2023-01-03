@@ -245,7 +245,31 @@ importers:
 
   packages/abi: {}
 
-  packages/api: {}
+  packages/account:
+    specifiers:
+      '@0xsequence/core': ^0.43.4
+      '@0xsequence/migration': ^0.43.4
+      '@0xsequence/network': ^0.43.4
+      '@0xsequence/sessions': ^0.43.4
+      '@0xsequence/tests': ^0.43.4
+      '@0xsequence/wallet': ^0.43.4
+      '@istanbuljs/nyc-config-typescript': ^1.0.2
+      ethers: ^5.5.2
+      nyc: ^15.1.0
+    dependencies:
+      '@0xsequence/core': link:../core
+      '@0xsequence/migration': link:../migration
+      '@0xsequence/network': link:../network
+      '@0xsequence/sessions': link:../sessions
+      '@0xsequence/wallet': link:../wallet
+      ethers: 5.7.2
+    devDependencies:
+      '@0xsequence/tests': link:../tests
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      nyc: 15.1.0
+
+  packages/api:
+    specifiers: {}
 
   packages/auth:
     dependencies:
@@ -318,6 +342,14 @@ importers:
         specifier: ^5.7.2
         version: 5.7.2
 
+  packages/core:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ^1.0.2
+      nyc: ^15.1.0
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      nyc: 15.1.0
+
   packages/deployer:
     dependencies:
       '@0xsequence/utils':
@@ -385,6 +417,21 @@ importers:
   packages/indexer: {}
 
   packages/metadata: {}
+
+  packages/migration:
+    specifiers:
+      '@0xsequence/core': ^0.43.4
+      '@0xsequence/wallet': ^0.43.4
+      '@istanbuljs/nyc-config-typescript': ^1.0.2
+      ethers: ^5.5.2
+      nyc: ^15.1.0
+    dependencies:
+      '@0xsequence/core': link:../core
+      '@0xsequence/wallet': link:../wallet
+      ethers: 5.7.2
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      nyc: 15.1.0
 
   packages/multicall:
     dependencies:
@@ -486,6 +533,14 @@ importers:
         version: 5.7.2
 
   packages/relayer:
+    specifiers5
+      '@0xsequence/abi': ^0.43.21
+      '@0xsequence/config': ^0.43.21
+      '@0xsequence/network': ^0.43.21
+      '@0xsequence/transactions': ^0.43.21
+      '@0xsequence/utils': ^0.43.21
+      '@0xsequence/wallet-contracts': 1.10.0
+      ethers: ^5.7.2
     dependencies:
       '@0xsequence/abi':
         specifier: ^0.43.26
@@ -510,6 +565,38 @@ importers:
         specifier: ^5.7.2
         version: 5.7.2
 
+  packages/replacer:
+    specifiers:
+      '@0xsequence/abi': 0.43.5
+    dependencies:
+      '@0xsequence/abi': 0.43.5
+
+  packages/sessions:
+    specifiers:
+      '@0xsequence/core': ^0.43.4
+      '@0xsequence/tests': ^0.43.4
+      '@istanbuljs/nyc-config-typescript': ^1.0.2
+      ethers: ^5.5.2
+      nyc: ^15.1.0
+    dependencies:
+      '@0xsequence/core': link:../core
+      ethers: 5.7.2
+    devDependencies:
+      '@0xsequence/tests': link:../tests
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      nyc: 15.1.0
+
+  packages/signhub:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ^1.0.2
+      ethers: ^5.5.2
+      nyc: ^15.1.0
+    dependencies:
+      ethers: 5.7.2
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      nyc: 15.1.0
+
   packages/simulator:
     dependencies:
       '@0xsequence/transactions':
@@ -522,6 +609,19 @@ importers:
       ethers:
         specifier: ^5.7.2
         version: 5.7.2
+
+  packages/tests:
+    specifiers:
+      '@0xsequence/core': ^0.43.7
+      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      ethers: ^5.7.2
+      web3: ^1.8.1
+    dependencies:
+      '@0xsequence/core': link:../core
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2
+      ethers: 5.7.2
+      web3: 1.8.1
 
   packages/transactions:
     dependencies:
@@ -553,28 +653,33 @@ importers:
         version: 5.7.2
 
   packages/wallet:
+    specifiers:
+      '@0xsequence/abi': ^0.43.26
+      '@0xsequence/config': ^0.43.26
+      '@0xsequence/core': ^0.43.7
+      '@0xsequence/ethauth': ^0.8.0
+      '@0xsequence/guard': ^0.43.26
+      '@0xsequence/network': ^0.43.26
+      '@0xsequence/relayer': ^0.43.26
+      '@0xsequence/signhub': ^0.43.7
+      '@0xsequence/tests': ^0.43.7
+      '@0xsequence/transactions': ^0.43.26
+      '@0xsequence/utils': ^0.43.26
+      '@0xsequence/wallet-contracts': 1.10.0
+      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      ethers: ^5.7.2
+      web3: ^1.8.1
     dependencies:
-      '@0xsequence/abi':
-        specifier: ^0.43.26
-        version: link:../abi
-      '@0xsequence/config':
-        specifier: ^0.43.26
-        version: link:../config
-      '@0xsequence/guard':
-        specifier: ^0.43.26
-        version: link:../guard
-      '@0xsequence/network':
-        specifier: ^0.43.26
-        version: link:../network
-      '@0xsequence/relayer':
-        specifier: ^0.43.26
-        version: link:../relayer
-      '@0xsequence/transactions':
-        specifier: ^0.43.26
-        version: link:../transactions
-      '@0xsequence/utils':
-        specifier: ^0.43.26
-        version: link:../utils
+      '@0xsequence/abi': link:../abi
+      '@0xsequence/config': link:../config
+      '@0xsequence/core': link:../core
+      '@0xsequence/guard': link:../guard
+      '@0xsequence/network': link:../network
+      '@0xsequence/relayer': link:../relayer
+      '@0xsequence/signhub': link:../signhub
+      '@0xsequence/tests': link:../tests
+      '@0xsequence/transactions': link:../transactions
+      '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/ethauth':
         specifier: ^0.8.0
@@ -594,7 +699,11 @@ importers:
 
 packages:
 
-  /@0xsequence/ethauth@0.8.1(ethers@5.7.2):
+  /@0xsequence/abi/0.43.5:
+    resolution: {integrity: sha512-9Vzq1Kzc1oCI1S7f6yE57xUoGeQzeQNirnTkjVoRqBNpVTAPMxYax+uAIyvZljVs/VqwLvjfCk6mneY1HYaNDQ==}
+    dev: false
+
+  /@0xsequence/ethauth/0.8.1_ethers@5.7.2:
     resolution: {integrity: sha512-P21cxRSS+2mDAqFVAJt0lwQFtbObX+Ewlj8DMyDELp81+QbfHFh6LCyu8dTXNdBx6UbmRFOCSBno5Txd50cJPQ==}
     peerDependencies:
       ethers: '>=5.5'
@@ -2570,7 +2679,17 @@ packages:
       '@istanbuljs/schema': 0.1.3
     dev: true
 
-  /@istanbuljs/schema@0.1.3:
+  /@istanbuljs/nyc-config-typescript/1.0.2_nyc@15.1.0:
+    resolution: {integrity: sha512-iKGIyMoyJuFnJRSVTZ78POIRvNnwZaWIf8vG4ZS3rQq58MMDrqEX2nnzx0R28V2X8JvmKYiqY9FP2hlJsm8A0w==}
+    engines: {node: '>=8'}
+    peerDependencies:
+      nyc: '>=15'
+    dependencies:
+      '@istanbuljs/schema': 0.1.3
+      nyc: 15.1.0
+    dev: true
+
+  /@istanbuljs/schema/0.1.3:
     resolution: {integrity: sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==}
     engines: {node: '>=8'}
     dev: true
