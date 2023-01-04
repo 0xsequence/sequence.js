@@ -7,10 +7,12 @@ export type Config = {
   version: number
 }
 
+export type SimpleSigner = { address: string, weight: ethers.BigNumberish }
+
 export type SimpleConfig = {
   threshold: ethers.BigNumberish,
   checkpoint: ethers.BigNumberish,
-  signers: { address: string, weight: ethers.BigNumberish }[]
+  signers: SimpleSigner[]
 }
 
 export interface ConfigCoder<T extends Config = Config> {
@@ -27,6 +29,13 @@ export interface ConfigCoder<T extends Config = Config> {
 
   toJSON: (config: T) => string
   fromJSON: (json: string) => T
+
+  editConfig: (config: T, action: {
+    add?: SimpleSigner[],
+    remove?: string[],
+    threshold?: ethers.BigNumberish,
+    checkpoint?: ethers.BigNumberish
+  }) => T
 
   // isValid: (config: T) => boolean
 
