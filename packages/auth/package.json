@@ -18,13 +18,18 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.43.26",
+    "@0xsequence/account": "^0.43.4",
     "@0xsequence/api": "^0.43.26",
     "@0xsequence/config": "^0.43.26",
+    "@0xsequence/core": "^0.43.7",
     "@0xsequence/ethauth": "^0.8.0",
     "@0xsequence/indexer": "^0.43.26",
     "@0xsequence/metadata": "^0.43.26",
+    "@0xsequence/migration": "workspace:^0.43.4",
     "@0xsequence/network": "^0.43.26",
     "@0xsequence/provider": "^0.43.26",
+    "@0xsequence/sessions": "^0.43.4",
+    "@0xsequence/signhub": "^0.43.7",
     "@0xsequence/wallet": "^0.43.26",
     "@0xsequence/utils": "^0.43.26"
   },
@@ -32,6 +37,7 @@
     "ethers": ">=5.5 < 6"
   },
   "devDependencies": {
+    "@0xsequence/tests": "workspace:^0.43.7",
     "@0xsequence/wallet-contracts": "1.10.0",
     "concurrently": "^7.5.0",
     "ethers": "^5.7.2",

@@ -274,53 +274,50 @@ importers:
     specifiers: {}
 
   packages/auth:
+    specifiers:
+      '@0xsequence/abi': ^0.43.26
+      '@0xsequence/account': ^0.43.4
+      '@0xsequence/api': ^0.43.26
+      '@0xsequence/config': ^0.43.26
+      '@0xsequence/core': ^0.43.7
+      '@0xsequence/ethauth': ^0.8.0
+      '@0xsequence/indexer': ^0.43.26
+      '@0xsequence/metadata': ^0.43.26
+      '@0xsequence/migration': workspace:^0.43.4
+      '@0xsequence/network': ^0.43.26
+      '@0xsequence/provider': ^0.43.26
+      '@0xsequence/sessions': ^0.43.4
+      '@0xsequence/signhub': ^0.43.7
+      '@0xsequence/tests': workspace:^0.43.7
+      '@0xsequence/utils': ^0.43.26
+      '@0xsequence/wallet': ^0.43.26
+      '@0xsequence/wallet-contracts': 1.10.0
+      concurrently: ^7.5.0
+      ethers: ^5.7.2
+      hardhat: ^2.12.2
+      mockttp: ^3.6.0
     dependencies:
-      '@0xsequence/abi':
-        specifier: ^0.43.26
-        version: link:../abi
-      '@0xsequence/api':
-        specifier: ^0.43.26
-        version: link:../api
-      '@0xsequence/config':
-        specifier: ^0.43.26
-        version: link:../config
-      '@0xsequence/ethauth':
-        specifier: ^0.8.0
-        version: 0.8.1(ethers@5.7.2)
-      '@0xsequence/indexer':
-        specifier: ^0.43.26
-        version: link:../indexer
-      '@0xsequence/metadata':
-        specifier: ^0.43.26
-        version: link:../metadata
-      '@0xsequence/network':
-        specifier: ^0.43.26
-        version: link:../network
-      '@0xsequence/provider':
-        specifier: ^0.43.26
-        version: link:../provider
-      '@0xsequence/utils':
-        specifier: ^0.43.26
-        version: link:../utils
-      '@0xsequence/wallet':
-        specifier: ^0.43.26
-        version: link:../wallet
+      '@0xsequence/abi': link:../abi
+      '@0xsequence/account': link:../account
+      '@0xsequence/api': link:../api
+      '@0xsequence/config': link:../config
+      '@0xsequence/core': link:../core
+      '@0xsequence/ethauth': 0.8.1_ethers@5.7.2
+      '@0xsequence/indexer': link:../indexer
+      '@0xsequence/metadata': link:../metadata
+      '@0xsequence/migration': link:../migration
+      '@0xsequence/network': link:../network
+      '@0xsequence/provider': link:../provider
+      '@0xsequence/sessions': link:../sessions
+      '@0xsequence/signhub': link:../signhub
+      '@0xsequence/utils': link:../utils
     devDependencies:
-      '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
-        version: 1.10.0
-      concurrently:
-        specifier: ^7.5.0
-        version: 7.6.0
-      ethers:
-        specifier: ^5.7.2
-        version: 5.7.2
-      hardhat:
-        specifier: ^2.12.2
-        version: 2.12.4
-      mockttp:
-        specifier: ^3.6.0
-        version: 3.6.2
+      '@0xsequence/tests': link:../tests
+      '@0xsequence/wallet-contracts': 1.10.0
+      concurrently: 7.6.0
+      ethers: 5.7.2
+      hardhat: 2.12.4
+      mockttp: 3.6.2
 
   packages/config:
     dependencies:
