@@ -68,6 +68,10 @@ export interface SignatureCoder<
   signaturesOf: (
     config: Y,
   ) => { address: string, signature: string }[]
+
+  signaturesOfDecoded: (
+    decoded: Z
+  ) => string[]
 }
 
 export function subdigestOf(payload: SignedPayload) {

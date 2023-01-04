@@ -788,6 +788,22 @@ export function signaturesOf(topology: Topology): { address: string, signature: 
   return []
 }
 
+export function signaturesOfDecoded(utopology: UnrecoveredTopology): string[] {
+  if (isUnrecoveredNode(utopology)) {
+    return [...signaturesOfDecoded(utopology.left), ...signaturesOfDecoded(utopology.right)]
+  }
+
+  if (isUnrecoveredNestedLeaf(utopology)) {
+    return signaturesOfDecoded(utopology.tree)
+  }
+
+  if (isUnrecoveredSignatureLeaf(utopology)) {
+    return [utopology.signature]
+  }
+
+  return []
+}
+
 export const SignatureCoder: base.SignatureCoder<
   WalletConfig,
   Signature,
@@ -846,5 +862,9 @@ export const SignatureCoder: base.SignatureCoder<
 
   signaturesOf(config: WalletConfig): { address: string, signature: string }[] {
     return signaturesOf(config.tree)
+  },
+
+  signaturesOfDecoded: function (data: UnrecoveredSignature): string[] {
+    return signaturesOfDecoded(data.decoded.tree)
   }
 }

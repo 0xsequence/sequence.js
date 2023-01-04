@@ -4,7 +4,7 @@ import { migrator, context, defaults, version } from '@0xsequence/migration'
 import { Orchestrator } from '@0xsequence/signhub'
 import { NetworkConfig } from '@0xsequence/network'
 import { ethers } from 'ethers'
-import { commons, universal, v2 } from '@0xsequence/core'
+import { commons, universal } from '@0xsequence/core'
 import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
 import { counterfactualVersion } from '@0xsequence/migration/src/version'
 import { Wallet } from '@0xsequence/wallet'
@@ -399,6 +399,21 @@ export class Account {
     return coder.encode(chainedSignature)
   }
 
+  async publishWitness(): Promise<void> {
+    const digest = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`This is a Sequence account woo! ${Date.now()}`))
+    const signature = await this.signDigest(digest, 0, false)
+    const decoded = this.coders.signature.decode(signature)
+
+    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
+
+    await Promise.all(signatures.map((s) => this.tracker.saveWitness({
+      wallet: this.address,
+      signature: s,
+      digest,
+      chainId: 0
+    })))
+  }
+
   async signDigest(
     digest: ethers.BytesLike,
     chainId: ethers.BigNumberish,
@@ -557,6 +572,11 @@ export class Account {
 
   async signAllMigrations() {
     return Promise.all(this.networks.map((n) => this.signMigrations(n.chainId)))
+  }
+
+  async isMigratedAllChains(): Promise<boolean> {
+    const statuses = await Promise.all(this.networks.map((n) => this.status(n.chainId)))
+    return statuses.every((s) => s.fullyMigrated)
   }
 
   async sendSignedTransactions(

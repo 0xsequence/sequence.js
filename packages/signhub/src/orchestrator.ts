@@ -47,6 +47,10 @@ export class Orchestrator {
   private signers: SapientSigner[] = []
 
   constructor(signers: (ethers.Signer | SapientSigner)[]) {
+    this.setSigners(signers)
+  }
+
+  setSigners(signers: (ethers.Signer | SapientSigner)[]) {
     this.signers = signers.map((s) => isSapientSigner(s) ? s : new SignerWrapper(s))
   }
 
