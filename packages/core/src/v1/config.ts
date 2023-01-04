@@ -145,5 +145,49 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       threshold: ethers.BigNumber.from(parsed.threshold),
       signers
     }
+  },
+
+  editConfig: function (
+    config: WalletConfig,
+    action: {
+      add?: commons.config.SimpleSigner[];
+      remove?: string[];
+      threshold?: ethers.BigNumberish,
+      checkpoint?: ethers.BigNumberish
+    }
+  ): WalletConfig {
+    const newSigners = config.signers.slice()
+
+    if (action.checkpoint && !ethers.constants.Zero.eq(action.checkpoint)) {
+      throw new Error('v1 wallet config does not support checkpoint')
+    }
+
+    if (action.add) {
+      for (const signer of action.add) {
+        if (newSigners.find((s) => s.address === signer.address)) {
+          continue
+        }
+
+        newSigners.push({
+          weight: signer.weight,
+          address: signer.address
+        })
+      }
+    }
+
+    if (action.remove) {
+      for (const address of action.remove) {
+        const index = newSigners.findIndex((signer) => signer.address === address)
+        if (index >= 0) {
+          newSigners.splice(index, 1)
+        }
+      }
+    }
+
+    return {
+      version: config.version,
+      threshold: action.threshold ?? config.threshold,
+      signers: newSigners
+    }
   }
 }

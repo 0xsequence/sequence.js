@@ -540,5 +540,46 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       checkpoint: ethers.BigNumber.from(config.checkpoint),
       tree: topologyFromJSON(config.tree)
     }
+  },
+
+  editConfig: function (
+    config: WalletConfig,
+    action: {
+      add?: commons.config.SimpleSigner[];
+      remove?: string[];
+      threshold?: ethers.BigNumberish,
+      checkpoint?: ethers.BigNumberish
+    }
+  ): WalletConfig {
+    const members = topologyToMembers(config.tree)
+
+    if (action.add) {
+      for (const signer of action.add) {
+        if (members.find((s) => isSignerLeaf(s) && s.address === signer.address)) {
+          continue
+        }
+
+        members.push({
+          address: signer.address,
+          weight: signer.weight
+        })
+      }
+    }
+
+    if (action.remove) {
+      for (const address of action.remove) {
+        const index = members.findIndex((s) => isSignerLeaf(s) && s.address === address)
+        if (index >= 0) {
+          members.splice(index, 1)
+        }
+      }
+    }
+
+    return {
+      version: config.version,
+      threshold: action.threshold ?? config.threshold,
+      checkpoint: action.checkpoint ?? config.checkpoint,
+      tree: optimized2SignersTopologyBuilder(members)
+    }
   }
 }

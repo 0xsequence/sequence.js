@@ -203,15 +203,20 @@ importers:
   packages/auth:
     specifiers:
       '@0xsequence/abi': ^0.43.7
+      '@0xsequence/account': ^0.43.4
       '@0xsequence/api': ^0.43.7
       '@0xsequence/config': ^0.43.7
-      '@0xsequence/ethauth': ^0.8.0
+      '@0xsequence/core': ^0.43.7
+      '@0xsequence/ethauth': ^0.8.1
       '@0xsequence/indexer': ^0.43.7
       '@0xsequence/metadata': ^0.43.7
+      '@0xsequence/migration': workspace:^0.43.4
       '@0xsequence/network': ^0.43.7
       '@0xsequence/provider': ^0.43.7
+      '@0xsequence/sessions': ^0.43.4
+      '@0xsequence/signhub': ^0.43.7
+      '@0xsequence/tests': workspace:^0.43.7
       '@0xsequence/utils': ^0.43.7
-      '@0xsequence/wallet': ^0.43.7
       '@0xsequence/wallet-contracts': 1.10.0
       concurrently: ^7.5.0
       ethers: ^5.7.2
@@ -219,16 +224,21 @@ importers:
       mockttp: ^3.6.0
     dependencies:
       '@0xsequence/abi': link:../abi
+      '@0xsequence/account': link:../account
       '@0xsequence/api': link:../api
       '@0xsequence/config': link:../config
+      '@0xsequence/core': link:../core
       '@0xsequence/ethauth': 0.8.1_ethers@5.7.2
       '@0xsequence/indexer': link:../indexer
       '@0xsequence/metadata': link:../metadata
+      '@0xsequence/migration': link:../migration
       '@0xsequence/network': link:../network
       '@0xsequence/provider': link:../provider
+      '@0xsequence/sessions': link:../sessions
+      '@0xsequence/signhub': link:../signhub
       '@0xsequence/utils': link:../utils
-      '@0xsequence/wallet': link:../wallet
     devDependencies:
+      '@0xsequence/tests': link:../tests
       '@0xsequence/wallet-contracts': 1.10.0
       concurrently: 7.6.0
       ethers: 5.7.2
