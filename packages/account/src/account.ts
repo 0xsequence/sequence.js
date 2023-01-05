@@ -137,7 +137,8 @@ export class Account {
       tracker: options.tracker,
       contexts: options.contexts,
       networks: options.networks,
-      orchestrator: options.orchestrator
+      orchestrator: options.orchestrator,
+      migrations: options.migrations
     })
   }
 
