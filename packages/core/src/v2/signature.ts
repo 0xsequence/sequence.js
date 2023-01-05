@@ -622,7 +622,10 @@ export async function recoverSignature(
   const result: (Signature | ChainedSignature)[] = []
   let mutatedPayload = signedPayload
 
-  for (const sig of [signature, ...signature.suffix]) {
+  // Recover the chain of signatures
+  // NOTICE: Remove the suffix from the "first" siganture
+  // otherwise we recurse infinitely
+  for (const sig of [{ ...signature, suffix: undefined }, ...signature.suffix]) {
     const recovered = await recoverSignature(sig, mutatedPayload, provider)
     result.unshift(recovered)
 
