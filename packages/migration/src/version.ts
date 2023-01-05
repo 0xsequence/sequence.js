@@ -16,12 +16,12 @@ export async function versionOf(
 
   // if not deployed we need to check to which version
   // the counterfactual address belongs to
-  if (!(await reader.isDeployed())) {
+  if (!(await reader.isDeployed(address))) {
     return counterfactualVersion(address, firstImageHash, versions)
   }
 
   // if deployed we need to check the implementation address
-  const implementation = await reader.implementation()
+  const implementation = await reader.implementation(address)
   if (!implementation || implementation === ethers.constants.AddressZero) {
     throw new Error('Invalid implementation address')
   }
