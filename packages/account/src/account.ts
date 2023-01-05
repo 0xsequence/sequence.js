@@ -57,23 +57,23 @@ export type AccountOptions = {
 }
 
 class Chain0Reader implements commons.reader.Reader {
-  async isDeployed(): Promise<boolean> {
+  async isDeployed(_wallet: string): Promise<boolean> {
     return false
   }
 
-  async implementation(): Promise<string | undefined> {
+  async implementation(_wallet: string): Promise<string | undefined> {
     return undefined
   }
 
-  async imageHash(): Promise<string | undefined> {
+  async imageHash(_wallet: string): Promise<string | undefined> {
     return undefined
   }
 
-  async nonce(_space: ethers.BigNumberish): Promise<ethers.BigNumberish> {
+  async nonce(_wallet: string, _space: ethers.BigNumberish): Promise<ethers.BigNumberish> {
     return ethers.constants.Zero
   }
 
-  async isValidSignature(_digest: ethers.utils.BytesLike, _signature: ethers.utils.BytesLike): Promise<boolean> {
+  async isValidSignature(_wallet: string, _digest: ethers.utils.BytesLike, _signature: ethers.utils.BytesLike): Promise<boolean> {
     throw new Error('Method not supported.')
   }
 }
@@ -175,7 +175,7 @@ export class Account {
 
     // TODO: Networks should be able to provide a reader directly
     // and we should default to the on-chain reader
-    return new commons.reader.OnChainReader(this.address, this.provider(chainId))
+    return new commons.reader.OnChainReader(this.provider(chainId))
   }
 
   relayer(chainId: ethers.BigNumberish): Relayer {
@@ -269,10 +269,10 @@ export class Account {
   // 3. Get any pending configuration updates that have been signed by the wallet
   // 4. Fetch reverse lookups for both on-chain and pending configurations
   async status(chainId: ethers.BigNumberish): Promise<AccountStatus> {
-    const isDeployedPromise = this.reader(chainId).isDeployed()
+    const isDeployedPromise = this.reader(chainId).isDeployed(this.address)
     const onChainVersionInfoPromise = this.onchainVersionInfo(chainId)
 
-    let onChainImageHash = await this.reader(chainId).imageHash()
+    let onChainImageHash = await this.reader(chainId).imageHash(this.address)
     if (!onChainImageHash) {
       const counterFactualImageHash = await this.tracker.imageHashOfCounterFactualWallet({
         wallet: this.address
