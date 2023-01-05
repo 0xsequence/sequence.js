@@ -318,7 +318,6 @@ export class Account {
     const presigned = await this.tracker.loadPresignedConfiguration({
       wallet: this.address,
       fromImageHash: fromImageHash,
-      checkpoint: universal.genericCoderFor(onChainConfig.version).config.checkpointOf(onChainConfig),
     })
 
     const imageHash = presigned && presigned.length > 0 ? presigned[presigned.length - 1].nextImageHash : fromImageHash

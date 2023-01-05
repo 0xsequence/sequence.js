@@ -284,10 +284,9 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
   loadPresignedConfiguration = async (args: {
     wallet: string,
     fromImageHash: string,
-    checkpoint: ethers.BigNumberish,
     longestPath?: boolean
   }): Promise<PresignedConfigUpdate[]> => {
-    const { wallet, fromImageHash, checkpoint, longestPath } = args
+    const { wallet, fromImageHash, longestPath } = args
 
     const fromConfig = await this.configOfImageHash({ imageHash: fromImageHash })
     if (!fromConfig || !v2.config.ConfigCoder.isWalletConfig(fromConfig)) {
@@ -323,8 +322,8 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
       if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) continue
       const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
 
-      // Only consider candidates later than the minimum required checkpoint
-      if (nextCheckpoint.lte(checkpoint)) continue
+      // Only consider candidates later than the starting checkpoint
+      if (nextCheckpoint.lte(fromConfig.checkpoint)) continue
 
       if (bestCandidate) {
         const bestCheckpoint = bestCandidate.checkpoint
@@ -373,7 +372,6 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const nextStep = await this.loadPresignedConfiguration({
       wallet,
       fromImageHash: bestCandidate.nextImageHash,
-      checkpoint: bestCandidate.checkpoint,
       longestPath
     })
 
