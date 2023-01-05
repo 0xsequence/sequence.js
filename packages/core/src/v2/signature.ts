@@ -604,10 +604,10 @@ export async function recoverSignature(
   const signedPayload = (payload as { subdigest: string}).subdigest === undefined ? payload as base.SignedPayload : undefined
   const subdigest = signedPayload ? base.subdigestOf(signedPayload) : (payload as { subdigest: string }).subdigest
 
-  // if payload chainid is 0 then it must be encoded with "no chainid" encoding
-  // and if it is encoded with "no chainid" encoding then it must have chainid 0
-  if (signedPayload && ethers.constants.Zero.eq(signedPayload.chainid) !== (signature.type === SignatureType.NoChainIdDynamic)) {
-    throw new Error(`Invalid signature type-chainid combination: ${signature.type}-${signedPayload.chainid.toString()}`)
+  // if payload chain id is 0 then it must be encoded with "no chain id" encoding
+  // and if it is encoded with "no chain id" encoding then it must have chain id 0
+  if (signedPayload && ethers.constants.Zero.eq(signedPayload.chainId) !== (signature.type === SignatureType.NoChainIdDynamic)) {
+    throw new Error(`Invalid signature type-chain id combination: ${signature.type}-${signedPayload.chainId.toString()}`)
   }
 
   if (!isUnrecoveredChainedSignature(signature)) {

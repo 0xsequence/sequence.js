@@ -21,7 +21,7 @@ export type UnrecoveredSignature = {
 export type SignedPayload = {
   message?: ethers.BytesLike,
   digest: string,
-  chainid: ethers.BigNumberish,
+  chainId: ethers.BigNumberish,
   address: string
 }
 
@@ -77,10 +77,10 @@ export interface SignatureCoder<
 export function subdigestOf(payload: SignedPayload) {
   return ethers.utils.solidityKeccak256(
     ['bytes', 'uint256', 'address', 'bytes32'],
-    ['0x1901', payload.chainid, payload.address, payload.digest]
+    ['0x1901', payload.chainId, payload.address, payload.digest]
   )
 }
 
 export function isSignedPayload(payload: any): payload is SignedPayload {
-  return payload.digest !== undefined && payload.chainid !== undefined && payload.address !== undefined
+  return payload.digest !== undefined && payload.chainId !== undefined && payload.address !== undefined
 }
