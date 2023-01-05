@@ -5,11 +5,12 @@ import { ethers } from "ethers"
  * Provides stateful information about the wallet.
  */
 export interface Reader {
-  isDeployed(): Promise<boolean>
-  implementation(): Promise<string | undefined>
-  imageHash(): Promise<string | undefined>
-  nonce(space: ethers.BigNumberish): Promise<ethers.BigNumberish>
+  isDeployed(wallet: string): Promise<boolean>
+  implementation(wallet: string): Promise<string | undefined>
+  imageHash(wallet: string): Promise<string | undefined>
+  nonce(wallet: string, space: ethers.BigNumberish): Promise<ethers.BigNumberish>
   isValidSignature(
+    wallet: string,
     digest: ethers.BytesLike,
     signature: ethers.BytesLike
   ): Promise<boolean>
@@ -20,31 +21,31 @@ export interface Reader {
  * It is used to understand the "real" state of the wallet contract on-chain.
  */
  export class OnChainReader implements Reader {
-  public readonly module: ethers.Contract
 
   constructor(
-    public readonly address: string,
     public readonly provider: ethers.providers.Provider
-  ) {
-    this.module = new ethers.Contract(
+  ) {}
+
+  private module(address: string) {
+    return new ethers.Contract(
       address,
       [
         ...walletContracts.mainModuleUpgradable.abi,
         ...walletContracts.mainModule.abi,
         ...walletContracts.erc1271.abi
       ],
-      provider
+      this.provider
     )
   }
 
-  async isDeployed(): Promise<boolean> {
-    const code = await this.provider.getCode(this.address).then((c) => ethers.utils.arrayify(c))
+  async isDeployed(wallet: string): Promise<boolean> {
+    const code = await this.provider.getCode(wallet).then((c) => ethers.utils.arrayify(c))
     return code.length !== 0
   }
 
-  async implementation(): Promise<string | undefined> {
-    const position = ethers.utils.defaultAbiCoder.encode(['address'], [this.address])
-    const val = await this.provider.getStorageAt(this.address, position).then((c) => ethers.utils.arrayify(c))
+  async implementation(wallet: string): Promise<string | undefined> {
+    const position = ethers.utils.defaultAbiCoder.encode(['address'], [wallet])
+    const val = await this.provider.getStorageAt(wallet, position).then((c) => ethers.utils.arrayify(c))
 
     if (val.length === 20) {
       return ethers.utils.getAddress(ethers.utils.hexlify(val))
@@ -57,21 +58,21 @@ export interface Reader {
     return undefined
   }
 
-  async imageHash(): Promise<string | undefined> {
+  async imageHash(wallet: string): Promise<string | undefined> {
     try {
-      const imageHash = await this.module.imageHash()
+      const imageHash = await this.module(wallet).imageHash()
       return imageHash
     } catch {}
 
     return undefined
   }
 
-  async nonce(space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
+  async nonce(wallet: string, space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
     try {
-      const nonce = await this.module.readNonce(space)
+      const nonce = await this.module(wallet).readNonce(space)
       return nonce
     } catch (e) {
-      if (!(await this.isDeployed())) {
+      if (!(await this.isDeployed(wallet))) {
         return 0
       }
 
@@ -80,14 +81,15 @@ export interface Reader {
   }
 
   async isValidSignature(
+    wallet: string,
     digest: ethers.BytesLike,
     signature: ethers.BytesLike
   ): Promise<boolean> {
     try {
-      const isValid = await this.module.isValidSignature(digest, signature)
+      const isValid = await this.module(wallet).isValidSignature(digest, signature)
       return isValid === '0x1626ba7e' // as defined in ERC1271
     } catch (e) {
-      if (!(await this.isDeployed())) {
+      if (!(await this.isDeployed(wallet))) {
         throw new Error('Wallet must be deployed to validate signature')
       }
 

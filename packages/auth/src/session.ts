@@ -278,7 +278,7 @@ export class Session {
     const proofString = {
       proofString: this.account.signDigest(proof.messageDigest(), 0).then((s) => {
         proof.signature = s
-        return ethAuth.encodeProof(proof)
+        return ethAuth.encodeProof(proof, true)
       }).catch((reason) => {
         this.proofStrings.delete(key)
         throw reason
