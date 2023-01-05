@@ -26,7 +26,6 @@ export abstract class ConfigTracker {
   loadPresignedConfiguration: (args: {
     wallet: string,
     fromImageHash: string,
-    checkpoint: ethers.BigNumberish,
     longestPath?: boolean
   }) => Promise<PresignedConfigUpdate[]>
 
