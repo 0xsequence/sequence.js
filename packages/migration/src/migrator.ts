@@ -28,7 +28,7 @@ export interface PresignedMigrationTracker {
   saveMigration(
     address: string,
     fromVersion: number,
-    chainid: ethers.BigNumberish,
+    chainId: ethers.BigNumberish,
     signed: SignedMigration,
     contexts: VersionedContext
   ): Promise<void>

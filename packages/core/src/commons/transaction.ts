@@ -84,8 +84,8 @@ export function digestOfTransactions(nonce: BigNumberish, txs: Transaction[]) {
   return ethers.utils.keccak256(packMetaTransactionsData(nonce, txs))
 }
 
-export function subdigestOfTransactions(address: string, chainid: BigNumberish, nonce: ethers.BigNumberish, txs: Transaction[]): string {
-  return subdigestOf({ address, chainid, digest: digestOfTransactions(nonce, txs) })
+export function subdigestOfTransactions(address: string, chainId: BigNumberish, nonce: ethers.BigNumberish, txs: Transaction[]): string {
+  return subdigestOf({ address, chainId, digest: digestOfTransactions(nonce, txs) })
 }
 
 export function toSequenceTransactions(
