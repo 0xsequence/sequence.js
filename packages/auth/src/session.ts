@@ -36,7 +36,7 @@ type ProofStringPromise = {
 }
 
 export interface SessionDumpV1 {
-  config: v1.config.WalletConfig,
+  config: Omit<v1.config.WalletConfig, 'version'> & { address?: string },
   jwt?: SessionJWT
   metadata: SessionMeta
 }
@@ -416,9 +416,12 @@ export class Session {
 
     if (isSessionDumpV1(dump)) {
       // Old configuration format used to also contain an "address" field
-      // we should find it, otherwise we can't load the old session
-      const oldAddress = (dump.config as any).address
-      if (!oldAddress) throw Error('Invalid v1 session dump')
+      // but if it doesn't, it means that it was a "counter-factual" account
+      // not yet updated, so we need to compute the address
+      const oldAddress = dump.config.address || commons.context.addressOf(
+        contexts[1],
+        v1.config.ConfigCoder.imageHashOf({ ...dump.config, version: 1 })
+      )
 
       account = new Account({
         address: oldAddress,

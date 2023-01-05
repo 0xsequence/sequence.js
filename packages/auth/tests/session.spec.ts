@@ -16,7 +16,7 @@ const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/c
 
 const { expect } = chai.use(chaiAsPromised)
 
-import { Session, SessionSettings, ValidateSequenceWalletProof } from '../src'
+import { Session, SessionDumpV1, SessionSettings, ValidateSequenceWalletProof } from '../src'
 
 import * as mockServer from 'mockttp'
 import { ETHAuth } from '@0xsequence/ethauth'
@@ -24,8 +24,9 @@ import { context, migrator } from '@0xsequence/migration'
 import { Orchestrator } from '@0xsequence/signhub'
 import { tracker } from '@0xsequence/sessions'
 import { LocalConfigTracker } from '@0xsequence/sessions/src/trackers/local'
-import { v2 } from '@0xsequence/core'
+import { v1, v2 } from '@0xsequence/core'
 import { OnChainReader } from '@0xsequence/core/src/commons/reader'
+import { Account } from '@0xsequence/account'
 
 type EthereumInstance = {
   chainId?: number
@@ -335,6 +336,112 @@ describe('Wallet integration', function () {
 
     await newSession1.account.sendTransaction([], networks[0].chainId)
     await newSession2.account.sendTransaction([], networks[0].chainId)
+  })
+
+  it('Should re-open a session after sending a transaction', async () => {
+    const referenceSigner = ethers.Wallet.createRandom()
+    const signer1 = ethers.Wallet.createRandom()
+    orchestrator.setSigners([referenceSigner, signer1])
+
+    const session = await Session.open({
+      settings: simpleSettings,
+      referenceSigner: referenceSigner.address,
+      addSigners: [{
+        address: referenceSigner.address, weight: 1,
+      }, {
+        address: signer1.address, weight: 1
+      }],
+      threshold: 2,
+      metadata: {
+        name: 'Test'
+      },
+      selectWallet: async () => undefined
+    })
+
+    await session.account.sendTransaction([], networks[0].chainId)
+
+    const signer2 = ethers.Wallet.createRandom()
+
+    const newSession = await Session.open({
+      settings: simpleSettings,
+      referenceSigner: referenceSigner.address,
+      addSigners: [{ address: signer2.address, weight: 1 }],
+      threshold: 2,
+      metadata: {
+        name: 'Test'
+      },
+      selectWallet: async (wallets) => {
+        expect(wallets.length).to.equal(1)
+        return wallets[0]
+      }
+    })
+
+    expect(newSession.account.address).to.equal(session.account.address)
+
+    await newSession.account.sendTransaction([], networks[0].chainId)
+  })
+
+  describe('Migrate sessions', () => {
+    let ogAccount: Account
+    let referenceSigner: ethers.Wallet
+    let v1SessionDump: SessionDumpV1
+
+    beforeEach(async () => {
+      // Create a wallet using v1
+      referenceSigner = ethers.Wallet.createRandom()
+      orchestrator.setSigners([referenceSigner])
+
+      ogAccount = await Account.new({
+        config: { threshold: 1, checkpoint: 0, signers: [{ address: referenceSigner.address, weight: 1 }] },
+        tracker,
+        contexts: { 1: contexts[1] },
+        orchestrator,
+        networks,
+        migrations: { 0: {
+          version: 1,
+          configCoder: v1.config.ConfigCoder,
+          signatureCoder: v1.signature.SignatureCoder,
+        } as any}
+      })
+
+      await ogAccount.publishWitness()
+
+      v1SessionDump = {
+        config: {
+          threshold: 1,
+          signers: [{ address: referenceSigner.address, weight: 1 }],
+        },
+        metadata: {
+          name: 'Test',
+        }
+      }
+    })
+
+    it('Should open and migrate old session, without dump', async () => {
+      const newSigner = ethers.Wallet.createRandom()
+      orchestrator.setSigners([referenceSigner, newSigner])
+
+      const newSession = await Session.open({
+        settings: simpleSettings,
+        referenceSigner: referenceSigner.address,
+        addSigners: [{ address: newSigner.address, weight: 1 }],
+        threshold: 1,
+        metadata: {
+          name: 'Test'
+        },
+        selectWallet: async (wallets) => {
+          expect(wallets.length).to.equal(1)
+          return wallets[0]
+        }
+      })
+
+      expect(newSession.account.address).to.equal(ogAccount.address)
+      const status = await newSession.account.status(networks[0].chainId)
+      expect(status.version).to.equal(2)
+      expect(status.fullyMigrated).to.be.true
+
+      await newSession.account.sendTransaction([], networks[0].chainId)
+    })
   })
 
   describe('JWT Auth', () => {
