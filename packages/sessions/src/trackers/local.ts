@@ -323,14 +323,18 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
       if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) continue
       const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
 
-      // If next config doesn't have a higher checkpoint, skip
-      const bestCheckpoint = bestCandidate?.checkpoint ?? checkpoint
-      if (!nextCheckpoint.gt(bestCheckpoint)) continue
+      // Only consider candidates later than the minimum required checkpoint
+      if (nextCheckpoint.lte(checkpoint)) continue
 
-      if (longestPath) {
-        if (bestCandidate && bestCandidate.checkpoint.lt(nextConfig.checkpoint)) continue
-      } else {
-        if (bestCandidate && bestCandidate.checkpoint.gt(nextConfig.checkpoint)) continue
+      if (bestCandidate) {
+        const bestCheckpoint = bestCandidate.checkpoint
+        if (longestPath) {
+          // Only consider candidates earlier than our current best
+          if (nextCheckpoint.gte(bestCheckpoint)) continue
+        } else {
+          // Only consider candidates later than our current best
+          if (nextCheckpoint.lte(bestCheckpoint)) continue
+        }
       }
 
       // Get all signatures (for all signers) for this subdigest
