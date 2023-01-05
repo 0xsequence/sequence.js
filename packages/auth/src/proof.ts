@@ -36,7 +36,7 @@ export const ValidateSequenceWalletProof = (
     const recovered = await coders.signature.recover(decoded, {
       address: proof.address,
       digest: ethers.utils.hexlify(digest),
-      chainid: 0 // Sequence uses chainId 0 for all networks, proofs are not chain specific
+      chainId: 0 // Sequence uses chainId 0 for all networks, proofs are not chain specific
     }, provider)
 
     const imageHash = coders.config.imageHashOf(recovered.config)

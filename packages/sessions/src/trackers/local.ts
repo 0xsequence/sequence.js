@@ -231,7 +231,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const subdigest = commons.signature.subdigestOf(payload)
     return this.store.set(subdigest, JSON.stringify({
       ...payload,
-      chainid: ethers.BigNumber.from(payload.chainid).toString()
+      chainId: ethers.BigNumber.from(payload.chainId).toString()
     }))
   }
 
@@ -246,7 +246,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const parsed = JSON.parse(result)
     return {
       ...parsed,
-      chainid: ethers.BigNumber.from(parsed.chainid)
+      chainId: ethers.BigNumber.from(parsed.chainId)
     }
   }
 
@@ -261,7 +261,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const payload = {
       message,
       address: args.wallet,
-      chainid: 0,
+      chainId: 0,
       digest
     }
 
@@ -393,7 +393,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const payload = {
       digest: args.digest,
       address: args.wallet,
-      chainid: args.chainId,
+      chainId: args.chainId,
     }
 
     const subdigest = commons.signature.subdigestOf(payload)
@@ -457,7 +457,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
         wallet,
         proof: {
           digest: payload.digest,
-          chainId: ethers.BigNumber.from(payload.chainid),
+          chainId: ethers.BigNumber.from(payload.chainId),
           signature
         }
       })
@@ -469,7 +469,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
   async saveMigration(
     address: string,
     fromVersion: number,
-    chainid: ethers.BigNumberish,
+    chainId: ethers.BigNumberish,
     signed: SignedMigration,
     contexts: context.VersionedContext
   ): Promise<void> {
@@ -487,7 +487,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     // Split signature and save each part
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
     const digest = ethers.utils.keccak256(message)
-    const payload = { chainid, message, address, digest }
+    const payload = { chainId, message, address, digest }
 
     await this.savePayload({ payload })
 
@@ -534,7 +534,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const candidates = await Promise.all(subdigests.map(async (subdigest) => {
       const payload = await this.payloadOfSubdigest({ subdigest })
       if (!payload || !payload.message) return undefined
-      if (!ethers.BigNumber.from(chainId).eq(payload.chainid)) return undefined
+      if (!ethers.BigNumber.from(chainId).eq(payload.chainId)) return undefined
 
       const signers = coder.config.signersOf(currentConfig as any)
 
