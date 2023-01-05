@@ -115,7 +115,7 @@ export class Wallet<
   reader(): commons.reader.Reader {
     if (this._reader) return this._reader
     if (!this.provider) throw new Error("Wallet status provider requires a provider")
-    return new commons.reader.OnChainReader(this.address, this.provider)
+    return new commons.reader.OnChainReader(this.provider)
   }
 
   setConfig(config: Y) {
@@ -141,7 +141,7 @@ export class Wallet<
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
-    if (await this.reader().isDeployed()) return bundle
+    if (await this.reader().isDeployed(this.address)) return bundle
 
     const deployTx = this.buildDeployTransaction()
 
@@ -199,7 +199,7 @@ export class Wallet<
 
   async buildUpdateConfigurationTransaction(config: Y): Promise<commons.transaction.TransactionBundle> {
     if (this.coders.config.update.isKindUsed) {
-      const implementation = await this.reader().implementation()
+      const implementation = await this.reader().implementation(this.address)
       const isLaterUpdate = implementation && implementation === this.context.mainModuleUpgradable
       return this.coders.config.update.buildTransaction(this.address, config, this.context, isLaterUpdate ? 'later' : 'first')
     }
@@ -247,7 +247,7 @@ export class Wallet<
 
     let defaultedNonce = nonce
     if (defaultedNonce === undefined) {
-      defaultedNonce = await this.reader().nonce(0)
+      defaultedNonce = await this.reader().nonce(this.address, 0)
       if (defaultedNonce === undefined) throw new Error("Unable to determine nonce")
     }
 
