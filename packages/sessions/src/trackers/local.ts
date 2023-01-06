@@ -466,7 +466,6 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
   async saveMigration(
     address: string,
-    chainId: ethers.BigNumberish,
     signed: SignedMigration,
     contexts: context.VersionedContext
   ): Promise<void> {
@@ -485,7 +484,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     // Split signature and save each part
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
     const digest = ethers.utils.keccak256(message)
-    const payload = { chainId, message, address, digest }
+    const payload = { chainId: signed.tx.chainId, message, address, digest }
 
     await this.savePayload({ payload })
 
