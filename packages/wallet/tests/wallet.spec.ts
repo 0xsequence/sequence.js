@@ -63,7 +63,7 @@ describe('Wallet (primitive)', () => {
           }
         })
 
-        expect(await wallet.reader().isDeployed()).to.be.true
+        expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
       });
 
       //
@@ -178,7 +178,7 @@ describe('Wallet (primitive)', () => {
 
             const signature = await wallet.signMessage(message)
             const digest = ethers.utils.keccak256(message)
-            expect(await wallet.reader().isValidSignature(digest, signature)).to.be.true
+            expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
           });
 
           //
@@ -260,12 +260,12 @@ describe('Wallet (primitive)', () => {
                   throw new Error('Version not supported in test')
                 }
 
-                const prevImplentation = await wallet.reader().implementation()
+                const prevImplentation = await wallet.reader().implementation(wallet.address)
 
                 await wallet.sendTransaction(updateTx.transactions)
 
-                expect(await wallet.reader().imageHash()).to.equal(coders.config.imageHashOf(newConfig))
-                expect(await wallet.reader().implementation()).to.not.equal(prevImplentation)
+                expect(await wallet.reader().imageHash(wallet.address)).to.equal(coders.config.imageHashOf(newConfig))
+                expect(await wallet.reader().implementation(wallet.address)).to.not.equal(prevImplentation)
               })
             })
           })
