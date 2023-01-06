@@ -49,7 +49,7 @@ export interface SessionDumpV2 {
 }
 
 export function isSessionDumpV1(obj: any): obj is SessionDumpV1 {
-  return obj.config && obj.context && obj.metadata && obj.version === undefined
+  return obj.config && obj.metadata && obj.version === undefined
 }
 
 export function isSessionDumpV2(obj: any): obj is SessionDumpV2 {
@@ -438,7 +438,7 @@ export class Session {
         await account.signAllMigrations()
         if (!(await account.isMigratedAllChains())) throw Error('Failed to migrate account')
       }
-    } else {
+    } else if (isSessionDumpV2(dump)) {
       account = new Account({
         address: dump.address,
         tracker,
@@ -446,6 +446,8 @@ export class Session {
         contexts,
         orchestrator
       })
+    } else {
+      throw Error('Invalid dump format')
     }
 
     return new Session(
