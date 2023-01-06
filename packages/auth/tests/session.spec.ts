@@ -442,6 +442,91 @@ describe('Wallet integration', function () {
 
       await newSession.account.sendTransaction([], networks[0].chainId)
     })
+
+    it('Should open and migrate dump', async () => {
+      const newSession = await Session.load({
+        settings: simpleSettings,
+        dump: v1SessionDump,
+      })
+
+      expect(newSession.account.address).to.equal(ogAccount.address)
+
+      const status = await newSession.account.status(networks[0].chainId)
+      expect(status.version).to.equal(2)
+      expect(status.fullyMigrated).to.be.true
+
+      await newSession.account.sendTransaction([], networks[0].chainId)
+    })
+
+    describe('After updating old wallet', () => {
+      beforeEach(async () => {
+        const status = await ogAccount.status(networks[0].chainId)
+        const wallet = ogAccount.walletForStatus(networks[0].chainId, status)
+
+        const newSigner = ethers.Wallet.createRandom()
+        orchestrator.setSigners([referenceSigner, newSigner])
+
+        const uptx = await wallet.buildUpdateConfigurationTransaction({
+          threshold: 2,
+          signers: [
+            { address: referenceSigner.address, weight: 1 },
+            { address: newSigner.address, weight: 1 }
+          ]
+        } as v1.config.WalletConfig)
+
+        const suptx = await wallet.signTransactionBundle(uptx)
+        await wallet.relayer?.relay(suptx)
+
+        v1SessionDump = {
+          ...v1SessionDump,
+          config: {
+            ...v1SessionDump.config,
+            address: wallet.address
+          }
+        }
+      })
+
+      it('Should open and migrate old session', async () => {
+        const newSigner2 = ethers.Wallet.createRandom()
+  
+        const newSession = await Session.open({
+          settings: simpleSettings,
+          referenceSigner: referenceSigner.address,
+          addSigners: [{ address: newSigner2.address, weight: 1 }],
+          threshold: 2,
+          metadata: {
+            name: 'Test'
+          },
+          selectWallet: async (wallets) => {
+            expect(wallets.length).to.equal(1)
+            return wallets[0]
+          }
+        })
+
+        expect(newSession.account.address).to.equal(ogAccount.address)
+        const status = await newSession.account.status(networks[0].chainId)
+        expect(status.version).to.equal(2)
+        expect(status.fullyMigrated).to.be.true
+
+        orchestrator.setSigners([referenceSigner, newSigner2])
+        await newSession.account.sendTransaction([], networks[0].chainId)
+      })
+
+      it('Should open and migrate dump', async () => {
+        const newSession = await Session.load({
+          settings: simpleSettings,
+          dump: v1SessionDump,
+        })
+
+        expect(newSession.account.address).to.equal(ogAccount.address)
+
+        const status = await newSession.account.status(networks[0].chainId)
+        expect(status.version).to.equal(2)
+        expect(status.fullyMigrated).to.be.true
+
+        await newSession.account.sendTransaction([], networks[0].chainId)
+      })
+    })
   })
 
   describe('JWT Auth', () => {
