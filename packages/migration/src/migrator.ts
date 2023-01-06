@@ -34,16 +34,34 @@ export interface PresignedMigrationTracker {
 
 export type Migrations = { [version: number]: Migration<commons.config.Config, commons.config.Config> }
 
+function validateMigrations(migrations: Migrations) {
+  for (const [version, migration] of Object.entries(migrations)) {
+    if (version !== String(migration.version - 1)) {
+      throw new Error(`Migration with key ${version} has version ${migration.version}, expected version to be key + 1`)
+    }
+  }
+}
+
 export class Migrator {
   constructor(
     public readonly tracker: PresignedMigrationTracker,
     public readonly migrations: Migrations,
     public readonly contexts: VersionedContext
-  ) {}
+  ) {
+    validateMigrations(migrations)
+  }
 
   lastMigration(): Migration<commons.config.Config, commons.config.Config> {
-    const versions = Object.values(this.migrations)
-    return versions[versions.length - 1]
+    let last: Migration<commons.config.Config, commons.config.Config> | undefined
+    for (const migration of Object.values(this.migrations)) {
+      if (last === undefined || migration.version > last.version) {
+        last = migration
+      }
+    }
+    if (last === undefined) {
+      throw new Error('No migrations')
+    }
+    return last
   }
 
   async getAllMigratePresignedTransaction(args: {
