@@ -506,7 +506,7 @@ export class Account {
 
     // Everything is encoded as a bundle
     // using the GuestModule of the account version
-    const { guestModule } = this.contextFor(this.version)
+    const { guestModule } = this.contextFor(status.version)
     return { entrypoint: guestModule, transactions }
   }
 
