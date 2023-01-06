@@ -564,7 +564,7 @@ export class Account {
     )
 
     await Promise.all(signed.map((migration) => Promise.all([
-      this.tracker.saveMigration(this.address, migration.fromVersion, chainId, migration, this.contexts),
+      this.tracker.saveMigration(this.address, chainId, migration, this.contexts),
       this.tracker.saveWalletConfig({ config: migration.toConfig })
     ])))
 
