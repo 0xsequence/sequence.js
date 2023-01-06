@@ -277,7 +277,7 @@ describe('Local config tracker', () => {
 
         it('Should return return empty chained configuration if config is not known', async () => {
           const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
-          const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash, checkpoint: 0 })
+          const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash })
           expect(res).to.deep.equal([])
         })
 
@@ -285,7 +285,7 @@ describe('Local config tracker', () => {
           const config = utils.configs.random.genRandomV2Config()
           const imageHash = v2.config.imageHash(config)
           await tracker.saveWalletConfig({ config })
-          const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash, checkpoint: 0 })
+          const res = await tracker.loadPresignedConfiguration({ wallet: ethers.Wallet.createRandom().address, fromImageHash: imageHash })
           expect(res).to.deep.equal([])
         })
 
@@ -306,7 +306,7 @@ describe('Local config tracker', () => {
           await tracker.saveWalletConfig({ config: nextConfig })
           await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
 
-          const res = await tracker.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash, checkpoint: 0 })
+          const res = await tracker.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
           expect(res.length).to.equal(1)
           expect(res[0].nextImageHash).to.equal(nextImageHash)
           expect(res[0].wallet).to.equal(wallet.address)
@@ -331,7 +331,7 @@ describe('Local config tracker', () => {
           await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
 
           const wrongWallet = ethers.Wallet.createRandom().address
-          const res = await tracker.loadPresignedConfiguration({ wallet: wrongWallet, fromImageHash: imageHash, checkpoint: 0 })
+          const res = await tracker.loadPresignedConfiguration({ wallet: wrongWallet, fromImageHash: imageHash })
           expect(res.length).to.equal(0)
         })
 
@@ -390,8 +390,7 @@ describe('Local config tracker', () => {
 
           const route0_2a = await tracker.loadPresignedConfiguration({
             wallet: address,
-            fromImageHash: imageHash,
-            checkpoint: 0
+            fromImageHash: imageHash
           })
 
           expect(route0_2a.length).to.equal(0)
@@ -399,23 +398,13 @@ describe('Local config tracker', () => {
           // But starting from imageHash1 should give us a link
           const result1_2a = await tracker.loadPresignedConfiguration({
             wallet: address,
-            fromImageHash:  nextImageHash1,
-            checkpoint: 0
+            fromImageHash: nextImageHash1
           })
 
           expect(result1_2a.length).to.equal(1)
           expect(result1_2a[0].nextImageHash).to.equal(nextImageHash2)
           expect(result1_2a[0].signature).to.equal(signature2)
           expect(result1_2a[0].wallet).to.equal(address)
-
-          // Unless the checkpoint is equal to config2
-          const result1_2b = await tracker.loadPresignedConfiguration({
-            wallet: address,
-            fromImageHash:  nextImageHash1,
-            checkpoint: 3
-          })
-
-          expect(result1_2b.length).to.equal(0)
 
           // Adding the 0_1 step should give us a full chain to 2
           await tracker.savePresignedConfiguration({
@@ -426,8 +415,7 @@ describe('Local config tracker', () => {
 
           const result0_2b = await tracker.loadPresignedConfiguration({
             wallet: address,
-            fromImageHash: imageHash,
-            checkpoint: 0
+            fromImageHash: imageHash
           })
 
           expect(result0_2b.length).to.equal(2)
@@ -492,8 +480,7 @@ describe('Local config tracker', () => {
           // Going from 1 to 3 should give us 1 jump
           const resa = await tracker.loadPresignedConfiguration({
             wallet: address,
-            fromImageHash: imageHash1,
-            checkpoint: 0
+            fromImageHash: imageHash1
           })
 
           expect(resa.length).to.equal(1)
@@ -508,7 +495,6 @@ describe('Local config tracker', () => {
           const resb = await tracker.loadPresignedConfiguration({
             wallet: address,
             fromImageHash: imageHash1,
-            checkpoint: 0,
             longestPath: true
           })
 
