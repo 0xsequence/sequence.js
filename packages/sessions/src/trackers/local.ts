@@ -466,11 +466,11 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
   async saveMigration(
     address: string,
-    fromVersion: number,
     chainId: ethers.BigNumberish,
     signed: SignedMigration,
     contexts: context.VersionedContext
   ): Promise<void> {
+    const fromVersion = signed.fromVersion
     if (fromVersion !== 1) throw new Error("Migration not supported")
     if (!v2.config.isWalletConfig(signed.toConfig)) throw new Error("Invalid to config")
 
