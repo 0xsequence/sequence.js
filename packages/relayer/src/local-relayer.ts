@@ -24,19 +24,17 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   }
 
   async getFeeOptions(
-    _config: commons.config.Config,
-    _context: WalletContext,
+    _address: string,
     ..._transactions: commons.transaction.Transaction[]
   ): Promise<{ options: FeeOption[] }> {
     return { options: [] }
   }
 
   async gasRefundOptions(
-    config: commons.config.Config,
-    context: WalletContext,
+    address: string,
     ...transactions:commons.transaction.Transaction[]
   ): Promise<FeeOption[]> {
-    const { options } = await this.getFeeOptions(config, context, ...transactions)
+    const { options } = await this.getFeeOptions(address, ...transactions)
     return options
   }
 
@@ -44,7 +42,10 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     this.txnOptions = transactionRequest
   }
 
-  async relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<commons.transaction.TransactionResponse<providers.TransactionReceipt>> {
+  async relay(
+    signedTxs: commons.transaction.IntendedTransactionBundle,
+    quote?: FeeQuote, waitForReceipt: boolean = true
+  ): Promise<commons.transaction.TransactionResponse<providers.TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
