@@ -1,7 +1,5 @@
-import { Signer as AbstractSigner, ethers, providers } from 'ethers'
-import { Transaction, TransactionResponse } from '@0xsequence/transactions'
+import { Signer as AbstractSigner, providers } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
@@ -25,28 +23,18 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     if (!this.signer.provider) throw new Error("Signer must have a provider")
   }
 
-  async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
-    // NOTE: on hardhat some tests fail on HookCallerMock when not passing gasLimit directly as below,
-    // and using eth_gasEstimate. Perhaps review HookCallerMock.sol and fix it to avoid what looks
-    // like an infinite loop?
-    const walletDeployTxn = this.prepareWalletDeploy(config, context)
-
-    // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate
-    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
-  }
-
   async getFeeOptions(
-    _config: WalletConfig,
+    _config: commons.config.Config,
     _context: WalletContext,
-    ..._transactions: Transaction[]
+    ..._transactions: commons.transaction.Transaction[]
   ): Promise<{ options: FeeOption[] }> {
     return { options: [] }
   }
 
   async gasRefundOptions(
-    config: WalletConfig,
+    config: commons.config.Config,
     context: WalletContext,
-    ...transactions: Transaction[]
+    ...transactions:commons.transaction.Transaction[]
   ): Promise<FeeOption[]> {
     const { options } = await this.getFeeOptions(config, context, ...transactions)
     return options
@@ -56,7 +44,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     this.txnOptions = transactionRequest
   }
 
-  async relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<providers.TransactionReceipt>> {
+  async relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<commons.transaction.TransactionResponse<providers.TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
@@ -76,7 +64,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     })
 
     if (waitForReceipt) {
-      const response: TransactionResponse = await responsePromise
+      const response: commons.transaction.TransactionResponse = await responsePromise
       response.receipt = await response.wait()
       return response
     } else {

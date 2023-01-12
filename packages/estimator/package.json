@@ -18,9 +18,7 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.43.15",
-    "@0xsequence/config": "^0.43.15",
     "@0xsequence/network": "^0.43.15",
-    "@0xsequence/transactions": "^0.43.15",
     "@0xsequence/utils": "^0.43.15",
     "@0xsequence/wallet-contracts": "1.10.0"
   },
