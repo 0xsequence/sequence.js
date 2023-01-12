@@ -30,3 +30,19 @@ export function maxForBits(bits: number): ethers.BigNumber {
 export function randomBool(): boolean {
   return Math.random() >= 0.5
 }
+
+export async function waitForProvider<T extends ethers.providers.Provider>(provider: T, timeout: number = 30000): Promise<T> {
+  const start = Date.now()
+  while (true) {
+    try {
+      await provider.getBlockNumber()
+      return provider
+    } catch (e) {
+      if (Date.now() - start > timeout) {
+        throw e
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+  }
+}

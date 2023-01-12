@@ -36,7 +36,7 @@ describe('Account', () => {
 
   before(async () => {
     provider1 = new ethers.providers.Web3Provider(hardhat.network.provider.send)
-    provider2 = new ethers.providers.JsonRpcProvider('http://localhost:7147')
+    provider2 = new ethers.providers.JsonRpcProvider('http://127.0.0.1:7048')
 
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1) as any
