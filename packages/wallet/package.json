@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.43.14",
-    "@0xsequence/config": "^0.43.14",
     "@0xsequence/core": "^0.42.9",
     "@0xsequence/guard": "^0.43.14",
     "@0xsequence/network": "^0.43.14",

@@ -1,12 +1,11 @@
 import { ethers } from "ethers"
-import { commons, v2 } from "@0xsequence/core"
+import { commons } from "@0xsequence/core"
 import { isSignerStatusSigned, Orchestrator, Status } from "@0xsequence/signhub"
 import { Deferrable, subDigestOf } from "@0xsequence/utils"
 import { FeeQuote, Relayer } from "@0xsequence/relayer"
 import { walletContracts } from '@0xsequence/abi'
 
 import { resolveArrayProperties } from "./utils"
-import { decodeNonce } from "@0xsequence/transactions"
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,

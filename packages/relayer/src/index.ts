@@ -1,50 +1,46 @@
 import { ethers, providers } from 'ethers'
-import { SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
-import { WalletContext } from '@0xsequence/network'
-import { WalletConfig } from '@0xsequence/config'
 import { proto } from './rpc-relayer'
 
 import { commons } from '@0xsequence/core'
 
 export interface Relayer {
   // simulate returns the execution results for a list of transactions.
-  simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]>
+  simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]>
 
   // getFeeOptions returns the fee options that the relayer will accept as payment.
   // If a quote is returned, it may be passed back to the relayer for dispatch.
   getFeeOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
+    config: commons.config.Config,
+    context: commons.context.WalletContext,
+    ...transactions: commons.transaction.Transaction[]
   ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
 
   // gasRefundOptions returns the transactions which can be included to refund a
   // relayer for submitting your transaction to a network.
   gasRefundOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
+    config: commons.config.Config,
+    context: commons.context.WalletContext,
+    ...transactions: commons.transaction.Transaction[]
   ): Promise<FeeOption[]>
 
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
+  getNonce(config: commons.config.Config, context: commons.context.WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
   // waitForReceipt must default to true.
-  relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
+  relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt?: boolean): Promise<commons.transaction.TransactionResponse>
 
   // wait for transaction confirmation
   // timeout is the maximum time to wait for the transaction response
   // delay is the polling interval, i.e. the time to wait between requests
   // maxFails is the maximum number of hard failures to tolerate before giving up
-  wait(metaTxnId: string | SignedTransactions, timeout?: number, delay?: number, maxFails?: number): Promise<TransactionResponse>
+  wait(metaTxnId: string | commons.transaction.SignedTransactionBundle, timeout?: number, delay?: number, maxFails?: number): Promise<commons.transaction.TransactionResponse>
 }
 
 export * from './local-relayer'
-export * from './base-relayer'
 export * from './provider-relayer'
 export * from './rpc-relayer'
 export { proto as RpcRelayerProto } from './rpc-relayer'
