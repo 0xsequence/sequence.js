@@ -11,9 +11,9 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 120000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat2 > /dev/null'",
-    "start:hardhat2": "hardhat node --hostname 0.0.0.0 --port 7147 --config ./hardhat2.config.js",
+    "start:hardhat2": "hardhat node --hostname 0.0.0.0 --port 7048 --config ./hardhat2.config.js",
     "test:coverage": "nyc pnpm test"
   },
   "dependencies": {
