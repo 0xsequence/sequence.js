@@ -9,208 +9,146 @@ overrides:
 importers:
 
   .:
+    specifiers:
+      '@0xsequence/abi': workspace:*
+      '@0xsequence/api': workspace:*
+      '@0xsequence/auth': workspace:*
+      '@0xsequence/deployer': workspace:*
+      '@0xsequence/estimator': workspace:*
+      '@0xsequence/guard': workspace:*
+      '@0xsequence/indexer': workspace:*
+      '@0xsequence/metadata': workspace:*
+      '@0xsequence/multicall': workspace:*
+      '@0xsequence/network': workspace:*
+      '@0xsequence/provider': workspace:*
+      '@0xsequence/relayer': workspace:*
+      '@0xsequence/simulator': workspace:*
+      '@0xsequence/utils': workspace:*
+      '@0xsequence/wallet': workspace:*
+      '@babel/core': ^7.20.2
+      '@babel/plugin-proposal-class-properties': ^7.18.6
+      '@babel/preset-env': ^7.20.2
+      '@babel/preset-typescript': ^7.18.6
+      '@babel/runtime': ^7.20.1
+      '@changesets/changelog-github': ^0.4.7
+      '@changesets/cli': ^2.25.2
+      '@preconstruct/cli': ^2.2.2
+      '@types/chai': ^4.2.22
+      '@types/chai-as-promised': ^7.1.4
+      '@types/mocha': ^10.0.0
+      '@types/node': ^18.11.17
+      '@typescript-eslint/eslint-plugin': ^5.43.0
+      '@typescript-eslint/parser': ^5.43.0
+      ava: ^3.15.0
+      chai: ^4.3.4
+      chai-as-promised: ^7.1.1
+      concurrently: ^7.5.0
+      eslint: ^8.27.0
+      eslint-config-prettier: ^8.5.0
+      eslint-plugin-import: ^2.26.0
+      eslint-plugin-prettier: ^4.2.1
+      ethers: ^5.7.2
+      express: ^4.18.2
+      hardhat: ^2.12.2
+      husky: 4.3.8
+      mocha: ^10.1.0
+      nyc: ^15.1.0
+      prettier: ^2.7.1
+      puppeteer: ^19.7.2
+      rimraf: ^3.0.2
+      ts-node: ^10.9.1
+      tsx: ^3.12.1
+      typescript: ~4.9.4
+      wait-on: ^6.0.1
     devDependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:packages/abi
-      '@0xsequence/api':
-        specifier: workspace:*
-        version: link:packages/api
-      '@0xsequence/auth':
-        specifier: workspace:*
-        version: link:packages/auth
-      '@0xsequence/config':
-        specifier: workspace:*
-        version: link:packages/config
-      '@0xsequence/deployer':
-        specifier: workspace:*
-        version: link:packages/deployer
-      '@0xsequence/estimator':
-        specifier: workspace:*
-        version: link:packages/estimator
-      '@0xsequence/guard':
-        specifier: workspace:*
-        version: link:packages/guard
-      '@0xsequence/indexer':
-        specifier: workspace:*
-        version: link:packages/indexer
-      '@0xsequence/metadata':
-        specifier: workspace:*
-        version: link:packages/metadata
-      '@0xsequence/multicall':
-        specifier: workspace:*
-        version: link:packages/multicall
-      '@0xsequence/network':
-        specifier: workspace:*
-        version: link:packages/network
-      '@0xsequence/provider':
-        specifier: workspace:*
-        version: link:packages/provider
-      '@0xsequence/relayer':
-        specifier: workspace:*
-        version: link:packages/relayer
-      '@0xsequence/simulator':
-        specifier: workspace:*
-        version: link:packages/simulator
-      '@0xsequence/transactions':
-        specifier: workspace:*
-        version: link:packages/transactions
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:packages/utils
-      '@0xsequence/wallet':
-        specifier: workspace:*
-        version: link:packages/wallet
-      '@babel/core':
-        specifier: ^7.20.2
-        version: 7.20.5
-      '@babel/plugin-proposal-class-properties':
-        specifier: ^7.18.6
-        version: 7.18.6(@babel/core@7.20.5)
-      '@babel/preset-env':
-        specifier: ^7.20.2
-        version: 7.20.2(@babel/core@7.20.5)
-      '@babel/preset-typescript':
-        specifier: ^7.18.6
-        version: 7.18.6(@babel/core@7.20.5)
-      '@babel/runtime':
-        specifier: ^7.20.1
-        version: 7.20.6
-      '@changesets/changelog-github':
-        specifier: ^0.4.7
-        version: 0.4.8
-      '@changesets/cli':
-        specifier: ^2.25.2
-        version: 2.26.0
-      '@preconstruct/cli':
-        specifier: ^2.2.2
-        version: 2.2.2
-      '@types/chai':
-        specifier: ^4.2.22
-        version: 4.3.4
-      '@types/chai-as-promised':
-        specifier: ^7.1.4
-        version: 7.1.5
-      '@types/mocha':
-        specifier: ^10.0.0
-        version: 10.0.1
-      '@types/node':
-        specifier: ^18.11.17
-        version: 18.11.17
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^5.43.0
-        version: 5.47.0(@typescript-eslint/parser@5.47.0)(eslint@8.30.0)(typescript@4.9.4)
-      '@typescript-eslint/parser':
-        specifier: ^5.43.0
-        version: 5.47.0(eslint@8.30.0)(typescript@4.9.4)
-      ava:
-        specifier: ^3.15.0
-        version: 3.15.0
-      chai:
-        specifier: ^4.3.4
-        version: 4.3.7
-      chai-as-promised:
-        specifier: ^7.1.1
-        version: 7.1.1(chai@4.3.7)
-      concurrently:
-        specifier: ^7.5.0
-        version: 7.6.0
-      eslint:
-        specifier: ^8.27.0
-        version: 8.30.0
-      eslint-config-prettier:
-        specifier: ^8.5.0
-        version: 8.5.0(eslint@8.30.0)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.26.0(@typescript-eslint/parser@5.47.0)(eslint@8.30.0)
-      eslint-plugin-prettier:
-        specifier: ^4.2.1
-        version: 4.2.1(eslint-config-prettier@8.5.0)(eslint@8.30.0)(prettier@2.8.1)
-      ethers:
-        specifier: ^5.7.2
-        version: 5.7.2
-      express:
-        specifier: ^4.18.2
-        version: 4.18.2
-      hardhat:
-        specifier: ^2.12.2
-        version: 2.12.4(ts-node@10.9.1)(typescript@4.9.4)
-      husky:
-        specifier: 4.3.8
-        version: 4.3.8
-      mocha:
-        specifier: ^10.1.0
-        version: 10.2.0
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-      prettier:
-        specifier: ^2.7.1
-        version: 2.8.1
-      puppeteer:
-        specifier: ^19.7.2
-        version: 19.7.2(typescript@4.9.4)
-      rimraf:
-        specifier: ^3.0.2
-        version: 3.0.2
-      ts-node:
-        specifier: ^10.9.1
-        version: 10.9.1(@types/node@18.11.17)(typescript@4.9.4)
-      tsx:
-        specifier: ^3.12.1
-        version: 3.12.1
-      typescript:
-        specifier: ~4.9.4
-        version: 4.9.4
-      wait-on:
-        specifier: ^6.0.1
-        version: 6.0.1
+      '@0xsequence/abi': link:packages/abi
+      '@0xsequence/api': link:packages/api
+      '@0xsequence/auth': link:packages/auth
+      '@0xsequence/deployer': link:packages/deployer
+      '@0xsequence/estimator': link:packages/estimator
+      '@0xsequence/guard': link:packages/guard
+      '@0xsequence/indexer': link:packages/indexer
+      '@0xsequence/metadata': link:packages/metadata
+      '@0xsequence/multicall': link:packages/multicall
+      '@0xsequence/network': link:packages/network
+      '@0xsequence/provider': link:packages/provider
+      '@0xsequence/relayer': link:packages/relayer
+      '@0xsequence/simulator': link:packages/simulator
+      '@0xsequence/utils': link:packages/utils
+      '@0xsequence/wallet': link:packages/wallet
+      '@babel/core': 7.20.5
+      '@babel/plugin-proposal-class-properties': 7.18.6_@babel+core@7.20.5
+      '@babel/preset-env': 7.20.2_@babel+core@7.20.5
+      '@babel/preset-typescript': 7.18.6_@babel+core@7.20.5
+      '@babel/runtime': 7.20.6
+      '@changesets/changelog-github': 0.4.8
+      '@changesets/cli': 2.26.0
+      '@preconstruct/cli': 2.2.2
+      '@types/chai': 4.3.4
+      '@types/chai-as-promised': 7.1.5
+      '@types/mocha': 10.0.1
+      '@types/node': 18.11.17
+      '@typescript-eslint/eslint-plugin': 5.47.0_ncmi6noazr3nzas7jxykisekym
+      '@typescript-eslint/parser': 5.47.0_lzzuuodtsqwxnvqeq4g4likcqa
+      ava: 3.15.0
+      chai: 4.3.7
+      chai-as-promised: 7.1.1_chai@4.3.7
+      concurrently: 7.6.0
+      eslint: 8.30.0
+      eslint-config-prettier: 8.5.0_eslint@8.30.0
+      eslint-plugin-import: 2.26.0_tqyj5ytb5g6r5ett7xxedhk6eq
+      eslint-plugin-prettier: 4.2.1_kl4pe43v5b43npmso5hoplpbyi
+      ethers: 5.7.2
+      express: 4.18.2
+      hardhat: 2.12.4_z6wznmtyb6ovnulj6iujpct7um
+      husky: 4.3.8
+      mocha: 10.2.0
+      nyc: 15.1.0
+      prettier: 2.8.1
+      puppeteer: 19.7.2_typescript@4.9.4
+      rimraf: 3.0.2
+      ts-node: 10.9.1_moeqx3xmzxqxagf2sz6mqkbb7m
+      tsx: 3.12.1
+      typescript: 4.9.4
+      wait-on: 6.0.1
 
   packages/0xsequence:
+    specifiers:
+      '@0xsequence/abi': ^0.43.21
+      '@0xsequence/api': ^0.43.21
+      '@0xsequence/auth': ^0.43.21
+      '@0xsequence/guard': ^0.43.21
+      '@0xsequence/indexer': ^0.43.21
+      '@0xsequence/metadata': ^0.43.21
+      '@0xsequence/multicall': ^0.43.21
+      '@0xsequence/network': ^0.43.21
+      '@0xsequence/provider': ^0.43.21
+      '@0xsequence/relayer': ^0.43.21
+      '@0xsequence/utils': ^0.43.21
+      '@0xsequence/wallet': ^0.43.21
+      '@0xsequence/wallet-contracts': 1.10.0
+      '@babel/plugin-transform-runtime': ^7.19.6
+      babel-loader: ^9.1.0
+      ethers: ^5.7.2
+      ganache: ^7.5.0
+      hardhat: ^2.12.2
+      html-webpack-plugin: ^5.3.1
+      webpack: ^5.65.0
+      webpack-cli: ^4.6.0
+      webpack-dev-server: ^3.11.2
     dependencies:
-      '@0xsequence/abi':
-        specifier: ^0.43.26
-        version: link:../abi
-      '@0xsequence/api':
-        specifier: ^0.43.26
-        version: link:../api
-      '@0xsequence/auth':
-        specifier: ^0.43.26
-        version: link:../auth
-      '@0xsequence/config':
-        specifier: ^0.43.26
-        version: link:../config
-      '@0xsequence/guard':
-        specifier: ^0.43.26
-        version: link:../guard
-      '@0xsequence/indexer':
-        specifier: ^0.43.26
-        version: link:../indexer
-      '@0xsequence/metadata':
-        specifier: ^0.43.26
-        version: link:../metadata
-      '@0xsequence/multicall':
-        specifier: ^0.43.26
-        version: link:../multicall
-      '@0xsequence/network':
-        specifier: ^0.43.26
-        version: link:../network
-      '@0xsequence/provider':
-        specifier: ^0.43.26
-        version: link:../provider
-      '@0xsequence/relayer':
-        specifier: ^0.43.26
-        version: link:../relayer
-      '@0xsequence/transactions':
-        specifier: ^0.43.26
-        version: link:../transactions
-      '@0xsequence/utils':
-        specifier: ^0.43.26
-        version: link:../utils
-      '@0xsequence/wallet':
-        specifier: ^0.43.26
-        version: link:../wallet
+      '@0xsequence/abi': link:../abi
+      '@0xsequence/api': link:../api
+      '@0xsequence/auth': link:../auth
+      '@0xsequence/guard': link:../guard
+      '@0xsequence/indexer': link:../indexer
+      '@0xsequence/metadata': link:../metadata
+      '@0xsequence/multicall': link:../multicall
+      '@0xsequence/network': link:../network
+      '@0xsequence/provider': link:../provider
+      '@0xsequence/relayer': link:../relayer
+      '@0xsequence/utils': link:../utils
+      '@0xsequence/wallet': link:../wallet
     devDependencies:
       '@0xsequence/wallet-contracts':
         specifier: 1.10.0
@@ -300,7 +238,7 @@ importers:
       '@0xsequence/abi': link:../abi
       '@0xsequence/account': link:../account
       '@0xsequence/api': link:../api
-      '@0xsequence/config': link:../config
+      '@0xsequence/config': 0.43.7_ethers@5.7.2
       '@0xsequence/core': link:../core
       '@0xsequence/ethauth': 0.8.1_ethers@5.7.2
       '@0xsequence/indexer': link:../indexer
@@ -381,25 +319,19 @@ importers:
         version: 8.1.1
 
   packages/estimator:
+    specifiers:
+      '@0xsequence/abi': ^0.43.21
+      '@0xsequence/network': ^0.43.21
+      '@0xsequence/utils': ^0.43.21
+      '@0xsequence/wallet-contracts': 1.10.0
+      '@ethersproject/abstract-signer': ^5.7.0
+      '@ethersproject/properties': ^5.7.0
+      ethers: ^5.7.2
     dependencies:
-      '@0xsequence/abi':
-        specifier: ^0.43.26
-        version: link:../abi
-      '@0xsequence/config':
-        specifier: ^0.43.26
-        version: link:../config
-      '@0xsequence/network':
-        specifier: ^0.43.26
-        version: link:../network
-      '@0xsequence/transactions':
-        specifier: ^0.43.26
-        version: link:../transactions
-      '@0xsequence/utils':
-        specifier: ^0.43.26
-        version: link:../utils
-      '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
-        version: 1.10.0
+      '@0xsequence/abi': link:../abi
+      '@0xsequence/network': link:../network
+      '@0xsequence/utils': link:../utils
+      '@0xsequence/wallet-contracts': 1.10.0
     devDependencies:
       '@ethersproject/abstract-signer':
         specifier: ^5.7.0
@@ -492,37 +424,25 @@ importers:
         version: 5.7.2
 
   packages/provider:
+    specifiers:
+      '@0xsequence/abi': ^0.43.21
+      '@0xsequence/auth': ^0.43.21
+      '@0xsequence/network': ^0.43.21
+      '@0xsequence/relayer': ^0.43.21
+      '@0xsequence/utils': ^0.43.21
+      '@0xsequence/wallet': ^0.43.21
+      ethers: ^5.7.2
+      eventemitter2: ^6.4.5
+      webextension-polyfill: ^0.10.0
     dependencies:
-      '@0xsequence/abi':
-        specifier: ^0.43.26
-        version: link:../abi
-      '@0xsequence/auth':
-        specifier: ^0.43.26
-        version: link:../auth
-      '@0xsequence/config':
-        specifier: ^0.43.26
-        version: link:../config
-      '@0xsequence/network':
-        specifier: ^0.43.26
-        version: link:../network
-      '@0xsequence/relayer':
-        specifier: ^0.43.26
-        version: link:../relayer
-      '@0xsequence/transactions':
-        specifier: ^0.43.26
-        version: link:../transactions
-      '@0xsequence/utils':
-        specifier: ^0.43.26
-        version: link:../utils
-      '@0xsequence/wallet':
-        specifier: ^0.43.26
-        version: link:../wallet
-      eventemitter2:
-        specifier: ^6.4.5
-        version: 6.4.9
-      webextension-polyfill:
-        specifier: ^0.10.0
-        version: 0.10.0
+      '@0xsequence/abi': link:../abi
+      '@0xsequence/auth': link:../auth
+      '@0xsequence/network': link:../network
+      '@0xsequence/relayer': link:../relayer
+      '@0xsequence/utils': link:../utils
+      '@0xsequence/wallet': link:../wallet
+      eventemitter2: 6.4.9
+      webextension-polyfill: 0.10.0
     devDependencies:
       '@types/webextension-polyfill':
         specifier: ^0.10.0
@@ -534,19 +454,15 @@ importers:
   packages/relayer:
     specifiers:
       '@0xsequence/abi': ^0.43.21
-      '@0xsequence/config': ^0.43.21
       '@0xsequence/core': ^0.43.7
       '@0xsequence/network': ^0.43.21
-      '@0xsequence/transactions': ^0.43.21
       '@0xsequence/utils': ^0.43.21
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
       '@0xsequence/abi': link:../abi
-      '@0xsequence/config': link:../config
       '@0xsequence/core': link:../core
       '@0xsequence/network': link:../network
-      '@0xsequence/transactions': link:../transactions
       '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/wallet-contracts':
@@ -596,12 +512,8 @@ importers:
 
   packages/simulator:
     dependencies:
-      '@0xsequence/transactions':
-        specifier: ^0.43.26
-        version: link:../transactions
-      '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
-        version: 1.10.0
+      '@0xsequence/transactions': 0.43.7_ethers@5.7.2
+      '@0xsequence/wallet-contracts': 1.10.0
     devDependencies:
       ethers:
         specifier: ^5.7.2
@@ -621,6 +533,11 @@ importers:
       web3: 1.8.1
 
   packages/transactions:
+    specifiers:
+      '@0xsequence/abi': ^0.43.21
+      '@0xsequence/network': ^0.43.21
+      '@0xsequence/utils': ^0.43.21
+      ethers: ^5.7.2
     dependencies:
       '@0xsequence/abi':
         specifier: ^0.43.26
@@ -651,8 +568,7 @@ importers:
 
   packages/wallet:
     specifiers:
-      '@0xsequence/abi': ^0.43.26
-      '@0xsequence/config': ^0.43.26
+      '@0xsequence/abi': ^0.43.21
       '@0xsequence/core': ^0.43.7
       '@0xsequence/ethauth': ^0.8.0
       '@0xsequence/guard': ^0.43.26
@@ -660,22 +576,19 @@ importers:
       '@0xsequence/relayer': ^0.43.26
       '@0xsequence/signhub': ^0.43.7
       '@0xsequence/tests': ^0.43.7
-      '@0xsequence/transactions': ^0.43.26
-      '@0xsequence/utils': ^0.43.26
+      '@0xsequence/utils': ^0.43.21
       '@0xsequence/wallet-contracts': 1.10.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       ethers: ^5.7.2
       web3: ^1.8.1
     dependencies:
       '@0xsequence/abi': link:../abi
-      '@0xsequence/config': link:../config
       '@0xsequence/core': link:../core
       '@0xsequence/guard': link:../guard
       '@0xsequence/network': link:../network
       '@0xsequence/relayer': link:../relayer
       '@0xsequence/signhub': link:../signhub
       '@0xsequence/tests': link:../tests
-      '@0xsequence/transactions': link:../transactions
       '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/ethauth':
@@ -700,6 +613,22 @@ packages:
     resolution: {integrity: sha512-9Vzq1Kzc1oCI1S7f6yE57xUoGeQzeQNirnTkjVoRqBNpVTAPMxYax+uAIyvZljVs/VqwLvjfCk6mneY1HYaNDQ==}
     dev: false
 
+  /@0xsequence/abi/0.43.7:
+    resolution: {integrity: sha512-mOKqboLmsH+VBzneCs06XV0EjVqTwpVZgNtT0MMq6JUU0z9oB71shE0+zSxyyn2l2+OpUf2i/lvn0hJEVcMd4A==}
+    dev: false
+
+  /@0xsequence/config/0.43.7_ethers@5.7.2:
+    resolution: {integrity: sha512-ZbaMTVC+qiLqY4Dcj0LtirDZMzZFZXVBL+QE9knK+1gFlVkBSf2g3Z/nh8kt4Oev9V1k7pGyPNXKlDPHHh16fA==}
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      '@0xsequence/abi': 0.43.7
+      '@0xsequence/multicall': 0.43.7_ethers@5.7.2
+      '@0xsequence/network': 0.43.7_ethers@5.7.2
+      '@0xsequence/utils': 0.43.7_ethers@5.7.2
+      ethers: 5.7.2
+    dev: false
+
   /@0xsequence/ethauth/0.8.1_ethers@5.7.2:
     resolution: {integrity: sha512-P21cxRSS+2mDAqFVAJt0lwQFtbObX+Ewlj8DMyDELp81+QbfHFh6LCyu8dTXNdBx6UbmRFOCSBno5Txd50cJPQ==}
     peerDependencies:
@@ -708,7 +637,47 @@ packages:
       ethers: 5.7.2
       js-base64: 3.7.3
 
-  /@0xsequence/wallet-contracts@1.10.0:
+  /@0xsequence/multicall/0.43.7_ethers@5.7.2:
+    resolution: {integrity: sha512-sSg2OhLRCEyRX+IlGnx+eFCWQE6xIq6p8icQTHVDUkKPSdt3rvtthniex+Wl2wCeT62a6HzCAG+yBNSM6FZ+xg==}
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      '@0xsequence/abi': 0.43.7
+      '@0xsequence/network': 0.43.7_ethers@5.7.2
+      '@0xsequence/utils': 0.43.7_ethers@5.7.2
+      ethers: 5.7.2
+    dev: false
+
+  /@0xsequence/network/0.43.7_ethers@5.7.2:
+    resolution: {integrity: sha512-mpodakEnpYL5720HiFaUYfqNWWXnZn0wFqRqe1CRNqobnYHdvL3uT66tsJsemQyGPnGzb4ErOLhIWCVn45ek4w==}
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      '@0xsequence/utils': 0.43.7_ethers@5.7.2
+      ethers: 5.7.2
+    dev: false
+
+  /@0xsequence/transactions/0.43.7_ethers@5.7.2:
+    resolution: {integrity: sha512-NcZ7FG1iTPUnzDbXzgMnKkqKda4hV+2RE4P5FuhGaWaxQLiy93/eWN3iMlHlME7bNFMpT/S949eMa4XDGINyVg==}
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      '@0xsequence/abi': 0.43.7
+      '@0xsequence/network': 0.43.7_ethers@5.7.2
+      '@0xsequence/utils': 0.43.7_ethers@5.7.2
+      ethers: 5.7.2
+    dev: false
+
+  /@0xsequence/utils/0.43.7_ethers@5.7.2:
+    resolution: {integrity: sha512-C6FRnJ0s1awJOhfnkNaS2ITK5PmDQz0zcVVeIqyRku+fw8fNBycmKav8wjzRoYK5xqZA1oghCSSIr+F5GZqHhw==}
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      ethers: 5.7.2
+      js-base64: 3.7.3
+    dev: false
+
+  /@0xsequence/wallet-contracts/1.10.0:
     resolution: {integrity: sha512-NfPBJkp6/ApjVuTqQMgJvpN5lWyNc9bHm9ZITEi3X3nREf5126RLEXCyThChapkmcglHnQn+ndA8j6bfcpFEAg==}
     optionalDependencies:
       '@ethersproject/abi': 5.7.0
