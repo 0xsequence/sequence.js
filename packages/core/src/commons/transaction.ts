@@ -70,6 +70,15 @@ export function intendTransactionBundle(
   }
 }
 
+export function intendedTransactionID(bundle: IntendedTransactionBundle) {
+  return ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(
+      ['address', 'uint256', 'bytes32'],
+      [bundle.intent.wallet, bundle.chainId, bundle.intent.digest]
+    )
+  )
+}
+
 export function unpackMetaTransactionsData(data: BytesLike): [ethers.BigNumber, TransactionEncoded[]] {
   const res = ethers.utils.defaultAbiCoder.decode(['uint256', MetaTransactionsType], data)
   if (res.length !== 2 || !res[0] || !res[1]) throw new Error('Invalid meta transaction data')

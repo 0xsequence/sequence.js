@@ -10,23 +10,21 @@ export interface Relayer {
   // getFeeOptions returns the fee options that the relayer will accept as payment.
   // If a quote is returned, it may be passed back to the relayer for dispatch.
   getFeeOptions(
-    config: commons.config.Config,
-    context: commons.context.WalletContext,
+    address: string,
     ...transactions: commons.transaction.Transaction[]
   ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
 
   // gasRefundOptions returns the transactions which can be included to refund a
   // relayer for submitting your transaction to a network.
   gasRefundOptions(
-    config: commons.config.Config,
-    context: commons.context.WalletContext,
+    address: string,
     ...transactions: commons.transaction.Transaction[]
   ): Promise<FeeOption[]>
 
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(config: commons.config.Config, context: commons.context.WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
+  getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
