@@ -1,15 +1,16 @@
-import { WalletConfig } from '@0xsequence/config'
 import { WalletContext } from '@0xsequence/network'
-import { Transaction } from '@0xsequence/transactions'
 import { ethers } from 'ethers'
+import { commons, v2 } from '@0xsequence/core'
 
 export interface Estimator {
   estimateGasLimits(
-    config: WalletConfig,
+    address: string,
+    config: v2.config.WalletConfig,
     context: WalletContext,
-    ...transactions: Transaction[]
+    nonce: ethers.BigNumberish,
+    ...transactions: commons.transaction.Transaction[]
   ): Promise<{
-    transactions:Transaction[],
+    transactions: commons.transaction.Transaction[],
     total: ethers.BigNumber
   }>
 }
