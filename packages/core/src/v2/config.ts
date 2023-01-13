@@ -403,6 +403,26 @@ export function signersOf(tree: Topology): string[] {
   return Array.from(signers)
 }
 
+export function signersOfWithWeights(tree: Topology): { address: string, weight: ethers.BigNumber }[] {
+  const stack: Topology[] = [tree]
+  const signers: { address: string, weight: ethers.BigNumber }[] = []
+
+  while (stack.length > 0) {
+    const node = stack.pop()
+
+    if (isNestedLeaf(node)) {
+      stack.push(node.tree)
+    } else if (isNode(node)) {
+      stack.push(node.left)
+      stack.push(node.right)
+    } else if (isSignerLeaf(node)) {
+      signers.push({ address: node.address, weight: ethers.BigNumber.from(node.weight) })
+    }
+  }
+
+  return signers
+}
+
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
     return (
