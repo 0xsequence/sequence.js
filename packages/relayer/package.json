@@ -26,6 +26,8 @@
     "ethers": ">=5.5"
   },
   "devDependencies": {
+    "@0xsequence/signhub": "workspace:^0.43.7",
+    "@0xsequence/tests": "workspace:^0.43.7",
     "@0xsequence/wallet-contracts": "1.10.0",
     "ethers": "^5.7.2"
   },
