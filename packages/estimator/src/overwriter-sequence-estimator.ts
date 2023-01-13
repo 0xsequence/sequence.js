@@ -1,104 +1,129 @@
 import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, encodeSignature, DecodedFullSigner, DecodedEOASigner } from '@0xsequence/config'
-import { readSequenceNonce, sequenceTxAbiEncode, Transaction } from '@0xsequence/transactions'
 import { OverwriterEstimator } from './overwriter-estimator'
 import { walletContracts } from '@0xsequence/abi'
 import { ethers, utils } from 'ethers'
 import { Estimator } from './estimator'
-
-const MainModuleGasEstimation = require("@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleGasEstimation.sol/MainModuleGasEstimation.json")
+import { commons, v2 } from '@0xsequence/core'
+import { mainModuleGasEstimation } from './builds'
 
 export class OverwriterSequenceEstimator implements Estimator {
   constructor(public estimator: OverwriterEstimator) {}
 
-  async estimateGasLimits(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<{ transactions:Transaction[], total: ethers.BigNumber }> {
-    const wallet = addressOf(config, context)
+  async estimateGasLimits(
+    address: string,
+    config: v2.config.WalletConfig,
+    context: WalletContext,
+    nonce: ethers.BigNumberish,
+    ...transactions: commons.transaction.Transaction[]
+  ): Promise<{ transactions: commons.transaction.Transaction[], total: ethers.BigNumber }> {
     const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
 
-    // Get non-eoa signers
-    // required for computing worse case scenario
-    const signers = await Promise.all(config.signers.map(async (s, i) => ({
-      ...s,
-      index: i,
-      isEOA: ethers.utils.arrayify(await this.estimator.provider.getCode(s.address)).length === 0
-    })))
+    const allSigners = await Promise.all(
+      v2.config.signersOfWithWeights(config.tree).map(async (s, i) => ({
+        index: i,
+        address: s.address,
+        weight: ethers.BigNumber.from(s.weight),
+        isEOA: await this.estimator.provider.getCode(s.address)
+          .then((c) => ethers.utils.arrayify(c).length === 0)
+      }))
+    )
 
-    // Define designated signers
-    let weightSum = 0
+    let totalWeight = 0
 
-    const definedSigners = signers
-      // Contract signers sign first, then lowest weight signers
-      .sort((a, b) => !a.isEOA && b.isEOA ? -1 : a.isEOA && !b.isEOA ? +1 : a.weight - b.weight)
-      // Define signers and not signers
-      .map((s) => {
-        if (weightSum >= config.threshold) {
-          return { ...s, signs: false }
-        }
-
-        weightSum += s.weight
-        return { ...s, signs: true }
+    // Pick NOT EOA signers until we reach the threshold
+    // if we can't reach the threshold, then we'll use the lowest weight EOA signers
+    // TODO: if EOAs have the same weight, then we should pick the ones further apart from each other (in the tree)
+    const designatedSigners = allSigners
+      .sort((a, b) => {
+        if (a.isEOA && !b.isEOA) return 1
+        if (!a.isEOA && b.isEOA) return -1
+        if (a.weight.eq(b.weight)) return a.index - b.index
+        return a.weight.sub(b.weight).toNumber()
       })
-      .sort((a, b) => a.index - b.index)            // Sort back to original configuration
+      .filter((s) => {
+        if (totalWeight >= config.threshold) {
+          return false
+        } else {
+          totalWeight += s.weight.toNumber()
+          return true
+        }
+      })
 
     // Generate a fake signature, meant to resemble the final signature of the transaction
     // this "fake" signature is provided to compute a more accurate gas estimation
-    const stubSignature = encodeSignature({ threshold: config.threshold, signers: await Promise.all(definedSigners.map(async (s) => {
-      if (!s.signs) return s
-
+    const fakeSignatures = new Map<string, commons.signature.SignaturePart>()
+    for (const s of designatedSigners) {
       if (s.isEOA) {
-        return {
-          weight: s.weight,
-          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02'
-        } as DecodedEOASigner
+        fakeSignatures.set(s.address, {
+          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02',
+          isDynamic: false
+        })
+      } else {
+        // Assume a 2/3 nested contract signature
+        const signer1 = ethers.Wallet.createRandom()
+        const signer2 = ethers.Wallet.createRandom()
+        const signer3 = ethers.Wallet.createRandom()
+
+        const nestedSignature = v2.signature.encodeSigners(
+          v2.config.ConfigCoder.fromSimple({
+            threshold: 2,
+            checkpoint: 0,
+            signers: [{
+              address: signer1.address,
+              weight: 1
+            }, {
+              address: signer2.address,
+              weight: 1
+            }, {
+              address: signer3.address,
+              weight: 1
+            }]
+          }),
+          new Map([
+            [signer1.address, { signature: (await signer1.signMessage("")) + '02', isDynamic: false }],
+            [signer2.address, { signature: (await signer2.signMessage("")) + '02', isDynamic: false }]
+          ]),
+          [],
+          0
+        )
+
+        fakeSignatures.set(s.address, {
+          signature: nestedSignature.encoded + '03',
+          isDynamic: true
+        })
       }
+    }
 
-      // Assume a 2/3 nested contract signature
-      // TODO: Improve this, how do we get the nested signer config?
-      const nestedSignature = encodeSignature({
-        threshold: 2,
-        signers: [{
-          address: ethers.Wallet.createRandom().address,
-          weight: 1
-        }, {
-          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02',
-          weight: 1
-        }, {
-          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02',
-          weight: 1
-        }]
-      }) + '03'
-
-      return {
-        weight: s.weight,
-        address: s.address,
-        signature: nestedSignature
-      } as DecodedFullSigner
-    }))})
+    const stubSignature = v2.signature.encodeSigners(
+      config,
+      fakeSignatures,
+      [],
+      0
+    ).encoded
 
     // Use the provided nonce
     // TODO: Maybe ignore if this fails on the MainModuleGasEstimation
     // it could help reduce the edge cases for when the gas estimation fails
-    const nonce = readSequenceNonce(...transactions)
-    const encoded = sequenceTxAbiEncode(transactions)
+    const encoded = commons.transaction.sequenceTxAbiEncode(transactions)
 
     const sequenceOverwrites = {
       [context.mainModule]: {
-        code: MainModuleGasEstimation.deployedBytecode
+        code: mainModuleGasEstimation.deployedBytecode
       },
       [context.mainModuleUpgradable]: {
-        code: MainModuleGasEstimation.deployedBytecode
+        code: mainModuleGasEstimation.deployedBytecode
       }
     }
 
     const estimates = await Promise.all([
       ...encoded.map(async (_, i) => {
         return this.estimator.estimate({
-          to: wallet,
+          to: address,
           data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded.slice(0, i), nonce, stubSignature]),
           overwrites: sequenceOverwrites
         })
       }), this.estimator.estimate({
-        to: wallet,     // Compute full gas estimation with all transaction
+        to: address,     // Compute full gas estimation with all transaction
         data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded, nonce, stubSignature]),
         overwrites: sequenceOverwrites
       })

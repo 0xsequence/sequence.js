@@ -26,6 +26,9 @@
     "ethers": ">=5.5"
   },
   "devDependencies": {
+    "@0xsequence/core": "workspace:^0.43.7",
+    "@0xsequence/signhub": "workspace:^0.43.7",
+    "@0xsequence/tests": "workspace:^0.43.7",
     "@ethersproject/abstract-signer": "^5.7.0",
     "@ethersproject/properties": "^5.7.0",
     "ethers": "^5.7.2"
