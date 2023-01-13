@@ -585,7 +585,7 @@ describe('Account', () => {
         ...deployTx,
         chainId: networks[0].chainId,
         intent: {
-          digest: '0x00',
+          id: '0x00',
           wallet: address
         }
       })

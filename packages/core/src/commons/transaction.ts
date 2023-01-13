@@ -36,7 +36,7 @@ export type TransactionBundle = {
 export type IntendedTransactionBundle = TransactionBundle & {
   chainId: BigNumberish,
   intent: {
-    digest: string,
+    id: string,
     wallet: string
   }
 }
@@ -61,12 +61,12 @@ export function intendTransactionBundle(
   bundle: TransactionBundle,
   wallet: string,
   chainId: BigNumberish,
-  digest: string
+  id: string
 ): IntendedTransactionBundle {
   return {
     ...bundle,
     chainId,
-    intent: { digest, wallet }
+    intent: { id: id, wallet }
   }
 }
 
@@ -74,7 +74,7 @@ export function intendedTransactionID(bundle: IntendedTransactionBundle) {
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       ['address', 'uint256', 'bytes32'],
-      [bundle.intent.wallet, bundle.chainId, bundle.intent.digest]
+      [bundle.intent.wallet, bundle.chainId, bundle.intent.id]
     )
   )
 }
@@ -232,7 +232,7 @@ export function isTransactionBundle(cand: any): cand is TransactionBundle {
     cand.transactions !== undefined &&
     cand.nonce !== undefined &&
     cand.intent !== undefined &&
-    cand.intent.digest !== undefined &&
+    cand.intent.id !== undefined &&
     cand.intent.wallet !== undefined &&
     Array.isArray(cand.transactions) &&
     (<TransactionBundle>cand).transactions.reduce((p, c) => p && isSequenceTransaction(c), true)

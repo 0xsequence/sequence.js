@@ -58,7 +58,7 @@ describe('Wallet (primitive)', () => {
 
         const deployTx = wallet.buildDeployTransaction()
         await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-            digest: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+          id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
             wallet: wallet.address
           }
         })
@@ -167,7 +167,7 @@ describe('Wallet (primitive)', () => {
 
             const deployTx = wallet.buildDeployTransaction()
             await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-                digest: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+              id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
                 wallet: wallet.address
               }
             })
@@ -190,7 +190,7 @@ describe('Wallet (primitive)', () => {
             setup: async (wallet: Wallet) => {
               const deployTx = wallet.buildDeployTransaction()
               await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-                  digest: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+                id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
                   wallet: wallet.address
                 }
               })

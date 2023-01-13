@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { commons } from "@0xsequence/core"
+import { commons, v1, v2 } from "@0xsequence/core"
 import { isSignerStatusSigned, Orchestrator, Status } from "@0xsequence/signhub"
 import { Deferrable, subDigestOf } from "@0xsequence/utils"
 import { FeeQuote, Relayer } from "@0xsequence/relayer"
@@ -51,6 +51,9 @@ const statusToSignatureParts = (status: Status) => {
 
   return parts
 }
+
+export type WalletV2 = Wallet<v2.config.WalletConfig, v2.signature.Signature, v2.signature.UnrecoveredSignature>
+export type WalletV1 = Wallet<v1.config.WalletConfig, v1.signature.Signature, v1.signature.UnrecoveredSignature>
 
 /**
  * The wallet is the minimum interface to interact with a single Sequence wallet/contract.
@@ -255,7 +258,7 @@ export class Wallet<
 
     return {
       intent: {
-        digest,
+        id: digest,
         wallet: this.address
       },
       chainId: this.chainId,
