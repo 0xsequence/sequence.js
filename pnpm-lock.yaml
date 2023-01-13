@@ -456,6 +456,8 @@ importers:
       '@0xsequence/abi': ^0.43.21
       '@0xsequence/core': ^0.43.7
       '@0xsequence/network': ^0.43.21
+      '@0xsequence/signhub': workspace:^0.43.7
+      '@0xsequence/tests': workspace:^0.43.7
       '@0xsequence/utils': ^0.43.21
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
@@ -465,12 +467,10 @@ importers:
       '@0xsequence/network': link:../network
       '@0xsequence/utils': link:../utils
     devDependencies:
-      '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
-        version: 1.10.0
-      ethers:
-        specifier: ^5.7.2
-        version: 5.7.2
+      '@0xsequence/signhub': link:../signhub
+      '@0xsequence/tests': link:../tests
+      '@0xsequence/wallet-contracts': 1.10.0
+      ethers: 5.7.2
 
   packages/replacer:
     specifiers:
@@ -7612,7 +7612,7 @@ packages:
     resolution: {integrity: sha512-5nqDSxl8nn5BSNxyR3n4I6eDmbolI6WT+QqR547RwxQapgjQBmtktdP+HTBb/a/zLsbzERTONyUB5pefh5TtjQ==}
     dev: true
 
-  /follow-redirects@1.15.2:
+  /follow-redirects/1.15.2:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
     peerDependencies:
@@ -7622,7 +7622,7 @@ packages:
         optional: true
     dev: true
 
-  /follow-redirects@1.15.2(debug@4.3.4):
+  /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
     peerDependencies:
@@ -12176,7 +12176,7 @@ packages:
     dependencies:
       command-exists: 1.2.9
       commander: 3.0.2
-      follow-redirects: 1.15.2(debug@4.3.4)
+      follow-redirects: 1.15.2
       fs-extra: 0.30.0
       js-sha3: 0.8.0
       memorystream: 0.3.1
