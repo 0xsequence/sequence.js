@@ -5,7 +5,7 @@ import * as chai from 'chai'
 import { commons, v1, v2 } from "@0xsequence/core"
 import { context } from "@0xsequence/tests"
 import { ethers } from 'ethers'
-import { Wallet } from '../src/index'
+import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
 
@@ -17,7 +17,7 @@ type Coders = {
 }
 
 describe('Wallet (primitive)', () => {
-  let provider: ethers.providers.Web3Provider
+  let provider: ethers.providers.JsonRpcProvider
   let signers: ethers.Signer[]
 
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>
@@ -27,7 +27,7 @@ describe('Wallet (primitive)', () => {
     provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
     signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
     contexts = await context.deploySequenceContexts(signers[0])
-    relayer = new LocalRelayer(signers[1])
+    relayer = new LocalRelayer(signers[0])
   });
 
   ([{
@@ -143,13 +143,53 @@ describe('Wallet (primitive)', () => {
           const orchestrator = new Orchestrator(members.slice(0, 11).map((m) => new hubsigners.SignerWrapper(m)))
           return { config, orchestrator }
         }
+      }, {
+        name: '1/1 signer (nested)',
+        signers: async () => {
+          const nestedSigner = ethers.Wallet.createRandom()
+
+          const nestedConfig = coders.config.fromSimple({
+            threshold: 1,
+            checkpoint: 0,
+            signers: [{ address: nestedSigner.address, weight: 1 }]
+          })
+
+          const nestedOrchestrator = new Orchestrator([nestedSigner])
+          const nestedWallet = Wallet.newWallet({
+            coders: coders,
+            context: contexts[version],
+            config: nestedConfig,
+            orchestrator: nestedOrchestrator,
+            chainId: provider.network.chainId,
+            provider,
+            relayer
+          })
+
+          const nestedDeployTx = nestedWallet.buildDeployTransaction()
+          await relayer.relay({ ...nestedDeployTx, chainId: provider.network.chainId, intent: {
+            id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+            wallet: nestedWallet.address
+          }})
+
+          expect(await nestedWallet.reader().isDeployed(nestedWallet.address)).to.be.true
+
+          const config = coders.config.fromSimple({
+            threshold: 1,
+            checkpoint: 0,
+            signers: [{ address: nestedWallet.address, weight: 1 }]
+          })
+
+          const orchestrator = new Orchestrator([new SequenceOrchestratorWrapper(nestedWallet)])
+
+          return { config, orchestrator }
+        }
       }]).map(({ name, signers }) => {
         describe(`Using ${name}`, () => {
           let orchestrator: Orchestrator
           let config: commons.config.Config
 
-          beforeEach(() => {
-            const { config: _config, orchestrator: _orchestrator } = signers()
+          beforeEach(async () => {
+            const { config: _config, orchestrator: _orchestrator } = await signers()
             config = _config
             orchestrator = _orchestrator
           })
@@ -172,12 +212,15 @@ describe('Wallet (primitive)', () => {
               }
             })
 
+            expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
+
             const message = ethers.utils.toUtf8Bytes(
               `This is a random message: ${ethers.utils.hexlify(ethers.utils.randomBytes(96))}`
             )
 
             const signature = await wallet.signMessage(message)
             const digest = ethers.utils.keccak256(message)
+
             expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
           });
 
