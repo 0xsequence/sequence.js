@@ -1,4 +1,3 @@
-import hardhat from 'hardhat'
 
 import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
@@ -11,7 +10,7 @@ import { commons, v2 } from '@0xsequence/core'
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 
-import { Wallet, WalletV2 } from '@0xsequence/wallet'
+import { SequenceOrchestratorWrapper, Wallet, WalletV2 } from '@0xsequence/wallet'
 import { OverwriterSequenceEstimator } from '../src'
 import { OverwriterEstimator } from '../dist/0xsequence-estimator.cjs'
 import { encodeData } from '@0xsequence/wallet/tests/utils'
@@ -43,21 +42,21 @@ describe('Wallet integration', function () {
     signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
 
     contexts = await context.deploySequenceContexts(signers[0])
-    relayer = new LocalRelayer(signers[1])
+    relayer = new LocalRelayer(signers[0])
 
     // Deploy call receiver mock
     callReceiver = (await new ethers.ContractFactory(
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       signers[0]
-    ).deploy()) as CallReceiverMock
+    ).deploy({ gasLimit: 1000000 })) as CallReceiverMock
 
     // Deploy hook caller mock
     hookCaller = (await new ethers.ContractFactory(
       HookCallerMockArtifact.abi,
       HookCallerMockArtifact.bytecode,
       signers[0]
-    ).deploy()) as HookCallerMock
+    ).deploy({ gasLimit: 1000000 })) as HookCallerMock
 
     // Deploy local relayer
     relayer = new LocalRelayer({ signer: signers[0] })
@@ -65,10 +64,6 @@ describe('Wallet integration', function () {
     // Create gas estimator
     estimator = new OverwriterSequenceEstimator(new OverwriterEstimator({ rpc: provider }))
   })
-
-  function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
 
   beforeEach(async () => {
     await callReceiver.setRevertFlag(false)
@@ -149,55 +144,83 @@ describe('Wallet integration', function () {
       //     })
       //   }
       // },
-      // {
-      //   name: 'nested wallet',
-      //   getWallet: async () => {
-      //     const EOAsigners = new Array(2).fill(0).map(() => ethers.Wallet.createRandom())
+      {
+        name: 'nested wallet',
+        getWallet: async () => {
+          const EOAsigners = new Array(3).fill(0).map(() => ethers.Wallet.createRandom())
 
-      //     const NestedSigners = await Promise.all(
-      //       new Array(2).fill(0).map(async () => {
-      //         const signers = new Array(3).fill(0).map(() => ethers.Wallet.createRandom())
-      //         const config = {
-      //           threshold: 2,
-      //           signers: signers.map(s => ({ weight: 1, address: s.address }))
-      //         }
-      //         const wallet = new Wallet({ context: context, config: config }, ...signers.slice(0, 2)).connect(
-      //           ethnode.provider,
-      //           relayer
-      //         )
-      //         await relayer.deployWallet(wallet.config, wallet.context)
-      //         return wallet.connect(ethnode.provider, relayer)
-      //       })
-      //     )
+          const nestedSigners = new Array(3).fill(0).map(() => ethers.Wallet.createRandom())
+          const nestedConfig = v2.config.ConfigCoder.fromSimple({
+            threshold: 2,
+            checkpoint: 0,
+            signers: nestedSigners.map(s => ({ weight: 1, address: s.address }))
+          })
 
-      //     const signers = [...NestedSigners, ...EOAsigners]
+          const nestedWallet = Wallet.newWallet({
+            context: contexts[2],
+            coders: v2.coders,
+            config: nestedConfig,
+            provider,
+            relayer,
+            orchestrator: new Orchestrator([nestedSigners[0], nestedSigners[1]]),
+            chainId: provider.network.chainId
+          })
 
-      //     const config = {
-      //       threshold: 3,
-      //       signers: signers.map(s => ({ weight: 1, address: s.address }))
-      //     }
+          const deployTx = nestedWallet.buildDeployTransaction()
+          await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
+              id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+              wallet: nestedWallet.address
+            }
+          })
 
-      //     const wallet = new Wallet({ context, config }, ...signers)
-      //     return wallet.connect(ethnode.provider, relayer)
-      //   }
-      // },
-      // {
-      //   name: 'asymetrical signers wallet',
-      //   getWallet: async () => {
-      //     const signersA = new Array(5).fill(0).map(() => ethers.Wallet.createRandom())
-      //     const signersB = new Array(6).fill(0).map(() => ethers.Wallet.createRandom())
+          const signers = [nestedWallet, ...EOAsigners]
 
-      //     const signers = [...signersA, ...signersB]
+          const config = v2.config.ConfigCoder.fromSimple({
+            threshold: 3,
+            checkpoint: 0,
+            signers: signers.map((s) => ({ weight: 1, address: s.address }))
+          })
 
-      //     const config = {
-      //       threshold: 5,
-      //       signers: signers.map((s, i) => ({ weight: i <= signersA.length ? 1 : 10, address: s.address }))
-      //     }
+          return Wallet.newWallet({
+            context: contexts[2],
+            coders: v2.coders,
+            config,
+            provider,
+            relayer,
+            orchestrator: new Orchestrator([
+              new SequenceOrchestratorWrapper(nestedWallet),
+              EOAsigners[0],
+              EOAsigners[1]
+            ]),
+            chainId: provider.network.chainId
+          })
+        }
+      },
+      {
+        name: 'asymetrical signers wallet',
+        getWallet: async () => {
+          const signersA = new Array(5).fill(0).map(() => ethers.Wallet.createRandom())
+          const signersB = new Array(6).fill(0).map(() => ethers.Wallet.createRandom())
 
-      //     const wallet = new Wallet({ context, config }, ...signersA)
-      //     return wallet.connect(ethnode.provider, relayer)
-      //   }
-      // }
+          const signers = [...signersA, ...signersB]
+
+          const config = v2.config.ConfigCoder.fromSimple({
+            threshold: 5,
+            checkpoint: 0,
+            signers: signers.map((s, i) => ({ weight: i <= signersA.length ? 1 : 10, address: s.address }))
+          })
+
+          return Wallet.newWallet({
+            context: contexts[2],
+            coders: v2.coders,
+            config,
+            provider,
+            relayer,
+            orchestrator: new Orchestrator(signersA),
+            chainId: provider.network.chainId
+          })
+        }
+      }
     ]
 
     options.map(o => {
@@ -267,45 +290,43 @@ describe('Wallet integration', function () {
             })
           })
 
-          // describe('a batch of transactions', () => {
-          //   let valB: Uint8Array
+          describe('a batch of transactions', () => {
+            let valB: Uint8Array
 
-          //   beforeEach(async () => {
-          //     await callReceiver.setRevertFlag(true)
-          //     valB = ethers.utils.randomBytes(99)
+            beforeEach(async () => {
+              await callReceiver.setRevertFlag(true)
+              valB = ethers.utils.randomBytes(99)
 
-          //     txs = [
-          //       {
-          //         delegateCall: false,
-          //         revertOnError: false,
-          //         gasLimit: 0,
-          //         to: callReceiver.address,
-          //         value: ethers.constants.Zero,
-          //         data: await encodeData(callReceiver, 'setRevertFlag', false),
-          //         nonce: 0
-          //       },
-          //       {
-          //         delegateCall: false,
-          //         revertOnError: true,
-          //         gasLimit: 0,
-          //         to: callReceiver.address,
-          //         value: ethers.constants.Zero,
-          //         data: await encodeData(callReceiver, 'testCall', 2, valB),
-          //         nonce: 0
-          //       }
-          //     ]
-          //   })
+              txs = [
+                {
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 0,
+                  to: callReceiver.address,
+                  value: ethers.constants.Zero,
+                  data: await encodeData(callReceiver, 'setRevertFlag', false)
+                },
+                {
+                  delegateCall: false,
+                  revertOnError: true,
+                  gasLimit: 0,
+                  to: callReceiver.address,
+                  value: ethers.constants.Zero,
+                  data: await encodeData(callReceiver, 'testCall', 2, valB)
+                }
+              ]
+            })
 
-          //   it('should use estimated gas for a batch of transactions', async () => {
-          //     const estimation = await estimator.estimateGasLimits(wallet.config, wallet.context, ...txs)
-          //     const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+            it('should use estimated gas for a batch of transactions', async () => {
+              const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
+              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-          //     expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 30000)
-          //     expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 30000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
 
-          //     expect(ethers.utils.hexlify(await callReceiver.lastValB())).to.equal(ethers.utils.hexlify(valB))
-          //   })
-          // })
+              expect(ethers.utils.hexlify(await callReceiver.lastValB())).to.equal(ethers.utils.hexlify(valB))
+            })
+          })
         })
       })
     })
