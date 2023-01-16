@@ -74,7 +74,7 @@ export class Orchestrator {
     message: ethers.BytesLike,
     callback?: (status: Status) => boolean
   ): Promise<Status> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       const status: Status = { ended: false, message, signers: {} }
 
       const onStatusUpdate = () => {
@@ -96,6 +96,7 @@ export class Orchestrator {
       // build callbacks object
       const accepted = await Promise.allSettled(this.signers.map(async (s) => {
         const saddr = await s.getAddress()
+        status.signers[saddr] = { situation: "Waiting" }
         return s.requestSignature(message, {
           onSignature: (signature) => {
             const isEOA = s.isEOA()
