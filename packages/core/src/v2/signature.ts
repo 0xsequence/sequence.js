@@ -291,9 +291,10 @@ export const partEncoder = {
     )
   },
   dynamicSignature: (weight: ethers.BigNumberish, address: ethers.BytesLike, signature: ethers.BytesLike): string => {
+    const arrSignature = ethers.utils.arrayify(signature)
     return ethers.utils.solidityPack(
       ['uint8', 'uint8', 'address', 'uint24', 'bytes'],
-      [SignaturePartType.DynamicSignature, weight, address, signature.length, signature]
+      [SignaturePartType.DynamicSignature, weight, address, arrSignature.length, arrSignature]
     )
   },
   address: (weight: ethers.BigNumberish, address: ethers.BytesLike): string => {
