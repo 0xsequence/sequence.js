@@ -36,6 +36,8 @@ export function isSignerStatusPending(status: SignerStatus): status is SignerSta
   return !isSignerStatusRejected(status) && !isSignerStatusSigned(status)
 }
 
+export const InitialSituation = "Initial"
+
 /**
  * It orchestrates the signing of a single digest by multiple signers.
  * It can provide internal visibility of the signing process, and it also
@@ -96,7 +98,7 @@ export class Orchestrator {
       // build callbacks object
       const accepted = await Promise.allSettled(this.signers.map(async (s) => {
         const saddr = await s.getAddress()
-        status.signers[saddr] = { situation: "Waiting" }
+        status.signers[saddr] = { situation: InitialSituation }
         return s.requestSignature(message, {
           onSignature: (signature) => {
             const isEOA = s.isEOA()
@@ -119,8 +121,9 @@ export class Orchestrator {
         const promise = accepted[i]
 
         if (promise.status === "rejected" || promise.value === false) {
-          console.warn(`Signer ${await signer.getAddress()} rejected the request ${(promise as any).reason}`)
-          status.signers[await signer.getAddress()] = { rejected: true }
+          const prejected = promise as PromiseRejectedResult
+          console.warn(`Signer ${await signer.getAddress()} rejected the request ${prejected.reason}`)
+          status.signers[await signer.getAddress()] = { rejected: true, error: prejected.reason.toString() }
         }
       }
 
