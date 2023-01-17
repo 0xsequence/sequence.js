@@ -172,6 +172,7 @@ importers:
       '@0xsequence/sessions': ^0.43.4
       '@0xsequence/signhub': ^0.43.7
       '@0xsequence/tests': ^0.43.4
+      '@0xsequence/utils': workspace:^0.43.7
       '@0xsequence/wallet': ^0.43.4
       '@istanbuljs/nyc-config-typescript': ^1.0.2
       ethers: ^5.5.2
@@ -181,6 +182,7 @@ importers:
       '@0xsequence/migration': link:../migration
       '@0xsequence/network': link:../network
       '@0xsequence/sessions': link:../sessions
+      '@0xsequence/utils': link:../utils
       '@0xsequence/wallet': link:../wallet
       ethers: 5.7.2
     devDependencies:
@@ -385,6 +387,7 @@ importers:
       '@0xsequence/account': workspace:^0.43.4
       '@0xsequence/auth': ^0.43.15
       '@0xsequence/core': workspace:^0.43.7
+      '@0xsequence/migration': workspace:^0.43.4
       '@0xsequence/network': ^0.43.15
       '@0xsequence/relayer': ^0.43.15
       '@0xsequence/utils': ^0.43.15
@@ -397,6 +400,7 @@ importers:
       '@0xsequence/account': link:../account
       '@0xsequence/auth': link:../auth
       '@0xsequence/core': link:../core
+      '@0xsequence/migration': link:../migration
       '@0xsequence/network': link:../network
       '@0xsequence/relayer': link:../relayer
       '@0xsequence/utils': link:../utils

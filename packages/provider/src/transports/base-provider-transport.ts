@@ -20,6 +20,7 @@ import {
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
+import { context } from '@0xsequence/migration'
 
 export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
 
@@ -39,7 +40,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected connectPayload: ConnectDetails | undefined
   protected accountsChangedPayload: { accounts: string[]; origin?: string } | undefined
   protected networksPayload: NetworkConfig[] | undefined
-  protected walletContextPayload: WalletContext | undefined
+  protected walletContextPayload: context.VersionedContext | undefined
 
   protected _sessionId?: string
   protected _init: InitState
