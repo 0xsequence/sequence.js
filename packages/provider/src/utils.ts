@@ -1,11 +1,8 @@
-import { ethers, BigNumberish, BytesLike } from 'ethers'
-import { WalletContext } from '@0xsequence/network'
-import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
+import { ethers, BytesLike } from 'ethers'
 import { Web3Provider } from './provider'
-import { Signer } from '@0xsequence/wallet'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { OnChainReader } from '@0xsequence/core/src/commons/reader'
-import { commons } from '@0xsequence/core'
+import { AccountStatus } from '@0xsequence/account'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
@@ -30,18 +27,8 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  chainId?: number,
-  walletContext?: WalletContext
+  provider: Web3Provider | ethers.providers.Web3Provider
 ): Promise<boolean> => {
-  if (!chainId) {
-    chainId = (await provider.getNetwork())?.chainId
-  }
-
-  if (!walletContext && Web3Provider.isSequenceProvider(provider)) {
-    walletContext = await provider.getSigner().getWalletContext()
-  }
-
   const reader = new OnChainReader(provider)
   return reader.isValidSignature(address, digest, sig)
 }
@@ -92,50 +79,22 @@ export const isValidSignature = async (
 //   return config
 // }
 
-// export const isBrowserExtension = (): boolean =>
-//   window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
+export const isBrowserExtension = (): boolean =>
+  window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
 
-// export const isUnityPlugin = (): boolean => !!navigator.userAgent.match(/UnitySequence/i)
+export const isUnityPlugin = (): boolean => !!navigator.userAgent.match(/UnitySequence/i)
 
 // /**
 //  * Returns the status of a signer's wallet on given chain by checking wallet deployment and config status
 //  *
-//  * @param {Signer} signer
-//  * @param {number} chainId
-//  * @return {Promise<boolean>} Promise that returns true if the wallet is up to date, false otherwise
+//  * @param {Status} of the wallet
 //  */
-// export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise<boolean> => {
-//   const walletState = await signer.getWalletState()
-//   const networks = await signer.getNetworks()
-
-//   const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
-//   if (!walletStateForRequiredChain) {
-//     throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
-//   }
-
-//   const isDeployed = walletStateForRequiredChain.deployed
-
-//   if (!networks) {
-//     throw new Error(`isWalletUpToDate util: could not get networks from signer`)
-//   }
-//   const authChain = networks.find(network => network.isAuthChain)
-//   if (!authChain) {
-//     throw new Error(`isWalletUpToDate util: could not get auth chain network information`)
-//   }
-//   const authChainId = authChain.chainId
-//   const authChainConfig = walletState.find(state => state.chainId === authChainId)?.config
-//   if (!authChainConfig) {
-//     throw new Error(`isWalletUpToDate util: could not get auth chain config`)
-//   }
-//   const requiredChainConfig = walletStateForRequiredChain.config
-//   if (!requiredChainConfig) {
-//     throw new Error(`isWalletUpToDate util: could not get config for chainId ${chainId}`)
-//   }
-
-//   const isUpToDate = isConfigEqual(authChainConfig, requiredChainConfig)
-
-//   return isDeployed && isUpToDate
-// }
+export const isWalletUpToDate = (status: AccountStatus): boolean => {
+  return (
+    status.onChain.deployed &&
+    status.fullyMigrated
+  )
+}
 
 export interface ItemStore {
   getItem(key: string): Promise<string | null>

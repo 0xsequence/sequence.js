@@ -3,13 +3,13 @@ import { tracker } from '@0xsequence/sessions'
 import { migrator, context, defaults, version } from '@0xsequence/migration'
 import { Orchestrator } from '@0xsequence/signhub'
 import { NetworkConfig } from '@0xsequence/network'
-import { ethers } from 'ethers'
+import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
 import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
 import { counterfactualVersion } from '@0xsequence/migration/src/version'
 import { Wallet } from '@0xsequence/wallet'
 import { FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
-import { intendTransactionBundle } from '@0xsequence/core/src/commons/transaction'
+import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 export type AccountStatus = {
   original: {
@@ -521,7 +521,7 @@ export class Account {
     feeQuote?: FeeQuote
   ) {
     const bootstrapTxs = await this.bootstrapTransactions(chainId)
-    const intended = intendTransactionBundle(
+    const intended = commons.transaction.intendTransactionBundle(
       bootstrapTxs,
       this.address,
       chainId,
@@ -613,5 +613,15 @@ export class Account {
 
     const signed = await this.signTransactions(txs, chainId)
     return this.sendSignedTransactions(signed, chainId, quote)
+  }
+
+  async signTypedData(
+    domain: TypedDataDomain,
+    types: Record<string, Array<TypedDataField>>,
+    message: Record<string, any>,
+    chainId: ethers.BigNumberish
+  ): Promise<string> {
+    const digest = encodeTypedDataDigest({ domain, types, message })
+    return this.signDigest(digest, chainId)
   }
 }
