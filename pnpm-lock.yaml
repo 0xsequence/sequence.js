@@ -511,13 +511,20 @@ importers:
       nyc: 15.1.0
 
   packages/simulator:
+    specifiers:
+      '@0xsequence/core': workspace:^0.43.7
+      '@0xsequence/signhub': workspace:^0.43.7
+      '@0xsequence/tests': workspace:^0.43.7
+      '@0xsequence/wallet-contracts': 1.10.0
+      ethers: ^5.7.2
     dependencies:
       '@0xsequence/transactions': 0.43.7_ethers@5.7.2
       '@0xsequence/wallet-contracts': 1.10.0
     devDependencies:
-      ethers:
-        specifier: ^5.7.2
-        version: 5.7.2
+      '@0xsequence/core': link:../core
+      '@0xsequence/signhub': link:../signhub
+      '@0xsequence/tests': link:../tests
+      ethers: 5.7.2
 
   packages/tests:
     specifiers:

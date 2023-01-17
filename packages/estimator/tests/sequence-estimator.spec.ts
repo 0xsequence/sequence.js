@@ -166,12 +166,7 @@ describe('Wallet integration', function () {
             chainId: provider.network.chainId
           })
 
-          const deployTx = nestedWallet.buildDeployTransaction()
-          await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-              id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-              wallet: nestedWallet.address
-            }
-          })
+          await nestedWallet.deploy()
 
           const signers = [nestedWallet, ...EOAsigners]
 
@@ -236,12 +231,7 @@ describe('Wallet integration', function () {
 
           beforeEach(async () => {
             await callReceiver.testCall(0, [])
-            const deployTx = wallet.buildDeployTransaction()
-            await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-                id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-                wallet: wallet.address
-              }
-            })
+            await wallet.deploy()
           })
 
           describe('a single transaction', () => {
