@@ -1,10 +1,8 @@
-import { BigNumberish, BytesLike, TypedDataDomain, TypedDataField } from 'ethers'
+import { BytesLike, TypedDataDomain, TypedDataField } from 'ethers'
 import { WalletContext, ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
-import { DecodedSignature, WalletConfig } from '@0xsequence/config'
 import { Wallet } from '../wallet'
-import { isValidSignature, prefixEIP191Message, recoverWalletConfig } from '../utils'
-import { isValidEIP712Signature, isValidEthSignSignature } from '@0xsequence/wallet'
+import { isValidSignature, prefixEIP191Message } from '../utils'
 
 export class WalletUtils {
   private wallet: Wallet
@@ -91,41 +89,41 @@ export class WalletUtils {
     return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
   }
 
-  // Recover the WalletConfig from a signature + digest combo
-  recoverWalletConfig = async (
-    address: string,
-    digest: BytesLike,
-    signature: string | DecodedSignature,
-    chainId: BigNumberish,
-    walletContext?: WalletContext
-  ): Promise<WalletConfig> => {
-    walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(address, digest, signature, chainId, walletContext)
-  }
+  // // Recover the WalletConfig from a signature + digest combo
+  // recoverWalletConfig = async (
+  //   address: string,
+  //   digest: BytesLike,
+  //   signature: string | DecodedSignature,
+  //   chainId: BigNumberish,
+  //   walletContext?: WalletContext
+  // ): Promise<WalletConfig> => {
+  //   walletContext = walletContext || (await this.wallet.getWalletContext())
+  //   return recoverWalletConfig(address, digest, signature, chainId, walletContext)
+  // }
 
-  // Recover the WalletConfig from a signature of a message
-  recoverWalletConfigFromMessage = async (
-    address: string,
-    message: string | Uint8Array,
-    signature: string | DecodedSignature,
-    chainId: BigNumberish,
-    walletContext?: WalletContext
-  ): Promise<WalletConfig> => {
-    walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(address, encodeMessageDigest(prefixEIP191Message(message)), signature, chainId, walletContext)
-  }
+  // // Recover the WalletConfig from a signature of a message
+  // recoverWalletConfigFromMessage = async (
+  //   address: string,
+  //   message: string | Uint8Array,
+  //   signature: string | DecodedSignature,
+  //   chainId: BigNumberish,
+  //   walletContext?: WalletContext
+  // ): Promise<WalletConfig> => {
+  //   walletContext = walletContext || (await this.wallet.getWalletContext())
+  //   return recoverWalletConfig(address, encodeMessageDigest(prefixEIP191Message(message)), signature, chainId, walletContext)
+  // }
 
-  // Recover the WalletConfig from a signature of a typedData object
-  recoverWalletConfigFromTypedData = async (
-    address: string,
-    typedData: TypedData,
-    signature: string | DecodedSignature,
-    chainId: BigNumberish,
-    walletContext?: WalletContext
-  ): Promise<WalletConfig> => {
-    walletContext = walletContext || (await this.wallet.getWalletContext())
-    return recoverWalletConfig(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
-  }
+  // // Recover the WalletConfig from a signature of a typedData object
+  // recoverWalletConfigFromTypedData = async (
+  //   address: string,
+  //   typedData: TypedData,
+  //   signature: string | DecodedSignature,
+  //   chainId: BigNumberish,
+  //   walletContext?: WalletContext
+  // ): Promise<WalletConfig> => {
+  //   walletContext = walletContext || (await this.wallet.getWalletContext())
+  //   return recoverWalletConfig(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
+  // }
 
   // sendTransaction()
   // sendTransactions()

@@ -13,7 +13,7 @@ export abstract class Signer extends AbstractSigner {
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   abstract getWalletContext(): Promise<WalletContext>
-  abstract getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config[]>
+  abstract getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
   // abstract getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
 
   abstract getNetworks(): Promise<NetworkConfig[]>
