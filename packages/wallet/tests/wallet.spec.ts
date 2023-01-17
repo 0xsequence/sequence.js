@@ -53,15 +53,11 @@ describe('Wallet (primitive)', () => {
           config,
           orchestrator: new Orchestrator([new hubsigners.SignerWrapper(signer)]),
           chainId: provider.network.chainId,
-          provider
+          provider,
+          relayer
         })
 
-        const deployTx = wallet.buildDeployTransaction()
-        await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-          id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-            wallet: wallet.address
-          }
-        })
+        await wallet.deploy()
 
         expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
       });
@@ -165,12 +161,7 @@ describe('Wallet (primitive)', () => {
             relayer
           })
 
-          const nestedDeployTx = nestedWallet.buildDeployTransaction()
-          await relayer.relay({ ...nestedDeployTx, chainId: provider.network.chainId, intent: {
-            id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-            wallet: nestedWallet.address
-          }})
-
+          await nestedWallet.deploy()
           expect(await nestedWallet.reader().isDeployed(nestedWallet.address)).to.be.true
 
           const config = coders.config.fromSimple({
@@ -202,16 +193,11 @@ describe('Wallet (primitive)', () => {
               config,
               orchestrator,
               chainId: provider.network.chainId,
-              provider
+              provider,
+              relayer
             })
 
-            const deployTx = wallet.buildDeployTransaction()
-            await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-              id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-                wallet: wallet.address
-              }
-            })
-
+            await wallet.deploy()
             expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
 
             const message = ethers.utils.toUtf8Bytes(
@@ -231,12 +217,7 @@ describe('Wallet (primitive)', () => {
           ([{
             name: 'After deployment',
             setup: async (wallet: Wallet) => {
-              const deployTx = wallet.buildDeployTransaction()
-              await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-                id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-                  wallet: wallet.address
-                }
-              })
+              await wallet.deploy()
             },
             deployed: true
           }, {

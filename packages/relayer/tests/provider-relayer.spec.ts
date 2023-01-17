@@ -84,14 +84,7 @@ describe('Wallet integration', function () {
           relayer
         })
 
-        if (c.deployed) {
-          const deployTx = wallet.buildDeployTransaction()
-          await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-              id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-              wallet: wallet.address
-            }
-          })
-        }
+        if (c.deployed) await wallet.deploy()
 
         expect(await wallet.reader().isDeployed(wallet.address)).to.equal(c.deployed)
       })
@@ -235,12 +228,7 @@ describe('Wallet integration', function () {
             chainId: provider.network.chainId
           })
 
-          const deployTx = altWallet.buildDeployTransaction()
-          await relayer.relay({ ...deployTx, chainId: provider.network.chainId, intent: {
-              id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-              wallet: altWallet.address
-            }
-          })
+          await altWallet.deploy()
 
           expect(await altWallet.reader().isDeployed(altWallet.address)).to.be.true
 
