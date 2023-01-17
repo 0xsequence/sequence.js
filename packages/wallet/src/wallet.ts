@@ -178,6 +178,16 @@ export class Wallet<
     return Wallet.buildDeployTransaction(this.context, imageHash)
   }
 
+  deploy(): Promise<ethers.providers.TransactionResponse> {
+    const deployTx = this.buildDeployTransaction()
+    if (!this.relayer) throw new Error("Wallet deploy requires a relayer")
+    return this.relayer.relay({ ...deployTx, chainId: this.chainId, intent: {
+        id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+        wallet: this.address
+      }
+    })
+  }
+
   static buildDeployTransaction(
     context: commons.context.WalletContext,
     imageHash: string,
