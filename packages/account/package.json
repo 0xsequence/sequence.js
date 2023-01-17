@@ -18,13 +18,13 @@
   },
   "dependencies": {
     "@0xsequence/core": "^0.43.4",
-    "@0xsequence/sessions": "^0.43.4",
     "@0xsequence/migration": "^0.43.4",
     "@0xsequence/network": "^0.43.4",
+    "@0xsequence/sessions": "^0.43.4",
+    "@0xsequence/utils": "workspace:^0.43.7",
     "@0xsequence/wallet": "^0.43.4",
     "ethers": "^5.5.2"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "@0xsequence/signhub": "^0.43.7",
     "@0xsequence/tests": "^0.43.4",

@@ -5,23 +5,22 @@ import {
   ProviderMessageRequest,
   EventType,
   ProviderMessageResponse,
-  ProviderMessageTransport,
   ProviderRpcError,
   InitState,
   ConnectDetails,
-  OpenWalletIntent,
   WalletSession,
   TransportSession
 } from '../types'
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
-import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from '@0xsequence/utils'
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
 import { isBrowserExtension, LocalStorage } from '../utils'
+import { context } from '@0xsequence/migration'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
@@ -70,7 +69,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       }
     })
 
-    this.walletRequestHandler.on('walletContext', (walletContext: WalletContext) => {
+    this.walletRequestHandler.on('walletContext', (walletContext: context.VersionedContext) => {
       if (!this.registered || !walletContext) return
       this.notifyWalletContext(walletContext)
     })
@@ -231,7 +230,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  notifyWalletContext(walletContext: WalletContext) {
+  notifyWalletContext(walletContext: context.VersionedContext) {
     this.sendMessage({
       idx: -1,
       type: EventType.WALLET_CONTEXT,
@@ -368,7 +367,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     }
 
     // ensure signer is ready
-    await this.walletRequestHandler.getSigner()
+    await this.walletRequestHandler.getAccount()
 
     // Notify open and proceed to prompt for connection if intended
     if (!(await this.walletRequestHandler.isSignedIn())) {
@@ -386,9 +385,10 @@ export abstract class BaseWalletTransport implements WalletTransport {
         let chainId: number | undefined = undefined
         try {
           if (networkId) {
-            chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
+            this.walletRequestHandler.setDefaultNetwork(networkId)
+            chainId = ethers.BigNumber.from(networkId).toNumber()
           } else {
-            chainId = await this.walletRequestHandler.getChainId()
+            chainId = ethers.BigNumber.from(this.walletRequestHandler.defaultNetworkId).toNumber()
           }
         } catch (err) {
           console.error(err)
@@ -423,9 +423,10 @@ export abstract class BaseWalletTransport implements WalletTransport {
         let chainId: number | undefined = undefined
         try {
           if (networkId) {
-            chainId = await this.walletRequestHandler.setDefaultNetwork(networkId, false)
+            this.walletRequestHandler.setDefaultNetwork(networkId)
+            chainId = ethers.BigNumber.from(networkId).toNumber()
           } else {
-            chainId = await this.walletRequestHandler.getChainId()
+            chainId = ethers.BigNumber.from(this.walletRequestHandler.defaultNetworkId).toNumber()
           }
         } catch (err) {
           console.error(err)

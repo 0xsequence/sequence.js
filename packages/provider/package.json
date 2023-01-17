@@ -18,6 +18,7 @@
     "@0xsequence/account": "workspace:^0.43.4",
     "@0xsequence/auth": "^0.43.26",
     "@0xsequence/core": "workspace:^0.43.7",
+    "@0xsequence/migration": "workspace:^0.43.4",
     "@0xsequence/network": "^0.43.26",
     "@0xsequence/relayer": "^0.43.26",
     "@0xsequence/utils": "^0.43.26",

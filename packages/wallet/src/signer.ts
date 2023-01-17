@@ -4,6 +4,7 @@ import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { Deferrable } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
+// TODO: Move to account ?
 export abstract class Signer extends AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
     return isSequenceSigner(cand)
@@ -12,7 +13,7 @@ export abstract class Signer extends AbstractSigner {
   abstract getProvider(chainId?: number): Promise<providers.JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
-  abstract getWalletContext(): Promise<WalletContext>
+  // abstract getWalletContext(): Promise<WalletContext>
   abstract getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
   // abstract getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
 
