@@ -382,7 +382,9 @@ importers:
   packages/provider:
     specifiers:
       '@0xsequence/abi': ^0.43.14
+      '@0xsequence/account': workspace:^0.43.4
       '@0xsequence/auth': ^0.43.14
+      '@0xsequence/core': workspace:^0.43.7
       '@0xsequence/network': ^0.43.14
       '@0xsequence/relayer': ^0.43.14
       '@0xsequence/utils': ^0.43.14
@@ -392,7 +394,9 @@ importers:
       webextension-polyfill: ^0.10.0
     dependencies:
       '@0xsequence/abi': link:../abi
+      '@0xsequence/account': link:../account
       '@0xsequence/auth': link:../auth
+      '@0xsequence/core': link:../core
       '@0xsequence/network': link:../network
       '@0xsequence/relayer': link:../relayer
       '@0xsequence/utils': link:../utils

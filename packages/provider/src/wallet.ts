@@ -18,7 +18,6 @@ import {
   ensureValidNetworks,
   sortNetworks
 } from '@0xsequence/network'
-import { WalletConfig, WalletState } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import { Web3Provider, Web3Signer } from './provider'
 import {
@@ -34,7 +33,9 @@ import { ExtensionMessageProvider } from './transports/extension-transport/exten
 import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
-import { Runtime } from 'webextension-polyfill'
+import { Runtime } from 'webextension-polyfill-ts'
+import { commons } from '@0xsequence/core'
+import { AccountStatus } from '@0xsequence/account'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -56,8 +57,8 @@ export interface WalletProvider {
   getSigner(chainId?: ChainIdLike): Web3Signer
 
   getWalletContext(): Promise<WalletContext>
-  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
-  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
+  getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
+  getWalletState(chainId?: ChainIdLike): Promise<AccountStatus>
   isDeployed(chainId?: ChainIdLike): Promise<boolean>
 
   getProviderConfig(): ProviderConfig
@@ -564,11 +565,11 @@ export class Wallet implements WalletProvider {
     return (await this.getAuthProvider()).getSigner()
   }
 
-  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
+  getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config> {
     return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
+  getWalletState(chainId?: ChainIdLike): Promise<AccountStatus> {
     return this.getSigner().getWalletState(chainId)
   }
 

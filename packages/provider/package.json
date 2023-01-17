@@ -15,7 +15,9 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.43.14",
+    "@0xsequence/account": "workspace:^0.43.4",
     "@0xsequence/auth": "^0.43.14",
+    "@0xsequence/core": "workspace:^0.43.7",
     "@0xsequence/network": "^0.43.14",
     "@0xsequence/relayer": "^0.43.14",
     "@0xsequence/utils": "^0.43.14",
