@@ -1,5 +1,5 @@
 import { BytesLike, TypedDataDomain, TypedDataField } from 'ethers'
-import { WalletContext, ChainIdLike } from '@0xsequence/network'
+import { ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { Wallet } from '../wallet'
 import { isValidSignature, prefixEIP191Message } from '../utils'
@@ -55,12 +55,11 @@ export class WalletUtils {
     address: string,
     digest: Uint8Array,
     signature: string,
-    chainId: number,
-    walletContext?: WalletContext
+    chainId: number
   ): Promise<boolean> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
-    return isValidSignature(address, digest, signature, provider, chainId, walletContext)
+    return isValidSignature(address, digest, signature, provider)
   }
 
   // Verify message signature
@@ -68,14 +67,13 @@ export class WalletUtils {
     address: string,
     message: string | Uint8Array,
     signature: string,
-    chainId: number,
-    walletContext?: WalletContext
+    chainId: number
   ): Promise<boolean> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
     const prefixed = prefixEIP191Message(message)
     const digest = encodeMessageDigest(prefixed)
-    return isValidSignature(address, digest, signature, provider, chainId, walletContext)
+    return isValidSignature(address, digest, signature, provider)
   }
 
   // Verify typedData signature
@@ -83,10 +81,9 @@ export class WalletUtils {
     address: string,
     typedData: TypedData,
     signature: string,
-    chainId: number,
-    walletContext?: WalletContext
+    chainId: number
   ): Promise<boolean> {
-    return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId, walletContext)
+    return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId)
   }
 
   // // Recover the WalletConfig from a signature + digest combo

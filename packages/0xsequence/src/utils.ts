@@ -2,9 +2,9 @@ export * from '@0xsequence/utils'
 
 export {
   isValidSignature,
-  isValidMessageSignature,
-  isValidTypedDataSignature,
-  recoverWalletConfig,
+  // isValidMessageSignature,
+  // isValidTypedDataSignature,
+  // recoverWalletConfig,
   isWalletUpToDate
 } from '@0xsequence/provider'
 

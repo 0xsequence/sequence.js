@@ -3,7 +3,7 @@ import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
 import { promisify, getRandomInt } from '@0xsequence/utils'
-import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandlerFunc, sequenceContext } from "@0xsequence/network"
+import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandlerFunc } from "@0xsequence/network"
 
 export type MulticallOptions = {
   // number of calls to enqueue before calling.
@@ -31,7 +31,8 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  contract: sequenceContext.sequenceUtils!,
+  // TODO: Import from global pre-defiend contracts
+  contract: '0xD7042Bf5C8Cc253301B01D7143166E17D5BF4f74',
   verbose: false
 }
 

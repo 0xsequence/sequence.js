@@ -14,7 +14,7 @@ import { Relayer } from '@0xsequence/relayer'
 import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 import { commons, universal } from '@0xsequence/core'
-import { AccountStatus } from '@0xsequence/account'
+import { Account, AccountStatus } from '@0xsequence/account'
 import { context } from '@0xsequence/migration'
 
 export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
@@ -80,8 +80,8 @@ export function isSequenceProvider(provider: any): provider is Web3Provider {
 }
 
 export class LocalWeb3Provider extends Web3Provider {
-  constructor(signer: Signer, networks?: NetworkConfig[]) {
-    const walletRequestHandler = new WalletRequestHandler(signer, null, null, networks || [])
+  constructor(account: Account, networks?: NetworkConfig[]) {
+    const walletRequestHandler = new WalletRequestHandler(account, null, null, networks || [])
     super(walletRequestHandler)
   }
 }
