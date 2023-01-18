@@ -34,7 +34,7 @@ import { ExtensionMessageProvider } from './transports/extension-transport/exten
 import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
-import { Runtime } from 'webextension-polyfill-ts'
+import { Runtime } from 'webextension-polyfill'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
