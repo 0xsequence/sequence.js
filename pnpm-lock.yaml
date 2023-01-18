@@ -115,15 +115,21 @@ importers:
   packages/0xsequence:
     specifiers:
       '@0xsequence/abi': ^0.43.14
+      '@0xsequence/account': workspace:^0.43.4
       '@0xsequence/api': ^0.43.14
       '@0xsequence/auth': ^0.43.14
+      '@0xsequence/core': workspace:^0.43.7
       '@0xsequence/guard': ^0.43.14
       '@0xsequence/indexer': ^0.43.14
       '@0xsequence/metadata': ^0.43.14
+      '@0xsequence/migration': workspace:^0.43.4
       '@0xsequence/multicall': ^0.43.14
       '@0xsequence/network': ^0.43.14
       '@0xsequence/provider': ^0.43.14
       '@0xsequence/relayer': ^0.43.14
+      '@0xsequence/sessions': workspace:^0.43.4
+      '@0xsequence/signhub': workspace:^0.43.7
+      '@0xsequence/tests': workspace:^0.43.7
       '@0xsequence/utils': ^0.43.14
       '@0xsequence/wallet': ^0.43.14
       '@0xsequence/wallet-contracts': 1.10.0
@@ -138,18 +144,24 @@ importers:
       webpack-dev-server: ^3.11.2
     dependencies:
       '@0xsequence/abi': link:../abi
+      '@0xsequence/account': link:../account
       '@0xsequence/api': link:../api
       '@0xsequence/auth': link:../auth
+      '@0xsequence/core': link:../core
       '@0xsequence/guard': link:../guard
       '@0xsequence/indexer': link:../indexer
       '@0xsequence/metadata': link:../metadata
+      '@0xsequence/migration': link:../migration
       '@0xsequence/multicall': link:../multicall
       '@0xsequence/network': link:../network
       '@0xsequence/provider': link:../provider
       '@0xsequence/relayer': link:../relayer
+      '@0xsequence/sessions': link:../sessions
+      '@0xsequence/signhub': link:../signhub
       '@0xsequence/utils': link:../utils
       '@0xsequence/wallet': link:../wallet
     devDependencies:
+      '@0xsequence/tests': link:../tests
       '@0xsequence/wallet-contracts': 1.10.0
       '@babel/plugin-transform-runtime': 7.19.6
       babel-loader: 9.1.0_webpack@5.75.0
@@ -369,12 +381,14 @@ importers:
   packages/network:
     specifiers:
       '@0xsequence/indexer': ^0.43.14
+      '@0xsequence/migration': workspace:^0.43.4
       '@0xsequence/provider': ^0.43.14
       '@0xsequence/relayer': ^0.43.14
       '@0xsequence/utils': ^0.43.14
       ethers: ^5.7.2
     dependencies:
       '@0xsequence/indexer': link:../indexer
+      '@0xsequence/migration': link:../migration
       '@0xsequence/provider': link:../provider
       '@0xsequence/relayer': link:../relayer
       '@0xsequence/utils': link:../utils
@@ -7590,18 +7604,6 @@ packages:
         optional: true
     dev: true
 
-  /follow-redirects/1.15.2_debug@4.3.4:
-    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dependencies:
-      debug: 4.3.4
-    dev: true
-
   /for-each/0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
     dependencies:
@@ -8479,7 +8481,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.2_debug@4.3.4
+      follow-redirects: 1.15.2
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug

@@ -55,7 +55,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
-  public defaultNetworkId: string | number
+  public defaultNetworkId: number
 
   constructor(
     account: Account | null | undefined,
@@ -63,7 +63,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     auxDataProvider: AuxDataProvider | null,
     mainnetNetworks: NetworkConfig[],
     testnetNetworks: NetworkConfig[] = [],
-    defaultNetworkId: string | number = 1
+    defaultNetworkId?: string | number
   ) {
     this.account = account
     this.prompter = prompter
@@ -71,7 +71,23 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.mainnetNetworks = mainnetNetworks
     this.testnetNetworks = testnetNetworks
 
-    this.defaultNetworkId = defaultNetworkId
+    this.defaultNetworkId = defaultNetworkId ? this.findNetworkID(defaultNetworkId) : this.mainnetNetworks.concat(this.testnetNetworks)[0].chainId
+  }
+
+  private findNetworkID(network: string | number) {
+    const networks = this.mainnetNetworks.concat(this.testnetNetworks)
+    const networkId = networks.find((n) => {
+      if (n.name === network) return true
+      if (n.chainId === network) return true
+      return false
+    })
+
+    if (!networkId) {
+      console.log(networks)
+      throw new Error(`Network ${network} not found`)
+    }
+
+    return networkId.chainId
   }
 
   async signIn(account: Account | null, options: WalletSignInOptions = {}) {
@@ -649,7 +665,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   setDefaultNetwork(chainId: string | number) {
-    this.defaultNetworkId = chainId
+    this.defaultNetworkId = this.findNetworkID(chainId)
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {

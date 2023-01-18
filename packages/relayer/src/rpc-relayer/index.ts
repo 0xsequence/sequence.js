@@ -16,7 +16,7 @@ const FINAL_STATUSES = [
 const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions {
-  provider: ethers.providers.Provider,
+  provider: ethers.providers.Provider | { url: string },
   url: string
 }
 
@@ -30,7 +30,7 @@ export class RpcRelayer implements Relayer {
 
   constructor(options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, global.fetch)
-    this.provider = options.provider
+    this.provider = ethers.providers.Provider.isProvider(options.provider) ? options.provider : new ethers.providers.JsonRpcProvider(options.provider.url)
   }
 
   async waitReceipt(

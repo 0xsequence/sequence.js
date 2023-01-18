@@ -1,5 +1,4 @@
 import { Signer as AbstractSigner, providers } from 'ethers'
-import { WalletContext } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'

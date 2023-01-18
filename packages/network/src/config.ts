@@ -292,78 +292,72 @@ export const networks: Record<ChainId, NetworkConfig> = {
 
 export type ChainIdLike = NetworkConfig | BigNumberish
 
+const genUrls = (network: string) => {
+  const rpcUrl = nodesURL(network)
+  return {
+    rpcUrl,
+    relayer: {
+      url: relayerURL(rpcUrl),
+      provider: {
+        url: rpcUrl,
+      }
+    },
+    indexerUrl: indexerURL(network)
+  }
+}
+
 export const mainnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.MAINNET],
-    rpcUrl: nodesURL('mainnet'),
-    relayer: { url: relayerURL('mainnet') },
-    indexerUrl: indexerURL('mainnet')
+    ...genUrls('mainnet')
   },
   {
     ...networks[ChainId.POLYGON],
-    rpcUrl: nodesURL('polygon'),
-    relayer: { url: relayerURL('polygon') },
-    indexerUrl: indexerURL('polygon'),
+    ...genUrls('polygon'),
+    // TODO: Remove default and auth chains from here
     isDefaultChain: true,
     isAuthChain: true
   },
   {
     ...networks[ChainId.BSC],
-    rpcUrl: nodesURL('bsc'),
-    indexerUrl: indexerURL('bsc'),
-    relayer: { url: relayerURL('bsc') }
+    ...genUrls('bsc')
   },
   {
     ...networks[ChainId.AVALANCHE],
-    rpcUrl: nodesURL('avalanche'),
-    indexerUrl: indexerURL('avalanche'),
-    relayer: { url: relayerURL('avalanche') }
+    ...genUrls('avalanche')
   },
   {
     ...networks[ChainId.ARBITRUM],
-    rpcUrl: nodesURL('arbitrum'),
-    indexerUrl: indexerURL('arbitrum'),
-    relayer: { url: relayerURL('arbitrum') }
+    ...genUrls('arbitrum')
   },
   {
     ...networks[ChainId.ARBITRUM_NOVA],
-    rpcUrl: nodesURL('arbitrum-nova'),
-    indexerUrl: indexerURL('arbitrum-nova'),
-    relayer: { url: relayerURL('arbitrum-nova') }
+    ...genUrls('arbitrum-nova')
   },
   {
     ...networks[ChainId.OPTIMISM],
-    rpcUrl: nodesURL('optimism'),
-    indexerUrl: indexerURL('optimism'),
-    relayer: { url: relayerURL('optimism') }
+    ...genUrls('optimism')
   }
 ])
 
+// TODO: Merge testenet and mainnet networks
 export const testnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.RINKEBY],
-    rpcUrl: nodesURL('rinkeby'),
-    relayer: { url: relayerURL('rinkeby') },
-    indexerUrl: indexerURL('rinkeby')
+    ...genUrls('rinkeby')
   },
   {
     ...networks[ChainId.GOERLI],
-    rpcUrl: nodesURL('goerli'),
-    relayer: { url: relayerURL('goerli') },
-    indexerUrl: indexerURL('goerli')
+    ...genUrls('goerli')
   },
   {
     ...networks[ChainId.POLYGON_MUMBAI],
-    rpcUrl: nodesURL('mumbai'),
-    relayer: { url: relayerURL('mumbai') },
-    indexerUrl: indexerURL('mumbai'),
+    ...genUrls('mumbai'),
     isDefaultChain: true,
     isAuthChain: true
   },
   {
     ...networks[ChainId.BSC_TESTNET],
-    rpcUrl: nodesURL('bsc-testnet'),
-    relayer: { url: relayerURL('bsc-testnet') },
-    indexerUrl: indexerURL('bsc-testnet')
+    ...genUrls('bsc-testnet')
   }
 ])
