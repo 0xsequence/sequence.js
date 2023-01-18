@@ -1,22 +1,16 @@
 import {
-  ProxyMessageProvider,
-  ProviderMessageTransport,
-  ProviderMessage,
   WalletRequestHandler,
   ProxyMessageChannel,
   ProxyMessageHandler,
   Wallet,
-  DefaultProviderConfig,
-  Web3Provider,
   WindowMessageHandler
 } from '@0xsequence/provider'
 import { providers } from 'ethers'
 import { test, assert } from '../../utils/assert'
-import { NetworkConfig, WalletContext, JsonRpcProvider } from '@0xsequence/network'
-import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, recoverConfig } from '@0xsequence/wallet'
-import { LocalRelayer } from '@0xsequence/relayer'
-import { configureLogger, packMessageData } from '@0xsequence/utils'
-import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
+import * as utils from '@0xsequence/tests'
+import { Orchestrator } from '@0xsequence/signhub'
+import { trackers } from '@0xsequence/sessions'
+import { context } from '@0xsequence/migration'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -30,10 +24,10 @@ export const tests = async () => {
   const provider2 = new JsonRpcProvider('http://localhost:9545')
 
   //
-  // Deploy Sequence WalletContext (deterministic). We skip deployment
-  // as we rely on mock-wallet to deploy it.
+  // Deploy Sequence WalletContext (deterministic).
   //
-  const deployedWalletContext = testWalletContext
+  const deployedWalletContext = await utils.context.deploySequenceContexts(provider1.getSigner())
+  await utils.context.deploySequenceContexts(provider2.getSigner())
   console.log('walletContext:', deployedWalletContext)
 
   //
@@ -52,9 +46,6 @@ export const tests = async () => {
   // const relayerAccount = getEOAWallet(testAccounts[5].privateKey)
   const relayer1 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey))
   const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
-
-  // wallet account address: 0xa91Ab3C5390A408DDB4a322510A4290363efcEE9 based on the chainId
-  const swallet = (await SequenceWallet.singleOwner(owner, deployedWalletContext)).connect(provider1, relayer1)
 
   // Network available list
   const networks: NetworkConfig[] = [
@@ -78,14 +69,20 @@ export const tests = async () => {
   ]
 
   // Account for managing multi-network wallets
-  const saccount = new SequenceAccount(
-    {
-      initialConfig: swallet.config,
-      networks,
-      context: deployedWalletContext
+  const saccount = await Account.new({
+    networks,
+    contexts: deployedWalletContext,
+    config: {
+      threshold: 1,
+      checkpoint: 0,
+      signers: [{
+        address: owner.address,
+        weight: 1
+      }]
     },
-    owner
-  )
+    orchestrator: new Orchestrator([owner]),
+    tracker: new trackers.local.LocalConfigTracker(provider1)
+  })
 
   // the rpc signer via the wallet
   const walletRequestHandler = new WalletRequestHandler(saccount, null, null, networks)
@@ -149,11 +146,11 @@ export const tests = async () => {
     assert.true(opened, 'wallet is opened')
   })
 
-  let walletContext: WalletContext
+  let walletContext: context.VersionedContext
   await test('getWalletContext', async () => {
     walletContext = await wallet.getWalletContext()
-    assert.equal(walletContext.factory, deployedWalletContext.factory, 'wallet context factory')
-    assert.equal(walletContext.guestModule, deployedWalletContext.guestModule, 'wallet context guestModule')
+    assert.equal(walletContext[2].factory, deployedWalletContext[2].factory, 'wallet context factory')
+    assert.equal(walletContext[2].guestModule, deployedWalletContext[2].guestModule, 'wallet context guestModule')
   })
 
   await test('getChainId', async () => {

@@ -1,5 +1,5 @@
 import { BytesLike, Signer as AbstractSigner, providers, TypedDataDomain, TypedDataField, ethers } from 'ethers'
-import { NetworkConfig, ChainIdLike, WalletContext } from '@0xsequence/network'
+import { NetworkConfig, ChainIdLike } from '@0xsequence/network'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { Deferrable } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
@@ -85,7 +85,6 @@ export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
     cand &&
     cand.updateConfig !== undefined &&
     cand.publishConfig !== undefined &&
-    cand.getWalletContext !== undefined &&
     cand.getWalletConfig !== undefined
   )
 }

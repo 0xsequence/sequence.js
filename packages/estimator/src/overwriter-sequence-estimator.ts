@@ -1,4 +1,3 @@
-import { WalletContext } from '@0xsequence/network'
 import { OverwriterEstimator } from './overwriter-estimator'
 import { walletContracts } from '@0xsequence/abi'
 import { ethers, utils } from 'ethers'
@@ -12,7 +11,7 @@ export class OverwriterSequenceEstimator implements Estimator {
   async estimateGasLimits(
     address: string,
     config: v2.config.WalletConfig,
-    context: WalletContext,
+    context: commons.context.WalletContext,
     nonce: ethers.BigNumberish,
     ...transactions: commons.transaction.Transaction[]
   ): Promise<{ transactions: commons.transaction.Transaction[], total: ethers.BigNumber }> {
