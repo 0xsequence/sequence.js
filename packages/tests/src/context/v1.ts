@@ -1,7 +1,10 @@
 import { ethers } from "ethers"
 import { v1 } from '../builds'
-import { deployContract } from "../utils"
+import { deployContract } from "../singletonFactory"
+import { isContract } from "../utils"
 
+// These are the Sequence v1 contracts
+// we use them if they are available
 const predefinedAddresses = {
   factory: '0xf9D09D634Fb818b05149329C1dcCFAeA53639d96',
   mainModule: '0xd01F11855bCcb95f88D7A48492F66410d4637313',
@@ -10,13 +13,13 @@ const predefinedAddresses = {
   multiCallUtils: '0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E'
 }
 
-
 export async function deployV1Context(signer: ethers.Signer) {
   // See if signer's provider has the contracts already deployed
   const provider = signer.provider
   if (provider) {
-    if (await provider.getCode(predefinedAddresses.factory).then((c) => ethers.utils.arrayify(c)).then((c) => c.length !== 0)) {
+    if (await Promise.all(Object.values(predefinedAddresses).map(address => isContract(provider, address))).then((r) => r.every((x) => x))) {
       console.log('Using predefined addresses for V1 contracts')
+
       return {
         version: 1,
 
