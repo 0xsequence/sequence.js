@@ -664,8 +664,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this._connectOptions = options
   }
 
-  setDefaultNetwork(chainId: string | number) {
+  setDefaultNetwork(chainId: string | number): number {
     this.defaultNetworkId = this.findNetworkID(chainId)
+    return this.defaultNetworkId
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {

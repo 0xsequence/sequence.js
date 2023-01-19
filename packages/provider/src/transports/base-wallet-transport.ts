@@ -385,10 +385,9 @@ export abstract class BaseWalletTransport implements WalletTransport {
         let chainId: number | undefined = undefined
         try {
           if (networkId) {
-            this.walletRequestHandler.setDefaultNetwork(networkId)
-            chainId = ethers.BigNumber.from(networkId).toNumber()
+            chainId = this.walletRequestHandler.setDefaultNetwork(networkId)
           } else {
-            chainId = ethers.BigNumber.from(this.walletRequestHandler.defaultNetworkId).toNumber()
+            chainId = this.walletRequestHandler.defaultNetworkId
           }
         } catch (err) {
           console.error(err)
@@ -423,10 +422,9 @@ export abstract class BaseWalletTransport implements WalletTransport {
         let chainId: number | undefined = undefined
         try {
           if (networkId) {
-            this.walletRequestHandler.setDefaultNetwork(networkId)
-            chainId = ethers.BigNumber.from(networkId).toNumber()
+            chainId = this.walletRequestHandler.setDefaultNetwork(networkId)
           } else {
-            chainId = ethers.BigNumber.from(this.walletRequestHandler.defaultNetworkId).toNumber()
+            chainId = this.walletRequestHandler.defaultNetworkId
           }
         } catch (err) {
           console.error(err)
