@@ -15,7 +15,8 @@ import {
   findNetworkConfig,
   updateNetworkConfig,
   ensureValidNetworks,
-  sortNetworks
+  sortNetworks,
+  findSupportedNetwork
 } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { Web3Provider, Web3Signer } from './provider'
@@ -180,7 +181,7 @@ export class Wallet implements WalletProvider {
       if (!this.networks || this.networks.length === 0) return 0
 
       // return the default chainId as we're connected
-      return this.networks.find(network => network.isDefaultChain)!.chainId
+      return findNetworkConfig(this.networks, this.config.defaultNetworkId!)!.chainId
     })
 
     // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
@@ -203,7 +204,8 @@ export class Wallet implements WalletProvider {
       this.transport.messageProvider
     )
 
-    this.transport.provider = new Web3Provider(this.transport.router)
+    // TODO: Move finding this config to upper in the stack
+    this.transport.provider = new Web3Provider(this.transport.router, findSupportedNetwork(this.config.defaultNetworkId!)?.chainId)
 
     // NOTE: we don't listen on 'connect' even here as we handle it within connect() method
     // in more synchronous flow.
@@ -432,7 +434,7 @@ export class Wallet implements WalletProvider {
       throw new Error('networks have not been set by session. connect first.')
     }
 
-    const network = this.networks.find(network => network.isDefaultChain)
+    const network = findNetworkConfig(this.networks, this.config.defaultNetworkId!)
 
     if (!network) {
       throw new Error('networks must have a default chain specified')
@@ -489,7 +491,7 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    let network: NetworkConfig | undefined = this.networks.find(network => network.isDefaultChain)!
+    let network: NetworkConfig | undefined = findNetworkConfig(this.networks, this.config.defaultNetworkId!)!
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
       if (!network) {

@@ -12,11 +12,11 @@
     "test": "echo 'TODO: Migration tests'"
   },
   "dependencies": {
+    "@0xsequence/abi": "workspace:^0.43.7",
     "@0xsequence/core": "^0.43.4",
     "@0xsequence/wallet": "^0.43.4",
     "ethers": "^5.5.2"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "nyc": "^15.1.0"

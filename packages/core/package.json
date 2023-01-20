@@ -23,5 +23,8 @@
   "files": [
     "src",
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "@0xsequence/abi": "workspace:^0.43.7"
+  }
 }

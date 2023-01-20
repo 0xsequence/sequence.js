@@ -181,6 +181,7 @@ importers:
       '@0xsequence/core': ^0.43.4
       '@0xsequence/migration': ^0.43.4
       '@0xsequence/network': ^0.43.4
+      '@0xsequence/relayer': workspace:^0.43.7
       '@0xsequence/sessions': ^0.43.4
       '@0xsequence/signhub': ^0.43.7
       '@0xsequence/tests': ^0.43.4
@@ -193,6 +194,7 @@ importers:
       '@0xsequence/core': link:../core
       '@0xsequence/migration': link:../migration
       '@0xsequence/network': link:../network
+      '@0xsequence/relayer': link:../relayer
       '@0xsequence/sessions': link:../sessions
       '@0xsequence/utils': link:../utils
       '@0xsequence/wallet': link:../wallet
@@ -271,8 +273,11 @@ importers:
 
   packages/core:
     specifiers:
+      '@0xsequence/abi': workspace:^0.43.7
       '@istanbuljs/nyc-config-typescript': ^1.0.2
       nyc: ^15.1.0
+    dependencies:
+      '@0xsequence/abi': link:../abi
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       nyc: 15.1.0
@@ -336,12 +341,14 @@ importers:
 
   packages/migration:
     specifiers:
+      '@0xsequence/abi': workspace:^0.43.7
       '@0xsequence/core': ^0.43.4
       '@0xsequence/wallet': ^0.43.4
       '@istanbuljs/nyc-config-typescript': ^1.0.2
       ethers: ^5.5.2
       nyc: ^15.1.0
     dependencies:
+      '@0xsequence/abi': link:../abi
       '@0xsequence/core': link:../core
       '@0xsequence/wallet': link:../wallet
       ethers: 5.7.2
@@ -430,6 +437,7 @@ importers:
       '@0xsequence/abi': ^0.43.15
       '@0xsequence/core': ^0.43.7
       '@0xsequence/network': ^0.43.15
+      '@0xsequence/relayer': workspace:^0.43.7
       '@0xsequence/signhub': workspace:^0.43.7
       '@0xsequence/tests': workspace:^0.43.7
       '@0xsequence/utils': ^0.43.15
@@ -439,6 +447,7 @@ importers:
       '@0xsequence/abi': link:../abi
       '@0xsequence/core': link:../core
       '@0xsequence/network': link:../network
+      '@0xsequence/relayer': 'link:'
       '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/signhub': link:../signhub
@@ -458,6 +467,7 @@ importers:
     specifiers:
       '@0xsequence/core': ^0.43.4
       '@0xsequence/migration': ^0.43.4
+      '@0xsequence/replacer': workspace:^0.43.4
       '@0xsequence/signhub': ^0.43.7
       '@0xsequence/tests': ^0.43.4
       '@istanbuljs/nyc-config-typescript': ^1.0.2
@@ -466,6 +476,7 @@ importers:
     dependencies:
       '@0xsequence/core': link:../core
       '@0xsequence/migration': link:../migration
+      '@0xsequence/replacer': link:../replacer
       ethers: 5.7.2
     devDependencies:
       '@0xsequence/signhub': link:../signhub
@@ -492,7 +503,6 @@ importers:
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
-      '@0xsequence/transactions': 0.43.7_ethers@5.7.2
       '@0xsequence/wallet-contracts': 1.10.0
     devDependencies:
       '@0xsequence/core': link:../core
@@ -613,17 +623,6 @@ packages:
     peerDependencies:
       ethers: '>=5.5'
     dependencies:
-      '@0xsequence/utils': 0.43.7_ethers@5.7.2
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/transactions/0.43.7_ethers@5.7.2:
-    resolution: {integrity: sha512-NcZ7FG1iTPUnzDbXzgMnKkqKda4hV+2RE4P5FuhGaWaxQLiy93/eWN3iMlHlME7bNFMpT/S949eMa4XDGINyVg==}
-    peerDependencies:
-      ethers: '>=5.5'
-    dependencies:
-      '@0xsequence/abi': 0.43.7
-      '@0xsequence/network': 0.43.7_ethers@5.7.2
       '@0xsequence/utils': 0.43.7_ethers@5.7.2
       ethers: 5.7.2
     dev: false

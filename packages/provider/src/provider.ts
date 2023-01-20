@@ -65,15 +65,21 @@ export class Web3Provider extends providers.Web3Provider implements JsonRpcHandl
   }
 
   async getChainId(): Promise<number> {
-    // TODO: is it safe to memoize this?
-    const result = await this.send('eth_chainId', [])
-    const chainId = ethers.BigNumber.from(result).toNumber()
-
-    if (this._defaultChainId && this._defaultChainId !== chainId) {
-      throw new Error(`provider chainId (${chainId}) does not match provider-bound chainId ${this._defaultChainId}`)
+    // If the dapp is asking for a particular default chain, then we first need to see
+    // if the wallet supports the network, for that we need to query the wallet networks
+    // and see if it contains the default chain. If it does, then we can return the default.
+    if (this._defaultChainId) {
+      const networks = await this.getNetworks()
+      if (networks.find((n) => n.chainId === this._defaultChainId)) return this._defaultChainId
+      throw new Error(`Default chainId ${this._defaultChainId} not supported by wallet`)
     }
 
-    return chainId
+    // If there is no default chain, then we can just return the chainId of the provider
+    return this.send('eth_chainId', [])
+  }
+
+  getNetworks(): Promise<NetworkConfig[]> {
+    return this.send('sequence_getNetworks', [])
   }
 }
 
@@ -206,9 +212,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
-    if (!this._networks) {
-      this._networks = await this.provider.send('sequence_getNetworks', [])
-    }
+    if (!this._networks) this._networks = await this.provider.getNetworks()
     return this._networks
   }
 

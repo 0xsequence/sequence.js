@@ -5,7 +5,7 @@ import { tryRecoverSigner } from "@0xsequence/core/src/commons/signer"
 import { migration, context } from "@0xsequence/migration"
 import { PresignedMigrationTracker, SignedMigration } from "@0xsequence/migration/src/migrator"
 import { ethers } from "ethers"
-import { runByEIP5719 } from "../../../replacer/src"
+import { runByEIP5719 } from "@0xsequence/replacer"
 import { ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
 
 export interface KeyValueStore {

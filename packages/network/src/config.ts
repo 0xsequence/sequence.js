@@ -1,7 +1,7 @@
 import { BigNumberish, providers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
-import { stringTemplate, validateAndSortNetworks } from './utils'
+import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
 
 export enum ChainId {
   // Ethereum
@@ -43,7 +43,11 @@ export enum ChainId {
 
   // AURORA
   AURORA = 1313161554,
-  AURORA_TESTNET = 1313161556
+  AURORA_TESTNET = 1313161556,
+
+  // HARDHAT TESTNETS
+  HARDHAT = 31337,
+  HARDHAT_2 = 31338,
 }
 
 export interface NetworkConfig {
@@ -287,7 +291,21 @@ export const networks: Record<ChainId, NetworkConfig> = {
       name: 'Aurora Explorer (Testnet)',
       rootUrl: 'https://testnet.aurorascan.dev/'
     }
+  },
+  [ChainId.HARDHAT]: {
+    chainId: ChainId.HARDHAT,
+    name: 'hardhat',
+    title: 'Hardhat (local testnet)'
+  },
+  [ChainId.HARDHAT_2]: {
+    chainId: ChainId.HARDHAT_2,
+    name: 'hardhat2',
+    title: 'Hardhat (local testnet)'
   }
+}
+
+export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): NetworkConfig | undefined {
+  return findNetworkConfig([...mainnetNetworks, ...testnetNetworks], chainIdOrName)
 }
 
 export type ChainIdLike = NetworkConfig | BigNumberish
@@ -359,5 +377,25 @@ export const testnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.BSC_TESTNET],
     ...genUrls('bsc-testnet')
+  },
+  {
+    ...networks[ChainId.HARDHAT],
+    rpcUrl: 'http://localhost:8545',
+    relayer: {
+      url: 'http://localhost:3000',
+      provider: {
+        url: 'http://localhost:8545',
+      }
+    }
+  },
+  {
+    ...networks[ChainId.HARDHAT_2],
+    rpcUrl: 'http://localhost:9545',
+    relayer: {
+      url: 'http://localhost:3000',
+      provider: {
+        url: 'http://localhost:9545',
+      }
+    }
   }
 ])

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@0xsequence/abi": "^0.43.15",
+    "@0xsequence/core": "workspace:^0.43.7",
     "@0xsequence/network": "^0.43.15",
     "@0xsequence/utils": "^0.43.15",
     "@0xsequence/wallet-contracts": "1.10.0"
@@ -26,7 +27,6 @@
     "ethers": ">=5.5"
   },
   "devDependencies": {
-    "@0xsequence/core": "workspace:^0.43.7",
     "@0xsequence/signhub": "workspace:^0.43.7",
     "@0xsequence/tests": "workspace:^0.43.7",
     "@ethersproject/abstract-signer": "^5.7.0",
