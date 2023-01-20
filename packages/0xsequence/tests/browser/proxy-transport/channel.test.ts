@@ -15,7 +15,7 @@ import { Account } from '@0xsequence/account'
 import * as utils from '@0xsequence/tests'
 import { Orchestrator } from '@0xsequence/signhub'
 import { trackers } from '@0xsequence/sessions'
-import { OnChainReader } from '@0xsequence/core/src/commons/reader'
+import { commons } from '@0xsequence/core'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -158,7 +158,7 @@ export const tests = async () => {
     )
 
     const chainId = await signer.getChainId()
-    const reader = new OnChainReader(rpcProvider)
+    const reader = new commons.reader.OnChainReader(rpcProvider)
 
     //
     // Verify the message signature
