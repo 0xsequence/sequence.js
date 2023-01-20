@@ -2,7 +2,7 @@ import { commons, v1, v2 } from "@0xsequence/core"
 import { ethers } from "ethers"
 
 import { Migration, MIGRATION_NONCE_SPACE } from "."
-import { walletContracts } from "../../../0xsequence/src/abi"
+import { walletContracts } from "@0xsequence/abi"
 import { VersionedContext } from "../context"
 import { UnsignedMigration } from "../migrator"
 

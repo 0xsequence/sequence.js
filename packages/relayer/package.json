@@ -20,6 +20,7 @@
     "@0xsequence/abi": "^0.43.26",
     "@0xsequence/core": "^0.43.7",
     "@0xsequence/network": "^0.43.26",
+    "@0xsequence/relayer": "^0.43.26",
     "@0xsequence/utils": "^0.43.26"
   },
   "peerDependencies": {
