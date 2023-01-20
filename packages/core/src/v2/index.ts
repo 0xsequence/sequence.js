@@ -11,3 +11,5 @@ export const coders = {
   config: ConfigCoder,
   signature: SignatureCoder,
 }
+
+export const version = 2

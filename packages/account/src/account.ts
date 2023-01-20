@@ -29,7 +29,7 @@ export type AccountStatus = {
   presignedConfigurations: PresignedConfigUpdate[],
   imageHash: string,
   config: commons.config.Config,
-  checkpoint: ethers.BigNumber,
+  checkpoint: ethers.BigNumberish,
   canOnchainValidate: boolean,
 }
 

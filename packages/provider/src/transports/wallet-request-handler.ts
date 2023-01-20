@@ -19,13 +19,13 @@ import {
 import { BigNumber, ethers, providers } from 'ethers'
 
 import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
-import { Signer } from '@0xsequence/wallet'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
 import { isWalletUpToDate, prefixEIP191Message } from '../utils'
 import { Account } from '@0xsequence/account'
+import { fromExtended } from '../extended'
 
 type ExternalProvider = providers.ExternalProvider
 
@@ -83,7 +83,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     })
 
     if (!networkId) {
-      console.log(networks)
       throw new Error(`Network ${network} not found`)
     }
 
@@ -399,14 +398,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_sendTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendtransaction
-          const [transactionParams] = request.params!
+          const transactionParams = fromExtended(request.params![0])
+            .map((tx) => {
+              // eth_sendTransaction uses 'gas'
+              // ethers and sequence use 'gasLimit'
+              if ('gas' in tx && tx.gasLimit === undefined) {
+                tx.gasLimit = tx.gas as any
+                delete tx.gas
+              }
 
-          // eth_sendTransaction uses 'gas'
-          // ethers and sequence use 'gasLimit'
-          if ('gas' in transactionParams && transactionParams.gasLimit === undefined) {
-            transactionParams.gasLimit = transactionParams.gas
-            delete transactionParams.gas
-          }
+              return tx
+            })
 
           let txnHash = ''
           if (this.prompter === null) {
@@ -693,7 +695,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return {
       walletContext: this.account.contexts,
       accountAddress: this.account.address,
-      networks: this.account.networks
+      // The dapp shouldn't access the relayer directly, and the provider (as an object) is not serializable.
+      networks: this.account.networks.map((n) => ({ ...n, provider: undefined, relayer: undefined }))
     }
   }
 
@@ -793,8 +796,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 export interface WalletUserPrompter {
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
-  promptSignTransaction(txn: ethers.providers.TransactionRequest, chainId?: number, options?: ConnectOptions): Promise<string>
-  promptSendTransaction(txn: ethers.providers.TransactionRequest, chainId?: number, options?: ConnectOptions): Promise<string>
+  promptSignTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
+  promptSendTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
 }
 
