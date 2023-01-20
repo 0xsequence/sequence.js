@@ -37,6 +37,8 @@ import { commons } from '@0xsequence/core'
 import { AccountStatus } from '@0xsequence/account'
 import { context } from '@0xsequence/migration'
 
+export const SESSION_LOCALSTORE_KEY = '@sequence.session'
+
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
   disconnect(): void
@@ -251,7 +253,7 @@ export class Wallet implements WalletProvider {
   }
 
   loadSession = async (preferredNetwork?: string | number): Promise<WalletSession | undefined> => {
-    const data = await LocalStorage.getInstance().getItem('@sequence.session')
+    const data = await LocalStorage.getInstance().getItem(SESSION_LOCALSTORE_KEY)
     if (!data || data === '') {
       return undefined
     }
@@ -367,11 +369,11 @@ export class Wallet implements WalletProvider {
     return this.connect({ ...options, authorize: true })
   }
 
-  disconnect(): void {
+  disconnect(): Promise<void> {
     if (this.isOpened()) {
       this.closeWallet()
     }
-    this.clearSession()
+    return this.clearSession()
   }
 
   // TODO: add switchNetwork(network: string | number) which will call wallet_switchEthereumChain
@@ -597,7 +599,7 @@ export class Wallet implements WalletProvider {
   private saveSession = async (session: WalletSession) => {
     logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
-    await LocalStorage.getInstance().setItem('@sequence.session', data)
+    await LocalStorage.getInstance().setItem(SESSION_LOCALSTORE_KEY, data)
   }
 
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
@@ -679,9 +681,9 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  private clearSession(): void {
+  private async clearSession(): Promise<void> {
     logger.debug('wallet provider: clearing session')
-    LocalStorage.getInstance().removeItem('@sequence.session')
+    await LocalStorage.getInstance().removeItem(SESSION_LOCALSTORE_KEY)
     this.session = undefined
     this.networks = []
     this.providers = {}

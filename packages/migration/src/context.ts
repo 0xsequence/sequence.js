@@ -1,6 +1,7 @@
 
 import { commons } from '@0xsequence/core'
 
+// TODO: Move this to commons
 export type VersionedContext = { [key: number]: commons.context.WalletContext }
 
 export function isValidVersionedContext(contexts: VersionedContext): boolean {

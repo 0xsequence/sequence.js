@@ -219,8 +219,7 @@ export function fromTransactionish(
   } else if (isSequenceTransaction(transaction)) {
     return [transaction]
   } else {
-    const stx = toSequenceTransaction(wallet, transaction).transaction
-    return []
+    return [toSequenceTransaction(wallet, transaction).transaction]
   }
 }
 
