@@ -1,22 +1,15 @@
 import { test, assert } from '../../utils/assert'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
-import { Wallet, DefaultProviderConfig, isValidMessageSignature } from '@0xsequence/provider'
-import { WalletContext } from '@0xsequence/network'
-import { testAccounts, getEOAWallet, testWalletContext, sendETH } from '../testutils'
-import { Transaction, TransactionRequest } from '@0xsequence/transactions'
+import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
+import { testAccounts, getEOAWallet, sendETH } from '../testutils'
 import { configureLogger } from '@0xsequence/utils'
+import { commons, v2 } from '@0xsequence/core'
+import { deploySequenceContexts } from '@0xsequence/tests/src/context'
+import { context } from '@0xsequence/migration'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 export const tests = async () => {
-
-  //
-  // Deploy Sequence WalletContext (deterministic). We skip deployment
-  // as we rely on mock-wallet to deploy it.
-  //
-  const deployedWalletContext = testWalletContext
-  console.log('walletContext:', deployedWalletContext)
-
   //
   // Setup
   //
@@ -25,16 +18,26 @@ export const tests = async () => {
   providerConfig.networks = [{
     name: 'hardhat', rpcUrl: 'http://0.0.0.0:8545'
   }]
-  
+
+  //
+  // Deploy Sequence WalletContext (deterministic).
+  //
+  const deployedWalletContext = await (async () => {
+    const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+    const signer = provider.getSigner()
+    return deploySequenceContexts(signer)
+  })()
+  console.log('walletContext:', deployedWalletContext)
+
   const wallet = new Wallet('hardhat', providerConfig)
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain
   const provider = wallet.getProvider()!
-  const signer = wallet.getSigner()
+  const signer = wallet.getSigner()!
   
   // clear it in case we're testing in browser session
-  wallet.disconnect()
+  await wallet.disconnect()
 
   await test('is disconnected / logged out', async () => {
     assert.false(wallet.isConnected(), 'is connected')
@@ -51,7 +54,7 @@ export const tests = async () => {
   await test('connect', async () => {
     const { connected } = await wallet.connect({
       keepWalletOpened: true,
-      redirectMode: true,
+      // redirectMode: true,
     })
     assert.true(connected, 'is connected')
   })
@@ -64,11 +67,13 @@ export const tests = async () => {
     assert.true(wallet.isConnected(), 'is connected')
   })
 
-  let walletContext: WalletContext
+  let walletContext: context.VersionedContext
   await test('getWalletContext', async () => {
     walletContext = await wallet.getWalletContext()
-    assert.equal(walletContext.factory, deployedWalletContext.factory, 'wallet context factory')
-    assert.equal(walletContext.guestModule, deployedWalletContext.guestModule, 'wallet context guestModule')
+    assert.equal(walletContext[1].factory, deployedWalletContext[1].factory, 'wallet context factory')
+    assert.equal(walletContext[1].guestModule, deployedWalletContext[1].guestModule, 'wallet context guestModule')
+    assert.equal(walletContext[2].factory, deployedWalletContext[2].factory, 'wallet context factory')
+    assert.equal(walletContext[2].guestModule, deployedWalletContext[2].guestModule, 'wallet context guestModule')
   })
 
   await test('getChainId', async () => {
@@ -97,40 +102,28 @@ export const tests = async () => {
 
   await test('getAccounts', async () => {
     const address = await wallet.getAddress()
-    assert.equal(address, ethers.utils.getAddress('0xa91Ab3C5390A408DDB4a322510A4290363efcEE9'), 'wallet address is correct')
+    assert.equal(address, ethers.utils.getAddress('0x0C90b76e8Ca332560f7909dBDB658623919aaA39'), 'wallet address is correct')
   })
 
   await test('getWalletConfig', async () => {
     const allWalletConfigs = await wallet.getWalletConfig()
-    assert.equal(allWalletConfigs.length, 2, '2 wallet configs (one for each chain)')
 
-    const config1 = allWalletConfigs[0]
-    assert.true(config1.chainId !== undefined, 'config1, chainId is set')
-    assert.true(config1.threshold === 1, 'config1, 1 threshold')
-    assert.true(config1.signers.length === 1, 'config1, 1 signer')
-    assert.true(config1.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config1, signer address')
-    assert.true(config1.signers[0].weight === 1, 'config1, signer weight')
-
-    const config2 = allWalletConfigs[0]
-    assert.true(config2.chainId !== undefined, 'config2, chainId is set')
-    assert.true(config2.threshold === 1, 'config2, 1 threshold')
-    assert.true(config2.signers.length === 1, 'config2, 1 signer')
-    assert.true(config2.signers[0].address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config2, signer address')
-    assert.true(config2.signers[0].weight === 1, 'config2, signer weight')
+    const config = allWalletConfigs as v2.config.WalletConfig
+    assert.equal(config.version, 2, 'wallet config version is correct')
+    assert.true(ethers.BigNumber.from(2).eq(config.threshold), 'config, 2 threshold')
+    assert.true(ethers.BigNumber.from(0).eq(config.checkpoint), 'config, 0 checkpoint')
+    assert.true(v2.config.isSignerLeaf(config.tree), 'config, isSignerLeaf')
+    assert.true((config.tree as v2.config.SignerLeaf).address === '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853', 'config, signer address')
+    assert.true(ethers.BigNumber.from(2).eq((config.tree as v2.config.SignerLeaf).weight), 'config, signer weight')
   })
 
   await test('getWalletState', async () => {
-    const allWalletStates = await signer.getWalletState()
-    assert.equal(allWalletStates.length, 2, '2 wallet states (one for each chain)')
+    const state = await wallet.getWalletState()
 
-    // we expect network order to be [defaultChain, authChain, ..], so chain 31337 will be at index 0
-    const state1 = allWalletStates[0]
-    assert.true(state1.chainId === 31337, 'state1, chainId is 31337')
-    assert.true(state1.config!.threshold === 1, 'state1, threshold')
-    assert.true(state1.config!.signers.length === 1, 'state1, 1 signer')
-    assert.true(state1.address === await wallet.getAddress(), 'state1, address')
-    // assert.true(state1.deployed, 'state1, deployed')
-    // assert.true(state1.publishedLatest, 'state1, publishedLatest')
+    assert.true(state !== undefined, 'state is defined')
+    assert.true(ethers.BigNumber.from(0).eq(state.checkpoint), 'state, 0 checkpoint')
+    assert.true(state.fullyMigrated, 'state, fullyMigrated')
+    assert.true(state.version === 2, 'state, version')
   })
 
   await test('multiple networks', async () => {
@@ -190,7 +183,7 @@ export const tests = async () => {
       const sig = await signer.signMessage(m)
       assert.equal(
         sig,
-        '0x00010001230f8b68557d982f26234c9c7ce4ff35a449392c1e7cbc9a1129268ce2acea40529252535b1caa300e30d53d5c24009cb6f2fafd0e132944016f9472c1a0cc8b1b02',
+        '0x0002000000000002dae61fe1d90658f8f4339bd58043b122929cd3f1faaeab38e4daa97b09471170464ebb81bb1957babce03c5fbd0bee815cc61de66d7edaff0d55a4bfbde016e11b02',
         'signature match'
       )
       return sig
@@ -200,17 +193,6 @@ export const tests = async () => {
     // Verify the signature
     const isValid = await wallet.utils.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signature is valid - 2')
-
-    // Verify signature with other util
-    const isValid2 = await isValidMessageSignature(address, message, sig, provider)
-    assert.true(isValid2, 'signature is valid - 2b')
-
-    // Recover the address / config from the signature
-    const walletConfig = await wallet.utils.recoverWalletConfigFromMessage(address, message, sig, chainId)
-    assert.true(walletConfig.address === address, 'recover address - 2')
-
-    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
   await test('signTypedData on defaultChain', async () => {
@@ -239,20 +221,13 @@ export const tests = async () => {
     const sig = await signer.signTypedData(domain, types, message)
     assert.equal(
       sig,
-      '0x00010001c25b59035ea662350e08f41b5087fc49a98b94936826b61a226f97e400c6ce290b8dfa09e3b0df82288fbc599d5b1a023a864bbd876bc67ec1f94c5f2fc4e6101b02',
+      '0x00020000000000022983d84883386d6e3f2749109d0583b11f5c103e68baa763adcd6f7390fa2c4d5f746f239f900cd11f685d5c79314a591646b5ce49336cb48f77583d964753cf1c02',
       'signature match typed-data'
     )
 
     // Verify typed data
     const isValid = await wallet.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
     assert.true(isValid, 'signature is valid - 3')
-
-    // Recover config / address
-    const walletConfig = await wallet.utils.recoverWalletConfigFromTypedData(address, { domain, types, message }, sig, chainId)
-    assert.true(walletConfig.address === address, 'recover address - 3')
-
-    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
   await test('signAuthMessage', async () => {
@@ -272,7 +247,7 @@ export const tests = async () => {
     const sig = await signer.signMessage(message, chainId)
     assert.equal(
       sig,
-      '0x00010001bbbabd7be415ffbf6196f17072413bed8f9f59c530357eb479e2fbe7ea210f22428bbb18413f24fed2edc7d4e6c11d588e436a56a54497080c9434fdcfdbb8ed1b02',
+      '0x0002000000000002974be7081d87872c08c827aeb505d75057a7a7f4232d61ce5634a35300e24c2b2113667a69e9a68b5c61fa955988f3362fc9b1c84ed6df89c572e2e33dd5fbab1b02',
       'signAuthMessage, signature match'
     )
 
@@ -287,17 +262,6 @@ export const tests = async () => {
     // Verify the signature
     const isValid = await wallet.utils.isValidMessageSignature(address, message, sig, chainId)
     assert.true(isValid, 'signAuthMessage, signature is valid')
-
-    // Verify signature with other util
-    const isValid2 = await isValidMessageSignature(address, message, sig, authProvider)
-    assert.true(isValid2, 'signAuthMessage, signature is valid')
-
-    // Recover the address / config from the signature
-    const walletConfig = await wallet.utils.recoverWalletConfigFromMessage(address, message, sig, chainId)
-    assert.true(walletConfig.address === address, 'recover address')
-
-    const singleSignerAddress = '0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853' // expected from mock-wallet owner
-    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')    
   })
   
   await test('getBalance', async () => {
@@ -354,7 +318,7 @@ export const tests = async () => {
       const beforeWalletDeployed = await wallet.isDeployed()
 
       // NOTE/TODO: gasPrice even if set will be set again by the LocalRelayer, we should allow it to be overridden
-      const tx: TransactionRequest = {
+      const tx: ethers.providers.TransactionRequest = {
         from: await walletAddress,
         to: toAddress,
         value: ethAmount,
@@ -375,16 +339,20 @@ export const tests = async () => {
       if (beforeWalletDeployed) {
         assert.equal(txReceipt.to, await wallet.getAddress(), 'recipient is correct')
       } else {
-        assert.equal(txReceipt.to, walletContext.guestModule, 'recipient is correct')
+        assert.equal(txReceipt.to, walletContext[2].guestModule, 'recipient is correct')
       }
 
       // Ensure fromAddress sent their eth
       const walletBalanceAfter = await signer.getBalance()
-      assert.true(walletBalanceAfter.sub(walletBalanceBefore).mul(-1).eq(ethAmount), `wallet sent ${ethAmount} eth`)
+      const sent = walletBalanceAfter.sub(walletBalanceBefore).mul(-1)
+      console.log('BALANCE BEFOOOOORE', walletBalanceBefore.toString())
+
+      assert.true(sent.eq(ethAmount), `wallet sent ${sent} eth while expected ${ethAmount}`)
 
       // Ensure toAddress received their eth
       const toBalanceAfter = await provider.getBalance(toAddress)
-      assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
+      const received = toBalanceAfter.sub(toBalanceBefore)
+      assert.true(received.eq(ethAmount), `toAddress received ${received} eth while expected ${ethAmount}`)
 
       // Extra checks
       if (opts.gasLimit) {
@@ -407,11 +375,11 @@ export const tests = async () => {
     const ethAmount1 = ethers.utils.parseEther('1.234')
     const ethAmount2 = ethers.utils.parseEther('0.456')
 
-    const tx1: TransactionRequest = {
+    const tx1: ethers.providers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount1
     }
-    const tx2: TransactionRequest = {
+    const tx2: ethers.providers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount2
     }
@@ -426,7 +394,9 @@ export const tests = async () => {
     await txnResp.wait()
 
     const toBalanceAfter = await provider.getBalance(testAccount.address)
-    assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
+    const sent = toBalanceAfter.sub(toBalanceBefore)
+    const expected = ethAmount1.add(ethAmount2)
+    assert.true(sent.eq(ethAmount1.add(ethAmount2)), `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`)
   })
 
   await test('sendTransaction batch format 2', async () => {
@@ -435,12 +405,12 @@ export const tests = async () => {
     const ethAmount1 = ethers.utils.parseEther('1.234')
     const ethAmount2 = ethers.utils.parseEther('0.456')
 
-    const tx1: TransactionRequest = {
+    const tx1: ethers.providers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount1
     }
 
-    const tx2: TransactionRequest = {
+    const tx2: ethers.providers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount2
     }
@@ -451,7 +421,9 @@ export const tests = async () => {
     await txnResp.wait()
 
     const toBalanceAfter = await provider.getBalance(testAccount.address)
-    assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
+    const sent = toBalanceAfter.sub(toBalanceBefore)
+    const expected = ethAmount1.add(ethAmount2)
+    assert.true(sent.eq(ethAmount1.add(ethAmount2)), `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`)
   })
 
   await test('sendTransaction batch format 3', async () => {
@@ -460,31 +432,25 @@ export const tests = async () => {
     const ethAmount1 = ethers.utils.parseEther('1.234')
     const ethAmount2 = ethers.utils.parseEther('0.456')
 
-    const tx1: Transaction = {
+    const tx1: commons.transaction.Transaction = {
       to: testAccount.address,
       value: ethAmount1
-      // data: '0x',
-      // gasLimit: '0x55555',
-      // delegateCall: false,
-      // revertOnError: false
     }
 
-    const tx2: Transaction = {
+    const tx2: commons.transaction.Transaction = {
       to: testAccount.address,
-      value: ethAmount2,
-      // data: '0x',
-      // gasLimit: '0x55555',
-      // delegateCall: false,
-      // revertOnError: false
+      value: ethAmount2
     }
 
     const toBalanceBefore = await provider.getBalance(testAccount.address)
-    const txnResp = await signer.sendTransactionBatch([tx1, tx2])
 
+    const txnResp = await signer.sendTransactionBatch([tx1, tx2])
     await txnResp.wait()
 
     const toBalanceAfter = await provider.getBalance(testAccount.address)
-    assert.true(toBalanceAfter.sub(toBalanceBefore).mul(1).eq(ethAmount1.add(ethAmount2)), `wallet sent ${ethAmount1} + ${ethAmount2} eth`)
+    const sent = toBalanceAfter.sub(toBalanceBefore)
+    const expected = ethAmount1.add(ethAmount2)
+    assert.true(sent.eq(ethAmount1.add(ethAmount2)), `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`)
   })
 
   await test('should reject a transaction response on sendTransactionBatch (at runtime)', async () => {
@@ -587,37 +553,5 @@ export const tests = async () => {
       const toBalanceAfter = await provider2.getBalance(toAddress)
       assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
     }
-  })
-  
+  })  
 }
-
-
-// TODO: send coins
-
-// TODO: send collectible
-
-// TODO: setup some failure states..? hmm, might be trickier, but maybe could have requestHandler do some faults/other..
-
-// TODO: add auth helpers to @0xsequence/auth, and heplers in "commands"
-
-//
-//--------
-//
-
-// import { sequence} from '@0xsequence'
-
-// const wallet = new sequence.Wallet()
-// wallet.login()
-
-// wallet.sendETH()
-// wallet.signMessage()
-
-// wallet.sendTransaction(...)
-
-// const tokens = new sequence.Tokens()
-
-// tokens.mintCoin(xx)
-// tokens.mintCollectible()
-
-// wallet.sendTransaction(tokens.mintCoin(xx))
-// wallet.sendTransaction(tokens.mintCollectible(xx))

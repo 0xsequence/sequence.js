@@ -3,6 +3,7 @@ import { Web3Provider } from './provider'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { OnChainReader } from '@0xsequence/core/src/commons/reader'
 import { AccountStatus } from '@0xsequence/account'
+import { commons } from '@0xsequence/core'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
@@ -27,9 +28,10 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider
+  provider: Web3Provider | ethers.providers.Web3Provider,
+  contexts: { [key: number]: commons.context.WalletContext }
 ): Promise<boolean> => {
-  const reader = new OnChainReader(provider)
+  const reader = new OnChainReader(provider, contexts)
   return reader.isValidSignature(address, digest, sig)
 }
 

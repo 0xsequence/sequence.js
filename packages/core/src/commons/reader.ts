@@ -1,5 +1,7 @@
 import { walletContracts } from "@0xsequence/abi"
 import { ethers } from "ethers"
+import { commons } from ".."
+import { isValidCounterFactual } from "./context"
 
 /**
  * Provides stateful information about the wallet.
@@ -23,7 +25,8 @@ export interface Reader {
  export class OnChainReader implements Reader {
 
   constructor(
-    public readonly provider: ethers.providers.Provider
+    public readonly provider: ethers.providers.Provider,
+    public readonly contexts?: { [key: number]: commons.context.WalletContext }
   ) {}
 
   private module(address: string) {
@@ -85,15 +88,26 @@ export interface Reader {
     digest: ethers.BytesLike,
     signature: ethers.BytesLike
   ): Promise<boolean> {
-    try {
+    const isDeployed = await this.isDeployed(wallet)
+
+    if (isDeployed) {
       const isValid = await this.module(wallet).isValidSignature(digest, signature)
       return isValid === '0x1626ba7e' // as defined in ERC1271
-    } catch (e) {
-      if (!(await this.isDeployed(wallet))) {
-        throw new Error('Wallet must be deployed to validate signature')
-      }
+    }
 
-      throw e
+    // We can try to recover the counter-factual address
+    // and check if it matches the wallet address
+    if (this.contexts) {
+      return isValidCounterFactual(
+        wallet,
+        digest,
+        signature,
+        await this.provider.getNetwork().then((n) => n.chainId),
+        this.provider,
+        this.contexts
+      )
+    } else {
+      throw new Error('Wallet must be deployed to validate signature, or context info must be provided')
     }
   }
 }
