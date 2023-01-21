@@ -12,14 +12,11 @@ import {
 } from '@0xsequence/provider'
 import { providers } from 'ethers'
 import { test, assert } from '../../utils/assert'
-import { NetworkConfig, WalletContext } from '@0xsequence/network'
+import { NetworkConfig, WalletContext, JsonRpcProvider } from '@0xsequence/network'
 import { Wallet as SequenceWallet, Account as SequenceAccount, isValidSignature, recoverConfig } from '@0xsequence/wallet'
-import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger, packMessageData } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet, testWalletContext } from '../testutils'
-
-const { JsonRpcProvider } = providers
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 

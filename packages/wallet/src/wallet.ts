@@ -34,7 +34,8 @@ import {
   NetworkConfig,
   isJsonRpcProvider,
   sequenceContext,
-  getChainId
+  getChainId,
+  JsonRpcProvider
 } from '@0xsequence/network'
 
 import {
@@ -143,13 +144,13 @@ export class Wallet extends Signer {
   // ie. new Wallet({ config: initConfig }).useConfig(latestConfig).useSigners(signers)
   useConfig(config: WalletConfig, strict?: boolean): Wallet {
     return new Wallet({ config, context: this.context, strict }, ...this._signers)
-      .setProvider(this.provider)
+      .setProvider(this.provider, this.chainId)
       .setRelayer(this.relayer)
   }
 
   useSigners(...signers: (BytesLike | AbstractSigner)[]): Wallet {
     return new Wallet({ config: this.config, context: this.context }, ...signers)
-      .setProvider(this.provider)
+      .setProvider(this.provider, this.chainId)
       .setRelayer(this.relayer)
   }
 
@@ -159,7 +160,7 @@ export class Wallet extends Signer {
   connect(provider: providers.Provider, relayer?: Relayer): Wallet {
     if (isJsonRpcProvider(provider)) {
       return new Wallet({ config: this.config, context: this.context }, ...this._signers)
-        .setProvider(provider)
+        .setProvider(provider, this.chainId)
         .setRelayer(relayer!)
     } else {
       throw new Error('Wallet provider argument is expected to be a JsonRpcProvider')
@@ -167,17 +168,17 @@ export class Wallet extends Signer {
   }
 
   // setProvider assigns a json-rpc provider to this wallet instance
-  setProvider(provider: providers.JsonRpcProvider | ConnectionInfo | string): Wallet {
+  setProvider(provider: providers.JsonRpcProvider | ConnectionInfo | string, chainId?: number): Wallet {
     if (provider === undefined) return this
     if (providers.Provider.isProvider(provider)) {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
     } else {
-      const jsonProvider = new providers.JsonRpcProvider(<ConnectionInfo | string>provider)
+      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider, chainId)
       this.provider = jsonProvider
       this.sender = new JsonRpcSender(jsonProvider)
     }
-    this.chainId = undefined // reset chainId value
+    this.chainId = chainId // reset chainId value
     return this
   }
 

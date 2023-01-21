@@ -11,7 +11,7 @@ import {
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
-import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork } from '@0xsequence/network'
+import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork, JsonRpcProvider } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
 import { ethers, Signer as AbstractSigner } from 'ethers'
@@ -505,7 +505,7 @@ export class Session {
 function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcProvider {
   const authChain = getAuthNetwork(networks)
   if (!authChain) throw Error('Auth chain not found')
-  return authChain.provider ?? new ethers.providers.JsonRpcProvider(authChain.rpcUrl)
+  return authChain.provider ?? new JsonRpcProvider(authChain.rpcUrl!, authChain.chainId)
 }
 
 function getJWTExpiration(jwt: string): number {
