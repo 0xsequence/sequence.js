@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.8
+
+### Patch Changes
+
+- network: JsonRpcProvider with caching
+- Updated dependencies
+  - @0xsequence/indexer@0.43.8
+  - @0xsequence/provider@0.43.8
+  - @0xsequence/relayer@0.43.8
+  - @0xsequence/utils@0.43.8
+
 ## 0.43.7
 
 ### Patch Changes

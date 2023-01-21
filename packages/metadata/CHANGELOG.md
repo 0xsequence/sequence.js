@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.8
+
+### Patch Changes
+
+- network: JsonRpcProvider with caching
+
 ## 0.43.7
 
 ### Patch Changes

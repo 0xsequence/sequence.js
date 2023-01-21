@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.43.8
+
+### Patch Changes
+
+- network: JsonRpcProvider with caching
+- Updated dependencies
+  - @0xsequence/abi@0.43.8
+  - @0xsequence/network@0.43.8
+  - @0xsequence/utils@0.43.8
+
 ## 0.43.7
 
 ### Patch Changes

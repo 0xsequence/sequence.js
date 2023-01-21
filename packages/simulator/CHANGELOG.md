@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.8
+
+### Patch Changes
+
+- network: JsonRpcProvider with caching
+- Updated dependencies
+  - @0xsequence/transactions@0.43.8
+
 ## 0.43.7
 
 ### Patch Changes
