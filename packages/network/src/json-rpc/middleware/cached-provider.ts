@@ -1,4 +1,15 @@
+import { ethers } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
+
+export interface CachedProviderOptions {
+  // defaultChainId passes a chainId to provider handler if one isn't passed.
+  // This is used in multi-chain mode 
+  defaultChainId?: number
+
+  // chainId specifies the cached provider is bound to a single chain at all times,
+  // and so will init the cache with the chainId value supplied.
+  chainId?: number
+}
 
 export class CachedProvider implements JsonRpcMiddlewareHandler {
 
@@ -10,11 +21,21 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
   private cache: {[key: string]: any}
   private onUpdateCallback?: (key?: string, value?: any) => void
 
+  // defaultChainId is used for default chain select with used with multi-chain provider
   readonly defaultChainId?: number
 
-  constructor(defaultChainId?: number) {
+  // chainId is used to bind this provider to a specific chain, for a bit of extra
+  // optimization to avoid having to query eth_chainId / net_version.
+  readonly chainId?: number
+
+  constructor(options?: CachedProviderOptions) {
     this.cache = {}
-    this.defaultChainId = defaultChainId
+    this.defaultChainId = options?.defaultChainId
+    this.chainId = options?.chainId
+    if (this.chainId) {
+      this.defaultChainId = this.chainId
+      this.initChainIdCache()
+    }
   }
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
@@ -89,5 +110,11 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
 
   clearCache = () => {
     this.cache = {}
+  }
+
+  private initChainIdCache = () => {
+    if (!this.chainId) return
+    this.setCacheValue(this.cacheKey('eth_chainId', [], this.chainId), ethers.utils.hexlify(this.chainId))
+    this.setCacheValue(this.cacheKey('net_version', [], this.chainId), `${this.chainId}`)
   }
 }

@@ -532,7 +532,7 @@ export class Wallet implements WalletProvider {
             chainId: network.chainId
           }),
           new SigningProvider(this.transport.provider!),
-          new CachedProvider(network.chainId)
+          new CachedProvider({ defaultChainId: network.chainId })
         ],
         new JsonRpcSender(rpcProvider)
       )

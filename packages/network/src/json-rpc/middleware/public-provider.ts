@@ -48,6 +48,8 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
       this.provider = undefined
     } else {
       this.rpcUrl = rpcUrl
+      // TODO: maybe use @0xsequence/network JsonRpcProvider here instead,
+      // which supports better caching.
       this.provider = new providers.JsonRpcProvider(rpcUrl)
     }
   }
