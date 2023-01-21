@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.43.9
+
+### Patch Changes
+
+- update deps
+- Updated dependencies
+  - @0xsequence/abi@0.43.9
+  - @0xsequence/network@0.43.9
+  - @0xsequence/utils@0.43.9
+
 ## 0.43.8
 
 ### Patch Changes

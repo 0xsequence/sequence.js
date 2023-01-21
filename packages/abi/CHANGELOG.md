@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.43.9
+
+### Patch Changes
+
+- update deps
+
 ## 0.43.8
 
 ### Patch Changes
