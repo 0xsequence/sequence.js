@@ -53,6 +53,7 @@ export interface NetworkConfig {
   testnet?: boolean
 
   blockExplorer?: BlockExplorerConfig
+  ensAddress?: string
 
   rpcUrl?: string
   provider?: providers.JsonRpcProvider
@@ -90,7 +91,8 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Etherscan',
       rootUrl: 'https://etherscan.io/'
-    }
+    },
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
   },
   [ChainId.ROPSTEN]: {
     chainId: ChainId.ROPSTEN,
@@ -100,7 +102,8 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Etherscan (Ropsten)',
       rootUrl: 'https://ropsten.etherscan.io/'
-    }
+    },
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
   },
   [ChainId.RINKEBY]: {
     chainId: ChainId.RINKEBY,
@@ -111,6 +114,7 @@ export const networks: Record<ChainId, NetworkConfig> = {
       name: 'Etherscan (Rinkeby)',
       rootUrl: 'https://rinkeby.etherscan.io/'
     },
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     disabled: true
   },
   [ChainId.GOERLI]: {
@@ -121,7 +125,8 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Etherscan (Goerli)',
       rootUrl: 'https://goerli.etherscan.io/'
-    }
+    },
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
   },
   [ChainId.KOVAN]: {
     chainId: ChainId.KOVAN,
