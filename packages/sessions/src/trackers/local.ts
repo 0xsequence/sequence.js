@@ -1,7 +1,5 @@
 
 import { commons, universal, v1, v2 } from "@0xsequence/core"
-import { SignedPayload } from "@0xsequence/core/src/commons/signature"
-import { tryRecoverSigner } from "@0xsequence/core/src/commons/signer"
 import { migration, context } from "@0xsequence/migration"
 import { PresignedMigrationTracker, SignedMigration } from "@0xsequence/migration/src/migrator"
 import { ethers } from "ethers"
@@ -350,7 +348,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
         const replacedSignature = await runByEIP5719(sig.signer, this.provider, sig.subdigest, sig.signature)
           .then((s) => ethers.utils.hexlify(s))
 
-        const isDynamic = tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
+        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
         mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
       }
 
@@ -549,7 +547,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
         const replacedSignature = await runByEIP5719(sig.signer, this.provider, sig.subdigest, sig.signature)
           .then((s) => ethers.utils.hexlify(s))
 
-        const isDynamic = tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
+        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
         mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
       }
 

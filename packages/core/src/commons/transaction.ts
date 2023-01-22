@@ -1,6 +1,5 @@
 import { BigNumberish, BytesLike, ethers } from "ethers"
 import { subdigestOf } from "./signature"
-import { Interface } from "ethers/lib/utils"
 import { walletContracts } from "@0xsequence/abi"
 
 export interface Transaction {
@@ -121,7 +120,7 @@ export function toSequenceTransaction(
       }
     }
   } else {
-    const walletInterface = new Interface(walletContracts.mainModule.abi)
+    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
 
     return {

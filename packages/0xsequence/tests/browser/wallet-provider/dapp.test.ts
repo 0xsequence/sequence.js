@@ -16,7 +16,7 @@ export const tests = async () => {
   const providerConfig = { ...DefaultProviderConfig }
   providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   providerConfig.networks = [{
-    name: 'hardhat', rpcUrl: 'http://0.0.0.0:8545'
+    name: 'hardhat', rpcUrl: 'http://localhost:8545'
   }]
 
   //

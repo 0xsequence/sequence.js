@@ -21,8 +21,8 @@ const main = async () => {
   //
   // Providers
   //
-  const provider = new JsonRpcProvider('http://localhost:8545', { blockCache: true })
-  const provider2 = new JsonRpcProvider('http://localhost:9545', { blockCache: true })
+  const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
 
   //
   // Deploy Sequence WalletContext (deterministic)

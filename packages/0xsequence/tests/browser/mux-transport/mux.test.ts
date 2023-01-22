@@ -5,9 +5,14 @@ import {
   Wallet,
   WindowMessageHandler
 } from '@0xsequence/provider'
-import { providers } from 'ethers'
+import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
+import { NetworkConfig } from '@0xsequence/network'
+import { LocalRelayer } from '@0xsequence/relayer'
+import { configureLogger } from '@0xsequence/utils'
+import { testAccounts, getEOAWallet } from '../testutils'
 import * as utils from '@0xsequence/tests'
+import { Account } from '@0xsequence/account'
 import { Orchestrator } from '@0xsequence/signhub'
 import { trackers } from '@0xsequence/sessions'
 import { context } from '@0xsequence/migration'
@@ -20,8 +25,8 @@ export const tests = async () => {
   //
   // Providers
   //
-  const provider1 = new JsonRpcProvider('http://localhost:8545')
-  const provider2 = new JsonRpcProvider('http://localhost:9545')
+  const provider1 = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
 
   //
   // Deploy Sequence WalletContext (deterministic).
