@@ -6,7 +6,6 @@ import { NetworkConfig } from '@0xsequence/network'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
 import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
-import { counterfactualVersion } from '@0xsequence/migration/src/version'
 import { Wallet } from '@0xsequence/wallet'
 import { FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
@@ -254,7 +253,7 @@ export class Account {
 
     // To find the first version, we need to try the firstImageHash
     // with every context, and find the first one that matches
-    const first = counterfactualVersion(
+    const first = version.counterfactualVersion(
       this.address,
       firstImageHash.imageHash,
       Object.values(this.contexts),
