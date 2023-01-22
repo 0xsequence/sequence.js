@@ -143,23 +143,23 @@ importers:
       webpack-cli: ^4.6.0
       webpack-dev-server: ^3.11.2
     dependencies:
-      '@0xsequence/abi': 0.43.9
+      '@0xsequence/abi': link:../abi
       '@0xsequence/account': link:../account
-      '@0xsequence/api': 0.43.9
-      '@0xsequence/auth': 0.43.9_ethers@5.7.2
+      '@0xsequence/api': link:../api
+      '@0xsequence/auth': link:../auth
       '@0xsequence/core': link:../core
-      '@0xsequence/guard': 0.43.9
-      '@0xsequence/indexer': 0.43.9
-      '@0xsequence/metadata': 0.43.9
+      '@0xsequence/guard': link:../guard
+      '@0xsequence/indexer': link:../indexer
+      '@0xsequence/metadata': link:../metadata
       '@0xsequence/migration': link:../migration
-      '@0xsequence/multicall': 0.43.9_ethers@5.7.2
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/provider': 0.43.9_ethers@5.7.2
-      '@0xsequence/relayer': 0.43.9_ethers@5.7.2
+      '@0xsequence/multicall': link:../multicall
+      '@0xsequence/network': link:../network
+      '@0xsequence/provider': link:../provider
+      '@0xsequence/relayer': link:../relayer
       '@0xsequence/sessions': link:../sessions
       '@0xsequence/signhub': link:../signhub
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
-      '@0xsequence/wallet': 0.43.9_ethers@5.7.2
+      '@0xsequence/utils': link:../utils
+      '@0xsequence/wallet': link:../wallet
     devDependencies:
       '@0xsequence/tests': link:../tests
       '@0xsequence/wallet-contracts': 1.10.0
@@ -193,11 +193,11 @@ importers:
     dependencies:
       '@0xsequence/core': link:../core
       '@0xsequence/migration': link:../migration
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
+      '@0xsequence/network': link:../network
       '@0xsequence/relayer': link:../relayer
       '@0xsequence/sessions': link:../sessions
       '@0xsequence/utils': link:../utils
-      '@0xsequence/wallet': 0.43.9_ethers@5.7.2
+      '@0xsequence/wallet': link:../wallet
       ethers: 5.7.2
     devDependencies:
       '@0xsequence/signhub': link:../signhub
@@ -232,20 +232,21 @@ importers:
       hardhat: ^2.12.2
       mockttp: ^3.6.0
     dependencies:
-      '@0xsequence/abi': 0.43.9
+      '@0xsequence/abi': link:../abi
       '@0xsequence/account': link:../account
-      '@0xsequence/api': 0.43.9
-      '@0xsequence/config': 0.43.7_ethers@5.7.2
+      '@0xsequence/api': link:../api
+      '@0xsequence/config': 0.43.9_ethers@5.7.2
       '@0xsequence/core': link:../core
       '@0xsequence/ethauth': 0.8.1_ethers@5.7.2
-      '@0xsequence/indexer': 0.43.9
-      '@0xsequence/metadata': 0.43.9
+      '@0xsequence/indexer': link:../indexer
+      '@0xsequence/metadata': link:../metadata
       '@0xsequence/migration': link:../migration
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/provider': 0.43.9_ethers@5.7.2
+      '@0xsequence/network': link:../network
+      '@0xsequence/provider': link:../provider
       '@0xsequence/sessions': link:../sessions
       '@0xsequence/signhub': link:../signhub
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/utils': link:../utils
+      '@0xsequence/wallet': link:../wallet
     devDependencies:
       '@0xsequence/tests': link:../tests
       '@0xsequence/wallet-contracts': 1.10.0
@@ -253,23 +254,6 @@ importers:
       ethers: 5.7.2
       hardhat: 2.12.4
       mockttp: 3.6.2
-
-  packages/config:
-    specifiers:
-      '@0xsequence/abi': ^0.43.14
-      '@0xsequence/multicall': ^0.43.14
-      '@0xsequence/network': ^0.43.14
-      '@0xsequence/utils': ^0.43.14
-      '@0xsequence/wallet-contracts': 1.10.0
-      ethers: ^5.7.2
-    dependencies:
-      '@0xsequence/abi': link:../abi
-      '@0xsequence/multicall': link:../multicall
-      '@0xsequence/network': link:../network
-      '@0xsequence/utils': link:../utils
-    devDependencies:
-      '@0xsequence/wallet-contracts': 1.10.0
-      ethers: 5.7.2
 
   packages/core:
     specifiers:
@@ -294,7 +278,7 @@ importers:
       ethers: ^5.7.2
       typechain: ^8.1.1
     dependencies:
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/utils': link:../utils
     devDependencies:
       '@ethersproject/abi': 5.7.0
       '@ethersproject/providers': 5.7.2
@@ -318,10 +302,10 @@ importers:
       '@ethersproject/properties': ^5.7.0
       ethers: ^5.7.2
     dependencies:
-      '@0xsequence/abi': 0.43.9
+      '@0xsequence/abi': link:../abi
       '@0xsequence/core': link:../core
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/network': link:../network
+      '@0xsequence/utils': link:../utils
       '@0xsequence/wallet-contracts': 1.10.0
     devDependencies:
       '@0xsequence/signhub': link:../signhub
@@ -350,7 +334,7 @@ importers:
     dependencies:
       '@0xsequence/abi': link:../abi
       '@0xsequence/core': link:../core
-      '@0xsequence/wallet': 0.43.9_ethers@5.7.2
+      '@0xsequence/wallet': link:../wallet
       ethers: 5.7.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -371,9 +355,9 @@ importers:
       web3: ^1.8.1
       web3-provider-engine: ^16.0.4
     dependencies:
-      '@0xsequence/abi': 0.43.9
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/abi': link:../abi
+      '@0xsequence/network': link:../network
+      '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/wallet-contracts': 1.10.0
       '@ethersproject/providers': 5.7.2
@@ -394,11 +378,11 @@ importers:
       '@0xsequence/utils': ^0.43.14
       ethers: ^5.7.2
     dependencies:
-      '@0xsequence/indexer': 0.43.9
+      '@0xsequence/indexer': link:../indexer
       '@0xsequence/migration': link:../migration
-      '@0xsequence/provider': 0.43.9_ethers@5.7.2
-      '@0xsequence/relayer': 0.43.9_ethers@5.7.2
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/provider': link:../provider
+      '@0xsequence/relayer': link:../relayer
+      '@0xsequence/utils': link:../utils
     devDependencies:
       ethers: 5.7.2
 
@@ -417,15 +401,15 @@ importers:
       eventemitter2: ^6.4.5
       webextension-polyfill: ^0.10.0
     dependencies:
-      '@0xsequence/abi': 0.43.9
+      '@0xsequence/abi': link:../abi
       '@0xsequence/account': link:../account
-      '@0xsequence/auth': 0.43.9_ethers@5.7.2
+      '@0xsequence/auth': link:../auth
       '@0xsequence/core': link:../core
       '@0xsequence/migration': link:../migration
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/relayer': 0.43.9_ethers@5.7.2
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
-      '@0xsequence/wallet': 0.43.9_ethers@5.7.2
+      '@0xsequence/network': link:../network
+      '@0xsequence/relayer': link:../relayer
+      '@0xsequence/utils': link:../utils
+      '@0xsequence/wallet': link:../wallet
       eventemitter2: 6.4.9
       webextension-polyfill: 0.10.0
     devDependencies:
@@ -444,11 +428,11 @@ importers:
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
-      '@0xsequence/abi': 0.43.9
+      '@0xsequence/abi': link:../abi
       '@0xsequence/core': link:../core
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
+      '@0xsequence/network': link:../network
       '@0xsequence/relayer': 'link:'
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/signhub': link:../signhub
       '@0xsequence/tests': link:../tests
@@ -523,20 +507,6 @@ importers:
       ethers: 5.7.2
       web3: 1.8.1
 
-  packages/transactions:
-    specifiers:
-      '@0xsequence/abi': ^0.43.14
-      '@0xsequence/network': ^0.43.14
-      '@0xsequence/utils': ^0.43.14
-      ethers: ^5.7.2
-    dependencies:
-      '@0xsequence/abi': link:../abi
-      '@0xsequence/config': link:../config
-      '@0xsequence/network': link:../network
-      '@0xsequence/utils': link:../utils
-    devDependencies:
-      ethers: 5.7.2
-
   packages/utils:
     specifiers:
       ethers: ^5.7.2
@@ -555,23 +525,23 @@ importers:
       '@0xsequence/network': ^0.43.14
       '@0xsequence/relayer': ^0.43.14
       '@0xsequence/signhub': ^0.43.7
-      '@0xsequence/tests': ^0.43.7
+      '@0xsequence/tests': ^0.43.4
       '@0xsequence/utils': ^0.43.14
       '@0xsequence/wallet-contracts': 1.10.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       ethers: ^5.7.2
       web3: ^1.8.1
     dependencies:
-      '@0xsequence/abi': 0.43.9
+      '@0xsequence/abi': link:../abi
       '@0xsequence/core': link:../core
-      '@0xsequence/guard': 0.43.9
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/relayer': 0.43.9_ethers@5.7.2
+      '@0xsequence/guard': link:../guard
+      '@0xsequence/network': link:../network
+      '@0xsequence/relayer': link:../relayer
       '@0xsequence/signhub': link:../signhub
-      '@0xsequence/tests': link:../tests
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
+      '@0xsequence/utils': link:../utils
     devDependencies:
       '@0xsequence/ethauth': 0.8.1_ethers@5.7.2
+      '@0xsequence/tests': link:../tests
       '@0xsequence/wallet-contracts': 1.10.0
       '@istanbuljs/nyc-config-typescript': 1.0.2
       ethers: 5.7.2
@@ -606,18 +576,6 @@ packages:
       '@0xsequence/provider': 0.43.9_ethers@5.7.2
       '@0xsequence/utils': 0.43.9_ethers@5.7.2
       '@0xsequence/wallet': 0.43.9_ethers@5.7.2
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/config/0.43.7_ethers@5.7.2:
-    resolution: {integrity: sha512-ZbaMTVC+qiLqY4Dcj0LtirDZMzZFZXVBL+QE9knK+1gFlVkBSf2g3Z/nh8kt4Oev9V1k7pGyPNXKlDPHHh16fA==}
-    peerDependencies:
-      ethers: '>=5.5'
-    dependencies:
-      '@0xsequence/abi': 0.43.9
-      '@0xsequence/multicall': 0.43.9_ethers@5.7.2
-      '@0xsequence/network': 0.43.9_ethers@5.7.2
-      '@0xsequence/utils': 0.43.9_ethers@5.7.2
       ethers: 5.7.2
     dev: false
 
