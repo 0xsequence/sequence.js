@@ -74,7 +74,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
     return new ethers.Contract(address, artifact.abi, signer)
   }
 
-  const maxGasLimit = await provider.getBlock('latest').then((b) => b.gasLimit.sub(1))
+  const maxGasLimit = await provider.getBlock('latest').then((b) => b.gasLimit.div(2))
   await singletonFactory.deploy(data, ethers.constants.HashZero, { gasLimit: maxGasLimit }).then((tx: any) => tx.wait())
 
   if (!await isContract(provider, address)) {
