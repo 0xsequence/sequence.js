@@ -505,7 +505,7 @@ export class Session {
 function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcProvider {
   const authChain = getAuthNetwork(networks)
   if (!authChain) throw Error('Auth chain not found')
-  return authChain.provider ?? new JsonRpcProvider(authChain.rpcUrl!, authChain.chainId)
+  return authChain.provider ?? new JsonRpcProvider(authChain.rpcUrl!, { chainId: authChain.chainId, blockCache: true })
 }
 
 function getJWTExpiration(jwt: string): number {

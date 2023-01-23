@@ -1,18 +1,29 @@
 import { ethers } from 'ethers'
-import { JsonRpcRouter, JsonRpcSender, loggingProviderMiddleware, CachedProvider, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './json-rpc'
+import { JsonRpcRouter, JsonRpcSender, loggingProviderMiddleware, networkProviderMiddleware, EagerProvider, SingleflightMiddleware, CachedProvider, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './json-rpc'
 import { networks, ChainId } from './config'
 
-// TODO: we can cache eth_getCode for our own wallet address..
-// this does not change often at all.. but it's more tricky to ensure we expire
-// / prune the cache perfectly, so we can add support for it another time.
+export interface JsonRpcProviderOptions {
+  // ..
+  chainId? :number
+
+  // ..
+  middlewares?: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>
+
+  // ..
+  blockCache?: boolean | string[]
+}
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
 export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
 
-  constructor(url: ethers.utils.ConnectionInfo | string, chainId?: number, middlewares?: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>) {
-    super(url, chainId)
+  constructor(url: ethers.utils.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
+    super(url, options?.chainId)
+
+    const chainId = options?.chainId
+    const middlewares = options?.middlewares
+    const blockCache = options?.blockCache
 
     this._chainId = chainId
 
@@ -24,7 +35,9 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
       middlewares ?? 
       [
         // loggingProviderMiddleware,
-        new CachedProvider({ chainId })
+        new EagerProvider({ chainId }),
+        new SingleflightMiddleware(),
+        new CachedProvider({ defaultChainId: chainId, blockCache: blockCache })
       ],
       new JsonRpcSender(this.fetch, chainId)
     )

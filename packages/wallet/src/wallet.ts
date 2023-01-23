@@ -174,7 +174,7 @@ export class Wallet extends Signer {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
     } else {
-      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider, chainId)
+      const jsonProvider = new JsonRpcProvider(<ConnectionInfo | string>provider, { chainId, blockCache: true })
       this.provider = jsonProvider
       this.sender = new JsonRpcSender(jsonProvider)
     }

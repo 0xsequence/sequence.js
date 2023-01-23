@@ -1,6 +1,7 @@
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddleware } from '../types'
 import { logger } from '@0xsequence/utils'
 
+// TODO: rename to loggerMiddleware
 export const loggingProviderMiddleware: JsonRpcMiddleware = (next: JsonRpcHandlerFunc) => {
   return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     const chainIdLabel = chainId ? ` chainId:${chainId}` : ''
