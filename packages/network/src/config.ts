@@ -70,9 +70,6 @@ export interface NetworkConfig {
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
 
-  // isAuthChain identifies the network containing wallet config contents.
-  isAuthChain?: boolean
-
   // Disabled / deprecated chain
   disabled?: boolean
 }
@@ -343,8 +340,7 @@ export const mainnetNetworks = validateAndSortNetworks([
     ...networks[ChainId.POLYGON],
     ...genUrls('polygon'),
     // TODO: Remove default and auth chains from here
-    isDefaultChain: true,
-    isAuthChain: true
+    isDefaultChain: true
   },
   {
     ...networks[ChainId.BSC],
@@ -389,8 +385,7 @@ export const testnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.POLYGON_MUMBAI],
     ...genUrls('mumbai'),
-    isDefaultChain: true,
-    isAuthChain: true
+    isDefaultChain: true
   },
   {
     ...networks[ChainId.BSC_TESTNET],

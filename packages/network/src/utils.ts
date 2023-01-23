@@ -21,10 +21,6 @@ export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
   return getChainId(chainId)
 }
 
-export const getAuthNetwork = (networks: NetworkConfig[]): NetworkConfig | undefined => {
-  return networks.find(network => network.isAuthChain)
-}
-
 export const isValidNetworkConfig = (
   networkConfig: NetworkConfig | NetworkConfig[],
   raise: boolean = false,
@@ -68,7 +64,6 @@ export const isValidNetworkConfig = (
   // Ensure one default chain
   // Ensure one auth chain
   let defaultChain = false
-  let authChain = false
   for (let i = 0; i < configs.length; i++) {
     const c = configs[i]
     if ((!c.rpcUrl || c.rpcUrl === '') && !c.provider) {
@@ -89,20 +84,10 @@ export const isValidNetworkConfig = (
       }
       defaultChain = true
     }
-    if (c.isAuthChain) {
-      if (authChain) {
-        if (raise) throw new Error(`invalid network config for chainId ${c.chainId}: AuthChain is already set by another config`)
-      }
-      authChain = true
-    }
   }
 
   if (!defaultChain) {
     if (raise) throw new Error(`invalid network config: DefaultChain must be set`)
-    return false
-  }
-  if (!authChain) {
-    if (raise) throw new Error(`invalid network config: AuthChain must be set`)
     return false
   }
 
@@ -144,13 +129,6 @@ export const updateNetworkConfig = (src: Partial<NetworkConfig>, dest: NetworkCo
   if (src.relayer) {
     dest.relayer = src.relayer
   }
-  // NOTE: we do not set default or auth chain from here
-  // if (src.isDefaultChain) {
-  //   dest.isDefaultChain = src.isDefaultChain
-  // }
-  // if (src.isAuthChain) {
-  //   dest.isAuthChain = src.isAuthChain
-  // }
 }
 
 export const validateAndSortNetworks = (networks: NetworkConfig[]) => {
@@ -204,10 +182,6 @@ export const sortNetworks = (networks: NetworkConfig[]): NetworkConfig[] => {
   // DefaultChain goes first
   const defaultConfigIdx = config.findIndex(c => c.isDefaultChain)
   if (defaultConfigIdx > 0) config.splice(0, 0, config.splice(defaultConfigIdx, 1)[0])
-
-  // AuthChain goes second
-  const authConfigIdx = config.findIndex(c => c.isAuthChain && c.isDefaultChain !== true)
-  if (authConfigIdx > 0) config.splice(1, 0, config.splice(authConfigIdx, 1)[0])
 
   return config
 }

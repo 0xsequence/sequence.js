@@ -96,7 +96,6 @@ describe('Wallet integration', function () {
         chainId: ethnode.chainId,
         provider: ethnode.provider,
         isDefaultChain: true,
-        isAuthChain: true,
         relayer: relayer
       }
     ] as NetworkConfig[]
