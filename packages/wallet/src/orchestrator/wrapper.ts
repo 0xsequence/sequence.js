@@ -1,4 +1,5 @@
 
+import { commons } from "@0xsequence/core"
 import { signers, Status } from "@0xsequence/signhub"
 import { ethers } from "ethers"
 import { Wallet } from "../wallet"
@@ -12,18 +13,23 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.address
   }
 
-  async requestSignature(message: ethers.utils.BytesLike, callbacks: {
+  async requestSignature(message: ethers.utils.BytesLike, metadata: Object, callbacks: {
     onSignature: (signature: ethers.utils.BytesLike) => void;
     onRejection: (error: string) => void;
     onStatus: (situation: string) => void
   }): Promise<boolean> {
+    if (!commons.isWalletSignRequestMetadata(metadata)) {
+      throw new Error('SequenceOrchestratorWrapper only supports nested Sequence signatures')
+    }
+
     // For Sequence nested signatures we must use `signDigest` and not `signMessage`
     // otherwise the wallet will hash the digest and the signature will be invalid.
-    callbacks.onSignature(await this.wallet.signDigest(message))
+    callbacks.onSignature(await this.wallet.signDigest(message, { nested: metadata }))
+
     return true
   }
 
-  notifyStatusChange(_: Status): void {}
+  notifyStatusChange(_s: Status, _m: Object): void {}
 
   isEOA(): boolean {
     return false

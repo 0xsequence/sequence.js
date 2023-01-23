@@ -10,7 +10,7 @@ export class SignerWrapper implements SapientSigner {
     return this.signer.getAddress()
   }
 
-  async requestSignature(message: ethers.utils.BytesLike, callbacks: {
+  async requestSignature(message: ethers.utils.BytesLike, _metadata: Object, callbacks: {
     onSignature: (signature: ethers.utils.BytesLike) => void;
     onRejection: (error: string) => void;
     onStatus: (situation: string) => void
@@ -19,7 +19,7 @@ export class SignerWrapper implements SapientSigner {
     return true
   }
 
-  notifyStatusChange(_: Status): void {}
+  notifyStatusChange(_s: Status, _m: Object): void {}
 
   isEOA(): boolean {
     return this.eoa
