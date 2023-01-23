@@ -23,12 +23,13 @@
     "@0xsequence/utils": "^0.43.9",
     "@0xsequence/wallet": "^0.43.9",
     "eventemitter2": "^6.4.5",
-    "webextension-polyfill-ts": "^0.26.0"
+    "webextension-polyfill": "^0.10.0"
   },
   "peerDependencies": {
     "ethers": ">=5.5"
   },
   "devDependencies": {
+    "@types/webextension-polyfill": "^0.10.0",
     "ethers": "^5.7.2"
   },
   "files": [

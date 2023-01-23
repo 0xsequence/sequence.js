@@ -336,9 +336,10 @@ importers:
       '@0xsequence/transactions': ^0.43.9
       '@0xsequence/utils': ^0.43.9
       '@0xsequence/wallet': ^0.43.9
+      '@types/webextension-polyfill': ^0.10.0
       ethers: ^5.7.2
       eventemitter2: ^6.4.5
-      webextension-polyfill-ts: ^0.26.0
+      webextension-polyfill: ^0.10.0
     dependencies:
       '@0xsequence/abi': link:../abi
       '@0xsequence/auth': link:../auth
@@ -349,8 +350,9 @@ importers:
       '@0xsequence/utils': link:../utils
       '@0xsequence/wallet': link:../wallet
       eventemitter2: 6.4.9
-      webextension-polyfill-ts: 0.26.0
+      webextension-polyfill: 0.10.0
     devDependencies:
+      '@types/webextension-polyfill': 0.10.0
       ethers: 5.7.2
 
   packages/relayer:
@@ -3326,6 +3328,10 @@ packages:
     resolution: {integrity: sha512-SaAfLJY/40wKFDsNFwaNfwqFSL6kVhTx9JD18qM+Gaw1qdAXLYF/6E7TIqWEdoG4so6fki/zxURP5NsoCePYJw==}
     dependencies:
       '@types/ethereum-protocol': 1.0.2
+    dev: true
+
+  /@types/webextension-polyfill/0.10.0:
+    resolution: {integrity: sha512-If4EcaHzYTqcbNMp/FdReVdRmLL/Te42ivnJII551bYjhX19bWem5m14FERCqdJA732OloGuxCRvLBvcMGsn4A==}
     dev: true
 
   /@types/ws/8.5.3:
@@ -13421,15 +13427,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /webextension-polyfill-ts/0.26.0:
-    resolution: {integrity: sha512-XEFL+aYVEsm/d4RajVwP75g56c/w2aSHnPwgtUv8/nCzbLNSzRQIix6aj1xqFkA5yr7OIDkk3OD/QTnPp8ThYA==}
-    deprecated: This project has moved to @types/webextension-polyfill
-    dependencies:
-      webextension-polyfill: 0.8.0
-    dev: false
-
-  /webextension-polyfill/0.8.0:
-    resolution: {integrity: sha512-a19+DzlT6Kp9/UI+mF9XQopeZ+n2ussjhxHJ4/pmIGge9ijCDz7Gn93mNnjpZAk95T4Tae8iHZ6sSf869txqiQ==}
+  /webextension-polyfill/0.10.0:
+    resolution: {integrity: sha512-c5s35LgVa5tFaHhrZDnr3FpQpjj1BB+RXhLTYUxGqBVN460HkbM8TBtEqdXWbpTKfzwCcjAZVF7zXCYSKtcp9g==}
     dev: false
 
   /webidl-conversions/3.0.1:
