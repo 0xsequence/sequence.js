@@ -219,12 +219,8 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   async getSigners(): Promise<string[]> {
     const networks = await this.getNetworks()
 
-    const authChainId = networks.find(n => n.isAuthChain)
-    if (!authChainId) {
-      throw new Error('authChainId could not be determined from network list')
-    }
-
-    const config = await this.getWalletConfig(authChainId)
+    // TODO: Replace this with a method that aggregates signer addresses from all chains
+    const config = await this.getWalletConfig(networks[0].chainId)
     if (!config) {
       throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
     }

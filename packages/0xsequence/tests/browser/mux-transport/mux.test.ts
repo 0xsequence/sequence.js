@@ -61,15 +61,13 @@ export const tests = async () => {
       provider: provider1,
       relayer: relayer1,
       isDefaultChain: true
-      // isAuthChain: true
     },
     {
       name: 'hardhat2',
       chainId: 31338,
       rpcUrl: provider2.connection.url,
       provider: provider2,
-      relayer: relayer2,
-      isAuthChain: true
+      relayer: relayer2
     }
   ]
 

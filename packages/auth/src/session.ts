@@ -337,7 +337,7 @@ export class Session {
     const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings } = args
     const { sequenceApiUrl, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
-    const referenceChainId = networks.find((n) => n.isAuthChain)?.chainId ?? networks[0].chainId
+    const referenceChainId = networks.find((n) => n.chainId === 1)?.chainId ?? networks[0].chainId
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
