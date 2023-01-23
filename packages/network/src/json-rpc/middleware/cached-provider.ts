@@ -73,7 +73,8 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       next(request, (error: any, response?: JsonRpcResponse, chainId?: number) => {
         // Store result in cache and continue
         if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
-          if (response && response.result) {
+          if (response && response.result && this.shouldCacheResponse(request, response)) {
+            // cache the value
             const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
             
             if (this.cachableJsonRpcMethods.includes(request.method)) {
@@ -140,6 +141,21 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
         this.cacheByBlock = {}
       }, 1500) // 1.5 second cache lifetime
     }
+  }
+
+  shouldCacheResponse = (request: JsonRpcRequest, response?: JsonRpcResponse): boolean => {
+    // skip if we do not have response result
+    if (!response || !response.result) {
+      return false
+    }
+
+    // skip caching eth_getCode where resposne value is '0x' or empty
+    if (request.method === 'eth_getCode' && response.result.length <= 2) {
+      return false
+    }
+
+    // all good -- signal to cache the result
+    return true
   }
 
   onUpdate(callback: (key?: string, value?: any) => void) {

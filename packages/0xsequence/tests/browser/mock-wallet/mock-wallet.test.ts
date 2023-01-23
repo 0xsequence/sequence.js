@@ -18,8 +18,8 @@ const main = async () => {
   //
   // Providers
   //
-  const provider = new JsonRpcProvider('http://localhost:8545')
-  const provider2 = new JsonRpcProvider('http://localhost:9545')
+  const provider = new JsonRpcProvider('http://localhost:8545', { blockCache: true })
+  const provider2 = new JsonRpcProvider('http://localhost:9545', { blockCache: true })
 
   //
   // Deploy Sequence WalletContext (deterministic)
