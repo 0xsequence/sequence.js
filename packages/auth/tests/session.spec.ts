@@ -20,11 +20,11 @@ import { Session, SessionDumpV1, SessionSettings, ValidateSequenceWalletProof } 
 
 import * as mockServer from 'mockttp'
 import { ETHAuth } from '@0xsequence/ethauth'
-import { context, migrator } from '@0xsequence/migration'
+import { migrator } from '@0xsequence/migration'
 import { Orchestrator } from '@0xsequence/signhub'
 import { tracker } from '@0xsequence/sessions'
 import { LocalConfigTracker } from '@0xsequence/sessions/src/trackers/local'
-import { v1, v2 } from '@0xsequence/core'
+import { commons, v1, v2 } from '@0xsequence/core'
 import { OnChainReader } from '@0xsequence/core/src/commons/reader'
 import { Account } from '@0xsequence/account'
 
@@ -72,7 +72,7 @@ describe('Wallet integration', function () {
   let callReceiver: CallReceiverMock
   let hookCaller: HookCallerMock
 
-  let contexts: context.VersionedContext
+  let contexts: commons.context.VersionedContext
   let networks: NetworkConfig[]
 
   let tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker

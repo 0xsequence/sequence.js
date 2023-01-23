@@ -36,7 +36,6 @@ import { WalletUtils } from './utils/index'
 import { Runtime } from 'webextension-polyfill-ts'
 import { commons } from '@0xsequence/core'
 import { AccountStatus } from '@0xsequence/account'
-import { context } from '@0xsequence/migration'
 
 export const SESSION_LOCALSTORE_KEY = '@sequence.session'
 
@@ -58,7 +57,7 @@ export interface WalletProvider {
   getProvider(chainId?: ChainIdLike): Web3Provider | undefined
   getSigner(chainId?: ChainIdLike): Web3Signer
 
-  getWalletContext(): Promise<context.VersionedContext>
+  getWalletContext(): Promise<commons.context.VersionedContext>
   getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
   getWalletState(chainId?: ChainIdLike): Promise<AccountStatus>
   isDeployed(chainId?: ChainIdLike): Promise<boolean>
@@ -248,7 +247,7 @@ export class Wallet implements WalletProvider {
     })
 
     // below will update the wallet context automatically
-    this.transport.messageProvider.on('walletContext', (walletContext: context.VersionedContext) => {
+    this.transport.messageProvider.on('walletContext', (walletContext: commons.context.VersionedContext) => {
       this.useSession({ walletContext: walletContext }, true)
     })
   }
@@ -550,7 +549,7 @@ export class Wallet implements WalletProvider {
     return this.getSigner().getWalletState(chainId)
   }
 
-  getWalletContext(): Promise<context.VersionedContext> {
+  getWalletContext(): Promise<commons.context.VersionedContext> {
     return this.getSigner().getWalletContext()
   }
 
@@ -719,7 +718,7 @@ export interface ProviderConfig {
   // WalletContext used the one returned by the wallet app upon login.
   //
   // NOTE: do not use this option unless you know what you're doing
-  walletContext?: context.VersionedContext
+  walletContext?: commons.context.VersionedContext
 }
 
 export const DefaultProviderConfig: ProviderConfig = {
