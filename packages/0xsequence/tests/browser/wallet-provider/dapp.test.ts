@@ -5,7 +5,6 @@ import { testAccounts, getEOAWallet, sendETH } from '../testutils'
 import { configureLogger } from '@0xsequence/utils'
 import { commons, v2 } from '@0xsequence/core'
 import { deploySequenceContexts } from '@0xsequence/tests/src/context'
-import { context } from '@0xsequence/migration'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -67,7 +66,7 @@ export const tests = async () => {
     assert.true(wallet.isConnected(), 'is connected')
   })
 
-  let walletContext: context.VersionedContext
+  let walletContext: commons.context.VersionedContext
   await test('getWalletContext', async () => {
     walletContext = await wallet.getWalletContext()
     assert.equal(walletContext[1].factory, deployedWalletContext[1].factory, 'wallet context factory')

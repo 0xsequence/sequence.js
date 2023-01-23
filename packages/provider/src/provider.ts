@@ -17,7 +17,6 @@ import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 import { commons, universal } from '@0xsequence/core'
 import { Account, AccountStatus } from '@0xsequence/account'
-import { context } from '@0xsequence/migration'
 import { ExtendedTransactionRequest, toExtended } from './extended'
 
 export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
@@ -117,7 +116,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // memoized
   _address: string
   _index: number
-  _context: context.VersionedContext
+  _context: commons.context.VersionedContext
   _networks: NetworkConfig[]
   private _providers: { [key: number]: Web3Provider } = {}
 
@@ -184,7 +183,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     throw new Error('TODO')
   }
 
-  async getWalletContext(): Promise<context.VersionedContext> {
+  async getWalletContext(): Promise<commons.context.VersionedContext> {
     if (!this._context) {
       this._context = await this.provider.send('sequence_getWalletContext', [])
     }

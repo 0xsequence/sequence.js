@@ -3,7 +3,6 @@ import { ethers } from "ethers"
 
 import { Migration, MIGRATION_NONCE_SPACE } from "."
 import { walletContracts } from "@0xsequence/abi"
-import { VersionedContext } from "../context"
 import { UnsignedMigration } from "../migrator"
 
 export class Migration_v1v2 implements Migration<
@@ -17,7 +16,7 @@ export class Migration_v1v2 implements Migration<
 
   buildTransaction(
     address: string,
-    contexts: VersionedContext,
+    contexts: commons.context.VersionedContext,
     newConfig: v1.config.WalletConfig | v2.config.WalletConfig
   ): UnsignedMigration {
     // If new config is not v2, then we need to convert it to v2
@@ -68,7 +67,7 @@ export class Migration_v1v2 implements Migration<
 
   decodeTransaction(
     tx: commons.transaction.TransactionBundle,
-    contexts: VersionedContext
+    contexts: commons.context.VersionedContext
   ): {
     address: string,
     newImageHash: string

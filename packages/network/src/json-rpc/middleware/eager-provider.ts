@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
+import { commons } from '../../../../0xsequence/src/core'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
-import { context } from '@0xsequence/migration'
 
 // EagerProvider will eagerly respond to a provider request from pre-initialized data values.
 //
@@ -10,7 +10,7 @@ import { context } from '@0xsequence/migration'
 export type EagerProviderOptions = {
   accountAddress?: string,
   chainId?: number,
-  walletContext?: context.VersionedContext
+  walletContext?: commons.context.VersionedContext
 }
 
 export class EagerProvider implements JsonRpcMiddlewareHandler {

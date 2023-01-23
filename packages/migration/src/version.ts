@@ -1,14 +1,13 @@
 import { ethers } from "ethers"
 import { commons } from '@0xsequence/core'
-import { isValidVersionedContext, VersionedContext } from "./context"
 
 export async function versionOf(
   address: string,
   firstImageHash: string,
-  contexts: VersionedContext,
+  contexts: commons.context.VersionedContext,
   reader: commons.reader.Reader
 ): Promise<number> {
-  if (!isValidVersionedContext(contexts)) {
+  if (!commons.context.isValidVersionedContext(contexts)) {
     throw new Error("Invalid versioned context")
   }
 

@@ -20,7 +20,7 @@ import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
 import { isBrowserExtension, LocalStorage } from '../utils'
-import { context } from '@0xsequence/migration'
+import { commons } from '@0xsequence/core'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
@@ -69,7 +69,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       }
     })
 
-    this.walletRequestHandler.on('walletContext', (walletContext: context.VersionedContext) => {
+    this.walletRequestHandler.on('walletContext', (walletContext: commons.context.VersionedContext) => {
       if (!this.registered || !walletContext) return
       this.notifyWalletContext(walletContext)
     })
@@ -230,7 +230,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  notifyWalletContext(walletContext: context.VersionedContext) {
+  notifyWalletContext(walletContext: commons.context.VersionedContext) {
     this.sendMessage({
       idx: -1,
       type: EventType.WALLET_CONTEXT,

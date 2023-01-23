@@ -1,6 +1,6 @@
 
 import { tracker } from '@0xsequence/sessions'
-import { migrator, context, defaults, version } from '@0xsequence/migration'
+import { migrator, defaults, version } from '@0xsequence/migration'
 import { Orchestrator } from '@0xsequence/signhub'
 import { NetworkConfig } from '@0xsequence/network'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
@@ -42,7 +42,7 @@ export type AccountOptions = {
   tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker,
 
   // Versioned contexts contains the context information for each Sequence version
-  contexts: context.VersionedContext
+  contexts: commons.context.VersionedContext
 
   // Optional list of migrations, if not provided, the default migrations will be used
   // NOTICE: the last vestion is considered the "current" version for the account
@@ -82,7 +82,7 @@ export class Account {
 
   public readonly networks: NetworkConfig[]
   public readonly tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
-  public readonly contexts: context.VersionedContext
+  public readonly contexts: commons.context.VersionedContext
 
   public readonly migrator: migrator.Migrator
   public readonly migrations: migrator.Migrations
@@ -104,7 +104,7 @@ export class Account {
   static async new(options: {
     config: commons.config.SimpleConfig,
     tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker,
-    contexts: context.VersionedContext,
+    contexts: commons.context.VersionedContext,
     orchestrator: Orchestrator,
     networks: NetworkConfig[],
     migrations?: migrator.Migrations

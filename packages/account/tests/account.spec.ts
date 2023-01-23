@@ -6,7 +6,7 @@ import * as utils from '@0xsequence/tests'
 import { ethers } from 'ethers'
 import { Orchestrator } from '@0xsequence/signhub'
 import { Account } from '../src/account'
-import { context, migrator } from '@0xsequence/migration'
+import { migrator } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
 import { tracker, trackers } from '@0xsequence/sessions'
 import { LocalRelayer, Relayer } from '@0xsequence/relayer'
@@ -23,13 +23,13 @@ describe('Account', () => {
   let signer1: ethers.Signer
   let signer2: ethers.Signer
 
-  let contexts: context.VersionedContext
+  let contexts: commons.context.VersionedContext
   let networks: NetworkConfig[]
 
   let tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
 
   let defaultArgs: {
-    contexts: context.VersionedContext
+    contexts: commons.context.VersionedContext
     networks: NetworkConfig[]
     tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
   }

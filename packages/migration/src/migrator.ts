@@ -2,7 +2,6 @@ import { commons } from '@0xsequence/core'
 import { Wallet } from '@0xsequence/wallet'
 import { ethers } from 'ethers'
 
-import { VersionedContext } from './context'
 import { Migration } from "./migrations"
 
 export type UnsignedMigration = {
@@ -28,7 +27,7 @@ export interface PresignedMigrationTracker {
   saveMigration(
     address: string,
     signed: SignedMigration,
-    contexts: VersionedContext
+    contexts: commons.context.VersionedContext
   ): Promise<void>
 }
 
@@ -46,7 +45,7 @@ export class Migrator {
   constructor(
     public readonly tracker: PresignedMigrationTracker,
     public readonly migrations: Migrations,
-    public readonly contexts: VersionedContext
+    public readonly contexts: commons.context.VersionedContext
   ) {
     validateMigrations(migrations)
   }
