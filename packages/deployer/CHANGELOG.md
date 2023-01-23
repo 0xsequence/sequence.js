@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.10
+
+### Patch Changes
+
+- various improvements
+- Updated dependencies
+  - @0xsequence/utils@0.43.10
+
 ## 0.43.9
 
 ### Patch Changes

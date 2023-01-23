@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.43.10
+
+### Patch Changes
+
+- various improvements
+
 ## 0.43.9
 
 ### Patch Changes

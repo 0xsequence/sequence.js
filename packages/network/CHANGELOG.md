@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.10
+
+### Patch Changes
+
+- various improvements
+- Updated dependencies
+  - @0xsequence/indexer@0.43.10
+  - @0xsequence/provider@0.43.10
+  - @0xsequence/relayer@0.43.10
+  - @0xsequence/utils@0.43.10
+
 ## 0.43.9
 
 ### Patch Changes
