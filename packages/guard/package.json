@@ -12,9 +12,9 @@
     "test": "echo",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
-  "peerDependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "@0xsequence/signhub": "workspace:^0.43.7"
+  },
   "files": [
     "src",
     "dist"

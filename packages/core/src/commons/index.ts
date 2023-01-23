@@ -6,3 +6,5 @@ export * as signer from './signer'
 export * as EIP1271 from './validateEIP1271'
 export * as transaction from './transaction'
 export * as reader from './reader'
+
+export * from './orchestrator'

@@ -219,7 +219,14 @@ export class Wallet<
     return this.coders.config.update.buildTransaction(this.address, config, this.context)
   }
 
-  async signDigest(digest: ethers.utils.BytesLike): Promise<string> {
+  async signDigest(
+    digest: ethers.utils.BytesLike,
+    request?: {
+      message?: ethers.utils.BytesLike,
+      transactions?: commons.transaction.Transaction[]
+      nested?: commons.WalletSignRequestMetadata
+    }
+  ): Promise<string> {
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
     const subdigest = subDigestOf(this.address, this.chainId, digest)
@@ -227,21 +234,39 @@ export class Wallet<
       return this.coders.signature.encodeSigners(this.config, new Map(), [subdigest], this.chainId).encoded
     }
 
+    // We build the metadata object, this contains additional information
+    // that may be needed to sign the digest (by the other signers, or by the guard)
+    const metadata: commons.WalletSignRequestMetadata = {
+      digest,
+      chainId: this.chainId,
+      address: this.address,
+      config: this.config,
+      ...request
+    }
+
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
     // to reach the threshold we returns true, that means the orchestrator will stop asking
     // and we can encode the final signature
     const subdigestBytes = ethers.utils.arrayify(subdigest)
-    const signature = await this.orchestrator.signMessage(subdigestBytes, (status: Status): boolean => {
-      const parts = statusToSignatureParts(status)
-      return this.coders.signature.hasEnoughSigningPower(this.config, parts)
-    })
+    const signature = await this.orchestrator.signMessage(
+      subdigestBytes,
+      metadata,
+      (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
+        const parts = statusToSignatureParts(status)
+
+        const newMetadata = { ...metadata, parts }
+        onNewMetadata(newMetadata)
+
+        return this.coders.signature.hasEnoughSigningPower(this.config, parts)
+      }
+    )
 
     const parts = statusToSignatureParts(signature)
     return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
   }
 
   signMessage(message: ethers.BytesLike): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message))
+    return this.signDigest(ethers.utils.keccak256(message), { message })
   }
 
   signTransactionBundle(bundle: commons.transaction.TransactionBundle): Promise<commons.transaction.SignedTransactionBundle> {
@@ -264,7 +289,7 @@ export class Wallet<
     }
 
     const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
-    const signature = await this.signDigest(digest)
+    const signature = await this.signDigest(digest, { transactions })
 
     return {
       intent: {
