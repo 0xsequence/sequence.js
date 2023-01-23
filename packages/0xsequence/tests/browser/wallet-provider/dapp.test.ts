@@ -86,15 +86,10 @@ export const tests = async () => {
 
     assert.equal(networks.length, 2, '2 networks')
     assert.true(networks[0].isDefaultChain!, '1st network is DefaultChain')
-    assert.true(!networks[0].isAuthChain, '1st network is not AuthChain')
     assert.true(!networks[1].isDefaultChain, '1st network is not DefaultChain')
-    assert.true(networks[1].isAuthChain!, '2nd network is AuthChain')
     assert.true(networks[1].chainId === 31338, 'authChainId is correct')
 
-    const authNetwork = await wallet.getAuthNetwork()
-    assert.equal(networks[1].chainId, authNetwork.chainId, 'authNetwork matches chainId')
-
-    const authProvider = wallet.getProvider(authNetwork)!
+    const authProvider = wallet.getProvider(31338)!
     assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
 
     assert.equal(await provider.getChainId(), 31337, 'provider chainId is 31337')
@@ -231,23 +226,20 @@ export const tests = async () => {
   })
 
   await test('signAuthMessage', async () => {
-    // NOTE: by definition, signAuthMessage will always be directed at the authChain network
-    const authNetwork = await wallet.getAuthNetwork()
-
     const address = await wallet.getAddress()
-    const chainId = authNetwork.chainId
-    const authProvider = wallet.getProvider(authNetwork)!
+    const chainId = 31337
+    const authProvider = wallet.getProvider(chainId)!
 
-    assert.equal(chainId, 31338, 'chainId is 31338 (authChain)')
-    assert.equal(await authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
-    assert.equal(await authProvider.getChainId(), await authProvider.getSigner().getChainId(), 'authProvider signer chainId is 31338')
+    assert.equal(chainId, 31337, 'chainId is 31337 (authChain)')
+    assert.equal(await authProvider.getChainId(), 31337, 'authProvider chainId is 31337')
+    assert.equal(await authProvider.getChainId(), await authProvider.getSigner().getChainId(), 'authProvider signer chainId is 31337')
 
     // Sign the message
     const message = 'hihi'
     const sig = await signer.signMessage(message, chainId)
     assert.equal(
       sig,
-      '0x0002000000000002974be7081d87872c08c827aeb505d75057a7a7f4232d61ce5634a35300e24c2b2113667a69e9a68b5c61fa955988f3362fc9b1c84ed6df89c572e2e33dd5fbab1b02',
+      '0x0002000000000002dae61fe1d90658f8f4339bd58043b122929cd3f1faaeab38e4daa97b09471170464ebb81bb1957babce03c5fbd0bee815cc61de66d7edaff0d55a4bfbde016e11b02',
       'signAuthMessage, signature match'
     )
 
@@ -466,13 +458,10 @@ export const tests = async () => {
     // NOTE: the account addresses are both chains have been seeded with the same private key
     // so we can have overlapping addresses and keys for ease of use duringtesting
 
-    // get provider of the 2nd chain (the authChain)
+    // get provider of the 2nd chain
     const provider2 = wallet.getProvider('hardhat2')!
     assert.equal(await provider2.getChainId(), 31338, 'provider is the 2nd chain')
     assert.equal(await provider2.getChainId(), await wallet.getProvider(31338)!.getChainId(), 'provider2 code path check')
-
-    const authProvider = await wallet.getAuthProvider()
-    assert.equal(await provider2.getChainId(), await authProvider.getChainId(), 'provider2 === authProvider')
 
     const signer2 = provider2.getSigner()
 

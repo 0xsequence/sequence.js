@@ -20,7 +20,7 @@ export class WalletUtils {
 
   // Sign message on the AuthChain
   async signAuthMessage(message: BytesLike, allSigners?: boolean): Promise<string> {
-    const signer = await this.wallet.getAuthSigner()
+    const signer = this.wallet.getSigner()
     if (!signer) throw new Error('unable to get AuthChain signer')
     return signer.signMessage(message, await signer.getChainId(), allSigners)
   }
@@ -45,7 +45,7 @@ export class WalletUtils {
     message: Record<string, any>,
     allSigners?: boolean
   ): Promise<string> {
-    const signer = await this.wallet.getAuthSigner()
+    const signer = this.wallet.getSigner()
     if (!signer) throw new Error('unable to get AuthChain signer')
     return signer.signTypedData(domain, types, message, await signer.getChainId(), allSigners)
   }
