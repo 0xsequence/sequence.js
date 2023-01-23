@@ -15,7 +15,7 @@ import * as utils from '@0xsequence/tests'
 import { Account } from '@0xsequence/account'
 import { Orchestrator } from '@0xsequence/signhub'
 import { trackers } from '@0xsequence/sessions'
-import { context } from '@0xsequence/migration'
+import { commons } from '@0xsequence/core'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -149,7 +149,7 @@ export const tests = async () => {
     assert.true(opened, 'wallet is opened')
   })
 
-  let walletContext: context.VersionedContext
+  let walletContext: commons.context.VersionedContext
   await test('getWalletContext', async () => {
     walletContext = await wallet.getWalletContext()
     assert.equal(walletContext[2].factory, deployedWalletContext[2].factory, 'wallet context factory')

@@ -1,5 +1,4 @@
 import { commons } from "@0xsequence/core"
-import { VersionedContext } from "../context"
 import { UnsignedMigration } from "../migrator"
 import { Migration_v1v2 } from "./migration_01_02"
 
@@ -14,13 +13,13 @@ export interface Migration<
 
   buildTransaction: (
     address: string,
-    contexts: VersionedContext,
+    contexts: commons.context.VersionedContext,
     newConfig: P | C
   ) => UnsignedMigration
 
   decodeTransaction: (
     tx: commons.transaction.TransactionBundle,
-    contexts: VersionedContext
+    contexts: commons.context.VersionedContext
   ) => {
     address: string,
     newImageHash: string

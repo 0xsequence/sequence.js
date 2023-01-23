@@ -5,7 +5,7 @@ import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
 import { tracker } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
-import { migrator, context } from '@0xsequence/migration'
+import { migrator } from '@0xsequence/migration'
 import { commons, v1 } from '@0xsequence/core'
 import { SequenceAPIClient } from '@0xsequence/api'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
@@ -65,7 +65,7 @@ export const LONG_SESSION_EXPIRATION = 3e7
 const EXPIRATION_JWT_MARGIN = 60 // seconds
 
 export type SessionSettings = {
-  contexts: context.VersionedContext
+  contexts: commons.context.VersionedContext
   sequenceApiUrl: string
   sequenceMetadataUrl: string
   networks: NetworkConfig[]
@@ -90,7 +90,7 @@ export class Session {
     public sequenceApiUrl: string,
     public sequenceMetadataUrl: string,
     public networks: NetworkConfig[],
-    public contexts: context.VersionedContext,
+    public contexts: commons.context.VersionedContext,
     public account: Account,
     public metadata: SessionMeta,
     jwt?: SessionJWT

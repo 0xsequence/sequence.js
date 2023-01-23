@@ -1,6 +1,6 @@
 
 import { commons, universal, v1, v2 } from "@0xsequence/core"
-import { migration, context } from "@0xsequence/migration"
+import { migration } from "@0xsequence/migration"
 import { PresignedMigrationTracker, SignedMigration } from "@0xsequence/migration/src/migrator"
 import { ethers } from "ethers"
 import { runByEIP5719 } from "@0xsequence/replacer"
@@ -465,7 +465,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
   async saveMigration(
     address: string,
     signed: SignedMigration,
-    contexts: context.VersionedContext
+    contexts: commons.context.VersionedContext
   ): Promise<void> {
     const fromVersion = signed.fromVersion
     if (fromVersion !== 1) throw new Error("Migration not supported")

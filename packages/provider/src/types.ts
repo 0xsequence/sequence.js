@@ -1,4 +1,4 @@
-import { context } from '@0xsequence/migration'
+import { commons } from '@0xsequence/core'
 import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
@@ -117,7 +117,7 @@ export interface WalletEventTypes {
   chainChanged: (chainIdHex: string) => void
 
   networks: (networks: NetworkConfig[]) => void
-  walletContext: (walletContext: context.VersionedContext) => void
+  walletContext: (walletContext: commons.context.VersionedContext) => void
 }
 
 export interface ProviderEventTypes extends WalletEventTypes {
@@ -276,7 +276,7 @@ export interface ETHAuthProof {
 
 export interface WalletSession {
   // Wallet context
-  walletContext?: context.VersionedContext
+  walletContext?: commons.context.VersionedContext
 
   // Account address of the wallet
   accountAddress?: string
