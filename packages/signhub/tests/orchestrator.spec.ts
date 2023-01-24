@@ -16,7 +16,7 @@ describe('Orchestrator', () => {
     ]
 
     const orchestrator = new Orchestrator(signers)
-    const signature = await orchestrator.signMessage('0x1234')
+    const signature = await orchestrator.signMessage('0x1234', {})
 
     expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
 
@@ -35,12 +35,12 @@ describe('Orchestrator', () => {
     const orchestrator = new Orchestrator(signers)
 
     let callbackCallsA = 0
-    orchestrator.subscribe((status) => {
+    orchestrator.subscribe((status, metadata) => {
       // Status should have all signers
       let numErrors = 0
       let numSignatures = 0
       let numPending = 0
-      expect(Object.keys(status.signers)).to.have.lengthOf(signers.length)
+      expect(Object.keys(status.signers)).to.have.lengthOf(signers.length, 'Should have all signers')
       for (const signer of signers) {
         expect(status.signers).to.have.property(signer.address)
         const signerStatus = status.signers[signer.address]
@@ -60,13 +60,13 @@ describe('Orchestrator', () => {
 
       callbackCallsA++
 
-      expect(numErrors).to.be.equal(0)
-      expect(numSignatures).to.be.equal(Math.max(callbackCallsA, 3))
-      expect(numPending).to.be.equal(Math.min(signers.length - callbackCallsA, 0))
+      expect(numErrors).to.be.equal(0, 'No errors should be present')
+      expect(numSignatures).to.be.equal(Math.max(callbackCallsA, 3), 'Should have max 3 signatures')
+      expect(numPending).to.be.equal(Math.min(signers.length - callbackCallsA, 0), 'Should have 0 pending')
     })
 
     let callbackCallsB = 0
-    await orchestrator.signMessage('0x1234', () => {
+    await orchestrator.signMessage('0x1234', {}, () => {
       callbackCallsB++
       return false
     })
@@ -107,7 +107,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return brokenSignerEOA.address
       },
-      requestSignature: function (message: ethers.utils.BytesLike, callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }): Promise<boolean> {
+      requestSignature: async function (
+        message: ethers.utils.BytesLike,
+        metadata: Object,
+        callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
+      ): Promise<boolean> {
         throw new Error('This is a broken signer.')
       },
       notifyStatusChange: function (status: Status): void {},
@@ -157,7 +161,7 @@ describe('Orchestrator', () => {
       expect(numPending).to.be.equal(Math.min(signers.length - callbackCallsA, 0))
     })
 
-    const signature = await orchestrator.signMessage('0x1234')
+    const signature = await orchestrator.signMessage('0x1234', {})
     expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
 
     for (const signer of signers) {
@@ -182,7 +186,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return rejectSignerEOA.address
       },
-      requestSignature: async function (message: ethers.utils.BytesLike, callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }): Promise<boolean> {
+      requestSignature: async function (
+        message: ethers.utils.BytesLike,
+        metadata: Object,
+        callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
+      ): Promise<boolean> {
         callbacks.onRejection('This is a rejected signer.')
         return true
       },
@@ -204,7 +212,7 @@ describe('Orchestrator', () => {
       callbackCallsA++
     })
 
-    const signature = await orchestrator.signMessage('0x1234')
+    const signature = await orchestrator.signMessage('0x1234', {})
     expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
 
     for (const signer of signers) {
@@ -229,7 +237,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return '0x1234'
       },
-      requestSignature: async function (message: ethers.utils.BytesLike, callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }): Promise<boolean> {
+      requestSignature: async function (
+        message: ethers.utils.BytesLike,
+        metadata: Object,
+        callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
+      ): Promise<boolean> {
         expect(message).to.be.equal(ogMessage)
         callbacks.onSignature('0x5678')
         return true
@@ -241,8 +253,115 @@ describe('Orchestrator', () => {
     }
 
     const orchestrator = new Orchestrator([signer])
-    const signature = await orchestrator.signMessage(ogMessage)
+    const signature = await orchestrator.signMessage(ogMessage, {})
 
     expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
+  })
+
+  it('Should pass metadata to signer', async () => {
+    const ogMessage = ethers.utils.randomBytes(99)
+    const signer: SapientSigner = {
+      getAddress: async function (): Promise<string> {
+        return '0x1234'
+      },
+      requestSignature: async function (
+        message: ethers.utils.BytesLike,
+        metadata: Object,
+        callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
+      ): Promise<boolean> {
+        expect(metadata).to.be.deep.equal({ test: 'test' })
+        callbacks.onSignature('0x5678')
+        return true
+      },
+      notifyStatusChange: function (status: Status): void {},
+      isEOA: function (): boolean {
+        return true
+      }
+    }
+
+    const orchestrator = new Orchestrator([signer])
+    const signature = await orchestrator.signMessage(ogMessage, { test: 'test' })
+
+    expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
+  })
+
+  it('Should pass updated metadata to signer', async () => {
+    const ogMessage = ethers.utils.randomBytes(99)
+
+    let firstCall = true
+    let errorOnNotify: any = undefined
+
+    const signer1: SapientSigner = {
+      getAddress: async function (): Promise<string> {
+        return '0x1234'
+      },
+      requestSignature: async function (
+        message: ethers.utils.BytesLike,
+        metadata: Object,
+        callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
+      ): Promise<boolean> {
+        expect(metadata).to.be.deep.equal({ test: 'test' })
+        callbacks.onSignature('0x5678')
+        return true
+      },
+      notifyStatusChange: function (status: Status, metadata: Object): void {
+        try {
+          if (firstCall) {
+            expect(metadata).to.be.deep.equal({ test: 'test' })
+          } else {
+            expect(metadata).to.be.deep.equal({ hello: 'world' })
+          }
+        } catch (e) {
+          errorOnNotify = e
+        }
+      },
+      isEOA: function (): boolean {
+        return true
+      }
+    }
+
+    const signer2: SapientSigner = {
+      getAddress: async function (): Promise<string> {
+        return '0x5678'
+      },
+      requestSignature: async function (
+        message: ethers.utils.BytesLike,
+        metadata: Object,
+        callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
+      ): Promise<boolean> {
+        expect(metadata).to.be.deep.equal({ test: 'test' })
+        callbacks.onSignature('0x9012')
+        return true
+      },
+      notifyStatusChange: function (status: Status, metadata: Object): void {
+        try {
+          if (firstCall) {
+            expect(metadata).to.be.deep.equal({ test: 'test' })
+          } else {
+            expect(metadata).to.be.deep.equal({ hello: 'world' })
+          }
+        } catch (e) {
+          errorOnNotify = e
+        }
+      },
+      isEOA: function (): boolean {
+        return true
+      }
+    }
+
+    const orchestrator = new Orchestrator([signer1, signer2])
+    const signature = await orchestrator.signMessage(ogMessage, { test: 'test' }, (s: Status, onNewMetadata: (metadata: Object) => void) => {
+      if (firstCall) {
+        firstCall = false
+        onNewMetadata({ hello: 'world' })
+        return false
+      }
+
+      return true
+    })
+
+    expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
+    expect((signature.signers['0x5678'] as any).signature).to.be.equal('0x9012')
+    if (errorOnNotify) throw errorOnNotify
   })
 })
