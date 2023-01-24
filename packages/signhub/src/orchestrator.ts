@@ -48,8 +48,18 @@ export class Orchestrator {
   private observers: ((status: Status, metadata: Object) => void)[] = []
   private signers: SapientSigner[] = []
 
-  constructor(signers: (ethers.Signer | SapientSigner)[]) {
+  private count = 0
+
+  constructor(signers: (ethers.Signer | SapientSigner)[], public tag: string = Orchestrator.randomTag()) {
     this.setSigners(signers)
+  }
+
+  private static randomTag(): string {
+    return `default-${ethers.utils.hexlify(ethers.utils.randomBytes(8)).slice(2)}`
+  }
+
+  private pullId(): string {
+    return `${this.tag}-${this.count++}`
   }
 
   setSigners(signers: (ethers.Signer | SapientSigner)[]) {
@@ -65,9 +75,9 @@ export class Orchestrator {
     return () => { this.observers = this.observers.filter((o) => o !== observer) }
   }
 
-  private async notifyObservers(status: Status, metadata: Object) {
+  private async notifyObservers(id: string, status: Status, metadata: Object) {
     await Promise.all([
-      ...this.signers.map(async (signer) => signer.notifyStatusChange(status, metadata)),
+      ...this.signers.map(async (signer) => signer.notifyStatusChange(id, status, metadata)),
       ...this.observers.map(async (observer) => observer(status, metadata))
     ])
   }
@@ -80,24 +90,26 @@ export class Orchestrator {
       onNewMetadata: (metadata: Object) => void
     ) => boolean
   ): Promise<Status> {
+    const id = this.pullId()
+
     return new Promise(async (resolve) => {
       const status: Status = { ended: false, message, signers: {} }
       let lastMetadata = metadata
 
       const onNewMetadata = (newMetadata: Object) => {
         lastMetadata = newMetadata
-        this.notifyObservers(status, lastMetadata)
+        this.notifyObservers(id, status, lastMetadata)
       }
 
       const onStatusUpdate = () => {
         try {
-          this.notifyObservers(status, lastMetadata)
+          this.notifyObservers(id, status, lastMetadata)
 
           const pending = Object.entries(status.signers).filter(([_, s]) => isSignerStatusPending(s))
           if ((callback && callback(status, onNewMetadata)) || pending.length === 0) {
             status.ended = true
             resolve(status)
-            this.notifyObservers(status, lastMetadata)
+            this.notifyObservers(id, status, lastMetadata)
             return
           }
         } catch (e) {
@@ -109,7 +121,7 @@ export class Orchestrator {
       const accepted = await Promise.allSettled(this.signers.map(async (s) => {
         const saddr = await s.getAddress()
         status.signers[saddr] = { situation: InitialSituation }
-        return s.requestSignature(message, metadata, {
+        return s.requestSignature(id, message, metadata, {
           onSignature: (signature) => {
             const isEOA = s.isEOA()
             status.signers[saddr] = { signature, isEOA }

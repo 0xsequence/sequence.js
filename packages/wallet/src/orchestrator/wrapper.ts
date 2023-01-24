@@ -13,11 +13,16 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.address
   }
 
-  async requestSignature(message: ethers.utils.BytesLike, metadata: Object, callbacks: {
-    onSignature: (signature: ethers.utils.BytesLike) => void;
-    onRejection: (error: string) => void;
-    onStatus: (situation: string) => void
-  }): Promise<boolean> {
+  async requestSignature(
+    _id: string,
+    message: ethers.utils.BytesLike,
+    metadata: Object,
+    callbacks: {
+      onSignature: (signature: ethers.utils.BytesLike) => void;
+      onRejection: (error: string) => void;
+      onStatus: (situation: string) => void
+    }
+  ): Promise<boolean> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
       throw new Error('SequenceOrchestratorWrapper only supports nested Sequence signatures')
     }
@@ -29,7 +34,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return true
   }
 
-  notifyStatusChange(_s: Status, _m: Object): void {}
+  notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
 
   isEOA(): boolean {
     return false
