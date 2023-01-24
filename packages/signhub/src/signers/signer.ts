@@ -4,13 +4,19 @@ import { Status } from "../orchestrator"
 export interface SapientSigner {
   getAddress(): Promise<string>
 
-  requestSignature(message: ethers.BytesLike, metadata: Object, callbacks: {
-    onSignature: (signature: ethers.BytesLike) => void,
-    onRejection: (error: string) => void,
-    onStatus: (situation: string) => void
-  }): Promise<boolean>
+  requestSignature(
+    id: string,
+    message: ethers.BytesLike,
+    metadata: Object,
+    callbacks: {
+      onSignature: (signature: ethers.BytesLike) => void,
+      onRejection: (error: string) => void,
+      onStatus: (situation: string) => void
+    }
+  ): Promise<boolean>
 
   notifyStatusChange(
+    id: string,
     status: Status,
     metadata: Object
   ): void

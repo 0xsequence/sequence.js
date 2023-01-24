@@ -1,6 +1,5 @@
 
 import * as chai from 'chai'
-import { assert } from 'console'
 import { ethers } from 'ethers'
 import { isSignerStatusPending, isSignerStatusRejected, isSignerStatusSigned, Orchestrator, Status } from '../src'
 import { SapientSigner } from '../src/signers'
@@ -108,13 +107,14 @@ describe('Orchestrator', () => {
         return brokenSignerEOA.address
       },
       requestSignature: async function (
+        id: string,
         message: ethers.utils.BytesLike,
         metadata: Object,
         callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
       ): Promise<boolean> {
         throw new Error('This is a broken signer.')
       },
-      notifyStatusChange: function (status: Status): void {},
+      notifyStatusChange: function (id: string, status: Status): void {},
       isEOA: function (): boolean {
         return true
       }
@@ -187,6 +187,7 @@ describe('Orchestrator', () => {
         return rejectSignerEOA.address
       },
       requestSignature: async function (
+        id: string,
         message: ethers.utils.BytesLike,
         metadata: Object,
         callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
@@ -194,7 +195,7 @@ describe('Orchestrator', () => {
         callbacks.onRejection('This is a rejected signer.')
         return true
       },
-      notifyStatusChange: function (status: Status): void {},
+      notifyStatusChange: function (id: string, status: Status): void {},
       isEOA: function (): boolean {
         return true
       }
@@ -238,6 +239,7 @@ describe('Orchestrator', () => {
         return '0x1234'
       },
       requestSignature: async function (
+        id: string,
         message: ethers.utils.BytesLike,
         metadata: Object,
         callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
@@ -246,7 +248,7 @@ describe('Orchestrator', () => {
         callbacks.onSignature('0x5678')
         return true
       },
-      notifyStatusChange: function (status: Status): void {},
+      notifyStatusChange: function (id: string, status: Status): void {},
       isEOA: function (): boolean {
         return true
       }
@@ -265,6 +267,7 @@ describe('Orchestrator', () => {
         return '0x1234'
       },
       requestSignature: async function (
+        id: string,
         message: ethers.utils.BytesLike,
         metadata: Object,
         callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
@@ -273,7 +276,7 @@ describe('Orchestrator', () => {
         callbacks.onSignature('0x5678')
         return true
       },
-      notifyStatusChange: function (status: Status): void {},
+      notifyStatusChange: function (id: string, status: Status): void {},
       isEOA: function (): boolean {
         return true
       }
@@ -296,6 +299,7 @@ describe('Orchestrator', () => {
         return '0x1234'
       },
       requestSignature: async function (
+        id: string,
         message: ethers.utils.BytesLike,
         metadata: Object,
         callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
@@ -304,7 +308,7 @@ describe('Orchestrator', () => {
         callbacks.onSignature('0x5678')
         return true
       },
-      notifyStatusChange: function (status: Status, metadata: Object): void {
+      notifyStatusChange: function (id: string, status: Status, metadata: Object): void {
         try {
           if (firstCall) {
             expect(metadata).to.be.deep.equal({ test: 'test' })
@@ -325,6 +329,7 @@ describe('Orchestrator', () => {
         return '0x5678'
       },
       requestSignature: async function (
+        id: string,
         message: ethers.utils.BytesLike,
         metadata: Object,
         callbacks: { onSignature: (signature: ethers.utils.BytesLike) => void; onRejection: (error: string) => void; onStatus: (situation: string) => void }
@@ -333,7 +338,7 @@ describe('Orchestrator', () => {
         callbacks.onSignature('0x9012')
         return true
       },
-      notifyStatusChange: function (status: Status, metadata: Object): void {
+      notifyStatusChange: function (id: string, status: Status, metadata: Object): void {
         try {
           if (firstCall) {
             expect(metadata).to.be.deep.equal({ test: 'test' })
@@ -363,5 +368,56 @@ describe('Orchestrator', () => {
     expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
     expect((signature.signers['0x5678'] as any).signature).to.be.equal('0x9012')
     if (errorOnNotify) throw errorOnNotify
+  })
+
+  it('Should generate distinct and incremental ids', async () => {
+    const ogMessage = ethers.utils.randomBytes(99)
+    const signer: SapientSigner = {
+      getAddress: async function (): Promise<string> {
+        return '0x1234'
+      },
+      requestSignature: async function (
+        id: string,
+        message: ethers.utils.BytesLike,
+        metadata: any,
+        callbacks: {
+          onSignature: (signature: ethers.utils.BytesLike) => void;
+          onRejection: (error: string) => void;
+          onStatus: (situation: string) => void
+        }
+      ): Promise<boolean> {
+        if (metadata.tag === 'test1') {
+          expect(id).to.be.equal('test-0')
+        }
+        if (metadata.tag === 'test2') {
+          expect(id).to.be.equal('test-1')
+        }
+        if (metadata.tag === 'test3') {
+          expect(id).to.be.equal('test-2')
+        }
+        callbacks.onSignature('0x5678')
+        return true
+      },
+      notifyStatusChange: function (id: string, status: Status): void {},
+      isEOA: function (): boolean {
+        return true
+      }
+    }
+
+    const orchestrator = new Orchestrator([signer], 'test')
+    const res1 = await orchestrator.signMessage(ogMessage, { tag: 'test1' })
+    const res2 = await orchestrator.signMessage(ogMessage, { tag: 'test2' })
+    const res3 = await orchestrator.signMessage(ogMessage, { tag: 'test3' })
+
+    expect((res1.signers['0x1234'] as any).signature).to.be.equal('0x5678')
+    expect((res2.signers['0x1234'] as any).signature).to.be.equal('0x5678')
+    expect((res3.signers['0x1234'] as any).signature).to.be.equal('0x5678')
+  })
+
+  it('Should auto-generate random tag', () => {
+    const orchestrator1 = new Orchestrator([])
+    const orchestrator2 = new Orchestrator([])
+
+    expect(orchestrator1.tag).to.not.be.equal(orchestrator2.tag)
   })
 })
