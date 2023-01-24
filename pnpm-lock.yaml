@@ -316,9 +316,13 @@ importers:
 
   packages/guard:
     specifiers:
+      '@0xsequence/core': workspace:^0.43.7
       '@0xsequence/signhub': workspace:^0.43.7
+      ethers: ^5.7.2
     dependencies:
+      '@0xsequence/core': link:../core
       '@0xsequence/signhub': link:../signhub
+      ethers: 5.7.2
 
   packages/indexer:
     specifiers: {}
