@@ -23,12 +23,9 @@ export class GuardSigner implements signers.SapientSigner {
     return this.address
   }
 
-  private idOfRequest(message: BytesLike): string {
-    return ethers.utils.keccak256(message)
-  }
-
   async requestSignature(
-    message: BytesLike,
+    id: string,
+    _message: BytesLike,
     metadata: Object,
     callbacks: {
       onSignature: (signature: BytesLike) => void;
@@ -41,14 +38,17 @@ export class GuardSigner implements signers.SapientSigner {
     } else {
       // Queue the request first, this method only does that
       // the requesting to the API is later handled on every status change
-      this.requests.set(this.idOfRequest(message), callbacks)
+      this.requests.set(id, callbacks)
     }
 
     return true
   }
 
-  notifyStatusChange(status: Status, metadata: Object): void {
-    const id = this.idOfRequest(status.message)
+  notifyStatusChange(
+    id: string,
+    status: Status,
+    metadata: Object
+  ): void {
     if (!this.requests.has(id)) return
 
     if (!commons.isWalletSignRequestMetadata(metadata)) {
@@ -56,7 +56,7 @@ export class GuardSigner implements signers.SapientSigner {
       return
     }
 
-    this.evaluateRequest(status.message, status, metadata)
+    this.evaluateRequest(id, status.message, status, metadata)
   }
 
   private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: ethers.BigNumberish): string {
@@ -66,9 +66,7 @@ export class GuardSigner implements signers.SapientSigner {
     )
   }
 
-  private async evaluateRequest(message: BytesLike, _: Status, metadata: commons.WalletSignRequestMetadata): Promise<void> {
-    const id = this.idOfRequest(message)
-
+  private async evaluateRequest(id: string, message: BytesLike, _: Status, metadata: commons.WalletSignRequestMetadata): Promise<void> {
     // Building auxData, notice: this uses the old v1 format
     // TODO: We should update the guard API so we can pass the metadata directly
     const coder = universal.genericCoderFor(metadata.config.version)
