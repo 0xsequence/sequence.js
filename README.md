@@ -77,15 +77,16 @@ and enjoyable.
 2. Code.. do your magic
 3. Run `pnpm changeset` to generate a new .changeset/ entry explaining the code changes
 4. Version bump all packages regardless of them having changes or not
-5. Commit and submit your changes as a PR for review
-6. Once merged and you're ready to make a release, continue to the next step. If you're not
+5. Run `pnpm i` to update the pnpm-lock.yaml.
+6. Commit and submit your changes as a PR for review
+7. Once merged and you're ready to make a release, continue to the next step. If you're not
    ready to make a release, then go back to step 2.
-7. Run `pnpm build && pnpm test` to double check all tests pass
-8. Run `pnpm version-packages` to bump versions of the packages
-9. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
-10. Run `pnpm release`. If the 2FA code timesout while publishing, run the command again
+8. Run `pnpm build && pnpm test` to double check all tests pass
+9. Run `pnpm version-packages` to bump versions of the packages
+10. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
+11. Run `pnpm release`. If the 2FA code timesout while publishing, run the command again
     with a new code, only the packages that were not published will be published.
-11. Finally, push your git tags, via: `git push --tags --no-verify`
+12. Finally, push your git tags, via: `git push --tags --no-verify`
 
 
 ## How to do a snapshot release
