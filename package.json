@@ -3,7 +3,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "build": "pnpm dev && pnpm typecheck && preconstruct build",
+    "build": "pnpm dev && pnpm typecheck && preconstruct build && node scripts/fix-mocha-ref.js",
     "watch": "preconstruct watch",
     "clean": "rimraf ./node_modules",
     "changeset": "changeset",
