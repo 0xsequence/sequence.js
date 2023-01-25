@@ -224,7 +224,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
     }
 
-    return universal.genericCoderFor(config.version).config.signersOf(config)
+    return universal.genericCoderFor(config.version).config.signersOf(config).map((s) => s.address)
   }
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with

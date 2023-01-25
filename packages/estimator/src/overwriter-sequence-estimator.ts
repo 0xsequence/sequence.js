@@ -18,7 +18,7 @@ export class OverwriterSequenceEstimator implements Estimator {
     const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
 
     const allSigners = await Promise.all(
-      v2.config.signersOfWithWeights(config.tree).map(async (s, i) => ({
+      v2.config.signersOf(config.tree).map(async (s, i) => ({
         index: i,
         address: s.address,
         weight: ethers.BigNumber.from(s.weight),
