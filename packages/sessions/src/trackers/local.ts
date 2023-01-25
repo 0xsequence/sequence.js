@@ -292,7 +292,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     }
 
     // Get all subdigests for the config members
-    const signers = v2.config.signersOf(fromConfig.tree)
+    const signers = v2.config.signersOf(fromConfig.tree).map((s) => s.address)
     const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
     const subdigests = [...new Set(subdigestsOfSigner.flat())]
 
@@ -531,7 +531,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
       if (!payload || !payload.message) return undefined
       if (!ethers.BigNumber.from(chainId).eq(payload.chainId)) return undefined
 
-      const signers = coder.config.signersOf(currentConfig as any)
+      const signers = coder.config.signersOf(currentConfig as any).map((s) => s.address)
 
       // Get all signatures (for all signers) for this subdigest
       const signatures = await Promise.all(signers.map(async (s) => {

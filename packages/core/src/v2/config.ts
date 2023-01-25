@@ -383,9 +383,9 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
   return false
 }
 
-export function signersOf(tree: Topology): string[] {
+export function signersOf(tree: Topology): { address: string, weight: number }[] {
   const stack: Topology[] = [tree]
-  const signers = new Set<string>()
+  const signers = new Set<{ address: string, weight: number }>()
 
   while (stack.length > 0) {
     const node = stack.pop()
@@ -396,31 +396,11 @@ export function signersOf(tree: Topology): string[] {
       stack.push(node.left)
       stack.push(node.right)
     } else if (isSignerLeaf(node)) {
-      signers.add(node.address)
+      signers.add({ address: node.address, weight: ethers.BigNumber.from(node.weight).toNumber() })
     }
   }
 
   return Array.from(signers)
-}
-
-export function signersOfWithWeights(tree: Topology): { address: string, weight: ethers.BigNumber }[] {
-  const stack: Topology[] = [tree]
-  const signers: { address: string, weight: ethers.BigNumber }[] = []
-
-  while (stack.length > 0) {
-    const node = stack.pop()
-
-    if (isNestedLeaf(node)) {
-      stack.push(node.tree)
-    } else if (isNode(node)) {
-      stack.push(node.left)
-      stack.push(node.right)
-    } else if (isSignerLeaf(node)) {
-      signers.push({ address: node.address, weight: ethers.BigNumber.from(node.weight) })
-    }
-  }
-
-  return signers
 }
 
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
@@ -444,7 +424,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return ethers.BigNumber.from(config.checkpoint)
   },
 
-  signersOf: (config: WalletConfig): string[] => {
+  signersOf: (config: WalletConfig): { address: string, weight: number }[] => {
     return signersOf(config.tree)
   },
 

@@ -25,7 +25,7 @@ export interface ConfigCoder<T extends Config = Config> {
 
   fromSimple: (config: SimpleConfig) => T
 
-  signersOf: (config: T) => string[]
+  signersOf: (config: T) => { address: string, weight: number }[]
 
   toJSON: (config: T) => string
   fromJSON: (json: string) => T
