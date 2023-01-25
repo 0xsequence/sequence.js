@@ -166,8 +166,8 @@ export class Account {
 
   provider(chainId: ethers.BigNumberish): ethers.providers.Provider {
     const found = this.network(chainId)
-    if (!found.provider) throw new Error(`Provider not found for chainId ${chainId}`)
-    return found.provider
+    if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
+    return found.provider || new ethers.providers.JsonRpcProvider(found.rpcUrl)
   }
 
   reader(chainId: ethers.BigNumberish): commons.reader.Reader {
