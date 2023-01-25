@@ -229,7 +229,7 @@ describe('Wallet integration', function () {
     expect(session2.account.address).to.equal(session.account.address)
     expect(newConfig.threshold).to.deep.equal(ethers.BigNumber.from(2))
 
-    const newSigners = v2.config.signersOf(newConfig.tree)
+    const newSigners = v2.config.signersOf(newConfig.tree).map((s) => s.address)
     expect(newSigners.length).to.equal(2)
     expect(newSigners).to.include(newSigner.address)
     expect(newSigners).to.include(referenceSigner.address)

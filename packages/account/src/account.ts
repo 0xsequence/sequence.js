@@ -268,7 +268,7 @@ export class Account {
   // 2. Get any pending migrations that have been signed by the wallet
   // 3. Get any pending configuration updates that have been signed by the wallet
   // 4. Fetch reverse lookups for both on-chain and pending configurations
-  async status(chainId: ethers.BigNumberish): Promise<AccountStatus> {
+  async status(chainId: ethers.BigNumberish, longestPath: boolean = false): Promise<AccountStatus> {
     const isDeployedPromise = this.reader(chainId).isDeployed(this.address)
     const onChainVersionInfoPromise = this.onchainVersionInfo(chainId)
 
@@ -317,6 +317,7 @@ export class Account {
     const presigned = await this.tracker.loadPresignedConfiguration({
       wallet: this.address,
       fromImageHash: fromImageHash,
+      longestPath
     })
 
     const imageHash = presigned && presigned.length > 0 ? presigned[presigned.length - 1].nextImageHash : fromImageHash
@@ -434,6 +435,14 @@ export class Account {
     const signature = await wallet.signDigest(digest)
 
     return decorate ? this.decorateSignature(signature, status) : signature
+  }
+
+  async removeSigners(
+    signers: string[]
+  ): Promise<void> {
+    const currentConfig = await this.status(0).then((s) => s.config)
+    const newConfig = this.coders.config.editConfig(currentConfig, { remove: signers })
+    return this.updateConfig(newConfig)
   }
 
   async updateConfig(
@@ -622,5 +631,64 @@ export class Account {
   ): Promise<string> {
     const digest = encodeTypedDataDigest({ domain, types, message })
     return this.signDigest(digest, chainId)
+  }
+
+  async getAllSigners(): Promise<{
+    address: string,
+    weight: number,
+    network: number,
+    flaggedForRemoval: boolean
+  }[]> {
+    const networks = this.networks
+
+    // Getting all status with `longestPath` set to true will give us all the possible configurations
+    // between the current onChain config and the latest config, including the ones "flagged for removal"
+    const statuses = await Promise.all(networks.map((n) => this.status(n.chainId, true)))
+
+    const allSigners: {
+      address: string,
+      weight: number,
+      network: number,
+      flaggedForRemoval: boolean
+    }[] = []
+
+    // We need to get the signers for each status
+    await Promise.all(statuses.map(async (status, inet) => {
+      const chainId = networks[inet].chainId
+      return Promise.all(status.presignedConfigurations.map(async (update, iconf) => {
+        const isLast = iconf === status.presignedConfigurations.length - 1
+        const config = await this.tracker.configOfImageHash({ imageHash: update.nextImageHash })
+        if (!config) {
+          console.warn(`AllSigners may be incomplete, config not found for imageHash ${update.nextImageHash}`)
+          return
+        }
+
+        const coder = universal.genericCoderFor(config.version)
+        const signers = coder.config.signersOf(config)
+
+        signers.forEach((signer) => {
+          const exists = allSigners.find((s) => (
+            s.address === signer.address &&
+            s.network === chainId
+          ))
+
+          if (exists && isLast && exists.flaggedForRemoval) {
+            exists.flaggedForRemoval = false
+            return
+          }
+
+          if (exists) return
+
+          allSigners.push({
+            address: signer.address,
+            weight: signer.weight,
+            network: chainId,
+            flaggedForRemoval: !isLast
+          })
+        })
+      }))
+    }))
+
+    return allSigners
   }
 }
