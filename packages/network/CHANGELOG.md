@@ -1,5 +1,18 @@
 # @0xsequence/network
 
+## 0.43.11
+
+### Patch Changes
+
+- fix lockfiles
+- re-add mocha type deleter
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/indexer@0.43.11
+  - @0xsequence/provider@0.43.11
+  - @0xsequence/relayer@0.43.11
+  - @0xsequence/utils@0.43.11
+
 ## 0.43.10
 
 ### Patch Changes

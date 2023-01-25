@@ -1,5 +1,21 @@
 # @0xsequence/wallet
 
+## 0.43.11
+
+### Patch Changes
+
+- fix lockfiles
+- re-add mocha type deleter
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@0.43.11
+  - @0xsequence/config@0.43.11
+  - @0xsequence/guard@0.43.11
+  - @0xsequence/network@0.43.11
+  - @0xsequence/relayer@0.43.11
+  - @0xsequence/transactions@0.43.11
+  - @0xsequence/utils@0.43.11
+
 ## 0.43.10
 
 ### Patch Changes

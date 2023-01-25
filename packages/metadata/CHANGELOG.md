@@ -1,5 +1,12 @@
 # @0xsequence/metadata
 
+## 0.43.11
+
+### Patch Changes
+
+- fix lockfiles
+- re-add mocha type deleter
+
 ## 0.43.10
 
 ### Patch Changes

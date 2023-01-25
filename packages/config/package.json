@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/config",
-  "version": "0.43.10",
+  "version": "0.43.11",
   "description": "config sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/config",
   "source": "src/index.ts",
@@ -18,10 +18,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.43.10",
-    "@0xsequence/multicall": "^0.43.10",
-    "@0xsequence/network": "^0.43.10",
-    "@0xsequence/utils": "^0.43.10"
+    "@0xsequence/abi": "^0.43.11",
+    "@0xsequence/multicall": "^0.43.11",
+    "@0xsequence/network": "^0.43.11",
+    "@0xsequence/utils": "^0.43.11"
   },
   "peerDependencies": {
     "ethers": ">=5.5"

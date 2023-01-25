@@ -1,5 +1,15 @@
 # @0xsequence/deployer
 
+## 0.43.11
+
+### Patch Changes
+
+- fix lockfiles
+- re-add mocha type deleter
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/utils@0.43.11
+
 ## 0.43.10
 
 ### Patch Changes
