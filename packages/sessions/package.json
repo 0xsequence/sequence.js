@@ -17,12 +17,14 @@
     "@0xsequence/core": "^0.43.4",
     "@0xsequence/migration": "^0.43.4",
     "@0xsequence/replacer": "workspace:^0.43.4",
-    "ethers": "^5.5.2"
+    "ethers": "^5.5.2",
+    "idb": "^7.1.1"
   },
   "devDependencies": {
     "@0xsequence/signhub": "^0.43.7",
     "@0xsequence/tests": "^0.43.4",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "fake-indexeddb": "^4.0.1",
     "nyc": "^15.1.0"
   },
   "files": [
