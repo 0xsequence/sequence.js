@@ -680,6 +680,7 @@ export class Wallet implements WalletProvider {
     this.networks = []
     this.providers = {}
     this.transport.cachedProvider?.clearCache()
+    this.transport.messageProvider?.unregister()
   }
 }
 
@@ -753,12 +754,18 @@ export const DefaultProviderConfig: ProviderConfig = {
 let walletInstance: Wallet | undefined
 
 export const initWallet = async (network?: string | number, config?: Partial<ProviderConfig>) => {
-  if (walletInstance && walletInstance.isOpened()) {
-    walletInstance.closeWallet()
+  if (walletInstance) {
+    return walletInstance
   }
   walletInstance = new Wallet(network, config)
   await walletInstance.loadSession(network)
   return walletInstance
+}
+
+export const unregisterWallet = () => {
+  if (!walletInstance) return
+  walletInstance.closeWallet()
+  walletInstance.disconnect()
 }
 
 export const getWallet = () => {
