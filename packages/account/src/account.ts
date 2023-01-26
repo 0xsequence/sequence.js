@@ -437,11 +437,19 @@ export class Account {
     return decorate ? this.decorateSignature(signature, status) : signature
   }
 
-  async removeSigners(
-    signers: string[]
+  async editConfig(
+    changes: {
+      add?: commons.config.SimpleSigner[];
+      remove?: string[];
+      threshold?: ethers.BigNumberish;
+    }
   ): Promise<void> {
     const currentConfig = await this.status(0).then((s) => s.config)
-    const newConfig = this.coders.config.editConfig(currentConfig, { remove: signers })
+    const newConfig = this.coders.config.editConfig(currentConfig, {
+      ...changes,
+      checkpoint: this.coders.config.checkpointOf(currentConfig).add(1)
+    })
+
     return this.updateConfig(newConfig)
   }
 
