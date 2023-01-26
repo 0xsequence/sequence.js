@@ -9,6 +9,9 @@ import { ethers } from 'ethers'
 import { Wallet } from '@0xsequence/wallet'
 import { Orchestrator } from '@0xsequence/signhub'
 
+// This is a hack to get around the fact that indexedDB is not available in nodejs
+import "fake-indexeddb/auto"
+
 const { expect } = chai
 
 const ConfigCases = [{
@@ -125,8 +128,11 @@ describe('Local config tracker', () => {
   });
 
   ([{
-    name: 'Using memory store',
-    store: () => new trackers.local.MemoryTrackerStore()
+  //   name: 'Using memory store',
+  //   store: () => new trackers.stores.MemoryTrackerStore()
+  // }, {
+    name: 'Using IndexedDB store',
+    store: () => new trackers.stores.IndexedDBStore('test')
   }]).map(({ name, store }) => {
     describe(name, () => {
       let tracker: tracker.ConfigTracker
