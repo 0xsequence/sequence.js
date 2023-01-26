@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.12
+
+### Patch Changes
+
+- provider: single wallet init, and add new unregisterWallet() method
+
 ## 0.43.11
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.43.12
+
+### Patch Changes
+
+- provider: single wallet init, and add new unregisterWallet() method
+- Updated dependencies
+  - @0xsequence/abi@0.43.12
+  - @0xsequence/config@0.43.12
+  - @0xsequence/guard@0.43.12
+  - @0xsequence/network@0.43.12
+  - @0xsequence/relayer@0.43.12
+  - @0xsequence/transactions@0.43.12
+  - @0xsequence/utils@0.43.12
+
 ## 0.43.11
 
 ### Patch Changes
