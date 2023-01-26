@@ -588,6 +588,11 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider!.once(event, fn)
   }
 
+  unregister = () => {
+    this.disconnect()
+    this.transport.messageProvider?.unregister()
+  }
+
   private saveSession = async (session: WalletSession) => {
     logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
@@ -680,7 +685,6 @@ export class Wallet implements WalletProvider {
     this.networks = []
     this.providers = {}
     this.transport.cachedProvider?.clearCache()
-    this.transport.messageProvider?.unregister()
   }
 }
 
@@ -765,7 +769,7 @@ export const initWallet = async (network?: string | number, config?: Partial<Pro
 export const unregisterWallet = () => {
   if (!walletInstance) return
   walletInstance.closeWallet()
-  walletInstance.disconnect()
+  walletInstance.unregister()
 }
 
 export const getWallet = () => {
