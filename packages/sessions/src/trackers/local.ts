@@ -6,27 +6,102 @@ import { ethers } from "ethers"
 import { runByEIP5719 } from "@0xsequence/replacer"
 import { ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
 
-export interface KeyValueStore {
-  get: (key: string) => Promise<string | undefined>
-  set: (key: string, value: string) => Promise<void>
+export interface TrackerStore {
+  // top level configurations store
+  loadConfig: (imageHash: string) => Promise<v1.config.WalletConfig | PlainV2Config | undefined>
+  saveConfig: (imageHash: string, config: v1.config.WalletConfig | PlainV2Config) => Promise<void>
 
-  setMany: (key: string, value: string) => Promise<void>
-  getMany: (key: string) => Promise<string[]>
+  // v2 configurations store
+  loadV2Node: (nodeHash: string) => Promise<PlainNode | PlainNested | v2.config.Topology | undefined>
+  saveV2Node: (nodeHash: string, node: PlainNode | PlainNested | v2.config.Topology) => Promise<void>
+
+  // counter-factual wallets
+  loadCounterFactualWallet: (wallet: string) => Promise<{ imageHash: string, context: commons.context.WalletContext } | undefined>
+  saveCounterFactualWallet: (wallet: string, imageHash: string, context: commons.context.WalletContext) => Promise<void>
+
+  // payloads
+  loadPayloadOfSubdigest: (subdigest: string) => Promise<commons.signature.SignedPayload | undefined>
+  savePayloadOfSubdigest: (subdigest: string, payload: commons.signature.SignedPayload) => Promise<void>
+
+  // signatures
+  loadSubdigestsOfSigner: (signer: string) => Promise<string[]>
+  loadSignatureOfSubdigest: (signer: string, subdigest: string) => Promise<ethers.BytesLike | undefined>
+  saveSignatureOfSubdigest: (signer: string, subdigest: string, payload: ethers.BytesLike) => Promise<void>
+
+  // migrations
+  loadMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number) => Promise<string[]>
+  saveMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number, subdigest: string) => Promise<void>
 }
 
-export class MemoryStore implements KeyValueStore {
-  private store: { [key: string]: string } = {}
-  private manyStore: { [key: string]: string[] } = {}
+export class MemoryTrackerStore implements TrackerStore {
+  private configs: { [imageHash: string]: v1.config.WalletConfig | PlainV2Config } = {}
+  private v2Nodes: { [nodeHash: string]: PlainNode | PlainNested | v2.config.Topology } = {}
+  private counterFactualWallets: { [wallet: string]: { imageHash: string, context: commons.context.WalletContext } } = {}
+  private payloads: { [subdigest: string]: commons.signature.SignedPayload } = {}
+  private signatures: { [signer: string]: { [subdigest: string]: ethers.BytesLike } } = {}
+  private migrations: { [wallet: string]: { [fromVersion: number]: { [toVersion: number]: string[] } } } = {}
 
-  get = async (key: string) => this.store[key]
-  set = async (key: string, value: string) => { this.store[key] = value }
-
-  setMany = async (key: string, value: string) => {
-    if (!this.manyStore[key]) this.manyStore[key] = []
-    this.manyStore[key].push(value)
+  loadConfig = (imageHash: string): Promise<v1.config.WalletConfig | PlainV2Config | undefined> => {
+    return Promise.resolve(this.configs[imageHash])
   }
 
-  getMany = async (key: string) => this.manyStore[key] || []
+  saveConfig = (imageHash: string, config: v1.config.WalletConfig | PlainV2Config): Promise<void> => {
+    this.configs[imageHash] = config
+    return Promise.resolve()
+  }
+  
+  loadV2Node = (nodeHash: string): Promise<v2.config.Topology | PlainNode | PlainNested | undefined> => {
+    return Promise.resolve(this.v2Nodes[nodeHash])
+  }
+
+  saveV2Node = (nodeHash: string, node: v2.config.Topology | PlainNode | PlainNested): Promise<void> => {
+    this.v2Nodes[nodeHash] = node
+    return Promise.resolve()
+  }
+
+  loadCounterFactualWallet = (wallet: string): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> => {
+    return Promise.resolve(this.counterFactualWallets[wallet])
+  }
+
+  saveCounterFactualWallet = (wallet: string, imageHash: string, context: commons.context.WalletContext): Promise<void> => {
+    this.counterFactualWallets[wallet] = { imageHash, context }
+    return Promise.resolve()
+  }
+
+  loadPayloadOfSubdigest = (subdigest: string): Promise<commons.signature.SignedPayload | undefined> => {
+    return Promise.resolve(this.payloads[subdigest])
+  }
+
+  savePayloadOfSubdigest = (subdigest: string, payload: commons.signature.SignedPayload): Promise<void> => {
+    this.payloads[subdigest] = payload
+    return Promise.resolve()
+  }
+
+  loadSubdigestsOfSigner = (signer: string): Promise<string[]> => {
+    return Promise.resolve(Object.keys(this.signatures[signer] || {}))
+  }
+
+  loadSignatureOfSubdigest = (signer: string, subdigest: string): Promise<ethers.BytesLike | undefined> => {
+    return Promise.resolve(this.signatures[signer]?.[subdigest])
+  }
+
+  saveSignatureOfSubdigest = (signer: string, subdigest: string, payload: ethers.BytesLike): Promise<void> => {
+    if (!this.signatures[signer]) this.signatures[signer] = {}
+    this.signatures[signer][subdigest] = payload
+    return Promise.resolve()
+  }
+
+  loadMigrationsSubdigest = (wallet: string, fromVersion: number, toVersion: number): Promise<string[]> => {
+    return Promise.resolve(this.migrations[wallet]?.[fromVersion]?.[toVersion] || [])
+  }
+
+  saveMigrationsSubdigest = (wallet: string, fromVersion: number, toVersion: number, subdigest: string): Promise<void> => {
+    if (!this.migrations[wallet]) this.migrations[wallet] = {}
+    if (!this.migrations[wallet][fromVersion]) this.migrations[wallet][fromVersion] = {}
+    if (!this.migrations[wallet][fromVersion][toVersion]) this.migrations[wallet][fromVersion][toVersion] = []
+    this.migrations[wallet][fromVersion][toVersion].push(subdigest)
+    return Promise.resolve()
+  }
 }
 
 type PlainNode = {
@@ -65,31 +140,29 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
     // For now, it's recommended to use Mainnet as the provider.
     public provider: ethers.providers.Provider,
-    private store: KeyValueStore = new MemoryStore()
+    private store: TrackerStore = new MemoryTrackerStore()
   ) {}
 
   private loadTopology = async (hash: string): Promise<v2.config.Topology> => {
-    const plain = await this.store.get(hash)
-    if (!plain || plain === 'undefined' || plain === '') return { nodeHash: hash }
+    const node = await this.store.loadV2Node(hash)
+    if (!node) return { nodeHash: hash }
 
-    const parsed = JSON.parse(plain)
-
-    if (isPlainNode(parsed)) {
+    if (isPlainNode(node)) {
       return {
-        left: await this.loadTopology(parsed.left),
-        right: await this.loadTopology(parsed.right)
+        left: await this.loadTopology(node.left),
+        right: await this.loadTopology(node.right)
       }
     }
 
-    if (isPlainNested(parsed)) {
+    if (isPlainNested(node)) {
       return {
-        weight: ethers.BigNumber.from(parsed.weight),
-        threshold: ethers.BigNumber.from(parsed.threshold),
-        tree: await this.loadTopology(parsed.tree)
+        weight: ethers.BigNumber.from(node.weight),
+        threshold: ethers.BigNumber.from(node.threshold),
+        tree: await this.loadTopology(node.tree)
       }
     }
 
-    return v2.config.topologyFromJSON(parsed)
+    return node
   }
 
   private saveTopology = async (node: v2.config.Topology): Promise<void> => {
@@ -102,33 +175,41 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     if (v2.config.isNode(node)) {
       const saveLeft = this.saveTopology(node.left)
       const saveRight = this.saveTopology(node.right)
-
-      await Promise.all([saveLeft, saveRight, this.store.set(hash, JSON.stringify({
+      const saveThis = this.store.saveV2Node(hash, {
         left: v2.config.hashNode(node.left),
         right: v2.config.hashNode(node.right)
-      } as PlainNode))])
+      } as PlainNode)
+
+      await Promise.all([saveLeft, saveRight, saveThis])
 
       return
     }
 
     if (v2.config.isNestedLeaf(node)) {
       const saveTree = this.saveTopology(node.tree)
-
-      await Promise.all([saveTree, this.store.set(hash, JSON.stringify({
+      const saveThis = this.store.saveV2Node(hash, {
         weight: ethers.BigNumber.from(node.weight).toString(),
         threshold: ethers.BigNumber.from(node.threshold).toString(),
         tree: v2.config.hashNode(node.tree)
-      } as PlainNested))])
+      } as PlainNested)
+
+      await Promise.all([saveTree, saveThis])
 
       return
     }
 
     // If it's a normal leaf, then we just store it
-    if (
-      v2.config.isSignerLeaf(node) ||
-      v2.config.isSubdigestLeaf(node)
-    ) {
-      return this.store.set(hash, v2.config.topologyToJSON(node))
+    if (v2.config.isSignerLeaf(node)) {
+      return this.store.saveV2Node(hash, {
+        address: node.address,
+        weight: node.weight
+      })
+    }
+
+    if (v2.config.isSubdigestLeaf(node)) {
+      return this.store.saveV2Node(hash, {
+        subdigest: node.subdigest
+      })
     }
 
     throw new Error(`Unknown topology type: ${node}`)
@@ -141,7 +222,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     if (v1.config.ConfigCoder.isWalletConfig(config)) {
       // We can store the configuration as-is
       const imageHash = v1.config.ConfigCoder.imageHashOf(config)
-      return this.store.set(imageHash, v1.config.ConfigCoder.toJSON(config))
+      return this.store.saveConfig(imageHash, config)
     }
 
     if (v2.config.ConfigCoder.isWalletConfig(config)) {
@@ -149,14 +230,14 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
       // then we can reconstruct it. This also means we can combine multiple configurations
       // if they share information
       const storeTree = this.saveTopology(config.tree)
-      await Promise.all([storeTree, this.store.set(
-        v2.config.ConfigCoder.imageHashOf(config),
-        JSON.stringify({
-          version: 2,
-          threshold: ethers.BigNumber.from(config.threshold).toString(),
-          checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
-          tree: v2.config.hashNode(config.tree)
-      } as PlainV2Config))])
+      const storeConfig = this.store.saveConfig(v2.config.ConfigCoder.imageHashOf(config), {
+        version: 2,
+        threshold: ethers.BigNumber.from(config.threshold).toString(),
+        checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
+        tree: v2.config.hashNode(config.tree)
+      })
+
+      await Promise.all([storeTree, storeConfig])
     }
 
     return
@@ -167,25 +248,23 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
   }): Promise<commons.config.Config | undefined> => {
     const { imageHash } = args
 
-    const protoConfigRes = await this.store.get(imageHash)
-    if (!protoConfigRes) return undefined
+    const config = await this.store.loadConfig(imageHash)
+    if (!config) return undefined
 
-    const protoConfig = JSON.parse(protoConfigRes) as v1.config.WalletConfig | PlainV2Config
-
-    if (protoConfig.version === 1) {
-      return v1.config.ConfigCoder.fromJSON(protoConfigRes)
+    if (config.version === 1) {
+      return config
     }
 
-    if (isPlainV2Config(protoConfig)) {
+    if (isPlainV2Config(config)) {
       return {
         version: 2,
-        threshold: ethers.BigNumber.from(protoConfig.threshold),
-        checkpoint: ethers.BigNumber.from(protoConfig.checkpoint),
-        tree: await this.loadTopology(protoConfig.tree)
+        threshold: ethers.BigNumber.from(config.threshold),
+        checkpoint: ethers.BigNumber.from(config.checkpoint),
+        tree: await this.loadTopology(config.tree)
       } as v2.config.WalletConfig
     }
 
-    throw new Error(`Unknown config type: ${protoConfig}`)
+    throw new Error(`Unknown config type: ${config}`)
   }
 
   saveCounterFactualWallet = async (args: {
@@ -193,14 +272,10 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     context: commons.context.WalletContext[]
   }): Promise<void> => {
     const { imageHash, context } = args
-    for (const ctx of context) {
+    await Promise.all(context.map((ctx) => {
       const address = commons.context.addressOf(ctx, imageHash)
-
-      await this.store.set(address, JSON.stringify({
-        imageHash,
-        context: ctx
-      }))
-    }
+      return this.store.saveCounterFactualWallet(address, imageHash, ctx)
+    }))
   }
 
   imageHashOfCounterFactualWallet = async (args: {
@@ -210,14 +285,13 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     context: commons.context.WalletContext
   } | undefined> => {
     const { wallet } = args
-    const result = await this.store.get(wallet)
+    const result = await this.store.loadCounterFactualWallet(wallet)
 
     if (!result) return undefined
-    const parsed = JSON.parse(result)
 
     return {
-      imageHash: parsed.imageHash,
-      context: parsed.context
+      imageHash: result.imageHash,
+      context: result.context
     }
   }
 
@@ -227,25 +301,14 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     const { payload } = args
 
     const subdigest = commons.signature.subdigestOf(payload)
-    return this.store.set(subdigest, JSON.stringify({
-      ...payload,
-      chainId: ethers.BigNumber.from(payload.chainId).toString()
-    }))
+    await this.store.savePayloadOfSubdigest(subdigest, payload)
   }
 
   payloadOfSubdigest = async (args: {
     subdigest: string
   }): Promise<commons.signature.SignedPayload | undefined> => {
     const { subdigest } = args
-
-    const result = await this.store.get(subdigest)
-    if (!result) return undefined
-
-    const parsed = JSON.parse(result)
-    return {
-      ...parsed,
-      chainId: ethers.BigNumber.from(parsed.chainId)
-    }
+    return this.store.loadPayloadOfSubdigest(subdigest)
   }
 
   savePresignedConfiguration = async (
@@ -268,12 +331,11 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     // Save all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)
-    await Promise.all(signatures.map((sig) => this.saveSubdigest({
-      wallet: args.wallet,
-      subdigest: recovered.subdigest,
-      signer: sig.address,
-      signature: sig.signature
-    })))
+    await Promise.all(signatures.map((sig) => this.store.saveSignatureOfSubdigest(
+      sig.address,
+      recovered.subdigest,
+      sig.signature
+    )))
 
     // Save the recovered configuration
     await this.saveWalletConfig({ config: recovered.config })
@@ -293,7 +355,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     // Get all subdigests for the config members
     const signers = v2.config.signersOf(fromConfig.tree).map((s) => s.address)
-    const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.getMany(s)))
+    const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.loadSubdigestsOfSigner(s)))
     const subdigests = [...new Set(subdigestsOfSigner.flat())]
 
     // Get all unique payloads
@@ -336,7 +398,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
       // Get all signatures (for all signers) for this subdigest
       const signatures = await Promise.all(signers.map(async (s) => {
-        const res = await this.store.get(`${payload.subdigest}:${s}`)
+        const res = await this.store.loadSignatureOfSubdigest(s, payload.subdigest)
         return { signer: s, signature: res, subdigest: payload.subdigest }
       }))
 
@@ -397,24 +459,8 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     await Promise.all([
       this.savePayload({ payload }),
-      this.saveSubdigest({ wallet: args.wallet, signer, subdigest, signature: args.signature }),
+      this.store.saveSignatureOfSubdigest(signer, subdigest, args.signature)
     ])
-  }
-
-  private saveSubdigest = async (args: {
-    wallet: string,
-    signer: string,
-    subdigest: string,
-    signature: string
-  }) => {
-    // subdigest:address -> signature
-    const key = `${args.subdigest}:${args.signer}`
-    const saveSignature = this.store.set(key, args.signature)
-
-    // address -> subdigest[]
-    const saveSubdigests = this.store.setMany(args.signer, args.subdigest)
-
-    await Promise.all([saveSignature, saveSubdigests])
   }
 
   walletsOfSigner = async (args: {
@@ -427,7 +473,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
       signature: string
     }
   }[]> => {
-    const subdigests = await this.store.getMany(args.signer)
+    const subdigests = await this.store.loadSubdigestsOfSigner(args.signer)
     const payloads = await Promise.all(subdigests.map((s) => this.payloadOfSubdigest({ subdigest: s })))
       .then((p) => p.filter((p) => p !== undefined) as commons.signature.SignedPayload[])
 
@@ -446,7 +492,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
       if (result.find((r) => r.wallet === wallet)) continue
 
       const subdigest = commons.signature.subdigestOf(payload)
-      const signature = await this.store.get(`${subdigest}:${args.signer}`)
+      const signature = await this.store.loadSignatureOfSubdigest(args.signer, subdigest)
       if (!signature) continue
 
       result.push({
@@ -454,7 +500,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
         proof: {
           digest: payload.digest,
           chainId: ethers.BigNumber.from(payload.chainId),
-          signature
+          signature: ethers.utils.hexlify(signature)
         }
       })
     }
@@ -491,12 +537,11 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     // Save all signature parts
     const signatures = v1.signature.SignatureCoder.signaturesOf(recovered.config)
-    await Promise.all(signatures.map((sig) => this.saveSubdigest({
-      wallet: address,
-      subdigest: recovered.subdigest,
-      signer: sig.address,
-      signature: sig.signature
-    })))
+    await Promise.all(signatures.map((sig) => this.store.saveSignatureOfSubdigest(
+      sig.address,
+      recovered.subdigest,
+      sig.signature
+    )))
 
     // Save the recovered config
     await this.saveWalletConfig({
@@ -505,7 +550,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
     // Save the migrate transaction
     const subdigest = commons.signature.subdigestOf(payload)
-    await this.store.setMany(`migrate:${address}:${fromVersion}:${fromVersion + 1}`, subdigest)
+    await this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest)
   }
 
   async getMigration(
@@ -517,7 +562,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     // Get the current config and all possible migration payloads
     const [currentConfig, subdigests] = await Promise.all([
       this.configOfImageHash({ imageHash: fromImageHash }),
-      this.store.getMany(`migrate:${address}:${fromVersion}:${fromVersion + 1}`)
+      this.store.loadMigrationsSubdigest(address, fromVersion, fromVersion + 1)
     ])
 
     const coder = universal.coderFor(fromVersion)
@@ -535,7 +580,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
       // Get all signatures (for all signers) for this subdigest
       const signatures = await Promise.all(signers.map(async (s) => {
-        const res = await this.store.get(`${subdigest}:${s}`)
+        const res = await this.store.loadSignatureOfSubdigest(s, subdigest)
         return { signer: s, signature: res, subdigest }
       }))
 

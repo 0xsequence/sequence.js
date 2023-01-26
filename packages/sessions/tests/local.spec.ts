@@ -126,7 +126,7 @@ describe('Local config tracker', () => {
 
   ([{
     name: 'Using memory store',
-    store: () => new trackers.local.MemoryStore()
+    store: () => new trackers.local.MemoryTrackerStore()
   }]).map(({ name, store }) => {
     describe(name, () => {
       let tracker: tracker.ConfigTracker
