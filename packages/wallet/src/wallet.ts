@@ -293,7 +293,8 @@ export class Wallet<
 
     return {
       intent: {
-        id: digest,
+        // Maybe is better if signDigest returns the subdigest directly
+        id: subDigestOf(this.address, this.chainId, digest),
         wallet: this.address
       },
       chainId: this.chainId,
