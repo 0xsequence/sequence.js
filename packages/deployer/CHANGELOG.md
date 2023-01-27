@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.13
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/utils@0.43.13
+
 ## 0.43.12
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.43.13
+
+### Patch Changes
+
+- metadata: update bindings
+
 ## 0.43.12
 
 ### Patch Changes

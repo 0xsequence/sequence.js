@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.43.13
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.13
+  - @0xsequence/network@0.43.13
+  - @0xsequence/utils@0.43.13
+
 ## 0.43.12
 
 ### Patch Changes
