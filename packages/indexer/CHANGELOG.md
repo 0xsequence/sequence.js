@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.43.14
+
+### Patch Changes
+
+- bump
+
 ## 0.43.13
 
 ### Patch Changes

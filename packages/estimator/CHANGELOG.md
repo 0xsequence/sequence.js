@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.43.14
+
+### Patch Changes
+
+- bump
+- Updated dependencies
+  - @0xsequence/abi@0.43.14
+  - @0xsequence/config@0.43.14
+  - @0xsequence/network@0.43.14
+  - @0xsequence/transactions@0.43.14
+  - @0xsequence/utils@0.43.14
+
 ## 0.43.13
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.14
+
+### Patch Changes
+
+- bump
+- Updated dependencies
+  - @0xsequence/transactions@0.43.14
+
 ## 0.43.13
 
 ### Patch Changes
