@@ -1,13 +1,7 @@
 import { commons } from '@0xsequence/core'
 import { ethers } from 'ethers'
 
-export type PresignedConfigUpdate = {
-  wallet: string,
-  nextImageHash: string,
-  signature: string
-}
-
-export type PresignedConfigurationPayload = {
+export type PresignedConfigLink = {
   wallet: string,
   nextImageHash: string,
   signature: string
@@ -19,7 +13,7 @@ export type ConfigDataDump = {
     imageHash: string,
     context: commons.context.WalletContext
   }[],
-  presignedTransactions: PresignedConfigurationPayload[]
+  presignedTransactions: PresignedConfigLink[]
 }
 
 export abstract class ConfigTracker {
@@ -27,10 +21,10 @@ export abstract class ConfigTracker {
     wallet: string,
     fromImageHash: string,
     longestPath?: boolean
-  }) => Promise<PresignedConfigUpdate[]>
+  }) => Promise<PresignedConfigLink[]>
 
   savePresignedConfiguration: (
-    args: PresignedConfigurationPayload
+    args: PresignedConfigLink
   ) => Promise<void>
 
   saveWitness: ( args: {
