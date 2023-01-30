@@ -5,7 +5,7 @@ import { Orchestrator } from '@0xsequence/signhub'
 import { NetworkConfig } from '@0xsequence/network'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
-import { PresignedConfigUpdate } from '@0xsequence/sessions/src/tracker'
+import { PresignedConfigLink } from '@0xsequence/sessions/src/tracker'
 import { Wallet } from '@0xsequence/wallet'
 import { FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
@@ -25,7 +25,7 @@ export type AccountStatus = {
   fullyMigrated: boolean,
   signedMigrations: migrator.SignedMigration[],
   version: number,
-  presignedConfigurations: PresignedConfigUpdate[],
+  presignedConfigurations: PresignedConfigLink[],
   imageHash: string,
   config: commons.config.Config,
   checkpoint: ethers.BigNumberish,

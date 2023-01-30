@@ -1,13 +1,12 @@
 
 import { commons, universal, v1, v2 } from "@0xsequence/core"
-import { migration } from "@0xsequence/migration"
-import { PresignedMigrationTracker, SignedMigration } from "@0xsequence/migration/src/migrator"
+import { migration, migrator } from "@0xsequence/migration"
 import { ethers } from "ethers"
 import { runByEIP5719 } from "@0xsequence/replacer"
-import { ConfigTracker, PresignedConfigUpdate, PresignedConfigurationPayload } from "../tracker"
+import { ConfigTracker, PresignedConfigLink } from "../tracker"
 import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from "./stores"
 
-export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTracker {
+export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   constructor(
     // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
@@ -185,7 +184,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
   }
 
   savePresignedConfiguration = async (
-    args: PresignedConfigurationPayload
+    args: PresignedConfigLink
   ): Promise<void> => {
     // Presigned configurations only work with v2 (for now)
     // so we can assume that the signature is for a v2 configuration
@@ -218,7 +217,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     wallet: string,
     fromImageHash: string,
     longestPath?: boolean
-  }): Promise<PresignedConfigUpdate[]> => {
+  }): Promise<PresignedConfigLink[]> => {
     const { wallet, fromImageHash, longestPath } = args
 
     const fromConfig = await this.configOfImageHash({ imageHash: fromImageHash })
@@ -383,7 +382,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
 
   async saveMigration(
     address: string,
-    signed: SignedMigration,
+    signed: migrator.SignedMigration,
     contexts: commons.context.VersionedContext
   ): Promise<void> {
     const fromVersion = signed.fromVersion
@@ -431,7 +430,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
     fromImageHash: string,
     fromVersion: number,
     chainId: ethers.BigNumberish
-  ): Promise<SignedMigration | undefined> {
+  ): Promise<migrator.SignedMigration | undefined> {
     // Get the current config and all possible migration payloads
     const [currentConfig, subdigests] = await Promise.all([
       this.configOfImageHash({ imageHash: fromImageHash }),
@@ -492,7 +491,7 @@ export class LocalConfigTracker implements ConfigTracker, PresignedMigrationTrac
         toConfig: currentConfig,
         fromVersion,
         toVersion: fromVersion + 1
-      } as SignedMigration
+      } as migrator.SignedMigration
     })).then((c) => c.filter((c) => c !== undefined))
 
     // Return the first valid candidate

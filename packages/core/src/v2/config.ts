@@ -403,6 +403,14 @@ export function signersOf(tree: Topology): { address: string, weight: number }[]
   return Array.from(signers)
 }
 
+export function isComplete(tree: Topology): boolean {
+  if (isNode(tree)) {
+    return isComplete(tree.left) && isComplete(tree.right)
+  }
+
+  return !isNodeLeaf(tree)
+}
+
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
     return (
@@ -443,6 +451,10 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         }
       })
     })
+  },
+
+  isComplete: (config: WalletConfig): boolean => {
+    return isComplete(config.tree)
   },
 
   // isValid = (config: WalletConfig): boolean {}
