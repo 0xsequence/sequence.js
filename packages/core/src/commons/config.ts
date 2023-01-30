@@ -30,6 +30,8 @@ export interface ConfigCoder<T extends Config = Config> {
   toJSON: (config: T) => string
   fromJSON: (json: string) => T
 
+  isComplete: (config: T) => boolean
+
   editConfig: (config: T, action: {
     add?: SimpleSigner[],
     remove?: string[],

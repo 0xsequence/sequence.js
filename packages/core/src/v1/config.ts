@@ -41,6 +41,11 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return false
   },
 
+  isComplete: (_config: WalletConfig): boolean => {
+    // v1 does not support incomplete configs
+    return true
+  },
+
   checkpointOf: (_config: WalletConfig): ethers.BigNumber => {
     return ethers.BigNumber.from(0)
   },

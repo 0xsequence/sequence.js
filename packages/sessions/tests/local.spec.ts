@@ -120,6 +120,8 @@ const randomContext = () => {
   }
 }
 
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 describe('Local config tracker', () => {
   let provider: ethers.providers.Web3Provider
 
@@ -128,17 +130,34 @@ describe('Local config tracker', () => {
   });
 
   ([{
-  //   name: 'Using memory store',
-  //   store: () => new trackers.stores.MemoryTrackerStore()
-  // }, {
+    name: 'Using memory store',
+    getTracker: () => new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+  }, {
     name: 'Using IndexedDB store',
-    store: () => new trackers.stores.IndexedDBStore('test')
-  }]).map(({ name, store }) => {
+    getTracker: () => new trackers.local.LocalConfigTracker(provider, new trackers.stores.IndexedDBStore('test'))
+  }, {
+    name: 'Using multiple trackers (2)',
+    getTracker: () => {
+      const tracker1 = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+      const tracker2 = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+
+      return new trackers.MultipleTracker([tracker1, tracker2])
+    }
+  }, {
+    name: 'Using multiple trackers (3)',
+    getTracker: () => {
+      const tracker1 = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+      const tracker2 = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+      const tracker3 = new trackers.local.LocalConfigTracker(provider, new trackers.stores.IndexedDBStore('test-2'))
+
+      return new trackers.MultipleTracker([tracker1, tracker2, tracker3])
+    }
+  }]).map(({ name, getTracker }) => {
     describe(name, () => {
       let tracker: tracker.ConfigTracker
 
       beforeEach(() => {
-        tracker = new trackers.local.LocalConfigTracker(provider, store())
+        tracker = getTracker()
       })
 
       describe('Configuration', () => {
@@ -384,7 +403,7 @@ describe('Local config tracker', () => {
           const signature2 = await wallet2.signDigest(digest2)
 
           // Saving only signature2 should lead to empty path
-          // becuase there is no route from initial config to config1
+          // because there is no route from initial config to config1
           await tracker.saveWalletConfig({ config })
           await tracker.saveWalletConfig({ config: nextConfig1 })
           await tracker.saveWalletConfig({ config: nextConfig2 })
@@ -641,6 +660,335 @@ describe('Local config tracker', () => {
           expect(wallet2Result?.proof.digest).to.equal(digest2)
           expect(wallet2Result?.proof.signature).to.equal((decoded2.decoded.tree as v2.signature.SignatureLeaf).signature)
         })
+      })
+    })
+  })
+
+  describe.only('Multiple config trackers', () => {
+    let tracker1: trackers.local.LocalConfigTracker
+    let tracker2: trackers.local.LocalConfigTracker
+
+    let combined: trackers.MultipleTracker
+
+    beforeEach(async () => {
+      tracker1 = new trackers.local.LocalConfigTracker(provider)
+      tracker2 = new trackers.local.LocalConfigTracker(provider)
+
+      combined = new trackers.MultipleTracker([tracker1, tracker2])
+    })
+
+    describe('Config', () => {
+      it('Storing a config should store it in both', async () => {
+        const config = {
+          version: 2,
+          threshold: ethers.BigNumber.from(1),
+          checkpoint: ethers.BigNumber.from(0),
+          tree: {
+            address: ethers.Wallet.createRandom().address,
+            weight: ethers.BigNumber.from(1)
+          }
+        }
+  
+        const imageHash = v2.config.imageHash(config)
+  
+        await combined.saveWalletConfig({ config })
+  
+        const config1 = await tracker1.configOfImageHash({ imageHash })
+        const config2 = await tracker2.configOfImageHash({ imageHash })
+  
+        expect(config1).to.deep.equal(config)
+        expect(config2).to.deep.equal(config)
+      })
+  
+      it('Retrieving a config from tracker1, should mirror to tracker2', async () => {
+        const config = {
+          version: 2,
+          threshold: ethers.BigNumber.from(1),
+          checkpoint: ethers.BigNumber.from(0),
+          tree: {
+            address: ethers.Wallet.createRandom().address,
+            weight: ethers.BigNumber.from(1)
+          }
+        }
+  
+        const imageHash = v2.config.imageHash(config)
+  
+        await tracker1.saveWalletConfig({ config })
+  
+        const config1 = await combined.configOfImageHash({ imageHash })
+
+        await wait(500)
+
+        const config2 = await tracker2.configOfImageHash({ imageHash })
+  
+        expect(config1).to.deep.equal(config)
+        expect(config2).to.deep.equal(config)
+      })
+  
+      it('Should combine 2 different sources', async () => {
+        const node1 = {
+          address: ethers.Wallet.createRandom().address,
+          weight: ethers.BigNumber.from(1)
+        }
+  
+        const node2 = {
+          address: ethers.Wallet.createRandom().address,
+          weight: ethers.BigNumber.from(1)
+        }
+  
+        const config1 = {
+          version: 2,
+          threshold: ethers.BigNumber.from(1),
+          checkpoint: ethers.BigNumber.from(1234),
+          tree: {
+            left: {
+              nodeHash: v2.config.hashNode(node1),
+            },
+            right: node2
+          }
+        }
+  
+        const config2 = {
+          version: 2,
+          threshold: ethers.BigNumber.from(1),
+          checkpoint: ethers.BigNumber.from(1234),
+          tree: {
+            left: node1,
+            right: {
+              nodeHash: v2.config.hashNode(node2),
+            }
+          }
+        }
+  
+        const configAll = {
+          version: 2,
+          threshold: ethers.BigNumber.from(1),
+          checkpoint: ethers.BigNumber.from(1234),
+          tree: {
+            left: node1,
+            right: node2
+          }
+        }
+  
+        await tracker1.saveWalletConfig({ config: config1 })
+        await tracker2.saveWalletConfig({ config: config2 })
+  
+        const imageHash = v2.config.imageHash(config2)
+        const res1 = await combined.configOfImageHash({ imageHash })
+        const res2 = await tracker1.configOfImageHash({ imageHash })
+        const res3 = await tracker2.configOfImageHash({ imageHash })
+  
+        expect(res1).to.deep.equal(configAll)
+        expect(res2).to.deep.equal(configAll)
+        expect(res3).to.deep.equal(configAll)
+      })
+    })
+
+    describe('Counter factual addresses', () => {
+      it('Should store counter-factual address in both', async () => {
+        const context = randomContext()
+        const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+
+        const wallet = commons.context.addressOf(context, imageHash)
+        await combined.saveCounterFactualWallet({ context: [context], imageHash })
+
+        const res1 = await combined.imageHashOfCounterFactualWallet({ wallet })
+        const res2 = await tracker1.imageHashOfCounterFactualWallet({ wallet })
+        const res3 = await tracker2.imageHashOfCounterFactualWallet({ wallet })
+
+        expect(res1).to.deep.equal({ imageHash, context })
+        expect(res2).to.deep.equal({ imageHash, context })
+        expect(res3).to.deep.equal({ imageHash, context })
+      })
+
+      it('Should mirror counter-factual address from tracker1', async () => {
+        const context = randomContext()
+        const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+
+        const wallet = commons.context.addressOf(context, imageHash)
+        await tracker1.saveCounterFactualWallet({ context: [context], imageHash })
+
+        const res1 = await combined.imageHashOfCounterFactualWallet({ wallet })
+
+        await wait(500)
+
+        const res2 = await tracker1.imageHashOfCounterFactualWallet({ wallet })
+        const res3 = await tracker2.imageHashOfCounterFactualWallet({ wallet })
+
+        expect(res1).to.deep.equal({ imageHash, context })
+        expect(res2).to.deep.equal({ imageHash, context })
+        expect(res3).to.deep.equal({ imageHash, context })
+      })
+    })
+
+    describe('Chained configurations', () => {
+      let context: commons.context.WalletContext
+
+      before(async () => {
+        context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then((c) => c[2])
+      })
+
+      it('Should store chained config in both', async () => {
+        const signer = ethers.Wallet.createRandom()
+        const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+        const imageHash = v2.config.imageHash(config)
+        const address = commons.context.addressOf(context, imageHash)
+        const wallet = new Wallet({ config, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+        const nextConfig = utils.configs.random.genRandomV2Config()
+        const nextImageHash = v2.config.imageHash(nextConfig)
+
+        const digest = v2.chained.hashSetImageHash(nextImageHash)
+        const signature = await wallet.signDigest(digest)
+
+        await combined.saveWalletConfig({ config })
+        await combined.saveWalletConfig({ config: nextConfig })
+        await combined.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+
+        const res2 = await tracker1.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+        const res3 = await tracker2.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+        const res1 = await combined.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+
+        expect(res1.length).to.equal(1)
+        expect(res1[0].nextImageHash).to.equal(nextImageHash)
+        expect(res1[0].wallet).to.equal(wallet.address)
+        expect(res1[0].signature).to.equal(signature)
+
+        expect(res2.length).to.equal(1)
+        expect(res2[0].nextImageHash).to.equal(nextImageHash)
+        expect(res2[0].wallet).to.equal(wallet.address)
+        expect(res2[0].signature).to.equal(signature)
+
+        expect(res3.length).to.equal(1)
+        expect(res3[0].nextImageHash).to.equal(nextImageHash)
+        expect(res3[0].wallet).to.equal(wallet.address)
+        expect(res3[0].signature).to.equal(signature)
+      })
+
+      it('Should mirror chained config from tracker2', async () => {
+        const signer = ethers.Wallet.createRandom()
+        const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+        const imageHash = v2.config.imageHash(config)
+        const address = commons.context.addressOf(context, imageHash)
+        const wallet = new Wallet({ config, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+        const nextConfig = utils.configs.random.genRandomV2Config()
+        const nextImageHash = v2.config.imageHash(nextConfig)
+
+        const digest = v2.chained.hashSetImageHash(nextImageHash)
+        const signature = await wallet.signDigest(digest)
+
+        await tracker2.saveWalletConfig({ config })
+        await tracker2.saveWalletConfig({ config: nextConfig })
+        await tracker2.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+
+        const res1 = await combined.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+
+        await wait(500)
+
+        const res2 = await tracker1.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+        const res3 = await tracker2.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+
+        expect(res1.length).to.equal(1)
+        expect(res1[0].nextImageHash).to.equal(nextImageHash)
+        expect(res1[0].wallet).to.equal(wallet.address)
+        expect(res1[0].signature).to.equal(signature)
+
+        expect(res2.length).to.equal(1)
+        expect(res2[0].nextImageHash).to.equal(nextImageHash)
+        expect(res2[0].wallet).to.equal(wallet.address)
+        expect(res2[0].signature).to.equal(signature)
+
+        expect(res3.length).to.equal(1)
+        expect(res3[0].nextImageHash).to.equal(nextImageHash)
+        expect(res3[0].wallet).to.equal(wallet.address)
+        expect(res3[0].signature).to.equal(signature)
+      })
+
+      it('Should return highest checkpoint chain (and then mirror)', async () => {
+        // Step 1
+        const signer = ethers.Wallet.createRandom()
+        const config = { version: 2, threshold: 1, checkpoint: 0, tree: { address: signer.address, weight: 1 } }
+        const imageHash = v2.config.imageHash(config)
+
+        const address = commons.context.addressOf(context, imageHash)
+        const wallet1 = new Wallet({ config, chainId: 0, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
+
+        const signer2a = ethers.Wallet.createRandom()
+        const signer2b = ethers.Wallet.createRandom()
+        const nextConfig1 = { version: 2, threshold: 6, checkpoint: 2, tree: {
+            right: {
+              address: signer2a.address, weight: 3
+            },
+            left: {
+              address: signer2b.address, weight: 3
+            }
+          }
+        }
+
+        const nextImageHash1 = v2.config.imageHash(nextConfig1)
+
+        const digest1 = v2.chained.hashSetImageHash(nextImageHash1)
+        const signature1 = await wallet1.signDigest(digest1)
+
+        // Step 2
+        const nextConfig2 = { ...utils.configs.random.genRandomV2Config(), checkpoint: 3 }
+        const nextImageHash2 = v2.config.imageHash(nextConfig2)
+
+        const digest2 = v2.chained.hashSetImageHash(nextImageHash2)
+        const wallet2 = new Wallet({
+          config: nextConfig1,
+          chainId: 0,
+          coders: v2.coders,
+          address,
+          context,
+          orchestrator: new Orchestrator([signer2a, signer2b])
+        })
+
+        const signature2 = await wallet2.signDigest(digest2)
+
+        // Saving only signature1 on tracker 1
+        await tracker1.saveWalletConfig({ config })
+        await tracker1.saveWalletConfig({ config: nextConfig1 })
+        await tracker1.savePresignedConfiguration({
+          wallet: address,
+          nextImageHash: nextImageHash1,
+          signature: signature1
+        })
+
+        // Saving both signatures on tracker 2
+        await tracker2.saveWalletConfig({ config })
+        await tracker2.saveWalletConfig({ config: nextConfig1 })
+        await tracker2.saveWalletConfig({ config: nextConfig2 })
+        await tracker2.savePresignedConfiguration({
+          wallet: address,
+          nextImageHash: nextImageHash1,
+          signature: signature1
+        })
+        await tracker2.savePresignedConfiguration({
+          wallet: address,
+          nextImageHash: nextImageHash2,
+          signature: signature2
+        })
+
+        // Now the combined tracker should return the highest checkpoint
+        const res1 = await combined.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+
+        await wait(500)
+
+        const res2 = await tracker1.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+        const res3 = await tracker2.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
+
+        expect(res1.length).to.equal(2)
+        expect(res1[0].wallet).to.equal(address)
+        expect(res1[1].wallet).to.equal(address)
+        expect(res1[0].nextImageHash).to.equal(nextImageHash1)
+        expect(res1[1].nextImageHash).to.equal(nextImageHash2)
+        expect(res1[0].signature).to.equal(signature1)
+        expect(res1[1].signature).to.equal(signature2)
+
+        expect(res2).to.deep.equal(res1)
+        expect(res3).to.deep.equal(res1)
       })
     })
   })
