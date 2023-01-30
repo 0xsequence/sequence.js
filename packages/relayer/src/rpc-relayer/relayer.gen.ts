@@ -27,7 +27,6 @@ export enum ETHTxnStatus {
   PARTIALLY_FAILED = 'PARTIALLY_FAILED',
   FAILED = 'FAILED'
 }
-
 export enum TransferType {
   SEND = 'SEND',
   RECEIVE = 'RECEIVE',
@@ -36,13 +35,11 @@ export enum TransferType {
   BURN = 'BURN',
   UNKNOWN = 'UNKNOWN'
 }
-
 export enum FeeTokenType {
   UNKNOWN = 'UNKNOWN',
   ERC20_TOKEN = 'ERC20_TOKEN',
   ERC1155_TOKEN = 'ERC1155_TOKEN'
 }
-
 export enum SortOrder {
   DESC = 'DESC',
   ASC = 'ASC'

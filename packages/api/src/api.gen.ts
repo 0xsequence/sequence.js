@@ -25,13 +25,11 @@ export enum SmartRampOrderStatus {
   FAILED = 'FAILED',
   COMPLETE = 'COMPLETE'
 }
-
 export enum SmartRampTxnStatus {
   UNKNOWN = 'UNKNOWN',
   SUCCESSFUL = 'SUCCESSFUL',
   FAILED = 'FAILED'
 }
-
 export enum SortOrder {
   DESC = 'DESC',
   ASC = 'ASC'
