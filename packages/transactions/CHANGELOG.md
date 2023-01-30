@@ -1,5 +1,16 @@
 # @0xsequence/transactions
 
+## 0.43.13
+
+### Patch Changes
+
+- update rpc bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.13
+  - @0xsequence/config@0.43.13
+  - @0xsequence/network@0.43.13
+  - @0xsequence/utils@0.43.13
+
 ## 0.43.12
 
 ### Patch Changes

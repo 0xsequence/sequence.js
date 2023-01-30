@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.43.13
+
+### Patch Changes
+
+- update rpc bindings
+
 ## 0.43.12
 
 ### Patch Changes
