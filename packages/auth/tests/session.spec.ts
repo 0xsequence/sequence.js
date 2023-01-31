@@ -159,7 +159,7 @@ describe('Wallet integration', function () {
 
     const leaf = configv2.tree as v2.config.SignerLeaf
     expect(leaf.address).to.equal(referenceSigner.address)
-    expect(leaf.weight).to.deep.equal(ethers.BigNumber.from(1))
+    expect(ethers.BigNumber.from(leaf.weight)).to.deep.equal(ethers.BigNumber.from(1))
 
     await session.account.sendTransaction({ to: referenceSigner.address }, networks[0].chainId)
   })
@@ -233,8 +233,8 @@ describe('Wallet integration', function () {
     expect(newSigners.length).to.equal(2)
     expect(newSigners).to.include(newSigner.address)
     expect(newSigners).to.include(referenceSigner.address)
-    expect((newConfig.tree as any).left.weight).to.deep.equal(ethers.BigNumber.from(1))
-    expect((newConfig.tree as any).right.weight).to.deep.equal(ethers.BigNumber.from(1))
+    expect(ethers.BigNumber.from((newConfig.tree as any).left.weight)).to.deep.equal(ethers.BigNumber.from(1))
+    expect(ethers.BigNumber.from((newConfig.tree as any).right.weight)).to.deep.equal(ethers.BigNumber.from(1))
   })
 
   it('Should create a new account if selectWallet returns undefined', async () => {
