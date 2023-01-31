@@ -33,7 +33,7 @@ import { ExtensionMessageProvider } from './transports/extension-transport/exten
 import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
-import { Runtime } from 'webextension-polyfill-ts'
+import { Runtime } from 'webextension-polyfill'
 import { commons } from '@0xsequence/core'
 import { AccountStatus } from '@0xsequence/account'
 
