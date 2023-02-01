@@ -291,7 +291,7 @@ export const tests = async () => {
 
       const ethAmount = ethers.utils.parseEther('1.4242')
 
-      // NOTE: when a wallet is undeployed (counter-factual), and although the txn contents are to send from our
+      // NOTE: when a wallet is undeployed (counterfactual), and although the txn contents are to send from our
       // sequence wallet to the test account, the transaction by the Sequence Wallet instance will be sent `to` the
       // `GuestModule` smart contract address of the Sequence context `from` the Sequence Relayer (local) account.
       //

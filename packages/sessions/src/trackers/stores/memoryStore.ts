@@ -5,7 +5,7 @@ import { PlainNested, PlainNode, PlainV2Config, TrackerStore } from "."
 export class MemoryTrackerStore implements TrackerStore {
   private configs: { [imageHash: string]: v1.config.WalletConfig | PlainV2Config } = {}
   private v2Nodes: { [nodeHash: string]: PlainNode | PlainNested | v2.config.Topology } = {}
-  private counterFactualWallets: { [wallet: string]: { imageHash: string, context: commons.context.WalletContext } } = {}
+  private counterfactualWallets: { [wallet: string]: { imageHash: string, context: commons.context.WalletContext } } = {}
   private payloads: { [subdigest: string]: commons.signature.SignedPayload } = {}
   private signatures: { [signer: string]: { [subdigest: string]: ethers.BytesLike } } = {}
   private migrations: { [wallet: string]: { [fromVersion: number]: { [toVersion: number]: string[] } } } = {}
@@ -28,12 +28,12 @@ export class MemoryTrackerStore implements TrackerStore {
     return Promise.resolve()
   }
 
-  loadCounterFactualWallet = (wallet: string): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> => {
-    return Promise.resolve(this.counterFactualWallets[wallet])
+  loadCounterfactualWallet = (wallet: string): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> => {
+    return Promise.resolve(this.counterfactualWallets[wallet])
   }
 
-  saveCounterFactualWallet = (wallet: string, imageHash: string, context: commons.context.WalletContext): Promise<void> => {
-    this.counterFactualWallets[wallet] = { imageHash, context }
+  saveCounterfactualWallet = (wallet: string, imageHash: string, context: commons.context.WalletContext): Promise<void> => {
+    this.counterfactualWallets[wallet] = { imageHash, context }
     return Promise.resolve()
   }
 

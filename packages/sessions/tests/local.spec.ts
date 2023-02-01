@@ -262,14 +262,14 @@ describe('Local config tracker', () => {
         })
       })
 
-      describe('Counter factual address', () => {
+      describe('Counterfactual address', () => {
         it('Should set and get address', async () => {
           const context = randomContext()
           const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
 
           const wallet = commons.context.addressOf(context, imageHash)
-          await tracker.saveCounterFactualWallet({ context: [context], imageHash })
-          const res = await tracker.imageHashOfCounterFactualWallet({ wallet })
+          await tracker.saveCounterfactualWallet({ context: [context], imageHash })
+          const res = await tracker.imageHashOfCounterfactualWallet({ wallet })
 
           expect(res).to.deep.equal({ imageHash, context })
         })
@@ -279,17 +279,17 @@ describe('Local config tracker', () => {
           const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
 
           const wallets = contexts.map((c) => commons.context.addressOf(c, imageHash))
-          await tracker.saveCounterFactualWallet({ context: contexts, imageHash })
+          await tracker.saveCounterfactualWallet({ context: contexts, imageHash })
 
           for (let i = 0; i < wallets.length; i++) {
-            const res = await tracker.imageHashOfCounterFactualWallet({ wallet: wallets[i] })
+            const res = await tracker.imageHashOfCounterfactualWallet({ wallet: wallets[i] })
             expect(res).to.deep.equal({ imageHash, context: contexts[i] })
           }
         })
 
         it('Should return undefined for unknown wallet', async () => {
           const wallet = ethers.Wallet.createRandom().address
-          expect(await tracker.imageHashOfCounterFactualWallet({ wallet })).to.be.undefined
+          expect(await tracker.imageHashOfCounterfactualWallet({ wallet })).to.be.undefined
         })
       })
 
@@ -784,36 +784,36 @@ describe('Local config tracker', () => {
       })
     })
 
-    describe('Counter factual addresses', () => {
-      it('Should store counter-factual address in both', async () => {
+    describe('Counterfactual addresses', () => {
+      it('Should store counterfactual address in both', async () => {
         const context = randomContext()
         const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
 
         const wallet = commons.context.addressOf(context, imageHash)
-        await combined.saveCounterFactualWallet({ context: [context], imageHash })
+        await combined.saveCounterfactualWallet({ context: [context], imageHash })
 
-        const res1 = await combined.imageHashOfCounterFactualWallet({ wallet })
-        const res2 = await tracker1.imageHashOfCounterFactualWallet({ wallet })
-        const res3 = await tracker2.imageHashOfCounterFactualWallet({ wallet })
+        const res1 = await combined.imageHashOfCounterfactualWallet({ wallet })
+        const res2 = await tracker1.imageHashOfCounterfactualWallet({ wallet })
+        const res3 = await tracker2.imageHashOfCounterfactualWallet({ wallet })
 
         expect(res1).to.deep.equal({ imageHash, context })
         expect(res2).to.deep.equal({ imageHash, context })
         expect(res3).to.deep.equal({ imageHash, context })
       })
 
-      it('Should mirror counter-factual address from tracker1', async () => {
+      it('Should mirror counterfactual address from tracker1', async () => {
         const context = randomContext()
         const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
 
         const wallet = commons.context.addressOf(context, imageHash)
-        await tracker1.saveCounterFactualWallet({ context: [context], imageHash })
+        await tracker1.saveCounterfactualWallet({ context: [context], imageHash })
 
-        const res1 = await combined.imageHashOfCounterFactualWallet({ wallet })
+        const res1 = await combined.imageHashOfCounterfactualWallet({ wallet })
 
         await wait(500)
 
-        const res2 = await tracker1.imageHashOfCounterFactualWallet({ wallet })
-        const res3 = await tracker2.imageHashOfCounterFactualWallet({ wallet })
+        const res2 = await tracker1.imageHashOfCounterfactualWallet({ wallet })
+        const res3 = await tracker2.imageHashOfCounterfactualWallet({ wallet })
 
         expect(res1).to.deep.equal({ imageHash, context })
         expect(res2).to.deep.equal({ imageHash, context })
