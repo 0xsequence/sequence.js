@@ -84,18 +84,18 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     }))
   }
 
-  async imageHashOfCounterFactualWallet(args: { wallet: string }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
-    const promises = this.trackers.map(async (t, i) => ({ res: await t.imageHashOfCounterFactualWallet(args), i }))
+  async imageHashOfCounterfactualWallet(args: { wallet: string }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
+    const promises = this.trackers.map(async (t, i) => ({ res: await t.imageHashOfCounterfactualWallet(args), i }))
     const result = await raceUntil(promises, undefined, (val) => val?.res !== undefined)
     if (!result?.res) return undefined
-    this.saveCounterFactualWallet({ imageHash: result.res.imageHash, context: [result.res.context], skipTracker: result.i })
+    this.saveCounterfactualWallet({ imageHash: result.res.imageHash, context: [result.res.context], skipTracker: result.i })
     return result.res
   }
 
-  async saveCounterFactualWallet(args: { imageHash: string; context: commons.context.WalletContext[], skipTracker?: number }): Promise<void> {
+  async saveCounterfactualWallet(args: { imageHash: string; context: commons.context.WalletContext[], skipTracker?: number }): Promise<void> {
     await Promise.all(this.trackers.map((t, i) => {
       if (i === args.skipTracker) return
-      return t.saveCounterFactualWallet(args)
+      return t.saveCounterfactualWallet(args)
     }))
   }
 
