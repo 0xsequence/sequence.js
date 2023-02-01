@@ -125,7 +125,7 @@ export class Account {
 
     await Promise.all([
       options.tracker.saveWalletConfig({ config }),
-      options.tracker.saveCounterFactualWallet({
+      options.tracker.saveCounterfactualWallet({
         context: Object.values(options.contexts),
         imageHash
       })
@@ -235,13 +235,13 @@ export class Account {
     }
     current: number
   }> {
-    // First we need to use the tracker to get the counter-factual imageHash
-    const firstImageHash = await this.tracker.imageHashOfCounterFactualWallet({
+    // First we need to use the tracker to get the counterfactual imageHash
+    const firstImageHash = await this.tracker.imageHashOfCounterfactualWallet({
       wallet: this.address
     })
 
     if (!firstImageHash) {
-      throw new Error(`Counter-factual imageHash not found for wallet ${this.address}`)
+      throw new Error(`Counterfactual imageHash not found for wallet ${this.address}`)
     }
 
     const current = await version.versionOf(
@@ -274,11 +274,11 @@ export class Account {
 
     let onChainImageHash = await this.reader(chainId).imageHash(this.address)
     if (!onChainImageHash) {
-      const counterFactualImageHash = await this.tracker.imageHashOfCounterFactualWallet({
+      const counterfactualImageHash = await this.tracker.imageHashOfCounterfactualWallet({
         wallet: this.address
       })
 
-      onChainImageHash = counterFactualImageHash?.imageHash
+      onChainImageHash = counterfactualImageHash?.imageHash
     }
 
     if (!onChainImageHash) {

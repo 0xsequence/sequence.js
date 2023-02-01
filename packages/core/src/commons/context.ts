@@ -29,7 +29,7 @@ export function addressOf(context: WalletContext, imageHash: ethers.BytesLike) {
   return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
 }
 
-export async function isValidCounterFactual(
+export async function isValidCounterfactual(
   wallet: string,
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,

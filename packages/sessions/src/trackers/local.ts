@@ -139,25 +139,25 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     throw new Error(`Unknown config type: ${config}`)
   }
 
-  saveCounterFactualWallet = async (args: {
+  saveCounterfactualWallet = async (args: {
     imageHash: string,
     context: commons.context.WalletContext[]
   }): Promise<void> => {
     const { imageHash, context } = args
     await Promise.all(context.map((ctx) => {
       const address = commons.context.addressOf(ctx, imageHash)
-      return this.store.saveCounterFactualWallet(address, imageHash, ctx)
+      return this.store.saveCounterfactualWallet(address, imageHash, ctx)
     }))
   }
 
-  imageHashOfCounterFactualWallet = async (args: {
+  imageHashOfCounterfactualWallet = async (args: {
     wallet: string
   }): Promise<{
     imageHash: string,
     context: commons.context.WalletContext
   } | undefined> => {
     const { wallet } = args
-    const result = await this.store.loadCounterFactualWallet(wallet)
+    const result = await this.store.loadCounterfactualWallet(wallet)
 
     if (!result) return undefined
 

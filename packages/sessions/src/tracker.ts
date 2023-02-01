@@ -42,14 +42,14 @@ export abstract class ConfigTracker {
     config: commons.config.Config
   }) => Promise<void>
 
-  imageHashOfCounterFactualWallet: (args: {
+  imageHashOfCounterfactualWallet: (args: {
     wallet: string
   }) => Promise<{
     imageHash: string,
     context: commons.context.WalletContext
   } | undefined>
 
-  saveCounterFactualWallet: (args: {
+  saveCounterfactualWallet: (args: {
     imageHash: string,
     context: commons.context.WalletContext[]
   }) => Promise<void>

@@ -419,7 +419,7 @@ export class Session {
 
     if (isSessionDumpV1(dump)) {
       // Old configuration format used to also contain an "address" field
-      // but if it doesn't, it means that it was a "counter-factual" account
+      // but if it doesn't, it means that it was a "counterfactual" account
       // not yet updated, so we need to compute the address
       const oldAddress = dump.config.address || commons.context.addressOf(
         contexts[1],

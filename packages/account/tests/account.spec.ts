@@ -501,7 +501,7 @@ describe('Account', () => {
 
       // Sessions server MUST have information about the old wallet
       // in production this is retrieved from SequenceUtils contract
-      await tracker.saveCounterFactualWallet({ imageHash, context: [contexts[1]] })
+      await tracker.saveCounterfactualWallet({ imageHash, context: [contexts[1]] })
       await tracker.saveWalletConfig({ config })
 
       // Importing the account should work!
@@ -592,7 +592,7 @@ describe('Account', () => {
 
       // Feed all information to sequence-sessions
       // (on prod this would be imported from SequenceUtils)
-      await tracker.saveCounterFactualWallet({ imageHash, context: Object.values(contexts) })
+      await tracker.saveCounterfactualWallet({ imageHash, context: Object.values(contexts) })
       await tracker.saveWalletConfig({ config })
 
       // Importing the account should work!
@@ -721,7 +721,7 @@ describe('Account', () => {
       })
 
       // Feed the tracker with all the data
-      await tracker.saveCounterFactualWallet({ imageHash: imageHash1a, context: [contexts[1]] })
+      await tracker.saveCounterfactualWallet({ imageHash: imageHash1a, context: [contexts[1]] })
       await tracker.saveWalletConfig({ config: config1b })
       await tracker.saveWalletConfig({ config: config1a })
 
