@@ -115,8 +115,8 @@ describe('Orchestrator', () => {
         throw new Error('This is a broken signer.')
       },
       notifyStatusChange: function (id: string, status: Status): void {},
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 
@@ -196,8 +196,8 @@ describe('Orchestrator', () => {
         return true
       },
       notifyStatusChange: function (id: string, status: Status): void {},
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 
@@ -249,8 +249,8 @@ describe('Orchestrator', () => {
         return true
       },
       notifyStatusChange: function (id: string, status: Status): void {},
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 
@@ -277,8 +277,8 @@ describe('Orchestrator', () => {
         return true
       },
       notifyStatusChange: function (id: string, status: Status): void {},
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 
@@ -319,8 +319,8 @@ describe('Orchestrator', () => {
           errorOnNotify = e
         }
       },
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 
@@ -349,8 +349,8 @@ describe('Orchestrator', () => {
           errorOnNotify = e
         }
       },
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 
@@ -399,8 +399,8 @@ describe('Orchestrator', () => {
         return true
       },
       notifyStatusChange: function (id: string, status: Status): void {},
-      isEOA: function (): boolean {
-        return true
+      suffix: function () {
+        return [ 2 ]
       }
     }
 

@@ -28,5 +28,5 @@ export type WalletSignRequestMetadata = {
 }
 
 export function isWalletSignRequestMetadata(obj: any): obj is WalletSignRequestMetadata {
-  return obj && obj.address && obj.digest && obj.chainId && obj.config
+  return obj && obj.address && obj.digest && obj.chainId !== undefined && obj.config
 }

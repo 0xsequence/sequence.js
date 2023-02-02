@@ -66,80 +66,80 @@ describe('Wallet (primitive)', () => {
       // Run tests using different combinations of signers
       //
       ([{
-        name: '1/1 signer',
-        signers: () => {
-          const signer = ethers.Wallet.createRandom()
+          name: '1/1 signer',
+          signers: () => {
+            const signer = ethers.Wallet.createRandom()
 
-          const config = coders.config.fromSimple({
-            threshold: 1,
-            checkpoint: 0,
-            signers: [{ address: signer.address, weight: 1 }]
-          })
+            const config = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ address: signer.address, weight: 1 }]
+            })
 
-          const orchestrator = new Orchestrator([new hubsigners.SignerWrapper(signer)])
+            const orchestrator = new Orchestrator([new hubsigners.SignerWrapper(signer)])
 
-          return { config, orchestrator }
-        }
-      }, {
-        name: '1/2 signers',
-        signers: () => {
-          const signer = ethers.Wallet.createRandom()
-          const signers = [{
-            address: signer.address,
-            weight: 1
-          }, {
-            address: ethers.Wallet.createRandom().address,
-            weight: 1
-          }].sort(() => Math.random() > 0.5 ? 1 : -1)
+            return { config, orchestrator }
+          }
+        }, {
+          name: '1/2 signers',
+          signers: () => {
+            const signer = ethers.Wallet.createRandom()
+            const signers = [{
+              address: signer.address,
+              weight: 1
+            }, {
+              address: ethers.Wallet.createRandom().address,
+              weight: 1
+            }].sort(() => Math.random() > 0.5 ? 1 : -1)
 
-          const config = coders.config.fromSimple({
-            threshold: 1,
-            checkpoint: 0,
-            signers
-          })
+            const config = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers
+            })
 
-          const orchestrator = new Orchestrator([new hubsigners.SignerWrapper(signer)])
-          return { config, orchestrator }
-        }
-      }, {
-        name: '2/4 signers',
-        signers: () => {
-          const members = new Array(4).fill(0).map(() => ethers.Wallet.createRandom())
+            const orchestrator = new Orchestrator([new hubsigners.SignerWrapper(signer)])
+            return { config, orchestrator }
+          }
+        }, {
+          name: '2/4 signers',
+          signers: () => {
+            const members = new Array(4).fill(0).map(() => ethers.Wallet.createRandom())
 
-          const signers = members.map((m) => ({
-            address: m.address,
-            weight: 2
-          })).sort(() => Math.random() > 0.5 ? 1 : -1)
+            const signers = members.map((m) => ({
+              address: m.address,
+              weight: 2
+            })).sort(() => Math.random() > 0.5 ? 1 : -1)
 
-          const config = coders.config.fromSimple({
-            threshold: 2,
-            checkpoint: 0,
-            signers
-          })
+            const config = coders.config.fromSimple({
+              threshold: 2,
+              checkpoint: 0,
+              signers
+            })
 
-          const orchestrator = new Orchestrator(members.slice(0, 2).map((m) => new hubsigners.SignerWrapper(m)))
-          return { config, orchestrator }
-        }
-      }, {
-        name: '11/90 signers',
-        signers: () => {
-          const members = new Array(90).fill(0).map(() => ethers.Wallet.createRandom())
+            const orchestrator = new Orchestrator(members.slice(0, 2).map((m) => new hubsigners.SignerWrapper(m)))
+            return { config, orchestrator }
+          }
+        }, {
+          name: '11/90 signers',
+          signers: () => {
+            const members = new Array(90).fill(0).map(() => ethers.Wallet.createRandom())
 
-          const signers = members.map((m) => ({
-            address: m.address,
-            weight: 1
-          })).sort(() => Math.random() > 0.5 ? 1 : -1)
+            const signers = members.map((m) => ({
+              address: m.address,
+              weight: 1
+            })).sort(() => Math.random() > 0.5 ? 1 : -1)
 
-          const config = coders.config.fromSimple({
-            threshold: 11,
-            checkpoint: 0,
-            signers
-          })
+            const config = coders.config.fromSimple({
+              threshold: 11,
+              checkpoint: 0,
+              signers
+            })
 
-          const orchestrator = new Orchestrator(members.slice(0, 11).map((m) => new hubsigners.SignerWrapper(m)))
-          return { config, orchestrator }
-        }
-      }, {
+            const orchestrator = new Orchestrator(members.slice(0, 11).map((m) => new hubsigners.SignerWrapper(m)))
+            return { config, orchestrator }
+          }
+        }, {
         name: '1/1 signer (nested)',
         signers: async () => {
           const nestedSigner = ethers.Wallet.createRandom()
