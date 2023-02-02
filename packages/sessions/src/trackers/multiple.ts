@@ -84,19 +84,37 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     }))
   }
 
-  async imageHashOfCounterfactualWallet(args: { wallet: string }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
-    const promises = this.trackers.map(async (t, i) => ({ res: await t.imageHashOfCounterfactualWallet(args), i }))
-    const result = await raceUntil(promises, undefined, (val) => val?.res !== undefined)
-    if (!result?.res) return undefined
-    this.saveCounterfactualWallet({ imageHash: result.res.imageHash, context: [result.res.context], skipTracker: result.i })
-    return result.res
+  async imageHashOfCounterfactualWallet(args: {
+    wallet: string
+  }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
+    const imageHash = await raceUntil(
+      this.trackers.map(t => t.imageHashOfCounterfactualWallet(args)),
+      undefined,
+      result => Boolean(result)
+    )
+
+    if (imageHash) {
+      this.configOfImageHash({ imageHash: imageHash.imageHash }).then(config => {
+        if (config) {
+          this.saveCounterfactualWallet({ config, context: [imageHash.context] })
+        }
+      })
+    }
+
+    return imageHash
   }
 
-  async saveCounterfactualWallet(args: { imageHash: string; context: commons.context.WalletContext[], skipTracker?: number }): Promise<void> {
-    await Promise.all(this.trackers.map((t, i) => {
-      if (i === args.skipTracker) return
-      return t.saveCounterfactualWallet(args)
-    }))
+  async saveCounterfactualWallet(args: {
+    config: commons.config.Config
+    context: commons.context.WalletContext[]
+    skipTracker?: number
+  }): Promise<void> {
+    await Promise.all(
+      this.trackers.map((t, i) => {
+        if (i === args.skipTracker) return
+        return t.saveCounterfactualWallet(args)
+      })
+    )
   }
 
   async walletsOfSigner(args: { signer: string }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
