@@ -33,8 +33,7 @@ const SIGNER_READY_TIMEOUT = 10000
 
 export interface WalletSignInOptions {
   connect?: boolean
-  mainnetNetworks?: NetworkConfig[]
-  testnetNetworks?: NetworkConfig[]
+  networks?: NetworkConfig[]
   defaultNetworkId?: string | number
 }
 
@@ -47,8 +46,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   private prompter: WalletUserPrompter | null
   private auxDataProvider: AuxDataProvider | null
-  private mainnetNetworks: NetworkConfig[]
-  private testnetNetworks: NetworkConfig[]
+  private networks: NetworkConfig[]
 
   private _openIntent?: OpenWalletIntent
   private _connectOptions?: ConnectOptions
@@ -61,22 +59,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     account: Account | null | undefined,
     prompter: WalletUserPrompter | null,
     auxDataProvider: AuxDataProvider | null,
-    mainnetNetworks: NetworkConfig[],
-    testnetNetworks: NetworkConfig[] = [],
+    networks: NetworkConfig[],
     defaultNetworkId?: string | number
   ) {
     this.account = account
     this.prompter = prompter
     this.auxDataProvider = auxDataProvider
-    this.mainnetNetworks = mainnetNetworks
-    this.testnetNetworks = testnetNetworks
+    this.networks = networks
 
-    this.defaultNetworkId = defaultNetworkId ? this.findNetworkID(defaultNetworkId) : this.mainnetNetworks.concat(this.testnetNetworks)[0].chainId
+    this.defaultNetworkId = defaultNetworkId ? this.findNetworkID(defaultNetworkId) : networks[0].chainId
   }
 
   private findNetworkID(network: string | number) {
-    const networks = this.mainnetNetworks.concat(this.testnetNetworks)
-    const networkId = networks.find((n) => {
+    const networkId = this.networks.find((n) => {
       if (n.name === network) return true
       if (n.chainId === network) return true
       return false
@@ -92,18 +87,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   async signIn(account: Account | null, options: WalletSignInOptions = {}) {
     this.setAccount(account)
 
-    const { connect, mainnetNetworks, testnetNetworks, defaultNetworkId } = options
+    const { connect, networks, defaultNetworkId } = options
 
-    if (mainnetNetworks && mainnetNetworks.length > 0) {
-      this.mainnetNetworks = mainnetNetworks
-    }
-    if (testnetNetworks && testnetNetworks.length > 0) {
-      this.testnetNetworks = testnetNetworks
-    }
-    if (
-      (!this.mainnetNetworks || this.mainnetNetworks.length === 0) &&
-      (!this.testnetNetworks || this.testnetNetworks.length === 0)
-    ) {
+    if (networks === undefined || networks.length === 0) {
       throw new Error('signIn failed as network configuration is empty')
     }
 
