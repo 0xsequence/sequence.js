@@ -501,8 +501,7 @@ describe('Account', () => {
 
       // Sessions server MUST have information about the old wallet
       // in production this is retrieved from SequenceUtils contract
-      await tracker.saveCounterfactualWallet({ imageHash, context: [contexts[1]] })
-      await tracker.saveWalletConfig({ config })
+      await tracker.saveCounterfactualWallet({ config, context: [contexts[1]] })
 
       // Importing the account should work!
       const account = new Account({ ...defaultArgs, address, orchestrator: new Orchestrator([signer1]) })
@@ -592,8 +591,7 @@ describe('Account', () => {
 
       // Feed all information to sequence-sessions
       // (on prod this would be imported from SequenceUtils)
-      await tracker.saveCounterfactualWallet({ imageHash, context: Object.values(contexts) })
-      await tracker.saveWalletConfig({ config })
+      await tracker.saveCounterfactualWallet({ config, context: Object.values(contexts) })
 
       // Importing the account should work!
       const account = new Account({
@@ -721,9 +719,8 @@ describe('Account', () => {
       })
 
       // Feed the tracker with all the data
-      await tracker.saveCounterfactualWallet({ imageHash: imageHash1a, context: [contexts[1]] })
+      await tracker.saveCounterfactualWallet({ config: config1a, context: [contexts[1]] })
       await tracker.saveWalletConfig({ config: config1b })
-      await tracker.saveWalletConfig({ config: config1a })
 
       // Status on network 0 should be deployed, network 1 not
       // and the configuration on network 0 should be the B one

@@ -140,14 +140,18 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
   }
 
   saveCounterfactualWallet = async (args: {
-    imageHash: string,
+    config: commons.config.Config
     context: commons.context.WalletContext[]
   }): Promise<void> => {
-    const { imageHash, context } = args
-    await Promise.all(context.map((ctx) => {
-      const address = commons.context.addressOf(ctx, imageHash)
-      return this.store.saveCounterfactualWallet(address, imageHash, ctx)
-    }))
+    const { config, context } = args
+    const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
+    await Promise.all([
+      this.saveWalletConfig({ config }),
+      ...context.map(ctx => {
+        const address = commons.context.addressOf(ctx, imageHash)
+        return this.store.saveCounterfactualWallet(address, imageHash, ctx)
+      })
+    ])
   }
 
   imageHashOfCounterfactualWallet = async (args: {
