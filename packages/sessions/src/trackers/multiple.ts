@@ -1,6 +1,5 @@
-
-import { ConfigTracker, PresignedConfigLink } from '../tracker'
-import { migrator } from "@0xsequence/migration"
+import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { migrator } from '@0xsequence/migration'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
 import { LocalConfigTracker } from './local';
@@ -162,19 +161,29 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     })
 
     if (!best) return []
-    best.result.forEach((res) => {
-      this.configOfImageHash({ imageHash: res.nextImageHash })
-      this.savePresignedConfiguration({
-        wallet: args.wallet,
-        nextImageHash: res.nextImageHash,
-        signature: res.signature
-      })
+
+    const configs = new Map<string, Promise<commons.config.Config | undefined>>()
+    const config = (imageHash: string): Promise<commons.config.Config | undefined> => {
+      if (!configs.has(imageHash)) {
+        configs.set(imageHash, this.configOfImageHash({ imageHash }))
+      }
+      return configs.get(imageHash)!
+    }
+    best.result.forEach(async res => {
+      const nextConfig = await config(res.nextImageHash)
+      if (nextConfig) {
+        this.savePresignedConfiguration({
+          wallet: args.wallet,
+          nextConfig,
+          signature: res.signature
+        })
+      }
     })
 
     return best.result
   }
 
-  async savePresignedConfiguration(args: PresignedConfigLink): Promise<void> {
+  async savePresignedConfiguration(args: PresignedConfig): Promise<void> {
     await Promise.all(this.trackers.map(t => t.savePresignedConfiguration(args)))
   }
 
