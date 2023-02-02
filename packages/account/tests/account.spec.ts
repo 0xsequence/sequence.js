@@ -517,7 +517,7 @@ describe('Account', () => {
       await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
 
       // Should sign migration using the account
-      await account.signAllMigrations()
+      await account.signAllMigrations((c) => c)
 
       const status2 = await account.status(networks[0].chainId)
       expect(status2.fullyMigrated).to.be.true
@@ -624,7 +624,7 @@ describe('Account', () => {
       await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[1].chainId)).to.be.rejected
 
-      await account.signAllMigrations()
+      await account.signAllMigrations((c) => c)
 
       // Sign a transaction on network 0 and network 1, both should work
       // and should take the wallet on-chain up to speed
@@ -746,7 +746,7 @@ describe('Account', () => {
 
       // Sign all migrations should only have signers1 and 2
       // so the migration should only be available on network 1 (the one not updated)
-      await account.signAllMigrations()
+      await account.signAllMigrations((c) => c)
 
       const config2a = v2.config.ConfigCoder.fromSimple(simpleConfig1a)
       const config2b = v2.config.ConfigCoder.fromSimple(simpleConfig1b)
@@ -778,7 +778,7 @@ describe('Account', () => {
 
       // Signing another migration with signers1 and 2 should put both in sync
       account.setOrchestrator(new Orchestrator([signer1, signer2]))
-      await account.signAllMigrations()
+      await account.signAllMigrations((c) => c)
 
       await expect(account.sendTransaction([], networks[0].chainId)).to.be.fulfilled
       await expect(account.sendTransaction([], networks[1].chainId)).to.be.fulfilled

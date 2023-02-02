@@ -557,18 +557,20 @@ export class Account {
     }
   }
 
-  async signMigrations(chainId: ethers.BigNumberish): Promise<number> {
+  async signMigrations(chainId: ethers.BigNumberish, editConfig: (prevConfig: commons.config.Config) => commons.config.Config): Promise<boolean> {
     const status = await this.status(chainId)
-    if (status.fullyMigrated) return 0
+    if (status.fullyMigrated) return false
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await this.migrator.signMissingMigrations(this.address, status.version, wallet)
-    await Promise.all(signed.map(migration => this.tracker.saveMigration(this.address, migration, this.contexts)))
-    return signed.length
+    const signed = await this.migrator.signNextMigration(this.address, status.version, wallet, editConfig(wallet.config))
+    if (!signed) return false
+
+    await this.tracker.saveMigration(this.address, signed, this.contexts)
+    return true
   }
 
-  async signAllMigrations() {
-    return Promise.all(this.networks.map((n) => this.signMigrations(n.chainId)))
+  async signAllMigrations(editConfig: (prevConfig: commons.config.Config) => commons.config.Config) {
+    return Promise.all(this.networks.map((n) => this.signMigrations(n.chainId, editConfig)))
   }
 
   async isMigratedAllChains(): Promise<boolean> {
