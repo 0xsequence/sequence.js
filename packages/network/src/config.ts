@@ -302,7 +302,7 @@ export const networks: Record<ChainId, NetworkConfig> = {
 }
 
 export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): NetworkConfig | undefined {
-  return findNetworkConfig([...mainnetNetworks, ...testnetNetworks], chainIdOrName)
+  return findNetworkConfig(allNetworks, chainIdOrName)
 }
 
 export type ChainIdLike = NetworkConfig | BigNumberish
@@ -321,7 +321,7 @@ const genUrls = (network: string) => {
   }
 }
 
-export const mainnetNetworks = validateAndSortNetworks([
+export const allNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.MAINNET],
     ...genUrls('mainnet')
@@ -351,11 +351,7 @@ export const mainnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.OPTIMISM],
     ...genUrls('optimism')
-  }
-])
-
-// TODO: Merge testenet and mainnet networks
-export const testnetNetworks = validateAndSortNetworks([
+  },
   {
     ...networks[ChainId.RINKEBY],
     ...genUrls('rinkeby')
@@ -367,7 +363,6 @@ export const testnetNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.POLYGON_MUMBAI],
     ...genUrls('mumbai'),
-    isDefaultChain: true
   },
   {
     ...networks[ChainId.BSC_TESTNET],
