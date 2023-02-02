@@ -21,7 +21,7 @@ export interface SapientSigner {
     metadata: Object
   ): void
 
-  isEOA(): boolean
+  suffix(): ethers.BytesLike
 }
 
 export function isSapientSigner(signer: ethers.Signer | SapientSigner): signer is SapientSigner {

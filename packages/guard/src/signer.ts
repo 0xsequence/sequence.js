@@ -15,6 +15,7 @@ export class GuardSigner implements signers.SapientSigner {
   constructor(
     public readonly address: string,
     public readonly url: string,
+    public readonly appendSuffix: boolean = false
   ) {
     this.guard = new Guard(url, global.fetch)
   }
@@ -59,10 +60,10 @@ export class GuardSigner implements signers.SapientSigner {
     this.evaluateRequest(id, status.message, status, metadata)
   }
 
-  private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: ethers.BigNumberish): string {
+  private packMsgAndSig(address: string, msg: BytesLike, sig: BytesLike, chainId: ethers.BigNumberish): string {
     return ethers.utils.defaultAbiCoder.encode(
       ['address', 'uint256', 'bytes', 'bytes'],
-      [this.address, chainId, msg, sig]
+      [address, chainId, msg, sig]
     )
   }
 
@@ -76,7 +77,7 @@ export class GuardSigner implements signers.SapientSigner {
       const result = await this.guard.sign({
         request: {
           msg: ethers.utils.hexlify(message),
-          auxData: this.packMsgAndSig(message, encoded, metadata.chainId),
+          auxData: this.packMsgAndSig(metadata.address, metadata.digest, encoded, metadata.chainId),
           chainId: ethers.BigNumber.from(metadata.chainId).toNumber() // TODO: This should be a string (in the API)
         }
       })
@@ -93,10 +94,7 @@ export class GuardSigner implements signers.SapientSigner {
     }
   }
 
-  isEOA(): boolean {
-    // TODO: Maybe add a method on the API?
-    // there is no reason that impedes a guard to be an EOA
-    // we return false because that's how it's implemented in the wallet
-    return false
+  suffix(): BytesLike {
+    return this.appendSuffix ? [ 3 ] : []
   }
 }

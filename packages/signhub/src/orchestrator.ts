@@ -19,7 +19,7 @@ export type SignerStatusRejected = {
 
 export type SignerStatusSigned = {
   signature: ethers.BytesLike,
-  isEOA: boolean
+  suffix: ethers.BytesLike
 }
 
 export type SignerStatus = SignerStatusPending | SignerStatusRejected | SignerStatusSigned
@@ -123,8 +123,8 @@ export class Orchestrator {
         status.signers[saddr] = { situation: InitialSituation }
         return s.requestSignature(id, message, metadata, {
           onSignature: (signature) => {
-            const isEOA = s.isEOA()
-            status.signers[saddr] = { signature, isEOA }
+            const suffix = s.suffix()
+            status.signers[saddr] = { signature, suffix }
             onStatusUpdate()
           },
           onRejection: (error) => {
