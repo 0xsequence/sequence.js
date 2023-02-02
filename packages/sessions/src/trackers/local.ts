@@ -482,15 +482,14 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
           signature: encoded.encoded,
           intent: {
             id: ethers.utils.keccak256(payload.message),
-            wallet: address,
+            wallet: address
           }
         },
-        toImageHash: coder.config.imageHashOf(currentConfig as any),
         toConfig: currentConfig,
         fromVersion,
         toVersion: fromVersion + 1
       } as migrator.SignedMigration
-    })).then((c) => c.filter((c) => c !== undefined))
+    })).then(c => c.filter(c => c !== undefined))
 
     // Return the first valid candidate
     return candidates[0]

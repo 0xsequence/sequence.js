@@ -60,8 +60,7 @@ export class Migration_v1v2 implements Migration<
       tx,
       fromVersion: this.version - 1,
       toVersion: this.version,
-      toConfig: newConfig,
-      toImageHash: v2.config.ConfigCoder.imageHashOf(newConfig)
+      toConfig: newConfig
     }
   }
 
