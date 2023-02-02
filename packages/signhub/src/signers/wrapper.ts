@@ -12,10 +12,10 @@ export class SignerWrapper implements SapientSigner {
 
   async requestSignature(
     _id: string,
-    message: ethers.utils.BytesLike,
+    message: ethers.BytesLike,
     _metadata: Object,
     callbacks: {
-      onSignature: (signature: ethers.utils.BytesLike) => void;
+      onSignature: (signature: ethers.BytesLike) => void;
       onRejection: (error: string) => void;
       onStatus: (situation: string) => void
     }
@@ -26,7 +26,7 @@ export class SignerWrapper implements SapientSigner {
 
   notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
 
-  isEOA(): boolean {
-    return this.eoa
+  suffix(): ethers.BytesLike {
+    return [ 2 ]
   }
 }

@@ -36,7 +36,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
 
   notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
 
-  isEOA(): boolean {
-    return false
+  suffix(): ethers.utils.BytesLike {
+    return [ 3 ]
   }
 }

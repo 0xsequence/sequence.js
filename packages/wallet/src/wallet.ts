@@ -37,15 +37,13 @@ const statusToSignatureParts = (status: Status) => {
   for (const signer of Object.keys(status.signers)) {
     const value = status.signers[signer]
     if (isSignerStatusSigned(value)) {
-      // Suffix is 0x02 if EOA or 0x03 if contract
-      // TODO: Maybe this should be moved to a different function that
-      // only handles suffixes
+      const suffix = ethers.utils.arrayify(value.suffix)
       const suffixed = ethers.utils.solidityPack(
-        ['bytes', 'uint8'],
-        [value.signature, value.isEOA ? 0x02 : 0x03]
+        ['bytes', 'bytes'],
+        [value.signature, suffix]
       )
 
-      parts.set(signer, { signature: suffixed, isDynamic: !value.isEOA })
+      parts.set(signer, { signature: suffixed, isDynamic: suffix.length !== 1 || suffix[0] !== 2 })
     }
   }
 
