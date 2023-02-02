@@ -144,7 +144,8 @@ describe('Wallet integration', function () {
       selectWallet: async (ws) => {
         expect(ws.length).to.equal(0)
         return undefined
-      }
+      },
+      editConfig: (config) => config
     })
 
     expect(session.account.address).to.not.equal(ethers.constants.AddressZero)
@@ -179,14 +180,16 @@ describe('Wallet integration', function () {
       selectWallet: async (ws) => {
         expect(ws.length).to.equal(0)
         return undefined
-      }
+      },
+      editConfig: (config) => config
     })
 
     const dump = await session.dump()
 
     const session2 = await Session.load({
       settings: simpleSettings,
-      dump
+      dump,
+      editConfig: (config) => config
     })
 
     await session.account.sendTransaction({ to: referenceSigner.address }, networks[0].chainId)
@@ -206,7 +209,8 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (ws) => ws[0] ?? undefined
+      selectWallet: async (ws) => ws[0] ?? undefined,
+      editConfig: (config) => config
     })
 
     const newSigner = ethers.Wallet.createRandom()
@@ -221,7 +225,8 @@ describe('Wallet integration', function () {
       selectWallet: async (ws) => {
         expect(ws.length).to.equal(1)
         return ws[0]
-      }
+      },
+      editConfig: (config) => config
     })
 
     const newConfig = await session2.account.status(networks[0].chainId).then((s) => s.config) as v2.config.WalletConfig
@@ -249,7 +254,8 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async () => undefined
+      selectWallet: async () => undefined,
+      editConfig: (config) => config
     })
 
     const newSigner = ethers.Wallet.createRandom()
@@ -264,7 +270,8 @@ describe('Wallet integration', function () {
       selectWallet: async (wallets) => {
         expect(wallets.length).to.equal(1)
         return undefined
-      }
+      },
+      editConfig: (config) => config
     })
 
     expect(newSession.account.address).to.not.equal(oldSession.account.address)
@@ -282,7 +289,8 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async () => undefined
+      selectWallet: async () => undefined,
+      editConfig: (config) => config
     })
 
     const oldSession2 = await Session.open({
@@ -293,7 +301,8 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async () => undefined
+      selectWallet: async () => undefined,
+      editConfig: (config) => config
     })
 
     const newSigner = ethers.Wallet.createRandom()
@@ -310,7 +319,8 @@ describe('Wallet integration', function () {
         expect(wallets).to.include(oldSession1.account.address)
         expect(wallets).to.include(oldSession2.account.address)
         return oldSession1.account.address
-      }
+      },
+      editConfig: (config) => config
     })
 
     expect(newSession1.account.address).to.equal(oldSession1.account.address)
@@ -328,7 +338,8 @@ describe('Wallet integration', function () {
         expect(wallets).to.include(oldSession1.account.address)
         expect(wallets).to.include(oldSession2.account.address)
         return oldSession2.account.address
-      }
+      },
+      editConfig: (config) => config
     })
 
     expect(newSession2.account.address).to.equal(oldSession2.account.address)
@@ -354,7 +365,8 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async () => undefined
+      selectWallet: async () => undefined,
+      editConfig: (config) => config
     })
 
     await session.account.sendTransaction([], networks[0].chainId)
@@ -372,7 +384,8 @@ describe('Wallet integration', function () {
       selectWallet: async (wallets) => {
         expect(wallets.length).to.equal(1)
         return wallets[0]
-      }
+      },
+      editConfig: (config) => config
     })
 
     expect(newSession.account.address).to.equal(session.account.address)
@@ -431,7 +444,8 @@ describe('Wallet integration', function () {
         selectWallet: async (wallets) => {
           expect(wallets.length).to.equal(1)
           return wallets[0]
-        }
+        },
+        editConfig: (config) => config
       })
 
       expect(newSession.account.address).to.equal(ogAccount.address)
@@ -446,6 +460,7 @@ describe('Wallet integration', function () {
       const newSession = await Session.load({
         settings: simpleSettings,
         dump: v1SessionDump,
+        editConfig: (config) => config
       })
 
       expect(newSession.account.address).to.equal(ogAccount.address)
@@ -499,7 +514,8 @@ describe('Wallet integration', function () {
           selectWallet: async (wallets) => {
             expect(wallets.length).to.equal(1)
             return wallets[0]
-          }
+          },
+          editConfig: (config) => config
         })
 
         expect(newSession.account.address).to.equal(ogAccount.address)
@@ -515,6 +531,7 @@ describe('Wallet integration', function () {
         const newSession = await Session.load({
           settings: simpleSettings,
           dump: v1SessionDump,
+          editConfig: (config) => config
         })
 
         expect(newSession.account.address).to.equal(ogAccount.address)
@@ -626,7 +643,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       await session.auth()
@@ -647,7 +665,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       const newSigner = ethers.Wallet.createRandom()
@@ -659,7 +678,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0]
+        selectWallet: async (ws) => ws[0],
+        editConfig: (config) => config
       })
 
       await session.auth()
@@ -682,7 +702,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       await session._initialAuthRequest
@@ -707,7 +728,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       await expect(session._initialAuthRequest).to.be.rejected
@@ -724,7 +746,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0]
+        selectWallet: async (ws) => ws[0],
+        editConfig: (config) => config
       })
 
       await session._initialAuthRequest
@@ -747,7 +770,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       const api = await session.getAPIClient()
@@ -778,7 +802,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       const newSigner = ethers.Wallet.createRandom()
@@ -794,7 +819,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0]
+        selectWallet: async (ws) => ws[0],
+        editConfig: (config) => config
       })
 
       const api = await session.getAPIClient()
@@ -824,7 +850,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       let calledCallback = 0
@@ -849,7 +876,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       const newSigner = ethers.Wallet.createRandom()
@@ -866,7 +894,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0]
+        selectWallet: async (ws) => ws[0],
+        editConfig: (config) => config
       })
 
       let calledCallback = 0
@@ -889,7 +918,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       alwaysFail = true
@@ -912,7 +942,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       const newSigner = ethers.Wallet.createRandom()
@@ -928,7 +959,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0]
+        selectWallet: async (ws) => ws[0],
+        editConfig: (config) => config
       })
 
       await session._initialAuthRequest
@@ -963,7 +995,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       await expect(session._initialAuthRequest).to.be.rejected
@@ -990,7 +1023,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       const apiPromise = session.getAPIClient()
@@ -1013,7 +1047,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       await expect(session.auth()).to.be.rejected
@@ -1036,7 +1071,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       // 1 signing request is made to publish signers
@@ -1074,7 +1110,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       // 1 signing request is made to publish signers
@@ -1106,7 +1143,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async () => undefined
+        selectWallet: async () => undefined,
+        editConfig: (config) => config
       })
 
       await session._initialAuthRequest
@@ -1156,7 +1194,8 @@ describe('Wallet integration', function () {
             name: 'Test',
             expiration: 240
           },
-          selectWallet: async () => undefined
+          selectWallet: async () => undefined,
+          editConfig: (config) => config
         })
 
         await session._initialAuthRequest
@@ -1194,7 +1233,8 @@ describe('Wallet integration', function () {
             name: 'Test',
             expiration: 1
           },
-          selectWallet: async () => undefined
+          selectWallet: async () => undefined,
+          editConfig: (config) => config
         })
 
         await session._initialAuthRequest
