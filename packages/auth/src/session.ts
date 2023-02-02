@@ -336,9 +336,9 @@ export class Session {
     threshold: ethers.BigNumberish
     metadata: SessionMeta,
     selectWallet: (wallets: string[]) => Promise<string | undefined>,
-    editConfig: (config: commons.config.Config) => commons.config.Config
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
   }): Promise<Session> {
-    const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfig } = args
+    const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration } = args
     const { sequenceApiUrl, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
     const referenceChainId = networks.find((n) => n.chainId === 1)?.chainId ?? networks[0].chainId
@@ -363,7 +363,7 @@ export class Session {
       // if it has been migrated and if not, migrate it (in all chains)
       let isFullyMigrated = await account.isMigratedAllChains()
       if (!isFullyMigrated) {
-        await account.signAllMigrations(editConfig)
+        await account.signAllMigrations(editConfigOnMigration)
         isFullyMigrated = await account.isMigratedAllChains()
         if (!isFullyMigrated) throw Error('Failed to migrate account')
       }
@@ -412,9 +412,9 @@ export class Session {
   static async load(args: {
     settings: SessionSettings,
     dump: SessionDumpV1 | SessionDumpV2,
-    editConfig: (config: commons.config.Config) => commons.config.Config
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
   }): Promise<Session> {
-    const { dump, settings, editConfig } = args
+    const { dump, settings, editConfigOnMigration } = args
     const { sequenceApiUrl, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
     let account: Account
@@ -437,7 +437,7 @@ export class Session {
       })
 
       if (!(await account.isMigratedAllChains())) {
-        await account.signAllMigrations(editConfig)
+        await account.signAllMigrations(editConfigOnMigration)
         if (!(await account.isMigratedAllChains())) throw Error('Failed to migrate account')
       }
     } else if (isSessionDumpV2(dump)) {
