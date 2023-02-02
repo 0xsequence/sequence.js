@@ -1,10 +1,9 @@
-
-import { commons, universal, v1, v2 } from "@0xsequence/core"
-import { migration, migrator } from "@0xsequence/migration"
-import { ethers } from "ethers"
-import { runByEIP5719 } from "@0xsequence/replacer"
-import { ConfigTracker, PresignedConfigLink } from "../tracker"
-import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from "./stores"
+import { commons, universal, v1, v2 } from '@0xsequence/core'
+import { migration, migrator } from '@0xsequence/migration'
+import { ethers } from 'ethers'
+import { runByEIP5719 } from '@0xsequence/replacer'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from './stores'
 
 export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   constructor(
@@ -187,13 +186,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return this.store.loadPayloadOfSubdigest(subdigest)
   }
 
-  savePresignedConfiguration = async (
-    args: PresignedConfigLink
-  ): Promise<void> => {
+  savePresignedConfiguration = async (args: PresignedConfig): Promise<void> => {
     // Presigned configurations only work with v2 (for now)
     // so we can assume that the signature is for a v2 configuration
     const decoded = v2.signature.SignatureCoder.decode(args.signature)
-    const message = v2.chained.messageSetImageHash(args.nextImageHash)
+    const nextImageHash = universal.genericCoderFor(args.nextConfig.version).config.imageHashOf(args.nextConfig)
+    const message = v2.chained.messageSetImageHash(nextImageHash)
     const digest = ethers.utils.keccak256(message)
     const payload = {
       message,
@@ -202,19 +200,19 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       digest
     }
 
-    await this.savePayload({ payload })
+    const savePayload = this.savePayload({ payload })
+    const saveNextConfig = this.saveWalletConfig({ config: args.nextConfig })
+
     const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
 
-    // Save all signature parts
+    // Save the recovered configuration and all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)
-    await Promise.all(signatures.map((sig) => this.store.saveSignatureOfSubdigest(
-      sig.address,
-      recovered.subdigest,
-      sig.signature
-    )))
-
-    // Save the recovered configuration
-    await this.saveWalletConfig({ config: recovered.config })
+    await Promise.all([
+      savePayload,
+      saveNextConfig,
+      this.saveWalletConfig({ config: recovered.config }),
+      ...signatures.map(sig => this.store.saveSignatureOfSubdigest(sig.address, recovered.subdigest, sig.signature))
+    ])
   }
 
   loadPresignedConfiguration = async (args: {

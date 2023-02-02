@@ -463,16 +463,12 @@ export class Account {
     // sign the update struct, using chain id 0
     const signature = await this.signDigest(updateStruct, 0, false)
 
-    // save both the new config and the presigned transaction
-    // to the sessions tracker
-    await Promise.all([
-      this.tracker.saveWalletConfig({ config }),
-      this.tracker.savePresignedConfiguration({
-        nextImageHash,
-        signature,
-        wallet: this.address
-      })
-    ])
+    // save the presigned transaction to the sessions tracker
+    return this.tracker.savePresignedConfiguration({
+      wallet: this.address,
+      nextConfig: config,
+      signature
+    })
   }
 
   /**
