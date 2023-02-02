@@ -104,31 +104,24 @@ export class Migrator {
     return { signedMigrations: migs, missing: false, lastImageHash: fih, lastVersion: fversion }
   }
 
-  async signMissingMigrations(
+  async signNextMigration(
     address: string,
     fromVersion: number,
     wallet: Wallet,
-  ): Promise<SignedMigration[]> {
-    const versions = Object.values(this.contexts)
+    nextConfig: commons.config.Config
+  ): Promise<SignedMigration | undefined> {
+    const migration = this.migrations[fromVersion]
 
-    const result: SignedMigration[] = []
-
-    for (let i = fromVersion; i < versions.length; i++) {
-      const migration = this.migrations[i]
-
-      if (!migration) {
-        throw new Error(`No migration found for version ${i}`)
-      }
-
-      const unsignedMigration = migration.buildTransaction(address, this.contexts, wallet.config)
-      const signedBundle = await wallet.signTransactionBundle(unsignedMigration.tx)
-
-      result.push({
-        ...unsignedMigration,
-        tx: signedBundle
-      })
+    if (!migration) {
+      return undefined
     }
 
-    return result
+    const unsignedMigration = migration.buildTransaction(address, this.contexts, nextConfig)
+    const signedBundle = await wallet.signTransactionBundle(unsignedMigration.tx)
+
+    return {
+      ...unsignedMigration,
+      tx: signedBundle
+    }
   }
 }
