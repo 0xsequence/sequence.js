@@ -49,10 +49,7 @@ export abstract class ConfigTracker {
     context: commons.context.WalletContext
   } | undefined>
 
-  saveCounterfactualWallet: (args: {
-    imageHash: string,
-    context: commons.context.WalletContext[]
-  }) => Promise<void>
+  saveCounterfactualWallet: (args: { config: commons.config.Config; context: commons.context.WalletContext[] }) => Promise<void>
 
   walletsOfSigner: (args: {
     signer: string

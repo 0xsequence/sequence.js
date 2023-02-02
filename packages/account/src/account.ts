@@ -123,13 +123,7 @@ export class Account {
     const context = options.contexts[lastMigration.version]
     const address = commons.context.addressOf(context, imageHash)
 
-    await Promise.all([
-      options.tracker.saveWalletConfig({ config }),
-      options.tracker.saveCounterfactualWallet({
-        context: Object.values(options.contexts),
-        imageHash
-      })
-    ])
+    await options.tracker.saveCounterfactualWallet({ config, context: Object.values(options.contexts) })
 
     return new Account({
       address,

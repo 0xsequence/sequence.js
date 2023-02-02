@@ -265,10 +265,11 @@ describe('Local config tracker', () => {
       describe('Counterfactual address', () => {
         it('Should set and get address', async () => {
           const context = randomContext()
-          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const config = utils.configs.random.genRandomV1Config()
+          const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
 
           const wallet = commons.context.addressOf(context, imageHash)
-          await tracker.saveCounterfactualWallet({ context: [context], imageHash })
+          await tracker.saveCounterfactualWallet({ config, context: [context] })
           const res = await tracker.imageHashOfCounterfactualWallet({ wallet })
 
           expect(res).to.deep.equal({ imageHash, context })
@@ -276,10 +277,11 @@ describe('Local config tracker', () => {
 
         it('Should set address for multiple configs', async () => {
           const contexts = new Array(5).fill(0).map(() => randomContext())
-          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const config = utils.configs.random.genRandomV1Config()
+          const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
 
-          const wallets = contexts.map((c) => commons.context.addressOf(c, imageHash))
-          await tracker.saveCounterfactualWallet({ context: contexts, imageHash })
+          const wallets = contexts.map(c => commons.context.addressOf(c, imageHash))
+          await tracker.saveCounterfactualWallet({ config, context: contexts })
 
           for (let i = 0; i < wallets.length; i++) {
             const res = await tracker.imageHashOfCounterfactualWallet({ wallet: wallets[i] })
@@ -787,10 +789,11 @@ describe('Local config tracker', () => {
     describe('Counterfactual addresses', () => {
       it('Should store counterfactual address in both', async () => {
         const context = randomContext()
-        const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+        const config = utils.configs.random.genRandomV1Config()
+        const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
 
         const wallet = commons.context.addressOf(context, imageHash)
-        await combined.saveCounterfactualWallet({ context: [context], imageHash })
+        await combined.saveCounterfactualWallet({ config, context: [context] })
 
         const res1 = await combined.imageHashOfCounterfactualWallet({ wallet })
         const res2 = await tracker1.imageHashOfCounterfactualWallet({ wallet })
@@ -803,10 +806,11 @@ describe('Local config tracker', () => {
 
       it('Should mirror counterfactual address from tracker1', async () => {
         const context = randomContext()
-        const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+        const config = utils.configs.random.genRandomV1Config()
+        const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
 
         const wallet = commons.context.addressOf(context, imageHash)
-        await tracker1.saveCounterfactualWallet({ context: [context], imageHash })
+        await tracker1.saveCounterfactualWallet({ config, context: [context] })
 
         const res1 = await combined.imageHashOfCounterfactualWallet({ wallet })
 
