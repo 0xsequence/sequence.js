@@ -13,7 +13,7 @@ export interface LocalTrackerDBSchema extends DBSchema {
     key: string,
     value: v2.config.Topology | PlainNode | PlainNested
   },
-  'counterFactualWallets': {
+  'counterfactualWallets': {
     key: string,
     value: {
       imageHash: string,
@@ -94,7 +94,7 @@ export class IndexedDBStore implements TrackerStore {
         if (oldVersion === 0) {
           db.createObjectStore('configs')
           db.createObjectStore('v2Nodes')
-          db.createObjectStore('counterFactualWallets')
+          db.createObjectStore('counterfactualWallets')
           db.createObjectStore('payloads')
 
           const signatures = db.createObjectStore('signatures')
@@ -128,14 +128,14 @@ export class IndexedDBStore implements TrackerStore {
     await db.put('v2Nodes', node, nodeHash)
   }
 
-  loadCounterFactualWallet = async (wallet: string): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> => {
+  loadCounterfactualWallet = async (wallet: string): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> => {
     const db = await this.getDb()
-    return db.get('counterFactualWallets', wallet)
+    return db.get('counterfactualWallets', wallet)
   }
 
-  saveCounterFactualWallet = async (wallet: string, imageHash: string, context: commons.context.WalletContext): Promise<void> => {
+  saveCounterfactualWallet = async (wallet: string, imageHash: string, context: commons.context.WalletContext): Promise<void> => {
     const db = await this.getDb()
-    await db.put('counterFactualWallets', { imageHash, context }, wallet)
+    await db.put('counterfactualWallets', { imageHash, context }, wallet)
   }
 
   loadPayloadOfSubdigest = async (subdigest: string): Promise<commons.signature.SignedPayload | undefined> => {

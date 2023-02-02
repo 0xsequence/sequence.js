@@ -123,13 +123,7 @@ export class Account {
     const context = options.contexts[lastMigration.version]
     const address = commons.context.addressOf(context, imageHash)
 
-    await Promise.all([
-      options.tracker.saveWalletConfig({ config }),
-      options.tracker.saveCounterFactualWallet({
-        context: Object.values(options.contexts),
-        imageHash
-      })
-    ])
+    await options.tracker.saveCounterfactualWallet({ config, context: Object.values(options.contexts) })
 
     return new Account({
       address,
@@ -235,13 +229,13 @@ export class Account {
     }
     current: number
   }> {
-    // First we need to use the tracker to get the counter-factual imageHash
-    const firstImageHash = await this.tracker.imageHashOfCounterFactualWallet({
+    // First we need to use the tracker to get the counterfactual imageHash
+    const firstImageHash = await this.tracker.imageHashOfCounterfactualWallet({
       wallet: this.address
     })
 
     if (!firstImageHash) {
-      throw new Error(`Counter-factual imageHash not found for wallet ${this.address}`)
+      throw new Error(`Counterfactual imageHash not found for wallet ${this.address}`)
     }
 
     const current = await version.versionOf(
@@ -274,11 +268,11 @@ export class Account {
 
     let onChainImageHash = await this.reader(chainId).imageHash(this.address)
     if (!onChainImageHash) {
-      const counterFactualImageHash = await this.tracker.imageHashOfCounterFactualWallet({
+      const counterfactualImageHash = await this.tracker.imageHashOfCounterfactualWallet({
         wallet: this.address
       })
 
-      onChainImageHash = counterFactualImageHash?.imageHash
+      onChainImageHash = counterfactualImageHash?.imageHash
     }
 
     if (!onChainImageHash) {
@@ -469,16 +463,12 @@ export class Account {
     // sign the update struct, using chain id 0
     const signature = await this.signDigest(updateStruct, 0, false)
 
-    // save both the new config and the presigned transaction
-    // to the sessions tracker
-    await Promise.all([
-      this.tracker.saveWalletConfig({ config }),
-      this.tracker.savePresignedConfiguration({
-        nextImageHash,
-        signature,
-        wallet: this.address
-      })
-    ])
+    // save the presigned transaction to the sessions tracker
+    return this.tracker.savePresignedConfiguration({
+      wallet: this.address,
+      nextConfig: config,
+      signature
+    })
   }
 
   /**
@@ -572,17 +562,8 @@ export class Account {
     if (status.fullyMigrated) return 0
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await this.migrator.signMissingMigrations(
-      this.address,
-      status.version,
-      wallet
-    )
-
-    await Promise.all(signed.map((migration) => Promise.all([
-      this.tracker.saveMigration(this.address, migration, this.contexts),
-      this.tracker.saveWalletConfig({ config: migration.toConfig })
-    ])))
-
+    const signed = await this.migrator.signMissingMigrations(this.address, status.version, wallet)
+    await Promise.all(signed.map(migration => this.tracker.saveMigration(this.address, migration, this.contexts)))
     return signed.length
   }
 

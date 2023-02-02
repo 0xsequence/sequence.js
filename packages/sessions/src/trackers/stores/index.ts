@@ -40,9 +40,9 @@ export interface TrackerStore {
   loadV2Node: (nodeHash: string) => Promise<PlainNode | PlainNested | v2.config.Topology | undefined>
   saveV2Node: (nodeHash: string, node: PlainNode | PlainNested | v2.config.Topology) => Promise<void>
 
-  // counter-factual wallets
-  loadCounterFactualWallet: (wallet: string) => Promise<{ imageHash: string, context: commons.context.WalletContext } | undefined>
-  saveCounterFactualWallet: (wallet: string, imageHash: string, context: commons.context.WalletContext) => Promise<void>
+  // counterfactual wallets
+  loadCounterfactualWallet: (wallet: string) => Promise<{ imageHash: string, context: commons.context.WalletContext } | undefined>
+  saveCounterfactualWallet: (wallet: string, imageHash: string, context: commons.context.WalletContext) => Promise<void>
 
   // payloads
   loadPayloadOfSubdigest: (subdigest: string) => Promise<commons.signature.SignedPayload | undefined>

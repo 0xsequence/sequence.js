@@ -1,7 +1,7 @@
 import { walletContracts } from "@0xsequence/abi"
 import { ethers } from "ethers"
 import { commons } from ".."
-import { isValidCounterFactual } from "./context"
+import { isValidCounterfactual } from "./context"
 
 /**
  * Provides stateful information about the wallet.
@@ -95,10 +95,10 @@ export interface Reader {
       return isValid === '0x1626ba7e' // as defined in ERC1271
     }
 
-    // We can try to recover the counter-factual address
+    // We can try to recover the counterfactual address
     // and check if it matches the wallet address
     if (this.contexts) {
-      return isValidCounterFactual(
+      return isValidCounterfactual(
         wallet,
         digest,
         signature,

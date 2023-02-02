@@ -1,10 +1,9 @@
-
-import { commons, universal, v1, v2 } from "@0xsequence/core"
-import { migration, migrator } from "@0xsequence/migration"
-import { ethers } from "ethers"
-import { runByEIP5719 } from "@0xsequence/replacer"
-import { ConfigTracker, PresignedConfigLink } from "../tracker"
-import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from "./stores"
+import { commons, universal, v1, v2 } from '@0xsequence/core'
+import { migration, migrator } from '@0xsequence/migration'
+import { ethers } from 'ethers'
+import { runByEIP5719 } from '@0xsequence/replacer'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from './stores'
 
 export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   constructor(
@@ -139,25 +138,29 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     throw new Error(`Unknown config type: ${config}`)
   }
 
-  saveCounterFactualWallet = async (args: {
-    imageHash: string,
+  saveCounterfactualWallet = async (args: {
+    config: commons.config.Config
     context: commons.context.WalletContext[]
   }): Promise<void> => {
-    const { imageHash, context } = args
-    await Promise.all(context.map((ctx) => {
-      const address = commons.context.addressOf(ctx, imageHash)
-      return this.store.saveCounterFactualWallet(address, imageHash, ctx)
-    }))
+    const { config, context } = args
+    const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
+    await Promise.all([
+      this.saveWalletConfig({ config }),
+      ...context.map(ctx => {
+        const address = commons.context.addressOf(ctx, imageHash)
+        return this.store.saveCounterfactualWallet(address, imageHash, ctx)
+      })
+    ])
   }
 
-  imageHashOfCounterFactualWallet = async (args: {
+  imageHashOfCounterfactualWallet = async (args: {
     wallet: string
   }): Promise<{
     imageHash: string,
     context: commons.context.WalletContext
   } | undefined> => {
     const { wallet } = args
-    const result = await this.store.loadCounterFactualWallet(wallet)
+    const result = await this.store.loadCounterfactualWallet(wallet)
 
     if (!result) return undefined
 
@@ -183,13 +186,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return this.store.loadPayloadOfSubdigest(subdigest)
   }
 
-  savePresignedConfiguration = async (
-    args: PresignedConfigLink
-  ): Promise<void> => {
+  savePresignedConfiguration = async (args: PresignedConfig): Promise<void> => {
     // Presigned configurations only work with v2 (for now)
     // so we can assume that the signature is for a v2 configuration
     const decoded = v2.signature.SignatureCoder.decode(args.signature)
-    const message = v2.chained.messageSetImageHash(args.nextImageHash)
+    const nextImageHash = universal.genericCoderFor(args.nextConfig.version).config.imageHashOf(args.nextConfig)
+    const message = v2.chained.messageSetImageHash(nextImageHash)
     const digest = ethers.utils.keccak256(message)
     const payload = {
       message,
@@ -198,19 +200,19 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       digest
     }
 
-    await this.savePayload({ payload })
+    const savePayload = this.savePayload({ payload })
+    const saveNextConfig = this.saveWalletConfig({ config: args.nextConfig })
+
     const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
 
-    // Save all signature parts
+    // Save the recovered configuration and all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)
-    await Promise.all(signatures.map((sig) => this.store.saveSignatureOfSubdigest(
-      sig.address,
-      recovered.subdigest,
-      sig.signature
-    )))
-
-    // Save the recovered configuration
-    await this.saveWalletConfig({ config: recovered.config })
+    await Promise.all([
+      savePayload,
+      saveNextConfig,
+      this.saveWalletConfig({ config: recovered.config }),
+      ...signatures.map(sig => this.store.saveSignatureOfSubdigest(sig.address, recovered.subdigest, sig.signature))
+    ])
   }
 
   loadPresignedConfiguration = async (args: {
@@ -401,28 +403,24 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
     const digest = ethers.utils.keccak256(message)
     const payload = { chainId: signed.tx.chainId, message, address, digest }
+    const subdigest = commons.signature.subdigestOf(payload)
 
-    await this.savePayload({ payload })
+    const savePayload = this.savePayload({ payload })
+    const saveToConfig = this.saveWalletConfig({ config: signed.toConfig })
 
     const decoded = v1.signature.SignatureCoder.decode(signed.tx.signature)
     const recovered = await v1.signature.SignatureCoder.recover(decoded, payload, this.provider)
 
-    // Save all signature parts
+    // Save the recovered config, the migrate transaction, and all signature parts
     const signatures = v1.signature.SignatureCoder.signaturesOf(recovered.config)
-    await Promise.all(signatures.map((sig) => this.store.saveSignatureOfSubdigest(
-      sig.address,
-      recovered.subdigest,
-      sig.signature
-    )))
 
-    // Save the recovered config
-    await this.saveWalletConfig({
-      config: recovered.config
-    })
-
-    // Save the migrate transaction
-    const subdigest = commons.signature.subdigestOf(payload)
-    await this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest)
+    await Promise.all([
+      savePayload,
+      saveToConfig,
+      this.saveWalletConfig({ config: recovered.config }),
+      this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest),
+      ...signatures.map(sig => this.store.saveSignatureOfSubdigest(sig.address, recovered.subdigest, sig.signature))
+    ])
   }
 
   async getMigration(
@@ -484,15 +482,14 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
           signature: encoded.encoded,
           intent: {
             id: ethers.utils.keccak256(payload.message),
-            wallet: address,
+            wallet: address
           }
         },
-        toImageHash: coder.config.imageHashOf(currentConfig as any),
         toConfig: currentConfig,
         fromVersion,
         toVersion: fromVersion + 1
       } as migrator.SignedMigration
-    })).then((c) => c.filter((c) => c !== undefined))
+    })).then(c => c.filter(c => c !== undefined))
 
     // Return the first valid candidate
     return candidates[0]

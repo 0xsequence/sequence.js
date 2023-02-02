@@ -1,6 +1,5 @@
-
-import { ConfigTracker, PresignedConfigLink } from '../tracker'
-import { migrator } from "@0xsequence/migration"
+import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { migrator } from '@0xsequence/migration'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
 import { LocalConfigTracker } from './local';
@@ -84,19 +83,37 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     }))
   }
 
-  async imageHashOfCounterFactualWallet(args: { wallet: string }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
-    const promises = this.trackers.map(async (t, i) => ({ res: await t.imageHashOfCounterFactualWallet(args), i }))
-    const result = await raceUntil(promises, undefined, (val) => val?.res !== undefined)
-    if (!result?.res) return undefined
-    this.saveCounterFactualWallet({ imageHash: result.res.imageHash, context: [result.res.context], skipTracker: result.i })
-    return result.res
+  async imageHashOfCounterfactualWallet(args: {
+    wallet: string
+  }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
+    const imageHash = await raceUntil(
+      this.trackers.map(t => t.imageHashOfCounterfactualWallet(args)),
+      undefined,
+      result => Boolean(result)
+    )
+
+    if (imageHash) {
+      this.configOfImageHash({ imageHash: imageHash.imageHash }).then(config => {
+        if (config) {
+          this.saveCounterfactualWallet({ config, context: [imageHash.context] })
+        }
+      })
+    }
+
+    return imageHash
   }
 
-  async saveCounterFactualWallet(args: { imageHash: string; context: commons.context.WalletContext[], skipTracker?: number }): Promise<void> {
-    await Promise.all(this.trackers.map((t, i) => {
-      if (i === args.skipTracker) return
-      return t.saveCounterFactualWallet(args)
-    }))
+  async saveCounterfactualWallet(args: {
+    config: commons.config.Config
+    context: commons.context.WalletContext[]
+    skipTracker?: number
+  }): Promise<void> {
+    await Promise.all(
+      this.trackers.map((t, i) => {
+        if (i === args.skipTracker) return
+        return t.saveCounterfactualWallet(args)
+      })
+    )
   }
 
   async walletsOfSigner(args: { signer: string }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
@@ -144,19 +161,29 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     })
 
     if (!best) return []
-    best.result.forEach((res) => {
-      this.configOfImageHash({ imageHash: res.nextImageHash })
-      this.savePresignedConfiguration({
-        wallet: args.wallet,
-        nextImageHash: res.nextImageHash,
-        signature: res.signature
-      })
+
+    const configs = new Map<string, Promise<commons.config.Config | undefined>>()
+    const config = (imageHash: string): Promise<commons.config.Config | undefined> => {
+      if (!configs.has(imageHash)) {
+        configs.set(imageHash, this.configOfImageHash({ imageHash }))
+      }
+      return configs.get(imageHash)!
+    }
+    best.result.forEach(async res => {
+      const nextConfig = await config(res.nextImageHash)
+      if (nextConfig) {
+        this.savePresignedConfiguration({
+          wallet: args.wallet,
+          nextConfig,
+          signature: res.signature
+        })
+      }
     })
 
     return best.result
   }
 
-  async savePresignedConfiguration(args: PresignedConfigLink): Promise<void> {
+  async savePresignedConfiguration(args: PresignedConfig): Promise<void> {
     await Promise.all(this.trackers.map(t => t.savePresignedConfiguration(args)))
   }
 
