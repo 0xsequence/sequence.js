@@ -820,5 +820,92 @@ describe('Account', () => {
       // Configs are now the same!
       expect(status1d.imageHash).to.be.equal(status2d.imageHash)
     })
+
+    it('Should edit the configuration during the migration', async () => {
+      // Old account may be an address that's not even deployed
+      const signer1 = ethers.Wallet.createRandom()
+      const signer2 = ethers.Wallet.createRandom()
+
+      const simpleConfig1 = {
+        threshold: 1,
+        checkpoint: 0,
+        signers: [{
+          address: signer1.address,
+          weight: 1
+        }]
+      }
+
+      const simpleConfig2 = {
+        threshold: 1,
+        checkpoint: 0,
+        signers: [{
+          address: signer2.address,
+          weight: 1
+        }]
+      }
+
+      const config = v1.config.ConfigCoder.fromSimple(simpleConfig1)
+      const configv2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
+
+      const imageHash = v1.config.ConfigCoder.imageHashOf(config)
+      const address = commons.context.addressOf(contexts[1], imageHash)
+
+      // Sessions server MUST have information about the old wallet
+      // in production this is retrieved from SequenceUtils contract
+      await tracker.saveCounterfactualWallet({ config, context: [contexts[1]] })
+
+      // Importing the account should work!
+      const orchestrator = new Orchestrator([signer1])
+      const account = new Account({ ...defaultArgs, address, orchestrator: orchestrator })
+
+      const status = await account.status(0)
+      expect(status.fullyMigrated).to.be.false
+      expect(status.onChain.deployed).to.be.false
+      expect(status.onChain.imageHash).to.equal(imageHash)
+      expect(status.imageHash).to.equal(imageHash)
+      expect(status.version).to.equal(1)
+
+      // Sending a transaction should fail (not fully migrated)
+      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
+
+      // Should sign migration using the account
+      await account.signAllMigrations((c) => {
+        expect(v1.config.ConfigCoder.imageHashOf(c as any)).to.equal(v1.config.ConfigCoder.imageHashOf(config))
+        return configv2
+      })
+
+      const status2 = await account.status(networks[0].chainId)
+      expect(status2.fullyMigrated).to.be.true
+      expect(status2.onChain.deployed).to.be.false
+      expect(status2.onChain.imageHash).to.equal(imageHash)
+      expect(status2.onChain.version).to.equal(1)
+      expect(status2.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status2.version).to.equal(2)
+
+      // Send a transaction
+      orchestrator.setSigners([signer2])
+      const tx = await account.sendTransaction([], networks[0].chainId)
+      expect(tx).to.not.be.undefined
+
+      const status3 = await account.status(networks[0].chainId)
+      expect(status3.fullyMigrated).to.be.true
+      expect(status3.onChain.deployed).to.be.true
+      expect(status3.onChain.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status3.onChain.version).to.equal(2)
+      expect(status3.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status3.version).to.equal(2)
+
+      // Send another transaction on another chain
+      const tx2 = await account.sendTransaction([], networks[1].chainId)
+      expect(tx2).to.not.be.undefined
+
+      const status4 = await account.status(networks[1].chainId)
+      expect(status4.fullyMigrated).to.be.true
+      expect(status4.onChain.deployed).to.be.true
+      expect(status4.onChain.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status4.onChain.version).to.equal(2)
+      expect(status4.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
+      expect(status4.version).to.equal(2)
+    })
   })
 })
