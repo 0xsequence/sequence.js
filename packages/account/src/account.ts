@@ -562,17 +562,8 @@ export class Account {
     if (status.fullyMigrated) return 0
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await this.migrator.signMissingMigrations(
-      this.address,
-      status.version,
-      wallet
-    )
-
-    await Promise.all(signed.map((migration) => Promise.all([
-      this.tracker.saveMigration(this.address, migration, this.contexts),
-      this.tracker.saveWalletConfig({ config: migration.toConfig })
-    ])))
-
+    const signed = await this.migrator.signMissingMigrations(this.address, status.version, wallet)
+    await Promise.all(signed.map(migration => this.tracker.saveMigration(this.address, migration, this.contexts)))
     return signed.length
   }
 

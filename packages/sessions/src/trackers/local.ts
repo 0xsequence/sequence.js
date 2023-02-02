@@ -403,28 +403,24 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
     const digest = ethers.utils.keccak256(message)
     const payload = { chainId: signed.tx.chainId, message, address, digest }
+    const subdigest = commons.signature.subdigestOf(payload)
 
-    await this.savePayload({ payload })
+    const savePayload = this.savePayload({ payload })
+    const saveToConfig = this.saveWalletConfig({ config: signed.toConfig })
 
     const decoded = v1.signature.SignatureCoder.decode(signed.tx.signature)
     const recovered = await v1.signature.SignatureCoder.recover(decoded, payload, this.provider)
 
-    // Save all signature parts
+    // Save the recovered config, the migrate transaction, and all signature parts
     const signatures = v1.signature.SignatureCoder.signaturesOf(recovered.config)
-    await Promise.all(signatures.map((sig) => this.store.saveSignatureOfSubdigest(
-      sig.address,
-      recovered.subdigest,
-      sig.signature
-    )))
 
-    // Save the recovered config
-    await this.saveWalletConfig({
-      config: recovered.config
-    })
-
-    // Save the migrate transaction
-    const subdigest = commons.signature.subdigestOf(payload)
-    await this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest)
+    await Promise.all([
+      savePayload,
+      saveToConfig,
+      this.saveWalletConfig({ config: recovered.config }),
+      this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest),
+      ...signatures.map(sig => this.store.saveSignatureOfSubdigest(sig.address, recovered.subdigest, sig.signature))
+    ])
   }
 
   async getMigration(
