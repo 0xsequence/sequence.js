@@ -5,10 +5,9 @@ import { ethers } from 'ethers'
 import { Migration } from "./migrations"
 
 export type UnsignedMigration = {
-  tx: commons.transaction.TransactionBundle,
-  fromVersion: number,
-  toVersion: number,
-  toImageHash: string,
+  tx: commons.transaction.TransactionBundle
+  fromVersion: number
+  toVersion: number
   toConfig: commons.config.Config
 }
 
