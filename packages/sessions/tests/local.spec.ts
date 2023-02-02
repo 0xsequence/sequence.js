@@ -331,7 +331,7 @@ describe('Local config tracker', () => {
 
           await tracker.saveWalletConfig({ config })
           await tracker.saveWalletConfig({ config: nextConfig })
-          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+          await tracker.savePresignedConfiguration({ wallet: address, nextConfig, signature })
 
           const res = await tracker.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
           expect(res.length).to.equal(1)
@@ -355,7 +355,7 @@ describe('Local config tracker', () => {
 
           await tracker.saveWalletConfig({ config })
           await tracker.saveWalletConfig({ config: nextConfig })
-          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+          await tracker.savePresignedConfiguration({ wallet: address, nextConfig, signature })
 
           const wrongWallet = ethers.Wallet.createRandom().address
           const res = await tracker.loadPresignedConfiguration({ wallet: wrongWallet, fromImageHash: imageHash })
@@ -411,7 +411,7 @@ describe('Local config tracker', () => {
           await tracker.saveWalletConfig({ config: nextConfig2 })
           await tracker.savePresignedConfiguration({
             wallet: address,
-            nextImageHash: nextImageHash2,
+            nextConfig: nextConfig2,
             signature: signature2
           })
 
@@ -436,7 +436,7 @@ describe('Local config tracker', () => {
           // Adding the 0_1 step should give us a full chain to 2
           await tracker.savePresignedConfiguration({
             wallet: address,
-            nextImageHash: nextImageHash1,
+            nextConfig: nextConfig1,
             signature: signature1
           })
 
@@ -501,8 +501,8 @@ describe('Local config tracker', () => {
           await tracker.saveWalletConfig({ config: config1 })
           await tracker.saveWalletConfig({ config: config2 })
           await tracker.saveWalletConfig({ config: config3 })
-          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash: imageHash2, signature: signature1 })
-          await tracker.savePresignedConfiguration({ wallet: address, nextImageHash: imageHash3, signature: signature2 })
+          await tracker.savePresignedConfiguration({ wallet: address, nextConfig: config2, signature: signature1 })
+          await tracker.savePresignedConfiguration({ wallet: address, nextConfig: config3, signature: signature2 })
 
           // Going from 1 to 3 should give us 1 jump
           const resa = await tracker.loadPresignedConfiguration({
@@ -847,7 +847,7 @@ describe('Local config tracker', () => {
 
         await combined.saveWalletConfig({ config })
         await combined.saveWalletConfig({ config: nextConfig })
-        await combined.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+        await combined.savePresignedConfiguration({ wallet: address, nextConfig, signature })
 
         const res2 = await tracker1.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
         const res3 = await tracker2.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
@@ -884,7 +884,7 @@ describe('Local config tracker', () => {
 
         await tracker2.saveWalletConfig({ config })
         await tracker2.saveWalletConfig({ config: nextConfig })
-        await tracker2.savePresignedConfiguration({ wallet: address, nextImageHash, signature })
+        await tracker2.savePresignedConfiguration({ wallet: address, nextConfig, signature })
 
         const res1 = await combined.loadPresignedConfiguration({ wallet: address, fromImageHash: imageHash })
 
@@ -956,7 +956,7 @@ describe('Local config tracker', () => {
         await tracker1.saveWalletConfig({ config: nextConfig1 })
         await tracker1.savePresignedConfiguration({
           wallet: address,
-          nextImageHash: nextImageHash1,
+          nextConfig: nextConfig1,
           signature: signature1
         })
 
@@ -966,12 +966,12 @@ describe('Local config tracker', () => {
         await tracker2.saveWalletConfig({ config: nextConfig2 })
         await tracker2.savePresignedConfiguration({
           wallet: address,
-          nextImageHash: nextImageHash1,
+          nextConfig: nextConfig1,
           signature: signature1
         })
         await tracker2.savePresignedConfiguration({
           wallet: address,
-          nextImageHash: nextImageHash2,
+          nextConfig: nextConfig2,
           signature: signature2
         })
 
