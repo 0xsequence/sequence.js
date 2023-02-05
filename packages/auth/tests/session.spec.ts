@@ -155,7 +155,7 @@ describe('Wallet integration', function () {
     expect(v2.config.isWalletConfig(status.config)).to.equal(true)
     const configv2 = status.config as v2.config.WalletConfig
 
-    expect(configv2.threshold).to.deep.equal(ethers.BigNumber.from(1))
+    expect(ethers.BigNumber.from(configv2.threshold)).to.deep.equal(ethers.BigNumber.from(1))
     expect(v2.config.isSignerLeaf(configv2.tree)).to.equal(true)
 
     const leaf = configv2.tree as v2.config.SignerLeaf
