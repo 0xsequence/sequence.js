@@ -74,7 +74,8 @@ export class GuardSigner implements signers.SapientSigner {
     const { encoded } = coder.signature.encodeSigners(metadata.config, metadata.signatureParts ?? new Map(), [], metadata.chainId)
 
     try {
-      const result = await this.guard.sign({
+      const result = await this.guard.signWith({
+        signer: this.address,
         request: {
           msg: ethers.utils.hexlify(message),
           auxData: this.packMsgAndSig(metadata.address, metadata.digest, encoded, metadata.chainId),
