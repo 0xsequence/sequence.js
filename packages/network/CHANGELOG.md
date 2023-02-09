@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.15
+
+### Patch Changes
+
+- - provider: expand receiver type on some util methods
+- Updated dependencies
+  - @0xsequence/indexer@0.43.15
+  - @0xsequence/provider@0.43.15
+  - @0xsequence/relayer@0.43.15
+  - @0xsequence/utils@0.43.15
+
 ## 0.43.14
 
 ### Patch Changes

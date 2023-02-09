@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/transactions",
-  "version": "0.43.14",
+  "version": "0.43.15",
   "description": "transactions sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/transactions",
   "source": "src/index.ts",
@@ -14,10 +14,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.43.14",
-    "@0xsequence/config": "^0.43.14",
-    "@0xsequence/network": "^0.43.14",
-    "@0xsequence/utils": "^0.43.14"
+    "@0xsequence/abi": "^0.43.15",
+    "@0xsequence/config": "^0.43.15",
+    "@0xsequence/network": "^0.43.15",
+    "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
     "ethers": ">=5.5"

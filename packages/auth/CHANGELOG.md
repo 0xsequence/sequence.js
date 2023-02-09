@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.15
+
+### Patch Changes
+
+- - provider: expand receiver type on some util methods
+- Updated dependencies
+  - @0xsequence/abi@0.43.15
+  - @0xsequence/api@0.43.15
+  - @0xsequence/config@0.43.15
+  - @0xsequence/indexer@0.43.15
+  - @0xsequence/metadata@0.43.15
+  - @0xsequence/network@0.43.15
+  - @0xsequence/provider@0.43.15
+  - @0xsequence/utils@0.43.15
+  - @0xsequence/wallet@0.43.15
+
 ## 0.43.14
 
 ### Patch Changes

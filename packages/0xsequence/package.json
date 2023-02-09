@@ -1,6 +1,6 @@
 {
   "name": "0xsequence",
-  "version": "0.43.14",
+  "version": "0.43.15",
   "description": "Sequence: a modular web3 stack and smart wallet for Ethereum chains",
   "repository": "https://github.com/0xsequence/sequence.js",
   "source": "src/index.ts",
@@ -28,20 +28,20 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.43.14",
-    "@0xsequence/api": "^0.43.14",
-    "@0xsequence/auth": "^0.43.14",
-    "@0xsequence/config": "^0.43.14",
-    "@0xsequence/guard": "^0.43.14",
-    "@0xsequence/indexer": "^0.43.14",
-    "@0xsequence/metadata": "^0.43.14",
-    "@0xsequence/multicall": "^0.43.14",
-    "@0xsequence/network": "^0.43.14",
-    "@0xsequence/provider": "^0.43.14",
-    "@0xsequence/relayer": "^0.43.14",
-    "@0xsequence/transactions": "^0.43.14",
-    "@0xsequence/utils": "^0.43.14",
-    "@0xsequence/wallet": "^0.43.14"
+    "@0xsequence/abi": "^0.43.15",
+    "@0xsequence/api": "^0.43.15",
+    "@0xsequence/auth": "^0.43.15",
+    "@0xsequence/config": "^0.43.15",
+    "@0xsequence/guard": "^0.43.15",
+    "@0xsequence/indexer": "^0.43.15",
+    "@0xsequence/metadata": "^0.43.15",
+    "@0xsequence/multicall": "^0.43.15",
+    "@0xsequence/network": "^0.43.15",
+    "@0xsequence/provider": "^0.43.15",
+    "@0xsequence/relayer": "^0.43.15",
+    "@0xsequence/transactions": "^0.43.15",
+    "@0xsequence/utils": "^0.43.15",
+    "@0xsequence/wallet": "^0.43.15"
   },
   "peerDependencies": {
     "ethers": ">=5.5"

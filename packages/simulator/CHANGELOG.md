@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.15
+
+### Patch Changes
+
+- - provider: expand receiver type on some util methods
+- Updated dependencies
+  - @0xsequence/transactions@0.43.15
+
 ## 0.43.14
 
 ### Patch Changes

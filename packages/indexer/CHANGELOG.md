@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.43.15
+
+### Patch Changes
+
+- - provider: expand receiver type on some util methods
+
 ## 0.43.14
 
 ### Patch Changes
