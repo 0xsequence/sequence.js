@@ -29,7 +29,7 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
+  provider: Web3Provider | ethers.providers.Web3Provider | ethers.providers.Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
@@ -46,7 +46,7 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
+  provider: Web3Provider | ethers.providers.Web3Provider  | ethers.providers.Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
@@ -59,7 +59,7 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
+  provider: Web3Provider | ethers.providers.Web3Provider  | ethers.providers.Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
