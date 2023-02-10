@@ -232,7 +232,7 @@ describe('Wallet integration', function () {
     const newConfig = await session2.account.status(networks[0].chainId).then((s) => s.config) as v2.config.WalletConfig
 
     expect(session2.account.address).to.equal(session.account.address)
-    expect(newConfig.threshold).to.deep.equal(ethers.BigNumber.from(2))
+    expect(ethers.BigNumber.from(newConfig.threshold)).to.deep.equal(ethers.BigNumber.from(2))
 
     const newSigners = v2.config.signersOf(newConfig.tree).map((s) => s.address)
     expect(newSigners.length).to.equal(2)
