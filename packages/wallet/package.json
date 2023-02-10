@@ -26,13 +26,13 @@
     "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "^6.0.0"
   },
   "devDependencies": {
     "@0xsequence/ethauth": "^0.8.0",
     "@0xsequence/wallet-contracts": "1.10.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ethers": "^5.7.2",
+    "ethers": "^6.0.0",
     "web3": "^1.8.1"
   },
   "files": [

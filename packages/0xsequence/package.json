@@ -44,13 +44,13 @@
     "@0xsequence/wallet": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "^6.0.0"
   },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "1.10.0",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.0.0",
     "ganache": "^7.5.0",
     "hardhat": "^2.12.2",
     "html-webpack-plugin": "^5.3.1",

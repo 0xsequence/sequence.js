@@ -19,10 +19,10 @@
     "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "^6.0.0"
   },
   "devDependencies": {
-    "ethers": "^5.7.2"
+    "ethers": "^6.0.0"
   },
   "files": [
     "src",

@@ -29,12 +29,12 @@
     "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "^6.0.0"
   },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "1.10.0",
     "concurrently": "^7.5.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.0.0",
     "hardhat": "^2.12.2",
     "mockttp": "^3.6.0"
   },

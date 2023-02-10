@@ -20,18 +20,14 @@
     "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5",
-    "@ethersproject/abi": ">= 5.5",
-    "@ethersproject/providers": ">= 5.5"
+    "ethers": "^6.0.0"
   },
   "devDependencies": {
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@typechain/ethers-v5": "^10.1.1",
     "dotenv": "^16.0.3",
-    "ethers": "^5.7.2",
+    "ethers": "^6.0.0",
     "typechain": "^8.1.1"
   },
   "files": [

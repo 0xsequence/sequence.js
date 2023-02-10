@@ -26,11 +26,11 @@
     "webextension-polyfill": "^0.10.0"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "^6.0.0"
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
-    "ethers": "^5.7.2"
+    "ethers": "^6.0.0"
   },
   "files": [
     "src",
