@@ -28,6 +28,8 @@ import { commons, v1, v2 } from '@0xsequence/core'
 import { OnChainReader } from '@0xsequence/core/src/commons/reader'
 import { Account } from '@0xsequence/account'
 
+const deterministic = false
+
 type EthereumInstance = {
   chainId?: number
   providerUrl?: string
@@ -130,7 +132,7 @@ describe('Wallet integration', function () {
   })
 
   it('Should open a new session', async () => {
-    const referenceSigner = ethers.Wallet.createRandom()
+    const referenceSigner = randomWallet('Should open a new session')
     orchestrator.setSigners([referenceSigner])
 
     const session = await Session.open({
@@ -166,7 +168,7 @@ describe('Wallet integration', function () {
   })
 
   it('Should dump and load a session', async () => {
-    const referenceSigner = ethers.Wallet.createRandom()
+    const referenceSigner = randomWallet('Should dump and load a session')
     orchestrator.setSigners([referenceSigner])
 
     const session = await Session.open({
@@ -198,7 +200,7 @@ describe('Wallet integration', function () {
   })
 
   it('Should open an existing session', async () => {
-    const referenceSigner = ethers.Wallet.createRandom()
+    const referenceSigner = randomWallet('Should open an existing session')
     orchestrator.setSigners([referenceSigner])
 
     const session = await Session.open({
@@ -213,7 +215,7 @@ describe('Wallet integration', function () {
       editConfigOnMigration: (config) => config
     })
 
-    const newSigner = ethers.Wallet.createRandom()
+    const newSigner = randomWallet('Should open an existing session 2')
     const session2 = await Session.open({
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
@@ -243,7 +245,7 @@ describe('Wallet integration', function () {
   })
 
   it('Should create a new account if selectWallet returns undefined', async () => {
-    const referenceSigner = ethers.Wallet.createRandom()
+    const referenceSigner = randomWallet('Should create a new account if selectWallet returns undefined')
     orchestrator.setSigners([referenceSigner])
 
     const oldSession = await Session.open({
@@ -258,7 +260,7 @@ describe('Wallet integration', function () {
       editConfigOnMigration: (config) => config
     })
 
-    const newSigner = ethers.Wallet.createRandom()
+    const newSigner = randomWallet('Should create a new account if selectWallet returns undefined 2')
     const newSession = await Session.open({
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
@@ -278,7 +280,7 @@ describe('Wallet integration', function () {
   })
 
   it('Should select between two wallets using selectWallet', async () => {
-    const referenceSigner = ethers.Wallet.createRandom()
+    const referenceSigner = randomWallet('Should select between two wallets using selectWallet')
     orchestrator.setSigners([referenceSigner])
 
     const oldSession1 = await Session.open({
@@ -305,7 +307,7 @@ describe('Wallet integration', function () {
       editConfigOnMigration: (config) => config
     })
 
-    const newSigner = ethers.Wallet.createRandom()
+    const newSigner = randomWallet('Should select between two wallets using selectWallet 2')
     const newSession1 = await Session.open({
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
@@ -349,8 +351,8 @@ describe('Wallet integration', function () {
   })
 
   it('Should re-open a session after sending a transaction', async () => {
-    const referenceSigner = ethers.Wallet.createRandom()
-    const signer1 = ethers.Wallet.createRandom()
+    const referenceSigner = randomWallet('Should re-open a session after sending a transaction')
+    const signer1 = randomWallet('Should re-open a session after sending a transaction 2')
     orchestrator.setSigners([referenceSigner, signer1])
 
     const session = await Session.open({
@@ -371,7 +373,7 @@ describe('Wallet integration', function () {
 
     await session.account.sendTransaction([], networks[0].chainId)
 
-    const signer2 = ethers.Wallet.createRandom()
+    const signer2 = randomWallet('Should re-open a session after sending a transaction 3')
 
     const newSession = await Session.open({
       settings: simpleSettings,
@@ -396,11 +398,12 @@ describe('Wallet integration', function () {
   describe('Migrate sessions', () => {
     let ogAccount: Account
     let referenceSigner: ethers.Wallet
+    let referenceSignerIndex = 1
     let v1SessionDump: SessionDumpV1
 
     beforeEach(async () => {
       // Create a wallet using v1
-      referenceSigner = ethers.Wallet.createRandom()
+      referenceSigner = randomWallet(`Migrate sessions ${referenceSignerIndex++}`)
       orchestrator.setSigners([referenceSigner])
 
       ogAccount = await Account.new({
@@ -430,7 +433,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should open and migrate old session, without dump', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = randomWallet('Should open and migrate old session, without dump')
       orchestrator.setSigners([referenceSigner, newSigner])
 
       const newSession = await Session.open({
@@ -473,11 +476,13 @@ describe('Wallet integration', function () {
     })
 
     describe('After updating old wallet', () => {
+      let newSignerIndex = 1
+
       beforeEach(async () => {
         const status = await ogAccount.status(networks[0].chainId)
         const wallet = ogAccount.walletForStatus(networks[0].chainId, status)
 
-        const newSigner = ethers.Wallet.createRandom()
+        const newSigner = randomWallet(`After updating old wallet ${newSignerIndex++}`)
         orchestrator.setSigners([referenceSigner, newSigner])
 
         const uptx = await wallet.buildUpdateConfigurationTransaction({
@@ -501,8 +506,8 @@ describe('Wallet integration', function () {
       })
 
       it('Should open and migrate old session', async () => {
-        const newSigner2 = ethers.Wallet.createRandom()
-  
+        const newSigner2 = randomWallet('Should open and migrate old session')
+
         const newSession = await Session.open({
           settings: simpleSettings,
           referenceSigner: referenceSigner.address,
@@ -548,6 +553,7 @@ describe('Wallet integration', function () {
   describe('JWT Auth', () => {
     let server: mockServer.Mockttp
     let fakeJwt: string
+    let fakeJwtIndex = 1
     let proofAddress: string
 
     let delayMs: number = 0
@@ -566,7 +572,7 @@ describe('Wallet integration', function () {
         sequenceMetadataUrl: ''
       }
 
-      fakeJwt = ethers.utils.hexlify(ethers.utils.randomBytes(64))
+      fakeJwt = ethers.utils.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`))
 
       server = mockServer.getLocal()
       server.start(8099)
@@ -632,7 +638,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should get JWT token', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get JWT token')
       orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
@@ -654,7 +660,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should get JWT after updating session', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get JWT after updating session')
       orchestrator.setSigners([referenceSigner])
 
       await Session.open({
@@ -669,7 +675,7 @@ describe('Wallet integration', function () {
         editConfigOnMigration: (config) => config
       })
 
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = randomWallet('Should get JWT after updating session 2')
       const session = await Session.open({
         settings,
         referenceSigner: referenceSigner.address,
@@ -691,7 +697,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should get JWT during first session creation', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get JWT during first session creation')
       orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
@@ -717,7 +723,7 @@ describe('Wallet integration', function () {
     it('Should get JWT during session opening', async () => {
       delayMs = 500
 
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get JWT during session opening')
       orchestrator.setSigners([referenceSigner])
 
       let session = await Session.open({
@@ -734,7 +740,7 @@ describe('Wallet integration', function () {
 
       await expect(session._initialAuthRequest).to.be.rejected
 
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = randomWallet('Should get JWT during session opening 2')
 
       session = await Session.open({
         settings,
@@ -759,7 +765,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should get API with lazy JWT during first session creation', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get API with lazy JWT during first session creation')
       orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
@@ -791,7 +797,7 @@ describe('Wallet integration', function () {
 
     it('Should get API with lazy JWT during session opening', async () => {
       delayMs = 500
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get API with lazy JWT during session opening')
       orchestrator.setSigners([referenceSigner])
 
       await Session.open({
@@ -806,7 +812,7 @@ describe('Wallet integration', function () {
         editConfigOnMigration: (config) => config
       })
 
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = randomWallet('Should get API with lazy JWT during session opening 2')
       orchestrator.setSigners([referenceSigner, newSigner])
 
       const session = await Session.open({
@@ -839,7 +845,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should call callbacks on JWT token', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should call callbacks on JWT token')
       orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
@@ -865,7 +871,7 @@ describe('Wallet integration', function () {
     it('Should call callbacks on JWT token (on open only once)', async () => {
       delayMs = 500
 
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should call callbacks on JWT token (on open only once)')
       orchestrator.setSigners([referenceSigner])
 
       await Session.open({
@@ -880,7 +886,7 @@ describe('Wallet integration', function () {
         editConfigOnMigration: (config) => config
       })
 
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = randomWallet('Should call callbacks on JWT token (on open only once) 2')
       orchestrator.setSigners([referenceSigner, newSigner])
 
       const session = await Session.open({
@@ -908,7 +914,7 @@ describe('Wallet integration', function () {
 
     it('Should retry 5 times retrieving the JWT token', async () => {
       delayMs = 1000
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should retry 5 times retrieving the JWT token')
 
       const session = await Session.open({
         settings,
@@ -931,7 +937,7 @@ describe('Wallet integration', function () {
     it('Should get API with JWT already present', async () => {
       delayMs = 500
 
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should get API with JWT already present')
       orchestrator.setSigners([referenceSigner])
 
       await Session.open({
@@ -946,7 +952,7 @@ describe('Wallet integration', function () {
         editConfigOnMigration: (config) => config
       })
 
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = randomWallet('Should get API with JWT already present 2')
       orchestrator.setSigners([referenceSigner, newSigner])
 
       const session = await Session.open({
@@ -982,7 +988,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should fail to get API with false tryAuth and no JWT', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should fail to get API with false tryAuth and no JWT')
       orchestrator.setSigners([referenceSigner])
 
       alwaysFail = true
@@ -1012,7 +1018,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should fail to get API without api url', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should fail to get API without api url')
       orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
@@ -1036,7 +1042,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should fail to get JWT with no api configured', async () => {
-      const referenceSigner = ethers.Wallet.createRandom()
+      const referenceSigner = randomWallet('Should fail to get JWT with no api configured')
       orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
@@ -1058,7 +1064,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should reuse outstanding JWT requests', async () => {
-      const referenceSigner = new CountingSigner(ethers.Wallet.createRandom())
+      const referenceSigner = new CountingSigner(randomWallet('Should reuse outstanding JWT requests'))
       orchestrator.setSigners([referenceSigner])
 
       alwaysFail = true
@@ -1097,7 +1103,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should reuse existing proof signatures', async () => {
-      const referenceSigner = new CountingSigner(ethers.Wallet.createRandom())
+      const referenceSigner = new CountingSigner(randomWallet('Should reuse existing proof signatures'))
       orchestrator.setSigners([referenceSigner])
 
       alwaysFail = true
@@ -1133,7 +1139,7 @@ describe('Wallet integration', function () {
     })
 
     it('Should neither re-authenticate nor retry if request succeeds', async () => {
-      const referenceSigner = new CountingSigner(ethers.Wallet.createRandom())
+      const referenceSigner = new CountingSigner(randomWallet('Should neither re-authenticate nor retry if request succeeds'))
 
       const session = await Session.open({
         settings,
@@ -1182,7 +1188,7 @@ describe('Wallet integration', function () {
         const baseTime = 1613579057
         setDate(baseTime)
 
-        const referenceSigner = ethers.Wallet.createRandom()
+        const referenceSigner = randomWallet('Should request a new JWT after expiration')
         orchestrator.setSigners([referenceSigner])
 
         const session = await Session.open({
@@ -1208,7 +1214,7 @@ describe('Wallet integration', function () {
         const newBaseTime = baseTime + 60 * 60
         setDate(newBaseTime)
 
-        fakeJwt = ethers.utils.hexlify(ethers.utils.randomBytes(96))
+        fakeJwt = ethers.utils.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2'))
 
         await session.getAPIClient()
 
@@ -1221,7 +1227,7 @@ describe('Wallet integration', function () {
         const baseTime = 1613579057
         setDate(baseTime)
 
-        const referenceSigner = ethers.Wallet.createRandom()
+        const referenceSigner = randomWallet('Should force min expiration time')
         orchestrator.setSigners([referenceSigner])
 
         const session = await Session.open({
@@ -1246,3 +1252,19 @@ describe('Wallet integration', function () {
     })
   })
 })
+
+function randomWallet(entropy: number | string): ethers.Wallet {
+  return new ethers.Wallet(randomBytes(32, entropy))
+}
+
+function randomBytes(length: number, entropy: number | string): Uint8Array {
+  if (deterministic) {
+    let bytes = ''
+    while (bytes.length < 2 * length) {
+      bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
+    }
+    return ethers.utils.arrayify(`0x${bytes.slice(0, 2 * length)}`)
+  } else {
+    return ethers.utils.randomBytes(length)
+  }
+}
