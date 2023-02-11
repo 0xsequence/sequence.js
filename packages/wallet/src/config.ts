@@ -7,7 +7,7 @@ import {
   decodeSignature,
   recoverEOASigner
 } from '@0xsequence/config'
-import { BytesLike, ethers, Contract, Provider, keccak256, hexlify, getBytes, getAddress } from 'ethers'
+import { BytesLike, Contract, Provider, keccak256, hexlify, getBytes, getAddress } from 'ethers'
 import { Signer } from './signer'
 import { walletContracts } from '@0xsequence/abi'
 import { isValidSignature } from './validate'

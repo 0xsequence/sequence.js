@@ -1,14 +1,4 @@
-import {
-  ethers,
-  AbstractSigner,
-  keccak256,
-  solidityPacked,
-  dataSlice,
-  zeroPadValue,
-  AbiCoder,
-  getAddress,
-  BigNumberish
-} from 'ethers'
+import { AbstractSigner, keccak256, solidityPacked, dataSlice, zeroPadValue, AbiCoder, getAddress, BigNumberish } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
 import { cacheConfig } from './cache'

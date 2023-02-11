@@ -1,4 +1,4 @@
-import { ethers, Interface, toUtf8String } from 'ethers'
+import { Interface, toUtf8String } from 'ethers'
 
 export function messageIsExemptFromEIP191Prefix(message: Uint8Array): boolean {
   return EIP_191_PREFIX_EXCEPTIONS.some(e => e.predicate(message))

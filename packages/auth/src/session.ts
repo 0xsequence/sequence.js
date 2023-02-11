@@ -21,7 +21,7 @@ import {
 } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
-import { ethers, AbstractSigner, BigNumberish } from 'ethers'
+import { AbstractSigner, BigNumberish, JsonRpcProvider as BaseJsonRpcProvider } from 'ethers'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -83,7 +83,7 @@ export class Session {
     public context: WalletContext,
     public account: Account,
     public metadata: SessionMeta,
-    private readonly authProvider: ethers.JsonRpcProvider,
+    private readonly authProvider: BaseJsonRpcProvider,
     jwt?: SessionJWT
   ) {
     if (jwt) {
@@ -511,7 +511,7 @@ export class Session {
   }
 }
 
-function getAuthProvider(networks: NetworkConfig[]): ethers.JsonRpcProvider {
+function getAuthProvider(networks: NetworkConfig[]): BaseJsonRpcProvider {
   const authChain = getAuthNetwork(networks)
   if (!authChain) throw Error('Auth chain not found')
   return authChain.provider ?? new JsonRpcProvider(authChain.rpcUrl!, { chainId: authChain.chainId, blockCache: true })

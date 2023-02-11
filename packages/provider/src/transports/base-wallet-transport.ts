@@ -1,4 +1,4 @@
-import { ethers, hexlify } from 'ethers'
+import { hexlify } from 'ethers'
 import {
   WalletTransport,
   ProviderMessage,

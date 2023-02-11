@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 import { HttpNetworkConfig, HttpNetworkHDAccountsConfig } from 'hardhat/types/config'
-import { ethers } from 'ethers'
+import { Wallet } from 'ethers'
 
 type EthereumNetworksTypes = 'rinkeby' | 'ropsten' | 'kovan' | 'goerli' | 'mainnet' | 'mumbai' | 'matic'
 
@@ -11,7 +11,7 @@ export const getEnvConfig = (env: string) => {
 
   if (envLoad.error) {
     console.warn('No config found, using default')
-    return { ETH_MNEMONIC: ethers.Wallet.createRandom().mnemonic.phrase }
+    return { ETH_MNEMONIC: Wallet.createRandom().mnemonic!.phrase }
   }
 
   return envLoad.parsed || {}

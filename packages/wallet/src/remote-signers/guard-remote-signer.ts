@@ -1,4 +1,4 @@
-import { ethers, BytesLike, hexlify } from 'ethers'
+import { BytesLike, hexlify } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 import { Guard } from '@0xsequence/guard'
 import { ChainId, ChainIdLike } from '@0xsequence/network'

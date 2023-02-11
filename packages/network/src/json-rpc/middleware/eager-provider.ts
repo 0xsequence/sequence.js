@@ -1,4 +1,4 @@
-import { ethers, getAddress, hexlify } from 'ethers'
+import { getAddress, hexlify } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
 import { WalletContext } from '../../context'
 

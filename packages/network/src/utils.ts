@@ -1,4 +1,4 @@
-import { ethers, BigNumberish } from 'ethers'
+import { BigNumberish } from 'ethers'
 import { ChainIdLike } from '.'
 import { NetworkConfig } from './config'
 

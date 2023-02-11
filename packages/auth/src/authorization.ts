@@ -1,4 +1,4 @@
-import { ethers, getAddress } from 'ethers'
+import { getAddress } from 'ethers'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { ETHAuthProof } from '@0xsequence/provider'
 import { DEFAULT_SESSION_EXPIRATION } from './session'

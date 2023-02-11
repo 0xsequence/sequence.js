@@ -1,4 +1,4 @@
-import { ethers, Network } from 'ethers'
+import { Network, JsonRpcProvider as BaseJsonRpcProvider } from 'ethers'
 import {
   JsonRpcRouter,
   JsonRpcSender,
@@ -23,7 +23,7 @@ export interface JsonRpcProviderOptions {
 }
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
-export class JsonRpcProvider extends ethers.JsonRpcProvider {
+export class JsonRpcProvider extends BaseJsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
 

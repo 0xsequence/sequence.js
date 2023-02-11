@@ -3,7 +3,7 @@ import { WalletConfig, addressOf, encodeSignature, DecodedFullSigner, DecodedEOA
 import { readSequenceNonce, sequenceTxAbiEncode, Transaction } from '@0xsequence/transactions'
 import { OverwriterEstimator } from './overwriter-estimator'
 import { walletContracts } from '@0xsequence/abi'
-import { ethers, getBytes, Interface } from 'ethers'
+import { getBytes, Interface, Wallet } from 'ethers'
 import { Estimator } from './estimator'
 
 const MainModuleGasEstimation = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleGasEstimation.sol/MainModuleGasEstimation.json')
@@ -15,7 +15,7 @@ export class OverwriterSequenceEstimator implements Estimator {
     config: WalletConfig,
     context: WalletContext,
     ...transactions: Transaction[]
-  ): Promise<{ transactions: Transaction[]; total: BigInt }> {
+  ): Promise<{ transactions: Transaction[]; total: bigint }> {
     const wallet = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
 
@@ -57,7 +57,7 @@ export class OverwriterSequenceEstimator implements Estimator {
           if (s.isEOA) {
             return {
               weight: s.weight,
-              signature: (await ethers.Wallet.createRandom().signMessage('')) + '02'
+              signature: (await Wallet.createRandom().signMessage('')) + '02'
             } as DecodedEOASigner
           }
 
@@ -68,15 +68,15 @@ export class OverwriterSequenceEstimator implements Estimator {
               threshold: 2,
               signers: [
                 {
-                  address: ethers.Wallet.createRandom().address,
+                  address: Wallet.createRandom().address,
                   weight: 1
                 },
                 {
-                  signature: (await ethers.Wallet.createRandom().signMessage('')) + '02',
+                  signature: (await Wallet.createRandom().signMessage('')) + '02',
                   weight: 1
                 },
                 {
-                  signature: (await ethers.Wallet.createRandom().signMessage('')) + '02',
+                  signature: (await Wallet.createRandom().signMessage('')) + '02',
                   weight: 1
                 }
               ]

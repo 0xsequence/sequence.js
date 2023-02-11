@@ -1,4 +1,4 @@
-import { AbiCoder, ethers, Interface, Result } from 'ethers'
+import { AbiCoder, Interface, Result } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'

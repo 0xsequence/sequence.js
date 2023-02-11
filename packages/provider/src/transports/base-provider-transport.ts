@@ -19,7 +19,7 @@ import {
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
-import { ethers, getAddress } from 'ethers'
+import { getAddress } from 'ethers'
 
 export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
 

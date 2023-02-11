@@ -1,4 +1,4 @@
-import { Contract, ethers, getBytes, JsonRpcProvider, keccak256 } from 'ethers'
+import { Contract, getBytes, JsonRpcProvider, keccak256 } from 'ethers'
 import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@0xsequence/ethauth'
 import { sequenceContext, WalletContext } from '@0xsequence/network'
 import { isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'

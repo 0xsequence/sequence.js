@@ -96,7 +96,7 @@ export interface UniversalDeployer2 extends BaseContract {
       _creationCode: PromiseOrValue<BytesLike>,
       _instance: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigInt>
+    ): Promise<bigint>
   }
 
   populateTransaction: {

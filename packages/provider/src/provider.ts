@@ -29,7 +29,7 @@ import { Relayer } from '@0xsequence/relayer'
 import { Forbid } from '@0xsequence/utils'
 import { TransactionRequest, TransactionResponse, SignedTransactions } from '@0xsequence/transactions'
 import { WalletRequestHandler } from './transports/wallet-request-handler'
-import { resolveProperties } from 'ethers/utils'
+import { resolveProperties, toQuantity } from 'ethers/utils'
 
 export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
   static isSequenceProvider(cand: any): cand is Web3Provider {
@@ -492,7 +492,7 @@ const hexlifyTransaction = (
     if (value === null || value === undefined) {
       return
     }
-    const hexValue = ethers.utils.hexValue(value)
+    const hexValue = toQuantity(value)
     if (key === 'gasLimit') {
       key = 'gas'
     }

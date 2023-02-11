@@ -1,4 +1,4 @@
-import { BigNumberish, ethers } from 'ethers'
+import { BigNumberish } from 'ethers'
 import { SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'

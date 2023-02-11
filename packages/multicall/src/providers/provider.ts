@@ -91,7 +91,7 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
     return this.rpcCall(JsonRpcMethod.ethGetCode, addressOrName, blockTag)
   }
 
-  async getBalance(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<BlockTag>): Promise<BigInt> {
+  async getBalance(addressOrName: string | Promise<string>, blockTag?: string | number | Promise<BlockTag>): Promise<bigint> {
     return this.rpcCall(JsonRpcMethod.ethGetBalance, addressOrName, blockTag)
   }
 

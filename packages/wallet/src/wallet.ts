@@ -1,7 +1,6 @@
 import {
   BytesLike,
   BigNumberish,
-  ethers,
   AbstractSigner,
   TypedDataDomain,
   TypedDataField,
@@ -11,7 +10,8 @@ import {
   toUtf8Bytes,
   getBytes,
   AbiCoder,
-  getAddress
+  getAddress,
+  Wallet as BaseWallet
 } from 'ethers'
 
 import { walletContracts } from '@0xsequence/abi'
@@ -136,7 +136,7 @@ export class Wallet extends Signer {
     }
 
     this.config = sortConfig(config)
-    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new ethers.Wallet(s)))
+    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new BaseWallet(s)))
 
     // cache wallet config for future imageHash lookups
     this.imageHash
@@ -795,7 +795,7 @@ export class Wallet extends Signer {
 
   // singleOwner will create a Wallet instance with a single signer (ie. from a single EOA account)
   static async singleOwner(owner: BytesLike | AbstractSigner, context?: WalletContext): Promise<Wallet> {
-    const signer = AbstractSigner.isSigner(owner) ? owner : new ethers.Wallet(owner)
+    const signer = AbstractSigner.isSigner(owner) ? owner : new BaseWallet(owner)
     const config = {
       threshold: 1,
       signers: [

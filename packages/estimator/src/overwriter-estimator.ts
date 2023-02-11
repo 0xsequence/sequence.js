@@ -1,4 +1,4 @@
-import { BigNumberish, BytesLike, ethers, getAddress, getBytes, hexlify, Interface, JsonRpcProvider, toUtf8String } from 'ethers'
+import { BigNumberish, BytesLike, getAddress, getBytes, hexlify, Interface, JsonRpcProvider, toUtf8String, Wallet } from 'ethers'
 import { isBigNumberish, Optionals } from '@0xsequence/utils'
 
 const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
@@ -75,10 +75,10 @@ export class OverwriterEstimator {
       }
     }
     blockTag?: string | BigNumberish
-  }): Promise<BigInt> {
+  }): Promise<bigint> {
     const blockTag = args.blockTag ? toQuantity(args.blockTag) : 'latest'
     const data = args.data ? args.data : []
-    const from = args.from ? getAddress(args.from) : ethers.Wallet.createRandom().address
+    const from = args.from ? getAddress(args.from) : Wallet.createRandom().address
 
     const gasEstimatorInterface = new Interface(GasEstimator.abi)
     const encodedEstimate = gasEstimatorInterface.encodeFunctionData('estimate', [args.to, data])

@@ -27,7 +27,7 @@ export const BaseRelayerDefaults: Omit<Required<Optionals<BaseRelayerOptions>>, 
 export class BaseRelayer {
   readonly provider: Provider | undefined
   public readonly bundleCreation: boolean
-  public creationGasLimit: BigInt
+  public creationGasLimit: bigint
 
   constructor(options?: BaseRelayerOptions) {
     const opts = { ...BaseRelayerDefaults, ...options }
@@ -52,7 +52,7 @@ export class BaseRelayer {
 
   async prependWalletDeploy(
     signedTransactions: Pick<SignedTransactions, 'config' | 'context' | 'transactions' | 'nonce' | 'signature'>
-  ): Promise<{ to: string; execute: { transactions: Transaction[]; nonce: BigInt; signature: string } }> {
+  ): Promise<{ to: string; execute: { transactions: Transaction[]; nonce: bigint; signature: string } }> {
     const { config, context, transactions, nonce, signature } = signedTransactions
     const walletAddress = addressOf(config, context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)

@@ -1,4 +1,4 @@
-import { AbiCoder, BigNumberish, ethers, TransactionReceipt } from 'ethers'
+import { AbiCoder, BigNumberish, TransactionReceipt } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import {
   Transaction,

@@ -1,4 +1,4 @@
-import { ethers, Signer, BigNumberish, keccak256, Interface, AbiCoder, ZeroAddress } from 'ethers'
+import { Signer, BigNumberish, keccak256, Interface, AbiCoder, ZeroAddress } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'

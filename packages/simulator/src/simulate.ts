@@ -25,5 +25,5 @@ export interface Result {
   executed: boolean
   succeeded: boolean
   result: string
-  gasUsed: BigInt
+  gasUsed: bigint
 }

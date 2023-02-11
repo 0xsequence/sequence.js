@@ -20,7 +20,7 @@ export interface Overrides {
   [address: string]: {
     balance?: BigNumberish
     nonce?: BigNumberish
-    code?: BytesLike | utils.Hexable | number | bigint
+    code?: BytesLike | number | bigint
     state?: StorageOverrides
     stateDiff?: StorageOverrides
   }

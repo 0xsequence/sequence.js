@@ -9,6 +9,6 @@ export interface Estimator {
     ...transactions: Transaction[]
   ): Promise<{
     transactions: Transaction[]
-    total: BigInt
+    total: bigint
   }>
 }

@@ -7,7 +7,8 @@ import {
   solidityPacked,
   dataSlice,
   JsonRpcProvider,
-  getAddress
+  getAddress,
+  Contract
 } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from './typings/contracts'
@@ -38,11 +39,11 @@ export class UniversalDeployer {
 
   deploy = async <T extends ContractFactory>(
     contractAlias: string,
-    contractFactory: new (signer: ethers.Signer) => T,
+    contractFactory: new (signer: Signer) => T,
     txParams?: TransactionRequest,
     instance?: number | BigInt,
     ...args: Parameters<T['deploy']>
-  ): Promise<ethers.Contract> => {
+  ): Promise<Contract> => {
     try {
       // Deploy universal deployer 2 if not yet deployed on chain_id
       const universalDeployer2Code = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
@@ -147,12 +148,12 @@ export class UniversalDeployer {
       const { contract, contractAlias } = instance
       list[contractAlias] = contract
       return list
-    }, {} as { [key: string]: ethers.Contract | { address: string } })
+    }, {} as { [key: string]: Contract | { address: string } })
   }
 
   getDeploymentList = () =>
     this.deployedInstances.map(({ contract, contractAlias }) => {
-      if (contract as ethers.Contract) {
+      if (contract as Contract) {
         return {
           contractName: contractAlias,
           address: contract.address
@@ -186,7 +187,7 @@ export class UniversalDeployer {
   }
 
   addressOf = async <T extends ContractFactory>(
-    contractFactory: new (signer: ethers.Signer) => T,
+    contractFactory: new (signer: Signer) => T,
     contractInstance: number | BigInt,
     ...args: Parameters<T['deploy']>
   ): Promise<string> => {
