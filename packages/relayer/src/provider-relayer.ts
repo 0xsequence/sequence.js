@@ -6,7 +6,7 @@ import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { logger, Optionals, Mask } from '@0xsequence/utils'
-import { BlockTag, TransactionReceipt } from 'ethers/providers'
+import { AbstractProvider, BlockTag, TransactionReceipt } from 'ethers/providers'
 
 const DEFAULT_GAS_LIMIT = 800000n
 
@@ -24,7 +24,7 @@ export const ProviderRelayerDefaults: Required<Optionals<Mask<ProviderRelayerOpt
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return obj.provider !== undefined && Provider.isProvider(obj.provider)
+  return obj.provider !== undefined && obj.provider instanceof AbstractProvider
 }
 
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {

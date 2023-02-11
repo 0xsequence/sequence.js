@@ -1,4 +1,4 @@
-import { BigNumberish, Interface, Provider } from 'ethers'
+import { AbstractProvider, BigNumberish, Interface, Provider } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
@@ -15,7 +15,7 @@ export function isBaseRelayerOptions(obj: any): obj is BaseRelayerOptions {
   return (
     (obj.bundleCreation !== undefined && typeof obj.bundleCreation === 'boolean') ||
     (obj.creationGasLimit !== undefined && isBigNumberish(obj.creationGasLimit)) ||
-    (obj.provider !== undefined && (Provider.isProvider(obj.provider) || typeof obj.provider === 'string'))
+    (obj.provider !== undefined && (obj.provider instanceof AbstractProvider || typeof obj.provider === 'string'))
   )
 }
 

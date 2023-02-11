@@ -7,7 +7,7 @@ import {
   ProxyMessageHandler,
   prefixEIP191Message
 } from '@0xsequence/provider'
-import { ethers, getAddress, JsonRpcProvider, toUtf8Bytes, Wallet as EOAWallet } from 'ethers'
+import { getAddress, JsonRpcProvider, toUtf8Bytes, Wallet as EOAWallet } from 'ethers'
 import { test, assert } from '../../utils/assert'
 import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, isValidSignature, recoverConfig } from '@0xsequence/wallet'

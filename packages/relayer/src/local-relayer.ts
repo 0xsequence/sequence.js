@@ -13,7 +13,7 @@ export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
 }
 
 export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
-  return obj.signer !== undefined && AbstractSigner.isSigner(obj.signer)
+  return obj.signer !== undefined && obj.signer instanceof AbstractSigner
 }
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
@@ -21,8 +21,10 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   private txnOptions: TransactionRequest
 
   constructor(options: LocalRelayerOptions | AbstractSigner) {
-    super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
-    this.signer = AbstractSigner.isSigner(options) ? options : options.signer
+    super(
+      options instanceof AbstractSigner ? { provider: options.provider! } : { ...options, provider: options.signer.provider! }
+    )
+    this.signer = options instanceof AbstractSigner ? options : options.signer
     if (!this.signer.provider) throw new Error('Signer must have a provider')
   }
 

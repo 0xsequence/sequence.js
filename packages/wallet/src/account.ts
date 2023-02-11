@@ -224,7 +224,7 @@ export class Account extends Signer {
     // See if wallet and available signers set has enough signer power,
     // but if allSigners is false, we allow partial signing
     const weight = await wallet.signWeight()
-    if (weight.lt(wallet.config.threshold) && allSigners !== false) {
+    if (weight < wallet.config.threshold && allSigners !== false) {
       throw new NotEnoughSigners(
         `Sign message - wallet combined weight ${weight.toString()} below required ${wallet.config.threshold.toString()}`
       )
@@ -378,7 +378,7 @@ export class Account extends Signer {
     if (!skipThresholdCheck) {
       // See if wallet has enough signer power
       const weight = await wallet.useConfig(thisConfig!).signWeight()
-      if (weight.lt(thisConfig!.threshold) && allSigners) {
+      if (weight < thisConfig!.threshold && allSigners) {
         throw new NotEnoughSigners(
           `wallet combined weight ${weight.toString()} below required threshold ${thisConfig!.threshold.toString()}`
         )

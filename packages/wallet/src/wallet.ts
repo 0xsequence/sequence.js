@@ -11,7 +11,8 @@ import {
   getBytes,
   AbiCoder,
   getAddress,
-  Wallet as BaseWallet
+  Wallet as BaseWallet,
+  SigningKey
 } from 'ethers'
 
 import { walletContracts } from '@0xsequence/abi'
@@ -136,7 +137,7 @@ export class Wallet extends Signer {
     }
 
     this.config = sortConfig(config)
-    this._signers = signers.map(s => (AbstractSigner.isSigner(s) ? s : new BaseWallet(s)))
+    this._signers = signers.map(s => (s instanceof AbstractSigner ? s : new BaseWallet(new SigningKey(s))))
 
     // cache wallet config for future imageHash lookups
     this.imageHash
@@ -174,7 +175,7 @@ export class Wallet extends Signer {
   // setProvider assigns a json-rpc provider to this wallet instance
   setProvider(provider: JsonRpcProvider | ConnectionInfo | string, chainId?: number): Wallet {
     if (provider === undefined) return this
-    if (Provider.isProvider(provider)) {
+    if (provider instanceof JsonRpcProvider) {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
     } else {
@@ -538,12 +539,12 @@ export class Wallet extends Signer {
   }
 
   // signWeight will return the total weight of all signers available based on the config
-  async signWeight(): Promise<BigNumber> {
+  async signWeight(): Promise<bigint> {
     const signers = await this.getSigners()
     return signers.reduce((p, s) => {
       const sconfig = this.config.signers.find(c => c.address === s)
       if (!sconfig) return p
-      return p.add(sconfig.weight)
+      return p + BigInt(sconfig.weight)
     }, 0n)
   }
 
@@ -795,7 +796,7 @@ export class Wallet extends Signer {
 
   // singleOwner will create a Wallet instance with a single signer (ie. from a single EOA account)
   static async singleOwner(owner: BytesLike | AbstractSigner, context?: WalletContext): Promise<Wallet> {
-    const signer = AbstractSigner.isSigner(owner) ? owner : new BaseWallet(owner)
+    const signer = owner instanceof AbstractSigner ? owner : new BaseWallet(new SigningKey(owner))
     const config = {
       threshold: 1,
       signers: [
@@ -810,6 +811,6 @@ export class Wallet extends Signer {
 
   async hasEnoughSigners(chainId?: ChainIdLike): Promise<boolean> {
     if (chainId) await this.getChainIdNumber(chainId)
-    return (await this.signWeight()).gte(this.config.threshold)
+    return (await this.signWeight()) >= this.config.threshold
   }
 }
