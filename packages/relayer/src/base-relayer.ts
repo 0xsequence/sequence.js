@@ -46,7 +46,7 @@ export class BaseRelayer {
 
     return {
       to: context.factory,
-      data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'), [context.mainModule, imageHash(config)])
+      data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy')!, [context.mainModule, imageHash(config)])
     }
   }
 
@@ -82,7 +82,7 @@ export class BaseRelayer {
               gasLimit: 0n,
               to: walletAddress,
               value: 0n,
-              data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+              data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [
                 sequenceTxAbiEncode(transactions),
                 nonce,
                 await encodedSignature
@@ -120,7 +120,7 @@ export class BaseRelayer {
     const walletInterface = new Interface(walletContracts.mainModule.abi)
     return {
       to,
-      data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+      data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [
         sequenceTxAbiEncode(execute.transactions),
         execute.nonce,
         execute.signature

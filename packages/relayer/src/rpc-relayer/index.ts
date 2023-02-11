@@ -130,7 +130,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
       })
 
       const walletInterface = new Interface(walletContracts.mainModule.abi)
-      const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+      const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [
         sequenceTxAbiEncode(execute.transactions),
         execute.nonce,
         execute.signature
@@ -189,7 +189,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     const walletAddress = addressOf(signedTxs.config, signedTxs.context)
     const walletInterface = new Interface(walletContracts.mainModule.abi)
-    const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+    const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [
       sequenceTxAbiEncode(execute.transactions),
       execute.nonce,
       execute.signature

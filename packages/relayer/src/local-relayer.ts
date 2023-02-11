@@ -71,7 +71,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     const { to, execute } = await this.prependWalletDeploy(signedTxs)
 
     const walletInterface = new Interface(walletContracts.mainModule.abi)
-    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [
       sequenceTxAbiEncode(execute.transactions),
       execute.nonce,
       execute.signature

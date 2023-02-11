@@ -634,7 +634,7 @@ export class Wallet extends Signer {
             gasLimit: 0n,
             to: this.address,
             value: 0n,
-            data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
+            data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation')!, [
               this.context.mainModuleUpgradable
             ])
           }
@@ -648,7 +648,7 @@ export class Wallet extends Signer {
       gasLimit: 0n,
       to: this.address,
       value: 0n,
-      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [imageHash(config)])
+      data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash')!, [imageHash(config)])
     }
 
     const postTransaction = publish ? await this.buildPublishConfigTransaction(config, indexed) : []
@@ -668,7 +668,7 @@ export class Wallet extends Signer {
         gasLimit: gasLimit,
         to: this.address,
         value: 0n,
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [sequenceTxAbiEncode(transactions)])
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute')!, [sequenceTxAbiEncode(transactions)])
       }
     ]
   }
@@ -683,7 +683,7 @@ export class Wallet extends Signer {
         to: this.context.sequenceUtils!,
         value: 0n,
         nonce: nonce,
-        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), [
+        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig')!, [
           this.address,
           config.threshold,
           sortConfig(config).signers.map(s => ({
@@ -739,7 +739,7 @@ export class Wallet extends Signer {
         to: contextRequireFreshSigner!,
         value: 0n,
         nonce: nonce,
-        data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner'), [
+        data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner')!, [
           signer
         ])
       })),
@@ -750,7 +750,7 @@ export class Wallet extends Signer {
         to: this.context.sequenceUtils!,
         value: 0n,
         nonce: nonce,
-        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), [
+        data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners')!, [
           this.address,
           keccak256(message),
           this.config.signers.length,

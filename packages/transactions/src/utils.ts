@@ -101,7 +101,7 @@ export async function toSequenceTransaction(
     }
   } else {
     const walletInterface = new Interface(walletContracts.mainModule.abi)
-    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
+    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract')!, [tx.data])
     const address = typeof wallet === 'string' ? wallet : wallet.getAddress()
 
     return {
@@ -171,7 +171,7 @@ export function makeExpirable(context: WalletContext, txs: Transaction[], expira
       gasLimit: 0,
       to: context.sequenceUtils,
       value: 0,
-      data: sequenceUtils.encodeFunctionData(sequenceUtils.getFunction('requireNonExpired'), [expiration])
+      data: sequenceUtils.encodeFunctionData(sequenceUtils.getFunction('requireNonExpired')!, [expiration])
     },
     ...txs
   ]
@@ -191,7 +191,7 @@ export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: 
       gasLimit: 0,
       to: context.sequenceUtils,
       value: 0,
-      data: sequenceUtils.encodeFunctionData(sequenceUtils.getFunction('requireMinNonce'), [
+      data: sequenceUtils.encodeFunctionData(sequenceUtils.getFunction('requireMinNonce')!, [
         dep.address,
         dep.space ? encodeNonce(dep.space, dep.nonce) : dep.nonce
       ])
