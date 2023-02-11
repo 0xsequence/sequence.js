@@ -1,4 +1,4 @@
-import { ethers, getBytes, JsonRpcProvider, keccak256 } from 'ethers'
+import { Contract, ethers, getBytes, JsonRpcProvider, keccak256 } from 'ethers'
 import { Proof, ValidatorFunc, IsValidSignatureBytes32MagicValue } from '@0xsequence/ethauth'
 import { sequenceContext, WalletContext } from '@0xsequence/network'
 import { isValidSequenceUndeployedWalletSignature } from '@0xsequence/wallet'
@@ -24,7 +24,7 @@ export const ValidateSequenceDeployedWalletProof: ValidatorFunc = async (
   // Call EIP-1271 IsValidSignature(bytes32, bytes) method on the deployed wallet. Note: for undeployed
   // wallets, you will need to implement your own ValidatorFunc with the additional context.
   const abi = ['function isValidSignature(bytes32, bytes) public view returns (bytes4)']
-  const contract = new ethers.Contract(proof.address, abi, provider)
+  const contract = new Contract(proof.address, abi, provider)
 
   // hash the message digest as required by isValidSignature
   const isValidSignature = await contract.isValidSignature(digest, getBytes(proof.signature))

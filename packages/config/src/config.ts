@@ -1,4 +1,14 @@
-import { ethers, AbstractSigner, keccak256, solidityPacked, dataSlice, zeroPadValue, AbiCoder } from 'ethers'
+import {
+  ethers,
+  AbstractSigner,
+  keccak256,
+  solidityPacked,
+  dataSlice,
+  zeroPadValue,
+  AbiCoder,
+  getAddress,
+  BigNumberish
+} from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletContractBytecode } from './bytecode'
 import { cacheConfig } from './cache'
@@ -69,8 +79,8 @@ export const isUsableConfig = (config: WalletConfig): boolean => {
 
 export const isValidConfigSigners = (config: WalletConfig, signers: string[]): boolean => {
   if (signers.length === 0) return true
-  const a = config.signers.map(s => ethers.getAddress(s.address))
-  const b = signers.map(s => ethers.getAddress(s))
+  const a = config.signers.map(s => getAddress(s.address))
+  const b = signers.map(s => getAddress(s))
   let valid = true
   b.forEach(s => {
     if (!a.includes(s)) valid = false
@@ -86,7 +96,7 @@ export const addressOf = (salt: WalletConfig | string, context: WalletContext, i
 
     const hash = keccak256(solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', context.factory, salt, codeHash]))
 
-    return ethers.getAddress(dataSlice(hash, 12))
+    return getAddress(dataSlice(hash, 12))
   }
 
   if (salt.address && !ignoreAddress) return salt.address
@@ -112,8 +122,8 @@ export const sortConfig = (config: WalletConfig): WalletConfig => {
   config.signers.sort((a, b) => compareAddr(a.address, b.address))
 
   // normalize
-  config.signers.forEach(s => (s.address = ethers.getAddress(s.address)))
-  if (config.address) config.address = ethers.getAddress(config.address)
+  config.signers.forEach(s => (s.address = getAddress(s.address)))
+  if (config.address) config.address = getAddress(config.address)
 
   // ensure no duplicate signers in the config
   const signers = config.signers.map(s => s.address)
@@ -145,20 +155,20 @@ export const compareAddr = (a: string, b: string): number => {
 export function editConfig(
   config: WalletConfig,
   args: {
-    threshold?: ethers.BigNumberish
-    set?: { weight: ethers.BigNumberish; address: string }[]
+    threshold?: BigNumberish
+    set?: { weight: BigNumberish; address: string }[]
     del?: { address: string }[]
   }
 ): WalletConfig {
-  const normSigner = (s: { weight: ethers.BigNumberish; address: string }) => ({
+  const normSigner = (s: { weight: BigNumberish; address: string }) => ({
     weight: Number(s.weight),
-    address: ethers.getAddress(s.address)
+    address: getAddress(s.address)
   })
 
   const normSrcSigners = config.signers.map(normSigner)
 
   const normSetSigners = args.set ? args.set.map(normSigner) : []
-  const normDelAddress = args.del ? args.del.map(a => ethers.getAddress(a.address)) : []
+  const normDelAddress = args.del ? args.del.map(a => getAddress(a.address)) : []
 
   const normSetAddress = normSetSigners.map(s => s.address)
 
@@ -175,12 +185,9 @@ export function editConfig(
 
 // TODO: very similar to createWalletConfig, but doesn't allow an AbstractSigner object
 // TODO: lets also check isUsableConfig before returning it
-export function genConfig(
-  threshold: ethers.BigNumberish,
-  signers: { weight: ethers.BigNumberish; address: string }[]
-): WalletConfig {
+export function genConfig(threshold: BigNumberish, signers: { weight: BigNumberish; address: string }[]): WalletConfig {
   return sortConfig({
     threshold: Number(threshold),
-    signers: signers.map(s => ({ weight: Number(s.weight), address: ethers.getAddress(s.address) }))
+    signers: signers.map(s => ({ weight: Number(s.weight), address: getAddress(s.address) }))
   })
 }

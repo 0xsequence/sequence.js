@@ -24,7 +24,7 @@ export type DeployEvent = TypedEvent<[string], DeployEventObject>
 export type DeployEventFilter = TypedEventFilter<DeployEvent>
 
 export interface NanoUniversalDeployer extends BaseContract {
-  // connect(signerOrProvider: Signer | Provider | string): this
+  connect(signerOrProvider: Signer | Provider | string): this
   attach(addressOrName: string): this
   deployed(): Promise<this>
 

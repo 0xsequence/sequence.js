@@ -1,4 +1,4 @@
-import { ethers, hexlify } from 'ethers'
+import { ethers, getAddress, hexlify } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
 import { WalletContext } from '../../context'
 
@@ -41,7 +41,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
         case 'eth_accounts':
           if (this.options.accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.getAddress(this.options.accountAddress)] })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: [getAddress(this.options.accountAddress)] })
             return
           }
           break

@@ -135,7 +135,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     const accounts = await this.provider.send('eth_accounts', [])
     this._address = accounts[0]
     this._index = 0
-    return ethers.getAddress(this._address)
+    return getAddress(this._address)
   }
 
   signTransaction(transaction: TransactionRequest): Promise<string> {

@@ -1,4 +1,4 @@
-import { AbiCoder, Contract, ethers, Provider, ZeroHash } from 'ethers'
+import { AbiCoder, Contract, ethers, getAddress, Provider, ZeroHash } from 'ethers'
 import { addressOf, imageHash, WalletConfig } from '..'
 import { getCachedConfig } from '../cache'
 import { ConfigFinder } from './config-finder'
@@ -20,7 +20,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     skipCache?: boolean
   }): Promise<{ config: WalletConfig | undefined }> => {
     const { provider, context, ignoreIndex, requireIndex, skipCache } = args
-    const address = ethers.getAddress(args.address)
+    const address = getAddress(args.address)
 
     logger.info(`[findCurrentConfig] address:${address}, ignoreIndex:${ignoreIndex}, requireIndex:${requireIndex}`)
 
@@ -160,7 +160,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     // Wallet is in counter-factual mode
     // Lookup config in known configurations
-    const normalizedAddress = ethers.getAddress(address)
+    const normalizedAddress = getAddress(address)
     const found = knownConfigs.find(kc => addressOf(kc, context, true) === normalizedAddress)
     if (found) return { imageHash: imageHash(found), config: found }
 

@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, getAddress } from 'ethers'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { ETHAuthProof } from '@0xsequence/provider'
 import { DEFAULT_SESSION_EXPIRATION } from './session'
@@ -20,7 +20,7 @@ export interface AuthorizationOptions {
 export const signAuthorization = async (signer: Signer, options: AuthorizationOptions): Promise<ETHAuthProof> => {
   const chainId = await signer.getChainId()
 
-  const address = ethers.getAddress(await signer.getAddress())
+  const address = getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw ErrAccountIsRequired
   }

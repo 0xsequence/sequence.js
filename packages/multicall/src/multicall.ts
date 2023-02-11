@@ -224,7 +224,7 @@ export class Multicall {
             value: 0,
             data: encodedCall!
           },
-          BigNumber.isBigNumber(blockTag) ? blockTag.toNumber() : blockTag
+          Number(blockTag)
         ]
         // @ts-ignore
       }),

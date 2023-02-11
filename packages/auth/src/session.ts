@@ -21,7 +21,7 @@ import {
 } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
-import { ethers, AbstractSigner } from 'ethers'
+import { ethers, AbstractSigner, BigNumberish } from 'ethers'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -356,8 +356,8 @@ export class Session {
     context: WalletContext
     networks: NetworkConfig[]
     referenceSigner: string
-    signers: { signer: AbstractSigner | string; weight: ethers.BigNumberish }[]
-    threshold: ethers.BigNumberish
+    signers: { signer: AbstractSigner | string; weight: BigNumberish }[]
+    threshold: BigNumberish
     metadata: SessionMeta
     deepSearch?: boolean
     knownConfigs?: WalletConfig[]

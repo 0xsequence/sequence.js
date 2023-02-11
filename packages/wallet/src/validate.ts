@@ -1,4 +1,4 @@
-import { ethers, getBytes, keccak256, Provider, recoverAddress, solidityPacked } from 'ethers'
+import { Contract, ethers, getBytes, keccak256, Provider, recoverAddress, solidityPacked } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { walletContracts } from '@0xsequence/abi'
 import { packMessageData } from '@0xsequence/utils'
@@ -57,7 +57,7 @@ export async function isValidContractWalletSignature(address: string, digest: Ui
       return undefined
     }
 
-    const wallet = new ethers.Contract(address, walletContracts.erc1271.abi, provider)
+    const wallet = new Contract(address, walletContracts.erc1271.abi, provider)
     const response = await wallet.isValidSignature(digest, sig)
     return walletContracts.erc1271.returns.isValidSignatureBytes32 === response
   } catch {

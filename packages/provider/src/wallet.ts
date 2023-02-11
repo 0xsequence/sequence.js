@@ -29,7 +29,7 @@ import {
   UnrealMessageProvider
 } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
-import { ethers, hexlify, JsonRpcProvider } from 'ethers'
+import { getAddress, hexlify, JsonRpcProvider } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
@@ -634,7 +634,7 @@ export class Wallet implements WalletProvider {
 
   private useAccountAddress(accountAddress: string) {
     if (!this.session) this.session = {}
-    this.session.accountAddress = ethers.getAddress(accountAddress)
+    this.session.accountAddress = getAddress(accountAddress)
   }
 
   private useNetworks(networks: NetworkConfig[]) {

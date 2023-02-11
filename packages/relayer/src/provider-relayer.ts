@@ -1,4 +1,4 @@
-import { BigNumberish, ethers, Provider } from 'ethers'
+import { BigNumberish, Contract, ethers, Provider } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
@@ -93,12 +93,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     }))
   }
 
-  async getNonce(
-    config: WalletConfig,
-    context: WalletContext,
-    space?: BigNumberish,
-    blockTag?: BlockTag
-  ): Promise<ethers.BigNumberish> {
+  async getNonce(config: WalletConfig, context: WalletContext, space?: BigNumberish, blockTag?: BlockTag): Promise<BigNumberish> {
     if (!this.provider) {
       throw new Error('provider is not set')
     }
@@ -113,7 +108,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       space = 0
     }
 
-    const module = new ethers.Contract(addr, walletContracts.mainModule.abi, this.provider)
+    const module = new Contract(addr, walletContracts.mainModule.abi, this.provider)
     const nonce = await module.readNonce(space, { blockTag: blockTag })
     return encodeNonce(space, nonce)
   }

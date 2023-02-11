@@ -1,4 +1,4 @@
-import { ethers, getBytes, keccak256, solidityPacked, toUtf8Bytes } from 'ethers'
+import { BigNumberish, BytesLike, getBytes, keccak256, solidityPacked, toUtf8Bytes } from 'ethers'
 
 export const encodeMessageDigest = (message: string | Uint8Array) => {
   if (typeof message === 'string') {
@@ -9,10 +9,10 @@ export const encodeMessageDigest = (message: string | Uint8Array) => {
 }
 
 // packMessageData encodes the specified data ready for the Sequence Wallet contracts.
-export const packMessageData = (walletAddress: string, chainId: ethers.BigNumberish, digest: ethers.BytesLike): string => {
+export const packMessageData = (walletAddress: string, chainId: BigNumberish, digest: BytesLike): string => {
   return solidityPacked(['string', 'uint256', 'address', 'bytes32'], ['\x19\x01', chainId, walletAddress, digest])
 }
 
-export const subDigestOf = (address: string, chainId: ethers.BigNumberish, digest: ethers.BytesLike): string => {
+export const subDigestOf = (address: string, chainId: BigNumberish, digest: BytesLike): string => {
   return keccak256(packMessageData(address, chainId, digest))
 }

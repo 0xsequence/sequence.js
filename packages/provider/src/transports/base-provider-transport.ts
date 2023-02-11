@@ -19,7 +19,7 @@ import {
 
 import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
-import { ethers } from 'ethers'
+import { ethers, getAddress } from 'ethers'
 
 export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
 
@@ -227,7 +227,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       this.accountsChangedPayload = { accounts: [] }
       if (message.data && message.data.length > 0) {
         this.accountsChangedPayload = {
-          accounts: [ethers.getAddress(message.data[0])],
+          accounts: [getAddress(message.data[0])],
           origin: message.origin
         }
         this.events.emit('accountsChanged', this.accountsChangedPayload.accounts, this.accountsChangedPayload.origin)

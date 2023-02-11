@@ -1,9 +1,9 @@
-import { ethers, getBytes, hexlify, Interface, JsonRpcProvider, toUtf8String } from 'ethers'
+import { BigNumberish, BytesLike, ethers, getAddress, getBytes, hexlify, Interface, JsonRpcProvider, toUtf8String } from 'ethers'
 import { isBigNumberish, Optionals } from '@0xsequence/utils'
 
 const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
 
-function toQuantity(number: ethers.BigNumberish): string {
+function toQuantity(number: BigNumberish): string {
   if (isBigNumberish(number)) {
     return '0x' + BigInt(number).toString(16)
   }
@@ -11,7 +11,7 @@ function toQuantity(number: ethers.BigNumberish): string {
   return number
 }
 
-function tryDecodeError(bytes: ethers.BytesLike): string {
+function tryDecodeError(bytes: BytesLike): string {
   try {
     return toUtf8String('0x' + hexlify(bytes).substr(138))
   } catch (e) {
@@ -19,8 +19,8 @@ function tryDecodeError(bytes: ethers.BytesLike): string {
   }
 }
 
-function toHexNumber(number: ethers.BigNumberish): string {
-  return ethers.BigNumber.from(number).toHexString()
+function toHexNumber(number: BigNumberish): string {
+  return '0x' + BigInt(number).toString(16)
 }
 
 export type OverwriterEstimatorOptions = {
@@ -45,7 +45,7 @@ export class OverwriterEstimator {
     this.options = { ...OverwriterEstimatorDefaults, ...options }
   }
 
-  txBaseCost(data: ethers.BytesLike): number {
+  txBaseCost(data: BytesLike): number {
     const bytes = getBytes(data)
     return Number(
       bytes.reduce((p, c) => (c == 0 ? p + BigInt(this.options.dataZeroCost) : p + BigInt(this.options.dataOneCost)), 0n) +
@@ -56,14 +56,14 @@ export class OverwriterEstimator {
   async estimate(args: {
     to: string
     from?: string
-    data?: ethers.BytesLike
-    gasPrice?: ethers.BigNumberish
-    gas?: ethers.BigNumberish
+    data?: BytesLike
+    gasPrice?: BigNumberish
+    gas?: BigNumberish
     overwrites?: {
       [address: string]: {
         code?: string
-        balance?: ethers.BigNumberish
-        nonce?: ethers.BigNumberish
+        balance?: BigNumberish
+        nonce?: BigNumberish
         stateDiff?: {
           key: string
           value: string
@@ -74,18 +74,18 @@ export class OverwriterEstimator {
         }[]
       }
     }
-    blockTag?: string | ethers.BigNumberish
+    blockTag?: string | BigNumberish
   }): Promise<BigInt> {
     const blockTag = args.blockTag ? toQuantity(args.blockTag) : 'latest'
     const data = args.data ? args.data : []
-    const from = args.from ? ethers.getAddress(args.from) : ethers.Wallet.createRandom().address
+    const from = args.from ? getAddress(args.from) : ethers.Wallet.createRandom().address
 
     const gasEstimatorInterface = new Interface(GasEstimator.abi)
     const encodedEstimate = gasEstimatorInterface.encodeFunctionData('estimate', [args.to, data])
 
     const providedOverwrites = args.overwrites
       ? Object.keys(args.overwrites).reduce((p, a) => {
-          const address = ethers.getAddress(a)
+          const address = getAddress(a)
           const o = args.overwrites![a]
 
           if (address === from) {

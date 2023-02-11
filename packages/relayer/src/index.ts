@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumberish, ethers } from 'ethers'
 import { SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
@@ -24,12 +24,7 @@ export interface Relayer {
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(
-    config: WalletConfig,
-    context: WalletContext,
-    space?: ethers.BigNumberish,
-    blockTag?: BlockTag
-  ): Promise<ethers.BigNumberish>
+  getNonce(config: WalletConfig, context: WalletContext, space?: BigNumberish, blockTag?: BlockTag): Promise<BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.

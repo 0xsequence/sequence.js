@@ -10,7 +10,8 @@ import {
   Interface,
   toUtf8Bytes,
   getBytes,
-  AbiCoder
+  AbiCoder,
+  getAddress
 } from 'ethers'
 
 import { walletContracts } from '@0xsequence/abi'
@@ -263,7 +264,7 @@ export class Wallet extends Signer {
     if (!this._signers || this._signers.length === 0) {
       return []
     }
-    return Promise.all(this._signers.map(s => s.getAddress().then(s => ethers.getAddress(s))))
+    return Promise.all(this._signers.map(s => s.getAddress().then(s => getAddress(s))))
   }
 
   // chainId returns the network connected to this wallet instance
@@ -410,7 +411,7 @@ export class Wallet extends Signer {
   ): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
-    const domainChainId = domain.chainId ? BigNumber.from(domain.chainId).toNumber() : undefined
+    const domainChainId = domain.chainId ? Number(domain.chainId) : undefined
     if (domainChainId && domainChainId !== signChainId) {
       throw new Error(`signTypedData: domain.chainId (${domain.chainId}) is expected to be ${signChainId}`)
     }
@@ -800,7 +801,7 @@ export class Wallet extends Signer {
       signers: [
         {
           weight: 1,
-          address: ethers.getAddress(await signer.getAddress())
+          address: getAddress(await signer.getAddress())
         }
       ]
     }

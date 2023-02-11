@@ -7,7 +7,7 @@ import {
   decodeSignature,
   recoverEOASigner
 } from '@0xsequence/config'
-import { BytesLike, ethers, Contract, Provider, keccak256, hexlify, getBytes } from 'ethers'
+import { BytesLike, ethers, Contract, Provider, keccak256, hexlify, getBytes, getAddress } from 'ethers'
 import { Signer } from './signer'
 import { walletContracts } from '@0xsequence/abi'
 import { isValidSignature } from './validate'
@@ -72,7 +72,7 @@ export const recoverConfigFromDigest = async (
       } else if (isDecodedAddress(s)) {
         return {
           weight: s.weight,
-          address: ethers.getAddress((<DecodedOwner>s).address)
+          address: getAddress((<DecodedOwner>s).address)
         }
       } else if (isDecodedFullSigner(s)) {
         if (walletSignersValidation) {

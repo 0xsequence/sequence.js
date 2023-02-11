@@ -1,4 +1,4 @@
-import { ethers, Interface, Provider } from 'ethers'
+import { BigNumberish, Interface, Provider } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, imageHash, DecodedSignature, encodeSignature } from '@0xsequence/config'
@@ -7,7 +7,7 @@ import { isBigNumberish, Optionals } from '@0xsequence/utils'
 
 export interface BaseRelayerOptions {
   bundleCreation?: boolean
-  creationGasLimit?: ethers.BigNumberish
+  creationGasLimit?: BigNumberish
   provider?: Provider
 }
 
@@ -111,7 +111,7 @@ export class BaseRelayer {
     signature: string | Promise<string> | DecodedSignature | Promise<DecodedSignature>,
     ...transactions: Transaction[]
   ): Promise<{ to: string; data: string }> {
-    //, gasLimit?: ethers.BigNumberish }> {
+    //, gasLimit?: BigNumberish }> {
     const nonce = readSequenceNonce(...transactions)
     if (!nonce) {
       throw new Error('Unable to prepare transactions without a defined nonce')

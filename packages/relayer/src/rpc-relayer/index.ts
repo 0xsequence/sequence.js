@@ -1,4 +1,4 @@
-import { AbiCoder, ethers, TransactionReceipt } from 'ethers'
+import { AbiCoder, BigNumberish, ethers, TransactionReceipt } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import {
   Transaction,
@@ -151,10 +151,10 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     return options
   }
 
-  async getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
+  async getNonce(config: WalletConfig, context: WalletContext, space?: BigNumberish): Promise<BigNumberish> {
     const addr = addressOf(config, context)
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
-    const encodedNonce = space !== undefined ? ethers.BigNumber.from(space).toHexString() : undefined
+    const encodedNonce = space !== undefined ? '0x' + BigInt(space).toString(16) : undefined
     const resp = await this.service.getMetaTxnNonce({ walletContractAddress: addr, space: encodedNonce })
     const nonce = BigInt(resp.nonce)
     const [decodedSpace, decodedNonce] = decodeNonce(nonce)

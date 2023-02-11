@@ -1,5 +1,14 @@
 import * as fs from 'fs'
-import { ethers, ContractFactory, ContractTransaction, keccak256, solidityPacked, dataSlice, JsonRpcProvider } from 'ethers'
+import {
+  ethers,
+  ContractFactory,
+  ContractTransaction,
+  keccak256,
+  solidityPacked,
+  dataSlice,
+  JsonRpcProvider,
+  getAddress
+} from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from './typings/contracts'
 import {
@@ -12,7 +21,7 @@ import {
 } from './constants'
 import { ContractInstance } from './types'
 import { createLogger, Logger } from './utils/logger'
-import { TransactionRequest } from 'ethers/providers'
+import { Signer, TransactionRequest } from 'ethers/providers'
 
 let prompt: Logger
 createLogger().then(logger => (prompt = logger))
@@ -21,9 +30,9 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF)
 
 export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
-  private signer: ethers.Signer
+  private signer: Signer
 
-  constructor(public networkName: string, public provider: JsonRpcProvider, public signerOverride?: ethers.Signer) {
+  constructor(public networkName: string, public provider: JsonRpcProvider, public signerOverride?: Signer) {
     this.signer = signerOverride || provider.getSigner()
   }
 
@@ -193,6 +202,6 @@ export class UniversalDeployer {
       solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
     )
 
-    return ethers.getAddress(dataSlice(hash, 12))
+    return getAddress(dataSlice(hash, 12))
   }
 }

@@ -16,7 +16,7 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { ethers, hexlify } from 'ethers'
+import { getAddress, hexlify } from 'ethers'
 
 import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { Signer } from '@0xsequence/wallet'
@@ -407,7 +407,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
           const [transaction] = request.params!
-          const sender = ethers.getAddress(transaction.from)
+          const sender = getAddress(transaction.from)
 
           if (sender !== (await signer.getAddress())) {
             throw new Error('sender address does not match wallet')
@@ -433,7 +433,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
           if (isSignedTransactions(request.params![0])) {
-            const txChainId = BigNumber.from(request.params![0].chainId).toNumber()
+            const txChainId = Number(request.params![0].chainId)
             const tx = await (await signer.getRelayer(txChainId))!.relay(request.params![0])
             response.result = (await tx).hash
           } else {
@@ -444,17 +444,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getTransactionCount': {
-          const address = ethers.getAddress(request.params![0] as string)
+          const address = getAddress(request.params![0] as string)
           const tag = request.params![1]
 
-          const walletAddress = ethers.getAddress(await signer.getAddress())
+          const walletAddress = getAddress(await signer.getAddress())
 
           if (address === walletAddress) {
             const count = await signer.getTransactionCount(tag)
-            response.result = ethers.BigNumber.from(count).toHexString()
+            response.result = '0x' + BigInt(count).toString(16)
           } else {
             const count = await provider.getTransactionCount(address, tag)
-            response.result = ethers.BigNumber.from(count).toHexString()
+            response.result = '0x' + BigInt(count).toString(16)
           }
           break
         }

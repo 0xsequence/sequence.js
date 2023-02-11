@@ -1,5 +1,16 @@
 import * as multicall from '@0xsequence/multicall'
-import { BytesLike, ethers, getBytes, hexlify, keccak256, Provider, recoverAddress, solidityPacked } from 'ethers'
+import {
+  BytesLike,
+  ethers,
+  getAddress,
+  getBytes,
+  hexlify,
+  keccak256,
+  Provider,
+  recoverAddress,
+  solidityPacked,
+  Wallet
+} from 'ethers'
 import { WalletConfig } from '.'
 
 export type DecodedSignature = {
@@ -16,7 +27,7 @@ export type DecodedAddressPart = {
 
 export type DecodedEOASigner = {
   weight: number
-  signature: ethers.BytesLike
+  signature: BytesLike
 }
 
 export type DecodedEOASplitSigner = {
@@ -30,7 +41,7 @@ export type DecodedEOASplitSigner = {
 export type DecodedFullSigner = {
   weight: number
   address: string
-  signature: ethers.BytesLike
+  signature: BytesLike
 }
 
 export function isDecodedAddress(cand: DecodedSignaturePart): cand is DecodedAddressPart {
@@ -86,7 +97,7 @@ export const decodeSignature = (signature: string | DecodedSignature): DecodedSi
 
     switch (signatureType) {
       case SignatureType.Address:
-        const addr = ethers.getAddress(auxsig.slice(rindex, rindex + 40))
+        const addr = getAddress(auxsig.slice(rindex, rindex + 40))
         rindex += 40
 
         signers.push({
@@ -118,7 +129,7 @@ export const decodeSignature = (signature: string | DecodedSignature): DecodedSi
         break
 
       case SignatureType.Full:
-        const address = ethers.getAddress(auxsig.slice(rindex, rindex + 40))
+        const address = getAddress(auxsig.slice(rindex, rindex + 40))
         rindex += 40
 
         const size = Number(`0x${auxsig.slice(rindex, rindex + 4)}`) * 2
@@ -349,7 +360,7 @@ export async function buildStubSignature(provider: Provider, config: WalletConfi
             threshold: 1,
             signers: [
               {
-                address: ethers.Wallet.createRandom().address,
+                address: Wallet.createRandom().address,
                 weight: 1
               },
               {
