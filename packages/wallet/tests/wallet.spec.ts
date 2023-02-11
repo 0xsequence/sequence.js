@@ -1562,7 +1562,7 @@ describe('Wallet integration', function () {
       expect(await updatedWallet.getAddress()).to.equal(address)
 
       expect(
-        AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0]
+        AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorage(wallet.address, wallet.address))[0]
       ).to.equal(getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1594,7 +1594,7 @@ describe('Wallet integration', function () {
       const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
 
       expect(
-        AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorageAt(wallet.address, wallet.address))[0]
+        AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorage(wallet.address, wallet.address))[0]
       ).to.equal(getAddress(context.mainModuleUpgradable))
 
       expect(updatedWallet.address).to.be.equal(wallet.address)
@@ -1746,7 +1746,7 @@ describe('Wallet integration', function () {
         const updatedWallet = new lib.Wallet({ config, context }, s1).connect(ethnode.provider, relayer)
 
         expect(
-          AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0]
+          AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorage(wallet2.address, wallet2.address))[0]
         ).to.equal(getAddress(context.mainModuleUpgradable))
 
         expect(updatedWallet.address).to.be.equal(wallet2.address)
@@ -1778,7 +1778,7 @@ describe('Wallet integration', function () {
         const updatedWallet = new lib.Wallet({ config, context }, s1, s2).connect(ethnode.provider, relayer)
 
         expect(
-          AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorageAt(wallet2.address, wallet2.address))[0]
+          AbiCoder.defaultAbiCoder().decode(['address'], await ethnode.provider.getStorage(wallet2.address, wallet2.address))[0]
         ).to.equal(getAddress(context.mainModuleUpgradable))
 
         expect(updatedWallet.address).to.be.equal(wallet2.address)

@@ -450,7 +450,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           const walletAddress = getAddress(await signer.getAddress())
 
           if (address === walletAddress) {
-            const count = await signer.getTransactionCount(tag)
+            const count = await signer.getNonce(tag)
             response.result = '0x' + BigInt(count).toString(16)
           } else {
             const count = await provider.getTransactionCount(address, tag)

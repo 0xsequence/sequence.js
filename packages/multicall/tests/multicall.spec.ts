@@ -440,14 +440,14 @@ describe('Multicall integration', function () {
         it('Should call getStorageAt', async () => {
           const random = hexlify(randomBytes(32))
           await callMock.testCall(random, '0x00')
-          const storageAt = zeroPadValue(await provider.getStorageAt(callMock.address, 0), 32)
+          const storageAt = zeroPadValue(await provider.getStorage(callMock.address, 0), 32)
           expect(storageAt).to.equal(AbiCoder.defaultAbiCoder().encode(['bytes32'], [random]))
         })
 
         it('Should call getStorageAt with padding', async () => {
           const val = '0x001a6077bf4f6eae0b4d9158b68bc770c97e5ef19efffcfa28aec2bce13cae24'
           await callMock.testCall(val, '0x00')
-          const storageAt = zeroPadValue(await provider.getStorageAt(callMock.address, 0), 32)
+          const storageAt = zeroPadValue(await provider.getStorage(callMock.address, 0), 32)
           expect(storageAt).to.equal(AbiCoder.defaultAbiCoder().encode(['bytes32'], [val]))
         })
 

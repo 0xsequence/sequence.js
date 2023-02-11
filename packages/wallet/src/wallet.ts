@@ -275,7 +275,7 @@ export class Wallet extends Signer {
       throw new Error('provider is not set, first connect a provider')
     }
 
-    this.chainId = (await this.provider.getNetwork()).chainId
+    this.chainId = Number((await this.provider.getNetwork()).chainId)
     return this.chainId
   }
 
@@ -291,7 +291,7 @@ export class Wallet extends Signer {
   }
 
   // getNonce returns the transaction nonce for this wallet, via the relayer
-  async getNonce(blockTag?: BlockTag, space?: BigNumberish): Promise<BigNumberish> {
+  async getNonce(blockTag?: BlockTag, space?: BigNumberish): Promise<number> {
     return this.relayer.getNonce(this.config, this.context, space, blockTag)
   }
 
@@ -607,7 +607,7 @@ export class Wallet extends Signer {
 
     const isUpgradable = await (async () => {
       try {
-        const implementation = await this.provider.getStorageAt(
+        const implementation = await this.provider.getStorage(
           this.address,
           AbiCoder.defaultAbiCoder().encode(['address'], [this.address])
         )

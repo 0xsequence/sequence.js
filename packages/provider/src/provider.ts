@@ -9,7 +9,8 @@ import {
   toUtf8Bytes,
   hexlify,
   TypedDataEncoder,
-  getAddress
+  getAddress,
+  BrowserProvider
 } from 'ethers'
 import {
   NetworkConfig,
@@ -30,7 +31,7 @@ import { TransactionRequest, TransactionResponse, SignedTransactions } from '@0x
 import { WalletRequestHandler } from './transports/wallet-request-handler'
 import { resolveProperties, toQuantity } from 'ethers/utils'
 
-export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
+export class Web3Provider extends BrowserProvider implements JsonRpcHandler {
   static isSequenceProvider(cand: any): cand is Web3Provider {
     return isSequenceProvider(cand)
   }

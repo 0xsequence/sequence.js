@@ -1,4 +1,15 @@
-import { ethers, BigNumberish, BytesLike, isHexString, toUtf8Bytes, Provider, concat, getBytes, isBytesLike } from 'ethers'
+import {
+  ethers,
+  BigNumberish,
+  BytesLike,
+  isHexString,
+  toUtf8Bytes,
+  Provider,
+  concat,
+  getBytes,
+  isBytesLike,
+  BrowserProvider
+} from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
 import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
@@ -29,7 +40,7 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | Web3Provider | Provider,
+  provider: Web3Provider | BrowserProvider | Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
@@ -46,7 +57,7 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider | Provider,
+  provider: Web3Provider | BrowserProvider | Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
@@ -59,7 +70,7 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider | Provider,
+  provider: Web3Provider | BrowserProvider | Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {

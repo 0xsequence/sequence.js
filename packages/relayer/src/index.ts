@@ -24,7 +24,7 @@ export interface Relayer {
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(config: WalletConfig, context: WalletContext, space?: BigNumberish, blockTag?: BlockTag): Promise<BigNumberish>
+  getNonce(config: WalletConfig, context: WalletContext, space?: BigNumberish, blockTag?: BlockTag): Promise<number>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
