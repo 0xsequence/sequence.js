@@ -64,7 +64,7 @@ export const createWalletConfig = async (
 // a wallet that has a non-usable configuration is not able to perform any transactions, and can be considered as destroyed
 export const isUsableConfig = (config: WalletConfig): boolean => {
   const sum = config.signers.reduce((p, c) => BigInt(c.weight) + p, 0n)
-  return sum > config.threshold
+  return sum >= config.threshold
 }
 
 export const isValidConfigSigners = (config: WalletConfig, signers: string[]): boolean => {
