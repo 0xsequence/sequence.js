@@ -11,10 +11,17 @@ import {
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
-import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork, JsonRpcProvider } from '@0xsequence/network'
+import {
+  ChainIdLike,
+  NetworkConfig,
+  WalletContext,
+  findNetworkConfig,
+  getAuthNetwork,
+  JsonRpcProvider
+} from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/wallet'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers, AbstractSigner } from 'ethers'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -76,7 +83,7 @@ export class Session {
     public context: WalletContext,
     public account: Account,
     public metadata: SessionMeta,
-    private readonly authProvider: ethers.providers.JsonRpcProvider,
+    private readonly authProvider: ethers.JsonRpcProvider,
     jwt?: SessionJWT
   ) {
     if (jwt) {
@@ -284,7 +291,9 @@ export class Session {
             .sign(proof.messageDigest())
             .then(signature => {
               const decodedSignature = decodeSignature(signature)
-              const totalWeight = decodedSignature.signers.filter(isDecodedSigner).reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
+              const totalWeight = decodedSignature.signers
+                .filter(isDecodedSigner)
+                .reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
               if (totalWeight < decodedSignature.threshold) {
                 throw Error(`insufficient signing power, need ${decodedSignature.threshold}, have ${totalWeight}`)
               }
@@ -502,7 +511,7 @@ export class Session {
   }
 }
 
-function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcProvider {
+function getAuthProvider(networks: NetworkConfig[]): ethers.JsonRpcProvider {
   const authChain = getAuthNetwork(networks)
   if (!authChain) throw Error('Auth chain not found')
   return authChain.provider ?? new JsonRpcProvider(authChain.rpcUrl!, { chainId: authChain.chainId, blockCache: true })

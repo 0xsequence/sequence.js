@@ -29,7 +29,7 @@ import {
   UnrealMessageProvider
 } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
-import { ethers, providers } from 'ethers'
+import { ethers, hexlify, JsonRpcProvider } from 'ethers'
 import { ExtensionMessageProvider } from './transports/extension-transport/extension-message-provider'
 import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
@@ -296,7 +296,7 @@ export class Wallet implements WalletProvider {
       return {
         connected: true,
         session: this.session,
-        chainId: ethers.utils.hexlify(await this.getChainId())
+        chainId: hexlify(await this.getChainId())
       }
     }
 
@@ -503,7 +503,7 @@ export class Wallet implements WalletProvider {
     let provider: Web3Provider
 
     // network.provider may be set by the ProviderConfig override
-    const rpcProvider = network.provider ? network.provider : new providers.JsonRpcProvider(network.rpcUrl, network.chainId)
+    const rpcProvider = network.provider ? network.provider : new JsonRpcProvider(network.rpcUrl, network.chainId)
 
     if (network.isDefaultChain) {
       // communicating with defaultChain will prioritize the wallet message transport
@@ -634,7 +634,7 @@ export class Wallet implements WalletProvider {
 
   private useAccountAddress(accountAddress: string) {
     if (!this.session) this.session = {}
-    this.session.accountAddress = ethers.utils.getAddress(accountAddress)
+    this.session.accountAddress = ethers.getAddress(accountAddress)
   }
 
   private useNetworks(networks: NetworkConfig[]) {

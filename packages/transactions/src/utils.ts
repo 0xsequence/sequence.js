@@ -1,4 +1,4 @@
-import { ethers, Signer, BigNumberish, utils } from 'ethers'
+import { ethers, Signer, BigNumberish, keccak256, Interface, AbiCoder, ZeroAddress } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { Transaction, TransactionRequest, Transactionish, TransactionEncoded, NonceDependency, SignedTransactions } from './types'
@@ -20,7 +20,7 @@ export function packMetaTransactionsData(...txs: Transaction[]): string {
 }
 
 export function packMetaTransactionsNonceData(nonce: BigNumberish, ...txs: Transaction[]): string {
-  return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
+  return AbiCoder.defaultAbiCoder().encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
 export function digestOfTransactions(...txs: Transaction[]): string {
@@ -30,7 +30,7 @@ export function digestOfTransactions(...txs: Transaction[]): string {
 }
 
 export function digestOfTransactionsNonce(nonce: BigNumberish, ...txs: Transaction[]) {
-  return ethers.utils.keccak256(packMetaTransactionsNonceData(nonce, ...txs))
+  return keccak256(packMetaTransactionsNonceData(nonce, ...txs))
 }
 
 export function computeMetaTxnHash(address: string, chainId: BigNumberish, ...txs: Transaction[]): string {
@@ -48,8 +48,8 @@ export async function toSequenceTransactions(
 
   // Uses the lowest nonce found on TransactionRequest
   // if there are no nonces, it leaves an undefined nonce
-  const nonces = (await Promise.all(txs.map(t => t.nonce))).filter(n => n !== undefined).map(n => ethers.BigNumber.from(n))
-  const nonce = nonces.length !== 0 ? nonces.reduce((p, c) => (p.lt(c) ? p : c)) : undefined
+  const nonces = (await Promise.all(txs.map(t => t.nonce))).filter(n => n !== undefined).map(n => BigInt(n!))
+  const nonce = nonces.length !== 0 ? nonces.reduce((p, c) => (p < c ? p : c)) : undefined
 
   // Maps all transactions into SequenceTransactions
   return Promise.all(allTxs.map(tx => toSequenceTransaction(wallet, tx, revertOnError, gasLimit, nonce)))
@@ -100,7 +100,7 @@ export async function toSequenceTransaction(
       nonce: nonce ? nonce : await tx.nonce
     }
   } else {
-    const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new Interface(walletContracts.mainModule.abi)
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
     const address = typeof wallet === 'string' ? wallet : wallet.getAddress()
 
@@ -133,9 +133,9 @@ export function readSequenceNonce(...txs: Transaction[]): BigNumberish | undefin
   if (!sample) {
     return undefined
   }
-  const sampleNonce = ethers.BigNumber.from(sample.nonce)
+  const sampleNonce = BigInt(sample.nonce!)
 
-  if (txs.find(t => t.nonce !== undefined && !ethers.BigNumber.from(t.nonce).eq(sampleNonce))) {
+  if (txs.find(t => t.nonce !== undefined && BigInt(t.nonce) !== sampleNonce)) {
     throw new Error('Mixed nonces on Sequence transactions')
   }
 
@@ -146,9 +146,9 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
   return txs.map(t => ({
     delegateCall: t.delegateCall === true,
     revertOnError: t.revertOnError === true,
-    gasLimit: t.gasLimit !== undefined ? t.gasLimit : ethers.constants.Zero,
-    target: t.to ?? ethers.constants.AddressZero,
-    value: t.value !== undefined ? t.value : ethers.constants.Zero,
+    gasLimit: t.gasLimit !== undefined ? t.gasLimit : 0n,
+    target: t.to ?? ZeroAddress,
+    value: t.value !== undefined ? t.value : 0n,
     data: t.data !== undefined ? t.data : []
   }))
 }
@@ -158,7 +158,7 @@ export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transactio
 }
 
 export function makeExpirable(context: WalletContext, txs: Transaction[], expiration: BigNumberish): Transaction[] {
-  const sequenceUtils = new utils.Interface(walletContracts.sequenceUtils.abi)
+  const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
   if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
@@ -178,7 +178,7 @@ export function makeExpirable(context: WalletContext, txs: Transaction[], expira
 }
 
 export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: NonceDependency): Transaction[] {
-  const sequenceUtils = new utils.Interface(walletContracts.sequenceUtils.abi)
+  const sequenceUtils = new Interface(walletContracts.sequenceUtils.abi)
 
   if (!context || !context.sequenceUtils) {
     throw new Error('Undefined sequenceUtils')
@@ -201,23 +201,23 @@ export function makeAfterNonce(context: WalletContext, txs: Transaction[], dep: 
 }
 
 export function encodeNonce(space: BigNumberish, nonce: BigNumberish): BigNumberish {
-  const bspace = ethers.BigNumber.from(space)
-  const bnonce = ethers.BigNumber.from(nonce)
+  const bspace = BigInt(space)
+  const bnonce = BigInt(nonce)
 
-  const shl = ethers.constants.Two.pow(ethers.BigNumber.from(96))
+  const shl = 2n ** 96n
 
-  if (!bnonce.div(shl).eq(ethers.constants.Zero)) {
+  if (bnonce / shl !== 0n) {
     throw new Error('Space already encoded')
   }
 
-  return bnonce.add(bspace.mul(shl))
+  return bnonce + bspace * shl
 }
 
 export function decodeNonce(nonce: BigNumberish): [BigNumberish, BigNumberish] {
-  const bnonce = ethers.BigNumber.from(nonce)
-  const shr = ethers.constants.Two.pow(ethers.BigNumber.from(96))
+  const bnonce = BigInt(nonce)
+  const shr = 2n ** 96n
 
-  return [bnonce.div(shr), bnonce.mod(shr)]
+  return [bnonce / shr, bnonce % shr]
 }
 
 export function isSignedTransactions(cand: any): cand is SignedTransactions {

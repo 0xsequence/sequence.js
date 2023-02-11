@@ -1,4 +1,4 @@
-import { ethers, BigNumberish, BytesLike } from 'ethers'
+import { ethers, BigNumberish, BytesLike, isHexString, toUtf8Bytes, Provider, concat, getBytes, isBytesLike } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
 import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
@@ -6,14 +6,14 @@ import { Web3Provider } from './provider'
 import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 
-const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
+const eip191prefix = toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
 export const messageToBytes = (message: BytesLike): Uint8Array => {
-  if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
-    return ethers.utils.arrayify(message)
+  if (isBytesLike(message)) {
+    return getBytes(message)
   }
 
-  return ethers.utils.toUtf8Bytes(message)
+  return toUtf8Bytes(message)
 }
 
 export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
@@ -21,7 +21,7 @@ export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes
   } else {
-    return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+    return getBytes(concat([eip191prefix, toUtf8Bytes(String(messageBytes.length)), messageBytes]))
   }
 }
 
@@ -29,7 +29,7 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider | ethers.providers.Provider,
+  provider: Web3Provider | Web3Provider | Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
@@ -46,7 +46,7 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider  | ethers.providers.Provider,
+  provider: Web3Provider | ethers.providers.Web3Provider | Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {
@@ -59,7 +59,7 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider  | ethers.providers.Provider,
+  provider: Web3Provider | ethers.providers.Web3Provider | Provider,
   chainId?: number,
   walletContext?: WalletContext
 ): Promise<boolean> => {

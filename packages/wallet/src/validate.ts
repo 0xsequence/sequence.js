@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { ethers, getBytes, keccak256, Provider, recoverAddress, solidityPacked } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { walletContracts } from '@0xsequence/abi'
 import { packMessageData } from '@0xsequence/utils'
@@ -9,7 +9,7 @@ export async function isValidSignature(
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider?: providers.Provider,
+  provider?: Provider,
   walletContext?: WalletContext,
   chainId?: number
 ): Promise<boolean> {
@@ -17,10 +17,7 @@ export async function isValidSignature(
   //
   // TODO: the EOA check here assume its being passed a digest, but its not a correct assumption
   // as often the message signing is of a string of text and not a digest.
-  if (
-    isValidEIP712Signature(address, digest, sig) ||
-    isValidEthSignSignature(address, digest, sig)
-  ) return true
+  if (isValidEIP712Signature(address, digest, sig) || isValidEthSignSignature(address, digest, sig)) return true
 
   // Check if valid deployed smart wallet (via erc1271 check)
   const erc1271Check = await isValidContractWalletSignature(address, digest, sig, provider)
@@ -31,58 +28,28 @@ export async function isValidSignature(
     return !!(await isValidSequenceUndeployedWalletSignature(address, digest, sig, walletContext, provider, chainId))
   }
 
-  return erc1271Check  
+  return erc1271Check
 }
 
-export function isValidEIP712Signature(
-  address: string,
-  digest: Uint8Array,
-  sig: string
-): boolean {
+export function isValidEIP712Signature(address: string, digest: Uint8Array, sig: string): boolean {
   try {
-    return compareAddr(
-      ethers.utils.recoverAddress(
-        digest,
-        ethers.utils.splitSignature(sig)
-      ),
-      address
-    ) === 0
+    return compareAddr(recoverAddress(digest, ethers.utils.splitSignature(sig)), address) === 0
   } catch {
     return false
   }
 }
 
-export function isValidEthSignSignature(
-  address: string,
-  digest: Uint8Array,
-  sig: string
-): boolean {
+export function isValidEthSignSignature(address: string, digest: Uint8Array, sig: string): boolean {
   try {
-    const subDigest = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ['string', 'bytes32'],
-        ['\x19Ethereum Signed Message:\n32', digest]
-      )
-    )
-    return compareAddr(
-      ethers.utils.recoverAddress(
-        subDigest,
-        ethers.utils.splitSignature(sig)
-      ),
-      address
-    ) === 0
+    const subDigest = keccak256(solidityPacked(['string', 'bytes32'], ['\x19Ethereum Signed Message:\n32', digest]))
+    return compareAddr(recoverAddress(subDigest, ethers.utils.splitSignature(sig)), address) === 0
   } catch {
     return false
   }
 }
 
 // Check if valid Smart Contract Wallet signature, via ERC1271
-export async function isValidContractWalletSignature(
-  address: string,
-  digest: Uint8Array,
-  sig: string,
-  provider?: providers.Provider
-) {
+export async function isValidContractWalletSignature(address: string, digest: Uint8Array, sig: string, provider?: Provider) {
   if (!provider) return undefined
   try {
     if ((await provider.getCode(address)) === '0x') {
@@ -103,7 +70,7 @@ export async function isValidSequenceUndeployedWalletSignature(
   digest: Uint8Array,
   sig: string,
   walletContext?: WalletContext,
-  provider?: providers.Provider,
+  provider?: Provider,
   chainId?: number
 ) {
   if (!provider && !chainId) return undefined // Signature validity can't be determined
@@ -112,9 +79,9 @@ export async function isValidSequenceUndeployedWalletSignature(
   try {
     const cid = chainId ? chainId : (await provider!.getNetwork()).chainId
     const signature = decodeSignature(sig)
-    const subDigest = ethers.utils.arrayify(ethers.utils.keccak256(packMessageData(address, cid, digest)))
+    const subDigest = getBytes(keccak256(packMessageData(address, cid, digest)))
     const config = await recoverConfigFromDigest(subDigest, signature, provider, walletContext, chainId, true)
-    const weight = signature.signers.reduce((v, s) => isDecodedEOASigner(s) || isDecodedFullSigner(s) ? v + s.weight : v, 0)
+    const weight = signature.signers.reduce((v, s) => (isDecodedEOASigner(s) || isDecodedFullSigner(s) ? v + s.weight : v), 0)
     return compareAddr(addressOf(config, walletContext), address) === 0 && weight >= signature.threshold
   } catch {
     return false

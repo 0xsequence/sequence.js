@@ -1,8 +1,9 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
 import { WalletConfig } from '@0xsequence/config'
 import { proto } from './rpc-relayer'
+import { BlockTag } from 'ethers/providers'
 
 export interface Relayer {
   // simulate returns the execution results for a list of transactions.
@@ -14,20 +15,21 @@ export interface Relayer {
     config: WalletConfig,
     context: WalletContext,
     ...transactions: Transaction[]
-  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
   // gasRefundOptions returns the transactions which can be included to refund a
   // relayer for submitting your transaction to a network.
-  gasRefundOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<FeeOption[]>
+  gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]>
 
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(config: WalletConfig, context: WalletContext, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
+  getNonce(
+    config: WalletConfig,
+    context: WalletContext,
+    space?: ethers.BigNumberish,
+    blockTag?: BlockTag
+  ): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.

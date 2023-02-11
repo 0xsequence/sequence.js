@@ -1,11 +1,11 @@
-import { ethers } from 'ethers'
+import { ethers, getBytes, hexlify, Interface, JsonRpcProvider, toUtf8String } from 'ethers'
 import { isBigNumberish, Optionals } from '@0xsequence/utils'
 
-const GasEstimator = require("@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json")
+const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
 
-function toQuantity(number: ethers.BigNumberish | string): string {
+function toQuantity(number: ethers.BigNumberish): string {
   if (isBigNumberish(number)) {
-    return ethers.BigNumber.from(number).toHexString()
+    return '0x' + BigInt(number).toString(16)
   }
 
   return number
@@ -13,7 +13,7 @@ function toQuantity(number: ethers.BigNumberish | string): string {
 
 function tryDecodeError(bytes: ethers.BytesLike): string {
   try {
-    return ethers.utils.toUtf8String('0x' + ethers.utils.hexlify(bytes).substr(138))
+    return toUtf8String('0x' + hexlify(bytes).substr(138))
   } catch (e) {
     return 'UNKNOWN_ERROR'
   }
@@ -24,9 +24,9 @@ function toHexNumber(number: ethers.BigNumberish): string {
 }
 
 export type OverwriterEstimatorOptions = {
-  rpc: string | ethers.providers.JsonRpcProvider,
-  dataZeroCost?: number,
-  dataOneCost?: number,
+  rpc: string | JsonRpcProvider
+  dataZeroCost?: number
+  dataOneCost?: number
   baseCost?: number
 }
 
@@ -37,88 +37,98 @@ export const OverwriterEstimatorDefaults: Required<Optionals<OverwriterEstimator
 }
 
 export class OverwriterEstimator {
-  public provider: ethers.providers.JsonRpcProvider
+  public provider: JsonRpcProvider
   public options: Required<OverwriterEstimatorOptions>
 
   constructor(options: OverwriterEstimatorOptions) {
-    this.provider = typeof(options.rpc) === 'string' ? new ethers.providers.JsonRpcProvider(options.rpc) : options.rpc
+    this.provider = typeof options.rpc === 'string' ? new JsonRpcProvider(options.rpc) : options.rpc
     this.options = { ...OverwriterEstimatorDefaults, ...options }
   }
 
   txBaseCost(data: ethers.BytesLike): number {
-    const bytes = ethers.utils.arrayify(data)
-    return bytes.reduce((p, c) => c == 0 ? p.add(this.options.dataZeroCost) : p.add(this.options.dataOneCost), ethers.constants.Zero).add(this.options.baseCost).toNumber()
+    const bytes = getBytes(data)
+    return Number(
+      bytes.reduce((p, c) => (c == 0 ? p + BigInt(this.options.dataZeroCost) : p + BigInt(this.options.dataOneCost)), 0n) +
+        BigInt(this.options.baseCost)
+    )
   }
 
   async estimate(args: {
-    to: string,
-    from?: string,
-    data?: ethers.BytesLike,
-    gasPrice?: ethers.BigNumberish,
-    gas?: ethers.BigNumberish,
+    to: string
+    from?: string
+    data?: ethers.BytesLike
+    gasPrice?: ethers.BigNumberish
+    gas?: ethers.BigNumberish
     overwrites?: {
       [address: string]: {
-        code?: string,
-        balance?: ethers.BigNumberish,
-        nonce?: ethers.BigNumberish,
+        code?: string
+        balance?: ethers.BigNumberish
+        nonce?: ethers.BigNumberish
         stateDiff?: {
-          key: string,
-          value: string,
-        }[],
+          key: string
+          value: string
+        }[]
         state?: {
-          key: string,
-          value: string,
+          key: string
+          value: string
         }[]
       }
-    },
+    }
     blockTag?: string | ethers.BigNumberish
-  }): Promise<ethers.BigNumber> {
-    const blockTag = args.blockTag ? toQuantity(args.blockTag) : "latest"
+  }): Promise<BigInt> {
+    const blockTag = args.blockTag ? toQuantity(args.blockTag) : 'latest'
     const data = args.data ? args.data : []
-    const from = args.from ? ethers.utils.getAddress(args.from) : ethers.Wallet.createRandom().address
+    const from = args.from ? ethers.getAddress(args.from) : ethers.Wallet.createRandom().address
 
-    const gasEstimatorInterface = new ethers.utils.Interface(GasEstimator.abi)
-    const encodedEstimate = gasEstimatorInterface.encodeFunctionData("estimate", [args.to, data])
+    const gasEstimatorInterface = new Interface(GasEstimator.abi)
+    const encodedEstimate = gasEstimatorInterface.encodeFunctionData('estimate', [args.to, data])
 
-    const providedOverwrites = args.overwrites ? Object.keys(args.overwrites).reduce((p, a) => {
-      const address = ethers.utils.getAddress(a)
-      const o = args.overwrites![a]
+    const providedOverwrites = args.overwrites
+      ? Object.keys(args.overwrites).reduce((p, a) => {
+          const address = ethers.getAddress(a)
+          const o = args.overwrites![a]
 
-      if (address === from) {
-        throw Error("Can't overwrite from address values")
-      }
-
-      return {
-        ...p,
-        [address]: {
-            code: o.code ? ethers.utils.hexlify(o.code) : undefined,
-            nonce: o.nonce ? toHexNumber(o.nonce) : undefined,
-            balance: o.balance ? toHexNumber(o.balance) : undefined,
-            state: o.state ? o.state : undefined,
-            stateDiff: o.stateDiff ? o.stateDiff : undefined
+          if (address === from) {
+            throw Error("Can't overwrite from address values")
           }
-      }
-    }, {}) : {}
 
-    const overwrites = { ...providedOverwrites, 
+          return {
+            ...p,
+            [address]: {
+              code: o.code ? hexlify(o.code) : undefined,
+              nonce: o.nonce ? toHexNumber(o.nonce) : undefined,
+              balance: o.balance ? toHexNumber(o.balance) : undefined,
+              state: o.state ? o.state : undefined,
+              stateDiff: o.stateDiff ? o.stateDiff : undefined
+            }
+          }
+        }, {})
+      : {}
+
+    const overwrites = {
+      ...providedOverwrites,
       [from]: {
         code: GasEstimator.deployedBytecode
       }
     }
 
-    const response = await this.provider.send("eth_call", [{
-      to: from,
-      data: encodedEstimate,
-      gasPrice: args.gasPrice,
-      gas: args.gas,
-    }, blockTag, overwrites])
+    const response = await this.provider.send('eth_call', [
+      {
+        to: from,
+        data: encodedEstimate,
+        gasPrice: args.gasPrice,
+        gas: args.gas
+      },
+      blockTag,
+      overwrites
+    ])
 
-    const decoded = gasEstimatorInterface.decodeFunctionResult("estimate", response)
+    const decoded = gasEstimatorInterface.decodeFunctionResult('estimate', response)
 
     if (!decoded.success) {
       throw Error(`Failed gas estimation with ${tryDecodeError(decoded.result)}`)
     }
 
-    return ethers.BigNumber.from(decoded.gas).add(this.txBaseCost(data))
+    return BigInt(decoded.gas) + BigInt(this.txBaseCost(data))
   }
 }

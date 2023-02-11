@@ -1,10 +1,19 @@
-import { ethers } from 'ethers'
-import { JsonRpcRouter, JsonRpcSender, loggingProviderMiddleware, EagerProvider, SingleflightMiddleware, CachedProvider, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './json-rpc'
+import { ethers, Network } from 'ethers'
+import {
+  JsonRpcRouter,
+  JsonRpcSender,
+  loggingProviderMiddleware,
+  EagerProvider,
+  SingleflightMiddleware,
+  CachedProvider,
+  JsonRpcMiddleware,
+  JsonRpcMiddlewareHandler
+} from './json-rpc'
 import { networks, ChainId } from './config'
 
 export interface JsonRpcProviderOptions {
   // ..
-  chainId? :number
+  chainId?: number
 
   // ..
   middlewares?: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>
@@ -14,11 +23,11 @@ export interface JsonRpcProviderOptions {
 }
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
-export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
+export class JsonRpcProvider extends ethers.JsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
 
-  constructor(url: ethers.utils.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
+  constructor(url: ethers.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
     super(url, options?.chainId)
 
     const chainId = options?.chainId
@@ -32,8 +41,7 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
     // so if you set middlewares, make sure you set the caching middleware yourself if you'd
     // like to keep using it.
     const router = new JsonRpcRouter(
-      middlewares ?? 
-      [
+      middlewares ?? [
         // loggingProviderMiddleware,
         new EagerProvider({ chainId }),
         new SingleflightMiddleware(),
@@ -45,7 +53,7 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
     this._sender = new JsonRpcSender(router, chainId)
   }
 
-  async getNetwork(): Promise<ethers.providers.Network> {
+  async getNetwork(): Promise<Network> {
     const chainId = this._chainId
     if (chainId) {
       const network = networks[chainId as ChainId]
@@ -53,12 +61,12 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
       const ensAddress = network?.ensAddress
       return {
         name: name,
-        chainId: chainId,
+        chainId: BigInt(chainId),
         ensAddress: ensAddress
       }
     } else {
       const chainIdHex = await this.send('eth_chainId', [])
-      this._chainId = ethers.BigNumber.from(chainIdHex).toNumber()
+      this._chainId = Number(chainIdHex)
       return this.getNetwork()
     }
   }
@@ -71,21 +79,24 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
     const request = {
       method: method,
       params: params,
-      id: (this._nextId++),
+      id: this._nextId++,
       jsonrpc: '2.0'
     }
 
-    const result = ethers.utils.fetchJson(this.connection, JSON.stringify(request), getResult).then((result) => {
-      return result
-    }, (error) => {
-      throw error
-    })
+    const result = ethers.utils.fetchJson(this.connection, JSON.stringify(request), getResult).then(
+      result => {
+        return result
+      },
+      error => {
+        throw error
+      }
+    )
 
     return result
   }
 }
 
-function getResult(payload: { error?: { code?: number, data?: any, message?: string }, result?: any }): any {
+function getResult(payload: { error?: { code?: number; data?: any; message?: string }; result?: any }): any {
   if (payload.error) {
     // @TODO: not any
     const error: any = new Error(payload.error.message)

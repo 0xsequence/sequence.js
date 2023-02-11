@@ -1,17 +1,18 @@
-import { Contract, ethers } from 'ethers'
+import { AbiCoder, Contract, ethers, Provider, ZeroHash } from 'ethers'
 import { addressOf, imageHash, WalletConfig } from '..'
 import { getCachedConfig } from '../cache'
 import { ConfigFinder } from './config-finder'
 import { walletContracts } from '@0xsequence/abi'
 import { WalletContext } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
+import { Filter, Log } from 'ethers/providers'
 
 export class SequenceUtilsFinder implements ConfigFinder {
-  constructor(public authProvider: ethers.providers.Provider) {}
+  constructor(public authProvider: Provider) {}
 
   findCurrentConfig = async (args: {
     address: string
-    provider: ethers.providers.Provider
+    provider: Provider
     context: WalletContext
     knownConfigs?: WalletConfig[]
     ignoreIndex?: boolean
@@ -19,7 +20,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     skipCache?: boolean
   }): Promise<{ config: WalletConfig | undefined }> => {
     const { provider, context, ignoreIndex, requireIndex, skipCache } = args
-    const address = ethers.utils.getAddress(args.address)
+    const address = ethers.getAddress(args.address)
 
     logger.info(`[findCurrentConfig] address:${address}, ignoreIndex:${ignoreIndex}, requireIndex:${requireIndex}`)
 
@@ -48,7 +49,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
   findLastWalletOfInitialSigner = async (args: {
     signer: string
-    provider: ethers.providers.Provider
+    provider: Provider
     context: WalletContext
     ignoreIndex?: boolean
     requireIndex?: boolean
@@ -113,7 +114,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     if (lastLog === undefined) return undefined
 
     const event = authContract.interface.decodeEventLog('RequiredConfig', lastLog.data, lastLog.topics)
-    const signers = ethers.utils.defaultAbiCoder.decode(
+    const signers = AbiCoder.defaultAbiCoder().decode(
       [
         `tuple(
         uint256 weight,
@@ -124,10 +125,10 @@ export class SequenceUtilsFinder implements ConfigFinder {
     )[0]
 
     const config = {
-      threshold: ethers.BigNumber.from(event._threshold).toNumber(),
+      threshold: Number(event._threshold),
       signers: signers.map((s: any) => ({
         address: s.signer,
-        weight: ethers.BigNumber.from(s.weight).toNumber()
+        weight: Number(s.weight)
       }))
     }
 
@@ -139,7 +140,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
   findCurrentImageHash = async (
     context: WalletContext,
-    provider: ethers.providers.Provider,
+    provider: Provider,
     address: string,
     knownConfigs: WalletConfig[] = [],
     skipCache?: boolean
@@ -147,7 +148,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     logger.info(`[findCurrentImageHash] address:${address}`)
 
     const walletContract = new Contract(address, walletContracts.mainModuleUpgradable.abi, provider)
-    const currentImageHash = (await walletContract.functions.imageHash.call([]).catch(() => [])) as string[]
+    const currentImageHash = (await walletContract.imageHash.call([]).catch(() => [])) as string[]
 
     // Wallet is not counterfactual and has a defined imageHash
     if (currentImageHash[0] !== undefined) {
@@ -159,7 +160,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     // Wallet is in counter-factual mode
     // Lookup config in known configurations
-    const normalizedAddress = ethers.utils.getAddress(address)
+    const normalizedAddress = ethers.getAddress(address)
     const found = knownConfigs.find(kc => addressOf(kc, context, true) === normalizedAddress)
     if (found) return { imageHash: imageHash(found), config: found }
 
@@ -167,7 +168,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     const authContract = new Contract(context.sequenceUtils!, walletContracts.sequenceUtils.abi, this.authProvider)
     const knownImageHash = (await authContract.knownImageHashes(address)) as string
 
-    if (knownImageHash !== ethers.constants.HashZero) {
+    if (knownImageHash !== ZeroHash) {
       if (addressOf(knownImageHash, context) !== address) throw Error('findCurrentImageHash: inconsistent RequireUtils results')
       return { imageHash: knownImageHash }
     }
@@ -178,7 +179,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
 
     if (log !== undefined) {
       const event = authContract.interface.decodeEventLog('RequiredConfig', log.data, log.topics)
-      const signers = ethers.utils.defaultAbiCoder.decode(
+      const signers = AbiCoder.defaultAbiCoder().decode(
         [
           `tuple(
           uint256 weight,
@@ -189,10 +190,10 @@ export class SequenceUtilsFinder implements ConfigFinder {
       )[0]
 
       const config = {
-        threshold: ethers.BigNumber.from(event._threshold).toNumber(),
+        threshold: Number(event._threshold),
         signers: signers.map((s: any) => ({
           address: s.signer,
-          weight: ethers.BigNumber.from(s.weight).toNumber()
+          weight: Number(s.weight)
         }))
       }
 
@@ -206,10 +207,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     return {}
   }
 
-  private findLatestLog = async (
-    provider: ethers.providers.Provider,
-    filter: ethers.providers.Filter
-  ): Promise<ethers.providers.Log | undefined> => {
+  private findLatestLog = async (provider: Provider, filter: Filter): Promise<Log | undefined> => {
     const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : (filter.toBlock as number)
     const fromBlock = filter.fromBlock as number
 
@@ -229,10 +227,7 @@ export class SequenceUtilsFinder implements ConfigFinder {
     }
   }
 
-  private findFirstLog = async (
-    provider: ethers.providers.Provider,
-    filter: ethers.providers.Filter
-  ): Promise<ethers.providers.Log | undefined> => {
+  private findFirstLog = async (provider: Provider, filter: Filter): Promise<Log | undefined> => {
     const toBlock = filter.toBlock === 'latest' || !filter.toBlock ? await provider.getBlockNumber() : (filter.toBlock as number)
     const fromBlock = filter.fromBlock ? (filter.fromBlock as number) : 0
 

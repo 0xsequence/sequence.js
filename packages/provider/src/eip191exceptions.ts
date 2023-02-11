@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, Interface, toUtf8String } from 'ethers'
 
 export function messageIsExemptFromEIP191Prefix(message: Uint8Array): boolean {
   return EIP_191_PREFIX_EXCEPTIONS.some(e => e.predicate(message))
@@ -23,7 +23,7 @@ const DCL_REGEX =
   /^Decentraland Login\nEphemeral address: 0x[a-fA-F0-9]{40}\nExpiration: (\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((-(\d{2}):(\d{2})|Z)?)$/
 export function isDecentralandLoginMessage(bytes: Uint8Array): boolean {
   try {
-    const stringified = ethers.utils.toUtf8String(bytes)
+    const stringified = toUtf8String(bytes)
     return DCL_REGEX.test(stringified)
   } catch {
     return false
@@ -33,7 +33,7 @@ export function isDecentralandLoginMessage(bytes: Uint8Array): boolean {
 // try to interpret bytes as abi-encoded 0x v3 OrderWithHash -
 // see https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md
 export function isZeroExV3Order(bytes: Uint8Array): boolean {
-  const abi = new ethers.utils.Interface(ZeroXV3EIP1271OrderWithHashAbi)
+  const abi = new Interface(ZeroXV3EIP1271OrderWithHashAbi)
   try {
     abi.decodeFunctionData('OrderWithHash', bytes)
     return true

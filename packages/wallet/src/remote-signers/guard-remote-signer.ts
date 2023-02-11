@@ -1,4 +1,4 @@
-import { BigNumber, ethers, BytesLike } from 'ethers'
+import { ethers, BytesLike, hexlify } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 import { Guard } from '@0xsequence/guard'
 import { ChainId, ChainIdLike } from '@0xsequence/network'
@@ -20,9 +20,9 @@ export class GuardRemoteSigner extends RemoteSigner {
 
   async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainIdLike): Promise<string> {
     const request = {
-      msg: ethers.utils.hexlify(message),
-      auxData: ethers.utils.hexlify(auxData ? auxData : []),
-      chainId: chainId ? BigNumber.from(chainId).toNumber() : this.defaultChainId
+      msg: hexlify(message),
+      auxData: hexlify(auxData ? auxData : []),
+      chainId: chainId ? Number(chainId) : this.defaultChainId
     }
     const res = await this._guard.sign({ request: request })
 

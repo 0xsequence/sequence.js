@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { BigNumberish, ethers, Provider } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
@@ -6,13 +6,14 @@ import { WalletConfig, addressOf } from '@0xsequence/config'
 import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { logger, Optionals, Mask } from '@0xsequence/utils'
+import { BlockTag, TransactionReceipt } from 'ethers/providers'
 
-const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
+const DEFAULT_GAS_LIMIT = 800000n
 
 export interface ProviderRelayerOptions extends BaseRelayerOptions {
-  provider: providers.Provider,
-  waitPollRate?: number,
-  deltaBlocksLog?: number,
+  provider: Provider
+  waitPollRate?: number
+  deltaBlocksLog?: number
   fromBlockLog?: number
 }
 
@@ -23,11 +24,11 @@ export const ProviderRelayerDefaults: Required<Optionals<Mask<ProviderRelayerOpt
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return obj.provider !== undefined && providers.Provider.isProvider(obj.provider)
+  return obj.provider !== undefined && Provider.isProvider(obj.provider)
 }
 
 export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
-  public provider: providers.Provider
+  public provider: Provider
   public waitPollRate: number
   public deltaBlocksLog: number
   public fromBlockLog: number
@@ -45,58 +46,58 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     config: WalletConfig,
     context: WalletContext,
     ...transactions: Transaction[]
-  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
-  abstract gasRefundOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<FeeOption[]>
+  abstract gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]>
 
   abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
-    return (await Promise.all(transactions.map(async tx => {
-      // Respect gasLimit request of the transaction (as long as its not 0)
-      if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
-        return tx.gasLimit
-      }
+    return (
+      await Promise.all(
+        transactions.map(async tx => {
+          // Respect gasLimit request of the transaction (as long as its not 0)
+          if (tx.gasLimit && BigInt(tx.gasLimit || 0) !== 0n) {
+            return tx.gasLimit
+          }
 
-      // Fee can't be estimated locally for delegateCalls
-      if (tx.delegateCall) {
-        return DEFAULT_GAS_LIMIT
-      }
+          // Fee can't be estimated locally for delegateCalls
+          if (tx.delegateCall) {
+            return DEFAULT_GAS_LIMIT
+          }
 
-      // Fee can't be estimated for self-called if wallet hasn't been deployed
-      if (tx.to === wallet && !(await this.isWalletDeployed(wallet))) {
-        return DEFAULT_GAS_LIMIT
-      }
+          // Fee can't be estimated for self-called if wallet hasn't been deployed
+          if (tx.to === wallet && !(await this.isWalletDeployed(wallet))) {
+            return DEFAULT_GAS_LIMIT
+          }
 
-      if (!this.provider) {
-        throw new Error('signer.provider is not set, but is required')
-      }
+          if (!this.provider) {
+            throw new Error('signer.provider is not set, but is required')
+          }
 
-      // TODO: If the wallet address has been deployed, gas limits can be
-      // estimated with more accurately by using self-calls with the batch transactions one by one
-      return this.provider.estimateGas({
-        from: wallet,
-        to: tx.to,
-        data: tx.data,
-        value: tx.value
-      })
-    }))).map(gasLimit => ({
+          // TODO: If the wallet address has been deployed, gas limits can be
+          // estimated with more accurately by using self-calls with the batch transactions one by one
+          return this.provider.estimateGas({
+            from: wallet,
+            to: tx.to,
+            data: tx.data,
+            value: tx.value
+          })
+        })
+      )
+    ).map(gasLimit => ({
       executed: true,
       succeeded: true,
-      gasUsed: ethers.BigNumber.from(gasLimit).toNumber(),
-      gasLimit: ethers.BigNumber.from(gasLimit).toNumber()
+      gasUsed: Number(gasLimit),
+      gasLimit: Number(gasLimit)
     }))
   }
 
   async getNonce(
     config: WalletConfig,
     context: WalletContext,
-    space?: ethers.BigNumberish,
-    blockTag?: providers.BlockTag
+    space?: BigNumberish,
+    blockTag?: BlockTag
   ): Promise<ethers.BigNumberish> {
     if (!this.provider) {
       throw new Error('provider is not set')
@@ -122,7 +123,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     timeout?: number,
     delay: number = this.waitPollRate,
     maxFails: number = 5
-  ): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
+  ): Promise<TransactionResponse & { receipt: TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
       logger.info('computing id', metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
 
@@ -156,7 +157,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       throw new Error(`timed out after ${fails} failed attempts${errorMessage ? `: ${errorMessage}` : ''}`)
     }
 
-    const waitReceipt = async (): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> => {
+    const waitReceipt = async (): Promise<TransactionResponse & { receipt: TransactionReceipt }> => {
       // Transactions can only get executed on nonce change
       // get all nonce changes and look for metaTxnIds in between logs
       let lastBlock: number = this.fromBlockLog
@@ -234,7 +235,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
     if (timeout !== undefined) {
       return Promise.race([
         waitReceipt(),
-        new Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }>((_, reject) =>
+        new Promise<TransactionResponse & { receipt: TransactionReceipt }>((_, reject) =>
           setTimeout(() => {
             timedOut = true
             reject(`Timeout waiting for transaction receipt ${metaTxnId}`)

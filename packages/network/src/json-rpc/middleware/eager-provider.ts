@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, hexlify } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
 import { WalletContext } from '../../context'
 
@@ -8,13 +8,12 @@ import { WalletContext } from '../../context'
 // communicating to a specific network provider.
 
 export type EagerProviderOptions = {
-  accountAddress?: string,
-  chainId?: number,
+  accountAddress?: string
+  chainId?: number
   walletContext?: WalletContext
 }
 
 export class EagerProvider implements JsonRpcMiddlewareHandler {
-
   readonly options: EagerProviderOptions
 
   constructor(options: EagerProviderOptions) {
@@ -23,7 +22,6 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
     return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-
       const { id, method } = request
 
       switch (method) {
@@ -36,14 +34,14 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
         case 'eth_chainId':
           if (this.options.chainId) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.utils.hexlify(this.options.chainId) })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: hexlify(this.options.chainId) })
             return
           }
           break
 
         case 'eth_accounts':
           if (this.options.accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.utils.getAddress(this.options.accountAddress)] })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.getAddress(this.options.accountAddress)] })
             return
           }
           break
@@ -59,8 +57,6 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
       }
 
       next(request, callback, chainId)
-
     }
   }
-
 }

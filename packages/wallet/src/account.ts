@@ -1,4 +1,4 @@
-import { Signer as AbstractSigner, BytesLike, providers, utils, TypedDataDomain, TypedDataField } from 'ethers'
+import { AbstractSigner, BytesLike, JsonRpcProvider, TypedDataDomain, TypedDataField } from 'ethers'
 import { Signer, NotEnoughSigners, SignedTransactionsCallback } from './signer'
 import {
   SignedTransactions,
@@ -31,6 +31,7 @@ import { Wallet } from './wallet'
 import { resolveArrayProperties } from './utils'
 import { isRelayer, FeeOption, FeeQuote, Relayer, RpcRelayer, isRpcRelayerOptions } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
+import { Provider, TransactionRequest } from 'ethers/providers'
 
 export interface AccountOptions {
   initialConfig: WalletConfig
@@ -52,7 +53,7 @@ export class Account extends Signer {
 
   // provider points at the main chain for compatability with the Signer.
   // Use getProvider(chainId) to get the provider for the respective network.
-  provider: providers.JsonRpcProvider
+  provider: JsonRpcProvider
 
   // memoized value
   private _chainId?: number
@@ -160,7 +161,7 @@ export class Account extends Signer {
     return this._wallets[0].wallet.getSigners()
   }
 
-  async getProvider(chainId?: number): Promise<providers.JsonRpcProvider | undefined> {
+  async getProvider(chainId?: number): Promise<JsonRpcProvider | undefined> {
     if (!chainId) return this.mainWallet()?.wallet.getProvider()
     return this._wallets.find(w => w.network.chainId === chainId)?.wallet.getProvider()
   }
@@ -178,7 +179,7 @@ export class Account extends Signer {
   async getChainId(): Promise<number> {
     if (this._chainId) return this._chainId
     const network = await this.provider.getNetwork()
-    this._chainId = network.chainId
+    this._chainId = Number(network.chainId)
     return this._chainId
   }
 
@@ -266,7 +267,7 @@ export class Account extends Signer {
   }
 
   async getFeeOptions(
-    transaction: utils.Deferrable<Transactionish>,
+    transaction: Transactionish,
     chainId?: ChainIdLike,
     allSigners: boolean = true
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
@@ -303,7 +304,7 @@ export class Account extends Signer {
   }
 
   async sendTransaction(
-    dtransactionish: utils.Deferrable<Transactionish>,
+    dtransactionish: Transactionish,
     chainId?: ChainIdLike,
     allSigners: boolean = true,
     quote?: FeeQuote,
@@ -322,7 +323,7 @@ export class Account extends Signer {
   }
 
   async sendTransactionBatch(
-    transactions: utils.Deferrable<providers.TransactionRequest[] | Transaction[]>,
+    transactions: TransactionRequest[] | Transaction[],
     chainId?: ChainIdLike,
     allSigners: boolean = true,
     quote?: FeeQuote,
@@ -332,7 +333,7 @@ export class Account extends Signer {
   }
 
   async signTransactions(
-    dtransactionish: utils.Deferrable<Transactionish>,
+    dtransactionish: Transactionish,
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<SignedTransactions> {
@@ -351,7 +352,7 @@ export class Account extends Signer {
   }
 
   async prependConfigUpdate(
-    dtransactionish: utils.Deferrable<Transactionish>,
+    dtransactionish: Transactionish,
     chainId?: ChainIdLike,
     allSigners?: boolean,
     skipThresholdCheck?: boolean
@@ -613,11 +614,11 @@ export class Account extends Signer {
     return this.options.networks.find(network => network.isDefaultChain)!.chainId
   }
 
-  connect(_: providers.Provider): AbstractSigner {
+  connect(_: Provider): AbstractSigner {
     throw new Error('connect method is not supported in MultiWallet')
   }
 
-  signTransaction(_: utils.Deferrable<providers.TransactionRequest>): Promise<string> {
+  signTransaction(_: TransactionRequest): Promise<string> {
     throw new Error('signTransaction method is not supported in MultiWallet, please use signTransactions(...)')
   }
 }

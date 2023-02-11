@@ -1,12 +1,13 @@
-import { BigNumber, BigNumberish, BytesLike, utils, providers } from 'ethers'
+import { BigNumberish, BytesLike, hexlify, isHexString, JsonRpcProvider } from 'ethers'
+import { BlockTag, TransactionRequest } from 'ethers/providers'
 
 export async function gethCall(
-  provider: providers.JsonRpcProvider,
-  transaction: providers.TransactionRequest,
-  block?: providers.BlockTag,
+  provider: JsonRpcProvider,
+  transaction: TransactionRequest,
+  block?: BlockTag,
   overrides?: Overrides
 ) {
-  const formatter = providers.JsonRpcProvider.getFormatter()
+  const formatter = JsonRpcProvider.getFormatter()
 
   return provider.send('eth_call', [
     formatter.transactionRequest(transaction),
@@ -37,7 +38,7 @@ function formatOverrides(overrides: any): Overrides {
   const formatted: Overrides = {}
 
   for (const [key, value] of Object.entries(overrides)) {
-    if (utils.isHexString(key, 20)) {
+    if (isHexString(key, 20)) {
       try {
         formatted[key] = providers.Formatter.check(overridesFormat, value)
       } catch {}
@@ -48,9 +49,9 @@ function formatOverrides(overrides: any): Overrides {
 }
 
 const overridesFormat = {
-  balance: skipNullish(BigNumber.from),
-  nonce: skipNullish(BigNumber.from),
-  code: skipNullish(utils.hexlify),
+  balance: skipNullish(BigInt),
+  nonce: skipNullish(BigInt),
+  code: skipNullish(hexlify),
   state: skipNullish(formatStorageOverrides),
   stateDiff: skipNullish(formatStorageOverrides)
 }
@@ -63,10 +64,10 @@ function formatStorageOverrides(overrides: any): StorageOverrides {
   const formatted: StorageOverrides = {}
 
   for (const [key, value] of Object.entries(overrides)) {
-    if (utils.isHexString(key, 32)) {
+    if (isHexString(key, 32)) {
       try {
-        const hash = utils.hexlify(value as any)
-        if (utils.isHexString(hash, 32)) {
+        const hash = hexlify(value as any)
+        if (isHexString(hash, 32)) {
           formatted[key] = hash
         }
       } catch {}

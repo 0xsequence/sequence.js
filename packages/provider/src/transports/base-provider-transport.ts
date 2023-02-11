@@ -227,7 +227,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       this.accountsChangedPayload = { accounts: [] }
       if (message.data && message.data.length > 0) {
         this.accountsChangedPayload = {
-          accounts: [ethers.utils.getAddress(message.data[0])],
+          accounts: [ethers.getAddress(message.data[0])],
           origin: message.origin
         }
         this.events.emit('accountsChanged', this.accountsChangedPayload.accounts, this.accountsChangedPayload.origin)

@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { AbiCoder, ethers, TransactionReceipt } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import {
   Transaction,
@@ -90,7 +90,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
   }
 
   async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
-    const coder = ethers.utils.defaultAbiCoder
+    const coder = AbiCoder.defaultAbiCoder()
     const encoded = coder.encode([MetaTransactionsType], [sequenceTxAbiEncode(transactions)])
     return (await this.service.simulate({ wallet, transactions: encoded })).results
   }
@@ -129,7 +129,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         signature: buildStubSignature(this.provider, config)
       })
 
-      const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+      const walletInterface = new Interface(walletContracts.mainModule.abi)
       const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
         sequenceTxAbiEncode(execute.transactions),
         execute.nonce,
@@ -156,7 +156,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${addr} space: ${space}`)
     const encodedNonce = space !== undefined ? ethers.BigNumber.from(space).toHexString() : undefined
     const resp = await this.service.getMetaTxnNonce({ walletContractAddress: addr, space: encodedNonce })
-    const nonce = ethers.BigNumber.from(resp.nonce)
+    const nonce = BigInt(resp.nonce)
     const [decodedSpace, decodedNonce] = decodeNonce(nonce)
     logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${addr} ${decodedNonce} space: ${decodedSpace}`)
     return nonce
@@ -188,7 +188,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
     const { to: contract, execute } = await this.prependWalletDeploy(signedTxs)
 
     const walletAddress = addressOf(signedTxs.config, signedTxs.context)
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new Interface(walletContracts.mainModule.abi)
     const input = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
       sequenceTxAbiEncode(execute.transactions),
       execute.nonce,
@@ -206,10 +206,10 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
         hash: metaTxn.txnHash,
         confirmations: 0,
         from: walletAddress,
-        wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+        wait: (_confirmations?: number): Promise<TransactionReceipt> => Promise.reject(new Error('impossible'))
       }
 
-      const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
+      const wait = async (confirmations?: number): Promise<TransactionReceipt> => {
         if (!this.provider) {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }
@@ -260,7 +260,7 @@ export class RpcRelayer extends BaseRelayer implements Relayer {
 
     return {
       blockHash: txReceipt.blockHash,
-      blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
+      blockNumber: Number(txReceipt.blockNumber),
       confirmations: 1,
       from: typeof metaTxnId === 'string' ? undefined : addressOf(metaTxnId.config, metaTxnId.context),
       hash: txReceipt.transactionHash,

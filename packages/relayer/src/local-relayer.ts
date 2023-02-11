@@ -1,4 +1,4 @@
-import { Signer as AbstractSigner, ethers, providers } from 'ethers'
+import { AbstractSigner, Interface } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { SignedTransactions, Transaction, sequenceTxAbiEncode, TransactionResponse } from '@0xsequence/transactions'
 import { WalletContext } from '@0xsequence/network'
@@ -6,8 +6,9 @@ import { WalletConfig } from '@0xsequence/config'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
+import { TransactionReceipt, TransactionRequest } from 'ethers/providers'
 
-export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
+export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
   signer: AbstractSigner
 }
 
@@ -17,12 +18,12 @@ export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
   private signer: AbstractSigner
-  private txnOptions: providers.TransactionRequest
+  private txnOptions: TransactionRequest
 
   constructor(options: LocalRelayerOptions | AbstractSigner) {
     super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
     this.signer = AbstractSigner.isSigner(options) ? options : options.signer
-    if (!this.signer.provider) throw new Error("Signer must have a provider")
+    if (!this.signer.provider) throw new Error('Signer must have a provider')
   }
 
   async deployWallet(config: WalletConfig, context: WalletContext): Promise<TransactionResponse> {
@@ -32,7 +33,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     const walletDeployTxn = this.prepareWalletDeploy(config, context)
 
     // NOTE: for hardhat to pass, we have to set the gasLimit directly, as its unable to estimate
-    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: ethers.constants.Two.pow(17) } )
+    return this.signer.sendTransaction({ ...walletDeployTxn, gasLimit: 2n ** 17n })
   }
 
   async getFeeOptions(
@@ -43,20 +44,20 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     return { options: [] }
   }
 
-  async gasRefundOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
-  ): Promise<FeeOption[]> {
+  async gasRefundOptions(config: WalletConfig, context: WalletContext, ...transactions: Transaction[]): Promise<FeeOption[]> {
     const { options } = await this.getFeeOptions(config, context, ...transactions)
     return options
   }
 
-  setTransactionOptions(transactionRequest: providers.TransactionRequest) {
+  setTransactionOptions(transactionRequest: TransactionRequest) {
     this.txnOptions = transactionRequest
   }
 
-  async relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt: boolean = true): Promise<TransactionResponse<providers.TransactionReceipt>> {
+  async relay(
+    signedTxs: SignedTransactions,
+    quote?: FeeQuote,
+    waitForReceipt: boolean = true
+  ): Promise<TransactionResponse<TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
@@ -67,7 +68,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
 
     const { to, execute } = await this.prependWalletDeploy(signedTxs)
 
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new Interface(walletContracts.mainModule.abi)
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
       sequenceTxAbiEncode(execute.transactions),
       execute.nonce,
@@ -76,7 +77,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
-    // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
+    // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), 0n)
     // txRequest.gasLimit = gasLimit
 
     const responsePromise = this.signer.sendTransaction({ to, data, ...this.txnOptions })

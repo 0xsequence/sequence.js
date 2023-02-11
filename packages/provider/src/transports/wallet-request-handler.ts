@@ -16,7 +16,7 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { BigNumber, ethers, providers } from 'ethers'
+import { ethers, hexlify } from 'ethers'
 
 import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
 import { Signer } from '@0xsequence/wallet'
@@ -153,7 +153,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     const connectDetails: ConnectDetails = {
       connected: true,
-      chainId: ethers.utils.hexlify(await this.getChainId())
+      chainId: hexlify(await this.getChainId())
     }
 
     if (options && options.askForEmail) {
@@ -407,7 +407,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
           const [transaction] = request.params!
-          const sender = ethers.utils.getAddress(transaction.from)
+          const sender = ethers.getAddress(transaction.from)
 
           if (sender !== (await signer.getAddress())) {
             throw new Error('sender address does not match wallet')
@@ -444,10 +444,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getTransactionCount': {
-          const address = ethers.utils.getAddress(request.params![0] as string)
+          const address = ethers.getAddress(request.params![0] as string)
           const tag = request.params![1]
 
-          const walletAddress = ethers.utils.getAddress(await signer.getAddress())
+          const walletAddress = ethers.getAddress(await signer.getAddress())
 
           if (address === walletAddress) {
             const count = await signer.getTransactionCount(tag)
@@ -509,7 +509,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             throw new Error('invalid chainId')
           }
 
-          const chainId = ethers.BigNumber.from(switchParams.chainId)
+          const chainId = BigInt(switchParams.chainId)
 
           const ok = await this.setDefaultNetwork(chainId.toString(), true)
           if (!ok) {
@@ -732,7 +732,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (n.length > 0) {
       const defaultNetwork = n.find(network => network.isDefaultChain)
       if (defaultNetwork) {
-        this.events.emit('chainChanged', ethers.utils.hexlify(defaultNetwork.chainId))
+        this.events.emit('chainChanged', hexlify(defaultNetwork.chainId))
       }
     } else {
       this.events.emit('chainChanged', '0x0')

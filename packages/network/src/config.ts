@@ -1,4 +1,4 @@
-import { BigNumberish, providers } from 'ethers'
+import { BigNumberish, JsonRpcProvider } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { stringTemplate, validateAndSortNetworks } from './utils'
@@ -56,7 +56,7 @@ export interface NetworkConfig {
   ensAddress?: string
 
   rpcUrl?: string
-  provider?: providers.JsonRpcProvider
+  provider?: JsonRpcProvider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions

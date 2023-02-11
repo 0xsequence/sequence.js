@@ -1,4 +1,4 @@
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { getBytes, TypedDataDomain, TypedDataEncoder, TypedDataField } from 'ethers'
 
 export interface TypedData {
   domain: TypedDataDomain
@@ -11,14 +11,14 @@ export type { TypedDataDomain, TypedDataField }
 
 export const encodeTypedDataHash = (typedData: TypedData): string => {
   const types = { ...typedData.types }
-  
+
   // remove EIP712Domain key from types as ethers will auto-gen it in
   // the hash encoder below
   delete types['EIP712Domain']
 
-  return ethers.utils._TypedDataEncoder.hash(typedData.domain, types, typedData.message)
+  return TypedDataEncoder.hash(typedData.domain, types, typedData.message)
 }
 
 export const encodeTypedDataDigest = (typedData: TypedData): Uint8Array => {
-  return ethers.utils.arrayify(encodeTypedDataHash(typedData))
+  return getBytes(encodeTypedDataHash(typedData))
 }

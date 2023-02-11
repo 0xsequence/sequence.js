@@ -1,10 +1,6 @@
-import { BytesLike, Signer as AbstractSigner, providers, utils } from 'ethers'
+import { BytesLike, AbstractSigner } from 'ethers'
 import { ChainIdLike } from '@0xsequence/network'
-
-type Provider = providers.Provider
-type TransactionRequest = providers.TransactionRequest
-type TransactionResponse = providers.TransactionResponse
-type Deferrable<T> = utils.Deferrable<T>
+import { Provider, TransactionRequest, TransactionResponse } from 'ethers/providers'
 
 export abstract class RemoteSigner extends AbstractSigner {
   abstract signMessageWithData(message: BytesLike, data?: BytesLike, chainId?: ChainIdLike): Promise<string>
@@ -17,7 +13,7 @@ export abstract class RemoteSigner extends AbstractSigner {
     throw new Error('sendTransaction method is not supported in RemoteSigner')
   }
 
-  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
+  signTransaction(_: TransactionRequest): Promise<string> {
     throw new Error('signTransaction method is not supported in RemoteSigner')
   }
 

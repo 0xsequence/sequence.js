@@ -1,4 +1,4 @@
-import { BytesLike, Signer as AbstractSigner, providers, utils } from 'ethers'
+import { BytesLike, AbstractSigner } from 'ethers'
 import { RemoteSigner } from './remote-signer'
 
 export class LocalRemoteSigner extends RemoteSigner {

@@ -20,7 +20,7 @@ export interface AuthorizationOptions {
 export const signAuthorization = async (signer: Signer, options: AuthorizationOptions): Promise<ETHAuthProof> => {
   const chainId = await signer.getChainId()
 
-  const address = ethers.utils.getAddress(await signer.getAddress())
+  const address = ethers.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw ErrAccountIsRequired
   }

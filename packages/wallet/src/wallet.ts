@@ -1,11 +1,16 @@
 import {
   BytesLike,
-  BigNumber, BigNumberish,
+  BigNumberish,
   ethers,
-  Signer as AbstractSigner,
-  providers,
-  utils,
-  TypedDataDomain, TypedDataField,
+  AbstractSigner,
+  TypedDataDomain,
+  TypedDataField,
+  keccak256,
+  randomBytes,
+  Interface,
+  toUtf8Bytes,
+  getBytes,
+  AbiCoder
 } from 'ethers'
 
 import { walletContracts } from '@0xsequence/abi'
@@ -64,9 +69,7 @@ import { resolveArrayProperties } from './utils'
 import { isSequenceSigner, Signer, SignedTransactionsCallback } from './signer'
 import { fetchImageHash } from '.'
 
-type BlockTag = providers.BlockTag
-type ConnectionInfo = utils.ConnectionInfo
-type Deferrable<T> = utils.Deferrable<T>
+import { BlockTag, Provider } from 'ethers/providers'
 
 // Wallet is a signer interface to a Smart Contract based Ethereum account.
 //
@@ -97,7 +100,7 @@ export class Wallet extends Signer {
 
   // provider is an Ethereum Json RPC provider that is connected to a particular network (aka chain)
   // and access to the signer for signing transactions.
-  provider: providers.JsonRpcProvider
+  provider: JsonRpcProvider
 
   // sender is a minimal Json RPC sender interface. It's here for convenience for other web3
   // interfaces to use.
@@ -157,7 +160,7 @@ export class Wallet extends Signer {
   // connect is a short-hand to create an Account instance and set the provider and relayer.
   //
   // The connect method is defined on the AbstractSigner as connect(Provider): AbstractSigner
-  connect(provider: providers.Provider, relayer?: Relayer): Wallet {
+  connect(provider: Provider, relayer?: Relayer): Wallet {
     if (isJsonRpcProvider(provider)) {
       return new Wallet({ config: this.config, context: this.context }, ...this._signers)
         .setProvider(provider, this.chainId)
@@ -168,9 +171,9 @@ export class Wallet extends Signer {
   }
 
   // setProvider assigns a json-rpc provider to this wallet instance
-  setProvider(provider: providers.JsonRpcProvider | ConnectionInfo | string, chainId?: number): Wallet {
+  setProvider(provider: JsonRpcProvider | ConnectionInfo | string, chainId?: number): Wallet {
     if (provider === undefined) return this
-    if (providers.Provider.isProvider(provider)) {
+    if (Provider.isProvider(provider)) {
       this.provider = provider
       this.sender = new JsonRpcSender(provider)
     } else {
@@ -189,7 +192,7 @@ export class Wallet extends Signer {
     return this
   }
 
-  async getProvider(chainId?: number): Promise<providers.JsonRpcProvider> {
+  async getProvider(chainId?: number): Promise<JsonRpcProvider> {
     if (chainId) await this.getChainIdNumber(chainId)
     return this.provider
   }
@@ -260,7 +263,7 @@ export class Wallet extends Signer {
     if (!this._signers || this._signers.length === 0) {
       return []
     }
-    return Promise.all(this._signers.map(s => s.getAddress().then(s => ethers.utils.getAddress(s))))
+    return Promise.all(this._signers.map(s => s.getAddress().then(s => ethers.getAddress(s))))
   }
 
   // chainId returns the network connected to this wallet instance
@@ -296,12 +299,12 @@ export class Wallet extends Signer {
   async getTransactionCount(blockTag?: BlockTag): Promise<number> {
     const encodedNonce = await this.getNonce(blockTag, 0)
     const [_, decodedNonce] = decodeNonce(encodedNonce)
-    return ethers.BigNumber.from(decodedNonce).toNumber()
+    return Number(decodedNonce)
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
   async sendTransaction(
-    transaction: Deferrable<Transactionish>,
+    transaction: Transactionish,
     chainId?: ChainIdLike,
     allSigners?: boolean,
     quote?: FeeQuote,
@@ -319,7 +322,7 @@ export class Wallet extends Signer {
 
   // sendTransactionBatch is a sugar for better readability, but is the same as sendTransaction
   async sendTransactionBatch(
-    transactions: Deferrable<TransactionRequest[] | Transaction[]>,
+    transactions: TransactionRequest[] | Transaction[],
     chainId?: ChainIdLike,
     allSigners: boolean = true,
     quote?: FeeQuote,
@@ -332,11 +335,7 @@ export class Wallet extends Signer {
   // signTransactions will sign a Sequence transaction with the wallet signers
   //
   // NOTE: the txs argument of type Transactionish can accept one or many transactions.
-  async signTransactions(
-    txs: Deferrable<Transactionish>,
-    chainId?: ChainIdLike,
-    allSigners?: boolean
-  ): Promise<SignedTransactions> {
+  async signTransactions(txs: Transactionish, chainId?: ChainIdLike, allSigners?: boolean): Promise<SignedTransactions> {
     const signChainId = await this.getChainIdNumber(chainId)
 
     const transaction = await resolveArrayProperties<Transactionish>(txs)
@@ -382,7 +381,11 @@ export class Wallet extends Signer {
     }
   }
 
-  async sendSignedTransactions(signedTxs: SignedTransactions, chainId?: ChainIdLike, quote?: FeeQuote): Promise<TransactionResponse> {
+  async sendSignedTransactions(
+    signedTxs: SignedTransactions,
+    chainId?: ChainIdLike,
+    quote?: FeeQuote
+  ): Promise<TransactionResponse> {
     if (!this.relayer) {
       throw new Error('relayer is not set, first connect a relayer')
     }
@@ -394,7 +397,7 @@ export class Wallet extends Signer {
   //
   // NOTE: signMessage(message: Bytes | string): Promise<string> is defined on AbstractSigner
   async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, isDigest: boolean = false): Promise<string> {
-    const data = typeof message === 'string' && !message.startsWith('0x') ? ethers.utils.toUtf8Bytes(message) : message
+    const data = typeof message === 'string' && !message.startsWith('0x') ? toUtf8Bytes(message) : message
     return this.sign(data, isDigest, chainId, allSigners)
   }
 
@@ -428,14 +431,14 @@ export class Wallet extends Signer {
 
   async subDigest(digest: BytesLike, chainId?: ChainIdLike): Promise<Uint8Array> {
     const solvedChainId = await this.getChainIdNumber(chainId)
-    return ethers.utils.arrayify(subDigestOf(this.address, solvedChainId, digest))
+    return getBytes(subDigestOf(this.address, solvedChainId, digest))
   }
 
   // sign is a helper method to sign a payload with the wallet signers
   async sign(msg: BytesLike, isDigest: boolean = true, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
     const signChainId = await this.getChainIdNumber(chainId)
 
-    const digest = isDigest ? msg : ethers.utils.keccak256(msg)
+    const digest = isDigest ? msg : keccak256(msg)
 
     // Generate sub-digest
     const subDigest = await this.subDigest(digest, chainId)
@@ -515,7 +518,9 @@ export class Wallet extends Signer {
     const localSignature = await signWith(localSigners, this.packMsgAndSig(digest, [], signChainId))
 
     // Skip remote signers if we already meet threshold
-    const totalWeight = localSignature.signers.filter(isDecodedSigner).reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
+    const totalWeight = localSignature.signers
+      .filter(isDecodedSigner)
+      .reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
     if (totalWeight >= this.config.threshold) {
       return encodeSignature(localSignature)
     }
@@ -538,7 +543,7 @@ export class Wallet extends Signer {
       const sconfig = this.config.signers.find(c => c.address === s)
       if (!sconfig) return p
       return p.add(sconfig.weight)
-    }, ethers.constants.Zero)
+    }, 0n)
   }
 
   async isDeployed(chainId?: ChainIdLike): Promise<boolean> {
@@ -602,7 +607,7 @@ export class Wallet extends Signer {
       try {
         const implementation = await this.provider.getStorageAt(
           this.address,
-          ethers.utils.defaultAbiCoder.encode(['address'], [this.address])
+          AbiCoder.defaultAbiCoder().encode(['address'], [this.address])
         )
         return compareAddr(implementation, this.context.mainModuleUpgradable) === 0
       } catch {
@@ -610,7 +615,7 @@ export class Wallet extends Signer {
       }
     })()
 
-    const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new Interface(walletContracts.mainModule.abi)
 
     // empirically, this seems to work for the tests:
     // const gasLimit = 100000 + 1800 * config.signers.length
@@ -624,23 +629,23 @@ export class Wallet extends Signer {
           {
             delegateCall: false,
             revertOnError: true,
-            gasLimit: ethers.constants.Zero,
+            gasLimit: 0n,
             to: this.address,
-            value: ethers.constants.Zero,
+            value: 0n,
             data: walletInterface.encodeFunctionData(walletInterface.getFunction('updateImplementation'), [
               this.context.mainModuleUpgradable
             ])
           }
         ]
 
-    const mainModuleInterface = new utils.Interface(walletContracts.mainModuleUpgradable.abi)
+    const mainModuleInterface = new Interface(walletContracts.mainModuleUpgradable.abi)
 
     const transaction = {
       delegateCall: false,
       revertOnError: true,
-      gasLimit: ethers.constants.Zero,
+      gasLimit: 0n,
       to: this.address,
-      value: ethers.constants.Zero,
+      value: 0n,
       data: mainModuleInterface.encodeFunctionData(mainModuleInterface.getFunction('updateImageHash'), [imageHash(config)])
     }
 
@@ -660,21 +665,21 @@ export class Wallet extends Signer {
         revertOnError: false,
         gasLimit: gasLimit,
         to: this.address,
-        value: ethers.constants.Zero,
+        value: 0n,
         data: walletInterface.encodeFunctionData(walletInterface.getFunction('selfExecute'), [sequenceTxAbiEncode(transactions)])
       }
     ]
   }
 
   buildPublishConfigTransaction(config: WalletConfig, indexed: boolean = true, nonce?: number): Transaction[] {
-    const sequenceUtilsInterface = new utils.Interface(walletContracts.sequenceUtils.abi)
+    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
     return [
       {
         delegateCall: false,
         revertOnError: true,
-        gasLimit: ethers.constants.Zero,
+        gasLimit: 0n,
         to: this.context.sequenceUtils!,
-        value: ethers.constants.Zero,
+        value: 0n,
         nonce: nonce,
         data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishConfig'), [
           this.address,
@@ -694,10 +699,10 @@ export class Wallet extends Signer {
     nonce?: number,
     requireFreshSigners: string[] = []
   ): Promise<Transaction[]> {
-    const sequenceUtilsInterface = new utils.Interface(walletContracts.sequenceUtils.abi)
-    const requireFreshSignersInterface = new utils.Interface(walletContracts.requireFreshSigner.abi)
+    const sequenceUtilsInterface = new Interface(walletContracts.sequenceUtils.abi)
+    const requireFreshSignersInterface = new Interface(walletContracts.requireFreshSigner.abi)
 
-    const message = ethers.utils.randomBytes(32)
+    const message = randomBytes(32)
 
     const signature = await this.signMessage(message, this.chainId, false)
 
@@ -728,9 +733,9 @@ export class Wallet extends Signer {
       ...requireFreshSigners.map(signer => ({
         delegateCall: false,
         revertOnError: true,
-        gasLimit: ethers.constants.Zero,
+        gasLimit: 0n,
         to: contextRequireFreshSigner!,
-        value: ethers.constants.Zero,
+        value: 0n,
         nonce: nonce,
         data: requireFreshSignersInterface.encodeFunctionData(requireFreshSignersInterface.getFunction('requireFreshSigner'), [
           signer
@@ -739,13 +744,13 @@ export class Wallet extends Signer {
       {
         delegateCall: false,
         revertOnError: true,
-        gasLimit: ethers.constants.Zero,
+        gasLimit: 0n,
         to: this.context.sequenceUtils!,
-        value: ethers.constants.Zero,
+        value: 0n,
         nonce: nonce,
         data: sequenceUtilsInterface.encodeFunctionData(sequenceUtilsInterface.getFunction('publishInitialSigners'), [
           this.address,
-          ethers.utils.keccak256(message),
+          keccak256(message),
           this.config.signers.length,
           filteredSignature,
           indexed
@@ -780,10 +785,10 @@ export class Wallet extends Signer {
 
   // packMsgAndSig is used by RemoteSigners to include details as a string blob of data.
   private packMsgAndSig(msg: BytesLike, sig: BytesLike, chainId: BigNumberish): string {
-    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
+    return AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes', 'bytes'], [this.address, chainId, msg, sig])
   }
 
-  signTransaction(_: Deferrable<TransactionRequest>): Promise<string> {
+  signTransaction(_: TransactionRequest): Promise<string> {
     throw new Error('signTransaction method is not supported in Wallet, please use signTransactions(...)')
   }
 
@@ -795,7 +800,7 @@ export class Wallet extends Signer {
       signers: [
         {
           weight: 1,
-          address: ethers.utils.getAddress(await signer.getAddress())
+          address: ethers.getAddress(await signer.getAddress())
         }
       ]
     }

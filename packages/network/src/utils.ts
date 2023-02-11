@@ -13,7 +13,7 @@ export const getChainId = (chainId: ChainIdLike): number => {
   if ((<NetworkConfig>chainId).chainId) {
     return (<NetworkConfig>chainId).chainId
   }
-  return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
+  return Number(chainId as BigNumberish)
 }
 
 export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
@@ -160,7 +160,7 @@ export const validateAndSortNetworks = (networks: NetworkConfig[]) => {
 export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
   if (typeof chainId === 'string') {
     if (chainId.startsWith('0x')) {
-      const id = ethers.BigNumber.from(chainId).toNumber()
+      const id = Number(chainId)
       return networks.find(n => n.chainId === id)
     } else {
       return networks.find(n => n.name === chainId)
