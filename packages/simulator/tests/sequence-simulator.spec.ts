@@ -5,7 +5,7 @@ import { Transaction } from '@0xsequence/transactions'
 import { LocalRelayer } from '@0xsequence/relayer'
 
 import { WalletContext, NetworkConfig } from '@0xsequence/network'
-import { ethers, Signer as AbstractSigner, providers } from 'ethers'
+import { ethers, AbstractSigner, JsonRpcProvider, ContractFactory, randomBytes } from 'ethers'
 
 import { configureLogger } from '@0xsequence/utils'
 
@@ -26,7 +26,7 @@ import { encodeData } from '@0xsequence/wallet/tests/utils'
 
 type EthereumInstance = {
   chainId: number
-  provider: providers.JsonRpcProvider
+  provider: JsonRpcProvider
   signer: AbstractSigner
 }
 
@@ -43,7 +43,7 @@ describe('Wallet integration', function () {
   before(async () => {
     // Provider from hardhat without a server instance
     const url = 'http://127.0.0.1:10045/'
-    const provider = new providers.JsonRpcProvider(url)
+    const provider = new JsonRpcProvider(url)
 
     ethnode = {
       chainId: (await provider.getNetwork()).chainId,
@@ -79,14 +79,14 @@ describe('Wallet integration', function () {
     }
 
     // Deploy call receiver mock
-    callReceiver = (await new ethers.ContractFactory(
+    callReceiver = (await new ContractFactory(
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ethnode.signer
     ).deploy()) as CallReceiverMock
 
     // Deploy hook caller mock
-    hookCaller = (await new ethers.ContractFactory(
+    hookCaller = (await new ContractFactory(
       HookCallerMockArtifact.abi,
       HookCallerMockArtifact.bytecode,
       ethnode.signer
@@ -110,7 +110,7 @@ describe('Wallet integration', function () {
       {
         name: 'single signer wallet',
         getWallet: async () => {
-          const pk = ethers.utils.randomBytes(32)
+          const pk = randomBytes(32)
           const wallet = await Wallet.singleOwner(pk, context)
           return wallet.connect(ethnode.provider, relayer)
         }
@@ -218,7 +218,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 14442, '0x112233'),
                   nonce: 0
                 }
@@ -231,7 +231,7 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results.every(result => result.executed)).to.be.true
               expect(results.every(result => result.succeeded)).to.be.true
-              expect(results.every(result => result.gasUsed.gt(0))).to.be.true
+              expect(results.every(result => result.gasUsed > 0n)).to.be.true
             })
 
             it('should use estimated gas for a single failing transaction', async () => {
@@ -251,7 +251,7 @@ describe('Wallet integration', function () {
 
             beforeEach(async () => {
               await callReceiver.setRevertFlag(false)
-              valB = ethers.utils.randomBytes(99)
+              valB = randomBytes(99)
 
               txs = [
                 {
@@ -259,7 +259,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'setRevertFlag', true),
                   nonce: 0
                 },
@@ -268,7 +268,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 2, valB),
                   nonce: 0
                 }
@@ -281,10 +281,10 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results[0].executed).to.be.true
               expect(results[0].succeeded).to.be.true
-              expect(results[0].gasUsed.gt(0)).to.be.true
+              expect(results[0].gasUsed > 0n).to.be.true
               expect(results[1].executed).to.be.true
               expect(results[1].succeeded).to.be.false
-              expect(results[1].gasUsed.gt(0)).to.be.true
+              expect(results[1].gasUsed > 0n).to.be.true
             })
           })
         })

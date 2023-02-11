@@ -1,7 +1,6 @@
 import {
   ethers,
   BytesLike,
-  Bytes,
   TypedDataDomain,
   TypedDataField,
   JsonRpcProvider,

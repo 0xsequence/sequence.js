@@ -1,4 +1,17 @@
-import { ethers, providers, Signer } from 'ethers'
+import {
+  AbiCoder,
+  Contract,
+  ContractFactory,
+  ethers,
+  hexlify,
+  JsonRpcProvider,
+  Provider,
+  randomBytes,
+  Signer,
+  Wallet,
+  ZeroAddress,
+  zeroPadValue
+} from 'ethers'
 import * as Ganache from 'ganache'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts'
 import { JsonRpcRouter, JsonRpcExternalProvider } from '@0xsequence/network'
@@ -26,33 +39,33 @@ const GANACHE_PORT = 38546
 type GanacheInstance = {
   server?: any
   serverUri?: string
-  provider?: providers.JsonRpcProvider
-  spyProxy?: providers.JsonRpcProvider
+  provider?: JsonRpcProvider
+  spyProxy?: JsonRpcProvider
   signer?: Signer
   chainId?: number
 }
 
 describe('Multicall integration', function () {
   const ganache: GanacheInstance = {}
-  let provider: ethers.providers.Provider
-  let brokenProvider: ethers.providers.Provider
+  let provider: Provider
+  let brokenProvider: Provider
 
   let callMock: CallReceiverMock
 
-  let utilsContract: ethers.Contract
+  let utilsContract: Contract
 
   let callCounter = 0
-  let accounts: { account: ethers.Wallet; secretKey: string; balance: string }[]
+  let accounts: { account: Wallet; secretKey: string; balance: string }[]
 
   before(async () => {
     accounts = Array(5)
       .fill(0)
       .map(() => {
-        const account = ethers.Wallet.createRandom()
+        const account = Wallet.createRandom()
         return {
           account: account,
           secretKey: account.privateKey,
-          balance: ethers.utils.hexlify(ethers.utils.randomBytes(9))
+          balance: hexlify(randomBytes(9))
         }
       })
 
@@ -69,21 +82,20 @@ describe('Multicall integration', function () {
         verbose: false,
         debug: false,
         logger: undefined
-      },
+      }
     })
 
     // TODO: use hardhat instead like in wallet/wallet.spec.ts
 
     await ganache.server.listen(GANACHE_PORT)
     ganache.serverUri = `http://127.0.0.1:${GANACHE_PORT}/`
-    ganache.provider = new providers.JsonRpcProvider(ganache.serverUri)
+    ganache.provider = new JsonRpcProvider(ganache.serverUri)
     ganache.signer = ganache.provider.getSigner()
 
-    utilsContract = await new ethers.ContractFactory(
-      SequenceUtilsArtifact.abi,
-      SequenceUtilsArtifact.bytecode,
-      ganache.signer
-    ).deploy(ethers.constants.AddressZero, ethers.constants.AddressZero)
+    utilsContract = await new ContractFactory(SequenceUtilsArtifact.abi, SequenceUtilsArtifact.bytecode, ganache.signer).deploy(
+      ZeroAddress,
+      ZeroAddress
+    )
 
     // Create provider
     ganache.spyProxy = SpyProxy(
@@ -127,7 +139,7 @@ describe('Multicall integration', function () {
   })
 
   async function createCallMock() {
-    return (await new ethers.ContractFactory(
+    return (await new ContractFactory(
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ganache.signer
@@ -263,8 +275,8 @@ describe('Multicall integration', function () {
         it('Should aggregate three calls', async () => {
           const callMockB = await createCallMock()
 
-          const randomData1 = ethers.utils.hexlify(ethers.utils.randomBytes(33))
-          const randomData2 = ethers.utils.hexlify(ethers.utils.randomBytes(42))
+          const randomData1 = hexlify(randomBytes(33))
+          const randomData2 = hexlify(randomBytes(42))
 
           await callMock.testCall(55122, randomData1)
           await callMockB.testCall(2, randomData2)
@@ -292,7 +304,7 @@ describe('Multicall integration', function () {
 
           const randomValues = Array(62)
             .fill(0)
-            .map(() => ethers.utils.hexlify(ethers.utils.randomBytes(getRandomInt(0, 41))))
+            .map(() => hexlify(randomBytes(getRandomInt(0, 41))))
           await Promise.all(randomValues.map((v, i) => callMocks[i].testCall(0, v)))
 
           const values = await Promise.all(callMocks.map(c => c.connect(provider).lastValB()))
@@ -321,7 +333,7 @@ describe('Multicall integration', function () {
 
           const randomValues = Array(numberOfCalls)
             .fill(0)
-            .map(() => ethers.utils.hexlify(ethers.utils.randomBytes(getRandomInt(0, 41))))
+            .map(() => hexlify(randomBytes(getRandomInt(0, 41))))
           await Promise.all(randomValues.slice(0, mid).map((v, i) => callMocks[i].testCall(0, v)))
           await Promise.all(randomValues.slice(mid).map((v, i) => callMocks[i + mid].testCall(0, v)))
 
@@ -358,7 +370,7 @@ describe('Multicall integration', function () {
           expect(callCounter).to.equal(1)
         })
         it('Should call eth_getBalance', async () => {
-          const randomAddress = ethers.Wallet.createRandom().address
+          const randomAddress = Wallet.createRandom().address
 
           const balances = await Promise.all([
             provider.getBalance(accounts[2].account.address),
@@ -426,17 +438,17 @@ describe('Multicall integration', function () {
         })
 
         it('Should call getStorageAt', async () => {
-          const random = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const random = hexlify(randomBytes(32))
           await callMock.testCall(random, '0x00')
-          const storageAt = ethers.utils.hexZeroPad(await provider.getStorageAt(callMock.address, 0), 32)
-          expect(storageAt).to.equal(ethers.utils.defaultAbiCoder.encode(['bytes32'], [random]))
+          const storageAt = zeroPadValue(await provider.getStorageAt(callMock.address, 0), 32)
+          expect(storageAt).to.equal(AbiCoder.defaultAbiCoder().encode(['bytes32'], [random]))
         })
 
         it('Should call getStorageAt with padding', async () => {
           const val = '0x001a6077bf4f6eae0b4d9158b68bc770c97e5ef19efffcfa28aec2bce13cae24'
           await callMock.testCall(val, '0x00')
-          const storageAt = ethers.utils.hexZeroPad(await provider.getStorageAt(callMock.address, 0), 32)
-          expect(storageAt).to.equal(ethers.utils.defaultAbiCoder.encode(['bytes32'], [val]))
+          const storageAt = zeroPadValue(await provider.getStorageAt(callMock.address, 0), 32)
+          expect(storageAt).to.equal(AbiCoder.defaultAbiCoder().encode(['bytes32'], [val]))
         })
 
         it('Should detect network', async () => {
@@ -482,7 +494,7 @@ describe('Multicall integration', function () {
             overhead: 1,
             brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) =>
               getProvider({
-                contract: ethers.Wallet.createRandom().address
+                contract: Wallet.createRandom().address
               })
           },
           {
@@ -556,7 +568,7 @@ describe('Multicall integration', function () {
             })
 
             it('Should fallback to provider if multicall fails eth_getBalance', async () => {
-              const randomAddress = ethers.Wallet.createRandom().address
+              const randomAddress = Wallet.createRandom().address
 
               const balances = await Promise.all([
                 brokenProvider.getBalance(accounts[2].account.address),

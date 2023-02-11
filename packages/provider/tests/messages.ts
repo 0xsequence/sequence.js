@@ -6,8 +6,7 @@ export const message1 = new Uint8Array([
   72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33
 ])
 
-
-export const dclLogin = ethers.utils.toUtf8Bytes(`Decentraland Login
+export const dclLogin = toUtf8Bytes(`Decentraland Login
 Ephemeral address: 0xe1bCF3CAc83534a055f7254C1FD88B21159fCc67
 Expiration: 2022-10-27T16:03:29.191Z`)
 

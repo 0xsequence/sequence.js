@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { Signer, ContractFactory } from 'ethers'
 
 import {
   Factory,
@@ -17,37 +17,36 @@ const SequenceUtilsArtifact = require('@0xsequence/wallet-contracts/artifacts/co
 const RequireFreshSignerArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/libs/RequireFreshSigner.sol/RequireFreshSigner.json')
 
 export async function deployWalletContext(
-  signer: ethers.Signer
+  signer: Signer
 ): Promise<[Factory, MainModule, MainModuleUpgradable, GuestModule, SequenceUtils, RequireFreshSigner]> {
-  const factory = (await new ethers.ContractFactory(
+  const factory = (await new ContractFactory(
     FactoryArtifact.abi,
     FactoryArtifact.bytecode,
     signer
   ).deploy()) as unknown as Factory
 
-  const mainModule = (await new ethers.ContractFactory(MainModuleArtifact.abi, MainModuleArtifact.bytecode, signer).deploy(
+  const mainModule = (await new ContractFactory(MainModuleArtifact.abi, MainModuleArtifact.bytecode, signer).deploy(
     factory.address
   )) as unknown as MainModule
 
-  const mainModuleUpgradable = (await new ethers.ContractFactory(
+  const mainModuleUpgradable = (await new ContractFactory(
     MainModuleUpgradableArtifact.abi,
     MainModuleUpgradableArtifact.bytecode,
     signer
   ).deploy()) as unknown as MainModuleUpgradable
 
-  const guestModule = (await new ethers.ContractFactory(
+  const guestModule = (await new ContractFactory(
     GuestModuleArtifact.abi,
     GuestModuleArtifact.bytecode,
     signer
   ).deploy()) as unknown as GuestModule
 
-  const sequenceUtils = (await new ethers.ContractFactory(
-    SequenceUtilsArtifact.abi,
-    SequenceUtilsArtifact.bytecode,
-    signer
-  ).deploy(factory.address, mainModule.address)) as unknown as SequenceUtils
+  const sequenceUtils = (await new ContractFactory(SequenceUtilsArtifact.abi, SequenceUtilsArtifact.bytecode, signer).deploy(
+    factory.address,
+    mainModule.address
+  )) as unknown as SequenceUtils
 
-  const requireFreshSigner = (await new ethers.ContractFactory(
+  const requireFreshSigner = (await new ContractFactory(
     RequireFreshSignerArtifact.abi,
     RequireFreshSignerArtifact.bytecode,
     signer

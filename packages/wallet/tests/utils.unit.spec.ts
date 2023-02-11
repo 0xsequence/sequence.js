@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { ethers } from 'ethers'
+import { ZeroAddress } from 'ethers'
 
 import { imageHash, addressOf } from '@0xsequence/config'
 
@@ -10,7 +10,7 @@ describe('Wallet utils', function () {
       signers: [
         {
           weight: 1,
-          address: ethers.constants.AddressZero
+          address: ZeroAddress
         }
       ]
     }

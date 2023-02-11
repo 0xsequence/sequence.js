@@ -1,4 +1,4 @@
-import { ethers, Wallet as EOAWallet, providers } from 'ethers'
+import { ethers, Wallet as EOAWallet, providers, Provider } from 'ethers'
 
 // testAccounts with 10000 ETH each
 export const testAccounts = [
@@ -28,7 +28,7 @@ export const testAccounts = [
   }
 ]
 
-export const getEOAWallet = (privateKey: string, provider?: string | ethers.providers.Provider): EOAWallet => {
+export const getEOAWallet = (privateKey: string, provider?: string | Provider): EOAWallet => {
   // defaults
   if (!provider) {
     provider = 'http://localhost:8545'

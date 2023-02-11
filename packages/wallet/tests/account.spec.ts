@@ -1,7 +1,7 @@
 import chaiAsPromised from 'chai-as-promised'
 import * as chai from 'chai'
 
-import { ethers, providers } from 'ethers'
+import { JsonRpcProvider, randomBytes, Wallet } from 'ethers'
 import hardhat from 'hardhat'
 import { WalletContext, NetworkConfig as _NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, RpcRelayer } from '@0xsequence/relayer'
@@ -19,18 +19,18 @@ const { expect } = chai.use(chaiAsPromised)
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
 interface NetworkConfig extends _NetworkConfig {
-  provider: providers.JsonRpcProvider
+  provider: JsonRpcProvider
 }
 
 describe('Account integration', () => {
   let context: WalletContext
   let account: lib.Account
-  let owner: ethers.Wallet
+  let owner: Wallet
 
   const provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
 
   const nodeB = 'http://127.0.0.1:7047/'
-  const providerB = new ethers.providers.JsonRpcProvider(nodeB)
+  const providerB = new JsonRpcProvider(nodeB)
   const signerB = providerB.getSigner()
 
   const networks: NetworkConfig[] = [
@@ -78,7 +78,7 @@ describe('Account integration', () => {
 
   beforeEach(async () => {
     // Create account
-    owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+    owner = new Wallet(randomBytes(32))
     const wallet = await lib.Wallet.singleOwner(owner, context)
 
     account = new lib.Account(
@@ -93,7 +93,7 @@ describe('Account integration', () => {
 
   describe('find wallet by signer', () => {
     it('should find wallet of an indexed signer', async () => {
-      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const owner = new Wallet(randomBytes(32))
       const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(
         networks[0].provider,
         networks[0].relayer as RpcRelayer
@@ -110,7 +110,7 @@ describe('Account integration', () => {
       expect(found.wallet).to.equal(wallet.address)
     })
     it('should find wallet of not indexed signer', async () => {
-      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const owner = new Wallet(randomBytes(32))
       const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(
         networks[0].provider,
         networks[0].relayer as RpcRelayer
@@ -127,7 +127,7 @@ describe('Account integration', () => {
       expect(found.wallet).to.equal(wallet.address)
     })
     it('should find wallet of indexed signer, ignoring index', async () => {
-      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const owner = new Wallet(randomBytes(32))
       const wallet = (await lib.Wallet.singleOwner(owner, context)).connect(
         networks[0].provider,
         networks[0].relayer as RpcRelayer
@@ -145,7 +145,7 @@ describe('Account integration', () => {
       expect(found.wallet).to.equal(wallet.address)
     })
     it('should not find wallet of not published signer', async () => {
-      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const owner = new Wallet(randomBytes(32))
 
       const found = await new SequenceUtilsFinder(networks[0].provider).findLastWalletOfInitialSigner({
         signer: owner.address,
@@ -159,7 +159,7 @@ describe('Account integration', () => {
 
   describe('config', () => {
     it('should create new instance', async () => {
-      const owner = new ethers.Wallet(ethers.utils.randomBytes(32))
+      const owner = new Wallet(randomBytes(32))
       const wallet = (await lib.Wallet.singleOwner(owner)).connect(networks[0].provider)
 
       expect(await wallet.getChainId()).to.equal(31337)
@@ -188,7 +188,7 @@ describe('Account integration', () => {
       expect(await account.isDeployed()).to.be.false
 
       // deploy the wallet
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig((await lib.Wallet.singleOwner(newSigner)).config)
       expect(await account.isDeployed()).to.be.true
 
@@ -229,7 +229,7 @@ describe('Account integration', () => {
       expect(await account.isDeployed()).to.be.false
 
       // deploy the wallet
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig((await lib.Wallet.singleOwner(newSigner)).config, false)
       expect(await account.isDeployed()).to.be.true
 
@@ -368,7 +368,7 @@ describe('Account integration', () => {
     })
 
     it('should return different configs for different chains (indexed)', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }, true)
 
       const state = await account.getWalletState()
@@ -387,7 +387,7 @@ describe('Account integration', () => {
     })
 
     it('should return different configs for different chains (not-indexed)', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }, false)
 
       const state = await account.getWalletState()
@@ -406,7 +406,7 @@ describe('Account integration', () => {
     })
 
     it('should return different configs for different chains after reload auth config (indexed)', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }, true)
 
       const importedAccount = new lib.Account(
@@ -434,7 +434,7 @@ describe('Account integration', () => {
     })
 
     it('should return different configs for different chains after reload auth config (not-indexed)', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig({ threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }, false)
 
       const importedAccount = new lib.Account(
@@ -462,7 +462,7 @@ describe('Account integration', () => {
     })
 
     it('should return different configs for different chains after reload alt config (indexed)', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       const newConfig = { threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }
 
       await account.publishConfig(true)
@@ -493,7 +493,7 @@ describe('Account integration', () => {
     })
 
     it('should return different configs for different chains after reload alt config (not-indexed)', async () => {
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       const newConfig = { threshold: 3, signers: [{ address: newSigner.address, weight: 10 }] }
 
       await account.publishConfig(false)
@@ -566,7 +566,7 @@ describe('Account integration', () => {
       expect(await account.isDeployed()).to.be.false
 
       // deploy the wallet
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig((await lib.Wallet.singleOwner(newSigner)).config)
       expect(await account.isDeployed()).to.be.true
       expect(await isWalletUpToDate(account, 31337)).to.be.true
@@ -582,7 +582,7 @@ describe('Account integration', () => {
       expect(isValidConfigSigners(initialConfig, await account.getSigners())).to.be.true
 
       // update config / deploy for auth chain
-      const newSigner = ethers.Wallet.createRandom()
+      const newSigner = Wallet.createRandom()
       await account.updateConfig((await lib.Wallet.singleOwner(newSigner)).config)
       expect(await account.isDeployed()).to.be.true
       expect(await isWalletUpToDate(account, 31337)).to.be.true

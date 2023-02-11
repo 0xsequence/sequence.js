@@ -7,7 +7,7 @@ import {
   ProxyMessageHandler,
   prefixEIP191Message
 } from '@0xsequence/provider'
-import { ethers, Wallet as EOAWallet } from 'ethers'
+import { ethers, getAddress, JsonRpcProvider, toUtf8Bytes, Wallet as EOAWallet } from 'ethers'
 import { test, assert } from '../../utils/assert'
 import { sequenceContext, testnetNetworks } from '@0xsequence/network'
 import { Wallet, isValidSignature, recoverConfig } from '@0xsequence/wallet'
@@ -64,7 +64,7 @@ export const tests = async () => {
   const relayer = new LocalRelayer(owner)
 
   // wallet account address: 0xa91Ab3C5390A408DDB4a322510A4290363efcEE9 based on the chainId
-  const rpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const rpcProvider = new JsonRpcProvider('http://localhost:8545')
   const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
 
   const networks = [
@@ -107,7 +107,7 @@ export const tests = async () => {
   const address = await signer.getAddress()
 
   await test('verifying getAddress result', async () => {
-    assert.equal(address, ethers.utils.getAddress('0xa91Ab3C5390A408DDB4a322510A4290363efcEE9'), 'wallet address')
+    assert.equal(address, getAddress('0xa91Ab3C5390A408DDB4a322510A4290363efcEE9'), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -130,7 +130,7 @@ export const tests = async () => {
   })
 
   await test('sign a message and validate/recover', async () => {
-    const message = ethers.utils.toUtf8Bytes('hihi')
+    const message = toUtf8Bytes('hihi')
 
     //
     // Sign the message
@@ -147,7 +147,7 @@ export const tests = async () => {
     //
     // Verify the message signature
     //
-    // const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    // const messageDigest = getBytes(keccak256(message))
     const messageDigest = encodeMessageDigest(prefixEIP191Message(message))
     const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, chainId)
     assert.true(isValid, 'signature is valid - 1')
@@ -164,7 +164,7 @@ export const tests = async () => {
     const recoveredWalletAddress = addressOf(walletConfig, sequenceContext)
     assert.true(recoveredWalletAddress === address, 'recover address - 1')
 
-    const singleSignerAddress = ethers.utils.getAddress('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853') // expected from mock-wallet owner
+    const singleSignerAddress = getAddress('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853') // expected from mock-wallet owner
     assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
