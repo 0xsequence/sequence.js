@@ -7,6 +7,13 @@ export enum SigType {
   WALLET_BYTES32 = 3
 }
 
+export function canRecover(signature: ethers.BytesLike) {
+  const bytes = ethers.utils.arrayify(signature)
+  const type = bytes[bytes.length - 1]
+
+  return type === SigType.EIP712 || type === SigType.ETH_SIGN
+}
+
 export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesLike) {
   const bytes = ethers.utils.arrayify(signature)
   const digestBytes = ethers.utils.arrayify(digest)
