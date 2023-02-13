@@ -21,7 +21,7 @@ export class GuardRemoteSigner extends RemoteSigner {
   async signMessageWithData(message: BytesLike, auxData?: BytesLike, chainId?: ChainIdLike): Promise<string> {
     const request = {
       msg: hexlify(message),
-      auxData: hexlify(auxData ? auxData : []),
+      auxData: hexlify(auxData ? auxData : new Uint8Array([])),
       chainId: chainId ? Number(chainId) : this.defaultChainId
     }
     const res = await this._guard.sign({ request: request })

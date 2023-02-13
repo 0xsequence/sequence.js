@@ -19,7 +19,7 @@ export function partition<T>(array: T[], callback: (v: T, i: number) => boolean)
   )
 }
 
-export type BlockTag = 'earliest' | 'latest' | 'pending' | BigNumber
+export type BlockTag = 'earliest' | 'latest' | 'pending' | bigint
 
 export function parseBlockTag(cand: string | BigNumberish | undefined): BlockTag {
   if (cand === undefined) return 'latest'
@@ -31,17 +31,15 @@ export function parseBlockTag(cand: string | BigNumberish | undefined): BlockTag
       return cand
   }
 
-  return BigNumber.from(cand)
+  return BigInt(cand)
 }
 
 export function eqBlockTag(a: BlockTag, b: BlockTag): boolean {
   if (a === b) return true
 
-  if (BigNumber.isBigNumber(a)) {
-    if (BigNumber.isBigNumber(b)) return a.eq(b)
+  try {
+    return BigInt(a) === BigInt(b)
+  } catch (err) {
     return false
   }
-
-  if (BigNumber.isBigNumber(b)) return false
-  return a === b
 }
