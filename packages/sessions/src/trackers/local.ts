@@ -329,6 +329,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     }
 
     const subdigest = commons.signature.subdigestOf(payload)
+    if (!commons.signer.canRecover(args.signature)) {
+      // We don't support saving witnesses for non-recoverable signatures
+      // we could change this eventually, but the issue is that the witness may become invalid
+      return
+    }
+
     const signer = commons.signer.recoverSigner(subdigest, args.signature)
 
     await Promise.all([

@@ -79,8 +79,16 @@ export async function runByEIP5719(
 ): Promise<ethers.BytesLike> {
   if (tries > 10) throw new Error('EIP5719 - Too many tries')
 
-  const recoveredAddr = commons.signer.recoverSigner(digest, signature)
-  if (recoveredAddr && recoveredAddr.toLowerCase() === address.toLowerCase()) return signature
+  if (commons.signer.canRecover(signature)) {
+    const recoveredAddr = commons.signer.recoverSigner(digest, signature)
+    if (recoveredAddr && recoveredAddr.toLowerCase() === address.toLowerCase()) return signature
+  }
+
+  try {
+    if (await commons.signer.isValidSignature(address, digest, signature, provider)) {
+      return signature
+    }
+  } catch {}
 
   const altUri = await tryAwait(eip5719Contract(address, provider).getAlternativeSignature(digest) as Promise<string>)
   if (!altUri || altUri === '') throw new Error('EIP5719 - Invalid signature and no alternative signature')
