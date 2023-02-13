@@ -27,12 +27,7 @@ export abstract class ConfigTracker {
 
   savePresignedConfiguration: (args: PresignedConfig) => Promise<void>
 
-  saveWitness: ( args: {
-    wallet: string,
-    digest: string,
-    chainId: ethers.BigNumberish,
-    signature: string
-  }) => Promise<void>
+  saveWitnesses: (args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }) => Promise<void>
 
   configOfImageHash: (args: {
     imageHash: string

@@ -568,11 +568,11 @@ describe('Local config tracker', () => {
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
-          await tracker.saveWitness({
+          await tracker.saveWitnesses({
             wallet: address,
             digest,
             chainId: 1,
-            signature: (decoded.decoded.tree as v2.signature.SignatureLeaf).signature
+            signatures: [(decoded.decoded.tree as v2.signature.SignatureLeaf).signature]
           })
 
           const witness = await tracker.walletsOfSigner({ signer: signer.address })
@@ -586,11 +586,11 @@ describe('Local config tracker', () => {
           const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
           const signature2 = await wallet.signDigest(digest2)
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
-          await tracker.saveWitness({
+          await tracker.saveWitnesses({
             wallet: address,
             digest: digest2,
             chainId: 1,
-            signature: (decoded2.decoded.tree as v2.signature.SignatureLeaf).signature
+            signatures: [(decoded2.decoded.tree as v2.signature.SignatureLeaf).signature]
           })
 
           const witness2 = await tracker.walletsOfSigner({ signer: signer.address })
@@ -601,11 +601,11 @@ describe('Local config tracker', () => {
           const wallet2 = new Wallet({ config, chainId: 2, coders: v2.coders, address, context, orchestrator: new Orchestrator([signer]) })
           const signature3 = await wallet2.signDigest(digest3)
           const decoded3 = v2.signature.SignatureCoder.decode(signature3)
-          await tracker.saveWitness({
+          await tracker.saveWitnesses({
             wallet: address,
             digest: digest3,
             chainId: 2,
-            signature: (decoded3.decoded.tree as v2.signature.SignatureLeaf).signature
+            signatures: [(decoded3.decoded.tree as v2.signature.SignatureLeaf).signature]
           })
 
           const witness3 = await tracker.walletsOfSigner({ signer: signer.address })
@@ -623,11 +623,11 @@ describe('Local config tracker', () => {
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
-          await tracker.saveWitness({
+          await tracker.saveWitnesses({
             wallet: address,
             digest,
             chainId: 1,
-            signature: (decoded.decoded.tree as v2.signature.SignatureLeaf).signature
+            signatures: [(decoded.decoded.tree as v2.signature.SignatureLeaf).signature]
           })
 
           const config2 = { version: 2, threshold: 2, checkpoint: 0, tree: { address: signer.address, weight: 2 } }
@@ -639,11 +639,11 @@ describe('Local config tracker', () => {
           const signature2 = await wallet2.signDigest(digest2)
 
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
-          await tracker.saveWitness({
+          await tracker.saveWitnesses({
             wallet: address2,
             digest: digest2,
             chainId: 1,
-            signature: (decoded2.decoded.tree as v2.signature.SignatureLeaf).signature
+            signatures: [(decoded2.decoded.tree as v2.signature.SignatureLeaf).signature]
           })
 
           const witness = await tracker.walletsOfSigner({ signer: signer.address })

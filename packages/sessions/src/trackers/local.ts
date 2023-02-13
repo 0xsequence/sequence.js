@@ -316,11 +316,11 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     }, ...nextStep]
   }
 
-  saveWitness = async (args: {
-    wallet: string,
-    digest: string,
-    chainId: ethers.BigNumberish,
-    signature: string
+  saveWitnesses = async (args: {
+    wallet: string
+    digest: string
+    chainId: ethers.BigNumberish
+    signatures: string[]
   }): Promise<void> => {
     const payload = {
       digest: args.digest,
@@ -329,17 +329,19 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     }
 
     const subdigest = commons.signature.subdigestOf(payload)
-    if (!commons.signer.canRecover(args.signature)) {
-      // We don't support saving witnesses for non-recoverable signatures
-      // we could change this eventually, but the issue is that the witness may become invalid
-      return
-    }
-
-    const signer = commons.signer.recoverSigner(subdigest, args.signature)
 
     await Promise.all([
       this.savePayload({ payload }),
-      this.store.saveSignatureOfSubdigest(signer, subdigest, args.signature)
+      ...args.signatures
+        .filter(signature => {
+          // We don't support saving witnesses for non-recoverable signatures
+          // we could change this eventually, but the issue is that the witness may become invalid
+          return commons.signer.canRecover(signature)
+        })
+        .map(signature => {
+          const signer = commons.signer.recoverSigner(subdigest, signature)
+          return this.store.saveSignatureOfSubdigest(signer, subdigest, signature)
+        })
     ])
   }
 

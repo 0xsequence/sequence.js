@@ -130,12 +130,24 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     // consider optimizing this for better performance during login
 
     const result = Object.keys(wallets).map(w => ({ wallet: w, proof: wallets[w] }))
-    result.forEach(r => this.saveWitness({ wallet: r.wallet, digest: r.proof.digest, chainId: r.proof.chainId, signature: r.proof.signature }))
+
+    const witnesses = new Map<string, { wallet: string; digest: string; chainId: BigNumber; signatures: string[] }>()
+    result.forEach(({ wallet, proof: { digest, chainId, signature } }) => {
+      const key = `${wallet}-${digest}-${chainId}`
+      let signatures = witnesses.get(key)
+      if (!signatures) {
+        signatures = { wallet, digest, chainId, signatures: [] }
+        witnesses.set(key, signatures)
+      }
+      signatures.signatures.push(signature)
+    })
+    witnesses.forEach(witnesses => this.saveWitnesses(witnesses))
+
     return result
   }
 
-  async saveWitness(args: { wallet: string; digest: string; chainId: BigNumberish; signature: string }): Promise<void> {
-    await Promise.all(this.trackers.map(t => t.saveWitness(args)))
+  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigNumberish; signatures: string[] }): Promise<void> {
+    await Promise.all(this.trackers.map(t => t.saveWitnesses(args)))
   }
 
   async loadPresignedConfiguration(args: { wallet: string; fromImageHash: string; longestPath?: boolean | undefined }): Promise<PresignedConfigLink[]> {
