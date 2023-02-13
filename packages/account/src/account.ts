@@ -397,15 +397,8 @@ export class Account {
     const digest = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`This is a Sequence account woo! ${Date.now()}`))
     const signature = await this.signDigest(digest, 0, false)
     const decoded = this.coders.signature.decode(signature)
-
     const signatures = this.coders.signature.signaturesOfDecoded(decoded)
-
-    await Promise.all(signatures.map((s) => this.tracker.saveWitness({
-      wallet: this.address,
-      signature: s,
-      digest,
-      chainId: 0
-    })))
+    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId: 0, signatures })
   }
 
   async signDigest(
