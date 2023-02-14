@@ -16,6 +16,8 @@ import { Wallet } from '@0xsequence/wallet'
 
 const { expect } = chai.use(chaiAsPromised)
 
+const deterministic = false
+
 describe('Account', () => {
   let provider1: ethers.providers.JsonRpcProvider
   let provider2: ethers.providers.JsonRpcProvider
@@ -70,10 +72,10 @@ describe('Account', () => {
 
   describe('New account', () => {
     it('Should create a new account', async () => {
-      const signer = ethers.Wallet.createRandom()
+      const signer = randomWallet('Should create a new account')
       const config = {
         threshold: 1,
-        checkpoint: Math.floor(Date.now() / 1000),
+        checkpoint: Math.floor(now() / 1000),
         signers: [{ address: signer.address, weight: 1 }]
       }
 
@@ -95,10 +97,10 @@ describe('Account', () => {
     })
 
     it('Should send transactions on multiple networks', async () => {
-      const signer = ethers.Wallet.createRandom()
+      const signer = randomWallet('Should send transactions on multiple networks')
       const config = {
         threshold: 1,
-        checkpoint: Math.floor(Date.now() / 1000),
+        checkpoint: Math.floor(now() / 1000),
         signers: [{ address: signer.address, weight: 1 }]
       }
 
@@ -124,16 +126,16 @@ describe('Account', () => {
     })
 
     it('Should create a new account with many signers', async () => {
-      const signers = new Array(24).fill(0).map(() => ethers.Wallet.createRandom())
+      const signers = new Array(24).fill(0).map(() => randomWallet('Should create a new account with many signers'))
       const config = {
         threshold: 3,
-        checkpoint: Math.floor(Date.now() / 1000),
+        checkpoint: Math.floor(now() / 1000),
         signers: signers.map((signer) => ({
           address: signer.address, weight: 1
         }))
       }
 
-      const rsigners = signers.sort(() => Math.random() - 0.5)
+      const rsigners = signers.sort(() => randomFraction('Should create a new account with many signers 2') - 0.5)
       const account = await Account.new({
         ...defaultArgs,
         config,
@@ -149,10 +151,10 @@ describe('Account', () => {
     })
 
     it('Should sign and validate a message', async () => {
-      const signer = ethers.Wallet.createRandom()
+      const signer = randomWallet('Should sign and validate a message')
       const config = {
         threshold: 1,
-        checkpoint: Math.floor(Date.now() / 1000),
+        checkpoint: Math.floor(now() / 1000),
         signers: [{ address: signer.address, weight: 1 }]
       }
 
@@ -178,10 +180,10 @@ describe('Account', () => {
     })
 
     it('Should update account to new configuration', async () => {
-      const signer = ethers.Wallet.createRandom()
+      const signer = randomWallet('Should update account to new configuration')
       const simpleConfig1 = {
         threshold: 1,
-        checkpoint: Math.floor(Date.now() / 1000),
+        checkpoint: Math.floor(now() / 1000),
         signers: [{ address: signer.address, weight: 1 }]
       }
       const config1 = v2.config.ConfigCoder.fromSimple(simpleConfig1)
@@ -192,12 +194,12 @@ describe('Account', () => {
         orchestrator: new Orchestrator([signer]),
       })
 
-      const signer2a = ethers.Wallet.createRandom()
-      const signer2b = ethers.Wallet.createRandom()
+      const signer2a = randomWallet('Should update account to new configuration 2')
+      const signer2b = randomWallet('Should update account to new configuration 3')
 
       const simpleConfig2 = {
         threshold: 4,
-        checkpoint: Math.floor(Date.now() / 1000) + 1,
+        checkpoint: Math.floor(now() / 1000) + 1,
         signers: [{
           address: signer2a.address,
           weight: 2
@@ -224,12 +226,13 @@ describe('Account', () => {
       let signer1: ethers.Wallet
       let signer2a: ethers.Wallet
       let signer2b: ethers.Wallet
+      let signerIndex = 1
 
       beforeEach(async () => {
-        signer1 = ethers.Wallet.createRandom()
+        signer1 = randomWallet(`After upgrading ${signerIndex++}`)
         const simpleConfig1 = {
           threshold: 1,
-          checkpoint: Math.floor(Date.now() / 1000) + 1,
+          checkpoint: Math.floor(now() / 1000) + 1,
           signers: [{ address: signer1.address, weight: 1 }]
         }
 
@@ -239,8 +242,8 @@ describe('Account', () => {
           orchestrator: new Orchestrator([signer1]),
         })
 
-        signer2a = ethers.Wallet.createRandom()
-        signer2b = ethers.Wallet.createRandom()
+        signer2a = randomWallet(`After upgrading ${signerIndex++}`)
+        signer2b = randomWallet(`After upgrading ${signerIndex++}`)
 
         const simpleConfig2 = {
           threshold: 4,
@@ -345,13 +348,14 @@ describe('Account', () => {
         let signer3a: ethers.Wallet
         let signer3b: ethers.Wallet
         let signer3c: ethers.Wallet
+        let signerIndex = 1
 
         let config3: v2.config.WalletConfig
 
         beforeEach(async () => {
-          signer3a = ethers.Wallet.createRandom()
-          signer3b = ethers.Wallet.createRandom()
-          signer3c = ethers.Wallet.createRandom()
+          signer3a = randomWallet(`After updating the config again ${signerIndex++}`)
+          signer3b = randomWallet(`After updating the config again ${signerIndex++}`)
+          signer3c = randomWallet(`After updating the config again ${signerIndex++}`)
 
           const simpleConfig3 = {
             threshold: 5,
@@ -434,10 +438,11 @@ describe('Account', () => {
           expect(tx).to.not.be.undefined
         })
 
+        let signerIndex = 1
         it('Should update the configuration again', async () => {
-          const signer2a = ethers.Wallet.createRandom()
-          const signer2b = ethers.Wallet.createRandom()
-          const signer2c = ethers.Wallet.createRandom()
+          const signer2a = randomWallet(`Should update the configuration again ${signerIndex++}`)
+          const signer2b = randomWallet(`Should update the configuration again ${signerIndex++}`)
+          const signer2c = randomWallet(`Should update the configuration again ${signerIndex++}`)
 
           const simpleConfig2 = {
             threshold: 6,
@@ -482,7 +487,7 @@ describe('Account', () => {
   describe('Migrated wallet', () => {
     it('Should migrate undeployed account', async () => {
       // Old account may be an address that's not even deployed
-      const signer1 = ethers.Wallet.createRandom()
+      const signer1 = randomWallet('Should migrate undeployed account')
 
       const simpleConfig = {
         threshold: 1,
@@ -555,9 +560,9 @@ describe('Account', () => {
     it('Should migrate a half-deployed account', async () => {
       // Old account created with 3 signers, and already deployed
       // in one of the chains
-      const signer1 = ethers.Wallet.createRandom()
-      const signer2 = ethers.Wallet.createRandom()
-      const signer3 = ethers.Wallet.createRandom()
+      const signer1 = randomWallet('Should migrate a half-deployed account')
+      const signer2 = randomWallet('Should migrate a half-deployed account 2')
+      const signer3 = randomWallet('Should migrate a half-deployed account 3')
 
       const simpleConfig = {
         threshold: 2,
@@ -649,10 +654,10 @@ describe('Account', () => {
     })
 
     it('Should migrate an upgraded wallet', async () => {
-      const signer1 = ethers.Wallet.createRandom()
-      const signer2 = ethers.Wallet.createRandom()
-      const signer3 = ethers.Wallet.createRandom()
-      const signer4 = ethers.Wallet.createRandom()
+      const signer1 = randomWallet('Should migrate an upgraded wallet')
+      const signer2 = randomWallet('Should migrate an upgraded wallet 2')
+      const signer3 = randomWallet('Should migrate an upgraded wallet 3')
+      const signer4 = randomWallet('Should migrate an upgraded wallet 4')
 
       const simpleConfig1a = {
         threshold: 3,
@@ -823,8 +828,8 @@ describe('Account', () => {
 
     it('Should edit the configuration during the migration', async () => {
       // Old account may be an address that's not even deployed
-      const signer1 = ethers.Wallet.createRandom()
-      const signer2 = ethers.Wallet.createRandom()
+      const signer1 = randomWallet('Should edit the configuration during the migration')
+      const signer2 = randomWallet('Should edit the configuration during the migration 2')
 
       const simpleConfig1 = {
         threshold: 1,
@@ -909,3 +914,34 @@ describe('Account', () => {
     })
   })
 })
+
+let nowCalls = 0
+function now(): number {
+  if (deterministic) {
+    return Date.parse('2023-02-14T00:00:00.000Z') + 1000 * nowCalls++
+  } else {
+    return Date.now()
+  }
+}
+
+function randomWallet(entropy: number | string): ethers.Wallet {
+  return new ethers.Wallet(randomBytes(32, entropy))
+}
+
+function randomFraction(entropy: number | string): number {
+  const bytes = randomBytes(7, entropy)
+  bytes[0] &= 0x1f
+  return bytes.reduce((sum, byte) => 256 * sum + byte) / Number.MAX_SAFE_INTEGER
+}
+
+function randomBytes(length: number, entropy: number | string): Uint8Array {
+  if (deterministic) {
+    let bytes = ''
+    while (bytes.length < 2 * length) {
+      bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
+    }
+    return ethers.utils.arrayify(`0x${bytes.slice(0, 2 * length)}`)
+  } else {
+    return ethers.utils.randomBytes(length)
+  }
+}
