@@ -170,7 +170,7 @@ describe('Local config tracker', () => {
             const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
             const getConfig = await tracker.configOfImageHash({ imageHash })
 
-            expect(getConfig).to.deep.equal(config)
+            expect(normalize(getConfig)).to.deep.equal(normalize(config))
           })
         })
 
@@ -184,14 +184,14 @@ describe('Local config tracker', () => {
             const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
             const getConfig = await tracker.configOfImageHash({ imageHash })
 
-            expect(getConfig).to.deep.equal(config)
+            expect(normalize(getConfig)).to.deep.equal(normalize(config))
           }
 
           for (const config of configs) {
             const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
             const getConfig = await tracker.configOfImageHash({ imageHash })
 
-            expect(getConfig).to.deep.equal(config)
+            expect(normalize(getConfig)).to.deep.equal(normalize(config))
           }
 
           // Adding the configs again should not change anything
@@ -201,7 +201,7 @@ describe('Local config tracker', () => {
             const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
             const getConfig = await tracker.configOfImageHash({ imageHash })
 
-            expect(getConfig).to.deep.equal(config)
+            expect(normalize(getConfig)).to.deep.equal(normalize(config))
           }
         })
 
@@ -225,35 +225,39 @@ describe('Local config tracker', () => {
           const imageHash = v2.config.imageHash(emptyConfig)
 
           await tracker.saveWalletConfig({ config: emptyConfig })
-          expect(await tracker.configOfImageHash({ imageHash })).to.deep.equal(emptyConfig)
+          expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(normalize(emptyConfig))
 
           // Add the first config
           // should reveal the left branch
           await tracker.saveWalletConfig({ config: config1 })
-          expect(await tracker.configOfImageHash({ imageHash: ih1 })).to.deep.equal(config1)
-          expect(await tracker.configOfImageHash({ imageHash })).to.deep.equal({
-            version: 2,
-            threshold: ethers.BigNumber.from(2),
-            checkpoint: ethers.BigNumber.from(0),
-            tree: {
-              left: config1.tree,
-              right: { nodeHash: v2.config.hashNode(config2.tree) }
-            }
-          })
+          expect(normalize(await tracker.configOfImageHash({ imageHash: ih1 }))).to.deep.equal(normalize(config1))
+          expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
+            normalize({
+              version: 2,
+              threshold: ethers.BigNumber.from(2),
+              checkpoint: ethers.BigNumber.from(0),
+              tree: {
+                left: config1.tree,
+                right: { nodeHash: v2.config.hashNode(config2.tree) }
+              }
+            })
+          )
 
           // Add the second config
           // should reveal the whole tree
           await tracker.saveWalletConfig({ config: config2 })
-          expect(await tracker.configOfImageHash({ imageHash: ih2 })).to.deep.equal(config2)
-          expect(await tracker.configOfImageHash({ imageHash })).to.deep.equal({
-            version: 2,
-            threshold: ethers.BigNumber.from(2),
-            checkpoint: ethers.BigNumber.from(0),
-            tree: {
-              left: config1.tree,
-              right: config2.tree
-            }
-          })
+          expect(normalize(await tracker.configOfImageHash({ imageHash: ih2 }))).to.deep.equal(normalize(config2))
+          expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
+            normalize({
+              version: 2,
+              threshold: ethers.BigNumber.from(2),
+              checkpoint: ethers.BigNumber.from(0),
+              tree: {
+                left: config1.tree,
+                right: config2.tree
+              }
+            })
+          )
         })
 
         it('Should return undefined for unknown imageHash', async () => {
@@ -997,3 +1001,17 @@ describe('Local config tracker', () => {
     })
   })
 })
+
+function normalize(value: any): any {
+  switch (typeof value) {
+    case 'object':
+      if (ethers.BigNumber.isBigNumber(value)) {
+        return value.toString()
+      }
+      return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, normalize(value)]))
+    case 'number':
+      return `${value}`
+    default:
+      return value
+  }
+}
