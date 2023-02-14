@@ -172,10 +172,10 @@ export class RpcRelayer implements Relayer {
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
 
     if (waitForReceipt) {
-      return this.wait(metaTxn.txnHash)
+      return this.wait(signedTxs.intent.id)
     } else {
       const response = {
-        hash: metaTxn.txnHash,
+        hash: signedTxs.intent.id,
         confirmations: 0,
         from: signedTxs.intent.wallet,
         wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
@@ -186,7 +186,7 @@ export class RpcRelayer implements Relayer {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }
 
-        const waitResponse = await this.wait(metaTxn.txnHash)
+        const waitResponse = await this.wait(signedTxs.intent.id)
         const transactionHash = waitResponse.receipt?.transactionHash
 
         if (!transactionHash) {
