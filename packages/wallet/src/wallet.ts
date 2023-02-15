@@ -246,10 +246,10 @@ export class Wallet<
     // to reach the threshold we returns true, that means the orchestrator will stop asking
     // and we can encode the final signature
     const subdigestBytes = ethers.utils.arrayify(subdigest)
-    const signature = await this.orchestrator.signMessage(
-      subdigestBytes,
+    const signature = await this.orchestrator.signMessage({
+      message: subdigestBytes,
       metadata,
-      (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
+      callback: (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
         const parts = statusToSignatureParts(status)
 
         const newMetadata = { ...metadata, parts }
@@ -257,7 +257,7 @@ export class Wallet<
 
         return this.coders.signature.hasEnoughSigningPower(this.config, parts)
       }
-    )
+    })
 
     const parts = statusToSignatureParts(signature)
     return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded

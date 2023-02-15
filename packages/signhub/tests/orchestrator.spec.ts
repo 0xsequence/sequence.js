@@ -15,7 +15,7 @@ describe('Orchestrator', () => {
     ]
 
     const orchestrator = new Orchestrator(signers)
-    const signature = await orchestrator.signMessage('0x1234', {})
+    const signature = await orchestrator.signMessage({ message: '0x1234' })
 
     expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
 
@@ -65,9 +65,12 @@ describe('Orchestrator', () => {
     })
 
     let callbackCallsB = 0
-    await orchestrator.signMessage('0x1234', {}, () => {
-      callbackCallsB++
-      return false
+    await orchestrator.signMessage({
+      message: '0x1234',
+      callback: () => {
+        callbackCallsB++
+        return false
+      }
     })
 
     // 3 updates + 1 final
@@ -161,7 +164,7 @@ describe('Orchestrator', () => {
       expect(numPending).to.be.equal(Math.min(signers.length - callbackCallsA, 0))
     })
 
-    const signature = await orchestrator.signMessage('0x1234', {})
+    const signature = await orchestrator.signMessage({ message: '0x1234' })
     expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
 
     for (const signer of signers) {
@@ -213,7 +216,7 @@ describe('Orchestrator', () => {
       callbackCallsA++
     })
 
-    const signature = await orchestrator.signMessage('0x1234', {})
+    const signature = await orchestrator.signMessage({ message: '0x1234' })
     expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
 
     for (const signer of signers) {
@@ -255,7 +258,7 @@ describe('Orchestrator', () => {
     }
 
     const orchestrator = new Orchestrator([signer])
-    const signature = await orchestrator.signMessage(ogMessage, {})
+    const signature = await orchestrator.signMessage({ message: ogMessage })
 
     expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
   })
@@ -283,7 +286,7 @@ describe('Orchestrator', () => {
     }
 
     const orchestrator = new Orchestrator([signer])
-    const signature = await orchestrator.signMessage(ogMessage, { test: 'test' })
+    const signature = await orchestrator.signMessage({ message: ogMessage, metadata: { test: 'test' }})
 
     expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
   })
@@ -355,14 +358,18 @@ describe('Orchestrator', () => {
     }
 
     const orchestrator = new Orchestrator([signer1, signer2])
-    const signature = await orchestrator.signMessage(ogMessage, { test: 'test' }, (s: Status, onNewMetadata: (metadata: Object) => void) => {
-      if (firstCall) {
-        firstCall = false
-        onNewMetadata({ hello: 'world' })
-        return false
-      }
+    const signature = await orchestrator.signMessage({
+      message: ogMessage,
+      metadata: { test: 'test' },
+      callback: (s: Status, onNewMetadata: (metadata: Object) => void) => {
+        if (firstCall) {
+          firstCall = false
+          onNewMetadata({ hello: 'world' })
+          return false
+        }
 
-      return true
+        return true
+      }
     })
 
     expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
@@ -405,9 +412,9 @@ describe('Orchestrator', () => {
     }
 
     const orchestrator = new Orchestrator([signer], 'test')
-    const res1 = await orchestrator.signMessage(ogMessage, { tag: 'test1' })
-    const res2 = await orchestrator.signMessage(ogMessage, { tag: 'test2' })
-    const res3 = await orchestrator.signMessage(ogMessage, { tag: 'test3' })
+    const res1 = await orchestrator.signMessage({ message: ogMessage, metadata: { tag: 'test1' }})
+    const res2 = await orchestrator.signMessage({ message: ogMessage, metadata: { tag: 'test2' }})
+    const res3 = await orchestrator.signMessage({ message: ogMessage, metadata: { tag: 'test3' }})
 
     expect((res1.signers['0x1234'] as any).signature).to.be.equal('0x5678')
     expect((res2.signers['0x1234'] as any).signature).to.be.equal('0x5678')
@@ -419,5 +426,26 @@ describe('Orchestrator', () => {
     const orchestrator2 = new Orchestrator([])
 
     expect(orchestrator1.tag).to.not.be.equal(orchestrator2.tag)
+  })
+
+  it('Should only sign with candidates', async () => {
+    const message = ethers.utils.randomBytes(99)
+
+    const signer1 = ethers.Wallet.createRandom()
+    const signer2 = ethers.Wallet.createRandom()
+    const signer3 = ethers.Wallet.createRandom()
+    const signer4 = ethers.Wallet.createRandom()
+
+    const orchestrator = new Orchestrator([signer1, signer2, signer3, signer4])
+
+    const result = await orchestrator.signMessage({
+      message: message,
+      candidates: [signer1.address, signer3.address]
+    })
+
+    expect(result.signers[signer1.address]).to.not.be.undefined
+    expect(result.signers[signer2.address]).to.be.undefined
+    expect(result.signers[signer3.address]).to.not.be.undefined
+    expect(result.signers[signer4.address]).to.be.undefined
   })
 })

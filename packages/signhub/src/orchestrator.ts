@@ -82,19 +82,21 @@ export class Orchestrator {
     ])
   }
 
-  signMessage(
+  signMessage(args: {
+    candidates?: string[],
     message: ethers.BytesLike,
-    metadata: Object,
+    metadata?: Object,
     callback?: (
       status: Status,
       onNewMetadata: (metadata: Object) => void
     ) => boolean
-  ): Promise<Status> {
+  }): Promise<Status> {
     const id = this.pullId()
 
     return new Promise(async (resolve) => {
+      const { message, metadata, callback, candidates } = args
       const status: Status = { ended: false, message, signers: {} }
-      let lastMetadata = metadata
+      let lastMetadata = metadata ?? {}
 
       const onNewMetadata = (newMetadata: Object) => {
         lastMetadata = newMetadata
@@ -117,11 +119,19 @@ export class Orchestrator {
         }
       }
 
+      // we only call signers that are found in `candidates`
+      // if `candidates` is undefined, we call all signers
+      let signers = this.signers
+      if (candidates) {
+        const addresses = await Promise.all(this.signers.map(async (s) => s.getAddress()))
+        signers = this.signers.filter((_, i) => candidates.includes(addresses[i]))
+      }
+
       // build callbacks object
-      const accepted = await Promise.allSettled(this.signers.map(async (s) => {
+      const accepted = await Promise.allSettled(signers.map(async (s) => {
         const saddr = await s.getAddress()
         status.signers[saddr] = { situation: InitialSituation }
-        return s.requestSignature(id, message, metadata, {
+        return s.requestSignature(id, message, metadata ?? {}, {
           onSignature: (signature) => {
             const suffix = s.suffix()
             status.signers[saddr] = { signature, suffix }
