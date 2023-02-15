@@ -247,6 +247,7 @@ export class Wallet<
     // and we can encode the final signature
     const subdigestBytes = ethers.utils.arrayify(subdigest)
     const signature = await this.orchestrator.signMessage({
+      candidates: this.coders.config.signersOf(this.config).map((s) => s.address),
       message: subdigestBytes,
       metadata,
       callback: (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
