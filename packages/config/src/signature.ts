@@ -8,6 +8,7 @@ import {
   keccak256,
   Provider,
   recoverAddress,
+  Signature,
   solidityPacked,
   Wallet
 } from 'ethers'
@@ -110,7 +111,7 @@ export const decodeSignature = (signature: string | DecodedSignature): DecodedSi
         const sig = getBytes(`0x${auxsig.slice(rindex, rindex + 132)}`)
         rindex += 132
 
-        const split = ethers.utils.splitSignature(sig.slice(0, 65))
+        const split = Signature.from(sig.slice(0, 65))
         const r = split.r
         const s = split.s
         const v = split.v
@@ -162,7 +163,7 @@ const SIG_TYPE_WALLET_BYTES32 = 3
 
 export const splitDecodedEOASigner = (sig: DecodedEOASigner): DecodedEOASplitSigner => {
   const signature = getBytes(sig.signature)
-  const split = ethers.utils.splitSignature(signature.slice(0, 65))
+  const split = Signature.from(signature.slice(0, 65))
   const t = Number(signature[signature.length - 1])
 
   return {

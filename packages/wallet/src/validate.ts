@@ -1,4 +1,4 @@
-import { Contract, ethers, getBytes, keccak256, Provider, recoverAddress, solidityPacked } from 'ethers'
+import { Contract, ethers, getBytes, keccak256, Provider, recoverAddress, Signature, solidityPacked } from 'ethers'
 import { WalletContext } from '@0xsequence/network'
 import { walletContracts } from '@0xsequence/abi'
 import { packMessageData } from '@0xsequence/utils'
@@ -33,7 +33,7 @@ export async function isValidSignature(
 
 export function isValidEIP712Signature(address: string, digest: Uint8Array, sig: string): boolean {
   try {
-    return compareAddr(recoverAddress(digest, ethers.utils.splitSignature(sig)), address) === 0
+    return compareAddr(recoverAddress(digest, Signature.from(sig)), address) === 0
   } catch {
     return false
   }
@@ -42,7 +42,7 @@ export function isValidEIP712Signature(address: string, digest: Uint8Array, sig:
 export function isValidEthSignSignature(address: string, digest: Uint8Array, sig: string): boolean {
   try {
     const subDigest = keccak256(solidityPacked(['string', 'bytes32'], ['\x19Ethereum Signed Message:\n32', digest]))
-    return compareAddr(recoverAddress(subDigest, ethers.utils.splitSignature(sig)), address) === 0
+    return compareAddr(recoverAddress(subDigest, Signature.from(sig)), address) === 0
   } catch {
     return false
   }
