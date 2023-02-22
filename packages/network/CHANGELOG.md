@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.17
+
+### Patch Changes
+
+- rpc clients, check of 'global' is defined
+- Updated dependencies
+  - @0xsequence/indexer@0.43.17
+  - @0xsequence/provider@0.43.17
+  - @0xsequence/relayer@0.43.17
+  - @0xsequence/utils@0.43.17
+
 ## 0.43.16
 
 ### Patch Changes

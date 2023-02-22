@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.17
+
+### Patch Changes
+
+- rpc clients, check of 'global' is defined
+- Updated dependencies
+  - @0xsequence/utils@0.43.17
+
 ## 0.43.16
 
 ### Patch Changes

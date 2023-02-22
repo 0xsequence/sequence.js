@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.43.17
+
+### Patch Changes
+
+- rpc clients, check of 'global' is defined
+
 ## 0.43.16
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.43.17
+
+### Patch Changes
+
+- rpc clients, check of 'global' is defined
+- Updated dependencies
+  - @0xsequence/abi@0.43.17
+  - @0xsequence/config@0.43.17
+  - @0xsequence/network@0.43.17
+  - @0xsequence/transactions@0.43.17
+  - @0xsequence/utils@0.43.17
+
 ## 0.43.16
 
 ### Patch Changes
