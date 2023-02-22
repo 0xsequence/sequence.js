@@ -22,9 +22,11 @@ export enum SequenceIndexerServices {
   GOERLI = 'https://goerli-indexer.sequence.app'
 }
 
+const fetch = global ? global.fetch : window.fetch
+
 export class SequenceIndexerClient extends IndexerRpc {
   constructor(hostname: string, public jwtAuth?: string) {
-    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, global.fetch)
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
     this.fetch = this._fetch
   }
 
@@ -39,7 +41,7 @@ export class SequenceIndexerClient extends IndexerRpc {
     // before the request is made
     init!.headers = { ...init!.headers, ...headers }
 
-    return global.fetch(input, init)
+    return fetch(input, init)
   }
 }
 

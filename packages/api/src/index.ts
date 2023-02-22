@@ -2,9 +2,11 @@ export * from './api.gen'
 
 import { API as ApiRpc } from './api.gen'
 
+const fetch = global ? global.fetch : window.fetch
+
 export class SequenceAPIClient extends ApiRpc {
   constructor(hostname: string, public jwtAuth?: string) {
-    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, global.fetch)
+    super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
     this.fetch = this._fetch
   }
 
@@ -19,6 +21,6 @@ export class SequenceAPIClient extends ApiRpc {
     // before the request is made
     init!.headers = { ...init!.headers, ...headers }
 
-    return global.fetch(input, init)
+    return fetch(input, init)
   }
 }

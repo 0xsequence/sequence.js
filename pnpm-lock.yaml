@@ -56,7 +56,7 @@ importers:
       mocha: ^10.1.0
       nyc: ^15.1.0
       prettier: ^2.7.1
-      puppeteer: ^19.2.2
+      puppeteer: ^19.7.2
       rimraf: ^3.0.2
       ts-node: ^10.9.1
       tsx: ^3.12.1
@@ -109,7 +109,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.8.1
-      puppeteer: 19.4.1
+      puppeteer: 19.7.2_typescript@4.9.4
       rimraf: 3.0.2
       ts-node: 10.9.1_moeqx3xmzxqxagf2sz6mqkbb7m
       tsx: 3.12.1
@@ -4860,6 +4860,15 @@ packages:
     engines: {node: '>=6.0'}
     dev: true
 
+  /chromium-bidi/0.4.4_6o5gdkn34s2j2m26x63ssheuqa:
+    resolution: {integrity: sha512-4BX5cSaponuvVT1+SbLYTOAgDoVtX/Khoc9UsbFJ/AsPVUeFAM3RiIDFI6XFhLYMi9WmVJqh1ZH+dRpNKkKwiQ==}
+    peerDependencies:
+      devtools-protocol: '*'
+    dependencies:
+      devtools-protocol: 0.0.1094867
+      mitt: 3.0.0
+    dev: true
+
   /chunkd/2.0.1:
     resolution: {integrity: sha512-7d58XsFmOq0j6el67Ug9mHf9ELUXsQXYJBkyxhH/k+6Ke0qXRnv0kbemx+Twc6fRJ07C49lcbdgm9FL1Ei/6SQ==}
     dev: true
@@ -5785,8 +5794,8 @@ packages:
     resolution: {integrity: sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==}
     dev: true
 
-  /devtools-protocol/0.0.1068969:
-    resolution: {integrity: sha512-ATFTrPbY1dKYhPPvpjtwWKSK2mIwGmRwX54UASn9THEuIZCe2n9k3vVuMmt6jWeL+e5QaaguEv/pMyR+JQB7VQ==}
+  /devtools-protocol/0.0.1094867:
+    resolution: {integrity: sha512-pmMDBKiRVjh0uKK6CT1WqZmM3hBVSgD+N2MrgyV1uNizAZMw4tx6i/RTc+/uCsKSCmg0xXx7arCP/OFcIwTsiQ==}
     dev: true
 
   /diff/4.0.2:
@@ -9824,6 +9833,10 @@ packages:
       minipass: 2.9.0
     dev: true
 
+  /mitt/3.0.0:
+    resolution: {integrity: sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==}
+    dev: true
+
   /mixin-deep/1.3.2:
     resolution: {integrity: sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==}
     engines: {node: '>=0.10.0'}
@@ -11000,18 +11013,25 @@ packages:
       escape-goat: 2.1.1
     dev: true
 
-  /puppeteer-core/19.4.1:
-    resolution: {integrity: sha512-JHIuqtqrUAx4jGOTxXu4ilapV2jabxtVMA/e4wwFUMvtSsqK4nVBSI+Z1SKDoz7gRy/JUIc8WzmfocCa6SIZ1w==}
+  /puppeteer-core/19.7.2_typescript@4.9.4:
+    resolution: {integrity: sha512-PvI+fXqgP0uGJxkyZcX51bnzjFA73MODZOAv0fSD35yR7tvbqwtMV3/Y+hxQ0AMMwzxkEebP6c7po/muqxJvmQ==}
     engines: {node: '>=14.1.0'}
+    peerDependencies:
+      typescript: '>= 4.7.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
     dependencies:
+      chromium-bidi: 0.4.4_6o5gdkn34s2j2m26x63ssheuqa
       cross-fetch: 3.1.5
       debug: 4.3.4
-      devtools-protocol: 0.0.1068969
+      devtools-protocol: 0.0.1094867
       extract-zip: 2.0.1
       https-proxy-agent: 5.0.1
       proxy-from-env: 1.1.0
       rimraf: 3.0.2
       tar-fs: 2.1.1
+      typescript: 4.9.4
       unbzip2-stream: 1.4.3
       ws: 8.11.0
     transitivePeerDependencies:
@@ -11021,8 +11041,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /puppeteer/19.4.1:
-    resolution: {integrity: sha512-PCnrR13B8A+VSEDXRmrNXRZbrkF1tfsI1hKSC7vs13eNS6CUD3Y4FA8SF8/VZy+Pm1kg5AggJT2Nu3HLAtGkFg==}
+  /puppeteer/19.7.2_typescript@4.9.4:
+    resolution: {integrity: sha512-4Lm7Qpe/LU95Svirei/jDLDvR5oMrl9BPGd7HMY5+Q28n+BhvKuW97gKkR+1LlI86bO8J3g8rG/Ll5kv9J1nlQ==}
     engines: {node: '>=14.1.0'}
     requiresBuild: true
     dependencies:
@@ -11030,11 +11050,12 @@ packages:
       https-proxy-agent: 5.0.1
       progress: 2.0.3
       proxy-from-env: 1.1.0
-      puppeteer-core: 19.4.1
+      puppeteer-core: 19.7.2_typescript@4.9.4
     transitivePeerDependencies:
       - bufferutil
       - encoding
       - supports-color
+      - typescript
       - utf-8-validate
     dev: true
 

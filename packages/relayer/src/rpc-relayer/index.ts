@@ -37,12 +37,14 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
   return obj.url !== undefined && typeof obj.url === 'string'
 }
 
+const fetch = global ? global.fetch : window.fetch
+
 export class RpcRelayer extends BaseRelayer implements Relayer {
   private readonly service: proto.Relayer
 
   constructor(options: RpcRelayerOptions) {
     super(options)
-    this.service = new proto.Relayer(options.url, global.fetch)
+    this.service = new proto.Relayer(options.url, fetch)
   }
 
   async waitReceipt(
