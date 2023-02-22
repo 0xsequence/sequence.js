@@ -152,6 +152,19 @@ describe('Local config tracker', () => {
 
       return new trackers.MultipleTracker([tracker1, tracker2, tracker3])
     }
+  }, {
+    name: 'Using a cached tracker',
+    getTracker: () => {
+      const tracker = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+      const cache = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+      return new trackers.CachedTracker(tracker, cache, {})
+    }
+  }, {
+    name: 'Using a deduped tracker',
+    getTracker: () => {
+      const tracker = new trackers.local.LocalConfigTracker(provider, new trackers.stores.MemoryTrackerStore())
+      return new trackers.DedupedTracker(tracker, 50)
+    }
   }]).map(({ name, getTracker }) => {
     describe(name, () => {
       let tracker: tracker.ConfigTracker
@@ -230,6 +243,13 @@ describe('Local config tracker', () => {
           // Add the first config
           // should reveal the left branch
           await tracker.saveWalletConfig({ config: config1 })
+
+          // The deduped tracker may cache the result a bit, so if we see a window
+          // we apply a small delay
+          if ((tracker as any).window) {
+            await new Promise((resolve) => setTimeout(resolve, 100))
+          }
+
           expect(normalize(await tracker.configOfImageHash({ imageHash: ih1 }))).to.deep.equal(normalize(config1))
           expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
             normalize({
@@ -246,6 +266,11 @@ describe('Local config tracker', () => {
           // Add the second config
           // should reveal the whole tree
           await tracker.saveWalletConfig({ config: config2 })
+
+          if ((tracker as any).window) {
+            await new Promise((resolve) => setTimeout(resolve, 100))
+          }
+
           expect(normalize(await tracker.configOfImageHash({ imageHash: ih2 }))).to.deep.equal(normalize(config2))
           expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
             normalize({
@@ -263,6 +288,16 @@ describe('Local config tracker', () => {
         it('Should return undefined for unknown imageHash', async () => {
           const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
           expect(await tracker.configOfImageHash({ imageHash })).to.be.undefined
+        })
+
+        it('Should handle the same request multiple times', async () => {
+          const config = utils.configs.random.genRandomV1Config()
+          const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
+
+          await Promise.all(new Array(10).fill(0).map(async () => tracker.saveWalletConfig({ config })))
+          const results = await Promise.all(new Array(10).fill(0).map(async () => tracker.configOfImageHash({ imageHash })))
+
+          expect(results).to.deep.equal(new Array(10).fill(config))
         })
       })
 
@@ -296,6 +331,18 @@ describe('Local config tracker', () => {
         it('Should return undefined for unknown wallet', async () => {
           const wallet = ethers.Wallet.createRandom().address
           expect(await tracker.imageHashOfCounterfactualWallet({ wallet })).to.be.undefined
+        })
+
+        it('Should handle the same request multiple times', async () => {
+          const context = randomContext()
+          const config = utils.configs.random.genRandomV1Config()
+          const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
+
+          const wallet = commons.context.addressOf(context, imageHash)
+          await Promise.all(new Array(10).fill(0).map(async () => tracker.saveCounterfactualWallet({ config, context: [context] })))
+
+          const results = await Promise.all(new Array(10).fill(0).map(async () => tracker.imageHashOfCounterfactualWallet({ wallet })))
+          expect(results).to.deep.equal(new Array(10).fill({ imageHash, context }))
         })
       })
 
@@ -443,6 +490,10 @@ describe('Local config tracker', () => {
             nextConfig: nextConfig1,
             signature: signature1
           })
+
+          if ((tracker as any).window) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+          }
 
           const result0_2b = await tracker.loadPresignedConfiguration({
             wallet: address,
@@ -670,7 +721,7 @@ describe('Local config tracker', () => {
     })
   })
 
-  describe.only('Multiple config trackers', () => {
+  describe('Multiple config trackers', () => {
     let tracker1: trackers.local.LocalConfigTracker
     let tracker2: trackers.local.LocalConfigTracker
 
