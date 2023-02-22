@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.18
+
+### Patch Changes
+
+- rpc client global check, hardening
+- Updated dependencies
+  - @0xsequence/abi@0.43.18
+  - @0xsequence/api@0.43.18
+  - @0xsequence/config@0.43.18
+  - @0xsequence/indexer@0.43.18
+  - @0xsequence/metadata@0.43.18
+  - @0xsequence/network@0.43.18
+  - @0xsequence/provider@0.43.18
+  - @0xsequence/utils@0.43.18
+  - @0xsequence/wallet@0.43.18
+
 ## 0.43.17
 
 ### Patch Changes

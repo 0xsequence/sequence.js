@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.43.18
+
+### Patch Changes
+
+- rpc client global check, hardening
+- Updated dependencies
+  - @0xsequence/abi@0.43.18
+  - @0xsequence/network@0.43.18
+  - @0xsequence/utils@0.43.18
+
 ## 0.43.17
 
 ### Patch Changes

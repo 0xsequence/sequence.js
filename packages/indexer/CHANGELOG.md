@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.43.18
+
+### Patch Changes
+
+- rpc client global check, hardening
+
 ## 0.43.17
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.18
+
+### Patch Changes
+
+- rpc client global check, hardening
+- Updated dependencies
+  - @0xsequence/indexer@0.43.18
+  - @0xsequence/provider@0.43.18
+  - @0xsequence/relayer@0.43.18
+  - @0xsequence/utils@0.43.18
+
 ## 0.43.17
 
 ### Patch Changes
