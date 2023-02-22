@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.19
+
+### Patch Changes
+
+- session proof update
+- Updated dependencies
+  - @0xsequence/abi@0.43.19
+  - @0xsequence/api@0.43.19
+  - @0xsequence/config@0.43.19
+  - @0xsequence/indexer@0.43.19
+  - @0xsequence/metadata@0.43.19
+  - @0xsequence/network@0.43.19
+  - @0xsequence/provider@0.43.19
+  - @0xsequence/utils@0.43.19
+  - @0xsequence/wallet@0.43.19
+
 ## 0.43.18
 
 ### Patch Changes

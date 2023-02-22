@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.43.19
+
+### Patch Changes
+
+- session proof update
+
 ## 0.43.18
 
 ### Patch Changes

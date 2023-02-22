@@ -118,20 +118,20 @@ importers:
 
   packages/0xsequence:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/api': ^0.43.18
-      '@0xsequence/auth': ^0.43.18
-      '@0xsequence/config': ^0.43.18
-      '@0xsequence/guard': ^0.43.18
-      '@0xsequence/indexer': ^0.43.18
-      '@0xsequence/metadata': ^0.43.18
-      '@0xsequence/multicall': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/provider': ^0.43.18
-      '@0xsequence/relayer': ^0.43.18
-      '@0xsequence/transactions': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
-      '@0xsequence/wallet': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/api': ^0.43.19
+      '@0xsequence/auth': ^0.43.19
+      '@0xsequence/config': ^0.43.19
+      '@0xsequence/guard': ^0.43.19
+      '@0xsequence/indexer': ^0.43.19
+      '@0xsequence/metadata': ^0.43.19
+      '@0xsequence/multicall': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/provider': ^0.43.19
+      '@0xsequence/relayer': ^0.43.19
+      '@0xsequence/transactions': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
+      '@0xsequence/wallet': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       '@babel/plugin-transform-runtime': ^7.19.6
       babel-loader: ^9.1.0
@@ -177,16 +177,16 @@ importers:
 
   packages/auth:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/api': ^0.43.18
-      '@0xsequence/config': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/api': ^0.43.19
+      '@0xsequence/config': ^0.43.19
       '@0xsequence/ethauth': ^0.8.0
-      '@0xsequence/indexer': ^0.43.18
-      '@0xsequence/metadata': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/provider': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
-      '@0xsequence/wallet': ^0.43.18
+      '@0xsequence/indexer': ^0.43.19
+      '@0xsequence/metadata': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/provider': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
+      '@0xsequence/wallet': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       concurrently: ^7.5.0
       ethers: ^5.7.2
@@ -212,10 +212,10 @@ importers:
 
   packages/config:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/multicall': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/multicall': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
@@ -229,7 +229,7 @@ importers:
 
   packages/deployer:
     specifiers:
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/utils': ^0.43.19
       '@ethersproject/abi': ^5.7.0
       '@ethersproject/providers': ^5.7.2
       '@nomiclabs/hardhat-ethers': ^2.2.1
@@ -252,11 +252,11 @@ importers:
 
   packages/estimator:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/config': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/transactions': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/config': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/transactions': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       '@ethersproject/abstract-signer': ^5.7.0
       '@ethersproject/properties': ^5.7.0
@@ -284,9 +284,9 @@ importers:
 
   packages/multicall:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       '@ethersproject/providers': ^5.7.2
       '@types/web3-provider-engine': ^14.0.1
@@ -313,10 +313,10 @@ importers:
 
   packages/network:
     specifiers:
-      '@0xsequence/indexer': ^0.43.18
-      '@0xsequence/provider': ^0.43.18
-      '@0xsequence/relayer': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/indexer': ^0.43.19
+      '@0xsequence/provider': ^0.43.19
+      '@0xsequence/relayer': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       ethers: ^5.7.2
     dependencies:
       '@0xsequence/indexer': link:../indexer
@@ -328,14 +328,14 @@ importers:
 
   packages/provider:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/auth': ^0.43.18
-      '@0xsequence/config': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/relayer': ^0.43.18
-      '@0xsequence/transactions': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
-      '@0xsequence/wallet': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/auth': ^0.43.19
+      '@0xsequence/config': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/relayer': ^0.43.19
+      '@0xsequence/transactions': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
+      '@0xsequence/wallet': ^0.43.19
       '@types/webextension-polyfill': ^0.10.0
       ethers: ^5.7.2
       eventemitter2: ^6.4.5
@@ -357,11 +357,11 @@ importers:
 
   packages/relayer:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/config': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/transactions': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/config': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/transactions': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
@@ -376,7 +376,7 @@ importers:
 
   packages/simulator:
     specifiers:
-      '@0xsequence/transactions': ^0.43.18
+      '@0xsequence/transactions': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       ethers: ^5.7.2
     dependencies:
@@ -387,10 +387,10 @@ importers:
 
   packages/transactions:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/config': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/config': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       ethers: ^5.7.2
     dependencies:
       '@0xsequence/abi': link:../abi
@@ -411,14 +411,14 @@ importers:
 
   packages/wallet:
     specifiers:
-      '@0xsequence/abi': ^0.43.18
-      '@0xsequence/config': ^0.43.18
+      '@0xsequence/abi': ^0.43.19
+      '@0xsequence/config': ^0.43.19
       '@0xsequence/ethauth': ^0.8.0
-      '@0xsequence/guard': ^0.43.18
-      '@0xsequence/network': ^0.43.18
-      '@0xsequence/relayer': ^0.43.18
-      '@0xsequence/transactions': ^0.43.18
-      '@0xsequence/utils': ^0.43.18
+      '@0xsequence/guard': ^0.43.19
+      '@0xsequence/network': ^0.43.19
+      '@0xsequence/relayer': ^0.43.19
+      '@0xsequence/transactions': ^0.43.19
+      '@0xsequence/utils': ^0.43.19
       '@0xsequence/wallet-contracts': 1.10.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       ethers: ^5.7.2

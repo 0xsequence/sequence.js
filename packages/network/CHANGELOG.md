@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.19
+
+### Patch Changes
+
+- session proof update
+- Updated dependencies
+  - @0xsequence/indexer@0.43.19
+  - @0xsequence/provider@0.43.19
+  - @0xsequence/relayer@0.43.19
+  - @0xsequence/utils@0.43.19
+
 ## 0.43.18
 
 ### Patch Changes

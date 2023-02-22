@@ -1,5 +1,17 @@
 # @0xsequence/relayer
 
+## 0.43.19
+
+### Patch Changes
+
+- session proof update
+- Updated dependencies
+  - @0xsequence/abi@0.43.19
+  - @0xsequence/config@0.43.19
+  - @0xsequence/network@0.43.19
+  - @0xsequence/transactions@0.43.19
+  - @0xsequence/utils@0.43.19
+
 ## 0.43.18
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.19
+
+### Patch Changes
+
+- session proof update
+- Updated dependencies
+  - @0xsequence/transactions@0.43.19
+
 ## 0.43.18
 
 ### Patch Changes
