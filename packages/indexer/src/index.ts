@@ -22,7 +22,7 @@ export enum SequenceIndexerServices {
   GOERLI = 'https://goerli-indexer.sequence.app'
 }
 
-const fetch = typeof 'global' !== undefined ? global.fetch : window.fetch
+const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
 export class SequenceIndexerClient extends IndexerRpc {
   constructor(hostname: string, public jwtAuth?: string) {

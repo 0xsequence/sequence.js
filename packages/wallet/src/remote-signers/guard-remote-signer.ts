@@ -3,7 +3,7 @@ import { RemoteSigner } from './remote-signer'
 import { Guard } from '@0xsequence/guard'
 import { ChainId, ChainIdLike } from '@0xsequence/network'
 
-const fetch = typeof 'global' !== undefined ? global.fetch : window.fetch
+const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
 export class GuardRemoteSigner extends RemoteSigner {
   private readonly _guard: Guard
