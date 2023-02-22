@@ -20,7 +20,7 @@
     "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5",
+    "ethers": ">=5.5 < 6",
     "@ethersproject/abi": ">= 5.5",
     "@ethersproject/providers": ">= 5.5"
   },

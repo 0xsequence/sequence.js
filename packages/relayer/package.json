@@ -24,7 +24,7 @@
     "@0xsequence/utils": "^0.43.15"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": ">=5.5 < 6"
   },
   "devDependencies": {
     "@0xsequence/wallet-contracts": "1.10.0",
