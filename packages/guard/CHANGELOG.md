@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.43.16
+
+### Patch Changes
+
+- ethers peerDep to v5, update rpc client global use
+
 ## 0.43.15
 
 ### Patch Changes

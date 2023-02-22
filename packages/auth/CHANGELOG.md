@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.16
+
+### Patch Changes
+
+- ethers peerDep to v5, update rpc client global use
+- Updated dependencies
+  - @0xsequence/abi@0.43.16
+  - @0xsequence/api@0.43.16
+  - @0xsequence/config@0.43.16
+  - @0xsequence/indexer@0.43.16
+  - @0xsequence/metadata@0.43.16
+  - @0xsequence/network@0.43.16
+  - @0xsequence/provider@0.43.16
+  - @0xsequence/utils@0.43.16
+  - @0xsequence/wallet@0.43.16
+
 ## 0.43.15
 
 ### Patch Changes

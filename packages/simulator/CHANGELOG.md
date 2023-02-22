@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.16
+
+### Patch Changes
+
+- ethers peerDep to v5, update rpc client global use
+- Updated dependencies
+  - @0xsequence/transactions@0.43.16
+
 ## 0.43.15
 
 ### Patch Changes
