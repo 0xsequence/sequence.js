@@ -2,7 +2,7 @@ export * from './api.gen'
 
 import { API as ApiRpc } from './api.gen'
 
-const fetch = global ? global.fetch : window.fetch
+const fetch = typeof 'global' !== undefined ? global.fetch : window.fetch
 
 export class SequenceAPIClient extends ApiRpc {
   constructor(hostname: string, public jwtAuth?: string) {
