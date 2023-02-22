@@ -258,6 +258,9 @@ export class Session {
       address: this.account.address
     })
     proof.claims.app = this.name
+    if (typeof window === 'object') {
+      proof.claims.ogn = window.origin
+    }
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
