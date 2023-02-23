@@ -46,42 +46,42 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
   }
 
   configOfImageHash(args: { imageHash: string; }): Promise<commons.config.Config | undefined> {
-    return this.dedupe('configOfImageHash', this.tracker.configOfImageHash, args)
+    return this.dedupe('configOfImageHash', (args) => this.tracker.configOfImageHash(args), args)
   }
 
   getMigration(address: string, fromImageHash: string, fromVersion: number, chainId: BigNumberish): Promise<migrator.SignedMigration | undefined> {
-    return this.dedupe('getMigration', this.tracker.getMigration, address, fromImageHash, fromVersion, chainId)
+    return this.dedupe('getMigration', (...args) => this.tracker.getMigration(...args), address, fromImageHash, fromVersion, chainId)
   }
 
   saveMigration(address: string, signed: migrator.SignedMigration, contexts: commons.context.VersionedContext): Promise<void> {
-    return this.dedupe('saveMigration', this.tracker.saveMigration, address, signed, contexts)
+    return this.dedupe('saveMigration', (...args) => this.tracker.saveMigration(...args), address, signed, contexts)
   }
 
   loadPresignedConfiguration(args: { wallet: string; fromImageHash: string; longestPath?: boolean | undefined; }): Promise<PresignedConfigLink[]> {
-    return this.dedupe('loadPresignedConfiguration', this.tracker.loadPresignedConfiguration, args)
+    return this.dedupe('loadPresignedConfiguration', (args) => this.tracker.loadPresignedConfiguration(args), args)
   }
 
   savePresignedConfiguration(args: PresignedConfig): Promise<void> {
-    return this.dedupe('savePresignedConfiguration', this.tracker.savePresignedConfiguration, args)
+    return this.dedupe('savePresignedConfiguration', (args) => this.tracker.savePresignedConfiguration(args), args)
   }
 
   saveWitnesses(args: { wallet: string; digest: string; chainId: BigNumberish; signatures: string[]; }): Promise<void> {
-    return this.dedupe('saveWitnesses', this.tracker.saveWitnesses, args)
+    return this.dedupe('saveWitnesses', (args) => this.tracker.saveWitnesses(args), args)
   }
 
   saveWalletConfig(args: { config: commons.config.Config; }): Promise<void> {
-    return this.dedupe('saveWalletConfig', this.tracker.saveWalletConfig, args)
+    return this.dedupe('saveWalletConfig', (args) => this.tracker.saveWalletConfig(args), args)
   }
 
   imageHashOfCounterfactualWallet(args: { wallet: string; }): Promise<{ imageHash: string; context: commons.context.WalletContext; } | undefined> {
-    return this.dedupe('imageHashOfCounterfactualWallet', this.tracker.imageHashOfCounterfactualWallet, args)
+    return this.dedupe('imageHashOfCounterfactualWallet', (args) => this.tracker.imageHashOfCounterfactualWallet(args), args)
   }
 
   saveCounterfactualWallet(args: { config: commons.config.Config; context: commons.context.WalletContext[]; }): Promise<void> {
-    return this.dedupe('saveCounterfactualWallet', this.tracker.saveCounterfactualWallet, args)
+    return this.dedupe('saveCounterfactualWallet', (args) => this.tracker.saveCounterfactualWallet(args), args)
   }
 
   walletsOfSigner(args: { signer: string; }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string; }; }[]> {
-    return this.dedupe('walletsOfSigner', this.tracker.walletsOfSigner, args)
+    return this.dedupe('walletsOfSigner', (args) => this.tracker.walletsOfSigner(args), args)
   }
 }
