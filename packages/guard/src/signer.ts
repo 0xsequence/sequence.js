@@ -7,6 +7,7 @@ import { commons, universal } from '@0xsequence/core'
 export class GuardSigner implements signers.SapientSigner {
   private guard: Guard
   private requests: Map<string, {
+    lastAttempt?: string;
     onSignature: (signature: BytesLike) => void;
     onRejection: (error: string) => void;
     onStatus: (situation: string) => void;
@@ -67,6 +68,13 @@ export class GuardSigner implements signers.SapientSigner {
     )
   }
 
+  private keyOfRequest(signer: string, msg: BytesLike, auxData: BytesLike, chainId: ethers.BigNumberish): string {
+    return ethers.utils.solidityKeccak256(
+      ['address', 'uint256', 'bytes', 'bytes'],
+      [signer, chainId, msg, auxData]
+    )
+  }
+
   private async evaluateRequest(id: string, message: BytesLike, _: Status, metadata: commons.WalletSignRequestMetadata): Promise<void> {
     // Building auxData, notice: this uses the old v1 format
     // TODO: We should update the guard API so we can pass the metadata directly
@@ -74,6 +82,14 @@ export class GuardSigner implements signers.SapientSigner {
     const { encoded } = coder.signature.encodeSigners(metadata.config, metadata.signatureParts ?? new Map(), [], metadata.chainId)
 
     try {
+      const key = this.keyOfRequest(this.address, message, encoded, metadata.chainId)
+      const lastAttempt = this.requests.get(id)?.lastAttempt
+      if (lastAttempt === key) {
+        return
+      }
+
+      this.requests.get(id)!.lastAttempt = key
+
       const result = await this.guard.signWith({
         signer: this.address,
         request: {
