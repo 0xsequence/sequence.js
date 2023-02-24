@@ -89,13 +89,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     const { connect, networks, defaultNetworkId } = options
 
-    if (networks === undefined || networks.length === 0) {
-      throw new Error('signIn failed as network configuration is empty')
-    }
-
-    const networkId = defaultNetworkId || this.defaultNetworkId
-    if (networkId) {
-      this.setDefaultNetwork(networkId)
+    if (networks !== undefined && networks.length > 0) {
+      const networkId = defaultNetworkId || this.defaultNetworkId
+      if (networkId) {
+        this.setDefaultNetwork(networkId)
+      }
     }
 
     // Optionally, connect the dapp and wallet. In case connectOptions are provided, we will perform
