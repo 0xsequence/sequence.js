@@ -1,18 +1,22 @@
 import { commons, universal, v1, v2 } from '@0xsequence/core'
 import { migration, migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
-import { runByEIP5719 } from '@0xsequence/replacer'
+import { CachedEIP5719 } from '@0xsequence/replacer'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from './stores'
 
 export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
+  private cachedEIP5719: CachedEIP5719
+
   constructor(
     // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
     // For now, it's recommended to use Mainnet as the provider.
     public provider: ethers.providers.Provider,
-    private store: TrackerStore = new MemoryTrackerStore()
-  ) {}
+    private store: TrackerStore = new MemoryTrackerStore(),
+  ) {
+    this.cachedEIP5719 = new CachedEIP5719(provider)
+  }
 
   private loadTopology = async (hash: string): Promise<v2.config.Topology> => {
     const node = await this.store.loadV2Node(hash)
@@ -281,7 +285,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         if (!sig.signature) continue
 
         // TODO: Use Promise.all for EIP-5719
-        const replacedSignature = await runByEIP5719(sig.signer, this.provider, sig.subdigest, sig.signature)
+        const replacedSignature = await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, sig.signature)
           .then((s) => ethers.utils.hexlify(s))
 
         const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
@@ -467,7 +471,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         if (!sig.signature) continue
 
         // TODO: Use Promise.all for EIP-5719
-        const replacedSignature = await runByEIP5719(sig.signer, this.provider, sig.subdigest, sig.signature)
+        const replacedSignature = await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, sig.signature)
           .then((s) => ethers.utils.hexlify(s))
 
         const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer

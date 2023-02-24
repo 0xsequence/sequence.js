@@ -4,6 +4,8 @@ import { walletContracts } from "@0xsequence/abi"
 import { isIPFS, useGateway } from "./ipfs"
 import { commons } from "@0xsequence/core"
 
+export * from "./cached"
+
 export function eip5719Contract(address: string, provider: ethers.providers.Provider): ethers.Contract {
   // TODO: for some reason walletContracts is not being loaded from local
   // remove this code once fixed
