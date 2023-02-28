@@ -13,6 +13,9 @@ export interface Transaction {
 
 export interface SimulatedTransaction extends Transaction {
   succeeded: boolean
+  executed: boolean
+  gasUsed: number
+  gasLimit: number
   result?: string
   reason?: string
 }

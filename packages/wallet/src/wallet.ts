@@ -331,7 +331,7 @@ export class Wallet<
 
     const simulations = await relayer.simulate(this.address, ...transactions)
     return transactions.map((tx, i) => {
-      const gasLimit = tx.gasLimit || simulations[i].gasLimit
+      const gasLimit = tx.gasLimit ? ethers.BigNumber.from(tx.gasLimit).toNumber() : simulations[i].gasLimit
       return { ...tx, ...simulations[i], gasLimit }
     })
   }

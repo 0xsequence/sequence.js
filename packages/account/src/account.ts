@@ -198,7 +198,7 @@ export class Account {
       chainId,
       this.contextFor(status.version),
       status.config,
-      coder
+      coder,
     )
   }
 
@@ -213,6 +213,7 @@ export class Account {
       context,
       chainId,
       coders,
+      relayer: this.relayer(chainId),
       address: this.address,
       orchestrator: this.orchestrator,
       reader: this.reader(chainId),
