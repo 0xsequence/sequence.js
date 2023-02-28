@@ -7,7 +7,7 @@ import { Sessions, SignatureType, Transaction } from './sessions.gen'
 export class RemoteConfigTracker implements ConfigTracker, PresignedMigrationTracker {
   private readonly sessions: Sessions
 
-  constructor(hostname: string) {
+  constructor(hostname: string, public readonly onlyRecoverable: boolean = true) {
     this.sessions = new Sessions(hostname, fetch)
   }
 
@@ -54,11 +54,18 @@ export class RemoteConfigTracker implements ConfigTracker, PresignedMigrationTra
     chainId: ethers.BigNumberish
     signatures: string[]
   }): Promise<void> {
+    let filteredSignatures = args.signatures
+    if (this.onlyRecoverable) {
+      filteredSignatures = filteredSignatures.filter((signature) => {
+        return commons.signer.canRecover(signature)
+      })
+    }
+
     await this.sessions.saveSignerSignatures({
       wallet: args.wallet,
       digest: args.digest,
       chainID: numberString(args.chainId),
-      signatures: args.signatures
+      signatures: filteredSignatures
     })
   }
 
@@ -100,7 +107,7 @@ export class RemoteConfigTracker implements ConfigTracker, PresignedMigrationTra
     context: commons.context.WalletContext[]
   }): Promise<void> {
     const deployConfig = encodeConfig(args.config)
-    await Promise.allSettled(args.context.map(({ version }) => this.sessions.saveWallet({ version, deployConfig })))
+    await this.sessions.saveWallet({ version: args.config.version, deployConfig })
   }
 
   async walletsOfSigner(args: {
