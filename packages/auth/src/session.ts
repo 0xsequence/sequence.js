@@ -374,14 +374,16 @@ export class Session {
 
       // NOTICE: We are performing the wallet update on a single chain, assuming that
       // all other networks have the same configuration. This is not always true.
-      const prevConfig = await account.status(referenceChainId).then((s) => s.config)
-      const newConfig = account.coders.config.editConfig(prevConfig, {
-        add: addSigners,
-        checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
-        threshold
-      })
+      if (addSigners.length > 0) {
+        const prevConfig = await account.status(referenceChainId).then((s) => s.config)
+        const newConfig = account.coders.config.editConfig(prevConfig, {
+          add: addSigners,
+          checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
+          threshold
+        })
 
-      await account.updateConfig(newConfig)
+        await account.updateConfig(newConfig)
+      }
     } else {
       // fresh account
       account = await Account.new({
