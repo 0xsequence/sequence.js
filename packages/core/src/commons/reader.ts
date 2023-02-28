@@ -23,6 +23,8 @@ export interface Reader {
  * It is used to understand the "real" state of the wallet contract on-chain.
  */
  export class OnChainReader implements Reader {
+  // Simple cache to avoid re-fetching the same data
+  private isDeployedCache: Set<string> = new Set()
 
   constructor(
     public readonly provider: ethers.providers.Provider,
@@ -42,8 +44,18 @@ export interface Reader {
   }
 
   async isDeployed(wallet: string): Promise<boolean> {
+    // This is safe to cache because the wallet cannot be undeployed once deployed
+    if (this.isDeployedCache.has(wallet)) {
+      return true
+    }
+
     const code = await this.provider.getCode(wallet).then((c) => ethers.utils.arrayify(c))
-    return code.length !== 0
+    const isDeployed = code.length !== 0
+    if (isDeployed) {
+      this.isDeployedCache.add(wallet)
+    }
+
+    return isDeployed
   }
 
   async implementation(wallet: string): Promise<string | undefined> {
