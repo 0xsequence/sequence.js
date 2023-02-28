@@ -14,6 +14,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     // For now, it's recommended to use Mainnet as the provider.
     public provider: ethers.providers.Provider,
     private store: TrackerStore = new MemoryTrackerStore(),
+    public useEIP5719: boolean = false
   ) {
     this.cachedEIP5719 = new CachedEIP5719(provider)
   }
@@ -471,11 +472,14 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         if (!sig.signature) continue
 
         // TODO: Use Promise.all for EIP-5719
-        const replacedSignature = await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, sig.signature)
-          .then((s) => ethers.utils.hexlify(s))
+        let signature = ethers.utils.hexlify(sig.signature)
+        if (this.useEIP5719) {
+          signature = await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, signature)
+            .then((s) => ethers.utils.hexlify(s))
+        }
 
-        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
-        mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
+        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, signature) !== sig.signer
+        mappedSignatures.set(sig.signer, { isDynamic, signature })
       }
 
       // Encode signature parts into a single signature
