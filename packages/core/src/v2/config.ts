@@ -596,9 +596,10 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   buildStubSignature: function (
-    config: WalletConfig,
-    overrides: Map<string, string>
+    _config: WalletConfig,
+    _overrides: Map<string, string>
   ) {
-    throw new Error('Not implemented')
+    console.warn('buildStubSignature is not implemented for v2')
+    return '0x000000' // 6 empty bytes is the minimum length of a signature
   }
 }

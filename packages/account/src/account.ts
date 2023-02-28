@@ -7,7 +7,7 @@ import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
 import { PresignedConfigLink } from '@0xsequence/sessions/src/tracker'
 import { Wallet } from '@0xsequence/wallet'
-import { FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { encodeTypedDataDigest } from '@0xsequence/utils'
 
 export type AccountStatus = {
@@ -582,6 +582,79 @@ export class Account {
     const decoratedBundle = this.decorateTransactions(signedBundle, status)
 
     return this.relayer(chainId).relay(decoratedBundle, quote)
+  }
+
+  async fillGasLimits(
+    txs: commons.transaction.Transactionish,
+    chainId: ethers.BigNumberish,
+    status?: AccountStatus
+  ): Promise<commons.transaction.SimulatedTransaction[]> {
+    const wallet = this.walletForStatus(chainId, status || await this.status(chainId))
+    return wallet.fillGasLimits(txs)
+  }
+
+  async gasRefundQuotes(
+    txs: commons.transaction.Transactionish,
+    chainId: ethers.BigNumberish,
+    stubSignatureOverrides: Map<string, string>,
+    status?: AccountStatus
+  ): Promise<{
+    options: FeeOption[];
+    quote?: FeeQuote,
+    decorated: commons.transaction.IntendedTransactionBundle
+  }> {
+    const transactions = commons.transaction.fromTransactionish(this.address, txs)
+
+    const wstatus = status || await this.status(chainId)
+    const wallet = this.walletForStatus(chainId, wstatus)
+
+    // We can't sign the transactions (because we don't want to bother the user)
+    // so we use the latest configuration to build a "stub" signature, the relayer
+    // knows to ignore the wallet signatures
+    const stubSignature = wallet.coders.config.buildStubSignature(wallet.config, stubSignatureOverrides)
+
+    // Now we can decorate the transactions as always, but we need to manually build the signed bundle
+    const intentId = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+    const signedBundle: commons.transaction.SignedTransactionBundle = {
+      chainId,
+      intent: {
+        id: intentId,
+        wallet: this.address,
+      },
+      signature: stubSignature,
+      transactions,
+      entrypoint: this.address,
+      nonce: 0 // The relayer also ignored the nonce
+    }
+
+    const decoratedBundle = this.decorateTransactions(signedBundle, wstatus)
+    const data = commons.transaction.encodeBundleExecData(decoratedBundle)
+    const res = await this.relayer(chainId).getFeeOptionsRaw(decoratedBundle.entrypoint, data)
+    return { ...res, decorated: decoratedBundle }
+  }
+
+  async prepareTransactions(args: {
+    txs: commons.transaction.Transactionish,
+    chainId: ethers.BigNumberish,
+    stubSignatureOverrides: Map<string, string>
+  }): Promise<{
+    transactions: commons.transaction.SimulatedTransaction[],
+    flatDecorated: commons.transaction.Transaction[],
+    options: FeeOption[],
+    quote?: FeeQuote
+  }> {
+    const status = await this.status(args.chainId)
+
+    const transactions = await this.fillGasLimits(args.txs, args.chainId, status)
+    const gasRefundQuote = await this.gasRefundQuotes(transactions, args.chainId, args.stubSignatureOverrides, status)
+    const flatDecorated = commons.transaction.unwind(this.address, gasRefundQuote.decorated.transactions)
+
+    return {
+      transactions,
+      flatDecorated,
+      options: gasRefundQuote.options,
+      quote: gasRefundQuote.quote
+    }
   }
 
   async sendTransaction(

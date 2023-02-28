@@ -1,4 +1,4 @@
-import { Signer as AbstractSigner, providers } from 'ethers'
+import { Signer as AbstractSigner, providers, BytesLike } from 'ethers'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
@@ -26,6 +26,10 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     _address: string,
     ..._transactions: commons.transaction.Transaction[]
   ): Promise<{ options: FeeOption[] }> {
+    return { options: [] }
+  }
+
+  async getFeeOptionsRaw(_entrypoint: string, _data: BytesLike): Promise<{ options: FeeOption[] }> {
     return { options: [] }
   }
 

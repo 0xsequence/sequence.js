@@ -39,6 +39,11 @@ export abstract class ProviderRelayer implements Relayer {
     ...transactions: commons.transaction.Transaction[]
   ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
 
+  abstract getFeeOptionsRaw(
+    entrypoint: string,
+    data: ethers.utils.BytesLike
+  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+
   abstract gasRefundOptions(
     address: string,
     ...transactions: commons.transaction.Transaction[]

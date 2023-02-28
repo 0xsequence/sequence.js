@@ -121,6 +121,19 @@ export class RpcRelayer implements Relayer {
     }
   }
 
+  async getFeeOptionsRaw(
+    entrypoint: string,
+    data: ethers.utils.BytesLike
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+    const { options, quote } = await this.service.feeOptions({
+      wallet: entrypoint,
+      to: entrypoint,
+      data: ethers.utils.hexlify(data)
+    })
+
+    return { options, quote: { _tag: 'FeeQuote', _quote: quote } }
+  }
+
   async gasRefundOptions(address: string, ...transactions: commons.transaction.Transaction[]): Promise<FeeOption[]> {
     const { options } = await this.getFeeOptions(address, ...transactions)
     return options

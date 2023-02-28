@@ -2,7 +2,7 @@ import { ethers } from "ethers"
 import { commons, v1, v2 } from "@0xsequence/core"
 import { isSignerStatusSigned, Orchestrator, Status } from "@0xsequence/signhub"
 import { Deferrable, subDigestOf } from "@0xsequence/utils"
-import { FeeQuote, Relayer } from "@0xsequence/relayer"
+import { FeeQuote, Relayer, SimulateResult } from "@0xsequence/relayer"
 import { walletContracts } from '@0xsequence/abi'
 
 import { resolveArrayProperties } from "./utils"
@@ -278,7 +278,6 @@ export class Wallet<
 
   async signTransactions(txs: Deferrable<commons.transaction.Transactionish>, nonce?: ethers.BigNumberish): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
-
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
 
     let defaultedNonce = nonce
@@ -320,6 +319,21 @@ export class Wallet<
     const signed = await this.signTransactions(txs, nonce)
     const decorated = await this.decorateTransactions(signed)
     return this.sendSignedTransaction(decorated, quote)
+  }
+
+  async fillGasLimits(
+    txs: Deferrable<commons.transaction.Transactionish>
+  ): Promise<commons.transaction.SimulatedTransaction[]> {
+    const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
+    const transactions = commons.transaction.fromTransactionish(this.address, transaction)
+    const relayer = this.relayer
+    if (!relayer) throw new Error("Wallet fillGasLimits requires a relayer")
+
+    const simulations = await relayer.simulate(this.address, ...transactions)
+    return transactions.map((tx, i) => {
+      const gasLimit = tx.gasLimit || simulations[i].gasLimit
+      return { ...tx, ...simulations[i], gasLimit }
+    })
   }
 
   connect(provider: ethers.providers.Provider, relayer?: Relayer): Wallet<Y, T, Z> {

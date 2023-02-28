@@ -11,6 +11,12 @@ export interface Transaction {
   revertOnError?: boolean
 }
 
+export interface SimulatedTransaction extends Transaction {
+  succeeded: boolean
+  result?: string
+  reason?: string
+}
+
 export interface TransactionEncoded {
   delegateCall: boolean
   revertOnError: boolean
@@ -261,4 +267,46 @@ export function encodeBundleExecData(bundle: TransactionBundle): string {
       []
     ]
   )
+}
+
+// TODO: Use Sequence ABI package
+export const selfExecuteSelector = '0x61c2926c'
+export const selfExecuteAbi = `tuple(
+  bool delegateCall,
+  bool revertOnError,
+  uint256 gasLimit,
+  address target,
+  uint256 value,
+  bytes data
+)[]`
+
+// Splits Sequence batch transactions into individual parts
+export const unwind = (wallet: string, transactions: Transaction[]): Transaction[] => {
+  const unwound: Transaction[] = []
+
+  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+
+  for (const tx of transactions) {
+    const txData = ethers.utils.arrayify(tx.data || '0x')
+
+    if (tx.to === wallet && ethers.utils.hexlify(txData.slice(0, 4)) === selfExecuteSelector) {
+      // Decode as selfExecute call
+      const data = txData.slice(4)
+      const decoded = ethers.utils.defaultAbiCoder.decode([selfExecuteAbi], data)[0]
+      unwound.push(...decoded.map((d: TransactionEncoded) => ({ ...d, to: d.target })))
+    } else {
+      try {
+        const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0]
+        const unwoundTransactions = unwind(
+          wallet,
+          innerTransactions.map((tx: TransactionEncoded) => ({ ...tx, to: tx.target }))
+        )
+        unwound.push(...unwoundTransactions)
+      } catch {
+        unwound.push(tx)
+      }
+    }
+  }
+
+  return unwound
 }
