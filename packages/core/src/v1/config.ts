@@ -194,5 +194,12 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       threshold: action.threshold ?? config.threshold,
       signers: newSigners
     }
+  },
+
+  buildStubSignature: function (
+    config: WalletConfig,
+    overrides: Map<string, string>
+  ) {
+    throw new Error('Not implemented')
   }
 }

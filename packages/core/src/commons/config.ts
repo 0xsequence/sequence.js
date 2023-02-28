@@ -39,6 +39,11 @@ export interface ConfigCoder<T extends Config = Config> {
     checkpoint?: ethers.BigNumberish
   }) => T
 
+  buildStubSignature: (
+    config: T,
+    overrides: Map<string, string>
+  ) => string
+
   // isValid: (config: T) => boolean
 
   // TODO: This may not be the best place for this

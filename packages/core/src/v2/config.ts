@@ -593,5 +593,12 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       checkpoint: action.checkpoint ?? config.checkpoint,
       tree: optimized2SignersTopologyBuilder(members)
     }
+  },
+
+  buildStubSignature: function (
+    config: WalletConfig,
+    overrides: Map<string, string>
+  ) {
+    throw new Error('Not implemented')
   }
 }
