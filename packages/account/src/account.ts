@@ -208,12 +208,13 @@ export class Account {
     config: commons.config.Config,
     coders: typeof this.coders
   ): Wallet {
+    const isNetworkZero = ethers.constants.Zero.eq(chainId)
     return new Wallet({
       config,
       context,
       chainId,
       coders,
-      relayer: this.relayer(chainId),
+      relayer: isNetworkZero ? undefined : this.relayer(chainId),
       address: this.address,
       orchestrator: this.orchestrator,
       reader: this.reader(chainId),
