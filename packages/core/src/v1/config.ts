@@ -2,6 +2,7 @@
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
+import { encodeSigners } from './signature'
 
 
 export type AddressMember = {
@@ -197,10 +198,33 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   buildStubSignature: function (
-    _config: WalletConfig,
-    _overrides: Map<string, string>
+    config: WalletConfig,
+    overrides: Map<string, string>
   ) {
-    console.warn('buildStubSignature is not implemented for v1 config')
-    return '0x00' // Just the threshold
+    const parts = new Map<string, commons.signature.SignaturePart>()
+
+    for (const [signer, signature] of overrides.entries()) {
+      parts.set(signer, { signature, isDynamic: true })
+
+      const { encoded, weight } = encodeSigners(config, parts, [], 0)
+
+      if (weight.gte(config.threshold)) {
+        return encoded
+      }
+    }
+
+    const signers = config.signers
+
+    for (const { address } of signers.sort(({ weight: a }, { weight: b }) => ethers.BigNumber.from(a).sub(b).toNumber())) {
+      parts.set(address, { signature: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1c02', isDynamic: false })
+
+      const { encoded, weight } = encodeSigners(config, parts, [], 0)
+
+      if (weight.gte(config.threshold)) {
+        return encoded
+      }
+    }
+
+    return encodeSigners(config, parts, [], 0).encoded
   }
 }
