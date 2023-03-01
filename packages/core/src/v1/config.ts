@@ -216,7 +216,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     const signers = config.signers
 
     for (const { address } of signers.sort(({ weight: a }, { weight: b }) => ethers.BigNumber.from(a).sub(b).toNumber())) {
-      parts.set(address, { signature: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a01c02', isDynamic: false })
+      const signature = '0x4e82f02f388a12b5f9d29eaf2452dd040c0ee5804b4e504b4dd64e396c6c781f2c7624195acba242dd825bfd25a290912e3c230841fd55c9a734c4de8d9899451b02'
+      parts.set(address, { signature, isDynamic: false })
 
       const { encoded, weight } = encodeSigners(config, parts, [], 0)
 
