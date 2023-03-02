@@ -67,6 +67,7 @@ const EXPIRATION_JWT_MARGIN = 60 // seconds
 export type SessionSettings = {
   contexts: commons.context.VersionedContext
   sequenceApiUrl: string
+  sequenceApiChainId: ethers.BigNumberish
   sequenceMetadataUrl: string
   networks: NetworkConfig[]
   tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
@@ -88,6 +89,7 @@ export class Session {
 
   constructor(
     public sequenceApiUrl: string,
+    public sequenceApiChainId: ethers.BigNumberish,
     public sequenceMetadataUrl: string,
     public networks: NetworkConfig[],
     public contexts: commons.context.VersionedContext,
@@ -279,7 +281,9 @@ export class Session {
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
     const proofString = {
-      proofString: this.account.signDigest(proof.messageDigest(), 0).then((s) => {
+      proofString: this.account.signDigest(
+        proof.messageDigest(), this.sequenceApiChainId
+      ).then((s) => {
         proof.signature = s
         return ethAuth.encodeProof(proof, true)
       }).catch((reason) => {
@@ -339,7 +343,7 @@ export class Session {
     editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
   }): Promise<Session> {
     const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration } = args
-    const { sequenceApiUrl, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
+    const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
     const referenceChainId = networks.find((n) => n.chainId === 1)?.chainId ?? networks[0].chainId
     if (!referenceChainId) throw Error('No reference chain found')
@@ -399,7 +403,15 @@ export class Session {
       await account.publishWitness()
     }
 
-    const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, contexts, account, metadata)
+    const session = new Session(
+      sequenceApiUrl,
+      sequenceApiChainId,
+      sequenceMetadataUrl,
+      networks,
+      contexts,
+      account,
+      metadata
+    )
 
     if (sequenceApiUrl) {
       // Fire JWT requests after updating config
@@ -417,7 +429,7 @@ export class Session {
     editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
   }): Promise<Session> {
     const { dump, settings, editConfigOnMigration } = args
-    const { sequenceApiUrl, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
+    const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
     let account: Account
 
@@ -456,6 +468,7 @@ export class Session {
 
     return new Session(
       sequenceApiUrl,
+      sequenceApiChainId,
       sequenceMetadataUrl,
       networks,
       contexts,
