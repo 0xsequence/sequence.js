@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.43.20
+
+### Patch Changes
+
+- indexer: update bindings
+
 ## 0.43.19
 
 ### Patch Changes

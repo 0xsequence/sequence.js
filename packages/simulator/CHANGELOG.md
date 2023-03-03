@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.20
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/transactions@0.43.20
+
 ## 0.43.19
 
 ### Patch Changes

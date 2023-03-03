@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 0.43.20
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.20
+  - @0xsequence/config@0.43.20
+  - @0xsequence/guard@0.43.20
+  - @0xsequence/network@0.43.20
+  - @0xsequence/relayer@0.43.20
+  - @0xsequence/transactions@0.43.20
+  - @0xsequence/utils@0.43.20
+
 ## 0.43.19
 
 ### Patch Changes

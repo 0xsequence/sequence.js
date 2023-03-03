@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.20
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/indexer@0.43.20
+  - @0xsequence/provider@0.43.20
+  - @0xsequence/relayer@0.43.20
+  - @0xsequence/utils@0.43.20
+
 ## 0.43.19
 
 ### Patch Changes

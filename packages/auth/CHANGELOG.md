@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.20
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.20
+  - @0xsequence/api@0.43.20
+  - @0xsequence/config@0.43.20
+  - @0xsequence/indexer@0.43.20
+  - @0xsequence/metadata@0.43.20
+  - @0xsequence/network@0.43.20
+  - @0xsequence/provider@0.43.20
+  - @0xsequence/utils@0.43.20
+  - @0xsequence/wallet@0.43.20
+
 ## 0.43.19
 
 ### Patch Changes
