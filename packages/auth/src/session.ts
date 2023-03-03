@@ -276,6 +276,14 @@ export class Session {
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
+    const chainId = ethers.BigNumber.from(this.sequenceApiChainId)
+    const network = this.networks.find(n => chainId.eq(n.chainId))
+    if (!network) throw Error('No network found')
+    ethAuth.chainId = chainId.toNumber()
+    if (network.provider) {
+      ethAuth.provider = network.provider
+    }
+
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
     const proofString = {
@@ -302,9 +310,13 @@ export class Session {
   private async isProofStringValid(proofString: string): Promise<boolean> {
     try {
       const ethAuth = new ETHAuth()
-      const provider = this.networks.find((n) => n.provider)?.provider
-      if (!provider) throw Error('No provider found')
-      ethAuth.provider = provider
+      const chainId = ethers.BigNumber.from(this.sequenceApiChainId)
+      const network = this.networks.find(n => chainId.eq(n.chainId))
+      if (!network) throw Error('No network found')
+      ethAuth.chainId = chainId.toNumber()
+      if (network.provider) {
+        ethAuth.provider = network.provider
+      }
 
       await ethAuth.decodeProof(proofString)
 
