@@ -86,8 +86,9 @@ describe('Wallet integration', function () {
     ethnode.providerUrl = `http://127.0.0.1:9546/`
     ethnode.provider = new ethers.providers.JsonRpcProvider(ethnode.providerUrl)
 
+    const chainId = (await ethnode.provider.getNetwork()).chainId
     ethnode.signer = ethnode.provider.getSigner()
-    ethnode.chainId = 31337
+    ethnode.chainId = chainId
 
     // Deploy local relayer
     relayer = new LocalRelayer(ethnode.signer)
@@ -95,10 +96,10 @@ describe('Wallet integration', function () {
     networks = [
       {
         name: 'local',
-        chainId: ethnode.chainId,
+        chainId,
         provider: ethnode.provider,
         isDefaultChain: true,
-        relayer: relayer
+        relayer
       }
     ] as NetworkConfig[]
 
@@ -123,6 +124,7 @@ describe('Wallet integration', function () {
 
     simpleSettings = {
       sequenceApiUrl: '',
+      sequenceApiChainId: chainId,
       sequenceMetadataUrl: '',
       contexts,
       networks,
