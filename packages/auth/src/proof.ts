@@ -14,7 +14,7 @@ export const ValidateSequenceWalletProof = (
 ): ValidatorFunc => {
   return async (
     provider: ethers.providers.JsonRpcProvider,
-    _chainId: number,
+    chainId: number,
     proof: Proof
   ): Promise<{ isValid: boolean }> => {
     const digest = proof.messageDigest()
@@ -36,7 +36,7 @@ export const ValidateSequenceWalletProof = (
     const recovered = await coders.signature.recover(decoded, {
       address: proof.address,
       digest: ethers.utils.hexlify(digest),
-      chainId: 0 // Sequence uses chainId 0 for all networks, proofs are not chain specific
+      chainId
     }, provider)
 
     const imageHash = coders.config.imageHashOf(recovered.config)
