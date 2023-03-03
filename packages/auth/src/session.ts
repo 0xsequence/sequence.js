@@ -259,7 +259,7 @@ export class Session {
     })
     proof.claims.app = this.name
     if (typeof window === 'object') {
-      proof.claims.ogn = window.origin
+      proof.claims.ogn = window.location.origin
     }
     proof.setExpiryIn(this.expiration)
 
