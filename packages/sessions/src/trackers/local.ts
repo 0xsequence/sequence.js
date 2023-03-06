@@ -289,7 +289,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         const replacedSignature = await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, sig.signature)
           .then((s) => ethers.utils.hexlify(s))
 
-        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, sig.signature) !== sig.signer
+        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, replacedSignature) !== sig.signer
         mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
       }
 
