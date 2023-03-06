@@ -276,26 +276,29 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       }
 
       // Get all signatures (for all signers) for this subdigest
-      const signatures = await Promise.all(signers.map(async (s) => {
-        const res = await this.store.loadSignatureOfSubdigest(s, payload.subdigest)
-        return { signer: s, signature: res, subdigest: payload.subdigest }
-      }))
+      const signatures = new Map(
+        (
+          await Promise.all(
+            signers.map(async signer => {
+              const signature = await this.store.loadSignatureOfSubdigest(signer, payload.subdigest)
+              if (!signature) {
+                return [signer, undefined]
+              }
 
-      const mappedSignatures: Map<string, commons.signature.SignaturePart> = new Map()
-      for (const sig of signatures) {
-        if (!sig.signature) continue
+              const replacedSignature = ethers.utils.hexlify(
+                this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, payload.subdigest, signature) : signature
+              )
 
-        // TODO: Use Promise.all for EIP-5719
-        const replacedSignature = ethers.utils.hexlify(
-          this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, sig.signature) : sig.signature
-        )
+              const isDynamic = commons.signer.tryRecoverSigner(payload.subdigest, replacedSignature) !== signer
 
-        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, replacedSignature) !== sig.signer
-        mappedSignatures.set(sig.signer, { isDynamic, signature: replacedSignature })
-      }
+              return [signer, { isDynamic, signature: replacedSignature }]
+            })
+          )
+        ).filter((signature): signature is [string, commons.signature.SignaturePart] => Boolean(signature[1]))
+      )
 
       // Encode the full signature
-      const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, mappedSignatures, [], 0)
+      const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, signatures, [], 0)
       if (encoded.weight.lt(fromConfig.threshold)) continue
 
       // Save the new best candidate
@@ -463,28 +466,29 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       const signers = coder.config.signersOf(currentConfig as any).map((s) => s.address)
 
       // Get all signatures (for all signers) for this subdigest
-      const signatures = await Promise.all(signers.map(async (s) => {
-        const res = await this.store.loadSignatureOfSubdigest(s, subdigest)
-        return { signer: s, signature: res, subdigest }
-      }))
+      const signatures = new Map(
+        (
+          await Promise.all(
+            signers.map(async signer => {
+              const signature = await this.store.loadSignatureOfSubdigest(signer, subdigest)
+              if (!signature) {
+                return [signer, undefined]
+              }
 
-      const mappedSignatures: Map<string, commons.signature.SignaturePart> = new Map()
-      for (const sig of signatures) {
-        if (!sig.signature) continue
+              const replacedSignature = ethers.utils.hexlify(
+                this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
+              )
 
-        // TODO: Use Promise.all for EIP-5719
-        let signature = ethers.utils.hexlify(sig.signature)
-        if (this.useEIP5719) {
-          signature = await this.cachedEIP5719.runByEIP5719(sig.signer, sig.subdigest, signature)
-            .then((s) => ethers.utils.hexlify(s))
-        }
+              const isDynamic = commons.signer.tryRecoverSigner(subdigest, replacedSignature) !== signer
 
-        const isDynamic = commons.signer.tryRecoverSigner(sig.subdigest, signature) !== sig.signer
-        mappedSignatures.set(sig.signer, { isDynamic, signature })
-      }
+              return [signer, { isDynamic, signature: replacedSignature }]
+            })
+          )
+        ).filter((signature): signature is [string, commons.signature.SignaturePart] => Boolean(signature[1]))
+      )
 
       // Encode signature parts into a single signature
-      const encoded = coder.signature.encodeSigners(currentConfig as any, mappedSignatures, [], chainId)
+      const encoded = coder.signature.encodeSigners(currentConfig as any, signatures, [], chainId)
       if (!encoded || encoded.weight < currentConfig.threshold) return undefined
 
       // Unpack payload (it should have transactions)
