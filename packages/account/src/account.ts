@@ -353,6 +353,23 @@ export class Account {
     }
   }
 
+  async predecorateTransactions(
+    txs: commons.transaction.Transactionish,
+    status: AccountStatus,
+    chainId: ethers.BigNumberish,
+  ): Promise<commons.transaction.Transactionish> {
+    // if onchain wallet config is not up to date
+    // then we should append an extra transaction that updates it
+    // to the latest "lazy" state
+    if (status.onChain.imageHash !== status.imageHash) {
+      const wallet = this.walletForStatus(chainId, status)
+      const updateConfig = await wallet.buildUpdateConfigurationTransaction(status.config)
+      return [(Array.isArray(txs) ? txs : [txs]), updateConfig.transactions].flat()
+    }
+
+    return txs
+  }
+
   decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
     status: AccountStatus,
@@ -538,9 +555,10 @@ export class Account {
 
   async signTransactions(
     txs: commons.transaction.Transactionish,
-    chainId: ethers.BigNumberish
+    chainId: ethers.BigNumberish,
+    pstatus?: AccountStatus
   ): Promise<commons.transaction.SignedTransactionBundle> {
-    const status = await this.status(chainId)
+    const status = pstatus || await this.status(chainId)
     this.mustBeFullyMigrated(status)
 
     const wallet = this.walletForStatus(chainId, status)
@@ -576,9 +594,10 @@ export class Account {
   async sendSignedTransactions(
     signedBundle: commons.transaction.IntendedTransactionBundle,
     chainId: ethers.BigNumberish,
-    quote?: FeeQuote
+    quote?: FeeQuote,
+    pstatus?: AccountStatus
   ): Promise<ethers.providers.TransactionResponse> {
-    const status = await this.status(signedBundle.chainId)
+    const status = pstatus || await this.status(signedBundle.chainId)
     this.mustBeFullyMigrated(status)
 
     const decoratedBundle = this.decorateTransactions(signedBundle, status)
@@ -663,22 +682,11 @@ export class Account {
     txs: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
-    skipLazyUpdate: boolean = false
+    skipPreDecorate: boolean = false
   ): Promise<ethers.providers.TransactionResponse> {
-    if (!skipLazyUpdate) {
-      // if onchain wallet config is not up to date
-      // then we should append an extra transaction that updates it
-      // to the latest "lazy" state
-      const status = await this.status(chainId)
-
-      if (status.onChain.imageHash !== status.imageHash) {
-        const wallet = this.walletForStatus(chainId, status)
-        const updateConfig = await wallet.buildUpdateConfigurationTransaction(status.config)
-        txs = [(Array.isArray(txs) ? txs : [txs]), updateConfig.transactions].flat()
-      }
-    }
-
-    const signed = await this.signTransactions(txs, chainId)
+    const status = await this.status(chainId)
+    const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
+    const signed = await this.signTransactions(predecorated, chainId)
     return this.sendSignedTransactions(signed, chainId, quote)
   }
 
