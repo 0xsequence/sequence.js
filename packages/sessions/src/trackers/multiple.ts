@@ -28,18 +28,7 @@ export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val:
 }
 
 export async function allSafe<T>(promises: Promise<T>[], fallback: T): Promise<T[]> {
-  const results: T[] = []
-
-  for (const p of promises) {
-    try {
-      results.push(await p)
-    } catch {
-      // Ignore
-      results.push(fallback)
-    }
-  }
-
-  return results
+  return Promise.all(promises.map(promise => promise.catch(() => fallback)))
 }
 
 export class MultipleTracker implements migrator.PresignedMigrationTracker, ConfigTracker {
