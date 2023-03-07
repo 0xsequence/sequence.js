@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.21
+
+### Patch Changes
+
+- api: update client bindings
+- Updated dependencies
+  - @0xsequence/indexer@0.43.21
+  - @0xsequence/provider@0.43.21
+  - @0xsequence/relayer@0.43.21
+  - @0xsequence/utils@0.43.21
+
 ## 0.43.20
 
 ### Patch Changes

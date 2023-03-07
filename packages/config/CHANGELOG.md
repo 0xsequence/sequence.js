@@ -1,5 +1,16 @@
 # @0xsequence/config
 
+## 0.43.21
+
+### Patch Changes
+
+- api: update client bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.21
+  - @0xsequence/multicall@0.43.21
+  - @0xsequence/network@0.43.21
+  - @0xsequence/utils@0.43.21
+
 ## 0.43.20
 
 ### Patch Changes

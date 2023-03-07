@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.21
+
+### Patch Changes
+
+- api: update client bindings
+- Updated dependencies
+  - @0xsequence/utils@0.43.21
+
 ## 0.43.20
 
 ### Patch Changes
