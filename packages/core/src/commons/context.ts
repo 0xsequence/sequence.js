@@ -95,6 +95,6 @@ export function isValidVersionedContext(contexts: VersionedContext): boolean {
 }
 
 export function latestContext(contexts: VersionedContext): WalletContext {
-  const versions = Object.keys(context).length
+  const versions = Object.keys(contexts).length
   return contexts[versions]
 }
