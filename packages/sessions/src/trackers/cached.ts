@@ -12,6 +12,14 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
   ) {}
 
   async loadPresignedConfiguration(args: { wallet: string; fromImageHash: string; longestPath?: boolean | undefined }): Promise<PresignedConfigLink[]> {
+    const configs = new Map<string, Promise<commons.config.Config | undefined>>()
+    const configOf = (imageHash: string): Promise<commons.config.Config | undefined> => {
+      if (!configs.has(imageHash)) {
+        configs.set(imageHash, this.configOfImageHash({ imageHash }))
+      }
+      return configs.get(imageHash)!
+    }
+
     // We need to check both, and return the one with the highest checkpoint
     // eventually we could try to combine them, but for now we'll just return
     // the one with the highest checkpoint
@@ -22,7 +30,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
       if (!last) return undefined
 
       // TODO: This will fire a lot of requests, optimize it
-      const config = await this.configOfImageHash({ imageHash: last.nextImageHash })
+      const config = await configOf(last.nextImageHash)
       if (!config) return undefined
 
       return { checkpoint: universal.genericCoderFor(config.version).config.checkpointOf(config), result: r }
@@ -37,15 +45,8 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
 
     if (!best) return []
 
-    const configs = new Map<string, Promise<commons.config.Config | undefined>>()
-    const config = (imageHash: string): Promise<commons.config.Config | undefined> => {
-      if (!configs.has(imageHash)) {
-        configs.set(imageHash, this.configOfImageHash({ imageHash }))
-      }
-      return configs.get(imageHash)!
-    }
     best.result.forEach(async res => {
-      const nextConfig = await config(res.nextImageHash)
+      const nextConfig = await configOf(res.nextImageHash)
       if (nextConfig) {
         this.savePresignedConfiguration({
           wallet: args.wallet,
