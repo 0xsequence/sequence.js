@@ -706,12 +706,6 @@ export class Account {
     network: number,
     flaggedForRemoval: boolean
   }[]> {
-    const networks = this.networks
-
-    // Getting all status with `longestPath` set to true will give us all the possible configurations
-    // between the current onChain config and the latest config, including the ones "flagged for removal"
-    const statuses = await Promise.all(networks.map((n) => this.status(n.chainId, true)))
-
     const allSigners: {
       address: string,
       weight: number,
@@ -720,8 +714,13 @@ export class Account {
     }[] = []
 
     // We need to get the signers for each status
-    await Promise.all(statuses.map(async (status, inet) => {
-      const chainId = networks[inet].chainId
+    await Promise.all(this.networks.map(async network => {
+      const chainId = network.chainId
+
+      // Getting the status with `longestPath` set to true will give us all the possible configurations
+      // between the current onChain config and the latest config, including the ones "flagged for removal"
+      const status = await this.status(chainId, true)
+
       return Promise.all(status.presignedConfigurations.map(async (update, iconf) => {
         const isLast = iconf === status.presignedConfigurations.length - 1
         const config = await this.tracker.configOfImageHash({ imageHash: update.nextImageHash })
