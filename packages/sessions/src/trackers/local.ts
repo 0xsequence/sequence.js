@@ -24,10 +24,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     if (!node) return { nodeHash: hash }
 
     if (isPlainNode(node)) {
-      return {
-        left: await this.loadTopology(node.left),
-        right: await this.loadTopology(node.right)
-      }
+      const [left, right] = await Promise.all([this.loadTopology(node.left), this.loadTopology(node.right)])
+      return { left, right }
     }
 
     if (isPlainNested(node)) {
