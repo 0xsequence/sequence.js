@@ -15,8 +15,9 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     // We need to check both, and return the one with the highest checkpoint
     // eventually we could try to combine them, but for now we'll just return
     // the one with the highest checkpoint
-    const results = await Promise.all([this.tracker.loadPresignedConfiguration(args), this.cache.loadPresignedConfiguration(args)])
-    const checkpoints = await Promise.all(results.map(async (r) => {
+    const results = [this.tracker.loadPresignedConfiguration(args), this.cache.loadPresignedConfiguration(args)]
+    const checkpoints = await Promise.all(results.map(async result => {
+      const r = await result
       const last = r[r.length - 1]
       if (!last) return undefined
 
