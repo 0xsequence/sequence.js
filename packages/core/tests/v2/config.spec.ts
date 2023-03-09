@@ -300,6 +300,7 @@ describe('v2 config utils', () => {
       }, config.legacyTopologyBuilder)
 
       expect(legacyConfig1).to.deep.equal({
+        version: 2,
         checkpoint: 999999,
         threshold: 11,
         tree: {
@@ -330,6 +331,7 @@ describe('v2 config utils', () => {
       })
 
       expect(legacyConfig2).to.deep.equal({
+        version: 2,
         checkpoint: 2,
         threshold: 1,
         tree: {
@@ -376,6 +378,7 @@ describe('v2 config utils', () => {
       })
 
       expect(legacyConfig3).to.deep.equal({
+        version: 2,
         checkpoint: 3,
         threshold: 2,
         tree: {
@@ -414,6 +417,7 @@ describe('v2 config utils', () => {
       }, config.merkleTopologyBuilder)
 
       expect(merkleConfig1).to.deep.equal({
+        version: 2,
         checkpoint: 999999,
         threshold: 11,
         tree: {
@@ -444,6 +448,7 @@ describe('v2 config utils', () => {
       }, config.merkleTopologyBuilder)
 
       expect(merkleConfig2).to.deep.equal({
+        version: 2,
         checkpoint: 2,
         threshold: 1,
         tree: sampleTree2
@@ -469,6 +474,7 @@ describe('v2 config utils', () => {
       }, config.merkleTopologyBuilder)
 
       expect(merkleConfig3).to.deep.equal({
+        version: 2,
         checkpoint: 3,
         threshold: 2,
         tree: {
