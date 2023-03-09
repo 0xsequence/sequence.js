@@ -48,7 +48,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     best.result.forEach(async res => {
       const nextConfig = await configOf(res.nextImageHash)
       if (nextConfig) {
-        this.savePresignedConfiguration({
+        this.cache.savePresignedConfiguration({
           wallet: args.wallet,
           nextConfig,
           signature: res.signature
