@@ -492,7 +492,7 @@ export class Wallet implements WalletProvider {
     let provider: Web3Provider
 
     // network.provider may be set by the ProviderConfig override
-    const rpcProvider = network.provider ? network.provider : new providers.JsonRpcProvider(network.rpcUrl, network.chainId)
+    const rpcProvider = new providers.JsonRpcProvider(network.rpcUrl, network.chainId)
 
     if (network.isDefaultChain) {
       // communicating with defaultChain will prioritize the wallet message transport
