@@ -27,7 +27,7 @@ export class PromiseCache {
     }
 
     if (!entry) {
-      entry = { promise: Promise.reject('unreachable') }
+      entry = { promise: Promise.resolve() }
       if (validMilliseconds === undefined) {
         entry.promise = task(...args)
       } else {
