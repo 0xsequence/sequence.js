@@ -60,8 +60,8 @@ export interface NetworkConfig {
   blockExplorer?: BlockExplorerConfig
   ensAddress?: string
 
-  rpcUrl: string
-  provider?: providers.Provider
+  rpcUrl?: string
+  provider?: providers.JsonRpcProvider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
@@ -85,7 +85,7 @@ export const indexerURL = (network: string) => stringTemplate('https://${network
 export const relayerURL = (network: string) => stringTemplate('https://${network}-relayer.sequence.app', { network: network })
 export const nodesURL = (network: string) => stringTemplate('https://nodes.sequence.app/${network}', { network: network })
 
-export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
+export const networks: Record<ChainId, NetworkConfig> = {
   [ChainId.MAINNET]: {
     chainId: ChainId.MAINNET,
     name: 'mainnet',
