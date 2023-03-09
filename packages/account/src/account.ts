@@ -624,10 +624,12 @@ export class Account {
     quote?: FeeQuote,
     decorated: commons.transaction.IntendedTransactionBundle
   }> {
-    const transactions = commons.transaction.fromTransactionish(this.address, txs)
 
     const wstatus = status || await this.status(chainId)
     const wallet = this.walletForStatus(chainId, wstatus)
+
+    const predecorated = await this.predecorateTransactions(txs, wstatus, chainId)
+    const transactions = commons.transaction.fromTransactionish(this.address, predecorated)
 
     // We can't sign the transactions (because we don't want to bother the user)
     // so we use the latest configuration to build a "stub" signature, the relayer
