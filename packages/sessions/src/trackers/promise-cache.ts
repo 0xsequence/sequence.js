@@ -13,7 +13,7 @@ export class PromiseCache {
     task: (...args: S) => Promise<T>,
     ...args: S
   ): Promise<T> {
-    key = `${key}:${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(JSON.stringify(args)))}`
+    key = `${key}:${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(JSON.stringify(args, deterministically)))}`
 
     let entry = this.cache.get(key)
 
@@ -48,4 +48,12 @@ export class PromiseCache {
 type Entry = {
   promise: Promise<unknown>
   expiration?: Date
+}
+
+function deterministically(_key: string, value: any): any {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return Object.fromEntries(Object.entries(value).sort())
+  }
+
+  return value
 }
