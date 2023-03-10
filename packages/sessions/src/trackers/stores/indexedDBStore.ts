@@ -173,6 +173,6 @@ export class IndexedDBStore implements TrackerStore {
 
   saveMigrationsSubdigest = async (wallet: string, fromVersion: number, toVersion: number, subdigest: string): Promise<void> => {
     const db = await this.getDb()
-    await db.put('migrations', { wallet, fromVersion, toVersion, subdigest })
+    await db.put('migrations', { wallet, fromVersion, toVersion, subdigest }, subdigest)
   }
 }
