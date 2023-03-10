@@ -101,7 +101,7 @@ export class IndexedDBStore implements TrackerStore {
           signatures.createIndex('signer', 'signer', { unique: false })
 
           const migrations = db.createObjectStore('migrations')
-          migrations.createIndex('jump', ['wallet', 'fromVersion', 'toVersion'], { unique: true })
+          migrations.createIndex('jump', ['wallet', 'fromVersion', 'toVersion'])
         }
       },
     })
