@@ -92,7 +92,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
           address,
           isDynamic: true
         })
-        i += length
+        i += size
         break
 
       default:
@@ -149,7 +149,7 @@ export async function recoverSignature(
 
     if (s.isDynamic) {
       if (!s.address) throw new Error('Dynamic signature part must have address')
-      if (!isValidSignature(s.address, subdigest, s.address, provider)) {
+      if (!isValidSignature(s.address, subdigest, s.signature, provider)) {
         throw new Error(`Invalid dynamic signature part ${s.address}`)
       }
 
