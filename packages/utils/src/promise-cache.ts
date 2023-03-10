@@ -27,17 +27,16 @@ export class PromiseCache {
     }
 
     if (!entry) {
-      entry = { promise: Promise.resolve() }
-      if (validMilliseconds === undefined) {
-        entry.promise = task(...args)
-      } else {
-        entry.promise = task(...args).then(result => {
-          if (entry) {
-            entry.expiration = new Date(Date.now() + validMilliseconds)
-          }
+      const entry_: Entry = { promise: task(...args) }
+
+      if (validMilliseconds !== undefined) {
+        entry_.promise = entry_.promise.then(result => {
+          entry_.expiration = new Date(Date.now() + validMilliseconds)
           return result
         })
       }
+
+      entry = entry_
       this.cache.set(key, entry)
     }
 
