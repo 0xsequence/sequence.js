@@ -71,10 +71,13 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   private findNetworkID(network: string | number) {
-    const networkId = this.networks.find((n) => {
-      if (n.name === network) return true
-      if (n.chainId === network) return true
-      return false
+    const networkId = this.networks.find(n => {
+      switch (`${network}`) {
+        case n.name, `${n.chainId}`:
+          return true
+        default:
+          return false
+      }
     })
 
     if (!networkId) {
