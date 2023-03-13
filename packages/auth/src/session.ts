@@ -284,11 +284,20 @@ export class Session {
     ethAuth.provider = new ethers.providers.JsonRpcProvider(network.rpcUrl)
 
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
+    
 
     const proofString = {
-      proofString: this.account.signDigest(
-        proof.messageDigest(), this.sequenceApiChainId
-      ).then((s) => {
+      proofString: Promise.resolve(
+      // NOTICE: TODO: Here we ask the account to sign the message
+      // using whatever configuration we have ON-CHAIN, this means
+      // that the account will still use the v1 wallet, even if the migration
+      // was signed.
+      //
+      // This works for Sequence webapp v1 -> v2 because all v1 configurations share the same formula
+      // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
+      // those other signers may not be part of the configuration.
+      //
+      this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true, true)).then((s) => {
         proof.signature = s
         return ethAuth.encodeProof(proof, true)
       }).catch((reason) => {

@@ -191,7 +191,7 @@ export class Account {
 
   walletForStatus(
     chainId: ethers.BigNumberish,
-    status: AccountStatus
+    status: Pick<AccountStatus, 'version'> & Pick<AccountStatus, 'config'>
   ): Wallet {
     const coder = universal.coderFor(status.version)
     return this.walletFor(
@@ -399,9 +399,9 @@ export class Account {
 
   decorateSignature<T extends ethers.BytesLike>(
     signature: T,
-    status: AccountStatus,
+    status: Partial<Pick<AccountStatus, 'presignedConfigurations'>>,
   ): T | string {
-    if (status.presignedConfigurations.length === 0) {
+    if (!status.presignedConfigurations || status.presignedConfigurations.length === 0) {
       return signature
     }
 
@@ -423,7 +423,8 @@ export class Account {
   async signDigest(
     digest: ethers.BytesLike,
     chainId: ethers.BigNumberish,
-    decorate: boolean = true
+    decorate: boolean = true,
+    useOnchain: boolean = false
   ): Promise<string> {
     // If we are signing a digest for chainId zero then we can never be fully migrated
     // because Sequence v1 doesn't allow for signing a message on "all chains"
@@ -437,10 +438,11 @@ export class Account {
 
     this.mustBeFullyMigrated(status)
 
-    const wallet = this.walletForStatus(chainId, status)
+    const useStatus = useOnchain ? status.onChain : status
+    const wallet = this.walletForStatus(chainId, useStatus)
     const signature = await wallet.signDigest(digest)
 
-    return decorate ? this.decorateSignature(signature, status) : signature
+    return decorate ? this.decorateSignature(signature, useStatus as any) : signature
   }
 
   async editConfig(
