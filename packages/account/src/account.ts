@@ -135,6 +135,10 @@ export class Account {
     })
   }
 
+  getAddress(): Promise<string> {
+    return Promise.resolve(this.address)
+  }
+
   get version(): number {
     return this.migrator.lastMigration().version
   }

@@ -1,8 +1,9 @@
 import { ethers } from 'ethers'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
+import { ChainIdLike } from '@0xsequence/network'
 import { ETHAuthProof } from '@0xsequence/provider'
-import { DEFAULT_SESSION_EXPIRATION } from './session'
 import { Signer } from '@0xsequence/wallet'
+import { DEFAULT_SESSION_EXPIRATION } from './session'
 
 export interface AuthorizationOptions {
   // app name string, ie 'Skyweaver'
@@ -17,9 +18,7 @@ export interface AuthorizationOptions {
 
 // signAuthorization will perform an EIP712 typed-data message signing of ETHAuth domain via the provided
 // Signer and authorization options.
-export const signAuthorization = async (signer: Signer, options: AuthorizationOptions): Promise<ETHAuthProof> => {
-  const chainId = await signer.getChainId()
-
+export const signAuthorization = async (signer: Pick<Signer, 'getAddress' | 'signTypedData'>, chainId: ChainIdLike, options: AuthorizationOptions): Promise<ETHAuthProof> => {
   const address = ethers.utils.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw ErrAccountIsRequired

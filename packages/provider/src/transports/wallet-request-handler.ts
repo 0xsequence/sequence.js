@@ -181,7 +181,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
       try {
         // TODO: Either implement account as a signer, or change signAuthorization to accept an account
-        connectDetails.proof = await signAuthorization(this.account as any, authOptions)
+        connectDetails.proof = await signAuthorization(this.account, this.defaultNetworkId, authOptions)
       } catch (err) {
         logger.warn(`connect, signAuthorization failed for options: ${JSON.stringify(options)}, due to: ${err.message}`)
         return {

@@ -31,7 +31,7 @@ export abstract class Signer extends AbstractSigner {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: ChainIdLike,
+    chainId: ChainIdLike,
     allSigners?: boolean
   ): Promise<string>
 
