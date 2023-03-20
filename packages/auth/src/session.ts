@@ -358,9 +358,10 @@ export class Session {
     threshold: ethers.BigNumberish
     metadata: SessionMeta,
     selectWallet: (wallets: string[]) => Promise<string | undefined>,
-    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config,
+    onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration } = args
+    const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration, onMigration } = args
     const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
     const referenceChainId = networks.find((n) => n.chainId === 1)?.chainId ?? networks[0].chainId
@@ -385,6 +386,13 @@ export class Session {
       // if it has been migrated and if not, migrate it (in all chains)
       let isFullyMigrated = await account.isMigratedAllChains()
       if (!isFullyMigrated) {
+        // This is an oportunity for whoever is opening the session to
+        // feed the orchestrator with more signers, so that the migration
+        // can be completed.
+        if (onMigration && !await onMigration(account)) {
+          throw Error('Migration cancelled, cannot open session')
+        }
+
         await account.signAllMigrations(editConfigOnMigration)
         isFullyMigrated = await account.isMigratedAllChains()
         if (!isFullyMigrated) throw Error('Failed to migrate account')
@@ -444,9 +452,10 @@ export class Session {
   static async load(args: {
     settings: SessionSettings,
     dump: SessionDumpV1 | SessionDumpV2,
-    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config,
+    onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const { dump, settings, editConfigOnMigration } = args
+    const { dump, settings, editConfigOnMigration, onMigration } = args
     const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
     let account: Account
@@ -468,10 +477,21 @@ export class Session {
         orchestrator
       })
 
+      // TODO: This property may not hold if the user adds a new network
       if (!(await account.isMigratedAllChains())) {
+        // This is an oportunity for whoever is opening the session to
+        // feed the orchestrator with more signers, so that the migration
+        // can be completed.
+        if (onMigration && !await onMigration(account)) {
+          throw Error('Migration cancelled, cannot open session')
+        }
+
+        console.log('Migrating account...')
         await account.signAllMigrations(editConfigOnMigration)
         if (!(await account.isMigratedAllChains())) throw Error('Failed to migrate account')
       }
+
+      // We may need to update the JWT if the account has been migrated
     } else if (isSessionDumpV2(dump)) {
       account = new Account({
         address: dump.address,
