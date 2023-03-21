@@ -18,7 +18,7 @@ import {
 
 import { BigNumber, ethers, providers } from 'ethers'
 
-import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse } from '@0xsequence/network'
+import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, getChainId } from '@0xsequence/network'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { logger, TypedData } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
@@ -155,9 +155,22 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
+    let chainId: number
+    switch (typeof options?.networkId) {
+      case 'string':
+        chainId = getChainId(options.networkId)
+        break
+      case 'number':
+        chainId = options.networkId
+        break
+      default:
+        chainId = this.defaultNetworkId
+        break
+    }
+
     const connectDetails: ConnectDetails = {
       connected: true,
-      chainId: ethers.BigNumber.from(this.defaultNetworkId).toHexString()
+      chainId: ethers.BigNumber.from(chainId).toHexString()
     }
 
     if (options && options.askForEmail) {
@@ -181,7 +194,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
       try {
         // TODO: Either implement account as a signer, or change signAuthorization to accept an account
-        connectDetails.proof = await signAuthorization(this.account, this.defaultNetworkId, authOptions)
+        connectDetails.proof = await signAuthorization(this.account, chainId, authOptions)
       } catch (err) {
         logger.warn(`connect, signAuthorization failed for options: ${JSON.stringify(options)}, due to: ${err.message}`)
         return {
