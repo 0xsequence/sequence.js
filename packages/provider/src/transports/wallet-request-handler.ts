@@ -280,22 +280,27 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       if (!account) throw new Error('WalletRequestHandler: wallet account is not configured')
 
       // fetch the provider for the specific chain, or undefined will select defaultChain
-      const provider = this.account?.provider(chainId ?? this.defaultNetworkId) as ethers.providers.JsonRpcProvider
+      const provider = this.account?.provider(chainId ?? this.defaultNetworkId)
       if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
-
-      if (provider.send === undefined) {
-        throw new Error(`Account provider doesn't support send method`)
-      }
+      const jsonRpcProvider = provider instanceof ethers.providers.JsonRpcProvider ? provider : undefined
 
       switch (request.method) {
         case 'net_version': {
-          const result = await provider.send('net_version', [])
+          if (!jsonRpcProvider) {
+            throw new Error(`Account provider doesn't support send method`)
+          }
+
+          const result = await jsonRpcProvider.send('net_version', [])
           response.result = result
           break
         }
 
         case 'eth_chainId': {
-          const result = await provider.send('eth_chainId', [])
+          if (!jsonRpcProvider) {
+            throw new Error(`Account provider doesn't support send method`)
+          }
+
+          const result = await jsonRpcProvider.send('eth_chainId', [])
           response.result = result
           break
         }
@@ -619,8 +624,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         default: {
+          if (!jsonRpcProvider) {
+            throw new Error(`Account provider doesn't support send method`)
+          }
+
           // NOTE: provider here will be chain-bound if chainId is provided
-          const providerResponse = await provider.send(request.method, request.params!)
+          const providerResponse = await jsonRpcProvider.send(request.method, request.params!)
           response.result = providerResponse
         }
       }
