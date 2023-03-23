@@ -1,16 +1,29 @@
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler, JsonRpcHandler } from '../types'
 
 export const SignerJsonRpcMethods = [
-  'personal_sign', 'eth_sign', 'eth_signTypedData', 'eth_signTypedData_v4',
-  'eth_sendTransaction', 'eth_sendRawTransaction',
-  
-  'sequence_getWalletContext', 'sequence_getWalletConfig', 'sequence_getWalletState', 'sequence_getNetworks',
-  'sequence_updateConfig', 'sequence_publishConfig', 'sequence_gasRefundOptions',
-  'sequence_getNonce', 'sequence_relay',
+  'personal_sign',
+  'eth_sign',
+  'eth_signTypedData',
+  'eth_signTypedData_v4',
+  'eth_sendTransaction',
+  'eth_sendRawTransaction',
 
-  'eth_decrypt', 'eth_getEncryptionPublicKey',
-  'wallet_addEthereumChain', 'wallet_switchEthereumChain',
-  'wallet_registerOnboarding', 'wallet_watchAsset',
+  'sequence_getWalletContext',
+  'sequence_getWalletConfig',
+  'sequence_getWalletState',
+  'sequence_getNetworks',
+  'sequence_updateConfig',
+  'sequence_publishConfig',
+  'sequence_gasRefundOptions',
+  'sequence_getNonce',
+  'sequence_relay',
+
+  'eth_decrypt',
+  'eth_getEncryptionPublicKey',
+  'wallet_addEthereumChain',
+  'wallet_switchEthereumChain',
+  'wallet_registerOnboarding',
+  'wallet_watchAsset',
   'wallet_scanQRCode'
 ]
 
