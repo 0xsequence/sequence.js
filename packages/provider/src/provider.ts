@@ -229,7 +229,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, sequenceVerified?: boolean): Promise<string> {
     const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
 
     const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
@@ -238,7 +238,10 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     // NOTE: as of ethers v5.5, it switched to using personal_sign, see
     // https://github.com/ethers-io/ethers.js/pull/1542 and see
     // https://github.com/WalletConnect/walletconnect-docs/issues/32 for additional info.
-    return await provider!.send('personal_sign', [ethers.utils.hexlify(data), address])
+    return provider!.send(
+      sequenceVerified ? 'sequence_sign' : 'personal_sign',
+      [ethers.utils.hexlify(data), address]
+    )
   }
 
   // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
@@ -248,15 +251,16 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
-    allSigners?: boolean
+    allSigners?: boolean,
+    sequenceVerified?: boolean
   ): Promise<string> {
     // Populate any ENS names (in-place)
     // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
     //   return this.provider.resolveName(name)
     // })
 
-    return await this.provider.send(
-      'eth_signTypedData_v4',
+    return this.provider.send(
+      sequenceVerified ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4',
       [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
       maybeChainId(chainId) || this.defaultChainId
     )

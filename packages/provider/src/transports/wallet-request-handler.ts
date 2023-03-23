@@ -318,20 +318,27 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'sequence_sign':
         case 'personal_sign':
         case 'eth_sign': {
           // note: message from json-rpc input is in hex format
           let message: any
 
           // there is a difference in the order of the params:
-          // personal_sign: [data, address]
+          // sequence_sign, personal_sign: [data, address]
           // eth_sign: [address, data]
-          if (request.method === 'personal_sign') {
-            const [data, address] = request.params!
-            message = data
-          } else {
-            const [address, data] = request.params!
-            message = data
+          switch (request.method) {
+            case 'sequence_sign':
+            case 'personal_sign': {
+              const [data, _address] = request.params!
+              message = data
+              break
+            }
+            case 'eth_sign': {
+              const [_address, data] = request.params!
+              message = data
+              break
+            }
           }
 
           let sig = ''
@@ -346,7 +353,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultNetworkId)
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
+            const promptResultForDeployment = request.method === 'sequence_sign' || await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, this.connectOptions)
             }
@@ -361,6 +368,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'sequence_signTypedData_v4':
         case 'eth_signTypedData':
         case 'eth_signTypedData_v4': {
           // note: signingAddress from json-rpc input is in hex format, and typedDataObject
@@ -386,7 +394,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultNetworkId)
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
+            const promptResultForDeployment = request.method === 'sequence_signTypedData_v4' || await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
             }

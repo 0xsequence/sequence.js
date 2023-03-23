@@ -7,6 +7,8 @@ export const SignerJsonRpcMethods = [
   'eth_signTypedData_v4',
   'eth_sendTransaction',
   'eth_sendRawTransaction',
+  'sequence_sign',             // sequence-aware personal_sign
+  'sequence_signTypedData_v4', // sequence-aware eth_signTypedData_v4
 
   'sequence_getWalletContext',
   'sequence_getWalletConfig',
