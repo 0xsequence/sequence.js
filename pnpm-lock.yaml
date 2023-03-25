@@ -164,62 +164,62 @@ importers:
   packages/0xsequence:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/account':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../account
       '@0xsequence/api':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../api
       '@0xsequence/auth':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../auth
       '@0xsequence/core':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/guard':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../guard
       '@0xsequence/indexer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../indexer
       '@0xsequence/metadata':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../metadata
       '@0xsequence/migration':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../migration
       '@0xsequence/multicall':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../multicall
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/provider':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../provider
       '@0xsequence/relayer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../relayer
       '@0xsequence/sessions':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../sessions
       '@0xsequence/signhub':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../wallet
     devDependencies:
       '@0xsequence/tests':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../tests
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
       '@babel/plugin-transform-runtime':
         specifier: ^7.19.6
@@ -254,35 +254,35 @@ importers:
   packages/account:
     dependencies:
       '@0xsequence/core':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/migration':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../migration
       '@0xsequence/network':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/relayer':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../relayer
       '@0xsequence/sessions':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../sessions
       '@0xsequence/utils':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../wallet
       ethers:
         specifier: ^5.5.2
         version: 5.7.2
     devDependencies:
       '@0xsequence/signhub':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/tests':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../tests
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.2
@@ -296,56 +296,53 @@ importers:
   packages/auth:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/account':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../account
       '@0xsequence/api':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../api
-      '@0xsequence/config':
-        specifier: ^0.43.26
-        version: 0.43.26(ethers@5.7.2)
       '@0xsequence/core':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/ethauth':
-        specifier: ^0.8.0
+        specifier: ^0.8.1
         version: 0.8.1(ethers@5.7.2)
       '@0xsequence/indexer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../indexer
       '@0xsequence/metadata':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../metadata
       '@0xsequence/migration':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../migration
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/provider':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../provider
       '@0xsequence/sessions':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../sessions
       '@0xsequence/signhub':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../wallet
     devDependencies:
       '@0xsequence/tests':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../tests
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
       concurrently:
         specifier: ^7.5.0
@@ -363,7 +360,7 @@ importers:
   packages/core:
     dependencies:
       '@0xsequence/abi':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../abi
       ethers:
         specifier: '>=5.5'
@@ -379,7 +376,7 @@ importers:
   packages/deployer:
     dependencies:
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
     devDependencies:
       '@ethersproject/abi':
@@ -410,26 +407,26 @@ importers:
   packages/estimator:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/core':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
     devDependencies:
       '@0xsequence/signhub':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/tests':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../tests
       '@ethersproject/abstract-signer':
         specifier: ^5.7.0
@@ -444,10 +441,10 @@ importers:
   packages/guard:
     dependencies:
       '@0xsequence/core':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/signhub':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       ethers:
         specifier: ^5.7.2
@@ -460,13 +457,13 @@ importers:
   packages/migration:
     dependencies:
       '@0xsequence/abi':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/core':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/wallet':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../wallet
       ethers:
         specifier: ^5.5.2
@@ -482,17 +479,17 @@ importers:
   packages/multicall:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
     devDependencies:
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
       '@ethersproject/providers':
         specifier: ^5.7.2
@@ -522,19 +519,19 @@ importers:
   packages/network:
     dependencies:
       '@0xsequence/indexer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../indexer
       '@0xsequence/migration':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../migration
       '@0xsequence/provider':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../provider
       '@0xsequence/relayer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../relayer
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
     devDependencies:
       ethers:
@@ -544,31 +541,31 @@ importers:
   packages/provider:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/account':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../account
       '@0xsequence/auth':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../auth
       '@0xsequence/core':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/migration':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../migration
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/relayer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../relayer
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../wallet
       eventemitter2:
         specifier: ^6.4.5
@@ -587,29 +584,29 @@ importers:
   packages/relayer:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/core':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/relayer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: 'link:'
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
     devDependencies:
       '@0xsequence/signhub':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/tests':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../tests
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
       ethers:
         specifier: ^5.7.2
@@ -618,10 +615,10 @@ importers:
   packages/replacer:
     dependencies:
       '@0xsequence/abi':
-        specifier: 0.43.5
-        version: 0.43.5
+        specifier: workspace:*
+        version: link:../abi
       '@0xsequence/core':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../core
       ethers:
         specifier: '>=5.5'
@@ -630,13 +627,13 @@ importers:
   packages/sessions:
     dependencies:
       '@0xsequence/core':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/migration':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../migration
       '@0xsequence/replacer':
-        specifier: workspace:^0.43.4
+        specifier: workspace:*
         version: link:../replacer
       ethers:
         specifier: ^5.5.2
@@ -646,10 +643,10 @@ importers:
         version: 7.1.1
     devDependencies:
       '@0xsequence/signhub':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/tests':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../tests
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.2
@@ -677,17 +674,17 @@ importers:
   packages/simulator:
     dependencies:
       '@0xsequence/core':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
     devDependencies:
       '@0xsequence/signhub':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/tests':
-        specifier: workspace:^0.43.7
+        specifier: workspace:*
         version: link:../tests
       ethers:
         specifier: ^5.7.2
@@ -696,7 +693,7 @@ importers:
   packages/tests:
     dependencies:
       '@0xsequence/core':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -722,35 +719,35 @@ importers:
   packages/wallet:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../abi
       '@0xsequence/core':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../core
       '@0xsequence/guard':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../guard
       '@0xsequence/network':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../network
       '@0xsequence/relayer':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../relayer
       '@0xsequence/signhub':
-        specifier: ^0.43.7
+        specifier: workspace:*
         version: link:../signhub
       '@0xsequence/utils':
-        specifier: ^0.43.26
+        specifier: workspace:*
         version: link:../utils
     devDependencies:
       '@0xsequence/ethauth':
-        specifier: ^0.8.0
+        specifier: ^0.8.1
         version: 0.8.1(ethers@5.7.2)
       '@0xsequence/tests':
-        specifier: ^0.43.4
+        specifier: workspace:*
         version: link:../tests
       '@0xsequence/wallet-contracts':
-        specifier: 1.10.0
+        specifier: ^1.10.0
         version: 1.10.0
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -764,48 +761,6 @@ importers:
 
 packages:
 
-  /@0xsequence/abi@0.43.26:
-    resolution: {integrity: sha512-libZgp7wA5DSf4QOmTQb5n1V1cvPXG/qxf8KdGoBEklSZtfbC+G2xcbCGQZOl0qg0j5GwX9B0UtaSXe6IObooQ==}
-    dev: false
-
-  /@0xsequence/abi@0.43.5:
-    resolution: {integrity: sha512-9Vzq1Kzc1oCI1S7f6yE57xUoGeQzeQNirnTkjVoRqBNpVTAPMxYax+uAIyvZljVs/VqwLvjfCk6mneY1HYaNDQ==}
-    dev: false
-
-  /@0xsequence/api@0.43.26:
-    resolution: {integrity: sha512-+vOEwO/zHUtFai2qloxO5VK0k9t9MrKnOAQUamKLMupDac20GdUjPnaiVfHZ3X16v8yopf2W7Pn9zSMbg4nGBQ==}
-    dev: false
-
-  /@0xsequence/auth@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-iiGJQf5pg+uAi2nyYxGMbUs3N295CLwg2MnqJbO71/5S/s3eBhSL+lm2hcJvTqh4wRYEmIYsGj2m7t5RATY9ug==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/api': 0.43.26
-      '@0xsequence/config': 0.43.26(ethers@5.7.2)
-      '@0xsequence/ethauth': 0.8.1(ethers@5.7.2)
-      '@0xsequence/indexer': 0.43.26
-      '@0xsequence/metadata': 0.43.26
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/provider': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      '@0xsequence/wallet': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/config@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-Iiip9gPFMOngxEalDgF6f2szJ6Xbme3aAgdW5Xwy4xv+aMPmQH1euEF0/2yD4vGpbG/5aeOR5H0H4zrsuU2/8Q==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/multicall': 0.43.26(ethers@5.7.2)
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
-
   /@0xsequence/ethauth@0.8.1(ethers@5.7.2):
     resolution: {integrity: sha512-P21cxRSS+2mDAqFVAJt0lwQFtbObX+Ewlj8DMyDELp81+QbfHFh6LCyu8dTXNdBx6UbmRFOCSBno5Txd50cJPQ==}
     peerDependencies:
@@ -813,93 +768,6 @@ packages:
     dependencies:
       ethers: 5.7.2
       js-base64: 3.7.3
-
-  /@0xsequence/guard@0.43.26:
-    resolution: {integrity: sha512-C7fRENl+SLQTlrbU3BmxTcG6mB9VApxLLhXscXUEZmWhkGRncEQIPmJaT0RZ2ymchpKGUaKS9w59iyWnejfLzw==}
-    dev: false
-
-  /@0xsequence/indexer@0.43.26:
-    resolution: {integrity: sha512-mK9WoEvsQjLmVPrkFOdnH2pKCPLyZR6RA14pxgEj/sakmwqRWj9dQIjrNwMWak9Q0XJJ4enlKw/w5xg5HVJzHg==}
-    dev: false
-
-  /@0xsequence/metadata@0.43.26:
-    resolution: {integrity: sha512-WaD2oInmtFSHHCF+BpQBkBuqBwxcLi7N2uRowhAaQj/vxLJYDz1yIOZS+iWqZnkm5l3ZuidTyfmn+HCw4BIxvw==}
-    dev: false
-
-  /@0xsequence/multicall@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-N4QX5tI2EkFvQS8PR/kVj/RrE9TUFmhqBOv/c4nmZWeuf2X4GS38x55yicnVZmysEX9N5A0URNGa1t0ynGKjdg==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/network@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-e8DEwK5LV+u1TiTBBGHb7/MnTv33+X/0h3aIroMOmHqLjpeDqnJYEvonLYyFNKMX11sse4bvWVC+4PW3pD0k0g==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/indexer': 0.43.26
-      '@0xsequence/provider': 0.43.26(ethers@5.7.2)
-      '@0xsequence/relayer': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/provider@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-tpE7BDPNy+4o1KATB1FI25RT9Pj+RdD0wQtpshcrKLuFvWbcdbA/VgD7k0EgZWBnTCMjBc12MZ7pzIrJXxCWHA==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/auth': 0.43.26(ethers@5.7.2)
-      '@0xsequence/config': 0.43.26(ethers@5.7.2)
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/relayer': 0.43.26(ethers@5.7.2)
-      '@0xsequence/transactions': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      '@0xsequence/wallet': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-      eventemitter2: 6.4.9
-      webextension-polyfill: 0.10.0
-    dev: false
-
-  /@0xsequence/relayer@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-cQ64XokGd7qLsc9tbWShS4AFCo4ikQLb7aitiuPo61GTE8oHaTjckWupBq/cC5zKte0qGVMZFeWI+x6K/yceKA==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/config': 0.43.26(ethers@5.7.2)
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/transactions': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/transactions@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-b8bG8Y49YjyjnBKUcJV/H28MrNsnPagVkJgCFdTmQEb2XyHXAMqSDiNrRC3EG98H5yy9PT7wXkiaMI4YXaKgtQ==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/config': 0.43.26(ethers@5.7.2)
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
-
-  /@0xsequence/utils@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-952LB3mQO4qwA7USdl+75vnkuiiYuCFZ61J49T/jib7Oef/qM9JSlYEDBrZBB6DVtXAEH8zdKLjcewCmc+H2rg==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      ethers: 5.7.2
-      js-base64: 3.7.3
-    dev: false
 
   /@0xsequence/wallet-contracts@1.10.0:
     resolution: {integrity: sha512-NfPBJkp6/ApjVuTqQMgJvpN5lWyNc9bHm9ZITEi3X3nREf5126RLEXCyThChapkmcglHnQn+ndA8j6bfcpFEAg==}
@@ -910,21 +778,6 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-
-  /@0xsequence/wallet@0.43.26(ethers@5.7.2):
-    resolution: {integrity: sha512-oG/2W0kgtuTosg/5bRxpuooviytd7BgQi3U6x/OyygcKhYpo2CTsLKifU90GANI7aCe71Nj0EDlWZx3UAIrojA==}
-    peerDependencies:
-      ethers: '>=5.5 < 6'
-    dependencies:
-      '@0xsequence/abi': 0.43.26
-      '@0xsequence/config': 0.43.26(ethers@5.7.2)
-      '@0xsequence/guard': 0.43.26
-      '@0xsequence/network': 0.43.26(ethers@5.7.2)
-      '@0xsequence/relayer': 0.43.26(ethers@5.7.2)
-      '@0xsequence/transactions': 0.43.26(ethers@5.7.2)
-      '@0xsequence/utils': 0.43.26(ethers@5.7.2)
-      ethers: 5.7.2
-    dev: false
 
   /@ampproject/remapping@2.2.0:
     resolution: {integrity: sha512-qRmjj8nj9qmLTQXXmaR1cck3UXSRMPrbsLJAasZpF+t3riI71BXed5ebIOYwQntykeZuhjsdweEc9BxH5Jc26w==}

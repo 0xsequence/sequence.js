@@ -12,7 +12,7 @@
     "test": "echo 'no tests for test tools'"
   },
   "dependencies": {
-    "@0xsequence/core": "^0.43.7"
+    "@0xsequence/core": "workspace:*"
   },
   "peerDependencies": {
     "ethers": ">=5.5"

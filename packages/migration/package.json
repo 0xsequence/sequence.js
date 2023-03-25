@@ -12,9 +12,9 @@
     "test": "echo 'TODO: Migration tests'"
   },
   "dependencies": {
-    "@0xsequence/abi": "workspace:^0.43.7",
-    "@0xsequence/core": "^0.43.4",
-    "@0xsequence/wallet": "^0.43.4",
+    "@0xsequence/abi": "workspace:*",
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/wallet": "workspace:*",
     "ethers": "^5.5.2"
   },
   "devDependencies": {

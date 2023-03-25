@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/core": "workspace:^0.43.7",
-    "@0xsequence/signhub": "workspace:^0.43.7",
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/signhub": "workspace:*",
     "ethers": "^5.7.2"
   },
   "files": [

@@ -17,19 +17,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.43.26",
-    "@0xsequence/core": "^0.43.7",
-    "@0xsequence/network": "^0.43.26",
-    "@0xsequence/relayer": "^0.43.26",
-    "@0xsequence/utils": "^0.43.26"
+    "@0xsequence/abi": "workspace:*",
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/network": "workspace:*",
+    "@0xsequence/relayer": "workspace:*",
+    "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
     "ethers": ">=5.5 < 6"
   },
   "devDependencies": {
-    "@0xsequence/signhub": "workspace:^0.43.7",
-    "@0xsequence/tests": "workspace:^0.43.7",
-    "@0xsequence/wallet-contracts": "1.10.0",
+    "@0xsequence/signhub": "workspace:*",
+    "@0xsequence/tests": "workspace:*",
+    "@0xsequence/wallet-contracts": "^1.10.0",
     "ethers": "^5.7.2"
   },
   "files": [
