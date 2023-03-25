@@ -1,10 +1,10 @@
 import { commons } from '@0xsequence/core'
-import { PresignedMigrationTracker, SignedMigration } from '@0xsequence/migration/src/migrator'
+import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 
-export class DebugConfigTracker implements ConfigTracker, PresignedMigrationTracker {
-  constructor(private readonly tracker: ConfigTracker & PresignedMigrationTracker) {}
+export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
+  constructor(private readonly tracker: ConfigTracker & migrator.PresignedMigrationTracker) {}
 
   async loadPresignedConfiguration(args: {
     wallet: string
@@ -67,13 +67,13 @@ export class DebugConfigTracker implements ConfigTracker, PresignedMigrationTrac
     fromImageHash: string,
     fromVersion: number,
     chainId: ethers.BigNumberish
-  ): Promise<SignedMigration | undefined> {
+  ): Promise<migrator.SignedMigration | undefined> {
     console.debug('? getMigration')
     debug({ address, fromImageHash, fromVersion, chainId }, '? ')
     return debug(await this.tracker.getMigration(address, fromImageHash, fromVersion, chainId), '! ')
   }
 
-  saveMigration(address: string, signed: SignedMigration, contexts: commons.context.VersionedContext): Promise<void> {
+  saveMigration(address: string, signed: migrator.SignedMigration, contexts: commons.context.VersionedContext): Promise<void> {
     console.debug('? saveMigration')
     debug({ address, signed, contexts }, '? ')
     return this.tracker.saveMigration(address, signed, contexts)

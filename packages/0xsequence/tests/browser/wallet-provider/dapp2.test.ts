@@ -1,8 +1,8 @@
-import { test, assert } from '../../utils/assert'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
+import { context } from '@0xsequence/tests'
 import { configureLogger } from '@0xsequence/utils'
-import { deploySequenceContexts } from '@0xsequence/tests/src/context'
+import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { test, assert } from '../../utils/assert'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -21,7 +21,7 @@ export const tests = async () => {
     const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
     const signer1 = provider1.getSigner()
     const signer2 = provider2.getSigner()
-    return Promise.all([deploySequenceContexts(signer1), deploySequenceContexts(signer2)])
+    return Promise.all([context.deploySequenceContexts(signer1), context.deploySequenceContexts(signer2)])
   })()
 
   console.log('walletContext:', deployedWalletContext)

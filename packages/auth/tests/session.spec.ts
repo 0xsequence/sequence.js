@@ -1,32 +1,24 @@
-import { delay, mockDate } from './utils'
-
-import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
-
-import { LocalRelayer } from '@0xsequence/relayer'
-
+import { Account } from '@0xsequence/account'
+import { commons, v1, v2 } from '@0xsequence/core'
+import { ETHAuth } from '@0xsequence/ethauth'
+import { migrator } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
-import { ethers, Signer as AbstractSigner } from 'ethers'
-
-import chaiAsPromised from 'chai-as-promised'
-import * as chai from 'chai'
+import { LocalRelayer } from '@0xsequence/relayer'
+import { tracker, trackers } from '@0xsequence/sessions'
+import { Orchestrator } from '@0xsequence/signhub'
 import * as utils from '@0xsequence/tests'
+import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
+import * as chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+import { ethers, Signer as AbstractSigner } from 'ethers'
+import * as mockServer from 'mockttp'
+import { Session, SessionDumpV1, SessionSettings, ValidateSequenceWalletProof } from '../src'
+import { delay, mockDate } from './utils'
 
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
 const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/HookCallerMock.sol/HookCallerMock.json')
 
 const { expect } = chai.use(chaiAsPromised)
-
-import { Session, SessionDumpV1, SessionSettings, ValidateSequenceWalletProof } from '../src'
-
-import * as mockServer from 'mockttp'
-import { ETHAuth } from '@0xsequence/ethauth'
-import { migrator } from '@0xsequence/migration'
-import { Orchestrator } from '@0xsequence/signhub'
-import { tracker } from '@0xsequence/sessions'
-import { LocalConfigTracker } from '@0xsequence/sessions/src/trackers/local'
-import { commons, v1, v2 } from '@0xsequence/core'
-import { OnChainReader } from '@0xsequence/core/src/commons/reader'
-import { Account } from '@0xsequence/account'
 
 const deterministic = false
 
@@ -119,7 +111,7 @@ describe('Wallet integration', function () {
       ethnode.signer
     ).deploy()) as HookCallerMock
 
-    tracker = new LocalConfigTracker(ethnode.provider!)
+    tracker = new trackers.local.LocalConfigTracker(ethnode.provider!)
     orchestrator = new Orchestrator([])
 
     simpleSettings = {
@@ -582,7 +574,7 @@ describe('Wallet integration', function () {
         if (delayMs !== 0) await delay(delayMs)
 
         const validator = ValidateSequenceWalletProof(
-          new OnChainReader(networks[0].provider!),
+          new commons.reader.OnChainReader(networks[0].provider!),
           tracker,
           contexts[2],
           {

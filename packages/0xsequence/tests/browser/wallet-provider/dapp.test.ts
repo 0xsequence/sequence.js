@@ -1,10 +1,10 @@
-import { test, assert } from '../../utils/assert'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
-import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
-import { testAccounts, getEOAWallet, sendETH } from '../testutils'
-import { configureLogger } from '@0xsequence/utils'
 import { commons, v2 } from '@0xsequence/core'
-import { deploySequenceContexts } from '@0xsequence/tests/src/context'
+import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
+import { context } from '@0xsequence/tests'
+import { configureLogger } from '@0xsequence/utils'
+import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { test, assert } from '../../utils/assert'
+import { testAccounts, getEOAWallet, sendETH } from '../testutils'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -24,7 +24,7 @@ export const tests = async () => {
   const deployedWalletContext = await (async () => {
     const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
     const signer = provider.getSigner()
-    return deploySequenceContexts(signer)
+    return context.deploySequenceContexts(signer)
   })()
   console.log('walletContext:', deployedWalletContext)
 

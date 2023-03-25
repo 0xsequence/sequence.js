@@ -1,8 +1,8 @@
 import { isValidSignature, prefixEIP191Message, WindowMessageProvider } from '@0xsequence/provider'
+import { context } from '@0xsequence/tests'
+import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
-import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
-import { deploySequenceContexts } from '@0xsequence/tests/src/context'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -15,7 +15,7 @@ export const tests = async () => {
   const testWalletContext = await (async () => {
     const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
     const signer = provider.getSigner()
-    return deploySequenceContexts(signer)
+    return context.deploySequenceContexts(signer)
   })()
 
   walletProvider.openWallet()

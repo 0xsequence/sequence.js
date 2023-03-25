@@ -1,10 +1,10 @@
 import { commons, universal, v1, v2 } from '@0xsequence/core'
-import { PresignedMigrationTracker, SignedMigration } from '@0xsequence/migration/src/migrator'
+import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../../tracker'
 import { Sessions, SignatureType, Transaction } from './sessions.gen'
 
-export class RemoteConfigTracker implements ConfigTracker, PresignedMigrationTracker {
+export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
 
   constructor(hostname: string, public readonly onlyRecoverable: boolean = true) {
@@ -143,11 +143,11 @@ export class RemoteConfigTracker implements ConfigTracker, PresignedMigrationTra
     fromImageHash: string,
     fromVersion: number,
     chainId: ethers.BigNumberish
-  ): Promise<SignedMigration | undefined> {
+  ): Promise<migrator.SignedMigration | undefined> {
     const chainIdString = numberString(chainId)
     const { migrations } = await this.sessions.migrations({ wallet, fromVersion, fromImageHash, chainID: chainIdString })
 
-    const chooseMigration = async (chainId: string): Promise<SignedMigration | undefined> => {
+    const chooseMigration = async (chainId: string): Promise<migrator.SignedMigration | undefined> => {
       const migrations_ = migrations[chainId]
       if (migrations_) {
         const toVersions = Object.keys(migrations_)
@@ -207,7 +207,7 @@ export class RemoteConfigTracker implements ConfigTracker, PresignedMigrationTra
     return
   }
 
-  async saveMigration(wallet: string, signed: SignedMigration, _contexts: commons.context.VersionedContext): Promise<void> {
+  async saveMigration(wallet: string, signed: migrator.SignedMigration, _contexts: commons.context.VersionedContext): Promise<void> {
     await this.sessions.saveMigration({
       wallet,
       fromVersion: signed.fromVersion,
