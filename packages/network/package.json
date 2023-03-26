@@ -15,7 +15,6 @@
   "dependencies": {
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/migration": "workspace:*",
-    "@0xsequence/provider": "workspace:*",
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*"
   },

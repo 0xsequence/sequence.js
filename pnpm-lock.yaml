@@ -524,9 +524,6 @@ importers:
       '@0xsequence/migration':
         specifier: workspace:*
         version: link:../migration
-      '@0xsequence/provider':
-        specifier: workspace:*
-        version: link:../provider
       '@0xsequence/relayer':
         specifier: workspace:*
         version: link:../relayer

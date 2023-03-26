@@ -1,5 +1,5 @@
 import { commons } from '@0xsequence/core'
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -50,11 +50,7 @@ export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
 // which may contain the result or an error payload from the wallet.
 export type ProviderMessageResponseCallback = (error?: ProviderRpcError, response?: ProviderMessageResponse) => void
 
-export interface ProviderRpcError extends Error {
-  message: string
-  code?: number
-  data?: { [key: string]: any }
-}
+export type ProviderRpcError = NetworkProviderRpcError
 
 export interface ProviderMessageRequestHandler {
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet.
