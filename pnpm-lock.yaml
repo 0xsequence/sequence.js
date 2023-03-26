@@ -589,9 +589,6 @@ importers:
       '@0xsequence/network':
         specifier: workspace:*
         version: link:../network
-      '@0xsequence/relayer':
-        specifier: workspace:*
-        version: 'link:'
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:../utils

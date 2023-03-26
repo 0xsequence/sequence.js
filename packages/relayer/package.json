@@ -20,7 +20,6 @@
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*",
     "@0xsequence/network": "workspace:*",
-    "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {

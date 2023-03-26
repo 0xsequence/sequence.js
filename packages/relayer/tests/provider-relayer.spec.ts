@@ -1,17 +1,13 @@
-import hardhat from 'hardhat'
-import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
-
-import { Wallet, WalletV1, WalletV2 } from '@0xsequence/wallet'
-import { LocalRelayer } from '@0xsequence/relayer'
-
-import { NetworkConfig } from '@0xsequence/network'
-import { ethers } from 'ethers'
-import { Orchestrator } from '@0xsequence/signhub'
-
-import chaiAsPromised from 'chai-as-promised'
-import * as chai from 'chai'
 import { commons, v2 } from '@0xsequence/core'
+import { Orchestrator } from '@0xsequence/signhub'
 import { context } from '@0xsequence/tests'
+import { Wallet, WalletV2 } from '@0xsequence/wallet'
+import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
+import * as chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+import { ethers } from 'ethers'
+import hardhat from 'hardhat'
+import { LocalRelayer } from '../src'
 
 const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/CallReceiverMock.sol/CallReceiverMock.json')
 const HookCallerMockArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/mocks/HookCallerMock.sol/HookCallerMock.json')
