@@ -14,6 +14,7 @@ export enum ChainId {
   // Polygon
   POLYGON = 137,
   POLYGON_MUMBAI = 80001,
+  POLYGON_ZKEVM = 1101,
 
   // BSC
   BSC = 56,
@@ -155,6 +156,15 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Polygonscan (Mumbai)',
       rootUrl: 'https://mumbai.polygonscan.com/'
+    }
+  },
+  [ChainId.POLYGON_ZKEVM]: {
+    chainId: ChainId.POLYGON_ZKEVM,
+    name: 'zkevm',
+    title: 'zkEVM',
+    blockExplorer: {
+      name: 'zkEVM Polygonscan',
+      rootUrl: 'https://zkevm.polygonscan.com/'
     }
   },
   [ChainId.BSC]: {
