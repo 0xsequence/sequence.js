@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.22
+
+### Patch Changes
+
+- add zkevm chain
+- Updated dependencies
+  - @0xsequence/transactions@0.43.22
+
 ## 0.43.21
 
 ### Patch Changes

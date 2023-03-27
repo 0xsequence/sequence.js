@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.22
+
+### Patch Changes
+
+- add zkevm chain
+
 ## 0.43.21
 
 ### Patch Changes

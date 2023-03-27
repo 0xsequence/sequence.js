@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.43.22
+
+### Patch Changes
+
+- add zkevm chain
+- Updated dependencies
+  - @0xsequence/abi@0.43.22
+  - @0xsequence/network@0.43.22
+  - @0xsequence/utils@0.43.22
+
 ## 0.43.21
 
 ### Patch Changes
