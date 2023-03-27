@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 0.43.23
+
+### Patch Changes
+
+- update zkEVM name to Polygon zkEVM
+- Updated dependencies
+  - @0xsequence/abi@0.43.23
+  - @0xsequence/network@0.43.23
+  - @0xsequence/utils@0.43.23
+
 ## 0.43.22
 
 ### Patch Changes

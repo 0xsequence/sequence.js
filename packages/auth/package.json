@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "0.43.22",
+  "version": "0.43.23",
   "description": "auth sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
   "source": "src/index.ts",
@@ -17,16 +17,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.43.22",
-    "@0xsequence/api": "^0.43.22",
-    "@0xsequence/config": "^0.43.22",
+    "@0xsequence/abi": "^0.43.23",
+    "@0xsequence/api": "^0.43.23",
+    "@0xsequence/config": "^0.43.23",
     "@0xsequence/ethauth": "^0.8.0",
-    "@0xsequence/indexer": "^0.43.22",
-    "@0xsequence/metadata": "^0.43.22",
-    "@0xsequence/network": "^0.43.22",
-    "@0xsequence/provider": "^0.43.22",
-    "@0xsequence/wallet": "^0.43.22",
-    "@0xsequence/utils": "^0.43.22"
+    "@0xsequence/indexer": "^0.43.23",
+    "@0xsequence/metadata": "^0.43.23",
+    "@0xsequence/network": "^0.43.23",
+    "@0xsequence/provider": "^0.43.23",
+    "@0xsequence/wallet": "^0.43.23",
+    "@0xsequence/utils": "^0.43.23"
   },
   "peerDependencies": {
     "ethers": ">=5.5 < 6"

@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.43.23
+
+### Patch Changes
+
+- update zkEVM name to Polygon zkEVM
+- Updated dependencies
+  - @0xsequence/abi@0.43.23
+  - @0xsequence/api@0.43.23
+  - @0xsequence/auth@0.43.23
+  - @0xsequence/config@0.43.23
+  - @0xsequence/guard@0.43.23
+  - @0xsequence/indexer@0.43.23
+  - @0xsequence/metadata@0.43.23
+  - @0xsequence/multicall@0.43.23
+  - @0xsequence/network@0.43.23
+  - @0xsequence/provider@0.43.23
+  - @0xsequence/relayer@0.43.23
+  - @0xsequence/transactions@0.43.23
+  - @0xsequence/utils@0.43.23
+  - @0xsequence/wallet@0.43.23
+
 ## 0.43.22
 
 ### Patch Changes

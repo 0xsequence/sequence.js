@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.43.23
+
+### Patch Changes
+
+- update zkEVM name to Polygon zkEVM
+
 ## 0.43.22
 
 ### Patch Changes
