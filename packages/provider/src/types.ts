@@ -1,3 +1,4 @@
+import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
@@ -262,13 +263,7 @@ export interface MessageToSign {
   chainId?: number
 }
 
-export interface ETHAuthProof {
-  // eip712 typed-data payload for ETHAuth domain as input
-  typedData: TypedData
-
-  // signature encoded in an ETHAuth proof string
-  proofString: string
-}
+export type ETHAuthProof = AuthETHAuthProof
 
 export interface WalletSession {
   // Wallet context

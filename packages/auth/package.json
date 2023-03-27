@@ -26,7 +26,6 @@
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",
     "@0xsequence/network": "workspace:*",
-    "@0xsequence/provider": "workspace:*",
     "@0xsequence/sessions": "workspace:*",
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/wallet": "workspace:*",

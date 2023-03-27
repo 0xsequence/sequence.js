@@ -322,9 +322,6 @@ importers:
       '@0xsequence/network':
         specifier: workspace:*
         version: link:../network
-      '@0xsequence/provider':
-        specifier: workspace:*
-        version: link:../provider
       '@0xsequence/sessions':
         specifier: workspace:*
         version: link:../sessions

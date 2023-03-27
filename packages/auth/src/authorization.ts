@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { ChainIdLike } from '@0xsequence/network'
-import { ETHAuthProof } from '@0xsequence/provider'
+import { TypedData } from '@0xsequence/utils'
 import { Signer } from '@0xsequence/wallet'
 import { DEFAULT_SESSION_EXPIRATION } from './session'
 
@@ -14,6 +14,14 @@ export interface AuthorizationOptions {
 
   // expiry in seconds encoded in the message
   expiry?: number
+}
+
+export interface ETHAuthProof {
+  // eip712 typed-data payload for ETHAuth domain as input
+  typedData: TypedData
+
+  // signature encoded in an ETHAuth proof string
+  proofString: string
 }
 
 // signAuthorization will perform an EIP712 typed-data message signing of ETHAuth domain via the provided
