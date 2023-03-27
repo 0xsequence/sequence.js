@@ -521,9 +521,6 @@ importers:
       '@0xsequence/indexer':
         specifier: workspace:*
         version: link:../indexer
-      '@0xsequence/migration':
-        specifier: workspace:*
-        version: link:../migration
       '@0xsequence/relayer':
         specifier: workspace:*
         version: link:../relayer
