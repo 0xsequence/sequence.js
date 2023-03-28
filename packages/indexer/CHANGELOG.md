@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.43.24
+
+### Patch Changes
+
+- name change from zkevm to polygon-zkevm
+
 ## 0.43.23
 
 ### Patch Changes

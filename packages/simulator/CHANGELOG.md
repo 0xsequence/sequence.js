@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.24
+
+### Patch Changes
+
+- name change from zkevm to polygon-zkevm
+- Updated dependencies
+  - @0xsequence/transactions@0.43.24
+
 ## 0.43.23
 
 ### Patch Changes

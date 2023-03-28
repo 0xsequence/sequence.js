@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.24
+
+### Patch Changes
+
+- name change from zkevm to polygon-zkevm
+- Updated dependencies
+  - @0xsequence/abi@0.43.24
+  - @0xsequence/api@0.43.24
+  - @0xsequence/config@0.43.24
+  - @0xsequence/indexer@0.43.24
+  - @0xsequence/metadata@0.43.24
+  - @0xsequence/network@0.43.24
+  - @0xsequence/provider@0.43.24
+  - @0xsequence/utils@0.43.24
+  - @0xsequence/wallet@0.43.24
+
 ## 0.43.23
 
 ### Patch Changes

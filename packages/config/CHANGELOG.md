@@ -1,5 +1,16 @@
 # @0xsequence/config
 
+## 0.43.24
+
+### Patch Changes
+
+- name change from zkevm to polygon-zkevm
+- Updated dependencies
+  - @0xsequence/abi@0.43.24
+  - @0xsequence/multicall@0.43.24
+  - @0xsequence/network@0.43.24
+  - @0xsequence/utils@0.43.24
+
 ## 0.43.23
 
 ### Patch Changes
