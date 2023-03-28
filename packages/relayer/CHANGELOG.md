@@ -1,5 +1,17 @@
 # @0xsequence/relayer
 
+## 0.43.25
+
+### Patch Changes
+
+- added polygon zkevm to mainnet networks
+- Updated dependencies
+  - @0xsequence/abi@0.43.25
+  - @0xsequence/config@0.43.25
+  - @0xsequence/network@0.43.25
+  - @0xsequence/transactions@0.43.25
+  - @0xsequence/utils@0.43.25
+
 ## 0.43.24
 
 ### Patch Changes

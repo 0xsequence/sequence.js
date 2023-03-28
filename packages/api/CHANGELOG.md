@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.43.25
+
+### Patch Changes
+
+- added polygon zkevm to mainnet networks
+
 ## 0.43.24
 
 ### Patch Changes
