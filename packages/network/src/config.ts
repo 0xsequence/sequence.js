@@ -160,7 +160,7 @@ export const networks: Record<ChainId, NetworkConfig> = {
   },
   [ChainId.POLYGON_ZKEVM]: {
     chainId: ChainId.POLYGON_ZKEVM,
-    name: 'zkevm',
+    name: 'polygon-zkevm',
     title: 'Polygon zkEVM',
     blockExplorer: {
       name: 'Polygonscan (zkEVM)',
