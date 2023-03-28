@@ -346,6 +346,18 @@ export const mainnetNetworks = validateAndSortNetworks([
     rpcUrl: nodesURL('optimism'),
     indexerUrl: indexerURL('optimism'),
     relayer: { url: relayerURL('optimism') }
+  },
+  {
+    ...networks[ChainId.POLYGON_ZKEVM],
+    rpcUrl: nodesURL('polygon-zkevm'),
+    indexerUrl: indexerURL('polygon-zkevm'),
+    relayer: { url: relayerURL('polygon-zkevm') }
+  },
+  {
+    ...networks[ChainId.GNOSIS],
+    rpcUrl: nodesURL('gnosis'),
+    indexerUrl: indexerURL('gnosis'),
+    relayer: { url: relayerURL('gnosis') }
   }
 ])
 
