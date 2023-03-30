@@ -154,18 +154,6 @@ export function hasSequenceTransactions(txs: any[]): txs is Transaction[] {
   return txs.every(isSequenceTransaction)
 }
 
-// export function readSequenceNonce(...txs: Transaction[]): ethers.BigNumber | undefined {
-//   const sample = txs.find(t => t.nonce !== undefined)
-//   if (!sample) return undefined
-
-//   const sampleNonce = ethers.BigNumber.from(sample.nonce)
-//   if (txs.find(t => t.nonce !== undefined && !ethers.BigNumber.from(t.nonce).eq(sampleNonce))) {
-//     throw new Error('Mixed nonces on Sequence transactions')
-//   }
-
-//   return sampleNonce
-// }
-
 // TODO: We may be able to remove this if we make Transaction === TransactionEncoded
 export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
   return txs.map(t => ({

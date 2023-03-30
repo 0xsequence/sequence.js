@@ -688,11 +688,13 @@ export class Account {
     txs: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
-    skipPreDecorate: boolean = false
+    skipPreDecorate: boolean = false,
+    callback?: (signed: commons.transaction.SignedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
     const status = await this.status(chainId)
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
     const signed = await this.signTransactions(predecorated, chainId)
+    if (callback) callback(signed)
     return this.sendSignedTransactions(signed, chainId, quote)
   }
 
