@@ -8,6 +8,8 @@ export enum SequenceIndexerServices {
 
   POLYGON = 'https://polygon-indexer.sequence.app',
   POLYGON_MUMBAI = 'https://mumbai-indexer.sequence.app',
+  
+  POLYGON_ZKEVM = 'https://polygon-zkevm-indexer.sequence.app',
 
   ARBITRUM = 'https://arbitrum-indexer.sequence.app',
   ARBITRUM_NOVA = 'https://arbitrum-nova-indexer.sequence.app',
