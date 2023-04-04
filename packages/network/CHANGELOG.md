@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.26
+
+### Patch Changes
+
+- add zkevm url to enum
+- Updated dependencies
+  - @0xsequence/indexer@0.43.26
+  - @0xsequence/provider@0.43.26
+  - @0xsequence/relayer@0.43.26
+  - @0xsequence/utils@0.43.26
+
 ## 0.43.25
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 0.43.26
+
+### Patch Changes
+
+- add zkevm url to enum
+
 ## 0.43.25
 
 ### Patch Changes

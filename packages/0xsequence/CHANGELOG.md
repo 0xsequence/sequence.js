@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.43.26
+
+### Patch Changes
+
+- add zkevm url to enum
+- Updated dependencies
+  - @0xsequence/abi@0.43.26
+  - @0xsequence/api@0.43.26
+  - @0xsequence/auth@0.43.26
+  - @0xsequence/config@0.43.26
+  - @0xsequence/guard@0.43.26
+  - @0xsequence/indexer@0.43.26
+  - @0xsequence/metadata@0.43.26
+  - @0xsequence/multicall@0.43.26
+  - @0xsequence/network@0.43.26
+  - @0xsequence/provider@0.43.26
+  - @0xsequence/relayer@0.43.26
+  - @0xsequence/transactions@0.43.26
+  - @0xsequence/utils@0.43.26
+  - @0xsequence/wallet@0.43.26
+
 ## 0.43.25
 
 ### Patch Changes

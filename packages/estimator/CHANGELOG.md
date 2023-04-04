@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 0.43.26
+
+### Patch Changes
+
+- add zkevm url to enum
+- Updated dependencies
+  - @0xsequence/abi@0.43.26
+  - @0xsequence/config@0.43.26
+  - @0xsequence/network@0.43.26
+  - @0xsequence/transactions@0.43.26
+  - @0xsequence/utils@0.43.26
+
 ## 0.43.25
 
 ### Patch Changes
