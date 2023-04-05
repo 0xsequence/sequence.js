@@ -425,8 +425,7 @@ export class Account {
   async signDigest(
     digest: ethers.BytesLike,
     chainId: ethers.BigNumberish,
-    decorate: boolean = true,
-    useOnchain: boolean = false
+    decorate: boolean = true
   ): Promise<string> {
     // If we are signing a digest for chainId zero then we can never be fully migrated
     // because Sequence v1 doesn't allow for signing a message on "all chains"
@@ -440,11 +439,10 @@ export class Account {
 
     this.mustBeFullyMigrated(status)
 
-    const useStatus = useOnchain ? status.onChain : status
-    const wallet = this.walletForStatus(chainId, useStatus)
+    const wallet = this.walletForStatus(chainId, status)
     const signature = await wallet.signDigest(digest)
 
-    return decorate ? this.decorateSignature(signature, useStatus as any) : signature
+    return decorate ? this.decorateSignature(signature, status) : signature
   }
 
   async editConfig(
@@ -500,7 +498,7 @@ export class Account {
    */
   buildBootstrapTransactions(
     status: AccountStatus
-  ): commons.transaction.TransactionBundle {
+  ): Omit<commons.transaction.IntendedTransactionBundle, 'chainId'> {
     const transactions: commons.transaction.Transaction[] = []
 
     // Add wallet deployment if needed
@@ -525,32 +523,35 @@ export class Account {
       delegateCall: false
     })))
 
+    // Build the transaction intent, if the transaction has migrations
+    // then we should use one of the intents of the migrations (anyone will do)
+    // if it doesn't, then we must build a random intent, this is not ideal
+    // because we will not be able to track the transaction later
+    const id = status.signedMigrations.length > 0
+      ? status.signedMigrations[0].tx.intent.id
+      : ethers.utils.hexlify(ethers.utils.randomBytes(32))
+
     // Everything is encoded as a bundle
     // using the GuestModule of the account version
     const { guestModule } = this.contextFor(status.version)
-    return { entrypoint: guestModule, transactions }
+    return { entrypoint: guestModule, transactions, intent: { id, wallet: this.address } }
   }
 
   async bootstrapTransactions(
     chainId: ethers.BigNumberish,
-  ): Promise<commons.transaction.TransactionBundle> {
-    const status = await this.status(chainId)
+    prestatus?: AccountStatus
+  ): Promise<Omit<commons.transaction.IntendedTransactionBundle, 'chainId'>> {
+    const status = prestatus || await this.status(chainId)
     return this.buildBootstrapTransactions(status)
   }
 
   async doBootstrap(
     chainId: ethers.BigNumberish,
-    feeQuote?: FeeQuote
+    feeQuote?: FeeQuote,
+    prestatus?: AccountStatus
   ) {
-    const bootstrapTxs = await this.bootstrapTransactions(chainId)
-    const intended = commons.transaction.intendTransactionBundle(
-      bootstrapTxs,
-      this.address,
-      chainId,
-      ethers.utils.hexlify(ethers.utils.randomBytes(32))
-    )
-
-    return this.relayer(chainId).relay(intended, feeQuote)
+    const bootstrapTxs = await this.bootstrapTransactions(chainId, prestatus)
+    return this.relayer(chainId).relay({ ...bootstrapTxs, chainId }, feeQuote)
   }
 
   signMessage(message: ethers.BytesLike, chainId: ethers.BigNumberish): Promise<string> {

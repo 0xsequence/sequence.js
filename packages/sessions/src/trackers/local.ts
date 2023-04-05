@@ -500,7 +500,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
           nonce: nonce,
           signature: encoded.encoded,
           intent: {
-            id: ethers.utils.keccak256(payload.message),
+            id: subdigest,
             wallet: address
           }
         },

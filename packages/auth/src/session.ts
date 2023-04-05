@@ -297,7 +297,7 @@ export class Session {
       // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
       // those other signers may not be part of the configuration.
       //
-      this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true, true)).then((s) => {
+      this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true)).then((s) => {
         proof.signature = s
         return ethAuth.encodeProof(proof, true)
       }).catch((reason) => {
@@ -364,7 +364,7 @@ export class Session {
     const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration, onMigration } = args
     const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
-    const referenceChainId = networks.find((n) => n.chainId === 1)?.chainId ?? networks[0].chainId
+    const referenceChainId = sequenceApiChainId
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
@@ -405,7 +405,17 @@ export class Session {
       // NOTICE: We are performing the wallet update on a single chain, assuming that
       // all other networks have the same configuration. This is not always true.
       if (addSigners.length > 0) {
-        const prevConfig = await account.status(referenceChainId).then((s) => s.config)
+        const status = await account.status(referenceChainId)
+
+        // NOTICE: We only need to do this because the API will not be able to
+        // validate the v2 signature (if the account has an onchain version of 1)
+        // we could speed this up by sending the migration alongside the jwt request
+        // and letting the API validate it offchain.
+        if (status.onChain.version !== status.version) {
+          await account.doBootstrap(referenceChainId, undefined, status)
+        }
+
+        const prevConfig = status.config
         const newConfig = account.coders.config.editConfig(prevConfig, {
           add: addSigners,
           checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
