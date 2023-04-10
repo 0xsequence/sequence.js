@@ -71,13 +71,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   private findNetworkID(network: string | number) {
+    const lnet = typeof network === 'string' ? network.toLowerCase() : network
     const networkId = this.networks.find(n => {
-      switch (`${network}`) {
-        case n.name, `${n.chainId}`:
-          return true
-        default:
-          return false
-      }
+      return n.name.toLowerCase() === lnet || n.chainId.toString() === lnet || n.chainId === lnet
     })
 
     if (!networkId) {
@@ -158,7 +154,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     let chainId: number
     switch (typeof options?.networkId) {
       case 'string':
-        chainId = getChainId(options.networkId)
+        // First see if it matches the name of a network
+        try {
+          chainId = this.findNetworkID(options.networkId)
+        } catch (err) {
+          // If not, try to parse it as a big number
+          chainId = getChainId(options.networkId)
+        }
+
         break
       case 'number':
         chainId = options.networkId
