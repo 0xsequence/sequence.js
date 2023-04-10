@@ -12,8 +12,8 @@ createLogger().then(logger => prompt = logger)
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
 
 export class UniversalDeployer {
-  private deployedInstances: ContractInstance[] = []
-  private signer: ethers.Signer
+  protected deployedInstances: ContractInstance[] = []
+  protected signer: ethers.Signer
 
   constructor(public networkName: string, public provider: ethers.providers.JsonRpcProvider, public signerOverride?: ethers.Signer) {
     this.signer = signerOverride || provider.getSigner()
