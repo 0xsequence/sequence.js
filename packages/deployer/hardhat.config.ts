@@ -1,6 +1,10 @@
 // import '@nomiclabs/hardhat-truffle5'
 import { networkConfig } from './src/utils/configLoader'
 
+import * as tdly from "@tenderly/hardhat-tenderly"
+
+tdly.setup({ automaticVerifications: false })
+
 const ganacheNetwork = {
   url: 'http://127.0.0.1:8545',
   blockGasLimit: 6000000000

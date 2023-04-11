@@ -10,7 +10,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
+    "test:file": "NODE_OPTIONS='--loader tsx' mocha",
     "typecheck": "tsc --noEmit",
     "build": "rm -rf src/typings && TS_NODE_PROJECT=../../tsconfig.test.json hardhat clean && pnpm compile-contracts && pnpm gen:typings",
     "compile-contracts": "TS_NODE_PROJECT=../../tsconfig.test.json hardhat --max-memory 4096 compile",
@@ -29,10 +29,14 @@
     "@ethersproject/providers": "^5.7.2",
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@tenderly/sdk": "^0.1.0",
     "@typechain/ethers-v5": "^10.1.1",
     "@types/mocha": "^10.0.0",
     "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
+    "hardhat": "^2.12.2",
+    "mocha": "^10.1.0",
+    "sinon": "^15.0.3",
     "typechain": "^8.1.1"
   },
   "files": [
