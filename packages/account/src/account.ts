@@ -730,11 +730,14 @@ export class Account {
       // between the current onChain config and the latest config, including the ones "flagged for removal"
       const status = await this.status(chainId, true)
 
-      return Promise.all(status.presignedConfigurations.map(async (update, iconf) => {
-        const isLast = iconf === status.presignedConfigurations.length - 1
-        const config = await this.tracker.configOfImageHash({ imageHash: update.nextImageHash })
+      const fullChain = [status.onChain.imageHash, ...status.presignedConfigurations.map((update) => update.nextImageHash)]
+
+      return Promise.all(fullChain.map(async (nextImageHash, iconf) => {
+        const isLast = iconf === fullChain.length - 1
+        const config = await this.tracker.configOfImageHash({ imageHash: nextImageHash })
+
         if (!config) {
-          console.warn(`AllSigners may be incomplete, config not found for imageHash ${update.nextImageHash}`)
+          console.warn(`AllSigners may be incomplete, config not found for imageHash ${nextImageHash}`)
           return
         }
 
