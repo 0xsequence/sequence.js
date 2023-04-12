@@ -40,7 +40,8 @@ export interface LocalTrackerDBSchema extends DBSchema {
       wallet: string,
       fromVersion: number,
       toVersion: number,
-      subdigest: string
+      subdigest: string,
+      toImageHash: string
     },
     indexes: {
       'jump': string // '${wallet}-${fromVersion}-${toVersion}
@@ -165,14 +166,14 @@ export class IndexedDBStore implements TrackerStore {
     await db.put('signatures', { signature: payload, signer }, [subdigest, signer].join('-'))
   }
 
-  loadMigrationsSubdigest = async (wallet: string, fromVersion: number, toVersion: number): Promise<string[]> => {
+  loadMigrationsSubdigest = async (wallet: string, fromVersion: number, toVersion: number): Promise<{subdigest: string, toImageHash: string}[]> => {
     const db = await this.getDb()
     const index = await db.getAllFromIndex('migrations', 'jump', IDBKeyRange.only([wallet, fromVersion, toVersion]))
-    return index.map(key => key.subdigest)
+    return index.map(key => ({ subdigest: key.subdigest, toImageHash: key.toImageHash }))
   }
 
-  saveMigrationsSubdigest = async (wallet: string, fromVersion: number, toVersion: number, subdigest: string): Promise<void> => {
+  saveMigrationsSubdigest = async (wallet: string, fromVersion: number, toVersion: number, subdigest: string, toImageHash: string): Promise<void> => {
     const db = await this.getDb()
-    await db.put('migrations', { wallet, fromVersion, toVersion, subdigest }, subdigest)
+    await db.put('migrations', { wallet, fromVersion, toVersion, subdigest, toImageHash }, subdigest)
   }
 }

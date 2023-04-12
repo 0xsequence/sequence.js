@@ -433,7 +433,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       savePayload,
       saveToConfig,
       this.saveWalletConfig({ config: recovered.config }),
-      this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest),
+      this.store.saveMigrationsSubdigest(address, fromVersion, fromVersion + 1, subdigest, newImageHash),
       ...signatures.map(sig => this.store.saveSignatureOfSubdigest(sig.address, recovered.subdigest, sig.signature))
     ])
   }
@@ -445,7 +445,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     // Get the current config and all possible migration payloads
-    const [currentConfig, subdigests] = await Promise.all([
+    const [currentConfig, txs] = await Promise.all([
       this.configOfImageHash({ imageHash: fromImageHash }),
       this.store.loadMigrationsSubdigest(address, fromVersion, fromVersion + 1)
     ])
@@ -456,7 +456,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
     // We need to process every migration candidate individually
     // and see which one has enough signers to be valid (for the current config)
-    const candidates = await Promise.all(subdigests.map(async (subdigest) => {
+    const candidates = await Promise.all(txs.map(async (tx) => {
+      const { subdigest, toImageHash } = tx
       const payload = await this.payloadOfSubdigest({ subdigest })
       if (!payload || !payload.message) return undefined
       if (!ethers.BigNumber.from(chainId).eq(payload.chainId)) return undefined
@@ -504,7 +505,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
             wallet: address
           }
         },
-        toConfig: currentConfig,
+        toConfig: await this.configOfImageHash({ imageHash: toImageHash }),
         fromVersion,
         toVersion: fromVersion + 1
       } as migrator.SignedMigration

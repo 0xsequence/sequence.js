@@ -730,7 +730,13 @@ export class Account {
       // between the current onChain config and the latest config, including the ones "flagged for removal"
       const status = await this.status(chainId, true)
 
-      const fullChain = [status.onChain.imageHash, ...status.presignedConfigurations.map((update) => update.nextImageHash)]
+      const fullChain = [
+        status.onChain.imageHash,
+        ...(
+          status.onChain.version !== status.version ? status.signedMigrations.map((m) => universal.coderFor(m.toVersion).config.imageHashOf(m.toConfig as any)) : []
+        ),
+        ...status.presignedConfigurations.map((update) => update.nextImageHash)
+      ]
 
       return Promise.all(fullChain.map(async (nextImageHash, iconf) => {
         const isLast = iconf === fullChain.length - 1

@@ -8,7 +8,7 @@ export class MemoryTrackerStore implements TrackerStore {
   private counterfactualWallets: { [wallet: string]: { imageHash: string, context: commons.context.WalletContext } } = {}
   private payloads: { [subdigest: string]: commons.signature.SignedPayload } = {}
   private signatures: { [signer: string]: { [subdigest: string]: ethers.BytesLike } } = {}
-  private migrations: { [wallet: string]: { [fromVersion: number]: { [toVersion: number]: string[] } } } = {}
+  private migrations: { [wallet: string]: { [fromVersion: number]: { [toVersion: number]: { subdigest: string, toImageHash: string }[] } } } = {}
 
   loadConfig = (imageHash: string): Promise<v1.config.WalletConfig | PlainV2Config | undefined> => {
     return Promise.resolve(this.configs[imageHash])
@@ -60,15 +60,15 @@ export class MemoryTrackerStore implements TrackerStore {
     return Promise.resolve()
   }
 
-  loadMigrationsSubdigest = (wallet: string, fromVersion: number, toVersion: number): Promise<string[]> => {
+  loadMigrationsSubdigest = (wallet: string, fromVersion: number, toVersion: number): Promise<{ subdigest: string, toImageHash: string }[]> => {
     return Promise.resolve(this.migrations[wallet]?.[fromVersion]?.[toVersion] || [])
   }
 
-  saveMigrationsSubdigest = (wallet: string, fromVersion: number, toVersion: number, subdigest: string): Promise<void> => {
+  saveMigrationsSubdigest = (wallet: string, fromVersion: number, toVersion: number, subdigest: string, toImageHash: string): Promise<void> => {
     if (!this.migrations[wallet]) this.migrations[wallet] = {}
     if (!this.migrations[wallet][fromVersion]) this.migrations[wallet][fromVersion] = {}
     if (!this.migrations[wallet][fromVersion][toVersion]) this.migrations[wallet][fromVersion][toVersion] = []
-    this.migrations[wallet][fromVersion][toVersion].push(subdigest)
+    this.migrations[wallet][fromVersion][toVersion].push({ subdigest, toImageHash })
     return Promise.resolve()
   }
 }

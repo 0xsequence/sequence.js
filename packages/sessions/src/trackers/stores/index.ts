@@ -54,8 +54,8 @@ export interface TrackerStore {
   saveSignatureOfSubdigest: (signer: string, subdigest: string, payload: ethers.BytesLike) => Promise<void>
 
   // migrations
-  loadMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number) => Promise<string[]>
-  saveMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number, subdigest: string) => Promise<void>
+  loadMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number) => Promise<{ subdigest: string, toImageHash: string }[]>
+  saveMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number, subdigest: string, toImageHash: string) => Promise<void>
 }
 
 export * from './memoryStore'
