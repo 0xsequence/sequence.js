@@ -12,12 +12,8 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "isolatedModules": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "types": [
-      "node"
-    ]
+    "baseUrl": ".",
+    "typeRoots": ["node_modules/@types", "./packages/**/node_modules/@types", "./packages/**/types"]
   },
-  "include": ["./packages/**/src/**/*.ts"]
+  "include": ["./packages/**/src/**/*.ts", "./packages/**/tests/**/*.ts"]
 }
