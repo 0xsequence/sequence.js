@@ -43,23 +43,17 @@ export type EtherscanVerificationRequest = {
   waitForSuccess: boolean // Whether to wait for success or return after sending the request
 }
 
-export type VerifyResponse = {
-  alreadyVerified: string[] // contracts that were already verified on Etherscan
-  successful: string[] // contracts that were verified successfully
-  failed: string[] // contracts for which verification failed
-}
-
 type EtherscanApiResponse = {
   status: string
   result: string
   message?: string // Error
 }
 
-export class EtherscanVerify {
+export class EtherscanVerifier {
   constructor(private readonly apiKey: string, private readonly networkName: string) {}
 
   // Throws on failure
-  verify = async (addr: string, request: EtherscanVerificationRequest): Promise<void> => {
+  verifyContract = async (addr: string, request: EtherscanVerificationRequest): Promise<void> => {
     // Determine network
     const apiUrl = `https://api${this.networkName === 'homestead' ? '' : `-${this.networkName}`}.etherscan.io/api`
 

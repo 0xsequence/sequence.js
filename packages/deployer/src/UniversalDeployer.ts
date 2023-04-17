@@ -5,6 +5,7 @@ import { UniversalDeployer2__factory } from "./typings/contracts"
 import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX, UNIVERSAL_DEPLOYER_2_BYTECODE } from './constants'
 import { ContractInstance } from './types'
 import { createLogger, Logger } from './utils/logger'
+import { addressOf } from './utils/addressUtils'
 
 let prompt: Logger
 createLogger().then(logger => prompt = logger)
@@ -41,7 +42,7 @@ export class UniversalDeployer {
       const instanceNumber = instance !== undefined ? instance : 0
 
       // Verify if contract already deployed
-      const contractAddress = await this.addressOf(contractFactory, instanceNumber, ...args)
+      const contractAddress = await addressOf(this.signer, contractFactory, instanceNumber, ...args)
       const contractCode = await this.provider.getCode(contractAddress)
 
       const deployer = UniversalDeployer2__factory.connect(UNIVERSAL_DEPLOYER_2_ADDRESS, this.signer)
@@ -170,28 +171,6 @@ export class UniversalDeployer {
       contractAlias,
       contract: {address: address}
     })
-  }
-  
-  addressOf = async <T extends ContractFactory>(
-    contractFactory: new (signer: ethers.Signer) => T,
-    contractInstance: number | ethers.BigNumber,
-    ...args: Parameters<T['deploy']>
-  ): Promise<string> => {
-    const factory = new contractFactory(this.signer)
-    const deployTx = await factory.getDeployTransaction(...args)
-    const deployData = deployTx.data
-  
-    const codeHash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(['bytes'], [deployData])
-    )
-
-    const salt = ethers.utils.solidityPack(['uint256'], [contractInstance])
-
-    const hash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
-    )
-
-    return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
   }
 
 }
