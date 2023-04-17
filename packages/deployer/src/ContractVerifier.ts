@@ -1,4 +1,4 @@
-import { Tenderly, TenderlyConfiguration, VerificationRequest } from '@tenderly/sdk'
+import { SolidityCompilerVersions, Tenderly, TenderlyConfiguration, VerificationRequest } from '@tenderly/sdk'
 import { ethers, ContractFactory, Signer } from 'ethers'
 import { createLogger, Logger } from './utils/logger'
 import { EtherscanVerificationRequest, EtherscanVerifier } from './verifiers/EtherscanVerifier'
@@ -8,6 +8,30 @@ let prompt: Logger
 createLogger().then(logger => (prompt = logger))
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF)
+
+type SolidityCompilerVersion = `v${number}.${number}.${number}` | `v${number}.${number}.${number}+commit.${string}`;
+type Path = string
+type Web3Address = string
+
+export type ContractVerificationRequest = {
+  contractToVerify: string,
+  version: SolidityCompilerVersion,
+  sources: Record<Path, { // File path to source content
+      content: string;
+  }>,
+  settings: {
+    optimizer: {
+      enabled: boolean,
+      runs: number,
+      details?: {
+        yul?: boolean,
+      },
+    },
+    libraries?: Record<Path, Record<string, Web3Address>>;
+    remappings?: string[];
+  },
+  waitForSuccess: boolean,
+}
 
 export class ContractVerifier {
 
@@ -32,11 +56,44 @@ export class ContractVerifier {
 
   verifyContract = async(
     address: string,
-    tenderVerificationRequest: VerificationRequest,
-    etherscanVerificationRequest: EtherscanVerificationRequest,
-    contractAlias?: string,
+    verificationRequest: ContractVerificationRequest,
   ): Promise<void> => {
-    await this.tenderlyVerifier.verifyContract(address, contractAlias ?? etherscanVerificationRequest.contractToVerify, tenderVerificationRequest)
+
+    const version = verificationRequest.version.split('+')[0] as SolidityCompilerVersions // Simple version for tenderly
+
+    // Construct different verification requests
+    const tenderVerificationRequest: VerificationRequest = {
+      contractToVerify: verificationRequest.contractToVerify,
+      solc: {
+        version,
+        sources: verificationRequest.sources,
+        settings: {
+          optimizer: verificationRequest.settings.optimizer,
+        },
+      },
+      config: { // Default mode public
+        mode: 'public',
+      },
+    }
+
+    const etherscanVerificationRequest: EtherscanVerificationRequest = {
+      contractToVerify: verificationRequest.contractToVerify,
+      version,
+      compilerInput: {
+        language: 'Solidity',
+        sources: verificationRequest.sources,
+        settings: {
+          optimizer: verificationRequest.settings.optimizer,
+          outputSelection: { // Default output selection
+            '*': { '*': ['abi', 'evm.bytecode', 'evm.deployedBytecode', 'evm.methodIdentifiers', 'metadata'], '': ['ast'] }
+          },
+          remappings: verificationRequest.settings.remappings,
+        },
+      },
+      waitForSuccess: verificationRequest.waitForSuccess,
+    }
+
+    await this.tenderlyVerifier.verifyContract(address, verificationRequest.contractToVerify, tenderVerificationRequest)
     await this.etherscanVerifier.verifyContract(address, etherscanVerificationRequest)
   }
 
