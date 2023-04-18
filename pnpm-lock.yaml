@@ -11664,6 +11664,7 @@ packages:
 
   /semver@5.7.1:
     resolution: {integrity: sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==}
+    hasBin: true
     dev: true
 
   /semver@6.3.0:

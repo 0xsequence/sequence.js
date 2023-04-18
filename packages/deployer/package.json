@@ -9,7 +9,7 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "pnpm test:file tests/**/*.spec.ts",
+    "test": "pnpm test:file \"tests/**/*.spec.ts\"",
     "test:file": "NODE_OPTIONS='--loader tsx' mocha",
     "typecheck": "tsc --noEmit",
     "build": "rm -rf src/typings && TS_NODE_PROJECT=../../tsconfig.test.json hardhat clean && pnpm compile-contracts && pnpm gen:typings",

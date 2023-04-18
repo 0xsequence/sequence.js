@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { ethers, ContractFactory, ContractTransaction } from 'ethers'
+import { ethers, ContractFactory, ContractTransaction, BigNumber } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from "./typings/contracts"
 import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX, UNIVERSAL_DEPLOYER_2_BYTECODE } from './constants'
@@ -18,6 +18,34 @@ export class UniversalDeployer {
 
   constructor(public networkName: string, public provider: ethers.providers.JsonRpcProvider, public signerOverride?: ethers.Signer) {
     this.signer = signerOverride || provider.getSigner()
+  }
+
+  /**
+   * Return all funds in signer to address
+   * @return The dust remaining in the signer
+   */
+  recoverFunds = async (address: string): Promise<BigNumber> => {
+    prompt.start(`Recovering signer funds to ${address}`)
+    const signerAddress = await this.signer.getAddress()
+    const signerBalance = await this.provider.getBalance(signerAddress)
+    
+    const isEOA = (await this.provider.getCode(address)).length <= 2
+    const gasEstimate = isEOA ? 21000 : await this.signer.estimateGas({ to: address, value: signerBalance })
+    const gasPrice = await this.provider.getGasPrice()
+
+    const tx = await this.signer.sendTransaction({
+      to: address,
+      value: signerBalance.sub(gasPrice.mul(gasEstimate)),
+      gasLimit: gasEstimate,
+      gasPrice,
+    })
+    await tx.wait()
+
+    const dust = await this.provider.getBalance(signerAddress)
+    prompt.info(`Dust remaining: ${ethers.utils.formatEther(dust)} ETH`)
+    prompt.succeed('Funds recovered')
+
+    return dust
   }
 
   deploy = async <T extends ContractFactory>(
