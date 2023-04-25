@@ -382,22 +382,6 @@ export class Session {
         orchestrator
       })
 
-      // Account may not have been migrated yet, so we need to check
-      // if it has been migrated and if not, migrate it (in all chains)
-      let isFullyMigrated = await account.isMigratedAllChains()
-      if (!isFullyMigrated) {
-        // This is an oportunity for whoever is opening the session to
-        // feed the orchestrator with more signers, so that the migration
-        // can be completed.
-        if (onMigration && !await onMigration(account)) {
-          throw Error('Migration cancelled, cannot open session')
-        }
-
-        await account.signAllMigrations(editConfigOnMigration)
-        isFullyMigrated = await account.isMigratedAllChains()
-        if (!isFullyMigrated) throw Error('Failed to migrate account')
-      }
-
       // Get the latest configuration of the wallet (on the reference chain)
       // now this configuration should be of the latest version, so we can start
       // manipulating it.
@@ -405,7 +389,29 @@ export class Session {
       // NOTICE: We are performing the wallet update on a single chain, assuming that
       // all other networks have the same configuration. This is not always true.
       if (addSigners.length > 0) {
+        // New wallets never need migrations
+        // (because we create them on the latest version)
         const status = await account.status(referenceChainId)
+
+        // If the wallet was created originally on v2, then we can skip
+        // the migration checks all together.
+        if (status.original.version !== status.version) {
+          // Account may not have been migrated yet, so we need to check
+          // if it has been migrated and if not, migrate it (in all chains)
+          let isFullyMigrated = await account.isMigratedAllChains()
+          if (!isFullyMigrated) {
+            // This is an oportunity for whoever is opening the session to
+            // feed the orchestrator with more signers, so that the migration
+            // can be completed.
+            if (onMigration && !await onMigration(account)) {
+              throw Error('Migration cancelled, cannot open session')
+            }
+
+            await account.signAllMigrations(editConfigOnMigration)
+            isFullyMigrated = await account.isMigratedAllChains()
+            if (!isFullyMigrated) throw Error('Failed to migrate account')
+          }
+        }
 
         // NOTICE: We only need to do this because the API will not be able to
         // validate the v2 signature (if the account has an onchain version of 1)
