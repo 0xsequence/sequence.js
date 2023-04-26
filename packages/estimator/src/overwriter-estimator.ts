@@ -41,7 +41,7 @@ export class OverwriterEstimator {
   public options: Required<OverwriterEstimatorOptions>
 
   constructor(options: OverwriterEstimatorOptions) {
-    this.provider = typeof(options.rpc) === 'string' ? new ethers.providers.JsonRpcProvider(options.rpc) : options.rpc
+    this.provider = typeof(options.rpc) === 'string' ? new ethers.providers.StaticJsonRpcProvider(options.rpc) : options.rpc
     this.options = { ...OverwriterEstimatorDefaults, ...options }
   }
 

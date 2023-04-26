@@ -163,7 +163,7 @@ export class Account {
   provider(chainId: ethers.BigNumberish): ethers.providers.Provider {
     const found = this.network(chainId)
     if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
-    return found.provider || new ethers.providers.JsonRpcProvider(found.rpcUrl)
+    return found.provider || new ethers.providers.StaticJsonRpcProvider(found.rpcUrl, { name: "", chainId: ethers.BigNumber.from(chainId).toNumber() })
   }
 
   reader(chainId: ethers.BigNumberish): commons.reader.Reader {
@@ -223,43 +223,6 @@ export class Account {
     })
   }
 
-  // Gets the current on-chain version of the wallet
-  // on a given network
-  async onchainVersionInfo(chainId: ethers.BigNumberish): Promise<{
-    first: {
-      imageHash: string,
-      context: commons.context.WalletContext,
-      version: number
-    }
-    current: number
-  }> {
-    // First we need to use the tracker to get the counterfactual imageHash
-    const firstImageHash = await this.tracker.imageHashOfCounterfactualWallet({
-      wallet: this.address
-    })
-
-    if (!firstImageHash) {
-      throw new Error(`Counterfactual imageHash not found for wallet ${this.address}`)
-    }
-
-    const current = await version.versionOf(
-      this.address,
-      firstImageHash.imageHash,
-      this.contexts,
-      this.reader(chainId)
-    )
-
-    // To find the first version, we need to try the firstImageHash
-    // with every context, and find the first one that matches
-    const first = version.counterfactualVersion(
-      this.address,
-      firstImageHash.imageHash,
-      Object.values(this.contexts),
-    )
-
-    return { first: { ...firstImageHash, version: first }, current }
-  }
-
   // Get the status of the account on a given network
   // this does the following process:
   // 1. Get the current on-chain status of the wallet (version + imageHash)
@@ -268,30 +231,59 @@ export class Account {
   // 4. Fetch reverse lookups for both on-chain and pending configurations
   async status(chainId: ethers.BigNumberish, longestPath: boolean = false): Promise<AccountStatus> {
     const isDeployedPromise = this.reader(chainId).isDeployed(this.address)
-    const onChainVersionInfoPromise = this.onchainVersionInfo(chainId)
+  
+    const counterfactualImageHashPromise = this.tracker.imageHashOfCounterfactualWallet({
+      wallet: this.address
+    }).then((r) => {
+      if (!r) throw new Error(`Counterfactual imageHash not found for wallet ${this.address}`)
+      return r
+    })
 
-    let onChainImageHash = await this.reader(chainId).imageHash(this.address)
-    if (!onChainImageHash) {
-      const counterfactualImageHash = await this.tracker.imageHashOfCounterfactualWallet({
-        wallet: this.address
-      })
+    const counterFactualVersionPromise = counterfactualImageHashPromise.then((r) => {
+      return version.counterfactualVersion(
+        this.address,
+        r.imageHash,
+        Object.values(this.contexts),
+      )
+    })
 
-      onChainImageHash = counterfactualImageHash?.imageHash
-    }
+    const onChainVersionPromise = (async () => {
+      const isDeployed = await isDeployedPromise
+      if (!isDeployed) return counterFactualVersionPromise
 
-    if (!onChainImageHash) {
+      const implementation = await this.reader(chainId).implementation(this.address)
+      if (!implementation) throw new Error(`Implementation not found for wallet ${this.address}`)
+
+      const versions = Object.values(this.contexts)
+      for (let i = 0; i < versions.length; i++) {
+        if (versions[i].mainModule === implementation || versions[i].mainModuleUpgradable === implementation) {
+          return versions[i].version
+        }
+      }
+
+      throw new Error(`Version not found for implementation ${implementation}`)
+    })()
+
+    const onChainImageHashPromise = (async () => {
+      const deployedImageHash = await this.reader(chainId).imageHash(this.address)
+      if (deployedImageHash) return deployedImageHash
+      const counterfactualImageHash = await counterfactualImageHashPromise
+      if (counterfactualImageHash) return counterfactualImageHash.imageHash
       throw new Error(`On-chain imageHash not found for wallet ${this.address}`)
-    }
+    })()
 
-    const onChainConfig = await this.tracker.configOfImageHash({ imageHash: onChainImageHash })
-    if (!onChainConfig) {
+    const onChainConfigPromise = (async () => {
+      const onChainImageHash = await onChainImageHashPromise
+      const onChainConfig = await this.tracker.configOfImageHash({ imageHash: onChainImageHash })
+      if (onChainConfig) return onChainConfig
       throw new Error(`On-chain config not found for imageHash ${onChainImageHash}`)
-    }
+    })()
 
-    const { current: onChainVersion, first: onChainFirstInfo } = await onChainVersionInfoPromise
+    const onChainVersion = await onChainVersionPromise
+    const onChainImageHash = await onChainImageHashPromise
 
     let fromImageHash = onChainImageHash
-    let version = onChainVersion
+    let lastVersion = onChainVersion
     let signedMigrations: migrator.SignedMigration[] = []
 
     if (onChainVersion !== this.version) {
@@ -307,7 +299,7 @@ export class Account {
       // The migrator returns the original version and imageHash
       // if no presigned migration is found, so no need to check here
       fromImageHash = presignedMigrate.lastImageHash
-      version = presignedMigrate.lastVersion
+      lastVersion = presignedMigrate.lastVersion
 
       signedMigrations = presignedMigrate.signedMigrations
     }
@@ -325,25 +317,29 @@ export class Account {
     }
 
     const isDeployed = await isDeployedPromise
-    const checkpoint = universal.coderFor(version).config.checkpointOf(config as any)
+    const counterfactualImageHash = await counterfactualImageHashPromise
+    const checkpoint = universal.coderFor(lastVersion).config.checkpointOf(config as any)
 
     return {
-      original: onChainFirstInfo,
+      original: {
+        ...counterfactualImageHash,
+        version: await counterFactualVersionPromise
+      },
       onChain: {
         imageHash: onChainImageHash,
-        config: onChainConfig,
+        config: await onChainConfigPromise,
         version: onChainVersion,
         deployed: isDeployed
       },
-      fullyMigrated: version === this.version,
+      fullyMigrated: lastVersion === this.version,
       signedMigrations,
-      version,
+      version: lastVersion,
       presignedConfigurations: presigned,
       imageHash,
       config,
       checkpoint,
       canOnchainValidate: (
-        version === this.version &&
+        lastVersion === this.version &&
         isDeployed
       )
     }

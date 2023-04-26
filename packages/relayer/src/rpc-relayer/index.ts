@@ -32,7 +32,7 @@ export class RpcRelayer implements Relayer {
 
   constructor(options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, fetch)
-    this.provider = ethers.providers.Provider.isProvider(options.provider) ? options.provider : new ethers.providers.JsonRpcProvider(options.provider.url)
+    this.provider = ethers.providers.Provider.isProvider(options.provider) ? options.provider : new ethers.providers.StaticJsonRpcProvider(options.provider.url)
   }
 
   async waitReceipt(

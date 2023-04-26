@@ -281,7 +281,7 @@ export class Session {
     if (!network) throw Error('No network found')
     ethAuth.chainId = chainId.toNumber()
     // TODO: Modify ETHAuth so it can take a provider instead of a url
-    ethAuth.provider = new ethers.providers.JsonRpcProvider(network.rpcUrl)
+    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(network.rpcUrl, { name: "", chainId: chainId.toNumber() })
 
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
     
@@ -324,7 +324,7 @@ export class Session {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
-      ethAuth.provider = new ethers.providers.JsonRpcProvider(network.rpcUrl)
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(network.rpcUrl, { name: "", chainId: chainId.toNumber() })
 
       await ethAuth.decodeProof(proofString)
 
