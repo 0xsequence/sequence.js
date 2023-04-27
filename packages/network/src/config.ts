@@ -70,6 +70,9 @@ export interface NetworkConfig {
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
 
+  // deprecated but retained for backwards compatibility
+  isAuthChain?: boolean
+
   // Disabled / deprecated chain
   disabled?: boolean
 }
@@ -147,7 +150,10 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
     blockExplorer: {
       name: 'Polygonscan',
       rootUrl: 'https://polygonscan.com/'
-    }
+    },
+    // TODO: Remove default and auth chains from here
+    isDefaultChain: true,
+    isAuthChain: true
   },
   [ChainId.POLYGON_MUMBAI]: {
     chainId: ChainId.POLYGON_MUMBAI,
@@ -338,9 +344,7 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.POLYGON],
-    ...genUrls('polygon'),
-    // TODO: Remove default and auth chains from here
-    isDefaultChain: true
+    ...genUrls('polygon')
   },
   {
     ...networks[ChainId.BSC],
