@@ -3,7 +3,7 @@ import { NetworkConfig, ChainIdLike, findNetworkConfig } from '@0xsequence/netwo
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
-import { tracker } from '@0xsequence/sessions'
+import { tracker, trackers } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
 import { migrator } from '@0xsequence/migration'
 import { commons, v1 } from '@0xsequence/core'
@@ -391,7 +391,7 @@ export class Session {
       if (addSigners.length > 0) {
         // New wallets never need migrations
         // (because we create them on the latest version)
-        const status = await account.status(referenceChainId)
+        let status = await account.status(referenceChainId)
 
         // If the wallet was created originally on v2, then we can skip
         // the migration checks all together.
@@ -408,7 +408,18 @@ export class Session {
             }
 
             await account.signAllMigrations(editConfigOnMigration)
-            isFullyMigrated = await account.isMigratedAllChains()
+
+            // If we are using a dedupped tracker we need to invalidate the cache
+            // otherwise we run the risk of not seeing the signed migrations reflected.
+            if (trackers.isDedupedTracker(tracker)) {
+              tracker.invalidateCache()
+            }
+
+            [isFullyMigrated, status] = await Promise.all([
+              account.isMigratedAllChains(),
+              account.status(referenceChainId)
+            ])
+
             if (!isFullyMigrated) throw Error('Failed to migrate account')
           }
         }

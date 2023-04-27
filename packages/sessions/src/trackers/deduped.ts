@@ -4,17 +4,25 @@ import { BigNumber, BigNumberish } from "ethers";
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from "../tracker";
 import { PromiseCache } from "./promise-cache";
 
+export function isDedupedTracker(tracker: any): tracker is DedupedTracker {
+  return tracker instanceof DedupedTracker
+}
+
 // This tracks wraps another tracker and dedupes calls to it, so in any calls
 // are sent in short succession, only the first call is forwarded to the
 // underlying tracker, and the rest are ignored.
 export class DedupedTracker implements migrator.PresignedMigrationTracker, ConfigTracker {
-  private readonly cache: PromiseCache = new PromiseCache();
+  private cache: PromiseCache = new PromiseCache();
 
   constructor(
     private readonly tracker: migrator.PresignedMigrationTracker & ConfigTracker,
     public readonly window = 50,
     public verbose = false
   ) {}
+
+  invalidateCache() {
+    this.cache = new PromiseCache()
+  }
 
   configOfImageHash(args: { imageHash: string; }): Promise<commons.config.Config | undefined> {
     return this.cache.do('configOfImageHash', this.window, args => this.tracker.configOfImageHash(args), args)
