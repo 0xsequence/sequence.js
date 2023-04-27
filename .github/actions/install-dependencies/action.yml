@@ -7,11 +7,8 @@ runs:
     - name: Setup PNPM
       uses: pnpm/action-setup@v2
       with:
-        version: 7
-
-    - name: Update PNPM
-      shell: bash
-      run: npm install -g pnpm@7.22.0
+        version: 8
+        run_install: false
 
     - name: Get pnpm store directory
       id: pnpm-cache
