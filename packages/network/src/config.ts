@@ -48,14 +48,20 @@ export enum ChainId {
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
-  HARDHAT_2 = 31338,
+  HARDHAT_2 = 31338
+}
+
+export enum NetworkType {
+  MAINNET = 'mainnet',
+  TESTNET = 'testnet'
 }
 
 export interface NetworkConfig {
+  chainId: number
+  type: NetworkType
+
   title?: string
   name: string
-  chainId: number
-  testnet?: boolean
 
   blockExplorer?: BlockExplorerConfig
   ensAddress?: string
@@ -91,6 +97,7 @@ export const nodesURL = (network: string) => stringTemplate('https://nodes.seque
 export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.MAINNET]: {
     chainId: ChainId.MAINNET,
+    type: NetworkType.MAINNET,
     name: 'mainnet',
     title: 'Ethereum',
     blockExplorer: {
@@ -101,9 +108,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.ROPSTEN]: {
     chainId: ChainId.ROPSTEN,
+    type: NetworkType.TESTNET,
     name: 'ropsten',
     title: 'Ropsten',
-    testnet: true,
     blockExplorer: {
       name: 'Etherscan (Ropsten)',
       rootUrl: 'https://ropsten.etherscan.io/'
@@ -112,9 +119,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.RINKEBY]: {
     chainId: ChainId.RINKEBY,
+    type: NetworkType.TESTNET,
     name: 'rinkeby',
     title: 'Rinkeby',
-    testnet: true,
     blockExplorer: {
       name: 'Etherscan (Rinkeby)',
       rootUrl: 'https://rinkeby.etherscan.io/'
@@ -124,9 +131,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.GOERLI]: {
     chainId: ChainId.GOERLI,
+    type: NetworkType.TESTNET,
     name: 'goerli',
     title: 'Goerli',
-    testnet: true,
     blockExplorer: {
       name: 'Etherscan (Goerli)',
       rootUrl: 'https://goerli.etherscan.io/'
@@ -135,9 +142,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.KOVAN]: {
     chainId: ChainId.KOVAN,
+    type: NetworkType.TESTNET,
     name: 'kovan',
     title: 'Kovan',
-    testnet: true,
     blockExplorer: {
       name: 'Etherscan (Kovan)',
       rootUrl: 'https://kovan.etherscan.io/'
@@ -145,6 +152,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.POLYGON]: {
     chainId: ChainId.POLYGON,
+    type: NetworkType.MAINNET,
     name: 'polygon',
     title: 'Polygon',
     blockExplorer: {
@@ -157,9 +165,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.POLYGON_MUMBAI]: {
     chainId: ChainId.POLYGON_MUMBAI,
+    type: NetworkType.TESTNET,
     name: 'mumbai',
     title: 'Polygon Mumbai',
-    testnet: true,
     blockExplorer: {
       name: 'Polygonscan (Mumbai)',
       rootUrl: 'https://mumbai.polygonscan.com/'
@@ -167,6 +175,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.POLYGON_ZKEVM]: {
     chainId: ChainId.POLYGON_ZKEVM,
+    type: NetworkType.MAINNET,
     name: 'polygon-zkevm',
     title: 'Polygon zkEVM',
     blockExplorer: {
@@ -176,6 +185,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.BSC]: {
     chainId: ChainId.BSC,
+    type: NetworkType.MAINNET,
     name: 'bsc',
     title: 'BNB Smart Chain',
     blockExplorer: {
@@ -185,9 +195,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.BSC_TESTNET]: {
     chainId: ChainId.BSC_TESTNET,
+    type: NetworkType.TESTNET,
     name: 'bsc-testnet',
     title: 'BNB Smart Chain Testnet',
-    testnet: true,
     blockExplorer: {
       name: 'BSCScan (Testnet)',
       rootUrl: 'https://testnet.bscscan.com/'
@@ -195,6 +205,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.OPTIMISM]: {
     chainId: ChainId.OPTIMISM,
+    type: NetworkType.MAINNET,
     name: 'optimism',
     title: 'Optimism',
     blockExplorer: {
@@ -204,9 +215,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.OPTIMISM_TESTNET]: {
     chainId: ChainId.OPTIMISM_TESTNET,
+    type: NetworkType.TESTNET,
     name: 'optimism-testnet',
     title: 'Optimistic Kovan',
-    testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Testnet)',
       rootUrl: 'https://kovan-optimistic.etherscan.io/'
@@ -214,6 +225,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.ARBITRUM]: {
     chainId: ChainId.ARBITRUM,
+    type: NetworkType.MAINNET,
     name: 'arbitrum',
     title: 'Arbitrum One',
     blockExplorer: {
@@ -223,9 +235,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.ARBITRUM_TESTNET]: {
     chainId: ChainId.ARBITRUM_TESTNET,
+    type: NetworkType.TESTNET,
     name: 'arbitrum-testnet',
     title: 'Arbitrum Testnet',
-    testnet: true,
     blockExplorer: {
       name: 'Arbiscan (Testnet)',
       rootUrl: 'https://testnet.arbiscan.io/'
@@ -233,6 +245,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.ARBITRUM_NOVA]: {
     chainId: ChainId.ARBITRUM_NOVA,
+    type: NetworkType.MAINNET,
     name: 'arbitrum-nova',
     title: 'Arbitrum Nova',
     blockExplorer: {
@@ -242,6 +255,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.AVALANCHE]: {
     chainId: ChainId.AVALANCHE,
+    type: NetworkType.MAINNET,
     name: 'avalanche',
     title: 'Avalanche',
     blockExplorer: {
@@ -251,9 +265,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.AVALANCHE_TESTNET]: {
     chainId: ChainId.AVALANCHE_TESTNET,
+    type: NetworkType.TESTNET,
     name: 'avalanche-testnet',
     title: 'Avalanche Testnet',
-    testnet: true,
     blockExplorer: {
       name: 'Snowtrace (Testnet)',
       rootUrl: 'https://testnet.snowtrace.io/'
@@ -261,6 +275,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.FANTOM]: {
     chainId: ChainId.FANTOM,
+    type: NetworkType.MAINNET,
     name: 'fantom',
     title: 'Fantom',
     blockExplorer: {
@@ -270,9 +285,9 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.FANTOM_TESTNET]: {
     chainId: ChainId.FANTOM_TESTNET,
+    type: NetworkType.TESTNET,
     name: 'fantom-testnet',
     title: 'Fantom Testnet',
-    testnet: true,
     blockExplorer: {
       name: 'FTMScan (Testnet)',
       rootUrl: 'https://testnet.ftmscan.com/'
@@ -280,6 +295,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.GNOSIS]: {
     chainId: ChainId.GNOSIS,
+    type: NetworkType.MAINNET,
     name: 'gnosis',
     title: 'Gnosis Chain',
     blockExplorer: {
@@ -289,6 +305,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.AURORA]: {
     chainId: ChainId.AURORA,
+    type: NetworkType.MAINNET,
     name: 'aurora',
     title: 'Aurora',
     blockExplorer: {
@@ -298,6 +315,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.AURORA_TESTNET]: {
     chainId: ChainId.AURORA_TESTNET,
+    type: NetworkType.TESTNET,
     name: 'aurora-testnet',
     title: 'Aurora Testnet',
     blockExplorer: {
@@ -307,11 +325,13 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   },
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
+    type: NetworkType.TESTNET,
     name: 'hardhat',
     title: 'Hardhat (local testnet)'
   },
   [ChainId.HARDHAT_2]: {
     chainId: ChainId.HARDHAT_2,
+    type: NetworkType.TESTNET,
     name: 'hardhat2',
     title: 'Hardhat (local testnet)'
   }
@@ -330,7 +350,7 @@ const genUrls = (network: string) => {
     relayer: {
       url: relayerURL(rpcUrl),
       provider: {
-        url: rpcUrl,
+        url: rpcUrl
       }
     },
     indexerUrl: indexerURL(network)
@@ -384,7 +404,7 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.POLYGON_MUMBAI],
-    ...genUrls('mumbai'),
+    ...genUrls('mumbai')
   },
   {
     ...networks[ChainId.BSC_TESTNET],
@@ -396,7 +416,7 @@ export const allNetworks = validateAndSortNetworks([
     relayer: {
       url: 'http://localhost:3000',
       provider: {
-        url: 'http://localhost:8545',
+        url: 'http://localhost:8545'
       }
     }
   },
@@ -406,7 +426,7 @@ export const allNetworks = validateAndSortNetworks([
     relayer: {
       url: 'http://localhost:3000',
       provider: {
-        url: 'http://localhost:9545',
+        url: 'http://localhost:9545'
       }
     }
   }
