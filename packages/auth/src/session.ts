@@ -395,7 +395,7 @@ export class Session {
 
         // If the wallet was created originally on v2, then we can skip
         // the migration checks all together.
-        if (status.original.version !== status.version) {
+        if (status.original.version !== status.version || account.version !== status.version) {
           // Account may not have been migrated yet, so we need to check
           // if it has been migrated and if not, migrate it (in all chains)
           let isFullyMigrated = await account.isMigratedAllChains()
