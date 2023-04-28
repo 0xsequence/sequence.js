@@ -70,12 +70,11 @@ export interface NetworkConfig {
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
 
-  // deprecated but retained for backwards compatibility
-  isAuthChain?: boolean
-
   // Disabled / deprecated chain
   disabled?: boolean
 }
+
+type LegacyNetworkConfig = NetworkConfig & { isAuthChain?: boolean }
 
 export type BlockExplorerConfig = {
   name?: string
@@ -154,7 +153,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
     // TODO: Remove default and auth chains from here
     isDefaultChain: true,
     isAuthChain: true
-  },
+  } as LegacyNetworkConfig,
   [ChainId.POLYGON_MUMBAI]: {
     chainId: ChainId.POLYGON_MUMBAI,
     name: 'mumbai',
