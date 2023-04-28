@@ -81,6 +81,9 @@ export interface NetworkConfig {
 
   // Disabled / deprecated chain
   disabled?: boolean
+
+  // Testnet mode ? for legacy v1
+  testnet?: boolean
 }
 
 export type BlockExplorerConfig = {
@@ -109,6 +112,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.ROPSTEN]: {
     chainId: ChainId.ROPSTEN,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'ropsten',
     title: 'Ropsten',
     blockExplorer: {
@@ -120,6 +124,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.RINKEBY]: {
     chainId: ChainId.RINKEBY,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'rinkeby',
     title: 'Rinkeby',
     blockExplorer: {
@@ -132,6 +137,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.GOERLI]: {
     chainId: ChainId.GOERLI,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'goerli',
     title: 'Goerli',
     blockExplorer: {
@@ -143,6 +149,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.KOVAN]: {
     chainId: ChainId.KOVAN,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'kovan',
     title: 'Kovan',
     blockExplorer: {
@@ -166,6 +173,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.POLYGON_MUMBAI]: {
     chainId: ChainId.POLYGON_MUMBAI,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'mumbai',
     title: 'Polygon Mumbai',
     blockExplorer: {
@@ -196,6 +204,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.BSC_TESTNET]: {
     chainId: ChainId.BSC_TESTNET,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'bsc-testnet',
     title: 'BNB Smart Chain Testnet',
     blockExplorer: {
@@ -216,6 +225,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.OPTIMISM_TESTNET]: {
     chainId: ChainId.OPTIMISM_TESTNET,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'optimism-testnet',
     title: 'Optimistic Kovan',
     blockExplorer: {
@@ -236,6 +246,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.ARBITRUM_TESTNET]: {
     chainId: ChainId.ARBITRUM_TESTNET,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'arbitrum-testnet',
     title: 'Arbitrum Testnet',
     blockExplorer: {
@@ -266,6 +277,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.AVALANCHE_TESTNET]: {
     chainId: ChainId.AVALANCHE_TESTNET,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'avalanche-testnet',
     title: 'Avalanche Testnet',
     blockExplorer: {
@@ -286,6 +298,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.FANTOM_TESTNET]: {
     chainId: ChainId.FANTOM_TESTNET,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'fantom-testnet',
     title: 'Fantom Testnet',
     blockExplorer: {
@@ -316,6 +329,7 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.AURORA_TESTNET]: {
     chainId: ChainId.AURORA_TESTNET,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'aurora-testnet',
     title: 'Aurora Testnet',
     blockExplorer: {
@@ -326,12 +340,14 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'hardhat',
     title: 'Hardhat (local testnet)'
   },
   [ChainId.HARDHAT_2]: {
     chainId: ChainId.HARDHAT_2,
     type: NetworkType.TESTNET,
+    testnet: true,
     name: 'hardhat2',
     title: 'Hardhat (local testnet)'
   }
