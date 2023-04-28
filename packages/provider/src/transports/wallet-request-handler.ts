@@ -549,6 +549,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'sequence_isSequence': {
+          response.result = true
+          break
+        }
+
         // smart wallet method
         case 'sequence_updateConfig': {
           throw new Error('sequence_updateConfig method is not allowed from a dapp')
