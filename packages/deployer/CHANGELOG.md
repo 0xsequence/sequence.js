@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.27
+
+### Patch Changes
+
+- Add rpc is sequence method
+- Updated dependencies
+  - @0xsequence/utils@0.43.27
+
 ## 0.43.26
 
 ### Patch Changes

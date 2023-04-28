@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 0.43.27
+
+### Patch Changes
+
+- Add rpc is sequence method
+
 ## 0.43.26
 
 ### Patch Changes

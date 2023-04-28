@@ -1,5 +1,20 @@
 # @0xsequence/provider
 
+## 0.43.27
+
+### Patch Changes
+
+- Add rpc is sequence method
+- Updated dependencies
+  - @0xsequence/abi@0.43.27
+  - @0xsequence/auth@0.43.27
+  - @0xsequence/config@0.43.27
+  - @0xsequence/network@0.43.27
+  - @0xsequence/relayer@0.43.27
+  - @0xsequence/transactions@0.43.27
+  - @0xsequence/utils@0.43.27
+  - @0xsequence/wallet@0.43.27
+
 ## 0.43.26
 
 ### Patch Changes

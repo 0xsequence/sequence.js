@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.27
+
+### Patch Changes
+
+- Add rpc is sequence method
+- Updated dependencies
+  - @0xsequence/indexer@0.43.27
+  - @0xsequence/provider@0.43.27
+  - @0xsequence/relayer@0.43.27
+  - @0xsequence/utils@0.43.27
+
 ## 0.43.26
 
 ### Patch Changes
