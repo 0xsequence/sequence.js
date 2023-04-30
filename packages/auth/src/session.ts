@@ -8,7 +8,7 @@ import {
   genConfig,
   isDecodedSigner
 } from '@0xsequence/config'
-import { ETHAuth, Proof } from '@0xsequence/ethauth'
+import { ETHAuth, Proof, Claims } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
 import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork, JsonRpcProvider } from '@0xsequence/network'
@@ -67,6 +67,8 @@ export class Session {
   private apiClient: SequenceAPIClient | undefined
   private metadataClient: SequenceMetadataClient | undefined
   private indexerClients: Map<number, Indexer> = new Map()
+
+  public claims: Claims | undefined
 
   constructor(
     public sequenceApiUrl: string,
@@ -357,6 +359,7 @@ export class Session {
     knownConfigs?: WalletConfig[]
     noIndex?: boolean
     configFinder?: ConfigFinder
+    claims?: Claims
   }): Promise<Session> {
     const {
       sequenceApiUrl,
@@ -369,7 +372,8 @@ export class Session {
       deepSearch,
       knownConfigs,
       noIndex,
-      metadata
+      metadata,
+      claims
     } = args
 
     const authProvider = getAuthProvider(networks)
@@ -417,6 +421,9 @@ export class Session {
 
       const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
 
+      // Set optional claims
+      session.claims = claims
+
       // Update wallet config on-chain on the authChain
       const [newConfig] = await account.updateConfig(
         editConfig(config, { threshold, set: await solvedSigners }),
@@ -463,6 +470,9 @@ export class Session {
       await account.publishConfig(noIndex ? false : true, [referenceSigner])
 
       const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
+
+      // Set optional claims
+      session.claims = claims
 
       if (sequenceApiUrl) {
         // Fire JWT requests when opening session
