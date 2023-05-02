@@ -304,8 +304,13 @@ export class Wallet implements WalletProvider {
     }
 
     if (options) {
-      if (options.authorize && (!options.app || options.app === '')) {
-        throw new Error(`connecting with 'authorize' option also requires 'app' to be set`)
+      if (options.authorize) {
+        if (!options.app) {
+          throw new Error(`connecting with 'authorize' option also requires 'app' to be set`)
+        }
+        if (options.authorizeVersion === undefined) {
+          options.authorizeVersion = 2
+        }
       }
     }
 

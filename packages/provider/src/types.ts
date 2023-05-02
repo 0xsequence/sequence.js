@@ -154,6 +154,9 @@ export interface ConnectOptions {
   /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
   authorize?: boolean
 
+  /** authorizeVersion is the version of the SDK that will validate the ETHAuth proof. */
+  authorizeVersion?: number
+
   /** askForEmail will prompt to give permission to the dapp to access email address */
   askForEmail?: boolean
 
