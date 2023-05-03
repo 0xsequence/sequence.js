@@ -1,5 +1,12 @@
+import { Account, AccountStatus } from '@0xsequence/account'
+import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
+import { commons } from '@0xsequence/core'
+import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, getChainId } from '@0xsequence/network'
+import { logger, TypedData } from '@0xsequence/utils'
+import { BigNumber, ethers, providers } from 'ethers'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
+import { fromExtended } from '../extended'
 import {
   ProviderMessageRequest,
   ProviderMessageResponse,
@@ -15,17 +22,7 @@ import {
   ProviderEventTypes,
   TypedEventEmitter
 } from '../types'
-
-import { BigNumber, ethers, providers } from 'ethers'
-
-import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, getChainId } from '@0xsequence/network'
-import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
-import { logger, TypedData } from '@0xsequence/utils'
-import { commons } from '@0xsequence/core'
-
 import { isWalletUpToDate, prefixEIP191Message } from '../utils'
-import { Account } from '@0xsequence/account'
-import { fromExtended } from '../extended'
 
 type ExternalProvider = providers.ExternalProvider
 
@@ -572,7 +569,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'sequence_getWalletState': {
           const [chainId] = request.params!
           // TODO: Add getWalletState to the Signer interface
-          response.result = await account.status(chainId)
+          if (chainId) {
+            response.result = [getLegacyWalletState(chainId, await account.status(chainId))]
+          } else {
+            response.result = await Promise.all(account.networks.map(async network => {
+              const status = await account.status(network.chainId)
+              return getLegacyWalletState(network.chainId, status)
+            }))
+          }
           break
         }
 
@@ -823,6 +827,45 @@ export interface WalletUserPrompter {
 
 export interface AuxDataProvider {
   get(key: string): Promise<any>
+}
+
+interface LegacyWalletState {
+  context: commons.context.WalletContext
+  config?: commons.config.Config
+
+  // the wallet address
+  address: string
+
+  // the chainId of the network
+  chainId: number
+
+  // whether the wallet has been ever deployed
+  deployed: boolean
+
+  // the imageHash of the `config` WalletConfig
+  imageHash: string
+
+  // the last imageHash of a WalletConfig, stored on-chain
+  lastImageHash?: string
+
+  // whether the WalletConfig object itself has been published to logs
+  published?: boolean
+
+  status: AccountStatus
+}
+
+function getLegacyWalletState(chainId: number, status: AccountStatus): LegacyWalletState {
+  return {
+    context: status.original.context,
+    config: status.onChain.config,
+    address: commons.context.addressOf(status.original.context, status.original.imageHash),
+    chainId,
+    deployed: status.onChain.deployed,
+    imageHash: status.imageHash,
+    lastImageHash: status.onChain.imageHash,
+    published: true,
+    status
+  }
 }
 
 const permittedJsonRpcMethods = [
