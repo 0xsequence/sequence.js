@@ -203,11 +203,11 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   async getWalletState(chainId?: ChainIdLike): Promise<AccountStatus> {
     const reqChainId = maybeChainId(chainId) || this.defaultChainId
     if (!reqChainId) throw new Error('chainId is required')    
-    return await this.provider.send(
+    return (await this.provider.send(
       'sequence_getWalletState',
       [reqChainId],
       reqChainId
-    )
+    ))[0].status
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
