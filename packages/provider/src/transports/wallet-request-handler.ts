@@ -561,7 +561,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         // smart wallet method
         case 'sequence_getWalletConfig': {
           const [chainId] = request.params!
-          response.result = await account.status(chainId).then((s) => s.config)
+          if (chainId) {
+            response.result = [(await account.status(chainId)).onChain.config]
+          } else {
+            response.result = await Promise.all(account.networks.map(async network => {
+              const status = await account.status(network.chainId)
+              return status.onChain.config
+            }))
+          }
           break
         }
 
