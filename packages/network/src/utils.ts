@@ -141,7 +141,7 @@ export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLik
       const id = ethers.BigNumber.from(chainId).toNumber()
       return networks.find(n => n.chainId === id)
     } else {
-      return networks.find(n => n.name === chainId)
+      return networks.find(n => n.name === chainId || `${n.chainId}` === chainId)
     }
   } else if (typeof chainId === 'number') {
     return networks.find(n => n.chainId === chainId)
