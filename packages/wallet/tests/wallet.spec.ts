@@ -509,6 +509,136 @@ describe('Wallet integration', function () {
         })
       })
 
+      describe('async transactions', async () => {
+        it('Should not allow nonce specified', async () => {
+          const callReceiver1 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
+            nonce: 777
+          }
+
+          await expect(wallet.sendTransactionAsync(transaction)).to.be.rejectedWith('Cannot send async transaction with a defined nonce')
+        })
+
+        it('Should send an async transaction', async () => {
+          const callReceiver1 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
+          }
+
+          await wallet.sendTransactionAsync(transaction)
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+        })
+
+        it('Should send two async transactions at once', async () => {
+          const callReceiver1 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+          const callReceiver2 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+          const callReceiver3 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+
+          const transactions = [
+            {
+              gas: '121000',
+              to: callReceiver1.address,
+              value: 0,
+              data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
+            },
+            {
+              gas: '121000',
+              to: callReceiver2.address,
+              value: 0,
+              data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
+            },
+            {
+              gas: '121000',
+              to: callReceiver3.address,
+              value: 0,
+              data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
+            }
+          ]
+
+          // Just to force deployment
+          const deployWalletTx = {gas: '100000', to: ethers.constants.AddressZero}
+          await wallet.sendTransactionAsync(deployWalletTx)
+
+          // Send txns in parallel, but independently
+          await Promise.all([
+            wallet.sendTransactionAsync(transactions[0]),
+            wallet.sendTransactionAsync(transactions[1]),
+            wallet.sendTransactionAsync(transactions[2])
+          ])
+
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+          expect(await callReceiver3.lastValB()).to.equal('0x778899')
+        })
+
+        it('Should send nested transactions in one batch, async', async () => {
+          const callReceiver1 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+          const callReceiver2 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+          const callReceiver3 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+
+          const transaction = {
+            gas: '121000',
+            to: callReceiver1.address,
+            value: 0,
+            data: await encodeData(callReceiver, 'testCall', 1, '0x112233'),
+            auxiliary: [
+              {
+                gas: '100000',
+                to: callReceiver2.address,
+                value: 0,
+                data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
+              },
+              {
+                gas: '70000',
+                to: callReceiver3.address,
+                value: 0,
+                data: await encodeData(callReceiver, 'testCall', 2, '0x778899')
+              }
+            ]
+          }
+
+          await wallet.sendTransactionAsync(transaction)
+
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+          expect(await callReceiver3.lastValB()).to.equal('0x778899')
+        })
+
+        it('Should send multiple async transactions in one batch, async', async () => {
+          const callReceiver1 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+          const callReceiver2 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()
+
+          const transactions = [
+            {
+              gas: '250000',
+              to: callReceiver1.address,
+              value: 0,
+              data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
+            },
+            {
+              gas: '250000',
+              to: callReceiver2.address,
+              value: 0,
+              data: await encodeData(callReceiver, 'testCall', 2, '0x445566')
+            }
+          ]
+          
+          await wallet.sendTransactionAsync(transactions)
+          expect(await callReceiver1.lastValB()).to.equal('0x112233')
+          expect(await callReceiver2.lastValB()).to.equal('0x445566')
+        })
+      })
+
+
       describe('expirable transactions', async () => {
         it('Should generate and send a non-expired transaction', async () => {
           const callReceiver1 = await (new CallReceiverMock__factory()).connect(ethnode.signer).deploy()

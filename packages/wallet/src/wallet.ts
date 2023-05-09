@@ -15,6 +15,7 @@ import {
   Transactionish,
   TransactionRequest,
   readSequenceNonce,
+  encodeNonce,
   appendNonce,
   sequenceTxAbiEncode,
   SignedTransactions,
@@ -313,6 +314,38 @@ export class Wallet extends Signer {
       const address = addressOf(signedTxs.config, signedTxs.context)
       const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
       callback(signedTxs, metaTxnHash)
+    }
+    return this.relayer.relay(signedTxs, quote, waitForReceipt)
+  }
+
+  // sendTransactionAsync will dispatch the transaction to the relayer for submission to the network
+  // but with a random nonce so that txn from this wallet can be executed asynchronously
+  async sendTransactionAsync(
+    transaction: Deferrable<Transactionish>,
+    chainId?: ChainIdLike,
+    allSigners?: boolean,
+    quote?: FeeQuote,
+    callback?: SignedTransactionsCallback,
+    waitForReceipt?: boolean
+  ): Promise<TransactionResponse> {
+    // Convert Transactionish into Sequence transactions
+    const txs = await resolveArrayProperties<Transactionish>(transaction)
+    const stx = await fromTransactionish(this.context, this.address, txs)
+
+    // Enforce that nonce can't be defined upstream to simplify debugging
+    if (stx[0].nonce !== undefined) {
+      throw new Error('Cannot send async transaction with a defined nonce')
+    }
+
+    // Assign random nonce of first txn (all txns here will have the same nonce)
+    const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
+    stx[0].nonce = encodeNonce(randomNonceSpace, 0)
+
+    const signedTxs = await this.signTransactions(stx, chainId, allSigners)
+    if (callback) {
+      const address = addressOf(signedTxs.config, signedTxs.context)
+      const metaTxnHash = computeMetaTxnHash(address, signedTxs.chainId, ...signedTxs.transactions)
+      callback(signedTxs, metaTxnHash) 
     }
     return this.relayer.relay(signedTxs, quote, waitForReceipt)
   }
