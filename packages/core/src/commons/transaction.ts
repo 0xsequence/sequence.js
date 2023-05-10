@@ -105,6 +105,19 @@ export function subdigestOfTransactions(address: string, chainId: BigNumberish, 
   return subdigestOf({ address, chainId, digest: digestOfTransactions(nonce, txs) })
 }
 
+export function subdigestOfGuestModuleTransactions(guestModule: string, chainId: BigNumberish, txs: Transaction[]): string {
+  return subdigestOf({
+    address: guestModule,
+    chainId,
+    digest: ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        ['string', MetaTransactionsType],
+        ['guest:', sequenceTxAbiEncode(txs)]
+      )
+    )
+  })
+}
+
 export function toSequenceTransactions(
   wallet: string,
   txs: (Transaction | ethers.providers.TransactionRequest)[]

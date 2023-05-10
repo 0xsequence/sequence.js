@@ -372,7 +372,7 @@ export class Account {
     bundle: commons.transaction.IntendedTransactionBundle,
     status: AccountStatus,
   ): commons.transaction.IntendedTransactionBundle {
-    const bootstrapBundle = this.buildBootstrapTransactions(status)
+    const bootstrapBundle = this.buildBootstrapTransactions(status, bundle.chainId)
     if (bootstrapBundle.transactions.length === 0) {
       return bundle
     }
@@ -493,8 +493,9 @@ export class Account {
    * 
    */
   buildBootstrapTransactions(
-    status: AccountStatus
-  ): Omit<commons.transaction.IntendedTransactionBundle, 'chainId'> {
+    status: AccountStatus,
+    chainId: ethers.BigNumberish
+  ): commons.transaction.IntendedTransactionBundle {
     const transactions: commons.transaction.Transaction[] = []
 
     // Add wallet deployment if needed
@@ -521,16 +522,16 @@ export class Account {
 
     // Build the transaction intent, if the transaction has migrations
     // then we should use one of the intents of the migrations (anyone will do)
-    // if it doesn't, then we must build a random intent, this is not ideal
-    // because we will not be able to track the transaction later
+    // if it doesn't, then the only intent we could use if the GuestModule one
+    // ... but this may fail if the relayer uses a different GuestModule
     const id = status.signedMigrations.length > 0
       ? status.signedMigrations[0].tx.intent.id
-      : ethers.utils.hexlify(ethers.utils.randomBytes(32))
+      : commons.transaction.subdigestOfGuestModuleTransactions(this.contexts[this.version].guestModule, chainId, transactions)
 
     // Everything is encoded as a bundle
     // using the GuestModule of the account version
     const { guestModule } = this.contextFor(status.version)
-    return { entrypoint: guestModule, transactions, intent: { id, wallet: this.address } }
+    return { entrypoint: guestModule, transactions, chainId, intent: { id, wallet: this.address } }
   }
 
   async bootstrapTransactions(
@@ -538,7 +539,7 @@ export class Account {
     prestatus?: AccountStatus
   ): Promise<Omit<commons.transaction.IntendedTransactionBundle, 'chainId'>> {
     const status = prestatus || await this.status(chainId)
-    return this.buildBootstrapTransactions(status)
+    return this.buildBootstrapTransactions(status, chainId)
   }
 
   async doBootstrap(
