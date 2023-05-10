@@ -584,13 +584,51 @@ export class Account {
     return true
   }
 
-  async signAllMigrations(editConfig: (prevConfig: commons.config.Config) => commons.config.Config) {
-    return Promise.all(this.networks.map((n) => this.signMigrations(n.chainId, editConfig)))
+  async signAllMigrations(
+    editConfig: (prevConfig: commons.config.Config) => commons.config.Config
+  ): Promise<{ signedMigrations: Array<any>, failedChains: number[] }> {
+    const failedChains: number[] = []
+    const signedMigrations = await Promise.all(
+      this.networks.map(async (n) => {
+        try {
+          // Signing migrations for each chain
+          return await this.signMigrations(n.chainId, editConfig)
+        } catch (error) {
+          console.warn(`Failed to sign migrations for chain ${n.chainId}`, error)
+
+          // Adding failed chainId to the failedChains array
+          failedChains.push(n.chainId)
+          // Using null as a placeholder for failed chains
+          return null
+        }
+      }),
+    )
+  
+    // Filter out null values to get only the successful signed migrations
+    const successfulSignedMigrations = signedMigrations.filter((migration) => migration !== null)
+  
+    return { signedMigrations: successfulSignedMigrations, failedChains }
   }
 
-  async isMigratedAllChains(): Promise<boolean> {
-    const statuses = await Promise.all(this.networks.map((n) => this.status(n.chainId)))
-    return statuses.every((s) => s.fullyMigrated)
+  async isMigratedAllChains(): Promise<{ migratedAllChains: boolean, failedChains: number[] }> {
+    const failedChains: number[] = []
+    const statuses = await Promise.all(
+      this.networks.map(async (n) => {
+        try {
+          return await this.status(n.chainId)
+        } catch (error) {
+          failedChains.push(n.chainId)
+
+          console.warn(`Failed to get status for chain ${n.chainId}`, error)
+
+          // default to true for failed chains
+          return { fullyMigrated: true }
+        }
+      }),
+    )
+
+    const migratedAllChains = statuses.every((s) => s.fullyMigrated)
+    return { migratedAllChains, failedChains }
   }
 
   async sendSignedTransactions(

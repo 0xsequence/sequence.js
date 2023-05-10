@@ -64,6 +64,10 @@ export const LONG_SESSION_EXPIRATION = 3e7
 
 const EXPIRATION_JWT_MARGIN = 60 // seconds
 
+// These chains are always validated for migrations
+// if they are not available, the login will fail
+export const CRITICAL_CHAINS = [1, 137]
+
 export type SessionSettings = {
   contexts: commons.context.VersionedContext
   sequenceApiUrl: string
@@ -398,7 +402,13 @@ export class Session {
         if (status.original.version !== status.version || account.version !== status.version) {
           // Account may not have been migrated yet, so we need to check
           // if it has been migrated and if not, migrate it (in all chains)
-          let isFullyMigrated = await account.isMigratedAllChains()
+          let { migratedAllChains: isFullyMigrated, failedChains } = await account.isMigratedAllChains()
+
+          // Failed chains must not contain mainnet or polygon, otherwise we cannot proceed.
+          if (failedChains.some((c) => CRITICAL_CHAINS.includes(c))) {
+            throw Error(`Failed to fetch account status on ${failedChains.join(', ')}`)
+          }
+
           if (!isFullyMigrated) {
             // This is an oportunity for whoever is opening the session to
             // feed the orchestrator with more signers, so that the migration
@@ -407,7 +417,10 @@ export class Session {
               throw Error('Migration cancelled, cannot open session')
             }
 
-            await account.signAllMigrations(editConfigOnMigration)
+            const { failedChains } = await account.signAllMigrations(editConfigOnMigration)
+            if (failedChains.some((c) => CRITICAL_CHAINS.includes(c))) {
+              throw Error(`Failed to sign migrations on ${failedChains.join(', ')}`)
+            }
 
             // If we are using a dedupped tracker we need to invalidate the cache
             // otherwise we run the risk of not seeing the signed migrations reflected.
@@ -416,7 +429,7 @@ export class Session {
             }
 
             [isFullyMigrated, status] = await Promise.all([
-              account.isMigratedAllChains(),
+              account.isMigratedAllChains().then((r) => r.migratedAllChains),
               account.status(referenceChainId)
             ])
 
@@ -505,7 +518,7 @@ export class Session {
       })
 
       // TODO: This property may not hold if the user adds a new network
-      if (!(await account.isMigratedAllChains())) {
+      if (!(await account.isMigratedAllChains().then((r) => r.migratedAllChains))) {
         // This is an oportunity for whoever is opening the session to
         // feed the orchestrator with more signers, so that the migration
         // can be completed.
@@ -515,7 +528,7 @@ export class Session {
 
         console.log('Migrating account...')
         await account.signAllMigrations(editConfigOnMigration)
-        if (!(await account.isMigratedAllChains())) throw Error('Failed to migrate account')
+        if (!(await account.isMigratedAllChains().then((r) => r.migratedAllChains))) throw Error('Failed to migrate account')
       }
 
       // We may need to update the JWT if the account has been migrated
