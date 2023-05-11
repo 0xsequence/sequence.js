@@ -402,7 +402,7 @@ export class Session {
         if (status.original.version !== status.version || account.version !== status.version) {
           // Account may not have been migrated yet, so we need to check
           // if it has been migrated and if not, migrate it (in all chains)
-          let { migratedAllChains: isFullyMigrated, failedChains } = await account.isMigratedAllChains()
+          const { migratedAllChains: isFullyMigrated, failedChains } = await account.isMigratedAllChains()
 
           // Failed chains must not contain mainnet or polygon, otherwise we cannot proceed.
           if (failedChains.some((c) => CRITICAL_CHAINS.includes(c))) {
@@ -428,12 +428,13 @@ export class Session {
               tracker.invalidateCache()
             }
 
-            [isFullyMigrated, status] = await Promise.all([
+            let isFullyMigrated2: boolean
+            [isFullyMigrated2, status] = await Promise.all([
               account.isMigratedAllChains().then((r) => r.migratedAllChains),
               account.status(referenceChainId)
             ])
 
-            if (!isFullyMigrated) throw Error('Failed to migrate account')
+            if (!isFullyMigrated2) throw Error('Failed to migrate account')
           }
         }
 
