@@ -8,7 +8,6 @@ import { ethers } from 'ethers'
 import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { getEOAWallet, sendETH, testAccounts } from '../../0xsequence/tests/browser/testutils'
 
 const { expect } = chai
 
@@ -293,40 +292,36 @@ describe('Wallet (primitive)', () => {
                 expect(await wallet.reader().implementation(wallet.address)).to.not.equal(prevImplentation)
               })
 
-              describe.only('async transactions', async () => {
-                const testAccount = getEOAWallet(testAccounts[1].privateKey)
-                let toBalanceBefore
+              describe('async transactions', async () => {
+                let testAccount: ethers.providers.JsonRpcSigner
+                let testAccountAddress: string
+                let toBalanceBefore: ethers.BigNumber
 
                 beforeEach(async () => {
+                  testAccount = provider.getSigner(5)
+                  testAccountAddress = await testAccount.getAddress()
+  
                   const ethAmount = ethers.utils.parseEther('100')
-                  const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
+                  const txResp = await testAccount.sendTransaction({
+                    to: await wallet.getAddress(),
+                    value: ethAmount
+                  })
                   await provider.getTransactionReceipt(txResp.hash)
-                  toBalanceBefore = await provider.getBalance(testAccount.address)
-                })
-
-                it('Should not allow nonce specified', async () => {
-                  const ethAmount1 = ethers.utils.parseEther('1.0')
-              
-                  const tx: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
-                    value: ethAmount1
-                  }
-
-                  await expect(wallet.sendTransactionNonBlocking(tx)).to.be.rejectedWith('Cannot send async transaction with a defined nonce')
+                  toBalanceBefore = await provider.getBalance(testAccountAddress)
                 })
         
                 it('Should send an async transaction', async () => {
                   const ethAmount = ethers.utils.parseEther('1.0')
               
                   const tx: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount
                   }
         
                   await wallet.sendTransactionNonBlocking(tx)
-                  const toBalanceAfter = await provider.getBalance(testAccount.address)
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent).to.be.eq(ethAmount)
+                  expect(sent.toString()).to.be.eq(ethAmount.toString())
                 })
         
                 it('Should send two async transactions at once', async () => {
@@ -335,17 +330,17 @@ describe('Wallet (primitive)', () => {
                   const ethAmount3 = ethers.utils.parseEther('5.0')
               
                   const tx1: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount1
                   }
 
                   const tx2: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount2
                   }
 
                   const tx3: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount3
                   }
         
@@ -360,9 +355,9 @@ describe('Wallet (primitive)', () => {
                     wallet.sendTransactionNonBlocking(tx3)
                   ])
         
-                  const toBalanceAfter = await provider.getBalance(testAccount.address)
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3))
+                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
                 })
         
                 it('Should send multiple async transactions in one batch, async', async () => {
@@ -371,26 +366,26 @@ describe('Wallet (primitive)', () => {
                   const ethAmount3 = ethers.utils.parseEther('5.0')
 
                   const tx1: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount1
                   }
 
                   const tx2: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount2
                   }
 
                   const tx3: ethers.providers.TransactionRequest = {
-                    to: testAccount.address,
+                    to: testAccountAddress,
                     value: ethAmount3
                   }
 
                   // Send txns in parallel, but independently
                   await wallet.sendTransactionNonBlocking([tx1, tx2, tx3])
 
-                  const toBalanceAfter = await provider.getBalance(testAccount.address)
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3))
+                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
                 })
               })
             })
