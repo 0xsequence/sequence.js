@@ -293,7 +293,6 @@ export class Web3Signer extends Signer implements TypedDataSigner {
         })
     })
 
-    // @ts-ignore
     return tx
   }
 

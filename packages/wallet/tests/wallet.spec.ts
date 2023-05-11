@@ -8,6 +8,7 @@ import { ethers } from 'ethers'
 import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
+import { getEOAWallet, sendETH, testAccounts } from '../../0xsequence/tests/browser/testutils'
 
 const { expect } = chai
 
@@ -290,6 +291,107 @@ describe('Wallet (primitive)', () => {
 
                 expect(await wallet.reader().imageHash(wallet.address)).to.equal(coders.config.imageHashOf(newConfig))
                 expect(await wallet.reader().implementation(wallet.address)).to.not.equal(prevImplentation)
+              })
+
+              describe.only('async transactions', async () => {
+                const testAccount = getEOAWallet(testAccounts[1].privateKey)
+                let toBalanceBefore
+
+                beforeEach(async () => {
+                  const ethAmount = ethers.utils.parseEther('100')
+                  const txResp = await sendETH(testAccount, await wallet.getAddress(), ethAmount)
+                  await provider.getTransactionReceipt(txResp.hash)
+                  toBalanceBefore = await provider.getBalance(testAccount.address)
+                })
+
+                it('Should not allow nonce specified', async () => {
+                  const ethAmount1 = ethers.utils.parseEther('1.0')
+              
+                  const tx: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount1
+                  }
+
+                  await expect(wallet.sendTransactionNonBlocking(tx)).to.be.rejectedWith('Cannot send async transaction with a defined nonce')
+                })
+        
+                it('Should send an async transaction', async () => {
+                  const ethAmount = ethers.utils.parseEther('1.0')
+              
+                  const tx: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount
+                  }
+        
+                  await wallet.sendTransactionNonBlocking(tx)
+                  const toBalanceAfter = await provider.getBalance(testAccount.address)
+                  const sent = toBalanceAfter.sub(toBalanceBefore)
+                  expect(sent).to.be.eq(ethAmount)
+                })
+        
+                it('Should send two async transactions at once', async () => {
+                  const ethAmount1 = ethers.utils.parseEther('1.0')
+                  const ethAmount2 = ethers.utils.parseEther('2.0')
+                  const ethAmount3 = ethers.utils.parseEther('5.0')
+              
+                  const tx1: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount1
+                  }
+
+                  const tx2: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount2
+                  }
+
+                  const tx3: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount3
+                  }
+        
+                  // Just to force deployment
+                  const deployWalletTx = {to: ethers.constants.AddressZero}
+                  await wallet.sendTransactionNonBlocking(deployWalletTx)
+        
+                  // Send txns in parallel, but independently
+                  await Promise.all([
+                    wallet.sendTransactionNonBlocking(tx1),
+                    wallet.sendTransactionNonBlocking(tx2),
+                    wallet.sendTransactionNonBlocking(tx3)
+                  ])
+        
+                  const toBalanceAfter = await provider.getBalance(testAccount.address)
+                  const sent = toBalanceAfter.sub(toBalanceBefore)
+                  expect(sent).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3))
+                })
+        
+                it('Should send multiple async transactions in one batch, async', async () => {
+                  const ethAmount1 = ethers.utils.parseEther('1.0')
+                  const ethAmount2 = ethers.utils.parseEther('2.0')
+                  const ethAmount3 = ethers.utils.parseEther('5.0')
+
+                  const tx1: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount1
+                  }
+
+                  const tx2: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount2
+                  }
+
+                  const tx3: ethers.providers.TransactionRequest = {
+                    to: testAccount.address,
+                    value: ethAmount3
+                  }
+
+                  // Send txns in parallel, but independently
+                  await wallet.sendTransactionNonBlocking([tx1, tx2, tx3])
+
+                  const toBalanceAfter = await provider.getBalance(testAccount.address)
+                  const sent = toBalanceAfter.sub(toBalanceBefore)
+                  expect(sent).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3))
+                })
               })
             })
           })

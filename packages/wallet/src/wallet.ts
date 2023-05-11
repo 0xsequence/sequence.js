@@ -321,6 +321,18 @@ export class Wallet<
     return this.sendSignedTransaction(decorated, quote)
   }
 
+  // sendTransactionNonBlocking will dispatch the transaction to the relayer for submission to the network
+  // but with a random nonce so that txn from this wallet can be executed in any order
+  async sendTransactionNonBlocking(
+    txs: Deferrable<commons.transaction.Transactionish>,
+    quote?: FeeQuote
+  ): Promise<ethers.providers.TransactionResponse> {
+    // Generate nonce with random space
+    const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
+    const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
+    return this.sendTransaction(txs, randomNonce, quote)
+  }
+
   async fillGasLimits(
     txs: Deferrable<commons.transaction.Transactionish>
   ): Promise<commons.transaction.SimulatedTransaction[]> {
