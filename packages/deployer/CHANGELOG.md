@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.28
+
+### Patch Changes
+
+- update api bindings
+- Updated dependencies
+  - @0xsequence/utils@0.43.28
+
 ## 0.43.27
 
 ### Patch Changes
