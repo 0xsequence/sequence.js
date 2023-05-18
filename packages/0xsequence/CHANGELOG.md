@@ -1,5 +1,26 @@
 # 0xsequence
 
+## 0.43.29
+
+### Patch Changes
+
+- provider: check availability of window object
+- Updated dependencies
+  - @0xsequence/abi@0.43.29
+  - @0xsequence/api@0.43.29
+  - @0xsequence/auth@0.43.29
+  - @0xsequence/config@0.43.29
+  - @0xsequence/guard@0.43.29
+  - @0xsequence/indexer@0.43.29
+  - @0xsequence/metadata@0.43.29
+  - @0xsequence/multicall@0.43.29
+  - @0xsequence/network@0.43.29
+  - @0xsequence/provider@0.43.29
+  - @0xsequence/relayer@0.43.29
+  - @0xsequence/transactions@0.43.29
+  - @0xsequence/utils@0.43.29
+  - @0xsequence/wallet@0.43.29
+
 ## 0.43.28
 
 ### Patch Changes

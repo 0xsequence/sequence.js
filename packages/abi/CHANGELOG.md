@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.43.29
+
+### Patch Changes
+
+- provider: check availability of window object
+
 ## 0.43.28
 
 ### Patch Changes

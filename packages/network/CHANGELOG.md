@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.29
+
+### Patch Changes
+
+- provider: check availability of window object
+- Updated dependencies
+  - @0xsequence/indexer@0.43.29
+  - @0xsequence/provider@0.43.29
+  - @0xsequence/relayer@0.43.29
+  - @0xsequence/utils@0.43.29
+
 ## 0.43.28
 
 ### Patch Changes

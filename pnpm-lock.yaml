@@ -170,46 +170,46 @@ importers:
   packages/0xsequence:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/api':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../api
       '@0xsequence/auth':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../auth
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/guard':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../guard
       '@0xsequence/indexer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../indexer
       '@0xsequence/metadata':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../metadata
       '@0xsequence/multicall':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../multicall
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/provider':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../provider
       '@0xsequence/relayer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../relayer
       '@0xsequence/transactions':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../transactions
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../wallet
     devDependencies:
       '@0xsequence/wallet-contracts':
@@ -250,34 +250,34 @@ importers:
   packages/auth:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/api':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../api
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/ethauth':
         specifier: ^0.8.0
         version: 0.8.1(ethers@5.7.2)
       '@0xsequence/indexer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../indexer
       '@0xsequence/metadata':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../metadata
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/provider':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../provider
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../wallet
     devDependencies:
       '@0xsequence/wallet-contracts':
@@ -299,16 +299,16 @@ importers:
   packages/config:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/multicall':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../multicall
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       '@0xsequence/wallet-contracts':
@@ -321,7 +321,7 @@ importers:
   packages/deployer:
     dependencies:
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       '@ethersproject/abi':
@@ -352,19 +352,19 @@ importers:
   packages/estimator:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/transactions':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../transactions
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
       '@0xsequence/wallet-contracts':
         specifier: 1.10.0
@@ -389,13 +389,13 @@ importers:
   packages/multicall:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       '@0xsequence/wallet-contracts':
@@ -429,16 +429,16 @@ importers:
   packages/network:
     dependencies:
       '@0xsequence/indexer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../indexer
       '@0xsequence/provider':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../provider
       '@0xsequence/relayer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../relayer
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       ethers:
@@ -448,28 +448,28 @@ importers:
   packages/provider:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/auth':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../auth
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/relayer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../relayer
       '@0xsequence/transactions':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../transactions
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
       '@0xsequence/wallet':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../wallet
       eventemitter2:
         specifier: ^6.4.5
@@ -488,19 +488,19 @@ importers:
   packages/relayer:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/transactions':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../transactions
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       '@0xsequence/wallet-contracts':
@@ -513,7 +513,7 @@ importers:
   packages/simulator:
     dependencies:
       '@0xsequence/transactions':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../transactions
       '@0xsequence/wallet-contracts':
         specifier: 1.10.0
@@ -526,16 +526,16 @@ importers:
   packages/transactions:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       ethers:
@@ -555,25 +555,25 @@ importers:
   packages/wallet:
     dependencies:
       '@0xsequence/abi':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../abi
       '@0xsequence/config':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../config
       '@0xsequence/guard':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../guard
       '@0xsequence/network':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../network
       '@0xsequence/relayer':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../relayer
       '@0xsequence/transactions':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../transactions
       '@0xsequence/utils':
-        specifier: ^0.43.28
+        specifier: ^0.43.29
         version: link:../utils
     devDependencies:
       '@0xsequence/ethauth':

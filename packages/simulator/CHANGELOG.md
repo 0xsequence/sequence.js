@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.29
+
+### Patch Changes
+
+- provider: check availability of window object
+- Updated dependencies
+  - @0xsequence/transactions@0.43.29
+
 ## 0.43.28
 
 ### Patch Changes
