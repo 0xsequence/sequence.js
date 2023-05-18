@@ -145,11 +145,23 @@ export class LocalStorage {
   private constructor() {}
 
   static getInstance(): ItemStore {
-    if (!LocalStorage._instance) {
-      LocalStorage._instance = {
-        getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
-        setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
-        removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
+    if (typeof window === 'object') {
+      if (!LocalStorage._instance) {
+        LocalStorage._instance = {
+          getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
+          setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
+          removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
+        }
+      }
+    } else {
+      // noop local storage if window is not defined
+      // TODO: perhaps add an in-memory local storage if we need?
+      if (!LocalStorage._instance) {
+        LocalStorage._instance = {
+          getItem: (key: string) => Promise.resolve(null),
+          setItem: (key: string, value: string) => Promise.resolve(),
+          removeItem: (key: string) => Promise.resolve()
+        }
       }
     }
     return this._instance

@@ -133,7 +133,7 @@ export class Wallet implements WalletProvider {
     this.transport.messageProvider = new MuxMessageProvider()
 
     // multiple message provider setup, first one to connect will be the main transport
-    if (this.config.transports?.windowTransport?.enabled) {
+    if (this.config.transports?.windowTransport?.enabled && typeof window === 'object') {
       this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
       this.transport.messageProvider.add(this.transport.windowMessageProvider)
     }
