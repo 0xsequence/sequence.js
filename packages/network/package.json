@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@0xsequence/core": "workspace:*",
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*"
