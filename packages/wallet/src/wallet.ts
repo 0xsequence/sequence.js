@@ -280,6 +280,20 @@ export class Wallet<
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
 
+    // NOTICE: If the `transactions` list is empty, then we add a dummy transaction
+    // otherwise the `TxExecuted` event will not be emitted, and we won't be able to
+    // find the transaction hash
+    if (transactions.length === 0) {
+      transactions.push({
+        to: this.address,
+        data: '0x',
+        value: 0,
+        gasLimit: 0,
+        delegateCall: false,
+        revertOnError: true
+      })
+    }
+
     let defaultedNonce = nonce
     if (defaultedNonce === undefined) {
       defaultedNonce = await this.reader().nonce(this.address, 0)
