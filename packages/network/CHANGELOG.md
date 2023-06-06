@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.30
+
+### Patch Changes
+
+- add arbitrum goerli testnet
+- Updated dependencies
+  - @0xsequence/indexer@0.43.30
+  - @0xsequence/provider@0.43.30
+  - @0xsequence/relayer@0.43.30
+  - @0xsequence/utils@0.43.30
+
 ## 0.43.29
 
 ### Patch Changes

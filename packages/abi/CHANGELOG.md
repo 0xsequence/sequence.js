@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.43.30
+
+### Patch Changes
+
+- add arbitrum goerli testnet
+
 ## 0.43.29
 
 ### Patch Changes

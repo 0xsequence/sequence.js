@@ -1,5 +1,16 @@
 # @0xsequence/config
 
+## 0.43.30
+
+### Patch Changes
+
+- add arbitrum goerli testnet
+- Updated dependencies
+  - @0xsequence/abi@0.43.30
+  - @0xsequence/multicall@0.43.30
+  - @0xsequence/network@0.43.30
+  - @0xsequence/utils@0.43.30
+
 ## 0.43.29
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 0.43.30
+
+### Patch Changes
+
+- add arbitrum goerli testnet
+- Updated dependencies
+  - @0xsequence/utils@0.43.30
+
 ## 0.43.29
 
 ### Patch Changes
