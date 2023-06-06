@@ -220,7 +220,7 @@ export const networks: Record<ChainId, NetworkConfig> = {
     title: 'Arbitrum Goerli',
     testnet: true,
     blockExplorer: {
-      name: 'Arbiscan (Goerli Testnet)',
+      name: 'Arbiscan (Testnet)',
       rootUrl: 'https://testnet.arbiscan.io/'
     }
   },
