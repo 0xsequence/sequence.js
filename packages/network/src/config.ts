@@ -26,7 +26,7 @@ export enum ChainId {
 
   // Arbitrum One
   ARBITRUM = 42161,
-  ARBITRUM_TESTNET = 421611,
+  ARBITRUM_GOERLI = 421613,
 
   // Arbitrum Nova
   ARBITRUM_NOVA = 42170,
@@ -214,13 +214,13 @@ export const networks: Record<ChainId, NetworkConfig> = {
       rootUrl: 'https://arbiscan.io/'
     }
   },
-  [ChainId.ARBITRUM_TESTNET]: {
-    chainId: ChainId.ARBITRUM_TESTNET,
-    name: 'arbitrum-testnet',
-    title: 'Arbitrum Testnet',
+  [ChainId.ARBITRUM_GOERLI]: {
+    chainId: ChainId.ARBITRUM_GOERLI,
+    name: 'arbitrum-goerli',
+    title: 'Arbitrum Goerli',
     testnet: true,
     blockExplorer: {
-      name: 'Arbiscan (Testnet)',
+      name: 'Arbiscan (Goerli Testnet)',
       rootUrl: 'https://testnet.arbiscan.io/'
     }
   },
@@ -387,5 +387,11 @@ export const testnetNetworks = validateAndSortNetworks([
     rpcUrl: nodesURL('bsc-testnet'),
     relayer: { url: relayerURL('bsc-testnet') },
     indexerUrl: indexerURL('bsc-testnet')
+  },
+  {
+    ...networks[ChainId.ARBITRUM_GOERLI],
+    rpcUrl: nodesURL('arbitrum-goerli'),
+    relayer: { url: relayerURL('arbitrum-goerli') },
+    indexerUrl: indexerURL('arbitrum-goerli')
   }
 ])
