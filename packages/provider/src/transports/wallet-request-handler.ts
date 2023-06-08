@@ -45,7 +45,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private signerReadyCallbacks: Array<() => void> = []
 
   private prompter: WalletUserPrompter | null
-  private auxDataProvider: AuxDataProvider | null
   private mainnetNetworks: NetworkConfig[]
   private testnetNetworks: NetworkConfig[]
 
@@ -59,13 +58,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   constructor(
     signer: Signer | null | undefined,
     prompter: WalletUserPrompter | null,
-    auxDataProvider: AuxDataProvider | null,
     mainnetNetworks: NetworkConfig[],
     testnetNetworks: NetworkConfig[] = []
   ) {
     this.signer = signer
     this.prompter = prompter
-    this.auxDataProvider = auxDataProvider
     this.mainnetNetworks = mainnetNetworks
     this.testnetNetworks = testnetNetworks
   }
@@ -100,13 +97,21 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     //
     // NOTE: if a user is signing into a dapp from a fresh state, and and auth request is made
     // we don't trigger the promptConnect flow, as we consider the user just authenticated
-    // for this dapp, so its safe to authorize in the connect() method without the prompt.
+    // for this dapp, so its safe to authorize in the promptSignInConnect() which will directly
+    // connect after signing in.
     //
     // NOTE: signIn can optionally connect and notify dapp at this time for new signIn flows
     if (connect) {
       const connectOptions = this._connectOptions
 
-      const connectDetails = await this.connect(connectOptions)
+      let connectDetails: ConnectDetails | PromptConnectDetails
+
+      if (this.prompter !== null) {
+        connectDetails = await this.prompter?.promptSignInConnect(connectOptions)
+      } else {
+        connectDetails = await this.connect(connectOptions)
+      }
+
       this.notifyConnect(connectDetails)
 
       if (!connectOptions || connectOptions.keepWalletOpened !== true) {
@@ -154,13 +159,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const connectDetails: ConnectDetails = {
       connected: true,
       chainId: ethers.utils.hexlify(await this.getChainId())
-    }
-
-    if (options && options.askForEmail) {
-      const email = await this.auxDataProvider?.get('email')
-      if (email) {
-        connectDetails.email = email
-      }
     }
 
     if (options && options.authorize) {
@@ -812,14 +810,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
 export interface WalletUserPrompter {
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
+  promptSignInConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
+
   promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
   promptSignTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: TransactionRequest, chaindId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
-}
-
-export interface AuxDataProvider {
-  get(key: string): Promise<any>
 }
 
 const permittedJsonRpcMethods = [

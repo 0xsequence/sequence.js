@@ -80,7 +80,7 @@ export const tests = async () => {
   ]
 
   // the rpc signer via the wallet
-  const walletRequestHandler = new WalletRequestHandler(undefined, null, null, networks)
+  const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)
 
   // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour
   // of the wallet-webapp, so lets ensure the mock wallet does the same thing too.
