@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.31
+
+### Patch Changes
+
+- remove AuxDataProvider, add promptSignInConnect
+- Updated dependencies
+  - @0xsequence/abi@0.43.31
+  - @0xsequence/api@0.43.31
+  - @0xsequence/config@0.43.31
+  - @0xsequence/indexer@0.43.31
+  - @0xsequence/metadata@0.43.31
+  - @0xsequence/network@0.43.31
+  - @0xsequence/provider@0.43.31
+  - @0xsequence/utils@0.43.31
+  - @0xsequence/wallet@0.43.31
+
 ## 0.43.30
 
 ### Patch Changes

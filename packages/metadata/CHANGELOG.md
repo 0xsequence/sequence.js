@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.31
+
+### Patch Changes
+
+- remove AuxDataProvider, add promptSignInConnect
+
 ## 0.43.30
 
 ### Patch Changes

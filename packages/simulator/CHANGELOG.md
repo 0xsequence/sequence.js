@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.31
+
+### Patch Changes
+
+- remove AuxDataProvider, add promptSignInConnect
+- Updated dependencies
+  - @0xsequence/transactions@0.43.31
+
 ## 0.43.30
 
 ### Patch Changes
