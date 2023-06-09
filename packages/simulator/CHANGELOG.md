@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.32
+
+### Patch Changes
+
+- add Base Goerli network
+- Updated dependencies
+  - @0xsequence/transactions@0.43.32
+
 ## 0.43.31
 
 ### Patch Changes

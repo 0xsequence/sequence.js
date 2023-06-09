@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.32
+
+### Patch Changes
+
+- add Base Goerli network
+- Updated dependencies
+  - @0xsequence/indexer@0.43.32
+  - @0xsequence/provider@0.43.32
+  - @0xsequence/relayer@0.43.32
+  - @0xsequence/utils@0.43.32
+
 ## 0.43.31
 
 ### Patch Changes

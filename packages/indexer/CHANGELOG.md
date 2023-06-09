@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.43.32
+
+### Patch Changes
+
+- add Base Goerli network
+
 ## 0.43.31
 
 ### Patch Changes
