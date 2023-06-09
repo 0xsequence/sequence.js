@@ -55,6 +55,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
+  onConnectOptionsChange: ((connectOptions: ConnectOptions | undefined) => void) | undefined = undefined
+
   constructor(
     signer: Signer | null | undefined,
     prompter: WalletUserPrompter | null,
@@ -664,6 +666,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   setConnectOptions(options: ConnectOptions | undefined) {
     this._connectOptions = options
+
+    this.onConnectOptionsChange?.(options)
   }
 
   get defaultNetworkId(): string | number | undefined {
