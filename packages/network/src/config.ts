@@ -44,7 +44,10 @@ export enum ChainId {
 
   // AURORA
   AURORA = 1313161554,
-  AURORA_TESTNET = 1313161556
+  AURORA_TESTNET = 1313161556,
+
+  // BASE
+  BASE_GOERLI = 84531
 }
 
 export interface NetworkConfig {
@@ -297,6 +300,15 @@ export const networks: Record<ChainId, NetworkConfig> = {
       name: 'Aurora Explorer (Testnet)',
       rootUrl: 'https://testnet.aurorascan.dev/'
     }
+  },
+  [ChainId.BASE_GOERLI]: {
+    chainId: ChainId.BASE_GOERLI,
+    name: 'base-goerli',
+    title: 'Base Goerli',
+    blockExplorer: {
+      name: 'Base Goerli Explorer',
+      rootUrl: 'https://goerli.basescan.org/'
+    }
   }
 }
 
@@ -393,5 +405,11 @@ export const testnetNetworks = validateAndSortNetworks([
     rpcUrl: nodesURL('arbitrum-goerli'),
     relayer: { url: relayerURL('arbitrum-goerli') },
     indexerUrl: indexerURL('arbitrum-goerli')
+  },
+  {
+    ...networks[ChainId.BASE_GOERLI],
+    rpcUrl: nodesURL('base-goerli'),
+    relayer: { url: relayerURL('base-goerli') },
+    indexerUrl: indexerURL('base-goerli')
   }
 ])
