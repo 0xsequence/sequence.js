@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.33
+
+### Patch Changes
+
+- Adding onConnectOptionsChange handler to WalletRequestHandler
+- Updated dependencies
+  - @0xsequence/transactions@0.43.33
+
 ## 0.43.32
 
 ### Patch Changes

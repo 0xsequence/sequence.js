@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.33
+
+### Patch Changes
+
+- Adding onConnectOptionsChange handler to WalletRequestHandler
+- Updated dependencies
+  - @0xsequence/indexer@0.43.33
+  - @0xsequence/provider@0.43.33
+  - @0xsequence/relayer@0.43.33
+  - @0xsequence/utils@0.43.33
+
 ## 0.43.32
 
 ### Patch Changes

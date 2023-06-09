@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 0.43.33
+
+### Patch Changes
+
+- Adding onConnectOptionsChange handler to WalletRequestHandler
+
 ## 0.43.32
 
 ### Patch Changes
