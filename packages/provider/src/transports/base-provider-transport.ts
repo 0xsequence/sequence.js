@@ -125,6 +125,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
   // handleMessage will handle message received from the remote wallet
   handleMessage(message: ProviderMessage<any>) {
+    console.log('yesssss...............................', message)
+    console.log('yesssss...............................', message)
+    console.log('yesssss...............................', message)
+    console.log('yesssss...............................', message)
+    console.log('yesssss...............................', message)
+    console.log('yesssss...............................', message)
+    console.log('handleMessage', message.type)
+
     // init incoming for initial handshake with transport.
     // always respond to INIT messages, e.g. on popup window reload
     if (message.type === EventType.INIT) {
@@ -211,7 +219,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         // NOTE: this would occur if 'idx' isn't set, which should never happen
         // or when we register two handler, or duplicate messages with the same idx are sent,
         // all of which should be prevented prior to getting to this point
-        throw new Error('impossible state')
+        throw new Error('impossible state, no response callback for message')
       }
 
       // Callback to original caller
@@ -266,7 +274,9 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // NOTIFY CONNECT -- when wallet instructs we've connected
     if (message.type === EventType.CONNECT) {
+      console.log('message.type === EventType.CONNECT')
       this.connectPayload = message.data
+      console.log('..???? paload??????????????? connnect...???', this.connectPayload)
       this.events.emit('connect', this.connectPayload!)
     }
 

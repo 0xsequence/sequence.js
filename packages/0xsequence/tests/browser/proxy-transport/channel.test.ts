@@ -1,3 +1,6 @@
+// NOTE: run `pnpm test:server` and open browser at http://localhost:9999/proxy-transport/channel.test.html
+// to run tests from this file directly from your Web Browser.
+
 import {
   Web3Provider,
   ProxyMessageProvider,

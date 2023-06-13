@@ -172,7 +172,7 @@ export class LocalStorage {
   }
 }
 
-// window.localstorage helper
+// window.localStorage helper
 export class LocalStore<T extends Object = string> {
   readonly key: string
 

@@ -26,7 +26,9 @@ import {
   WindowMessageProvider,
   ProxyMessageProvider,
   ProxyMessageChannelPort,
-  UnrealMessageProvider
+  UnrealMessageProvider,
+  UrlMessageProvider,
+  UrlMessageProviderHooks
 } from './transports'
 import { WalletSession, ProviderEventTypes, ConnectOptions, OpenWalletIntent, ConnectDetails } from './types'
 import { ethers, providers } from 'ethers'
@@ -36,8 +38,11 @@ import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill'
 
+
 export interface WalletProvider {
+  // connect<M extends ConnectOptions>(options?: M): M extends RedirectMode ? void : Promise<ConnectDetails>
   connect(options?: ConnectOptions): Promise<ConnectDetails>
+  connectWithRedirect(options?: ConnectOptions): void  
   disconnect(): void
 
   isConnected(): boolean
@@ -89,6 +94,7 @@ export class Wallet implements WalletProvider {
     // message communication
     messageProvider?: MuxMessageProvider
     windowMessageProvider?: WindowMessageProvider
+    urlMessageProvider?: UrlMessageProvider
     proxyMessageProvider?: ProxyMessageProvider
     extensionMessageProvider?: ExtensionMessageProvider
     unrealMessageProvider?: UnrealMessageProvider
@@ -137,6 +143,14 @@ export class Wallet implements WalletProvider {
       this.transport.windowMessageProvider = new WindowMessageProvider(this.config.walletAppURL)
       this.transport.messageProvider.add(this.transport.windowMessageProvider)
     }
+    if (this.config.transports?.urlTransport?.enabled) {
+      const redirectUrl = this.config.transports?.urlTransport?.redirectUrl
+      const hooks = this.config.transports?.urlTransport?.hooks
+      if (redirectUrl && hooks) {
+        this.transport.urlMessageProvider = new UrlMessageProvider(this, this.config.walletAppURL, redirectUrl, hooks)
+        this.transport.messageProvider.add(this.transport.urlMessageProvider)
+      }
+    }
     if (this.config.transports?.proxyTransport?.enabled) {
       this.transport.proxyMessageProvider = new ProxyMessageProvider(this.config.transports.proxyTransport.appPort!)
       this.transport.messageProvider.add(this.transport.proxyMessageProvider)
@@ -158,6 +172,7 @@ export class Wallet implements WalletProvider {
       this.transport.unrealMessageProvider = new UnrealMessageProvider(this.config.walletAppURL)
       this.transport.messageProvider.add(this.transport.unrealMessageProvider)
     }
+
     this.transport.messageProvider.register()
 
     // .....
@@ -182,6 +197,7 @@ export class Wallet implements WalletProvider {
 
     // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
     this.transport.cachedProvider = new CachedProvider()
+    console.log('cachdproviderrrrr:', this.transport.cachedProvider)
     this.transport.cachedProvider.onUpdate(() => {
       if (!this.session) this.session = { providerCache: {} }
       this.session.providerCache = this.transport.cachedProvider!.getCache()
@@ -281,6 +297,19 @@ export class Wallet implements WalletProvider {
     }
   }
 
+  // connect<M extends ConnectOptions>(options?: M): M extends RedirectMode ? void : Promise<ConnectDetails>
+  // connect(options?: ConnectOptions): void | Promise<ConnectDetails> {
+  //   if (options?.refresh === true) {
+  //     this.disconnect()
+  //   }
+  //   if (options?.redirectMode) {
+  //     this._connectWithRedirect(options)
+  //     return
+  //   } else {
+  //     return this._connect(options)      
+  //   }
+  // }
+
   connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
     if (options?.refresh === true) {
       this.disconnect()
@@ -288,7 +317,7 @@ export class Wallet implements WalletProvider {
 
     if (
       this.isConnected() &&
-      (await this.isSiteConnected(options?.origin)) &&
+      // (await this.isSiteConnected(options?.origin)) &&
       !!this.session &&
       !options?.authorize &&
       !options?.askForEmail
@@ -306,7 +335,12 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    await this.openWallet(undefined, { type: 'connect', options })
+    if (options?.redirectMode) {
+      this.openWallet(undefined, { type: 'connect', options })
+      return { connected: false }
+    } else {
+      await this.openWallet(undefined, { type: 'connect', options })
+    }
 
     const connectDetails = await this.transport.messageProvider!.waitUntilConnected().catch((error): ConnectDetails => {
       if (error instanceof Error) {
@@ -327,6 +361,10 @@ export class Wallet implements WalletProvider {
     }
 
     return connectDetails
+  }
+
+  connectWithRedirect = (options?: ConnectOptions): void => {
+    this.connect({ ...options, redirectMode: true })
   }
 
   async addConnectedSite(origin: string | undefined) {
@@ -385,6 +423,9 @@ export class Wallet implements WalletProvider {
   }
 
   isConnected(): boolean {
+    // log all checks below
+    console.log('this.session', this.session)
+    console.log('this.networks', this.networks)
     return (
       this.session !== undefined &&
       this.session.networks !== undefined &&
@@ -599,7 +640,7 @@ export class Wallet implements WalletProvider {
     await LocalStorage.getInstance().setItem('@sequence.session', data)
   }
 
-  private useSession = async (session: WalletSession, autoSave: boolean = true) => {
+  useSession = async (session: WalletSession, autoSave: boolean = true) => {
     if (!this.session) this.session = {}
 
     // setup wallet context
@@ -620,10 +661,18 @@ export class Wallet implements WalletProvider {
     }
 
     // setup provider cache
-    if (session.providerCache) {
-      this.transport.cachedProvider!.setCache(session.providerCache)
+    console.log('???? session.providerCache', session.providerCache)
+    console.log('???? this.transport.cachedProvider', this.transport.cachedProvider)
+
+    if (this.transport.cachedProvider) {
+      if (session.providerCache) {
+        this.transport.cachedProvider.setCache(session.providerCache)
+      } else {
+        console.log('therooo...........', this.transport.cachedProvider!.clearCache)
+        this.transport.cachedProvider.clearCache()
+      }
     } else {
-      this.transport.cachedProvider!.clearCache()
+      console.log('noooo???????????????????????? CACHE???????????????????')
     }
 
     // persist
@@ -686,11 +735,22 @@ export class Wallet implements WalletProvider {
     this.providers = {}
     this.transport.cachedProvider?.clearCache()
   }
+
+  static load = async (network?: string | number, config?: Partial<ProviderConfig>) => {
+    if (walletInstance) {
+      return walletInstance
+    } else {
+      walletInstance = new Wallet(network, config)
+      await walletInstance.loadSession(network)
+      return walletInstance
+    }
+  }
 }
 
 export interface ProviderConfig {
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
+  // TODO: rename localStorag to like cacheStore or sessionStore
   localStorage?: ItemStore
 
   // Sequence Wallet App URL, default: https://sequence.app
@@ -717,6 +777,12 @@ export interface ProviderConfig {
     // WindowMessage transport (optional)
     windowTransport?: {
       enabled: boolean
+    }
+
+    urlTransport?: {
+      enabled: boolean
+      redirectUrl?: string
+      hooks?: UrlMessageProviderHooks
     }
 
     // ProxyMessage transport (optional)
@@ -751,7 +817,8 @@ export const DefaultProviderConfig: ProviderConfig = {
 
   transports: {
     windowTransport: { enabled: true },
-    proxyTransport: { enabled: false }
+    proxyTransport: { enabled: false },
+    urlTransport: { enabled: false }
   }
 }
 

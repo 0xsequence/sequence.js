@@ -1,3 +1,6 @@
+// NOTE: run `pnpm test:server` and open browser at http://localhost:9999/wallet-provider/dapp2.test.html
+// to run tests from this file directly from your Web Browser.
+
 import { test, assert } from '../../utils/assert'
 import { TypedDataDomain, TypedDataField } from 'ethers'
 import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
