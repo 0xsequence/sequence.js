@@ -1,5 +1,117 @@
 # @0xsequence/auth
 
+## 0.43.33
+
+### Patch Changes
+
+- Adding onConnectOptionsChange handler to WalletRequestHandler
+- Updated dependencies
+  - @0xsequence/abi@0.43.33
+  - @0xsequence/api@0.43.33
+  - @0xsequence/config@0.43.33
+  - @0xsequence/indexer@0.43.33
+  - @0xsequence/metadata@0.43.33
+  - @0xsequence/network@0.43.33
+  - @0xsequence/provider@0.43.33
+  - @0xsequence/utils@0.43.33
+  - @0xsequence/wallet@0.43.33
+
+## 0.43.32
+
+### Patch Changes
+
+- add Base Goerli network
+- Updated dependencies
+  - @0xsequence/abi@0.43.32
+  - @0xsequence/api@0.43.32
+  - @0xsequence/config@0.43.32
+  - @0xsequence/indexer@0.43.32
+  - @0xsequence/metadata@0.43.32
+  - @0xsequence/network@0.43.32
+  - @0xsequence/provider@0.43.32
+  - @0xsequence/utils@0.43.32
+  - @0xsequence/wallet@0.43.32
+
+## 0.43.31
+
+### Patch Changes
+
+- remove AuxDataProvider, add promptSignInConnect
+- Updated dependencies
+  - @0xsequence/abi@0.43.31
+  - @0xsequence/api@0.43.31
+  - @0xsequence/config@0.43.31
+  - @0xsequence/indexer@0.43.31
+  - @0xsequence/metadata@0.43.31
+  - @0xsequence/network@0.43.31
+  - @0xsequence/provider@0.43.31
+  - @0xsequence/utils@0.43.31
+  - @0xsequence/wallet@0.43.31
+
+## 0.43.30
+
+### Patch Changes
+
+- add arbitrum goerli testnet
+- Updated dependencies
+  - @0xsequence/abi@0.43.30
+  - @0xsequence/api@0.43.30
+  - @0xsequence/config@0.43.30
+  - @0xsequence/indexer@0.43.30
+  - @0xsequence/metadata@0.43.30
+  - @0xsequence/network@0.43.30
+  - @0xsequence/provider@0.43.30
+  - @0xsequence/utils@0.43.30
+  - @0xsequence/wallet@0.43.30
+
+## 0.43.29
+
+### Patch Changes
+
+- provider: check availability of window object
+- Updated dependencies
+  - @0xsequence/abi@0.43.29
+  - @0xsequence/api@0.43.29
+  - @0xsequence/config@0.43.29
+  - @0xsequence/indexer@0.43.29
+  - @0xsequence/metadata@0.43.29
+  - @0xsequence/network@0.43.29
+  - @0xsequence/provider@0.43.29
+  - @0xsequence/utils@0.43.29
+  - @0xsequence/wallet@0.43.29
+
+## 0.43.28
+
+### Patch Changes
+
+- update api bindings
+- Updated dependencies
+  - @0xsequence/abi@0.43.28
+  - @0xsequence/api@0.43.28
+  - @0xsequence/config@0.43.28
+  - @0xsequence/indexer@0.43.28
+  - @0xsequence/metadata@0.43.28
+  - @0xsequence/network@0.43.28
+  - @0xsequence/provider@0.43.28
+  - @0xsequence/utils@0.43.28
+  - @0xsequence/wallet@0.43.28
+
+## 0.43.27
+
+### Patch Changes
+
+- Add rpc is sequence method
+- Updated dependencies
+  - @0xsequence/abi@0.43.27
+  - @0xsequence/api@0.43.27
+  - @0xsequence/config@0.43.27
+  - @0xsequence/indexer@0.43.27
+  - @0xsequence/metadata@0.43.27
+  - @0xsequence/network@0.43.27
+  - @0xsequence/provider@0.43.27
+  - @0xsequence/utils@0.43.27
+  - @0xsequence/wallet@0.43.27
+
 ## 0.43.26
 
 ### Patch Changes

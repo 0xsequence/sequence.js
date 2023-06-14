@@ -1,5 +1,47 @@
 # @0xsequence/utils
 
+## 0.43.33
+
+### Patch Changes
+
+- Adding onConnectOptionsChange handler to WalletRequestHandler
+
+## 0.43.32
+
+### Patch Changes
+
+- add Base Goerli network
+
+## 0.43.31
+
+### Patch Changes
+
+- remove AuxDataProvider, add promptSignInConnect
+
+## 0.43.30
+
+### Patch Changes
+
+- add arbitrum goerli testnet
+
+## 0.43.29
+
+### Patch Changes
+
+- provider: check availability of window object
+
+## 0.43.28
+
+### Patch Changes
+
+- update api bindings
+
+## 0.43.27
+
+### Patch Changes
+
+- Add rpc is sequence method
+
 ## 0.43.26
 
 ### Patch Changes

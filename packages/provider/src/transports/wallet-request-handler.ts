@@ -42,7 +42,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private signerReadyCallbacks: Array<() => void> = []
 
   private prompter: WalletUserPrompter | null
-  private auxDataProvider: AuxDataProvider | null
   private networks: NetworkConfig[]
 
   private _openIntent?: OpenWalletIntent
@@ -50,18 +49,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   private events: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
 
+  onConnectOptionsChange: ((connectOptions: ConnectOptions | undefined) => void) | undefined = undefined
+
   public defaultNetworkId: number
 
   constructor(
     account: Account | null | undefined,
     prompter: WalletUserPrompter | null,
-    auxDataProvider: AuxDataProvider | null,
     networks: NetworkConfig[],
     defaultNetworkId?: string | number
   ) {
     this.account = account
     this.prompter = prompter
-    this.auxDataProvider = auxDataProvider
     this.networks = networks
 
     this.defaultNetworkId = defaultNetworkId ? this.findNetworkID(defaultNetworkId) : networks[0].chainId
@@ -97,13 +96,21 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     //
     // NOTE: if a user is signing into a dapp from a fresh state, and and auth request is made
     // we don't trigger the promptConnect flow, as we consider the user just authenticated
-    // for this dapp, so its safe to authorize in the connect() method without the prompt.
+    // for this dapp, so its safe to authorize in the promptSignInConnect() which will directly
+    // connect after signing in.
     //
     // NOTE: signIn can optionally connect and notify dapp at this time for new signIn flows
     if (connect) {
       const connectOptions = this._connectOptions
 
-      const connectDetails = await this.connect(connectOptions)
+      let connectDetails: ConnectDetails | PromptConnectDetails
+
+      if (this.prompter !== null) {
+        connectDetails = await this.prompter?.promptSignInConnect(connectOptions)
+      } else {
+        connectDetails = await this.connect(connectOptions)
+      }
+
       this.notifyConnect(connectDetails)
 
       if (!connectOptions || connectOptions.keepWalletOpened !== true) {
@@ -171,13 +178,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const connectDetails: ConnectDetails = {
       connected: true,
       chainId: ethers.BigNumber.from(chainId).toHexString()
-    }
-
-    if (options && options.askForEmail) {
-      const email = await this.auxDataProvider?.get('email')
-      if (email) {
-        connectDetails.email = email
-      }
     }
 
     if (options && options.authorize) {
@@ -596,6 +596,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           break
         }
 
+        case 'sequence_isSequence': {
+          response.result = true
+          break
+        }
+
         // smart wallet method
         case 'sequence_updateConfig': {
           throw new Error('sequence_updateConfig method is not allowed from a dapp')
@@ -695,6 +700,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   setConnectOptions(options: ConnectOptions | undefined) {
     this._connectOptions = options
+
+    this.onConnectOptionsChange?.(options)
   }
 
   setDefaultNetwork(chainId: string | number): number {
@@ -826,14 +833,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
 export interface WalletUserPrompter {
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
+  promptSignInConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
+
   promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
   promptSignTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
-}
-
-export interface AuxDataProvider {
-  get(key: string): Promise<any>
 }
 
 interface LegacyWalletState {

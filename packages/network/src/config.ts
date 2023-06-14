@@ -26,7 +26,7 @@ export enum ChainId {
 
   // Arbitrum One
   ARBITRUM = 42161,
-  ARBITRUM_TESTNET = 421611,
+  ARBITRUM_GOERLI = 421613,
 
   // Arbitrum Nova
   ARBITRUM_NOVA = 42170,
@@ -45,6 +45,9 @@ export enum ChainId {
   // AURORA
   AURORA = 1313161554,
   AURORA_TESTNET = 1313161556,
+
+  // BASE
+  BASE_GOERLI = 84531,
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -220,10 +223,10 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
       rootUrl: 'https://arbiscan.io/'
     }
   },
-  [ChainId.ARBITRUM_TESTNET]: {
-    chainId: ChainId.ARBITRUM_TESTNET,
-    name: 'arbitrum-testnet',
-    title: 'Arbitrum Testnet',
+  [ChainId.ARBITRUM_GOERLI]: {
+    chainId: ChainId.ARBITRUM_GOERLI,
+    name: 'arbitrum-goerli',
+    title: 'Arbitrum Goerli',
     testnet: true,
     blockExplorer: {
       name: 'Arbiscan (Testnet)',
@@ -302,6 +305,15 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
     blockExplorer: {
       name: 'Aurora Explorer (Testnet)',
       rootUrl: 'https://testnet.aurorascan.dev/'
+    }
+  },
+  [ChainId.BASE_GOERLI]: {
+    chainId: ChainId.BASE_GOERLI,
+    name: 'base-goerli',
+    title: 'Base Goerli',
+    blockExplorer: {
+      name: 'Base Goerli Explorer',
+      rootUrl: 'https://goerli.basescan.org/'
     }
   },
   [ChainId.HARDHAT]: {
@@ -388,6 +400,14 @@ export const allNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.BSC_TESTNET],
     ...genUrls('bsc-testnet')
+  },
+  {
+    ...networks[ChainId.ARBITRUM_GOERLI],
+    ...genUrls('arbitrum-goerli')
+  },
+  {
+    ...networks[ChainId.BASE_GOERLI],
+    ...genUrls('base-goerli')
   },
   {
     ...networks[ChainId.HARDHAT],
