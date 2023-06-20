@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/provider",
-  "version": "0.43.33",
+  "version": "0.43.34",
   "description": "provider sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/provider",
   "source": "src/index.ts",
@@ -14,14 +14,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/abi": "^0.43.33",
-    "@0xsequence/auth": "^0.43.33",
-    "@0xsequence/config": "^0.43.33",
-    "@0xsequence/network": "^0.43.33",
-    "@0xsequence/relayer": "^0.43.33",
-    "@0xsequence/transactions": "^0.43.33",
-    "@0xsequence/utils": "^0.43.33",
-    "@0xsequence/wallet": "^0.43.33",
+    "@0xsequence/abi": "^0.43.34",
+    "@0xsequence/auth": "^0.43.34",
+    "@0xsequence/config": "^0.43.34",
+    "@0xsequence/network": "^0.43.34",
+    "@0xsequence/relayer": "^0.43.34",
+    "@0xsequence/transactions": "^0.43.34",
+    "@0xsequence/utils": "^0.43.34",
+    "@0xsequence/wallet": "^0.43.34",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill": "^0.10.0"
   },

@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 0.43.34
+
+### Patch Changes
+
+- auth: no jwt for indexer
+- Updated dependencies
+  - @0xsequence/transactions@0.43.34
+
 ## 0.43.33
 
 ### Patch Changes

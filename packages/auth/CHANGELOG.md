@@ -1,5 +1,21 @@
 # @0xsequence/auth
 
+## 0.43.34
+
+### Patch Changes
+
+- auth: no jwt for indexer
+- Updated dependencies
+  - @0xsequence/abi@0.43.34
+  - @0xsequence/api@0.43.34
+  - @0xsequence/config@0.43.34
+  - @0xsequence/indexer@0.43.34
+  - @0xsequence/metadata@0.43.34
+  - @0xsequence/network@0.43.34
+  - @0xsequence/provider@0.43.34
+  - @0xsequence/utils@0.43.34
+  - @0xsequence/wallet@0.43.34
+
 ## 0.43.33
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 0.43.34
+
+### Patch Changes
+
+- auth: no jwt for indexer
+- Updated dependencies
+  - @0xsequence/indexer@0.43.34
+  - @0xsequence/provider@0.43.34
+  - @0xsequence/relayer@0.43.34
+  - @0xsequence/utils@0.43.34
+
 ## 0.43.33
 
 ### Patch Changes
