@@ -158,13 +158,11 @@ export class Session {
       throw Error(`No network for chain ${chainId}`)
     }
 
-    const jwtAuth = (await this.getJWT(true)).token
-
     if (!this.indexerClients.has(network.chainId)) {
       if (network.indexer) {
         this.indexerClients.set(network.chainId, network.indexer)
       } else if (network.indexerUrl) {
-        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl, jwtAuth))
+        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl))
       } else {
         throw Error(`No indexer url for chain ${chainId}`)
       }
