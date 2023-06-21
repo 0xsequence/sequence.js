@@ -811,8 +811,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       return true
     }
     const status = await account.status(chainId)
-    const isUpToDate = isWalletUpToDate(status)
-    if (isUpToDate) {
+    if (status.canOnchainValidate) {
       return true
     }
     const promptResult = await prompter.promptConfirmWalletDeploy(chainId, this.connectOptions)

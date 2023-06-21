@@ -339,7 +339,7 @@ export class Account {
       config,
       checkpoint,
       canOnchainValidate: (
-        lastVersion === this.version &&
+        onChainVersion === this.version &&
         isDeployed
       )
     }
