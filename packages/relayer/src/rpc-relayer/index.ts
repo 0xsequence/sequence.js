@@ -3,6 +3,7 @@ import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
 import { logger } from '@0xsequence/utils'
+import { getDefaultConnectionInfo } from '@0xsequence/network'
 
 export { proto }
 
@@ -16,12 +17,17 @@ const FINAL_STATUSES = [
 const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions {
-  provider: ethers.providers.Provider | { url: string },
+  provider: ethers.providers.Provider | { url: string }
   url: string
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
-  return obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && ethers.providers.Provider.isProvider(obj.provider)
+  return (
+    obj.url !== undefined &&
+    typeof obj.url === 'string' &&
+    obj.provider !== undefined &&
+    ethers.providers.Provider.isProvider(obj.provider)
+  )
 }
 
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
@@ -32,7 +38,9 @@ export class RpcRelayer implements Relayer {
 
   constructor(options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, fetch)
-    this.provider = ethers.providers.Provider.isProvider(options.provider) ? options.provider : new ethers.providers.StaticJsonRpcProvider(options.provider.url)
+    this.provider = ethers.providers.Provider.isProvider(options.provider)
+      ? options.provider
+      : new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(options.provider.url))
   }
 
   async waitReceipt(
@@ -79,7 +87,10 @@ export class RpcRelayer implements Relayer {
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
     const coder = ethers.utils.defaultAbiCoder
-    const encoded = coder.encode([commons.transaction.MetaTransactionsType], [commons.transaction.sequenceTxAbiEncode(transactions)])
+    const encoded = coder.encode(
+      [commons.transaction.MetaTransactionsType],
+      [commons.transaction.sequenceTxAbiEncode(transactions)]
+    )
     return (await this.service.simulate({ wallet, transactions: encoded })).results
   }
 
@@ -109,8 +120,8 @@ export class RpcRelayer implements Relayer {
         data: commons.transaction.encodeBundleExecData({
           entrypoint: address,
           transactions,
-          nonce,
-        }),
+          nonce
+        })
       })
 
       logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options)}`)
@@ -121,10 +132,7 @@ export class RpcRelayer implements Relayer {
     }
   }
 
-  async getFeeOptionsRaw(
-    entrypoint: string,
-    data: ethers.utils.BytesLike
-  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+  async getFeeOptionsRaw(entrypoint: string, data: ethers.utils.BytesLike): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     const { options, quote } = await this.service.feeOptions({
       wallet: entrypoint,
       to: entrypoint,

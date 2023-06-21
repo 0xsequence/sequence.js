@@ -1,5 +1,4 @@
-
-import { NetworkConfig, ChainIdLike, findNetworkConfig } from '@0xsequence/network'
+import { NetworkConfig, ChainIdLike, findNetworkConfig, getDefaultConnectionInfo } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
@@ -36,14 +35,14 @@ type ProofStringPromise = {
 }
 
 export interface SessionDumpV1 {
-  config: Omit<v1.config.WalletConfig, 'version'> & { address?: string },
+  config: Omit<v1.config.WalletConfig, 'version'> & { address?: string }
   jwt?: SessionJWT
   metadata: SessionMeta
 }
 
 export interface SessionDumpV2 {
-  version: 2,
-  address: string,
+  version: 2
+  address: string
   jwt?: SessionJWT
   metadata: SessionMeta
 }
@@ -285,29 +284,34 @@ export class Session {
     if (!network) throw Error('No network found')
     ethAuth.chainId = chainId.toNumber()
     // TODO: Modify ETHAuth so it can take a provider instead of a url
-    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(network.rpcUrl, { name: "", chainId: chainId.toNumber() })
+    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+      name: '',
+      chainId: chainId.toNumber()
+    })
 
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
-    
 
     const proofString = {
       proofString: Promise.resolve(
-      // NOTICE: TODO: Here we ask the account to sign the message
-      // using whatever configuration we have ON-CHAIN, this means
-      // that the account will still use the v1 wallet, even if the migration
-      // was signed.
-      //
-      // This works for Sequence webapp v1 -> v2 because all v1 configurations share the same formula
-      // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
-      // those other signers may not be part of the configuration.
-      //
-      this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true)).then((s) => {
-        proof.signature = s
-        return ethAuth.encodeProof(proof, true)
-      }).catch((reason) => {
-        this.proofStrings.delete(key)
-        throw reason
-      }),
+        // NOTICE: TODO: Here we ask the account to sign the message
+        // using whatever configuration we have ON-CHAIN, this means
+        // that the account will still use the v1 wallet, even if the migration
+        // was signed.
+        //
+        // This works for Sequence webapp v1 -> v2 because all v1 configurations share the same formula
+        // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
+        // those other signers may not be part of the configuration.
+        //
+        this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true)
+      )
+        .then(s => {
+          proof.signature = s
+          return ethAuth.encodeProof(proof, true)
+        })
+        .catch(reason => {
+          this.proofStrings.delete(key)
+          throw reason
+        }),
       expiration
     }
 
@@ -328,7 +332,10 @@ export class Session {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
-      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(network.rpcUrl, { name: "", chainId: chainId.toNumber() })
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+        name: '',
+        chainId: chainId.toNumber()
+      })
 
       await ethAuth.decodeProof(proofString)
 
@@ -356,13 +363,13 @@ export class Session {
   }
 
   static async open(args: {
-    settings: SessionSettings,
-    addSigners: commons.config.SimpleSigner[],
+    settings: SessionSettings
+    addSigners: commons.config.SimpleSigner[]
     referenceSigner: string
     threshold: ethers.BigNumberish
-    metadata: SessionMeta,
-    selectWallet: (wallets: string[]) => Promise<string | undefined>,
-    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config,
+    metadata: SessionMeta
+    selectWallet: (wallets: string[]) => Promise<string | undefined>
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
     const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration, onMigration } = args
@@ -372,7 +379,7 @@ export class Session {
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
-    const selectedWallet = await selectWallet(foundWallets.map((w) => w.wallet))
+    const selectedWallet = await selectWallet(foundWallets.map(w => w.wallet))
 
     let account: Account
 
@@ -405,7 +412,7 @@ export class Session {
           const { migratedAllChains: isFullyMigrated, failedChains } = await account.isMigratedAllChains()
 
           // Failed chains must not contain mainnet or polygon, otherwise we cannot proceed.
-          if (failedChains.some((c) => CRITICAL_CHAINS.includes(c))) {
+          if (failedChains.some(c => CRITICAL_CHAINS.includes(c))) {
             throw Error(`Failed to fetch account status on ${failedChains.join(', ')}`)
           }
 
@@ -413,12 +420,12 @@ export class Session {
             // This is an oportunity for whoever is opening the session to
             // feed the orchestrator with more signers, so that the migration
             // can be completed.
-            if (onMigration && !await onMigration(account)) {
+            if (onMigration && !(await onMigration(account))) {
               throw Error('Migration cancelled, cannot open session')
             }
 
             const { failedChains } = await account.signAllMigrations(editConfigOnMigration)
-            if (failedChains.some((c) => CRITICAL_CHAINS.includes(c))) {
+            if (failedChains.some(c => CRITICAL_CHAINS.includes(c))) {
               throw Error(`Failed to sign migrations on ${failedChains.join(', ')}`)
             }
 
@@ -429,8 +436,8 @@ export class Session {
             }
 
             let isFullyMigrated2: boolean
-            [isFullyMigrated2, status] = await Promise.all([
-              account.isMigratedAllChains().then((r) => r.migratedAllChains),
+            ;[isFullyMigrated2, status] = await Promise.all([
+              account.isMigratedAllChains().then(r => r.migratedAllChains),
               account.status(referenceChainId)
             ])
 
@@ -470,15 +477,7 @@ export class Session {
       await account.publishWitness()
     }
 
-    const session = new Session(
-      sequenceApiUrl,
-      sequenceApiChainId,
-      sequenceMetadataUrl,
-      networks,
-      contexts,
-      account,
-      metadata
-    )
+    const session = new Session(sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, networks, contexts, account, metadata)
 
     if (sequenceApiUrl) {
       // Fire JWT requests after updating config
@@ -491,9 +490,9 @@ export class Session {
   }
 
   static async load(args: {
-    settings: SessionSettings,
-    dump: SessionDumpV1 | SessionDumpV2,
-    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config,
+    settings: SessionSettings
+    dump: SessionDumpV1 | SessionDumpV2
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
     const { dump, settings, editConfigOnMigration, onMigration } = args
@@ -505,10 +504,9 @@ export class Session {
       // Old configuration format used to also contain an "address" field
       // but if it doesn't, it means that it was a "counterfactual" account
       // not yet updated, so we need to compute the address
-      const oldAddress = dump.config.address || commons.context.addressOf(
-        contexts[1],
-        v1.config.ConfigCoder.imageHashOf({ ...dump.config, version: 1 })
-      )
+      const oldAddress =
+        dump.config.address ||
+        commons.context.addressOf(contexts[1], v1.config.ConfigCoder.imageHashOf({ ...dump.config, version: 1 }))
 
       account = new Account({
         address: oldAddress,
@@ -519,17 +517,17 @@ export class Session {
       })
 
       // TODO: This property may not hold if the user adds a new network
-      if (!(await account.isMigratedAllChains().then((r) => r.migratedAllChains))) {
+      if (!(await account.isMigratedAllChains().then(r => r.migratedAllChains))) {
         // This is an oportunity for whoever is opening the session to
         // feed the orchestrator with more signers, so that the migration
         // can be completed.
-        if (onMigration && !await onMigration(account)) {
+        if (onMigration && !(await onMigration(account))) {
           throw Error('Migration cancelled, cannot open session')
         }
 
         console.log('Migrating account...')
         await account.signAllMigrations(editConfigOnMigration)
-        if (!(await account.isMigratedAllChains().then((r) => r.migratedAllChains))) throw Error('Failed to migrate account')
+        if (!(await account.isMigratedAllChains().then(r => r.migratedAllChains))) throw Error('Failed to migrate account')
       }
 
       // We may need to update the JWT if the account has been migrated

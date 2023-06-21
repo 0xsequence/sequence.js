@@ -19,7 +19,8 @@
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*",
-    "@0xsequence/utils": "workspace:*"
+    "@0xsequence/utils": "workspace:*",
+    "@0xsequence/network": "workspace:*"
   },
   "peerDependencies": {
     "ethers": ">=5.5 < 6"

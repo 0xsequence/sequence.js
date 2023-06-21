@@ -16,7 +16,8 @@ import {
   updateNetworkConfig,
   ensureValidNetworks,
   sortNetworks,
-  findSupportedNetwork
+  findSupportedNetwork,
+  getDefaultConnectionInfo
 } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { Web3Provider, Web3Signer } from './provider'
@@ -203,7 +204,10 @@ export class Wallet implements WalletProvider {
     )
 
     // TODO: Move finding this config to upper in the stack
-    this.transport.provider = new Web3Provider(this.transport.router, findSupportedNetwork(this.config.defaultNetworkId!)?.chainId)
+    this.transport.provider = new Web3Provider(
+      this.transport.router,
+      findSupportedNetwork(this.config.defaultNetworkId!)?.chainId
+    )
 
     // NOTE: we don't listen on 'connect' even here as we handle it within connect() method
     // in more synchronous flow.
@@ -497,7 +501,7 @@ export class Wallet implements WalletProvider {
     let provider: Web3Provider
 
     // network.provider may be set by the ProviderConfig override
-    const rpcProvider = new providers.JsonRpcProvider(network.rpcUrl, network.chainId)
+    const rpcProvider = new providers.JsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), network.chainId)
 
     if (network.isDefaultChain) {
       // communicating with defaultChain will prioritize the wallet message transport
