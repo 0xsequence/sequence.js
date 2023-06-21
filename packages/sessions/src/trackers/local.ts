@@ -103,13 +103,11 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       // We split the configuration in a list of nodes, and store them individually
       // then we can reconstruct it. This also means we can combine multiple configurations
       // if they share information
-
       const imageHash = v2.config.ConfigCoder.imageHashOf(config)
 
       // This is an optimization, it allows us to avoid splitting the tree if it's already complete
-      let storeConfigFullPromise: Promise<void> | undefined
-      if (!v2.config.isComplete(config.tree)) {
-        storeConfigFullPromise = this.store.saveConfig(imageHash, config)
+      if (v2.config.isComplete(config.tree)) {
+        return this.store.saveConfig(imageHash, config)
       }
 
       const storeTree = this.saveTopology(config.tree)
@@ -121,7 +119,6 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       })
 
       await Promise.all([storeTree, storeConfig])
-      await storeConfigFullPromise
     }
 
     return
