@@ -451,8 +451,17 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     ])
 
     const coder = universal.coderFor(fromVersion)
-    if (!currentConfig) throw new Error("Invalid from config")
-    if (!coder.config.isWalletConfig(currentConfig)) throw new Error("Invalid from config - version")
+    if (!currentConfig) {
+      // We may not be able to find the config, because the migration is still not copied locally
+      // in that case we consider as we don't have any migration
+      return undefined
+    }
+
+    if (!coder.config.isWalletConfig(currentConfig)) {
+      // throw new Error("Invalid from config - version")
+      // better to not fail here, some other tracker may be able to handle this migration
+      return undefined
+    }
 
     // We need to process every migration candidate individually
     // and see which one has enough signers to be valid (for the current config)
