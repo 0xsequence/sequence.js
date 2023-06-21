@@ -110,15 +110,19 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         return this.store.saveConfig(imageHash, config)
       }
 
-      const storeTree = this.saveTopology(config.tree)
-      const storeConfig = this.store.saveConfig(imageHash, {
-        version: 2,
-        threshold: ethers.BigNumber.from(config.threshold).toString(),
-        checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
-        tree: v2.config.hashNode(config.tree)
-      })
+      // TODO: Re-enable storing partial v2 configs once
+      // we have more performant code to reconstructing them
+      // in the meantime, rely on the remote tracker
 
-      await Promise.all([storeTree, storeConfig])
+      // const storeTree = this.saveTopology(config.tree)
+      // const storeConfig = this.store.saveConfig(imageHash, {
+      //   version: 2,
+      //   threshold: ethers.BigNumber.from(config.threshold).toString(),
+      //   checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
+      //   tree: v2.config.hashNode(config.tree)
+      // })
+
+      // await Promise.all([storeTree, storeConfig])
     }
 
     return
