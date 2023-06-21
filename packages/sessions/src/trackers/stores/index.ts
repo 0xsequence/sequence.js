@@ -28,13 +28,19 @@ export function isPlainNested(node: any): node is PlainNested {
 }
 
 export function isPlainV2Config(config: any): config is PlainV2Config {
-  return config.version === 2 && config.threshold !== undefined && config.checkpoint !== undefined && config.tree !== undefined
+  return (
+    config.version === 2 &&
+    config.threshold !== undefined &&
+    config.checkpoint !== undefined &&
+    config.tree !== undefined &&
+    typeof config.tree === 'string'
+  )
 }
 
 export interface TrackerStore {
   // top level configurations store
-  loadConfig: (imageHash: string) => Promise<v1.config.WalletConfig | PlainV2Config | undefined>
-  saveConfig: (imageHash: string, config: v1.config.WalletConfig | PlainV2Config) => Promise<void>
+  loadConfig: (imageHash: string) => Promise<v1.config.WalletConfig | PlainV2Config | v2.config.WalletConfig | undefined>
+  saveConfig: (imageHash: string, config: v1.config.WalletConfig | PlainV2Config | v2.config.WalletConfig) => Promise<void>
 
   // v2 configurations store
   loadV2Node: (nodeHash: string) => Promise<PlainNode | PlainNested | v2.config.Topology | undefined>
