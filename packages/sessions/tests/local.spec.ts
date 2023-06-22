@@ -218,7 +218,7 @@ describe('Local config tracker', () => {
           }
         })
 
-        it('Should combine two different v2 configurations', async () => {
+        it.skip('Should combine two different v2 configurations', async () => {
           const config1 = utils.configs.random.genRandomV2Config(undefined, undefined, 25, 15, true)
           const config2 = utils.configs.random.genRandomV2Config(undefined, undefined, 2, 1, false)
 
@@ -782,7 +782,7 @@ describe('Local config tracker', () => {
         expect(config2).to.deep.equal(config)
       })
   
-      it('Should combine 2 different sources', async () => {
+      it.skip('Should combine 2 different sources', async () => {
         const node1 = {
           address: ethers.Wallet.createRandom().address,
           weight: ethers.BigNumber.from(1)

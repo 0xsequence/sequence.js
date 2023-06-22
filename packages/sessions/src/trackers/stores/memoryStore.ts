@@ -3,18 +3,18 @@ import { ethers } from "ethers"
 import { PlainNested, PlainNode, PlainV2Config, TrackerStore } from "."
 
 export class MemoryTrackerStore implements TrackerStore {
-  private configs: { [imageHash: string]: v1.config.WalletConfig | PlainV2Config } = {}
+  private configs: { [imageHash: string]: v1.config.WalletConfig | v2.config.WalletConfig | PlainV2Config } = {}
   private v2Nodes: { [nodeHash: string]: PlainNode | PlainNested | v2.config.Topology } = {}
   private counterfactualWallets: { [wallet: string]: { imageHash: string, context: commons.context.WalletContext } } = {}
   private payloads: { [subdigest: string]: commons.signature.SignedPayload } = {}
   private signatures: { [signer: string]: { [subdigest: string]: ethers.BytesLike } } = {}
   private migrations: { [wallet: string]: { [fromVersion: number]: { [toVersion: number]: { subdigest: string, toImageHash: string }[] } } } = {}
 
-  loadConfig = (imageHash: string): Promise<v1.config.WalletConfig | PlainV2Config | undefined> => {
+  loadConfig = (imageHash: string): Promise<v1.config.WalletConfig | v2.config.WalletConfig | PlainV2Config | undefined> => {
     return Promise.resolve(this.configs[imageHash])
   }
 
-  saveConfig = (imageHash: string, config: v1.config.WalletConfig | PlainV2Config): Promise<void> => {
+  saveConfig = (imageHash: string, config: v1.config.WalletConfig | v2.config.WalletConfig | PlainV2Config): Promise<void> => {
     this.configs[imageHash] = config
     return Promise.resolve()
   }

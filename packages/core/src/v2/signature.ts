@@ -332,7 +332,7 @@ export function encodeSigners(
     }
   }
 
-  if (config.threshold > 255) {
+  if (ethers.BigNumber.from(config.threshold).gt(255)) {
     return {
       encoded: ethers.utils.solidityPack(
         ['uint8', 'uint16', 'uint32', 'bytes'],

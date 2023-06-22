@@ -41,7 +41,7 @@ export function isSignerLeaf(leaf: any): leaf is SignerLeaf {
 }
 
 export function isSubdigestLeaf(leaf: any): leaf is SubdigestLeaf {
-  return (leaf as SubdigestLeaf).subdigest !== undefined
+  return (leaf as SubdigestLeaf).subdigest !== undefined && (leaf as SignerLeaf).address === undefined
 }
 
 export function topologyToJSON(tree: Topology): string {

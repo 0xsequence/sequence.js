@@ -7,7 +7,7 @@ import { DBSchema, IDBPDatabase, openDB } from 'idb'
 export interface LocalTrackerDBSchema extends DBSchema {
   'configs': {
     key: string,
-    value: v1.config.WalletConfig | PlainV2Config
+    value: v1.config.WalletConfig | v2.config.WalletConfig | PlainV2Config
   },
   'v2Nodes': {
     key: string,
@@ -109,12 +109,12 @@ export class IndexedDBStore implements TrackerStore {
     return this._lazyDb
   }
 
-  loadConfig = async (imageHash: string): Promise<v1.config.WalletConfig | PlainV2Config | undefined> => {
+  loadConfig = async (imageHash: string): Promise<v1.config.WalletConfig | v2.config.WalletConfig | PlainV2Config | undefined> => {
     const db = await this.getDb()
     return db.get('configs', imageHash).then((c) => recreateBigNumbers(c))
   }
 
-  saveConfig = async (imageHash: string, config: v1.config.WalletConfig | PlainV2Config): Promise<void> => {
+  saveConfig = async (imageHash: string, config: v1.config.WalletConfig | v2.config.WalletConfig | PlainV2Config): Promise<void> => {
     const db = await this.getDb()
     await db.put('configs', config, imageHash)
   }
