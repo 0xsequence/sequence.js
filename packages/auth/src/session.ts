@@ -475,6 +475,13 @@ export class Session {
       // sign a digest and send it to the tracker
       // otherwise the tracker will not know about this account
       await account.publishWitness()
+
+      // safety check, the remove tracker should be able to find
+      // this account for the reference signer
+      const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner, noCache: true })
+      if (!foundWallets.some(w => w.wallet === account.address)) {
+        throw Error('Account not found on tracker')
+      }
     }
 
     const session = new Session(sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, networks, contexts, account, metadata)

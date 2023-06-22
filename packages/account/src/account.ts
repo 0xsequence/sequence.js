@@ -455,11 +455,22 @@ export class Account {
     const signature = await this.signDigest(updateStruct, 0, false)
 
     // save the presigned transaction to the sessions tracker
-    return this.tracker.savePresignedConfiguration({
+    await this.tracker.savePresignedConfiguration({
       wallet: this.address,
       nextConfig: config,
       signature
     })
+
+    // safety check, tracker should have a reverse lookup for the imageHash
+    // outside of the local cache
+    const reverseConfig = await this.tracker.configOfImageHash({ 
+      imageHash: nextImageHash,
+      noCache: true
+    })
+
+    if (!reverseConfig || this.coders.config.imageHashOf(reverseConfig) !== nextImageHash) {
+      throw Error(`Reverse lookup failed for imageHash ${nextImageHash}`)
+    }
   }
 
   /**
@@ -554,10 +565,18 @@ export class Account {
     if (status.fullyMigrated) return false
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await this.migrator.signNextMigration(this.address, status.version, wallet, editConfig(wallet.config))
+    const nextConfig = editConfig(wallet.config)
+    const signed = await this.migrator.signNextMigration(this.address, status.version, wallet, nextConfig)
     if (!signed) return false
 
     await this.tracker.saveMigration(this.address, signed, this.contexts)
+
+    const nextImageHash = this.coders.config.imageHashOf(nextConfig)
+    const reverseConfig = await this.tracker.configOfImageHash({ imageHash: nextImageHash, noCache: true })
+    if (!reverseConfig || this.coders.config.imageHashOf(reverseConfig) !== nextImageHash) {
+      throw Error(`Reverse lookup failed for imageHash ${nextImageHash}`)
+    }
+
     return true
   }
 

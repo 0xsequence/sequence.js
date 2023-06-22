@@ -30,7 +30,8 @@ export abstract class ConfigTracker {
   saveWitnesses: (args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }) => Promise<void>
 
   configOfImageHash: (args: {
-    imageHash: string
+    imageHash: string,
+    noCache?: boolean
   }) => Promise<commons.config.Config | undefined>
 
   saveWalletConfig: (args: {
@@ -38,16 +39,21 @@ export abstract class ConfigTracker {
   }) => Promise<void>
 
   imageHashOfCounterfactualWallet: (args: {
-    wallet: string
+    wallet: string,
+    noCache?: boolean
   }) => Promise<{
     imageHash: string,
     context: commons.context.WalletContext
   } | undefined>
 
-  saveCounterfactualWallet: (args: { config: commons.config.Config; context: commons.context.WalletContext[] }) => Promise<void>
+  saveCounterfactualWallet: (args: {
+    config: commons.config.Config;
+    context: commons.context.WalletContext[]
+  }) => Promise<void>
 
   walletsOfSigner: (args: {
-    signer: string
+    signer: string,
+    noCache?: boolean
   }) => Promise<{
     wallet: string,
     proof: {

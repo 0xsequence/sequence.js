@@ -65,11 +65,13 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     await Promise.all([this.tracker.savePresignedConfiguration(args), this.cache.savePresignedConfiguration(args)])
   }
 
-  async configOfImageHash(args: { imageHash: string }): Promise<commons.config.Config | undefined> {
+  async configOfImageHash(args: { imageHash: string, noCache?: boolean }): Promise<commons.config.Config | undefined> {
     // We first check the cache, if it's not there, we check the tracker
     // and then we save it to the cache
-    const config = await this.cache.configOfImageHash(args)
-    if (config) return config
+    if (args.noCache !== true) {
+      const config = await this.cache.configOfImageHash(args)
+      if (config) return config
+    }
 
     const config2 = await this.tracker.configOfImageHash(args)
     if (config2) {
@@ -83,11 +85,13 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     await Promise.all([this.tracker.saveWalletConfig(args), this.cache.saveWalletConfig(args)])
   }
 
-  async imageHashOfCounterfactualWallet(args: { wallet: string }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
+  async imageHashOfCounterfactualWallet(args: { wallet: string, noCache?: boolean }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
     // We first check the cache, if it's not there, we check the tracker
     // and then we save it to the cache
-    const result1 = await this.cache.imageHashOfCounterfactualWallet(args)
-    if (result1) return result1
+    if (args.noCache !== true) {
+      const result1 = await this.cache.imageHashOfCounterfactualWallet(args)
+      if (result1) return result1
+    }
 
     const result2 = await this.tracker.imageHashOfCounterfactualWallet(args)
     if (result2) {
@@ -105,7 +109,11 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     await Promise.all([this.tracker.saveCounterfactualWallet(args), this.cache.saveCounterfactualWallet(args)])
   }
 
-  async walletsOfSigner(args: { signer: string }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+  async walletsOfSigner(args: { signer: string, noCache?: boolean }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+    if (args.noCache) {
+      return this.tracker.walletsOfSigner(args)
+    }
+
     // In this case we need to both aggregate the results from the cache and the tracker
     // and then dedupe the results
     const results = await Promise.all([this.tracker.walletsOfSigner(args), this.cache.walletsOfSigner(args)])
