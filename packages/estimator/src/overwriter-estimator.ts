@@ -1,6 +1,5 @@
 import { ethers } from 'ethers'
-import { isBigNumberish, Optionals } from '@0xsequence/utils'
-import { getDefaultConnectionInfo } from '@0xsequence/network'
+import { getDefaultConnectionInfo, isBigNumberish, Optionals } from '@0xsequence/utils'
 
 const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
 

@@ -1,10 +1,10 @@
 import { commons, universal } from '@0xsequence/core'
 import { migrator, defaults, version } from '@0xsequence/migration'
-import { NetworkConfig, getDefaultConnectionInfo } from '@0xsequence/network'
+import { NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
-import { encodeTypedDataDigest } from '@0xsequence/utils'
+import { encodeTypedDataDigest, getDefaultConnectionInfo } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 
