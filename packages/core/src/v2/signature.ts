@@ -366,7 +366,10 @@ export function encodeTree(
     const left = encodeTree(topology.left, parts, subdigests)
     const right = encodeTree(topology.right, parts, subdigests)
 
-    if (trim && left.weight.eq(0) && right.weight.eq(0)) {
+    const isLeftSigner = isSignerLeaf(topology.left)
+    const isRightSigner = isSignerLeaf(topology.right)
+
+    if (trim && left.weight.eq(0) && right.weight.eq(0) && !isLeftSigner && !isRightSigner) {
       return {
         // We don't need to include anything for this node
         // just the hash will be enough
@@ -375,7 +378,7 @@ export function encodeTree(
       }
     }
 
-    if (trim && right.weight.eq(0)) {
+    if (trim && right.weight.eq(0) && !isRightSigner) {
       return {
         // The right node doesn't have any weight
         // but we still need to include the left node encoded
@@ -387,7 +390,7 @@ export function encodeTree(
       }
     }
 
-    if (trim && left.weight.eq(0)) {
+    if (trim && left.weight.eq(0) && !isLeftSigner) {
       return {
         // The left node doesn't have any weight
         // we can just append its hash, but for the right node
