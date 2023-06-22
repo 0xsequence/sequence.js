@@ -1,5 +1,5 @@
-import { NetworkConfig, ChainIdLike, findNetworkConfig, getDefaultConnectionInfo } from '@0xsequence/network'
-import { jwtDecodeClaims } from '@0xsequence/utils'
+import { NetworkConfig, ChainIdLike, findNetworkConfig } from '@0xsequence/network'
+import { getDefaultConnectionInfo, jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
 import { tracker, trackers } from '@0xsequence/sessions'

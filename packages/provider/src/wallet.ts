@@ -16,10 +16,9 @@ import {
   updateNetworkConfig,
   ensureValidNetworks,
   sortNetworks,
-  findSupportedNetwork,
-  getDefaultConnectionInfo
+  findSupportedNetwork
 } from '@0xsequence/network'
-import { logger } from '@0xsequence/utils'
+import { getDefaultConnectionInfo, logger } from '@0xsequence/utils'
 import { Web3Provider, Web3Signer } from './provider'
 import {
   MuxMessageProvider,

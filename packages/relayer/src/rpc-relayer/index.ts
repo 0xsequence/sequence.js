@@ -2,8 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { logger } from '@0xsequence/utils'
-import { getDefaultConnectionInfo } from '@0xsequence/network'
+import { getDefaultConnectionInfo, logger } from '@0xsequence/utils'
 
 export { proto }
 

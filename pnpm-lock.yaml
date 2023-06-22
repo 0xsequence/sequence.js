@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -413,9 +413,6 @@ importers:
       '@0xsequence/core':
         specifier: workspace:*
         version: link:../core
-      '@0xsequence/network':
-        specifier: workspace:*
-        version: link:../network
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:../utils
@@ -587,9 +584,6 @@ importers:
       '@0xsequence/core':
         specifier: workspace:*
         version: link:../core
-      '@0xsequence/network':
-        specifier: workspace:*
-        version: link:../network
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:../utils
