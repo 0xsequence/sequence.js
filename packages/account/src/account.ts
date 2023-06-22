@@ -569,13 +569,19 @@ export class Account {
     const signed = await this.migrator.signNextMigration(this.address, status.version, wallet, nextConfig)
     if (!signed) return false
 
-    await this.tracker.saveMigration(this.address, signed, this.contexts)
-
-    const nextImageHash = this.coders.config.imageHashOf(nextConfig)
+    // Make sure the tracker has a copy of the config
+    // before attempting to save the migration
+    // otherwise if this second step fails the tracker could end up
+    // with a migration to an unknown config
+    await this.tracker.saveWalletConfig({ config: nextConfig })
+    const nextCoder = universal.coderFor(nextConfig.version).config
+    const nextImageHash = nextCoder.imageHashOf(nextConfig as any)
     const reverseConfig = await this.tracker.configOfImageHash({ imageHash: nextImageHash, noCache: true })
-    if (!reverseConfig || this.coders.config.imageHashOf(reverseConfig) !== nextImageHash) {
+    if (!reverseConfig || nextCoder.imageHashOf(reverseConfig as any) !== nextImageHash) {
       throw Error(`Reverse lookup failed for imageHash ${nextImageHash}`)
     }
+
+    await this.tracker.saveMigration(this.address, signed, this.contexts)
 
     return true
   }
