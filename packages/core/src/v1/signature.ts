@@ -226,6 +226,10 @@ export const SignatureCoder: base.SignatureCoder<
     return encodeSignature(data)
   },
 
+  trim: async (data: string): Promise<string> => {
+    return data
+  },
+
   supportsNoChainId: true,
 
   recover: (

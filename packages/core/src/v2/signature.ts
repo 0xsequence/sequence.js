@@ -1,7 +1,7 @@
 
 import { BigNumberish, ethers } from "ethers"
 import { isValidSignature, recoverSigner, tryRecoverSigner } from "../commons/signer"
-import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash } from "./config"
+import { hashNode, isNestedLeaf, isNode, isNodeLeaf, isSignerLeaf, isSubdigestLeaf, Leaf, WalletConfig, SignerLeaf, Topology, imageHash, NodeLeaf, decodeSignerLeaf, isEncodedSignerLeaf } from "./config"
 import * as base from '../commons/signature'
 import { hashSetImageHash } from "./chained"
 
@@ -663,7 +663,7 @@ export function encodeChain(main: ethers.BytesLike, suffix: ethers.BytesLike[]):
 }
 
 export function encodeSignature(
-  decoded: UnrecoveredChainedSignature | ChainedSignature | UnrecoveredSignature | Signature | ethers.BytesLike
+  decoded: UnrecoveredChainedSignature | ChainedSignature | UnrecoveredSignature | Signature | ethers.BytesLike,
 ): string {
   if (ethers.utils.isBytesLike(decoded)) return ethers.utils.hexlify(decoded)
 
@@ -678,7 +678,7 @@ export function encodeSignature(
 
   switch (decoded.type) {
     case SignatureType.Legacy:
-      if (body.threshold > 255) {
+      if (ethers.BigNumber.from(body.threshold).gt(255)) {
         throw new Error(`Legacy signature threshold is too large: ${body.threshold} (max 255)`)
       }
 
@@ -808,6 +808,139 @@ export function signaturesOfDecoded(utopology: UnrecoveredTopology): string[] {
   return []
 }
 
+export function subdigestsOfDecoded(utopology: UnrecoveredTopology): string[] {
+  if (isUnrecoveredNode(utopology)) {
+    return [...subdigestsOfDecoded(utopology.left), ...subdigestsOfDecoded(utopology.right)]
+  }
+
+  if (isUnrecoveredNestedLeaf(utopology)) {
+    return subdigestsOfDecoded(utopology.tree)
+  }
+
+  if (isSubdigestLeaf(utopology)) {
+    return [utopology.subdigest]
+  }
+
+  return []
+}
+
+export async function trimSignature(signature: string | UnrecoveredSignature): Promise<string> {
+  const decoded = typeof signature === 'string' ? decodeSignature(signature) : signature
+
+  if (isUnrecoveredChainedSignature(decoded)) {
+    // We need to trim every suffix AND the main signature
+    const trimmed = await Promise.all([
+      trimSignature({ ...decoded, suffix: undefined } as UnrecoveredSignature),
+      ...decoded.suffix.map((s) => trimSignature(s))
+    ])
+
+    return encodeChain(trimmed[0], trimmed.slice(1))
+  }
+
+  const { trimmed } = await trimUnrecoveredTree(decoded.decoded.tree)
+  return encodeSignature({ ...decoded, decoded: { ...decoded.decoded, tree: trimmed }})
+}
+
+export async function trimUnrecoveredTree(tree: UnrecoveredTopology, trimStaticDigest: boolean = true): Promise<{
+  weight: number,
+  trimmed: UnrecoveredTopology
+}> {
+  if (isUnrecoveredNode(tree)) {
+    const [left, right] = await Promise.all([
+      trimUnrecoveredTree(tree.left),
+      trimUnrecoveredTree(tree.right)
+    ])
+
+    if (left.weight === 0 && right.weight === 0) {
+      try {
+        // If both weights are 0 then it means we don't have any signatures yet
+        // because of that, we should be able to "recover" the tree with any subdigest
+        // and still get the valid node hash (there shouldn't be any signatures to verify)
+        const recovered = await recoverTopology(tree, ethers.constants.HashZero, undefined as any)
+      
+        return {
+          weight: 0,
+          trimmed: {
+            nodeHash: hashNode(recovered)
+          } as NodeLeaf
+        }
+      } catch {
+        // If something fails it's more likely because some signatures have sneaked in
+        // in that case we should keep this node
+      }
+    } else {
+      return {
+        weight: left.weight + right.weight,
+        trimmed: {
+          left: left.trimmed,
+          right: right.trimmed
+        } as UnrecoveredNode
+      }
+    }
+  }
+
+  if (isUnrecoveredNestedLeaf(tree)) {
+    const trimmed = await trimUnrecoveredTree(tree.tree)
+
+    if (trimmed.weight === 0) {
+      try {
+        // If the nested leaf is empty, we can recover it with any subdigest
+        // and still get the valid node hash (there shouldn't be any signatures to verify)
+        const recovered = await recoverTopology(tree, ethers.constants.HashZero, undefined as any)
+    
+        return {
+          weight: 0,
+          trimmed: {
+            nodeHash: hashNode(recovered)
+          } as NodeLeaf
+        }
+      } catch {
+        // If something fails it's more likely because some signatures have sneaked in
+        // in that case we should keep this node
+      }
+    }
+
+    return {
+      weight: trimmed.weight,
+      trimmed: {
+        weight: tree.weight,
+        threshold: tree.threshold,
+        tree: trimmed.trimmed
+      } as UnrecoveredNestedLeaf
+    }
+  }
+
+  // Hash nodes can be encoded as signer leaves if they have a weight below
+  // 256, most likely the are signer leaves wrongly encoded
+  if (isNodeLeaf(tree) && isEncodedSignerLeaf(tree.nodeHash)) {
+    return {
+      weight: 0,
+      trimmed: {
+        ...decodeSignerLeaf(tree.nodeHash),
+      } as SignerLeaf
+    }
+  }
+
+  if (isUnrecoveredSignatureLeaf(tree) || (isSignerLeaf(tree) && tree.signature !== undefined)) {
+    return {
+      weight: ethers.BigNumber.from(tree.weight).toNumber(),
+      trimmed: tree
+    }
+  }
+
+  if (!trimStaticDigest && isSubdigestLeaf(tree)) {
+    return {
+      weight: +Infinity,
+      trimmed: tree
+    }
+  }
+
+  return {
+    weight: 0,
+    trimmed: tree
+  }
+}
+
 export const SignatureCoder: base.SignatureCoder<
   WalletConfig,
   Signature,
@@ -819,6 +952,10 @@ export const SignatureCoder: base.SignatureCoder<
 
   encode: (data: Signature | UnrecoveredSignature): string => {
     return encodeSignature(data)
+  },
+
+  trim: (data: string): Promise<string> => {
+    return trimSignature(data)
   },
 
   supportsNoChainId: true,

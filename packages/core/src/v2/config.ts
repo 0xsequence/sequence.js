@@ -136,12 +136,40 @@ export function isTopology(topology: any): topology is Topology {
   return isNode(topology) || isLeaf(topology)
 }
 
+export function encodeSignerLeaf(leaf: SignerLeaf): string {
+  return ethers.utils.solidityPack(
+    ['uint96', 'address'],
+    [leaf.weight, leaf.address]
+  )
+}
+
+export function decodeSignerLeaf(encoded: string): SignerLeaf {
+  const bytes = ethers.utils.arrayify(encoded);
+
+  if (bytes.length !== 32) {
+      throw new Error('Invalid encoded string length');
+  }
+
+  const weight = ethers.BigNumber.from(bytes.slice(0, 12));
+  const address = ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(12)));
+
+  return { weight, address }
+}
+
+export function isEncodedSignerLeaf(encoded: string): boolean {
+  const bytes = ethers.utils.arrayify(encoded)
+
+  if (bytes.length !== 32) {
+    return false
+  }
+
+  const prefix = bytes.slice(0, 11)
+  return prefix.every((byte) => byte === 0)
+}
+
 export function hashNode(node: Node | Leaf): string {
   if (isSignerLeaf(node)) {
-    return ethers.utils.solidityPack(
-      ['uint96', 'address'],
-      [node.weight, node.address]
-    )
+    return encodeSignerLeaf(node)
   }
 
   if (isSubdigestLeaf(node)) {

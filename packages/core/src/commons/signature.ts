@@ -33,6 +33,8 @@ export interface SignatureCoder<
   decode: (data: string) => Z,
   encode: (data: T | Z | ethers.BytesLike) => string,
 
+  trim: (data: string) => Promise<string>,
+
   recover: (
     data: Z,
     payload: SignedPayload,
