@@ -387,16 +387,16 @@ export class Account {
   decorateSignature<T extends ethers.BytesLike>(
     signature: T,
     status: Partial<Pick<AccountStatus, 'presignedConfigurations'>>
-  ): T | string {
+  ): Promise<T | string> {
     if (!status.presignedConfigurations || status.presignedConfigurations.length === 0) {
-      return signature
+      return new Promise(resolve => resolve(signature))
     }
 
     const coder = this.coders.signature
 
     const chain = status.presignedConfigurations.map(c => c.signature)
     const chainedSignature = coder.chainSignatures(signature, chain)
-    return coder.encode(chainedSignature)
+    return coder.trim(chainedSignature)
   }
 
   async publishWitness(): Promise<void> {
@@ -553,7 +553,7 @@ export class Account {
 
     return {
       ...signed,
-      signature: this.decorateSignature(signed.signature, status)
+      signature: await this.decorateSignature(signed.signature, status)
     }
   }
 
