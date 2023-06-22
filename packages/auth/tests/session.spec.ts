@@ -258,7 +258,7 @@ describe('Wallet integration', function () {
     const newSession = await Session.open({
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
-      addSigners: [{ address: newSigner.address, weight: 1 }],
+      addSigners: [{ address: referenceSigner.address, weight: 1, }, { address: newSigner.address, weight: 1 }],
       threshold: 1,
       metadata: {
         name: 'Test'
@@ -909,6 +909,7 @@ describe('Wallet integration', function () {
     it('Should retry 5 times retrieving the JWT token', async () => {
       delayMs = 1000
       const referenceSigner = randomWallet('Should retry 5 times retrieving the JWT token')
+      orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
         settings,
@@ -1134,6 +1135,7 @@ describe('Wallet integration', function () {
 
     it('Should neither re-authenticate nor retry if request succeeds', async () => {
       const referenceSigner = new CountingSigner(randomWallet('Should neither re-authenticate nor retry if request succeeds'))
+      orchestrator.setSigners([referenceSigner])
 
       const session = await Session.open({
         settings,
