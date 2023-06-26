@@ -13,7 +13,7 @@ export type WalletSignRequestMetadata = {
 
   config: Config,
 
-  signatureParts?: Map<string, commons.signature.SignaturePart>,
+  parts?: Map<string, commons.signature.SignaturePart>,
 
   // TODO: We can add a "percentage" field to the orchestrator to indicate
   //       how close are we to the threshold. This can be used to display
