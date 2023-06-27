@@ -350,7 +350,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       )
 
       // Skip if we don't have ANY signatures (it can never reach the threshold)
-      if (Object.keys(signatures).length === 0) continue
+      if (signatures.size === 0) continue
 
       // Encode the full signature (to see if it has enough weight)
       const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, signatures, [], 0)
