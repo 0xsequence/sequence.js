@@ -12,53 +12,51 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
   ) {}
 
   async loadPresignedConfiguration(args: { wallet: string; fromImageHash: string; longestPath?: boolean | undefined }): Promise<PresignedConfigLink[]> {
-    const configs = new Map<string, Promise<commons.config.Config | undefined>>()
-    const configOf = (imageHash: string): Promise<commons.config.Config | undefined> => {
-      if (!configs.has(imageHash)) {
-        configs.set(imageHash, this.configOfImageHash({ imageHash }))
-      }
-      return configs.get(imageHash)!
-    }
-
     // We need to check both, and return the one with the highest checkpoint
     // eventually we could try to combine them, but for now we'll just return
     // the one with the highest checkpoint
     const results = [this.tracker.loadPresignedConfiguration(args), this.cache.loadPresignedConfiguration(args)]
-    const checkpoints = await Promise.all(results.map(async result => {
-      const r = await result
-      const last = r[r.length - 1]
-      if (!last) return undefined
 
-      // TODO: This will fire a lot of requests, optimize it
-      const config = await configOf(last.nextImageHash)
-      if (!config) return undefined
+    let best: PresignedConfigLink[]
 
-      return { checkpoint: universal.genericCoderFor(config.version).config.checkpointOf(config), result: r }
-    }))
+    // If both results end with the same image hash, we can just return the longest/shortest one
+    const [result1, result2] = await Promise.all(results)
+    if (
+      result1.length > 0 &&
+      result2.length > 0 &&
+      result1[result1.length - 1].nextImageHash === result2[result2.length - 1].nextImageHash
+    ) {
+      best = (
+        args.longestPath === true ?
+        result1.length > result2.length ? result1 : result2 :
+        result1.length < result2.length ? result1 : result2
+      )
+    } else {
+      // Otherwise we need to check the checkpoints
+      // this requires us to fetch the config for each image hash
+      const checkpoints = await Promise.all(results.map(async result => {
+        const r = await result
+        const last = r[r.length - 1]
+        if (!last) return undefined
 
-    const best = checkpoints.reduce((acc, val) => {
-      if (!val) return acc
-      if (!acc) return val
-      if (val.checkpoint.gt(acc.checkpoint)) return val
-      return acc
-    })
+        // TODO: This will fire a lot of requests, optimize it
+        const config = await this.configOfImageHash({ imageHash: last.nextImageHash })
+        if (!config) return undefined
+
+        return { checkpoint: universal.genericCoderFor(config.version).config.checkpointOf(config), result: r }
+      }))
+
+      best = checkpoints.reduce((acc, val) => {
+        if (!val) return acc
+        if (!acc) return val
+        if (val.checkpoint.gt(acc.checkpoint)) return val
+        return acc
+      })?.result ?? []
+    }
 
     if (!best) return []
 
-    ;(async () => {
-      for (const result of best.result) {
-        const nextConfig = await configOf(result.nextImageHash)
-        if (nextConfig) {
-          this.cache.savePresignedConfiguration({
-            wallet: args.wallet,
-            nextConfig,
-            signature: result.signature
-          })
-        }
-      }
-    })()
-
-    return best.result
+    return best
   }
 
   async savePresignedConfiguration(args: PresignedConfig): Promise<void> {
