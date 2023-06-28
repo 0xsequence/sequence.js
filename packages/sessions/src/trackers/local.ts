@@ -128,25 +128,36 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return
   }
 
+  private configOfImageHashCache = {} as { [key: string]: commons.config.Config }
+
   configOfImageHash = async (args: {
     imageHash: string
   }): Promise<commons.config.Config | undefined> => {
     const { imageHash } = args
 
+    if (this.configOfImageHashCache[args.imageHash]) {
+      return this.configOfImageHashCache[args.imageHash]
+    }
+
     const config = await this.store.loadConfig(imageHash)
-    if (!config) return undefined
+    if (!config) {
+      return undefined
+    }
 
     if (config.version === 1 || (config.version === 2 && !isPlainV2Config(config))) {
+      this.configOfImageHashCache[args.imageHash] = config
       return config
     }
 
     if (isPlainV2Config(config)) {
-      return {
+      const fullConfig = {
         version: 2,
         threshold: ethers.BigNumber.from(config.threshold),
         checkpoint: ethers.BigNumber.from(config.checkpoint),
         tree: await this.loadTopology(config.tree)
       } as v2.config.WalletConfig
+      this.configOfImageHashCache[args.imageHash] = fullConfig
+      return fullConfig
     }
 
     throw new Error(`Unknown config type: ${config}`)
@@ -193,11 +204,23 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     await this.store.savePayloadOfSubdigest(subdigest, payload)
   }
 
+  private payloadOfSubdigestCache = {} as { [key: string]: commons.signature.SignedPayload }
+
   payloadOfSubdigest = async (args: {
     subdigest: string
   }): Promise<commons.signature.SignedPayload | undefined> => {
+    if (this.payloadOfSubdigestCache[args.subdigest]) {
+      return this.payloadOfSubdigestCache[args.subdigest]
+    }
+
     const { subdigest } = args
-    return this.store.loadPayloadOfSubdigest(subdigest)
+    const res = await this.store.loadPayloadOfSubdigest(subdigest)
+
+    if (res) {
+      this.payloadOfSubdigestCache[subdigest] = res
+    }
+
+    return res
   }
 
   savePresignedConfiguration = async (args: PresignedConfig): Promise<void> => {
@@ -264,14 +287,34 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       signature: string,
     } | undefined
 
-    for (const { payload, nextImageHash } of nextImageHashes) {
-      // Get config of next imageHash
+    const nextConfigsAndCheckpoints = await Promise.all(nextImageHashes.map(async ({ nextImageHash, payload }) => {
       const nextConfig = await this.configOfImageHash({ imageHash: nextImageHash })
-      if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) continue
+      if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) return undefined
       const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
+      return { nextConfig, nextCheckpoint, nextImageHash, payload }
+    }))
 
-      // Only consider candidates later than the starting checkpoint
-      if (nextCheckpoint.lte(fromConfig.checkpoint)) continue
+    const sortedNextConfigsAndCheckpoints = nextConfigsAndCheckpoints
+      .filter((c) => c !== undefined)
+      .filter((c) => c!.nextCheckpoint.gt(fromConfig.checkpoint))
+      .sort((a, b) => (
+        // If we are looking for the longest path, sort by ascending checkpoint
+        // because we want to find the smalles jump, and we should start with the
+        // closest one. If we are not looking for the longest path, sort by
+        // descending checkpoint, because we want to find the largest jump.
+        //
+        // We don't have a guarantee that all "next configs" will be valid
+        // so worst case scenario we will need to try all of them.
+        // But we can try to optimize for the most common case.
+        a!.nextCheckpoint.gt(b!.nextCheckpoint) ? (
+          longestPath ? 1 : -1
+        ) : (
+          longestPath ? -1 : 1
+        )
+      ))
+
+    for (const entry of sortedNextConfigsAndCheckpoints) {
+      const { nextConfig, nextCheckpoint, nextImageHash, payload } = entry!
 
       if (bestCandidate) {
         const bestCheckpoint = bestCandidate.checkpoint
@@ -306,7 +349,10 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         ).filter((signature): signature is [string, commons.signature.SignaturePart] => Boolean(signature[1]))
       )
 
-      // Encode the full signature
+      // Skip if we don't have ANY signatures (it can never reach the threshold)
+      if (signatures.size === 0) continue
+
+      // Encode the full signature (to see if it has enough weight)
       const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, signatures, [], 0)
       if (encoded.weight.lt(fromConfig.threshold)) continue
 
@@ -317,8 +363,10 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         signature: encoded.encoded
       }
     }
-
-    if (!bestCandidate) return []
+    
+    if (!bestCandidate) {
+      return []
+    }
 
     // Get the next step
     const nextStep = await this.loadPresignedConfiguration({
