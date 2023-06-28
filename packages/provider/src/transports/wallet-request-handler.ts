@@ -353,7 +353,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultNetworkId)
           } else {
-            const promptResultForDeployment = request.method === 'sequence_sign' || await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_sign', chainId)
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, this.connectOptions)
             }
@@ -394,7 +394,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultNetworkId)
           } else {
-            const promptResultForDeployment = request.method === 'sequence_signTypedData_v4' || await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_signTypedData_v4', chainId)
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
             }
@@ -803,6 +803,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   private async handleConfirmWalletDeployPrompt(
     prompter: WalletUserPrompter,
     account: Account,
+    sequenceVerified: boolean,
     chainId?: number
   ): Promise<boolean> {
     // check if wallet is deployed and up to date, if not, prompt user to deploy
@@ -810,22 +811,30 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (!chainId) {
       return true
     }
+
+    const skipsDeploy = (status: AccountStatus) => {
+      return status.canOnchainValidate || (status.original.version === 2 && sequenceVerified)
+    }
+
     const status = await account.status(chainId)
-    if (status.canOnchainValidate) {
+    if (skipsDeploy(status)) {
       return true
     }
+
     const promptResult = await prompter.promptConfirmWalletDeploy(chainId, this.connectOptions)
+
     // if client returned true, check again to make sure wallet is deployed and up to date
     if (promptResult) {
       const status2 = await account.status(chainId)
-      const isPromptResultCorrect = isWalletUpToDate(status2)
-      if (!isPromptResultCorrect) {
+
+      if (skipsDeploy(status2)) {
+        return true
+      } else {
         logger.error('WalletRequestHandler: result for promptConfirmWalletDeploy is not correct')
         return false
-      } else {
-        return true
       }
     }
+
     return false
   }
 }
