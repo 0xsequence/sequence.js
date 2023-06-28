@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { prefixEIP191Message } from '../src/utils'
 
 // Ethereum personal sign: Hello, World!
 export const message1 = new Uint8Array([
@@ -6,10 +7,11 @@ export const message1 = new Uint8Array([
   72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33
 ])
 
-
-export const dclLogin = ethers.utils.toUtf8Bytes(`Decentraland Login
+const dlcText = `Decentraland Login
 Ephemeral address: 0xe1bCF3CAc83534a055f7254C1FD88B21159fCc67
-Expiration: 2022-10-27T16:03:29.191Z`)
+Expiration: 2022-10-27T16:03:29.191Z`
+
+export const dclLogin = ethers.utils.toUtf8Bytes(dlcText)
 
 // Ethereum personal sign 0x v3 order
 export const zeroExV3Order = new Uint8Array([
@@ -47,3 +49,43 @@ export const zeroExV3Order = new Uint8Array([
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 ])
+
+// Messages for testing remove-iep191prefix
+
+export const removeIep191Prefix_test1_raw = `1915 Robert Frost
+The Road Not Taken
+  
+Two roads diverged in a yellow wood,
+And sorry I could not travel both
+And be one traveler, long I stood
+And looked down one as far as I could
+To where it bent in the undergrowth
+  
+Then took the other, as just as fair,
+And having perhaps the better claim,
+Because it was grassy and wanted wear
+Though as for that the passing there
+Had worn them really about the same,
+  
+And both that morning equally lay
+In leaves no step had trodden black.
+Oh, I kept the first for another day!
+Yet knowing how way leads on to way,
+I doubted if I should ever come back.
+  
+I shall be telling this with a sigh
+Somewhere ages and ages hence:
+Two roads diverged in a wood, and I—
+I took the one less traveled by,
+And that has made all the difference.
+  
+\u2601 \u2600 \u2602`
+export const removeIep191Prefix_test2_raw = dlcText
+export const removeIep191Prefix_test3_raw = '1915 Robe' // 9 chars
+export const removeIep191Prefix_test4_raw =
+  '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789' // 99 chars
+
+export const removeIep191Prefix_test1_prefixed = prefixEIP191Message(removeIep191Prefix_test1_raw)
+export const removeIep191Prefix_test2_prefixed = prefixEIP191Message(dlcText)
+export const removeIep191Prefix_test3_prefixed = prefixEIP191Message(removeIep191Prefix_test3_raw)
+export const removeIep191Prefix_test4_prefixed = prefixEIP191Message(removeIep191Prefix_test4_raw)
