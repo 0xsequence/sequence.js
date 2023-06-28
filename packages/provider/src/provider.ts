@@ -64,14 +64,9 @@ export class Web3Provider extends providers.Web3Provider implements JsonRpcHandl
   }
 
   async getChainId(): Promise<number> {
-    // If the dapp is asking for a particular default chain, then we first need to see
-    // if the wallet supports the network, for that we need to query the wallet networks
-    // and see if it contains the default chain. If it does, then we can return the default.
-    if (this._defaultChainId) {
-      const networks = await this.getNetworks()
-      if (networks.find((n) => n.chainId === this._defaultChainId)) return this._defaultChainId
-      throw new Error(`Default chainId ${this._defaultChainId} not supported by wallet`)
-    }
+    // If we already have a default chainId, then we can just return it
+    const defaultChainId = this._defaultChainId
+    if (defaultChainId) return defaultChainId
 
     // If there is no default chain, then we can just return the chainId of the provider
     return this.send('eth_chainId', [])
