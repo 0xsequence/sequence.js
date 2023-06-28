@@ -84,8 +84,10 @@ export const removeIep191Prefix_test2_raw = dlcText
 export const removeIep191Prefix_test3_raw = '1915 Robe' // 9 chars
 export const removeIep191Prefix_test4_raw =
   '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789' // 99 chars
+export const removeIep191Prefix_test5_raw = 'Robe 1915'
 
 export const removeIep191Prefix_test1_prefixed = prefixEIP191Message(removeIep191Prefix_test1_raw)
 export const removeIep191Prefix_test2_prefixed = prefixEIP191Message(dlcText)
 export const removeIep191Prefix_test3_prefixed = prefixEIP191Message(removeIep191Prefix_test3_raw)
 export const removeIep191Prefix_test4_prefixed = prefixEIP191Message(removeIep191Prefix_test4_raw)
+export const removeIep191Prefix_test5_prefixed = prefixEIP191Message(removeIep191Prefix_test5_raw)

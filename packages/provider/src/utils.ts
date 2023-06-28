@@ -52,7 +52,7 @@ export const removeEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
     prefixAsNumber = Number(ethers.utils.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   }
 
-  if (prefixAsNumber > ethereumSignedMessagePartSlicedArray.length) {
+  if (prefixAsNumber > ethereumSignedMessagePartSlicedArray.length || !Number.isInteger(prefixAsNumber)) {
     prefixCharLenght = maxPrefixCharLength - 1
   } else {
     prefixCharLenght = maxPrefixCharLength

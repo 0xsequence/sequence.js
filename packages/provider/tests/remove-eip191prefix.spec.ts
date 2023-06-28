@@ -9,7 +9,9 @@ import {
   removeIep191Prefix_test3_prefixed,
   removeIep191Prefix_test3_raw,
   removeIep191Prefix_test4_prefixed,
-  removeIep191Prefix_test4_raw
+  removeIep191Prefix_test4_raw,
+  removeIep191Prefix_test5_prefixed,
+  removeIep191Prefix_test5_raw
 } from './messages'
 import { removeEIP191Prefix } from '../src/utils'
 import { ethers } from 'ethers'
@@ -27,5 +29,6 @@ describe('removing eip191prefix', () => {
   it('should remove prefix for case where max prefix char as number is bigger than the length of the message', () => {
     expect(ethers.utils.toUtf8String(removeEIP191Prefix(removeIep191Prefix_test3_prefixed))).equal(removeIep191Prefix_test3_raw)
     expect(ethers.utils.toUtf8String(removeEIP191Prefix(removeIep191Prefix_test4_prefixed))).equal(removeIep191Prefix_test4_raw)
+    expect(ethers.utils.toUtf8String(removeEIP191Prefix(removeIep191Prefix_test5_prefixed))).equal(removeIep191Prefix_test5_raw)
   })
 })
