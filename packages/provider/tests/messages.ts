@@ -50,9 +50,9 @@ export const zeroExV3Order = new Uint8Array([
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 ])
 
-// Messages for testing remove-iep191prefix
+// Messages for testing trim-eip191prefix
 
-export const removeIep191Prefix_test1_raw = `1915 Robert Frost
+export const trimEIP191Prefix_test1_raw = `1915 Robert Frost
 The Road Not Taken
   
 Two roads diverged in a yellow wood,
@@ -80,14 +80,14 @@ I took the one less traveled by,
 And that has made all the difference.
   
 \u2601 \u2600 \u2602`
-export const removeIep191Prefix_test2_raw = dclText
-export const removeIep191Prefix_test3_raw = '1915 Robe' // 9 chars
-export const removeIep191Prefix_test4_raw =
+export const trimEIP191Prefix_test2_raw = dclText
+export const trimEIP191Prefix_test3_raw = '1915 Robe' // 9 chars
+export const trimEIP191Prefix_test4_raw =
   '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789' // 99 chars
-export const removeIep191Prefix_test5_raw = 'Robe 1915'
+export const trimEIP191Prefix_test5_raw = 'Robe 1915'
 
-export const removeIep191Prefix_test1_prefixed = prefixEIP191Message(removeIep191Prefix_test1_raw)
-export const removeIep191Prefix_test2_prefixed = prefixEIP191Message(dclText)
-export const removeIep191Prefix_test3_prefixed = prefixEIP191Message(removeIep191Prefix_test3_raw)
-export const removeIep191Prefix_test4_prefixed = prefixEIP191Message(removeIep191Prefix_test4_raw)
-export const removeIep191Prefix_test5_prefixed = prefixEIP191Message(removeIep191Prefix_test5_raw)
+export const trimEIP191Prefix_test1_prefixed = prefixEIP191Message(trimEIP191Prefix_test1_raw)
+export const trimEIP191Prefix_test2_prefixed = prefixEIP191Message(dclText)
+export const trimEIP191Prefix_test3_prefixed = prefixEIP191Message(trimEIP191Prefix_test3_raw)
+export const trimEIP191Prefix_test4_prefixed = prefixEIP191Message(trimEIP191Prefix_test4_raw)
+export const trimEIP191Prefix_test5_prefixed = prefixEIP191Message(trimEIP191Prefix_test5_raw)

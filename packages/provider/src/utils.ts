@@ -23,7 +23,7 @@ export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   }
 }
 
-export const removeEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
+export const trimEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
   // If the message is not prefixed, we return the message as is.
   if (JSON.stringify(prefixedMessage.slice(0, eip191prefix.length)) !== JSON.stringify(eip191prefix)) {
     return prefixedMessage

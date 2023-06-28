@@ -375,7 +375,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             try {
               typedData = JSON.parse(typedDataObject)
             } catch (e) {
-              console.warn('error parsing typedData', e)
+              console.warn('walletRequestHandler: error parsing typedData', e)
             }
           } else {
             typedData = typedDataObject
