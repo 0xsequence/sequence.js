@@ -30,8 +30,7 @@ const SIGNER_READY_TIMEOUT = 10000
 
 export interface WalletSignInOptions {
   connect?: boolean
-  networks?: NetworkConfig[]
-  defaultNetworkId?: string | number
+  defaultNetworkId?: number
 }
 
 export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, ProviderMessageRequestHandler {
@@ -51,19 +50,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   onConnectOptionsChange: ((connectOptions: ConnectOptions | undefined) => void) | undefined = undefined
 
-  public defaultNetworkId: number
-
   constructor(
     account: Account | null | undefined,
     prompter: WalletUserPrompter | null,
-    networks: NetworkConfig[],
-    defaultNetworkId?: string | number
+    networks: NetworkConfig[]
   ) {
     this.account = account
     this.prompter = prompter
     this.networks = networks
+  }
 
-    this.defaultNetworkId = defaultNetworkId ? this.findNetworkID(defaultNetworkId) : networks[0].chainId
+  defaultNetworkId(): number {
+    return this.prompter?.getDefaultNetwork() ?? this.networks[0].chainId
   }
 
   private findNetworkID(network: string | number) {
@@ -82,14 +80,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   async signIn(account: Account | null, options: WalletSignInOptions = {}) {
     this.setAccount(account)
 
-    const { connect, networks, defaultNetworkId } = options
-
-    if (networks !== undefined && networks.length > 0) {
-      const networkId = defaultNetworkId || this.defaultNetworkId
-      if (networkId) {
-        this.setDefaultNetwork(networkId)
-      }
-    }
+    const { connect, defaultNetworkId } = options
 
     // Optionally, connect the dapp and wallet. In case connectOptions are provided, we will perform
     // necessary auth request, and then notify the dapp of the 'connect' details.
@@ -116,6 +107,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       if (!connectOptions || connectOptions.keepWalletOpened !== true) {
         this.notifyClose()
       }
+    }
+  
+    if (defaultNetworkId && this.defaultNetworkId() !== defaultNetworkId) {
+      await this.prompter?.promptChangeNetwork(defaultNetworkId)
     }
   }
 
@@ -155,7 +150,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    let chainId: number
+    let chainId: number | string
     switch (typeof options?.networkId) {
       case 'string':
         // First see if it matches the name of a network
@@ -171,7 +166,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         chainId = options.networkId
         break
       default:
-        chainId = this.defaultNetworkId
+        chainId = this.prompter?.getDefaultNetwork() ?? 1
         break
     }
 
@@ -280,7 +275,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       if (!account) throw new Error('WalletRequestHandler: wallet account is not configured')
 
       // fetch the provider for the specific chain, or undefined will select defaultChain
-      const provider = this.account?.provider(chainId ?? this.defaultNetworkId)
+      const provider = this.account?.provider(chainId ?? this.defaultNetworkId())
       if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
       const jsonRpcProvider = provider instanceof ethers.providers.JsonRpcProvider ? provider : undefined
 
@@ -351,7 +346,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultNetworkId)
+            sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultNetworkId())
           } else {
             const promptResultForDeployment = request.method === 'sequence_sign' || await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
             if (promptResultForDeployment) {
@@ -392,7 +387,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultNetworkId)
+            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultNetworkId())
           } else {
             const promptResultForDeployment = request.method === 'sequence_signTypedData_v4' || await this.handleConfirmWalletDeployPrompt(this.prompter, account, chainId)
             if (promptResultForDeployment) {
@@ -426,7 +421,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           let txnHash = ''
           if (this.prompter === null) {
             // prompter is null, so we'll send from here
-            const txnResponse = await account.sendTransaction(transactionParams, chainId ?? this.defaultNetworkId)
+            const txnResponse = await account.sendTransaction(transactionParams, chainId ?? this.defaultNetworkId())
             txnHash = txnResponse.hash
           } else {
             // prompt user to provide the response
@@ -457,7 +452,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             //
             // TODO: verify serializing / transporting the SignedTransaction object works as expected, most likely however
             // we will want to resolveProperties the big number values to hex strings
-            response.result = await account.signTransactions(transaction, chainId ?? this.defaultNetworkId)
+            response.result = await account.signTransactions(transaction, chainId ?? this.defaultNetworkId())
           } else {
             response.result = await this.prompter.promptSignTransaction(transaction, chainId, this.connectOptions)
           }
@@ -546,7 +541,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           const chainId = ethers.BigNumber.from(switchParams.chainId)
 
-          this.setDefaultNetwork(chainId.toString())
+          this.setDefaultNetwork(chainId.toNumber())
 
           response.result = null // success
           break
@@ -704,9 +699,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.onConnectOptionsChange?.(options)
   }
 
-  setDefaultNetwork(chainId: string | number): number {
-    this.defaultNetworkId = this.findNetworkID(chainId)
-    return this.defaultNetworkId
+  async setDefaultNetwork(chainId: number): Promise<number> {
+    await this.prompter?.promptChangeNetwork(chainId)
+    return this.defaultNetworkId()
   }
 
   async getNetworks(jsonRpcResponse?: boolean): Promise<NetworkConfig[]> {
@@ -754,7 +749,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const n = networks || (await this.getNetworks(true))
     this.events.emit('networks', n)
     if (n.length > 0) {
-      const defaultNetwork = n.find(network => network.chainId === this.defaultNetworkId)
+      const defaultNetwork = n.find(network => network.chainId === this.defaultNetworkId())
       if (defaultNetwork) {
         this.events.emit('chainChanged', ethers.utils.hexlify(defaultNetwork.chainId))
       }
@@ -831,6 +826,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 }
 
 export interface WalletUserPrompter {
+  getDefaultNetwork(): number
+
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignInConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
 
@@ -838,6 +835,8 @@ export interface WalletUserPrompter {
   promptSignTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
+
+  promptChangeNetwork(chainId: number): Promise<boolean>
 }
 
 interface LegacyWalletState {
