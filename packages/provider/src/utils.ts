@@ -37,7 +37,7 @@ export const removeEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
   // and we need to find the prefix that will match this.
   // Here first we take the max prefix char length, and check if as a number it is bigger
   // than the length of the message (since prefix is added to represent length of original message),
-  // if it is we we remove 1 from char length, if not we keep the max prefix char length.
+  // if it is we remove 1 from char length, if not we keep the max prefix char length.
   // As an example for the case where , if the message is 123456789, the expected prefix char is 9, with starting value 9123456789
   // the char length of the total message with the prefix is 10, so the max prefix char length we start is 2 from [1,0], and as a number 10, it is longer
   // than the length of the message after removing prefix (10 - 2 = 8), so we slice 1 char less, which is 9, and we get the correct prefix.
