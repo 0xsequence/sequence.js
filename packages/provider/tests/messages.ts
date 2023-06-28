@@ -7,11 +7,11 @@ export const message1 = new Uint8Array([
   72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33
 ])
 
-const dlcText = `Decentraland Login
+const dclText = `Decentraland Login
 Ephemeral address: 0xe1bCF3CAc83534a055f7254C1FD88B21159fCc67
 Expiration: 2022-10-27T16:03:29.191Z`
 
-export const dclLogin = ethers.utils.toUtf8Bytes(dlcText)
+export const dclLogin = ethers.utils.toUtf8Bytes(dclText)
 
 // Ethereum personal sign 0x v3 order
 export const zeroExV3Order = new Uint8Array([
@@ -80,14 +80,14 @@ I took the one less traveled by,
 And that has made all the difference.
   
 \u2601 \u2600 \u2602`
-export const removeIep191Prefix_test2_raw = dlcText
+export const removeIep191Prefix_test2_raw = dclText
 export const removeIep191Prefix_test3_raw = '1915 Robe' // 9 chars
 export const removeIep191Prefix_test4_raw =
   '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789' // 99 chars
 export const removeIep191Prefix_test5_raw = 'Robe 1915'
 
 export const removeIep191Prefix_test1_prefixed = prefixEIP191Message(removeIep191Prefix_test1_raw)
-export const removeIep191Prefix_test2_prefixed = prefixEIP191Message(dlcText)
+export const removeIep191Prefix_test2_prefixed = prefixEIP191Message(dclText)
 export const removeIep191Prefix_test3_prefixed = prefixEIP191Message(removeIep191Prefix_test3_raw)
 export const removeIep191Prefix_test4_prefixed = prefixEIP191Message(removeIep191Prefix_test4_raw)
 export const removeIep191Prefix_test5_prefixed = prefixEIP191Message(removeIep191Prefix_test5_raw)
