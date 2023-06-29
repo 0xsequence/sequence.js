@@ -53,6 +53,13 @@ export type AccountOptions = {
   networks: NetworkConfig[]
 }
 
+export interface PreparedTransactions {
+  transactions: commons.transaction.SimulatedTransaction[]
+  flatDecorated: commons.transaction.Transaction[]
+  feeOptions: FeeOption[]
+  feeQuote?: FeeQuote
+}
+
 class Chain0Reader implements commons.reader.Reader {
   async isDeployed(_wallet: string): Promise<boolean> {
     return false
@@ -463,7 +470,7 @@ export class Account {
 
     // safety check, tracker should have a reverse lookup for the imageHash
     // outside of the local cache
-    const reverseConfig = await this.tracker.configOfImageHash({ 
+    const reverseConfig = await this.tracker.configOfImageHash({
       imageHash: nextImageHash,
       noCache: true
     })
@@ -701,12 +708,7 @@ export class Account {
     txs: commons.transaction.Transactionish
     chainId: ethers.BigNumberish
     stubSignatureOverrides: Map<string, string>
-  }): Promise<{
-    transactions: commons.transaction.SimulatedTransaction[]
-    flatDecorated: commons.transaction.Transaction[]
-    options: FeeOption[]
-    quote?: FeeQuote
-  }> {
+  }): Promise<PreparedTransactions> {
     const status = await this.status(args.chainId)
 
     const transactions = await this.fillGasLimits(args.txs, args.chainId, status)
@@ -716,8 +718,8 @@ export class Account {
     return {
       transactions,
       flatDecorated,
-      options: gasRefundQuote.options,
-      quote: gasRefundQuote.quote
+      feeOptions: gasRefundQuote.options,
+      feeQuote: gasRefundQuote.quote
     }
   }
 
