@@ -349,10 +349,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultChainId(), sequenceVerified ? 'eip6492' : 'ignore')
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, sequenceVerified, chainId)
-            if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, sequenceVerified, this.connectOptions)
-            }
+            sig = await this.prompter.promptSignMessage({
+              chainId: chainId,
+              message: prefixedMessage,
+              eip6492: sequenceVerified
+            }, this.connectOptions)
           }
 
           if (sig && sig.length > 0) {
@@ -393,10 +394,11 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultChainId(), sequenceVerified ? 'eip6492' : 'ignore')
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, sequenceVerified, chainId)
-            if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, sequenceVerified, this.connectOptions)
-            }
+            sig = await this.prompter.promptSignMessage({
+              chainId: chainId,
+              typedData: typedData,
+              eip6492: sequenceVerified
+            }, this.connectOptions)
           }
 
           if (sig && sig.length > 0) {
@@ -844,7 +846,7 @@ export interface WalletUserPrompter {
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignInConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
 
-  promptSignMessage(message: MessageToSign, sequenceVerified: boolean, options?: ConnectOptions): Promise<string>
+  promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
   promptSignTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
