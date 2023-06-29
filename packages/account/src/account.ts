@@ -796,10 +796,11 @@ export class Account {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId: ethers.BigNumberish
+    chainId: ethers.BigNumberish,
+    cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
     const digest = encodeTypedDataDigest({ domain, types, message })
-    return this.signDigest(digest, chainId)
+    return this.signDigest(digest, chainId, true, cantValidateBehavior)
   }
 
   async getAllSigners(): Promise<

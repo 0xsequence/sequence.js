@@ -344,13 +344,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
+          const sequenceVerified = request.method === 'sequence_sign'
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultChainId())
+            sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultChainId(), sequenceVerified ? 'eip6492' : 'ignore')
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_sign', chainId)
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, sequenceVerified, chainId)
             if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, this.connectOptions)
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, sequenceVerified, this.connectOptions)
             }
           }
 
@@ -387,13 +388,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           let sig = ''
 
+          const sequenceVerified = request.method === 'sequence_signTypedData_v4'
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultChainId())
+            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultChainId(), sequenceVerified ? 'eip6492' : 'ignore')
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_signTypedData_v4', chainId)
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, sequenceVerified, chainId)
             if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
+              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, sequenceVerified, this.connectOptions)
             }
           }
 
@@ -842,7 +844,7 @@ export interface WalletUserPrompter {
   promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignInConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
 
-  promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
+  promptSignMessage(message: MessageToSign, sequenceVerified: boolean, options?: ConnectOptions): Promise<string>
   promptSignTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptSendTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
   promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
