@@ -224,7 +224,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
   // multi-chain support.
-  async signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, sequenceVerified?: boolean): Promise<string> {
+  async signMessage(message: BytesLike, chainId?: ChainIdLike, sequenceVerified: boolean = true): Promise<string> {
     const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
 
     const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
@@ -246,8 +246,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
-    allSigners?: boolean,
-    sequenceVerified?: boolean
+    sequenceVerified: boolean = true
   ): Promise<string> {
     // Populate any ENS names (in-place)
     // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {

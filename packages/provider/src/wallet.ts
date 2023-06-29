@@ -288,6 +288,11 @@ export class Wallet implements WalletProvider {
   }
 
   connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+    if (options && options?.authorizeVersion === undefined) {
+      // Populate default authorize version if not provided
+      options.authorizeVersion = 2
+    }
+
     if (options?.refresh === true) {
       this.disconnect()
     }
