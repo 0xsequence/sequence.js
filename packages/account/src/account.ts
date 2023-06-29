@@ -1,5 +1,4 @@
 import { commons, universal } from '@0xsequence/core'
-import { EIP_6492_SUFFIX } from '@0xsequence/core/src/commons/validateEIP6492'
 import { migrator, defaults, version } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
@@ -480,7 +479,7 @@ export class Account {
 
     return ethers.utils.solidityPack(
       ['bytes', 'bytes32'],
-      [encoded, EIP_6492_SUFFIX]
+      [encoded, commons.EIP6492.EIP_6492_SUFFIX]
     )
   }
 
@@ -872,4 +871,8 @@ export class Account {
 
     return allSigners
   }
+}
+
+export function isAccount(value: any): value is Account {
+  return value instanceof Account
 }
