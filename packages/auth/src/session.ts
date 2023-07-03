@@ -302,7 +302,7 @@ export class Session {
         // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
         // those other signers may not be part of the configuration.
         //
-        this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true)
+        this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true, 'eip6492')
       )
         .then(s => {
           proof.signature = s
