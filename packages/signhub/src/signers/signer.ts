@@ -1,5 +1,5 @@
-import { ethers } from "ethers"
-import { Status } from "../orchestrator"
+import { ethers } from 'ethers'
+import { Status } from '../orchestrator'
 
 export interface SapientSigner {
   getAddress(): Promise<string>
@@ -9,17 +9,13 @@ export interface SapientSigner {
     message: ethers.BytesLike,
     metadata: Object,
     callbacks: {
-      onSignature: (signature: ethers.BytesLike) => void,
-      onRejection: (error: string) => void,
+      onSignature: (signature: ethers.BytesLike) => void
+      onRejection: (error: string) => void
       onStatus: (situation: string) => void
     }
   ): Promise<boolean>
 
-  notifyStatusChange(
-    id: string,
-    status: Status,
-    metadata: Object
-  ): void
+  notifyStatusChange(id: string, status: Status, metadata: Object): void
 
   suffix(): ethers.BytesLike
 }

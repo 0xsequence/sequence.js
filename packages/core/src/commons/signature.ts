@@ -1,16 +1,15 @@
-
 import { ethers } from 'ethers'
 import * as config from './config'
 
 export type SignaturePart = {
-  signature: string,
+  signature: string
   isDynamic: boolean
 }
 
 export type Signature<T extends config.Config> = {
-  version: number,
-  config: T,
-  subdigest: string,
+  version: number
+  config: T
+  subdigest: string
   payload?: SignedPayload
 }
 
@@ -19,9 +18,9 @@ export type UnrecoveredSignature = {
 }
 
 export type SignedPayload = {
-  message?: ethers.BytesLike,
-  digest: string,
-  chainId: ethers.BigNumberish,
+  message?: ethers.BytesLike
+  digest: string
+  chainId: ethers.BigNumberish
   address: string
 }
 
@@ -30,16 +29,12 @@ export interface SignatureCoder<
   T extends Signature<Y> = Signature<Y>,
   Z extends UnrecoveredSignature = UnrecoveredSignature
 > {
-  decode: (data: string) => Z,
-  encode: (data: T | Z | ethers.BytesLike) => string,
+  decode: (data: string) => Z
+  encode: (data: T | Z | ethers.BytesLike) => string
 
-  trim: (data: string) => Promise<string>,
+  trim: (data: string) => Promise<string>
 
-  recover: (
-    data: Z,
-    payload: SignedPayload,
-    provider: ethers.providers.Provider
-  ) => Promise<T>
+  recover: (data: Z, payload: SignedPayload, provider: ethers.providers.Provider) => Promise<T>
 
   supportsNoChainId: boolean
 
@@ -49,31 +44,19 @@ export interface SignatureCoder<
     subdigests: string[],
     chainId: ethers.BigNumberish
   ) => {
-    encoded: string,
+    encoded: string
     weight: ethers.BigNumber
   }
 
-  hasEnoughSigningPower: (
-    config: Y,
-    signatures: Map<string, SignaturePart>
-  ) => boolean
+  hasEnoughSigningPower: (config: Y, signatures: Map<string, SignaturePart>) => boolean
 
-  chainSignatures: (
-    main: T | Z | ethers.BytesLike,
-    suffixes: (T | Z | ethers.BytesLike)[]
-  ) => string
+  chainSignatures: (main: T | Z | ethers.BytesLike, suffixes: (T | Z | ethers.BytesLike)[]) => string
 
-  hashSetImageHash: (
-    imageHash: string
-  ) => string
+  hashSetImageHash: (imageHash: string) => string
 
-  signaturesOf: (
-    config: Y,
-  ) => { address: string, signature: string }[]
+  signaturesOf: (config: Y) => { address: string; signature: string }[]
 
-  signaturesOfDecoded: (
-    decoded: Z
-  ) => string[]
+  signaturesOfDecoded: (decoded: Z) => string[]
 }
 
 export function subdigestOf(payload: SignedPayload) {

@@ -1,7 +1,7 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 import { v1 } from '../builds'
-import { deployContract } from "../singletonFactory"
-import { isContract } from "../utils"
+import { deployContract } from '../singletonFactory'
+import { isContract } from '../utils'
 
 // These are the Sequence v1 contracts
 // we use them if they are available
@@ -17,7 +17,11 @@ export async function deployV1Context(signer: ethers.Signer) {
   // See if signer's provider has the contracts already deployed
   const provider = signer.provider
   if (provider) {
-    if (await Promise.all(Object.values(predefinedAddresses).map(address => isContract(provider, address))).then((r) => r.every((x) => x))) {
+    if (
+      await Promise.all(Object.values(predefinedAddresses).map(address => isContract(provider, address))).then(r =>
+        r.every(x => x)
+      )
+    ) {
       console.log('Using predefined addresses for V1 contracts')
 
       return {

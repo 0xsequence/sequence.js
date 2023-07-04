@@ -51,12 +51,7 @@ export class WalletUtils {
   }
 
   // Verify signature of a digest, one of a message, typedData or other
-  async isValidSignature(
-    address: string,
-    digest: Uint8Array,
-    signature: string,
-    chainId: number
-  ): Promise<boolean> {
+  async isValidSignature(address: string, digest: Uint8Array, signature: string, chainId: number): Promise<boolean> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
     return isValidSignature(address, digest, signature, provider, await this.wallet.getWalletContext())
@@ -77,12 +72,7 @@ export class WalletUtils {
   }
 
   // Verify typedData signature
-  isValidTypedDataSignature(
-    address: string,
-    typedData: TypedData,
-    signature: string,
-    chainId: number
-  ): Promise<boolean> {
+  isValidTypedDataSignature(address: string, typedData: TypedData, signature: string, chainId: number): Promise<boolean> {
     return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId)
   }
 

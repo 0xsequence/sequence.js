@@ -1,7 +1,14 @@
 import { Account, AccountStatus } from '@0xsequence/account'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
-import { NetworkConfig, JsonRpcHandler, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, getChainId } from '@0xsequence/network'
+import {
+  NetworkConfig,
+  JsonRpcHandler,
+  JsonRpcRequest,
+  JsonRpcResponseCallback,
+  JsonRpcResponse,
+  getChainId
+} from '@0xsequence/network'
 import { logger, TypedData } from '@0xsequence/utils'
 import { BigNumber, ethers, providers } from 'ethers'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
@@ -50,11 +57,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
   onConnectOptionsChange: ((connectOptions: ConnectOptions | undefined) => void) | undefined = undefined
 
-  constructor(
-    account: Account | null | undefined,
-    prompter: WalletUserPrompter | null,
-    networks: NetworkConfig[]
-  ) {
+  constructor(account: Account | null | undefined, prompter: WalletUserPrompter | null, networks: NetworkConfig[]) {
     this.account = account
     this.prompter = prompter
     this.networks = networks
@@ -108,7 +111,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         this.notifyClose()
       }
     }
-  
+
     if (defaultNetworkId && this.defaultChainId() !== defaultNetworkId) {
       await this.prompter?.promptChangeNetwork(defaultNetworkId)
     }
@@ -348,7 +351,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             // prompter is null, so we'll sign from here
             sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultChainId())
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_sign', chainId)
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(
+              this.prompter,
+              account,
+              request.method === 'sequence_sign',
+              chainId
+            )
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, this.connectOptions)
             }
@@ -389,9 +397,19 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultChainId())
+            sig = await account.signTypedData(
+              typedData.domain,
+              typedData.types,
+              typedData.message,
+              chainId ?? this.defaultChainId()
+            )
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_signTypedData_v4', chainId)
+            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(
+              this.prompter,
+              account,
+              request.method === 'sequence_signTypedData_v4',
+              chainId
+            )
             if (promptResultForDeployment) {
               sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
             }
@@ -408,17 +426,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
         case 'eth_sendTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendtransaction
-          const transactionParams = fromExtended(request.params![0])
-            .map((tx) => {
-              // eth_sendTransaction uses 'gas'
-              // ethers and sequence use 'gasLimit'
-              if ('gas' in tx && tx.gasLimit === undefined) {
-                tx.gasLimit = tx.gas as any
-                delete tx.gas
-              }
+          const transactionParams = fromExtended(request.params![0]).map(tx => {
+            // eth_sendTransaction uses 'gas'
+            // ethers and sequence use 'gasLimit'
+            if ('gas' in tx && tx.gasLimit === undefined) {
+              tx.gasLimit = tx.gas as any
+              delete tx.gas
+            }
 
-              return tx
-            })
+            return tx
+          })
 
           let txnHash = ''
           if (this.prompter === null) {
@@ -561,10 +578,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (chainId) {
             response.result = [(await account.status(chainId)).onChain.config]
           } else {
-            response.result = await Promise.all(account.networks.map(async network => {
-              const status = await account.status(network.chainId)
-              return status.onChain.config
-            }))
+            response.result = await Promise.all(
+              account.networks.map(async network => {
+                const status = await account.status(network.chainId)
+                return status.onChain.config
+              })
+            )
           }
           break
         }
@@ -576,10 +595,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (chainId) {
             response.result = [getLegacyWalletState(chainId, await account.status(chainId))]
           } else {
-            response.result = await Promise.all(account.networks.map(async network => {
-              const status = await account.status(network.chainId)
-              return getLegacyWalletState(network.chainId, status)
-            }))
+            response.result = await Promise.all(
+              account.networks.map(async network => {
+                const status = await account.status(network.chainId)
+                return getLegacyWalletState(network.chainId, status)
+              })
+            )
           }
           break
         }
@@ -731,7 +752,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       walletContext: this.account.contexts,
       accountAddress: this.account.address,
       // The dapp shouldn't access the relayer directly, and the provider (as an object) is not serializable.
-      networks: this.account.networks.map((n) => ({ ...n, provider: undefined, relayer: undefined }))
+      networks: this.account.networks.map(n => ({ ...n, provider: undefined, relayer: undefined }))
     }
   }
 

@@ -1,16 +1,15 @@
-
 import { expect } from 'chai'
 import { config } from '../../src/v2'
 
 const sampleTree1: config.Topology = {
   left: {
     address: '0x07ab71Fe97F9122a2dBE3797aa441623f5a59DB1',
-    weight: 2,
+    weight: 2
   },
   right: {
     left: {
       left: {
-        subdigest: '0xb374baf809e388014912ca7020c8ef51ad68591db3f010f9e35a77c15d4d6bed',
+        subdigest: '0xb374baf809e388014912ca7020c8ef51ad68591db3f010f9e35a77c15d4d6bed'
       },
       right: {
         subdigest: '0x787c83a19321fc70f8653f8faa39cce60bf26cac51c25df1b0634eb7ddbe0c60'
@@ -18,7 +17,7 @@ const sampleTree1: config.Topology = {
     },
     right: {
       address: '0xdafea492d9c6733ae3d56b7ed1adb60692c98bc5',
-      weight: 1,
+      weight: 1
     }
   }
 }
@@ -59,7 +58,7 @@ const sampleTree2: config.Topology = {
         subdigest: '0x0000000000000000000000000000000000000000000000000000000000000007'
       }
     }
-  },
+  }
 }
 
 const sampleTree3: config.Topology = {
@@ -67,24 +66,24 @@ const sampleTree3: config.Topology = {
     tree: {
       left: {
         address: '0x07ab71Fe97F9122a2dBE3797aa441623f5a59DB1',
-        weight: 2,
+        weight: 2
       },
       right: {
         left: {
-          subdigest: '0x0000000000000000000000000000000000000000000000000000000000000006',
+          subdigest: '0x0000000000000000000000000000000000000000000000000000000000000006'
         },
         right: {
-          subdigest: '0x787c83a19321fc70f8653f8faa39cce60bf26cac51c25df10000000000000000',
+          subdigest: '0x787c83a19321fc70f8653f8faa39cce60bf26cac51c25df10000000000000000'
         }
       }
     },
     weight: 90,
-    threshold: 2,
+    threshold: 2
   },
   right: {
     left: {
       left: {
-        subdigest: '0xb374baf809e388014912ca7020c8ef51ad68591db3f010f9e35a77c15d4d6bed',
+        subdigest: '0xb374baf809e388014912ca7020c8ef51ad68591db3f010f9e35a77c15d4d6bed'
       },
       right: {
         subdigest: '0x787c83a19321fc70f8653f8faa39cce60bf26cac51c25df1b0634eb7ddbe0c60'
@@ -92,7 +91,7 @@ const sampleTree3: config.Topology = {
     },
     right: {
       address: '0xdafea492d9c6733ae3d56b7ed1adb60692c98bc5',
-      weight: 1,
+      weight: 1
     }
   }
 }
@@ -102,7 +101,7 @@ describe('v2 config utils', () => {
     it('Should detect signer leaf', () => {
       const leaf: config.Leaf = {
         address: '0x07ab71Fe97F9122a2dBE3797aa441623f5a59DB1',
-        weight: 2,
+        weight: 2
       }
 
       expect(config.isLeaf(leaf)).to.be.true
@@ -130,7 +129,7 @@ describe('v2 config utils', () => {
       const leaf: config.Leaf = {
         tree: sampleTree1,
         weight: 90,
-        threshold: 2,
+        threshold: 2
       }
 
       expect(config.isLeaf(leaf)).to.be.true
@@ -155,7 +154,7 @@ describe('v2 config utils', () => {
     it('Hash signer leaf', () => {
       const hash = config.hashNode({
         address: '0x07ab71Fe97F9122a2dBE3797aa441623f5a59DB1',
-        weight: 129,
+        weight: 129
       })
 
       expect(hash).to.equal(`0x00000000000000000000008107ab71fe97f9122a2dbe3797aa441623f5a59db1`)
@@ -163,19 +162,17 @@ describe('v2 config utils', () => {
 
     it('Hash subdigest', () => {
       const hash = config.hashNode({
-        subdigest: '0xb38b3da0ef56c3094675167fed4a263c3346b325dddb6e56a3eb9a10ed7539ed',
+        subdigest: '0xb38b3da0ef56c3094675167fed4a263c3346b325dddb6e56a3eb9a10ed7539ed'
       })
 
       expect(hash).to.equal(`0x7cf15e50f6d44f71912ca6575b7fd911a5c6f19d0195692c7d35a102ad5ae98b`)
     })
 
     it('Hash nested leaf', () => {
-
-
       const hash = config.hashNode({
         tree: sampleTree1,
         weight: 90,
-        threshold: 211,
+        threshold: 211
       })
 
       expect(hash).to.equal(`0x6cca65d12b31379a7b429e43443969524821e57d2c6a7fafae8e30bd31a5295b`)
@@ -288,16 +285,19 @@ describe('v2 config utils', () => {
 
   describe('Build configurations', async () => {
     it('Build legacy configuration', () => {
-      const legacyConfig1 = config.toWalletConfig({
-        members: [
-          sampleTree1['left'],
-          sampleTree1['right']['left']['left'],
-          sampleTree1['right']['left']['right'],
-          sampleTree1['right']['right']
-        ],
-        threshold: 11,
-        checkpoint: 999999
-      }, config.legacyTopologyBuilder)
+      const legacyConfig1 = config.toWalletConfig(
+        {
+          members: [
+            sampleTree1['left'],
+            sampleTree1['right']['left']['left'],
+            sampleTree1['right']['left']['right'],
+            sampleTree1['right']['right']
+          ],
+          threshold: 11,
+          checkpoint: 999999
+        },
+        config.legacyTopologyBuilder
+      )
 
       expect(legacyConfig1).to.deep.equal({
         version: 2,
@@ -400,21 +400,24 @@ describe('v2 config utils', () => {
             right: sampleTree3['right']['left']['right']
           },
           right: sampleTree3['right']['right']
-        },
+        }
       })
     })
 
     it('Build merkle configuration', () => {
-      const merkleConfig1 = config.toWalletConfig({
-        members: [
-          sampleTree1['left'],
-          sampleTree1['right']['left']['left'],
-          sampleTree1['right']['left']['right'],
-          sampleTree1['right']['right']
-        ],
-        threshold: 11,
-        checkpoint: 999999
-      }, config.merkleTopologyBuilder)
+      const merkleConfig1 = config.toWalletConfig(
+        {
+          members: [
+            sampleTree1['left'],
+            sampleTree1['right']['left']['left'],
+            sampleTree1['right']['left']['right'],
+            sampleTree1['right']['right']
+          ],
+          threshold: 11,
+          checkpoint: 999999
+        },
+        config.merkleTopologyBuilder
+      )
 
       expect(merkleConfig1).to.deep.equal({
         version: 2,
@@ -423,29 +426,32 @@ describe('v2 config utils', () => {
         tree: {
           left: {
             left: sampleTree1['left'],
-            right: sampleTree1['right']['left']['left'],
+            right: sampleTree1['right']['left']['left']
           },
           right: {
             left: sampleTree1['right']['left']['right'],
-            right:  sampleTree1['right']['right']
-          },
+            right: sampleTree1['right']['right']
+          }
         }
       })
 
-      const merkleConfig2 = config.toWalletConfig({
-        members: [
-          sampleTree2['left']['left']['left'],
-          sampleTree2['left']['left']['right'],
-          sampleTree2['left']['right']['left'],
-          sampleTree2['left']['right']['right'],
-          sampleTree2['right']['left']['left'],
-          sampleTree2['right']['left']['right'],
-          sampleTree2['right']['right']['left'],
-          sampleTree2['right']['right']['right']
-        ],
-        threshold: 1,
-        checkpoint: 2
-      }, config.merkleTopologyBuilder)
+      const merkleConfig2 = config.toWalletConfig(
+        {
+          members: [
+            sampleTree2['left']['left']['left'],
+            sampleTree2['left']['left']['right'],
+            sampleTree2['left']['right']['left'],
+            sampleTree2['left']['right']['right'],
+            sampleTree2['right']['left']['left'],
+            sampleTree2['right']['left']['right'],
+            sampleTree2['right']['right']['left'],
+            sampleTree2['right']['right']['right']
+          ],
+          threshold: 1,
+          checkpoint: 2
+        },
+        config.merkleTopologyBuilder
+      )
 
       expect(merkleConfig2).to.deep.equal({
         version: 2,
@@ -454,24 +460,27 @@ describe('v2 config utils', () => {
         tree: sampleTree2
       })
 
-      const merkleConfig3 = config.toWalletConfig({
-        members: [
-          {
-            threshold: sampleTree3['left']['threshold'],
-            weight: sampleTree3['left']['weight'],
-            members: [
-              sampleTree3['left']['tree']['left'],
-              sampleTree3['left']['tree']['right']['left'],
-              sampleTree3['left']['tree']['right']['right']
-            ]
-          },
-          sampleTree3['right']['left']['left'],
-          sampleTree3['right']['left']['right'],
-          sampleTree3['right']['right']
-        ],
-        threshold: 2,
-        checkpoint: 3
-      }, config.merkleTopologyBuilder)
+      const merkleConfig3 = config.toWalletConfig(
+        {
+          members: [
+            {
+              threshold: sampleTree3['left']['threshold'],
+              weight: sampleTree3['left']['weight'],
+              members: [
+                sampleTree3['left']['tree']['left'],
+                sampleTree3['left']['tree']['right']['left'],
+                sampleTree3['left']['tree']['right']['right']
+              ]
+            },
+            sampleTree3['right']['left']['left'],
+            sampleTree3['right']['left']['right'],
+            sampleTree3['right']['right']
+          ],
+          threshold: 2,
+          checkpoint: 3
+        },
+        config.merkleTopologyBuilder
+      )
 
       expect(merkleConfig3).to.deep.equal({
         version: 2,

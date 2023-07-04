@@ -1,7 +1,7 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 
-import { deployV1Context } from "./v1"
-import { deployV2Context } from "./v2"
+import { deployV1Context } from './v1'
+import { deployV2Context } from './v2'
 
 export async function deploySequenceContexts(signer: ethers.Signer) {
   const v1 = await deployV1Context(signer)
