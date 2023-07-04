@@ -47,7 +47,10 @@ export enum ChainId {
   AURORA_TESTNET = 1313161556,
 
   // BASE
-  BASE_GOERLI = 84531
+  BASE_GOERLI = 84531,
+
+  // HOMEVERSE
+  HOMEVERSE_TESTNET = 40875
 }
 
 export interface NetworkConfig {
@@ -309,6 +312,15 @@ export const networks: Record<ChainId, NetworkConfig> = {
       name: 'Base Goerli Explorer',
       rootUrl: 'https://goerli.basescan.org/'
     }
+  },
+  [ChainId.HOMEVERSE_TESTNET]: {
+    chainId: ChainId.HOMEVERSE_TESTNET,
+    name: 'homeverse-testnet',
+    title: 'Homeverse Testnet',
+    blockExplorer: {
+      name: 'Homeverse Explorer (Testnet)',
+      rootUrl: 'https://explorer.oasys.homeverse.games/'
+    }
   }
 }
 
@@ -411,5 +423,11 @@ export const testnetNetworks = validateAndSortNetworks([
     rpcUrl: nodesURL('base-goerli'),
     relayer: { url: relayerURL('base-goerli') },
     indexerUrl: indexerURL('base-goerli')
+  },
+  {
+    ...networks[ChainId.HOMEVERSE_TESTNET],
+    rpcUrl: nodesURL('homeverse-testnet'),
+    relayer: { url: relayerURL('homeverse-testnet') },
+    indexerUrl: indexerURL('homeverse-testnet')
   }
 ])
