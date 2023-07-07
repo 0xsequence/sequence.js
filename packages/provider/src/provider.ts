@@ -8,7 +8,8 @@ import {
   JsonRpcRequest,
   JsonRpcResponseCallback,
   JsonRpcSender,
-  maybeChainId
+  maybeChainId,
+  findNetworkConfig
 } from '@0xsequence/network'
 
 import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
@@ -188,21 +189,13 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   async getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config> {
     const reqChainId = maybeChainId(chainId) || this.defaultChainId
     if (!reqChainId) throw new Error('chainId is required')
-    return (await this.provider.send(
-      'sequence_getWalletConfig',
-      [reqChainId],
-      reqChainId
-    ))[0]
+    return (await this.provider.send('sequence_getWalletConfig', [reqChainId], reqChainId))[0]
   }
 
   async getWalletState(chainId?: ChainIdLike): Promise<AccountStatus> {
     const reqChainId = maybeChainId(chainId) || this.defaultChainId
-    if (!reqChainId) throw new Error('chainId is required')    
-    return (await this.provider.send(
-      'sequence_getWalletState',
-      [reqChainId],
-      reqChainId
-    ))[0].status
+    if (!reqChainId) throw new Error('chainId is required')
+    return (await this.provider.send('sequence_getWalletState', [reqChainId], reqChainId))[0].status
   }
 
   async getNetworks(): Promise<NetworkConfig[]> {
@@ -219,7 +212,10 @@ export class Web3Signer extends Signer implements TypedDataSigner {
       throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
     }
 
-    return universal.genericCoderFor(config.version).config.signersOf(config).map((s) => s.address)
+    return universal
+      .genericCoderFor(config.version)
+      .config.signersOf(config)
+      .map(s => s.address)
   }
 
   // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
@@ -233,10 +229,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     // NOTE: as of ethers v5.5, it switched to using personal_sign, see
     // https://github.com/ethers-io/ethers.js/pull/1542 and see
     // https://github.com/WalletConnect/walletconnect-docs/issues/32 for additional info.
-    return provider!.send(
-      sequenceVerified ? 'sequence_sign' : 'personal_sign',
-      [ethers.utils.hexlify(data), address]
-    )
+    return provider!.send(sequenceVerified ? 'sequence_sign' : 'personal_sign', [ethers.utils.hexlify(data), address])
   }
 
   // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
@@ -331,7 +324,9 @@ export class Web3Signer extends Signer implements TypedDataSigner {
 
   // updateConfig..
   // NOTE: this is not supported by the remote wallet by default.
-  async updateConfig(newConfig?: commons.config.Config): Promise<[commons.config.Config, ethers.providers.TransactionResponse | undefined]> {
+  async updateConfig(
+    newConfig?: commons.config.Config
+  ): Promise<[commons.config.Config, ethers.providers.TransactionResponse | undefined]> {
     // sequence_updateConfig
     const [config, tx] = await this.provider.send('sequence_updateConfig', [newConfig], this.defaultChainId)
     if (tx === null) {
@@ -513,7 +508,9 @@ const hexlifyTransaction = (
 }
 
 class UncheckedJsonRpcSigner extends Web3Signer {
-  sendTransaction(transaction: Deferrable<ethers.providers.TransactionRequest>): Promise<commons.transaction.TransactionResponse> {
+  sendTransaction(
+    transaction: Deferrable<ethers.providers.TransactionRequest>
+  ): Promise<commons.transaction.TransactionResponse> {
     return this.sendUncheckedTransaction(transaction).then(hash => {
       return <commons.transaction.TransactionResponse>{
         chainId: 0,
@@ -528,5 +525,41 @@ class UncheckedJsonRpcSigner extends Web3Signer {
         wait: (confirmations?: number) => this.provider.waitForTransaction(hash, confirmations)
       }
     })
+  }
+}
+
+export class ProviderProxy extends Web3Provider {
+  chainId: number
+
+  private providers: Record<number, Web3Provider>
+
+  private get _provider(): Web3Provider {
+    return this.providers[this.chainId]
+  }
+
+  constructor(providers: Record<number, Web3Provider>, chainId: number) {
+    super(undefined as any, chainId)
+    this.providers = providers
+    this.chainId = chainId
+  }
+
+  async send(method: string, params: Array<any>): Promise<any> {
+    if (method === 'wallet_switchEthereumChain') {
+      this.chainId = params[0].chainId
+
+      this.emit('chainChanged', this.chainId)
+
+      return null
+    }
+
+    return this._provider.send(method, params)
+  }
+
+  async getNetwork() {
+    return this._provider.getNetwork()
+  }
+
+  async getChainId(): Promise<number> {
+    return this._provider.getChainId()
   }
 }

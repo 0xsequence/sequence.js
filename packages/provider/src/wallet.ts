@@ -16,10 +16,12 @@ import {
   updateNetworkConfig,
   ensureValidNetworks,
   sortNetworks,
-  findSupportedNetwork
+  findSupportedNetwork,
+  networks,
+  ChainId
 } from '@0xsequence/network'
 import { getDefaultConnectionInfo, logger } from '@0xsequence/utils'
-import { Web3Provider, Web3Signer } from './provider'
+import { ProviderProxy, Web3Provider, Web3Signer } from './provider'
 import {
   MuxMessageProvider,
   WindowMessageProvider,
@@ -99,17 +101,25 @@ export class Wallet implements WalletProvider {
   private networks: NetworkConfig[]
   private providers: { [chainId: number]: Web3Provider }
 
-  constructor(network?: string | number, config?: Partial<ProviderConfig>) {
+  private providerProxy: ProviderProxy
+
+  constructor(chainId?: ChainIdLike, config?: Partial<ProviderConfig>) {
     // config is a Partial, so that we may intersect it with the DefaultProviderConfig,
     // which allows easy overriding and control of the config.
     this.config = { ...DefaultProviderConfig }
     if (config) {
       this.config = { ...this.config, ...config }
     }
-    if (network) {
-      this.config.defaultNetworkId = network
-    } else if (!this.config.defaultNetworkId) {
-      this.config.defaultNetworkId = 'mainnet'
+    if (chainId) {
+      const network = findSupportedNetwork(chainId)
+
+      if (network) {
+        this.config.defaultNetworkId = network.chainId
+      }
+    }
+
+    if (!this.config.defaultNetworkId) {
+      this.config.defaultNetworkId = ChainId.MAINNET
     }
 
     if (config?.localStorage) {
@@ -119,6 +129,7 @@ export class Wallet implements WalletProvider {
     this.transport = {}
     this.networks = []
     this.providers = {}
+    this.providerProxy = new ProviderProxy(this.providers, this.config.defaultNetworkId)
     this.connectedSites = new LocalStore('@sequence.connectedSites', [])
     this.utils = new WalletUtils(this)
     this.init()
@@ -445,13 +456,21 @@ export class Wallet implements WalletProvider {
       throw new Error('networks have not been set by session. connect first.')
     }
 
-    const network = findNetworkConfig(this.networks, this.config.defaultNetworkId!)
+    const provider = this.getProvider()
 
-    if (!network) {
-      throw new Error('networks must have a default chain specified')
+    if (!provider) {
+      throw new Error('provider not found')
     }
 
-    return network.chainId
+    return provider?.getChainId()
+
+    // const network = findNetworkConfig(this.networks, this.config.defaultNetworkId!)
+
+    // if (!network) {
+    //   throw new Error('networks must have a default chain specified')
+    // }
+
+    // return network.chainId
   }
 
   openWallet = async (path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean> => {
@@ -488,62 +507,23 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    let network: NetworkConfig | undefined = findNetworkConfig(this.networks, this.config.defaultNetworkId!)!
+    const network: NetworkConfig | undefined = findNetworkConfig(this.networks, chainId || this.providerProxy.chainId)!
+
+    if (!network) {
+      throw new Error(`network ${chainId} is not in the network list`)
+    }
+
+    // if the provider does not exist, create it
+    if (!this.providers[network.chainId]) {
+      this.providers[network.chainId] = this.createProvider(network)
+    }
+
     if (chainId) {
-      network = findNetworkConfig(this.networks, chainId)
-      if (!network) {
-        throw new Error(`network ${chainId} is not in the network list`)
-      }
-    }
-
-    // return memoized network provider
-    if (this.providers[network.chainId]) {
+      // return memoized network provider
       return this.providers[network.chainId]
-    }
-
-    // builder web3 provider stack
-    let provider: Web3Provider
-
-    // network.provider may be set by the ProviderConfig override
-    const rpcProvider = new providers.JsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), network.chainId)
-
-    if (network.isDefaultChain) {
-      // communicating with defaultChain will prioritize the wallet message transport
-      const router = new JsonRpcRouter(
-        [
-          loggingProviderMiddleware,
-          exceptionProviderMiddleware,
-          new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext }),
-          new SigningProvider(this.transport!.provider!),
-          this.transport.cachedProvider!
-        ],
-        new JsonRpcSender(rpcProvider)
-      )
-
-      provider = new Web3Provider(router, network.chainId)
     } else {
-      // communicating with another chain will bind to that network, but will forward
-      // any signing-related requests to the wallet message transport
-      const router = new JsonRpcRouter(
-        [
-          loggingProviderMiddleware,
-          exceptionProviderMiddleware,
-          new EagerProvider({
-            accountAddress: this.session!.accountAddress,
-            walletContext: this.session!.walletContext,
-            chainId: network.chainId
-          }),
-          new SigningProvider(this.transport.provider!),
-          new CachedProvider({ defaultChainId: network.chainId })
-        ],
-        new JsonRpcSender(rpcProvider)
-      )
-
-      provider = new Web3Provider(router, network.chainId)
+      return this.providerProxy
     }
-
-    this.providers[network.chainId] = provider
-    return provider
   }
 
   getAllProviders(): { [chainId: number]: Web3Provider } {
@@ -581,6 +561,46 @@ export class Wallet implements WalletProvider {
   unregister = () => {
     this.disconnect()
     this.transport.messageProvider?.unregister()
+  }
+
+  private createProvider(network: NetworkConfig) {
+    // network.provider may be set by the ProviderConfig override
+    const rpcProvider = new providers.JsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), network.chainId)
+
+    if (network.isDefaultChain) {
+      // communicating with defaultChain will prioritize the wallet message transport
+      const router = new JsonRpcRouter(
+        [
+          loggingProviderMiddleware,
+          exceptionProviderMiddleware,
+          new EagerProvider({ accountAddress: this.session!.accountAddress, walletContext: this.session!.walletContext }),
+          new SigningProvider(this.transport!.provider!),
+          this.transport.cachedProvider!
+        ],
+        new JsonRpcSender(rpcProvider)
+      )
+
+      return new Web3Provider(router, network.chainId)
+    } else {
+      // communicating with another chain will bind to that network, but will forward
+      // any signing-related requests to the wallet message transport
+      const router = new JsonRpcRouter(
+        [
+          loggingProviderMiddleware,
+          exceptionProviderMiddleware,
+          new EagerProvider({
+            accountAddress: this.session!.accountAddress,
+            walletContext: this.session!.walletContext,
+            chainId: network.chainId
+          }),
+          new SigningProvider(this.transport.provider!),
+          new CachedProvider({ defaultChainId: network.chainId })
+        ],
+        new JsonRpcSender(rpcProvider)
+      )
+
+      return new Web3Provider(router, network.chainId)
+    }
   }
 
   private saveSession = async (session: WalletSession) => {
@@ -700,7 +720,7 @@ export interface ProviderConfig {
   // defaultNetworkId is the primary network of a dapp and the default network a
   // provider will communicate. Note: this setting is also configurable from the
   // Wallet constructor's first argument.
-  defaultNetworkId?: string | number
+  defaultNetworkId?: number
 
   // transports for dapp to wallet jron-rpc communication
   transports?: {
