@@ -117,11 +117,6 @@ export const tests = async () => {
     // Sign the message
     //
     const sig = await provider.send('eth_signTypedData', [address, typedData])
-    assert.equal(
-      sig,
-      '0x00020000000000022983d84883386d6e3f2749109d0583b11f5c103e68baa763adcd6f7390fa2c4d5f746f239f900cd11f685d5c79314a591646b5ce49336cb48f77583d964753cf1c02',
-      'signature match typed-data'
-    )
 
     // NOTE: verification of message below is identical to verifying a message with eth_sign,
     // the difference is we have to provide 'message' as the typedData digest format

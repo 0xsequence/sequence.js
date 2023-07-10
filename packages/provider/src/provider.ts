@@ -364,7 +364,7 @@ export class Web3Signer extends Signer implements TypedDataSigner {
   // ethers JsonRpcSigner methods
   //
 
-  async _legacySignMessage(message: Bytes | string, chainId?: ChainIdLike, allSigners?: boolean): Promise<string> {
+  async _legacySignMessage(message: Bytes | string, chainId?: ChainIdLike): Promise<string> {
     const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
 
     const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
@@ -379,10 +379,9 @@ export class Web3Signer extends Signer implements TypedDataSigner {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId?: ChainIdLike,
-    allSigners?: boolean
+    chainId?: ChainIdLike
   ): Promise<string> {
-    return this.signTypedData(domain, types, message, chainId, allSigners)
+    return this.signTypedData(domain, types, message, chainId)
   }
 
   async sendUncheckedTransaction(transaction: Deferrable<ExtendedTransactionRequest>, chainId?: ChainIdLike): Promise<string> {

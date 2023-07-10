@@ -574,13 +574,9 @@ describe('Wallet integration', function () {
         if (delayMs !== 0) await delay(delayMs)
 
         const validator = ValidateSequenceWalletProof(
-          new commons.reader.OnChainReader(networks[0].provider!),
+          () => new commons.reader.OnChainReader(networks[0].provider!),
           tracker,
-          contexts[2],
-          {
-            config: v2.config.ConfigCoder as any,
-            signature: v2.signature.SignatureCoder as any,
-          }
+          contexts[2]
         )
 
         const ethauth = new ETHAuth(validator)
@@ -717,7 +713,7 @@ describe('Wallet integration', function () {
     it('Should get JWT during session opening', async () => {
       delayMs = 500
 
-      const referenceSigner = randomWallet('Should get JWT during session opening')
+      const referenceSigner = randomWallet('Should get JWT during session opening - 1')
       orchestrator.setSigners([referenceSigner])
 
       let session = await Session.open({
@@ -735,6 +731,7 @@ describe('Wallet integration', function () {
       await expect(session._initialAuthRequest).to.be.rejected
 
       const newSigner = randomWallet('Should get JWT during session opening 2')
+      orchestrator.setSigners([referenceSigner, newSigner])
 
       session = await Session.open({
         settings,
@@ -746,7 +743,10 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0],
+        selectWallet: async (ws) => {
+          expect(ws.length).to.equal(1)
+          return ws[0]
+        },
         editConfigOnMigration: (config) => config
       })
 

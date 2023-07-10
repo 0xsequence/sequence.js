@@ -13,6 +13,7 @@ import { LocalRelayer, Relayer } from '@0xsequence/relayer'
 import { commons, v1, v2 } from '@0xsequence/core'
 import chaiAsPromised from 'chai-as-promised'
 import { Wallet } from '@0xsequence/wallet'
+import { encodeBundleExecData } from '@0xsequence/core/src/commons/transaction'
 
 const { expect } = chai.use(chaiAsPromised)
 
@@ -220,6 +221,52 @@ describe('Account', () => {
       expect(status2.onChain.version).to.equal(2)
       expect(status2.onChain.imageHash).to.deep.equal(v2.config.ConfigCoder.imageHashOf(config1))
       expect(status2.imageHash).to.deep.equal(v2.config.ConfigCoder.imageHashOf(config2))
+    })
+
+    it('Should sign and validate a message without being deployed', async () => {
+      const signer = randomWallet('Should sign and validate a message without being deployed')
+      const config = {
+        threshold: 1,
+        checkpoint: Math.floor(now() / 1000),
+        signers: [{ address: signer.address, weight: 1 }]
+      }
+
+      const account = await Account.new({
+        ...defaultArgs,
+        config,
+        orchestrator: new Orchestrator([signer]),
+      })
+
+      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
+
+      const valid = await account.reader(networks[0].chainId).isValidSignature(
+        account.address,
+        ethers.utils.keccak256(msg),
+        sig
+      )
+
+      expect(valid).to.be.true
+    })
+
+    it('Should refuse to sign when not deployed', async () => {
+      const signer = randomWallet('Should refuse to sign when not deployed')
+      const config = {
+        threshold: 1,
+        checkpoint: Math.floor(now() / 1000),
+        signers: [{ address: signer.address, weight: 1 }]
+      }
+
+      const account = await Account.new({
+        ...defaultArgs,
+        config,
+        orchestrator: new Orchestrator([signer]),
+      })
+
+      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const sig = account.signMessage(msg, networks[0].chainId, 'throw')
+
+      expect(sig).to.be.rejected
     })
 
     describe('After upgrading', () => {
@@ -913,6 +960,134 @@ describe('Account', () => {
       expect(status4.onChain.version).to.equal(2)
       expect(status4.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
       expect(status4.version).to.equal(2)
+    })
+
+    context('Signing messages', async () => {
+      context('After migrating', async () => {
+        let account: Account
+        let imageHash: string
+
+        beforeEach(async () => {
+          // Old account may be an address that's not even deployed
+          const signer1 = randomWallet(
+            'Signing messages - After migrating' +
+            account?.address ?? '' // Append prev address to entropy to avoid collisions
+          )
+
+          const simpleConfig = {
+            threshold: 1,
+            checkpoint: 0,
+            signers: [{
+              address: signer1.address,
+              weight: 1
+            }]
+          }
+
+          const config = v1.config.ConfigCoder.fromSimple(simpleConfig)
+          imageHash = v1.config.ConfigCoder.imageHashOf(config)
+          const address = commons.context.addressOf(contexts[1], imageHash)
+
+          // Sessions server MUST have information about the old wallet
+          // in production this is retrieved from SequenceUtils contract
+          await tracker.saveCounterfactualWallet({ config, context: [contexts[1]] })
+
+          account = new Account({ ...defaultArgs, address, orchestrator: new Orchestrator([signer1]) })
+
+          // Should sign migration using the account
+          await account.signAllMigrations((c) => c)
+        })
+
+        it('Should validate a message signed by undeployed migrated wallet', async () => {
+          const msg = ethers.utils.toUtf8Bytes('I like that you are reading our tests')
+          const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
+    
+          const valid = await account.reader(networks[0].chainId).isValidSignature(
+            account.address,
+            ethers.utils.keccak256(msg),
+            sig
+          )
+    
+          expect(valid).to.be.true
+        })
+
+        it('Should reject a message signed by undeployed migrated wallet (if set the throw)', async () => {
+          const msg = ethers.utils.toUtf8Bytes('I do not know what to write here anymore')    
+          const sig = account.signMessage(msg, networks[0].chainId, 'throw')
+
+          await expect(sig).to.be.rejected
+        })
+
+        it('Should return an invalid signature by undeployed migrated wallet (if set to ignore)', async () => {
+          const msg = ethers.utils.toUtf8Bytes('Sending a hug')
+          const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
+
+          const valid = await account.reader(networks[0].chainId).isValidSignature(
+            account.address,
+            ethers.utils.keccak256(msg),
+            sig
+          )
+    
+          expect(valid).to.be.false
+        })
+
+        it('Should validate a message signed by deployed migrated wallet (deployed with v1)', async () => {
+          const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
+          await signer1.sendTransaction({
+            to: deployTx.entrypoint,
+            data: encodeBundleExecData(deployTx),
+          })
+  
+          expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
+            .to.not.equal(0)
+
+          const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
+          const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
+    
+          const valid = await account.reader(networks[0].chainId).isValidSignature(
+            account.address,
+            ethers.utils.keccak256(msg),
+            sig
+          )
+    
+          expect(valid).to.be.true
+        })
+
+        it('Should fail to sign a message signed by deployed migrated wallet (deployed with v1) if throw', async () => {
+          const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
+          await signer1.sendTransaction({
+            to: deployTx.entrypoint,
+            data: encodeBundleExecData(deployTx),
+          })
+  
+          expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
+            .to.not.equal(0)
+
+          const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
+          const sig = account.signMessage(msg, networks[0].chainId, 'throw')
+          expect(sig).to.be.rejected
+        })
+
+        it('Should return an invalid signature by deployed migrated wallet (deployed with v1) if ignore', async () => {
+          const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
+          await signer1.sendTransaction({
+            to: deployTx.entrypoint,
+            data: encodeBundleExecData(deployTx),
+          })
+  
+          expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
+            .to.not.equal(0)
+
+          const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
+          const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
+          const valid = await account.reader(networks[0].chainId).isValidSignature(
+            account.address,
+            ethers.utils.keccak256(msg),
+            sig
+          )
+    
+          expect(valid).to.be.false
+        })
+      })
     })
   })
 })

@@ -264,6 +264,8 @@ export interface MessageToSign {
   message?: Uint8Array
   typedData?: TypedData
   chainId?: number
+
+  eip6492?: boolean
 }
 
 export type ETHAuthProof = AuthETHAuthProof

@@ -414,7 +414,12 @@ export class Account {
     return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId: 0, signatures })
   }
 
-  async signDigest(digest: ethers.BytesLike, chainId: ethers.BigNumberish, decorate: boolean = true): Promise<string> {
+  async signDigest(
+    digest: ethers.BytesLike,
+    chainId: ethers.BigNumberish,
+    decorate: boolean = true,
+    cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
+  ): Promise<string> {
     // If we are signing a digest for chainId zero then we can never be fully migrated
     // because Sequence v1 doesn't allow for signing a message on "all chains"
 
@@ -427,10 +432,55 @@ export class Account {
 
     this.mustBeFullyMigrated(status)
 
+    // Check if we can validate onchain and what to do if we can't
+    // revert early, since there is no point in signing a digest now
+    if (!status.canOnchainValidate && cantValidateBehavior === 'throw') {
+      throw new Error('Wallet cannot validate onchain')
+    }
+
     const wallet = this.walletForStatus(chainId, status)
     const signature = await wallet.signDigest(digest)
 
-    return decorate ? this.decorateSignature(signature, status) : signature
+    const decorated = decorate ? this.decorateSignature(signature, status) : signature
+
+    // If the wallet can't validate onchain then we
+    // need to prefix the decorated signature with all deployments and migrations
+    // aka doing a bootstrap using EIP-6492
+    if (!status.canOnchainValidate) {
+      switch (cantValidateBehavior) {
+        // NOTICE: We covered this case before signing the digest
+        // case 'throw':
+        //   throw new Error('Wallet cannot validate on-chain')
+        case 'ignore':
+          return decorated
+
+        case 'eip6492':
+          return this.buildEIP6492Signature(await decorated, status, chainId)
+      }
+    }
+
+    return decorated
+  }
+
+  private buildEIP6492Signature(
+    signature: string,
+    status: AccountStatus,
+    chainId: ethers.BigNumberish
+  ): string {
+    const bootstrapBundle = this.buildBootstrapTransactions(status, chainId)
+    if (bootstrapBundle.transactions.length === 0) {
+      throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
+    }
+
+    const encoded = ethers.utils.defaultAbiCoder.encode(
+      ['address', 'bytes', 'bytes'],
+      [bootstrapBundle.entrypoint, commons.transaction.encodeBundleExecData(bootstrapBundle), signature]
+    )
+
+    return ethers.utils.solidityPack(
+      ['bytes', 'bytes32'],
+      [encoded, commons.EIP6492.EIP_6492_SUFFIX]
+    )
   }
 
   async editConfig(changes: {
@@ -543,8 +593,12 @@ export class Account {
     return this.relayer(chainId).relay({ ...bootstrapTxs, chainId }, feeQuote)
   }
 
-  signMessage(message: ethers.BytesLike, chainId: ethers.BigNumberish): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message), chainId)
+  signMessage(
+    message: ethers.BytesLike,
+    chainId: ethers.BigNumberish,
+    cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
+  ): Promise<string> {
+    return this.signDigest(ethers.utils.keccak256(message), chainId, true, cantValidateBehavior)
   }
 
   async signTransactions(
@@ -741,10 +795,11 @@ export class Account {
     domain: TypedDataDomain,
     types: Record<string, Array<TypedDataField>>,
     message: Record<string, any>,
-    chainId: ethers.BigNumberish
+    chainId: ethers.BigNumberish,
+    cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
     const digest = encodeTypedDataDigest({ domain, types, message })
-    return this.signDigest(digest, chainId)
+    return this.signDigest(digest, chainId, true, cantValidateBehavior)
   }
 
   async getAllSigners(): Promise<
@@ -816,4 +871,8 @@ export class Account {
 
     return allSigners
   }
+}
+
+export function isAccount(value: any): value is Account {
+  return value instanceof Account
 }

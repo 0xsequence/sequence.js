@@ -344,14 +344,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           // TODO:
           // if (process.env.TEST_MODE === 'true' && this.prompter === null) {
+          const sequenceVerified = request.method === 'sequence_sign'
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultChainId())
+            sig = await account.signMessage(prefixedMessage, chainId ?? this.defaultChainId(), sequenceVerified ? 'eip6492' : 'ignore')
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_sign', chainId)
-            if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, message: prefixedMessage }, this.connectOptions)
-            }
+            sig = await this.prompter.promptSignMessage({
+              chainId: chainId,
+              message: prefixedMessage,
+              eip6492: sequenceVerified
+            }, this.connectOptions)
           }
 
           if (sig && sig.length > 0) {
@@ -387,14 +389,16 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           let sig = ''
 
+          const sequenceVerified = request.method === 'sequence_signTypedData_v4'
           if (this.prompter === null) {
             // prompter is null, so we'll sign from here
-            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultChainId())
+            sig = await account.signTypedData(typedData.domain, typedData.types, typedData.message, chainId ?? this.defaultChainId(), sequenceVerified ? 'eip6492' : 'ignore')
           } else {
-            const promptResultForDeployment = await this.handleConfirmWalletDeployPrompt(this.prompter, account, request.method === 'sequence_signTypedData_v4', chainId)
-            if (promptResultForDeployment) {
-              sig = await this.prompter.promptSignMessage({ chainId: chainId, typedData: typedData }, this.connectOptions)
-            }
+            sig = await this.prompter.promptSignMessage({
+              chainId: chainId,
+              typedData: typedData,
+              eip6492: sequenceVerified
+            }, this.connectOptions)
           }
 
           if (sig && sig.length > 0) {

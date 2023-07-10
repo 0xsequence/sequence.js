@@ -1,9 +1,10 @@
 import { ethers } from 'ethers'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
-import { ChainIdLike } from '@0xsequence/network'
+import { ChainIdLike, toChainIdNumber } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 import { Signer } from '@0xsequence/wallet'
 import { DEFAULT_SESSION_EXPIRATION } from './session'
+import { Account } from '@0xsequence/account'
 
 export interface AuthorizationOptions {
   // app name string, ie 'Skyweaver'
@@ -26,7 +27,7 @@ export interface ETHAuthProof {
 
 // signAuthorization will perform an EIP712 typed-data message signing of ETHAuth domain via the provided
 // Signer and authorization options.
-export const signAuthorization = async (signer: Pick<Signer, 'getAddress' | 'signTypedData'>, chainId: ChainIdLike, options: AuthorizationOptions): Promise<ETHAuthProof> => {
+export const signAuthorization = async (signer: Signer | Account, chainId: ChainIdLike, options: AuthorizationOptions): Promise<ETHAuthProof> => {
   const address = ethers.utils.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw ErrAccountIsRequired
@@ -44,7 +45,14 @@ export const signAuthorization = async (signer: Pick<Signer, 'getAddress' | 'sig
   proof.setExpiryIn(options.expiry ? Math.max(options.expiry, 200) : DEFAULT_SESSION_EXPIRATION)
 
   const typedData = proof.messageTypedData()
-  proof.signature = await signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainId)
+
+  const chainIdNumber = toChainIdNumber(chainId)
+
+  proof.signature = await (signer instanceof Account ?
+    // Account can sign EIP-6492 signatures, so it doesn't require deploying the wallet
+    signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainIdNumber, 'eip6492') :
+    signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainIdNumber)
+  )
 
   const ethAuth = new ETHAuth()
   const proofString = await ethAuth.encodeProof(proof, true)

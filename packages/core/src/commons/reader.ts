@@ -1,7 +1,7 @@
 import { walletContracts } from "@0xsequence/abi"
 import { ethers } from "ethers"
 import { commons } from ".."
-import { isValidCounterfactual } from "./context"
+import { validateEIP6492Offchain } from "./validateEIP6492"
 
 /**
  * Provides stateful information about the wallet.
@@ -95,31 +95,14 @@ export interface Reader {
     }
   }
 
+  // We use the EIP-6492 validator contract to check the signature
+  // this means that if the wallet is not deployed, then the signature
+  // must be prefixed with a transaction that deploys the wallet
   async isValidSignature(
     wallet: string,
     digest: ethers.BytesLike,
     signature: ethers.BytesLike
   ): Promise<boolean> {
-    const isDeployed = await this.isDeployed(wallet)
-
-    if (isDeployed) {
-      const isValid = await this.module(wallet).isValidSignature(digest, signature)
-      return isValid === '0x1626ba7e' // as defined in ERC1271
-    }
-
-    // We can try to recover the counterfactual address
-    // and check if it matches the wallet address
-    if (this.contexts) {
-      return isValidCounterfactual(
-        wallet,
-        digest,
-        signature,
-        await this.provider.getNetwork().then((n) => n.chainId),
-        this.provider,
-        this.contexts
-      )
-    } else {
-      throw new Error('Wallet must be deployed to validate signature, or context info must be provided')
-    }
+    return validateEIP6492Offchain(this.provider, wallet, digest, signature)
   }
 }
