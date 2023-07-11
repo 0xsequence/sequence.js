@@ -352,7 +352,7 @@ const genUrls = (network: string) => {
   return {
     rpcUrl,
     relayer: {
-      url: relayerURL(rpcUrl),
+      url: relayerURL(network),
       provider: {
         url: rpcUrl,
       }
