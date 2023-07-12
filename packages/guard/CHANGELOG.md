@@ -1,5 +1,17 @@
 # @0xsequence/guard
 
+## 1.0.0
+
+### Major Changes
+
+- https://sequence.xyz/blog/sequence-wallet-light-state-sync-full-merkle-wallets
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.0.0
+  - @0xsequence/signhub@1.0.0
+
 ## 0.43.34
 
 ### Patch Changes
