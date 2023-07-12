@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 0.43.34
+
+### Patch Changes
+
+- auth: no jwt for indexer
+
 ## 0.43.33
 
 ### Patch Changes
