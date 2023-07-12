@@ -1,12 +1,15 @@
 import { ethers } from 'ethers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
-import { Wallet, Account } from '@0xsequence/wallet'
-import { NetworkConfig, JsonRpcProvider } from '@0xsequence/network'
+import { Account } from '@0xsequence/account'
+import { NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger } from '@0xsequence/utils'
 
-import { testAccounts, getEOAWallet, deployWalletContext, testWalletContext } from '../testutils'
+import { testAccounts, getEOAWallet } from '../testutils'
 import { test, assert } from '../../utils/assert'
+import * as utils from '@0xsequence/tests'
+import { Orchestrator } from '@0xsequence/signhub'
+import { trackers } from '@0xsequence/sessions'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -18,22 +21,24 @@ const main = async () => {
   //
   // Providers
   //
-  const provider = new JsonRpcProvider('http://localhost:8545', { blockCache: true })
-  const provider2 = new JsonRpcProvider('http://localhost:9545', { blockCache: true })
+  const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
 
   //
   // Deploy Sequence WalletContext (deterministic)
   //
-  const deployedWalletContext = await deployWalletContext(provider, provider2)
+  const deployedWalletContext = await utils.context.deploySequenceContexts(provider.getSigner())
+  await utils.context.deploySequenceContexts(provider2.getSigner())
+
   console.log('walletContext:', deployedWalletContext)
 
   // assert testWalletContext value is correct
-  if (
-    deployedWalletContext.factory !== testWalletContext.factory ||
-    deployedWalletContext.guestModule !== testWalletContext.guestModule
-  ) {
-    throw new Error('deployedWalletContext and testWalletContext do not match. check or regen.')
-  }
+  // if (
+  //   deployedWalletContext.factory !== testWalletContext.factory ||
+  //   deployedWalletContext.guestModule !== testWalletContext.guestModule
+  // ) {
+  //   throw new Error('deployedWalletContext and testWalletContext do not match. check or regen.')
+  // }
 
   //
   // Setup single owner Sequence wallet
@@ -48,7 +53,7 @@ const main = async () => {
   const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
 
   // wallet account address: 0xa91Ab3C5390A408DDB4a322510A4290363efcEE9 based on the chainId
-  const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
+  // const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list
   const networks: NetworkConfig[] = [
@@ -59,28 +64,40 @@ const main = async () => {
       provider: provider,
       relayer: relayer,
       isDefaultChain: true
-      // isAuthChain: true
     },
     {
       name: 'hardhat2',
       chainId: 31338,
       rpcUrl: provider2.connection.url,
       provider: provider2,
-      relayer: relayer2,
-      isAuthChain: true
+      relayer: relayer2
     }
   ]
 
   // Account for managing multi-network wallets
   // TODO: make this a 3-key multisig with threshold of 2
-  const account = new Account(
-    {
-      initialConfig: wallet.config,
-      networks,
-      context: deployedWalletContext
+  // const account = new Account(
+  //   {
+  //     initialConfig: wallet.config,
+  //     networks,
+  //     context: deployedWalletContext
+  //   },
+  //   owner
+  // )
+  const account = await Account.new({
+    config: {
+      threshold: 2,
+      checkpoint: 0,
+      signers: [{
+        address: owner.address,
+        weight: 2
+      }]
     },
-    owner
-  )
+    networks,
+    contexts: deployedWalletContext,
+    orchestrator: new Orchestrator([owner]),
+    tracker: new trackers.local.LocalConfigTracker(provider)
+  })
 
   // the json-rpc signer via the wallet
   const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)

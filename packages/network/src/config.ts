@@ -1,7 +1,8 @@
-import { BigNumberish, providers } from 'ethers'
+import { BigNumberish, ethers, providers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
-import { stringTemplate, validateAndSortNetworks } from './utils'
+import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
+import { isBigNumberish } from '@0xsequence/utils'
 
 export enum ChainId {
   // Ethereum
@@ -47,7 +48,11 @@ export enum ChainId {
   AURORA_TESTNET = 1313161556,
 
   // BASE
-  BASE_GOERLI = 84531
+  BASE_GOERLI = 84531,
+
+  // HARDHAT TESTNETS
+  HARDHAT = 31337,
+  HARDHAT_2 = 31338,
 }
 
 export interface NetworkConfig {
@@ -59,8 +64,8 @@ export interface NetworkConfig {
   blockExplorer?: BlockExplorerConfig
   ensAddress?: string
 
-  rpcUrl?: string
-  provider?: providers.JsonRpcProvider
+  rpcUrl: string
+  provider?: providers.Provider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
@@ -69,12 +74,11 @@ export interface NetworkConfig {
   // network and may configure the wallet to use it as its main/default chain.
   isDefaultChain?: boolean
 
-  // isAuthChain identifies the network containing wallet config contents.
-  isAuthChain?: boolean
-
   // Disabled / deprecated chain
   disabled?: boolean
 }
+
+type LegacyNetworkConfig = NetworkConfig & { isAuthChain?: boolean }
 
 export type BlockExplorerConfig = {
   name?: string
@@ -87,7 +91,7 @@ export const indexerURL = (network: string) => stringTemplate('https://${network
 export const relayerURL = (network: string) => stringTemplate('https://${network}-relayer.sequence.app', { network: network })
 export const nodesURL = (network: string) => stringTemplate('https://nodes.sequence.app/${network}', { network: network })
 
-export const networks: Record<ChainId, NetworkConfig> = {
+export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.MAINNET]: {
     chainId: ChainId.MAINNET,
     name: 'mainnet',
@@ -149,8 +153,11 @@ export const networks: Record<ChainId, NetworkConfig> = {
     blockExplorer: {
       name: 'Polygonscan',
       rootUrl: 'https://polygonscan.com/'
-    }
-  },
+    },
+    // TODO: Remove default and auth chains from here
+    isDefaultChain: true,
+    isAuthChain: true
+  } as LegacyNetworkConfig,
   [ChainId.POLYGON_MUMBAI]: {
     chainId: ChainId.POLYGON_MUMBAI,
     name: 'mumbai',
@@ -309,107 +316,130 @@ export const networks: Record<ChainId, NetworkConfig> = {
       name: 'Base Goerli Explorer',
       rootUrl: 'https://goerli.basescan.org/'
     }
+  },
+  [ChainId.HARDHAT]: {
+    chainId: ChainId.HARDHAT,
+    name: 'hardhat',
+    title: 'Hardhat (local testnet)'
+  },
+  [ChainId.HARDHAT_2]: {
+    chainId: ChainId.HARDHAT_2,
+    name: 'hardhat2',
+    title: 'Hardhat (local testnet)'
   }
+}
+
+export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): NetworkConfig | undefined {
+  return findNetworkConfig(allNetworks, chainIdOrName)
 }
 
 export type ChainIdLike = NetworkConfig | BigNumberish
 
-export const mainnetNetworks = validateAndSortNetworks([
+export function toChainIdNumber(chainIdLike: ChainIdLike): ethers.BigNumber {
+  if (ethers.BigNumber.isBigNumber(chainIdLike)) {
+    return chainIdLike
+  }
+
+  if (isBigNumberish(chainIdLike)) {
+    return ethers.BigNumber.from(chainIdLike)
+  }
+
+  return ethers.BigNumber.from(chainIdLike.chainId)
+}
+
+const genUrls = (network: string) => {
+  const rpcUrl = nodesURL(network)
+  return {
+    rpcUrl,
+    relayer: {
+      url: relayerURL(network),
+      provider: {
+        url: rpcUrl,
+      }
+    },
+    indexerUrl: indexerURL(network)
+  }
+}
+
+export const allNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.MAINNET],
-    rpcUrl: nodesURL('mainnet'),
-    relayer: { url: relayerURL('mainnet') },
-    indexerUrl: indexerURL('mainnet')
+    ...genUrls('mainnet')
   },
   {
     ...networks[ChainId.POLYGON],
-    rpcUrl: nodesURL('polygon'),
-    relayer: { url: relayerURL('polygon') },
-    indexerUrl: indexerURL('polygon'),
-    isDefaultChain: true,
-    isAuthChain: true
+    ...genUrls('polygon')
   },
   {
     ...networks[ChainId.BSC],
-    rpcUrl: nodesURL('bsc'),
-    indexerUrl: indexerURL('bsc'),
-    relayer: { url: relayerURL('bsc') }
+    ...genUrls('bsc')
   },
   {
     ...networks[ChainId.AVALANCHE],
-    rpcUrl: nodesURL('avalanche'),
-    indexerUrl: indexerURL('avalanche'),
-    relayer: { url: relayerURL('avalanche') }
+    ...genUrls('avalanche')
   },
   {
     ...networks[ChainId.ARBITRUM],
-    rpcUrl: nodesURL('arbitrum'),
-    indexerUrl: indexerURL('arbitrum'),
-    relayer: { url: relayerURL('arbitrum') }
+    ...genUrls('arbitrum')
   },
   {
     ...networks[ChainId.ARBITRUM_NOVA],
-    rpcUrl: nodesURL('arbitrum-nova'),
-    indexerUrl: indexerURL('arbitrum-nova'),
-    relayer: { url: relayerURL('arbitrum-nova') }
+    ...genUrls('arbitrum-nova')
   },
   {
     ...networks[ChainId.OPTIMISM],
-    rpcUrl: nodesURL('optimism'),
-    indexerUrl: indexerURL('optimism'),
-    relayer: { url: relayerURL('optimism') }
+    ...genUrls('optimism')
   },
   {
     ...networks[ChainId.POLYGON_ZKEVM],
-    rpcUrl: nodesURL('polygon-zkevm'),
-    indexerUrl: indexerURL('polygon-zkevm'),
-    relayer: { url: relayerURL('polygon-zkevm') }
+    ...genUrls('polygon-zkevm')
   },
   {
     ...networks[ChainId.GNOSIS],
-    rpcUrl: nodesURL('gnosis'),
-    indexerUrl: indexerURL('gnosis'),
-    relayer: { url: relayerURL('gnosis') }
-  }
-])
-
-export const testnetNetworks = validateAndSortNetworks([
+    ...genUrls('gnosis')
+  },
   {
     ...networks[ChainId.RINKEBY],
-    rpcUrl: nodesURL('rinkeby'),
-    relayer: { url: relayerURL('rinkeby') },
-    indexerUrl: indexerURL('rinkeby')
+    ...genUrls('rinkeby')
   },
   {
     ...networks[ChainId.GOERLI],
-    rpcUrl: nodesURL('goerli'),
-    relayer: { url: relayerURL('goerli') },
-    indexerUrl: indexerURL('goerli')
+    ...genUrls('goerli')
   },
   {
     ...networks[ChainId.POLYGON_MUMBAI],
-    rpcUrl: nodesURL('mumbai'),
-    relayer: { url: relayerURL('mumbai') },
-    indexerUrl: indexerURL('mumbai'),
-    isDefaultChain: true,
-    isAuthChain: true
+    ...genUrls('mumbai'),
   },
   {
     ...networks[ChainId.BSC_TESTNET],
-    rpcUrl: nodesURL('bsc-testnet'),
-    relayer: { url: relayerURL('bsc-testnet') },
-    indexerUrl: indexerURL('bsc-testnet')
+    ...genUrls('bsc-testnet')
   },
   {
     ...networks[ChainId.ARBITRUM_GOERLI],
-    rpcUrl: nodesURL('arbitrum-goerli'),
-    relayer: { url: relayerURL('arbitrum-goerli') },
-    indexerUrl: indexerURL('arbitrum-goerli')
+    ...genUrls('arbitrum-goerli')
   },
   {
     ...networks[ChainId.BASE_GOERLI],
-    rpcUrl: nodesURL('base-goerli'),
-    relayer: { url: relayerURL('base-goerli') },
-    indexerUrl: indexerURL('base-goerli')
+    ...genUrls('base-goerli')
+  },
+  {
+    ...networks[ChainId.HARDHAT],
+    rpcUrl: 'http://localhost:8545',
+    relayer: {
+      url: 'http://localhost:3000',
+      provider: {
+        url: 'http://localhost:8545',
+      }
+    }
+  },
+  {
+    ...networks[ChainId.HARDHAT_2],
+    rpcUrl: 'http://localhost:9545',
+    relayer: {
+      url: 'http://localhost:3000',
+      provider: {
+        url: 'http://localhost:9545',
+      }
+    }
   }
 ])

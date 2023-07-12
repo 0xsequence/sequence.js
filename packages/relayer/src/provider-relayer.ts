@@ -1,22 +1,19 @@
 import { ethers, providers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { computeMetaTxnHash, encodeNonce, SignedTransactions, Transaction, TransactionResponse } from '@0xsequence/transactions'
-import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf } from '@0xsequence/config'
-import { BaseRelayer, BaseRelayerOptions } from './base-relayer'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
-import { logger, Optionals, Mask } from '@0xsequence/utils'
+import { logger, Optionals } from '@0xsequence/utils'
+import { commons } from '@0xsequence/core'
 
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
-export interface ProviderRelayerOptions extends BaseRelayerOptions {
+export interface ProviderRelayerOptions {
   provider: providers.Provider,
   waitPollRate?: number,
   deltaBlocksLog?: number,
   fromBlockLog?: number
 }
 
-export const ProviderRelayerDefaults: Required<Optionals<Mask<ProviderRelayerOptions, BaseRelayerOptions>>> = {
+export const ProviderRelayerDefaults: Required<Optionals<ProviderRelayerOptions>> = {
   waitPollRate: 1000,
   deltaBlocksLog: 12,
   fromBlockLog: -1024
@@ -26,36 +23,35 @@ export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOption
   return obj.provider !== undefined && providers.Provider.isProvider(obj.provider)
 }
 
-export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
+export abstract class ProviderRelayer implements Relayer {
   public provider: providers.Provider
   public waitPollRate: number
   public deltaBlocksLog: number
   public fromBlockLog: number
 
   constructor(options: ProviderRelayerOptions) {
-    super(options)
     const opts = { ...ProviderRelayerDefaults, ...options }
     this.provider = opts.provider
-    this.waitPollRate = opts.waitPollRate
-    this.deltaBlocksLog = opts.deltaBlocksLog
-    this.fromBlockLog = opts.fromBlockLog
   }
 
   abstract getFeeOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
+    address: string,
+    ...transactions: commons.transaction.Transaction[]
+  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+
+  abstract getFeeOptionsRaw(
+    entrypoint: string,
+    data: ethers.utils.BytesLike
   ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
 
   abstract gasRefundOptions(
-    config: WalletConfig,
-    context: WalletContext,
-    ...transactions: Transaction[]
+    address: string,
+    ...transactions: commons.transaction.Transaction[]
   ): Promise<FeeOption[]>
 
-  abstract relay(signedTxs: SignedTransactions, quote?: FeeQuote, waitForReceipt?: boolean): Promise<TransactionResponse>
+  abstract relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt?: boolean): Promise<commons.transaction.TransactionResponse>
 
-  async simulate(wallet: string, ...transactions: Transaction[]): Promise<SimulateResult[]> {
+  async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
     return (await Promise.all(transactions.map(async tx => {
       // Respect gasLimit request of the transaction (as long as its not 0)
       if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
@@ -68,7 +64,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       }
 
       // Fee can't be estimated for self-called if wallet hasn't been deployed
-      if (tx.to === wallet && !(await this.isWalletDeployed(wallet))) {
+      if (tx.to === wallet && await this.provider.getCode(wallet).then((code) => ethers.utils.arrayify(code).length === 0)) {
         return DEFAULT_GAS_LIMIT
       }
 
@@ -93,8 +89,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
   }
 
   async getNonce(
-    config: WalletConfig,
-    context: WalletContext,
+    address: string,
     space?: ethers.BigNumberish,
     blockTag?: providers.BlockTag
   ): Promise<ethers.BigNumberish> {
@@ -102,9 +97,7 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       throw new Error('provider is not set')
     }
 
-    const addr = addressOf(config, context)
-
-    if ((await this.provider.getCode(addr)) === '0x') {
+    if ((await this.provider.getCode(address)) === '0x') {
       return 0
     }
 
@@ -112,21 +105,19 @@ export abstract class ProviderRelayer extends BaseRelayer implements Relayer {
       space = 0
     }
 
-    const module = new ethers.Contract(addr, walletContracts.mainModule.abi, this.provider)
+    const module = new ethers.Contract(address, walletContracts.mainModule.abi, this.provider)
     const nonce = await module.readNonce(space, { blockTag: blockTag })
-    return encodeNonce(space, nonce)
+    return commons.transaction.encodeNonce(space, nonce)
   }
 
   async wait(
-    metaTxnId: string | SignedTransactions,
+    metaTxnId: string | commons.transaction.SignedTransactionBundle,
     timeout?: number,
     delay: number = this.waitPollRate,
     maxFails: number = 5
   ): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
-      logger.info('computing id', metaTxnId.config, metaTxnId.context, metaTxnId.chainId, ...metaTxnId.transactions)
-
-      metaTxnId = computeMetaTxnHash(addressOf(metaTxnId.config, metaTxnId.context), metaTxnId.chainId, ...metaTxnId.transactions)
+      metaTxnId = commons.transaction.intendedTransactionID(metaTxnId)
     }
 
     let timedOut = false

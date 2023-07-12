@@ -1,0 +1,26 @@
+{
+  "name": "@0xsequence/replacer",
+  "version": "0.43.4",
+  "description": "EIP-5719 client implementation",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/replacer",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-replacer.cjs.js",
+  "module": "dist/0xsequence-replacer.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo 'TODO: replacer tests'"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "workspace:*",
+    "@0xsequence/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "devDependencies": {},
+  "files": [
+    "src",
+    "dist"
+  ]
+}

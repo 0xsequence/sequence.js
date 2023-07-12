@@ -1,20 +1,21 @@
 import {
   Web3Provider,
   ProxyMessageProvider,
-  WalletSession,
   WalletRequestHandler,
   ProxyMessageChannel,
   ProxyMessageHandler,
   prefixEIP191Message
 } from '@0xsequence/provider'
-import { ethers, Wallet as EOAWallet } from 'ethers'
+import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
-import { sequenceContext, testnetNetworks } from '@0xsequence/network'
-import { Wallet, isValidSignature, recoverConfig } from '@0xsequence/wallet'
-import { addressOf } from '@0xsequence/config'
 import { LocalRelayer } from '@0xsequence/relayer'
-import { configureLogger, encodeMessageDigest, packMessageData } from '@0xsequence/utils'
+import { configureLogger, encodeMessageDigest } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet } from '../testutils'
+import { Account } from '@0xsequence/account'
+import * as utils from '@0xsequence/tests'
+import { Orchestrator } from '@0xsequence/signhub'
+import { trackers } from '@0xsequence/sessions'
+import { commons } from '@0xsequence/core'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -62,10 +63,8 @@ export const tests = async () => {
 
   // relayer account is same as owner here
   const relayer = new LocalRelayer(owner)
-
-  // wallet account address: 0xa91Ab3C5390A408DDB4a322510A4290363efcEE9 based on the chainId
   const rpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-  const wallet = (await Wallet.singleOwner(owner)).connect(rpcProvider, relayer)
+  const contexts = await utils.context.deploySequenceContexts(rpcProvider.getSigner())
 
   const networks = [
     {
@@ -75,9 +74,24 @@ export const tests = async () => {
       provider: rpcProvider,
       relayer: relayer,
       isDefaultChain: true
-      // isAuthChain: true
     }
   ]
+
+  // wallet account address: 0x91A858FbBa42E7EE200b4303b1A8B2F0BD139663 based on the chainId
+  const account = await Account.new({
+    config: {
+      threshold: 1,
+      checkpoint: 1674142220,
+      signers: [{
+        address: owner.address,
+        weight: 1
+      }]
+    },
+    networks,
+    contexts,
+    orchestrator: new Orchestrator([owner]),
+    tracker: new trackers.local.LocalConfigTracker(rpcProvider)
+  })
 
   // the rpc signer via the wallet
   const walletRequestHandler = new WalletRequestHandler(undefined, null, networks)
@@ -85,7 +99,7 @@ export const tests = async () => {
   // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour
   // of the wallet-webapp, so lets ensure the mock wallet does the same thing too.
   setTimeout(() => {
-    walletRequestHandler.signIn(wallet)
+    walletRequestHandler.signIn(account)
   }, 1000)
 
   // register wallet message handler, in this case using the ProxyMessage transport.
@@ -102,12 +116,12 @@ export const tests = async () => {
   await walletProvider.waitUntilOpened()
 
   // setup web3 provider
-  const provider = new Web3Provider(walletProvider)
+  const provider = new Web3Provider(walletProvider, 31337)
   const signer = provider.getSigner()
   const address = await signer.getAddress()
 
   await test('verifying getAddress result', async () => {
-    assert.equal(address, ethers.utils.getAddress('0xa91Ab3C5390A408DDB4a322510A4290363efcEE9'), 'wallet address')
+    assert.equal(address, ethers.utils.getAddress('0x91A858FbBa42E7EE200b4303b1A8B2F0BD139663'), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -138,34 +152,20 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
     assert.equal(
       sig,
-      '0x00010001230f8b68557d982f26234c9c7ce4ff35a449392c1e7cbc9a1129268ce2acea40529252535b1caa300e30d53d5c24009cb6f2fafd0e132944016f9472c1a0cc8b1b02',
+      '0x000000000000000000000000e35a6b88704b08f944f37d0c709f8cb548594883000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000002a000000000000000000000000000000000000000000000000000000000000002047a9a16280000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000186a00000000000000000000000000050eb6e88efa415aeb63baca79db74c112bef2e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000004432c02a14000000000000000000000000eda2d9b473e7dcf61d18606c459e06e0635c351372a16f43c162cf3b238b87c35fccdbebab1b4d1e42e2c835e30471dd311fe67900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004a000163c9620c0001045ea593a25d0053816f2cfb0239eb04c30cc08fd26193927bf6cf68f7f31a8239ecbcbd1365f18a6bf2bf3b13d544c91d85e35503696a28fcb96a4078a7556a1c02000000000000000000000000000000000000000000006492649264926492649264926492649264926492649264926492649264926492',
       'signature match'
     )
 
     const chainId = await signer.getChainId()
+    const reader = new commons.reader.OnChainReader(rpcProvider)
 
     //
     // Verify the message signature
     //
-    // const messageDigest = ethers.utils.arrayify(ethers.utils.keccak256(message))
+    await account.doBootstrap(31337)
     const messageDigest = encodeMessageDigest(prefixEIP191Message(message))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, sequenceContext, chainId)
+    const isValid = await reader.isValidSignature(address, messageDigest, sig)
     assert.true(isValid, 'signature is valid - 1')
-
-    // also compute the subDigest of the message, to be provided to the end-user
-    // in order to recover the config properly, the subDigest + sig is required.
-    const subDigest = packMessageData(address, chainId, messageDigest)
-
-    //
-    // Recover config / address
-    //
-    const walletConfig = await recoverConfig(subDigest, sig)
-
-    const recoveredWalletAddress = addressOf(walletConfig, sequenceContext)
-    assert.true(recoveredWalletAddress === address, 'recover address - 1')
-
-    const singleSignerAddress = ethers.utils.getAddress('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853') // expected from mock-wallet owner
-    assert.true(singleSignerAddress === walletConfig.signers[0].address, 'owner address check')
   })
 
   walletProvider.closeWallet()

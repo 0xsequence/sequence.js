@@ -1,0 +1,29 @@
+{
+  "name": "@0xsequence/tests",
+  "version": "0.43.7",
+  "description": "test tools for sequence.js",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/tests",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-tests.cjs.js",
+  "module": "dist/0xsequence-tests.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo 'no tests for test tools'"
+  },
+  "dependencies": {
+    "@0xsequence/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "ethers": "^5.7.2",
+    "web3": "^1.8.1"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}

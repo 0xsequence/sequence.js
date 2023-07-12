@@ -1,10 +1,8 @@
-import { ethers, BigNumberish, BytesLike } from 'ethers'
-import { WalletContext } from '@0xsequence/network'
-import { WalletConfig, addressOf, DecodedSignature, isConfigEqual } from '@0xsequence/config'
-import { packMessageData, encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
+import { ethers, BytesLike } from 'ethers'
 import { Web3Provider } from './provider'
-import { isValidSignature as _isValidSignature, recoverConfig, Signer } from '@0xsequence/wallet'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
+import { AccountStatus } from '@0xsequence/account'
+import { commons } from '@0xsequence/core'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
@@ -25,112 +23,115 @@ export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   }
 }
 
+export const trimEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
+  // If the message is not prefixed, we return the message as is.
+  if (JSON.stringify(prefixedMessage.slice(0, eip191prefix.length)) !== JSON.stringify(eip191prefix)) {
+    return prefixedMessage
+  }
+
+  // We have two parts to remove.
+  // First is the EIP-191 prefix.
+  const ethereumSignedMessagePartSlicedArray = prefixedMessage.slice(eip191prefix.length)
+
+  // Second is the digits added which represent length of the message without the prefix
+  // and we need to find the prefix that will match this.
+  // Here first we take the max prefix char length, and check if as a number it is bigger
+  // than the length of the message (since prefix is added to represent length of original message),
+  // if it is we remove 1 from char length, if not we keep the max prefix char length.
+  // As an example for the case where , if the message is 123456789, the expected prefix char is 9, with starting value 9123456789
+  // the char length of the total message with the prefix is 10, so the max prefix char length we start is 2 from [1,0], and as a number 10, it is longer
+  // than the length of the message after removing prefix (10 - 2 = 8), so we slice 1 char less, which is 9, and we get the correct prefix.
+  const maxPrefixCharLength = String(ethereumSignedMessagePartSlicedArray.length).length
+
+  let prefixCharLenght: number
+  let prefixAsNumber: number
+
+  try {
+    prefixAsNumber = Number(ethers.utils.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
+  } catch {
+    prefixAsNumber = Number(ethers.utils.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
+  }
+
+  if (prefixAsNumber > ethereumSignedMessagePartSlicedArray.length || !Number.isInteger(prefixAsNumber)) {
+    prefixCharLenght = maxPrefixCharLength - 1
+  } else {
+    prefixCharLenght = maxPrefixCharLength
+  }
+
+  const prefixRevertedMessage = ethereumSignedMessagePartSlicedArray.slice(prefixCharLenght)
+
+  return prefixRevertedMessage
+}
+
 export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider | ethers.providers.Provider,
-  chainId?: number,
-  walletContext?: WalletContext
+  provider: Web3Provider | ethers.providers.Web3Provider,
+  contexts: { [key: number]: commons.context.WalletContext }
 ): Promise<boolean> => {
-  if (!chainId) {
-    chainId = (await provider.getNetwork())?.chainId
-  }
-  if (!walletContext && Web3Provider.isSequenceProvider(provider)) {
-    walletContext = await provider.getSigner().getWalletContext()
-  }
-  return _isValidSignature(address, digest, sig, provider, walletContext, chainId)
+  const reader = new commons.reader.OnChainReader(provider, contexts)
+  return reader.isValidSignature(address, digest, sig)
 }
 
-export const isValidMessageSignature = async (
-  address: string,
-  message: string | Uint8Array,
-  signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider  | ethers.providers.Provider,
-  chainId?: number,
-  walletContext?: WalletContext
-): Promise<boolean> => {
-  const prefixed = prefixEIP191Message(message)
-  const digest = encodeMessageDigest(prefixed)
-  return isValidSignature(address, digest, signature, provider, chainId, walletContext)
-}
+// export const isValidMessageSignature = async (
+//   address: string,
+//   message: string | Uint8Array,
+//   signature: string,
+//   provider: Web3Provider | ethers.providers.Web3Provider,
+//   chainId?: number,
+//   walletContext?: WalletContext
+// ): Promise<boolean> => {
+//   const prefixed = prefixEIP191Message(message)
+//   const digest = encodeMessageDigest(prefixed)
+//   return isValidSignature(address, digest, signature, provider, chainId, walletContext)
+// }
 
-export const isValidTypedDataSignature = (
-  address: string,
-  typedData: TypedData,
-  signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider  | ethers.providers.Provider,
-  chainId?: number,
-  walletContext?: WalletContext
-): Promise<boolean> => {
-  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, chainId, walletContext)
-}
+// export const isValidTypedDataSignature = (
+//   address: string,
+//   typedData: TypedData,
+//   signature: string,
+//   provider: Web3Provider | ethers.providers.Web3Provider,
+//   chainId?: number,
+//   walletContext?: WalletContext
+// ): Promise<boolean> => {
+//   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, chainId, walletContext)
+// }
 
-export const recoverWalletConfig = async (
-  address: string,
-  digest: BytesLike,
-  signature: string | DecodedSignature,
-  chainId: BigNumberish,
-  walletContext?: WalletContext
-): Promise<WalletConfig> => {
-  const subDigest = packMessageData(address, chainId, digest)
-  const config = await recoverConfig(subDigest, signature)
+// export const recoverWalletConfig = async (
+//   address: string,
+//   digest: BytesLike,
+//   signature: string | commons.signature.UnrecoveredSignature | commons.signature.Signature<commons.config.Config>,
+//   chainId: BigNumberish,
+//   walletContext?: WalletContext
+// ): Promise<commons.config.Config> => {
+//   const subDigest = packMessageData(address, chainId, digest)
+//   const config = await recoverConfig(subDigest, signature)
 
-  if (walletContext) {
-    const recoveredWalletAddress = addressOf(config, walletContext)
-    if (config.address && config.address !== recoveredWalletAddress) {
-      throw new Error('recovered address does not match the WalletConfig address, check the WalletContext')
-    } else {
-      config.address = recoveredWalletAddress
-    }
-  }
+//   if (walletContext) {
+//     const recoveredWalletAddress = addressOf(config, walletContext)
+//     if (config.address && config.address !== recoveredWalletAddress) {
+//       throw new Error('recovered address does not match the WalletConfig address, check the WalletContext')
+//     } else {
+//       config.address = recoveredWalletAddress
+//     }
+//   }
 
-  return config
-}
+//   return config
+// }
 
 export const isBrowserExtension = (): boolean =>
   window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
 
 export const isUnityPlugin = (): boolean => !!navigator.userAgent.match(/UnitySequence/i)
 
-/**
- * Returns the status of a signer's wallet on given chain by checking wallet deployment and config status
- *
- * @param {Signer} signer
- * @param {number} chainId
- * @return {Promise<boolean>} Promise that returns true if the wallet is up to date, false otherwise
- */
-export const isWalletUpToDate = async (signer: Signer, chainId: number): Promise<boolean> => {
-  const walletState = await signer.getWalletState()
-  const networks = await signer.getNetworks()
-
-  const walletStateForRequiredChain = walletState.find(state => state.chainId === chainId)
-  if (!walletStateForRequiredChain) {
-    throw new Error(`WalletRequestHandler: could not find wallet state for chainId ${chainId}`)
-  }
-
-  const isDeployed = walletStateForRequiredChain.deployed
-
-  if (!networks) {
-    throw new Error(`isWalletUpToDate util: could not get networks from signer`)
-  }
-  const authChain = networks.find(network => network.isAuthChain)
-  if (!authChain) {
-    throw new Error(`isWalletUpToDate util: could not get auth chain network information`)
-  }
-  const authChainId = authChain.chainId
-  const authChainConfig = walletState.find(state => state.chainId === authChainId)?.config
-  if (!authChainConfig) {
-    throw new Error(`isWalletUpToDate util: could not get auth chain config`)
-  }
-  const requiredChainConfig = walletStateForRequiredChain.config
-  if (!requiredChainConfig) {
-    throw new Error(`isWalletUpToDate util: could not get config for chainId ${chainId}`)
-  }
-
-  const isUpToDate = isConfigEqual(authChainConfig, requiredChainConfig)
-
-  return isDeployed && isUpToDate
+// /**
+//  * Returns the status of a signer's wallet on given chain by checking wallet deployment and config status
+//  *
+//  * @param {Status} of the wallet
+//  */
+export const isWalletUpToDate = (status: AccountStatus): boolean => {
+  return status.onChain.deployed && status.fullyMigrated
 }
 
 export interface ItemStore {

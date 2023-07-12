@@ -1,6 +1,5 @@
 import {
   NetworkConfig,
-  WalletContext,
   ChainIdLike,
   JsonRpcSender,
   JsonRpcRouter,
@@ -16,10 +15,10 @@ import {
   findNetworkConfig,
   updateNetworkConfig,
   ensureValidNetworks,
-  sortNetworks
+  sortNetworks,
+  findSupportedNetwork
 } from '@0xsequence/network'
-import { WalletConfig, WalletState } from '@0xsequence/config'
-import { logger } from '@0xsequence/utils'
+import { getDefaultConnectionInfo, logger } from '@0xsequence/utils'
 import { Web3Provider, Web3Signer } from './provider'
 import {
   MuxMessageProvider,
@@ -35,6 +34,10 @@ import { LocalStore, ItemStore, LocalStorage } from './utils'
 import { WalletUtils } from './utils/index'
 
 import { Runtime } from 'webextension-polyfill'
+import { commons } from '@0xsequence/core'
+import { AccountStatus } from '@0xsequence/account'
+
+export const SESSION_LOCALSTORE_KEY = '@sequence.session'
 
 export interface WalletProvider {
   connect(options?: ConnectOptions): Promise<ConnectDetails>
@@ -46,7 +49,6 @@ export interface WalletProvider {
   getAddress(): Promise<string>
   getNetworks(chainId?: ChainIdLike): Promise<NetworkConfig[]>
   getChainId(): Promise<number>
-  getAuthChainId(): Promise<number>
 
   isOpened(): boolean
   openWallet(path?: string, intent?: OpenWalletIntent, networkId?: string | number): Promise<boolean>
@@ -55,9 +57,9 @@ export interface WalletProvider {
   getProvider(chainId?: ChainIdLike): Web3Provider | undefined
   getSigner(chainId?: ChainIdLike): Web3Signer
 
-  getWalletContext(): Promise<WalletContext>
-  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]>
-  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]>
+  getWalletContext(): Promise<commons.context.VersionedContext>
+  getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
+  getWalletState(chainId?: ChainIdLike): Promise<AccountStatus>
   isDeployed(chainId?: ChainIdLike): Promise<boolean>
 
   getProviderConfig(): ProviderConfig
@@ -177,7 +179,7 @@ export class Wallet implements WalletProvider {
       if (!this.networks || this.networks.length === 0) return 0
 
       // return the default chainId as we're connected
-      return this.networks.find(network => network.isDefaultChain)!.chainId
+      return findNetworkConfig(this.networks, this.config.defaultNetworkId!)!.chainId
     })
 
     // Provider proxy to support middleware stack of logging, caching and read-only rpc calls
@@ -200,7 +202,11 @@ export class Wallet implements WalletProvider {
       this.transport.messageProvider
     )
 
-    this.transport.provider = new Web3Provider(this.transport.router)
+    // TODO: Move finding this config to upper in the stack
+    this.transport.provider = new Web3Provider(
+      this.transport.router,
+      findSupportedNetwork(this.config.defaultNetworkId!)?.chainId
+    )
 
     // NOTE: we don't listen on 'connect' even here as we handle it within connect() method
     // in more synchronous flow.
@@ -244,13 +250,13 @@ export class Wallet implements WalletProvider {
     })
 
     // below will update the wallet context automatically
-    this.transport.messageProvider.on('walletContext', (walletContext: WalletContext) => {
+    this.transport.messageProvider.on('walletContext', (walletContext: commons.context.VersionedContext) => {
       this.useSession({ walletContext: walletContext }, true)
     })
   }
 
   loadSession = async (preferredNetwork?: string | number): Promise<WalletSession | undefined> => {
-    const data = await LocalStorage.getInstance().getItem('@sequence.session')
+    const data = await LocalStorage.getInstance().getItem(SESSION_LOCALSTORE_KEY)
     if (!data || data === '') {
       return undefined
     }
@@ -282,6 +288,11 @@ export class Wallet implements WalletProvider {
   }
 
   connect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+    if (options && options?.authorizeVersion === undefined) {
+      // Populate default authorize version if not provided
+      options.authorizeVersion = 2
+    }
+
     if (options?.refresh === true) {
       this.disconnect()
     }
@@ -301,8 +312,13 @@ export class Wallet implements WalletProvider {
     }
 
     if (options) {
-      if (options.authorize && (!options.app || options.app === '')) {
-        throw new Error(`connecting with 'authorize' option also requires 'app' to be set`)
+      if (options.authorize) {
+        if (!options.app) {
+          throw new Error(`connecting with 'authorize' option also requires 'app' to be set`)
+        }
+        if (options.authorizeVersion === undefined) {
+          options.authorizeVersion = 2
+        }
       }
     }
 
@@ -366,11 +382,11 @@ export class Wallet implements WalletProvider {
     return this.connect({ ...options, authorize: true })
   }
 
-  disconnect(): void {
+  disconnect(): Promise<void> {
     if (this.isOpened()) {
       this.closeWallet()
     }
-    this.clearSession()
+    return this.clearSession()
   }
 
   // TODO: add switchNetwork(network: string | number) which will call wallet_switchEthereumChain
@@ -429,24 +445,10 @@ export class Wallet implements WalletProvider {
       throw new Error('networks have not been set by session. connect first.')
     }
 
-    const network = this.networks.find(network => network.isDefaultChain)
+    const network = findNetworkConfig(this.networks, this.config.defaultNetworkId!)
 
     if (!network) {
       throw new Error('networks must have a default chain specified')
-    }
-
-    return network.chainId
-  }
-
-  getAuthChainId = async (): Promise<number> => {
-    if (!this.networks || this.networks.length < 1) {
-      throw new Error('networks have not been set by session. connect first.')
-    }
-
-    const network = this.networks.find(network => network.isAuthChain)
-
-    if (!network) {
-      throw new Error('networks must have an auth chain specified')
     }
 
     return network.chainId
@@ -486,7 +488,7 @@ export class Wallet implements WalletProvider {
       }
     }
 
-    let network: NetworkConfig | undefined = this.networks.find(network => network.isDefaultChain)!
+    let network: NetworkConfig | undefined = findNetworkConfig(this.networks, this.config.defaultNetworkId!)!
     if (chainId) {
       network = findNetworkConfig(this.networks, chainId)
       if (!network) {
@@ -503,7 +505,7 @@ export class Wallet implements WalletProvider {
     let provider: Web3Provider
 
     // network.provider may be set by the ProviderConfig override
-    const rpcProvider = network.provider ? network.provider : new providers.JsonRpcProvider(network.rpcUrl, network.chainId)
+    const rpcProvider = new providers.JsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), network.chainId)
 
     if (network.isDefaultChain) {
       // communicating with defaultChain will prioritize the wallet message transport
@@ -544,14 +546,6 @@ export class Wallet implements WalletProvider {
     return provider
   }
 
-  async getAuthProvider(): Promise<Web3Provider> {
-    return this.getProvider((await this.getAuthNetwork()).chainId)!
-  }
-
-  async getAuthNetwork(): Promise<NetworkConfig> {
-    return (await this.getNetworks()).find(n => n.isAuthChain)!
-  }
-
   getAllProviders(): { [chainId: number]: Web3Provider } {
     return this.providers
   }
@@ -560,19 +554,15 @@ export class Wallet implements WalletProvider {
     return this.getProvider(chainId)!.getSigner()
   }
 
-  async getAuthSigner(): Promise<Web3Signer> {
-    return (await this.getAuthProvider()).getSigner()
-  }
-
-  getWalletConfig(chainId?: ChainIdLike): Promise<WalletConfig[]> {
+  getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config> {
     return this.getSigner().getWalletConfig(chainId)
   }
 
-  getWalletState(chainId?: ChainIdLike): Promise<WalletState[]> {
+  getWalletState(chainId?: ChainIdLike): Promise<AccountStatus> {
     return this.getSigner().getWalletState(chainId)
   }
 
-  getWalletContext(): Promise<WalletContext> {
+  getWalletContext(): Promise<commons.context.VersionedContext> {
     return this.getSigner().getWalletContext()
   }
 
@@ -596,7 +586,7 @@ export class Wallet implements WalletProvider {
   private saveSession = async (session: WalletSession) => {
     logger.debug('wallet provider: saving session')
     const data = JSON.stringify(session)
-    await LocalStorage.getInstance().setItem('@sequence.session', data)
+    await LocalStorage.getInstance().setItem(SESSION_LOCALSTORE_KEY, data)
   }
 
   private useSession = async (session: WalletSession, autoSave: boolean = true) => {
@@ -678,9 +668,9 @@ export class Wallet implements WalletProvider {
     }
   }
 
-  private clearSession(): void {
+  private async clearSession(): Promise<void> {
     logger.debug('wallet provider: clearing session')
-    LocalStorage.getInstance().removeItem('@sequence.session')
+    await LocalStorage.getInstance().removeItem(SESSION_LOCALSTORE_KEY)
     this.session = undefined
     this.networks = []
     this.providers = {}
@@ -741,7 +731,7 @@ export interface ProviderConfig {
   // WalletContext used the one returned by the wallet app upon login.
   //
   // NOTE: do not use this option unless you know what you're doing
-  walletContext?: WalletContext
+  walletContext?: commons.context.VersionedContext
 }
 
 export const DefaultProviderConfig: ProviderConfig = {

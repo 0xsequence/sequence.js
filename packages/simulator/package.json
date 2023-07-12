@@ -17,13 +17,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/transactions": "^0.43.34",
-    "@0xsequence/wallet-contracts": "1.10.0"
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/wallet-contracts": "^1.10.0"
   },
   "peerDependencies": {
     "ethers": ">=5.5 < 6"
   },
   "devDependencies": {
+    "@0xsequence/signhub": "workspace:*",
+    "@0xsequence/tests": "workspace:*",
     "ethers": "^5.7.2"
   },
   "files": [

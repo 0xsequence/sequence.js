@@ -1,10 +1,19 @@
 import { ethers } from 'ethers'
-import { JsonRpcRouter, JsonRpcSender, loggingProviderMiddleware, EagerProvider, SingleflightMiddleware, CachedProvider, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './json-rpc'
+import {
+  JsonRpcRouter,
+  JsonRpcSender,
+  loggingProviderMiddleware,
+  EagerProvider,
+  SingleflightMiddleware,
+  CachedProvider,
+  JsonRpcMiddleware,
+  JsonRpcMiddlewareHandler
+} from './json-rpc'
 import { networks, ChainId } from './config'
 
 export interface JsonRpcProviderOptions {
   // ..
-  chainId? :number
+  chainId?: number
 
   // ..
   middlewares?: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>
@@ -32,8 +41,7 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
     // so if you set middlewares, make sure you set the caching middleware yourself if you'd
     // like to keep using it.
     const router = new JsonRpcRouter(
-      middlewares ?? 
-      [
+      middlewares ?? [
         // loggingProviderMiddleware,
         new EagerProvider({ chainId }),
         new SingleflightMiddleware(),
@@ -71,21 +79,24 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
     const request = {
       method: method,
       params: params,
-      id: (this._nextId++),
+      id: this._nextId++,
       jsonrpc: '2.0'
     }
 
-    const result = ethers.utils.fetchJson(this.connection, JSON.stringify(request), getResult).then((result) => {
-      return result
-    }, (error) => {
-      throw error
-    })
+    const result = ethers.utils.fetchJson(this.connection, JSON.stringify(request), getResult).then(
+      result => {
+        return result
+      },
+      error => {
+        throw error
+      }
+    )
 
     return result
   }
 }
 
-function getResult(payload: { error?: { code?: number, data?: any, message?: string }, result?: any }): any {
+function getResult(payload: { error?: { code?: number; data?: any; message?: string }; result?: any }): any {
   if (payload.error) {
     // @TODO: not any
     const error: any = new Error(payload.error.message)

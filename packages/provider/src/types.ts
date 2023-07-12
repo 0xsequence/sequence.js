@@ -1,4 +1,6 @@
-import { NetworkConfig, WalletContext, JsonRpcRequest, JsonRpcResponse, JsonRpcHandler } from '@0xsequence/network'
+import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
+import { commons } from '@0xsequence/core'
+import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -49,11 +51,7 @@ export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
 // which may contain the result or an error payload from the wallet.
 export type ProviderMessageResponseCallback = (error?: ProviderRpcError, response?: ProviderMessageResponse) => void
 
-export interface ProviderRpcError extends Error {
-  message: string
-  code?: number
-  data?: { [key: string]: any }
-}
+export type ProviderRpcError = NetworkProviderRpcError
 
 export interface ProviderMessageRequestHandler {
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet.
@@ -116,7 +114,7 @@ export interface WalletEventTypes {
   chainChanged: (chainIdHex: string) => void
 
   networks: (networks: NetworkConfig[]) => void
-  walletContext: (walletContext: WalletContext) => void
+  walletContext: (walletContext: commons.context.VersionedContext) => void
 }
 
 export interface ProviderEventTypes extends WalletEventTypes {
@@ -155,6 +153,9 @@ export interface ConnectOptions {
 
   /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
   authorize?: boolean
+
+  /** authorizeVersion is the version of the SDK that will validate the ETHAuth proof. */
+  authorizeVersion?: number
 
   /** askForEmail will prompt to give permission to the dapp to access email address */
   askForEmail?: boolean
@@ -263,19 +264,15 @@ export interface MessageToSign {
   message?: Uint8Array
   typedData?: TypedData
   chainId?: number
+
+  eip6492?: boolean
 }
 
-export interface ETHAuthProof {
-  // eip712 typed-data payload for ETHAuth domain as input
-  typedData: TypedData
-
-  // signature encoded in an ETHAuth proof string
-  proofString: string
-}
+export type ETHAuthProof = AuthETHAuthProof
 
 export interface WalletSession {
   // Wallet context
-  walletContext?: WalletContext
+  walletContext?: commons.context.VersionedContext
 
   // Account address of the wallet
   accountAddress?: string

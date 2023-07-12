@@ -1,5 +1,3 @@
-import { ProviderRpcError } from '@0xsequence/provider'
-
 export const JsonRpcVersion = '2.0'
 
 export interface JsonRpcRequest {
@@ -33,4 +31,9 @@ export type JsonRpcMiddleware = (next: JsonRpcHandlerFunc) => JsonRpcHandlerFunc
 
 export interface JsonRpcMiddlewareHandler {
   sendAsyncMiddleware: JsonRpcMiddleware
+}
+
+export interface ProviderRpcError extends Error {
+  code?: number
+  data?: { [key: string]: any }
 }

@@ -1,20 +1,15 @@
+import { NetworkConfig, ChainIdLike, findNetworkConfig } from '@0xsequence/network'
+import { getDefaultConnectionInfo, jwtDecodeClaims } from '@0xsequence/utils'
+import { Account } from '@0xsequence/account'
+import { ethers } from 'ethers'
+import { tracker, trackers } from '@0xsequence/sessions'
+import { Orchestrator } from '@0xsequence/signhub'
+import { migrator } from '@0xsequence/migration'
+import { commons, v1 } from '@0xsequence/core'
 import { SequenceAPIClient } from '@0xsequence/api'
-import {
-  ConfigFinder,
-  SequenceUtilsFinder,
-  WalletConfig,
-  decodeSignature,
-  editConfig,
-  genConfig,
-  isDecodedSigner
-} from '@0xsequence/config'
-import { ETHAuth, Proof } from '@0xsequence/ethauth'
-import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
-import { ChainIdLike, NetworkConfig, WalletContext, findNetworkConfig, getAuthNetwork, JsonRpcProvider } from '@0xsequence/network'
-import { jwtDecodeClaims } from '@0xsequence/utils'
-import { Account } from '@0xsequence/wallet'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
+import { ETHAuth, Proof } from '@0xsequence/ethauth'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -39,11 +34,25 @@ type ProofStringPromise = {
   expiration: number
 }
 
-export interface SessionDump {
-  config: WalletConfig
-  context: WalletContext
+export interface SessionDumpV1 {
+  config: Omit<v1.config.WalletConfig, 'version'> & { address?: string }
   jwt?: SessionJWT
   metadata: SessionMeta
+}
+
+export interface SessionDumpV2 {
+  version: 2
+  address: string
+  jwt?: SessionJWT
+  metadata: SessionMeta
+}
+
+export function isSessionDumpV1(obj: any): obj is SessionDumpV1 {
+  return obj.config && obj.metadata && obj.version === undefined
+}
+
+export function isSessionDumpV2(obj: any): obj is SessionDumpV2 {
+  return obj.version === 2 && obj.address && obj.metadata
 }
 
 // Default session expiration of ETHAuth token (1 week)
@@ -54,9 +63,22 @@ export const LONG_SESSION_EXPIRATION = 3e7
 
 const EXPIRATION_JWT_MARGIN = 60 // seconds
 
+// These chains are always validated for migrations
+// if they are not available, the login will fail
+export const CRITICAL_CHAINS = [1, 137]
+
+export type SessionSettings = {
+  contexts: commons.context.VersionedContext
+  sequenceApiUrl: string
+  sequenceApiChainId: ethers.BigNumberish
+  sequenceMetadataUrl: string
+  networks: NetworkConfig[]
+  tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
+  orchestrator: Orchestrator
+}
+
 export class Session {
   _initialAuthRequest: Promise<SequenceAPIClient>
-
   _jwt: SessionJWTPromise | undefined
 
   // proof strings are indexed by account address and app name, see getProofStringKey()
@@ -70,13 +92,12 @@ export class Session {
 
   constructor(
     public sequenceApiUrl: string,
+    public sequenceApiChainId: ethers.BigNumberish,
     public sequenceMetadataUrl: string,
-    private networks: NetworkConfig[],
-    public config: WalletConfig,
-    public context: WalletContext,
+    public networks: NetworkConfig[],
+    public contexts: commons.context.VersionedContext,
     public account: Account,
     public metadata: SessionMeta,
-    private readonly authProvider: ethers.providers.JsonRpcProvider,
     jwt?: SessionJWT
   ) {
     if (jwt) {
@@ -103,10 +124,6 @@ export class Session {
     this.account = account
   }
 
-  setConfig(config: WalletConfig) {
-    this.config = config
-  }
-
   async auth(maxTries: number = 5): Promise<SequenceAPIClient> {
     const url = this.sequenceApiUrl
     if (!url) throw Error('No sequence api url')
@@ -127,15 +144,10 @@ export class Session {
     return new SequenceAPIClient(url, jwtAuth)
   }
 
-  get isTestnetMode(): boolean | undefined {
-    if (!this.networks || this.networks.length === 0) return
-    return !!this.networks[0].testnet
-  }
-
   async getAPIClient(tryAuth: boolean = true): Promise<SequenceAPIClient> {
     if (!this.apiClient) {
       const url = this.sequenceApiUrl
-      if (!url) throw Error('No chaind url')
+      if (!url) throw Error('No sequence api url')
 
       const jwtAuth = (await this.getJWT(tryAuth)).token
       this.apiClient = new SequenceAPIClient(url, jwtAuth)
@@ -171,9 +183,13 @@ export class Session {
     return this.indexerClients.get(network.chainId)!
   }
 
+  private now(): number {
+    return Math.floor(Date.now() / 1000)
+  }
+
   private async getJWT(tryAuth: boolean): Promise<SessionJWT> {
     const url = this.sequenceApiUrl
-    if (!url) throw Error('No chaind url')
+    if (!url) throw Error('No sequence api url')
 
     // check if we already have or are waiting for a token
     if (this._jwt) {
@@ -200,7 +216,7 @@ export class Session {
         .then(async proofString => {
           const api = new SequenceAPIClient(url)
 
-          const authResp = await api.getAuthToken({ ewtString: proofString, testnetMode: this.isTestnetMode })
+          const authResp = await api.getAuthToken({ ewtString: proofString })
 
           if (authResp?.status === true && authResp.jwtToken.length !== 0) {
             return authResp.jwtToken
@@ -255,6 +271,7 @@ export class Session {
     const proof = new Proof({
       address: this.account.address
     })
+
     proof.claims.app = this.name
     if (typeof window === 'object') {
       proof.claims.ogn = window.location.origin
@@ -262,37 +279,34 @@ export class Session {
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
-    const configFinder = new SequenceUtilsFinder(this.authProvider)
-    const authWallet = this.account.authWallet()
+    const chainId = ethers.BigNumber.from(this.sequenceApiChainId)
+    const network = this.networks.find(n => chainId.eq(n.chainId))
+    if (!network) throw Error('No network found')
+    ethAuth.chainId = chainId.toNumber()
+    // TODO: Modify ETHAuth so it can take a provider instead of a url
+    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+      name: '',
+      chainId: chainId.toNumber()
+    })
+
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
     const proofString = {
-      // Fetch latest config
-      // TODO: Should only search for latest config if necessary to be more efficient.
-      //       Perhaps compare local config hash with on-chain hash before doing
-      //       the search through the logs. Should do this accross sequence.js
-      proofString: configFinder
-        .findCurrentConfig({
-          address: authWallet.wallet.address,
-          provider: this.authProvider,
-          context: authWallet.wallet.context,
-          knownConfigs: [authWallet.wallet.config]
-        })
-        .then(val => {
-          if (!val.config) throw Error("Can't find latest config")
-          return authWallet.wallet
-            .useConfig(val.config!)
-            .sign(proof.messageDigest())
-            .then(signature => {
-              const decodedSignature = decodeSignature(signature)
-              const totalWeight = decodedSignature.signers.filter(isDecodedSigner).reduce((totalWeight, signer) => totalWeight + signer.weight, 0)
-              if (totalWeight < decodedSignature.threshold) {
-                throw Error(`insufficient signing power, need ${decodedSignature.threshold}, have ${totalWeight}`)
-              }
-
-              proof.signature = signature
-              return ethAuth.encodeProof(proof, true)
-            })
+      proofString: Promise.resolve(
+        // NOTICE: TODO: Here we ask the account to sign the message
+        // using whatever configuration we have ON-CHAIN, this means
+        // that the account will still use the v1 wallet, even if the migration
+        // was signed.
+        //
+        // This works for Sequence webapp v1 -> v2 because all v1 configurations share the same formula
+        // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
+        // those other signers may not be part of the configuration.
+        //
+        this.account.signDigest(proof.messageDigest(), this.sequenceApiChainId, true, 'eip6492')
+      )
+        .then(s => {
+          proof.signature = s
+          return ethAuth.encodeProof(proof, true)
         })
         .catch(reason => {
           this.proofStrings.delete(key)
@@ -300,6 +314,7 @@ export class Session {
         }),
       expiration
     }
+
     this.proofStrings.set(key, proofString)
     return proofString
   }
@@ -311,7 +326,16 @@ export class Session {
   private async isProofStringValid(proofString: string): Promise<boolean> {
     try {
       const ethAuth = new ETHAuth()
-      ethAuth.provider = this.authProvider
+      const chainId = ethers.BigNumber.from(this.sequenceApiChainId)
+      const network = this.networks.find(n => chainId.eq(n.chainId))
+      if (!network) throw Error('No network found')
+      ethAuth.chainId = chainId.toNumber()
+
+      // TODO: Modify ETHAuth so it can take a provider instead of a url
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+        name: '',
+        chainId: chainId.toNumber()
+      })
 
       await ethAuth.decodeProof(proofString)
 
@@ -321,7 +345,7 @@ export class Session {
     }
   }
 
-  async dump(): Promise<SessionDump> {
+  async dump(): Promise<SessionDumpV2> {
     let jwt: SessionJWT | undefined
     if (this._jwt) {
       try {
@@ -331,182 +355,212 @@ export class Session {
     }
 
     return {
-      config: this.config,
-      context: this.context,
+      version: 2,
+      address: this.account.address,
       metadata: this.metadata,
       jwt
     }
   }
 
-  private now(): number {
-    return Math.floor(new Date().getTime() / 1000)
-  }
-
   static async open(args: {
-    sequenceApiUrl: string
-    sequenceMetadataUrl: string
-    context: WalletContext
-    networks: NetworkConfig[]
+    settings: SessionSettings
+    addSigners: commons.config.SimpleSigner[]
     referenceSigner: string
-    signers: { signer: AbstractSigner | string; weight: ethers.BigNumberish }[]
     threshold: ethers.BigNumberish
     metadata: SessionMeta
-    deepSearch?: boolean
-    knownConfigs?: WalletConfig[]
-    noIndex?: boolean
-    configFinder?: ConfigFinder
+    selectWallet: (wallets: string[]) => Promise<string | undefined>
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
+    onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const {
-      sequenceApiUrl,
-      sequenceMetadataUrl,
-      context,
-      networks,
-      referenceSigner,
-      signers,
-      threshold,
-      deepSearch,
-      knownConfigs,
-      noIndex,
-      metadata
-    } = args
+    const { referenceSigner, threshold, metadata, addSigners, selectWallet, settings, editConfigOnMigration, onMigration } = args
+    const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
 
-    const authProvider = getAuthProvider(networks)
-    const configFinder = args.configFinder ? args.configFinder : new SequenceUtilsFinder(authProvider)
+    const referenceChainId = sequenceApiChainId
+    if (!referenceChainId) throw Error('No reference chain found')
 
-    const solvedSigners = Promise.all(
-      signers.map(async s => ({ ...s, address: typeof s.signer === 'string' ? s.signer : await s.signer.getAddress() }))
-    )
+    const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
+    const selectedWallet = await selectWallet(foundWallets.map(w => w.wallet))
 
-    const fullSigners = signers.filter(s => typeof s.signer !== 'string').map(s => s.signer)
+    let account: Account
 
-    const existingWallet = (
-      await configFinder.findLastWalletOfInitialSigner({
-        signer: referenceSigner,
-        context: context,
-        provider: authProvider,
-        requireIndex: deepSearch ? false : true
+    if (selectedWallet) {
+      // existing account, lets update it
+      account = new Account({
+        address: selectedWallet,
+        tracker,
+        networks,
+        contexts,
+        orchestrator
       })
-    ).wallet
 
-    if (existingWallet) {
-      // existing account
+      // Get the latest configuration of the wallet (on the reference chain)
+      // now this configuration should be of the latest version, so we can start
+      // manipulating it.
 
-      // Find prev configuration
-      const config = (
-        await configFinder.findCurrentConfig({
-          address: existingWallet,
-          provider: authProvider,
-          context: context,
-          knownConfigs
+      // NOTICE: We are performing the wallet update on a single chain, assuming that
+      // all other networks have the same configuration. This is not always true.
+      if (addSigners.length > 0) {
+        // New wallets never need migrations
+        // (because we create them on the latest version)
+        let status = await account.status(referenceChainId)
+
+        // If the wallet was created originally on v2, then we can skip
+        // the migration checks all together.
+        if (status.original.version !== status.version || account.version !== status.version) {
+          // Account may not have been migrated yet, so we need to check
+          // if it has been migrated and if not, migrate it (in all chains)
+          const { migratedAllChains: isFullyMigrated, failedChains } = await account.isMigratedAllChains()
+
+          // Failed chains must not contain mainnet or polygon, otherwise we cannot proceed.
+          if (failedChains.some(c => CRITICAL_CHAINS.includes(c))) {
+            throw Error(`Failed to fetch account status on ${failedChains.join(', ')}`)
+          }
+
+          if (!isFullyMigrated) {
+            // This is an oportunity for whoever is opening the session to
+            // feed the orchestrator with more signers, so that the migration
+            // can be completed.
+            if (onMigration && !(await onMigration(account))) {
+              throw Error('Migration cancelled, cannot open session')
+            }
+
+            const { failedChains } = await account.signAllMigrations(editConfigOnMigration)
+            if (failedChains.some(c => CRITICAL_CHAINS.includes(c))) {
+              throw Error(`Failed to sign migrations on ${failedChains.join(', ')}`)
+            }
+
+            // If we are using a dedupped tracker we need to invalidate the cache
+            // otherwise we run the risk of not seeing the signed migrations reflected.
+            if (trackers.isDedupedTracker(tracker)) {
+              tracker.invalidateCache()
+            }
+
+            let isFullyMigrated2: boolean
+            ;[isFullyMigrated2, status] = await Promise.all([
+              account.isMigratedAllChains().then(r => r.migratedAllChains),
+              account.status(referenceChainId)
+            ])
+
+            if (!isFullyMigrated2) throw Error('Failed to migrate account')
+          }
+        }
+
+        // NOTICE: We only need to do this because the API will not be able to
+        // validate the v2 signature (if the account has an onchain version of 1)
+        // we could speed this up by sending the migration alongside the jwt request
+        // and letting the API validate it offchain.
+        if (status.onChain.version !== status.version) {
+          await account.doBootstrap(referenceChainId, undefined, status)
+        }
+
+        const prevConfig = status.config
+        const newConfig = account.coders.config.editConfig(prevConfig, {
+          add: addSigners,
+          checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
+          threshold
         })
-      ).config
 
-      if (!config) throw Error('Wallet config not found')
-
-      // Load prev account
-      const account = new Account(
-        {
-          initialConfig: config,
-          networks: networks,
-          context: context
-        },
-        ...fullSigners
-      )
-
-      const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
-
-      // Update wallet config on-chain on the authChain
-      const [newConfig] = await account.updateConfig(
-        editConfig(config, { threshold, set: await solvedSigners }),
-        noIndex ? false : true
-      )
-
-      // Session is ready, lets update
-      session.setConfig(newConfig)
-      session.setAccount(
-        new Account(
-          {
-            initialConfig: newConfig,
-            networks: networks,
-            context: context
-          },
-          ...fullSigners
-        )
-      )
-
-      if (sequenceApiUrl) {
-        // Fire JWT requests after updating config
-        session._initialAuthRequest = session.auth()
-      } else {
-        session._initialAuthRequest = Promise.reject('no sequence api url')
+        await account.updateConfig(newConfig)
       }
-
-      return session
     } else {
       // fresh account
-      const config = genConfig(threshold, await solvedSigners)
+      account = await Account.new({
+        config: { threshold, checkpoint: 0, signers: addSigners },
+        tracker,
+        contexts,
+        orchestrator,
+        networks
+      })
 
-      const account = new Account(
-        {
-          initialConfig: config,
-          networks: networks,
-          context: context
-        },
-        ...fullSigners
-      )
+      // sign a digest and send it to the tracker
+      // otherwise the tracker will not know about this account
+      await account.publishWitness()
 
-      // send referenceSigner as "requireFreshSigners"
-      // this ensures the user doesn't end up with multiple accounts if there is a race condition during login
-
-      await account.publishConfig(noIndex ? false : true, [referenceSigner])
-
-      const session = new Session(sequenceApiUrl, sequenceMetadataUrl, networks, config, context, account, metadata, authProvider)
-
-      if (sequenceApiUrl) {
-        // Fire JWT requests when opening session
-        session._initialAuthRequest = session.auth()
-      } else {
-        session._initialAuthRequest = Promise.reject('no sequence api url')
+      // safety check, the remove tracker should be able to find
+      // this account for the reference signer
+      const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner, noCache: true })
+      if (!foundWallets.some(w => w.wallet === account.address)) {
+        throw Error('Account not found on tracker')
       }
-
-      return session
     }
+
+    const session = new Session(sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, networks, contexts, account, metadata)
+
+    if (sequenceApiUrl) {
+      // Fire JWT requests after updating config
+      session._initialAuthRequest = session.auth()
+    } else {
+      session._initialAuthRequest = Promise.reject('no sequence api url')
+    }
+
+    return session
   }
 
-  static load(args: {
-    sequenceApiUrl: string
-    sequenceMetadataUrl: string
-    dump: SessionDump
-    signers: AbstractSigner[]
-    networks: NetworkConfig[]
-  }): Session {
-    const { sequenceApiUrl, sequenceMetadataUrl, dump, signers, networks } = args
+  static async load(args: {
+    settings: SessionSettings
+    dump: SessionDumpV1 | SessionDumpV2
+    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
+    onMigration?: (account: Account) => Promise<boolean>
+  }): Promise<Session> {
+    const { dump, settings, editConfigOnMigration, onMigration } = args
+    const { sequenceApiUrl, sequenceApiChainId, sequenceMetadataUrl, contexts, networks, tracker, orchestrator } = settings
+
+    let account: Account
+
+    if (isSessionDumpV1(dump)) {
+      // Old configuration format used to also contain an "address" field
+      // but if it doesn't, it means that it was a "counterfactual" account
+      // not yet updated, so we need to compute the address
+      const oldAddress =
+        dump.config.address ||
+        commons.context.addressOf(contexts[1], v1.config.ConfigCoder.imageHashOf({ ...dump.config, version: 1 }))
+
+      account = new Account({
+        address: oldAddress,
+        tracker,
+        networks,
+        contexts,
+        orchestrator
+      })
+
+      // TODO: This property may not hold if the user adds a new network
+      if (!(await account.isMigratedAllChains().then(r => r.migratedAllChains))) {
+        // This is an oportunity for whoever is opening the session to
+        // feed the orchestrator with more signers, so that the migration
+        // can be completed.
+        if (onMigration && !(await onMigration(account))) {
+          throw Error('Migration cancelled, cannot open session')
+        }
+
+        console.log('Migrating account...')
+        await account.signAllMigrations(editConfigOnMigration)
+        if (!(await account.isMigratedAllChains().then(r => r.migratedAllChains))) throw Error('Failed to migrate account')
+      }
+
+      // We may need to update the JWT if the account has been migrated
+    } else if (isSessionDumpV2(dump)) {
+      account = new Account({
+        address: dump.address,
+        tracker,
+        networks,
+        contexts,
+        orchestrator
+      })
+    } else {
+      throw Error('Invalid dump format')
+    }
 
     return new Session(
       sequenceApiUrl,
+      sequenceApiChainId,
       sequenceMetadataUrl,
       networks,
-      dump.config,
-      dump.context,
-      new Account(
-        {
-          initialConfig: dump.config,
-          context: dump.context,
-          networks: networks
-        },
-        ...signers
-      ),
+      contexts,
+      account,
       dump.metadata,
-      getAuthProvider(networks),
       dump.jwt
     )
   }
-}
-
-function getAuthProvider(networks: NetworkConfig[]): ethers.providers.JsonRpcProvider {
-  const authChain = getAuthNetwork(networks)
-  if (!authChain) throw Error('Auth chain not found')
-  return authChain.provider ?? new JsonRpcProvider(authChain.rpcUrl!, { chainId: authChain.chainId, blockCache: true })
 }
 
 function getJWTExpiration(jwt: string): number {
