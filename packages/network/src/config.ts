@@ -333,10 +333,10 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
   [ChainId.HOMEVERSE_TESTNET]: {
     chainId: ChainId.HOMEVERSE_TESTNET,
     name: 'homeverse-testnet',
-    title: 'Homeverse Testnet',
+    title: 'Oasys Homeverse Testnet',
     blockExplorer: {
-      name: 'Homeverse Explorer (Testnet)',
-      rootUrl: 'https://explorer.oasys.homeverse.games/'
+      name: 'Oasys Homeverse Explorer (Testnet)',
+      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
     }
   }
 }
