@@ -53,6 +53,9 @@ export enum ChainId {
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338,
+
+  // HOMEVERSE
+  HOMEVERSE_TESTNET = 40875
 }
 
 export interface NetworkConfig {
@@ -326,6 +329,15 @@ export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
     chainId: ChainId.HARDHAT_2,
     name: 'hardhat2',
     title: 'Hardhat (local testnet)'
+  },
+  [ChainId.HOMEVERSE_TESTNET]: {
+    chainId: ChainId.HOMEVERSE_TESTNET,
+    name: 'homeverse-testnet',
+    title: 'Oasys Homeverse Testnet',
+    blockExplorer: {
+      name: 'Oasys Homeverse Explorer (Testnet)',
+      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
+    }
   }
 }
 
@@ -421,6 +433,10 @@ export const allNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.BASE_GOERLI],
     ...genUrls('base-goerli')
+  },
+  {
+    ...networks[ChainId.HOMEVERSE_TESTNET],
+    ...genUrls('homeverse-testnet')
   },
   {
     ...networks[ChainId.HARDHAT],
