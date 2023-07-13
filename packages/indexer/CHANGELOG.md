@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.0.2
+
+### Patch Changes
+
+- add extra signature validation utils methods
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.0.2
+
+### Patch Changes
+
+- add extra signature validation utils methods
+- Updated dependencies
+  - @0xsequence/abi@1.0.2
+  - @0xsequence/account@1.0.2
+  - @0xsequence/api@1.0.2
+  - @0xsequence/auth@1.0.2
+  - @0xsequence/core@1.0.2
+  - @0xsequence/guard@1.0.2
+  - @0xsequence/indexer@1.0.2
+  - @0xsequence/metadata@1.0.2
+  - @0xsequence/migration@1.0.2
+  - @0xsequence/multicall@1.0.2
+  - @0xsequence/network@1.0.2
+  - @0xsequence/provider@1.0.2
+  - @0xsequence/relayer@1.0.2
+  - @0xsequence/sessions@1.0.2
+  - @0xsequence/signhub@1.0.2
+  - @0xsequence/utils@1.0.2
+  - @0xsequence/wallet@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

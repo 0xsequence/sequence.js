@@ -1,5 +1,14 @@
 # @0xsequence/guard
 
+## 1.0.2
+
+### Patch Changes
+
+- add extra signature validation utils methods
+- Updated dependencies
+  - @0xsequence/core@1.0.2
+  - @0xsequence/signhub@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
