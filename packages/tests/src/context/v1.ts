@@ -1,6 +1,4 @@
 import { ethers } from "ethers"
-import { v1 } from '../builds'
-import { deployContract } from "../singletonFactory"
 import { isContract } from "../utils"
 
 // These are the Sequence v1 contracts

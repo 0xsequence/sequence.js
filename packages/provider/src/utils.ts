@@ -2,7 +2,7 @@ import { ethers, BytesLike } from 'ethers'
 import { Web3Provider } from './provider'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
-import { commons } from '@0xsequence/core'
+import { commons, allVersions } from '@0xsequence/core'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
@@ -69,9 +69,10 @@ export const isValidSignature = async (
   digest: Uint8Array,
   sig: string,
   provider: Web3Provider | ethers.providers.Web3Provider,
-  contexts: { [key: number]: commons.context.WalletContext }
+  contexts?: { [key: number]: commons.context.WalletContext }
 ): Promise<boolean> => {
-  const reader = new commons.reader.OnChainReader(provider, contexts)
+  const deployedContexts = allVersions.map(v => v.DeployedWalletContext)
+  const reader = new commons.reader.OnChainReader(provider, contexts || deployedContexts)
   return reader.isValidSignature(address, digest, sig)
 }
 
@@ -81,11 +82,12 @@ export const isValidMessageSignature = async (
   message: string | Uint8Array,
   signature: string,
   provider: Web3Provider | ethers.providers.Web3Provider,
-  contexts: { [key: number]: commons.context.WalletContext }
+  contexts?: { [key: number]: commons.context.WalletContext }
 ): Promise<boolean> => {
+  const deployedContexts = allVersions.map(v => v.DeployedWalletContext)
   const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
-  return isValidSignature(address, digest, signature, provider, contexts)
+  return isValidSignature(address, digest, signature, provider, contexts || deployedContexts)
 }
 
 // Verify typedData signature
@@ -94,9 +96,10 @@ export const isValidTypedDataSignature = (
   typedData: TypedData,
   signature: string,
   provider: Web3Provider | ethers.providers.Web3Provider,
-  contexts: { [key: number]: commons.context.WalletContext }
+  contexts?: { [key: number]: commons.context.WalletContext }
 ): Promise<boolean> => {
-  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, contexts)
+  const deployedContexts = allVersions.map(v => v.DeployedWalletContext)
+  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, contexts || deployedContexts)
 }
 
 // export const recoverWalletConfig = async (
