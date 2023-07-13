@@ -3,6 +3,7 @@ import { Web3Provider } from './provider'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
 import { commons } from '@0xsequence/core'
+import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
@@ -74,29 +75,29 @@ export const isValidSignature = async (
   return reader.isValidSignature(address, digest, sig)
 }
 
-// export const isValidMessageSignature = async (
-//   address: string,
-//   message: string | Uint8Array,
-//   signature: string,
-//   provider: Web3Provider | ethers.providers.Web3Provider,
-//   chainId?: number,
-//   walletContext?: WalletContext
-// ): Promise<boolean> => {
-//   const prefixed = prefixEIP191Message(message)
-//   const digest = encodeMessageDigest(prefixed)
-//   return isValidSignature(address, digest, signature, provider, chainId, walletContext)
-// }
+// Verify message signature
+export const isValidMessageSignature = async (
+  address: string,
+  message: string | Uint8Array,
+  signature: string,
+  provider: Web3Provider | ethers.providers.Web3Provider,
+  contexts: { [key: number]: commons.context.WalletContext }
+): Promise<boolean> => {
+  const prefixed = prefixEIP191Message(message)
+  const digest = encodeMessageDigest(prefixed)
+  return isValidSignature(address, digest, signature, provider, contexts)
+}
 
-// export const isValidTypedDataSignature = (
-//   address: string,
-//   typedData: TypedData,
-//   signature: string,
-//   provider: Web3Provider | ethers.providers.Web3Provider,
-//   chainId?: number,
-//   walletContext?: WalletContext
-// ): Promise<boolean> => {
-//   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, chainId, walletContext)
-// }
+// Verify typedData signature
+export const isValidTypedDataSignature = (
+  address: string,
+  typedData: TypedData,
+  signature: string,
+  provider: Web3Provider | ethers.providers.Web3Provider,
+  contexts: { [key: number]: commons.context.WalletContext }
+): Promise<boolean> => {
+  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, contexts)
+}
 
 // export const recoverWalletConfig = async (
 //   address: string,
