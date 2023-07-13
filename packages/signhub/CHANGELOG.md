@@ -1,5 +1,11 @@
 # @0xsequence/signhub
 
+## 1.0.1
+
+### Patch Changes
+
+- add homeverse testnet
+
 ## 1.0.0
 
 ### Major Changes

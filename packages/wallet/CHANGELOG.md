@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 1.0.1
+
+### Patch Changes
+
+- add homeverse testnet
+- Updated dependencies
+  - @0xsequence/abi@1.0.1
+  - @0xsequence/core@1.0.1
+  - @0xsequence/guard@1.0.1
+  - @0xsequence/network@1.0.1
+  - @0xsequence/relayer@1.0.1
+  - @0xsequence/signhub@1.0.1
+  - @0xsequence/utils@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

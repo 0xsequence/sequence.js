@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.0.1
+
+### Patch Changes
+
+- add homeverse testnet
+- Updated dependencies
+  - @0xsequence/core@1.0.1
+  - @0xsequence/migration@1.0.1
+  - @0xsequence/replacer@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
