@@ -2,7 +2,7 @@ import { ethers, BytesLike } from 'ethers'
 import { Web3Provider } from './provider'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
-import { commons, allVersions } from '@0xsequence/core'
+import { commons } from '@0xsequence/core'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 
 const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
@@ -68,11 +68,9 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  contexts?: { [key: number]: commons.context.WalletContext }
+  provider: Web3Provider | ethers.providers.Web3Provider
 ): Promise<boolean> => {
-  const deployedContexts = allVersions.map(v => v.DeployedWalletContext)
-  const reader = new commons.reader.OnChainReader(provider, contexts || deployedContexts)
+  const reader = new commons.reader.OnChainReader(provider)
   return reader.isValidSignature(address, digest, sig)
 }
 
@@ -81,13 +79,11 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  contexts?: { [key: number]: commons.context.WalletContext }
+  provider: Web3Provider | ethers.providers.Web3Provider
 ): Promise<boolean> => {
-  const deployedContexts = allVersions.map(v => v.DeployedWalletContext)
   const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
-  return isValidSignature(address, digest, signature, provider, contexts || deployedContexts)
+  return isValidSignature(address, digest, signature, provider)
 }
 
 // Verify typedData signature
@@ -95,34 +91,11 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider,
-  contexts?: { [key: number]: commons.context.WalletContext }
+  provider: Web3Provider | ethers.providers.Web3Provider
 ): Promise<boolean> => {
-  const deployedContexts = allVersions.map(v => v.DeployedWalletContext)
-  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider, contexts || deployedContexts)
+  return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider)
 }
 
-// export const recoverWalletConfig = async (
-//   address: string,
-//   digest: BytesLike,
-//   signature: string | commons.signature.UnrecoveredSignature | commons.signature.Signature<commons.config.Config>,
-//   chainId: BigNumberish,
-//   walletContext?: WalletContext
-// ): Promise<commons.config.Config> => {
-//   const subDigest = packMessageData(address, chainId, digest)
-//   const config = await recoverConfig(subDigest, signature)
-
-//   if (walletContext) {
-//     const recoveredWalletAddress = addressOf(config, walletContext)
-//     if (config.address && config.address !== recoveredWalletAddress) {
-//       throw new Error('recovered address does not match the WalletConfig address, check the WalletContext')
-//     } else {
-//       config.address = recoveredWalletAddress
-//     }
-//   }
-
-//   return config
-// }
 
 export const isBrowserExtension = (): boolean =>
   window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'

@@ -27,8 +27,7 @@ export interface Reader {
   private isDeployedCache: Set<string> = new Set()
 
   constructor(
-    public readonly provider: ethers.providers.Provider,
-    public readonly contexts?: { [key: number]: commons.context.WalletContext }
+    public readonly provider: ethers.providers.Provider
   ) {}
 
   private module(address: string) {

@@ -4,7 +4,6 @@ export {
   isValidSignature,
   isValidMessageSignature,
   isValidTypedDataSignature,
-  // recoverWalletConfig,
   isWalletUpToDate
 } from '@0xsequence/provider'
 
