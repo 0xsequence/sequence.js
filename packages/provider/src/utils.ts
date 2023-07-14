@@ -1,5 +1,4 @@
 import { ethers, BytesLike } from 'ethers'
-import { Web3Provider } from './provider'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
 import { commons } from '@0xsequence/core'
@@ -68,7 +67,7 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: Web3Provider | ethers.providers.Web3Provider
+  provider: ethers.providers.Provider
 ): Promise<boolean> => {
   const reader = new commons.reader.OnChainReader(provider)
   return reader.isValidSignature(address, digest, sig)
@@ -79,7 +78,7 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider
+  provider: ethers.providers.Provider
 ): Promise<boolean> => {
   const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
@@ -91,7 +90,7 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: Web3Provider | ethers.providers.Web3Provider
+  provider: ethers.providers.Provider
 ): Promise<boolean> => {
   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider)
 }
