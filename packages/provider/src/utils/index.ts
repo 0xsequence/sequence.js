@@ -59,7 +59,7 @@ export class WalletUtils {
   ): Promise<boolean> {
     const provider = this.wallet.getProvider(chainId)
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
-    return isValidSignature(address, digest, signature, provider, await this.wallet.getWalletContext())
+    return isValidSignature(address, digest, signature, provider)
   }
 
   // Verify message signature
@@ -73,7 +73,7 @@ export class WalletUtils {
     if (!provider) throw new Error(`unable to get provider for chainId ${chainId}`)
     const prefixed = prefixEIP191Message(message)
     const digest = encodeMessageDigest(prefixed)
-    return isValidSignature(address, digest, signature, provider, await this.wallet.getWalletContext())
+    return isValidSignature(address, digest, signature, provider)
   }
 
   // Verify typedData signature
