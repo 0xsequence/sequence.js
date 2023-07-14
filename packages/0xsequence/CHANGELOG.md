@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.0.3
+
+### Patch Changes
+
+- Simpler isValidSignature helpers
+- Updated dependencies
+  - @0xsequence/abi@1.0.3
+  - @0xsequence/account@1.0.3
+  - @0xsequence/api@1.0.3
+  - @0xsequence/auth@1.0.3
+  - @0xsequence/core@1.0.3
+  - @0xsequence/guard@1.0.3
+  - @0xsequence/indexer@1.0.3
+  - @0xsequence/metadata@1.0.3
+  - @0xsequence/migration@1.0.3
+  - @0xsequence/multicall@1.0.3
+  - @0xsequence/network@1.0.3
+  - @0xsequence/provider@1.0.3
+  - @0xsequence/relayer@1.0.3
+  - @0xsequence/sessions@1.0.3
+  - @0xsequence/signhub@1.0.3
+  - @0xsequence/utils@1.0.3
+  - @0xsequence/wallet@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

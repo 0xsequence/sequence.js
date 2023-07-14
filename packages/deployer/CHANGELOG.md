@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.0.3
+
+### Patch Changes
+
+- Simpler isValidSignature helpers
+- Updated dependencies
+  - @0xsequence/utils@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
