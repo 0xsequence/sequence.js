@@ -29,8 +29,8 @@ packages=($repo_dir/packages/*)
 for p in "${packages[@]}"
 do
   x=$(realpath $p)
-  # echo $x
-  pnpm link $x
+  echo "$option $x"
+  pnpm $option $x
 done
 
 exit $?
