@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.0.4
+
+### Patch Changes
+
+- provider: accept name or number for networkId
+- Updated dependencies
+  - @0xsequence/utils@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.0.4
+
+### Patch Changes
+
+- provider: accept name or number for networkId
+
 ## 1.0.3
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.0.4
+
+### Patch Changes
+
+- provider: accept name or number for networkId
+- Updated dependencies
+  - @0xsequence/abi@1.0.4
+  - @0xsequence/network@1.0.4
+  - @0xsequence/utils@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes

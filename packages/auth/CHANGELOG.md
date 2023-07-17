@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.0.4
+
+### Patch Changes
+
+- provider: accept name or number for networkId
+- Updated dependencies
+  - @0xsequence/abi@1.0.4
+  - @0xsequence/account@1.0.4
+  - @0xsequence/api@1.0.4
+  - @0xsequence/core@1.0.4
+  - @0xsequence/indexer@1.0.4
+  - @0xsequence/metadata@1.0.4
+  - @0xsequence/migration@1.0.4
+  - @0xsequence/network@1.0.4
+  - @0xsequence/sessions@1.0.4
+  - @0xsequence/signhub@1.0.4
+  - @0xsequence/utils@1.0.4
+  - @0xsequence/wallet@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes
