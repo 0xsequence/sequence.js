@@ -14,7 +14,7 @@ import {
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, findSupportedNetwork } from '@0xsequence/network'
 import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from '@0xsequence/utils'
 import { AuthorizationOptions } from '@0xsequence/auth'
 
@@ -327,6 +327,24 @@ export abstract class BaseWalletTransport implements WalletTransport {
     // origin host of the dapp.
     await this.init()
 
+    // determine chainId from networkId (string or number)
+    let chainId: number | undefined = undefined
+    try {
+      if (networkId) {
+        const network = findSupportedNetwork(networkId)
+        if (network) {
+          chainId = network.chainId
+        } else {
+          throw new Error(`unknown network ${networkId}`)
+        }
+      } else {
+        // if not provided, use defaultChainId
+        chainId = this.walletRequestHandler.defaultChainId()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+
     // Prepare connect options from intent
     if (intent && intent.type === 'connect' && intent.options) {
       const connectOptions = intent.options
@@ -382,17 +400,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // upon cancellation by user, the walletRequestHandler will throw an error
 
       if (intent && intent.type === 'connect') {
-        let chainId: number | undefined = undefined
-        try {
-          if (networkId) {
-            const networkIdNumber = ethers.BigNumber.from(networkId).toNumber()
-            chainId = await this.walletRequestHandler.setDefaultChainId(networkIdNumber)
-          } else {
-            chainId = this.walletRequestHandler.defaultChainId()
-          }
-        } catch (err) {
-          console.error(err)
-        }
         // Failed to set default network on open
         // Fail silently here so we can continue with connect flow and ask
         // user to connect on a different network if necessary
@@ -419,18 +426,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
           }
         }
       } else {
-        // Set default network, in case of error chainId will be undefined or 0
-        let chainId: number | undefined = undefined
-        try {
-          if (networkId) {
-            const networkIdNumber = ethers.BigNumber.from(networkId).toNumber()
-            chainId = await this.walletRequestHandler.setDefaultChainId(networkIdNumber)
-          } else {
-            chainId = this.walletRequestHandler.defaultChainId()
-          }
-        } catch (err) {
-          console.error(err)
-        }
+        // Using default network
 
         // Failed to set default network on open -- quit + close
         if (!chainId || chainId <= 0) {
