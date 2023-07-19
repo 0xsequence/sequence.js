@@ -3,17 +3,9 @@ import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
 import { isBigNumberish } from '@0xsequence/utils'
-import { ChainId } from './constants'
+import { ChainId, NetworkMetadata, networks } from './constants'
 
-export interface NetworkConfig {
-  title?: string
-  name: string
-  chainId: number
-  testnet?: boolean
-
-  blockExplorer?: BlockExplorerConfig
-  ensAddress?: string
-
+export type NetworkConfig = NetworkMetadata & {
   rpcUrl: string
   provider?: providers.Provider
   indexerUrl?: string
@@ -37,256 +29,9 @@ export type BlockExplorerConfig = {
   txnHashUrl?: string
 }
 
-export const indexerURL = (network: string) => stringTemplate('https://${network}-indexer.sequence.app', { network: network })
-export const relayerURL = (network: string) => stringTemplate('https://${network}-relayer.sequence.app', { network: network })
-export const nodesURL = (network: string) => stringTemplate('https://nodes.sequence.app/${network}', { network: network })
-
-export const networks: Record<ChainId, Omit<NetworkConfig, 'rpcUrl'>> = {
-  [ChainId.MAINNET]: {
-    chainId: ChainId.MAINNET,
-    name: 'mainnet',
-    title: 'Ethereum',
-    blockExplorer: {
-      name: 'Etherscan',
-      rootUrl: 'https://etherscan.io/'
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
-  },
-  [ChainId.ROPSTEN]: {
-    chainId: ChainId.ROPSTEN,
-    name: 'ropsten',
-    title: 'Ropsten',
-    testnet: true,
-    blockExplorer: {
-      name: 'Etherscan (Ropsten)',
-      rootUrl: 'https://ropsten.etherscan.io/'
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
-  },
-  [ChainId.RINKEBY]: {
-    chainId: ChainId.RINKEBY,
-    name: 'rinkeby',
-    title: 'Rinkeby',
-    testnet: true,
-    blockExplorer: {
-      name: 'Etherscan (Rinkeby)',
-      rootUrl: 'https://rinkeby.etherscan.io/'
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-    disabled: true
-  },
-  [ChainId.GOERLI]: {
-    chainId: ChainId.GOERLI,
-    name: 'goerli',
-    title: 'Goerli',
-    testnet: true,
-    blockExplorer: {
-      name: 'Etherscan (Goerli)',
-      rootUrl: 'https://goerli.etherscan.io/'
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
-  },
-  [ChainId.KOVAN]: {
-    chainId: ChainId.KOVAN,
-    name: 'kovan',
-    title: 'Kovan',
-    testnet: true,
-    blockExplorer: {
-      name: 'Etherscan (Kovan)',
-      rootUrl: 'https://kovan.etherscan.io/'
-    }
-  },
-  [ChainId.POLYGON]: {
-    chainId: ChainId.POLYGON,
-    name: 'polygon',
-    title: 'Polygon',
-    blockExplorer: {
-      name: 'Polygonscan',
-      rootUrl: 'https://polygonscan.com/'
-    },
-    // TODO: Remove default and auth chains from here
-    isDefaultChain: true,
-    isAuthChain: true
-  } as LegacyNetworkConfig,
-  [ChainId.POLYGON_MUMBAI]: {
-    chainId: ChainId.POLYGON_MUMBAI,
-    name: 'mumbai',
-    title: 'Polygon Mumbai',
-    testnet: true,
-    blockExplorer: {
-      name: 'Polygonscan (Mumbai)',
-      rootUrl: 'https://mumbai.polygonscan.com/'
-    }
-  },
-  [ChainId.POLYGON_ZKEVM]: {
-    chainId: ChainId.POLYGON_ZKEVM,
-    name: 'polygon-zkevm',
-    title: 'Polygon zkEVM',
-    blockExplorer: {
-      name: 'Polygonscan (zkEVM)',
-      rootUrl: 'https://zkevm.polygonscan.com/'
-    }
-  },
-  [ChainId.BSC]: {
-    chainId: ChainId.BSC,
-    name: 'bsc',
-    title: 'BNB Smart Chain',
-    blockExplorer: {
-      name: 'BSCScan',
-      rootUrl: 'https://bscscan.com/'
-    }
-  },
-  [ChainId.BSC_TESTNET]: {
-    chainId: ChainId.BSC_TESTNET,
-    name: 'bsc-testnet',
-    title: 'BNB Smart Chain Testnet',
-    testnet: true,
-    blockExplorer: {
-      name: 'BSCScan (Testnet)',
-      rootUrl: 'https://testnet.bscscan.com/'
-    }
-  },
-  [ChainId.OPTIMISM]: {
-    chainId: ChainId.OPTIMISM,
-    name: 'optimism',
-    title: 'Optimism',
-    blockExplorer: {
-      name: 'Etherscan (Optimism)',
-      rootUrl: 'https://optimistic.etherscan.io/'
-    }
-  },
-  [ChainId.OPTIMISM_TESTNET]: {
-    chainId: ChainId.OPTIMISM_TESTNET,
-    name: 'optimism-testnet',
-    title: 'Optimistic Kovan',
-    testnet: true,
-    blockExplorer: {
-      name: 'Etherscan (Optimism Testnet)',
-      rootUrl: 'https://kovan-optimistic.etherscan.io/'
-    }
-  },
-  [ChainId.ARBITRUM]: {
-    chainId: ChainId.ARBITRUM,
-    name: 'arbitrum',
-    title: 'Arbitrum One',
-    blockExplorer: {
-      name: 'Arbiscan',
-      rootUrl: 'https://arbiscan.io/'
-    }
-  },
-  [ChainId.ARBITRUM_GOERLI]: {
-    chainId: ChainId.ARBITRUM_GOERLI,
-    name: 'arbitrum-goerli',
-    title: 'Arbitrum Goerli',
-    testnet: true,
-    blockExplorer: {
-      name: 'Arbiscan (Testnet)',
-      rootUrl: 'https://testnet.arbiscan.io/'
-    }
-  },
-  [ChainId.ARBITRUM_NOVA]: {
-    chainId: ChainId.ARBITRUM_NOVA,
-    name: 'arbitrum-nova',
-    title: 'Arbitrum Nova',
-    blockExplorer: {
-      name: 'Nova Explorer',
-      rootUrl: 'https://nova-explorer.arbitrum.io/'
-    }
-  },
-  [ChainId.AVALANCHE]: {
-    chainId: ChainId.AVALANCHE,
-    name: 'avalanche',
-    title: 'Avalanche',
-    blockExplorer: {
-      name: 'Snowtrace',
-      rootUrl: 'https://snowtrace.io/'
-    }
-  },
-  [ChainId.AVALANCHE_TESTNET]: {
-    chainId: ChainId.AVALANCHE_TESTNET,
-    name: 'avalanche-testnet',
-    title: 'Avalanche Testnet',
-    testnet: true,
-    blockExplorer: {
-      name: 'Snowtrace (Testnet)',
-      rootUrl: 'https://testnet.snowtrace.io/'
-    }
-  },
-  [ChainId.FANTOM]: {
-    chainId: ChainId.FANTOM,
-    name: 'fantom',
-    title: 'Fantom',
-    blockExplorer: {
-      name: 'FTMScan',
-      rootUrl: 'https://ftmscan.com/'
-    }
-  },
-  [ChainId.FANTOM_TESTNET]: {
-    chainId: ChainId.FANTOM_TESTNET,
-    name: 'fantom-testnet',
-    title: 'Fantom Testnet',
-    testnet: true,
-    blockExplorer: {
-      name: 'FTMScan (Testnet)',
-      rootUrl: 'https://testnet.ftmscan.com/'
-    }
-  },
-  [ChainId.GNOSIS]: {
-    chainId: ChainId.GNOSIS,
-    name: 'gnosis',
-    title: 'Gnosis Chain',
-    blockExplorer: {
-      name: 'Gnosis Chain Explorer',
-      rootUrl: 'https://blockscout.com/xdai/mainnet/'
-    }
-  },
-  [ChainId.AURORA]: {
-    chainId: ChainId.AURORA,
-    name: 'aurora',
-    title: 'Aurora',
-    blockExplorer: {
-      name: 'Aurora Explorer',
-      rootUrl: 'https://aurorascan.dev/'
-    }
-  },
-  [ChainId.AURORA_TESTNET]: {
-    chainId: ChainId.AURORA_TESTNET,
-    name: 'aurora-testnet',
-    title: 'Aurora Testnet',
-    blockExplorer: {
-      name: 'Aurora Explorer (Testnet)',
-      rootUrl: 'https://testnet.aurorascan.dev/'
-    }
-  },
-  [ChainId.BASE_GOERLI]: {
-    chainId: ChainId.BASE_GOERLI,
-    name: 'base-goerli',
-    title: 'Base Goerli',
-    blockExplorer: {
-      name: 'Base Goerli Explorer',
-      rootUrl: 'https://goerli.basescan.org/'
-    }
-  },
-  [ChainId.HARDHAT]: {
-    chainId: ChainId.HARDHAT,
-    name: 'hardhat',
-    title: 'Hardhat (local testnet)'
-  },
-  [ChainId.HARDHAT_2]: {
-    chainId: ChainId.HARDHAT_2,
-    name: 'hardhat2',
-    title: 'Hardhat (local testnet)'
-  },
-  [ChainId.HOMEVERSE_TESTNET]: {
-    chainId: ChainId.HOMEVERSE_TESTNET,
-    name: 'homeverse-testnet',
-    title: 'Oasys Homeverse Testnet',
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer (Testnet)',
-      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
-    }
-  }
-}
+export const indexerURL = (network: string) => stringTemplate('https://${network}-indexer.sequence.app', { network })
+export const relayerURL = (network: string) => stringTemplate('https://${network}-relayer.sequence.app', { network })
+export const nodesURL = (network: string) => stringTemplate('https://nodes.sequence.app/${network}', { network })
 
 export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): NetworkConfig | undefined {
   return findNetworkConfig(allNetworks, chainIdOrName)
@@ -322,12 +67,14 @@ const genUrls = (network: string) => {
 
 export const allNetworks = validateAndSortNetworks([
   {
+    ...networks[ChainId.POLYGON],
+    ...genUrls('polygon'),
+    isDefaultChain: true,
+    isAuthChain: true
+  } as LegacyNetworkConfig,
+  {
     ...networks[ChainId.MAINNET],
     ...genUrls('mainnet')
-  },
-  {
-    ...networks[ChainId.POLYGON],
-    ...genUrls('polygon')
   },
   {
     ...networks[ChainId.BSC],
