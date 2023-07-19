@@ -106,7 +106,8 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.RINKEBY],
-    ...genUrls('rinkeby')
+    ...genUrls('rinkeby'),
+    disabled: true
   },
   {
     ...networks[ChainId.GOERLI],
