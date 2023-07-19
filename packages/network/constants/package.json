@@ -1,0 +1,4 @@
+{
+  "main": "dist/0xsequence-network-constants.cjs.js",
+  "module": "dist/0xsequence-network-constants.esm.js"
+}

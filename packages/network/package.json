@@ -26,6 +26,13 @@
   },
   "files": [
     "src",
-    "dist"
-  ]
+    "dist",
+    "constants"
+  ],
+  "preconstruct": {
+    "entrypoints": [
+      "index.ts",
+      "constants.ts"
+    ]
+  }
 }
