@@ -3,60 +3,7 @@ import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
 import { isBigNumberish } from '@0xsequence/utils'
-
-export enum ChainId {
-  // Ethereum
-  MAINNET = 1,
-  ROPSTEN = 3,
-  RINKEBY = 4,
-  GOERLI = 5,
-  KOVAN = 42,
-
-  // Polygon
-  POLYGON = 137,
-  POLYGON_MUMBAI = 80001,
-  POLYGON_ZKEVM = 1101,
-
-  // BSC
-  BSC = 56,
-  BSC_TESTNET = 97,
-
-  // Optimism
-  OPTIMISM = 10,
-  OPTIMISM_TESTNET = 69,
-
-  // Arbitrum One
-  ARBITRUM = 42161,
-  ARBITRUM_GOERLI = 421613,
-
-  // Arbitrum Nova
-  ARBITRUM_NOVA = 42170,
-
-  // Avalanche
-  AVALANCHE = 43114,
-  AVALANCHE_TESTNET = 43113,
-
-  // Fantom
-  FANTOM = 250,
-  FANTOM_TESTNET = 4002,
-
-  // Gnosis Chain (XDAI)
-  GNOSIS = 100,
-
-  // AURORA
-  AURORA = 1313161554,
-  AURORA_TESTNET = 1313161556,
-
-  // BASE
-  BASE_GOERLI = 84531,
-
-  // HARDHAT TESTNETS
-  HARDHAT = 31337,
-  HARDHAT_2 = 31338,
-
-  // HOMEVERSE
-  HOMEVERSE_TESTNET = 40875
-}
+import { ChainId } from './constants'
 
 export interface NetworkConfig {
   title?: string
@@ -366,7 +313,7 @@ const genUrls = (network: string) => {
     relayer: {
       url: relayerURL(network),
       provider: {
-        url: rpcUrl,
+        url: rpcUrl
       }
     },
     indexerUrl: indexerURL(network)
@@ -420,7 +367,7 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.POLYGON_MUMBAI],
-    ...genUrls('mumbai'),
+    ...genUrls('mumbai')
   },
   {
     ...networks[ChainId.BSC_TESTNET],
@@ -444,7 +391,7 @@ export const allNetworks = validateAndSortNetworks([
     relayer: {
       url: 'http://localhost:3000',
       provider: {
-        url: 'http://localhost:8545',
+        url: 'http://localhost:8545'
       }
     }
   },
@@ -454,7 +401,7 @@ export const allNetworks = validateAndSortNetworks([
     relayer: {
       url: 'http://localhost:3000',
       provider: {
-        url: 'http://localhost:9545',
+        url: 'http://localhost:9545'
       }
     }
   }
