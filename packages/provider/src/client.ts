@@ -1,5 +1,5 @@
 import { JsonRpcRequest, NetworkConfig, allNetworks, findNetworkConfig } from "@0xsequence/network"
-import { ConnectDetails, ConnectOptions, ItemStore, OpenWalletIntent, ProviderTransport, WalletSession } from "."
+import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, ProviderTransport, WalletSession, isMuxTransportTemplate } from "."
 import { commons } from "@0xsequence/core"
 import { TypedData } from "@0xsequence/utils"
 import { toExtended } from "./extended"
@@ -110,21 +110,28 @@ export class DefaultChainIDTracker {
  * 
  *  It doesn't implement a full ethereum Provider, it doesn't include read-only methods.
  */
-export class SequenceClient {
-  private session: SequenceClientSession
-  private defaultChainId: DefaultChainIDTracker
+export class SequenceClient {  
+  private readonly session: SequenceClientSession
+  private readonly defaultChainId: DefaultChainIDTracker
+  private readonly callbacks: { [K in keyof Callbacks]?: Callbacks[K][] } = {}
 
-  callbacks: { [K in keyof Callbacks]?: Callbacks[K][] } = {}
+  public readonly transport: ProviderTransport
 
   constructor (
-    public transport: ProviderTransport,
+    transport: ProviderTransport | MuxTransportTemplate,
     store: ItemStore,
     defaultChainId?: number
   ) {
+    if (isMuxTransportTemplate(transport)) {
+      this.transport = MuxMessageProvider.new(transport)
+    } else {
+      this.transport = transport
+    }
+
     this.session = new SequenceClientSession(store)
     this.defaultChainId = new DefaultChainIDTracker(store, defaultChainId)
 
-    transport.on('accountsChanged', (accounts: string[]) => {
+    this.transport.on('accountsChanged', (accounts: string[]) => {
       if (accounts.length > 1) {
         console.warn('SequenceClient: wallet-webapp returned more than one account')
       }
@@ -132,19 +139,19 @@ export class SequenceClient {
       this.callbacks.onAccountsChanged?.forEach(cb => cb(accounts))
     })
 
-    transport.on('networks', (networks: NetworkConfig[]) => {
+    this.transport.on('networks', (networks: NetworkConfig[]) => {
       this.callbacks.onNetworks?.forEach(cb => cb(networks))
     })
 
-    transport.on('walletContext', (context: commons.context.VersionedContext) => {
+    this.transport.on('walletContext', (context: commons.context.VersionedContext) => {
       this.callbacks.onWalletContext?.forEach(cb => cb(context))
     })
 
-    transport.on('open', () => {
+    this.transport.on('open', () => {
       this.callbacks.onOpen?.forEach(cb => cb())
     })
 
-    transport.on('close', () => {
+    this.transport.on('close', () => {
       this.callbacks.onOpen?.forEach(cb => cb())
     })
   

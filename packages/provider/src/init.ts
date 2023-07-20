@@ -1,7 +1,6 @@
 import { CachedProvider, ChainIdLike, JsonRpcRouter, JsonRpcSender, NetworkConfig, allNetworks, exceptionProviderMiddleware, findNetworkConfig, loggingProviderMiddleware } from "@0xsequence/network"
-import { ExtensionMessageProvider, MuxMessageProvider, ProxyMessageChannelPort, ProxyMessageProvider, UnrealMessageProvider, WindowMessageProvider } from "./transports"
+import { MuxTransportTemplate } from "./transports"
 import { ItemStore, LocalStorage } from "./utils"
-import { Runtime } from "webextension-polyfill"
 import { ethers } from "ethers"
 import { SequenceClient } from "./client"
 import { SequenceProvider } from "./provider"
@@ -11,9 +10,6 @@ export interface ProviderConfig {
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
   localStorage?: ItemStore
-
-  // Sequence Wallet App URL, default: https://sequence.app
-  walletAppURL: string
 
   // defaultNetwork is the primary network of a dapp and the default network a
   // provider will communicate. Note: this setting is also configurable from the
@@ -30,46 +26,19 @@ export interface ProviderConfig {
   // defined in sequence.js.
   networks?: Partial<NetworkConfig>[]
 
-  // networkRpcUrl will set the provider rpcUrl of the default network
-  networkRpcUrl?: string
-
   // transports for dapp to wallet jron-rpc communication
-  transports?: {
-    // WindowMessage transport (optional)
-    windowTransport?: {
-      enabled: boolean
-    }
-
-    // ProxyMessage transport (optional)
-    proxyTransport?: {
-      enabled: boolean
-      appPort?: ProxyMessageChannelPort
-    }
-
-    // Extension transport (optional)
-    extensionTransport?: {
-      enabled: boolean
-      runtime: Runtime.Static
-    }
-
-    // Unreal Engine transport (optional)
-    unrealTransport?: {
-      enabled: boolean
-    }
-  }
+  transports?: MuxTransportTemplate
 }
 
-export const DefaultProviderConfig: ProviderConfig = {
-  walletAppURL: 'https://sequence.app',
-
+export const DefaultProviderConfig = {
   transports: {
+    walletAppURL: 'https://sequence.app',
     windowTransport: { enabled: true },
     proxyTransport: { enabled: false }
   },
 
   defaultNetwork: 1,
-  defaultNetworkId: 1
-} as any
+}
 
 let sequenceWalletProvider: SequenceProvider | undefined
 
@@ -124,38 +93,6 @@ export const initWallet = (
     return rpcProviders[chainId]
   }
 
-  // Build transport
-  // TODO: Move this to transports
-  const muxMessageProvider = new MuxMessageProvider()
-
-  if (config.transports?.windowTransport?.enabled && typeof window === 'object') {
-    const windowMessageProvider = new WindowMessageProvider(config.walletAppURL)
-    muxMessageProvider.add(windowMessageProvider)
-  }
-
-  if (config.transports?.proxyTransport?.enabled) {
-   const proxyMessageProvider = new ProxyMessageProvider(config.transports.proxyTransport.appPort!)
-   muxMessageProvider.add(proxyMessageProvider)
-  }
-
-  if (config.transports?.extensionTransport?.enabled) {
-    const extensionMessageProvider = new ExtensionMessageProvider(config.transports.extensionTransport.runtime)
-    muxMessageProvider.add(extensionMessageProvider)
-
-    // NOTE/REVIEW: see note in mux-message-provider
-    //
-    // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
-    // send all requests to the WindowMessageProvider anyways. By allowing it, if browser restarts, it will break
-    // the entire extension because messageProvider.provider will be undefined. So this is a hack to fix it.
-  }
-
-  if (config.transports?.unrealTransport?.enabled) {
-    const unrealMessageProvider = new UnrealMessageProvider(config.walletAppURL)
-    muxMessageProvider.add(unrealMessageProvider)
-  }
-
-  muxMessageProvider.register()
-
   // This is the starting default network (as defined by the config)
   // it can be later be changed using `wallet_switchEthereumChain` or some
   // of the other methods on the provider.
@@ -168,7 +105,7 @@ export const initWallet = (
   const itemStore = config.localStorage || LocalStorage.getInstance()
 
   // Create client, provider and return signer
-  const client = new SequenceClient(muxMessageProvider, itemStore, defaultNetwork)
+  const client = new SequenceClient(config.transports, itemStore, defaultNetwork)
   sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
 
   return sequenceWalletProvider

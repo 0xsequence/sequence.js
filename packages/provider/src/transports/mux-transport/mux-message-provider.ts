@@ -1,18 +1,102 @@
 import {
-  ProviderMessage, EventType, ProviderTransport,
+  ProviderMessage, ProviderTransport,
   ProviderEventTypes, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent, ConnectDetails
 } from '../../types'
 
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { ProxyMessageChannelPort, ProxyMessageProvider } from '../proxy-transport'
+import { Runtime } from 'webextension-polyfill'
+import { UnrealMessageProvider } from '../unreal-transport'
+import { ExtensionMessageProvider } from '../extension-transport'
+import { WindowMessageProvider } from '../window-transport'
+
+export type MuxTransportTemplate = {
+  walletAppURL?: string
+
+  // WindowMessage transport (optional)
+  windowTransport?: {
+    enabled: boolean
+  }
+
+  // ProxyMessage transport (optional)
+  proxyTransport?: {
+    enabled: boolean
+    appPort?: ProxyMessageChannelPort
+  }
+
+  // Extension transport (optional)
+  extensionTransport?: {
+    enabled: boolean
+    runtime: Runtime.Static
+  }
+
+  // Unreal Engine transport (optional)
+  unrealTransport?: {
+    enabled: boolean
+  }
+}
+
+export function isMuxTransportTemplate(obj: any): obj is MuxTransportTemplate {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    (
+      (obj.windowTransport && typeof obj.windowTransport === 'object') ||
+      (obj.proxyTransport && typeof obj.proxyTransport === 'object') ||
+      (obj.extensionTransport && typeof obj.extensionTransport === 'object') ||
+      (obj.unrealTransport && typeof obj.unrealTransport === 'object')
+    ) &&
+    (
+      // One of the transports must be enabled
+      (obj.windowTransport && obj.windowTransport.enabled) ||
+      (obj.proxyTransport && obj.proxyTransport.enabled) ||
+      (obj.extensionTransport && obj.extensionTransport.enabled) ||
+      (obj.unrealTransport && obj.unrealTransport.enabled)
+    )
+  )
+}
 
 export class MuxMessageProvider implements ProviderTransport {
-
   private messageProviders: ProviderTransport[]
   private provider: ProviderTransport | undefined
 
   constructor(...messageProviders: ProviderTransport[]) {
     this.messageProviders = messageProviders
     this.provider = undefined
+  }
+
+  static new(template: MuxTransportTemplate): MuxMessageProvider {
+    const muxMessageProvider = new MuxMessageProvider()
+
+    if (template.windowTransport?.enabled && typeof window === 'object' && template.walletAppURL) {
+      const windowMessageProvider = new WindowMessageProvider(template.walletAppURL)
+      muxMessageProvider.add(windowMessageProvider)
+    }
+
+    if (template.proxyTransport?.enabled) {
+      const proxyMessageProvider = new ProxyMessageProvider(template.proxyTransport.appPort!)
+      muxMessageProvider.add(proxyMessageProvider)
+    }
+
+    if (template.extensionTransport?.enabled) {
+      const extensionMessageProvider = new ExtensionMessageProvider(template.extensionTransport.runtime)
+      muxMessageProvider.add(extensionMessageProvider)
+  
+      // NOTE/REVIEW: see note in mux-message-provider
+      //
+      // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
+      // send all requests to the WindowMessageProvider anyways. By allowing it, if browser restarts, it will break
+      // the entire extension because messageProvider.provider will be undefined. So this is a hack to fix it.
+    }
+
+    if (template.unrealTransport?.enabled && template.windowTransport && template.walletAppURL) {
+      const unrealMessageProvider = new UnrealMessageProvider(template.walletAppURL)
+      muxMessageProvider.add(unrealMessageProvider)
+    }
+
+    muxMessageProvider.register()
+
+    return muxMessageProvider
   }
 
   add(...messageProviders: ProviderTransport[]) {
