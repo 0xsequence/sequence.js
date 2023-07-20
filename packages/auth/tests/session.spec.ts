@@ -1264,14 +1264,18 @@ describe('Wallet integration', function () {
         networks
       })
 
+      // begin by setting the parameters of the ETHAuth proof
       const proof = new Proof({ address: account.address })
       proof.claims.app = 'Should validate an ETHAuth signature by an undeployed wallet'
-      proof.claims.iat = Math.floor(now() / 1000)
-      proof.claims.exp = proof.claims.iat + 3600
+      proof.claims.iat = Math.floor(now() / 1000) // seconds since epoch, or better yet, proof.setIssuedAtNow()
+      proof.claims.exp = proof.claims.iat + 3600  // seconds since epoch, or better yet, proof.setExpiryIn(3600)
 
+      // create an EIP-6492-compatible ETHAuth proof signature of the proof's message digest
       proof.signature = await account.signDigest(proof.messageDigest(), ethnode.chainId!, true, 'eip6492')
+      // an EIP-6492 signature for an undeployed wallet always ends with the EIP-6492 suffix
       expect(proof.signature.endsWith(commons.EIP6492.EIP_6492_SUFFIX.slice(2))).to.be.true
 
+      // create an EIP-6492-aware ETHAuth proof validator
       const validator = ValidateSequenceWalletProof(
         () => new commons.reader.OnChainReader(ethnode.provider!),
         tracker,
@@ -1280,9 +1284,11 @@ describe('Wallet integration', function () {
       const ethauth = new ETHAuth(validator)
       await ethauth.configJsonRpcProvider(ethnode.providerUrl!)
 
+      // proofs can be encoded to and decoded from strings like so
       const proofString = await ethauth.encodeProof(proof)
       const decodedProof = await ethauth.decodeProof(proofString)
 
+      // decoded proofs can be validated like so
       expect(ethauth.validateProof(decodedProof)).to.eventually.be.true
     })
   })
