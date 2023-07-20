@@ -1,5 +1,5 @@
-import { ethers } from "ethers"
-import { isValidEIP1271Signature } from "./validateEIP1271"
+import { ethers } from 'ethers'
+import { isValidEIP1271Signature } from './validateEIP1271'
 
 export enum SigType {
   EIP712 = 1,
@@ -61,10 +61,7 @@ export function isValidSignature(
   throw new Error(`Unsupported signature type: ${type}`)
 }
 
-export function tryRecoverSigner(
-  digest: ethers.BytesLike,
-  signature: ethers.BytesLike
-): string | undefined {
+export function tryRecoverSigner(digest: ethers.BytesLike, signature: ethers.BytesLike): string | undefined {
   const bytes = ethers.utils.arrayify(signature)
   if (bytes.length !== 66) return undefined
 

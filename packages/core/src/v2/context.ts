@@ -1,4 +1,3 @@
-
 import { WalletContext as BaseContext } from '../commons/context'
 
 export type WalletContext = BaseContext & {

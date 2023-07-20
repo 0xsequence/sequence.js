@@ -1,24 +1,30 @@
+import { ethers } from 'ethers'
 
-import { ethers } from "ethers"
+const EIP1271_MAGIC_VALUE = '0x1626ba7e'
 
-const EIP1271_MAGIC_VALUE = "0x1626ba7e"
-
-const EIP1271_ABI = [{
-  "inputs": [{
-    "internalType": "bytes32",
-    "type": "bytes32"
-  }, {
-    "internalType": "bytes",
-    "type": "bytes"
-  }],
-  "name": "isValidSignature",
-  "outputs": [{
-    "internalType": "bytes4",
-    "type": "bytes4"
-  }],
-  "stateMutability": "view",
-  "type": "function"
-}]
+const EIP1271_ABI = [
+  {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        type: 'bytes32'
+      },
+      {
+        internalType: 'bytes',
+        type: 'bytes'
+      }
+    ],
+    name: 'isValidSignature',
+    outputs: [
+      {
+        internalType: 'bytes4',
+        type: 'bytes4'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  }
+]
 
 export async function isValidEIP1271Signature(
   address: string,
