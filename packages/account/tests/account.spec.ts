@@ -1,18 +1,17 @@
-
-import hardhat from 'hardhat'
-import * as chai from 'chai'
-import * as utils from '@0xsequence/tests'
-
-import { ethers } from 'ethers'
-import { Orchestrator } from '@0xsequence/signhub'
-import { Account } from '../src/account'
+import { commons, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
-import { tracker, trackers } from '@0xsequence/sessions'
 import { LocalRelayer, Relayer } from '@0xsequence/relayer'
-import { commons, v1, v2 } from '@0xsequence/core'
-import chaiAsPromised from 'chai-as-promised'
+import { tracker, trackers } from '@0xsequence/sessions'
+import { Orchestrator } from '@0xsequence/signhub'
+import * as utils from '@0xsequence/tests'
 import { Wallet } from '@0xsequence/wallet'
+import * as chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+import { ethers } from 'ethers'
+import hardhat from 'hardhat'
+
+import { Account } from '../src/account'
 
 const { expect } = chai.use(chaiAsPromised)
 
