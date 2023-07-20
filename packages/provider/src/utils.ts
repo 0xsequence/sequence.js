@@ -111,8 +111,8 @@ export const isWalletUpToDate = (status: AccountStatus): boolean => {
 }
 
 export interface ItemStore {
-  getItem(key: string): Promise<string | null>
-  setItem(key: string, value: string): Promise<void>
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
   removeItem(key: string): Promise<void>
 }
 
@@ -125,7 +125,7 @@ export class LocalStorage {
     if (typeof window === 'object') {
       if (!LocalStorage._instance) {
         LocalStorage._instance = {
-          getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
+          getItem: (key: string) => window.localStorage.getItem(key),
           setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
           removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
         }
@@ -135,7 +135,7 @@ export class LocalStorage {
       // TODO: perhaps add an in-memory local storage if we need?
       if (!LocalStorage._instance) {
         LocalStorage._instance = {
-          getItem: (key: string) => Promise.resolve(null),
+          getItem: (key: string) => null,
           setItem: (key: string, value: string) => Promise.resolve(),
           removeItem: (key: string) => Promise.resolve()
         }
@@ -180,4 +180,15 @@ export class LocalStore<T extends Object = string> {
   del() {
     LocalStorage.getInstance().removeItem(this.key)
   }
+}
+
+export async function resolveArrayProperties<T>(
+  object: Readonly<ethers.utils.Deferrable<T>> | Readonly<ethers.utils.Deferrable<T>>[]
+): Promise<T> {
+  if (Array.isArray(object)) {
+    // T must include array type
+    return Promise.all(object.map((o) => ethers.utils.resolveProperties(o))) as any
+  }
+
+  return ethers.utils.resolveProperties(object)
 }

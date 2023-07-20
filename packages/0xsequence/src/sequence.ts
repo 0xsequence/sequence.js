@@ -19,11 +19,13 @@ export * as account from './account'
 export {
   initWallet,
   getWallet,
-  Wallet
+  unregisterWallet,
+  SequenceProvider,
+  SequenceClient,
+  SequenceSigner
 } from '@0xsequence/provider'
 
 export type {
-  WalletProvider,
   ProviderConfig,
   WalletSession
 } from '@0xsequence/provider'

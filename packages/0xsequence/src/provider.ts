@@ -1,7 +1,7 @@
 export * from '@0xsequence/provider'
 
 export type {
-  WalletProvider,
+  SequenceProvider,
   ProviderConfig,
 
   WalletSignInOptions,

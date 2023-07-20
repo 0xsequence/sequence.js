@@ -1,3 +1,3 @@
 export * as sequence from './sequence'
 
-export { Wallet, initWallet, getWallet } from '@0xsequence/provider'
+export { initWallet } from '@0xsequence/provider'

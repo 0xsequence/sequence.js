@@ -280,9 +280,6 @@ export interface WalletSession {
   // Networks in use for the session. The default/dapp network will show
   // up as the first one in the list as the "main chain"
   networks?: NetworkConfig[]
-
-  // Caching provider responses for things such as account and chainId
-  providerCache?: { [key: string]: any }
 }
 
 export class ProviderError extends Error {

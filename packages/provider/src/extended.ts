@@ -21,3 +21,7 @@ export function toExtended(transactions: ethers.providers.TransactionRequest[]):
 export function fromExtended(transaction: ExtendedTransactionRequest): ethers.providers.TransactionRequest[] {
   return [transaction, ...(transaction.auxiliary || [])]
 }
+
+export function isExtended(transaction: ethers.providers.TransactionRequest): transaction is ExtendedTransactionRequest {
+  return (transaction as any).auxiliary !== undefined
+}
