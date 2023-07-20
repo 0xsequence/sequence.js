@@ -1,4 +1,4 @@
-const { off } = require("process")
+const { off } = require('process')
 
 module.exports = {
   parser: '@typescript-eslint/parser',
@@ -26,12 +26,12 @@ module.exports = {
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-this-alias': 'off',
+    '@typescript-eslint/no-unsafe-declaration-merging': 'off',
 
     'import/no-unresolved': 'off',
     'import/no-default-export': 2,
     'import/no-named-as-default-member': 'off',
     'import/export': 'off'
-
 
     // 'import/order': [
     //   'warn',
@@ -43,6 +43,5 @@ module.exports = {
     //     }
     //   },
     // ]
-
   }
 }
