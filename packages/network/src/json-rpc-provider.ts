@@ -9,7 +9,7 @@ import {
   JsonRpcMiddleware,
   JsonRpcMiddlewareHandler
 } from './json-rpc'
-import { networks, ChainId } from './config'
+import { ChainId, networks } from './constants'
 
 export interface JsonRpcProviderOptions {
   // ..
