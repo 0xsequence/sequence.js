@@ -13,7 +13,6 @@ import { LocalRelayer, Relayer } from '@0xsequence/relayer'
 import { commons, v1, v2 } from '@0xsequence/core'
 import chaiAsPromised from 'chai-as-promised'
 import { Wallet } from '@0xsequence/wallet'
-import { encodeBundleExecData } from '@0xsequence/core/src/commons/transaction'
 
 const { expect } = chai.use(chaiAsPromised)
 
@@ -1034,7 +1033,7 @@ describe('Account', () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
           await signer1.sendTransaction({
             to: deployTx.entrypoint,
-            data: encodeBundleExecData(deployTx),
+            data: commons.transaction.encodeBundleExecData(deployTx),
           })
   
           expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
@@ -1056,7 +1055,7 @@ describe('Account', () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
           await signer1.sendTransaction({
             to: deployTx.entrypoint,
-            data: encodeBundleExecData(deployTx),
+            data: commons.transaction.encodeBundleExecData(deployTx),
           })
   
           expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
@@ -1071,7 +1070,7 @@ describe('Account', () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
           await signer1.sendTransaction({
             to: deployTx.entrypoint,
-            data: encodeBundleExecData(deployTx),
+            data: commons.transaction.encodeBundleExecData(deployTx),
           })
   
           expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
