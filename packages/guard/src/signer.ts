@@ -1,24 +1,24 @@
-
 import { signers, Status } from '@0xsequence/signhub'
 import { BytesLike, ethers } from 'ethers'
 import { Guard } from './guard.gen'
 import { commons, universal } from '@0xsequence/core'
 
+const fetch = typeof global === 'object' ? global.fetch : window.fetch
+
 export class GuardSigner implements signers.SapientSigner {
   private guard: Guard
-  private requests: Map<string, {
-    lastAttempt?: string;
-    onSignature: (signature: BytesLike) => void;
-    onRejection: (error: string) => void;
-    onStatus: (situation: string) => void;
-  }> = new Map()
+  private requests: Map<
+    string,
+    {
+      lastAttempt?: string
+      onSignature: (signature: BytesLike) => void
+      onRejection: (error: string) => void
+      onStatus: (situation: string) => void
+    }
+  > = new Map()
 
-  constructor(
-    public readonly address: string,
-    public readonly url: string,
-    public readonly appendSuffix: boolean = false
-  ) {
-    this.guard = new Guard(url, global.fetch)
+  constructor(public readonly address: string, public readonly url: string, public readonly appendSuffix: boolean = false) {
+    this.guard = new Guard(url, fetch)
   }
 
   async getAddress(): Promise<string> {
@@ -30,9 +30,9 @@ export class GuardSigner implements signers.SapientSigner {
     _message: BytesLike,
     metadata: Object,
     callbacks: {
-      onSignature: (signature: BytesLike) => void;
-      onRejection: (error: string) => void;
-      onStatus: (situation: string) => void;
+      onSignature: (signature: BytesLike) => void
+      onRejection: (error: string) => void
+      onStatus: (situation: string) => void
     }
   ): Promise<boolean> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
@@ -46,11 +46,7 @@ export class GuardSigner implements signers.SapientSigner {
     return true
   }
 
-  notifyStatusChange(
-    id: string,
-    status: Status,
-    metadata: Object
-  ): void {
+  notifyStatusChange(id: string, status: Status, metadata: Object): void {
     if (!this.requests.has(id)) return
 
     if (!commons.isWalletSignRequestMetadata(metadata)) {
@@ -62,20 +58,19 @@ export class GuardSigner implements signers.SapientSigner {
   }
 
   private packMsgAndSig(address: string, msg: BytesLike, sig: BytesLike, chainId: ethers.BigNumberish): string {
-    return ethers.utils.defaultAbiCoder.encode(
-      ['address', 'uint256', 'bytes', 'bytes'],
-      [address, chainId, msg, sig]
-    )
+    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [address, chainId, msg, sig])
   }
 
   private keyOfRequest(signer: string, msg: BytesLike, auxData: BytesLike, chainId: ethers.BigNumberish): string {
-    return ethers.utils.solidityKeccak256(
-      ['address', 'uint256', 'bytes', 'bytes'],
-      [signer, chainId, msg, auxData]
-    )
+    return ethers.utils.solidityKeccak256(['address', 'uint256', 'bytes', 'bytes'], [signer, chainId, msg, auxData])
   }
 
-  private async evaluateRequest(id: string, message: BytesLike, _: Status, metadata: commons.WalletSignRequestMetadata): Promise<void> {
+  private async evaluateRequest(
+    id: string,
+    message: BytesLike,
+    _: Status,
+    metadata: commons.WalletSignRequestMetadata
+  ): Promise<void> {
     // Building auxData, notice: this uses the old v1 format
     // TODO: We should update the guard API so we can pass the metadata directly
     const coder = universal.genericCoderFor(metadata.config.version)
@@ -112,6 +107,6 @@ export class GuardSigner implements signers.SapientSigner {
   }
 
   suffix(): BytesLike {
-    return this.appendSuffix ? [ 3 ] : []
+    return this.appendSuffix ? [3] : []
   }
 }
