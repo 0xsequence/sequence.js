@@ -229,8 +229,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'arbitrum-nova',
     title: 'Arbitrum Nova',
     blockExplorer: {
-      name: 'Nova Explorer',
-      rootUrl: 'https://nova-explorer.arbitrum.io/'
+      name: 'Arbiscan Nova',
+      rootUrl: 'https://nova.arbiscan.io/'
     }
   },
   [ChainId.AVALANCHE]: {
