@@ -57,15 +57,19 @@ export enum NetworkType {
   TESTNET = 'testnet'
 }
 
+export type BlockExplorerConfig = {
+  name?: string
+  rootUrl: string
+  addressUrl?: string
+  txnHashUrl?: string
+}
+
 export interface NetworkMetadata {
   chainId: ChainId
   type?: NetworkType
   name: string
   title?: string
-  blockExplorer?: {
-    name: string
-    rootUrl: string
-  }
+  blockExplorer?: BlockExplorerConfig
   ensAddress?: string
   testnet?: boolean // Deprecated
 }

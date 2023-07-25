@@ -22,13 +22,6 @@ export type NetworkConfig = NetworkMetadata & {
 
 type LegacyNetworkConfig = NetworkConfig & { isAuthChain?: boolean }
 
-export type BlockExplorerConfig = {
-  name?: string
-  rootUrl: string
-  addressUrl?: string
-  txnHashUrl?: string
-}
-
 export const indexerURL = (network: string) => stringTemplate('https://${network}-indexer.sequence.app', { network })
 export const relayerURL = (network: string) => stringTemplate('https://${network}-relayer.sequence.app', { network })
 export const nodesURL = (network: string) => stringTemplate('https://nodes.sequence.app/${network}', { network })
