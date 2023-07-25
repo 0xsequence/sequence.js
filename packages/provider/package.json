@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
+    "hardhat": "^2.12.2",
     "ethers": "^5.7.2"
   },
   "files": [
