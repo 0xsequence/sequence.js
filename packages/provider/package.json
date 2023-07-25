@@ -14,8 +14,10 @@
     "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
     "typecheck": "tsc --noEmit",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat1' 'pnpm start:hardhat2'",
-    "start:hardhat1": "hardhat --config hardhat1.config.js node --hostname 0.0.0.0 --port 9595",
-    "start:hardhat2": "hardhat --config hardhat2.config.js node --hostname 0.0.0.0 --port 8595"
+    "start:hardhat1": "pnpm start:hardhat1:verbose > /dev/null 2>&1",
+    "start:hardhat2": "pnpm start:hardhat2:verbose > /dev/null 2>&1",
+    "start:hardhat1:verbose": "hardhat --config hardhat1.config.js node --hostname 0.0.0.0 --port 9595",
+    "start:hardhat2:verbose": "hardhat --config hardhat2.config.js node --hostname 0.0.0.0 --port 8595"
   },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",

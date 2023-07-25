@@ -37,6 +37,14 @@ const basicMockClient = {
 } as unknown as SequenceClient
 
 describe('SequenceProvider', () => {
+  before(async () => {
+    // Wait for both providers to be ready
+    await Promise.all([
+      hardhat1Provider.ready,
+      hardhat2Provider.ready
+    ])
+  })
+
   describe('client proxy methods', () => {
     it('should call connect', async () => {
       let callsToConnect = 0
