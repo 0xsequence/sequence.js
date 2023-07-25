@@ -3,8 +3,8 @@ import { ConnectOptions, OpenWalletIntent, OptionalChainId, SequenceClient, Sequ
 import { expect } from "chai"
 import { allNetworks } from "@0xsequence/network"
 
-const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://localhost:9595', 31337)
-const hardhat2Provider = new ethers.providers.JsonRpcProvider('http://localhost:8595', 31338)
+const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:9595')
+const hardhat2Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8595')
 
 const providerFor = (chainId: number) => {
   if (chainId === 31337) {
@@ -36,12 +36,25 @@ const basicMockClient = {
   onDefaultChainIdChanged,
 } as unknown as SequenceClient
 
+async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20000): Promise<void> {
+  const start = Date.now()
+  while (Date.now() - start < timeout) {
+    try {
+      await provider.getBlockNumber()
+      return
+    } catch (e) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+  }
+  console.warn('waitUntilNoFail timed out')
+}
+
 describe('SequenceProvider', () => {
   before(async () => {
     // Wait for both providers to be ready
     await Promise.all([
-      hardhat1Provider.ready,
-      hardhat2Provider.ready
+      waitUntilNoFail(hardhat1Provider),
+      waitUntilNoFail(hardhat2Provider)
     ])
   })
 
@@ -340,7 +353,7 @@ describe('SequenceProvider', () => {
     })
 
     it('should fail if the passed network config doesnt exist on the provider', () => {
-      const fakeNetwork = { chainId: 99999, name: 'fake', rpcUrl: 'http://localhost:99999' }
+      const fakeNetwork = { chainId: 99999, name: 'fake', rpcUrl: 'http://127.0.0.1:99999' }
       expect(() => provider.toChainId(fakeNetwork)).to.throw(`Unsupported network ${fakeNetwork}`)
     })
 
