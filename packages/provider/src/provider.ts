@@ -207,7 +207,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
    *  This returns a subprovider, this is a regular non-sequence provider that
    *  can be used to fulfill read only requests on a given network.
    */
-  private async getSubprovider(chainId?: ChainIdLike): Promise<ethers.providers.JsonRpcProvider> {
+  async _getSubprovider(chainId?: ChainIdLike): Promise<ethers.providers.JsonRpcProvider> {
     const useChainId = await this.useChainId(chainId)
 
     // Whoever implements providerFrom should memoize the generated provider
@@ -258,7 +258,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
     // Forward call to the corresponding provider
     // we use the provided chainId, or the default one provided by the client
-    const provider = await this.getSubprovider()
+    const provider = await this._getSubprovider()
     const prepared = provider.prepareRequest(method, params) ?? [method, params]    
     return provider.send(prepared[0], prepared[1])
   }
@@ -291,17 +291,17 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     timeout?: number,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.waitForTransaction(transactionHash, confirmations, timeout) 
   }
 
   async getBlockNumber(optionals?: OptionalChainIdLike) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getBlockNumber()
   }
 
   async getGasPrice(optionals?: OptionalChainIdLike) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getGasPrice()
   }
 
@@ -310,7 +310,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getBalance(addressOrName, blockTag)
   }
 
@@ -319,7 +319,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransactionCount(addressOrName, blockTag)
   }
 
@@ -328,7 +328,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getCode(addressOrName, blockTag)
   }
 
@@ -338,7 +338,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getStorageAt(addressOrName, position, blockTag)
   }
 
@@ -347,7 +347,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.call(transaction, blockTag)
   }
 
@@ -355,7 +355,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.estimateGas(transaction)
   }
 
@@ -363,7 +363,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     blockHashOrBlockTag: ethers.providers.BlockTag | string | Promise<ethers.providers.BlockTag | string>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getBlock(blockHashOrBlockTag)
   }
 
@@ -371,7 +371,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     transactionHash: string | Promise<string>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransaction(transactionHash)
   }
 
@@ -379,7 +379,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     filter: ethers.providers.Filter | Promise<ethers.providers.Filter>,
     optionals?: OptionalChainIdLike
   ) {
-    const provider = await this.getSubprovider(optionals?.chainId)
+    const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getLogs(filter)
   }
 
@@ -396,7 +396,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     }
 
     // Resolver is always on the chainId 1
-    const provider = await this.getSubprovider(1)
+    const provider = await this._getSubprovider(1)
     return provider.getResolver(name)
   }
 
@@ -410,7 +410,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     }
 
     // Resolver is always on the chainId 1
-    const provider = await this.getSubprovider(1)
+    const provider = await this._getSubprovider(1)
     return provider.resolveName(name)
   }
 
@@ -420,7 +420,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     }
 
     // Resolver is always on the chainId 1
-    const provider = await this.getSubprovider(1)
+    const provider = await this._getSubprovider(1)
     return provider.lookupAddress(address)
   }
 
@@ -429,22 +429,22 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
       return null
     }
 
-    const provider = await this.getSubprovider(1)
+    const provider = await this._getSubprovider(1)
     return provider.getAvatar(nameOrAddress)
+  }
+
+  static is = (provider: any): provider is SequenceProvider => {
+    return (
+      provider &&
+      typeof provider === 'object' &&
+      provider._isSequenceProvider === true
+    )
   }
 }
 
 function normalizeChainId(chainId: string | number | bigint | { chainId: string }): number {
   if (typeof chainId === 'object') return normalizeChainId(chainId.chainId)
   return ethers.BigNumber.from(chainId).toNumber()
-}
-
-export const isSequenceProvider = (provider: any): provider is SequenceProvider => {
-  return (
-    provider &&
-    typeof provider === 'object' &&
-    provider.isSequenceProvider === true
-  )
 }
 
 /**
@@ -502,7 +502,11 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
    *  or that don't match the chainId of this signer.
    */
   getProvider(chainId?: ChainIdLike): SingleNetworkSequenceProvider {
-    return super.getProvider(this._useChainId(chainId))
+    if (this._useChainId(chainId) !== this.chainId) {
+      throw new Error(`Unreachable code`)
+    }
+  
+    return this
   }
 
   getSigner(chainId?: ChainIdLike): SingleNetworkSequenceSigner {
@@ -517,7 +521,7 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
     return super.perform(method, params)
   }
   
-  static isSingleNetworkSequenceProvider(cand: any): cand is SingleNetworkSequenceProvider {
+  static is(cand: any): cand is SingleNetworkSequenceProvider {
     return (
       cand &&
       typeof cand === 'object' &&

@@ -1,6 +1,6 @@
 import { ethers } from "ethers"
 
-import { SequenceProvider, SingleNetworkSequenceProvider, isSequenceProvider } from "./provider"
+import { SequenceProvider, SingleNetworkSequenceProvider } from "./provider"
 import { SequenceClient } from "./client"
 import { commons } from "@0xsequence/core"
 import { ChainIdLike, NetworkConfig } from "@0xsequence/network"
@@ -71,7 +71,7 @@ export class SequenceSigner implements ISequenceSigner {
   // This method shouldn't be used directly
   // it exists to maintain compatibility with ethers.Signer
   connect(provider: ethers.providers.Provider): SequenceSigner {
-    if (!isSequenceProvider(provider)) {
+    if (!SequenceProvider.is(provider)) {
       throw new Error("SequenceSigner can only be connected to a SequenceProvider")
     }
 
