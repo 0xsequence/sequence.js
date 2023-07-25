@@ -1,5 +1,19 @@
 # @0xsequence/multicall
 
+## 1.0.5
+
+### Patch Changes
+
+- network: export network constants
+- guard: use the correct global for fetch
+- network: nova-explorer.arbitrum.io -> nova.arbiscan.io
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.0.5
+  - @0xsequence/network@1.0.5
+  - @0xsequence/utils@1.0.5
+
 ## 1.0.4
 
 ### Patch Changes

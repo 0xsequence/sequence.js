@@ -1,5 +1,33 @@
 # 0xsequence
 
+## 1.0.5
+
+### Patch Changes
+
+- network: export network constants
+- guard: use the correct global for fetch
+- network: nova-explorer.arbitrum.io -> nova.arbiscan.io
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.0.5
+  - @0xsequence/account@1.0.5
+  - @0xsequence/api@1.0.5
+  - @0xsequence/auth@1.0.5
+  - @0xsequence/core@1.0.5
+  - @0xsequence/guard@1.0.5
+  - @0xsequence/indexer@1.0.5
+  - @0xsequence/metadata@1.0.5
+  - @0xsequence/migration@1.0.5
+  - @0xsequence/multicall@1.0.5
+  - @0xsequence/network@1.0.5
+  - @0xsequence/provider@1.0.5
+  - @0xsequence/relayer@1.0.5
+  - @0xsequence/sessions@1.0.5
+  - @0xsequence/signhub@1.0.5
+  - @0xsequence/utils@1.0.5
+  - @0xsequence/wallet@1.0.5
+
 ## 1.0.4
 
 ### Patch Changes

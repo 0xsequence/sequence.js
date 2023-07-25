@@ -1,5 +1,13 @@
 # @0xsequence/utils
 
+## 1.0.5
+
+### Patch Changes
+
+- network: export network constants
+- guard: use the correct global for fetch
+- network: nova-explorer.arbitrum.io -> nova.arbiscan.io
+
 ## 1.0.4
 
 ### Patch Changes
