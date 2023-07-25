@@ -965,9 +965,10 @@ describe('SequenceClient', () => {
           const req = results[calledSendAsync]
           calledSendAsync++
           expect(request).to.deep.equal({
-            method: 'sequence_getWalletConfig'
+            method: 'sequence_getWalletConfig',
+            params: [req?.chainId]
           })
-          expect(chainId).to.equal(req?.chainId)
+          expect(chainId).to.be.equal(req?.chainId)
           callback(undefined, { result: req?.result } as any)
         }
       },

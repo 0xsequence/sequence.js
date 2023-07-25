@@ -338,7 +338,7 @@ export class SequenceClient {
     const method = options?.eip6492 ? 'sequence_sign' : 'personal_sign'
 
     // Address is ignored by the wallet webapp
-    const res = await this.send({ method, params: [message, this.getAddress()] }, options?.chainId ?? this.getChainId())
+    const res = await this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
     return res.result
   }
 
@@ -378,7 +378,7 @@ export class SequenceClient {
     const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
 
-    const res = await this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId || this.getChainId())
+    const res = await this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId )
     return res.result
   }
 
@@ -388,7 +388,8 @@ export class SequenceClient {
   }
 
   async getOnchainWalletConfig(options?: OptionalChainId): Promise<commons.config.Config> {
-    const res = await this.send({ method: 'sequence_getWalletConfig' }, options?.chainId || this.getChainId())
+    // NOTICE: sequence_getWalletConfig sends the chainId as a param
+    const res = await this.send({ method: 'sequence_getWalletConfig', params: [options?.chainId || this.getChainId()] }, options?.chainId)
     return Array.isArray(res.result) ? res.result[0] : res.result
   }
 
