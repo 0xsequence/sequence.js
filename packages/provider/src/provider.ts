@@ -85,7 +85,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return this.signer.getSigner(chainId)
   }
 
-  connect(options?: ConnectOptions) {
+  connect(options: ConnectOptions) {
     return this.client.connect(options)
   }
 
@@ -140,7 +140,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return this.client.getOnchainWalletConfig(useChainId)
   }
 
-  authorize(options?: ConnectOptions) {
+  authorize(options: ConnectOptions) {
     // Just an alias for connect with authorize: true
     return this.client.connect({ ...options, authorize: true })
   }
@@ -197,7 +197,11 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     const useChainId = this.toChainId(chainId)
 
     if (!this.singleNetworkProviders[useChainId]) {
-      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(this.client, this.providerFor, useChainId)
+      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(
+        this.client,
+        this.providerFor,
+        useChainId
+      )
     }
 
     return this.singleNetworkProviders[useChainId]
@@ -385,25 +389,50 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   // ENS methods
 
+  async supportsENS(): Promise<boolean> {
+    const networks = await this.getNetworks()
+    return networks.some(n => n.chainId === 1)
+  }
+
   async getResolver(name: string) {
+    if (!await this.supportsENS()) {
+      return null
+    }
+
     // Resolver is always on the chainId 1
     const provider = await this.getSubprovider(1)
     return provider.getResolver(name)
   }
 
   async resolveName(name: string | Promise<string>) {
+    if (ethers.utils.isAddress(await name)) {
+      return name
+    }
+
+    if (!await this.supportsENS()) {
+      return null
+    }
+
     // Resolver is always on the chainId 1
     const provider = await this.getSubprovider(1)
     return provider.resolveName(name)
   }
 
   async lookupAddress(address: string | Promise<string>) {
+    if (!await this.supportsENS()) {
+      return null
+    }
+
     // Resolver is always on the chainId 1
     const provider = await this.getSubprovider(1)
     return provider.lookupAddress(address)
   }
 
   async getAvatar(nameOrAddress: string) {
+    if (!await this.supportsENS()) {
+      return null
+    }
+
     const provider = await this.getSubprovider(1)
     return provider.getAvatar(nameOrAddress)
   }
@@ -458,6 +487,17 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
 
   getChainId(): number {
     return super.toChainId(this.chainId)
+  }
+
+  async getNetwork(): Promise<NetworkConfig> {
+    const networks = await this.client.getNetworks()
+    const res = findNetworkConfig(networks, this.chainId)
+
+    if (!res) {
+      throw new Error(`Unsupported network ${this.chainId}`)
+    }
+
+    return res
   }
 
   /**

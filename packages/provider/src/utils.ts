@@ -116,6 +116,23 @@ export interface ItemStore {
   removeItem(key: string): Promise<void>
 }
 
+export class MemoryItemStore {
+  private store: Record<string, string> = {}
+
+  getItem(key: string): string | null {
+    return this.store[key] || null
+  }
+
+  setItem(key: string, value: string): void {
+    this.store[key] = value
+  }
+
+  removeItem(key: string): Promise<void> {
+    delete this.store[key]
+    return Promise.resolve()
+  }
+}
+
 export class LocalStorage {
   private static _instance: ItemStore
 

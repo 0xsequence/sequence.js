@@ -12,7 +12,7 @@ walletProvider.register()
 // ;(window as any).walletProvider = walletProvider
 
 export const tests = async () => {  
-  const testWalletContext = await (async () => {
+  await (async () => {
     const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
     const signer = provider.getSigner()
     return context.deploySequenceContexts(signer)
@@ -33,7 +33,7 @@ export const tests = async () => {
   const chainId = await signer.getChainId()
 
   await test('getAddress', async () => {
-    assert.equal(address, ethers.utils.getAddress('0x0C90b76e8Ca332560f7909dBDB658623919aaA39'), 'wallet address')
+    assert.true(ethers.utils.isAddress(address), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -69,21 +69,20 @@ export const tests = async () => {
     // TODO: signer should be a Sequence signer, and should be able to specify the chainId
     // however, for a single wallet, it can check the chainId and throw if doesnt match, for multi-wallet it will select
 
+    // Deploy the wallet (by sending a random tx)
+    // (this step is performed by wallet-webapp when signing without EIP-6492 support)
+    await signer.sendTransaction({ to: ethers.Wallet.createRandom().address })
+
     //
     // Sign the message
     //
     const sig = await signer.signMessage(message)
-    assert.equal(
-      sig,
-      '0x0002000000000002dae61fe1d90658f8f4339bd58043b122929cd3f1faaeab38e4daa97b09471170464ebb81bb1957babce03c5fbd0bee815cc61de66d7edaff0d55a4bfbde016e11b02',
-      'signature match'
-    )
 
     //
     // Verify the message signature
     //
     const messageDigest = encodeMessageDigest(prefixEIP191Message(message))
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext)
+    const isValid = await isValidSignature(address, messageDigest, sig, provider)
     assert.true(isValid, 'signature is valid - 5')
 
     // also compute the subDigest of the message, to be provided to the end-user
@@ -127,7 +126,7 @@ export const tests = async () => {
 
     const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
     const messageDigest = ethers.utils.arrayify(messageHash)
-    const isValid = await isValidSignature(address, messageDigest, sig, provider, testWalletContext)
+    const isValid = await isValidSignature(address, messageDigest, sig, provider)
     assert.true(isValid, 'signature is valid - 6')
 
     // also compute the subDigest of the message, to be provided to the end-user

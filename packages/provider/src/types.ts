@@ -134,12 +134,8 @@ export enum InitState {
 }
 
 export interface ConnectOptions {
-  /** Specifies the default network a dapp would like to connect to. This field
-   * is optional as it can be provided a number of different ways. */
-  networkId?: string | number
-
   /** app name of the dapp which will be announced to user on connect screen */
-  app?: string
+  app: string
 
   /** custom protocol for auth redirect (unity/unreal) */
   appProtocol?: string

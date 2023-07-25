@@ -64,19 +64,6 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return this.prompter?.getDefaultChainId() ?? this.networks[0].chainId
   }
 
-  private findNetworkID(network: string | number) {
-    const lnet = typeof network === 'string' ? network.toLowerCase() : network
-    const networkId = this.networks.find(n => {
-      return n.name.toLowerCase() === lnet || n.chainId.toString() === lnet || n.chainId === lnet
-    })
-
-    if (!networkId) {
-      throw new Error(`Network ${network} not found`)
-    }
-
-    return networkId.chainId
-  }
-
   async signIn(account: Account | null, options: WalletSignInOptions = {}) {
     this.setAccount(account)
 
@@ -150,25 +137,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    let chainId: number | string
-    switch (typeof options?.networkId) {
-      case 'string':
-        // First see if it matches the name of a network
-        try {
-          chainId = this.findNetworkID(options.networkId)
-        } catch (err) {
-          // If not, try to parse it as a big number
-          chainId = getChainId(options.networkId)
-        }
-
-        break
-      case 'number':
-        chainId = options.networkId
-        break
-      default:
-        chainId = this.prompter?.getDefaultChainId() ?? 1
-        break
-    }
+    const chainId: number | string = this.prompter?.getDefaultChainId() ?? 1
 
     const connectDetails: ConnectDetails = {
       connected: true,
@@ -740,6 +709,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   notifyConnect(connectDetails: ConnectDetails, origin?: string) {
+    console.log('emit connect', connectDetails)
     this.events.emit('connect', connectDetails)
     if (connectDetails.session?.accountAddress) {
       this.events.emit('accountsChanged', [connectDetails.session?.accountAddress], origin)

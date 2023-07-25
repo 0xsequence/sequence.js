@@ -1,4 +1,4 @@
-import { JsonRpcRequest, NetworkConfig, allNetworks, findNetworkConfig } from "@0xsequence/network"
+import { JsonRpcRequest, JsonRpcResponse, NetworkConfig } from "@0xsequence/network"
 import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, ProviderTransport, WalletSession, isMuxTransportTemplate } from "."
 import { commons } from "@0xsequence/core"
 import { TypedData } from "@0xsequence/utils"
@@ -209,6 +209,7 @@ export class SequenceClient {
   async openWallet(path?: string, intent?: OpenWalletIntent) {
     this.transport.openWallet(path, intent, 1)
     await this.transport.waitUntilOpened()
+    return this.isOpened()
   }
 
   closeWallet() {
@@ -233,8 +234,8 @@ export class SequenceClient {
     return session.accountAddress
   }
 
-  async connect(options?: ConnectOptions): Promise<ConnectDetails> {
-    if (options && options?.authorizeVersion === undefined) {
+  async connect(options: ConnectOptions): Promise<ConnectDetails> {
+    if (options?.authorizeVersion === undefined) {
       // Populate default authorize version if not provided
       options.authorizeVersion = 2
     }
@@ -271,18 +272,6 @@ export class SequenceClient {
       }
   
       this.session.setSession(connectDetails.session)
-
-      if (options?.networkId) {
-        // NOTICE: This is a bit extreme, but options.networkId does technically
-        // support sending a network name when connecting, ideally we keep this sort
-        // of abstraction higher up the stack, but for now we'll just do this.
-        const defaultNetworkId = findNetworkConfig(allNetworks, options.networkId)
-        if (defaultNetworkId) {
-          await this.defaultChainId.setDefaultChainId(defaultNetworkId.chainId)
-        } else {
-          console.warn(`connect options.networkId was provided but no matching network was found`)
-        }
-      }
     }
 
     return connectDetails
@@ -300,11 +289,13 @@ export class SequenceClient {
 
   // Working with sendAsync is less idiomatic
   // but transport uses it instead of send, so we wrap it
-  send(request: JsonRpcRequest, chainId?: number): Promise<any> {
+  send(request: JsonRpcRequest, chainId?: number): Promise<JsonRpcResponse> {
     return new Promise((resolve, reject) => {
       this.transport.sendAsync(request, (error, response) => {
         if (error) {
           reject(error)
+        } else if (response === undefined) {
+          reject(new Error(`Got undefined response for request: ${request}`))
         } else {
           resolve(response)
         }
@@ -377,7 +368,7 @@ export class SequenceClient {
 
   async getOnchainWalletConfig(chainId?: number): Promise<commons.config.Config> {
     const res = await this.send({ method: 'sequence_getWalletConfig', params: [chainId] })
-    return res.result
+    return Array.isArray(res.result) ? res.result[0] : res.result
   }
 
   // NOTICE: We are leaving out all the "regular" methods os a tipical

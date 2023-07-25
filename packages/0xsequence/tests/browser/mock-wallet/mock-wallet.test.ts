@@ -30,30 +30,12 @@ const main = async () => {
   const deployedWalletContext = await utils.context.deploySequenceContexts(provider.getSigner())
   await utils.context.deploySequenceContexts(provider2.getSigner())
 
-  console.log('walletContext:', deployedWalletContext)
+  // Generate a new wallet every time, otherwise tests will fail
+  // due to EIP-6492 being used only sometimes (some tests deploy the wallet)
+  const owner = ethers.Wallet.createRandom()
 
-  // assert testWalletContext value is correct
-  // if (
-  //   deployedWalletContext.factory !== testWalletContext.factory ||
-  //   deployedWalletContext.guestModule !== testWalletContext.guestModule
-  // ) {
-  //   throw new Error('deployedWalletContext and testWalletContext do not match. check or regen.')
-  // }
-
-  //
-  // Setup single owner Sequence wallet
-  //
-
-  // owner account address: 0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853
-  const owner = getEOAWallet(testAccounts[0].privateKey)
-
-  // relayers, account address: 0x3631d4d374c3710c3456d6b1de1ee8745fbff8ba
-  // const relayerAccount = getEOAWallet(testAccounts[5].privateKey)
   const relayer = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey))
   const relayer2 = new LocalRelayer(getEOAWallet(testAccounts[5].privateKey, provider2))
-
-  // wallet account address: 0xa91Ab3C5390A408DDB4a322510A4290363efcEE9 based on the chainId
-  // const wallet = (await Wallet.singleOwner(owner, deployedWalletContext)).connect(provider, relayer)
 
   // Network available list
   const networks: NetworkConfig[] = [

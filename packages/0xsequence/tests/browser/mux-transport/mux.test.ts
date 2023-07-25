@@ -2,8 +2,9 @@ import {
   WalletRequestHandler,
   ProxyMessageChannel,
   ProxyMessageHandler,
-  Wallet,
-  WindowMessageHandler
+  WindowMessageHandler,
+  SequenceClient,
+  MemoryItemStore
 } from '@0xsequence/provider'
 import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
@@ -102,14 +103,11 @@ export const tests = async () => {
   // Dapp, wallet provider and dapp tests
   //
 
-  // wallet provider with multiple message provider transports enabled
-  const wallet = new Wallet('hardhat', {
-    walletAppURL: 'http://localhost:9999/mock-wallet/mock-wallet.test.html',
-    transports: {
-      windowTransport: { enabled: true },
-      proxyTransport: { enabled: true, appPort: ch.app }
-    }
-  })
+  // wallet client with multiple message provider transports enabled
+  const client = new SequenceClient({
+    windowTransport: { enabled: true },
+    proxyTransport: { enabled: true, appPort: ch.app }
+  }, new MemoryItemStore(), 31337)
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain
@@ -117,18 +115,19 @@ export const tests = async () => {
   // const signer = wallet.getSigner()
 
   // clear it in case we're testing in browser session
-  wallet.disconnect()
+  client.disconnect()
 
   await test('is disconnected / logged out', async () => {
-    assert.false(wallet.isConnected(), 'is logged out')
+    assert.false(client.isConnected(), 'is logged out')
   })
 
   await test('is closed', async () => {
-    assert.false(wallet.isOpened(), 'is closed')
+    assert.false(client.isOpened(), 'is closed')
   })
 
   await test('connect', async () => {
-    const { connected } = await wallet.connect({
+    const { connected } = await client.connect({
+      app: 'test',
       keepWalletOpened: true
     })
 
@@ -136,35 +135,33 @@ export const tests = async () => {
   })
 
   await test('isOpened', async () => {
-    assert.true(wallet.isOpened(), 'is opened')
+    assert.true(client.isOpened(), 'is opened')
   })
 
   await test('isConnected', async () => {
-    assert.true(wallet.isConnected(), 'is connected')
+    assert.true(client.isConnected(), 'is connected')
   })
 
   await test('open wallet while its already opened', async () => {
     // its already opened, but lets do it again
-    const opened = await wallet.openWallet()
+    const opened = await client.openWallet()
     assert.true(opened, 'wallet is opened')
   })
 
   let walletContext: commons.context.VersionedContext
   await test('getWalletContext', async () => {
-    walletContext = await wallet.getWalletContext()
+    walletContext = await client.getWalletContext()
     assert.equal(walletContext[2].factory, deployedWalletContext[2].factory, 'wallet context factory')
     assert.equal(walletContext[2].guestModule, deployedWalletContext[2].guestModule, 'wallet context guestModule')
   })
 
   await test('getChainId', async () => {
-    const chainId = await wallet.getChainId()
+    const chainId = client.getChainId()
     assert.equal(chainId, 31337, 'chainId is correct')
   })
 
-  await test('getChainId for other chain', async () => {
-    const p = wallet.getProvider(31338)
-    if (p) {
-      assert.equal(await p.getChainId(), 31338, 'chainId of other chain is 31338')
-    }
+  await test('switch chains', async () => {
+    client.setDefaultChainId(31338)
+    assert.equal(client.getChainId(), 31338, 'chainId of other chain is 31338')
   })
 }
