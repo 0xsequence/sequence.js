@@ -11,7 +11,7 @@ type Callbacks = {
   onNetworks: (networks: NetworkConfig[]) => void
   onAccountsChanged: (accounts: string[]) => void
   onWalletContext: (context: commons.context.VersionedContext) => void
-  onDefaultChainIDChanged: (chainId: number) => void
+  onDefaultChainIdChanged: (chainId: number) => void
 }
 
 /**
@@ -73,7 +73,7 @@ export class SequenceClientSession {
  *  so we don't even bother to send this information to the wallet. Instead, we
  *  track it locally using storage, that way the data stays always in sync.
  */
-export class DefaultChainIDTracker {
+export class DefaultChainIdTracker {
   static readonly SESSION_LOCALSTORE_KEY = '@sequence.session.defaultChainId'
 
   callbacks: ((chainId: number) => void)[] = []
@@ -82,7 +82,7 @@ export class DefaultChainIDTracker {
     private store: ItemStore,
     private startingChainId: number = 1
   ) {
-    store.onItemChange(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, (value: string | null) => {
+    store.onItemChange(DefaultChainIdTracker.SESSION_LOCALSTORE_KEY, (value: string | null) => {
       if (value) {
         const chainId = parseInt(value)
         this.callbacks.forEach(cb => cb(chainId))
@@ -99,12 +99,12 @@ export class DefaultChainIDTracker {
 
   setDefaultChainId(chainId: number) {
     if (chainId !== this.getDefaultChainId()) {
-      this.store.setItem(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
+      this.store.setItem(DefaultChainIdTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
     }
   }
 
   getDefaultChainId(): number {
-    const read = this.store.getItem(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY)
+    const read = this.store.getItem(DefaultChainIdTracker.SESSION_LOCALSTORE_KEY)
 
     if (!read || read.length === 0) {
       return this.startingChainId
@@ -122,7 +122,7 @@ export class DefaultChainIDTracker {
  */
 export class SequenceClient {  
   private readonly session: SequenceClientSession
-  private readonly defaultChainId: DefaultChainIDTracker
+  private readonly defaultChainId: DefaultChainIdTracker
   private readonly callbacks: { [K in keyof Callbacks]?: Callbacks[K][] } = {}
 
   public readonly transport: ProviderTransport
@@ -139,7 +139,7 @@ export class SequenceClient {
     }
 
     this.session = new SequenceClientSession(store)
-    this.defaultChainId = new DefaultChainIDTracker(store, defaultChainId)
+    this.defaultChainId = new DefaultChainIdTracker(store, defaultChainId)
 
     this.transport.on('accountsChanged', (accounts: string[]) => {
       if (accounts.length > 1) {
@@ -166,7 +166,7 @@ export class SequenceClient {
     })
   
     this.defaultChainId.onDefaultChainIdChanged((chainId: number) => {
-      this.callbacks.onDefaultChainIDChanged?.forEach(cb => cb(chainId))
+      this.callbacks.onDefaultChainIdChanged?.forEach(cb => cb(chainId))
     })
   }
 
@@ -208,7 +208,7 @@ export class SequenceClient {
   }
 
   onDefaultChainIdChanged(callback: (chainId: number) => void) {
-    return this.registerCallback('onDefaultChainIDChanged', callback)
+    return this.registerCallback('onDefaultChainIdChanged', callback)
   }
 
   getChainId(): number {
