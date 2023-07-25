@@ -1,6 +1,6 @@
 import { CachedProvider, ChainIdLike, JsonRpcRouter, JsonRpcSender, NetworkConfig, allNetworks, exceptionProviderMiddleware, findNetworkConfig, loggingProviderMiddleware } from "@0xsequence/network"
 import { MuxTransportTemplate } from "./transports"
-import { ItemStore, LocalStorage } from "./utils"
+import { ItemStore, useBestStore } from "./utils"
 import { ethers } from "ethers"
 import { SequenceClient } from "./client"
 import { SequenceProvider } from "./provider"
@@ -102,7 +102,7 @@ export const initWallet = (
   }
 
   // Generate ItemStore
-  const itemStore = config.localStorage || LocalStorage.getInstance()
+  const itemStore = config.localStorage || useBestStore()
 
   // Create client, provider and return signer
   const client = new SequenceClient(config.transports, itemStore, defaultNetwork)

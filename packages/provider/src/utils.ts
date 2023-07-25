@@ -113,10 +113,14 @@ export const isWalletUpToDate = (status: AccountStatus): boolean => {
 export interface ItemStore {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
-  removeItem(key: string): Promise<void>
+
+  removeItem(key: string): void
+
+  onItemChange(key: string, cb: (value: string | null) => void): () => void
 }
 
-export class MemoryItemStore {
+export class MemoryItemStore implements ItemStore {
+  private callbacks: { key: string, cb: (value: string | null) => void }[] = []
   private store: Record<string, string> = {}
 
   getItem(key: string): string | null {
@@ -125,78 +129,68 @@ export class MemoryItemStore {
 
   setItem(key: string, value: string): void {
     this.store[key] = value
+    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(value))
   }
 
-  removeItem(key: string): Promise<void> {
+  removeItem(key: string): void {
     delete this.store[key]
-    return Promise.resolve()
+  }
+
+  onItemChange(key: string, cb: (value: string | null) => void): () => void {
+    this.callbacks.push({ key, cb })
+
+    return () => {
+      this.callbacks = this.callbacks.filter((c) => c.cb !== cb)
+    }
   }
 }
 
-export class LocalStorage {
-  private static _instance: ItemStore
+export class LocalStorage implements ItemStore {
+  private callbacks: { key: string, cb: (value: string | null) => void }[] = []
 
-  private constructor() {}
-
-  static getInstance(): ItemStore {
-    if (typeof window === 'object') {
-      if (!LocalStorage._instance) {
-        LocalStorage._instance = {
-          getItem: (key: string) => window.localStorage.getItem(key),
-          setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
-          removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
-        }
-      }
-    } else {
-      // noop local storage if window is not defined
-      // TODO: perhaps add an in-memory local storage if we need?
-      if (!LocalStorage._instance) {
-        LocalStorage._instance = {
-          getItem: (key: string) => null,
-          setItem: (key: string, value: string) => Promise.resolve(),
-          removeItem: (key: string) => Promise.resolve()
-        }
-      }
-    }
-    return this._instance
+  static isAvailable(): boolean {
+    return typeof window === 'object' && typeof window.localStorage === 'object'
   }
 
-  static use(instance: ItemStore) {
-    LocalStorage._instance = instance
+  constructor() {
+    if (!LocalStorage.isAvailable()) {
+      throw new Error('LocalStorage is not available')
+    }
+
+    window.addEventListener('storage', (e) => {
+      const { key, newValue } = e
+      const cb = this.callbacks.filter((c) => c.key === key)
+      cb.forEach((c) => c.cb(newValue))
+    })
+  }
+
+  getItem(key: string): string | null {
+    return window.localStorage.getItem(key)
+  }
+
+  setItem(key: string, value: string): void {
+    window.localStorage.setItem(key, value)
+  }
+
+  removeItem(key: string): void {
+    window.localStorage.removeItem(key)
+  }
+
+  onItemChange(key: string, cb: (value: string | null) => void): () => void {
+    this.callbacks.push({ key, cb })
+
+    return () => {
+      this.callbacks = this.callbacks.filter((c) => c.cb !== cb)
+    }
   }
 }
 
-// window.localstorage helper
-export class LocalStore<T extends Object = string> {
-  readonly key: string
-
-  constructor(key: string, public def?: T) {
-    this.key = key
+export function useBestStore(): ItemStore {
+  if (LocalStorage.isAvailable()) {
+    return new LocalStorage()
   }
 
-  async get(): Promise<T | undefined> {
-    const val = await LocalStorage.getInstance().getItem(this.key)
-
-    if (val === null) {
-      return this.def
-    }
-
-    try {
-      return JSON.parse(val)
-    } catch (err) {
-      console.error(err)
-    }
-
-    return
-  }
-
-  set(val: T | undefined) {
-    val ? LocalStorage.getInstance().setItem(this.key, JSON.stringify(val)) : LocalStorage.getInstance().removeItem(this.key)
-  }
-
-  del() {
-    LocalStorage.getInstance().removeItem(this.key)
-  }
+  return new MemoryItemStore()
 }
 
 export async function resolveArrayProperties<T>(

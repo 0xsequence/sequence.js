@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { MemoryItemStore, OpenWalletIntent, ProviderEventTypes, ProviderTransport, SequenceClient, TypedEventEmitter } from "../src"
+import { OpenWalletIntent, ProviderEventTypes, ProviderTransport, SequenceClient, TypedEventEmitter, useBestStore } from "../src"
 import { JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, allNetworks } from "@0xsequence/network"
 import EventEmitter from "events"
 import { commons, v1, v2 } from "@0xsequence/core"
@@ -44,7 +44,7 @@ describe('SequenceClient', () => {
         }
       }
 
-      client = new SequenceClient(mockTransport as unknown as ProviderTransport, new MemoryItemStore(), 1)
+      client = new SequenceClient(mockTransport as unknown as ProviderTransport, useBestStore(), 1)
     })
 
     it('shoud emit open event', async () => {
@@ -170,7 +170,7 @@ describe('SequenceClient', () => {
           return false
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -191,7 +191,7 @@ describe('SequenceClient', () => {
           calledCloseWallet++
         },
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -210,7 +210,7 @@ describe('SequenceClient', () => {
           return calledIsOpened === 1
         },
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -266,7 +266,7 @@ describe('SequenceClient', () => {
           calledCloseWallet++
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -307,7 +307,7 @@ describe('SequenceClient', () => {
         },
         isOpened: () => true,
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -333,7 +333,7 @@ describe('SequenceClient', () => {
         },
         isOpened: () => true,
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -365,7 +365,7 @@ describe('SequenceClient', () => {
           callback(undefined, command?.res)
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -400,7 +400,7 @@ describe('SequenceClient', () => {
           callback(new Error('Failed to send'))
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -416,7 +416,7 @@ describe('SequenceClient', () => {
           callback(undefined, undefined)
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -459,7 +459,7 @@ describe('SequenceClient', () => {
           return true
         },
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -511,7 +511,7 @@ describe('SequenceClient', () => {
         },
         closeWallet: () => {}
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -581,7 +581,7 @@ describe('SequenceClient', () => {
         },
         closeWallet: () => {}
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -767,7 +767,7 @@ describe('SequenceClient', () => {
         },
         closeWallet: () => {}
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -844,7 +844,7 @@ describe('SequenceClient', () => {
           callback(undefined, { result: req?.result } as any)
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -915,7 +915,7 @@ describe('SequenceClient', () => {
           callback(undefined, { result: sampleContext } as any)
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -972,7 +972,7 @@ describe('SequenceClient', () => {
           callback(undefined, { result: req?.result } as any)
         }
       },
-      new MemoryItemStore(),
+      useBestStore(),
       2
     )
 
@@ -994,5 +994,61 @@ describe('SequenceClient', () => {
 
     const result4 = await client.getOnchainWalletConfig({ chainId: 6 })
     expect(result4).to.deep.equal(results[3].result)
+  })
+
+  describe('Network changes', async () => {
+    it('should react to default chainId change', async () => {
+      const store = useBestStore()
+
+      const client1 = new SequenceClient(basicMockTransport, store, 2)
+      const client2 = new SequenceClient(basicMockTransport, store, 2)
+
+      expect(client1.getChainId()).to.equal(2)
+      expect(client2.getChainId()).to.equal(2)
+
+      client1.setDefaultChainId(5)
+
+      expect(client1.getChainId()).to.equal(5)
+      expect(client2.getChainId()).to.equal(5)
+    })
+
+    it('should converge after default chainId change (different initial chain ids)', async () => {
+      const store = useBestStore()
+
+      const client1 = new SequenceClient(basicMockTransport, store, 2)
+      const client2 = new SequenceClient(basicMockTransport, store, 5)
+
+      expect(client1.getChainId()).to.equal(2)
+      expect(client2.getChainId()).to.equal(5)
+
+      client1.setDefaultChainId(10)
+
+      expect(client1.getChainId()).to.equal(10)
+      expect(client2.getChainId()).to.equal(10)
+    })
+
+    it('should emit an event when default chainId changes', async () => {
+      const store = useBestStore()
+
+      const client1 = new SequenceClient(basicMockTransport, store, 2)
+      const client2 = new SequenceClient(basicMockTransport, store, 2)
+
+      let called1 = 0
+      client1.onDefaultChainIdChanged((chainId) => {
+        called1++
+        expect(chainId).to.equal(10)
+      })
+
+      let called2 = 0
+      client2.onDefaultChainIdChanged((chainId) => {
+        called2++
+        expect(chainId).to.equal(10)
+      })
+
+      client1.setDefaultChainId(10)
+
+      expect(called1).to.equal(1)
+      expect(called2).to.equal(1)
+    })
   })
 })

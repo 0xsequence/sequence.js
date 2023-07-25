@@ -81,7 +81,14 @@ export class DefaultChainIDTracker {
   constructor(
     private store: ItemStore,
     private startingChainId: number = 1
-  ) {}
+  ) {
+    store.onItemChange(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, (value: string | null) => {
+      if (value) {
+        const chainId = parseInt(value)
+        this.callbacks.forEach(cb => cb(chainId))
+      }
+    })
+  }
 
   onDefaultChainIdChanged(callback: (chainId: number) => void) {
     this.callbacks.push(callback)
@@ -91,12 +98,8 @@ export class DefaultChainIDTracker {
   }
 
   setDefaultChainId(chainId: number) {
-    const prev = this.getDefaultChainId()
-
-    this.store.setItem(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
-
-    if (prev !== this.getDefaultChainId()) {
-      this.callbacks.forEach(cb => cb(chainId))
+    if (chainId !== this.getDefaultChainId()) {
+      this.store.setItem(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
     }
   }
 
