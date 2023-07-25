@@ -1,11 +1,12 @@
 import { ethers } from "ethers"
 
-import { OptionalArgs, SequenceProvider, SingleNetworkSequenceProvider, isSequenceProvider } from "./provider"
+import { SequenceProvider, SingleNetworkSequenceProvider, isSequenceProvider } from "./provider"
 import { SequenceClient } from "./client"
 import { commons } from "@0xsequence/core"
 import { ChainIdLike, NetworkConfig } from "@0xsequence/network"
 import { resolveArrayProperties } from "./utils"
 import { WalletUtils } from "./utils/index"
+import { OptionalChainIdLike, OptionalEIP6492 } from "./types"
 
 export interface ISequenceSigner extends ethers.Signer {
   getProvider(): SequenceProvider
@@ -21,20 +22,14 @@ export interface ISequenceSigner extends ethers.Signer {
 
   signMessage(
     message: ethers.BytesLike,
-    options?: {
-      eip6492?: boolean,
-      chainId?: ChainIdLike,
-    }
+    options?: OptionalChainIdLike & OptionalEIP6492
   ): Promise<string>
 
   signTypedData(
     domain: ethers.TypedDataDomain,
     types: Record<string, Array<ethers.TypedDataField>>,
     message: Record<string, any>,
-    options?: {
-      eip6492?: boolean,
-      chainId?: ChainIdLike,
-    }
+    options?: OptionalChainIdLike & OptionalEIP6492
   ): Promise<string>
 
   // sendTransaction takes an unsigned transaction, or list of unsigned transactions, and then has it signed by
@@ -108,33 +103,27 @@ export class SequenceSigner implements ISequenceSigner {
    *  overriden to build a single-network SequenceProvider.
    */
   protected async useChainId(chainId?: ChainIdLike): Promise<number> {
-    return this.provider.toChainId(chainId) || await this.client.getChainId()
+    return this.provider.toChainId(chainId) || this.client.getChainId()
   }
 
   async signMessage(
     message: ethers.BytesLike,
-    options?: {
-      eip6492?: boolean,
-      chainId?: ChainIdLike,
-    }
+    options?: OptionalChainIdLike & OptionalEIP6492
   ): Promise<string> {
     const { eip6492 = true } = options || {}
     const chainId = await this.useChainId(options?.chainId)
-    return this.client.signMessage(message, eip6492, chainId)
+    return this.client.signMessage(message, { eip6492, chainId })
   }
 
   async signTypedData(
     domain: ethers.TypedDataDomain,
     types: Record<string, Array<ethers.TypedDataField>>,
     message: Record<string, any>,
-    options?: {
-      eip6492?: boolean,
-      chainId?: ChainIdLike,
-    }
+    options?: OptionalChainIdLike & OptionalEIP6492
   ): Promise<string> {
     const { eip6492 = true } = options || {}
     const chainId = await this.useChainId(options?.chainId)
-    return this.client.signTypedData({ domain, types, message }, eip6492, chainId)
+    return this.client.signTypedData({ domain, types, message }, { eip6492, chainId })
   }
 
   getProvider(): SequenceProvider
@@ -148,9 +137,7 @@ export class SequenceSigner implements ISequenceSigner {
   async sendTransaction(
     transaction: (
       ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest> | 
-      ethers.utils.Deferrable<commons.transaction.Transaction>[] |
-      ethers.utils.Deferrable<commons.transaction.Transaction>
+      ethers.utils.Deferrable<ethers.providers.TransactionRequest>
     ),
     options?: {
       chainId?: ChainIdLike,
@@ -158,7 +145,7 @@ export class SequenceSigner implements ISequenceSigner {
   ) {
     const chainId = await this.useChainId(options?.chainId)
     const resolved = await resolveArrayProperties(transaction)
-    const txHash = await this.client.sendTransaction(resolved, chainId)
+    const txHash = await this.client.sendTransaction(resolved, { chainId })
     const provider = this.getProvider(chainId)
 
     try {
@@ -174,7 +161,7 @@ export class SequenceSigner implements ISequenceSigner {
 
   async getWalletConfig(chainId?: ChainIdLike | undefined): Promise<commons.config.Config> {
     const useChainId = await this.useChainId(chainId)
-    return this.client.getOnchainWalletConfig(useChainId)
+    return this.client.getOnchainWalletConfig({ chainId: useChainId })
   }
 
   getNetworks(): Promise<NetworkConfig[]> {
@@ -183,7 +170,7 @@ export class SequenceSigner implements ISequenceSigner {
 
   async getBalance(
     blockTag?: ethers.providers.BlockTag | undefined,
-    optionals?: OptionalArgs
+    optionals?: OptionalChainIdLike
   ): Promise<ethers.BigNumber> {
     const provider = this.getProvider(optionals?.chainId)
     return provider.getBalance(this.getAddress(), blockTag)
@@ -191,7 +178,7 @@ export class SequenceSigner implements ISequenceSigner {
 
   async estimateGas(
     transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    optionals?: OptionalArgs
+    optionals?: OptionalChainIdLike
   ): Promise<ethers.BigNumber> {
     return this.getProvider(optionals?.chainId).estimateGas(transaction)
   }
@@ -199,7 +186,7 @@ export class SequenceSigner implements ISequenceSigner {
   async call(
     transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     blockTag?: ethers.providers.BlockTag | undefined,
-    optionals?: OptionalArgs
+    optionals?: OptionalChainIdLike
   ): Promise<string> {
     return this.getProvider(optionals?.chainId).call(transaction, blockTag)
   }
@@ -208,11 +195,11 @@ export class SequenceSigner implements ISequenceSigner {
     return Promise.resolve(this.client.getChainId())
   }
 
-  async getGasPrice(optionals?: OptionalArgs): Promise<ethers.BigNumber> {
+  async getGasPrice(optionals?: OptionalChainIdLike): Promise<ethers.BigNumber> {
     return this.getProvider(optionals?.chainId).getGasPrice()
   }
 
-  async getFeeData(optionals?: OptionalArgs): Promise<ethers.providers.FeeData> {
+  async getFeeData(optionals?: OptionalChainIdLike): Promise<ethers.providers.FeeData> {
     return this.getProvider(optionals?.chainId).getFeeData()
   }
 

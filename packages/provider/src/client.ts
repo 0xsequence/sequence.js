@@ -1,5 +1,5 @@
 import { JsonRpcRequest, JsonRpcResponse, NetworkConfig } from "@0xsequence/network"
-import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, ProviderTransport, WalletSession, isMuxTransportTemplate } from "."
+import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, OptionalChainId, OptionalEIP6492, ProviderTransport, WalletSession, isMuxTransportTemplate } from "."
 import { commons } from "@0xsequence/core"
 import { TypedData } from "@0xsequence/utils"
 import { toExtended } from "./extended"
@@ -7,6 +7,7 @@ import { ethers } from "ethers"
 
 type Callbacks = {
   onOpen: () => void
+  onClose: () => void
   onNetworks: (networks: NetworkConfig[]) => void
   onAccountsChanged: (accounts: string[]) => void
   onWalletContext: (context: commons.context.VersionedContext) => void
@@ -90,7 +91,13 @@ export class DefaultChainIDTracker {
   }
 
   setDefaultChainId(chainId: number) {
-    return this.store.setItem(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
+    const prev = this.getDefaultChainId()
+
+    this.store.setItem(DefaultChainIDTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
+
+    if (prev !== this.getDefaultChainId()) {
+      this.callbacks.forEach(cb => cb(chainId))
+    }
   }
 
   getDefaultChainId(): number {
@@ -152,7 +159,7 @@ export class SequenceClient {
     })
 
     this.transport.on('close', () => {
-      this.callbacks.onOpen?.forEach(cb => cb())
+      this.callbacks.onClose?.forEach(cb => cb())
     })
   
     this.defaultChainId.onDefaultChainIdChanged((chainId: number) => {
@@ -179,15 +186,20 @@ export class SequenceClient {
   onOpen(callback: Callbacks['onOpen']) {
     return this.registerCallback('onOpen', callback)
   }
+
+  onClose(callback: Callbacks['onClose']) {
+    return this.registerCallback('onClose', callback)
+  }
   
   onNetworks(callback: Callbacks['onNetworks']) {
     return this.registerCallback('onNetworks', callback)
   }
-  
+
   onAccountsChanged(callback: Callbacks['onAccountsChanged']) {
     return this.registerCallback('onAccountsChanged', callback)
   }
-  
+
+  // @deprecated
   onWalletContext(callback: Callbacks['onWalletContext']) {
     return this.registerCallback('onWalletContext', callback)
   }
@@ -299,19 +311,19 @@ export class SequenceClient {
         } else {
           resolve(response)
         }
-      }, chainId)
+      }, chainId || this.getChainId())
     })
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {
+    const connectedSession = this.session.connectedSession()
+
     if (pull) {
       const nextNetworks = await this.send({ method: 'sequence_getNetworks' })
-      const connectedSession = this.session.connectedSession()
       connectedSession.networks = nextNetworks.result
       this.session.setSession(connectedSession)
     }
 
-    const connectedSession = this.session.connectedSession()
     return connectedSession.networks
   }
 
@@ -321,43 +333,52 @@ export class SequenceClient {
 
   async signMessage(
     message: ethers.BytesLike,
-    eip6492: boolean = false,
-    chainId?: number
+    options?: OptionalEIP6492 & OptionalChainId
   ): Promise<string> {
-    const method = eip6492 ? 'sequence_sign' : 'personal_sign'
+    const method = options?.eip6492 ? 'sequence_sign' : 'personal_sign'
 
     // Address is ignored by the wallet webapp
-    const res = await this.send({ method, params: [message, this.getAddress()] }, chainId)
+    const res = await this.send({ method, params: [message, this.getAddress()] }, options?.chainId ?? this.getChainId())
     return res.result
   }
 
   async signTypedData(
     typedData: TypedData,
-    eip6492: boolean = false,
-    chainId?: number
+    options?: OptionalEIP6492 & OptionalChainId
   ): Promise<string> {
-    const method = eip6492 ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4'
+    const method = options?.eip6492 ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4'
 
     // TODO: Stop using ethers for this, this is the only place where we use it
     // and it makes the client depend on ethers.
     const encoded =  ethers.utils._TypedDataEncoder.getPayload(typedData.domain, typedData.types, typedData.message)
 
-    const res = await this.send({ method, params: [this.getAddress(), encoded] }, chainId)
+    // The sign typed data will use one of the following chainIds, in order:
+    // - The one provided in the options
+    // - The one provided in the typedData.domain.chainId
+    // - The default chainId
+
+    const res = await this.send({ method, params: [this.getAddress(), encoded] }, (
+      options?.chainId ||
+      (
+        typedData.domain.chainId &&
+        ethers.BigNumber.from(typedData.domain.chainId).toNumber()
+      ) ||
+      this.getChainId()
+    ))
     return res.result
   }
 
   async sendTransaction(
     tx: (
       ethers.providers.TransactionRequest[] |
-      commons.transaction.Transaction[] |
-      commons.transaction.Transactionish
+      ethers.providers.TransactionRequest
     ),
-    chainId?: number
+    options?: OptionalChainId
   ): Promise<string> {
-    const sequenceTxs = commons.transaction.fromTransactionish(this.getAddress(), tx)
+    const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
 
-    const res = await this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, chainId)
+    const res = await this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId || this.getChainId())
     return res.result
   }
 
@@ -366,8 +387,8 @@ export class SequenceClient {
     return res.result
   }
 
-  async getOnchainWalletConfig(chainId?: number): Promise<commons.config.Config> {
-    const res = await this.send({ method: 'sequence_getWalletConfig', params: [chainId] })
+  async getOnchainWalletConfig(options?: OptionalChainId): Promise<commons.config.Config> {
+    const res = await this.send({ method: 'sequence_getWalletConfig' }, options?.chainId || this.getChainId())
     return Array.isArray(res.result) ? res.result[0] : res.result
   }
 

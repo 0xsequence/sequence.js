@@ -1,6 +1,6 @@
 import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
+import { ChainIdLike, JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -307,3 +307,15 @@ export interface TypedEventEmitter<Events> {
 }
 
 type Arguments<T> = [T] extends [(...args: infer U) => any] ? U : [T] extends [void] ? [] : [T]
+
+export type OptionalChainIdLike = {
+  chainId?: ChainIdLike
+} | undefined
+
+export type OptionalChainId = {
+  chainId?: number
+} | undefined
+
+export type OptionalEIP6492 = {
+  eip6492?: boolean
+} | undefined

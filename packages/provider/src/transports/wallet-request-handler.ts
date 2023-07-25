@@ -22,7 +22,7 @@ import {
   ProviderEventTypes,
   TypedEventEmitter
 } from '../types'
-import { isWalletUpToDate, prefixEIP191Message } from '../utils'
+import { prefixEIP191Message } from '../utils'
 
 type ExternalProvider = providers.ExternalProvider
 
