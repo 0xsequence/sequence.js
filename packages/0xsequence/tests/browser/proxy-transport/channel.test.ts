@@ -136,10 +136,10 @@ export const tests = async () => {
     assert.equal(chainIdClient, 31337, 'chain id match')
 
     const netVersion = await client.send({ method: 'net_version' })
-    assert.equal(netVersion?.result, '31337', 'net_version check')
+    assert.equal(netVersion, '31337', 'net_version check')
 
     const chainId = await client.send({ method: 'eth_chainId' })
-    assert.equal(chainId?.result, '0x7a69', 'eth_chainId check')
+    assert.equal(chainId, '0x7a69', 'eth_chainId check')
   })
 
   await test('sign a message and validate/recover', async () => {
