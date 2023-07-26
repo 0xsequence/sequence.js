@@ -38,9 +38,7 @@ export interface ISequenceSigner extends ethers.Signer {
   sendTransaction(
     transaction: (
       ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest> | 
-      ethers.utils.Deferrable<commons.transaction.Transaction>[] |
-      ethers.utils.Deferrable<commons.transaction.Transaction>
+      ethers.utils.Deferrable<ethers.providers.TransactionRequest>
     ),
     options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
@@ -52,6 +50,7 @@ export class SequenceSigner implements ISequenceSigner {
   private readonly singleNetworkSigners: { [chainId: number]: SingleNetworkSequenceSigner } = {}
 
   readonly _isSigner: boolean = true
+  readonly _isSequenceSigner: boolean = true
 
   get utils(): WalletUtils {
     return this.provider.utils
@@ -100,7 +99,7 @@ export class SequenceSigner implements ISequenceSigner {
    *  it uses the chainId defined by the client (default chainId). This can be
    *  overriden to build a single-network SequenceProvider.
    */
-  protected async useChainId(chainId?: ChainIdLike): Promise<number> {
+  protected useChainId(chainId?: ChainIdLike): number {
     return this.provider.toChainId(chainId) || this.client.getChainId()
   }
 
@@ -109,7 +108,7 @@ export class SequenceSigner implements ISequenceSigner {
     options?: OptionalChainIdLike & OptionalEIP6492
   ): Promise<string> {
     const { eip6492 = true } = options || {}
-    const chainId = await this.useChainId(options?.chainId)
+    const chainId = this.useChainId(options?.chainId)
     return this.client.signMessage(message, { eip6492, chainId })
   }
 
@@ -120,7 +119,7 @@ export class SequenceSigner implements ISequenceSigner {
     options?: OptionalChainIdLike & OptionalEIP6492
   ): Promise<string> {
     const { eip6492 = true } = options || {}
-    const chainId = await this.useChainId(options?.chainId)
+    const chainId = this.useChainId(options?.chainId)
     return this.client.signTypedData({ domain, types, message }, { eip6492, chainId })
   }
 
@@ -139,7 +138,7 @@ export class SequenceSigner implements ISequenceSigner {
     ),
     options?: OptionalChainIdLike
   ) {
-    const chainId = await this.useChainId(options?.chainId)
+    const chainId = this.useChainId(options?.chainId)
     const resolved = await resolveArrayProperties(transaction)
     const txHash = await this.client.sendTransaction(resolved, { chainId })
     const provider = this.getProvider(chainId)
@@ -156,7 +155,7 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async getWalletConfig(chainId?: ChainIdLike | undefined): Promise<commons.config.Config> {
-    const useChainId = await this.useChainId(chainId)
+    const useChainId = this.useChainId(chainId)
     return this.client.getOnchainWalletConfig({ chainId: useChainId })
   }
 
@@ -242,6 +241,14 @@ export class SequenceSigner implements ISequenceSigner {
     // using a different provider, which would fail.
     throw new Error("SequenceWallet does not support signTransaction, use sendTransaction instead.")
   }
+
+  static is(cand: any): cand is SequenceSigner {
+    return (
+      cand &&
+      typeof cand === "object" &&
+      cand._isSequenceSigner === true
+    )
+  }
 }
 
 /**
@@ -268,14 +275,14 @@ export class SingleNetworkSequenceSigner extends SequenceSigner {
     const provided = this.provider.toChainId(chainId)
 
     if (provided && provided !== this.chainId) {
-      throw new Error(`This provider only supports the network ${this.chainId}, but ${provided} was requested.`)
+      throw new Error(`This signer only supports the network ${this.chainId}, but ${provided} was requested.`)
     }
 
     return provided || this.provider.toChainId(this.chainId)
   }
 
-  protected useChainId(chainId?: ChainIdLike): Promise<number> {
-    return Promise.resolve(this._useChainId(chainId))
+  protected useChainId(chainId?: ChainIdLike): number {
+    return this._useChainId(chainId)
   }
 
   getChainId(): Promise<number> {
@@ -292,10 +299,14 @@ export class SingleNetworkSequenceSigner extends SequenceSigner {
   }
 
   getSigner(chainId?: ChainIdLike | undefined): SingleNetworkSequenceSigner {
-    return super.getSigner(this._useChainId(chainId))
+    if (this._useChainId(chainId) !== this.chainId) {
+      throw new Error(`Unreachable code`)
+    }
+  
+    return this
   }
 
-  static isSingleNetworkSequenceSigner(cand: any): cand is SingleNetworkSequenceSigner {
+  static is(cand: any): cand is SingleNetworkSequenceSigner {
     return (
       cand &&
       typeof cand === "object" &&

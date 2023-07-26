@@ -11,7 +11,7 @@ import { SequenceSigner, SingleNetworkSequenceSigner } from '../signer'
  */
 export class WalletUtils {
   constructor(public signer: SequenceSigner) {
-    if (SingleNetworkSequenceSigner.isSingleNetworkSequenceSigner(signer)) {
+    if (SingleNetworkSequenceSigner.is(signer)) {
       throw new Error('WalletUtils does not support SingleNetworkSequenceSigner')
     }
   }
