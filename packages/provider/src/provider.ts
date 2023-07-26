@@ -2,7 +2,7 @@
 import { ethers } from "ethers"
 import { SequenceClient } from "./client"
 import { ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from "@0xsequence/network"
-import { ConnectDetails, ConnectOptions, OpenWalletIntent, OptionalChainIdLike, WalletSession } from "./types"
+import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, OptionalChainIdLike, WalletSession } from "./types"
 import { commons } from "@0xsequence/core"
 import { WalletUtils } from "./utils/index"
 import { SequenceSigner, SingleNetworkSequenceSigner } from "./signer"
@@ -47,7 +47,7 @@ export interface ISequenceProvider {
   utils: WalletUtils
 }
 
-export class SequenceProvider extends ethers.providers.BaseProvider implements ISequenceProvider {
+export class SequenceProvider extends ethers.providers.BaseProvider implements ISequenceProvider, EIP1193Provider {
   private readonly singleNetworkProviders: { [chainId: number]: SingleNetworkSequenceProvider } = {}
 
   readonly _isSequenceProvider = true
@@ -267,6 +267,10 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   send (method: string, params: any): Promise<any> {
     return this.perform(method, params)
+  }
+
+  request (request: { method: string; params?: any[] | undefined }) {
+    return this.perform(request.method, request.params)
   }
 
   async detectNetwork(): Promise<ethers.providers.Network> {

@@ -340,3 +340,8 @@ export type OptionalChainId = {
 export type OptionalEIP6492 = {
   eip6492?: boolean
 } | undefined
+
+// This is required by viem, it expects a provider to have an EIP-1193 compliant `request` attribute.
+export interface EIP1193Provider {
+  request: (request: { method: string, params?: Array<any> }) => Promise<any>
+}
