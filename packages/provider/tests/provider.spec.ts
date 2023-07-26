@@ -1,7 +1,8 @@
 import { ethers } from "ethers"
 import { ConnectOptions, OpenWalletIntent, OptionalChainId, SequenceClient, SequenceProvider, SingleNetworkSequenceProvider } from "../src"
 import { expect } from "chai"
-import { allNetworks } from "@0xsequence/network"
+import { JsonRpcRequest, allNetworks } from "@0xsequence/network"
+import { ExtendedTransactionRequest } from "../src/extended"
 
 const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:9595')
 const hardhat2Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8595')
@@ -18,7 +19,7 @@ const providerFor = (chainId: number) => {
   throw new Error(`No provider for chainId ${chainId}`)
 }
 
-let defaultChainId: number = 31337
+let defaultChainId: number
 
 let callback: (chainId: number) => void
 
@@ -34,6 +35,7 @@ let setDefaultChainId = (chainId: number) => {
 const basicMockClient = {
   getChainId: () => defaultChainId,
   onDefaultChainIdChanged,
+  setDefaultChainId
 } as unknown as SequenceClient
 
 async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20000): Promise<void> {
@@ -56,6 +58,10 @@ describe('SequenceProvider', () => {
       waitUntilNoFail(hardhat1Provider),
       waitUntilNoFail(hardhat2Provider)
     ])
+  })
+
+  beforeEach(() => {
+    defaultChainId = 31337
   })
 
   describe('client proxy methods', () => {
@@ -504,7 +510,7 @@ describe('SequenceProvider', () => {
     })
 
     it('should return hardat2 if default chain is changed', async () => {
-      setDefaultChainId(31338)
+      provider.setDefaultChainId(31338)
       expect(await provider._getSubprovider()).to.equal(hardhat2Provider)
     })
 
@@ -513,10 +519,6 @@ describe('SequenceProvider', () => {
         new ethers.Wallet('0xcd0434442164a4a6ef9bb677da8dc326fddf412cad4df65e1a3f2555aee5e2b3').connect(hardhat1Provider),
         new ethers.Wallet('0xcd0434442164a4a6ef9bb677da8dc326fddf412cad4df65e1a3f2555aee5e2b3').connect(hardhat2Provider)
       ]
-
-      beforeEach(() => {
-        defaultChainId = 31337
-      })
 
       describe('forward getBlockNumber', () => {
         let bn1: number
@@ -538,7 +540,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getBlockNumber()).to.equal(bn1, 'default chain')
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getBlockNumber()).to.equal(bn2, 'new default chain')
         })
 
@@ -588,7 +590,7 @@ describe('SequenceProvider', () => {
         it('forward getGasPrice - default', async () => {
           expect(await provider.getGasPrice()).to.deep.equal(ethers.BigNumber.from(1))
   
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getGasPrice()).to.deep.equal(ethers.BigNumber.from(2))
         })
 
@@ -632,7 +634,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getBalance(testAccounts[0].address)).to.deep.equal(b1)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getBalance(testAccounts[1].address)).to.deep.equal(b2)
         })
 
@@ -678,7 +680,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getTransactionCount(testAccounts[0].address)).to.equal(txc1)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getTransactionCount(testAccounts[1].address)).to.equal(txc2)
         })
 
@@ -720,7 +722,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getCode(addr)).to.equal('0x112233')
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getCode(addr)).to.equal('0x')
         })
 
@@ -765,7 +767,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getStorageAt(addr, '0x445566')).to.equal(expected)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getStorageAt(addr, '0x445566')).to.equal(empty)
         })
 
@@ -807,7 +809,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.call({ to: addr })).to.equal('0x112233')
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.call({ to: addr })).to.equal('0x')
         })
 
@@ -855,7 +857,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.estimateGas({ to: addr })).to.deep.equal(eg1)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.estimateGas({ to: addr })).to.deep.equal(eg2)
         })
 
@@ -893,7 +895,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getBlock(1)).to.deep.equal(b1)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getBlock(1)).to.deep.equal(b2)
         })
 
@@ -933,7 +935,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getTransaction(t1).then(r => r.hash)).to.equal(t1)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getTransaction(t1)).to.be.null
         })
 
@@ -980,7 +982,7 @@ describe('SequenceProvider', () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getLogs({ address: t1 })).to.deep.equal(r1)
 
-          setDefaultChainId(31338)
+          provider.setDefaultChainId(31338)
           expect(await provider.getLogs({ address: t1 })).to.deep.equal(r2)
         })
 
@@ -999,6 +1001,42 @@ describe('SequenceProvider', () => {
         it('fail to forward getLogs - static network provider for different chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           await expect(provider.getProvider('hardhat2').getLogs({ address: t1 }, { chainId: 31337 }))
+            .to.be.rejectedWith('This provider only supports the network 31338, but 31337 was requested.')
+        })
+      })
+
+      describe('forward waitForTransaction', () => {
+        let t1: string
+
+        beforeEach(async () => {
+          t1 = await testAccounts[0].sendTransaction({
+            to: ethers.Wallet.createRandom().address,
+          }).then((r) => r.hash)
+        })
+
+        it('forward waitForTransaction - default', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.waitForTransaction(t1, undefined, 250).then(r => r.transactionHash)).to.equal(t1)
+
+          provider.setDefaultChainId(31338)
+          await expect(provider.waitForTransaction(t1, undefined, 250)).to.be.rejected
+        })
+
+        it('forward waitForTransaction - specific chain', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.waitForTransaction(t1, undefined, 250, { chainId: 31337 }).then(r => r.transactionHash)).to.equal(t1)
+          await expect(provider.waitForTransaction(t1, undefined, 250, { chainId: 31338 })).to.be.rejected
+        })
+
+        it('forward waitForTransaction - static network provider', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.getProvider('hardhat').waitForTransaction(t1, undefined, 250).then(r => r.transactionHash)).to.equal(t1)
+          await expect(provider.getProvider('hardhat2').waitForTransaction(t1, undefined, 250)).to.be.rejected
+        })
+
+        it('fail to forward waitForTransaction - static network provider for different chain', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          await expect(provider.getProvider('hardhat2').waitForTransaction(t1, undefined, 250, { chainId: 31337 }))
             .to.be.rejectedWith('This provider only supports the network 31338, but 31337 was requested.')
         })
       })
@@ -1051,6 +1089,355 @@ describe('SequenceProvider', () => {
         })
       })
     })
+
+    describe('perform implementation', () => {
+      describe('perform eth_chainId', async () => {
+        it('should return initial default chainId', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+        })
+
+        it('should return new default chainId', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          provider.setDefaultChainId(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+        })
+
+        it('should return static chainId', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.getProvider(31337).perform('eth_chainId', [])).to.equal(31337)
+          expect(await provider.getProvider(31338).perform('eth_chainId', [])).to.equal(31338)
+        })
+      })
+
+      describe('perform eth_accounts', async () => {
+        let provider: SequenceProvider
+        let address: string
+
+        beforeEach(async () => {
+          address = ethers.Wallet.createRandom().address
+          provider = new SequenceProvider({
+            ...basicMockClient,
+            getAddress: () => address
+          } as unknown as SequenceClient, providerFor)
+        })
+
+        it('should return accounts on main provider', async () => {
+          expect(await provider.perform('eth_accounts', [])).to.deep.equal([address])
+        })
+
+        it('should return accounts on single network provider', async () => {
+          expect(await provider.getProvider(31337).perform('eth_accounts', [])).to.deep.equal([address])
+          expect(await provider.getProvider(31338).perform('eth_accounts', [])).to.deep.equal([address])
+        })
+      })
+
+      describe('perform wallet_switchEthereumChain', async () => {
+        it('should switch default chainId using object', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+          await provider.perform('wallet_switchEthereumChain', [{ chainId: '0x7a6a' }])
+          expect(defaultChainId).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+        })
+
+        it('should switch default chainId using hex string', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+          await provider.perform('wallet_switchEthereumChain', ['0x7a6a'])
+          expect(defaultChainId).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+        })
+
+        it('should switch default chainId using number', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+          await provider.perform('wallet_switchEthereumChain', [31338])
+          expect(defaultChainId).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+        })
+
+        it('should switch default chainId using string', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+          await provider.perform('wallet_switchEthereumChain', ['31338'])
+          expect(defaultChainId).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+        })
+
+        it('should fail to switch default chainId on static network provider', async () => {
+          const provider = new SequenceProvider(basicMockClient, providerFor)
+          await expect(provider.getProvider(31337).perform('wallet_switchEthereumChain', ['31337']))
+            .to.be.rejectedWith('This provider only supports the network 31337; use the parent provider to switch networks.')
+        })
+
+        describe('using the setDefaultChainId method', async () => {
+          it('should switch default chainId using name', async () => {
+            const provider = new SequenceProvider(basicMockClient, providerFor)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+            provider.setDefaultChainId('hardhat2')
+            expect(defaultChainId).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          })
+
+          it('should switch default chainId using number', async () => {
+            const provider = new SequenceProvider(basicMockClient, providerFor)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+            provider.setDefaultChainId(31338)
+            expect(defaultChainId).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          })
+
+          it('should switch default chainId using string', async () => {
+            const provider = new SequenceProvider(basicMockClient, providerFor)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+            provider.setDefaultChainId('31338')
+            expect(defaultChainId).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          })
+
+          it('should switch default chainId using hex string', async () => {
+            const provider = new SequenceProvider(basicMockClient, providerFor)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+
+            provider.setDefaultChainId('0x7a6a')
+            expect(defaultChainId).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          })
+
+          it('should fail to switch default chainId on static network provider', async () => {
+            const provider = new SequenceProvider(basicMockClient, providerFor)
+            expect(() => provider.getProvider(31337).setDefaultChainId(31338))
+              .to.throw('This provider only supports the network 31337; use the parent provider to switch networks.')
+          })
+
+          it('should fail to switch default chainId (to same chainId) on static network provider', async () => {
+            const provider = new SequenceProvider(basicMockClient, providerFor)
+            expect(() => provider.getProvider(31337).setDefaultChainId(31337))
+              .to.throw('This provider only supports the network 31337; use the parent provider to switch networks.')
+          })
+        })
+      })
+
+      describe('sequence client methods', () => {
+        describe('perform eth_sendTransaction', async () => {
+          const expectedResult = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+
+          let provider: SequenceProvider
+          let calledCount: number
+
+          let expectedChainId: number
+          let expectedTx: ethers.providers.TransactionRequest
+
+          beforeEach(async () => {
+            calledCount = 0
+            provider = new SequenceProvider({
+              ...basicMockClient,
+              send: async (request: JsonRpcRequest, chainId?: number) => {
+                expect(chainId).to.equal(expectedChainId)
+                expect(request.method).to.equal('eth_sendTransaction')
+                expect(request.params).to.deep.equal([expectedTx])
+                calledCount++
+                return expectedResult
+              }
+            } as unknown as SequenceClient, providerFor)
+
+            expectedTx = {
+              to: ethers.Wallet.createRandom().address,
+              value: '9000',
+              data: ethers.utils.hexlify(ethers.utils.randomBytes(66)),
+            }
+          })
+
+          it('should call sendTransaction on main provider', async () => {
+            expectedChainId = 31337
+            const res = await provider.perform('eth_sendTransaction', [expectedTx])
+            expect(calledCount).to.equal(1)
+            expect(res).to.equal(expectedResult)
+          })
+
+          it('should call sendTransaction after switching default chainId', async () => {
+            expectedChainId = 31338
+            provider.setDefaultChainId(31338)
+            const res = await provider.perform('eth_sendTransaction', [expectedTx])
+            expect(calledCount).to.equal(1)
+            expect(res).to.equal(expectedResult)
+          })
+
+          it('should call sendTransaction on single network provider', async () => {
+            expectedChainId = 31338
+            const res = await provider.getProvider(31338).perform('eth_sendTransaction', [expectedTx])
+            expect(calledCount).to.equal(1)
+            expect(res).to.equal(expectedResult)
+          })
+
+          it('should call sendTransaction with aux data', async () => {
+            expectedTx = { ...expectedTx, auxiliary: [{ to: ethers.Wallet.createRandom().address }] } as ExtendedTransactionRequest
+            expectedChainId = 31338
+            const res = await provider.getProvider(31338).perform('eth_sendTransaction', [expectedTx])
+            expect(calledCount).to.equal(1)
+            expect(res).to.equal(expectedResult)
+          })
+        });
+
+        ([
+          'eth_sign',
+          'personal_sign',
+          'sequence_sign'
+        ]).forEach((method) => {
+          describe(`perform ${method}`, async () => {
+            const expectedResult = ethers.utils.hexlify(ethers.utils.randomBytes(120))
+
+            let provider: SequenceProvider
+            let calledCount: number
+
+            let expectedChainId: number
+            let expectedAddress: string
+            let expectedMessage: string
+
+            beforeEach(async () => {
+              calledCount = 0
+              provider = new SequenceProvider({
+                ...basicMockClient,
+                send: async (request: JsonRpcRequest, chainId?: number) => {
+                  expect(chainId).to.equal(expectedChainId)
+                  expect(request.method).to.equal(method)
+                  expect(request.params).to.deep.equal([expectedAddress, expectedMessage])
+                  calledCount++
+                  return expectedResult
+                }
+              } as unknown as SequenceClient, providerFor)
+
+              expectedAddress = ethers.Wallet.createRandom().address
+              expectedMessage = ethers.utils.hexlify(ethers.utils.randomBytes(66))
+            })
+
+            it('should call sign on main provider', async () => {
+              expectedChainId = 31337
+              const res = await provider.perform(method, [expectedAddress, expectedMessage])
+              expect(calledCount).to.equal(1)
+              expect(res).to.equal(expectedResult)
+            })
+
+            it('should call sign after switching default chainId', async () => {
+              expectedChainId = 31338
+              provider.setDefaultChainId(31338)
+              const res = await provider.perform(method, [expectedAddress, expectedMessage])
+              expect(calledCount).to.equal(1)
+              expect(res).to.equal(expectedResult)
+            })
+
+            it('should call sign on single network provider', async () => {
+              expectedChainId = 31338
+              const res = await provider.getProvider(31338).perform(method, [expectedAddress, expectedMessage])
+              expect(calledCount).to.equal(1)
+              expect(res).to.equal(expectedResult)
+            })
+          })
+        });
+
+        ([
+          'eth_signTypedData',
+          'eth_signTypedData_v4',
+          'sequence_signTypedData_v4',
+        ]).forEach((method) => {
+          describe(`perform ${method}`, async () => {
+            const expectedResult = ethers.utils.hexlify(ethers.utils.randomBytes(121))
+
+            let provider: SequenceProvider
+            let calledCount: number
+
+            let expectedChainId: number
+            let expectedAddress: string
+            let expectedMessage: Array<any>
+
+            beforeEach(async () => {
+              calledCount = 0
+              provider = new SequenceProvider({
+                ...basicMockClient,
+                send: async (request: JsonRpcRequest, chainId?: number) => {
+                  expect(chainId).to.equal(expectedChainId)
+                  expect(request.method).to.equal(method)
+                  expect(request.params).to.deep.equal([expectedAddress, expectedMessage])
+                  calledCount++
+                  return expectedResult
+                }
+              } as unknown as SequenceClient, providerFor)
+
+              expectedAddress = ethers.Wallet.createRandom().address
+              expectedMessage = [{ thisisjustdata: ethers.utils.hexlify(ethers.utils.randomBytes(66)), sure: 'yes' }]
+            })
+
+            it('should call sign on main provider', async () => {
+              expectedChainId = 31337
+              const res = await provider.perform(method, [expectedAddress, expectedMessage])
+              expect(calledCount).to.equal(1)
+              expect(res).to.equal(expectedResult)
+            })
+
+            it('should call sign after switching default chainId', async () => {
+              expectedChainId = 31338
+              provider.setDefaultChainId(31338)
+              const res = await provider.perform(method, [expectedAddress, expectedMessage])
+              expect(calledCount).to.equal(1)
+              expect(res).to.equal(expectedResult)
+            })
+
+            it('should call sign on single network provider', async () => {
+              expectedChainId = 31338
+              const res = await provider.getProvider(31338).perform(method, [expectedAddress, expectedMessage])
+              expect(calledCount).to.equal(1)
+              expect(res).to.equal(expectedResult)
+            })
+          })
+        })
+      })
+
+      describe('misc public rpc methods', () => {
+        let provider: SequenceProvider
+        let b1: number
+        let b2: number
+
+        beforeEach(async () => {
+          provider = new SequenceProvider(basicMockClient, providerFor)
+          b1 = await hardhat1Provider.getBlockNumber()
+          b2 = await hardhat2Provider.getBlockNumber()
+        })
+
+        it('should forward random method to main provider', async () => {
+          await provider.perform('evm_mine', [])
+          expect(await hardhat1Provider.getBlockNumber()).to.equal(b1 + 1)
+          expect(await hardhat2Provider.getBlockNumber()).to.equal(b2)
+        })
+
+        it('should forward random method after switching default chain', async () => {
+          provider.setDefaultChainId(31338)
+          await provider.perform('evm_mine', [])
+          expect(await hardhat1Provider.getBlockNumber()).to.equal(b1)
+          expect(await hardhat2Provider.getBlockNumber()).to.equal(b2 + 1)
+        })
+
+        it('should forward random method to single network provider', async () => {
+          await provider.getProvider(31338).perform('evm_mine', [])
+          expect(await hardhat1Provider.getBlockNumber()).to.equal(b1)
+          expect(await hardhat2Provider.getBlockNumber()).to.equal(b2 + 1)
+        })
+
+        it('should forward method with parameters', async () => {
+          await provider.perform('evm_mine', [])
+          await provider.perform('evm_mine', [])
+          const block1 = await hardhat1Provider.getBlock(2).then(t => t.hash)
+          expect(await provider.perform('eth_getBlockByNumber', ['0x2', false]).then(t => t.hash)).to.equal(block1)
+        })
+      })
+    })
   })
 
   it('should return true to isSequenceProvider', () => {
@@ -1059,10 +1446,6 @@ describe('SequenceProvider', () => {
   })
 
   describe('network switching', () => {
-    beforeEach(async () => {
-      defaultChainId = 31337
-    })
-
     it('should emit chainChanged when default chain is changed', async () => {
       const provider = new SequenceProvider(basicMockClient, providerFor)
 
@@ -1072,7 +1455,7 @@ describe('SequenceProvider', () => {
         emittedCount++
       })
 
-      setDefaultChainId(31338)
+      provider.setDefaultChainId(31338)
 
       await new Promise((resolve) => setTimeout(resolve, 100))
       expect(emittedCount).to.equal(1)
@@ -1084,7 +1467,7 @@ describe('SequenceProvider', () => {
 
       expect(initialNetwork.chainId).to.equal(31337, "initial network")
 
-      setDefaultChainId(31338)
+      provider.setDefaultChainId(31338)
 
       await new Promise((resolve) => setTimeout(resolve, 100))
       const newNetwork = await provider.detectNetwork()
@@ -1106,7 +1489,7 @@ describe('SequenceProvider', () => {
       await new Promise((resolve) => setTimeout(resolve, 250))
       const initialBlockNumber = provider.blockNumber
 
-      setDefaultChainId(31338)
+      provider.setDefaultChainId(31338)
 
       await new Promise((resolve) => setTimeout(resolve, 250))
       const newBlockNumber = await provider.getBlockNumber()

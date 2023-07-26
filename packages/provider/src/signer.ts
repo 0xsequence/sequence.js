@@ -42,9 +42,7 @@ export interface ISequenceSigner extends ethers.Signer {
       ethers.utils.Deferrable<commons.transaction.Transaction>[] |
       ethers.utils.Deferrable<commons.transaction.Transaction>
     ),
-    options?: {
-      chainId?: ChainIdLike,
-    }
+    options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
 
   utils: WalletUtils
@@ -139,9 +137,7 @@ export class SequenceSigner implements ISequenceSigner {
       ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
       ethers.utils.Deferrable<ethers.providers.TransactionRequest>
     ),
-    options?: {
-      chainId?: ChainIdLike,
-    }
+    options?: OptionalChainIdLike
   ) {
     const chainId = await this.useChainId(options?.chainId)
     const resolved = await resolveArrayProperties(transaction)

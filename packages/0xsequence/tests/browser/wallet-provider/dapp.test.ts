@@ -105,7 +105,7 @@ export const tests = async () => {
     assert.equal(provider.getChainId(), 31337, 'provider chainId is 31337')
   })
 
-  await test('getAccounts', async () => {
+  await test('getAddress', async () => {
     const address = wallet.getAddress()
     assert.true(ethers.utils.isAddress(address), 'wallet address is valid')
   })

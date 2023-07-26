@@ -518,24 +518,15 @@ describe('SequenceClient', () => {
     const result1 = new Promise(() => client.getAddress())
     await expect(result1).to.be.rejectedWith('Sequence session not connected')
 
-    const result2 = new Promise(() => client.getAccounts())
-    await expect(result2).to.be.rejectedWith('Sequence session not connected')
-
     await client.connect({ app: 'This is a test' })
 
     const result3 = client.getAddress()
     expect(result3).to.equal(session.accountAddress)
 
-    const result4 = client.getAccounts()
-    expect(result4).to.deep.equal([session.accountAddress])
-
     await client.disconnect()
 
     const result5 = new Promise(() => client.getAddress())
     await expect(result5).to.be.rejectedWith('Sequence session not connected')
-
-    const result6 = new Promise(() => client.getAccounts())
-    await expect(result6).to.be.rejectedWith('Sequence session not connected')
   })
 
   it('should call sign message', async () => {

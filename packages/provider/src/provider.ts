@@ -23,6 +23,7 @@ export interface ISequenceProvider {
 
   getNetworks(): Promise<NetworkConfig[]>
   getChainId(): number
+
   setDefaultChainId(chainId: ChainIdLike): void
 
   isOpened(): boolean
@@ -98,7 +99,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   listAccounts(): string[] {
-    return this.client.getAccounts()
+    return [this.client.getAddress()]
   }
 
   // @deprecated use getSigner() instead
@@ -228,13 +229,13 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     }
 
     if (method === 'eth_accounts') {
-      return this.client.getAccounts()
+      return [this.client.getAddress()]
     }
 
     if (method === 'wallet_switchEthereumChain') {
       const args = params[0] as { chainId: string } | number | string
       const chainId = normalizeChainId(args)
-      return this.client.setDefaultChainId(chainId)
+      return this.setDefaultChainId(chainId)
     }
 
     // Usually these methods aren't used by calling the provider
@@ -253,7 +254,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     ) {
       // We pass the chainId to the client, if we don't pass one
       // the client will use its own default chainId
-      return this.client.send({ method, params })
+      return this.client.send({ method, params }, this.getChainId())
     }
 
     // Forward call to the corresponding provider
@@ -513,12 +514,8 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
     return super.getSigner(this._useChainId(chainId))
   }
 
-  async perform(method: string, params: any): Promise<any> {
-    if (method === 'wallet_switchEthereumChain') {
-      throw new Error('This provider only supports a single network; use the parent provider to switch networks.')
-    }
-
-    return super.perform(method, params)
+  setDefaultChainId(_chainId: ChainIdLike): void {
+    throw new Error(`This provider only supports the network ${this.chainId}; use the parent provider to switch networks.`)
   }
   
   static is(cand: any): cand is SingleNetworkSequenceProvider {

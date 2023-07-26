@@ -330,10 +330,6 @@ export class SequenceClient {
     return connectedSession.networks
   }
 
-  getAccounts(): string[] {
-    return [this.getAddress()]
-  }
-
   async signMessage(
     message: ethers.BytesLike,
     options?: OptionalEIP6492 & OptionalChainId
