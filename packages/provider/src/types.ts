@@ -181,6 +181,13 @@ export interface ConnectOptions {
   settings?: Settings
 }
 
+export interface NetworkedConnectOptions extends ConnectOptions {
+  /** chainId is the chainId to connect to. If not specified, the default chainId
+   * will be used. This does not define a default chain id, it is only used for the connect
+   * authorization signature. */
+  networkId?: string | number;
+}
+
 /** Options to further customize the wallet experience. */
 export interface Settings {
   /** Specify a wallet theme. `light` and `dark` are the main themes, to use other available
@@ -266,7 +273,7 @@ export interface ConnectDetails {
 export type PromptConnectDetails = Pick<ConnectDetails, 'chainId' | 'error' | 'connected' | 'proof' | 'email'>
 
 export type OpenWalletIntent =
-  | { type: 'connect'; options?: ConnectOptions }
+  | { type: 'connect'; options?: NetworkedConnectOptions }
   | { type: 'openWithOptions'; options?: ConnectOptions }
   | { type: 'jsonRpcRequest'; method: string }
 

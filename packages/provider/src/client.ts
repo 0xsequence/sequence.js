@@ -224,7 +224,7 @@ export class SequenceClient {
   // Proxy transport methods
 
   async openWallet(path?: string, intent?: OpenWalletIntent) {
-    this.transport.openWallet(path, intent, 1)
+    this.transport.openWallet(path, intent, this.getChainId())
     await this.transport.waitUntilOpened()
     return this.isOpened()
   }
@@ -273,7 +273,7 @@ export class SequenceClient {
       }
     }
 
-    await this.openWallet(undefined, { type: 'connect', options })
+    await this.openWallet(undefined, { type: 'connect', options: { ...options, networkId: this.getChainId() } })
 
     const connectDetails = await this.transport.waitUntilConnected().catch((error): ConnectDetails => {
       if (error instanceof Error) {
@@ -282,6 +282,12 @@ export class SequenceClient {
         return { connected: false, error: JSON.stringify(error) }
       }
     })
+
+    // Normalize chainId into a decimal string
+    // TODO: Remove this once wallet-webapp returns chainId as a string
+    if (connectDetails.chainId) {
+      connectDetails.chainId = ethers.BigNumber.from(connectDetails.chainId).toString()
+    }
 
     if (connectDetails.connected) {
       if (!connectDetails.session) {

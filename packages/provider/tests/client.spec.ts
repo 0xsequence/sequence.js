@@ -8,7 +8,13 @@ import { TypedData } from "@0xsequence/utils"
 import { ExtendedTransactionRequest } from "../src/extended"
 
 const basicMockTransport = {
-  on: () => {}
+  on: () => {},
+  register: () => {},
+  unregister: () => {},
+  openWallet: () => {},
+  closeWallet: () => {},
+  isOpened: () => false,
+  isConnected: () => false,
 } as unknown as ProviderTransport
 
 const sampleContext = {
@@ -39,6 +45,7 @@ describe('SequenceClient', () => {
 
     beforeEach(() => {
       const mockTransport = {
+        ...basicMockTransport,
         on<K extends keyof ProviderEventTypes>(event: K, fn: ProviderEventTypes[K]): void {
           callbacks.on(event, fn)
         }
@@ -151,10 +158,11 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        openWallet: (path: string, intent: OpenWalletIntent) => {
+        openWallet: (path: string, intent: OpenWalletIntent, chainId?: number) => {
           calledOpenWallet++
           expect(path).to.equal(path)
           expect(intent).to.equal(intent)
+          expect(chainId).to.equal(2)
           return Promise.resolve(true)
         },
         waitUntilOpened: async () => {
@@ -174,6 +182,51 @@ describe('SequenceClient', () => {
       2
     )
 
+    const result = await client.openWallet(path, intent)
+    expect(result).to.equal(false)
+    expect(calledOpenWallet).to.equal(1)
+    expect(calledWaitUntilOpened).to.equal(1)
+    expect(calledIsOpened).to.equal(1)
+  })
+
+  it('should open wallet on default chain id', async () => {
+    let calledOpenWallet = 0
+    let calledWaitUntilOpened = 0
+    let calledIsOpened = 0
+
+    const path = 'this/is/a/test/path'
+    const intent = {
+      type: 'connect'
+    } as OpenWalletIntent
+
+    const client = new SequenceClient(
+      {
+        ...basicMockTransport,
+        openWallet: (path: string, intent: OpenWalletIntent, chainId?: number) => {
+          calledOpenWallet++
+          expect(path).to.equal(path)
+          expect(intent).to.equal(intent)
+          expect(chainId).to.equal(3)
+          return Promise.resolve(true)
+        },
+        waitUntilOpened: async () => {
+          calledWaitUntilOpened++
+          // delay a bit
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          return {
+            accountAddress: ethers.Wallet.createRandom().address
+          }
+        },
+        isOpened: () => {
+          calledIsOpened++
+          return false
+        }
+      },
+      useBestStore(),
+      2
+    )
+
+    client.setDefaultChainId(3)
     const result = await client.openWallet(path, intent)
     expect(result).to.equal(false)
     expect(calledOpenWallet).to.equal(1)
@@ -243,7 +296,8 @@ describe('SequenceClient', () => {
             type: 'connect',
             options: {
               app: 'This is a test',
-              authorizeVersion: 2
+              authorizeVersion: 2,
+              networkId: 2
             }
           })
 
@@ -256,7 +310,7 @@ describe('SequenceClient', () => {
         },
         waitUntilConnected: async () => {
           calledWaitUntilConnected++
-          return { connected: true, session }
+          return { connected: true, chainId: '0x0a', session }
         },
         isOpened: () => {
           calledIsOpened++
@@ -274,6 +328,7 @@ describe('SequenceClient', () => {
     expect(result1).to.equal(false)
 
     const result2 = await client.connect({ app: 'This is a test' })
+    expect(result2.chainId).to.equal('10')
     expect(result2.connected).to.equal(true)
     expect(result2.session).to.equal(session)
 
