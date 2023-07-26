@@ -158,9 +158,9 @@ export class LocalStorage implements ItemStore {
     }
 
     window.addEventListener('storage', (e) => {
-      const { key, newValue } = e
+      const { key } = e
       const cb = this.callbacks.filter((c) => c.key === key)
-      cb.forEach((c) => c.cb(newValue))
+      cb.forEach((c) => c.cb(this.getItem(key!)))
     })
   }
 
@@ -170,10 +170,18 @@ export class LocalStorage implements ItemStore {
 
   setItem(key: string, value: string): void {
     window.localStorage.setItem(key, value)
+
+    // Trigger callbacks
+    // NOTICE: the event is not triggered on the same window
+    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(value))
   }
 
   removeItem(key: string): void {
     window.localStorage.removeItem(key)
+
+    // Trigger callbacks
+    // NOTICE: the event is not triggered on the same window
+    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(null))
   }
 
   onItemChange(key: string, cb: (value: string | null) => void): () => void {
