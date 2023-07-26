@@ -57,7 +57,8 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   constructor (
     public readonly client: SequenceClient,
-    private readonly providerFor: (networkId: number) => ethers.providers.JsonRpcProvider
+    private readonly providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
+    public readonly networks: NetworkConfig[] = allNetworks
   ) {
     // We support a lot of networks
     // but we start with the default one
@@ -158,7 +159,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
       return undefined
     }
   
-    const resolved = findNetworkConfig(allNetworks, chainId as ChainIdLike)
+    const resolved = findNetworkConfig(this.networks, chainId as ChainIdLike)
   
     if (!resolved) {
       throw new Error(`Unsupported network ${chainId}`)
@@ -270,7 +271,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   async detectNetwork(): Promise<ethers.providers.Network> {
     const chainId = this.client.getChainId()
-    const network = findNetworkConfig(allNetworks, chainId)
+    const network = findNetworkConfig(this.networks, chainId)
 
     if (!network) {
       throw new Error(`Unknown network ${chainId}`)

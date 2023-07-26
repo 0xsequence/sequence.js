@@ -61,20 +61,19 @@ export const initWallet = (
 
   const rpcProviders: Record<number, ethers.providers.JsonRpcProvider> = {}
 
-  // We can't allow the dapp to define networks that aren't already defined in sequence.js
-  // we may in the future, but the issue is that wallet-webapp won't have these new networks
-  // either, so it will fail to connect to them.
-  if (config.networks?.some((n) => {
-    return !allNetworks.find((cn) => cn.chainId === n.chainId)
-  })) {
-    throw new Error('networks config must only contain networks defined in sequence.js')
-  }
+  // Find any new networks that aren't already defined in sequence.js
+  // and add them to the list of networks, (they must have a rpcUrl and chainId)
+  const newNetworks = (config.networks?.filter((n) => {
+    n.rpcUrl !== undefined &&
+    n.chainId !== undefined &&
+    !allNetworks.find((an) => an.chainId === n.chainId)
+  }) ?? []) as NetworkConfig[]
 
   // Override any information about the networks using the config
   const combinedNetworks = allNetworks.map((n) => {
     const network = config.networks?.find((cn) => cn.chainId === n.chainId)
     return network ? { ...n, ...network } : n
-  })
+  }).concat(newNetworks)
 
   // This build a "public rpc" on demand, we build them on demand because we don't want to
   // generate a bunch of providers for networks that aren't used.
