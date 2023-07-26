@@ -1,7 +1,7 @@
 import { ethers } from "ethers"
 import { ConnectOptions, OpenWalletIntent, OptionalChainId, OptionalChainIdLike, OptionalEIP6492, SequenceClient, SequenceProvider, SequenceSigner, SingleNetworkSequenceProvider, SingleNetworkSequenceSigner } from "../src"
 import { expect } from "chai"
-import { JsonRpcRequest, allNetworks } from "@0xsequence/network"
+import { JsonRpcRequest, JsonRpcResponse, allNetworks } from "@0xsequence/network"
 import { ExtendedTransactionRequest } from "../src/extended"
 import { TypedData } from "@0xsequence/utils"
 

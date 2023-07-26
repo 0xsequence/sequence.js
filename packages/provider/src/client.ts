@@ -74,7 +74,7 @@ export class SequenceClientSession {
  *  track it locally using storage, that way the data stays always in sync.
  */
 export class DefaultChainIdTracker {
-  static readonly SESSION_LOCALSTORE_KEY = '@sequence.session.defaultChainId'
+  static readonly SESSION_CHAIN_ID_KEY = '@sequence.session.defaultChainId'
 
   callbacks: ((chainId: number) => void)[] = []
 
@@ -82,7 +82,7 @@ export class DefaultChainIdTracker {
     private store: ItemStore,
     private startingChainId: number = 1
   ) {
-    store.onItemChange(DefaultChainIdTracker.SESSION_LOCALSTORE_KEY, (value: string | null) => {
+    store.onItemChange(DefaultChainIdTracker.SESSION_CHAIN_ID_KEY, (value: string | null) => {
       if (value) {
         const chainId = parseInt(value)
         this.callbacks.forEach(cb => cb(chainId))
@@ -99,12 +99,12 @@ export class DefaultChainIdTracker {
 
   setDefaultChainId(chainId: number) {
     if (chainId !== this.getDefaultChainId()) {
-      this.store.setItem(DefaultChainIdTracker.SESSION_LOCALSTORE_KEY, chainId.toString())
+      this.store.setItem(DefaultChainIdTracker.SESSION_CHAIN_ID_KEY, chainId.toString())
     }
   }
 
   getDefaultChainId(): number {
-    const read = this.store.getItem(DefaultChainIdTracker.SESSION_LOCALSTORE_KEY)
+    const read = this.store.getItem(DefaultChainIdTracker.SESSION_CHAIN_ID_KEY)
 
     if (!read || read.length === 0) {
       return this.startingChainId
@@ -312,15 +312,19 @@ export class SequenceClient {
 
   // Working with sendAsync is less idiomatic
   // but transport uses it instead of send, so we wrap it
-  send(request: JsonRpcRequest, chainId?: number): Promise<JsonRpcResponse> {
+  send(request: JsonRpcRequest, chainId?: number): Promise<any> {
     return new Promise((resolve, reject) => {
       this.transport.sendAsync(request, (error, response) => {
         if (error) {
           reject(error)
         } else if (response === undefined) {
           reject(new Error(`Got undefined response for request: ${request}`))
+        } else if (typeof response === 'object' && response.error) {
+          reject(response.error)
+        } else if (typeof response === 'object' && response.result) {
+          resolve(response.result)
         } else {
-          resolve(response)
+          reject(new Error(`Got invalid response for request: ${request}`))
         }
       }, chainId || this.getChainId())
     })
@@ -330,8 +334,7 @@ export class SequenceClient {
     const connectedSession = this.session.connectedSession()
 
     if (pull) {
-      const nextNetworks = await this.send({ method: 'sequence_getNetworks' })
-      connectedSession.networks = nextNetworks.result
+      connectedSession.networks = await this.send({ method: 'sequence_getNetworks' })
       this.session.setSession(connectedSession)
     }
 
@@ -345,8 +348,7 @@ export class SequenceClient {
     const method = options?.eip6492 ? 'sequence_sign' : 'personal_sign'
 
     // Address is ignored by the wallet webapp
-    const res = await this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
-    return res.result
+    return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
   }
 
   async signTypedData(
@@ -364,7 +366,7 @@ export class SequenceClient {
     // - The one provided in the typedData.domain.chainId
     // - The default chainId
 
-    const res = await this.send({ method, params: [this.getAddress(), encoded] }, (
+    return this.send({ method, params: [this.getAddress(), encoded] }, (
       options?.chainId ||
       (
         typedData.domain.chainId &&
@@ -372,7 +374,6 @@ export class SequenceClient {
       ) ||
       this.getChainId()
     ))
-    return res.result
   }
 
   async sendTransaction(
@@ -385,19 +386,17 @@ export class SequenceClient {
     const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
 
-    const res = await this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId )
-    return res.result
+    return this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId )
   }
 
   async getWalletContext(): Promise<commons.context.VersionedContext> {
-    const res = await this.send({ method: 'sequence_getWalletContext' })
-    return res.result
+    return this.send({ method: 'sequence_getWalletContext' })
   }
 
   async getOnchainWalletConfig(options?: OptionalChainId): Promise<commons.config.Config> {
     // NOTICE: sequence_getWalletConfig sends the chainId as a param
     const res = await this.send({ method: 'sequence_getWalletConfig', params: [options?.chainId || this.getChainId()] }, options?.chainId)
-    return Array.isArray(res.result) ? res.result[0] : res.result
+    return Array.isArray(res) ? res[0] : res
   }
 
   // NOTICE: We are leaving out all the "regular" methods os a tipical
