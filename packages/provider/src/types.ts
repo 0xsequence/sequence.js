@@ -21,6 +21,20 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
   waitUntilConnected(): Promise<ConnectDetails>
 }
 
+export function isProviderTransport(transport: any): transport is ProviderTransport {
+  return (
+    transport &&
+    typeof transport === 'object' &&
+    typeof transport.register === 'function' &&
+    typeof transport.unregister === 'function' &&
+    typeof transport.openWallet === 'function' &&
+    typeof transport.closeWallet === 'function' &&
+    typeof transport.isOpened === 'function' &&
+    typeof transport.isConnected === 'function' &&
+    typeof transport.on === 'function'
+  )
+}
+
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void

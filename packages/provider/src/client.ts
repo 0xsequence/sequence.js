@@ -1,5 +1,5 @@
 import { JsonRpcRequest, JsonRpcResponse, NetworkConfig } from "@0xsequence/network"
-import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, OptionalChainId, OptionalEIP6492, ProviderTransport, WalletSession, isMuxTransportTemplate } from "."
+import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, OptionalChainId, OptionalEIP6492, ProviderTransport, WalletSession, isMuxTransportTemplate, isProviderTransport } from "."
 import { commons } from "@0xsequence/core"
 import { TypedData } from "@0xsequence/utils"
 import { toExtended } from "./extended"
@@ -134,8 +134,10 @@ export class SequenceClient {
   ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
-    } else {
+    } else if (isProviderTransport(transport)) {
       this.transport = transport
+    } else {
+      throw new Error('Invalid transport')
     }
 
     this.session = new SequenceClientSession(store)

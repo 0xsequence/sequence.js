@@ -50,7 +50,15 @@ export const initWallet = (
   }
 
   // Combine both the provided config and the default config
-  const config = { ...DefaultProviderConfig, ...partialConfig }
+  const config = {
+    ...DefaultProviderConfig,
+    ...partialConfig,
+    transports: {
+      ...DefaultProviderConfig.transports,
+      ...partialConfig?.transports,
+    }
+  }
+
   const rpcProviders: Record<number, ethers.providers.JsonRpcProvider> = {}
 
   // We can't allow the dapp to define networks that aren't already defined in sequence.js
