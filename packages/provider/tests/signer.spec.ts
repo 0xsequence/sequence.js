@@ -41,7 +41,11 @@ let setDefaultChainId = (chainId: number) => {
 const basicMockClient = {
   getChainId: () => defaultChainId,
   onDefaultChainIdChanged,
-  setDefaultChainId
+  setDefaultChainId,
+  // EIP-1193
+  onConnect: () => {},
+  onDisconnect: () => {},
+  onAccountsChanged: () => {}
 } as unknown as SequenceClient
 
 async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20000): Promise<void> {

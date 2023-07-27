@@ -35,7 +35,11 @@ let setDefaultChainId = (chainId: number) => {
 const basicMockClient = {
   getChainId: () => defaultChainId,
   onDefaultChainIdChanged,
-  setDefaultChainId
+  setDefaultChainId,
+  // EIP-1193
+  onConnect: () => {},
+  onDisconnect: () => {},
+  onAccountsChanged: () => {}
 } as unknown as SequenceClient
 
 async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20000): Promise<void> {
@@ -290,6 +294,98 @@ describe('SequenceProvider', () => {
     })
   })
 
+  describe('provider events', () => {
+    let provider: SequenceProvider
+
+    let callbacks: { [event: string]: (data: any) => void } = {}
+
+    beforeEach(() => {
+      const usecb = (name: string, cb: (data: any) => any) => {
+        callbacks[name] = cb
+        return () => {}
+      }
+
+      provider = new SequenceProvider(
+        {
+          ...basicMockClient,
+          onConnect: (c: any) => usecb('connect', c),
+          onDisconnect: (c: any) => usecb('disconnect', c),
+          onDefaultChainIdChanged: (c: any) => usecb('chainChanged', c),
+          onAccountsChanged: (c: any) => usecb('accountsChanged', c),
+        } as unknown as SequenceClient,
+        providerFor
+      )
+    })
+
+    it('should call onConnect', async () => {
+      let callsToOnConnect = 0
+
+      provider.on('connect', (data: any) => {
+        callsToOnConnect++
+        expect(data).to.deep.equal({
+          connected: true,
+          chainId: '0x112233'
+        })
+      })
+
+      callbacks['connect']({
+        connected: true,
+        chainId: '0x112233'
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      expect(callsToOnConnect).to.equal(1)
+    })
+
+    it('should call onDisconnect', async () => {
+      let callsToOnDisconnect = 0
+
+      provider.on('disconnect', (data: any) => {
+        callsToOnDisconnect++
+        expect(data).to.deep.equal({
+          connected: false,
+          error: 1000
+        })
+      })
+
+      callbacks['disconnect']({
+        connected: false,
+        error: 1000
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      expect(callsToOnDisconnect).to.equal(1)
+    })
+
+    it('should call onDefaultChainIdChanged', async () => {
+      let callsToOnDefaultChainIdChanged = 0
+
+      provider.on('chainChanged', (data: any) => {
+        callsToOnDefaultChainIdChanged++
+        expect(data).to.equal(31338)
+      })
+
+      callbacks['chainChanged'](31338)
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      expect(callsToOnDefaultChainIdChanged).to.equal(1)
+    })
+
+    it('should call onAccountsChanged', async () => {
+      let callsToOnAccountsChanged = 0
+
+      provider.on('accountsChanged', (data: any) => {
+        callsToOnAccountsChanged++
+        expect(data).to.deep.equal(['0x123'])
+      })
+
+      callbacks['accountsChanged'](['0x123'])
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      expect(callsToOnAccountsChanged).to.equal(1)
+    })
+  })
+
   // This converts from "any kind" of chainId to a number
   describe('toChainId', () => {
     let provider: SequenceProvider
@@ -298,6 +394,7 @@ describe('SequenceProvider', () => {
 
     beforeEach(() => {
       provider = new SequenceProvider({
+        ...basicMockClient,
         onDefaultChainIdChanged,
         getChainId: () => defaultChainId
       } as unknown as SequenceClient, providerFor)

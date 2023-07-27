@@ -1,18 +1,10 @@
 import { JsonRpcRequest, JsonRpcResponse, NetworkConfig } from "@0xsequence/network"
-import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, OptionalChainId, OptionalEIP6492, ProviderTransport, WalletSession, isMuxTransportTemplate, isProviderTransport } from "."
+import { ConnectDetails, ConnectOptions, ItemStore, MuxMessageProvider, MuxTransportTemplate, OpenWalletIntent, OptionalChainId, OptionalEIP6492, ProviderTransport, WalletEventTypes, WalletSession, isMuxTransportTemplate, isProviderTransport } from "."
 import { commons } from "@0xsequence/core"
 import { TypedData } from "@0xsequence/utils"
 import { toExtended } from "./extended"
 import { ethers } from "ethers"
 
-type Callbacks = {
-  onOpen: () => void
-  onClose: () => void
-  onNetworks: (networks: NetworkConfig[]) => void
-  onAccountsChanged: (accounts: string[]) => void
-  onWalletContext: (context: commons.context.VersionedContext) => void
-  onDefaultChainIdChanged: (chainId: number) => void
-}
 
 /**
  *  This session class is meant to persist the state of the wallet connection
@@ -123,7 +115,7 @@ export class DefaultChainIdTracker {
 export class SequenceClient {  
   private readonly session: SequenceClientSession
   private readonly defaultChainId: DefaultChainIdTracker
-  private readonly callbacks: { [K in keyof Callbacks]?: Callbacks[K][] } = {}
+  private readonly callbacks: { [K in keyof WalletEventTypes]?: WalletEventTypes[K][] } = {}
 
   public readonly transport: ProviderTransport
 
@@ -148,33 +140,50 @@ export class SequenceClient {
         console.warn('SequenceClient: wallet-webapp returned more than one account')
       }
 
-      this.callbacks.onAccountsChanged?.forEach(cb => cb(accounts))
+      this.callbacks.accountsChanged?.forEach(cb => cb(accounts))
     })
 
-    this.transport.on('networks', (networks: NetworkConfig[]) => {
-      this.callbacks.onNetworks?.forEach(cb => cb(networks))
+    this.transport.on('connect', (response: ConnectDetails) => {
+      const chainIdHex = ethers.BigNumber.from(this.getChainId()).toHexString()
+      this.callbacks.connect?.forEach(cb => cb({
+        ...response,
+        // Ignore the full connect response
+        // use the chainId defined locally
+        chainId: chainIdHex
+      }))
     })
 
-    this.transport.on('walletContext', (context: commons.context.VersionedContext) => {
-      this.callbacks.onWalletContext?.forEach(cb => cb(context))
+    this.transport.on('disconnect', (error) => {
+      this.callbacks.disconnect?.forEach(cb => cb(error))
     })
 
-    this.transport.on('open', () => {
-      this.callbacks.onOpen?.forEach(cb => cb())
+    this.transport.on('networks', (networks) => {
+      this.callbacks.networks?.forEach(cb => cb(networks))
+    })
+
+    this.transport.on('walletContext', (context) => {
+      this.callbacks.walletContext?.forEach(cb => cb(context))
+    })
+
+    this.transport.on('open', (info) => {
+      this.callbacks.open?.forEach(cb => cb(info))
     })
 
     this.transport.on('close', () => {
-      this.callbacks.onClose?.forEach(cb => cb())
+      this.callbacks.close?.forEach(cb => cb())
     })
   
+    // We don't listen for the transport chainChanged event
+    // instead we handle it locally, so we listen for changes in the store
     this.defaultChainId.onDefaultChainIdChanged((chainId: number) => {
-      this.callbacks.onDefaultChainIdChanged?.forEach(cb => cb(chainId))
+      const chainIdHex = ethers.BigNumber.from(chainId).toHexString()
+      this.callbacks.chainChanged?.forEach(cb => cb(chainIdHex))
     })
   }
 
   // Callbacks
 
-  registerCallback<K extends keyof Callbacks>(eventName: K, callback: Callbacks[K]) {
+  registerCallback<K extends keyof WalletEventTypes>(eventName: K, callback: WalletEventTypes[K]) {
     if (!this.callbacks[eventName]) {
       this.callbacks[eventName] = []
     }
@@ -188,29 +197,37 @@ export class SequenceClient {
 
   // Individual callbacks lead to more idiomatic code
 
-  onOpen(callback: Callbacks['onOpen']) {
-    return this.registerCallback('onOpen', callback)
+  onOpen(callback: WalletEventTypes['open']) {
+    return this.registerCallback('open', callback)
   }
 
-  onClose(callback: Callbacks['onClose']) {
-    return this.registerCallback('onClose', callback)
+  onClose(callback: WalletEventTypes['close']) {
+    return this.registerCallback('close', callback)
+  }
+
+  onConnect(callback: WalletEventTypes['connect']) {
+    return this.registerCallback('connect', callback)
+  }
+
+  onDisconnect(callback: WalletEventTypes['disconnect']) {
+    return this.registerCallback('disconnect', callback)
   }
   
-  onNetworks(callback: Callbacks['onNetworks']) {
-    return this.registerCallback('onNetworks', callback)
+  onNetworks(callback: WalletEventTypes['networks']) {
+    return this.registerCallback('networks', callback)
   }
 
-  onAccountsChanged(callback: Callbacks['onAccountsChanged']) {
-    return this.registerCallback('onAccountsChanged', callback)
+  onAccountsChanged(callback: WalletEventTypes['accountsChanged']) {
+    return this.registerCallback('accountsChanged', callback)
   }
 
   // @deprecated
-  onWalletContext(callback: Callbacks['onWalletContext']) {
-    return this.registerCallback('onWalletContext', callback)
+  onWalletContext(callback: WalletEventTypes['walletContext']) {
+    return this.registerCallback('walletContext', callback)
   }
 
-  onDefaultChainIdChanged(callback: (chainId: number) => void) {
-    return this.registerCallback('onDefaultChainIdChanged', callback)
+  onDefaultChainIdChanged(callback: WalletEventTypes['chainChanged']) {
+    return this.registerCallback('chainChanged', callback)
   }
 
   getChainId(): number {

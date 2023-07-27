@@ -108,7 +108,7 @@ describe('SequenceClient', () => {
       let calls = 0
 
       client.onDefaultChainIdChanged((chainId) => {
-        expect(chainId).to.equal(calls === 0 ? 2 : 1)
+        expect(chainId).to.equal(calls === 0 ? '0x02' : '0x01')
         calls++
       })
 
@@ -142,6 +142,80 @@ describe('SequenceClient', () => {
 
       callbacks.emit('close')
       expect(called).to.be.false
+    })
+
+    it('should emit connect event', async () => {
+      let callsToConnect = 0
+
+      client.onConnect((details) => {
+        callsToConnect++
+        expect(details).to.deep.equal({
+          connected: true,
+          chainId: '0x01',
+          session: {
+            accountAddress: '0x1234',
+          },
+          email: 'test@sequence.app'
+        })
+      })
+
+      callbacks.emit('connect', {
+        connected: true,
+        chainId: '0x01',
+        session: {
+          accountAddress: '0x1234',
+        },
+        email: 'test@sequence.app'
+      })
+
+      expect(callsToConnect).to.equal(1)
+    })
+
+    it('should use default chain id during connect event', async () => {
+      let callsToConnect = 0
+
+      client.onConnect((details) => {
+        callsToConnect++
+        expect(details).to.deep.equal({
+          connected: true,
+          chainId: '0x02',
+          session: {
+            accountAddress: '0x1234',
+          },
+          email: 'test@sequence.app'
+        })
+      })
+
+      client.setDefaultChainId(2)
+
+      callbacks.emit('connect', {
+        connected: true,
+        // This should be ignored
+        chainId: '0x0a',
+        session: {
+          accountAddress: '0x1234',
+        },
+        email: 'test@sequence.app'
+      })
+
+      expect(callsToConnect).to.equal(1)
+    })
+
+    it('should emit disconnect event', async () => {
+      let callsToDisconnect = 0
+
+      client.onDisconnect((details) => {
+        callsToDisconnect++
+        expect(details).to.deep.equal({
+          code: 9999
+        })
+      })
+
+      callbacks.emit('disconnect', {
+        code: 9999
+      } as any)
+
+      expect(callsToDisconnect).to.equal(1)
     })
   })
 
@@ -1082,13 +1156,13 @@ describe('SequenceClient', () => {
       let called1 = 0
       client1.onDefaultChainIdChanged((chainId) => {
         called1++
-        expect(chainId).to.equal(10)
+        expect(chainId).to.equal("0x0a")
       })
 
       let called2 = 0
       client2.onDefaultChainIdChanged((chainId) => {
         called2++
-        expect(chainId).to.equal(10)
+        expect(chainId).to.equal("0x0a")
       })
 
       client1.setDefaultChainId(10)

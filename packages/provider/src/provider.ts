@@ -63,10 +63,31 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     // We support a lot of networks
     // but we start with the default one
     super(client.getChainId())
-    client.onDefaultChainIdChanged(async (chainId) => {
-      // TODO: Maybe we should emit more events here
+
+    // Emit events as defined by EIP-1193
+    client.onConnect((details) => {
+      this.emit('connect', details)
+    })
+
+    client.onDisconnect((error) => {
+      this.emit('disconnect', error)
+    })
+
+    client.onDefaultChainIdChanged((chainId) => {
       this.emit('chainChanged', chainId)
     })
+
+    client.onAccountsChanged((accounts) => {
+      this.emit('accountsChanged', accounts)
+    })
+
+    // NOTICE: We don't emit 'open' and 'close' events
+    // because these are handled by the library, and they
+    // are not part of EIP-1193
+
+    // devs can still access them using
+    //   client.onOpen()
+    //   client.onClose()
 
     // Create a Sequence signer too
     this.signer = new SequenceSigner(this.client, this)
