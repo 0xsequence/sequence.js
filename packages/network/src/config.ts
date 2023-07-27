@@ -107,6 +107,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('goerli')
   },
   {
+    ...networks[ChainId.SEPOLIA],
+    ...genUrls('sepolia')
+  },
+  {
     ...networks[ChainId.POLYGON_MUMBAI],
     ...genUrls('mumbai')
   },
@@ -121,6 +125,10 @@ export const allNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.BASE_GOERLI],
     ...genUrls('base-goerli')
+  },
+  {
+    ...networks[ChainId.BASE_MAINNET],
+    ...genUrls('base-mainnet')
   },
   {
     ...networks[ChainId.HOMEVERSE_TESTNET],

@@ -5,6 +5,7 @@ export enum ChainId {
   RINKEBY = 4,
   GOERLI = 5,
   KOVAN = 42,
+  SEPOLIA = 11155111,
 
   // Polygon
   POLYGON = 137,
@@ -43,6 +44,7 @@ export enum ChainId {
 
   // BASE
   BASE_GOERLI = 84531,
+  BASE_MAINNET = 8453,
 
   // HOMEVERSE
   HOMEVERSE_TESTNET = 40875,
@@ -131,6 +133,17 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Etherscan (Kovan)',
       rootUrl: 'https://kovan.etherscan.io/'
+    }
+  },
+  [ChainId.SEPOLIA]: {
+    chainId: ChainId.SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'sepolia',
+    title: 'Sepolia',
+    testnet: true,
+    blockExplorer: {
+      name: 'Etherscan (Sepolia)',
+      rootUrl: 'https://sepolia.etherscan.io/'
     }
   },
   [ChainId.POLYGON]: {
@@ -317,6 +330,16 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Base Goerli Explorer',
       rootUrl: 'https://goerli.basescan.org/'
+    }
+  },
+  [ChainId.BASE_MAINNET]: {
+    chainId: ChainId.BASE_MAINNET,
+    type: NetworkType.MAINNET,
+    name: 'base-mainnet',
+    title: 'Base Mainnet (Coinbase)',
+    blockExplorer: {
+      name: 'Base Mainnet Explorer',
+      rootUrl: 'https://basescan.org/'
     }
   },
   [ChainId.HOMEVERSE_TESTNET]: {
