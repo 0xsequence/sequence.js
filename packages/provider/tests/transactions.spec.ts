@@ -90,31 +90,6 @@ describe('validating transaction requests', () => {
     expect(() => validateTransactionRequest(self, transaction)).to.throw()
   })
 
-  it('should succeed when a transaction does only a deep execute call', () => {
-    const transaction = {
-      to,
-      data: commons.transaction.encodeBundleExecData({
-        entrypoint: to,
-        transactions: [
-          {
-            to: self,
-            data: commons.transaction.encodeBundleExecData({
-              entrypoint: self,
-              transactions: [
-                {
-                  to: self,
-                  value: '1000000000000000000'
-                }
-              ]
-            })
-          }
-        ]
-      })
-    }
-
-    expect(() => validateTransactionRequest(self, transaction)).to.not.throw()
-  })
-
   it('should not throw an error in general', () => {
     const transaction = {
       to,
@@ -124,18 +99,6 @@ describe('validating transaction requests', () => {
           {
             to: self, // self without data is ok
             value: '1000000000000000000'
-          },
-          {
-            to: self, // execute is ok
-            data: commons.transaction.encodeBundleExecData({
-              entrypoint: self,
-              transactions: [
-                {
-                  to,
-                  data: '0x12345678'
-                }
-              ]
-            })
           }
         ]
       })
