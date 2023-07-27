@@ -455,6 +455,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             throw new Error('sender address does not match wallet')
           }
 
+          validateTransactionRequest(account.address, transaction)
+
           if (this.prompter === null) {
             // The eth_signTransaction method expects a `string` return value we instead return a `SignedTransactions` object,
             // this can only be broadcasted using an RPC provider with support for signed Sequence transactions, like this one.
@@ -474,14 +476,12 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // and would have prompted the user upon signing.
 
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
-          const transaction = request.params![0]
-          if (commons.transaction.isSignedTransactionBundle(transaction)) {
-            validateTransactionRequest(account.address, transaction.transactions)
-            const txChainId = BigNumber.from(transaction.chainId).toNumber()
-            const tx = await account.relayer(txChainId)!.relay(transaction)
+          if (commons.transaction.isSignedTransactionBundle(request.params![0])) {
+            const txChainId = BigNumber.from(request.params![0].chainId).toNumber()
+            const tx = await account.relayer(txChainId)!.relay(request.params![0])
             response.result = tx.hash
           } else {
-            const tx = await provider.sendTransaction(transaction)
+            const tx = await provider.sendTransaction(request.params![0])
             response.result = tx.hash
           }
           break
