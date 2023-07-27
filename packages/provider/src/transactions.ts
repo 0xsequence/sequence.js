@@ -12,14 +12,7 @@ function validateTransaction(wallet: string, transaction: commons.transaction.Tr
     if (transaction.data) {
       const data = ethers.utils.arrayify(transaction.data)
       if (data.length >= 4) {
-        const selector = ethers.utils.hexlify(data.slice(0, 4))
-        switch (selector) {
-          case '0x7a9a1628': // execute((bool,bool,uint256,address,uint256,bytes)[],uint256,bytes)
-          case '0x61c2926c': // selfExecute((bool,bool,uint256,address,uint256,bytes)[])
-            break
-          default:
-            throw new Error('self calls other than execute and selfExecute are forbidden')
-        }
+        throw new Error('self calls are forbidden')
       }
     }
   }
