@@ -297,7 +297,7 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
       // Decode as selfExecute call
       const data = txData.slice(4)
       const decoded = ethers.utils.defaultAbiCoder.decode([selfExecuteAbi], data)[0]
-      unwound.push(...decoded.map((d: TransactionEncoded) => ({ ...d, to: d.target })))
+      unwound.push(...unwind(tx.to, decoded.map((d: TransactionEncoded) => ({ ...d, to: d.target }))))
     } else {
       try {
         const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0]
