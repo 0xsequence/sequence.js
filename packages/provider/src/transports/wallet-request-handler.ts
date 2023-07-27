@@ -7,6 +7,7 @@ import { BigNumber, ethers, providers } from 'ethers'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import { fromExtended } from '../extended'
+import { validateTransactionRequest } from '../transactions'
 import {
   ProviderMessageRequest,
   ProviderMessageResponse,
@@ -424,6 +425,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
               return tx
             })
 
+          validateTransactionRequest(account.address, transactionParams)
+
           let txnHash = ''
           if (this.prompter === null) {
             // prompter is null, so we'll send from here
@@ -471,12 +474,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // and would have prompted the user upon signing.
 
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
-          if (commons.transaction.isSignedTransactionBundle(request.params![0])) {
-            const txChainId = BigNumber.from(request.params![0].chainId).toNumber()
-            const tx = await account.relayer(txChainId)!.relay(request.params![0])
+          const transaction = request.params![0]
+          if (commons.transaction.isSignedTransactionBundle(transaction)) {
+            validateTransactionRequest(account.address, transaction.transactions)
+            const txChainId = BigNumber.from(transaction.chainId).toNumber()
+            const tx = await account.relayer(txChainId)!.relay(transaction)
             response.result = tx.hash
           } else {
-            const tx = await provider.sendTransaction(request.params![0])
+            const tx = await provider.sendTransaction(transaction)
             response.result = tx.hash
           }
           break
