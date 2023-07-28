@@ -1,5 +1,31 @@
 # 0xsequence
 
+## 1.1.1
+
+### Patch Changes
+
+- network: add base mainnet and sepolia
+- provider: reject toxic transaction requests
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.1.1
+  - @0xsequence/account@1.1.1
+  - @0xsequence/api@1.1.1
+  - @0xsequence/auth@1.1.1
+  - @0xsequence/core@1.1.1
+  - @0xsequence/guard@1.1.1
+  - @0xsequence/indexer@1.1.1
+  - @0xsequence/metadata@1.1.1
+  - @0xsequence/migration@1.1.1
+  - @0xsequence/multicall@1.1.1
+  - @0xsequence/network@1.1.1
+  - @0xsequence/provider@1.1.1
+  - @0xsequence/relayer@1.1.1
+  - @0xsequence/sessions@1.1.1
+  - @0xsequence/signhub@1.1.1
+  - @0xsequence/utils@1.1.1
+  - @0xsequence/wallet@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

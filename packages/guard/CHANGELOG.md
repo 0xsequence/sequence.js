@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.1.1
+
+### Patch Changes
+
+- network: add base mainnet and sepolia
+- provider: reject toxic transaction requests
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.1.1
+  - @0xsequence/signhub@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

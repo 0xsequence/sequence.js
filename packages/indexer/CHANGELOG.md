@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 1.1.1
+
+### Patch Changes
+
+- network: add base mainnet and sepolia
+- provider: reject toxic transaction requests
+
 ## 1.1.0
 
 ### Minor Changes
