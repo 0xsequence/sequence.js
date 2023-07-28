@@ -1,5 +1,22 @@
 # @0xsequence/account
 
+## 1.1.0
+
+### Minor Changes
+
+- Refactor dapp facing provider
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.1.0
+  - @0xsequence/migration@1.1.0
+  - @0xsequence/network@1.1.0
+  - @0xsequence/relayer@1.1.0
+  - @0xsequence/sessions@1.1.0
+  - @0xsequence/utils@1.1.0
+  - @0xsequence/wallet@1.1.0
+
 ## 1.0.5
 
 ### Patch Changes

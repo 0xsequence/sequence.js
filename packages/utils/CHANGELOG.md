@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.1.0
+
+### Minor Changes
+
+- Refactor dapp facing provider
+
 ## 1.0.5
 
 ### Patch Changes

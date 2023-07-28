@@ -1,5 +1,17 @@
 # @0xsequence/guard
 
+## 1.1.0
+
+### Minor Changes
+
+- Refactor dapp facing provider
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.1.0
+  - @0xsequence/signhub@1.1.0
+
 ## 1.0.5
 
 ### Patch Changes
