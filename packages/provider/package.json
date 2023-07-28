@@ -9,9 +9,15 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "pnpm test:file tests/**/*.spec.ts",
+    "test": "pnpm test:concurrently 'pnpm test:run'",
+    "test:run": "pnpm test:file tests/**/*.spec.ts",
     "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat1' 'pnpm start:hardhat2'",
+    "start:hardhat1": "pnpm start:hardhat1:verbose > /dev/null 2>&1",
+    "start:hardhat2": "pnpm start:hardhat2:verbose > /dev/null 2>&1",
+    "start:hardhat1:verbose": "hardhat node --config hardhat1.config.js --hostname 0.0.0.0 --port 9595",
+    "start:hardhat2:verbose": "hardhat node --config hardhat2.config.js --hostname 0.0.0.0 --port 8595"
   },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
@@ -31,6 +37,7 @@
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
+    "hardhat": "^2.12.2",
     "ethers": "^5.7.2"
   },
   "files": [

@@ -19,7 +19,7 @@ import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from
 import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
-import { isBrowserExtension, LocalStorage } from '../utils'
+import { isBrowserExtension, useBestStore } from '../utils'
 import { commons } from '@0xsequence/core'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
@@ -375,11 +375,6 @@ export abstract class BaseWalletTransport implements WalletTransport {
       // Set connect options on the walletRequestHandler as our primary
       // wallet controller, and fall back to networkId if necessary
       this.walletRequestHandler.setConnectOptions(connectOptions)
-      if (connectOptions.networkId) {
-        networkId = connectOptions.networkId
-      } else if (networkId) {
-        connectOptions.networkId = networkId
-      }
     } else {
       this.walletRequestHandler.setConnectOptions(undefined)
     }
@@ -452,11 +447,11 @@ export abstract class BaseWalletTransport implements WalletTransport {
   }
 
   private saveTransportSession = (session: TransportSession) => {
-    LocalStorage.getInstance().setItem(TRANSPORT_SESSION_LS_KEY, JSON.stringify(session))
+    useBestStore().setItem(TRANSPORT_SESSION_LS_KEY, JSON.stringify(session))
   }
 
   protected getCachedTransportSession = async (): Promise<TransportSession | null> => {
-    const session = await LocalStorage.getInstance().getItem(TRANSPORT_SESSION_LS_KEY)
+    const session = useBestStore().getItem(TRANSPORT_SESSION_LS_KEY)
 
     try {
       return session ? (JSON.parse(session) as TransportSession) : null

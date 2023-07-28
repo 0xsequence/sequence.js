@@ -1,5 +1,4 @@
-import { Wallet, DefaultProviderConfig } from '@0xsequence/provider'
-import { context } from '@0xsequence/tests'
+import { DefaultProviderConfig, MemoryItemStore, SequenceClient, SequenceProvider } from '@0xsequence/provider'
 import { configureLogger } from '@0xsequence/utils'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { test, assert } from '../../utils/assert'
@@ -10,60 +9,59 @@ export const tests = async () => {
   //
   // Setup
   //
-  const providerConfig = { ...DefaultProviderConfig }
-  providerConfig.walletAppURL = 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
+  const transportsConfig = {
+    ...DefaultProviderConfig.transports,
+    walletAppURL: 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
+  }
 
-  //
-  // Deploy Sequence WalletContext (deterministic).
-  //
-  const deployedWalletContext = await (async () => {
-    const provider1 = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-    const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
-    const signer1 = provider1.getSigner()
-    const signer2 = provider2.getSigner()
-    return Promise.all([context.deploySequenceContexts(signer1), context.deploySequenceContexts(signer2)])
-  })()
+  const hardhatProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
 
-  console.log('walletContext:', deployedWalletContext)
+  const client = new SequenceClient(transportsConfig, new MemoryItemStore(), 31338)
+  const provider = new SequenceProvider(client, (chainId) => {
+    if (chainId === 31337) {
+      return hardhatProvider
+    }
 
-  const wallet = new Wallet('hardhat2', providerConfig)
+    if (chainId === 31338) {
+      return new ethers.providers.JsonRpcProvider('http://localhost:9545')
+    }
 
-  // provider + signer, by default if a chainId is not specified it will direct
-  // requests to the defaultChain
-  const provider = wallet.getProvider()!
-  const signer = wallet.getSigner()
+    throw new Error(`No provider for chainId ${chainId}`)
+  })
 
   // clear it in case we're testing in browser session
-  wallet.disconnect()
+  provider.disconnect()
 
   await test('is logged out', async () => {
-    assert.false(wallet.isConnected(), 'is logged out')
+    assert.false(provider.isConnected(), 'is logged out')
   })
 
   await test('is disconnected', async () => {
-    assert.false(wallet.isConnected(), 'is disconnnected')
+    assert.false(provider.isConnected(), 'is disconnnected')
   })
 
   await test('connect / login', async () => {
-    const { connected } = await wallet.connect({
+    const { connected } = await provider.connect({
+      app: 'test',
       keepWalletOpened: true
     })
+
     assert.true(connected, 'is connected')
   })
 
   await test('isConnected', async () => {
-    assert.true(wallet.isConnected(), 'is connected')
+    assert.true(provider.isConnected(), 'is connected')
   })
 
   await test('check defaultNetwork is 31338', async () => {
-    assert.equal(await provider.getChainId(), 31338, 'provider chainId is 31338')
+    assert.equal(provider.getChainId(), 31338, 'provider chainId is 31338')
 
     const network = await provider.getNetwork()
     assert.equal(network.chainId, 31338, 'chain id match')
   })
 
   await test('getNetworks()', async () => {
-    const networks = await wallet.getNetworks()
+    const networks = await provider.getNetworks()
     console.log('=> networks', networks)
 
     // There should be two chains, hardhat and hardhat2
@@ -74,7 +72,7 @@ export const tests = async () => {
 
   await test('signMessage with our custom defaultChain', async () => {
     console.log('signing message...')
-    const signer = wallet.getSigner()
+    const signer = provider.getSigner()
 
     const message = 'Hi there! Please sign this message, 123456789, thanks.'
 
@@ -82,13 +80,13 @@ export const tests = async () => {
     const sig = await signer.signMessage(message)
 
     // validate
-    const isValid = await wallet.utils.isValidMessageSignature(await wallet.getAddress(), message, sig, await signer.getChainId())
+    const isValid = await provider.utils.isValidMessageSignature(provider.getAddress(), message, sig, await signer.getChainId())
     assert.true(isValid, 'signMessage sig is valid')
   })
 
   await test('signTypedData on defaultChain (in this case, hardhat2)', async () => {
-    const address = await wallet.getAddress()
-    const chainId = await wallet.getChainId()
+    const address = provider.getAddress()
+    const chainId = provider.getChainId()
 
     const domain: TypedDataDomain = {
       name: 'Ether Mail',
@@ -109,15 +107,10 @@ export const tests = async () => {
       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
     }
 
-    const sig = await signer.signTypedData(domain, types, message)
-    assert.equal(
-      sig,
-      '0x000200000000000289cf4f28dad9e8062b2f4fdeb0463faa334dd7122ae4b50663e7b840f55f8cef03fd11063e67c4ba1b3266f28e53d647b55a641667f9adbe0adc241e8839bff61b02',
-      'signature match typed-data dapp'
-    )
+    const sig = await provider.getSigner().signTypedData(domain, types, message)
 
     // Verify typed data
-    const isValid = await wallet.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
+    const isValid = await provider.utils.isValidTypedDataSignature(address, { domain, types, message }, sig, chainId)
     assert.true(isValid, 'signature is valid - 4')
   })
 }

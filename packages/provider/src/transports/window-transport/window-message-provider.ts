@@ -88,11 +88,13 @@ export class WindowMessageProvider extends BaseProviderTransport {
       // when connecting to the wallet, however, this will be verified and enforced
       // on the wallet-side, so if a dapp provides the wrong origin, it will be dropped.
       if (intent.type === 'connect') {
-        if (!intent.options) intent.options = {}
+        if (!intent.options) intent.options = {
+          app: window.location.origin
+        }
 
         // skip setting origin host if we're in an browser extension execution context
         // allow origin that is passed in
-        if (!isBrowserExtension() && !isUnityPlugin()) {
+        if (!isBrowserExtension() && !isUnityPlugin() && intent.options) {
           intent.options.origin = window.location.origin
         }
       }

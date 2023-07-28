@@ -13,7 +13,7 @@ export class ProxyMessageProvider extends BaseProviderTransport {
   constructor(port: ProxyMessageChannelPort) {
     super()
     this.state = OpenState.CLOSED
-    this.port = port    
+    this.port = port
     if (!port) {
       throw new Error('port argument cannot be empty')
     }

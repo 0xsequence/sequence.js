@@ -111,73 +111,103 @@ export const isWalletUpToDate = (status: AccountStatus): boolean => {
 }
 
 export interface ItemStore {
-  getItem(key: string): Promise<string | null>
-  setItem(key: string, value: string): Promise<void>
-  removeItem(key: string): Promise<void>
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
+
+  removeItem(key: string): void
+
+  onItemChange(key: string, cb: (value: string | null) => void): () => void
 }
 
-export class LocalStorage {
-  private static _instance: ItemStore
+export class MemoryItemStore implements ItemStore {
+  private callbacks: { key: string, cb: (value: string | null) => void }[] = []
+  private store: Record<string, string> = {}
 
-  private constructor() {}
-
-  static getInstance(): ItemStore {
-    if (typeof window === 'object') {
-      if (!LocalStorage._instance) {
-        LocalStorage._instance = {
-          getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
-          setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
-          removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key))
-        }
-      }
-    } else {
-      // noop local storage if window is not defined
-      // TODO: perhaps add an in-memory local storage if we need?
-      if (!LocalStorage._instance) {
-        LocalStorage._instance = {
-          getItem: (key: string) => Promise.resolve(null),
-          setItem: (key: string, value: string) => Promise.resolve(),
-          removeItem: (key: string) => Promise.resolve()
-        }
-      }
-    }
-    return this._instance
+  getItem(key: string): string | null {
+    return this.store[key] || null
   }
 
-  static use(instance: ItemStore) {
-    LocalStorage._instance = instance
+  setItem(key: string, value: string): void {
+    this.store[key] = value
+    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(value))
+  }
+
+  removeItem(key: string): void {
+    delete this.store[key]
+  }
+
+  onItemChange(key: string, cb: (value: string | null) => void): () => void {
+    this.callbacks.push({ key, cb })
+
+    return () => {
+      this.callbacks = this.callbacks.filter((c) => c.cb !== cb)
+    }
   }
 }
 
-// window.localstorage helper
-export class LocalStore<T extends Object = string> {
-  readonly key: string
+export class LocalStorage implements ItemStore {
+  private callbacks: { key: string, cb: (value: string | null) => void }[] = []
 
-  constructor(key: string, public def?: T) {
-    this.key = key
+  static isAvailable(): boolean {
+    return typeof window === 'object' && typeof window.localStorage === 'object'
   }
 
-  async get(): Promise<T | undefined> {
-    const val = await LocalStorage.getInstance().getItem(this.key)
-
-    if (val === null) {
-      return this.def
+  constructor() {
+    if (!LocalStorage.isAvailable()) {
+      throw new Error('LocalStorage is not available')
     }
 
-    try {
-      return JSON.parse(val)
-    } catch (err) {
-      console.error(err)
+    window.addEventListener('storage', (e) => {
+      const { key } = e
+      const cb = this.callbacks.filter((c) => c.key === key)
+      cb.forEach((c) => c.cb(this.getItem(key!)))
+    })
+  }
+
+  getItem(key: string): string | null {
+    return window.localStorage.getItem(key)
+  }
+
+  setItem(key: string, value: string): void {
+    window.localStorage.setItem(key, value)
+
+    // Trigger callbacks
+    // NOTICE: the event is not triggered on the same window
+    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(value))
+  }
+
+  removeItem(key: string): void {
+    window.localStorage.removeItem(key)
+
+    // Trigger callbacks
+    // NOTICE: the event is not triggered on the same window
+    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(null))
+  }
+
+  onItemChange(key: string, cb: (value: string | null) => void): () => void {
+    this.callbacks.push({ key, cb })
+
+    return () => {
+      this.callbacks = this.callbacks.filter((c) => c.cb !== cb)
     }
+  }
+}
 
-    return
+export function useBestStore(): ItemStore {
+  if (LocalStorage.isAvailable()) {
+    return new LocalStorage()
   }
 
-  set(val: T | undefined) {
-    val ? LocalStorage.getInstance().setItem(this.key, JSON.stringify(val)) : LocalStorage.getInstance().removeItem(this.key)
+  return new MemoryItemStore()
+}
+
+export async function resolveArrayProperties<T>(
+  object: Readonly<ethers.utils.Deferrable<T>> | Readonly<ethers.utils.Deferrable<T>>[]
+): Promise<T> {
+  if (Array.isArray(object)) {
+    // T must include array type
+    return Promise.all(object.map((o) => ethers.utils.resolveProperties(o))) as any
   }
 
-  del() {
-    LocalStorage.getInstance().removeItem(this.key)
-  }
+  return ethers.utils.resolveProperties(object)
 }

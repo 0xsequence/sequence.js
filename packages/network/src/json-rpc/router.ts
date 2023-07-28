@@ -29,10 +29,6 @@ export class JsonRpcRouter implements JsonRpcHandler {
       callback(err, undefined)
     }
   }
-
-  // createWeb3Provider(network?: Networkish): EthersWeb3Provider {
-  //   return new EthersWeb3Provider(this.sender, network)
-  // }
 }
 
 export const createJsonRpcMiddlewareStack = (

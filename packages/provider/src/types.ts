@@ -1,6 +1,6 @@
 import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
-import { JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
+import { ChainIdLike, JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -19,6 +19,20 @@ export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransp
 
   waitUntilOpened(): Promise<WalletSession | undefined>
   waitUntilConnected(): Promise<ConnectDetails>
+}
+
+export function isProviderTransport(transport: any): transport is ProviderTransport {
+  return (
+    transport &&
+    typeof transport === 'object' &&
+    typeof transport.register === 'function' &&
+    typeof transport.unregister === 'function' &&
+    typeof transport.openWallet === 'function' &&
+    typeof transport.closeWallet === 'function' &&
+    typeof transport.isOpened === 'function' &&
+    typeof transport.isConnected === 'function' &&
+    typeof transport.on === 'function'
+  )
 }
 
 export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -134,12 +148,8 @@ export enum InitState {
 }
 
 export interface ConnectOptions {
-  /** Specifies the default network a dapp would like to connect to. This field
-   * is optional as it can be provided a number of different ways. */
-  networkId?: string | number
-
   /** app name of the dapp which will be announced to user on connect screen */
-  app?: string
+  app: string
 
   /** custom protocol for auth redirect (unity/unreal) */
   appProtocol?: string
@@ -169,6 +179,13 @@ export interface ConnectOptions {
 
   /** Options to further customize the wallet experience. */
   settings?: Settings
+}
+
+export interface NetworkedConnectOptions extends ConnectOptions {
+  /** chainId is the chainId to connect to. If not specified, the default chainId
+   * will be used. This does not define a default chain id, it is only used for the connect
+   * authorization signature. */
+  networkId?: string | number;
 }
 
 /** Options to further customize the wallet experience. */
@@ -256,7 +273,7 @@ export interface ConnectDetails {
 export type PromptConnectDetails = Pick<ConnectDetails, 'chainId' | 'error' | 'connected' | 'proof' | 'email'>
 
 export type OpenWalletIntent =
-  | { type: 'connect'; options?: ConnectOptions }
+  | { type: 'connect'; options?: NetworkedConnectOptions }
   | { type: 'openWithOptions'; options?: ConnectOptions }
   | { type: 'jsonRpcRequest'; method: string }
 
@@ -280,9 +297,6 @@ export interface WalletSession {
   // Networks in use for the session. The default/dapp network will show
   // up as the first one in the list as the "main chain"
   networks?: NetworkConfig[]
-
-  // Caching provider responses for things such as account and chainId
-  providerCache?: { [key: string]: any }
 }
 
 export class ProviderError extends Error {
@@ -314,3 +328,20 @@ export interface TypedEventEmitter<Events> {
 }
 
 type Arguments<T> = [T] extends [(...args: infer U) => any] ? U : [T] extends [void] ? [] : [T]
+
+export type OptionalChainIdLike = {
+  chainId?: ChainIdLike
+} | undefined
+
+export type OptionalChainId = {
+  chainId?: number
+} | undefined
+
+export type OptionalEIP6492 = {
+  eip6492?: boolean
+} | undefined
+
+// This is required by viem, it expects a provider to have an EIP-1193 compliant `request` attribute.
+export interface EIP1193Provider {
+  request: (request: { method: string, params?: Array<any> }) => Promise<any>
+}

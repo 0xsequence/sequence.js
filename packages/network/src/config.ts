@@ -127,6 +127,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('homeverse-testnet')
   },
   {
+    ...networks[ChainId.AVALANCHE_TESTNET],
+    ...genUrls('avalanche-testnet')
+  },
+  {
     ...networks[ChainId.HARDHAT],
     rpcUrl: 'http://localhost:8545',
     relayer: {

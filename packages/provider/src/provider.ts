@@ -1,531 +1,554 @@
-import { ethers, BytesLike, Bytes, providers, TypedDataDomain, TypedDataField } from 'ethers'
 
-import {
-  NetworkConfig,
-  ChainIdLike,
-  JsonRpcHandler,
-  JsonRpcFetchFunc,
-  JsonRpcRequest,
-  JsonRpcResponseCallback,
-  JsonRpcSender,
-  maybeChainId
-} from '@0xsequence/network'
+import { ethers } from "ethers"
+import { SequenceClient } from "./client"
+import { ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from "@0xsequence/network"
+import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, OptionalChainIdLike, WalletSession } from "./types"
+import { commons } from "@0xsequence/core"
+import { WalletUtils } from "./utils/index"
+import { SequenceSigner, SingleNetworkSequenceSigner } from "./signer"
 
-import { resolveArrayProperties, Signer } from '@0xsequence/wallet'
-import { Relayer } from '@0xsequence/relayer'
-import { Deferrable, shallowCopy, resolveProperties, Forbid } from '@0xsequence/utils'
-import { WalletRequestHandler } from './transports/wallet-request-handler'
-import { commons, universal } from '@0xsequence/core'
-import { Account, AccountStatus } from '@0xsequence/account'
-import { ExtendedTransactionRequest, toExtended } from './extended'
+export interface ISequenceProvider {
+  readonly _isSequenceProvider: true
 
-export class Web3Provider extends providers.Web3Provider implements JsonRpcHandler {
-  static isSequenceProvider(cand: any): cand is Web3Provider {
-    return isSequenceProvider(cand)
-  }
+  connect(options?: ConnectOptions): Promise<ConnectDetails>
+  disconnect(): void
 
-  readonly _sender: JsonRpcSender
+  isConnected(): boolean
+  getSession(): WalletSession | undefined
 
-  readonly _isSequenceProvider: boolean
+  listAccounts(): string[]
 
-  // defaultChainId is the default chainId to use with requests, but may be
-  // overridden by passing chainId argument to a specific request
-  readonly _defaultChainId?: number
+  // @deprecated use getSigner().getAddress() instead
+  getAddress(): string
 
-  constructor(provider: providers.JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: ChainIdLike) {
-    const sender = new JsonRpcSender(provider, maybeChainId(defaultChainId))
-    provider = sender
+  getNetworks(): Promise<NetworkConfig[]>
+  getChainId(): number
 
-    super(provider, 'any')
+  setDefaultChainId(chainId: ChainIdLike): void
 
-    this._sender = sender
-    this._isSequenceProvider = true
-    this._defaultChainId = maybeChainId(defaultChainId)
-  }
+  isOpened(): boolean
+  openWallet(path?: string, intent?: OpenWalletIntent): Promise<boolean>
+  closeWallet(): void
 
-  sendAsync(
-    request: JsonRpcRequest,
-    callback: JsonRpcResponseCallback | ((error: any, response: any) => void),
-    chainId?: number
+  getProvider(): SequenceProvider
+  getProvider(chainId: ChainIdLike): SingleNetworkSequenceProvider
+  getProvider(chainId?: ChainIdLike): SequenceProvider | SingleNetworkSequenceProvider
+
+  getSigner(): SequenceSigner
+  getSigner(chainId: ChainIdLike): SingleNetworkSequenceSigner
+  getSigner(chainId?: ChainIdLike): SequenceSigner | SingleNetworkSequenceSigner
+
+  // @deprecated use getSigner().getWalletContext() instead
+  getWalletContext(): Promise<commons.context.VersionedContext>
+
+  // @deprecated use getSigner().getWalletConfig() instead
+  getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
+
+  utils: WalletUtils
+}
+
+export class SequenceProvider extends ethers.providers.BaseProvider implements ISequenceProvider, EIP1193Provider {
+  private readonly singleNetworkProviders: { [chainId: number]: SingleNetworkSequenceProvider } = {}
+
+  readonly _isSequenceProvider = true
+  readonly utils: WalletUtils
+
+  readonly signer: SequenceSigner
+
+  constructor (
+    public readonly client: SequenceClient,
+    private readonly providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
+    public readonly networks: NetworkConfig[] = allNetworks
   ) {
-    this._sender.sendAsync(request, callback, chainId)
+    // We support a lot of networks
+    // but we start with the default one
+    super(client.getChainId())
+
+    // Emit events as defined by EIP-1193
+    client.onConnect((details) => {
+      this.emit('connect', details)
+    })
+
+    client.onDisconnect((error) => {
+      this.emit('disconnect', error)
+    })
+
+    client.onDefaultChainIdChanged((chainId) => {
+      this.emit('chainChanged', chainId)
+    })
+
+    client.onAccountsChanged((accounts) => {
+      this.emit('accountsChanged', accounts)
+    })
+
+    // NOTICE: We don't emit 'open' and 'close' events
+    // because these are handled by the library, and they
+    // are not part of EIP-1193
+
+    // devs can still access them using
+    //   client.onOpen()
+    //   client.onClose()
+
+    // Create a Sequence signer too
+    this.signer = new SequenceSigner(this.client, this)
+
+    // Create a utils instance
+    this.utils = new WalletUtils(this.signer)
   }
 
-  send(method: string, params: Array<any>, chainId?: number): Promise<any> {
-    return this._sender.send(method, params, chainId)
+  getSigner(): SequenceSigner
+  getSigner(chainId: ChainIdLike): SingleNetworkSequenceSigner
+  getSigner(chainId?: ChainIdLike): SequenceSigner | SingleNetworkSequenceSigner
+
+  getSigner(chainId?: ChainIdLike) {
+    return this.signer.getSigner(chainId)
   }
 
-  request(request: { method: string; params?: Array<any>; chainId?: number }): Promise<any> {
-    return this.send(request.method, request.params || [], request.chainId)
+  connect(options: ConnectOptions) {
+    return this.client.connect(options)
   }
 
-  getSigner(): Web3Signer {
-    return new Web3Signer(this, this._defaultChainId)
+  disconnect() {
+    return this.client.disconnect()
   }
 
-  async getChainId(): Promise<number> {
-    // If we already have a default chainId, then we can just return it
-    const defaultChainId = this._defaultChainId
-    if (defaultChainId) return defaultChainId
+  isConnected() {
+    return this.client.isConnected()
+  }
 
-    // If there is no default chain, then we can just return the chainId of the provider
-    return this.send('eth_chainId', [])
+  getSession() {
+    return this.client.getSession()
+  }
+
+  listAccounts(): string[] {
+    return [this.client.getAddress()]
+  }
+
+  // @deprecated use getSigner() instead
+  getAddress() {
+    return this.client.getAddress()
   }
 
   getNetworks(): Promise<NetworkConfig[]> {
-    return this.send('sequence_getNetworks', [])
-  }
-}
-
-export function isSequenceProvider(provider: any): provider is Web3Provider {
-  const cand = provider as Web3Provider
-  return cand && cand.send !== undefined && cand._isSequenceProvider === true
-}
-
-export class LocalWeb3Provider extends Web3Provider {
-  constructor(account: Account, networks?: NetworkConfig[]) {
-    const walletRequestHandler = new WalletRequestHandler(account, null, networks || [])
-    super(walletRequestHandler)
-  }
-}
-
-// TODO: in the future with ethers v6 we can remove/change this type name
-interface TypedDataSigner {
-  _signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
-    value: Record<string, any>
-  ): Promise<string>
-}
-
-export class Web3Signer extends Signer implements TypedDataSigner {
-  readonly provider: Web3Provider
-  readonly defaultChainId?: number
-
-  constructor(provider: Web3Provider, defaultChainId?: number) {
-    super()
-    this.provider = provider
-    this.defaultChainId = defaultChainId
+    return this.client.getNetworks()
   }
 
-  // memoized
-  _address: string
-  _index: number
-  _context: commons.context.VersionedContext
-  _networks: NetworkConfig[]
-  private _providers: { [key: number]: Web3Provider } = {}
-
-  //
-  // ethers AbstractSigner methods
-  //
-
-  async getAddress(): Promise<string> {
-    if (this._address) return this._address
-    const accounts = await this.provider.send('eth_accounts', [])
-    this._address = accounts[0]
-    this._index = 0
-    return ethers.utils.getAddress(this._address)
+  getChainId(): number {
+    return this.client.getChainId()
   }
 
-  signTransaction(transaction: Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
-    // TODO .. since ethers isn't using this method, perhaps we will?
-    throw new Error('signTransaction is unsupported, use signTransactions instead')
+  setDefaultChainId(chainId: ChainIdLike) {
+    return this.client.setDefaultChainId(this.toChainId(chainId))
   }
 
-  connect(provider: ethers.providers.Provider): ethers.providers.JsonRpcSigner {
-    throw new Error('unsupported: cannot alter JSON-RPC Signer connection')
+  isOpened(): boolean {
+    return this.client.isOpened()
   }
 
-  //
-  // Sequence Signer methods
-  //
-
-  // getProvider returns a Web3Provider instance for the current chain. Note that this method
-  // and signer is bound to a particular chain to prevent misuse. If you'd like a provider
-  // for a specific chain, try getSender(chainId), or wallet.getProvider(chainId).
-  async getProvider(chainId?: number): Promise<Web3Provider | undefined> {
-    if (chainId) {
-      const currentChainId = await this.getChainId()
-      if (currentChainId !== chainId) {
-        throw new Error(`signer is attempting to access chain ${chainId}, but is already bound to chain ${currentChainId}`)
-      }
-    }
-    return this.provider
+  closeWallet(): void {
+    return this.client.closeWallet()
   }
 
-  // getSender returns a Web3Provider instance via the signer transport. Note: for our case
-  // the of sequence wallet, this will bring up the wallet window whenever using it, as the json-rpc
-  // requests are sent to the window transport. Therefore, for anything non-signing related
-  // you can write a higher-order JsonRpcRouter sender to route to the public provider endpoints
-  // as we do in the WalletProvider.
-  //
-  // This method is primarily utilized internally when routing requests to a particular chainId.
-  async getSender(chainId?: number): Promise<Web3Provider | undefined> {
-    if (!chainId || (chainId && chainId === this.defaultChainId)) {
-      return this.provider
-    }
-    if (!this._providers[chainId]) {
-      this._providers[chainId] = new Web3Provider(new JsonRpcSender(this.provider, chainId), chainId)
-    }
-    return this._providers[chainId]
+  getWalletContext(): Promise<commons.context.VersionedContext> {
+    return this.client.getWalletContext()
   }
 
-  getRelayer(chainId?: number): Promise<Relayer | undefined> {
-    // TODO: JsonRpcRelayer ......? or, Web3Relayer.. or SequenceRelayer?
-    // sequence_gasRefundOptions
-    // sequence_getNonce
-    // sequence_relay
-    throw new Error('TODO')
-  }
-
-  async getWalletContext(): Promise<commons.context.VersionedContext> {
-    if (!this._context) {
-      this._context = await this.provider.send('sequence_getWalletContext', [])
-    }
-    return this._context
-  }
-
+  // @deprecated use getSigner() instead
   async getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config> {
-    const reqChainId = maybeChainId(chainId) || this.defaultChainId
-    if (!reqChainId) throw new Error('chainId is required')
-    return (await this.provider.send(
-      'sequence_getWalletConfig',
-      [reqChainId],
-      reqChainId
-    ))[0]
+    const useChainId = await this.useChainId(chainId)
+    return this.client.getOnchainWalletConfig({ chainId: useChainId })
   }
 
-  async getWalletState(chainId?: ChainIdLike): Promise<AccountStatus> {
-    const reqChainId = maybeChainId(chainId) || this.defaultChainId
-    if (!reqChainId) throw new Error('chainId is required')    
-    return (await this.provider.send(
-      'sequence_getWalletState',
-      [reqChainId],
-      reqChainId
-    ))[0].status
+  authorize(options: ConnectOptions) {
+    // Just an alias for connect with authorize: true
+    return this.client.connect({ ...options, authorize: true })
   }
 
-  async getNetworks(): Promise<NetworkConfig[]> {
-    if (!this._networks) this._networks = await this.provider.getNetworks()
-    return this._networks
+  async openWallet(
+    path?: string,
+    intent?: OpenWalletIntent
+  ) {
+    await this.client.openWallet(path, intent)
+    return true
   }
 
-  async getSigners(): Promise<string[]> {
-    const networks = await this.getNetworks()
+  toChainId(chainId: ChainIdLike): number
+  toChainId(chainId?: ChainIdLike): number | undefined
 
-    // TODO: Replace this with a method that aggregates signer addresses from all chains
-    const config = await this.getWalletConfig(networks[0].chainId)
-    if (!config) {
-      throw new Error(`walletConfig returned zero results for authChainId {authChainId}`)
-    }
-
-    return universal.genericCoderFor(config.version).config.signersOf(config).map((s) => s.address)
-  }
-
-  // signMessage matches implementation from ethers JsonRpcSigner for compatibility, but with
-  // multi-chain support.
-  async signMessage(message: BytesLike, chainId?: ChainIdLike, sequenceVerified: boolean = true): Promise<string> {
-    const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
-
-    const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
-    const address = await this.getAddress()
-
-    // NOTE: as of ethers v5.5, it switched to using personal_sign, see
-    // https://github.com/ethers-io/ethers.js/pull/1542 and see
-    // https://github.com/WalletConnect/walletconnect-docs/issues/32 for additional info.
-    return provider!.send(
-      sequenceVerified ? 'sequence_sign' : 'personal_sign',
-      [ethers.utils.hexlify(data), address]
-    )
-  }
-
-  // signTypedData matches implementation from ethers JsonRpcSigner for compatibility, but with
-  // multi-chain support.
-  async signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
-    message: Record<string, any>,
-    chainId?: ChainIdLike,
-    sequenceVerified: boolean = true
-  ): Promise<string> {
-    // Populate any ENS names (in-place)
-    // const populated = await ethers.utils._TypedDataEncoder.resolveNames(domain, types, message, (name: string) => {
-    //   return this.provider.resolveName(name)
-    // })
-
-    return this.provider.send(
-      sequenceVerified ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4',
-      [await this.getAddress(), ethers.utils._TypedDataEncoder.getPayload(domain, types, message)],
-      maybeChainId(chainId) || this.defaultChainId
-    )
-  }
-
-  // sendTransaction matches implementation from ethers JsonRpcSigner for compatibility, but with
-  // multi-chain support.
-  async sendTransaction(
-    transaction: Deferrable<ExtendedTransactionRequest>,
-    chainId?: ChainIdLike
-  ): Promise<commons.transaction.TransactionResponse> {
-    const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
-
-    const tx = this.sendUncheckedTransaction(transaction, chainId).then(hash => {
-      return ethers.utils
-        .poll(
-          () => {
-            return provider!.getTransaction(hash).then((tx: ethers.providers.TransactionResponse) => {
-              if (tx === null) {
-                return undefined
-              }
-              return provider!._wrapTransaction(tx, hash)
-            })
-          },
-          { onceBlock: this.provider! }
-        )
-        .catch((error: Error) => {
-          ;(<any>error).transactionHash = hash
-          throw error
-        })
-    })
-
-    // @ts-ignore
-    return tx
-  }
-
-  // sendTransactionBatch is a convenience method to call sendTransaction in a batch format, allowing you to
-  // send multiple transaction as a single payload and just one on-chain transaction.
-  async sendTransactionBatch(
-    transactions: Deferrable<ethers.providers.TransactionRequest[]>,
-    chainId?: ChainIdLike
-  ): Promise<ethers.providers.TransactionResponse> {
-    const batch = await resolveArrayProperties<Forbid<ethers.providers.TransactionRequest, 'wait'>[]>(transactions)
-    if (!batch || batch.length === 0) {
-      throw new Error('cannot send empty batch')
-    }
-
-    // sendTransactionBatch only accepts TransactionRequest, not TransactionResponses
-    if (batch.find(v => v.wait !== undefined && v.wait !== null)) {
-      throw new Error('transaction request expected for sendTransactionBatch, transaction response found')
-    }
-
-    const asExtended = toExtended(batch)
-    return this.sendTransaction(asExtended, chainId)
-  }
-
-  signTransactions(
-    transaction: Deferrable<ethers.providers.TransactionRequest>,
-    chainId?: ChainIdLike
-  ): Promise<commons.transaction.SignedTransactionBundle> {
-    transaction = shallowCopy(transaction)
-    // TODO: transaction argument..? make sure to resolve any properties and serialize property before sending over
-    // the wire.. see sendUncheckedTransaction and resolveProperties
-    return this.provider.send('eth_signTransaction', [transaction], maybeChainId(chainId) || this.defaultChainId)
-  }
-
-  sendSignedTransactions(
-    signedTxs: commons.transaction.SignedTransactionBundle,
-    chainId?: ChainIdLike
-  ): Promise<ethers.providers.TransactionResponse> {
-    // sequence_relay
-    throw new Error('TODO')
-  }
-
-  // updateConfig..
-  // NOTE: this is not supported by the remote wallet by default.
-  async updateConfig(newConfig?: commons.config.Config): Promise<[commons.config.Config, ethers.providers.TransactionResponse | undefined]> {
-    // sequence_updateConfig
-    const [config, tx] = await this.provider.send('sequence_updateConfig', [newConfig], this.defaultChainId)
-    if (tx === null) {
-      return [config, undefined]
-    }
-
-    const provider = await this.getSender(this.defaultChainId)
-    return [config, provider!._wrapTransaction(tx, tx.hash)]
-  }
-
-  // publishConfig..
-  // NOTE: this is not supported by the remote wallet by default.
-  async publishConfig(): Promise<ethers.providers.TransactionResponse | undefined> {
-    const provider = await this.getSender(this.defaultChainId)
-
-    const tx = await provider!.send('sequence_publishConfig', [])
-    if (tx === null) {
+  toChainId(chainId?: ChainIdLike) {
+    if (chainId === undefined) {
       return undefined
     }
-    return provider!._wrapTransaction(tx, tx.hash)
+  
+    const resolved = findNetworkConfig(this.networks, chainId as ChainIdLike)
+  
+    if (!resolved) {
+      throw new Error(`Unsupported network ${chainId}`)
+    }
+  
+    return resolved.chainId
   }
 
-  async isDeployed(chainId?: ChainIdLike): Promise<boolean> {
-    const provider = await this.getSender(maybeChainId(chainId))
-    const walletCode = await provider!.getCode(await this.getAddress())
-    return !!walletCode && walletCode !== '0x'
+  /**
+   *  Resolves the chainId to use for the given request. If no chainId is provided,
+   *  it uses the chainId defined by the client (default chainId). This can be
+   *  overriden to build a single-network SequenceProvider.
+   */
+  protected async useChainId(chainId?: ChainIdLike): Promise<number> {
+    return this.toChainId(chainId) || this.client.getChainId()
   }
 
-  //
-  // ethers JsonRpcSigner methods
-  //
+  /**
+   *  This generates a provider that ONLY works for the given chainId.
+   *  the generated provider can't switch networks, and can't handle requests
+   *  for other networks.
+   */
+  getProvider(): SequenceProvider
+  getProvider(chainId: ChainIdLike): SingleNetworkSequenceProvider
+  getProvider(chainId?: ChainIdLike): SequenceProvider | SingleNetworkSequenceProvider
 
-  async _legacySignMessage(message: Bytes | string, chainId?: ChainIdLike): Promise<string> {
-    const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
+  getProvider(chainId?: ChainIdLike) {
+    // The provider without a chainId is... this one
+    if (!chainId) {
+      return this
+    }
 
-    const data = typeof message === 'string' ? ethers.utils.toUtf8Bytes(message) : message
-    const address = await this.getAddress()
+    const useChainId = this.toChainId(chainId)
 
-    // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
-    // NOTE: ethers since 5.5 has switched to using personal_sign, we should review, etc.
-    return await provider!.send('eth_sign', [address, ethers.utils.hexlify(data)])
-  }
-
-  async _signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
-    message: Record<string, any>,
-    chainId?: ChainIdLike
-  ): Promise<string> {
-    return this.signTypedData(domain, types, message, chainId)
-  }
-
-  async sendUncheckedTransaction(transaction: Deferrable<ExtendedTransactionRequest>, chainId?: ChainIdLike): Promise<string> {
-    transaction = shallowCopy(transaction)
-
-    const fromAddress = this.getAddress()
-
-    // NOTE: we do not use provider estimation, and instead rely on our relayer to determine the gasLimit and gasPrice
-    //
-    // TODO: alternatively/one day, we could write a provider middleware to eth_estimateGas
-    // and send it to our relayer url instead for estimation..
-    //
-    // if (!transaction.gasLimit) {
-    //   const estimate = shallowCopy(transaction)
-    //   estimate.from = fromAddress
-    //   transaction.gasLimit = this.provider.estimateGas(estimate)
-    // }
-
-    const provider = await this.getSender(maybeChainId(chainId) || this.defaultChainId)
-
-    return resolveProperties({
-      tx: resolveProperties(transaction),
-      sender: await fromAddress
-    }).then(({ tx, sender }) => {
-      if (tx.from != null) {
-        if (ethers.utils.getAddress(tx.from) !== sender) {
-          // logger.throwArgumentError("from address mismatch", "transaction", transaction)
-          throw new Error(`from address mismatch for transaction ${transaction}`)
-        }
-      } else {
-        tx.from = sender
-      }
-
-      const hexTx = hexlifyTransaction(tx)
-
-      return provider!.send('eth_sendTransaction', [hexTx]).then(
-        hash => {
-          return hash
-        },
-        error => {
-          // return checkError("sendTransaction", error, hexTx)
-          throw error
-        }
+    if (!this.singleNetworkProviders[useChainId]) {
+      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(
+        this.client,
+        this.providerFor,
+        useChainId
       )
-    })
+    }
+
+    return this.singleNetworkProviders[useChainId]
   }
 
-  connectUnchecked(): ethers.providers.JsonRpcSigner {
-    return new UncheckedJsonRpcSigner(this.provider, this.defaultChainId)
+  /**
+   *  This returns a subprovider, this is a regular non-sequence provider that
+   *  can be used to fulfill read only requests on a given network.
+   */
+  async _getSubprovider(chainId?: ChainIdLike): Promise<ethers.providers.JsonRpcProvider> {
+    const useChainId = await this.useChainId(chainId)
+
+    // Whoever implements providerFrom should memoize the generated provider
+    // otherwise every instance of SequenceProvider will create a new subprovider
+    const provider = this.providerFor(useChainId)
+
+    if (!provider) {
+      throw new Error(`Unsupported network ${useChainId}`)
+    }
+
+    return provider
   }
 
-  async unlock(password: string): Promise<boolean> {
-    const address = await this.getAddress()
-    return this.provider.send('personal_unlockAccount', [address, password, null])
+  async perform(method: string, params: any): Promise<any> {
+    // First we check if the method should be handled by the client
+    if (method === 'eth_chainId') {
+      return this.useChainId()
+    }
+
+    if (method === 'eth_accounts') {
+      return [this.client.getAddress()]
+    }
+
+    if (method === 'wallet_switchEthereumChain') {
+      const args = params[0] as { chainId: string } | number | string
+      const chainId = normalizeChainId(args)
+      return this.setDefaultChainId(chainId)
+    }
+
+    // Usually these methods aren't used by calling the provider
+    // but to maximize compatibility we support them too.
+    // The correct way of accessing these methods is by using .getSigner()
+    if (
+      method === 'eth_sendTransaction' ||
+      method === 'eth_sign' ||
+      method === 'eth_signTypedData' ||
+      method === 'eth_signTypedData_v4' ||
+      method === 'personal_sign' ||
+      // These methods will use EIP-6492
+      // but this is handled directly by the wallet
+      method === 'sequence_sign' ||
+      method === 'sequence_signTypedData_v4'
+    ) {
+      // We pass the chainId to the client, if we don't pass one
+      // the client will use its own default chainId
+      return this.client.send({ method, params }, this.getChainId())
+    }
+
+    // Forward call to the corresponding provider
+    // we use the provided chainId, or the default one provided by the client
+    const provider = await this._getSubprovider()
+    const prepared = provider.prepareRequest(method, params) ?? [method, params]    
+    return provider.send(prepared[0], prepared[1])
+  }
+
+  send (method: string, params: any): Promise<any> {
+    return this.perform(method, params)
+  }
+
+  request (request: { method: string; params?: any[] | undefined }) {
+    return this.perform(request.method, request.params)
+  }
+
+  async detectNetwork(): Promise<ethers.providers.Network> {
+    const chainId = this.client.getChainId()
+    const network = findNetworkConfig(this.networks, chainId)
+
+    if (!network) {
+      throw new Error(`Unknown network ${chainId}`)
+    }
+
+    return network
+  }
+
+  // Override most of the methods, so we add support for an optional chainId
+  // argument, which is used to select the provider to use.
+  //
+  // NOTICE: We could use generics to avoid repeating the same code
+  // but this would make the code harder to read, and it's not worth it
+  // since we only have a few methods to override.
+
+  async waitForTransaction(
+    transactionHash: string,
+    confirmations?: number,
+    timeout?: number,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.waitForTransaction(transactionHash, confirmations, timeout) 
+  }
+
+  async getBlockNumber(optionals?: OptionalChainIdLike) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getBlockNumber()
+  }
+
+  async getGasPrice(optionals?: OptionalChainIdLike) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getGasPrice()
+  }
+
+  async getBalance(
+    addressOrName: string | Promise<string>,
+    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getBalance(addressOrName, blockTag)
+  }
+
+  async getTransactionCount(
+    addressOrName: string | Promise<string>,
+    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getTransactionCount(addressOrName, blockTag)
+  }
+
+  async getCode(
+    addressOrName: string | Promise<string>,
+    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getCode(addressOrName, blockTag)
+  }
+
+  async getStorageAt(
+    addressOrName: string | Promise<string>,
+    position: ethers.BigNumberish | Promise<ethers.BigNumberish>,
+    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getStorageAt(addressOrName, position, blockTag)
+  }
+
+  async call(
+    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.call(transaction, blockTag)
+  }
+
+  async estimateGas(
+    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.estimateGas(transaction)
+  }
+
+  async getBlock(
+    blockHashOrBlockTag: ethers.providers.BlockTag | string | Promise<ethers.providers.BlockTag | string>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getBlock(blockHashOrBlockTag)
+  }
+
+  async getTransaction(
+    transactionHash: string | Promise<string>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getTransaction(transactionHash)
+  }
+
+  async getLogs(
+    filter: ethers.providers.Filter | Promise<ethers.providers.Filter>,
+    optionals?: OptionalChainIdLike
+  ) {
+    const provider = await this._getSubprovider(optionals?.chainId)
+    return provider.getLogs(filter)
+  }
+
+  // ENS methods
+
+  async supportsENS(): Promise<boolean> {
+    const networks = await this.getNetworks()
+    return networks.some(n => n.chainId === 1)
+  }
+
+  async getResolver(name: string) {
+    if (!await this.supportsENS()) {
+      return null
+    }
+
+    // Resolver is always on the chainId 1
+    const provider = await this._getSubprovider(1)
+    return provider.getResolver(name)
+  }
+
+  async resolveName(name: string | Promise<string>) {
+    if (ethers.utils.isAddress(await name)) {
+      return name
+    }
+
+    if (!await this.supportsENS()) {
+      return null
+    }
+
+    // Resolver is always on the chainId 1
+    const provider = await this._getSubprovider(1)
+    return provider.resolveName(name)
+  }
+
+  async lookupAddress(address: string | Promise<string>) {
+    if (!await this.supportsENS()) {
+      return null
+    }
+
+    // Resolver is always on the chainId 1
+    const provider = await this._getSubprovider(1)
+    return provider.lookupAddress(address)
+  }
+
+  async getAvatar(nameOrAddress: string) {
+    if (!await this.supportsENS()) {
+      return null
+    }
+
+    const provider = await this._getSubprovider(1)
+    return provider.getAvatar(nameOrAddress)
+  }
+
+  static is = (provider: any): provider is SequenceProvider => {
+    return (
+      provider &&
+      typeof provider === 'object' &&
+      provider._isSequenceProvider === true
+    )
   }
 }
 
-// NOTE: method has been copied + modified from ethers.js JsonRpcProvider
-// Convert an ethers.js transaction into a JSON-RPC transaction
-
-const allowedTransactionKeys: { [key: string]: boolean } = {
-  chainId: true,
-  data: true,
-  gasLimit: true,
-  gasPrice: true,
-  nonce: true,
-  to: true,
-  value: true,
-  from: true,
-  auxiliary: true,
-  expiration: true,
-  afterNonce: true,
-  delegateCall: true,
-  revertOnError: true
+function normalizeChainId(chainId: string | number | bigint | { chainId: string }): number {
+  if (typeof chainId === 'object') return normalizeChainId(chainId.chainId)
+  return ethers.BigNumber.from(chainId).toNumber()
 }
 
-const hexlifyTransaction = (
-  transaction: ExtendedTransactionRequest,
-  allowExtra?: { [key: string]: boolean }
-): { [key: string]: string } => {
-  // Check only allowed properties are given
-  const allowed = shallowCopy(allowedTransactionKeys)
-  if (allowExtra) {
-    for (const key in allowExtra) {
-      if (allowExtra[key]) {
-        allowed[key] = true
-      }
-    }
-  }
-  ethers.utils.checkProperties(transaction, allowed)
+/**
+ *  This is the same provider, but it only allows a single network at a time.
+ *  the network defined by the constructor is the only one that can be used.
+ * 
+ *  Attempting to call any method with a different network will throw an error.
+ *  Attempting to change the network of this provider will throw an error.
+ * 
+ *  NOTICE: These networks won't support ENS unless they are the mainnet.
+ */
+export class SingleNetworkSequenceProvider extends SequenceProvider {
+  readonly _isSingleNetworkSequenceProvider = true
 
-  const result: { [key: string]: any } = {}
-
-  // Some nodes (INFURA ropsten; INFURA mainnet is fine) do not like leading zeros.
-  ;['gasLimit', 'gasPrice', 'nonce', 'value'].forEach(key => {
-    const value = (transaction as any)[key]
-    if (value === null || value === undefined) {
-      return
-    }
-    const hexValue = ethers.utils.hexValue(value)
-    if (key === 'gasLimit') {
-      key = 'gas'
-    }
-    result[key] = hexValue
-  })
-  ;['from', 'to', 'data'].forEach(key => {
-    if (!(<any>transaction)[key]) {
-      return
-    }
-    result[key] = ethers.utils.hexlify((<any>transaction)[key])
-  })
-  ;['delegateCall', 'revertOnError'].forEach(key => {
-    const value = (transaction as any)[key]
-    if (value !== undefined && value !== null) {
-      result[key] = value
-    }
-  })
-
-  const auxiliary = <any>transaction['auxiliary']
-  if (auxiliary && auxiliary.length > 0) {
-    result['auxiliary'] = []
-    auxiliary.forEach((a: any) => {
-      result['auxiliary'].push(hexlifyTransaction(a))
-    })
+  constructor(
+    client: SequenceClient,
+    providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
+    public readonly chainId: ChainIdLike
+  ) {
+    super(client, providerFor)
   }
 
-  return result
-}
+  private _useChainId(chainId?: ChainIdLike): number {
+    const provided = this.toChainId(chainId)
 
-class UncheckedJsonRpcSigner extends Web3Signer {
-  sendTransaction(transaction: Deferrable<ethers.providers.TransactionRequest>): Promise<commons.transaction.TransactionResponse> {
-    return this.sendUncheckedTransaction(transaction).then(hash => {
-      return <commons.transaction.TransactionResponse>{
-        chainId: 0,
-        confirmations: 0,
-        data: '',
-        from: '',
-        gasLimit: ethers.constants.Zero,
-        gasPrice: ethers.constants.Zero,
-        hash,
-        nonce: 0,
-        value: ethers.constants.Zero,
-        wait: (confirmations?: number) => this.provider.waitForTransaction(hash, confirmations)
-      }
-    })
+    if (provided && provided !== this.chainId) {
+      throw new Error(`This provider only supports the network ${this.chainId}, but ${provided} was requested.`)
+    }
+
+    return provided || super.toChainId(this.chainId)
+  }
+
+  protected useChainId(chainId?: ChainIdLike): Promise<number> {
+    return Promise.resolve(this._useChainId(chainId))
+  }
+
+  getChainId(): number {
+    return super.toChainId(this.chainId)
+  }
+
+  async getNetwork(): Promise<NetworkConfig> {
+    const networks = await this.client.getNetworks()
+    const res = findNetworkConfig(networks, this.chainId)
+
+    if (!res) {
+      throw new Error(`Unsupported network ${this.chainId}`)
+    }
+
+    return res
+  }
+
+  /**
+   *  Override getProvider and getSigner so they always use `useChainId`
+   *  this way they can't return providers and signers that can switch networks,
+   *  or that don't match the chainId of this signer.
+   */
+  getProvider(chainId?: ChainIdLike): SingleNetworkSequenceProvider {
+    if (this._useChainId(chainId) !== this.chainId) {
+      throw new Error(`Unreachable code`)
+    }
+  
+    return this
+  }
+
+  getSigner(chainId?: ChainIdLike): SingleNetworkSequenceSigner {
+    return super.getSigner(this._useChainId(chainId))
+  }
+
+  setDefaultChainId(_chainId: ChainIdLike): void {
+    throw new Error(`This provider only supports the network ${this.chainId}; use the parent provider to switch networks.`)
+  }
+  
+  static is(cand: any): cand is SingleNetworkSequenceProvider {
+    return (
+      cand &&
+      typeof cand === 'object' &&
+      cand._isSingleNetworkSequenceProvider === true
+    )
   }
 }
