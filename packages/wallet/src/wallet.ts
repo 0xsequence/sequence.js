@@ -138,7 +138,13 @@ export class Wallet<
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
-    if (await this.reader().isDeployed(this.address)) return bundle
+    // Allow children to decorate
+    const decorated = await this.orchestrator.decorateTransactions(bundle)
+
+    if (await this.reader().isDeployed(this.address)) {
+      // Deployed - No decorating at this level
+      return decorated
+    }
 
     const deployTx = this.buildDeployTransaction()
 
@@ -148,12 +154,12 @@ export class Wallet<
     return {
       entrypoint: this.context.guestModule,
       chainId: this.chainId,
-      intent: bundle.intent,
+      intent: decorated.intent,
       transactions: [
         ...deployTx.transactions,
         {
-          to: bundle.entrypoint,
-          data: commons.transaction.encodeBundleExecData(bundle),
+          to: decorated.entrypoint,
+          data: commons.transaction.encodeBundleExecData(decorated),
           gasLimit: 0,
           delegateCall: false,
           revertOnError: true,

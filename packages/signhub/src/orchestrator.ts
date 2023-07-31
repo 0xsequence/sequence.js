@@ -1,6 +1,7 @@
-import { ethers } from 'ethers'
-import { isSapientSigner, SapientSigner } from './signers/signer'
-import { SignerWrapper } from './signers/wrapper'
+import { ethers } from "ethers"
+import { commons } from "@0xsequence/core"
+import { isSapientSigner, SapientSigner } from "./signers/signer"
+import { SignerWrapper } from "./signers/wrapper"
 
 export type Status = {
   ended: boolean
@@ -39,10 +40,11 @@ export function isSignerStatusPending(status: SignerStatus): status is SignerSta
 export const InitialSituation = 'Initial'
 
 /**
- * It orchestrates the signing of a single digest by multiple signers.
+ * Orchestrates the signing of a single digests and transactions by multiple signers.
  * It can provide internal visibility of the signing process, and it also
  * provides the internal signers with additional information about the
- * message being signed.
+ * message being signed. Transaction decoration can be used to ensure on-chain state
+ * is correctly managed during the signing process.
  */
 export class Orchestrator {
   private observers: ((status: Status, metadata: Object) => void)[] = []
@@ -85,6 +87,15 @@ export class Orchestrator {
       ...this.signers.map(async signer => signer.notifyStatusChange(id, status, metadata)),
       ...this.observers.map(async observer => observer(status, metadata))
     ])
+  }
+
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle,
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+    for (const signer of this.signers) {
+      bundle = await signer.decorateTransactions(bundle)
+    }
+    return bundle
   }
 
   signMessage(args: {

@@ -12,6 +12,12 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.address
   }
 
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+    return this.wallet.decorateTransactions(bundle)
+  }
+
   async requestSignature(
     _id: string,
     message: ethers.utils.BytesLike,

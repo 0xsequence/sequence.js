@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { commons } from "@0xsequence/core"
 import { Status } from '../orchestrator'
 import { SapientSigner } from './signer'
 
@@ -10,6 +11,12 @@ export class SignerWrapper implements SapientSigner {
 
   getAddress(): Promise<string> {
     return this.signer.getAddress()
+  }
+
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+      return bundle
   }
 
   async requestSignature(

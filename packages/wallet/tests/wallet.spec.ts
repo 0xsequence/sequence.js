@@ -189,6 +189,41 @@ describe('Wallet (primitive)', () => {
 
             return { config, orchestrator }
           }
+        },
+        {
+          name: '1/1 signer (undeployed nested)',
+          signers: async () => {
+            const nestedSigner = ethers.Wallet.createRandom()
+
+            const nestedConfig = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ address: nestedSigner.address, weight: 1 }]
+            })
+
+            const nestedOrchestrator = new Orchestrator([nestedSigner])
+            const nestedWallet = Wallet.newWallet({
+              coders: coders,
+              context: contexts[version],
+              config: nestedConfig,
+              orchestrator: nestedOrchestrator,
+              chainId: provider.network.chainId,
+              provider,
+              relayer
+            })
+
+            expect(await nestedWallet.reader().isDeployed(nestedWallet.address)).to.be.false
+
+            const config = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ address: nestedWallet.address, weight: 1 }]
+            })
+
+            const orchestrator = new Orchestrator([new SequenceOrchestratorWrapper(nestedWallet)])
+
+            return { config, orchestrator }
+          }
         }
       ].map(({ name, signers }) => {
         describe(`Using ${name}`, () => {
@@ -201,29 +236,32 @@ describe('Wallet (primitive)', () => {
             orchestrator = _orchestrator
           })
 
-          it('Should sign and validate a message', async () => {
-            const wallet = Wallet.newWallet({
-              coders: coders,
-              context: contexts[version],
-              config,
-              orchestrator,
-              chainId: provider.network.chainId,
-              provider,
-              relayer
+          // Skip this as we cannot validate a message with an undeployed nested wallet
+          if (name !== '1/1 signer (undeployed nested)') {
+            it('Should sign and validate a message', async () => {
+              const wallet = Wallet.newWallet({
+                coders: coders,
+                context: contexts[version],
+                config,
+                orchestrator,
+                chainId: provider.network.chainId,
+                provider,
+                relayer
+              })
+
+              await wallet.deploy()
+              expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
+
+              const message = ethers.utils.toUtf8Bytes(
+                `This is a random message: ${ethers.utils.hexlify(ethers.utils.randomBytes(96))}`
+              )
+
+              const signature = await wallet.signMessage(message)
+              const digest = ethers.utils.keccak256(message)
+
+              expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
             })
-
-            await wallet.deploy()
-            expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
-
-            const message = ethers.utils.toUtf8Bytes(
-              `This is a random message: ${ethers.utils.hexlify(ethers.utils.randomBytes(96))}`
-            )
-
-            const signature = await wallet.signMessage(message)
-            const digest = ethers.utils.keccak256(message)
-
-            expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
-          })
+          }
 
           //
           // Run tests for deployed and undeployed wallets
