@@ -1,5 +1,6 @@
 import * as chai from 'chai'
 import { ethers } from 'ethers'
+import { commons } from "@0xsequence/core"
 import { isSignerStatusPending, isSignerStatusRejected, isSignerStatusSigned, Orchestrator, Status } from '../src'
 import { SapientSigner } from '../src/signers'
 
@@ -100,6 +101,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return brokenSignerEOA.address
       },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        throw new Error('This is a broken signer.')
+      },
       requestSignature: async function (
         id: string,
         message: ethers.utils.BytesLike,
@@ -180,6 +186,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return rejectSignerEOA.address
       },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        throw new Error('This is a rejected signer.')
+      },
       requestSignature: async function (
         id: string,
         message: ethers.utils.BytesLike,
@@ -233,6 +244,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return '0x1234'
       },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        return Promise.resolve(bundle)
+      },
       requestSignature: async function (
         id: string,
         message: ethers.utils.BytesLike,
@@ -264,6 +280,11 @@ describe('Orchestrator', () => {
     const signer: SapientSigner = {
       getAddress: async function (): Promise<string> {
         return '0x1234'
+      },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        return Promise.resolve(bundle)
       },
       requestSignature: async function (
         id: string,
@@ -301,6 +322,11 @@ describe('Orchestrator', () => {
       getAddress: async function (): Promise<string> {
         return '0x1234'
       },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        return Promise.resolve(bundle)
+      },
       requestSignature: async function (
         id: string,
         message: ethers.utils.BytesLike,
@@ -334,6 +360,11 @@ describe('Orchestrator', () => {
     const signer2: SapientSigner = {
       getAddress: async function (): Promise<string> {
         return '0x5678'
+      },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        return Promise.resolve(bundle)
       },
       requestSignature: async function (
         id: string,
@@ -390,6 +421,11 @@ describe('Orchestrator', () => {
     const signer: SapientSigner = {
       getAddress: async function (): Promise<string> {
         return '0x1234'
+      },
+      decorateTransactions(
+        bundle: commons.transaction.IntendedTransactionBundle,
+      ): Promise<commons.transaction.IntendedTransactionBundle> {
+        return Promise.resolve(bundle)
       },
       requestSignature: async function (
         id: string,

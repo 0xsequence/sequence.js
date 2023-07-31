@@ -29,6 +29,12 @@ export class GuardSigner implements signers.SapientSigner {
     return this.address
   }
 
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle,
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+    return Promise.resolve(bundle)
+  }
+
   async requestSignature(
     id: string,
     _message: BytesLike,

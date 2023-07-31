@@ -1,9 +1,20 @@
-import { ethers } from 'ethers'
-import { Status } from '../orchestrator'
+import { ethers } from "ethers"
+import { commons } from "@0xsequence/core"
+import { Status } from "../orchestrator"
 
 export interface SapientSigner {
   getAddress(): Promise<string>
 
+  /**
+   * Modify the transaction bundle before it is sent.
+   */
+  decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle,
+  ): Promise<commons.transaction.IntendedTransactionBundle>
+
+  /**
+   * Request a signature from the signer.
+   */
   requestSignature(
     id: string,
     message: ethers.BytesLike,
@@ -15,7 +26,14 @@ export interface SapientSigner {
     }
   ): Promise<boolean>
 
-  notifyStatusChange(id: string, status: Status, metadata: Object): void
+  /**
+   * Notify the signer of a status change.
+   */
+  notifyStatusChange(
+    id: string,
+    status: Status,
+    metadata: Object
+  ): void
 
   suffix(): ethers.BytesLike
 }
