@@ -1279,27 +1279,29 @@ describe('SequenceProvider', () => {
     })
 
     describe('perform implementation', () => {
+      const toHexString = n => `0x${n.toString(16)}`
+
       describe('perform eth_chainId', async () => {
         it('should return initial default chainId', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
         })
 
         it('should return new default chainId', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           provider.setDefaultChainId(31338)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
         })
 
         it('should return static chainId', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getProvider(31337).perform('eth_chainId', [])).to.equal(31337)
-          expect(await provider.getProvider(31338).perform('eth_chainId', [])).to.equal(31338)
+          expect(await provider.getProvider(31337).perform('eth_chainId', [])).to.equal(toHexString(31337))
+          expect(await provider.getProvider(31338).perform('eth_chainId', [])).to.equal(toHexString(31338))
         })
 
         it('should return chainId using request', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.request({ method: 'eth_chainId' })).to.equal(31337)
+          expect(await provider.request({ method: 'eth_chainId' })).to.equal(toHexString(31337))
         })
       })
 
@@ -1335,7 +1337,7 @@ describe('SequenceProvider', () => {
       describe('perform wallet_switchEthereumChain', async () => {
         it('should switch default chainId using request', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.request({ method: 'eth_chainId' })).to.equal(31337)
+          expect(await provider.request({ method: 'eth_chainId' })).to.equal(toHexString(31337))
 
           await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x7a6a' }] })
           expect(defaultChainId).to.equal(31338)
@@ -1343,38 +1345,38 @@ describe('SequenceProvider', () => {
 
         it('should switch default chainId using object', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
           await provider.perform('wallet_switchEthereumChain', [{ chainId: '0x7a6a' }])
           expect(defaultChainId).to.equal(31338)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
         })
 
         it('should switch default chainId using hex string', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
           await provider.perform('wallet_switchEthereumChain', ['0x7a6a'])
           expect(defaultChainId).to.equal(31338)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
         })
 
         it('should switch default chainId using number', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
           await provider.perform('wallet_switchEthereumChain', [31338])
           expect(defaultChainId).to.equal(31338)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
         })
 
         it('should switch default chainId using string', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
           await provider.perform('wallet_switchEthereumChain', ['31338'])
           expect(defaultChainId).to.equal(31338)
-          expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+          expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
         })
 
         it('should fail to switch default chainId on static network provider', async () => {
@@ -1387,38 +1389,38 @@ describe('SequenceProvider', () => {
         describe('using the setDefaultChainId method', async () => {
           it('should switch default chainId using name', async () => {
             const provider = new SequenceProvider(basicMockClient, providerFor)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
             provider.setDefaultChainId('hardhat2')
             expect(defaultChainId).to.equal(31338)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
           })
 
           it('should switch default chainId using number', async () => {
             const provider = new SequenceProvider(basicMockClient, providerFor)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
             provider.setDefaultChainId(31338)
             expect(defaultChainId).to.equal(31338)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
           })
 
           it('should switch default chainId using string', async () => {
             const provider = new SequenceProvider(basicMockClient, providerFor)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
             provider.setDefaultChainId('31338')
             expect(defaultChainId).to.equal(31338)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
           })
 
           it('should switch default chainId using hex string', async () => {
             const provider = new SequenceProvider(basicMockClient, providerFor)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31337)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31337))
 
             provider.setDefaultChainId('0x7a6a')
             expect(defaultChainId).to.equal(31338)
-            expect(await provider.perform('eth_chainId', [])).to.equal(31338)
+            expect(await provider.perform('eth_chainId', [])).to.equal(toHexString(31338))
           })
 
           it('should fail to switch default chainId on static network provider', async () => {

@@ -123,6 +123,8 @@ export const tests = async () => {
   })
 
   await test('multiple networks', async () => {
+    const toHexString = n => `0x${n.toString(16)}`
+
     // chainId 31337
     {
       assert.equal(provider.getChainId(), 31337, 'provider chainId is 31337')
