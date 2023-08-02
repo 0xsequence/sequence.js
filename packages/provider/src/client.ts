@@ -146,7 +146,7 @@ export class SequenceClient {
     })
 
     this.transport.on('connect', (response: ConnectDetails) => {
-      const chainIdHex = ethers.BigNumber.from(this.getChainId()).toHexString()
+      const chainIdHex = ethers.utils.hexValue(this.getChainId())
       this.callbacks.connect?.forEach(cb =>
         cb({
           ...response,

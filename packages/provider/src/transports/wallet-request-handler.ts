@@ -145,7 +145,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     const connectDetails: ConnectDetails = {
       connected: true,
-      chainId: ethers.BigNumber.from(chainId).toHexString()
+      chainId: ethers.utils.hexValue(chainId)
     }
 
     if (options && options.authorize) {
