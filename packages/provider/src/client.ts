@@ -180,7 +180,7 @@ export class SequenceClient {
     // We don't listen for the transport chainChanged event
     // instead we handle it locally, so we listen for changes in the store
     this.defaultChainId.onDefaultChainIdChanged((chainId: number) => {
-      const chainIdHex = ethers.BigNumber.from(chainId).toHexString()
+      const chainIdHex = ethers.utils.hexValue(chainId)
       this.callbacks.chainChanged?.forEach(cb => cb(chainIdHex))
     })
   }
