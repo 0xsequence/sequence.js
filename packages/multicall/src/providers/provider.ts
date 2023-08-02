@@ -28,7 +28,10 @@ export const ProxyMethods = [
 export class MulticallProvider extends ethers.providers.BaseProvider {
   private multicall: Multicall
 
-  constructor(private provider: ethers.providers.Provider, multicall?: Multicall | Partial<MulticallOptions>) {
+  constructor(
+    private provider: ethers.providers.Provider,
+    multicall?: Multicall | Partial<MulticallOptions>
+  ) {
     super(provider.getNetwork())
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
 

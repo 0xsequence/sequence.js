@@ -7,7 +7,10 @@ type ExternalProvider = providers.ExternalProvider
 export class MulticallExternalProvider implements ExternalProvider {
   private multicall: Multicall
 
-  constructor(private provider: providers.ExternalProvider, multicall?: Multicall | Partial<MulticallOptions>) {
+  constructor(
+    private provider: providers.ExternalProvider,
+    multicall?: Multicall | Partial<MulticallOptions>
+  ) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall!)
 
     if (provider.send) {

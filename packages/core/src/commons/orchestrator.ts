@@ -1,19 +1,19 @@
-import { ethers } from "ethers"
-import { commons } from ".."
-import { Config } from "./config"
+import { ethers } from 'ethers'
+import { commons } from '..'
+import { Config } from './config'
 
 /**
  * Request metadata, used to by the wallet to pass additional information to the
  * orchestrator.
  */
 export type WalletSignRequestMetadata = {
-  address: string,
-  digest: ethers.utils.BytesLike,
-  chainId: ethers.BigNumberish,
+  address: string
+  digest: ethers.utils.BytesLike
+  chainId: ethers.BigNumberish
 
-  config: Config,
+  config: Config
 
-  parts?: Map<string, commons.signature.SignaturePart>,
+  parts?: Map<string, commons.signature.SignaturePart>
 
   // TODO: We can add a "percentage" field to the orchestrator to indicate
   //       how close are we to the threshold. This can be used to display

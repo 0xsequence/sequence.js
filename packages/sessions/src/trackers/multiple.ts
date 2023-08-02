@@ -2,28 +2,32 @@ import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { migrator } from '@0xsequence/migration'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { commons, universal } from '@0xsequence/core'
-import { LocalConfigTracker } from './local';
+import { LocalConfigTracker } from './local'
 
 export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val: T) => boolean): Promise<T> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     let count = 0
 
-    promises.forEach(p => p.then((val: T) => {
-      if (evalRes(val)) {
-        resolve(val)
-      } else {
-        count++
-        if (count === promises.length) {
-          resolve(fallback)
-        }
-      }
-    }).catch(() => {
-      // Ignore
-      count++
-      if (count === promises.length) {
-        resolve(fallback)
-      }
-    }))
+    promises.forEach(p =>
+      p
+        .then((val: T) => {
+          if (evalRes(val)) {
+            resolve(val)
+          } else {
+            count++
+            if (count === promises.length) {
+              resolve(fallback)
+            }
+          }
+        })
+        .catch(() => {
+          // Ignore
+          count++
+          if (count === promises.length) {
+            resolve(fallback)
+          }
+        })
+    )
   })
 }
 
@@ -38,7 +42,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     const requests = this.trackers.map(async (t, i) => ({ res: await t.configOfImageHash(args), i }))
 
     // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
-    const result1 = await raceUntil(requests, undefined, (val) => {
+    const result1 = await raceUntil(requests, undefined, val => {
       if (val?.res === undefined) return false
       return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
     })
@@ -65,11 +69,13 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     return result2
   }
 
-  async saveWalletConfig(args: { config: commons.config.Config, skipTracker?: number }): Promise<void> {
-    await Promise.all(this.trackers.map((t, i) => {
-      if (i === args.skipTracker) return
-      return t.saveWalletConfig(args) 
-    }))
+  async saveWalletConfig(args: { config: commons.config.Config; skipTracker?: number }): Promise<void> {
+    await Promise.all(
+      this.trackers.map((t, i) => {
+        if (i === args.skipTracker) return
+        return t.saveWalletConfig(args)
+      })
+    )
   }
 
   async imageHashOfCounterfactualWallet(args: {
@@ -105,10 +111,15 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     )
   }
 
-  async walletsOfSigner(args: { signer: string }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
+  async walletsOfSigner(args: {
+    signer: string
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
     // We can't race here, because there is no "correct" response
     // we just return the union of all results, skipping duplicates
-    const results = await allSafe(this.trackers.map(t => t.walletsOfSigner(args)), []).then((r) => r.flat())
+    const results = await allSafe(
+      this.trackers.map(t => t.walletsOfSigner(args)),
+      []
+    ).then(r => r.flat())
 
     const wallets: { [wallet: string]: { digest: string; chainId: BigNumber; signature: string } } = {}
     for (const r of results) {
@@ -139,20 +150,30 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     await Promise.all(this.trackers.map(t => t.saveWitnesses(args)))
   }
 
-  async loadPresignedConfiguration(args: { wallet: string; fromImageHash: string; longestPath?: boolean | undefined }): Promise<PresignedConfigLink[]> {
+  async loadPresignedConfiguration(args: {
+    wallet: string
+    fromImageHash: string
+    longestPath?: boolean | undefined
+  }): Promise<PresignedConfigLink[]> {
     // We can't race here, because any of the trackers could have a new "link" in the chain
-    const results = await allSafe(this.trackers.map((t) => t.loadPresignedConfiguration(args)), [])
+    const results = await allSafe(
+      this.trackers.map(t => t.loadPresignedConfiguration(args)),
+      []
+    )
 
     // The "best" result is the one with the highest checkpoint
-    const checkpoints = await allSafe(results.map(async (r) => {
-      const last = r[r.length - 1]
+    const checkpoints = await allSafe(
+      results.map(async r => {
+        const last = r[r.length - 1]
 
-      // TODO: This will fire a lot of requests, optimize it
-      const config = await this.configOfImageHash({ imageHash: last.nextImageHash })
-      if (!config) return undefined
+        // TODO: This will fire a lot of requests, optimize it
+        const config = await this.configOfImageHash({ imageHash: last.nextImageHash })
+        if (!config) return undefined
 
-      return { checkpoint: universal.genericCoderFor(config.version).config.checkpointOf(config), result: r }
-    }), undefined)
+        return { checkpoint: universal.genericCoderFor(config.version).config.checkpointOf(config), result: r }
+      }),
+      undefined
+    )
 
     const best = checkpoints.reduce((acc, val) => {
       if (!val) return acc
@@ -188,13 +209,22 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     await Promise.all(this.trackers.map(t => t.savePresignedConfiguration(args)))
   }
 
-  async getMigration(address: string, fromImageHash: string, fromVersion: number, chainId: BigNumberish): Promise<migrator.SignedMigration | undefined> {
+  async getMigration(
+    address: string,
+    fromImageHash: string,
+    fromVersion: number,
+    chainId: BigNumberish
+  ): Promise<migrator.SignedMigration | undefined> {
     // TODO: Backfeed migration results to other trackers
     const results = await Promise.all(this.trackers.map(t => t.getMigration(address, fromImageHash, fromVersion, chainId)))
     return results.find(r => !!r)
   }
 
-  async saveMigration(address: string, signed: migrator.SignedMigration, contexts: commons.context.VersionedContext): Promise<void> {
+  async saveMigration(
+    address: string,
+    signed: migrator.SignedMigration,
+    contexts: commons.context.VersionedContext
+  ): Promise<void> {
     await Promise.all(this.trackers.map(t => t.saveMigration(address, signed, contexts)))
   }
 }

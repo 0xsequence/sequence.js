@@ -1,14 +1,11 @@
-import { commons, v1, v2 } from "@0xsequence/core"
-import { ethers } from "ethers"
+import { commons, v1, v2 } from '@0xsequence/core'
+import { ethers } from 'ethers'
 
-import { Migration, MIGRATION_NONCE_SPACE } from "."
-import { walletContracts } from "@0xsequence/abi"
-import { UnsignedMigration } from "../migrator"
+import { Migration, MIGRATION_NONCE_SPACE } from '.'
+import { walletContracts } from '@0xsequence/abi'
+import { UnsignedMigration } from '../migrator'
 
-export class Migration_v1v2 implements Migration<
-  v1.config.WalletConfig,
-  v2.config.WalletConfig
-> {
+export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.config.WalletConfig> {
   version = 2
 
   configCoder = v2.config.ConfigCoder
@@ -48,9 +45,7 @@ export class Migration_v1v2 implements Migration<
           gasLimit: 0,
           revertOnError: true,
           delegateCall: false,
-          data: contract.encodeFunctionData(contract.getFunction('updateImplementation'), [
-            context.mainModuleUpgradable
-          ])
+          data: contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
         },
         ...updateBundle.transactions
       ]
@@ -68,7 +63,7 @@ export class Migration_v1v2 implements Migration<
     tx: commons.transaction.TransactionBundle,
     contexts: commons.context.VersionedContext
   ): {
-    address: string,
+    address: string
     newImageHash: string
   } {
     const address = tx.entrypoint
@@ -81,7 +76,7 @@ export class Migration_v1v2 implements Migration<
       throw new Error('Invalid transaction bundle nonce')
     }
 
-    if(
+    if (
       tx.transactions[0].to !== address ||
       tx.transactions[1].to !== address ||
       tx.transactions[0].delegateCall ||
@@ -101,9 +96,7 @@ export class Migration_v1v2 implements Migration<
 
     const data1 = ethers.utils.hexlify(tx.transactions[0].data || [])
     const expectData1 = ethers.utils.hexlify(
-      contract.encodeFunctionData(contract.getFunction('updateImplementation'), [
-        context.mainModuleUpgradable
-      ])
+      contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
     )
 
     if (data1 !== expectData1) {

@@ -1,5 +1,5 @@
-import { ethers } from "ethers"
-import { isContract } from "../utils"
+import { ethers } from 'ethers'
+import { isContract } from '../utils'
 
 // These are the Sequence v1 contracts
 // we use them if they are available
@@ -12,21 +12,23 @@ const predefinedAddresses = {
 }
 
 export async function deployV1Context(signer: ethers.Signer): Promise<{
-  version: 1,
-  factory: string,
-  mainModule: string,
-  mainModuleUpgradable: string,
-  guestModule: string,
-  multiCallUtils: string,
+  version: 1
+  factory: string
+  mainModule: string
+  mainModuleUpgradable: string
+  guestModule: string
+  multiCallUtils: string
   walletCreationCode: string
-}>{
+}> {
   // See if signer's provider has the contracts already deployed
   const provider = signer.provider
   if (!provider) {
     throw new Error('Signer has no provider')
   }
 
-  if (await Promise.all(Object.values(predefinedAddresses).map(address => isContract(provider, address))).then((r) => r.every((x) => x))) {
+  if (
+    await Promise.all(Object.values(predefinedAddresses).map(address => isContract(provider, address))).then(r => r.every(x => x))
+  ) {
     console.log('Using predefined addresses for V1 contracts')
 
     return {
@@ -51,7 +53,9 @@ export async function deployV1Context(signer: ethers.Signer): Promise<{
     gasLimit: 8000000
   })
 
-  await signer.provider?.sendTransaction('0xf9010880852416b84e01830222e08080b8b66080604052348015600f57600080fd5b50609980601d6000396000f3fe60a06020601f369081018290049091028201604052608081815260009260609284918190838280828437600092018290525084519495509392505060208401905034f5604080516001600160a01b0383168152905191935081900360200190a0505000fea26469706673582212205a310755225e3c740b2f013fb6343f4c205e7141fcdf15947f5f0e0e818727fb64736f6c634300060a00331ca01820182018201820182018201820182018201820182018201820182018201820a01820182018201820182018201820182018201820182018201820182018201820')
+  await signer.provider?.sendTransaction(
+    '0xf9010880852416b84e01830222e08080b8b66080604052348015600f57600080fd5b50609980601d6000396000f3fe60a06020601f369081018290049091028201604052608081815260009260609284918190838280828437600092018290525084519495509392505060208401905034f5604080516001600160a01b0383168152905191935081900360200190a0505000fea26469706673582212205a310755225e3c740b2f013fb6343f4c205e7141fcdf15947f5f0e0e818727fb64736f6c634300060a00331ca01820182018201820182018201820182018201820182018201820182018201820a01820182018201820182018201820182018201820182018201820182018201820'
+  )
 
   // Deploy universal deployer
   await signer.sendTransaction({

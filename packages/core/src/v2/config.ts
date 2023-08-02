@@ -1,16 +1,15 @@
-
-import { ethers } from "ethers"
-import { walletContracts } from "@0xsequence/abi"
-import { commons } from ".."
-import { encodeSigners } from "./signature"
+import { ethers } from 'ethers'
+import { walletContracts } from '@0xsequence/abi'
+import { commons } from '..'
+import { encodeSigners } from './signature'
 
 //
 // Tree typings - leaves
 //
 
 export type SignerLeaf = {
-  address: string,
-  weight: ethers.BigNumberish,
+  address: string
+  weight: ethers.BigNumberish
   signature?: string
 }
 
@@ -19,8 +18,8 @@ export type SubdigestLeaf = {
 }
 
 export type NestedLeaf = {
-  tree: Topology,
-  weight: ethers.BigNumberish,
+  tree: Topology
+  weight: ethers.BigNumberish
   threshold: ethers.BigNumberish
 }
 
@@ -34,10 +33,7 @@ export type NodeLeaf = {
 export type Leaf = SignerLeaf | SubdigestLeaf | NestedLeaf | NodeLeaf
 
 export function isSignerLeaf(leaf: any): leaf is SignerLeaf {
-  return (
-    (leaf as SignerLeaf).address !== undefined &&
-    (leaf as SignerLeaf).weight !== undefined
-  )
+  return (leaf as SignerLeaf).address !== undefined && (leaf as SignerLeaf).weight !== undefined
 }
 
 export function isSubdigestLeaf(leaf: any): leaf is SubdigestLeaf {
@@ -119,17 +115,14 @@ export function isLeaf(leaf: any): leaf is Leaf {
 //
 
 export type Node = {
-  left: Node | Leaf,
+  left: Node | Leaf
   right: Node | Leaf
 }
 
 export type Topology = Node | Leaf
 
 export function isNode(node: any): node is Node {
-  return (
-    (node as Node).left !== undefined &&
-    (node as Node).right !== undefined
-  )
+  return (node as Node).left !== undefined && (node as Node).right !== undefined
 }
 
 export function isTopology(topology: any): topology is Topology {
@@ -137,21 +130,18 @@ export function isTopology(topology: any): topology is Topology {
 }
 
 export function encodeSignerLeaf(leaf: SignerLeaf): string {
-  return ethers.utils.solidityPack(
-    ['uint96', 'address'],
-    [leaf.weight, leaf.address]
-  )
+  return ethers.utils.solidityPack(['uint96', 'address'], [leaf.weight, leaf.address])
 }
 
 export function decodeSignerLeaf(encoded: string): SignerLeaf {
-  const bytes = ethers.utils.arrayify(encoded);
+  const bytes = ethers.utils.arrayify(encoded)
 
   if (bytes.length !== 32) {
-      throw new Error('Invalid encoded string length');
+    throw new Error('Invalid encoded string length')
   }
 
-  const weight = ethers.BigNumber.from(bytes.slice(0, 12));
-  const address = ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(12)));
+  const weight = ethers.BigNumber.from(bytes.slice(0, 12))
+  const address = ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(12)))
 
   return { weight, address }
 }
@@ -164,7 +154,7 @@ export function isEncodedSignerLeaf(encoded: string): boolean {
   }
 
   const prefix = bytes.slice(0, 11)
-  return prefix.every((byte) => byte === 0)
+  return prefix.every(byte => byte === 0)
 }
 
 export function hashNode(node: Node | Leaf): string {
@@ -173,10 +163,7 @@ export function hashNode(node: Node | Leaf): string {
   }
 
   if (isSubdigestLeaf(node)) {
-    return ethers.utils.solidityKeccak256(
-      ['string', 'bytes32'],
-      ['Sequence static digest:\n', node.subdigest]
-    )
+    return ethers.utils.solidityKeccak256(['string', 'bytes32'], ['Sequence static digest:\n', node.subdigest])
   }
 
   if (isNestedLeaf(node)) {
@@ -191,10 +178,7 @@ export function hashNode(node: Node | Leaf): string {
     return node.nodeHash
   }
 
-  return ethers.utils.solidityKeccak256(
-    ['bytes32', 'bytes32'],
-    [hashNode(node.left), hashNode(node.right)]
-  )
+  return ethers.utils.solidityKeccak256(['bytes32', 'bytes32'], [hashNode(node.left), hashNode(node.right)])
 }
 
 export function leftFace(topology: Topology): Topology[] {
@@ -216,8 +200,8 @@ export function leftFace(topology: Topology): Topology[] {
 //
 
 export type WalletConfig = commons.config.Config & {
-  threshold: ethers.BigNumberish,
-  checkpoint: ethers.BigNumberish,
+  threshold: ethers.BigNumberish
+  checkpoint: ethers.BigNumberish
   tree: Topology
 }
 
@@ -234,16 +218,7 @@ export function isWalletConfig(config: any): config is WalletConfig {
 export function imageHash(config: WalletConfig): string {
   return ethers.utils.solidityKeccak256(
     ['bytes32', 'uint256'],
-    [
-      ethers.utils.solidityKeccak256(
-        ['bytes32', 'uint256'],
-        [
-          hashNode(config.tree),
-          config.threshold
-        ]
-      ),
-      config.checkpoint
-    ]
+    [ethers.utils.solidityKeccak256(['bytes32', 'uint256'], [hashNode(config.tree), config.threshold]), config.checkpoint]
   )
 }
 
@@ -258,16 +233,16 @@ export function imageHash(config: WalletConfig): string {
 //
 
 export type SimpleNestedMember = {
-  threshold: ethers.BigNumberish,
-  weight: ethers.BigNumberish,
+  threshold: ethers.BigNumberish
+  weight: ethers.BigNumberish
   members: SimpleConfigMember[]
 }
 
 export type SimpleConfigMember = SubdigestLeaf | SignerLeaf | SimpleNestedMember
 
 export type SimpleWalletConfig = {
-  threshold: ethers.BigNumberish,
-  checkpoint: ethers.BigNumberish,
+  threshold: ethers.BigNumberish
+  checkpoint: ethers.BigNumberish
   members: SimpleConfigMember[]
 }
 
@@ -285,11 +260,13 @@ export function topologyToMembers(tree: Topology): SimpleConfigMember[] {
   }
 
   if (isNestedLeaf(tree)) {
-    return [{
-      threshold: tree.threshold,
-      weight: tree.weight,
-      members: topologyToMembers(tree.tree)
-    }]
+    return [
+      {
+        threshold: tree.threshold,
+        weight: tree.weight,
+        members: topologyToMembers(tree.tree)
+      }
+    ]
   }
 
   if (isNodeLeaf(tree)) {
@@ -298,10 +275,7 @@ export function topologyToMembers(tree: Topology): SimpleConfigMember[] {
     return []
   }
 
-  return [
-    ...topologyToMembers(tree.left),
-    ...topologyToMembers(tree.right)
-  ]
+  return [...topologyToMembers(tree.left), ...topologyToMembers(tree.right)]
 }
 
 export function hasUnknownNodes(tree: Topology): boolean {
@@ -327,7 +301,7 @@ export function toSimpleWalletConfig(config: WalletConfig): SimpleWalletConfig {
 export type TopologyBuilder = (members: SimpleConfigMember[]) => Topology
 
 const membersAsTopologies = (members: SimpleConfigMember[], builder: TopologyBuilder): Topology[] => {
-  return members.map((member) => {
+  return members.map(member => {
     if (isSimpleNestedMember(member)) {
       return {
         tree: builder(member.members),
@@ -391,7 +365,6 @@ export function toWalletConfig(
   simpleWalletConfig: SimpleWalletConfig,
   builder: TopologyBuilder = optimized2SignersTopologyBuilder
 ): WalletConfig {
-
   return {
     version: 2,
     threshold: simpleWalletConfig.threshold,
@@ -412,9 +385,9 @@ export function hasSubdigest(tree: Topology, subdigest: string): boolean {
   return false
 }
 
-export function signersOf(tree: Topology): { address: string, weight: number }[] {
+export function signersOf(tree: Topology): { address: string; weight: number }[] {
   const stack: Topology[] = [tree]
-  const signers = new Set<{ address: string, weight: number }>()
+  const signers = new Set<{ address: string; weight: number }>()
 
   while (stack.length > 0) {
     const node = stack.pop()
@@ -442,11 +415,7 @@ export function isComplete(tree: Topology): boolean {
 
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
-    return (
-      config.version === 2 &&
-      (config as WalletConfig).threshold !== undefined &&
-      (config as WalletConfig).tree !== undefined
-    )
+    return config.version === 2 && (config as WalletConfig).threshold !== undefined && (config as WalletConfig).tree !== undefined
   },
 
   imageHashOf: (config: WalletConfig): string => {
@@ -461,19 +430,19 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return ethers.BigNumber.from(config.checkpoint)
   },
 
-  signersOf: (config: WalletConfig): { address: string, weight: number }[] => {
+  signersOf: (config: WalletConfig): { address: string; weight: number }[] => {
     return signersOf(config.tree)
   },
 
   fromSimple: (config: {
     threshold: ethers.BigNumberish
     checkpoint: ethers.BigNumberish
-    signers: { address: string; weight: ethers.BigNumberish} []
+    signers: { address: string; weight: ethers.BigNumberish }[]
   }): WalletConfig => {
     return toWalletConfig({
       threshold: config.threshold,
       checkpoint: config.checkpoint,
-      members: config.signers.map((signer) => {
+      members: config.signers.map(signer => {
         return {
           address: signer.address,
           weight: signer.weight
@@ -507,19 +476,23 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
       return {
         entrypoint: wallet,
-        transactions: [{
-          to: wallet,
-          data: module.encodeFunctionData(module.getFunction('updateImageHash'), [
-            ConfigCoder.imageHashOf(config)
-          ]),
-          gasLimit: 0,
-          delegateCall: false,
-          revertOnError: true,
-          value: 0
-        }]
+        transactions: [
+          {
+            to: wallet,
+            data: module.encodeFunctionData(module.getFunction('updateImageHash'), [ConfigCoder.imageHashOf(config)]),
+            gasLimit: 0,
+            delegateCall: false,
+            revertOnError: true,
+            value: 0
+          }
+        ]
       }
     },
-    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newImageHash: string; kind: "first" | "later" | undefined}  {
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): {
+      address: string
+      newImageHash: string
+      kind: 'first' | 'later' | undefined
+    } {
       const module = new ethers.utils.Interface(walletContracts.mainModuleUpgradable.abi)
 
       if (tx.transactions.length !== 1) {
@@ -586,9 +559,9 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   editConfig: function (
     config: WalletConfig,
     action: {
-      add?: commons.config.SimpleSigner[];
-      remove?: string[];
-      threshold?: ethers.BigNumberish,
+      add?: commons.config.SimpleSigner[]
+      remove?: string[]
+      threshold?: ethers.BigNumberish
       checkpoint?: ethers.BigNumberish
     }
   ): WalletConfig {
@@ -596,7 +569,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
     if (action.add) {
       for (const signer of action.add) {
-        if (members.find((s) => isSignerLeaf(s) && s.address === signer.address)) {
+        if (members.find(s => isSignerLeaf(s) && s.address === signer.address)) {
           continue
         }
 
@@ -609,7 +582,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
     if (action.remove) {
       for (const address of action.remove) {
-        const index = members.findIndex((s) => isSignerLeaf(s) && s.address === address)
+        const index = members.findIndex(s => isSignerLeaf(s) && s.address === address)
         if (index >= 0) {
           members.splice(index, 1)
         }
@@ -624,10 +597,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     }
   },
 
-  buildStubSignature: function (
-    config: WalletConfig,
-    overrides: Map<string, string>
-  ) {
+  buildStubSignature: function (config: WalletConfig, overrides: Map<string, string>) {
     const parts = new Map<string, commons.signature.SignaturePart>()
 
     for (const [signer, signature] of overrides.entries()) {
@@ -643,7 +613,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     const signers = signersOf(config.tree)
 
     for (const { address } of signers.sort(({ weight: a }, { weight: b }) => a - b)) {
-      const signature = '0x4e82f02f388a12b5f9d29eaf2452dd040c0ee5804b4e504b4dd64e396c6c781f2c7624195acba242dd825bfd25a290912e3c230841fd55c9a734c4de8d9899451b02'
+      const signature =
+        '0x4e82f02f388a12b5f9d29eaf2452dd040c0ee5804b4e504b4dd64e396c6c781f2c7624195acba242dd825bfd25a290912e3c230841fd55c9a734c4de8d9899451b02'
       parts.set(address, { signature, isDynamic: false })
 
       const { encoded, weight } = encodeSigners(config, parts, [], 0)

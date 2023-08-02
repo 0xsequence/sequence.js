@@ -6,13 +6,13 @@
 // webrpc-gen -schema=relayer.ridl -target=typescript -client -out=./clients/relayer.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "752f4f4274ca80d2fd974b5b44ed8245dfe40554"
+export const WebRPCSchemaHash = '752f4f4274ca80d2fd974b5b44ed8245dfe40554'
 
 //
 // Types
@@ -71,8 +71,7 @@ export interface SenderStatus {
   active: boolean
 }
 
-export interface RuntimeChecks {
-}
+export interface RuntimeChecks {}
 
 export interface SequenceContext {
   factory: string
@@ -133,8 +132,8 @@ export interface MetaTxnLog {
   minedAt: string
   target: string
   input: string
-  txnArgs: {[key: string]: any}
-  txnReceipt?: {[key: string]: any}
+  txnArgs: { [key: string]: any }
+  txnReceipt?: { [key: string]: any }
   walletAddress: string
   metaTxnNonce: string
   gasLimit: number
@@ -179,7 +178,7 @@ export interface Transaction {
   chainId: number
   metaTxnID?: string
   transfers?: Array<TxnLogTransfer>
-  users?: {[key: string]: TxnLogUser}
+  users?: { [key: string]: TxnLogUser }
   timestamp: string
 }
 
@@ -265,35 +264,30 @@ export interface Relayer {
   reportGasSponsorUsage(args: ReportGasSponsorUsageArgs, headers?: object): Promise<ReportGasSponsorUsageReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface GetSequenceContextArgs {
-}
+export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextReturn {
-  data: SequenceContext  
+  data: SequenceContext
 }
-export interface GetChainIDArgs {
-}
+export interface GetChainIDArgs {}
 
 export interface GetChainIDReturn {
-  chainID: number  
+  chainID: number
 }
 export interface SendMetaTxnArgs {
   call: MetaTxn
@@ -302,7 +296,7 @@ export interface SendMetaTxnArgs {
 
 export interface SendMetaTxnReturn {
   status: boolean
-  txnHash: string  
+  txnHash: string
 }
 export interface GetMetaTxnNonceArgs {
   walletContractAddress: string
@@ -310,14 +304,14 @@ export interface GetMetaTxnNonceArgs {
 }
 
 export interface GetMetaTxnNonceReturn {
-  nonce: string  
+  nonce: string
 }
 export interface GetMetaTxnReceiptArgs {
   metaTxID: string
 }
 
 export interface GetMetaTxnReceiptReturn {
-  receipt: MetaTxnReceipt  
+  receipt: MetaTxnReceipt
 }
 export interface SimulateArgs {
   wallet: string
@@ -325,7 +319,7 @@ export interface SimulateArgs {
 }
 
 export interface SimulateReturn {
-  results: Array<SimulateResult>  
+  results: Array<SimulateResult>
 }
 export interface UpdateMetaTxnGasLimitsArgs {
   walletAddress: string
@@ -334,14 +328,13 @@ export interface UpdateMetaTxnGasLimitsArgs {
 }
 
 export interface UpdateMetaTxnGasLimitsReturn {
-  payload: string  
+  payload: string
 }
-export interface FeeTokensArgs {
-}
+export interface FeeTokensArgs {}
 
 export interface FeeTokensReturn {
   isFeeRequired: boolean
-  tokens: Array<FeeToken>  
+  tokens: Array<FeeToken>
 }
 export interface FeeOptionsArgs {
   wallet: string
@@ -351,7 +344,7 @@ export interface FeeOptionsArgs {
 
 export interface FeeOptionsReturn {
   options: Array<FeeOption>
-  quote?: string  
+  quote?: string
 }
 export interface GetMetaTxnNetworkFeeOptionsArgs {
   walletConfig: WalletConfig
@@ -359,7 +352,7 @@ export interface GetMetaTxnNetworkFeeOptionsArgs {
 }
 
 export interface GetMetaTxnNetworkFeeOptionsReturn {
-  options: Array<FeeOption>  
+  options: Array<FeeOption>
 }
 export interface SentTransactionsArgs {
   filter?: SentTransactionsFilter
@@ -368,7 +361,7 @@ export interface SentTransactionsArgs {
 
 export interface SentTransactionsReturn {
   page: Page
-  transactions: Array<Transaction>  
+  transactions: Array<Transaction>
 }
 export interface PendingTransactionsArgs {
   page?: Page
@@ -376,7 +369,7 @@ export interface PendingTransactionsArgs {
 
 export interface PendingTransactionsReturn {
   page: Page
-  transactions: Array<Transaction>  
+  transactions: Array<Transaction>
 }
 export interface ListGasSponsorsArgs {
   page?: Page
@@ -384,7 +377,7 @@ export interface ListGasSponsorsArgs {
 
 export interface ListGasSponsorsReturn {
   page: Page
-  gasSponsors: Array<GasSponsor>  
+  gasSponsors: Array<GasSponsor>
 }
 export interface AddGasSponsorArgs {
   address: string
@@ -394,7 +387,7 @@ export interface AddGasSponsorArgs {
 
 export interface AddGasSponsorReturn {
   status: boolean
-  gasSponsor: GasSponsor  
+  gasSponsor: GasSponsor
 }
 export interface UpdateGasSponsorArgs {
   address: string
@@ -404,7 +397,7 @@ export interface UpdateGasSponsorArgs {
 
 export interface UpdateGasSponsorReturn {
   status: boolean
-  gasSponsor: GasSponsor  
+  gasSponsor: GasSponsor
 }
 export interface ReportGasSponsorUsageArgs {
   startTime?: string
@@ -412,11 +405,9 @@ export interface ReportGasSponsorUsageArgs {
 }
 
 export interface ReportGasSponsorUsageReturn {
-  gasSponsorUsage: Array<GasSponsorUsage>  
+  gasSponsorUsage: Array<GasSponsorUsage>
 }
 
-
-  
 //
 // Client
 //
@@ -433,256 +424,213 @@ export class Relayer implements Relayer {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   version = (headers?: object): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          version: <Version>(_data.version)
+          version: <Version>_data.version
         }
       })
     })
   }
-  
+
   runtimeStatus = (headers?: object): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <RuntimeStatus>(_data.status)
+          status: <RuntimeStatus>_data.status
         }
       })
     })
   }
-  
+
   getSequenceContext = (headers?: object): Promise<GetSequenceContextReturn> => {
-    return this.fetch(
-      this.url('GetSequenceContext'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('GetSequenceContext'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          data: <SequenceContext>(_data.data)
+          data: <SequenceContext>_data.data
         }
       })
     })
   }
-  
+
   getChainID = (headers?: object): Promise<GetChainIDReturn> => {
-    return this.fetch(
-      this.url('GetChainID'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('GetChainID'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          chainID: <number>(_data.chainID)
+          chainID: <number>_data.chainID
         }
       })
     })
   }
-  
+
   sendMetaTxn = (args: SendMetaTxnArgs, headers?: object): Promise<SendMetaTxnReturn> => {
-    return this.fetch(
-      this.url('SendMetaTxn'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SendMetaTxn'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          txnHash: <string>(_data.txnHash)
+          status: <boolean>_data.status,
+          txnHash: <string>_data.txnHash
         }
       })
     })
   }
-  
+
   getMetaTxnNonce = (args: GetMetaTxnNonceArgs, headers?: object): Promise<GetMetaTxnNonceReturn> => {
-    return this.fetch(
-      this.url('GetMetaTxnNonce'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetMetaTxnNonce'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          nonce: <string>(_data.nonce)
+          nonce: <string>_data.nonce
         }
       })
     })
   }
-  
+
   getMetaTxnReceipt = (args: GetMetaTxnReceiptArgs, headers?: object): Promise<GetMetaTxnReceiptReturn> => {
-    return this.fetch(
-      this.url('GetMetaTxnReceipt'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetMetaTxnReceipt'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          receipt: <MetaTxnReceipt>(_data.receipt)
+          receipt: <MetaTxnReceipt>_data.receipt
         }
       })
     })
   }
-  
+
   simulate = (args: SimulateArgs, headers?: object): Promise<SimulateReturn> => {
-    return this.fetch(
-      this.url('Simulate'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('Simulate'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          results: <Array<SimulateResult>>(_data.results)
+          results: <Array<SimulateResult>>_data.results
         }
       })
     })
   }
-  
+
   updateMetaTxnGasLimits = (args: UpdateMetaTxnGasLimitsArgs, headers?: object): Promise<UpdateMetaTxnGasLimitsReturn> => {
-    return this.fetch(
-      this.url('UpdateMetaTxnGasLimits'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UpdateMetaTxnGasLimits'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          payload: <string>(_data.payload)
+          payload: <string>_data.payload
         }
       })
     })
   }
-  
+
   feeTokens = (headers?: object): Promise<FeeTokensReturn> => {
-    return this.fetch(
-      this.url('FeeTokens'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('FeeTokens'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          isFeeRequired: <boolean>(_data.isFeeRequired), 
-          tokens: <Array<FeeToken>>(_data.tokens)
+          isFeeRequired: <boolean>_data.isFeeRequired,
+          tokens: <Array<FeeToken>>_data.tokens
         }
       })
     })
   }
-  
+
   feeOptions = (args: FeeOptionsArgs, headers?: object): Promise<FeeOptionsReturn> => {
-    return this.fetch(
-      this.url('FeeOptions'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('FeeOptions'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          options: <Array<FeeOption>>(_data.options), 
-          quote: <string>(_data.quote)
+          options: <Array<FeeOption>>_data.options,
+          quote: <string>_data.quote
         }
       })
     })
   }
-  
-  getMetaTxnNetworkFeeOptions = (args: GetMetaTxnNetworkFeeOptionsArgs, headers?: object): Promise<GetMetaTxnNetworkFeeOptionsReturn> => {
-    return this.fetch(
-      this.url('GetMetaTxnNetworkFeeOptions'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  getMetaTxnNetworkFeeOptions = (
+    args: GetMetaTxnNetworkFeeOptionsArgs,
+    headers?: object
+  ): Promise<GetMetaTxnNetworkFeeOptionsReturn> => {
+    return this.fetch(this.url('GetMetaTxnNetworkFeeOptions'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          options: <Array<FeeOption>>(_data.options)
+          options: <Array<FeeOption>>_data.options
         }
       })
     })
   }
-  
+
   sentTransactions = (args: SentTransactionsArgs, headers?: object): Promise<SentTransactionsReturn> => {
-    return this.fetch(
-      this.url('SentTransactions'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SentTransactions'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          transactions: <Array<Transaction>>(_data.transactions)
+          page: <Page>_data.page,
+          transactions: <Array<Transaction>>_data.transactions
         }
       })
     })
   }
-  
+
   pendingTransactions = (args: PendingTransactionsArgs, headers?: object): Promise<PendingTransactionsReturn> => {
-    return this.fetch(
-      this.url('PendingTransactions'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('PendingTransactions'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          transactions: <Array<Transaction>>(_data.transactions)
+          page: <Page>_data.page,
+          transactions: <Array<Transaction>>_data.transactions
         }
       })
     })
   }
-  
+
   listGasSponsors = (args: ListGasSponsorsArgs, headers?: object): Promise<ListGasSponsorsReturn> => {
-    return this.fetch(
-      this.url('ListGasSponsors'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('ListGasSponsors'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          gasSponsors: <Array<GasSponsor>>(_data.gasSponsors)
+          page: <Page>_data.page,
+          gasSponsors: <Array<GasSponsor>>_data.gasSponsors
         }
       })
     })
   }
-  
+
   addGasSponsor = (args: AddGasSponsorArgs, headers?: object): Promise<AddGasSponsorReturn> => {
-    return this.fetch(
-      this.url('AddGasSponsor'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('AddGasSponsor'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          gasSponsor: <GasSponsor>(_data.gasSponsor)
+          status: <boolean>_data.status,
+          gasSponsor: <GasSponsor>_data.gasSponsor
         }
       })
     })
   }
-  
+
   updateGasSponsor = (args: UpdateGasSponsorArgs, headers?: object): Promise<UpdateGasSponsorReturn> => {
-    return this.fetch(
-      this.url('UpdateGasSponsor'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UpdateGasSponsor'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          gasSponsor: <GasSponsor>(_data.gasSponsor)
+          status: <boolean>_data.status,
+          gasSponsor: <GasSponsor>_data.gasSponsor
         }
       })
     })
   }
-  
+
   reportGasSponsorUsage = (args: ReportGasSponsorUsageArgs, headers?: object): Promise<ReportGasSponsorUsageReturn> => {
-    return this.fetch(
-      this.url('ReportGasSponsorUsage'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('ReportGasSponsorUsage'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          gasSponsorUsage: <Array<GasSponsorUsage>>(_data.gasSponsorUsage)
+          gasSponsorUsage: <Array<GasSponsorUsage>>_data.gasSponsorUsage
         }
       })
     })
   }
-  
 }
 
-  
 export interface WebRPCError extends Error {
   code: string
   msg: string
-	status: number
+  status: number
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -698,7 +646,7 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
+    } catch (err) {
       throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
     }
     if (!res.ok) {

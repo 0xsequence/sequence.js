@@ -1,6 +1,6 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 import { v2 } from '../builds'
-import { deployContract } from "../singletonFactory"
+import { deployContract } from '../singletonFactory'
 
 export async function deployV2Context(signer: ethers.Signer) {
   // See if signer's provider has the contracts already deployed

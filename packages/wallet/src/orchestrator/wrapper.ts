@@ -1,13 +1,12 @@
-
-import { commons } from "@0xsequence/core"
-import { signers, Status } from "@0xsequence/signhub"
-import { ethers } from "ethers"
-import { Wallet } from "../wallet"
+import { commons } from '@0xsequence/core'
+import { signers, Status } from '@0xsequence/signhub'
+import { ethers } from 'ethers'
+import { Wallet } from '../wallet'
 
 // Implements a wrapper for using Sequence wallets as nested signers
 // in the signhub orchestrator. It only works for nested signatures.
 export class SequenceOrchestratorWrapper implements signers.SapientSigner {
-  constructor(public wallet: Wallet<any, any ,any>) {}
+  constructor(public wallet: Wallet<any, any, any>) {}
 
   async getAddress(): Promise<string> {
     return this.wallet.address
@@ -18,8 +17,8 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     message: ethers.utils.BytesLike,
     metadata: Object,
     callbacks: {
-      onSignature: (signature: ethers.utils.BytesLike) => void;
-      onRejection: (error: string) => void;
+      onSignature: (signature: ethers.utils.BytesLike) => void
+      onRejection: (error: string) => void
       onStatus: (situation: string) => void
     }
   ): Promise<boolean> {
@@ -37,6 +36,6 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
   notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
 
   suffix(): ethers.utils.BytesLike {
-    return [ 3 ]
+    return [3]
   }
 }
