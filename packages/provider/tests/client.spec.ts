@@ -40,7 +40,7 @@ const sampleContext = {
 
 describe('SequenceClient', () => {
   describe('callbacks', () => {
-    let callbacks: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
+    const callbacks: TypedEventEmitter<ProviderEventTypes> = new EventEmitter() as TypedEventEmitter<ProviderEventTypes>
     let client: SequenceClient
 
     beforeEach(() => {
@@ -108,7 +108,7 @@ describe('SequenceClient', () => {
       let calls = 0
 
       client.onDefaultChainIdChanged(chainId => {
-        expect(chainId).to.equal(calls === 0 ? '0x02' : '0x01')
+        expect(chainId).to.equal(calls === 0 ? '0x2' : '0x1')
         calls++
       })
 
@@ -151,7 +151,7 @@ describe('SequenceClient', () => {
         callsToConnect++
         expect(details).to.deep.equal({
           connected: true,
-          chainId: '0x01',
+          chainId: '0x1',
           session: {
             accountAddress: '0x1234'
           },
@@ -161,7 +161,7 @@ describe('SequenceClient', () => {
 
       callbacks.emit('connect', {
         connected: true,
-        chainId: '0x01',
+        chainId: '0x1',
         session: {
           accountAddress: '0x1234'
         },
@@ -178,7 +178,7 @@ describe('SequenceClient', () => {
         callsToConnect++
         expect(details).to.deep.equal({
           connected: true,
-          chainId: '0x02',
+          chainId: '0x2',
           session: {
             accountAddress: '0x1234'
           },
@@ -191,7 +191,7 @@ describe('SequenceClient', () => {
       callbacks.emit('connect', {
         connected: true,
         // This should be ignored
-        chainId: '0x0a',
+        chainId: '0xa',
         session: {
           accountAddress: '0x1234'
         },
@@ -384,7 +384,7 @@ describe('SequenceClient', () => {
         },
         waitUntilConnected: async () => {
           calledWaitUntilConnected++
-          return { connected: true, chainId: '0x0a', session }
+          return { connected: true, chainId: '0xa', session }
         },
         isOpened: () => {
           calledIsOpened++
@@ -477,7 +477,7 @@ describe('SequenceClient', () => {
     let calledSendAsync = 0
 
     const commands = [
-      { chainId: 2, req: { method: 'eth_chainId', params: [] }, res: { result: '0x01' } },
+      { chainId: 2, req: { method: 'eth_chainId', params: [] }, res: { result: '0x1' } },
       { chainId: 2, req: { method: 'eth_accounts', params: [] }, res: { result: '0x12345' } },
       { chainId: 5, req: { method: 'eth_sendTransaction', params: [{ to: '0x1234' }] }, res: { result: '0x000' } },
       { chainId: 9, req: { method: 'non-standard', params: [{ a: 23123, b: true }] }, res: { result: '0x99' } }
@@ -501,7 +501,7 @@ describe('SequenceClient', () => {
     expect(calledSendAsync).to.equal(0)
 
     const result1 = await client.send({ method: 'eth_chainId', params: [] })
-    expect(result1).to.deep.equal('0x01')
+    expect(result1).to.deep.equal('0x1')
     expect(calledSendAsync).to.equal(1)
 
     const result2 = await client.send({ method: 'eth_accounts', params: [] }, 2)
@@ -1202,13 +1202,13 @@ describe('SequenceClient', () => {
       let called1 = 0
       client1.onDefaultChainIdChanged(chainId => {
         called1++
-        expect(chainId).to.equal('0x0a')
+        expect(chainId).to.equal('0xa')
       })
 
       let called2 = 0
       client2.onDefaultChainIdChanged(chainId => {
         called2++
-        expect(chainId).to.equal('0x0a')
+        expect(chainId).to.equal('0xa')
       })
 
       client1.setDefaultChainId(10)
