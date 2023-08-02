@@ -33,12 +33,7 @@ export class WalletUtils {
   }
 
   // Verify signature of a digest, one of a message, typedData or other
-  async isValidSignature(
-    address: string,
-    digest: Uint8Array,
-    signature: string,
-    chainId: number
-  ): Promise<boolean> {
+  async isValidSignature(address: string, digest: Uint8Array, signature: string, chainId: number): Promise<boolean> {
     return isValidSignature(address, digest, signature, this.signer.getProvider(chainId))
   }
 
@@ -56,12 +51,7 @@ export class WalletUtils {
   }
 
   // Verify typedData signature
-  isValidTypedDataSignature(
-    address: string,
-    typedData: TypedData,
-    signature: string,
-    chainId: number
-  ): Promise<boolean> {
+  isValidTypedDataSignature(address: string, typedData: TypedData, signature: string, chainId: number): Promise<boolean> {
     return this.isValidSignature(address, encodeTypedDataDigest(typedData), signature, chainId)
   }
 

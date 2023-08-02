@@ -1,4 +1,4 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 
 //                              = keccak256("SetImageHash(bytes32 imageHash)")
 export const SetImageHashPrefix = '0x8713a7c4465f6fbee2b6e9d6646d1d9f83fec929edfc4baf661f3c865bdd04d1'
@@ -8,10 +8,7 @@ export function hashSetImageHash(imageHash: string): string {
 }
 
 export function messageSetImageHash(imageHash: string) {
-  return ethers.utils.solidityPack(
-    ['bytes32', 'bytes32'],
-    [SetImageHashPrefix, imageHash]
-  )
+  return ethers.utils.solidityPack(['bytes32', 'bytes32'], [SetImageHashPrefix, imageHash])
 }
 
 export function decodeMessageSetImageHash(message: ethers.BytesLike): string | undefined {

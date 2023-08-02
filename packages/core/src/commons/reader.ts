@@ -1,7 +1,7 @@
-import { walletContracts } from "@0xsequence/abi"
-import { ethers } from "ethers"
-import { commons } from ".."
-import { validateEIP6492Offchain } from "./validateEIP6492"
+import { walletContracts } from '@0xsequence/abi'
+import { ethers } from 'ethers'
+import { commons } from '..'
+import { validateEIP6492Offchain } from './validateEIP6492'
 
 /**
  * Provides stateful information about the wallet.
@@ -11,33 +11,23 @@ export interface Reader {
   implementation(wallet: string): Promise<string | undefined>
   imageHash(wallet: string): Promise<string | undefined>
   nonce(wallet: string, space: ethers.BigNumberish): Promise<ethers.BigNumberish>
-  isValidSignature(
-    wallet: string,
-    digest: ethers.BytesLike,
-    signature: ethers.BytesLike
-  ): Promise<boolean>
+  isValidSignature(wallet: string, digest: ethers.BytesLike, signature: ethers.BytesLike): Promise<boolean>
 }
 
 /**
  * The OnChainReader class fetches on-chain data from a wallet.
  * It is used to understand the "real" state of the wallet contract on-chain.
  */
- export class OnChainReader implements Reader {
+export class OnChainReader implements Reader {
   // Simple cache to avoid re-fetching the same data
   private isDeployedCache: Set<string> = new Set()
 
-  constructor(
-    public readonly provider: ethers.providers.Provider
-  ) {}
+  constructor(public readonly provider: ethers.providers.Provider) {}
 
   private module(address: string) {
     return new ethers.Contract(
       address,
-      [
-        ...walletContracts.mainModuleUpgradable.abi,
-        ...walletContracts.mainModule.abi,
-        ...walletContracts.erc1271.abi
-      ],
+      [...walletContracts.mainModuleUpgradable.abi, ...walletContracts.mainModule.abi, ...walletContracts.erc1271.abi],
       this.provider
     )
   }
@@ -48,7 +38,7 @@ export interface Reader {
       return true
     }
 
-    const code = await this.provider.getCode(wallet).then((c) => ethers.utils.arrayify(c))
+    const code = await this.provider.getCode(wallet).then(c => ethers.utils.arrayify(c))
     const isDeployed = code.length !== 0
     if (isDeployed) {
       this.isDeployedCache.add(wallet)
@@ -59,7 +49,7 @@ export interface Reader {
 
   async implementation(wallet: string): Promise<string | undefined> {
     const position = ethers.utils.defaultAbiCoder.encode(['address'], [wallet])
-    const val = await this.provider.getStorageAt(wallet, position).then((c) => ethers.utils.arrayify(c))
+    const val = await this.provider.getStorageAt(wallet, position).then(c => ethers.utils.arrayify(c))
 
     if (val.length === 20) {
       return ethers.utils.getAddress(ethers.utils.hexlify(val))
@@ -97,11 +87,7 @@ export interface Reader {
   // We use the EIP-6492 validator contract to check the signature
   // this means that if the wallet is not deployed, then the signature
   // must be prefixed with a transaction that deploys the wallet
-  async isValidSignature(
-    wallet: string,
-    digest: ethers.BytesLike,
-    signature: ethers.BytesLike
-  ): Promise<boolean> {
+  async isValidSignature(wallet: string, digest: ethers.BytesLike, signature: ethers.BytesLike): Promise<boolean> {
     return validateEIP6492Offchain(this.provider, wallet, digest, signature)
   }
 }

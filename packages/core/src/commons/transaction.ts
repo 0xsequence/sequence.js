@@ -1,6 +1,6 @@
-import { BigNumberish, BytesLike, ethers } from "ethers"
-import { subdigestOf } from "./signature"
-import { walletContracts } from "@0xsequence/abi"
+import { BigNumberish, BytesLike, ethers } from 'ethers'
+import { subdigestOf } from './signature'
+import { walletContracts } from '@0xsequence/abi'
 
 export interface Transaction {
   to: string
@@ -29,28 +29,32 @@ export interface TransactionEncoded {
   data: BytesLike
 }
 
-export type Transactionish = ethers.providers.TransactionRequest | ethers.providers.TransactionRequest[] | Transaction | Transaction[]
+export type Transactionish =
+  | ethers.providers.TransactionRequest
+  | ethers.providers.TransactionRequest[]
+  | Transaction
+  | Transaction[]
 
 export interface TransactionResponse<R = any> extends ethers.providers.TransactionResponse {
   receipt?: R
 }
 
 export type TransactionBundle = {
-  entrypoint: string,
-  transactions: Transaction[],
+  entrypoint: string
+  transactions: Transaction[]
   nonce?: BigNumberish
 }
 
 export type IntendedTransactionBundle = TransactionBundle & {
-  chainId: BigNumberish,
+  chainId: BigNumberish
   intent: {
-    id: string,
+    id: string
     wallet: string
   }
 }
 
 export type SignedTransactionBundle = IntendedTransactionBundle & {
-  signature: string,
+  signature: string
   nonce: BigNumberish
 }
 
@@ -101,7 +105,12 @@ export function digestOfTransactions(nonce: BigNumberish, txs: Transaction[]) {
   return ethers.utils.keccak256(packMetaTransactionsData(nonce, txs))
 }
 
-export function subdigestOfTransactions(address: string, chainId: BigNumberish, nonce: ethers.BigNumberish, txs: Transaction[]): string {
+export function subdigestOfTransactions(
+  address: string,
+  chainId: BigNumberish,
+  nonce: ethers.BigNumberish,
+  txs: Transaction[]
+): string {
   return subdigestOf({ address, chainId, digest: digestOfTransactions(nonce, txs) })
 }
 
@@ -110,10 +119,7 @@ export function subdigestOfGuestModuleTransactions(guestModule: string, chainId:
     address: guestModule,
     chainId,
     digest: ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        ['string', MetaTransactionsType],
-        ['guest:', sequenceTxAbiEncode(txs)]
-      )
+      ethers.utils.defaultAbiCoder.encode(['string', MetaTransactionsType], ['guest:', sequenceTxAbiEncode(txs)])
     )
   })
 }
@@ -121,14 +127,14 @@ export function subdigestOfGuestModuleTransactions(guestModule: string, chainId:
 export function toSequenceTransactions(
   wallet: string,
   txs: (Transaction | ethers.providers.TransactionRequest)[]
-): { nonce?: ethers.BigNumberish, transaction: Transaction }[] {
+): { nonce?: ethers.BigNumberish; transaction: Transaction }[] {
   return txs.map(tx => toSequenceTransaction(wallet, tx))
 }
 
 export function toSequenceTransaction(
   wallet: string,
   tx: ethers.providers.TransactionRequest
-): { nonce?: ethers.BigNumberish, transaction: Transaction } {
+): { nonce?: ethers.BigNumberish; transaction: Transaction } {
   if (tx.to) {
     return {
       nonce: tx.nonce,
@@ -138,7 +144,7 @@ export function toSequenceTransaction(
         gasLimit: tx.gasLimit || 0,
         to: tx.to,
         value: tx.value || 0,
-        data: tx.data || '0x',
+        data: tx.data || '0x'
       }
     }
   } else {
@@ -214,10 +220,7 @@ export function decodeNonce(nonce: BigNumberish): [ethers.BigNumber, ethers.BigN
   return [bnonce.div(shr), bnonce.mod(shr)]
 }
 
-export function fromTransactionish(
-  wallet: string,
-  transaction: Transactionish
-): Transaction[] {
+export function fromTransactionish(wallet: string, transaction: Transactionish): Transaction[] {
   if (Array.isArray(transaction)) {
     if (hasSequenceTransactions(transaction)) {
       return transaction
@@ -248,28 +251,26 @@ export function isTransactionBundle(cand: any): cand is TransactionBundle {
 }
 
 export function isSignedTransactionBundle(cand: any): cand is SignedTransactionBundle {
-  return (
-    cand !== undefined &&
-    cand.signature !== undefined &&
-    cand.signature !== '' &&
-    isTransactionBundle(cand)
-  )
+  return cand !== undefined && cand.signature !== undefined && cand.signature !== '' && isTransactionBundle(cand)
 }
 
 export function encodeBundleExecData(bundle: TransactionBundle): string {
   const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-  return walletInterface.encodeFunctionData(walletInterface.getFunction('execute'),
-    isSignedTransactionBundle(bundle) ? [
-      // Signed transaction bundle has all 3 parameters
-      sequenceTxAbiEncode(bundle.transactions),
-      bundle.nonce,
-      bundle.signature
-    ] : [
-      // Unsigned bundle may be a GuestModule call, so signature and nonce are missing
-      sequenceTxAbiEncode(bundle.transactions),
-      0,
-      []
-    ]
+  return walletInterface.encodeFunctionData(
+    walletInterface.getFunction('execute'),
+    isSignedTransactionBundle(bundle)
+      ? [
+          // Signed transaction bundle has all 3 parameters
+          sequenceTxAbiEncode(bundle.transactions),
+          bundle.nonce,
+          bundle.signature
+        ]
+      : [
+          // Unsigned bundle may be a GuestModule call, so signature and nonce are missing
+          sequenceTxAbiEncode(bundle.transactions),
+          0,
+          []
+        ]
   )
 }
 
@@ -297,7 +298,12 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
       // Decode as selfExecute call
       const data = txData.slice(4)
       const decoded = ethers.utils.defaultAbiCoder.decode([selfExecuteAbi], data)[0]
-      unwound.push(...unwind(tx.to, decoded.map((d: TransactionEncoded) => ({ ...d, to: d.target }))))
+      unwound.push(
+        ...unwind(
+          tx.to,
+          decoded.map((d: TransactionEncoded) => ({ ...d, to: d.target }))
+        )
+      )
     } else {
       try {
         const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0]

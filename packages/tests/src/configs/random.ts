@@ -1,6 +1,6 @@
-import { v1, v2 } from "@0xsequence/core"
-import { ethers } from "ethers"
-import { maxForBits, randomBigNumber, randomBool } from "../utils"
+import { v1, v2 } from '@0xsequence/core'
+import { ethers } from 'ethers'
+import { maxForBits, randomBigNumber, randomBool } from '../utils'
 
 export function genRandomV1Config(
   threshold: ethers.BigNumberish = randomBigNumber(0, maxForBits(16)),
@@ -40,9 +40,8 @@ export function genRandomV2Config(
     })
   }
 
-  const topologyBuilder = useMerkleTopology ? v2.config.merkleTopologyBuilder : v2.config.legacyTopologyBuilder 
+  const topologyBuilder = useMerkleTopology ? v2.config.merkleTopologyBuilder : v2.config.legacyTopologyBuilder
   const tree = topologyBuilder([...signers, ...subdigests])
 
   return { version: 2, threshold, checkpoint, tree }
 }
-

@@ -1,38 +1,32 @@
-
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 import { encodeSigners } from './signature'
 
-
 export type AddressMember = {
-  weight: ethers.BigNumberish,
-  address: string,
+  weight: ethers.BigNumberish
+  address: string
   signature?: string
 }
 
 export type WalletConfig = commons.config.Config & {
-  threshold: ethers.BigNumberish,
+  threshold: ethers.BigNumberish
   signers: AddressMember[]
 }
 
 export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   isWalletConfig: (config: commons.config.Config): config is WalletConfig => {
     return (
-      config.version === 1 &&
-      (config as WalletConfig).threshold !== undefined &&
-      (config as WalletConfig).signers !== undefined
+      config.version === 1 && (config as WalletConfig).threshold !== undefined && (config as WalletConfig).signers !== undefined
     )
   },
 
   imageHashOf: (config: WalletConfig): string => {
     return config.signers.reduce(
-      (imageHash, signer) => ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(
-          ['bytes32', 'uint8', 'address'],
-          [imageHash, signer.weight, signer.address]
-        )
-      ),
+      (imageHash, signer) =>
+        ethers.utils.keccak256(
+          ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, signer.weight, signer.address])
+        ),
       ethers.utils.solidityPack(['uint256'], [config.threshold])
     )
   },
@@ -51,14 +45,14 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return ethers.BigNumber.from(0)
   },
 
-  signersOf: (config: WalletConfig): { address: string, weight: number }[] => {
-    return config.signers.map((s) => ({ address: s.address, weight: ethers.BigNumber.from(s.weight).toNumber() }))
+  signersOf: (config: WalletConfig): { address: string; weight: number }[] => {
+    return config.signers.map(s => ({ address: s.address, weight: ethers.BigNumber.from(s.weight).toNumber() }))
   },
 
   fromSimple: (config: {
     threshold: ethers.BigNumberish
     checkpoint: ethers.BigNumberish
-    signers: { address: string; weight: ethers.BigNumberish} []
+    signers: { address: string; weight: ethers.BigNumberish }[]
   }): WalletConfig => {
     if (!ethers.constants.Zero.eq(config.checkpoint)) {
       throw new Error('v1 wallet config does not support checkpoint')
@@ -80,19 +74,14 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       context: commons.context.WalletContext,
       kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new ethers.utils.Interface([
-        ...walletContracts.mainModule.abi,
-        ...walletContracts.mainModuleUpgradable.abi
-      ])
+      const module = new ethers.utils.Interface([...walletContracts.mainModule.abi, ...walletContracts.mainModuleUpgradable.abi])
 
       const transactions: commons.transaction.Transaction[] = []
 
       if (!kind || kind === 'first') {
         transactions.push({
           to: wallet,
-          data: module.encodeFunctionData(module.getFunction('updateImplementation'), [
-            context.mainModuleUpgradable
-          ]),
+          data: module.encodeFunctionData(module.getFunction('updateImplementation'), [context.mainModuleUpgradable]),
           gasLimit: 0,
           delegateCall: false,
           revertOnError: true,
@@ -102,9 +91,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
       transactions.push({
         to: wallet,
-        data: module.encodeFunctionData(module.getFunction('updateImageHash'), [
-          ConfigCoder.imageHashOf(config)
-        ]),
+        data: module.encodeFunctionData(module.getFunction('updateImageHash'), [ConfigCoder.imageHashOf(config)]),
         gasLimit: 0,
         delegateCall: false,
         revertOnError: true,
@@ -116,13 +103,17 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         transactions
       }
     },
-    decodeTransaction: function (tx: commons.transaction.TransactionBundle): { address: string; newImageHash: string; kind: "first" | "later" | undefined}  {
-      throw new Error("Function not implemented.")
+    decodeTransaction: function (tx: commons.transaction.TransactionBundle): {
+      address: string
+      newImageHash: string
+      kind: 'first' | 'later' | undefined
+    } {
+      throw new Error('Function not implemented.')
     }
   },
 
   toJSON: function (config: WalletConfig): string {
-    const plainMembers = config.signers.map((signer) => {
+    const plainMembers = config.signers.map(signer => {
       return {
         weight: ethers.BigNumber.from(signer.weight).toString(),
         address: signer.address
@@ -156,9 +147,9 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   editConfig: function (
     config: WalletConfig,
     action: {
-      add?: commons.config.SimpleSigner[];
-      remove?: string[];
-      threshold?: ethers.BigNumberish,
+      add?: commons.config.SimpleSigner[]
+      remove?: string[]
+      threshold?: ethers.BigNumberish
       checkpoint?: ethers.BigNumberish
     }
   ): WalletConfig {
@@ -170,7 +161,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
     if (action.add) {
       for (const signer of action.add) {
-        if (newSigners.find((s) => s.address === signer.address)) {
+        if (newSigners.find(s => s.address === signer.address)) {
           continue
         }
 
@@ -183,7 +174,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
     if (action.remove) {
       for (const address of action.remove) {
-        const index = newSigners.findIndex((signer) => signer.address === address)
+        const index = newSigners.findIndex(signer => signer.address === address)
         if (index >= 0) {
           newSigners.splice(index, 1)
         }
@@ -197,10 +188,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     }
   },
 
-  buildStubSignature: function (
-    config: WalletConfig,
-    overrides: Map<string, string>
-  ) {
+  buildStubSignature: function (config: WalletConfig, overrides: Map<string, string>) {
     const parts = new Map<string, commons.signature.SignaturePart>()
 
     for (const [signer, signature] of overrides.entries()) {
@@ -216,7 +204,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     const signers = config.signers
 
     for (const { address } of signers.sort(({ weight: a }, { weight: b }) => ethers.BigNumber.from(a).sub(b).toNumber())) {
-      const signature = '0x4e82f02f388a12b5f9d29eaf2452dd040c0ee5804b4e504b4dd64e396c6c781f2c7624195acba242dd825bfd25a290912e3c230841fd55c9a734c4de8d9899451b02'
+      const signature =
+        '0x4e82f02f388a12b5f9d29eaf2452dd040c0ee5804b4e504b4dd64e396c6c781f2c7624195acba242dd825bfd25a290912e3c230841fd55c9a734c4de8d9899451b02'
       parts.set(address, { signature, isDynamic: false })
 
       const { encoded, weight } = encodeSigners(config, parts, [], 0)

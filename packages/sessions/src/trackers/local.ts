@@ -89,9 +89,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     throw new Error(`Unknown topology type: ${node}`)
   }
 
-  saveWalletConfig = async (args: {
-    config: commons.config.Config
-  }): Promise<void> => {
+  saveWalletConfig = async (args: { config: commons.config.Config }): Promise<void> => {
     const { config } = args
     if (v1.config.ConfigCoder.isWalletConfig(config)) {
       // We can store the configuration as-is
@@ -130,9 +128,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
   private configOfImageHashCache = {} as { [key: string]: commons.config.Config }
 
-  configOfImageHash = async (args: {
-    imageHash: string
-  }): Promise<commons.config.Config | undefined> => {
+  configOfImageHash = async (args: { imageHash: string }): Promise<commons.config.Config | undefined> => {
     const { imageHash } = args
 
     if (this.configOfImageHashCache[args.imageHash]) {
@@ -180,10 +176,13 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
   imageHashOfCounterfactualWallet = async (args: {
     wallet: string
-  }): Promise<{
-    imageHash: string,
-    context: commons.context.WalletContext
-  } | undefined> => {
+  }): Promise<
+    | {
+        imageHash: string
+        context: commons.context.WalletContext
+      }
+    | undefined
+  > => {
     const { wallet } = args
     const result = await this.store.loadCounterfactualWallet(wallet)
 
@@ -195,9 +194,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     }
   }
 
-  savePayload = async (args: {
-    payload: commons.signature.SignedPayload
-  }): Promise<void> => {
+  savePayload = async (args: { payload: commons.signature.SignedPayload }): Promise<void> => {
     const { payload } = args
 
     const subdigest = commons.signature.subdigestOf(payload)
@@ -206,9 +203,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
   private payloadOfSubdigestCache = {} as { [key: string]: commons.signature.SignedPayload }
 
-  payloadOfSubdigest = async (args: {
-    subdigest: string
-  }): Promise<commons.signature.SignedPayload | undefined> => {
+  payloadOfSubdigest = async (args: { subdigest: string }): Promise<commons.signature.SignedPayload | undefined> => {
     if (this.payloadOfSubdigestCache[args.subdigest]) {
       return this.payloadOfSubdigestCache[args.subdigest]
     }
@@ -253,8 +248,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
   }
 
   loadPresignedConfiguration = async (args: {
-    wallet: string,
-    fromImageHash: string,
+    wallet: string
+    fromImageHash: string
     longestPath?: boolean
   }): Promise<PresignedConfigLink[]> => {
     const { wallet, fromImageHash, longestPath } = args
@@ -265,39 +260,47 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     }
 
     // Get all subdigests for the config members
-    const signers = v2.config.signersOf(fromConfig.tree).map((s) => s.address)
-    const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.loadSubdigestsOfSigner(s)))
+    const signers = v2.config.signersOf(fromConfig.tree).map(s => s.address)
+    const subdigestsOfSigner = await Promise.all(signers.map(s => this.store.loadSubdigestsOfSigner(s)))
     const subdigests = [...new Set(subdigestsOfSigner.flat())]
 
     // Get all unique payloads
-    const payloads = await Promise.all([...new Set(subdigests)]
-      .map(async (s) => ({ ...(await this.payloadOfSubdigest({ subdigest: s })), subdigest: s })))
+    const payloads = await Promise.all(
+      [...new Set(subdigests)].map(async s => ({ ...(await this.payloadOfSubdigest({ subdigest: s })), subdigest: s }))
+    )
 
     // Get all possible next imageHashes based on the payloads
     const nextImageHashes = payloads
-      .filter((p) => p?.message && p?.address && p.address === wallet)
-      .map((p) => ({ payload: p, nextImageHash: v2.chained.decodeMessageSetImageHash(p!.message!) }))
-      .filter((p) => p?.nextImageHash) as { payload: commons.signature.SignedPayload & { subdigest: string }, nextImageHash: string }[]
+      .filter(p => p?.message && p?.address && p.address === wallet)
+      .map(p => ({ payload: p, nextImageHash: v2.chained.decodeMessageSetImageHash(p!.message!) }))
+      .filter(p => p?.nextImageHash) as {
+      payload: commons.signature.SignedPayload & { subdigest: string }
+      nextImageHash: string
+    }[]
 
     // Build a signature for each next imageHash
     // and filter out the ones that don't have enough weight
-    let bestCandidate: {
-      nextImageHash: string,
-      checkpoint: ethers.BigNumber,
-      signature: string,
-    } | undefined
+    let bestCandidate:
+      | {
+          nextImageHash: string
+          checkpoint: ethers.BigNumber
+          signature: string
+        }
+      | undefined
 
-    const nextConfigsAndCheckpoints = await Promise.all(nextImageHashes.map(async ({ nextImageHash, payload }) => {
-      const nextConfig = await this.configOfImageHash({ imageHash: nextImageHash })
-      if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) return undefined
-      const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
-      return { nextConfig, nextCheckpoint, nextImageHash, payload }
-    }))
+    const nextConfigsAndCheckpoints = await Promise.all(
+      nextImageHashes.map(async ({ nextImageHash, payload }) => {
+        const nextConfig = await this.configOfImageHash({ imageHash: nextImageHash })
+        if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) return undefined
+        const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
+        return { nextConfig, nextCheckpoint, nextImageHash, payload }
+      })
+    )
 
     const sortedNextConfigsAndCheckpoints = nextConfigsAndCheckpoints
-      .filter((c) => c !== undefined)
-      .filter((c) => c!.nextCheckpoint.gt(fromConfig.checkpoint))
-      .sort((a, b) => (
+      .filter(c => c !== undefined)
+      .filter(c => c!.nextCheckpoint.gt(fromConfig.checkpoint))
+      .sort((a, b) =>
         // If we are looking for the longest path, sort by ascending checkpoint
         // because we want to find the smalles jump, and we should start with the
         // closest one. If we are not looking for the longest path, sort by
@@ -306,12 +309,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         // We don't have a guarantee that all "next configs" will be valid
         // so worst case scenario we will need to try all of them.
         // But we can try to optimize for the most common case.
-        a!.nextCheckpoint.gt(b!.nextCheckpoint) ? (
-          longestPath ? 1 : -1
-        ) : (
-          longestPath ? -1 : 1
-        )
-      ))
+        a!.nextCheckpoint.gt(b!.nextCheckpoint) ? (longestPath ? 1 : -1) : longestPath ? -1 : 1
+      )
 
     for (const entry of sortedNextConfigsAndCheckpoints) {
       const { nextConfig, nextCheckpoint, nextImageHash, payload } = entry!
@@ -363,7 +362,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         signature: encoded.encoded
       }
     }
-    
+
     if (!bestCandidate) {
       return []
     }
@@ -375,11 +374,14 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       longestPath
     })
 
-    return [{
-      wallet,
-      nextImageHash: bestCandidate.nextImageHash,
-      signature: bestCandidate.signature
-    }, ...nextStep]
+    return [
+      {
+        wallet,
+        nextImageHash: bestCandidate.nextImageHash,
+        signature: bestCandidate.signature
+      },
+      ...nextStep
+    ]
   }
 
   saveWitnesses = async (args: {
@@ -391,7 +393,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const payload = {
       digest: args.digest,
       address: args.wallet,
-      chainId: args.chainId,
+      chainId: args.chainId
     }
 
     const subdigest = commons.signature.subdigestOf(payload)
@@ -413,31 +415,34 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
   walletsOfSigner = async (args: {
     signer: string
-  }): Promise<{
-    wallet: string,
-    proof: {
-      digest: string,
-      chainId: ethers.BigNumber,
-      signature: string
-    }
-  }[]> => {
+  }): Promise<
+    {
+      wallet: string
+      proof: {
+        digest: string
+        chainId: ethers.BigNumber
+        signature: string
+      }
+    }[]
+  > => {
     const subdigests = await this.store.loadSubdigestsOfSigner(args.signer)
-    const payloads = await Promise.all(subdigests.map((s) => this.payloadOfSubdigest({ subdigest: s })))
-      .then((p) => p.filter((p) => p !== undefined) as commons.signature.SignedPayload[])
+    const payloads = await Promise.all(subdigests.map(s => this.payloadOfSubdigest({ subdigest: s }))).then(
+      p => p.filter(p => p !== undefined) as commons.signature.SignedPayload[]
+    )
 
     // filter unique wallets, and provide a proof for each wallet
     const result: {
-      wallet: string,
+      wallet: string
       proof: {
-        digest: string,
-        chainId: ethers.BigNumber,
+        digest: string
+        chainId: ethers.BigNumber
         signature: string
       }
     }[] = []
 
     for (const payload of payloads) {
       const wallet = payload.address
-      if (result.find((r) => r.wallet === wallet)) continue
+      if (result.find(r => r.wallet === wallet)) continue
 
       const subdigest = commons.signature.subdigestOf(payload)
       const signature = await this.store.loadSignatureOfSubdigest(args.signer, subdigest)
@@ -462,16 +467,14 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     contexts: commons.context.VersionedContext
   ): Promise<void> {
     const fromVersion = signed.fromVersion
-    if (fromVersion !== 1) throw new Error("Migration not supported")
-    if (!v2.config.isWalletConfig(signed.toConfig)) throw new Error("Invalid to config")
+    if (fromVersion !== 1) throw new Error('Migration not supported')
+    if (!v2.config.isWalletConfig(signed.toConfig)) throw new Error('Invalid to config')
 
     // Validate migration transaction
     const { newImageHash, address: decodedAddress } = migration.v1v2.decodeTransaction(signed.tx, contexts)
-    if (decodedAddress !== address) throw new Error("Invalid migration transaction - address")
-    if (
-      v2.config.ConfigCoder.imageHashOf(signed.toConfig) !=
-      newImageHash
-    ) throw new Error("Invalid migration transaction - config")
+    if (decodedAddress !== address) throw new Error('Invalid migration transaction - address')
+    if (v2.config.ConfigCoder.imageHashOf(signed.toConfig) != newImageHash)
+      throw new Error('Invalid migration transaction - config')
 
     // Split signature and save each part
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
@@ -524,60 +527,62 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
     // We need to process every migration candidate individually
     // and see which one has enough signers to be valid (for the current config)
-    const candidates = await Promise.all(txs.map(async (tx) => {
-      const { subdigest, toImageHash } = tx
-      const payload = await this.payloadOfSubdigest({ subdigest })
-      if (!payload || !payload.message) return undefined
-      if (!ethers.BigNumber.from(chainId).eq(payload.chainId)) return undefined
+    const candidates = await Promise.all(
+      txs.map(async tx => {
+        const { subdigest, toImageHash } = tx
+        const payload = await this.payloadOfSubdigest({ subdigest })
+        if (!payload || !payload.message) return undefined
+        if (!ethers.BigNumber.from(chainId).eq(payload.chainId)) return undefined
 
-      const signers = coder.config.signersOf(currentConfig as any).map((s) => s.address)
+        const signers = coder.config.signersOf(currentConfig as any).map(s => s.address)
 
-      // Get all signatures (for all signers) for this subdigest
-      const signatures = new Map(
-        (
-          await Promise.all(
-            signers.map(async signer => {
-              const signature = await this.store.loadSignatureOfSubdigest(signer, subdigest)
-              if (!signature) {
-                return [signer, undefined]
-              }
+        // Get all signatures (for all signers) for this subdigest
+        const signatures = new Map(
+          (
+            await Promise.all(
+              signers.map(async signer => {
+                const signature = await this.store.loadSignatureOfSubdigest(signer, subdigest)
+                if (!signature) {
+                  return [signer, undefined]
+                }
 
-              const replacedSignature = ethers.utils.hexlify(
-                this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
-              )
+                const replacedSignature = ethers.utils.hexlify(
+                  this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
+                )
 
-              const isDynamic = commons.signer.tryRecoverSigner(subdigest, replacedSignature) !== signer
+                const isDynamic = commons.signer.tryRecoverSigner(subdigest, replacedSignature) !== signer
 
-              return [signer, { isDynamic, signature: replacedSignature }]
-            })
-          )
-        ).filter((signature): signature is [string, commons.signature.SignaturePart] => Boolean(signature[1]))
-      )
+                return [signer, { isDynamic, signature: replacedSignature }]
+              })
+            )
+          ).filter((signature): signature is [string, commons.signature.SignaturePart] => Boolean(signature[1]))
+        )
 
-      // Encode signature parts into a single signature
-      const encoded = coder.signature.encodeSigners(currentConfig as any, signatures, [], chainId)
-      if (!encoded || encoded.weight < currentConfig.threshold) return undefined
+        // Encode signature parts into a single signature
+        const encoded = coder.signature.encodeSigners(currentConfig as any, signatures, [], chainId)
+        if (!encoded || encoded.weight < currentConfig.threshold) return undefined
 
-      // Unpack payload (it should have transactions)
-      const [nonce, transactions] = commons.transaction.unpackMetaTransactionsData(payload.message)
+        // Unpack payload (it should have transactions)
+        const [nonce, transactions] = commons.transaction.unpackMetaTransactionsData(payload.message)
 
-      return {
-        tx: {
-          entrypoint: address,
-          transactions: commons.transaction.fromTxAbiEncode(transactions),
-          chainId: chainId,
-          nonce: nonce,
-          signature: encoded.encoded,
-          intent: {
-            id: subdigest,
-            wallet: address
-          }
-        },
-        toConfig: await this.configOfImageHash({ imageHash: toImageHash }),
-        fromVersion,
-        toVersion: fromVersion + 1
-      } as migrator.SignedMigration
-    })).then(c => c.filter(c => c !== undefined))
+        return {
+          tx: {
+            entrypoint: address,
+            transactions: commons.transaction.fromTxAbiEncode(transactions),
+            chainId: chainId,
+            nonce: nonce,
+            signature: encoded.encoded,
+            intent: {
+              id: subdigest,
+              wallet: address
+            }
+          },
+          toConfig: await this.configOfImageHash({ imageHash: toImageHash }),
+          fromVersion,
+          toVersion: fromVersion + 1
+        } as migrator.SignedMigration
+      })
+    ).then(c => c.filter(c => c !== undefined))
 
     // Return the first valid candidate
     return candidates[0]
