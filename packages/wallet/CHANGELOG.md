@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.1.2
+
+### Patch Changes
+
+- provider: jsonrpc chain id fixes
+- Updated dependencies
+  - @0xsequence/abi@1.1.2
+  - @0xsequence/core@1.1.2
+  - @0xsequence/network@1.1.2
+  - @0xsequence/relayer@1.1.2
+  - @0xsequence/signhub@1.1.2
+  - @0xsequence/utils@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes

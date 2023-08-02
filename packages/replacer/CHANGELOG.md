@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 1.1.2
+
+### Patch Changes
+
+- provider: jsonrpc chain id fixes
+- Updated dependencies
+  - @0xsequence/abi@1.1.2
+  - @0xsequence/core@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes

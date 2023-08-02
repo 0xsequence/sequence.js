@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.1.2
+
+### Patch Changes
+
+- provider: jsonrpc chain id fixes
+- Updated dependencies
+  - @0xsequence/core@1.1.2
+  - @0xsequence/migration@1.1.2
+  - @0xsequence/replacer@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes

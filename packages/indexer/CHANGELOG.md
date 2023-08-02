@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.1.2
+
+### Patch Changes
+
+- provider: jsonrpc chain id fixes
+
 ## 1.1.1
 
 ### Patch Changes
