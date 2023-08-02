@@ -1,6 +1,12 @@
 import {
-  ProviderMessage, ProviderTransport,
-  ProviderEventTypes, ProviderMessageRequest, ProviderMessageResponse, WalletSession, OpenWalletIntent, ConnectDetails
+  ProviderMessage,
+  ProviderTransport,
+  ProviderEventTypes,
+  ProviderMessageRequest,
+  ProviderMessageResponse,
+  WalletSession,
+  OpenWalletIntent,
+  ConnectDetails
 } from '../../types'
 
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
@@ -40,19 +46,15 @@ export function isMuxTransportTemplate(obj: any): obj is MuxTransportTemplate {
   return (
     obj &&
     typeof obj === 'object' &&
-    (
-      (obj.windowTransport && typeof obj.windowTransport === 'object') ||
+    ((obj.windowTransport && typeof obj.windowTransport === 'object') ||
       (obj.proxyTransport && typeof obj.proxyTransport === 'object') ||
       (obj.extensionTransport && typeof obj.extensionTransport === 'object') ||
-      (obj.unrealTransport && typeof obj.unrealTransport === 'object')
-    ) &&
-    (
-      // One of the transports must be enabled
-      (obj.windowTransport && obj.windowTransport.enabled) ||
+      (obj.unrealTransport && typeof obj.unrealTransport === 'object')) &&
+    // One of the transports must be enabled
+    ((obj.windowTransport && obj.windowTransport.enabled) ||
       (obj.proxyTransport && obj.proxyTransport.enabled) ||
       (obj.extensionTransport && obj.extensionTransport.enabled) ||
-      (obj.unrealTransport && obj.unrealTransport.enabled)
-    )
+      (obj.unrealTransport && obj.unrealTransport.enabled))
   )
 }
 
@@ -81,7 +83,7 @@ export class MuxMessageProvider implements ProviderTransport {
     if (template.extensionTransport?.enabled) {
       const extensionMessageProvider = new ExtensionMessageProvider(template.extensionTransport.runtime)
       muxMessageProvider.add(extensionMessageProvider)
-  
+
       // NOTE/REVIEW: see note in mux-message-provider
       //
       // We don't add the extensionMessageProvider here because we don't send requests to it anyways, we seem to
@@ -190,7 +192,7 @@ export class MuxMessageProvider implements ProviderTransport {
     if (this.provider) {
       return this.provider.emit(event, ...args)
     }
-    for (let i=0; i < this.messageProviders.length; i++) {
+    for (let i = 0; i < this.messageProviders.length; i++) {
       this.messageProviders[i].emit(event, ...args)
     }
     return true
@@ -244,5 +246,4 @@ export class MuxMessageProvider implements ProviderTransport {
     }
     throw new Error('impossible state, wallet must be opened first')
   }
-
 }

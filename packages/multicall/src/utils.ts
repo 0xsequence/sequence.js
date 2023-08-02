@@ -10,10 +10,12 @@ export async function safeSolve<T>(promise: Promise<T>, def: T | ((e: any) => T)
 }
 
 export function partition<T>(array: T[], callback: (v: T, i: number) => boolean): [T[], T[]] {
-  return array.reduce(function(result, element, i) {
+  return array.reduce(
+    function (result, element, i) {
       callback(element, i) ? result[0].push(element) : result[1].push(element)
       return result
-    }, [[] as any[], [] as any[]]
+    },
+    [[] as any[], [] as any[]]
   )
 }
 

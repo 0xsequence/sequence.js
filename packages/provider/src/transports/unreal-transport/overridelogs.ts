@@ -30,7 +30,5 @@ export function overrideLogs(side: 'dapp' | 'wallet') {
 }
 
 function stringify(things: unknown[]): string {
-  return things
-    .map(a => (typeof a === 'object' ? (a instanceof Error ? a.message : JSON.stringify(a)) : String(a)))
-    .join(' ')
+  return things.map(a => (typeof a === 'object' ? (a instanceof Error ? a.message : JSON.stringify(a)) : String(a))).join(' ')
 }

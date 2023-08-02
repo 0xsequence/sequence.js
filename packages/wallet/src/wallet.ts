@@ -1,11 +1,11 @@
-import { ethers } from "ethers"
-import { commons, v1, v2 } from "@0xsequence/core"
-import { isSignerStatusSigned, Orchestrator, Status } from "@0xsequence/signhub"
-import { Deferrable, subDigestOf } from "@0xsequence/utils"
-import { FeeQuote, Relayer, SimulateResult } from "@0xsequence/relayer"
+import { ethers } from 'ethers'
+import { commons, v1, v2 } from '@0xsequence/core'
+import { isSignerStatusSigned, Orchestrator, Status } from '@0xsequence/signhub'
+import { Deferrable, subDigestOf } from '@0xsequence/utils'
+import { FeeQuote, Relayer, SimulateResult } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
-import { resolveArrayProperties } from "./utils"
+import { resolveArrayProperties } from './utils'
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -14,14 +14,14 @@ export type WalletOptions<
 > = {
   // Sequence version configurator
   coders: {
-    config: commons.config.ConfigCoder<Y>,
+    config: commons.config.ConfigCoder<Y>
     signature: commons.signature.SignatureCoder<Y, T, Z>
   }
 
-  context: commons.context.WalletContext,
-  config: Y,
+  context: commons.context.WalletContext
+  config: Y
 
-  chainId: ethers.BigNumberish,
+  chainId: ethers.BigNumberish
   address: string
 
   orchestrator: Orchestrator
@@ -38,10 +38,7 @@ const statusToSignatureParts = (status: Status) => {
     const value = status.signers[signer]
     if (isSignerStatusSigned(value)) {
       const suffix = ethers.utils.arrayify(value.suffix)
-      const suffixed = ethers.utils.solidityPack(
-        ['bytes', 'bytes'],
-        [value.signature, suffix]
-      )
+      const suffixed = ethers.utils.solidityPack(['bytes', 'bytes'], [value.signature, suffix])
 
       parts.set(signer, { signature: suffixed, isDynamic: suffix.length !== 1 || suffix[0] !== 2 })
     }
@@ -59,9 +56,9 @@ export type WalletV1 = Wallet<v1.config.WalletConfig, v1.signature.Signature, v1
  * provided by the user. This building block is used to create higher level abstractions.
  *
  * Wallet can also be used to create Sequence wallets, but it's not recommended to use it directly
- * 
+ *
  * @notice: TODO: This class is meant to replace the one in ../wallet.ts !!!
- * 
+ *
  */
 export class Wallet<
   Y extends commons.config.Config = commons.config.Config,
@@ -84,7 +81,7 @@ export class Wallet<
   private orchestrator: Orchestrator
   private _reader?: commons.reader.Reader
 
-  constructor(options: WalletOptions<T, Y, Z>) {  
+  constructor(options: WalletOptions<T, Y, Z>) {
     if (ethers.constants.Zero.eq(options.chainId) && !options.coders.signature.supportsNoChainId) {
       throw new Error(`Sequence version ${options.config.version} doesn't support chainId 0`)
     }
@@ -114,7 +111,7 @@ export class Wallet<
 
   reader(): commons.reader.Reader {
     if (this._reader) return this._reader
-    if (!this.provider) throw new Error("Wallet status provider requires a provider")
+    if (!this.provider) throw new Error('Wallet status provider requires a provider')
     return new commons.reader.OnChainReader(this.provider)
   }
 
@@ -178,8 +175,11 @@ export class Wallet<
 
   deploy(): Promise<ethers.providers.TransactionResponse> {
     const deployTx = this.buildDeployTransaction()
-    if (!this.relayer) throw new Error("Wallet deploy requires a relayer")
-    return this.relayer.relay({ ...deployTx, chainId: this.chainId, intent: {
+    if (!this.relayer) throw new Error('Wallet deploy requires a relayer')
+    return this.relayer.relay({
+      ...deployTx,
+      chainId: this.chainId,
+      intent: {
         id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
         wallet: this.address
       }
@@ -188,22 +188,22 @@ export class Wallet<
 
   static buildDeployTransaction(
     context: commons.context.WalletContext,
-    imageHash: string,
+    imageHash: string
   ): commons.transaction.TransactionBundle {
     const factoryInterface = new ethers.utils.Interface(walletContracts.factory.abi)
 
     return {
       entrypoint: context.guestModule,
-      transactions: [{
-        to: context.factory,
-        data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'),
-          [context.mainModule, imageHash]
-        ),
-        gasLimit: 100000,
-        delegateCall: false,
-        revertOnError: true,
-        value: 0
-      }]
+      transactions: [
+        {
+          to: context.factory,
+          data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'), [context.mainModule, imageHash]),
+          gasLimit: 100000,
+          delegateCall: false,
+          revertOnError: true,
+          value: 0
+        }
+      ]
     }
   }
 
@@ -220,7 +220,7 @@ export class Wallet<
   async signDigest(
     digest: ethers.utils.BytesLike,
     request?: {
-      message?: ethers.utils.BytesLike,
+      message?: ethers.utils.BytesLike
       transactions?: commons.transaction.Transaction[]
       nested?: commons.WalletSignRequestMetadata
     }
@@ -247,7 +247,7 @@ export class Wallet<
     // and we can encode the final signature
     const subdigestBytes = ethers.utils.arrayify(subdigest)
     const signature = await this.orchestrator.signMessage({
-      candidates: this.coders.config.signersOf(this.config).map((s) => s.address),
+      candidates: this.coders.config.signersOf(this.config).map(s => s.address),
       message: subdigestBytes,
       metadata,
       callback: (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
@@ -276,7 +276,10 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async signTransactions(txs: Deferrable<commons.transaction.Transactionish>, nonce?: ethers.BigNumberish): Promise<commons.transaction.SignedTransactionBundle> {
+  async signTransactions(
+    txs: Deferrable<commons.transaction.Transactionish>,
+    nonce?: ethers.BigNumberish
+  ): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
 
@@ -297,7 +300,7 @@ export class Wallet<
     let defaultedNonce = nonce
     if (defaultedNonce === undefined) {
       defaultedNonce = await this.reader().nonce(this.address, 0)
-      if (defaultedNonce === undefined) throw new Error("Unable to determine nonce")
+      if (defaultedNonce === undefined) throw new Error('Unable to determine nonce')
     }
 
     const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
@@ -321,7 +324,7 @@ export class Wallet<
     signedBundle: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote
   ): Promise<ethers.providers.TransactionResponse> {
-    if (!this.relayer) throw new Error("Wallet sendTransaction requires a relayer")
+    if (!this.relayer) throw new Error('Wallet sendTransaction requires a relayer')
     return this.relayer.relay(signedBundle, quote)
   }
 
@@ -335,13 +338,11 @@ export class Wallet<
     return this.sendSignedTransaction(decorated, quote)
   }
 
-  async fillGasLimits(
-    txs: Deferrable<commons.transaction.Transactionish>
-  ): Promise<commons.transaction.SimulatedTransaction[]> {
+  async fillGasLimits(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SimulatedTransaction[]> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
     const relayer = this.relayer
-    if (!relayer) throw new Error("Wallet fillGasLimits requires a relayer")
+    if (!relayer) throw new Error('Wallet fillGasLimits requires a relayer')
 
     const simulations = await relayer.simulate(this.address, ...transactions)
     return transactions.map((tx, i) => {
@@ -357,6 +358,6 @@ export class Wallet<
   }
 
   signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.')
   }
 }

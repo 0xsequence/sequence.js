@@ -1,11 +1,11 @@
-import { expect } from "chai"
-import { OpenWalletIntent, ProviderEventTypes, ProviderTransport, SequenceClient, TypedEventEmitter, useBestStore } from "../src"
-import { JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, allNetworks } from "@0xsequence/network"
-import EventEmitter from "events"
-import { commons, v1, v2 } from "@0xsequence/core"
-import { ethers } from "ethers"
-import { TypedData } from "@0xsequence/utils"
-import { ExtendedTransactionRequest } from "../src/extended"
+import { expect } from 'chai'
+import { OpenWalletIntent, ProviderEventTypes, ProviderTransport, SequenceClient, TypedEventEmitter, useBestStore } from '../src'
+import { JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, allNetworks } from '@0xsequence/network'
+import EventEmitter from 'events'
+import { commons, v1, v2 } from '@0xsequence/core'
+import { ethers } from 'ethers'
+import { TypedData } from '@0xsequence/utils'
+import { ExtendedTransactionRequest } from '../src/extended'
 
 const basicMockTransport = {
   on: () => {},
@@ -14,7 +14,7 @@ const basicMockTransport = {
   openWallet: () => {},
   closeWallet: () => {},
   isOpened: () => false,
-  isConnected: () => false,
+  isConnected: () => false
 } as unknown as ProviderTransport
 
 const sampleContext = {
@@ -24,8 +24,8 @@ const sampleContext = {
     mainModule: '0x5678',
     mainModuleUpgradable: '0x213123',
     guestModule: '0x634123',
-  
-    walletCreationCode: '0x112233',
+
+    walletCreationCode: '0x112233'
   },
   [4]: {
     version: 4,
@@ -34,7 +34,7 @@ const sampleContext = {
     mainModuleUpgradable: '0x5678',
     guestModule: '0x213123',
 
-    walletCreationCode: '0x112233',
+    walletCreationCode: '0x112233'
   }
 } as commons.context.VersionedContext
 
@@ -68,7 +68,7 @@ describe('SequenceClient', () => {
     it('should emit networks event', async () => {
       let called = false
 
-      client.onNetworks((networks) => {
+      client.onNetworks(networks => {
         expect(networks).to.deep.equal(allNetworks)
         called = true
       })
@@ -80,7 +80,7 @@ describe('SequenceClient', () => {
     it('should emit accounts changed event', async () => {
       let called = false
 
-      client.onAccountsChanged((accounts) => {
+      client.onAccountsChanged(accounts => {
         expect(accounts).to.deep.equal(['0x1234', '0x5678'])
         called = true
       })
@@ -92,7 +92,7 @@ describe('SequenceClient', () => {
     it('should emit wallet context event', async () => {
       let called = false
 
-      client.onWalletContext((context) => {
+      client.onWalletContext(context => {
         expect(context).to.deep.equal(sampleContext)
         called = true
       })
@@ -107,7 +107,7 @@ describe('SequenceClient', () => {
       // and transport is never aware of it.
       let calls = 0
 
-      client.onDefaultChainIdChanged((chainId) => {
+      client.onDefaultChainIdChanged(chainId => {
         expect(chainId).to.equal(calls === 0 ? '0x02' : '0x01')
         calls++
       })
@@ -147,13 +147,13 @@ describe('SequenceClient', () => {
     it('should emit connect event', async () => {
       let callsToConnect = 0
 
-      client.onConnect((details) => {
+      client.onConnect(details => {
         callsToConnect++
         expect(details).to.deep.equal({
           connected: true,
           chainId: '0x01',
           session: {
-            accountAddress: '0x1234',
+            accountAddress: '0x1234'
           },
           email: 'test@sequence.app'
         })
@@ -163,7 +163,7 @@ describe('SequenceClient', () => {
         connected: true,
         chainId: '0x01',
         session: {
-          accountAddress: '0x1234',
+          accountAddress: '0x1234'
         },
         email: 'test@sequence.app'
       })
@@ -174,13 +174,13 @@ describe('SequenceClient', () => {
     it('should use default chain id during connect event', async () => {
       let callsToConnect = 0
 
-      client.onConnect((details) => {
+      client.onConnect(details => {
         callsToConnect++
         expect(details).to.deep.equal({
           connected: true,
           chainId: '0x02',
           session: {
-            accountAddress: '0x1234',
+            accountAddress: '0x1234'
           },
           email: 'test@sequence.app'
         })
@@ -193,7 +193,7 @@ describe('SequenceClient', () => {
         // This should be ignored
         chainId: '0x0a',
         session: {
-          accountAddress: '0x1234',
+          accountAddress: '0x1234'
         },
         email: 'test@sequence.app'
       })
@@ -204,7 +204,7 @@ describe('SequenceClient', () => {
     it('should emit disconnect event', async () => {
       let callsToDisconnect = 0
 
-      client.onDisconnect((details) => {
+      client.onDisconnect(details => {
         callsToDisconnect++
         expect(details).to.deep.equal({
           code: 9999
@@ -242,7 +242,7 @@ describe('SequenceClient', () => {
         waitUntilOpened: async () => {
           calledWaitUntilOpened++
           // delay a bit
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await new Promise(resolve => setTimeout(resolve, 500))
           return {
             accountAddress: ethers.Wallet.createRandom().address
           }
@@ -286,7 +286,7 @@ describe('SequenceClient', () => {
         waitUntilOpened: async () => {
           calledWaitUntilOpened++
           // delay a bit
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await new Promise(resolve => setTimeout(resolve, 500))
           return {
             accountAddress: ethers.Wallet.createRandom().address
           }
@@ -316,7 +316,7 @@ describe('SequenceClient', () => {
         ...basicMockTransport,
         closeWallet: () => {
           calledCloseWallet++
-        },
+        }
       },
       useBestStore(),
       2
@@ -335,7 +335,7 @@ describe('SequenceClient', () => {
         isOpened: () => {
           calledIsOpened++
           return calledIsOpened === 1
-        },
+        }
       },
       useBestStore(),
       2
@@ -434,7 +434,7 @@ describe('SequenceClient', () => {
         waitUntilConnected: async () => {
           throw new Error('Failed to connect')
         },
-        isOpened: () => true,
+        isOpened: () => true
       },
       useBestStore(),
       2
@@ -460,7 +460,7 @@ describe('SequenceClient', () => {
         waitUntilConnected: async () => {
           return { connected: false }
         },
-        isOpened: () => true,
+        isOpened: () => true
       },
       useBestStore(),
       2
@@ -481,7 +481,7 @@ describe('SequenceClient', () => {
       { chainId: 2, req: { method: 'eth_accounts', params: [] }, res: { result: '0x12345' } },
       { chainId: 5, req: { method: 'eth_sendTransaction', params: [{ to: '0x1234' }] }, res: { result: '0x000' } },
       { chainId: 9, req: { method: 'non-standard', params: [{ a: 23123, b: true }] }, res: { result: '0x99' } }
-    ] as { chainId: number, req: JsonRpcRequest, res: JsonRpcResponse }[]
+    ] as { chainId: number; req: JsonRpcRequest; res: JsonRpcResponse }[]
 
     const client = new SequenceClient(
       {
@@ -570,10 +570,14 @@ describe('SequenceClient', () => {
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
           calledSendAsync++
           expect(request).to.deep.equal({ method: 'sequence_getNetworks' })
-          callback(undefined, { result: [{
-            chainId: 5,
-            name: 'test'
-          }] } as any)
+          callback(undefined, {
+            result: [
+              {
+                chainId: 5,
+                name: 'test'
+              }
+            ]
+          } as any)
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -586,7 +590,7 @@ describe('SequenceClient', () => {
         },
         isOpened: () => {
           return true
-        },
+        }
       },
       useBestStore(),
       2
@@ -608,10 +612,12 @@ describe('SequenceClient', () => {
     expect(calledSendAsync).to.equal(0)
 
     const result4 = await client.getNetworks(true)
-    expect(result4).to.deep.equal([{
-      chainId: 5,
-      name: 'test'
-    }])
+    expect(result4).to.deep.equal([
+      {
+        chainId: 5,
+        name: 'test'
+      }
+    ])
     // We forced a fetch
     expect(calledSendAsync).to.equal(1)
   })
@@ -671,8 +677,8 @@ describe('SequenceClient', () => {
       { eip6492: false, chainId: 2, message: '0x1234', result: '0x0000' },
       { eip6492: true, chainId: 2, message: [4, 2, 9, 1], result: '0x1111' },
       { eip6492: false, chainId: 5, message: '0x9993212', result: '0x2222' },
-      { eip6492: true, chainId: 6, message: [4, 2, 9, 1], result: '0x3333' },
-    ] as { eip6492: boolean, chainId: number, message: ethers.BytesLike, result: string }[]
+      { eip6492: true, chainId: 6, message: [4, 2, 9, 1], result: '0x3333' }
+    ] as { eip6492: boolean; chainId: number; message: ethers.BytesLike; result: string }[]
 
     const client = new SequenceClient(
       {
@@ -742,20 +748,20 @@ describe('SequenceClient', () => {
         chainId: 2,
         data: {
           domain: {
-            name: "App1",
-            version: "1",
+            name: 'App1',
+            version: '1',
             chainId: 2,
-            verifyingContract: ethers.Wallet.createRandom().address,
+            verifyingContract: ethers.Wallet.createRandom().address
           },
           types: {
             Person: [
-              { name: "name", type: "string" },
-              { name: "age", type: "uint256" }
+              { name: 'name', type: 'string' },
+              { name: 'age', type: 'uint256' }
             ]
           },
           message: {
-            name: "Alice",
-            age: "28"
+            name: 'Alice',
+            age: '28'
           }
         },
         result: '0x0000'
@@ -765,20 +771,20 @@ describe('SequenceClient', () => {
         chainId: 2,
         data: {
           domain: {
-            name: "App2",
-            version: "1.1",
+            name: 'App2',
+            version: '1.1',
             chainId: 2,
-            verifyingContract: ethers.Wallet.createRandom().address,
+            verifyingContract: ethers.Wallet.createRandom().address
           },
           types: {
             Payment: [
-              { name: "receiver", type: "address" },
-              { name: "amount", type: "uint256" }
+              { name: 'receiver', type: 'address' },
+              { name: 'amount', type: 'uint256' }
             ]
           },
           message: {
             receiver: ethers.Wallet.createRandom().address,
-            amount: "100"
+            amount: '100'
           }
         },
         result: '0x1111'
@@ -788,22 +794,22 @@ describe('SequenceClient', () => {
         chainId: 5,
         data: {
           domain: {
-            name: "App3",
-            version: "2",
+            name: 'App3',
+            version: '2',
             chainId: 5,
-            verifyingContract: ethers.Wallet.createRandom().address,
+            verifyingContract: ethers.Wallet.createRandom().address
           },
           types: {
             Agreement: [
-              { name: "firstParty", type: "address" },
-              { name: "secondParty", type: "address" },
-              { name: "terms", type: "string" }
+              { name: 'firstParty', type: 'address' },
+              { name: 'secondParty', type: 'address' },
+              { name: 'terms', type: 'string' }
             ]
           },
           message: {
             firstParty: ethers.Wallet.createRandom().address,
             secondParty: ethers.Wallet.createRandom().address,
-            terms: "Terms of the agreement here."
+            terms: 'Terms of the agreement here.'
           }
         },
         result: '0x2222'
@@ -813,20 +819,20 @@ describe('SequenceClient', () => {
         chainId: 6,
         data: {
           domain: {
-            name: "App4",
-            version: "2.1",
+            name: 'App4',
+            version: '2.1',
             chainId: 7, // This is ignored because option takes precedence
-            verifyingContract: ethers.Wallet.createRandom().address,
+            verifyingContract: ethers.Wallet.createRandom().address
           },
           types: {
             Sale: [
-              { name: "item", type: "string" },
-              { name: "price", type: "uint256" }
+              { name: 'item', type: 'string' },
+              { name: 'price', type: 'uint256' }
             ]
           },
           message: {
-            item: "Laptop",
-            price: "1500"
+            item: 'Laptop',
+            price: '1500'
           }
         },
         result: '0x3333'
@@ -836,25 +842,25 @@ describe('SequenceClient', () => {
         chainId: 99,
         data: {
           domain: {
-            name: "App4",
-            version: "2.1",
+            name: 'App4',
+            version: '2.1',
             chainId: 99,
-            verifyingContract: ethers.Wallet.createRandom().address,
+            verifyingContract: ethers.Wallet.createRandom().address
           },
           types: {
             Sale: [
-              { name: "item", type: "string" },
-              { name: "price", type: "uint256" }
+              { name: 'item', type: 'string' },
+              { name: 'price', type: 'uint256' }
             ]
           },
           message: {
-            item: "Laptop",
-            price: "1500"
+            item: 'Laptop',
+            price: '1500'
           }
         },
         result: '0x5555'
       }
-    ] as { eip6492: boolean, chainId: number, data: TypedData, result: string }[]    
+    ] as { eip6492: boolean; chainId: number; data: TypedData; result: string }[]
 
     const client = new SequenceClient(
       {
@@ -863,7 +869,7 @@ describe('SequenceClient', () => {
           const req = requests[calledSendAsync]
           calledSendAsync++
 
-          const encoded =  ethers.utils._TypedDataEncoder.getPayload(req!.data.domain, req!.data.types, req!.data.message)
+          const encoded = ethers.utils._TypedDataEncoder.getPayload(req!.data.domain, req!.data.types, req!.data.message)
 
           expect(request).to.deep.equal({
             method: req?.eip6492 ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4',
@@ -921,34 +927,53 @@ describe('SequenceClient', () => {
     let calledSendAsync = 0
 
     const requests = [
-      { chainId: 2, tx: {
-        to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-        value: ethers.utils.parseEther('1.0'),
-        auxiliary: [],
-      }, result: '0x0000' },
-      { chainId: 2, tx: {
-        to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
-        value: 0,
-        gasLimit: 90000,
-        data: '0x8fe62083b9bc53178597a5a6bf55a565f1889b177607a3713bd1299aa2d4eac5458b279c87b7f85eb4e8',
-        auxiliary: [],
-      }, result: '0x1111' },
-      { chainId: 5, tx: {
-        to: '0xf0B654137245894CAb26e56230403651B053D2Dd',
-        auxiliary: [],
-      }, result: '0x2222' },
-      { chainId: 6, tx: {
-        to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-        value: ethers.utils.parseEther('1.0'),
-        auxiliary: [{
+      {
+        chainId: 2,
+        tx: {
+          to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
+          value: ethers.utils.parseEther('1.0'),
+          auxiliary: []
+        },
+        result: '0x0000'
+      },
+      {
+        chainId: 2,
+        tx: {
           to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
-          data: '0xefc57b05025168af33d34948ddbad8bd32a2eb8857468aa492ef94de07451c4b3423080f028edebab979',
-        }, {
+          value: 0,
+          gasLimit: 90000,
+          data: '0x8fe62083b9bc53178597a5a6bf55a565f1889b177607a3713bd1299aa2d4eac5458b279c87b7f85eb4e8',
+          auxiliary: []
+        },
+        result: '0x1111'
+      },
+      {
+        chainId: 5,
+        tx: {
           to: '0xf0B654137245894CAb26e56230403651B053D2Dd',
-          value: 1,
-        }],
-      }, result: '0x3333' },
-    ] as { chainId: number, tx: ExtendedTransactionRequest, result: string }[]
+          auxiliary: []
+        },
+        result: '0x2222'
+      },
+      {
+        chainId: 6,
+        tx: {
+          to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
+          value: ethers.utils.parseEther('1.0'),
+          auxiliary: [
+            {
+              to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
+              data: '0xefc57b05025168af33d34948ddbad8bd32a2eb8857468aa492ef94de07451c4b3423080f028edebab979'
+            },
+            {
+              to: '0xf0B654137245894CAb26e56230403651B053D2Dd',
+              value: 1
+            }
+          ]
+        },
+        result: '0x3333'
+      }
+    ] as { chainId: number; tx: ExtendedTransactionRequest; result: string }[]
 
     const client = new SequenceClient(
       {
@@ -983,17 +1008,20 @@ describe('SequenceClient', () => {
 
     const result2 = await client.sendTransaction({
       to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-      value: ethers.utils.parseEther('1.0'),
+      value: ethers.utils.parseEther('1.0')
     })
-  
+
     expect(result2).to.equal('0x0000')
 
-    const result3 = await client.sendTransaction({
-      to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
-      value: 0,
-      data: '0x8fe62083b9bc53178597a5a6bf55a565f1889b177607a3713bd1299aa2d4eac5458b279c87b7f85eb4e8',
-      gasLimit: 90000,
-    }, { chainId: 2 })
+    const result3 = await client.sendTransaction(
+      {
+        to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
+        value: 0,
+        data: '0x8fe62083b9bc53178597a5a6bf55a565f1889b177607a3713bd1299aa2d4eac5458b279c87b7f85eb4e8',
+        gasLimit: 90000
+      },
+      { chainId: 2 }
+    )
 
     expect(result3).to.equal('0x1111')
 
@@ -1005,16 +1033,23 @@ describe('SequenceClient', () => {
 
     expect(result4).to.equal('0x2222')
 
-    const result5 = await client.sendTransaction([{
-      to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-      value: ethers.utils.parseEther('1.0'),
-    }, {
-      to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
-      data: '0xefc57b05025168af33d34948ddbad8bd32a2eb8857468aa492ef94de07451c4b3423080f028edebab979'
-    }, {
-      to: '0xf0B654137245894CAb26e56230403651B053D2Dd',
-      value: 1,
-    }], { chainId: 6 })
+    const result5 = await client.sendTransaction(
+      [
+        {
+          to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
+          value: ethers.utils.parseEther('1.0')
+        },
+        {
+          to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
+          data: '0xefc57b05025168af33d34948ddbad8bd32a2eb8857468aa492ef94de07451c4b3423080f028edebab979'
+        },
+        {
+          to: '0xf0B654137245894CAb26e56230403651B053D2Dd',
+          value: 1
+        }
+      ],
+      { chainId: 6 }
+    )
 
     expect(result5).to.equal('0x3333')
 
@@ -1049,34 +1084,45 @@ describe('SequenceClient', () => {
 
     const results = [
       {
-        chainId: 2, result: v2.config.ConfigCoder.fromSimple({
-          threshold: 2, checkpoint: 0, signers: [
+        chainId: 2,
+        result: v2.config.ConfigCoder.fromSimple({
+          threshold: 2,
+          checkpoint: 0,
+          signers: [
             { weight: 1, address: ethers.Wallet.createRandom().address },
-            { weight: 1, address: ethers.Wallet.createRandom().address },
+            { weight: 1, address: ethers.Wallet.createRandom().address }
           ]
         })
-      }, {
-        chainId: 2, result: v2.config.ConfigCoder.fromSimple({
-          threshold: 1, checkpoint: 10, signers: [
-            { weight: 1, address: ethers.Wallet.createRandom().address },
-          ]
+      },
+      {
+        chainId: 2,
+        result: v2.config.ConfigCoder.fromSimple({
+          threshold: 1,
+          checkpoint: 10,
+          signers: [{ weight: 1, address: ethers.Wallet.createRandom().address }]
         })
-      }, {
-        chainId: 5, result: v1.config.ConfigCoder.fromSimple({
-          threshold: 1, checkpoint: 0, signers: [
+      },
+      {
+        chainId: 5,
+        result: v1.config.ConfigCoder.fromSimple({
+          threshold: 1,
+          checkpoint: 0,
+          signers: [
             { weight: 3, address: ethers.Wallet.createRandom().address },
             { weight: 2, address: ethers.Wallet.createRandom().address },
-            { weight: 3, address: ethers.Wallet.createRandom().address },
+            { weight: 3, address: ethers.Wallet.createRandom().address }
           ]
         })
-      }, {
-        chainId: 6, result: v1.config.ConfigCoder.fromSimple({
-          threshold: 1, checkpoint: 0, signers: [
-            { weight: 1, address: ethers.Wallet.createRandom().address },
-          ]
+      },
+      {
+        chainId: 6,
+        result: v1.config.ConfigCoder.fromSimple({
+          threshold: 1,
+          checkpoint: 0,
+          signers: [{ weight: 1, address: ethers.Wallet.createRandom().address }]
         })
       }
-    ] as { chainId: number, result: commons.config.Config }[]
+    ] as { chainId: number; result: commons.config.Config }[]
 
     const client = new SequenceClient(
       {
@@ -1154,15 +1200,15 @@ describe('SequenceClient', () => {
       const client2 = new SequenceClient(basicMockTransport, store, 2)
 
       let called1 = 0
-      client1.onDefaultChainIdChanged((chainId) => {
+      client1.onDefaultChainIdChanged(chainId => {
         called1++
-        expect(chainId).to.equal("0x0a")
+        expect(chainId).to.equal('0x0a')
       })
 
       let called2 = 0
-      client2.onDefaultChainIdChanged((chainId) => {
+      client2.onDefaultChainIdChanged(chainId => {
         called2++
-        expect(chainId).to.equal("0x0a")
+        expect(chainId).to.equal('0x0a')
       })
 
       client1.setDefaultChainId(10)

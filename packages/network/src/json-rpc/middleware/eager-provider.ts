@@ -8,13 +8,12 @@ import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcRes
 // communicating to a specific network provider.
 
 export type EagerProviderOptions = {
-  accountAddress?: string,
-  chainId?: number,
+  accountAddress?: string
+  chainId?: number
   walletContext?: commons.context.VersionedContext
 }
 
 export class EagerProvider implements JsonRpcMiddlewareHandler {
-
   readonly options: EagerProviderOptions
 
   constructor(options: EagerProviderOptions) {
@@ -23,7 +22,6 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
     return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-
       const { id, method } = request
 
       switch (method) {
@@ -59,8 +57,6 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
       }
 
       next(request, callback, chainId)
-
     }
   }
-
 }

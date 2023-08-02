@@ -137,11 +137,11 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (ws) => {
+      selectWallet: async ws => {
         expect(ws.length).to.equal(0)
         return undefined
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     expect(session.account.address).to.not.equal(ethers.constants.AddressZero)
@@ -173,11 +173,11 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (ws) => {
+      selectWallet: async ws => {
         expect(ws.length).to.equal(0)
         return undefined
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     const dump = await session.dump()
@@ -185,7 +185,7 @@ describe('Wallet integration', function () {
     const session2 = await Session.load({
       settings: simpleSettings,
       dump,
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     await session.account.sendTransaction({ to: referenceSigner.address }, networks[0].chainId)
@@ -205,8 +205,8 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (ws) => ws[0] ?? undefined,
-      editConfigOnMigration: (config) => config
+      selectWallet: async ws => ws[0] ?? undefined,
+      editConfigOnMigration: config => config
     })
 
     const newSigner = randomWallet('Should open an existing session 2')
@@ -218,19 +218,19 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (ws) => {
+      selectWallet: async ws => {
         expect(ws.length).to.equal(1)
         return ws[0]
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
-    const newConfig = await session2.account.status(networks[0].chainId).then((s) => s.config) as v2.config.WalletConfig
+    const newConfig = (await session2.account.status(networks[0].chainId).then(s => s.config)) as v2.config.WalletConfig
 
     expect(session2.account.address).to.equal(session.account.address)
     expect(ethers.BigNumber.from(newConfig.threshold)).to.deep.equal(ethers.BigNumber.from(2))
 
-    const newSigners = v2.config.signersOf(newConfig.tree).map((s) => s.address)
+    const newSigners = v2.config.signersOf(newConfig.tree).map(s => s.address)
     expect(newSigners.length).to.equal(2)
     expect(newSigners).to.include(newSigner.address)
     expect(newSigners).to.include(referenceSigner.address)
@@ -251,23 +251,26 @@ describe('Wallet integration', function () {
         name: 'Test'
       },
       selectWallet: async () => undefined,
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     const newSigner = randomWallet('Should create a new account if selectWallet returns undefined 2')
     const newSession = await Session.open({
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
-      addSigners: [{ address: referenceSigner.address, weight: 1, }, { address: newSigner.address, weight: 1 }],
+      addSigners: [
+        { address: referenceSigner.address, weight: 1 },
+        { address: newSigner.address, weight: 1 }
+      ],
       threshold: 1,
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (wallets) => {
+      selectWallet: async wallets => {
         expect(wallets.length).to.equal(1)
         return undefined
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     expect(newSession.account.address).to.not.equal(oldSession.account.address)
@@ -286,7 +289,7 @@ describe('Wallet integration', function () {
         name: 'Test'
       },
       selectWallet: async () => undefined,
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     const oldSession2 = await Session.open({
@@ -298,7 +301,7 @@ describe('Wallet integration', function () {
         name: 'Test'
       },
       selectWallet: async () => undefined,
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     const newSigner = randomWallet('Should select between two wallets using selectWallet 2')
@@ -310,13 +313,13 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (wallets) => {
+      selectWallet: async wallets => {
         expect(wallets.length).to.equal(2)
         expect(wallets).to.include(oldSession1.account.address)
         expect(wallets).to.include(oldSession2.account.address)
         return oldSession1.account.address
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     expect(newSession1.account.address).to.equal(oldSession1.account.address)
@@ -329,13 +332,13 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (wallets) => {
+      selectWallet: async wallets => {
         expect(wallets.length).to.equal(2)
         expect(wallets).to.include(oldSession1.account.address)
         expect(wallets).to.include(oldSession2.account.address)
         return oldSession2.account.address
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     expect(newSession2.account.address).to.equal(oldSession2.account.address)
@@ -352,17 +355,22 @@ describe('Wallet integration', function () {
     const session = await Session.open({
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
-      addSigners: [{
-        address: referenceSigner.address, weight: 1,
-      }, {
-        address: signer1.address, weight: 1
-      }],
+      addSigners: [
+        {
+          address: referenceSigner.address,
+          weight: 1
+        },
+        {
+          address: signer1.address,
+          weight: 1
+        }
+      ],
       threshold: 2,
       metadata: {
         name: 'Test'
       },
       selectWallet: async () => undefined,
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     await session.account.sendTransaction([], networks[0].chainId)
@@ -377,11 +385,11 @@ describe('Wallet integration', function () {
       metadata: {
         name: 'Test'
       },
-      selectWallet: async (wallets) => {
+      selectWallet: async wallets => {
         expect(wallets.length).to.equal(1)
         return wallets[0]
       },
-      editConfigOnMigration: (config) => config
+      editConfigOnMigration: config => config
     })
 
     expect(newSession.account.address).to.equal(session.account.address)
@@ -406,11 +414,13 @@ describe('Wallet integration', function () {
         contexts: { 1: contexts[1] },
         orchestrator,
         networks,
-        migrations: { 0: {
-          version: 1,
-          configCoder: v1.config.ConfigCoder,
-          signatureCoder: v1.signature.SignatureCoder,
-        } as any}
+        migrations: {
+          0: {
+            version: 1,
+            configCoder: v1.config.ConfigCoder,
+            signatureCoder: v1.signature.SignatureCoder
+          } as any
+        }
       })
 
       await ogAccount.publishWitness()
@@ -418,10 +428,10 @@ describe('Wallet integration', function () {
       v1SessionDump = {
         config: {
           threshold: 1,
-          signers: [{ address: referenceSigner.address, weight: 1 }],
+          signers: [{ address: referenceSigner.address, weight: 1 }]
         },
         metadata: {
-          name: 'Test',
+          name: 'Test'
         }
       }
     })
@@ -438,11 +448,11 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (wallets) => {
+        selectWallet: async wallets => {
           expect(wallets.length).to.equal(1)
           return wallets[0]
         },
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       expect(newSession.account.address).to.equal(ogAccount.address)
@@ -457,7 +467,7 @@ describe('Wallet integration', function () {
       const newSession = await Session.load({
         settings: simpleSettings,
         dump: v1SessionDump,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       expect(newSession.account.address).to.equal(ogAccount.address)
@@ -510,11 +520,11 @@ describe('Wallet integration', function () {
           metadata: {
             name: 'Test'
           },
-          selectWallet: async (wallets) => {
+          selectWallet: async wallets => {
             expect(wallets.length).to.equal(1)
             return wallets[0]
           },
-          editConfigOnMigration: (config) => config
+          editConfigOnMigration: config => config
         })
 
         expect(newSession.account.address).to.equal(ogAccount.address)
@@ -530,7 +540,7 @@ describe('Wallet integration', function () {
         const newSession = await Session.load({
           settings: simpleSettings,
           dump: v1SessionDump,
-          editConfigOnMigration: (config) => config
+          editConfigOnMigration: config => config
         })
 
         expect(newSession.account.address).to.equal(ogAccount.address)
@@ -640,7 +650,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await session.auth()
@@ -662,7 +672,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       const newSigner = randomWallet('Should get JWT after updating session 2')
@@ -674,8 +684,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0],
-        editConfigOnMigration: (config) => config
+        selectWallet: async ws => ws[0],
+        editConfigOnMigration: config => config
       })
 
       await session.auth()
@@ -699,7 +709,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await session._initialAuthRequest
@@ -725,7 +735,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await expect(session._initialAuthRequest).to.be.rejected
@@ -736,18 +746,16 @@ describe('Wallet integration', function () {
       session = await Session.open({
         settings,
         referenceSigner: referenceSigner.address,
-        addSigners: [
-          { address: newSigner.address, weight: 1 }
-        ],
+        addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => {
+        selectWallet: async ws => {
           expect(ws.length).to.equal(1)
           return ws[0]
         },
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await session._initialAuthRequest
@@ -771,7 +779,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       const api = await session.getAPIClient()
@@ -803,7 +811,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       const newSigner = randomWallet('Should get API with lazy JWT during session opening 2')
@@ -812,15 +820,13 @@ describe('Wallet integration', function () {
       const session = await Session.open({
         settings,
         referenceSigner: referenceSigner.address,
-        addSigners: [
-          { address: newSigner.address, weight: 1 }
-        ],
+        addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0],
-        editConfigOnMigration: (config) => config
+        selectWallet: async ws => ws[0],
+        editConfigOnMigration: config => config
       })
 
       const api = await session.getAPIClient()
@@ -851,7 +857,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       let calledCallback = 0
@@ -877,7 +883,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       const newSigner = randomWallet('Should call callbacks on JWT token (on open only once) 2')
@@ -894,8 +900,8 @@ describe('Wallet integration', function () {
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0],
-        editConfigOnMigration: (config) => config
+        selectWallet: async ws => ws[0],
+        editConfigOnMigration: config => config
       })
 
       let calledCallback = 0
@@ -920,7 +926,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       alwaysFail = true
@@ -944,7 +950,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       const newSigner = randomWallet('Should get API with JWT already present 2')
@@ -953,15 +959,13 @@ describe('Wallet integration', function () {
       const session = await Session.open({
         settings,
         referenceSigner: referenceSigner.address,
-        addSigners: [
-          { address: newSigner.address, weight: 1 }
-        ],
+        addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
         metadata: {
           name: 'Test'
         },
-        selectWallet: async (ws) => ws[0],
-        editConfigOnMigration: (config) => config
+        selectWallet: async ws => ws[0],
+        editConfigOnMigration: config => config
       })
 
       await session._initialAuthRequest
@@ -997,7 +1001,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await expect(session._initialAuthRequest).to.be.rejected
@@ -1025,7 +1029,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       const apiPromise = session.getAPIClient()
@@ -1049,7 +1053,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await expect(session.auth()).to.be.rejected
@@ -1073,7 +1077,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       // 1 signing request is made to publish signers
@@ -1112,7 +1116,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       // 1 signing request is made to publish signers
@@ -1146,7 +1150,7 @@ describe('Wallet integration', function () {
           name: 'Test'
         },
         selectWallet: async () => undefined,
-        editConfigOnMigration: (config) => config
+        editConfigOnMigration: config => config
       })
 
       await session._initialAuthRequest
@@ -1197,7 +1201,7 @@ describe('Wallet integration', function () {
             expiration: 240
           },
           selectWallet: async () => undefined,
-          editConfigOnMigration: (config) => config
+          editConfigOnMigration: config => config
         })
 
         await session._initialAuthRequest
@@ -1236,7 +1240,7 @@ describe('Wallet integration', function () {
             expiration: 1
           },
           selectWallet: async () => undefined,
-          editConfigOnMigration: (config) => config
+          editConfigOnMigration: config => config
         })
 
         await session._initialAuthRequest
@@ -1268,7 +1272,7 @@ describe('Wallet integration', function () {
       const proof = new Proof({ address: account.address })
       proof.claims.app = 'Should validate an ETHAuth signature by an undeployed wallet'
       proof.claims.iat = Math.floor(now() / 1000) // seconds since epoch, or better yet, proof.setIssuedAtNow()
-      proof.claims.exp = proof.claims.iat + 3600  // seconds since epoch, or better yet, proof.setExpiryIn(3600)
+      proof.claims.exp = proof.claims.iat + 3600 // seconds since epoch, or better yet, proof.setExpiryIn(3600)
 
       // create an EIP-6492-compatible ETHAuth proof signature of the proof's message digest
       proof.signature = await account.signDigest(proof.messageDigest(), ethnode.chainId!, true, 'eip6492')

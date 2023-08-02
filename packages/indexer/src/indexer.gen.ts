@@ -6,18 +6,17 @@
 // webrpc-gen -schema=indexer.ridl -target=typescript -client -out=./clients/indexer.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "3254a537c563d6b612b7ab5365c305664abb5951"
+export const WebRPCSchemaHash = '3254a537c563d6b612b7ab5365c305664abb5951'
 
 //
 // Types
 //
-
 
 export interface ContractInfo {
   chainId: number
@@ -30,7 +29,6 @@ export interface ContractInfo {
   deployed: boolean
   bytecodeHash: string
   extensions: ContractInfoExtensions
-  
 }
 
 export interface ContractInfoExtensions {
@@ -49,14 +47,14 @@ export interface TokenMetadata {
   description: string
   image: string
   decimals: number
-  properties: {[key: string]: any}
+  properties: { [key: string]: any }
   video: string
   audio: string
   image_data: string
   external_url: string
   background_color: string
   animation_url: string
-  attributes: Array<{[key: string]: any}>
+  attributes: Array<{ [key: string]: any }>
 }
 export enum ContractType {
   UNKNOWN = 'UNKNOWN',
@@ -173,7 +171,7 @@ export interface TokenBalance {
   blockHash: string
   blockNumber: number
   chainId: number
-  
+
   contractInfo?: ContractInfo
   tokenMetadata?: TokenMetadata
 }
@@ -223,7 +221,7 @@ export interface TxnTransfer {
   amounts: Array<string>
   logIndex: number
   contractInfo?: ContractInfo
-  tokenMetadata?: {[key: string]: TokenMetadata}
+  tokenMetadata?: { [key: string]: TokenMetadata }
 }
 
 export interface TransactionHistoryFilter {
@@ -297,39 +295,38 @@ export interface Indexer {
   getTransactionHistory(args: GetTransactionHistoryArgs, headers?: object): Promise<GetTransactionHistoryReturn>
   syncBalance(args: SyncBalanceArgs, headers?: object): Promise<SyncBalanceReturn>
   fetchTransactionReceipt(args: FetchTransactionReceiptArgs, headers?: object): Promise<FetchTransactionReceiptReturn>
-  fetchTransactionReceiptWithFilter(args: FetchTransactionReceiptWithFilterArgs, headers?: object): Promise<FetchTransactionReceiptWithFilterReturn>
+  fetchTransactionReceiptWithFilter(
+    args: FetchTransactionReceiptWithFilterArgs,
+    headers?: object
+  ): Promise<FetchTransactionReceiptWithFilterReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface GetChainIDArgs {
-}
+export interface GetChainIDArgs {}
 
 export interface GetChainIDReturn {
-  chainID: number  
+  chainID: number
 }
 export interface GetEtherBalanceArgs {
   accountAddress?: string
 }
 
 export interface GetEtherBalanceReturn {
-  balance: EtherBalance  
+  balance: EtherBalance
 }
 export interface GetTokenBalancesArgs {
   accountAddress?: string
@@ -341,7 +338,7 @@ export interface GetTokenBalancesArgs {
 
 export interface GetTokenBalancesReturn {
   page: Page
-  balances: Array<TokenBalance>  
+  balances: Array<TokenBalance>
 }
 export interface GetTokenSuppliesArgs {
   contractAddress: string
@@ -352,15 +349,15 @@ export interface GetTokenSuppliesArgs {
 export interface GetTokenSuppliesReturn {
   page: Page
   contractType: ContractType
-  tokenIDs: Array<TokenSupply>  
+  tokenIDs: Array<TokenSupply>
 }
 export interface GetTokenSuppliesMapArgs {
-  tokenMap: {[key: string]: Array<string>}
+  tokenMap: { [key: string]: Array<string> }
   includeMetadata?: boolean
 }
 
 export interface GetTokenSuppliesMapReturn {
-  supplies: {[key: string]: Array<TokenSupply>}  
+  supplies: { [key: string]: Array<TokenSupply> }
 }
 export interface GetBalanceUpdatesArgs {
   contractAddress: string
@@ -371,7 +368,7 @@ export interface GetBalanceUpdatesArgs {
 
 export interface GetBalanceUpdatesReturn {
   page: Page
-  balances: Array<TokenBalance>  
+  balances: Array<TokenBalance>
 }
 export interface GetTransactionHistoryArgs {
   filter: TransactionHistoryFilter
@@ -381,7 +378,7 @@ export interface GetTransactionHistoryArgs {
 
 export interface GetTransactionHistoryReturn {
   page: Page
-  transactions: Array<Transaction>  
+  transactions: Array<Transaction>
 }
 export interface SyncBalanceArgs {
   accountAddress: string
@@ -389,15 +386,14 @@ export interface SyncBalanceArgs {
   tokenID?: string
 }
 
-export interface SyncBalanceReturn {  
-}
+export interface SyncBalanceReturn {}
 export interface FetchTransactionReceiptArgs {
   txnHash: string
   maxBlockWait?: number
 }
 
 export interface FetchTransactionReceiptReturn {
-  receipt: TransactionReceipt  
+  receipt: TransactionReceipt
 }
 export interface FetchTransactionReceiptWithFilterArgs {
   filter: Filter
@@ -405,11 +401,9 @@ export interface FetchTransactionReceiptWithFilterArgs {
 }
 
 export interface FetchTransactionReceiptWithFilterReturn {
-  receipt: TransactionReceipt  
+  receipt: TransactionReceipt
 }
 
-
-  
 //
 // Client
 //
@@ -426,178 +420,148 @@ export class Indexer implements Indexer {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   version = (headers?: object): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          version: <Version>(_data.version)
+          version: <Version>_data.version
         }
       })
     })
   }
-  
+
   runtimeStatus = (headers?: object): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <RuntimeStatus>(_data.status)
+          status: <RuntimeStatus>_data.status
         }
       })
     })
   }
-  
+
   getChainID = (headers?: object): Promise<GetChainIDReturn> => {
-    return this.fetch(
-      this.url('GetChainID'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('GetChainID'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          chainID: <number>(_data.chainID)
+          chainID: <number>_data.chainID
         }
       })
     })
   }
-  
+
   getEtherBalance = (args: GetEtherBalanceArgs, headers?: object): Promise<GetEtherBalanceReturn> => {
-    return this.fetch(
-      this.url('GetEtherBalance'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetEtherBalance'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          balance: <EtherBalance>(_data.balance)
+          balance: <EtherBalance>_data.balance
         }
       })
     })
   }
-  
+
   getTokenBalances = (args: GetTokenBalancesArgs, headers?: object): Promise<GetTokenBalancesReturn> => {
-    return this.fetch(
-      this.url('GetTokenBalances'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetTokenBalances'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          balances: <Array<TokenBalance>>(_data.balances)
+          page: <Page>_data.page,
+          balances: <Array<TokenBalance>>_data.balances
         }
       })
     })
   }
-  
+
   getTokenSupplies = (args: GetTokenSuppliesArgs, headers?: object): Promise<GetTokenSuppliesReturn> => {
-    return this.fetch(
-      this.url('GetTokenSupplies'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetTokenSupplies'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          contractType: <ContractType>(_data.contractType), 
-          tokenIDs: <Array<TokenSupply>>(_data.tokenIDs)
+          page: <Page>_data.page,
+          contractType: <ContractType>_data.contractType,
+          tokenIDs: <Array<TokenSupply>>_data.tokenIDs
         }
       })
     })
   }
-  
+
   getTokenSuppliesMap = (args: GetTokenSuppliesMapArgs, headers?: object): Promise<GetTokenSuppliesMapReturn> => {
-    return this.fetch(
-      this.url('GetTokenSuppliesMap'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetTokenSuppliesMap'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          supplies: <{[key: string]: Array<TokenSupply>}>(_data.supplies)
+          supplies: <{ [key: string]: Array<TokenSupply> }>_data.supplies
         }
       })
     })
   }
-  
+
   getBalanceUpdates = (args: GetBalanceUpdatesArgs, headers?: object): Promise<GetBalanceUpdatesReturn> => {
-    return this.fetch(
-      this.url('GetBalanceUpdates'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetBalanceUpdates'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          balances: <Array<TokenBalance>>(_data.balances)
+          page: <Page>_data.page,
+          balances: <Array<TokenBalance>>_data.balances
         }
       })
     })
   }
-  
+
   getTransactionHistory = (args: GetTransactionHistoryArgs, headers?: object): Promise<GetTransactionHistoryReturn> => {
-    return this.fetch(
-      this.url('GetTransactionHistory'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetTransactionHistory'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          transactions: <Array<Transaction>>(_data.transactions)
+          page: <Page>_data.page,
+          transactions: <Array<Transaction>>_data.transactions
         }
       })
     })
   }
-  
+
   syncBalance = (args: SyncBalanceArgs, headers?: object): Promise<SyncBalanceReturn> => {
-    return this.fetch(
-      this.url('SyncBalance'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SyncBalance'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
+
   fetchTransactionReceipt = (args: FetchTransactionReceiptArgs, headers?: object): Promise<FetchTransactionReceiptReturn> => {
-    return this.fetch(
-      this.url('FetchTransactionReceipt'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('FetchTransactionReceipt'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          receipt: <TransactionReceipt>(_data.receipt)
+          receipt: <TransactionReceipt>_data.receipt
         }
       })
     })
   }
-  
-  fetchTransactionReceiptWithFilter = (args: FetchTransactionReceiptWithFilterArgs, headers?: object): Promise<FetchTransactionReceiptWithFilterReturn> => {
-    return this.fetch(
-      this.url('FetchTransactionReceiptWithFilter'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  fetchTransactionReceiptWithFilter = (
+    args: FetchTransactionReceiptWithFilterArgs,
+    headers?: object
+  ): Promise<FetchTransactionReceiptWithFilterReturn> => {
+    return this.fetch(this.url('FetchTransactionReceiptWithFilter'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          receipt: <TransactionReceipt>(_data.receipt)
+          receipt: <TransactionReceipt>_data.receipt
         }
       })
     })
   }
-  
 }
 
-  
 export interface WebRPCError extends Error {
   code: string
   msg: string
-	status: number
+  status: number
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -613,7 +577,7 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
+    } catch (err) {
       throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
     }
     if (!res.ok) {

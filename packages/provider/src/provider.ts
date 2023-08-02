@@ -1,11 +1,10 @@
-
-import { ethers } from "ethers"
-import { SequenceClient } from "./client"
-import { ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from "@0xsequence/network"
-import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, OptionalChainIdLike, WalletSession } from "./types"
-import { commons } from "@0xsequence/core"
-import { WalletUtils } from "./utils/index"
-import { SequenceSigner, SingleNetworkSequenceSigner } from "./signer"
+import { ethers } from 'ethers'
+import { SequenceClient } from './client'
+import { ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
+import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, OptionalChainIdLike, WalletSession } from './types'
+import { commons } from '@0xsequence/core'
+import { WalletUtils } from './utils/index'
+import { SequenceSigner, SingleNetworkSequenceSigner } from './signer'
 
 export interface ISequenceProvider {
   readonly _isSequenceProvider: true
@@ -55,7 +54,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   readonly signer: SequenceSigner
 
-  constructor (
+  constructor(
     public readonly client: SequenceClient,
     private readonly providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
     public readonly networks: NetworkConfig[] = allNetworks
@@ -65,19 +64,19 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     super(client.getChainId())
 
     // Emit events as defined by EIP-1193
-    client.onConnect((details) => {
+    client.onConnect(details => {
       this.emit('connect', details)
     })
 
-    client.onDisconnect((error) => {
+    client.onDisconnect(error => {
       this.emit('disconnect', error)
     })
 
-    client.onDefaultChainIdChanged((chainId) => {
+    client.onDefaultChainIdChanged(chainId => {
       this.emit('chainChanged', chainId)
     })
 
-    client.onAccountsChanged((accounts) => {
+    client.onAccountsChanged(accounts => {
       this.emit('accountsChanged', accounts)
     })
 
@@ -164,10 +163,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return this.client.connect({ ...options, authorize: true })
   }
 
-  async openWallet(
-    path?: string,
-    intent?: OpenWalletIntent
-  ) {
+  async openWallet(path?: string, intent?: OpenWalletIntent) {
     await this.client.openWallet(path, intent)
     return true
   }
@@ -179,13 +175,13 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     if (chainId === undefined) {
       return undefined
     }
-  
+
     const resolved = findNetworkConfig(this.networks, chainId as ChainIdLike)
-  
+
     if (!resolved) {
       throw new Error(`Unsupported network ${chainId}`)
     }
-  
+
     return resolved.chainId
   }
 
@@ -216,11 +212,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     const useChainId = this.toChainId(chainId)
 
     if (!this.singleNetworkProviders[useChainId]) {
-      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(
-        this.client,
-        this.providerFor,
-        useChainId
-      )
+      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(this.client, this.providerFor, useChainId)
     }
 
     return this.singleNetworkProviders[useChainId]
@@ -282,15 +274,15 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     // Forward call to the corresponding provider
     // we use the provided chainId, or the default one provided by the client
     const provider = await this._getSubprovider()
-    const prepared = provider.prepareRequest(method, params) ?? [method, params]    
+    const prepared = provider.prepareRequest(method, params) ?? [method, params]
     return provider.send(prepared[0], prepared[1])
   }
 
-  send (method: string, params: any): Promise<any> {
+  send(method: string, params: any): Promise<any> {
     return this.perform(method, params)
   }
 
-  request (request: { method: string; params?: any[] | undefined }) {
+  request(request: { method: string; params?: any[] | undefined }) {
     return this.perform(request.method, request.params)
   }
 
@@ -312,14 +304,9 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   // but this would make the code harder to read, and it's not worth it
   // since we only have a few methods to override.
 
-  async waitForTransaction(
-    transactionHash: string,
-    confirmations?: number,
-    timeout?: number,
-    optionals?: OptionalChainIdLike
-  ) {
+  async waitForTransaction(transactionHash: string, confirmations?: number, timeout?: number, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.waitForTransaction(transactionHash, confirmations, timeout) 
+    return provider.waitForTransaction(transactionHash, confirmations, timeout)
   }
 
   async getBlockNumber(optionals?: OptionalChainIdLike) {
@@ -378,10 +365,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.call(transaction, blockTag)
   }
 
-  async estimateGas(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.estimateGas(transaction)
   }
@@ -394,18 +378,12 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.getBlock(blockHashOrBlockTag)
   }
 
-  async getTransaction(
-    transactionHash: string | Promise<string>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getTransaction(transactionHash: string | Promise<string>, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransaction(transactionHash)
   }
 
-  async getLogs(
-    filter: ethers.providers.Filter | Promise<ethers.providers.Filter>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getLogs(filter: ethers.providers.Filter | Promise<ethers.providers.Filter>, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getLogs(filter)
   }
@@ -418,7 +396,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   async getResolver(name: string) {
-    if (!await this.supportsENS()) {
+    if (!(await this.supportsENS())) {
       return null
     }
 
@@ -432,7 +410,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
       return name
     }
 
-    if (!await this.supportsENS()) {
+    if (!(await this.supportsENS())) {
       return null
     }
 
@@ -442,7 +420,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   async lookupAddress(address: string | Promise<string>) {
-    if (!await this.supportsENS()) {
+    if (!(await this.supportsENS())) {
       return null
     }
 
@@ -452,7 +430,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   async getAvatar(nameOrAddress: string) {
-    if (!await this.supportsENS()) {
+    if (!(await this.supportsENS())) {
       return null
     }
 
@@ -461,11 +439,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   static is = (provider: any): provider is SequenceProvider => {
-    return (
-      provider &&
-      typeof provider === 'object' &&
-      provider._isSequenceProvider === true
-    )
+    return provider && typeof provider === 'object' && provider._isSequenceProvider === true
   }
 }
 
@@ -477,10 +451,10 @@ function normalizeChainId(chainId: string | number | bigint | { chainId: string 
 /**
  *  This is the same provider, but it only allows a single network at a time.
  *  the network defined by the constructor is the only one that can be used.
- * 
+ *
  *  Attempting to call any method with a different network will throw an error.
  *  Attempting to change the network of this provider will throw an error.
- * 
+ *
  *  NOTICE: These networks won't support ENS unless they are the mainnet.
  */
 export class SingleNetworkSequenceProvider extends SequenceProvider {
@@ -532,7 +506,7 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
     if (this._useChainId(chainId) !== this.chainId) {
       throw new Error(`Unreachable code`)
     }
-  
+
     return this
   }
 
@@ -543,12 +517,8 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
   setDefaultChainId(_chainId: ChainIdLike): void {
     throw new Error(`This provider only supports the network ${this.chainId}; use the parent provider to switch networks.`)
   }
-  
+
   static is(cand: any): cand is SingleNetworkSequenceProvider {
-    return (
-      cand &&
-      typeof cand === 'object' &&
-      cand._isSingleNetworkSequenceProvider === true
-    )
+    return cand && typeof cand === 'object' && cand._isSingleNetworkSequenceProvider === true
   }
 }

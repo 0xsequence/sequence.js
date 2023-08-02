@@ -3,28 +3,28 @@ import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
 import { promisify, getRandomInt } from '@0xsequence/utils'
-import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandlerFunc } from "@0xsequence/network"
+import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandlerFunc } from '@0xsequence/network'
 
 export type MulticallOptions = {
   // number of calls to enqueue before calling.
-  batchSize: number,
+  batchSize: number
 
   // number of calls to batch within a time window (in milliseconds). If 0, will disable timeWindow.
-  timeWindow: number,
+  timeWindow: number
 
   // contract is the address of the Sequence MultiCallUtils smart contract where
   // the batched multicall is sent to an Ethereum node.
-  contract: string,
+  contract: string
 
   // logs details about aggregated calls
   verbose: boolean
 }
 
 type QueueEntry = {
-  request: JsonRpcRequest,
-  callback: JsonRpcResponseCallback,
-  next: JsonRpcHandlerFunc,
-  error?: boolean,
+  request: JsonRpcRequest
+  callback: JsonRpcResponseCallback
+  next: JsonRpcHandlerFunc
+  error?: boolean
   result?: JsonRpcResponseCallback
 }
 
@@ -37,13 +37,9 @@ const DefaultMulticallOptions = {
 }
 
 export class Multicall {
-  public static DefaultOptions = { ... DefaultMulticallOptions }
+  public static DefaultOptions = { ...DefaultMulticallOptions }
 
-  readonly batchableJsonRpcMethods = [
-    JsonRpcMethod.ethCall,
-    JsonRpcMethod.ethGetCode,
-    JsonRpcMethod.ethGetBalance
-  ]
+  readonly batchableJsonRpcMethods = [JsonRpcMethod.ethCall, JsonRpcMethod.ethGetCode, JsonRpcMethod.ethGetBalance]
 
   readonly multicallInterface = new ethers.utils.Interface(walletContracts.sequenceUtils.abi)
 
@@ -66,7 +62,7 @@ export class Multicall {
 
   handle = (next: JsonRpcHandlerFunc, request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
     // Schedule for batching and return
-    if (this.batchableJsonRpcMethods.find((m) => m === request.method)) {
+    if (this.batchableJsonRpcMethods.find(m => m === request.method)) {
       this.queue.push({
         request: request,
         callback: callback,
@@ -117,7 +113,7 @@ export class Multicall {
     let blockTag: BlockTag | undefined
 
     // Partition incompatible calls
-    var [items, discartItems] = partition(items, (item) => {
+    var [items, discartItems] = partition(items, item => {
       try {
         // Mixed next callbacks
         if (item.next !== next) return false
@@ -125,12 +121,8 @@ export class Multicall {
         switch (item.request.method) {
           case JsonRpcMethod.ethCall:
             // Unsupported eth_call parameters
-            if (
-              item.request.params![0].from ||
-              item.request.params![0].gasPrice ||
-              item.request.params![0].value
-            ) {
-              return false  
+            if (item.request.params![0].from || item.request.params![0].gasPrice || item.request.params![0].value) {
+              return false
             }
           case JsonRpcMethod.ethGetBalance:
           case JsonRpcMethod.ethGetCode:
@@ -155,7 +147,7 @@ export class Multicall {
     }
 
     // Aggregate all calls
-    let callParams = items.map((v) => {
+    let callParams = items.map(v => {
       try {
         switch (v.request.method) {
           case JsonRpcMethod.ethCall:
@@ -174,9 +166,9 @@ export class Multicall {
               target: this.options.contract,
               gasLimit: 0,
               value: 0,
-              data: this.multicallInterface.encodeFunctionData(
-                this.multicallInterface.getFunction('callCode'), [v.request.params![0]]
-              )
+              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callCode'), [
+                v.request.params![0]
+              ])
             }
           case JsonRpcMethod.ethGetBalance:
             return {
@@ -185,22 +177,21 @@ export class Multicall {
               target: this.options.contract,
               gasLimit: 0,
               value: 0,
-              data: this.multicallInterface.encodeFunctionData(
-                this.multicallInterface.getFunction('callBalanceOf'), [v.request.params![0]]
-              )
+              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callBalanceOf'), [
+                v.request.params![0]
+              ])
             }
           default:
             return null
-          }
-        } catch {
-          return null
         }
+      } catch {
+        return null
       }
-    )
+    })
 
     // Filter calls with enconding errors and forward items
     var [items, discartItems] = partition(items, (_, i: number) => callParams[i] !== undefined)
-    callParams = callParams.filter((c) => c)
+    callParams = callParams.filter(c => c)
 
     if (discartItems.length !== 0) {
       if (this.options.verbose) console.log('Forwarding calls on error', discartItems.length)
@@ -211,9 +202,7 @@ export class Multicall {
     // Encode multicall
     let encodedCall: string
     try {
-      encodedCall = this.multicallInterface.encodeFunctionData(
-        this.multicallInterface.getFunction('multiCall'), [callParams]
-      )
+      encodedCall = this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('multiCall'), [callParams])
     } catch {
       this.forward(items)
       return
@@ -230,20 +219,24 @@ export class Multicall {
         id: reqId!,
         jsonrpc: JsonRpcVersion!,
         method: JsonRpcMethod.ethCall!,
-        params: [{
-          to: this.options.contract!,
-          value: 0,
-          data: encodedCall!
-        }, BigNumber.isBigNumber(blockTag) ? blockTag.toNumber() : blockTag]
-      // @ts-ignore
-      }), (e) => ({
+        params: [
+          {
+            to: this.options.contract!,
+            value: 0,
+            data: encodedCall!
+          },
+          BigNumber.isBigNumber(blockTag) ? blockTag.toNumber() : blockTag
+        ]
+        // @ts-ignore
+      }),
+      e => ({
         jsonrpc: JsonRpcVersion!,
         id: reqId!,
         result: undefined,
         error: e!
       })
     )
-    
+
     // Error calling multicall
     // Forward all calls to middleware
     // @ts-ignore
@@ -297,27 +290,17 @@ export class Multicall {
 
   private forward(entries: QueueEntry[] | QueueEntry) {
     if (Array.isArray(entries)) {
-      entries.forEach((e) => e.next(e.request, e.callback))
+      entries.forEach(e => e.next(e.request, e.callback))
     } else {
       entries.next(entries.request, entries.callback)
     }
   }
 
   static isMulticall(cand: any): cand is Multicall {
-    return (
-      cand &&
-      cand.handle !== undefined &&
-      cand.conf !== undefined &&
-      Multicall.isMulticallOptions(cand.options)
-    )
+    return cand && cand.handle !== undefined && cand.conf !== undefined && Multicall.isMulticallOptions(cand.options)
   }
 
   static isMulticallOptions(cand: any): cand is MulticallOptions {
-    return (
-      cand !== undefined &&
-      cand.batchSize !== undefined &&
-      cand.timeWindow !== undefined &&
-      cand.contract !== undefined
-    )
+    return cand !== undefined && cand.batchSize !== undefined && cand.timeWindow !== undefined && cand.contract !== undefined
   }
 }

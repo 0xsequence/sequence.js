@@ -64,13 +64,15 @@ describe('Wallet integration', function () {
         const config = v2.config.ConfigCoder.fromSimple({
           threshold: 1,
           checkpoint: 0,
-          signers: [{
-            address: signer.address,
-            weight: 1
-          }],
+          signers: [
+            {
+              address: signer.address,
+              weight: 1
+            }
+          ]
         })
 
-        wallet =  Wallet.newWallet({
+        wallet = Wallet.newWallet({
           coders: v2.coders,
           context: contexts[2],
           config,
@@ -208,10 +210,12 @@ describe('Wallet integration', function () {
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 1,
             checkpoint: 0,
-            signers: [{
-              address: altSigner.address,
-              weight: 1
-            }]
+            signers: [
+              {
+                address: altSigner.address,
+                weight: 1
+              }
+            ]
           })
 
           const altWallet = Wallet.newWallet({
@@ -230,14 +234,17 @@ describe('Wallet integration', function () {
 
           await Promise.all(
             new Array(8).fill(0).map(async (_, i) => {
-              await altWallet.sendTransaction({
-                to: ethers.Wallet.createRandom().address,
-                data: ethers.utils.randomBytes(43),
-                delegateCall: false,
-                revertOnError: false,
-                gasLimit: 140000,
-                value: 0
-              }, commons.transaction.encodeNonce(i, 0))
+              await altWallet.sendTransaction(
+                {
+                  to: ethers.Wallet.createRandom().address,
+                  data: ethers.utils.randomBytes(43),
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 140000,
+                  value: 0
+                },
+                commons.transaction.encodeNonce(i, 0)
+              )
             })
           )
 
@@ -261,14 +268,17 @@ describe('Wallet integration', function () {
           // Post-txs
           await Promise.all(
             new Array(8).fill(0).map(async (_, i) => {
-              await altWallet.sendTransaction({
-                to: ethers.Wallet.createRandom().address,
-                data: ethers.utils.randomBytes(43),
-                delegateCall: false,
-                revertOnError: false,
-                gasLimit: 140000,
-                value: 0
-              }, commons.transaction.encodeNonce(i + 1000, 0))
+              await altWallet.sendTransaction(
+                {
+                  to: ethers.Wallet.createRandom().address,
+                  data: ethers.utils.randomBytes(43),
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 140000,
+                  value: 0
+                },
+                commons.transaction.encodeNonce(i + 1000, 0)
+              )
             })
           )
 
@@ -286,10 +296,12 @@ describe('Wallet integration', function () {
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 1,
             checkpoint: 0,
-            signers: [{
-              address: altSigner.address,
-              weight: 1
-            }]
+            signers: [
+              {
+                address: altSigner.address,
+                weight: 1
+              }
+            ]
           })
 
           const altWallet = Wallet.newWallet({
@@ -304,28 +316,34 @@ describe('Wallet integration', function () {
 
           await Promise.all(
             new Array(8).fill(0).map(async (_, i) => {
-              await altWallet.sendTransaction({
-                to: ethers.Wallet.createRandom().address,
-                data: ethers.utils.randomBytes(43),
-                delegateCall: false,
-                revertOnError: false,
-                gasLimit: 140000,
-                value: 0
-              }, commons.transaction.encodeNonce(i, 0))
+              await altWallet.sendTransaction(
+                {
+                  to: ethers.Wallet.createRandom().address,
+                  data: ethers.utils.randomBytes(43),
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 140000,
+                  value: 0
+                },
+                commons.transaction.encodeNonce(i, 0)
+              )
             })
           )
 
           await Promise.all(
             new Array(8).fill(0).map(async (_, i) => {
-              await altWallet.sendTransaction({
-                to: contexts[2].factory,
-                // 0xff not a valid factory method
-                data: '0xffffffffffff',
-                delegateCall: false,
-                revertOnError: false,
-                gasLimit: 140000,
-                value: 0
-              }, commons.transaction.encodeNonce(i + 1000, 0))
+              await altWallet.sendTransaction(
+                {
+                  to: contexts[2].factory,
+                  // 0xff not a valid factory method
+                  data: '0xffffffffffff',
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 140000,
+                  value: 0
+                },
+                commons.transaction.encodeNonce(i + 1000, 0)
+              )
             })
           )
 
@@ -360,10 +378,12 @@ describe('Wallet integration', function () {
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 1,
             checkpoint: 0,
-            signers: [{
-              address: altSigner.address,
-              weight: 1
-            }]
+            signers: [
+              {
+                address: altSigner.address,
+                weight: 1
+              }
+            ]
           })
 
           const altWallet = Wallet.newWallet({
@@ -378,26 +398,32 @@ describe('Wallet integration', function () {
 
           await Promise.all(
             new Array(8).fill(0).map(async (_, i) => {
-              await altWallet.sendTransaction({
-                to: ethers.Wallet.createRandom().address,
-                data: ethers.utils.randomBytes(43),
-                delegateCall: false,
-                revertOnError: false,
-                gasLimit: 140000
-              }, commons.transaction.encodeNonce(i, 0))
+              await altWallet.sendTransaction(
+                {
+                  to: ethers.Wallet.createRandom().address,
+                  data: ethers.utils.randomBytes(43),
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 140000
+                },
+                commons.transaction.encodeNonce(i, 0)
+              )
             })
           )
 
           await Promise.all(
             new Array(8).fill(0).map(async (_, i) => {
-              await altWallet.sendTransaction({
-                to: contexts[1].factory,
-                // 0xff not a valid factory method
-                data: '0xffffffffffff',
-                delegateCall: false,
-                revertOnError: false,
-                gasLimit: 140000
-              }, commons.transaction.encodeNonce(i + 1000, 0))
+              await altWallet.sendTransaction(
+                {
+                  to: contexts[1].factory,
+                  // 0xff not a valid factory method
+                  data: '0xffffffffffff',
+                  delegateCall: false,
+                  revertOnError: false,
+                  gasLimit: 140000
+                },
+                commons.transaction.encodeNonce(i + 1000, 0)
+              )
             })
           )
 
@@ -446,28 +472,34 @@ describe('Wallet integration', function () {
             // Pre-txs
             await Promise.all(
               new Array(8).fill(0).map(async (_, i) => {
-                await wallet.sendTransaction({
-                  to: ethers.Wallet.createRandom().address,
-                  data: ethers.utils.randomBytes(43),
-                  delegateCall: false,
-                  revertOnError: false,
-                  gasLimit: 140000,
-                  value: 0
-                }, commons.transaction.encodeNonce(i + 1000, 0))
+                await wallet.sendTransaction(
+                  {
+                    to: ethers.Wallet.createRandom().address,
+                    data: ethers.utils.randomBytes(43),
+                    delegateCall: false,
+                    revertOnError: false,
+                    gasLimit: 140000,
+                    value: 0
+                  },
+                  commons.transaction.encodeNonce(i + 1000, 0)
+                )
               })
             )
 
             await Promise.all(
               new Array(8).fill(0).map(async (_, i) => {
-                await wallet.sendTransaction({
-                  to: contexts[1].factory,
-                  // 0xff not a valid factory method
-                  data: '0xffffffffffff',
-                  delegateCall: false,
-                  revertOnError: false,
-                  gasLimit: 140000,
-                  value: 0
-                }, commons.transaction.encodeNonce(i + 2000, 0))
+                await wallet.sendTransaction(
+                  {
+                    to: contexts[1].factory,
+                    // 0xff not a valid factory method
+                    data: '0xffffffffffff',
+                    delegateCall: false,
+                    revertOnError: false,
+                    gasLimit: 140000,
+                    value: 0
+                  },
+                  commons.transaction.encodeNonce(i + 2000, 0)
+                )
               })
             )
 

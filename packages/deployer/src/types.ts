@@ -6,7 +6,7 @@ export interface FactoryDeployedContract {
 
 export interface ContractInstance {
   contractAlias: string
-  contract: Contract | {address: string}
+  contract: Contract | { address: string }
 }
 
 export interface ContractInfo {

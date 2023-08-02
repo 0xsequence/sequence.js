@@ -3,9 +3,7 @@ export * from '@0xsequence/provider'
 export type {
   SequenceProvider,
   ProviderConfig,
-
   WalletSignInOptions,
-
   ProviderTransport,
   WalletTransport,
   ProviderMessage,
@@ -14,11 +12,9 @@ export type {
   ProviderMessageResponseCallback,
   ProviderMessageRequestHandler,
   ProviderMessageTransport,
-
   WalletEventTypes,
   ProviderEventTypes,
   EventType,
-  
   WalletSession,
   OpenState,
   ConnectOptions,
@@ -29,6 +25,5 @@ export type {
   ProviderError,
   MessageToSign,
   ProviderRpcError,
-
   ErrSignedInRequired
 } from '@0xsequence/provider'

@@ -27,7 +27,7 @@
 //   if (!providers || providers.length === 0) {
 //     providers.push(new ethers.providers.JsonRpcProvider('http://localhost:8545'))
 //   }
-  
+
 //   // Memoize the result. Even though its universal/deterministic, caching the result
 //   // offers greater efficiency between calls
 //   if (deployWalletContextCache.length === providers.length) {
@@ -67,7 +67,6 @@
 
 //   return deployWalletContextCache[0]
 // }
-
 
 // // testWalletContext is determined by the `deployWalletContext` method above. We can use this
 // // across instances, but, we must ensure the contracts are deployed by the mock-wallet at least.

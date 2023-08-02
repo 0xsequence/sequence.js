@@ -1,5 +1,4 @@
-
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 
 export type ExtendedTransactionRequest = ethers.providers.TransactionRequest & {
   auxiliary?: ethers.providers.TransactionRequest[]
@@ -7,14 +6,14 @@ export type ExtendedTransactionRequest = ethers.providers.TransactionRequest & {
 
 export function toExtended(transactions: ethers.providers.TransactionRequest[]): ExtendedTransactionRequest {
   if (transactions.length === 0) {
-    throw new Error("No transaction provided")
+    throw new Error('No transaction provided')
   }
 
   const [first, ...rest] = transactions
 
   return {
     ...first,
-    auxiliary: rest,
+    auxiliary: rest
   }
 }
 

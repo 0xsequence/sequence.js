@@ -70,10 +70,12 @@ const main = async () => {
     config: {
       threshold: 2,
       checkpoint: 0,
-      signers: [{
-        address: owner.address,
-        weight: 2
-      }]
+      signers: [
+        {
+          address: owner.address,
+          weight: 2
+        }
+      ]
     },
     networks,
     contexts: deployedWalletContext,

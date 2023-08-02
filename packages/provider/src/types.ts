@@ -1,6 +1,13 @@
 import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
-import { ChainIdLike, JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, NetworkConfig, ProviderRpcError as NetworkProviderRpcError } from '@0xsequence/network'
+import {
+  ChainIdLike,
+  JsonRpcHandler,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  NetworkConfig,
+  ProviderRpcError as NetworkProviderRpcError
+} from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
 export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
@@ -185,7 +192,7 @@ export interface NetworkedConnectOptions extends ConnectOptions {
   /** chainId is the chainId to connect to. If not specified, the default chainId
    * will be used. This does not define a default chain id, it is only used for the connect
    * authorization signature. */
-  networkId?: string | number;
+  networkId?: string | number
 }
 
 /** Options to further customize the wallet experience. */
@@ -329,19 +336,25 @@ export interface TypedEventEmitter<Events> {
 
 type Arguments<T> = [T] extends [(...args: infer U) => any] ? U : [T] extends [void] ? [] : [T]
 
-export type OptionalChainIdLike = {
-  chainId?: ChainIdLike
-} | undefined
+export type OptionalChainIdLike =
+  | {
+      chainId?: ChainIdLike
+    }
+  | undefined
 
-export type OptionalChainId = {
-  chainId?: number
-} | undefined
+export type OptionalChainId =
+  | {
+      chainId?: number
+    }
+  | undefined
 
-export type OptionalEIP6492 = {
-  eip6492?: boolean
-} | undefined
+export type OptionalEIP6492 =
+  | {
+      eip6492?: boolean
+    }
+  | undefined
 
 // This is required by viem, it expects a provider to have an EIP-1193 compliant `request` attribute.
 export interface EIP1193Provider {
-  request: (request: { method: string, params?: Array<any> }) => Promise<any>
+  request: (request: { method: string; params?: Array<any> }) => Promise<any>
 }

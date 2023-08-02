@@ -27,7 +27,11 @@ export interface ETHAuthProof {
 
 // signAuthorization will perform an EIP712 typed-data message signing of ETHAuth domain via the provided
 // Signer and authorization options.
-export const signAuthorization = async (signer: Signer | Account, chainId: ChainIdLike, options: AuthorizationOptions): Promise<ETHAuthProof> => {
+export const signAuthorization = async (
+  signer: Signer | Account,
+  chainId: ChainIdLike,
+  options: AuthorizationOptions
+): Promise<ETHAuthProof> => {
   const address = ethers.utils.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw ErrAccountIsRequired
@@ -48,11 +52,10 @@ export const signAuthorization = async (signer: Signer | Account, chainId: Chain
 
   const chainIdNumber = toChainIdNumber(chainId)
 
-  proof.signature = await (signer instanceof Account ?
-    // Account can sign EIP-6492 signatures, so it doesn't require deploying the wallet
-    signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainIdNumber, 'eip6492') :
-    signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainIdNumber)
-  )
+  proof.signature = await (signer instanceof Account
+    ? // Account can sign EIP-6492 signatures, so it doesn't require deploying the wallet
+      signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainIdNumber, 'eip6492')
+    : signer.signTypedData(typedData.domain, typedData.types, typedData.message, chainIdNumber))
 
   const ethAuth = new ETHAuth()
   const proofString = await ethAuth.encodeProof(proof, true)

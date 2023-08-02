@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
-import { runByEIP5719, URISolver } from ".";
+import { ethers } from 'ethers'
+import { runByEIP5719, URISolver } from '.'
 
 export class CachedEIP5719 {
   constructor(
@@ -8,16 +8,15 @@ export class CachedEIP5719 {
     public window: number = 1000
   ) {}
 
-  private pending: Map<string, {
-    timestamp: number
-    promise: Promise<ethers.BytesLike>
-  }> = new Map()
+  private pending: Map<
+    string,
+    {
+      timestamp: number
+      promise: Promise<ethers.BytesLike>
+    }
+  > = new Map()
 
-  async runByEIP5719(
-    address: string,
-    digest: ethers.BytesLike,
-    signature: ethers.BytesLike
-  ): Promise<ethers.BytesLike> {
+  async runByEIP5719(address: string, digest: ethers.BytesLike, signature: ethers.BytesLike): Promise<ethers.BytesLike> {
     const key = `${address}-${digest}-${signature}`
     const now = Date.now()
 

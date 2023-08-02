@@ -42,19 +42,22 @@ describe('Account', () => {
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1) as any
 
-    networks = [{
-      chainId: 31337,
-      name: 'hardhat',
-      provider: provider1,
-      rpcUrl: "",
-      relayer: new LocalRelayer(provider1.getSigner())
-    }, {
-      chainId: 31338,
-      name: 'hardhat2',
-      provider: provider2,
-      rpcUrl: 'http://127.0.0.1:7048',
-      relayer: new LocalRelayer(provider2.getSigner())
-    }]
+    networks = [
+      {
+        chainId: 31337,
+        name: 'hardhat',
+        provider: provider1,
+        rpcUrl: '',
+        relayer: new LocalRelayer(provider1.getSigner())
+      },
+      {
+        chainId: 31338,
+        name: 'hardhat2',
+        provider: provider2,
+        rpcUrl: 'http://127.0.0.1:7048',
+        relayer: new LocalRelayer(provider2.getSigner())
+      }
+    ]
 
     signer1 = provider1.getSigner()
     signer2 = provider2.getSigner()
@@ -67,7 +70,7 @@ describe('Account', () => {
     defaultArgs = {
       contexts,
       networks,
-      tracker,
+      tracker
     }
   })
 
@@ -83,7 +86,7 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config,
-        orchestrator: new Orchestrator([signer]),
+        orchestrator: new Orchestrator([signer])
       })
 
       expect(account).to.be.instanceOf(Account)
@@ -108,7 +111,7 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config,
-        orchestrator: new Orchestrator([signer]),
+        orchestrator: new Orchestrator([signer])
       })
 
       await account.sendTransaction([], networks[0].chainId)
@@ -131,8 +134,9 @@ describe('Account', () => {
       const config = {
         threshold: 3,
         checkpoint: Math.floor(now() / 1000),
-        signers: signers.map((signer) => ({
-          address: signer.address, weight: 1
+        signers: signers.map(signer => ({
+          address: signer.address,
+          weight: 1
         }))
       }
 
@@ -140,7 +144,7 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config,
-        orchestrator: new Orchestrator(rsigners.slice(0, 4)),
+        orchestrator: new Orchestrator(rsigners.slice(0, 4))
       })
 
       await account.sendTransaction([], networks[0].chainId)
@@ -162,7 +166,7 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config,
-        orchestrator: new Orchestrator([signer]),
+        orchestrator: new Orchestrator([signer])
       })
 
       await account.doBootstrap(networks[0].chainId)
@@ -192,7 +196,7 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config: simpleConfig1,
-        orchestrator: new Orchestrator([signer]),
+        orchestrator: new Orchestrator([signer])
       })
 
       const signer2a = randomWallet('Should update account to new configuration 2')
@@ -201,18 +205,21 @@ describe('Account', () => {
       const simpleConfig2 = {
         threshold: 4,
         checkpoint: Math.floor(now() / 1000) + 1,
-        signers: [{
-          address: signer2a.address,
-          weight: 2
-        }, {
-          address: signer2b.address,
-          weight: 2
-        }]
+        signers: [
+          {
+            address: signer2a.address,
+            weight: 2
+          },
+          {
+            address: signer2b.address,
+            weight: 2
+          }
+        ]
       }
 
       const config2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
       await account.updateConfig(config2)
-  
+
       const status2 = await account.status(networks[0].chainId)
       expect(status2.fullyMigrated).to.be.true
       expect(status2.onChain.deployed).to.be.false
@@ -232,17 +239,13 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config,
-        orchestrator: new Orchestrator([signer]),
+        orchestrator: new Orchestrator([signer])
       })
 
       const msg = ethers.utils.toUtf8Bytes('Hello World')
       const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-      const valid = await account.reader(networks[0].chainId).isValidSignature(
-        account.address,
-        ethers.utils.keccak256(msg),
-        sig
-      )
+      const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -258,7 +261,7 @@ describe('Account', () => {
       const account = await Account.new({
         ...defaultArgs,
         config,
-        orchestrator: new Orchestrator([signer]),
+        orchestrator: new Orchestrator([signer])
       })
 
       const msg = ethers.utils.toUtf8Bytes('Hello World')
@@ -286,7 +289,7 @@ describe('Account', () => {
         account = await Account.new({
           ...defaultArgs,
           config: simpleConfig1,
-          orchestrator: new Orchestrator([signer1]),
+          orchestrator: new Orchestrator([signer1])
         })
 
         signer2a = randomWallet(`After upgrading ${signerIndex++}`)
@@ -294,14 +297,17 @@ describe('Account', () => {
 
         const simpleConfig2 = {
           threshold: 4,
-          checkpoint: await account.status(0).then((s) => ethers.BigNumber.from(s.checkpoint).add(1)),
-          signers: [{
-            address: signer2a.address,
-            weight: 2
-          }, {
-            address: signer2b.address,
-            weight: 2
-          }]
+          checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+          signers: [
+            {
+              address: signer2a.address,
+              weight: 2
+            },
+            {
+              address: signer2b.address,
+              weight: 2
+            }
+          ]
         }
 
         const config2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
@@ -323,7 +329,7 @@ describe('Account', () => {
         const msg = ethers.utils.toUtf8Bytes('Hello World')
         const sig = await account.signMessage(msg, networks[0].chainId)
 
-        const canOnchainValidate = await account.status(networks[0].chainId).then((s) => s.canOnchainValidate)
+        const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
         expect(canOnchainValidate).to.be.false
         await account.doBootstrap(networks[0].chainId)
 
@@ -376,7 +382,7 @@ describe('Account', () => {
           const msg = ethers.utils.toUtf8Bytes('Hello World')
           const sig = await account.signMessage(msg, networks[0].chainId)
 
-          const canOnchainValidate = await account.status(networks[0].chainId).then((s) => s.canOnchainValidate)
+          const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
           expect(canOnchainValidate).to.be.false
           await account.doBootstrap(networks[0].chainId)
 
@@ -406,17 +412,21 @@ describe('Account', () => {
 
           const simpleConfig3 = {
             threshold: 5,
-            checkpoint: await account.status(0).then((s) => ethers.BigNumber.from(s.checkpoint).add(1)),
-            signers: [{
-              address: signer3a.address,
-              weight: 2
-            }, {
-              address: signer3b.address,
-              weight: 2
-            }, {
-              address: signer3c.address,
-              weight: 1
-            }]
+            checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+            signers: [
+              {
+                address: signer3a.address,
+                weight: 2
+              },
+              {
+                address: signer3b.address,
+                weight: 2
+              },
+              {
+                address: signer3c.address,
+                weight: 1
+              }
+            ]
           }
 
           config3 = v2.config.ConfigCoder.fromSimple(simpleConfig3)
@@ -447,7 +457,7 @@ describe('Account', () => {
           const msg = ethers.utils.toUtf8Bytes('Hello World')
           const sig = await account.signMessage(msg, networks[0].chainId)
 
-          const canOnchainValidate = await account.status(networks[0].chainId).then((s) => s.canOnchainValidate)
+          const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
           expect(canOnchainValidate).to.be.false
           await account.doBootstrap(networks[0].chainId)
 
@@ -493,21 +503,25 @@ describe('Account', () => {
 
           const simpleConfig2 = {
             threshold: 6,
-            checkpoint: await account.status(0).then((s) => ethers.BigNumber.from(s.checkpoint).add(1)),
-            signers: [{
-              address: signer2a.address,
-              weight: 3
-            }, {
-              address: signer2b.address,
-              weight: 3
-            }, {
-              address: signer2c.address,
-              weight: 3
-            }]
+            checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+            signers: [
+              {
+                address: signer2a.address,
+                weight: 3
+              },
+              {
+                address: signer2b.address,
+                weight: 3
+              },
+              {
+                address: signer2c.address,
+                weight: 3
+              }
+            ]
           }
 
-          const ogOnchainImageHash = await account.status(0).then((s) => s.onChain.imageHash)
-          const imageHash1 = await account.status(0).then((s) => s.imageHash)
+          const ogOnchainImageHash = await account.status(0).then(s => s.onChain.imageHash)
+          const imageHash1 = await account.status(0).then(s => s.imageHash)
 
           const config2 = v2.config.ConfigCoder.fromSimple(simpleConfig2)
           await account.updateConfig(config2)
@@ -539,10 +553,12 @@ describe('Account', () => {
       const simpleConfig = {
         threshold: 1,
         checkpoint: 0,
-        signers: [{
-          address: signer1.address,
-          weight: 1
-        }]
+        signers: [
+          {
+            address: signer1.address,
+            weight: 1
+          }
+        ]
       }
 
       const config = v1.config.ConfigCoder.fromSimple(simpleConfig)
@@ -569,7 +585,7 @@ describe('Account', () => {
       await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
 
       // Should sign migration using the account
-      await account.signAllMigrations((c) => c)
+      await account.signAllMigrations(c => c)
 
       const status2 = await account.status(networks[0].chainId)
       expect(status2.fullyMigrated).to.be.true
@@ -614,16 +630,20 @@ describe('Account', () => {
       const simpleConfig = {
         threshold: 2,
         checkpoint: 0,
-        signers: [{
-          address: signer1.address,
-          weight: 1
-        }, {
-          address: signer2.address,
-          weight: 1
-        }, {
-          address: signer3.address,
-          weight: 1
-        }]
+        signers: [
+          {
+            address: signer1.address,
+            weight: 1
+          },
+          {
+            address: signer2.address,
+            weight: 1
+          },
+          {
+            address: signer3.address,
+            weight: 1
+          }
+        ]
       }
 
       const config = v1.config.ConfigCoder.fromSimple(simpleConfig)
@@ -676,7 +696,7 @@ describe('Account', () => {
       await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[1].chainId)).to.be.rejected
 
-      await account.signAllMigrations((c) => c)
+      await account.signAllMigrations(c => c)
 
       // Sign a transaction on network 0 and network 1, both should work
       // and should take the wallet on-chain up to speed
@@ -709,16 +729,20 @@ describe('Account', () => {
       const simpleConfig1a = {
         threshold: 3,
         checkpoint: 0,
-        signers: [{
-          address: signer1.address,
-          weight: 2
-        }, {
-          address: signer2.address,
-          weight: 2
-        }, {
-          address: signer3.address,
-          weight: 2
-        }]
+        signers: [
+          {
+            address: signer1.address,
+            weight: 2
+          },
+          {
+            address: signer2.address,
+            weight: 2
+          },
+          {
+            address: signer3.address,
+            weight: 2
+          }
+        ]
       }
 
       const config1a = v1.config.ConfigCoder.fromSimple(simpleConfig1a)
@@ -728,16 +752,20 @@ describe('Account', () => {
       const simpleConfig1b = {
         threshold: 3,
         checkpoint: 0,
-        signers: [{
-          address: signer1.address,
-          weight: 2
-        }, {
-          address: signer2.address,
-          weight: 2
-        }, {
-          address: signer4.address,
-          weight: 2
-        }]
+        signers: [
+          {
+            address: signer1.address,
+            weight: 2
+          },
+          {
+            address: signer2.address,
+            weight: 2
+          },
+          {
+            address: signer4.address,
+            weight: 2
+          }
+        ]
       }
 
       const config1b = v1.config.ConfigCoder.fromSimple(simpleConfig1b)
@@ -798,7 +826,7 @@ describe('Account', () => {
 
       // Sign all migrations should only have signers1 and 2
       // so the migration should only be available on network 1 (the one not updated)
-      await account.signAllMigrations((c) => c)
+      await account.signAllMigrations(c => c)
 
       const config2a = v2.config.ConfigCoder.fromSimple(simpleConfig1a)
       const config2b = v2.config.ConfigCoder.fromSimple(simpleConfig1b)
@@ -830,7 +858,7 @@ describe('Account', () => {
 
       // Signing another migration with signers1 and 2 should put both in sync
       account.setOrchestrator(new Orchestrator([signer1, signer2]))
-      await account.signAllMigrations((c) => c)
+      await account.signAllMigrations(c => c)
 
       await expect(account.sendTransaction([], networks[0].chainId)).to.be.fulfilled
       await expect(account.sendTransaction([], networks[1].chainId)).to.be.fulfilled
@@ -850,16 +878,20 @@ describe('Account', () => {
       const simpleConfig4 = {
         threshold: 2,
         checkpoint: 1,
-        signers: [{
-          address: signer1.address,
-          weight: 1
-        }, {
-          address: signer2.address,
-          weight: 1
-        }, {
-          address: signer4.address,
-          weight: 1
-        }]
+        signers: [
+          {
+            address: signer1.address,
+            weight: 1
+          },
+          {
+            address: signer2.address,
+            weight: 1
+          },
+          {
+            address: signer4.address,
+            weight: 1
+          }
+        ]
       }
 
       const config4 = v2.config.ConfigCoder.fromSimple(simpleConfig4)
@@ -881,19 +913,23 @@ describe('Account', () => {
       const simpleConfig1 = {
         threshold: 1,
         checkpoint: 0,
-        signers: [{
-          address: signer1.address,
-          weight: 1
-        }]
+        signers: [
+          {
+            address: signer1.address,
+            weight: 1
+          }
+        ]
       }
 
       const simpleConfig2 = {
         threshold: 1,
         checkpoint: 0,
-        signers: [{
-          address: signer2.address,
-          weight: 1
-        }]
+        signers: [
+          {
+            address: signer2.address,
+            weight: 1
+          }
+        ]
       }
 
       const config = v1.config.ConfigCoder.fromSimple(simpleConfig1)
@@ -921,7 +957,7 @@ describe('Account', () => {
       await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
 
       // Should sign migration using the account
-      await account.signAllMigrations((c) => {
+      await account.signAllMigrations(c => {
         expect(v1.config.ConfigCoder.imageHashOf(c as any)).to.equal(v1.config.ConfigCoder.imageHashOf(config))
         return configv2
       })
@@ -968,17 +1004,18 @@ describe('Account', () => {
         beforeEach(async () => {
           // Old account may be an address that's not even deployed
           const signer1 = randomWallet(
-            'Signing messages - After migrating' +
-            account?.address ?? '' // Append prev address to entropy to avoid collisions
+            'Signing messages - After migrating' + account?.address ?? '' // Append prev address to entropy to avoid collisions
           )
 
           const simpleConfig = {
             threshold: 1,
             checkpoint: 0,
-            signers: [{
-              address: signer1.address,
-              weight: 1
-            }]
+            signers: [
+              {
+                address: signer1.address,
+                weight: 1
+              }
+            ]
           }
 
           const config = v1.config.ConfigCoder.fromSimple(simpleConfig)
@@ -992,24 +1029,22 @@ describe('Account', () => {
           account = new Account({ ...defaultArgs, address, orchestrator: new Orchestrator([signer1]) })
 
           // Should sign migration using the account
-          await account.signAllMigrations((c) => c)
+          await account.signAllMigrations(c => c)
         })
 
         it('Should validate a message signed by undeployed migrated wallet', async () => {
           const msg = ethers.utils.toUtf8Bytes('I like that you are reading our tests')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
-    
-          const valid = await account.reader(networks[0].chainId).isValidSignature(
-            account.address,
-            ethers.utils.keccak256(msg),
-            sig
-          )
-    
+
+          const valid = await account
+            .reader(networks[0].chainId)
+            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+
           expect(valid).to.be.true
         })
 
         it('Should reject a message signed by undeployed migrated wallet (if set the throw)', async () => {
-          const msg = ethers.utils.toUtf8Bytes('I do not know what to write here anymore')    
+          const msg = ethers.utils.toUtf8Bytes('I do not know what to write here anymore')
           const sig = account.signMessage(msg, networks[0].chainId, 'throw')
 
           await expect(sig).to.be.rejected
@@ -1019,12 +1054,10 @@ describe('Account', () => {
           const msg = ethers.utils.toUtf8Bytes('Sending a hug')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
 
-          const valid = await account.reader(networks[0].chainId).isValidSignature(
-            account.address,
-            ethers.utils.keccak256(msg),
-            sig
-          )
-    
+          const valid = await account
+            .reader(networks[0].chainId)
+            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+
           expect(valid).to.be.false
         })
 
@@ -1032,21 +1065,18 @@ describe('Account', () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
           await signer1.sendTransaction({
             to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx),
+            data: commons.transaction.encodeBundleExecData(deployTx)
           })
-  
-          expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
-            .to.not.equal(0)
+
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
 
           const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
-    
-          const valid = await account.reader(networks[0].chainId).isValidSignature(
-            account.address,
-            ethers.utils.keccak256(msg),
-            sig
-          )
-    
+
+          const valid = await account
+            .reader(networks[0].chainId)
+            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+
           expect(valid).to.be.true
         })
 
@@ -1054,11 +1084,10 @@ describe('Account', () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
           await signer1.sendTransaction({
             to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx),
+            data: commons.transaction.encodeBundleExecData(deployTx)
           })
-  
-          expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
-            .to.not.equal(0)
+
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
 
           const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = account.signMessage(msg, networks[0].chainId, 'throw')
@@ -1069,20 +1098,17 @@ describe('Account', () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
           await signer1.sendTransaction({
             to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx),
+            data: commons.transaction.encodeBundleExecData(deployTx)
           })
-  
-          expect(await networks[0].provider!.getCode(account.address).then((c) => ethers.utils.arrayify(c).length))
-            .to.not.equal(0)
+
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
 
           const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
-          const valid = await account.reader(networks[0].chainId).isValidSignature(
-            account.address,
-            ethers.utils.keccak256(msg),
-            sig
-          )
-    
+          const valid = await account
+            .reader(networks[0].chainId)
+            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+
           expect(valid).to.be.false
         })
       })

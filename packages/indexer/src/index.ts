@@ -8,7 +8,7 @@ export enum SequenceIndexerServices {
 
   POLYGON = 'https://polygon-indexer.sequence.app',
   POLYGON_MUMBAI = 'https://mumbai-indexer.sequence.app',
-  
+
   POLYGON_ZKEVM = 'https://polygon-zkevm-indexer.sequence.app',
 
   ARBITRUM = 'https://arbitrum-indexer.sequence.app',
@@ -27,7 +27,10 @@ export enum SequenceIndexerServices {
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
 export class SequenceIndexerClient extends IndexerRpc {
-  constructor(hostname: string, public jwtAuth?: string) {
+  constructor(
+    hostname: string,
+    public jwtAuth?: string
+  ) {
     super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
     this.fetch = this._fetch
   }
@@ -46,7 +49,6 @@ export class SequenceIndexerClient extends IndexerRpc {
     return fetch(input, init)
   }
 }
-
 
 // const SequenceIndexerServices: { [key: string]: string } = {}
 

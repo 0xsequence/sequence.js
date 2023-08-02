@@ -1,11 +1,13 @@
 import { expect } from 'chai'
 import { base64EncodeObject, base64DecodeObject } from '@0xsequence/utils'
 
-describe('base64', function() {
-  
+describe('base64', function () {
   it('encoding, a', () => {
     const object = {
-      a: 1, b: 2, c: 'hihi', d: '1.234'
+      a: 1,
+      b: 2,
+      c: 'hihi',
+      d: '1.234'
     }
 
     const encoded = base64EncodeObject(object)
@@ -17,7 +19,10 @@ describe('base64', function() {
 
   it('encoding, b', () => {
     const object = {
-      a: 1, b: 2, c: 'hihi', d: `how do quote's "work+out"?`
+      a: 1,
+      b: 2,
+      c: 'hihi',
+      d: `how do quote's "work+out"?`
     }
 
     const encoded = base64EncodeObject(object)
@@ -25,12 +30,14 @@ describe('base64', function() {
 
     const o = base64DecodeObject(encoded)
     expect(object).to.deep.equal(o)
-
   })
 
   it('encoding, c', () => {
     const object = {
-      a: 1, b: 2, c: 'hihi', d: { nest: '123' }
+      a: 1,
+      b: 2,
+      c: 'hihi',
+      d: { nest: '123' }
     }
 
     const encoded = base64EncodeObject(object)
@@ -39,6 +46,4 @@ describe('base64', function() {
     const o = base64DecodeObject(encoded)
     expect(object).to.deep.equal(o)
   })
-
 })
-

@@ -17,7 +17,7 @@ export const tests = async () => {
   const hardhatProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
 
   const client = new SequenceClient(transportsConfig, new MemoryItemStore(), 31338)
-  const provider = new SequenceProvider(client, (chainId) => {
+  const provider = new SequenceProvider(client, chainId => {
     if (chainId === 31337) {
       return hardhatProvider
     }

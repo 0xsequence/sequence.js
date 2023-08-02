@@ -1,21 +1,32 @@
 import * as fs from 'fs'
 import { ethers, ContractFactory, ContractTransaction } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
-import { UniversalDeployer2__factory } from "./typings/contracts"
-import { EOA_UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_ADDRESS, UNIVERSAL_DEPLOYER_2_ADDRESS, UNIVERSAL_DEPLOYER_FUNDING, UNIVERSAL_DEPLOYER_TX, UNIVERSAL_DEPLOYER_2_BYTECODE } from './constants'
+import { UniversalDeployer2__factory } from './typings/contracts'
+import {
+  EOA_UNIVERSAL_DEPLOYER_ADDRESS,
+  UNIVERSAL_DEPLOYER_ADDRESS,
+  UNIVERSAL_DEPLOYER_2_ADDRESS,
+  UNIVERSAL_DEPLOYER_FUNDING,
+  UNIVERSAL_DEPLOYER_TX,
+  UNIVERSAL_DEPLOYER_2_BYTECODE
+} from './constants'
 import { ContractInstance } from './types'
 import { createLogger, Logger } from './utils/logger'
 
 let prompt: Logger
-createLogger().then(logger => prompt = logger)
+createLogger().then(logger => (prompt = logger))
 
-ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
+ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF)
 
 export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
   private signer: ethers.Signer
 
-  constructor(public networkName: string, public provider: ethers.providers.JsonRpcProvider, public signerOverride?: ethers.Signer) {
+  constructor(
+    public networkName: string,
+    public provider: ethers.providers.JsonRpcProvider,
+    public signerOverride?: ethers.Signer
+  ) {
     this.signer = signerOverride || provider.getSigner()
   }
 
@@ -27,7 +38,6 @@ export class UniversalDeployer {
     ...args: Parameters<T['deploy']>
   ): Promise<ethers.Contract> => {
     try {
-      
       // Deploy universal deployer 2 if not yet deployed on chain_id
       const universalDeployer2Code = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
       if (universalDeployer2Code === '0x') await this.deployUniversalDeployer2(txParams)
@@ -48,20 +58,19 @@ export class UniversalDeployer {
 
       if (contractCode === '0x') {
         // Deploy contract if not already deployed
-        const tx = await deployer.functions.deploy(deployTx.data!, instanceNumber, txParams) as ContractTransaction
+        const tx = (await deployer.functions.deploy(deployTx.data!, instanceNumber, txParams)) as ContractTransaction
         await tx.wait()
 
         // Verify that the deployment was successful since tx won't revert
-        const postDeployCode =  await this.provider.getCode(contractAddress)
+        const postDeployCode = await this.provider.getCode(contractAddress)
         postDeployCode === '0x' ? prompt.fail(contractAddress) : prompt.succeed()
-
       } else {
         prompt.warn(`ALREADY DEPLOYED: ${contractAlias}`)
       }
 
       const contract = factory.attach(contractAddress)
-      this.deployedInstances.push({contractAlias, contract})
-      
+      this.deployedInstances.push({ contractAlias, contract })
+
       return contract
     } catch (error) {
       throw new Error(`CONTRACT DEPLOY FAILED: ${error}`)
@@ -69,7 +78,7 @@ export class UniversalDeployer {
   }
 
   deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
-    if (await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS) < UNIVERSAL_DEPLOYER_FUNDING) {
+    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
       const tx = await this.signer.sendTransaction({
         to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
@@ -83,7 +92,7 @@ export class UniversalDeployer {
         prompt.succeed()
       }
     }
-  
+
     prompt.start('Deploying universal deployer contract')
     const tx2 = await this.provider.sendTransaction(UNIVERSAL_DEPLOYER_TX)
     // await tx2.wait()
@@ -103,7 +112,7 @@ export class UniversalDeployer {
     if (universalDeployerCode === '0x') {
       await this.deployUniversalDeployer(txParams)
     } else {
-      'ALREADY DEPLOYED'
+      ;('ALREADY DEPLOYED')
     }
 
     // NOTE: in case the getCode below fails, double check the UNIVERSAL_DEPLOYER_2_ADDRESS address
@@ -111,11 +120,11 @@ export class UniversalDeployer {
     // the UNIVERSAL_DEPLOYER_2_BYTECODE changes of the deployer -- which should never really happen.
 
     prompt.start('Deploying universal deployer 2 contract')
-    const tx = await this.signer.sendTransaction({
+    const tx = (await this.signer.sendTransaction({
       to: UNIVERSAL_DEPLOYER_ADDRESS,
       data: UNIVERSAL_DEPLOYER_2_BYTECODE,
       ...txParams
-    }) as ContractTransaction
+    })) as ContractTransaction
     await tx.wait()
 
     // const universalDeployer2CodeCheck = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
@@ -128,24 +137,28 @@ export class UniversalDeployer {
   }
 
   getDeployment = () => {
-    return this.deployedInstances.reduce((list, instance) => {
-      const { contract, contractAlias } = instance
-      list[contractAlias] = contract
-      return list
-    }, {} as {[key: string]: ethers.Contract | { address: string }})
+    return this.deployedInstances.reduce(
+      (list, instance) => {
+        const { contract, contractAlias } = instance
+        list[contractAlias] = contract
+        return list
+      },
+      {} as { [key: string]: ethers.Contract | { address: string } }
+    )
   }
 
-  getDeploymentList = () => this.deployedInstances.map(({ contract, contractAlias }) => {
+  getDeploymentList = () =>
+    this.deployedInstances.map(({ contract, contractAlias }) => {
       if (contract as ethers.Contract) {
         return {
           contractName: contractAlias,
-          address: contract.address,
+          address: contract.address
           // abi: contract.interface.abi
         }
       } else {
         return {
-          contractName: contractAlias, 
-          address: contract.address,
+          contractName: contractAlias,
+          address: contract.address
         }
       }
     })
@@ -161,17 +174,14 @@ export class UniversalDeployer {
       { flag: 'w+' }
     )
   }
-  
-  manualDeploymentRegistration = (
-    contractAlias: string,
-    address: string,
-  ) => {
+
+  manualDeploymentRegistration = (contractAlias: string, address: string) => {
     this.deployedInstances.push({
       contractAlias,
-      contract: {address: address}
+      contract: { address: address }
     })
   }
-  
+
   addressOf = async <T extends ContractFactory>(
     contractFactory: new (signer: ethers.Signer) => T,
     contractInstance: number | ethers.BigNumber,
@@ -180,18 +190,18 @@ export class UniversalDeployer {
     const factory = new contractFactory(this.signer)
     const deployTx = await factory.getDeployTransaction(...args)
     const deployData = deployTx.data
-  
-    const codeHash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(['bytes'], [deployData])
-    )
+
+    const codeHash = ethers.utils.keccak256(ethers.utils.solidityPack(['bytes'], [deployData]))
 
     const salt = ethers.utils.solidityPack(['uint256'], [contractInstance])
 
     const hash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
+      ethers.utils.solidityPack(
+        ['bytes1', 'address', 'bytes32', 'bytes32'],
+        ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash]
+      )
     )
 
     return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
   }
-
 }

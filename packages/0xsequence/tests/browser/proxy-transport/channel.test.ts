@@ -83,10 +83,12 @@ export const tests = async () => {
     config: {
       threshold: 1,
       checkpoint: 1674142220,
-      signers: [{
-        address: owner.address,
-        weight: 1
-      }]
+      signers: [
+        {
+          address: owner.address,
+          weight: 1
+        }
+      ]
     },
     networks,
     contexts,
@@ -132,7 +134,7 @@ export const tests = async () => {
   })
 
   await test('get chain id', async () => {
-    const chainIdClient  = client.getChainId()
+    const chainIdClient = client.getChainId()
     assert.equal(chainIdClient, 31337, 'chain id match')
 
     const netVersion = await client.send({ method: 'net_version' })

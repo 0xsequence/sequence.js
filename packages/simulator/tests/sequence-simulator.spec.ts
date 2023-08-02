@@ -19,7 +19,6 @@ import { context } from '@0xsequence/tests'
 import { commons, v2 } from '@0xsequence/core'
 import { Orchestrator } from '@0xsequence/signhub'
 
-
 describe('Wallet integration', function () {
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>
   let provider: ethers.providers.JsonRpcProvider
@@ -168,7 +167,7 @@ describe('Wallet integration', function () {
             relayer,
             orchestrator: new Orchestrator([
               ...EOASigners.slice(0, 2),
-              ...nestedSigners.slice(0, 1).map((s) => new SequenceOrchestratorWrapper(s))
+              ...nestedSigners.slice(0, 1).map(s => new SequenceOrchestratorWrapper(s))
             ]),
             chainId: provider.network.chainId
           })
