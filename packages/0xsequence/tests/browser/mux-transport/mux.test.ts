@@ -79,10 +79,12 @@ export const tests = async () => {
     config: {
       threshold: 1,
       checkpoint: 0,
-      signers: [{
-        address: owner.address,
-        weight: 1
-      }]
+      signers: [
+        {
+          address: owner.address,
+          weight: 1
+        }
+      ]
     },
     orchestrator: new Orchestrator([owner]),
     tracker: new trackers.local.LocalConfigTracker(provider1)
@@ -104,10 +106,14 @@ export const tests = async () => {
   //
 
   // wallet client with multiple message provider transports enabled
-  const client = new SequenceClient({
-    windowTransport: { enabled: true },
-    proxyTransport: { enabled: true, appPort: ch.app }
-  }, new MemoryItemStore(), 31337)
+  const client = new SequenceClient(
+    {
+      windowTransport: { enabled: true },
+      proxyTransport: { enabled: true, appPort: ch.app }
+    },
+    new MemoryItemStore(),
+    31337
+  )
 
   // provider + signer, by default if a chainId is not specified it will direct
   // requests to the defaultChain

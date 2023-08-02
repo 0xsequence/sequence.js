@@ -1,21 +1,21 @@
-import { commons, v1, v2 } from "@0xsequence/core"
-import { ethers } from "ethers"
+import { commons, v1, v2 } from '@0xsequence/core'
+import { ethers } from 'ethers'
 
 export type PlainNode = {
-  left: string,
+  left: string
   right: string
 }
 
 export type PlainNested = {
-  weight: string,
-  threshold: string,
+  weight: string
+  threshold: string
   tree: string
 }
 
 export type PlainV2Config = {
-  version: 2,
-  threshold: string,
-  checkpoint: string,
+  version: 2
+  threshold: string
+  checkpoint: string
   tree: string
 }
 
@@ -47,7 +47,7 @@ export interface TrackerStore {
   saveV2Node: (nodeHash: string, node: PlainNode | PlainNested | v2.config.Topology) => Promise<void>
 
   // counterfactual wallets
-  loadCounterfactualWallet: (wallet: string) => Promise<{ imageHash: string, context: commons.context.WalletContext } | undefined>
+  loadCounterfactualWallet: (wallet: string) => Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined>
   saveCounterfactualWallet: (wallet: string, imageHash: string, context: commons.context.WalletContext) => Promise<void>
 
   // payloads
@@ -60,8 +60,18 @@ export interface TrackerStore {
   saveSignatureOfSubdigest: (signer: string, subdigest: string, payload: ethers.BytesLike) => Promise<void>
 
   // migrations
-  loadMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number) => Promise<{ subdigest: string, toImageHash: string }[]>
-  saveMigrationsSubdigest: (wallet: string, fromVersion: number, toVersion: number, subdigest: string, toImageHash: string) => Promise<void>
+  loadMigrationsSubdigest: (
+    wallet: string,
+    fromVersion: number,
+    toVersion: number
+  ) => Promise<{ subdigest: string; toImageHash: string }[]>
+  saveMigrationsSubdigest: (
+    wallet: string,
+    fromVersion: number,
+    toVersion: number,
+    subdigest: string,
+    toImageHash: string
+  ) => Promise<void>
 }
 
 export * from './memoryStore'

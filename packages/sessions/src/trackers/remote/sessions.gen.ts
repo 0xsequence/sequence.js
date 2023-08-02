@@ -6,13 +6,13 @@
 // webrpc-gen -schema=sessions.ridl -target=typescript -client -out=./sessions.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.0.1"
+export const WebRPCSchemaVersion = 'v0.0.1'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "b96502864e03f0bea75f41cafaf2178946a9e3b7"
+export const WebRPCSchemaHash = 'b96502864e03f0bea75f41cafaf2178946a9e3b7'
 
 //
 // Types
@@ -76,25 +76,23 @@ export interface Sessions {
   saveMigration(args: SaveMigrationArgs, headers?: object): Promise<SaveMigrationReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
-export interface PingReturn {  
-}
+export interface PingReturn {}
 export interface ConfigArgs {
   imageHash: string
 }
 
 export interface ConfigReturn {
   version: number
-  config: any  
+  config: any
 }
 export interface WalletsArgs {
   signer: string
 }
 
 export interface WalletsReturn {
-  wallets: {[key: string]: Signature}  
+  wallets: { [key: string]: Signature }
 }
 export interface DeployHashArgs {
   wallet: string
@@ -102,7 +100,7 @@ export interface DeployHashArgs {
 
 export interface DeployHashReturn {
   deployHash: string
-  context: Context  
+  context: Context
 }
 export interface ConfigUpdatesArgs {
   wallet: string
@@ -111,7 +109,7 @@ export interface ConfigUpdatesArgs {
 }
 
 export interface ConfigUpdatesReturn {
-  updates: Array<ConfigUpdate>  
+  updates: Array<ConfigUpdate>
 }
 export interface MigrationsArgs {
   wallet: string
@@ -121,22 +119,20 @@ export interface MigrationsArgs {
 }
 
 export interface MigrationsReturn {
-  migrations: {[key: string]: {[key: number]: {[key: string]: TransactionBundle}}}  
+  migrations: { [key: string]: { [key: number]: { [key: string]: TransactionBundle } } }
 }
 export interface SaveConfigArgs {
   version: number
   config: any
 }
 
-export interface SaveConfigReturn {  
-}
+export interface SaveConfigReturn {}
 export interface SaveWalletArgs {
   version: number
   deployConfig: any
 }
 
-export interface SaveWalletReturn {  
-}
+export interface SaveWalletReturn {}
 export interface SaveSignatureArgs {
   wallet: string
   digest: string
@@ -145,8 +141,7 @@ export interface SaveSignatureArgs {
   toConfig?: any
 }
 
-export interface SaveSignatureReturn {  
-}
+export interface SaveSignatureReturn {}
 export interface SaveSignerSignaturesArgs {
   wallet: string
   digest: string
@@ -155,8 +150,7 @@ export interface SaveSignerSignaturesArgs {
   toConfig?: any
 }
 
-export interface SaveSignerSignaturesReturn {  
-}
+export interface SaveSignerSignaturesReturn {}
 export interface SaveMigrationArgs {
   wallet: string
   fromVersion: number
@@ -169,11 +163,8 @@ export interface SaveMigrationArgs {
   chainID?: string
 }
 
-export interface SaveMigrationReturn {  
-}
+export interface SaveMigrationReturn {}
 
-
-  
 //
 // Client
 //
@@ -190,143 +181,112 @@ export class Sessions implements Sessions {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
+
   config = (args: ConfigArgs, headers?: object): Promise<ConfigReturn> => {
-    return this.fetch(
-      this.url('Config'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('Config'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          version: <number>(_data.version), 
-          config: <any>(_data.config)
+          version: <number>_data.version,
+          config: <any>_data.config
         }
       })
     })
   }
-  
+
   wallets = (args: WalletsArgs, headers?: object): Promise<WalletsReturn> => {
-    return this.fetch(
-      this.url('Wallets'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('Wallets'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          wallets: <{[key: string]: Signature}>(_data.wallets)
+          wallets: <{ [key: string]: Signature }>_data.wallets
         }
       })
     })
   }
-  
+
   deployHash = (args: DeployHashArgs, headers?: object): Promise<DeployHashReturn> => {
-    return this.fetch(
-      this.url('DeployHash'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('DeployHash'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          deployHash: <string>(_data.deployHash), 
-          context: <Context>(_data.context)
+          deployHash: <string>_data.deployHash,
+          context: <Context>_data.context
         }
       })
     })
   }
-  
+
   configUpdates = (args: ConfigUpdatesArgs, headers?: object): Promise<ConfigUpdatesReturn> => {
-    return this.fetch(
-      this.url('ConfigUpdates'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('ConfigUpdates'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          updates: <Array<ConfigUpdate>>(_data.updates)
+          updates: <Array<ConfigUpdate>>_data.updates
         }
       })
     })
   }
-  
+
   migrations = (args: MigrationsArgs, headers?: object): Promise<MigrationsReturn> => {
-    return this.fetch(
-      this.url('Migrations'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('Migrations'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          migrations: <{[key: string]: {[key: number]: {[key: string]: TransactionBundle}}}>(_data.migrations)
+          migrations: <{ [key: string]: { [key: number]: { [key: string]: TransactionBundle } } }>_data.migrations
         }
       })
     })
   }
-  
+
   saveConfig = (args: SaveConfigArgs, headers?: object): Promise<SaveConfigReturn> => {
-    return this.fetch(
-      this.url('SaveConfig'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SaveConfig'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
+
   saveWallet = (args: SaveWalletArgs, headers?: object): Promise<SaveWalletReturn> => {
-    return this.fetch(
-      this.url('SaveWallet'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SaveWallet'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
+
   saveSignature = (args: SaveSignatureArgs, headers?: object): Promise<SaveSignatureReturn> => {
-    return this.fetch(
-      this.url('SaveSignature'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SaveSignature'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
+
   saveSignerSignatures = (args: SaveSignerSignaturesArgs, headers?: object): Promise<SaveSignerSignaturesReturn> => {
-    return this.fetch(
-      this.url('SaveSignerSignatures'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SaveSignerSignatures'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
+
   saveMigration = (args: SaveMigrationArgs, headers?: object): Promise<SaveMigrationReturn> => {
-    return this.fetch(
-      this.url('SaveMigration'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SaveMigration'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
-        return {
-        }
+        return {}
       })
     })
   }
-  
 }
 
-  
 export interface WebRPCError extends Error {
   code: string
   msg: string
-	status: number
+  status: number
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -342,7 +302,7 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
+    } catch (err) {
       throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
     }
     if (!res.ok) {

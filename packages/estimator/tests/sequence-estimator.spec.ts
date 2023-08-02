@@ -1,4 +1,3 @@
-
 import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 
 import { LocalRelayer } from '@0xsequence/relayer'
@@ -173,7 +172,7 @@ describe('Wallet integration', function () {
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 3,
             checkpoint: 0,
-            signers: signers.map((s) => ({ weight: 1, address: s.address }))
+            signers: signers.map(s => ({ weight: 1, address: s.address }))
           })
 
           return Wallet.newWallet({
@@ -182,11 +181,7 @@ describe('Wallet integration', function () {
             config,
             provider,
             relayer,
-            orchestrator: new Orchestrator([
-              new SequenceOrchestratorWrapper(nestedWallet),
-              EOAsigners[0],
-              EOAsigners[1]
-            ]),
+            orchestrator: new Orchestrator([new SequenceOrchestratorWrapper(nestedWallet), EOAsigners[0], EOAsigners[1]]),
             chainId: provider.network.chainId
           })
         }

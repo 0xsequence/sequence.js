@@ -9,7 +9,7 @@ export interface Estimator {
     nonce: ethers.BigNumberish,
     ...transactions: commons.transaction.Transaction[]
   ): Promise<{
-    transactions: commons.transaction.Transaction[],
+    transactions: commons.transaction.Transaction[]
     total: ethers.BigNumber
   }>
 }

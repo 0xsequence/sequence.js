@@ -14,7 +14,7 @@ export class OverwriterSequenceEstimator implements Estimator {
     context: commons.context.WalletContext,
     nonce: ethers.BigNumberish,
     ...transactions: commons.transaction.Transaction[]
-  ): Promise<{ transactions: commons.transaction.Transaction[], total: ethers.BigNumber }> {
+  ): Promise<{ transactions: commons.transaction.Transaction[]; total: ethers.BigNumber }> {
     const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
 
     const allSigners = await Promise.all(
@@ -22,8 +22,7 @@ export class OverwriterSequenceEstimator implements Estimator {
         index: i,
         address: s.address,
         weight: ethers.BigNumber.from(s.weight),
-        isEOA: await this.estimator.provider.getCode(s.address)
-          .then((c) => ethers.utils.arrayify(c).length === 0)
+        isEOA: await this.estimator.provider.getCode(s.address).then(c => ethers.utils.arrayify(c).length === 0)
       }))
     )
 
@@ -39,7 +38,7 @@ export class OverwriterSequenceEstimator implements Estimator {
         if (a.weight.eq(b.weight)) return a.index - b.index
         return a.weight.sub(b.weight).toNumber()
       })
-      .filter((s) => {
+      .filter(s => {
         if (totalWeight >= config.threshold) {
           return false
         } else {
@@ -54,7 +53,7 @@ export class OverwriterSequenceEstimator implements Estimator {
     for (const s of designatedSigners) {
       if (s.isEOA) {
         fakeSignatures.set(s.address, {
-          signature: (await ethers.Wallet.createRandom().signMessage("")) + '02',
+          signature: (await ethers.Wallet.createRandom().signMessage('')) + '02',
           isDynamic: false
         })
       } else {
@@ -67,20 +66,24 @@ export class OverwriterSequenceEstimator implements Estimator {
           v2.config.ConfigCoder.fromSimple({
             threshold: 2,
             checkpoint: 0,
-            signers: [{
-              address: signer1.address,
-              weight: 1
-            }, {
-              address: signer2.address,
-              weight: 1
-            }, {
-              address: signer3.address,
-              weight: 1
-            }]
+            signers: [
+              {
+                address: signer1.address,
+                weight: 1
+              },
+              {
+                address: signer2.address,
+                weight: 1
+              },
+              {
+                address: signer3.address,
+                weight: 1
+              }
+            ]
           }),
           new Map([
-            [signer1.address, { signature: (await signer1.signMessage("")) + '02', isDynamic: false }],
-            [signer2.address, { signature: (await signer2.signMessage("")) + '02', isDynamic: false }]
+            [signer1.address, { signature: (await signer1.signMessage('')) + '02', isDynamic: false }],
+            [signer2.address, { signature: (await signer2.signMessage('')) + '02', isDynamic: false }]
           ]),
           [],
           0
@@ -93,12 +96,7 @@ export class OverwriterSequenceEstimator implements Estimator {
       }
     }
 
-    const stubSignature = v2.signature.encodeSigners(
-      config,
-      fakeSignatures,
-      [],
-      0
-    ).encoded
+    const stubSignature = v2.signature.encodeSigners(config, fakeSignatures, [], 0).encoded
 
     // Use the provided nonce
     // TODO: Maybe ignore if this fails on the MainModuleGasEstimation
@@ -118,11 +116,16 @@ export class OverwriterSequenceEstimator implements Estimator {
       ...encoded.map(async (_, i) => {
         return this.estimator.estimate({
           to: address,
-          data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded.slice(0, i), nonce, stubSignature]),
+          data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+            encoded.slice(0, i),
+            nonce,
+            stubSignature
+          ]),
           overwrites: sequenceOverwrites
         })
-      }), this.estimator.estimate({
-        to: address,     // Compute full gas estimation with all transaction
+      }),
+      this.estimator.estimate({
+        to: address, // Compute full gas estimation with all transaction
         data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded, nonce, stubSignature]),
         overwrites: sequenceOverwrites
       })

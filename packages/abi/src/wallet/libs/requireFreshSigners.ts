@@ -1,16 +1,15 @@
-
 export const abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "",
-        type: "address"
+        internalType: 'address',
+        name: '',
+        type: 'address'
       }
     ],
-    name: "requireFreshSigner",
+    name: 'requireFreshSigner',
     outputs: [],
-    stateMutability: "nonpayable",
-    type: "function"
+    stateMutability: 'nonpayable',
+    type: 'function'
   }
 ]

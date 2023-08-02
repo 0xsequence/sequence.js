@@ -16,16 +16,6 @@ export * as sessions from './sessions'
 export * as migration from './migration'
 export * as account from './account'
 
-export {
-  initWallet,
-  getWallet,
-  unregisterWallet,
-  SequenceProvider,
-  SequenceClient,
-  SequenceSigner
-} from '@0xsequence/provider'
+export { initWallet, getWallet, unregisterWallet, SequenceProvider, SequenceClient, SequenceSigner } from '@0xsequence/provider'
 
-export type {
-  ProviderConfig,
-  WalletSession
-} from '@0xsequence/provider'
+export type { ProviderConfig, WalletSession } from '@0xsequence/provider'

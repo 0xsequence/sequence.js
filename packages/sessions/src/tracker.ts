@@ -10,18 +10,18 @@ export type PresignedConfig = {
 export type PresignedConfigLink = Omit<PresignedConfig, 'nextConfig'> & { nextImageHash: string }
 
 export type ConfigDataDump = {
-  configurations: commons.config.Config[],
+  configurations: commons.config.Config[]
   wallets: {
-    imageHash: string,
+    imageHash: string
     context: commons.context.WalletContext
-  }[],
+  }[]
   presignedTransactions: PresignedConfigLink[]
 }
 
 export abstract class ConfigTracker {
   loadPresignedConfiguration: (args: {
-    wallet: string,
-    fromImageHash: string,
+    wallet: string
+    fromImageHash: string
     longestPath?: boolean
   }) => Promise<PresignedConfigLink[]>
 
@@ -29,37 +29,28 @@ export abstract class ConfigTracker {
 
   saveWitnesses: (args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }) => Promise<void>
 
-  configOfImageHash: (args: {
-    imageHash: string,
-    noCache?: boolean
-  }) => Promise<commons.config.Config | undefined>
+  configOfImageHash: (args: { imageHash: string; noCache?: boolean }) => Promise<commons.config.Config | undefined>
 
-  saveWalletConfig: (args: {
-    config: commons.config.Config
-  }) => Promise<void>
+  saveWalletConfig: (args: { config: commons.config.Config }) => Promise<void>
 
-  imageHashOfCounterfactualWallet: (args: {
-    wallet: string,
-    noCache?: boolean
-  }) => Promise<{
-    imageHash: string,
-    context: commons.context.WalletContext
-  } | undefined>
+  imageHashOfCounterfactualWallet: (args: { wallet: string; noCache?: boolean }) => Promise<
+    | {
+        imageHash: string
+        context: commons.context.WalletContext
+      }
+    | undefined
+  >
 
-  saveCounterfactualWallet: (args: {
-    config: commons.config.Config;
-    context: commons.context.WalletContext[]
-  }) => Promise<void>
+  saveCounterfactualWallet: (args: { config: commons.config.Config; context: commons.context.WalletContext[] }) => Promise<void>
 
-  walletsOfSigner: (args: {
-    signer: string,
-    noCache?: boolean
-  }) => Promise<{
-    wallet: string,
-    proof: {
-      digest: string,
-      chainId: ethers.BigNumber,
-      signature: string
-    }
-  }[]>
+  walletsOfSigner: (args: { signer: string; noCache?: boolean }) => Promise<
+    {
+      wallet: string
+      proof: {
+        digest: string
+        chainId: ethers.BigNumber
+        signature: string
+      }
+    }[]
+  >
 }

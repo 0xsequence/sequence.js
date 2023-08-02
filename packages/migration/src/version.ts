@@ -1,4 +1,4 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
 
 export function counterfactualVersion(
@@ -22,9 +22,9 @@ export interface Version<
   S extends commons.signature.Signature<C>,
   U extends commons.signature.UnrecoveredSignature
 > {
-  version: number,
+  version: number
   coders: {
-    config: commons.config.ConfigCoder<C>,
+    config: commons.config.ConfigCoder<C>
     signature: commons.signature.SignatureCoder<C, S, U>
   }
 }

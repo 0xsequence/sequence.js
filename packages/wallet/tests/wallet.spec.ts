@@ -1,9 +1,8 @@
-
 import hardhat from 'hardhat'
 import * as chai from 'chai'
 
-import { commons, v1, v2 } from "@0xsequence/core"
-import { context } from "@0xsequence/tests"
+import { commons, v1, v2 } from '@0xsequence/core'
+import { context } from '@0xsequence/tests'
 import { ethers } from 'ethers'
 import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, signers as hubsigners } from '@0xsequence/signhub'
@@ -12,8 +11,8 @@ import { LocalRelayer } from '@0xsequence/relayer'
 const { expect } = chai
 
 type Coders = {
-  signature: commons.signature.SignatureCoder<any, any, any>,
-  config: commons.config.ConfigCoder<any>,
+  signature: commons.signature.SignatureCoder<any, any, any>
+  config: commons.config.ConfigCoder<any>
 }
 
 describe('Wallet (primitive)', () => {
@@ -28,15 +27,20 @@ describe('Wallet (primitive)', () => {
     signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
-  });
+  })
 
-  ([{
-    version: 1,
-    coders: { signature: v1.signature.SignatureCoder, config: v1.config.ConfigCoder },
-  }, {
-    version: 2,
-    coders: { signature: v2.signature.SignatureCoder, config: v2.config.ConfigCoder },
-  }] as { version: number, coders: Coders }[]).map(({ version, coders }) => {
+  ;(
+    [
+      {
+        version: 1,
+        coders: { signature: v1.signature.SignatureCoder, config: v1.config.ConfigCoder }
+      },
+      {
+        version: 2,
+        coders: { signature: v2.signature.SignatureCoder, config: v2.config.ConfigCoder }
+      }
+    ] as { version: number; coders: Coders }[]
+  ).map(({ version, coders }) => {
     describe(`Using v${version} version`, () => {
       it('Should deploy a new wallet', async () => {
         const signer = ethers.Wallet.createRandom()
@@ -60,12 +64,13 @@ describe('Wallet (primitive)', () => {
         await wallet.deploy()
 
         expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
-      });
+      })
 
       //
       // Run tests using different combinations of signers
       //
-      ([{
+      ;[
+        {
           name: '1/1 signer',
           signers: () => {
             const signer = ethers.Wallet.createRandom()
@@ -80,17 +85,21 @@ describe('Wallet (primitive)', () => {
 
             return { config, orchestrator }
           }
-        }, {
+        },
+        {
           name: '1/2 signers',
           signers: () => {
             const signer = ethers.Wallet.createRandom()
-            const signers = [{
-              address: signer.address,
-              weight: 1
-            }, {
-              address: ethers.Wallet.createRandom().address,
-              weight: 1
-            }].sort(() => Math.random() > 0.5 ? 1 : -1)
+            const signers = [
+              {
+                address: signer.address,
+                weight: 1
+              },
+              {
+                address: ethers.Wallet.createRandom().address,
+                weight: 1
+              }
+            ].sort(() => (Math.random() > 0.5 ? 1 : -1))
 
             const config = coders.config.fromSimple({
               threshold: 1,
@@ -101,15 +110,18 @@ describe('Wallet (primitive)', () => {
             const orchestrator = new Orchestrator([new hubsigners.SignerWrapper(signer)])
             return { config, orchestrator }
           }
-        }, {
+        },
+        {
           name: '2/4 signers',
           signers: () => {
             const members = new Array(4).fill(0).map(() => ethers.Wallet.createRandom())
 
-            const signers = members.map((m) => ({
-              address: m.address,
-              weight: 2
-            })).sort(() => Math.random() > 0.5 ? 1 : -1)
+            const signers = members
+              .map(m => ({
+                address: m.address,
+                weight: 2
+              }))
+              .sort(() => (Math.random() > 0.5 ? 1 : -1))
 
             const config = coders.config.fromSimple({
               threshold: 2,
@@ -117,18 +129,21 @@ describe('Wallet (primitive)', () => {
               signers
             })
 
-            const orchestrator = new Orchestrator(members.slice(0, 2).map((m) => new hubsigners.SignerWrapper(m)))
+            const orchestrator = new Orchestrator(members.slice(0, 2).map(m => new hubsigners.SignerWrapper(m)))
             return { config, orchestrator }
           }
-        }, {
+        },
+        {
           name: '11/90 signers',
           signers: () => {
             const members = new Array(90).fill(0).map(() => ethers.Wallet.createRandom())
 
-            const signers = members.map((m) => ({
-              address: m.address,
-              weight: 1
-            })).sort(() => Math.random() > 0.5 ? 1 : -1)
+            const signers = members
+              .map(m => ({
+                address: m.address,
+                weight: 1
+              }))
+              .sort(() => (Math.random() > 0.5 ? 1 : -1))
 
             const config = coders.config.fromSimple({
               threshold: 11,
@@ -136,45 +151,47 @@ describe('Wallet (primitive)', () => {
               signers
             })
 
-            const orchestrator = new Orchestrator(members.slice(0, 11).map((m) => new hubsigners.SignerWrapper(m)))
+            const orchestrator = new Orchestrator(members.slice(0, 11).map(m => new hubsigners.SignerWrapper(m)))
             return { config, orchestrator }
           }
-        }, {
-        name: '1/1 signer (nested)',
-        signers: async () => {
-          const nestedSigner = ethers.Wallet.createRandom()
+        },
+        {
+          name: '1/1 signer (nested)',
+          signers: async () => {
+            const nestedSigner = ethers.Wallet.createRandom()
 
-          const nestedConfig = coders.config.fromSimple({
-            threshold: 1,
-            checkpoint: 0,
-            signers: [{ address: nestedSigner.address, weight: 1 }]
-          })
+            const nestedConfig = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ address: nestedSigner.address, weight: 1 }]
+            })
 
-          const nestedOrchestrator = new Orchestrator([nestedSigner])
-          const nestedWallet = Wallet.newWallet({
-            coders: coders,
-            context: contexts[version],
-            config: nestedConfig,
-            orchestrator: nestedOrchestrator,
-            chainId: provider.network.chainId,
-            provider,
-            relayer
-          })
+            const nestedOrchestrator = new Orchestrator([nestedSigner])
+            const nestedWallet = Wallet.newWallet({
+              coders: coders,
+              context: contexts[version],
+              config: nestedConfig,
+              orchestrator: nestedOrchestrator,
+              chainId: provider.network.chainId,
+              provider,
+              relayer
+            })
 
-          await nestedWallet.deploy()
-          expect(await nestedWallet.reader().isDeployed(nestedWallet.address)).to.be.true
+            await nestedWallet.deploy()
+            expect(await nestedWallet.reader().isDeployed(nestedWallet.address)).to.be.true
 
-          const config = coders.config.fromSimple({
-            threshold: 1,
-            checkpoint: 0,
-            signers: [{ address: nestedWallet.address, weight: 1 }]
-          })
+            const config = coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ address: nestedWallet.address, weight: 1 }]
+            })
 
-          const orchestrator = new Orchestrator([new SequenceOrchestratorWrapper(nestedWallet)])
+            const orchestrator = new Orchestrator([new SequenceOrchestratorWrapper(nestedWallet)])
 
-          return { config, orchestrator }
+            return { config, orchestrator }
+          }
         }
-      }]).map(({ name, signers }) => {
+      ].map(({ name, signers }) => {
         describe(`Using ${name}`, () => {
           let orchestrator: Orchestrator
           let config: commons.config.Config
@@ -184,7 +201,6 @@ describe('Wallet (primitive)', () => {
             config = _config
             orchestrator = _orchestrator
           })
-
 
           it('Should sign and validate a message', async () => {
             const wallet = Wallet.newWallet({
@@ -208,26 +224,29 @@ describe('Wallet (primitive)', () => {
             const digest = ethers.utils.keccak256(message)
 
             expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
-          });
+          })
 
           //
           // Run tests for deployed and undeployed wallets
           // transactions should be decorated automatically
           //
-          ([{
-            name: 'After deployment',
-            setup: async (wallet: Wallet) => {
-              await wallet.deploy()
+          ;[
+            {
+              name: 'After deployment',
+              setup: async (wallet: Wallet) => {
+                await wallet.deploy()
+              },
+              deployed: true
             },
-            deployed: true
-          }, {
-            name: 'Before deployment',
-            setup: async (_: Wallet) => { },
-            deployed: false
-          }]).map(({ name, setup, deployed }) => {
+            {
+              name: 'Before deployment',
+              setup: async (_: Wallet) => {},
+              deployed: false
+            }
+          ].map(({ name, setup, deployed }) => {
             describe(name, () => {
               let wallet: Wallet
-    
+
               beforeEach(async () => {
                 wallet = Wallet.newWallet({
                   coders: coders,
@@ -238,28 +257,32 @@ describe('Wallet (primitive)', () => {
                   provider,
                   relayer
                 })
-    
+
                 await setup(wallet)
               })
-    
+
               it('Should send an empty list of transactions', async () => {
                 await wallet.sendTransaction([])
               })
-    
+
               it('Should send a transaction with an empty call', async () => {
-                await wallet.sendTransaction([{
-                  to: ethers.Wallet.createRandom().address
-                }])
+                await wallet.sendTransaction([
+                  {
+                    to: ethers.Wallet.createRandom().address
+                  }
+                ])
               })
 
               it('Should build and execute a wallet update transaction', async () => {
                 const newConfig = coders.config.fromSimple({
                   threshold: 1,
                   checkpoint: 0,
-                  signers: [{
-                    address: ethers.Wallet.createRandom().address,
-                    weight: 1
-                  }]
+                  signers: [
+                    {
+                      address: ethers.Wallet.createRandom().address,
+                      weight: 1
+                    }
+                  ]
                 })
 
                 const updateTx = await wallet.buildUpdateConfigurationTransaction(newConfig)

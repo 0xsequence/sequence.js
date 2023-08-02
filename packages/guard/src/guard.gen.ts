@@ -6,18 +6,17 @@
 // webrpc-gen -schema=guard.ridl -target=typescript -client -out=./clients/guard.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "a29651d1d5f63268e8d03b51e46557e0632c144d"
+export const WebRPCSchemaHash = 'a29651d1d5f63268e8d03b51e46557e0632c144d'
 
 //
 // Types
 //
-
 
 export interface Version {
   webrpcVersion: string
@@ -60,37 +59,34 @@ export interface Guard {
   signWith(args: SignWithArgs, headers?: object): Promise<SignWithReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
 export interface GetSignerConfigArgs {
   signer: string
 }
 
 export interface GetSignerConfigReturn {
-  signerConfig: WalletConfig  
+  signerConfig: WalletConfig
 }
 export interface SignArgs {
   request: SignRequest
 }
 
 export interface SignReturn {
-  sig: string  
+  sig: string
 }
 export interface SignWithArgs {
   signer: string
@@ -98,11 +94,9 @@ export interface SignWithArgs {
 }
 
 export interface SignWithReturn {
-  sig: string  
+  sig: string
 }
 
-
-  
 //
 // Client
 //
@@ -119,89 +113,72 @@ export class Guard implements Guard {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   version = (headers?: object): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          version: <Version>(_data.version)
+          version: <Version>_data.version
         }
       })
     })
   }
-  
+
   runtimeStatus = (headers?: object): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <RuntimeStatus>(_data.status)
+          status: <RuntimeStatus>_data.status
         }
       })
     })
   }
-  
+
   getSignerConfig = (args: GetSignerConfigArgs, headers?: object): Promise<GetSignerConfigReturn> => {
-    return this.fetch(
-      this.url('GetSignerConfig'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetSignerConfig'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          signerConfig: <WalletConfig>(_data.signerConfig)
+          signerConfig: <WalletConfig>_data.signerConfig
         }
       })
     })
   }
-  
+
   sign = (args: SignArgs, headers?: object): Promise<SignReturn> => {
-    return this.fetch(
-      this.url('Sign'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('Sign'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          sig: <string>(_data.sig)
+          sig: <string>_data.sig
         }
       })
     })
   }
-  
+
   signWith = (args: SignWithArgs, headers?: object): Promise<SignWithReturn> => {
-    return this.fetch(
-      this.url('SignWith'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SignWith'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          sig: <string>(_data.sig)
+          sig: <string>_data.sig
         }
       })
     })
   }
-  
 }
 
-  
 export interface WebRPCError extends Error {
   code: string
   msg: string
-	status: number
+  status: number
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -217,7 +194,7 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
+    } catch (err) {
       throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
     }
     if (!res.ok) {

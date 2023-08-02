@@ -7,7 +7,7 @@ export const SignerJsonRpcMethods = [
   'eth_signTypedData_v4',
   'eth_sendTransaction',
   'eth_sendRawTransaction',
-  'sequence_sign',             // sequence-aware personal_sign
+  'sequence_sign', // sequence-aware personal_sign
   'sequence_signTypedData_v4', // sequence-aware eth_signTypedData_v4
 
   'sequence_getWalletContext',
@@ -30,7 +30,6 @@ export const SignerJsonRpcMethods = [
 ]
 
 export class SigningProvider implements JsonRpcMiddlewareHandler {
-
   private provider: JsonRpcHandler
 
   constructor(provider: JsonRpcHandler) {
@@ -49,5 +48,4 @@ export class SigningProvider implements JsonRpcMiddlewareHandler {
       next(request, callback, chainId)
     }
   }
-
 }

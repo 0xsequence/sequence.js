@@ -1,4 +1,3 @@
-
 export function useGateway(uri: string, gateway: string) {
   const clean = uri.replace('ipfs://ipfs/', '').replace('ipfs://', '')
   if (uri.startsWith('ipfs://')) return `${gateway}${clean}`

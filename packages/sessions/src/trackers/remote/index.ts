@@ -7,7 +7,10 @@ import { Sessions, SignatureType, Transaction } from './sessions.gen'
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
 
-  constructor(hostname: string, public readonly onlyRecoverable: boolean = true) {
+  constructor(
+    hostname: string,
+    public readonly onlyRecoverable: boolean = true
+  ) {
     this.sessions = new Sessions(hostname, fetch)
   }
 
@@ -56,7 +59,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
   }): Promise<void> {
     let filteredSignatures = args.signatures
     if (this.onlyRecoverable) {
-      filteredSignatures = filteredSignatures.filter((signature) => {
+      filteredSignatures = filteredSignatures.filter(signature => {
         return commons.signer.canRecover(signature)
       })
     }
@@ -207,7 +210,11 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     return
   }
 
-  async saveMigration(wallet: string, signed: migrator.SignedMigration, _contexts: commons.context.VersionedContext): Promise<void> {
+  async saveMigration(
+    wallet: string,
+    signed: migrator.SignedMigration,
+    _contexts: commons.context.VersionedContext
+  ): Promise<void> {
     await this.sessions.saveMigration({
       wallet,
       fromVersion: signed.fromVersion,

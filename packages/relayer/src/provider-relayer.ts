@@ -7,9 +7,9 @@ import { commons } from '@0xsequence/core'
 const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
 
 export interface ProviderRelayerOptions {
-  provider: providers.Provider,
-  waitPollRate?: number,
-  deltaBlocksLog?: number,
+  provider: providers.Provider
+  waitPollRate?: number
+  deltaBlocksLog?: number
   fromBlockLog?: number
 }
 
@@ -37,50 +37,52 @@ export abstract class ProviderRelayer implements Relayer {
   abstract getFeeOptions(
     address: string,
     ...transactions: commons.transaction.Transaction[]
-  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
-  abstract getFeeOptionsRaw(
-    entrypoint: string,
-    data: ethers.utils.BytesLike
-  ): Promise<{ options: FeeOption[], quote?: FeeQuote }>
+  abstract getFeeOptionsRaw(entrypoint: string, data: ethers.utils.BytesLike): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
-  abstract gasRefundOptions(
-    address: string,
-    ...transactions: commons.transaction.Transaction[]
-  ): Promise<FeeOption[]>
+  abstract gasRefundOptions(address: string, ...transactions: commons.transaction.Transaction[]): Promise<FeeOption[]>
 
-  abstract relay(signedTxs: commons.transaction.IntendedTransactionBundle, quote?: FeeQuote, waitForReceipt?: boolean): Promise<commons.transaction.TransactionResponse>
+  abstract relay(
+    signedTxs: commons.transaction.IntendedTransactionBundle,
+    quote?: FeeQuote,
+    waitForReceipt?: boolean
+  ): Promise<commons.transaction.TransactionResponse>
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
-    return (await Promise.all(transactions.map(async tx => {
-      // Respect gasLimit request of the transaction (as long as its not 0)
-      if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
-        return tx.gasLimit
-      }
+    return (
+      await Promise.all(
+        transactions.map(async tx => {
+          // Respect gasLimit request of the transaction (as long as its not 0)
+          if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
+            return tx.gasLimit
+          }
 
-      // Fee can't be estimated locally for delegateCalls
-      if (tx.delegateCall) {
-        return DEFAULT_GAS_LIMIT
-      }
+          // Fee can't be estimated locally for delegateCalls
+          if (tx.delegateCall) {
+            return DEFAULT_GAS_LIMIT
+          }
 
-      // Fee can't be estimated for self-called if wallet hasn't been deployed
-      if (tx.to === wallet && await this.provider.getCode(wallet).then((code) => ethers.utils.arrayify(code).length === 0)) {
-        return DEFAULT_GAS_LIMIT
-      }
+          // Fee can't be estimated for self-called if wallet hasn't been deployed
+          if (tx.to === wallet && (await this.provider.getCode(wallet).then(code => ethers.utils.arrayify(code).length === 0))) {
+            return DEFAULT_GAS_LIMIT
+          }
 
-      if (!this.provider) {
-        throw new Error('signer.provider is not set, but is required')
-      }
+          if (!this.provider) {
+            throw new Error('signer.provider is not set, but is required')
+          }
 
-      // TODO: If the wallet address has been deployed, gas limits can be
-      // estimated with more accurately by using self-calls with the batch transactions one by one
-      return this.provider.estimateGas({
-        from: wallet,
-        to: tx.to,
-        data: tx.data,
-        value: tx.value
-      })
-    }))).map(gasLimit => ({
+          // TODO: If the wallet address has been deployed, gas limits can be
+          // estimated with more accurately by using self-calls with the batch transactions one by one
+          return this.provider.estimateGas({
+            from: wallet,
+            to: tx.to,
+            data: tx.data,
+            value: tx.value
+          })
+        })
+      )
+    ).map(gasLimit => ({
       executed: true,
       succeeded: true,
       gasUsed: ethers.BigNumber.from(gasLimit).toNumber(),
@@ -88,11 +90,7 @@ export abstract class ProviderRelayer implements Relayer {
     }))
   }
 
-  async getNonce(
-    address: string,
-    space?: ethers.BigNumberish,
-    blockTag?: providers.BlockTag
-  ): Promise<ethers.BigNumberish> {
+  async getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish> {
     if (!this.provider) {
       throw new Error('provider is not set')
     }

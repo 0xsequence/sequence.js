@@ -462,11 +462,7 @@ export class Account {
     return decorated
   }
 
-  private buildEIP6492Signature(
-    signature: string,
-    status: AccountStatus,
-    chainId: ethers.BigNumberish
-  ): string {
+  private buildEIP6492Signature(signature: string, status: AccountStatus, chainId: ethers.BigNumberish): string {
     const bootstrapBundle = this.buildBootstrapTransactions(status, chainId)
     if (bootstrapBundle.transactions.length === 0) {
       throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
@@ -477,10 +473,7 @@ export class Account {
       [bootstrapBundle.entrypoint, commons.transaction.encodeBundleExecData(bootstrapBundle), signature]
     )
 
-    return ethers.utils.solidityPack(
-      ['bytes', 'bytes32'],
-      [encoded, commons.EIP6492.EIP_6492_SUFFIX]
-    )
+    return ethers.utils.solidityPack(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
   }
 
   async editConfig(changes: {

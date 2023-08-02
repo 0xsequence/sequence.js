@@ -61,12 +61,18 @@ export abstract class Signer extends AbstractSigner {
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<commons.transaction.SignedTransactionBundle>
-  abstract sendSignedTransactions(signedTxs: commons.transaction.SignedTransactionBundle, chainId?: ChainIdLike, quote?: FeeQuote): Promise<commons.transaction.TransactionResponse>
+  abstract sendSignedTransactions(
+    signedTxs: commons.transaction.SignedTransactionBundle,
+    chainId?: ChainIdLike,
+    quote?: FeeQuote
+  ): Promise<commons.transaction.TransactionResponse>
 
   // updateConfig will update the wallet image hash on-chain, aka deploying a smart wallet config to chain. If
   // newConfig argument is undefined, then it will use the existing config. Config contents will also be
   // automatically published to the authChain when updating the config image hash.
-  abstract updateConfig(newConfig?: commons.config.Config): Promise<[commons.config.Config, commons.transaction.TransactionResponse | undefined]>
+  abstract updateConfig(
+    newConfig?: commons.config.Config
+  ): Promise<[commons.config.Config, commons.transaction.TransactionResponse | undefined]>
 
   // publishConfig will store the raw WalletConfig object on-chain, note: this may be expensive,
   // and is only necessary for config data-availability, in case of Account the contents are published
@@ -81,12 +87,7 @@ export type SignedTransactionsCallback = (signedTxs: commons.transaction.SignedT
 
 export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
   const cand = signer as Signer
-  return (
-    cand &&
-    cand.updateConfig !== undefined &&
-    cand.publishConfig !== undefined &&
-    cand.getWalletConfig !== undefined
-  )
+  return cand && cand.updateConfig !== undefined && cand.publishConfig !== undefined && cand.getWalletConfig !== undefined
 }
 
 // TODO: move to error.ts, along with others..

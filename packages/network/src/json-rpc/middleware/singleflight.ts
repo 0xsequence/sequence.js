@@ -1,7 +1,6 @@
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 
 export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
-
   private singleflightJsonRpcMethods = [
     'eth_chainId',
     'net_version',
@@ -26,7 +25,7 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
     'eth_getLogs'
   ]
 
-  inflight: {[key: string]: { id: number, callback: JsonRpcResponseCallback }[]}
+  inflight: { [key: string]: { id: number; callback: JsonRpcResponseCallback }[] }
 
   constructor() {
     this.inflight = {}
@@ -34,7 +33,6 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
     return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-
       // continue to next handler if method isn't part of methods list
       if (!this.singleflightJsonRpcMethods.includes(request.method)) {
         next(request, callback, chainId)
@@ -53,28 +51,32 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
       }
 
       // Continue down the handler chain
-      next(request, (error: any, response?: JsonRpcResponse, chainId?: number) => {
-        // callback the original request
-        callback(error, response)
+      next(
+        request,
+        (error: any, response?: JsonRpcResponse, chainId?: number) => {
+          // callback the original request
+          callback(error, response)
 
-        // callback all other requests of the same kind in queue, with the
-        // same response result as from the first response.
-        for (let i=0; i < this.inflight[key].length; i++) {
-          const sub = this.inflight[key][i]
-          if (error) {
-            sub.callback(error, response)
-          } else if (response) {
-            sub.callback(undefined, {
-              jsonrpc: '2.0',
-              id: sub.id,
-              result: response!.result
-            })
+          // callback all other requests of the same kind in queue, with the
+          // same response result as from the first response.
+          for (let i = 0; i < this.inflight[key].length; i++) {
+            const sub = this.inflight[key][i]
+            if (error) {
+              sub.callback(error, response)
+            } else if (response) {
+              sub.callback(undefined, {
+                jsonrpc: '2.0',
+                id: sub.id,
+                result: response!.result
+              })
+            }
           }
-        }
 
-        // clear request key
-        delete(this.inflight[key])
-      }, chainId)
+          // clear request key
+          delete this.inflight[key]
+        },
+        chainId
+      )
     }
   }
 
@@ -86,8 +88,8 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
       key = `:${method}:`
     }
     if (!params || params.length === 0) {
-      return key+'[]'
+      return key + '[]'
     }
-    return key+JSON.stringify(params)
+    return key + JSON.stringify(params)
   }
 }

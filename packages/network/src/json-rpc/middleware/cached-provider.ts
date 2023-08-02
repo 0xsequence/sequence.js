@@ -2,7 +2,7 @@ import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCal
 
 export interface CachedProviderOptions {
   // defaultChainId passes a chainId to provider handler if one isn't passed.
-  // This is used in multi-chain mode 
+  // This is used in multi-chain mode
   defaultChainId?: number
 
   // blockCache toggle, with option to pass specific set of methods to use with
@@ -11,12 +11,14 @@ export interface CachedProviderOptions {
 }
 
 export class CachedProvider implements JsonRpcMiddlewareHandler {
-
   // cachableJsonRpcMethods which can be permanently cached for lifetime
   // of the provider.
   private cachableJsonRpcMethods = [
-    'net_version', 'eth_chainId', 'eth_accounts',
-    'sequence_getWalletContext', 'sequence_getNetworks'
+    'net_version',
+    'eth_chainId',
+    'eth_accounts',
+    'sequence_getWalletContext',
+    'sequence_getNetworks'
   ]
 
   // cachableJsonRpcMethodsByBlock which can be temporarily cached for a short
@@ -24,15 +26,13 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
   // we keep the values here cachable only for 1.5 seconds. This is still useful to
   // memoize the calls within app-code that calls out to fetch these values within
   // a short period of time.
-  private cachableJsonRpcMethodsByBlock: string[] = [
-    'eth_call', 'eth_getCode'
-  ]
+  private cachableJsonRpcMethodsByBlock: string[] = ['eth_call', 'eth_getCode']
 
   // cache for life-time of provider (unless explicitly cleared)
-  private cache: {[key: string]: any}
-  
+  private cache: { [key: string]: any }
+
   // cache by block, simulated by using a 1 second life-time
-  private cacheByBlock: {[key: string]: any}
+  private cacheByBlock: { [key: string]: any }
   private cacheByBlockResetLock: boolean = false
 
   // onUpdateCallback callback to be notified when cache values are set.
@@ -54,7 +54,6 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
 
   sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
     return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
         const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
@@ -68,26 +67,33 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
           return
         }
       }
-  
+
       // Continue down the handler chain
-      next(request, (error: any, response?: JsonRpcResponse, chainId?: number) => {
-        // Store result in cache and continue
-        if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
-          if (response && response.result && this.shouldCacheResponse(request, response)) {
-            // cache the value
-            const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
-            
-            if (this.cachableJsonRpcMethods.includes(request.method)) {
-              this.setCacheValue(key, response.result)
-            } else {
-              this.setCacheByBlockValue(key, response.result)              
+      next(
+        request,
+        (error: any, response?: JsonRpcResponse, chainId?: number) => {
+          // Store result in cache and continue
+          if (
+            this.cachableJsonRpcMethods.includes(request.method) ||
+            this.cachableJsonRpcMethodsByBlock.includes(request.method)
+          ) {
+            if (response && response.result && this.shouldCacheResponse(request, response)) {
+              // cache the value
+              const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
+
+              if (this.cachableJsonRpcMethods.includes(request.method)) {
+                this.setCacheValue(key, response.result)
+              } else {
+                this.setCacheByBlockValue(key, response.result)
+              }
             }
           }
-        }
-  
-        // Exec next handler
-        callback(error, response)
-      }, chainId || this.defaultChainId)
+
+          // Exec next handler
+          callback(error, response)
+        },
+        chainId || this.defaultChainId
+      )
     }
   }
 
@@ -99,14 +105,14 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       key = `:${method}:`
     }
     if (!params || params.length === 0) {
-      return key+'[]'
+      return key + '[]'
     }
-    return key+JSON.stringify(params)
+    return key + JSON.stringify(params)
   }
 
   getCache = () => this.cache
 
-  setCache = (cache: {[key: string]: any}) => {
+  setCache = (cache: { [key: string]: any }) => {
     this.cache = cache
     if (this.onUpdateCallback) {
       this.onUpdateCallback()
@@ -132,7 +138,7 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
 
   setCacheByBlockValue = (key: string, value: any) => {
     this.cacheByBlock[key] = value
-   
+
     // clear the cacheByBlock once every X period of time
     if (!this.cacheByBlockResetLock) {
       this.cacheByBlockResetLock = true

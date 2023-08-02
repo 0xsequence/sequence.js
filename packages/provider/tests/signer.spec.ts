@@ -1,9 +1,20 @@
-import { ethers } from "ethers"
-import { ConnectOptions, OpenWalletIntent, OptionalChainId, OptionalChainIdLike, OptionalEIP6492, SequenceClient, SequenceProvider, SequenceSigner, SingleNetworkSequenceProvider, SingleNetworkSequenceSigner } from "../src"
-import { expect } from "chai"
-import { JsonRpcRequest, JsonRpcResponse, allNetworks } from "@0xsequence/network"
-import { ExtendedTransactionRequest } from "../src/extended"
-import { TypedData } from "@0xsequence/utils"
+import { ethers } from 'ethers'
+import {
+  ConnectOptions,
+  OpenWalletIntent,
+  OptionalChainId,
+  OptionalChainIdLike,
+  OptionalEIP6492,
+  SequenceClient,
+  SequenceProvider,
+  SequenceSigner,
+  SingleNetworkSequenceProvider,
+  SingleNetworkSequenceSigner
+} from '../src'
+import { expect } from 'chai'
+import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
+import { ExtendedTransactionRequest } from '../src/extended'
+import { TypedData } from '@0xsequence/utils'
 
 const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:9595')
 const hardhat2Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8595')
@@ -55,7 +66,7 @@ async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20
       await provider.getBlockNumber()
       return
     } catch (e) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise(resolve => setTimeout(resolve, 100))
     }
   }
   console.warn('waitUntilNoFail timed out')
@@ -64,10 +75,7 @@ async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20
 describe('SequenceSigner', () => {
   before(async () => {
     // Wait for both providers to be ready
-    await Promise.all([
-      waitUntilNoFail(hardhat1Provider),
-      waitUntilNoFail(hardhat2Provider)
-    ])
+    await Promise.all([waitUntilNoFail(hardhat1Provider), waitUntilNoFail(hardhat2Provider)])
   })
 
   beforeEach(() => {
@@ -79,10 +87,12 @@ describe('SequenceSigner', () => {
       let returnWalletConfig = {
         version: 1,
         threshold: 5,
-        signers: [{
-          weight: 1,
-          addr: ethers.Wallet.createRandom().address
-        }]
+        signers: [
+          {
+            weight: 1,
+            addr: ethers.Wallet.createRandom().address
+          }
+        ]
       }
 
       let expectedChainId: number
@@ -137,7 +147,8 @@ describe('SequenceSigner', () => {
 
     it('getNetworks', async () => {
       let callsToGetNetworks = 0
-      const signer = new SequenceProvider({
+      const signer = new SequenceProvider(
+        {
           ...basicMockClient,
           getNetworks: async () => {
             callsToGetNetworks++
@@ -189,7 +200,8 @@ describe('SequenceSigner', () => {
       beforeEach(() => {
         callsToGetAddress = 0
         address = ethers.Wallet.createRandom().address
-        signer = new SequenceProvider({
+        signer = new SequenceProvider(
+          {
             ...basicMockClient,
             getAddress: () => {
               callsToGetAddress++
@@ -227,9 +239,10 @@ describe('SequenceSigner', () => {
       beforeEach(async () => {
         address = ethers.Wallet.createRandom().address
 
-        signer = new SequenceProvider({
+        signer = new SequenceProvider(
+          {
             ...basicMockClient,
-            getAddress: () => address,
+            getAddress: () => address
           } as unknown as SequenceClient,
           providerFor
         ).getSigner()
@@ -266,23 +279,54 @@ describe('SequenceSigner', () => {
       })
 
       it('should return the balance on static network signer', async () => {
-        expect(await signer.getSigner(31337).getBalance().then(b => b.toNumber())).to.equal(10)
-        expect(await signer.getSigner(31338).getBalance().then(b => b.toNumber())).to.equal(20)
+        expect(
+          await signer
+            .getSigner(31337)
+            .getBalance()
+            .then(b => b.toNumber())
+        ).to.equal(10)
+        expect(
+          await signer
+            .getSigner(31338)
+            .getBalance()
+            .then(b => b.toNumber())
+        ).to.equal(20)
       })
 
       it('should return the balance on static network signer using string network name', async () => {
-        expect(await signer.getSigner('hardhat').getBalance().then(b => b.toNumber())).to.equal(10)
-        expect(await signer.getSigner('hardhat2').getBalance().then(b => b.toNumber())).to.equal(20)
+        expect(
+          await signer
+            .getSigner('hardhat')
+            .getBalance()
+            .then(b => b.toNumber())
+        ).to.equal(10)
+        expect(
+          await signer
+            .getSigner('hardhat2')
+            .getBalance()
+            .then(b => b.toNumber())
+        ).to.equal(20)
       })
 
       it('should return balance on specific chain when passing chainId', async () => {
-        expect(await signer.getSigner('hardhat').getBalance(undefined, { chainId: 31337 }).then(b => b.toNumber())).to.equal(10)
-        expect(await signer.getSigner('hardhat2').getBalance(undefined, { chainId: 31338 }).then(b => b.toNumber())).to.equal(20)
+        expect(
+          await signer
+            .getSigner('hardhat')
+            .getBalance(undefined, { chainId: 31337 })
+            .then(b => b.toNumber())
+        ).to.equal(10)
+        expect(
+          await signer
+            .getSigner('hardhat2')
+            .getBalance(undefined, { chainId: 31338 })
+            .then(b => b.toNumber())
+        ).to.equal(20)
       })
 
       it('should fail to return balance on specific chain when passing different chainId', async () => {
-        await expect(signer.getSigner('hardhat').getBalance(undefined, { chainId: 31338 }))
-          .to.be.rejectedWith('This signer only supports the network 31337, but 31338 was requested.')
+        await expect(signer.getSigner('hardhat').getBalance(undefined, { chainId: 31338 })).to.be.rejectedWith(
+          'This signer only supports the network 31337, but 31338 was requested.'
+        )
       })
     })
 
@@ -297,9 +341,11 @@ describe('SequenceSigner', () => {
       beforeEach(async () => {
         // deploy a "contract" that when called returns 0x112233
         // (this uses a bit of gas that we can measure)
-        const res = await testAccounts[0].sendTransaction({
-          data: '0x6b621122336000526003601df3600052600c6014f3'
-        }).then((r) => r.wait())
+        const res = await testAccounts[0]
+          .sendTransaction({
+            data: '0x6b621122336000526003601df3600052600c6014f3'
+          })
+          .then(r => r.wait())
 
         addr = res.contractAddress
 
@@ -329,8 +375,9 @@ describe('SequenceSigner', () => {
       })
 
       it('fail to forward estimateGas - static network provider for different chain', async () => {
-        await expect(signer.getSigner('hardhat2').estimateGas({ to: addr }, { chainId: 31337 }))
-          .to.be.rejectedWith('This signer only supports the network 31338, but 31337 was requested.')
+        await expect(signer.getSigner('hardhat2').estimateGas({ to: addr }, { chainId: 31337 })).to.be.rejectedWith(
+          'This signer only supports the network 31338, but 31337 was requested.'
+        )
       })
     })
 
@@ -340,9 +387,11 @@ describe('SequenceSigner', () => {
 
       beforeEach(async () => {
         // deploy a "contract" that when called returns 0x112233
-        const res = await testAccounts[0].sendTransaction({
-          data: '0x6b621122336000526003601df3600052600c6014f3'
-        }).then((r) => r.wait())
+        const res = await testAccounts[0]
+          .sendTransaction({
+            data: '0x6b621122336000526003601df3600052600c6014f3'
+          })
+          .then(r => r.wait())
 
         addr = res.contractAddress
 
@@ -369,8 +418,9 @@ describe('SequenceSigner', () => {
       })
 
       it('fail to forward call - static network provider for different chain', async () => {
-        await expect(signer.getSigner('hardhat2').call({ to: addr }, undefined, { chainId: 31337 }))
-          .to.be.rejectedWith('This signer only supports the network 31338, but 31337 was requested.')
+        await expect(signer.getSigner('hardhat2').call({ to: addr }, undefined, { chainId: 31337 })).to.be.rejectedWith(
+          'This signer only supports the network 31338, but 31337 was requested.'
+        )
       })
     })
 
@@ -386,14 +436,14 @@ describe('SequenceSigner', () => {
               getGasPrice: async () => ethers.BigNumber.from(1)
             } as unknown as ethers.providers.JsonRpcProvider
           }
-      
+
           if (chainId === 31338) {
             return {
               ...hardhat2Provider,
               getGasPrice: async () => ethers.BigNumber.from(2)
             } as unknown as ethers.providers.JsonRpcProvider
           }
-      
+
           throw new Error(`No provider for chainId ${chainId}`)
         }).getSigner()
       })
@@ -416,8 +466,9 @@ describe('SequenceSigner', () => {
       })
 
       it('fail to forward getGasPrice - static network provider for different chain', async () => {
-        await expect(signer.getSigner('hardhat').getGasPrice({ chainId: 31338 }))
-          .to.be.rejectedWith('This signer only supports the network 31337, but 31338 was requested.')
+        await expect(signer.getSigner('hardhat').getGasPrice({ chainId: 31338 })).to.be.rejectedWith(
+          'This signer only supports the network 31337, but 31338 was requested.'
+        )
       })
     })
 
@@ -436,7 +487,7 @@ describe('SequenceSigner', () => {
         signer = new SequenceProvider(
           {
             ...basicMockClient,
-            getNetworks: async () => (allNetworks)
+            getNetworks: async () => allNetworks
           } as unknown as SequenceClient,
           (chainId: number) => {
             if (chainId === 1) {
@@ -462,13 +513,15 @@ describe('SequenceSigner', () => {
       })
 
       it('fail to forward resolveName on single network (hardhat) provider', async () => {
-        await expect(signer.getSigner('hardhat').resolveName('vitalik.eth'))
-          .to.be.rejectedWith('This provider only supports the network 31337, but 1 was requested.')
+        await expect(signer.getSigner('hardhat').resolveName('vitalik.eth')).to.be.rejectedWith(
+          'This provider only supports the network 31337, but 1 was requested.'
+        )
       })
 
       it('shuld fail if the name is not resolved', async () => {
-        await expect(signer.resolveName('pleasedontregisterthisorelsethistestwillfail.eth'))
-          .to.be.rejectedWith('ENS name not found: pleasedontregisterthisorelsethistestwillfail.eth')
+        await expect(signer.resolveName('pleasedontregisterthisorelsethistestwillfail.eth')).to.be.rejectedWith(
+          'ENS name not found: pleasedontregisterthisorelsethistestwillfail.eth'
+        )
       })
     })
   })
@@ -487,8 +540,7 @@ describe('SequenceSigner', () => {
 
     it('should fail to connect to non-sequence provider', () => {
       const signer = new SequenceProvider(basicMockClient, providerFor).getSigner()
-      expect(() => signer.connect(hardhat1Provider))
-        .to.throw('SequenceSigner can only be connected to a SequenceProvider')
+      expect(() => signer.connect(hardhat1Provider)).to.throw('SequenceSigner can only be connected to a SequenceProvider')
     })
   })
 
@@ -532,8 +584,9 @@ describe('SequenceSigner', () => {
     it('static network provider should fail to return signer for different chainId', () => {
       const provider = new SequenceProvider(basicMockClient, providerFor)
       const staticProvider = provider.getProvider(31337)
-      expect(() => staticProvider.getSigner(31338))
-        .to.throw('This provider only supports the network 31337, but 31338 was requested.')
+      expect(() => staticProvider.getSigner(31338)).to.throw(
+        'This provider only supports the network 31337, but 31338 was requested.'
+      )
     })
 
     it('static network signer should return static chainId', async () => {
@@ -555,8 +608,7 @@ describe('SequenceSigner', () => {
 
     it('static network signer should fail to return signer for a different chainId', () => {
       const signer = new SequenceProvider(basicMockClient, providerFor).getSigner(31337)
-      expect(() => signer.getSigner(31338))
-        .to.throw('This signer only supports the network 31337, but 31338 was requested.')
+      expect(() => signer.getSigner(31338)).to.throw('This signer only supports the network 31337, but 31338 was requested.')
     })
 
     it('static network signer should return static network provider', () => {
@@ -574,13 +626,12 @@ describe('SequenceSigner', () => {
 
     it('static network signer should fail to return provider for different chainId', () => {
       const signer = new SequenceProvider(basicMockClient, providerFor).getSigner(31337)
-      expect(() => signer.getProvider(31338))
-        .to.throw('This signer only supports the network 31337, but 31338 was requested.')
+      expect(() => signer.getProvider(31338)).to.throw('This signer only supports the network 31337, but 31338 was requested.')
     })
 
     it('signer getProvider should return main provider', () => {
       const signer = new SequenceProvider(basicMockClient, providerFor).getSigner(31337)
-      expect(signer.getProvider()).to.equal(signer.provider) 
+      expect(signer.getProvider()).to.equal(signer.provider)
     })
   })
 
@@ -598,7 +649,8 @@ describe('SequenceSigner', () => {
       expectedOptions = {}
       returnValue = ethers.utils.hexlify(ethers.utils.randomBytes(99))
 
-      signer = new SequenceProvider({
+      signer = new SequenceProvider(
+        {
           ...basicMockClient,
           signMessage: async (message: string, options: OptionalEIP6492 & OptionalChainId) => {
             expect(message).to.equal(expectedSignMessage)
@@ -680,8 +732,9 @@ describe('SequenceSigner', () => {
     })
 
     it('should fail to sign message on static network signer if passing different chainId', async () => {
-      await expect(signer.getSigner(31338).signMessage(expectedSignMessage, { chainId: 31337 }))
-        .to.be.rejectedWith('This signer only supports the network 31338, but 31337 was requested.')
+      await expect(signer.getSigner(31338).signMessage(expectedSignMessage, { chainId: 31337 })).to.be.rejectedWith(
+        'This signer only supports the network 31338, but 31337 was requested.'
+      )
     })
 
     it('should pass array instead of string', async () => {
@@ -732,12 +785,10 @@ describe('SequenceSigner', () => {
       expectedOptions = {}
       returnValue = ethers.utils.hexlify(ethers.utils.randomBytes(99))
 
-      signer = new SequenceProvider({
+      signer = new SequenceProvider(
+        {
           ...basicMockClient,
-          signTypedData: async (
-            typedData: TypedData,
-            options: OptionalEIP6492 & OptionalChainId
-          ) => {
+          signTypedData: async (typedData: TypedData, options: OptionalEIP6492 & OptionalChainId) => {
             expect(typedData.domain).to.deep.equal(expectedDomain)
             expect(typedData.types).to.deep.equal(expectedTypes)
             expect(typedData.message).to.deep.equal(expectedMessage)
@@ -784,24 +835,30 @@ describe('SequenceSigner', () => {
 
     it('should sign typed data on specific chain without using eip6492', async () => {
       expectedOptions = { chainId: 31338, eip6492: false }
-      expect(await signer.signTypedData(expectedDomain, expectedTypes, expectedMessage, { chainId: 31338, eip6492: false })).to.equal(returnValue)
+      expect(
+        await signer.signTypedData(expectedDomain, expectedTypes, expectedMessage, { chainId: 31338, eip6492: false })
+      ).to.equal(returnValue)
       expect(callsToSignTypedData).to.equal(1)
     })
 
     it('should sign typed data on specific chain using string network name', async () => {
       expectedOptions = { chainId: 31338, eip6492: true }
-      expect(await signer.signTypedData(expectedDomain, expectedTypes, expectedMessage, {
-        chainId: 'hardhat2'
-      })).to.equal(returnValue)
+      expect(
+        await signer.signTypedData(expectedDomain, expectedTypes, expectedMessage, {
+          chainId: 'hardhat2'
+        })
+      ).to.equal(returnValue)
       expect(callsToSignTypedData).to.equal(1)
     })
 
     it('should sign typed data on specific chain using string network name without using eip6492', async () => {
       expectedOptions = { chainId: 31338, eip6492: false }
-      expect(await signer.signTypedData(expectedDomain, expectedTypes, expectedMessage, {
-        chainId: 'hardhat2',
-        eip6492: false
-      })).to.equal(returnValue)
+      expect(
+        await signer.signTypedData(expectedDomain, expectedTypes, expectedMessage, {
+          chainId: 'hardhat2',
+          eip6492: false
+        })
+      ).to.equal(returnValue)
       expect(callsToSignTypedData).to.equal(1)
     })
 
@@ -813,28 +870,32 @@ describe('SequenceSigner', () => {
 
     it('should sign typed data on static network signer without using eip6492', async () => {
       expectedOptions = { chainId: 31338, eip6492: false }
-      expect(await signer.getSigner(31338).signTypedData(expectedDomain, expectedTypes, expectedMessage, { eip6492: false })).to.equal(returnValue)
+      expect(
+        await signer.getSigner(31338).signTypedData(expectedDomain, expectedTypes, expectedMessage, { eip6492: false })
+      ).to.equal(returnValue)
       expect(callsToSignTypedData).to.equal(1)
     })
 
     it('should sign typed data on static network signer if passing chainId', async () => {
       expectedOptions = { chainId: 31338, eip6492: true }
-      expect(await signer.getSigner(31338).signTypedData(expectedDomain, expectedTypes, expectedMessage, { chainId: 31338 })).to.equal(returnValue)
+      expect(
+        await signer.getSigner(31338).signTypedData(expectedDomain, expectedTypes, expectedMessage, { chainId: 31338 })
+      ).to.equal(returnValue)
       expect(callsToSignTypedData).to.equal(1)
     })
 
     it('should fail to sign typed data on static network signer if passing different chainId', async () => {
-      await expect(signer.getSigner(31338).signTypedData(expectedDomain, expectedTypes, expectedMessage, { chainId: 31337 }))
-        .to.be.rejectedWith('This signer only supports the network 31338, but 31337 was requested.')
+      await expect(
+        signer.getSigner(31338).signTypedData(expectedDomain, expectedTypes, expectedMessage, { chainId: 31337 })
+      ).to.be.rejectedWith('This signer only supports the network 31338, but 31337 was requested.')
     })
   })
 
   describe('sendTransaction', () => {
     let callsToSendTransaction: number
-    let expectedTransactionRequest: (
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-    )
+    let expectedTransactionRequest:
+      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
+      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>
 
     let expectedOptions: OptionalChainIdLike
 
@@ -847,18 +908,18 @@ describe('SequenceSigner', () => {
         to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
         value: ethers.utils.parseEther('1.0'),
         data: ethers.utils.hexlify(ethers.utils.randomBytes(55)),
-        gasLimit: 40000,
+        gasLimit: 40000
       }
 
       expectedOptions = {}
 
-      signer = new SequenceProvider({
+      signer = new SequenceProvider(
+        {
           ...basicMockClient,
           sendTransaction: async (
-            transactionRequest: (
-              ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
-              ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-            ),
+            transactionRequest:
+              | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
+              | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
             options: OptionalChainIdLike
           ) => {
             expect(transactionRequest).to.deep.equal(expectedTransactionRequest)
@@ -870,7 +931,7 @@ describe('SequenceSigner', () => {
             // will throw an error
             const subsig = testAccounts[(options?.chainId ?? 31337) === 31337 ? 0 : 1]
             const tx = await subsig.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             return tx.hash
@@ -930,23 +991,28 @@ describe('SequenceSigner', () => {
     })
 
     it('should fail to send transaction on static network signer if passing different chainId', async () => {
-      await expect(signer.getSigner(31338).sendTransaction(expectedTransactionRequest, { chainId: 31337 }))
-        .to.be.rejectedWith('This signer only supports the network 31338, but 31337 was requested.')
+      await expect(signer.getSigner(31338).sendTransaction(expectedTransactionRequest, { chainId: 31337 })).to.be.rejectedWith(
+        'This signer only supports the network 31338, but 31337 was requested.'
+      )
     })
 
     it('should send batch transaction', async () => {
       expectedOptions = { chainId: 31338 }
-      expectedTransactionRequest = [{
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
-        value: ethers.utils.parseEther('1.0'),
-        data: ethers.utils.hexlify(ethers.utils.randomBytes(55)),
-      }, {
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
-        data: ethers.utils.hexlify(ethers.utils.randomBytes(1)),
-      }, {
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
-        value: 2
-      }]
+      expectedTransactionRequest = [
+        {
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          value: ethers.utils.parseEther('1.0'),
+          data: ethers.utils.hexlify(ethers.utils.randomBytes(55))
+        },
+        {
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          data: ethers.utils.hexlify(ethers.utils.randomBytes(1))
+        },
+        {
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          value: 2
+        }
+      ]
 
       const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 31338 })
       expect(tx.wait()).to.be.fulfilled
@@ -958,17 +1024,17 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const expected = {
         to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
-        value: ethers.utils.parseEther('1.0').toString(),
+        value: ethers.utils.parseEther('1.0').toString()
       }
 
       expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
 
       const derrered = {
-        to: new Promise<string>(async (r) => {
+        to: new Promise<string>(async r => {
           await new Promise(d => setTimeout(d, 1000))
           return r(expected.to)
         }),
-        value: new Promise<string>(async (r) => {
+        value: new Promise<string>(async r => {
           await new Promise(d => setTimeout(d, 600))
           return r(expected.value)
         })
@@ -981,35 +1047,41 @@ describe('SequenceSigner', () => {
 
     it('shoud send array of deffered transactions', async () => {
       expectedOptions = { chainId: 31338 }
-      const expected = [{
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
-        value: ethers.utils.parseEther('1.0').toString(),
-      }, {
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
-        data: ethers.utils.hexlify(ethers.utils.randomBytes(111)),
-      }]
+      const expected = [
+        {
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          value: ethers.utils.parseEther('1.0').toString()
+        },
+        {
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          data: ethers.utils.hexlify(ethers.utils.randomBytes(111))
+        }
+      ]
 
       expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
 
-      const derrered = [{
-        to: new Promise<string>(async (r) => {
-          await new Promise(d => setTimeout(d, 1000))
-          return r(expected[0].to)
-        }),
-        value: new Promise<string>(async (r) => {
-          await new Promise(d => setTimeout(d, 600))
-          return r(expected[0].value!)
-        })
-      }, {
-        to: new Promise<string>(async (r) => {
-          await new Promise(d => setTimeout(d, 412))
-          return r(expected[1].to)
-        }),
-        data: new Promise<string>(async (r) => {
-          await new Promise(d => setTimeout(d, 1001))
-          return r(expected[1].data!)
-        })
-      }]
+      const derrered = [
+        {
+          to: new Promise<string>(async r => {
+            await new Promise(d => setTimeout(d, 1000))
+            return r(expected[0].to)
+          }),
+          value: new Promise<string>(async r => {
+            await new Promise(d => setTimeout(d, 600))
+            return r(expected[0].value!)
+          })
+        },
+        {
+          to: new Promise<string>(async r => {
+            await new Promise(d => setTimeout(d, 412))
+            return r(expected[1].to)
+          }),
+          data: new Promise<string>(async r => {
+            await new Promise(d => setTimeout(d, 1001))
+            return r(expected[1].data!)
+          })
+        }
+      ]
 
       const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
       expect(tx.wait()).to.be.fulfilled
@@ -1017,4 +1089,3 @@ describe('SequenceSigner', () => {
     })
   })
 })
-

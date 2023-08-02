@@ -1,10 +1,19 @@
-import { CachedProvider, ChainIdLike, JsonRpcRouter, JsonRpcSender, NetworkConfig, allNetworks, exceptionProviderMiddleware, findNetworkConfig, loggingProviderMiddleware } from "@0xsequence/network"
-import { MuxTransportTemplate } from "./transports"
-import { ItemStore, useBestStore } from "./utils"
-import { ethers } from "ethers"
-import { SequenceClient } from "./client"
-import { SequenceProvider } from "./provider"
-
+import {
+  CachedProvider,
+  ChainIdLike,
+  JsonRpcRouter,
+  JsonRpcSender,
+  NetworkConfig,
+  allNetworks,
+  exceptionProviderMiddleware,
+  findNetworkConfig,
+  loggingProviderMiddleware
+} from '@0xsequence/network'
+import { MuxTransportTemplate } from './transports'
+import { ItemStore, useBestStore } from './utils'
+import { ethers } from 'ethers'
+import { SequenceClient } from './client'
+import { SequenceProvider } from './provider'
 
 export interface ProviderConfig {
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
@@ -37,14 +46,12 @@ export const DefaultProviderConfig = {
     proxyTransport: { enabled: false }
   },
 
-  defaultNetwork: 1,
+  defaultNetwork: 1
 }
 
 let sequenceWalletProvider: SequenceProvider | undefined
 
-export const initWallet = (
-  partialConfig?: Partial<ProviderConfig>
-) => {
+export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   if (sequenceWalletProvider) {
     return sequenceWalletProvider
   }
@@ -55,7 +62,7 @@ export const initWallet = (
     ...partialConfig,
     transports: {
       ...DefaultProviderConfig.transports,
-      ...partialConfig?.transports,
+      ...partialConfig?.transports
     }
   }
 
@@ -63,37 +70,33 @@ export const initWallet = (
 
   // Find any new networks that aren't already defined in sequence.js
   // and add them to the list of networks, (they must have a rpcUrl and chainId)
-  const newNetworks = (config.networks?.filter((n) => {
-    n.rpcUrl !== undefined &&
-    n.chainId !== undefined &&
-    !allNetworks.find((an) => an.chainId === n.chainId)
+  const newNetworks = (config.networks?.filter(n => {
+    n.rpcUrl !== undefined && n.chainId !== undefined && !allNetworks.find(an => an.chainId === n.chainId)
   }) ?? []) as NetworkConfig[]
 
   // Override any information about the networks using the config
-  const combinedNetworks = allNetworks.map((n) => {
-    const network = config.networks?.find((cn) => cn.chainId === n.chainId)
-    return network ? { ...n, ...network } : n
-  }).concat(newNetworks)
+  const combinedNetworks = allNetworks
+    .map(n => {
+      const network = config.networks?.find(cn => cn.chainId === n.chainId)
+      return network ? { ...n, ...network } : n
+    })
+    .concat(newNetworks)
 
   // This build a "public rpc" on demand, we build them on demand because we don't want to
   // generate a bunch of providers for networks that aren't used.
   const providerForChainId = (chainId: number) => {
     if (!rpcProviders[chainId]) {
-      const rpcUrl = combinedNetworks.find((n) => n.chainId === chainId)?.rpcUrl
+      const rpcUrl = combinedNetworks.find(n => n.chainId === chainId)?.rpcUrl
       if (!rpcUrl) {
         throw new Error(`no rpcUrl found for chainId: ${chainId}`)
       }
 
       const baseProvider = new ethers.providers.JsonRpcProvider(rpcUrl)
       const router = new JsonRpcRouter(
-        [
-          loggingProviderMiddleware,
-          exceptionProviderMiddleware,
-          new CachedProvider()
-        ],
+        [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()],
         new JsonRpcSender(baseProvider)
       )
-  
+
       rpcProviders[chainId] = new ethers.providers.Web3Provider(router, chainId)
     }
 

@@ -1,8 +1,7 @@
 import { expect } from 'chai'
 import { sanitizeHost } from '@0xsequence/utils'
 
-describe('sanitize', function() {
-  
+describe('sanitize', function () {
   it('sanitize host', () => {
     const a = 'http://localhost:4000'
     expect(sanitizeHost(a)).to.equal('http://localhost:4000')
@@ -19,6 +18,4 @@ describe('sanitize', function() {
     const e = 'http://hello-w(!#@%$#%^@orld.com'
     expect(sanitizeHost(e)).to.equal('http://hello-w')
   })
-
 })
-

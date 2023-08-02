@@ -69,7 +69,7 @@ describe('Multicall integration', function () {
         verbose: false,
         debug: false,
         logger: undefined
-      },
+      }
     })
 
     // TODO: use hardhat instead like in wallet/wallet.spec.ts

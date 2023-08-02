@@ -4,7 +4,7 @@ import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 import { commons } from '@0xsequence/core'
 
-export type LocalRelayerOptions = Omit<ProviderRelayerOptions, "provider"> & {
+export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
   signer: AbstractSigner
 }
 
@@ -19,13 +19,10 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   constructor(options: LocalRelayerOptions | AbstractSigner) {
     super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
     this.signer = AbstractSigner.isSigner(options) ? options : options.signer
-    if (!this.signer.provider) throw new Error("Signer must have a provider")
+    if (!this.signer.provider) throw new Error('Signer must have a provider')
   }
 
-  async getFeeOptions(
-    _address: string,
-    ..._transactions: commons.transaction.Transaction[]
-  ): Promise<{ options: FeeOption[] }> {
+  async getFeeOptions(_address: string, ..._transactions: commons.transaction.Transaction[]): Promise<{ options: FeeOption[] }> {
     return { options: [] }
   }
 
@@ -33,10 +30,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     return { options: [] }
   }
 
-  async gasRefundOptions(
-    address: string,
-    ...transactions:commons.transaction.Transaction[]
-  ): Promise<FeeOption[]> {
+  async gasRefundOptions(address: string, ...transactions: commons.transaction.Transaction[]): Promise<FeeOption[]> {
     const { options } = await this.getFeeOptions(address, ...transactions)
     return options
   }
@@ -47,12 +41,13 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
 
   async relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
-    quote?: FeeQuote, waitForReceipt: boolean = true
+    quote?: FeeQuote,
+    waitForReceipt: boolean = true
   ): Promise<commons.transaction.TransactionResponse<providers.TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
-  
+
     const data = commons.transaction.encodeBundleExecData(signedTxs)
 
     // TODO: think about computing gas limit individually, summing together and passing across

@@ -11,7 +11,7 @@ walletProvider.register()
 
 // ;(window as any).walletProvider = walletProvider
 
-export const tests = async () => {  
+export const tests = async () => {
   await (async () => {
     const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
     const signer = provider.getSigner()
@@ -62,7 +62,7 @@ export const tests = async () => {
     assert.equal(chainId2, 31337, 'chainId check')
   })
 
-  // NOTE: when a dapp wants to verify SmartWallet signed messages, they will need to verify against EIP-1271 
+  // NOTE: when a dapp wants to verify SmartWallet signed messages, they will need to verify against EIP-1271
   await test('sign a message and validate/recover', async () => {
     const message = ethers.utils.toUtf8Bytes('hihi')
 
@@ -91,12 +91,11 @@ export const tests = async () => {
   })
 
   await test('sign EIP712 typed data and validate/recover', async () => {
-
     const typedData = {
       types: {
         Person: [
-          {name: "name", type: "string"},
-          {name: "wallet", type: "address"},
+          { name: 'name', type: 'string' },
+          { name: 'wallet', type: 'address' }
         ]
       },
       primaryType: 'Person' as const,
@@ -107,8 +106,8 @@ export const tests = async () => {
         verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
       },
       message: {
-        'name': 'Bob',
-        'wallet': '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
+        name: 'Bob',
+        wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
       }
     }
 

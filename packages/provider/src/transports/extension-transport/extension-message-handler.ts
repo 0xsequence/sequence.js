@@ -9,7 +9,10 @@ export const CHANNEL_ID = 'sequence-extension-message-handler'
 export class ExtensionMessageHandler extends BaseWalletTransport {
   private port: any
 
-  constructor(walletRequestHandler: WalletRequestHandler, public runtime: Runtime.Static) {
+  constructor(
+    walletRequestHandler: WalletRequestHandler,
+    public runtime: Runtime.Static
+  ) {
     super(walletRequestHandler)
     this._init = InitState.OK
   }

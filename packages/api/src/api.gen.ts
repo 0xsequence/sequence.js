@@ -6,13 +6,13 @@
 // webrpc-gen -schema=api.ridl -target=typescript@v0.10.0 -client -out=./clients/api.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "e4aaaf3a3c07a1f339226fcac3b8addcb3120c7b"
+export const WebRPCSchemaHash = 'e4aaaf3a3c07a1f339226fcac3b8addcb3120c7b'
 
 //
 // Types
@@ -52,8 +52,7 @@ export interface RuntimeStatus {
   checks: RuntimeChecks
 }
 
-export interface RuntimeChecks {
-}
+export interface RuntimeChecks {}
 
 export interface SequenceContext {
   factory: string
@@ -66,7 +65,7 @@ export interface SequenceContext {
 export interface User {
   address: string
   username: string
-  
+
   avatar: string
   bio: string
   location: string
@@ -76,7 +75,6 @@ export interface User {
   maxInvites?: number
   updatedAt?: string
   createdAt?: string
-  
 }
 
 export interface WalletBackup {
@@ -98,8 +96,6 @@ export interface Friend {
 }
 
 export interface InviteCode {
-  
-  
   usesLeft: number
   ownerAccount: string
   email?: string
@@ -109,7 +105,6 @@ export interface InviteCode {
 }
 
 export interface InviteCodeAccount {
-  
   claimedByUserAddress: string
   claimedAt?: string
 }
@@ -259,7 +254,7 @@ export interface SmartRampOrder {
   purchaseAmount: number
   purchaseFees: number
   purchaseTotal: number
-  smartScriptParams: {[key: string]: any}
+  smartScriptParams: { [key: string]: any }
   txnHash: string
   txnSuccessful: SmartRampTxnStatus
   updatedAt?: string
@@ -327,15 +322,30 @@ export interface API {
   deletePayCard(args: DeletePayCardArgs, headers?: object): Promise<DeletePayCardReturn>
   smartRampQuote(args: SmartRampQuoteArgs, headers?: object): Promise<SmartRampQuoteReturn>
   smartRampPurchase(args: SmartRampPurchaseArgs, headers?: object): Promise<SmartRampPurchaseReturn>
-  smartRampWaitOrderConfirmation(args: SmartRampWaitOrderConfirmationArgs, headers?: object): Promise<SmartRampWaitOrderConfirmationReturn>
+  smartRampWaitOrderConfirmation(
+    args: SmartRampWaitOrderConfirmationArgs,
+    headers?: object
+  ): Promise<SmartRampWaitOrderConfirmationReturn>
   smartRampGetOrder(args: SmartRampGetOrderArgs, headers?: object): Promise<SmartRampGetOrderReturn>
-  smartRampCheckCardAuthorization(args: SmartRampCheckCardAuthorizationArgs, headers?: object): Promise<SmartRampCheckCardAuthorizationReturn>
+  smartRampCheckCardAuthorization(
+    args: SmartRampCheckCardAuthorizationArgs,
+    headers?: object
+  ): Promise<SmartRampCheckCardAuthorizationReturn>
   smartRampOrdersList(args: SmartRampOrdersListArgs, headers?: object): Promise<SmartRampOrdersListReturn>
   smartRampGetOrderTxnHash(args: SmartRampGetOrderTxnHashArgs, headers?: object): Promise<SmartRampGetOrderTxnHashReturn>
-  smartRampSubmitCardAuthorization(args: SmartRampSubmitCardAuthorizationArgs, headers?: object): Promise<SmartRampSubmitCardAuthorizationReturn>
+  smartRampSubmitCardAuthorization(
+    args: SmartRampSubmitCardAuthorizationArgs,
+    headers?: object
+  ): Promise<SmartRampSubmitCardAuthorizationReturn>
   adminSmartRampGetOrder(args: AdminSmartRampGetOrderArgs, headers?: object): Promise<AdminSmartRampGetOrderReturn>
-  adminSmartRampListCompletedOrders(args: AdminSmartRampListCompletedOrdersArgs, headers?: object): Promise<AdminSmartRampListCompletedOrdersReturn>
-  adminSmartRampListPendingOrders(args: AdminSmartRampListPendingOrdersArgs, headers?: object): Promise<AdminSmartRampListPendingOrdersReturn>
+  adminSmartRampListCompletedOrders(
+    args: AdminSmartRampListCompletedOrdersArgs,
+    headers?: object
+  ): Promise<AdminSmartRampListCompletedOrdersReturn>
+  adminSmartRampListPendingOrders(
+    args: AdminSmartRampListPendingOrdersArgs,
+    headers?: object
+  ): Promise<AdminSmartRampListPendingOrdersReturn>
   getInviteInfo(headers?: object): Promise<GetInviteInfoReturn>
   isValidAccessCode(args: IsValidAccessCodeArgs, headers?: object): Promise<IsValidAccessCodeReturn>
   internalClaimAccessCode(args: InternalClaimAccessCodeArgs, headers?: object): Promise<InternalClaimAccessCodeReturn>
@@ -345,29 +355,25 @@ export interface API {
   paperSessionSecret2(args: PaperSessionSecret2Args, headers?: object): Promise<PaperSessionSecret2Return>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface GetSequenceContextArgs {
-}
+export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextReturn {
-  data: SequenceContext  
+  data: SequenceContext
 }
 export interface GetAuthTokenArgs {
   ewtString: string
@@ -378,7 +384,7 @@ export interface GetAuthTokenReturn {
   status: boolean
   jwtToken: string
   address: string
-  user?: User  
+  user?: User
 }
 export interface SendPasswordlessLinkArgs {
   email: string
@@ -387,7 +393,7 @@ export interface SendPasswordlessLinkArgs {
 }
 
 export interface SendPasswordlessLinkReturn {
-  status: boolean  
+  status: boolean
 }
 export interface FriendListArgs {
   page?: Page
@@ -395,7 +401,7 @@ export interface FriendListArgs {
 
 export interface FriendListReturn {
   page: Page
-  friends: Array<Friend>  
+  friends: Array<Friend>
 }
 export interface GetFriendByAddressArgs {
   friendAddress: string
@@ -403,14 +409,14 @@ export interface GetFriendByAddressArgs {
 
 export interface GetFriendByAddressReturn {
   status: boolean
-  friend: Friend  
+  friend: Friend
 }
 export interface SearchFriendsArgs {
   filterUsername: string
 }
 
 export interface SearchFriendsReturn {
-  friends: Array<Friend>  
+  friends: Array<Friend>
 }
 export interface AddFriendArgs {
   friendAddress: string
@@ -419,7 +425,7 @@ export interface AddFriendArgs {
 
 export interface AddFriendReturn {
   status: boolean
-  friend?: Friend  
+  friend?: Friend
 }
 export interface UpdateFriendNicknameArgs {
   friendAddress: string
@@ -428,14 +434,14 @@ export interface UpdateFriendNicknameArgs {
 
 export interface UpdateFriendNicknameReturn {
   status: boolean
-  friend?: Friend  
+  friend?: Friend
 }
 export interface RemoveFriendArgs {
   friendAddress: string
 }
 
 export interface RemoveFriendReturn {
-  status: boolean  
+  status: boolean
 }
 export interface ContractCallArgs {
   chainID: string
@@ -446,28 +452,28 @@ export interface ContractCallArgs {
 }
 
 export interface ContractCallReturn {
-  returns: Array<string>  
+  returns: Array<string>
 }
 export interface DecodeContractCallArgs {
   callData: string
 }
 
 export interface DecodeContractCallReturn {
-  call: ContractCall  
+  call: ContractCall
 }
 export interface LookupContractCallSelectorsArgs {
   selectors: Array<string>
 }
 
 export interface LookupContractCallSelectorsReturn {
-  signatures: Array<Array<string>>  
+  signatures: Array<Array<string>>
 }
 export interface UserStorageFetchArgs {
   key: string
 }
 
 export interface UserStorageFetchReturn {
-  object: any  
+  object: any
 }
 export interface UserStorageSaveArgs {
   key: string
@@ -475,41 +481,40 @@ export interface UserStorageSaveArgs {
 }
 
 export interface UserStorageSaveReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface UserStorageDeleteArgs {
   key: string
 }
 
 export interface UserStorageDeleteReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface UserStorageFetchAllArgs {
   keys?: Array<string>
 }
 
 export interface UserStorageFetchAllReturn {
-  objects: {[key: string]: any}  
+  objects: { [key: string]: any }
 }
 export interface GetMoonpayLinkArgs {
   url: string
 }
 
 export interface GetMoonpayLinkReturn {
-  signedUrl: string  
+  signedUrl: string
 }
-export interface GetSardineClientTokenArgs {
-}
+export interface GetSardineClientTokenArgs {}
 
 export interface GetSardineClientTokenReturn {
-  token: string  
+  token: string
 }
 export interface IsUsingGoogleMailArgs {
   domain: string
 }
 
 export interface IsUsingGoogleMailReturn {
-  yes: boolean  
+  yes: boolean
 }
 export interface ResolveENSAddressArgs {
   ens: string
@@ -517,7 +522,7 @@ export interface ResolveENSAddressArgs {
 
 export interface ResolveENSAddressReturn {
   address: string
-  ok: boolean  
+  ok: boolean
 }
 export interface IsValidSignatureArgs {
   chainId: string
@@ -527,7 +532,7 @@ export interface IsValidSignatureArgs {
 }
 
 export interface IsValidSignatureReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface IsValidMessageSignatureArgs {
   chainId: string
@@ -537,7 +542,7 @@ export interface IsValidMessageSignatureArgs {
 }
 
 export interface IsValidMessageSignatureReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface IsValidTypedDataSignatureArgs {
   chainId: string
@@ -547,7 +552,7 @@ export interface IsValidTypedDataSignatureArgs {
 }
 
 export interface IsValidTypedDataSignatureReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface IsValidETHAuthProofArgs {
   chainId: string
@@ -556,28 +561,28 @@ export interface IsValidETHAuthProofArgs {
 }
 
 export interface IsValidETHAuthProofReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface GetCoinPricesArgs {
   tokens: Array<Token>
 }
 
 export interface GetCoinPricesReturn {
-  tokenPrices: Array<TokenPrice>  
+  tokenPrices: Array<TokenPrice>
 }
 export interface GetCollectiblePricesArgs {
   tokens: Array<Token>
 }
 
 export interface GetCollectiblePricesReturn {
-  tokenPrices: Array<TokenPrice>  
+  tokenPrices: Array<TokenPrice>
 }
 export interface GetExchangeRateArgs {
   toCurrency: string
 }
 
 export interface GetExchangeRateReturn {
-  exchangeRate: ExchangeRate  
+  exchangeRate: ExchangeRate
 }
 export interface MemoryStoreArgs {
   key: string
@@ -585,20 +590,19 @@ export interface MemoryStoreArgs {
 }
 
 export interface MemoryStoreReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface MemoryLoadArgs {
   key: string
 }
 
 export interface MemoryLoadReturn {
-  value: string  
+  value: string
 }
-export interface ListPayCardsOnFileArgs {
-}
+export interface ListPayCardsOnFileArgs {}
 
 export interface ListPayCardsOnFileReturn {
-  payCards: Array<PayCard>  
+  payCards: Array<PayCard>
 }
 export interface SavePayCardArgs {
   payCard: PayCard
@@ -606,7 +610,7 @@ export interface SavePayCardArgs {
 
 export interface SavePayCardReturn {
   ok: boolean
-  payCard: PayCard  
+  payCard: PayCard
 }
 export interface UpdatePayCardCVCArgs {
   payCardId: number
@@ -614,14 +618,14 @@ export interface UpdatePayCardCVCArgs {
 }
 
 export interface UpdatePayCardCVCReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface DeletePayCardArgs {
   payCardId: number
 }
 
 export interface DeletePayCardReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface SmartRampQuoteArgs {
   quoteRequest: SmartRampQuoteRequest
@@ -629,7 +633,7 @@ export interface SmartRampQuoteArgs {
 
 export interface SmartRampQuoteReturn {
   status: boolean
-  quoteDetails: SmartRampQuoteDetails  
+  quoteDetails: SmartRampQuoteDetails
 }
 export interface SmartRampPurchaseArgs {
   quoteDetails: SmartRampQuoteDetails
@@ -639,7 +643,7 @@ export interface SmartRampPurchaseArgs {
 
 export interface SmartRampPurchaseReturn {
   processing: boolean
-  receipt: SmartRampPurchaseReceipt  
+  receipt: SmartRampPurchaseReceipt
 }
 export interface SmartRampWaitOrderConfirmationArgs {
   orderId: string
@@ -647,7 +651,7 @@ export interface SmartRampWaitOrderConfirmationArgs {
 
 export interface SmartRampWaitOrderConfirmationReturn {
   done: boolean
-  receipt: SmartRampPurchaseReceipt  
+  receipt: SmartRampPurchaseReceipt
 }
 export interface SmartRampGetOrderArgs {
   orderId?: string
@@ -655,14 +659,14 @@ export interface SmartRampGetOrderArgs {
 }
 
 export interface SmartRampGetOrderReturn {
-  order: SmartRampOrder  
+  order: SmartRampOrder
 }
 export interface SmartRampCheckCardAuthorizationArgs {
   orderId: string
 }
 
 export interface SmartRampCheckCardAuthorizationReturn {
-  cardAuth: PayCardAuth  
+  cardAuth: PayCardAuth
 }
 export interface SmartRampOrdersListArgs {
   page?: Page
@@ -671,7 +675,7 @@ export interface SmartRampOrdersListArgs {
 
 export interface SmartRampOrdersListReturn {
   page: Page
-  orders: Array<SmartRampOrder>  
+  orders: Array<SmartRampOrder>
 }
 export interface SmartRampGetOrderTxnHashArgs {
   orderId: string
@@ -679,7 +683,7 @@ export interface SmartRampGetOrderTxnHashArgs {
 
 export interface SmartRampGetOrderTxnHashReturn {
   txnHash: string
-  txnSuccessful: SmartRampTxnStatus  
+  txnSuccessful: SmartRampTxnStatus
 }
 export interface SmartRampSubmitCardAuthorizationArgs {
   orderId: string
@@ -688,7 +692,7 @@ export interface SmartRampSubmitCardAuthorizationArgs {
 }
 
 export interface SmartRampSubmitCardAuthorizationReturn {
-  status: boolean  
+  status: boolean
 }
 export interface AdminSmartRampGetOrderArgs {
   orderId?: string
@@ -696,34 +700,33 @@ export interface AdminSmartRampGetOrderArgs {
 }
 
 export interface AdminSmartRampGetOrderReturn {
-  order: SmartRampOrder  
+  order: SmartRampOrder
 }
 export interface AdminSmartRampListCompletedOrdersArgs {
   accountAddress?: string
 }
 
 export interface AdminSmartRampListCompletedOrdersReturn {
-  orders: Array<SmartRampOrder>  
+  orders: Array<SmartRampOrder>
 }
 export interface AdminSmartRampListPendingOrdersArgs {
   accountAddress?: string
 }
 
 export interface AdminSmartRampListPendingOrdersReturn {
-  pendingOrders: Array<SmartRampOrder>  
+  pendingOrders: Array<SmartRampOrder>
 }
-export interface GetInviteInfoArgs {
-}
+export interface GetInviteInfoArgs {}
 
 export interface GetInviteInfoReturn {
-  inviteInfo: InviteInfo  
+  inviteInfo: InviteInfo
 }
 export interface IsValidAccessCodeArgs {
   accessCode: string
 }
 
 export interface IsValidAccessCodeReturn {
-  status: boolean  
+  status: boolean
 }
 export interface InternalClaimAccessCodeArgs {
   address: string
@@ -731,7 +734,7 @@ export interface InternalClaimAccessCodeArgs {
 }
 
 export interface InternalClaimAccessCodeReturn {
-  status: boolean  
+  status: boolean
 }
 export interface WalletRecoverArgs {
   username: string
@@ -739,7 +742,7 @@ export interface WalletRecoverArgs {
 }
 
 export interface WalletRecoverReturn {
-  encryptedWallet: string  
+  encryptedWallet: string
 }
 export interface BlockNumberAtTimeArgs {
   chainId: number
@@ -747,7 +750,7 @@ export interface BlockNumberAtTimeArgs {
 }
 
 export interface BlockNumberAtTimeReturn {
-  blocks: Array<number>  
+  blocks: Array<number>
 }
 export interface PaperSessionSecretArgs {
   chainName: string
@@ -757,7 +760,7 @@ export interface PaperSessionSecretArgs {
 }
 
 export interface PaperSessionSecretReturn {
-  secret: string  
+  secret: string
 }
 export interface PaperSessionSecret2Args {
   chainName: string
@@ -767,11 +770,9 @@ export interface PaperSessionSecret2Args {
 }
 
 export interface PaperSessionSecret2Return {
-  secret: string  
+  secret: string
 }
 
-
-  
 //
 // Client
 //
@@ -788,683 +789,587 @@ export class API implements API {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   version = (headers?: object): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          version: <Version>(_data.version)
+          version: <Version>_data.version
         }
       })
     })
   }
-  
+
   runtimeStatus = (headers?: object): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <RuntimeStatus>(_data.status)
+          status: <RuntimeStatus>_data.status
         }
       })
     })
   }
-  
+
   getSequenceContext = (headers?: object): Promise<GetSequenceContextReturn> => {
-    return this.fetch(
-      this.url('GetSequenceContext'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('GetSequenceContext'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          data: <SequenceContext>(_data.data)
+          data: <SequenceContext>_data.data
         }
       })
     })
   }
-  
+
   getAuthToken = (args: GetAuthTokenArgs, headers?: object): Promise<GetAuthTokenReturn> => {
-    return this.fetch(
-      this.url('GetAuthToken'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetAuthToken'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          jwtToken: <string>(_data.jwtToken), 
-          address: <string>(_data.address), 
-          user: <User>(_data.user)
+          status: <boolean>_data.status,
+          jwtToken: <string>_data.jwtToken,
+          address: <string>_data.address,
+          user: <User>_data.user
         }
       })
     })
   }
-  
+
   sendPasswordlessLink = (args: SendPasswordlessLinkArgs, headers?: object): Promise<SendPasswordlessLinkReturn> => {
-    return this.fetch(
-      this.url('SendPasswordlessLink'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SendPasswordlessLink'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   friendList = (args: FriendListArgs, headers?: object): Promise<FriendListReturn> => {
-    return this.fetch(
-      this.url('FriendList'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('FriendList'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          friends: <Array<Friend>>(_data.friends)
+          page: <Page>_data.page,
+          friends: <Array<Friend>>_data.friends
         }
       })
     })
   }
-  
+
   getFriendByAddress = (args: GetFriendByAddressArgs, headers?: object): Promise<GetFriendByAddressReturn> => {
-    return this.fetch(
-      this.url('GetFriendByAddress'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetFriendByAddress'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          friend: <Friend>(_data.friend)
+          status: <boolean>_data.status,
+          friend: <Friend>_data.friend
         }
       })
     })
   }
-  
+
   searchFriends = (args: SearchFriendsArgs, headers?: object): Promise<SearchFriendsReturn> => {
-    return this.fetch(
-      this.url('SearchFriends'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SearchFriends'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          friends: <Array<Friend>>(_data.friends)
+          friends: <Array<Friend>>_data.friends
         }
       })
     })
   }
-  
+
   addFriend = (args: AddFriendArgs, headers?: object): Promise<AddFriendReturn> => {
-    return this.fetch(
-      this.url('AddFriend'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('AddFriend'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          friend: <Friend>(_data.friend)
+          status: <boolean>_data.status,
+          friend: <Friend>_data.friend
         }
       })
     })
   }
-  
+
   updateFriendNickname = (args: UpdateFriendNicknameArgs, headers?: object): Promise<UpdateFriendNicknameReturn> => {
-    return this.fetch(
-      this.url('UpdateFriendNickname'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UpdateFriendNickname'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          friend: <Friend>(_data.friend)
+          status: <boolean>_data.status,
+          friend: <Friend>_data.friend
         }
       })
     })
   }
-  
+
   removeFriend = (args: RemoveFriendArgs, headers?: object): Promise<RemoveFriendReturn> => {
-    return this.fetch(
-      this.url('RemoveFriend'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('RemoveFriend'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   contractCall = (args: ContractCallArgs, headers?: object): Promise<ContractCallReturn> => {
-    return this.fetch(
-      this.url('ContractCall'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('ContractCall'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          returns: <Array<string>>(_data.returns)
+          returns: <Array<string>>_data.returns
         }
       })
     })
   }
-  
+
   decodeContractCall = (args: DecodeContractCallArgs, headers?: object): Promise<DecodeContractCallReturn> => {
-    return this.fetch(
-      this.url('DecodeContractCall'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('DecodeContractCall'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          call: <ContractCall>(_data.call)
+          call: <ContractCall>_data.call
         }
       })
     })
   }
-  
-  lookupContractCallSelectors = (args: LookupContractCallSelectorsArgs, headers?: object): Promise<LookupContractCallSelectorsReturn> => {
-    return this.fetch(
-      this.url('LookupContractCallSelectors'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  lookupContractCallSelectors = (
+    args: LookupContractCallSelectorsArgs,
+    headers?: object
+  ): Promise<LookupContractCallSelectorsReturn> => {
+    return this.fetch(this.url('LookupContractCallSelectors'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          signatures: <Array<Array<string>>>(_data.signatures)
+          signatures: <Array<Array<string>>>_data.signatures
         }
       })
     })
   }
-  
+
   userStorageFetch = (args: UserStorageFetchArgs, headers?: object): Promise<UserStorageFetchReturn> => {
-    return this.fetch(
-      this.url('UserStorageFetch'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UserStorageFetch'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          object: <any>(_data.object)
+          object: <any>_data.object
         }
       })
     })
   }
-  
+
   userStorageSave = (args: UserStorageSaveArgs, headers?: object): Promise<UserStorageSaveReturn> => {
-    return this.fetch(
-      this.url('UserStorageSave'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UserStorageSave'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok)
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
+
   userStorageDelete = (args: UserStorageDeleteArgs, headers?: object): Promise<UserStorageDeleteReturn> => {
-    return this.fetch(
-      this.url('UserStorageDelete'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UserStorageDelete'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok)
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
+
   userStorageFetchAll = (args: UserStorageFetchAllArgs, headers?: object): Promise<UserStorageFetchAllReturn> => {
-    return this.fetch(
-      this.url('UserStorageFetchAll'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UserStorageFetchAll'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          objects: <{[key: string]: any}>(_data.objects)
+          objects: <{ [key: string]: any }>_data.objects
         }
       })
     })
   }
-  
+
   getMoonpayLink = (args: GetMoonpayLinkArgs, headers?: object): Promise<GetMoonpayLinkReturn> => {
-    return this.fetch(
-      this.url('GetMoonpayLink'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetMoonpayLink'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          signedUrl: <string>(_data.signedUrl)
+          signedUrl: <string>_data.signedUrl
         }
       })
     })
   }
-  
+
   getSardineClientToken = (headers?: object): Promise<GetSardineClientTokenReturn> => {
-    return this.fetch(
-      this.url('GetSardineClientToken'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('GetSardineClientToken'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          token: <string>(_data.token)
+          token: <string>_data.token
         }
       })
     })
   }
-  
+
   isUsingGoogleMail = (args: IsUsingGoogleMailArgs, headers?: object): Promise<IsUsingGoogleMailReturn> => {
-    return this.fetch(
-      this.url('IsUsingGoogleMail'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('IsUsingGoogleMail'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          yes: <boolean>(_data.yes)
+          yes: <boolean>_data.yes
         }
       })
     })
   }
-  
+
   resolveENSAddress = (args: ResolveENSAddressArgs, headers?: object): Promise<ResolveENSAddressReturn> => {
-    return this.fetch(
-      this.url('ResolveENSAddress'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('ResolveENSAddress'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          address: <string>(_data.address), 
-          ok: <boolean>(_data.ok)
+          address: <string>_data.address,
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
+
   isValidSignature = (args: IsValidSignatureArgs, headers?: object): Promise<IsValidSignatureReturn> => {
-    return this.fetch(
-      this.url('IsValidSignature'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('IsValidSignature'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          isValid: <boolean>(_data.isValid)
+          isValid: <boolean>_data.isValid
         }
       })
     })
   }
-  
+
   isValidMessageSignature = (args: IsValidMessageSignatureArgs, headers?: object): Promise<IsValidMessageSignatureReturn> => {
-    return this.fetch(
-      this.url('IsValidMessageSignature'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('IsValidMessageSignature'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          isValid: <boolean>(_data.isValid)
+          isValid: <boolean>_data.isValid
         }
       })
     })
   }
-  
-  isValidTypedDataSignature = (args: IsValidTypedDataSignatureArgs, headers?: object): Promise<IsValidTypedDataSignatureReturn> => {
-    return this.fetch(
-      this.url('IsValidTypedDataSignature'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  isValidTypedDataSignature = (
+    args: IsValidTypedDataSignatureArgs,
+    headers?: object
+  ): Promise<IsValidTypedDataSignatureReturn> => {
+    return this.fetch(this.url('IsValidTypedDataSignature'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          isValid: <boolean>(_data.isValid)
+          isValid: <boolean>_data.isValid
         }
       })
     })
   }
-  
+
   isValidETHAuthProof = (args: IsValidETHAuthProofArgs, headers?: object): Promise<IsValidETHAuthProofReturn> => {
-    return this.fetch(
-      this.url('IsValidETHAuthProof'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('IsValidETHAuthProof'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          isValid: <boolean>(_data.isValid)
+          isValid: <boolean>_data.isValid
         }
       })
     })
   }
-  
+
   getCoinPrices = (args: GetCoinPricesArgs, headers?: object): Promise<GetCoinPricesReturn> => {
-    return this.fetch(
-      this.url('GetCoinPrices'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetCoinPrices'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          tokenPrices: <Array<TokenPrice>>(_data.tokenPrices)
+          tokenPrices: <Array<TokenPrice>>_data.tokenPrices
         }
       })
     })
   }
-  
+
   getCollectiblePrices = (args: GetCollectiblePricesArgs, headers?: object): Promise<GetCollectiblePricesReturn> => {
-    return this.fetch(
-      this.url('GetCollectiblePrices'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetCollectiblePrices'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          tokenPrices: <Array<TokenPrice>>(_data.tokenPrices)
+          tokenPrices: <Array<TokenPrice>>_data.tokenPrices
         }
       })
     })
   }
-  
+
   getExchangeRate = (args: GetExchangeRateArgs, headers?: object): Promise<GetExchangeRateReturn> => {
-    return this.fetch(
-      this.url('GetExchangeRate'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetExchangeRate'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          exchangeRate: <ExchangeRate>(_data.exchangeRate)
+          exchangeRate: <ExchangeRate>_data.exchangeRate
         }
       })
     })
   }
-  
+
   memoryStore = (args: MemoryStoreArgs, headers?: object): Promise<MemoryStoreReturn> => {
-    return this.fetch(
-      this.url('MemoryStore'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('MemoryStore'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok)
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
+
   memoryLoad = (args: MemoryLoadArgs, headers?: object): Promise<MemoryLoadReturn> => {
-    return this.fetch(
-      this.url('MemoryLoad'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('MemoryLoad'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          value: <string>(_data.value)
+          value: <string>_data.value
         }
       })
     })
   }
-  
+
   listPayCardsOnFile = (headers?: object): Promise<ListPayCardsOnFileReturn> => {
-    return this.fetch(
-      this.url('ListPayCardsOnFile'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('ListPayCardsOnFile'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          payCards: <Array<PayCard>>(_data.payCards)
+          payCards: <Array<PayCard>>_data.payCards
         }
       })
     })
   }
-  
+
   savePayCard = (args: SavePayCardArgs, headers?: object): Promise<SavePayCardReturn> => {
-    return this.fetch(
-      this.url('SavePayCard'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SavePayCard'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok), 
-          payCard: <PayCard>(_data.payCard)
+          ok: <boolean>_data.ok,
+          payCard: <PayCard>_data.payCard
         }
       })
     })
   }
-  
+
   updatePayCardCVC = (args: UpdatePayCardCVCArgs, headers?: object): Promise<UpdatePayCardCVCReturn> => {
-    return this.fetch(
-      this.url('UpdatePayCardCVC'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('UpdatePayCardCVC'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok)
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
+
   deletePayCard = (args: DeletePayCardArgs, headers?: object): Promise<DeletePayCardReturn> => {
-    return this.fetch(
-      this.url('DeletePayCard'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('DeletePayCard'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok)
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
+
   smartRampQuote = (args: SmartRampQuoteArgs, headers?: object): Promise<SmartRampQuoteReturn> => {
-    return this.fetch(
-      this.url('SmartRampQuote'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SmartRampQuote'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status), 
-          quoteDetails: <SmartRampQuoteDetails>(_data.quoteDetails)
+          status: <boolean>_data.status,
+          quoteDetails: <SmartRampQuoteDetails>_data.quoteDetails
         }
       })
     })
   }
-  
+
   smartRampPurchase = (args: SmartRampPurchaseArgs, headers?: object): Promise<SmartRampPurchaseReturn> => {
-    return this.fetch(
-      this.url('SmartRampPurchase'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SmartRampPurchase'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          processing: <boolean>(_data.processing), 
-          receipt: <SmartRampPurchaseReceipt>(_data.receipt)
+          processing: <boolean>_data.processing,
+          receipt: <SmartRampPurchaseReceipt>_data.receipt
         }
       })
     })
   }
-  
-  smartRampWaitOrderConfirmation = (args: SmartRampWaitOrderConfirmationArgs, headers?: object): Promise<SmartRampWaitOrderConfirmationReturn> => {
-    return this.fetch(
-      this.url('SmartRampWaitOrderConfirmation'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  smartRampWaitOrderConfirmation = (
+    args: SmartRampWaitOrderConfirmationArgs,
+    headers?: object
+  ): Promise<SmartRampWaitOrderConfirmationReturn> => {
+    return this.fetch(this.url('SmartRampWaitOrderConfirmation'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          done: <boolean>(_data.done), 
-          receipt: <SmartRampPurchaseReceipt>(_data.receipt)
+          done: <boolean>_data.done,
+          receipt: <SmartRampPurchaseReceipt>_data.receipt
         }
       })
     })
   }
-  
+
   smartRampGetOrder = (args: SmartRampGetOrderArgs, headers?: object): Promise<SmartRampGetOrderReturn> => {
-    return this.fetch(
-      this.url('SmartRampGetOrder'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SmartRampGetOrder'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          order: <SmartRampOrder>(_data.order)
+          order: <SmartRampOrder>_data.order
         }
       })
     })
   }
-  
-  smartRampCheckCardAuthorization = (args: SmartRampCheckCardAuthorizationArgs, headers?: object): Promise<SmartRampCheckCardAuthorizationReturn> => {
-    return this.fetch(
-      this.url('SmartRampCheckCardAuthorization'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  smartRampCheckCardAuthorization = (
+    args: SmartRampCheckCardAuthorizationArgs,
+    headers?: object
+  ): Promise<SmartRampCheckCardAuthorizationReturn> => {
+    return this.fetch(this.url('SmartRampCheckCardAuthorization'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          cardAuth: <PayCardAuth>(_data.cardAuth)
+          cardAuth: <PayCardAuth>_data.cardAuth
         }
       })
     })
   }
-  
+
   smartRampOrdersList = (args: SmartRampOrdersListArgs, headers?: object): Promise<SmartRampOrdersListReturn> => {
-    return this.fetch(
-      this.url('SmartRampOrdersList'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SmartRampOrdersList'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          orders: <Array<SmartRampOrder>>(_data.orders)
+          page: <Page>_data.page,
+          orders: <Array<SmartRampOrder>>_data.orders
         }
       })
     })
   }
-  
+
   smartRampGetOrderTxnHash = (args: SmartRampGetOrderTxnHashArgs, headers?: object): Promise<SmartRampGetOrderTxnHashReturn> => {
-    return this.fetch(
-      this.url('SmartRampGetOrderTxnHash'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SmartRampGetOrderTxnHash'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          txnHash: <string>(_data.txnHash), 
-          txnSuccessful: <SmartRampTxnStatus>(_data.txnSuccessful)
+          txnHash: <string>_data.txnHash,
+          txnSuccessful: <SmartRampTxnStatus>_data.txnSuccessful
         }
       })
     })
   }
-  
-  smartRampSubmitCardAuthorization = (args: SmartRampSubmitCardAuthorizationArgs, headers?: object): Promise<SmartRampSubmitCardAuthorizationReturn> => {
-    return this.fetch(
-      this.url('SmartRampSubmitCardAuthorization'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  smartRampSubmitCardAuthorization = (
+    args: SmartRampSubmitCardAuthorizationArgs,
+    headers?: object
+  ): Promise<SmartRampSubmitCardAuthorizationReturn> => {
+    return this.fetch(this.url('SmartRampSubmitCardAuthorization'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   adminSmartRampGetOrder = (args: AdminSmartRampGetOrderArgs, headers?: object): Promise<AdminSmartRampGetOrderReturn> => {
-    return this.fetch(
-      this.url('AdminSmartRampGetOrder'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('AdminSmartRampGetOrder'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          order: <SmartRampOrder>(_data.order)
+          order: <SmartRampOrder>_data.order
         }
       })
     })
   }
-  
-  adminSmartRampListCompletedOrders = (args: AdminSmartRampListCompletedOrdersArgs, headers?: object): Promise<AdminSmartRampListCompletedOrdersReturn> => {
-    return this.fetch(
-      this.url('AdminSmartRampListCompletedOrders'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  adminSmartRampListCompletedOrders = (
+    args: AdminSmartRampListCompletedOrdersArgs,
+    headers?: object
+  ): Promise<AdminSmartRampListCompletedOrdersReturn> => {
+    return this.fetch(this.url('AdminSmartRampListCompletedOrders'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          orders: <Array<SmartRampOrder>>(_data.orders)
+          orders: <Array<SmartRampOrder>>_data.orders
         }
       })
     })
   }
-  
-  adminSmartRampListPendingOrders = (args: AdminSmartRampListPendingOrdersArgs, headers?: object): Promise<AdminSmartRampListPendingOrdersReturn> => {
-    return this.fetch(
-      this.url('AdminSmartRampListPendingOrders'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  adminSmartRampListPendingOrders = (
+    args: AdminSmartRampListPendingOrdersArgs,
+    headers?: object
+  ): Promise<AdminSmartRampListPendingOrdersReturn> => {
+    return this.fetch(this.url('AdminSmartRampListPendingOrders'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          pendingOrders: <Array<SmartRampOrder>>(_data.pendingOrders)
+          pendingOrders: <Array<SmartRampOrder>>_data.pendingOrders
         }
       })
     })
   }
-  
+
   getInviteInfo = (headers?: object): Promise<GetInviteInfoReturn> => {
-    return this.fetch(
-      this.url('GetInviteInfo'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('GetInviteInfo'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          inviteInfo: <InviteInfo>(_data.inviteInfo)
+          inviteInfo: <InviteInfo>_data.inviteInfo
         }
       })
     })
   }
-  
+
   isValidAccessCode = (args: IsValidAccessCodeArgs, headers?: object): Promise<IsValidAccessCodeReturn> => {
-    return this.fetch(
-      this.url('IsValidAccessCode'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('IsValidAccessCode'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   internalClaimAccessCode = (args: InternalClaimAccessCodeArgs, headers?: object): Promise<InternalClaimAccessCodeReturn> => {
-    return this.fetch(
-      this.url('InternalClaimAccessCode'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('InternalClaimAccessCode'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   walletRecover = (args: WalletRecoverArgs, headers?: object): Promise<WalletRecoverReturn> => {
-    return this.fetch(
-      this.url('WalletRecover'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('WalletRecover'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          encryptedWallet: <string>(_data.encryptedWallet)
+          encryptedWallet: <string>_data.encryptedWallet
         }
       })
     })
   }
-  
+
   blockNumberAtTime = (args: BlockNumberAtTimeArgs, headers?: object): Promise<BlockNumberAtTimeReturn> => {
-    return this.fetch(
-      this.url('BlockNumberAtTime'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('BlockNumberAtTime'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          blocks: <Array<number>>(_data.blocks)
+          blocks: <Array<number>>_data.blocks
         }
       })
     })
   }
-  
+
   paperSessionSecret = (args: PaperSessionSecretArgs, headers?: object): Promise<PaperSessionSecretReturn> => {
-    return this.fetch(
-      this.url('PaperSessionSecret'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('PaperSessionSecret'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          secret: <string>(_data.secret)
+          secret: <string>_data.secret
         }
       })
     })
   }
-  
+
   paperSessionSecret2 = (args: PaperSessionSecret2Args, headers?: object): Promise<PaperSessionSecret2Return> => {
-    return this.fetch(
-      this.url('PaperSessionSecret2'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('PaperSessionSecret2'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          secret: <string>(_data.secret)
+          secret: <string>_data.secret
         }
       })
     })
   }
-  
 }
 
-  
 export interface WebRPCError extends Error {
   code: string
   msg: string
-	status: number
+  status: number
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -1480,7 +1385,7 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
+    } catch (err) {
       throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
     }
     if (!res.ok) {

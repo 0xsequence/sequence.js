@@ -4,14 +4,11 @@ import { SignerJsonRpcMethods } from './signing-provider'
 import { logger } from '@0xsequence/utils'
 
 export class PublicProvider implements JsonRpcMiddlewareHandler {
-
-  private privateJsonRpcMethods = [
-    'net_version', 'eth_chainId', 'eth_accounts', ...SignerJsonRpcMethods
-  ]
+  private privateJsonRpcMethods = ['net_version', 'eth_chainId', 'eth_accounts', ...SignerJsonRpcMethods]
 
   private provider?: providers.JsonRpcProvider
   private rpcUrl?: string
- 
+
   constructor(rpcUrl?: string) {
     if (rpcUrl) {
       this.setRpcUrl(rpcUrl)
@@ -22,13 +19,16 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
     return (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
       // When provider is configured, send non-private methods to our local public provider
       if (this.provider && !this.privateJsonRpcMethods.includes(request.method)) {
-        this.provider.send(request.method, request.params!).then(r => {
-          callback(undefined, {
-            jsonrpc: '2.0',
-            id: request.id!,
-            result: r
+        this.provider
+          .send(request.method, request.params!)
+          .then(r => {
+            callback(undefined, {
+              jsonrpc: '2.0',
+              id: request.id!,
+              result: r
+            })
           })
-        }).catch(e => callback(e))
+          .catch(e => callback(e))
         return
       }
 
@@ -53,5 +53,4 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
       this.provider = new providers.JsonRpcProvider(rpcUrl)
     }
   }
-
 }

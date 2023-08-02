@@ -24,7 +24,7 @@ export class Logger {
   }
 
   configure(config: Partial<LoggerConfig>) {
-    this.config = { ...this.config, ...config}
+    this.config = { ...this.config, ...config }
     switch (this.config.logLevel) {
       case 'DEBUG':
         this.logLevel = logLevel.DEBUG
@@ -92,7 +92,7 @@ export const logger = new Logger({
 
   // By default we silence the logger. In tests we should call `configureLogger`
   // below to set silence: false.
-  silence: true 
+  silence: true
 })
 
 export const configureLogger = (config: Partial<LoggerConfig>) => logger.configure(config)

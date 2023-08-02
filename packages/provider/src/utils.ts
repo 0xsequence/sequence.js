@@ -95,7 +95,6 @@ export const isValidTypedDataSignature = (
   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider)
 }
 
-
 export const isBrowserExtension = (): boolean =>
   window.location.protocol === 'chrome-extension:' || window.location.protocol === 'moz-extension:'
 
@@ -120,7 +119,7 @@ export interface ItemStore {
 }
 
 export class MemoryItemStore implements ItemStore {
-  private callbacks: { key: string, cb: (value: string | null) => void }[] = []
+  private callbacks: { key: string; cb: (value: string | null) => void }[] = []
   private store: Record<string, string> = {}
 
   getItem(key: string): string | null {
@@ -129,7 +128,7 @@ export class MemoryItemStore implements ItemStore {
 
   setItem(key: string, value: string): void {
     this.store[key] = value
-    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(value))
+    this.callbacks.filter(c => c.key === key).forEach(c => c.cb(value))
   }
 
   removeItem(key: string): void {
@@ -140,13 +139,13 @@ export class MemoryItemStore implements ItemStore {
     this.callbacks.push({ key, cb })
 
     return () => {
-      this.callbacks = this.callbacks.filter((c) => c.cb !== cb)
+      this.callbacks = this.callbacks.filter(c => c.cb !== cb)
     }
   }
 }
 
 export class LocalStorage implements ItemStore {
-  private callbacks: { key: string, cb: (value: string | null) => void }[] = []
+  private callbacks: { key: string; cb: (value: string | null) => void }[] = []
 
   static isAvailable(): boolean {
     return typeof window === 'object' && typeof window.localStorage === 'object'
@@ -157,10 +156,10 @@ export class LocalStorage implements ItemStore {
       throw new Error('LocalStorage is not available')
     }
 
-    window.addEventListener('storage', (e) => {
+    window.addEventListener('storage', e => {
       const { key } = e
-      const cb = this.callbacks.filter((c) => c.key === key)
-      cb.forEach((c) => c.cb(this.getItem(key!)))
+      const cb = this.callbacks.filter(c => c.key === key)
+      cb.forEach(c => c.cb(this.getItem(key!)))
     })
   }
 
@@ -173,7 +172,7 @@ export class LocalStorage implements ItemStore {
 
     // Trigger callbacks
     // NOTICE: the event is not triggered on the same window
-    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(value))
+    this.callbacks.filter(c => c.key === key).forEach(c => c.cb(value))
   }
 
   removeItem(key: string): void {
@@ -181,14 +180,14 @@ export class LocalStorage implements ItemStore {
 
     // Trigger callbacks
     // NOTICE: the event is not triggered on the same window
-    this.callbacks.filter((c) => c.key === key).forEach((c) => c.cb(null))
+    this.callbacks.filter(c => c.key === key).forEach(c => c.cb(null))
   }
 
   onItemChange(key: string, cb: (value: string | null) => void): () => void {
     this.callbacks.push({ key, cb })
 
     return () => {
-      this.callbacks = this.callbacks.filter((c) => c.cb !== cb)
+      this.callbacks = this.callbacks.filter(c => c.cb !== cb)
     }
   }
 }
@@ -202,11 +201,11 @@ export function useBestStore(): ItemStore {
 }
 
 export async function resolveArrayProperties<T>(
-  object: Readonly<ethers.utils.Deferrable<T>> | Readonly<ethers.utils.Deferrable<T>>[]
+  object: Readonly<ethers.utils.Deferrable<T>> | Readonly<ethers.utils.Deferrable<T>>[]
 ): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
-    return Promise.all(object.map((o) => ethers.utils.resolveProperties(o))) as any
+    return Promise.all(object.map(o => ethers.utils.resolveProperties(o))) as any
   }
 
   return ethers.utils.resolveProperties(object)

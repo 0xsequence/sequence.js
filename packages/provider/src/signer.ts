@@ -1,12 +1,12 @@
-import { ethers } from "ethers"
+import { ethers } from 'ethers'
 
-import { SequenceProvider, SingleNetworkSequenceProvider } from "./provider"
-import { SequenceClient } from "./client"
-import { commons } from "@0xsequence/core"
-import { ChainIdLike, NetworkConfig } from "@0xsequence/network"
-import { resolveArrayProperties } from "./utils"
-import { WalletUtils } from "./utils/index"
-import { OptionalChainIdLike, OptionalEIP6492 } from "./types"
+import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
+import { SequenceClient } from './client'
+import { commons } from '@0xsequence/core'
+import { ChainIdLike, NetworkConfig } from '@0xsequence/network'
+import { resolveArrayProperties } from './utils'
+import { WalletUtils } from './utils/index'
+import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 
 export interface ISequenceSigner extends ethers.Signer {
   getProvider(): SequenceProvider
@@ -20,10 +20,7 @@ export interface ISequenceSigner extends ethers.Signer {
   getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
   getNetworks(): Promise<NetworkConfig[]>
 
-  signMessage(
-    message: ethers.BytesLike,
-    options?: OptionalChainIdLike & OptionalEIP6492
-  ): Promise<string>
+  signMessage(message: ethers.BytesLike, options?: OptionalChainIdLike & OptionalEIP6492): Promise<string>
 
   signTypedData(
     domain: ethers.TypedDataDomain,
@@ -36,10 +33,9 @@ export interface ISequenceSigner extends ethers.Signer {
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   // It supports any kind of transaction, including regular ethers transactions, and Sequence transactions.
   sendTransaction(
-    transaction: (
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-    ),
+    transaction:
+      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
+      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
 
@@ -56,10 +52,10 @@ export class SequenceSigner implements ISequenceSigner {
     return this.provider.utils
   }
 
-  constructor (
+  constructor(
     public client: SequenceClient,
     public provider: SequenceProvider
-  ) { }
+  ) {}
 
   async getAddress(): Promise<string> {
     return this.client.getAddress()
@@ -69,7 +65,7 @@ export class SequenceSigner implements ISequenceSigner {
   // it exists to maintain compatibility with ethers.Signer
   connect(provider: ethers.providers.Provider): SequenceSigner {
     if (!SequenceProvider.is(provider)) {
-      throw new Error("SequenceSigner can only be connected to a SequenceProvider")
+      throw new Error('SequenceSigner can only be connected to a SequenceProvider')
     }
 
     return new SequenceSigner(this.client, provider)
@@ -90,7 +86,7 @@ export class SequenceSigner implements ISequenceSigner {
     if (!this.singleNetworkSigners[useChainId]) {
       this.singleNetworkSigners[useChainId] = new SingleNetworkSequenceSigner(this.client, this.provider, useChainId)
     }
-  
+
     return this.singleNetworkSigners[useChainId]
   }
 
@@ -103,10 +99,7 @@ export class SequenceSigner implements ISequenceSigner {
     return this.provider.toChainId(chainId) || this.client.getChainId()
   }
 
-  async signMessage(
-    message: ethers.BytesLike,
-    options?: OptionalChainIdLike & OptionalEIP6492
-  ): Promise<string> {
+  async signMessage(message: ethers.BytesLike, options?: OptionalChainIdLike & OptionalEIP6492): Promise<string> {
     const { eip6492 = true } = options || {}
     const chainId = this.useChainId(options?.chainId)
     return this.client.signMessage(message, { eip6492, chainId })
@@ -132,10 +125,9 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async sendTransaction(
-    transaction: (
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest>[] |
-      ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-    ),
+    transaction:
+      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
+      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     options?: OptionalChainIdLike
   ) {
     const chainId = this.useChainId(options?.chainId)
@@ -144,10 +136,13 @@ export class SequenceSigner implements ISequenceSigner {
     const provider = this.getProvider(chainId)
 
     try {
-      return await ethers.utils.poll(async () => {
-        const tx = await provider.getTransaction(txHash)
-        return tx ? provider._wrapTransaction(tx, txHash) : undefined
-      }, { onceBlock: provider }) as ethers.providers.TransactionResponse
+      return (await ethers.utils.poll(
+        async () => {
+          const tx = await provider.getTransaction(txHash)
+          return tx ? provider._wrapTransaction(tx, txHash) : undefined
+        },
+        { onceBlock: provider }
+      )) as ethers.providers.TransactionResponse
     } catch (err) {
       err.transactionHash = txHash
       throw err
@@ -163,10 +158,7 @@ export class SequenceSigner implements ISequenceSigner {
     return this.client.getNetworks()
   }
 
-  async getBalance(
-    blockTag?: ethers.providers.BlockTag | undefined,
-    optionals?: OptionalChainIdLike
-  ): Promise<ethers.BigNumber> {
+  async getBalance(blockTag?: ethers.providers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<ethers.BigNumber> {
     const provider = this.getProvider(optionals?.chainId)
     return provider.getBalance(this.getAddress(), blockTag)
   }
@@ -219,19 +211,19 @@ export class SequenceSigner implements ISequenceSigner {
   populateTransaction(
     _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
   ): Promise<ethers.providers.TransactionRequest> {
-    throw new Error("SequenceSigner does not support populateTransaction")
+    throw new Error('SequenceSigner does not support populateTransaction')
   }
 
   checkTransaction(
     _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
   ): ethers.utils.Deferrable<ethers.providers.TransactionRequest> {
-    throw new Error("SequenceSigner does not support checkTransaction")
+    throw new Error('SequenceSigner does not support checkTransaction')
   }
 
   getTransactionCount(_blockTag?: ethers.providers.BlockTag | undefined): Promise<number> {
     // We could try returning the sequence nonce here
     // but we aren't sure how ethers will use this nonce
-    throw new Error("SequenceSigner does not support getTransactionCount")
+    throw new Error('SequenceSigner does not support getTransactionCount')
   }
 
   signTransaction(_transaction: ethers.utils.Deferrable<commons.transaction.Transactionish>): Promise<string> {
@@ -239,31 +231,27 @@ export class SequenceSigner implements ISequenceSigner {
     // but first we need a way of serializing these signed transactions
     // and it could lead to more trouble, because the dapp could try to send this transaction
     // using a different provider, which would fail.
-    throw new Error("SequenceWallet does not support signTransaction, use sendTransaction instead.")
+    throw new Error('SequenceWallet does not support signTransaction, use sendTransaction instead.')
   }
 
   static is(cand: any): cand is SequenceSigner {
-    return (
-      cand &&
-      typeof cand === "object" &&
-      cand._isSequenceSigner === true
-    )
+    return cand && typeof cand === 'object' && cand._isSequenceSigner === true
   }
 }
 
 /**
  *  This is the same provider, but it only allows a single network at a time.
  *  the network defined by the constructor is the only one that can be used.
- * 
+ *
  *  Attempting to call any method with a different network will throw an error.
  *  Attempting to change the network of this provider will throw an error.
- * 
+ *
  *  NOTICE: These networks won't support ENS unless they are the mainnet.
  */
 export class SingleNetworkSequenceSigner extends SequenceSigner {
   readonly _isSingleNetworkSequenceSigner = true
 
-  constructor (
+  constructor(
     client: SequenceClient,
     provider: SequenceProvider,
     public readonly chainId: ChainIdLike
@@ -302,15 +290,11 @@ export class SingleNetworkSequenceSigner extends SequenceSigner {
     if (this._useChainId(chainId) !== this.chainId) {
       throw new Error(`Unreachable code`)
     }
-  
+
     return this
   }
 
   static is(cand: any): cand is SingleNetworkSequenceSigner {
-    return (
-      cand &&
-      typeof cand === "object" &&
-      cand._isSingleNetworkSequenceSigner === true
-    )
+    return cand && typeof cand === 'object' && cand._isSingleNetworkSequenceSigner === true
   }
 }
