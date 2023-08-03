@@ -40,7 +40,8 @@ export function isSignerStatusPending(status: SignerStatus): status is SignerSta
 export const InitialSituation = 'Initial'
 
 /**
- * Orchestrates the signing of a single digests and transactions by multiple signers.
+ * Orchestrates actions of collective signers.
+ * This includes the signing of a single digests and transactions by multiple signers.
  * It can provide internal visibility of the signing process, and it also
  * provides the internal signers with additional information about the
  * message being signed. Transaction decoration can be used to ensure on-chain state
@@ -87,6 +88,21 @@ export class Orchestrator {
       ...this.signers.map(async signer => signer.notifyStatusChange(id, status, metadata)),
       ...this.observers.map(async observer => observer(status, metadata))
     ])
+  }
+
+  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null> {
+    let bundle: commons.transaction.TransactionBundle | null = null
+    for (const signer of this.signers) {
+      const newBundle = await signer.buildDeployTransaction(metadata)
+      if (bundle === null) {
+        // Use first bundle as base
+        bundle = newBundle
+      } else if (newBundle?.transactions) {
+        // Combine deploy transactions
+        bundle.transactions = newBundle.transactions.concat(bundle.transactions)
+      }
+    }
+    return bundle
   }
 
   async decorateTransactions(
