@@ -2,10 +2,11 @@ import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { isSignerStatusSigned, Orchestrator, Status } from '@0xsequence/signhub'
 import { Deferrable, subDigestOf } from '@0xsequence/utils'
-import { FeeQuote, Relayer, SimulateResult } from '@0xsequence/relayer'
+import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
+import { WalletDeployMetadata } from "@0xsequence/core/src/commons"
 
-import { resolveArrayProperties } from './utils'
+import { resolveArrayProperties } from "./utils"
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -146,7 +147,22 @@ export class Wallet<
       return decorated
     }
 
-    const deployTx = this.buildDeployTransaction()
+    const transactions: commons.transaction.Transaction[] = [
+      {
+        to: decorated.entrypoint,
+        data: commons.transaction.encodeBundleExecData(decorated),
+        gasLimit: 0,
+        delegateCall: false,
+        revertOnError: true,
+        value: 0
+      }
+    ]
+
+    // Add deployment tx
+    const deployTx = await this.buildDeployTransaction()
+    if (deployTx) {
+      transactions.unshift(...deployTx.transactions)
+    }
 
     // TODO: If entrypoint is guestModule we can flatten the bundle
     // and avoid calling guestModule twice
@@ -155,37 +171,65 @@ export class Wallet<
       entrypoint: this.context.guestModule,
       chainId: this.chainId,
       intent: decorated.intent,
-      transactions: [
-        ...deployTx.transactions,
-        {
-          to: decorated.entrypoint,
-          data: commons.transaction.encodeBundleExecData(decorated),
-          gasLimit: 0,
-          delegateCall: false,
-          revertOnError: true,
-          value: 0
-        }
-      ]
+      transactions,
     }
   }
 
-  buildDeployTransaction(): commons.transaction.TransactionBundle {
+  async buildEIP6492Signature(
+    signature: string,
+  ): Promise<string> {
+    // Deployment must include children for EIP6492 to validate
+    const deployTx = await this.buildDeployTransaction({includeChildren: true, ignoreDeployed: true})
+    if (deployTx == null) {
+      // Already deployed. Skip wrapping
+      return signature
+    }
+
+    if (deployTx.transactions.length === 0) {
+      throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
+    }
+
+    const encoded = ethers.utils.defaultAbiCoder.encode(
+      ['address', 'bytes', 'bytes'],
+      [deployTx.entrypoint, commons.transaction.encodeBundleExecData(deployTx), signature]
+    )
+
+    return ethers.utils.solidityPack(
+      ['bytes', 'bytes32'],
+      [encoded, commons.EIP6492.EIP_6492_SUFFIX]
+    )
+  }
+
+  async buildDeployTransaction(metadata?: WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | null> {
+    if (metadata?.ignoreDeployed && await this.reader().isDeployed(this.address)) {
+      return null
+    }
+
     const imageHash = this.coders.config.imageHashOf(this.config)
 
     if (commons.context.addressOf(this.context, imageHash) !== this.address) {
       throw new Error(`First address of config ${imageHash} doesn't match wallet address ${this.address}`)
     }
 
-    return Wallet.buildDeployTransaction(this.context, imageHash)
+    const bundle = Wallet.buildDeployTransaction(this.context, imageHash)
+    if (metadata?.includeChildren) {
+      const childBundle = await this.orchestrator.buildDeployTransaction(metadata)
+      if (childBundle) {
+        // Deploy children first
+        bundle.transactions = childBundle.transactions.concat(bundle.transactions)
+      }
+    }
+    return bundle
   }
 
-  deploy(): Promise<ethers.providers.TransactionResponse> {
-    const deployTx = this.buildDeployTransaction()
-    if (!this.relayer) throw new Error('Wallet deploy requires a relayer')
-    return this.relayer.relay({
-      ...deployTx,
-      chainId: this.chainId,
-      intent: {
+  async deploy(metadata?: WalletDeployMetadata): Promise<ethers.providers.TransactionResponse | null> {
+    const deployTx = await this.buildDeployTransaction(metadata)
+    if (deployTx == null) {
+      // Already deployed
+      return null
+    }
+    if (!this.relayer) throw new Error("Wallet deploy requires a relayer")
+    return this.relayer.relay({ ...deployTx, chainId: this.chainId, intent: {
         id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
         wallet: this.address
       }
@@ -226,16 +270,28 @@ export class Wallet<
   async signDigest(
     digest: ethers.utils.BytesLike,
     request?: {
-      message?: ethers.utils.BytesLike
-      transactions?: commons.transaction.Transaction[]
-      nested?: commons.WalletSignRequestMetadata
-    }
+      message?: ethers.utils.BytesLike,
+      transactions?: commons.transaction.Transaction[],
+      nested?: commons.WalletSignRequestMetadata,
+      useEip6492?: true, // If true, EIP6492 can be used
+    },
   ): Promise<string> {
+    const addEip6492IfRequired = async (signature: string): Promise<string> => {
+      const canUseEip6492 = request?.useEip6492 === true
+      if (!canUseEip6492 || await this.reader().isDeployed(this.address)) {
+        // Deployed - Return
+        return signature
+      }
+      // Not deployed. Wrap with EIP6492
+      return this.buildEIP6492Signature(await signature)
+    }
+
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
     const subdigest = subDigestOf(this.address, this.chainId, digest)
     if (this.coders.config.hasSubdigest(this.config, subdigest)) {
-      return this.coders.signature.encodeSigners(this.config, new Map(), [subdigest], this.chainId).encoded
+      const signature = this.coders.signature.encodeSigners(this.config, new Map(), [subdigest], this.chainId).encoded
+      return addEip6492IfRequired(signature)
     }
 
     // We build the metadata object, this contains additional information
@@ -245,8 +301,11 @@ export class Wallet<
       chainId: this.chainId,
       address: this.address,
       config: this.config,
-      ...request
+      ...request,
     }
+    // Don't propagate useEip6492 as signature verification will fail
+    // addEip6492IfRequired will include deployment of children
+    metadata.useEip6492 = undefined
 
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
     // to reach the threshold we returns true, that means the orchestrator will stop asking
@@ -267,11 +326,14 @@ export class Wallet<
     })
 
     const parts = statusToSignatureParts(signature)
-    return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
+    const encodedSignature = this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
+    return addEip6492IfRequired(encodedSignature)
   }
 
-  signMessage(message: ethers.BytesLike): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message), { message })
+  signMessage(message: ethers.BytesLike, request?: {
+    useEip6492?: true
+  }): Promise<string> {
+    return this.signDigest(ethers.utils.keccak256(message), { message, ...request })
   }
 
   signTransactionBundle(bundle: commons.transaction.TransactionBundle): Promise<commons.transaction.SignedTransactionBundle> {

@@ -12,6 +12,11 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.address
   }
 
+  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null> {
+    const metadataOrEmpty = commons.isWalletDeployMetadata(metadata) ? metadata : undefined
+    return await this.wallet.buildDeployTransaction(metadataOrEmpty)
+  }
+
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
@@ -34,7 +39,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
 
     // For Sequence nested signatures we must use `signDigest` and not `signMessage`
     // otherwise the wallet will hash the digest and the signature will be invalid.
-    callbacks.onSignature(await this.wallet.signDigest(message, { nested: metadata }))
+    callbacks.onSignature(await this.wallet.signDigest(message, { useEip6492: metadata.useEip6492, nested: metadata }))
 
     return true
   }

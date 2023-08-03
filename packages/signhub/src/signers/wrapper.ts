@@ -13,6 +13,11 @@ export class SignerWrapper implements SapientSigner {
     return this.signer.getAddress()
   }
 
+  async buildDeployTransaction(): Promise<commons.transaction.TransactionBundle | null> {
+    // Wrapped signers don't require deployment
+    return null
+  }
+
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {

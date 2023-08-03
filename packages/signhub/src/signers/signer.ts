@@ -5,6 +5,9 @@ import { Status } from "../orchestrator"
 export interface SapientSigner {
   getAddress(): Promise<string>
 
+  // Note: This probably doesn't belong here as this isn't directly related to signing
+  buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null>
+
   /**
    * Modify the transaction bundle before it is sent.
    */
@@ -39,5 +42,10 @@ export interface SapientSigner {
 }
 
 export function isSapientSigner(signer: ethers.Signer | SapientSigner): signer is SapientSigner {
-  return (signer as SapientSigner).requestSignature !== undefined && (signer as SapientSigner).notifyStatusChange !== undefined
+  return (
+    (signer as SapientSigner).buildDeployTransaction !== undefined &&
+    (signer as SapientSigner).decorateTransactions !== undefined &&
+    (signer as SapientSigner).requestSignature !== undefined &&
+    (signer as SapientSigner).notifyStatusChange !== undefined
+  )
 }
