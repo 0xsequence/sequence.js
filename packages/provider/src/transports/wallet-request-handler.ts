@@ -3,6 +3,7 @@ import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import {
   ChainId,
+  findNetworkConfig,
   findSupportedNetwork,
   JsonRpcHandler,
   JsonRpcRequest,
@@ -182,7 +183,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     return connectDetails
   }
 
-  promptConnect = async (options?: ConnectOptions): Promise<ConnectDetails> => {
+  promptConnect = async (options?: NetworkedConnectOptions): Promise<ConnectDetails> => {
     if (!options && !this._connectOptions) {
       // this is an unexpected state and should not happen
       throw new Error('prompter connect options are empty')
@@ -200,6 +201,18 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     const connectDetails: ConnectDetails = promptConnectDetails
     if (connectDetails.connected && !connectDetails.session) {
       connectDetails.session = await this.walletSession()
+
+      if (options?.networkId) {
+        const network = findNetworkConfig(connectDetails.session?.networks || [], options.networkId)
+
+        if (network) {
+          // Delete the isDefaultChain property from the session network
+          connectDetails.session?.networks?.forEach(n => delete n.isDefaultChain)
+
+          // Add the isDefaultChain property to the network with the given networkId
+          network.isDefaultChain = true
+        }
+      }
     }
 
     return promptConnectDetails
