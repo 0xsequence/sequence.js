@@ -444,7 +444,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
         this.notifyOpen({
           sessionId: this._sessionId,
           chainId: `${chainId}`,
-          session: await this.walletRequestHandler.walletSession()
+          session: await this.walletRequestHandler.walletSession(chainId)
         })
       }
     }
