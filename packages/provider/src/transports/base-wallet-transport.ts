@@ -372,14 +372,15 @@ export abstract class BaseWalletTransport implements WalletTransport {
         connectOptions.app = sanitizeAlphanumeric(connectOptions.app)
       }
 
-      // Set connect options on the walletRequestHandler as our primary
-      // wallet controller, and fall back to networkId if necessary
-      this.walletRequestHandler.setConnectOptions(connectOptions)
       if (connectOptions.networkId) {
         networkId = connectOptions.networkId
       } else if (networkId) {
         connectOptions.networkId = networkId
       }
+
+      // Set connect options on the walletRequestHandler as our primary
+      // wallet controller, and fall back to networkId if necessary
+      this.walletRequestHandler.setConnectOptions(connectOptions)
     } else {
       this.walletRequestHandler.setConnectOptions(undefined)
     }
