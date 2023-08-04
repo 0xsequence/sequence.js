@@ -2,12 +2,13 @@ import { Account, AccountStatus } from '@0xsequence/account'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import {
-  NetworkConfig,
+  ChainId,
+  findSupportedNetwork,
   JsonRpcHandler,
   JsonRpcRequest,
-  JsonRpcResponseCallback,
   JsonRpcResponse,
-  getChainId
+  JsonRpcResponseCallback,
+  NetworkConfig
 } from '@0xsequence/network'
 import { logger, TypedData } from '@0xsequence/utils'
 import { BigNumber, ethers, providers } from 'ethers'
@@ -16,19 +17,20 @@ import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 import { fromExtended } from '../extended'
 import { validateTransactionRequest } from '../transactions'
 import {
-  ProviderMessageRequest,
-  ProviderMessageResponse,
-  ProviderMessageRequestHandler,
-  MessageToSign,
-  ProviderRpcError,
-  ConnectOptions,
   ConnectDetails,
-  PromptConnectDetails,
-  WalletSession,
-  OpenWalletIntent,
+  ConnectOptions,
   ErrSignedInRequired,
+  MessageToSign,
+  NetworkedConnectOptions,
+  OpenWalletIntent,
+  PromptConnectDetails,
   ProviderEventTypes,
-  TypedEventEmitter
+  ProviderMessageRequest,
+  ProviderMessageRequestHandler,
+  ProviderMessageResponse,
+  ProviderRpcError,
+  TypedEventEmitter,
+  WalletSession
 } from '../types'
 import { prefixEIP191Message } from '../utils'
 
@@ -132,7 +134,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     })
   }
 
-  async connect(options?: ConnectOptions): Promise<ConnectDetails> {
+  async connect(options?: NetworkedConnectOptions): Promise<ConnectDetails> {
     if (!this.account) {
       return {
         connected: false,
@@ -141,7 +143,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    const chainId: number | string = this.prompter?.getDefaultChainId() ?? 1
+    const networkId = options?.networkId ?? this.defaultChainId() ?? ChainId.MAINNET
+    const chainId = findSupportedNetwork(networkId)!.chainId
 
     const connectDetails: ConnectDetails = {
       connected: true,
