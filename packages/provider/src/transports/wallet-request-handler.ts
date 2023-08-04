@@ -3,6 +3,7 @@ import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import {
   ChainId,
+  ChainIdLike,
   findNetworkConfig,
   findSupportedNetwork,
   JsonRpcHandler,
@@ -178,9 +179,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
 
     // Build session response for connect details
-    connectDetails.session = await this.walletSession()
-
-    this.updateConnectDetails(connectDetails, options)
+    connectDetails.session = await this.walletSession(chainId)
 
     return connectDetails
   }
@@ -202,26 +201,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     const connectDetails: ConnectDetails = promptConnectDetails
     if (connectDetails.connected && !connectDetails.session) {
-      connectDetails.session = await this.walletSession()
-
-      this.updateConnectDetails(connectDetails, options)
+      connectDetails.session = await this.walletSession(options?.networkId)
     }
 
     return promptConnectDetails
-  }
-
-  private updateConnectDetails = (connectDetails: ConnectDetails, options?: NetworkedConnectOptions) => {
-    if (options?.networkId) {
-      const network = findNetworkConfig(connectDetails.session?.networks || [], options.networkId)
-
-      if (network) {
-        // Delete the isDefaultChain property from the session network
-        connectDetails.session?.networks?.forEach(n => delete n.isDefaultChain)
-
-        // Add the isDefaultChain property to the network with the given networkId
-        network.isDefaultChain = true
-      }
-    }
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
@@ -747,14 +730,31 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
   }
 
-  walletSession(): WalletSession | undefined {
-    if (!this.account) return undefined
-    return {
+  walletSession(networkId?: ChainIdLike): WalletSession | undefined {
+    if (!this.account) {
+      return undefined
+    }
+
+    const session = {
       walletContext: this.account.contexts,
       accountAddress: this.account.address,
       // The dapp shouldn't access the relayer directly, and the provider (as an object) is not serializable.
       networks: this.account.networks.map(n => ({ ...n, provider: undefined, relayer: undefined }))
     }
+
+    if (networkId) {
+      const network = findNetworkConfig(session.networks, networkId)
+
+      if (network) {
+        // Delete the isDefaultChain property from the session network
+        session.networks?.forEach(n => delete n.isDefaultChain)
+
+        // Add the isDefaultChain property to the network with the given networkId
+        network.isDefaultChain = true
+      }
+    }
+
+    return session
   }
 
   notifyConnect(connectDetails: ConnectDetails, origin?: string) {
