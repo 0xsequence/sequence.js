@@ -180,6 +180,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     // Build session response for connect details
     connectDetails.session = await this.walletSession()
 
+    this.updateConnectDetails(connectDetails, options)
+
     return connectDetails
   }
 
@@ -202,20 +204,24 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (connectDetails.connected && !connectDetails.session) {
       connectDetails.session = await this.walletSession()
 
-      if (options?.networkId) {
-        const network = findNetworkConfig(connectDetails.session?.networks || [], options.networkId)
-
-        if (network) {
-          // Delete the isDefaultChain property from the session network
-          connectDetails.session?.networks?.forEach(n => delete n.isDefaultChain)
-
-          // Add the isDefaultChain property to the network with the given networkId
-          network.isDefaultChain = true
-        }
-      }
+      this.updateConnectDetails(connectDetails, options)
     }
 
     return promptConnectDetails
+  }
+
+  private updateConnectDetails = (connectDetails: ConnectDetails, options?: NetworkedConnectOptions) => {
+    if (options?.networkId) {
+      const network = findNetworkConfig(connectDetails.session?.networks || [], options.networkId)
+
+      if (network) {
+        // Delete the isDefaultChain property from the session network
+        connectDetails.session?.networks?.forEach(n => delete n.isDefaultChain)
+
+        // Add the isDefaultChain property to the network with the given networkId
+        network.isDefaultChain = true
+      }
+    }
   }
 
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
