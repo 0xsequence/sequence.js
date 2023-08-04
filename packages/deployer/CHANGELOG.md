@@ -1,5 +1,15 @@
 # @0xsequence/deployer
 
+## 1.1.3
+
+### Patch Changes
+
+- provider: use network id from transport session
+- provider: sign authorization using ConnectOptions.networkId if provided
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/utils@1.1.3
+
 ## 1.1.2
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @0xsequence/signhub
 
+## 1.1.3
+
+### Patch Changes
+
+- provider: use network id from transport session
+- provider: sign authorization using ConnectOptions.networkId if provided
+
 ## 1.1.2
 
 ### Patch Changes
