@@ -12,7 +12,8 @@
     "test": "echo 'no tests for test tools'"
   },
   "dependencies": {
-    "@0xsequence/core": "workspace:*"
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
     "ethers": ">=5.5"

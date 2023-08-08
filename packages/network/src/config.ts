@@ -1,8 +1,8 @@
-import { BigNumberish, ethers, providers } from 'ethers'
+import { ethers, providers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
-import { isBigNumberish } from '@0xsequence/utils'
+import { isBigIntish, BigIntish } from '@0xsequence/utils'
 import { ChainId, NetworkMetadata, networks } from './constants'
 
 export type NetworkConfig = NetworkMetadata & {
@@ -30,18 +30,18 @@ export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): Netwo
   return findNetworkConfig(allNetworks, chainIdOrName)
 }
 
-export type ChainIdLike = NetworkConfig | BigNumberish
+export type ChainIdLike = NetworkConfig | BigIntish
 
-export function toChainIdNumber(chainIdLike: ChainIdLike): ethers.BigNumber {
-  if (ethers.BigNumber.isBigNumber(chainIdLike)) {
+export function toChainIdNumber(chainIdLike: ChainIdLike): bigint {
+  if (typeof chainIdLike === 'bigint') {
     return chainIdLike
   }
 
-  if (isBigNumberish(chainIdLike)) {
-    return ethers.BigNumber.from(chainIdLike)
+  if (isBigIntish(chainIdLike)) {
+    return BigInt(chainIdLike)
   }
 
-  return ethers.BigNumber.from(chainIdLike.chainId)
+  return BigInt(chainIdLike.chainId)
 }
 
 const createNetworkConfig = (chainId: ChainId, options?: { disabled?: boolean }): NetworkConfig => {

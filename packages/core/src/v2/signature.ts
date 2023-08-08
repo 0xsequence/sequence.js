@@ -1,4 +1,5 @@
-import { BigNumberish, ethers } from 'ethers'
+import { ethers } from 'ethers'
+import { BigIntish, MAX_UINT_256 } from '@0xsequence/utils'
 import { isValidSignature, recoverSigner, tryRecoverSigner } from '../commons/signer'
 import {
   hashNode,
@@ -50,8 +51,8 @@ export type UnrecoveredSignatureLeaf = Omit<SignatureLeaf, 'address'> &
 
 export type UnrecoveredNestedLeaf = {
   tree: UnrecoveredTopology
-  weight: BigNumberish
-  threshold: BigNumberish
+  weight: BigIntish
+  threshold: BigIntish
 }
 
 export type UnrecoveredLeaf = UnrecoveredNestedLeaf | UnrecoveredSignatureLeaf | Leaf
@@ -287,7 +288,7 @@ export const partEncoder = {
     const arr = ethers.utils.arrayify(tree)
     return ethers.utils.solidityPack(['uint8', 'uint24', 'bytes'], [SignaturePartType.Branch, arr.length, arr])
   },
-  nested: (weight: ethers.BigNumberish, threshold: ethers.BigNumberish, tree: ethers.BytesLike): string => {
+  nested: (weight: BigIntish, threshold: BigIntish, tree: ethers.BytesLike): string => {
     const arr = ethers.utils.arrayify(tree)
     return ethers.utils.solidityPack(
       ['uint8', 'uint8', 'uint16', 'uint24', 'bytes'],
@@ -297,17 +298,17 @@ export const partEncoder = {
   subdigest: (subdigest: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(['uint8', 'bytes32'], [SignaturePartType.Subdigest, subdigest])
   },
-  signature: (weight: ethers.BigNumberish, signature: ethers.BytesLike): string => {
+  signature: (weight: BigIntish, signature: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(['uint8', 'uint8', 'bytes'], [SignaturePartType.Signature, weight, signature])
   },
-  dynamicSignature: (weight: ethers.BigNumberish, address: ethers.BytesLike, signature: ethers.BytesLike): string => {
+  dynamicSignature: (weight: BigIntish, address: ethers.BytesLike, signature: ethers.BytesLike): string => {
     const arrSignature = ethers.utils.arrayify(signature)
     return ethers.utils.solidityPack(
       ['uint8', 'uint8', 'address', 'uint24', 'bytes'],
       [SignaturePartType.DynamicSignature, weight, address, arrSignature.length, arrSignature]
     )
   },
-  address: (weight: ethers.BigNumberish, address: ethers.BytesLike): string => {
+  address: (weight: BigIntish, address: ethers.BytesLike): string => {
     return ethers.utils.solidityPack(['uint8', 'uint8', 'address'], [SignaturePartType.Address, weight, address])
   }
 }
@@ -321,15 +322,15 @@ export function encodeSigners(
   config: WalletConfig,
   parts: Map<string, base.SignaturePart>,
   subdigests: string[],
-  chainId: ethers.BigNumberish,
+  chainId: BigIntish,
   options: EncodingOptions = {}
 ): {
   encoded: string
-  weight: ethers.BigNumber
+  weight: bigint
 } {
   const tree = encodeTree(config.tree, parts, subdigests, options)
 
-  if (ethers.BigNumber.from(chainId).isZero()) {
+  if (BigInt(chainId) === 0n) {
     return {
       encoded: ethers.utils.solidityPack(
         ['uint8', 'uint16', 'uint32', 'bytes'],
@@ -339,7 +340,7 @@ export function encodeSigners(
     }
   }
 
-  if (ethers.BigNumber.from(config.threshold).gt(255)) {
+  if (BigInt(config.threshold) > 255n) {
     return {
       encoded: ethers.utils.solidityPack(
         ['uint8', 'uint16', 'uint32', 'bytes'],
@@ -365,7 +366,7 @@ export function encodeTree(
   options: EncodingOptions = {}
 ): {
   encoded: string
-  weight: ethers.BigNumber
+  weight: bigint
 } {
   const trim = !options.disableTrim
 
@@ -376,16 +377,16 @@ export function encodeTree(
     const isLeftSigner = isSignerLeaf(topology.left)
     const isRightSigner = isSignerLeaf(topology.right)
 
-    if (trim && left.weight.eq(0) && right.weight.eq(0) && !isLeftSigner && !isRightSigner) {
+    if (trim && left.weight === 0n && right.weight === 0n && !isLeftSigner && !isRightSigner) {
       return {
         // We don't need to include anything for this node
         // just the hash will be enough
         encoded: partEncoder.node(hashNode(topology)),
-        weight: ethers.constants.Zero
+        weight: 0n
       }
     }
 
-    if (trim && right.weight.eq(0) && !isRightSigner) {
+    if (trim && right.weight === 0n && !isRightSigner) {
       return {
         // The right node doesn't have any weight
         // but we still need to include the left node encoded
@@ -394,7 +395,7 @@ export function encodeTree(
       }
     }
 
-    if (trim && left.weight.eq(0) && !isLeftSigner) {
+    if (trim && left.weight === 0n && !isLeftSigner) {
       return {
         // The left node doesn't have any weight
         // we can just append its hash, but for the right node
@@ -408,17 +409,17 @@ export function encodeTree(
       // Both nodes have weight, we need to include both
       // the right one must be a branch
       encoded: partEncoder.concat(left.encoded, partEncoder.branch(right.encoded)),
-      weight: left.weight.add(right.weight)
+      weight: left.weight + right.weight
     }
   }
 
   if (isNestedLeaf(topology)) {
     const tree = encodeTree(topology.tree, parts, subdigests)
 
-    if (trim && tree.weight.eq(0)) {
+    if (trim && tree.weight === 0n) {
       return {
         encoded: partEncoder.node(hashNode(topology)),
-        weight: ethers.constants.Zero
+        weight: 0n
       }
     }
 
@@ -431,7 +432,7 @@ export function encodeTree(
   if (isNodeLeaf(topology)) {
     return {
       encoded: partEncoder.node(hashNode(topology)),
-      weight: ethers.constants.Zero
+      weight: 0n
     }
   }
 
@@ -439,7 +440,7 @@ export function encodeTree(
     const include = subdigests.includes(topology.subdigest)
     return {
       encoded: partEncoder.subdigest(topology.subdigest),
-      weight: include ? ethers.constants.MaxUint256 : ethers.constants.Zero
+      weight: include ? MAX_UINT_256 : 0n
     }
   }
 
@@ -453,18 +454,18 @@ export function encodeTree(
       if (options.forceDynamicEncoding || part.isDynamic) {
         return {
           encoded: partEncoder.dynamicSignature(topology.weight, topology.address, signature),
-          weight: ethers.BigNumber.from(topology.weight)
+          weight: BigInt(topology.weight)
         }
       } else {
         return {
           encoded: partEncoder.signature(topology.weight, signature),
-          weight: ethers.BigNumber.from(topology.weight)
+          weight: BigInt(topology.weight)
         }
       }
     } else {
       return {
         encoded: partEncoder.address(topology.weight, topology.address),
-        weight: ethers.constants.Zero
+        weight: 0n
       }
     }
   }
@@ -474,8 +475,8 @@ export function encodeTree(
 
 export type UnrecoveredConfig = {
   tree: UnrecoveredTopology
-  threshold: ethers.BigNumberish
-  checkpoint: ethers.BigNumberish
+  threshold: BigIntish
+  checkpoint: BigIntish
 }
 
 export type UnrecoveredSignature = base.UnrecoveredSignature & {
@@ -667,7 +668,7 @@ export function encodeSignature(
 
   switch (decoded.type) {
     case SignatureType.Legacy:
-      if (ethers.BigNumber.from(body.threshold).gt(255)) {
+      if (BigInt(body.threshold) > 255n) {
         throw new Error(`Legacy signature threshold is too large: ${body.threshold} (max 255)`)
       }
 
@@ -893,7 +894,7 @@ export async function trimUnrecoveredTree(
 
   if (isUnrecoveredSignatureLeaf(tree) || (isSignerLeaf(tree) && tree.signature !== undefined)) {
     return {
-      weight: ethers.BigNumber.from(tree.weight).toNumber(),
+      weight: Number(BigInt(tree.weight)),
       trimmed: tree
     }
   }
@@ -938,17 +939,17 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
     config: WalletConfig,
     signatures: Map<string, base.SignaturePart>,
     subdigests: string[],
-    chainId: ethers.BigNumberish
+    chainId: BigIntish
   ): {
     encoded: string
-    weight: ethers.BigNumber
+    weight: bigint
   } => {
     return encodeSigners(config, signatures, subdigests, chainId)
   },
 
   hasEnoughSigningPower: (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
     const { weight } = SignatureCoder.encodeSigners(config, signatures, [], 0)
-    return weight.gte(config.threshold)
+    return weight >= BigInt(config.threshold)
   },
 
   chainSignatures: (

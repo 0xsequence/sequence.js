@@ -4,6 +4,7 @@ import { ethers, utils } from 'ethers'
 import { Estimator } from './estimator'
 import { commons, v2 } from '@0xsequence/core'
 import { mainModuleGasEstimation } from './builds'
+import { BigIntish } from '@0xsequence/utils'
 
 export class OverwriterSequenceEstimator implements Estimator {
   constructor(public estimator: OverwriterEstimator) {}
@@ -12,21 +13,21 @@ export class OverwriterSequenceEstimator implements Estimator {
     address: string,
     config: v2.config.WalletConfig,
     context: commons.context.WalletContext,
-    nonce: ethers.BigNumberish,
+    nonce: BigIntish,
     ...transactions: commons.transaction.Transaction[]
-  ): Promise<{ transactions: commons.transaction.Transaction[]; total: ethers.BigNumber }> {
+  ): Promise<{ transactions: commons.transaction.Transaction[]; total: bigint }> {
     const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
 
     const allSigners = await Promise.all(
       v2.config.signersOf(config.tree).map(async (s, i) => ({
         index: i,
         address: s.address,
-        weight: ethers.BigNumber.from(s.weight),
+        weight: BigInt(s.weight),
         isEOA: await this.estimator.provider.getCode(s.address).then(c => ethers.utils.arrayify(c).length === 0)
       }))
     )
 
-    let totalWeight = 0
+    let totalWeight = 0n
 
     // Pick NOT EOA signers until we reach the threshold
     // if we can't reach the threshold, then we'll use the lowest weight EOA signers
@@ -35,14 +36,14 @@ export class OverwriterSequenceEstimator implements Estimator {
       .sort((a, b) => {
         if (a.isEOA && !b.isEOA) return 1
         if (!a.isEOA && b.isEOA) return -1
-        if (a.weight.eq(b.weight)) return a.index - b.index
-        return a.weight.sub(b.weight).toNumber()
+        if (a.weight === b.weight) return a.index - b.index
+        return Number(a.weight - b.weight)
       })
       .filter(s => {
-        if (totalWeight >= (config.threshold as number)) {
+        if (totalWeight >= BigInt(config.threshold)) {
           return false
         } else {
-          totalWeight += s.weight.toNumber()
+          totalWeight += s.weight
           return true
         }
       })
@@ -132,7 +133,7 @@ export class OverwriterSequenceEstimator implements Estimator {
     ])
 
     return {
-      transactions: transactions.map((t, i) => ({ ...t, gasLimit: estimates[i + 1].sub(estimates[i]) })),
+      transactions: transactions.map((t, i) => ({ ...t, gasLimit: estimates[i + 1] - estimates[i] })),
       total: estimates[estimates.length - 1]
     }
   }

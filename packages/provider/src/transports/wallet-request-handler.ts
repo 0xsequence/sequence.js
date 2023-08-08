@@ -12,8 +12,8 @@ import {
   JsonRpcResponseCallback,
   NetworkConfig
 } from '@0xsequence/network'
-import { logger, TypedData } from '@0xsequence/utils'
-import { BigNumber, ethers, providers } from 'ethers'
+import { logger, toHexString, TypedData } from '@0xsequence/utils'
+import { ethers, providers } from 'ethers'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import { fromExtended } from '../extended'
@@ -474,7 +474,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
           // https://eth.wiki/json-rpc/API#eth_sendRawTransaction
           if (commons.transaction.isSignedTransactionBundle(request.params![0])) {
-            const txChainId = BigNumber.from(request.params![0].chainId).toNumber()
+            const txChainId = Number(BigInt(request.params![0].chainId))
             const tx = await account.relayer(txChainId)!.relay(request.params![0])
             response.result = tx.hash
           } else {
@@ -492,7 +492,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           // but for now we keep it simple and just use the provider
 
           const count = await provider.getTransactionCount(address, tag)
-          response.result = ethers.BigNumber.from(count).toHexString()
+          response.result = toHexString(BigInt(count))
 
           break
         }
@@ -547,9 +547,9 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
             throw new Error('invalid chainId')
           }
 
-          const chainId = ethers.BigNumber.from(switchParams.chainId)
+          const chainId = BigInt(switchParams.chainId)
 
-          this.setDefaultChainId(chainId.toNumber())
+          this.setDefaultChainId(Number(chainId))
 
           response.result = null // success
           break

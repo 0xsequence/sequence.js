@@ -2,9 +2,10 @@ import { commons } from '@0xsequence/core'
 import { signers, Status } from '@0xsequence/signhub'
 import { ethers } from 'ethers'
 import { Account } from '../account'
+import { BigIntish } from '@0xsequence/utils'
 
 export type MetadataWithChainId = {
-  chainId: ethers.BigNumberish
+  chainId: BigIntish
 }
 
 // Implements a wrapper for using Sequence accounts as nested signers in the signhub orchestrator.
@@ -15,10 +16,10 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.address
   }
 
-  getChainIdFromMetadata(metadata: object): ethers.BigNumber {
+  getChainIdFromMetadata(metadata: object): bigint {
     try {
       const { chainId } = metadata as MetadataWithChainId
-      return ethers.BigNumber.from(chainId)
+      return BigInt(chainId)
     } catch (err) {
       // Invalid metadata object
       throw new Error('AccountOrchestratorWrapper only supports metadata with chain id')

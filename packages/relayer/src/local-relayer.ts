@@ -58,7 +58,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
-    // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), ethers.BigNumber.from(0))
+    // const gasLimit = signedTxs.transactions.reduce((sum, tx) => sum.add(tx.gasLimit), 0n)
     // txRequest.gasLimit = gasLimit
 
     const responsePromise = this.signer.sendTransaction({

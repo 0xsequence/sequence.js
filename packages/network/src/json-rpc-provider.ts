@@ -66,7 +66,7 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
       }
     } else {
       const chainIdHex = await this.send('eth_chainId', [])
-      this._chainId = ethers.BigNumber.from(chainIdHex).toNumber()
+      this._chainId = Number(BigInt(chainIdHex))
       return this.getNetwork()
     }
   }

@@ -14,7 +14,7 @@ import {
 import { expect } from 'chai'
 import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
 import { ExtendedTransactionRequest } from '../src/extended'
-import { TypedData } from '@0xsequence/utils'
+import { TypedData, parseEther } from '@0xsequence/utils'
 
 const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:9595')
 const hardhat2Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8595')
@@ -333,8 +333,8 @@ describe('SequenceSigner', () => {
     describe('estimate gas', () => {
       let signer: SequenceSigner
 
-      let eg1: ethers.BigNumber
-      let eg2: ethers.BigNumber
+      let eg1: bigint
+      let eg2: bigint
 
       let addr: string
 
@@ -349,29 +349,29 @@ describe('SequenceSigner', () => {
 
         addr = res.contractAddress
 
-        eg1 = await hardhat1Provider.estimateGas({ to: addr })
-        eg2 = await hardhat2Provider.estimateGas({ to: addr })
+        eg1 = (await hardhat1Provider.estimateGas({ to: addr })).toBigInt()
+        eg2 = (await hardhat2Provider.estimateGas({ to: addr })).toBigInt()
 
-        expect(eg1).to.not.deep.equal(eg2)
+        expect(eg1).to.not.equal(eg2)
 
         signer = new SequenceProvider(basicMockClient, providerFor).getSigner()
       })
 
       it('forward estimateGas - default', async () => {
-        expect(await signer.estimateGas({ to: addr })).to.deep.equal(eg1)
+        expect((await signer.estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
 
         signer.provider.setDefaultChainId(31338)
-        expect(await signer.estimateGas({ to: addr })).to.deep.equal(eg2)
+        expect((await signer.estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
       })
 
       it('forward estimateGas - specific chain', async () => {
-        expect(await signer.estimateGas({ to: addr }, { chainId: 31337 })).to.deep.equal(eg1)
-        expect(await signer.estimateGas({ to: addr }, { chainId: 31338 })).to.deep.equal(eg2)
+        expect((await signer.estimateGas({ to: addr }, { chainId: 31337 })).toBigInt()).to.equal(eg1)
+        expect((await signer.estimateGas({ to: addr }, { chainId: 31338 })).toBigInt()).to.equal(eg2)
       })
 
       it('forward estimateGas - static network provider', async () => {
-        expect(await signer.getSigner('hardhat').estimateGas({ to: addr })).to.deep.equal(eg1)
-        expect(await signer.getSigner('hardhat2').estimateGas({ to: addr })).to.deep.equal(eg2)
+        expect((await signer.getSigner('hardhat').estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
+        expect((await signer.getSigner('hardhat2').estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
       })
 
       it('fail to forward estimateGas - static network provider for different chain', async () => {
@@ -433,14 +433,14 @@ describe('SequenceSigner', () => {
           if (chainId === 31337) {
             return {
               ...hardhat1Provider,
-              getGasPrice: async () => ethers.BigNumber.from(1)
+              getGasPrice: async () => 1n
             } as unknown as ethers.providers.JsonRpcProvider
           }
 
           if (chainId === 31338) {
             return {
               ...hardhat2Provider,
-              getGasPrice: async () => ethers.BigNumber.from(2)
+              getGasPrice: async () => 2n
             } as unknown as ethers.providers.JsonRpcProvider
           }
 
@@ -449,20 +449,20 @@ describe('SequenceSigner', () => {
       })
 
       it('forward getGasPrice - default', async () => {
-        expect(await signer.getGasPrice()).to.deep.equal(ethers.BigNumber.from(1))
+        expect(await signer.getGasPrice()).to.deep.equal(1n)
 
         signer.provider.setDefaultChainId(31338)
-        expect(await signer.getGasPrice()).to.deep.equal(ethers.BigNumber.from(2))
+        expect(await signer.getGasPrice()).to.deep.equal(2n)
       })
 
       it('forward getGasPrice - specific chain', async () => {
-        expect(await signer.getGasPrice({ chainId: 31337 })).to.deep.equal(ethers.BigNumber.from(1))
-        expect(await signer.getGasPrice({ chainId: 31338 })).to.deep.equal(ethers.BigNumber.from(2))
+        expect(await signer.getGasPrice({ chainId: 31337 })).to.deep.equal(1n)
+        expect(await signer.getGasPrice({ chainId: 31338 })).to.deep.equal(2n)
       })
 
       it('forward getGasPrice - static network provider', async () => {
-        expect(await signer.getSigner('hardhat').getGasPrice()).to.deep.equal(ethers.BigNumber.from(1))
-        expect(await signer.getSigner(31338).getGasPrice()).to.deep.equal(ethers.BigNumber.from(2))
+        expect(await signer.getSigner('hardhat').getGasPrice()).to.deep.equal(1n)
+        expect(await signer.getSigner(31338).getGasPrice()).to.deep.equal(2n)
       })
 
       it('fail to forward getGasPrice - static network provider for different chain', async () => {
@@ -906,7 +906,7 @@ describe('SequenceSigner', () => {
 
       expectedTransactionRequest = {
         to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
-        value: ethers.utils.parseEther('1.0'),
+        value: parseEther('1.0'),
         data: ethers.utils.hexlify(ethers.utils.randomBytes(55)),
         gasLimit: 40000
       }
@@ -1001,7 +1001,7 @@ describe('SequenceSigner', () => {
       expectedTransactionRequest = [
         {
           to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
-          value: ethers.utils.parseEther('1.0'),
+          value: parseEther('1.0'),
           data: ethers.utils.hexlify(ethers.utils.randomBytes(55))
         },
         {
@@ -1024,7 +1024,7 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const expected = {
         to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
-        value: ethers.utils.parseEther('1.0').toString()
+        value: parseEther('1.0').toString()
       }
 
       expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
@@ -1050,7 +1050,7 @@ describe('SequenceSigner', () => {
       const expected = [
         {
           to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
-          value: ethers.utils.parseEther('1.0').toString()
+          value: parseEther('1.0').toString()
         },
         {
           to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),

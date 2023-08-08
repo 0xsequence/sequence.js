@@ -72,7 +72,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
       throw new Error('Invalid transaction bundle size')
     }
 
-    if (!tx.nonce || !commons.transaction.encodeNonce(MIGRATION_NONCE_SPACE, 0).eq(tx.nonce)) {
+    if (!tx.nonce || commons.transaction.encodeNonce(MIGRATION_NONCE_SPACE, 0) !== BigInt(tx.nonce)) {
       throw new Error('Invalid transaction bundle nonce')
     }
 
@@ -83,10 +83,10 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
       tx.transactions[1].delegateCall ||
       !tx.transactions[0].revertOnError ||
       !tx.transactions[1].revertOnError ||
-      (tx.transactions[0].value && !ethers.constants.Zero.eq(tx.transactions[0].value)) ||
-      (tx.transactions[1].value && !ethers.constants.Zero.eq(tx.transactions[1].value)) ||
-      (tx.transactions[0].gasLimit && !ethers.constants.Zero.eq(tx.transactions[0].gasLimit)) ||
-      (tx.transactions[1].gasLimit && !ethers.constants.Zero.eq(tx.transactions[1].gasLimit))
+      (tx.transactions[0].value && BigInt(tx.transactions[0].value) !== 0n) ||
+      (tx.transactions[1].value && BigInt(tx.transactions[1].value) !== 0n) ||
+      (tx.transactions[0].gasLimit && BigInt(tx.transactions[0].gasLimit) !== 0n) ||
+      (tx.transactions[1].gasLimit && BigInt(tx.transactions[1].gasLimit) !== 0n)
     ) {
       throw new Error('Invalid transaction bundle format')
     }
