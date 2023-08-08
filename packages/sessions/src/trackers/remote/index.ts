@@ -3,6 +3,7 @@ import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../../tracker'
 import { Sessions, SignatureType, Transaction } from './sessions.gen'
+import { BigIntish } from '@0xsequence/utils'
 
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
@@ -51,12 +52,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     })
   }
 
-  async saveWitnesses(args: {
-    wallet: string
-    digest: string
-    chainId: ethers.BigNumberish
-    signatures: string[]
-  }): Promise<void> {
+  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
     let filteredSignatures = args.signatures
     if (this.onlyRecoverable) {
       filteredSignatures = filteredSignatures.filter(signature => {
@@ -115,7 +111,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
 
   async walletsOfSigner(args: {
     signer: string
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     const { wallets } = await this.sessions.wallets(args)
     return Object.entries(wallets).map(([wallet, { digest, chainID, type, signature }]) => {
       switch (type) {
@@ -135,7 +131,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
         proof: {
           digest,
           signature,
-          chainId: ethers.BigNumber.from(chainID)
+          chainId: BigInt(chainID)
         }
       }
     })
@@ -145,7 +141,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     wallet: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: ethers.BigNumberish
+    chainId: BigIntish
   ): Promise<migrator.SignedMigration | undefined> {
     const chainIdString = numberString(chainId)
     const { migrations } = await this.sessions.migrations({ wallet, fromVersion, fromImageHash, chainID: chainIdString })
@@ -346,12 +342,12 @@ function encodeTransaction(transaction: commons.transaction.Transaction): Transa
   }
 }
 
-function numberNumber(n: ethers.BigNumberish): number {
-  return ethers.BigNumber.from(n).toNumber()
+function numberNumber(n: BigIntish): number {
+  return Number(BigInt(n))
 }
 
-function numberString(n: ethers.BigNumberish): string {
-  return ethers.BigNumber.from(n).toString()
+function numberString(n: BigIntish): string {
+  return BigInt(n).toString()
 }
 
 function is404NotFound(error: any): boolean {

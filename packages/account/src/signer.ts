@@ -1,12 +1,13 @@
 import { ChainId } from '@0xsequence/network'
 import { Account } from './account'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
 import { FeeOption, proto } from '@0xsequence/relayer'
 import { isDeferrable } from './utils'
+import { BigIntish, toHexString } from '@0xsequence/utils'
 
 export type AccountSignerOptions = {
-  nonceSpace?: ethers.BigNumberish
+  nonceSpace?: BigIntish
   cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
   stubSignatureOverrides?: Map<string, string>
   selectFee?: (
@@ -18,7 +19,7 @@ export type AccountSignerOptions = {
 function encodeGasRefundTransaction(option?: FeeOption) {
   if (!option) return []
 
-  const value = ethers.BigNumber.from(option.value)
+  const value = BigInt(option.value)
 
   switch (option.token.type) {
     case proto.FeeTokenType.UNKNOWN:
@@ -28,7 +29,7 @@ function encodeGasRefundTransaction(option?: FeeOption) {
           revertOnError: true,
           gasLimit: option.gasLimit,
           to: option.to,
-          value: value.toHexString(),
+          value: toHexString(value),
           data: []
         }
       ]
@@ -53,7 +54,7 @@ function encodeGasRefundTransaction(option?: FeeOption) {
               outputs: [],
               type: 'function'
             }
-          ]).encodeFunctionData('transfer', [option.to, value.toHexString()])
+          ]).encodeFunctionData('transfer', [option.to, toHexString(value)])
         }
       ]
 
@@ -106,14 +107,14 @@ export class AccountSigner implements ethers.Signer {
       if (option.token.type === proto.FeeTokenType.UNKNOWN) {
         // Native token
         const balance = await this.getBalance()
-        if (balance.gte(ethers.BigNumber.from(option.value))) {
+        if (balance.gte(BigInt(option.value))) {
           return option
         }
       } else if (option.token.contractAddress && option.token.type === proto.FeeTokenType.ERC20_TOKEN) {
         // ERC20 token
         const token = new ethers.Contract(option.token.contractAddress, balanceOfAbi, this.provider)
         const balance = await token.balanceOf(this.account.address)
-        if (balance.gte(ethers.BigNumber.from(option.value))) {
+        if (balance.gte(BigInt(option.value))) {
           return option
         }
       } else {
@@ -160,7 +161,7 @@ export class AccountSigner implements ethers.Signer {
     ) as Promise<ethers.providers.TransactionResponse> // Will always have a transaction response
   }
 
-  getBalance(blockTag?: ethers.providers.BlockTag | undefined): Promise<ethers.BigNumber> {
+  getBalance(blockTag?: ethers.providers.BlockTag | undefined): Promise<BigNumber> {
     return this.provider.getBalance(this.account.address, blockTag)
   }
 
@@ -189,15 +190,15 @@ export class AccountSigner implements ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
-  estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<ethers.BigNumber> {
+  estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<BigNumber> {
     throw new Error('Method not implemented.')
   }
 
   getChainId(): Promise<number> {
-    return Promise.resolve(ethers.BigNumber.from(this.chainId).toNumber())
+    return Promise.resolve(Number(BigInt(this.chainId)))
   }
 
-  getGasPrice(): Promise<ethers.BigNumber> {
+  getGasPrice(): Promise<BigNumber> {
     throw new Error('Method not implemented.')
   }
 

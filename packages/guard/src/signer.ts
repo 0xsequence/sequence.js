@@ -1,8 +1,8 @@
 import { Account } from '@0xsequence/account'
 import { commons, universal } from '@0xsequence/core'
 import { signers, Status } from '@0xsequence/signhub'
-import { encodeTypedDataDigest, TypedData } from '@0xsequence/utils'
-import { BytesLike, ethers, TypedDataDomain } from 'ethers'
+import { BigIntish, encodeTypedDataDigest, TypedData } from '@0xsequence/utils'
+import { BigNumber, BytesLike, ethers, TypedDataDomain } from 'ethers'
 import { AuthMethodsReturn, Guard, RecoveryCode as GuardRecoveryCode } from './guard.gen'
 
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
@@ -55,7 +55,7 @@ export class GuardSigner implements signers.SapientSigner {
         request: {
           msg: ethers.utils.hexlify(message),
           auxData: this.packMsgAndSig(metadata.address, metadata.digest, encoded, metadata.chainId),
-          chainId: ethers.BigNumber.from(metadata.chainId).toNumber()
+          chainId: Number(BigInt(metadata.chainId))
         },
         token: guardTotpCode ? { id: AuthMethod.TOTP, token: guardTotpCode } : undefined
       })
@@ -170,7 +170,7 @@ export class GuardSigner implements signers.SapientSigner {
     return codes
   }
 
-  private packMsgAndSig(address: string, msg: BytesLike, sig: BytesLike, chainId: ethers.BigNumberish): string {
+  private packMsgAndSig(address: string, msg: BytesLike, sig: BytesLike, chainId: BigIntish): string {
     return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [address, chainId, msg, sig])
   }
 
@@ -245,7 +245,7 @@ async function signAuthUpdateProof(proof: AuthUpdateProof): Promise<{ jwt: strin
       typedData.domain,
       typedData.types,
       typedData.message,
-      typedData.domain.chainId ?? 1,
+      BigNumber.from(typedData.domain.chainId).toNumber() ?? 1,
       'eip6492'
     )
 

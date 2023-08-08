@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import * as config from './config'
+import { BigIntish } from '@0xsequence/utils'
 
 export type SignaturePart = {
   signature: string
@@ -20,7 +21,7 @@ export type UnrecoveredSignature = {
 export type SignedPayload = {
   message?: ethers.BytesLike
   digest: string
-  chainId: ethers.BigNumberish
+  chainId: BigIntish
   address: string
 }
 
@@ -42,10 +43,10 @@ export interface SignatureCoder<
     config: Y,
     signatures: Map<string, SignaturePart>,
     subdigests: string[],
-    chainId: ethers.BigNumberish
+    chainId: BigIntish
   ) => {
     encoded: string
-    weight: ethers.BigNumber
+    weight: bigint
   }
 
   hasEnoughSigningPower: (config: Y, signatures: Map<string, SignaturePart>) => boolean

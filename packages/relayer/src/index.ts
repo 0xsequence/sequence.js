@@ -2,6 +2,7 @@ import { ethers, providers } from 'ethers'
 import { proto } from './rpc-relayer'
 
 import { commons } from '@0xsequence/core'
+import { BigIntish } from '@0xsequence/utils'
 
 export interface Relayer {
   // simulate returns the execution results for a list of transactions.
@@ -32,7 +33,7 @@ export interface Relayer {
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
+  getNonce(address: string, space?: BigIntish, blockTag?: providers.BlockTag): Promise<BigIntish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.

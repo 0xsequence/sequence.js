@@ -1,11 +1,11 @@
 import { ethers } from 'ethers'
-import { getEthersConnectionInfo, isBigNumberish, Optionals } from '@0xsequence/utils'
+import { getEthersConnectionInfo, isBigIntish, BigIntish, Optionals, toHexString } from '@0xsequence/utils'
 
 const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
 
-function toQuantity(number: ethers.BigNumberish | string): string {
-  if (isBigNumberish(number)) {
-    return ethers.BigNumber.from(number).toHexString()
+function toQuantity(number: BigIntish | string): string {
+  if (isBigIntish(number)) {
+    return toHexString(BigInt(number))
   }
 
   return number
@@ -19,8 +19,8 @@ function tryDecodeError(bytes: ethers.BytesLike): string {
   }
 }
 
-function toHexNumber(number: ethers.BigNumberish): string {
-  return ethers.BigNumber.from(number).toHexString()
+function toHexNumber(number: BigIntish): string {
+  return toHexString(BigInt(number))
 }
 
 export type OverwriterEstimatorOptions = {
@@ -50,23 +50,24 @@ export class OverwriterEstimator {
 
   txBaseCost(data: ethers.BytesLike): number {
     const bytes = ethers.utils.arrayify(data)
-    return bytes
-      .reduce((p, c) => (c == 0 ? p.add(this.options.dataZeroCost) : p.add(this.options.dataOneCost)), ethers.constants.Zero)
-      .add(this.options.baseCost)
-      .toNumber()
+    return (
+      Number(
+        bytes.reduce((p, c) => (c == 0 ? p + BigInt(this.options.dataZeroCost) : p + BigInt(this.options.dataOneCost)), 0n)
+      ) + this.options.baseCost
+    )
   }
 
   async estimate(args: {
     to: string
     from?: string
     data?: ethers.BytesLike
-    gasPrice?: ethers.BigNumberish
-    gas?: ethers.BigNumberish
+    gasPrice?: BigIntish
+    gas?: BigIntish
     overwrites?: {
       [address: string]: {
         code?: string
-        balance?: ethers.BigNumberish
-        nonce?: ethers.BigNumberish
+        balance?: BigIntish
+        nonce?: BigIntish
         stateDiff?: {
           key: string
           value: string
@@ -77,8 +78,8 @@ export class OverwriterEstimator {
         }[]
       }
     }
-    blockTag?: string | ethers.BigNumberish
-  }): Promise<ethers.BigNumber> {
+    blockTag?: string | BigIntish
+  }): Promise<bigint> {
     const blockTag = args.blockTag ? toQuantity(args.blockTag) : 'latest'
     const data = args.data ? args.data : []
     const from = args.from ? ethers.utils.getAddress(args.from) : ethers.Wallet.createRandom().address
@@ -132,6 +133,6 @@ export class OverwriterEstimator {
       throw Error(`Failed gas estimation with ${tryDecodeError(decoded.result)}`)
     }
 
-    return ethers.BigNumber.from(decoded.gas).add(this.txBaseCost(data))
+    return BigInt(decoded.gas) + BigInt(this.txBaseCost(data))
   }
 }

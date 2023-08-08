@@ -12,7 +12,7 @@ import { JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, allNetworks }
 import EventEmitter from 'events'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { ethers } from 'ethers'
-import { TypedData } from '@0xsequence/utils'
+import { TypedData, parseEther } from '@0xsequence/utils'
 import { ExtendedTransactionRequest } from '../src/extended'
 import packageJson from '../package.json'
 
@@ -60,7 +60,7 @@ describe('SequenceClient', () => {
         }
       }
 
-      client = new SequenceClient(mockTransport as unknown as ProviderTransport, useBestStore(), 1)
+      client = new SequenceClient(mockTransport as unknown as ProviderTransport, useBestStore())
     })
 
     it('shoud emit open event', async () => {
@@ -980,7 +980,7 @@ describe('SequenceClient', () => {
         chainId: 2,
         tx: {
           to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-          value: ethers.utils.parseEther('1.0'),
+          value: parseEther('1.0'),
           auxiliary: []
         },
         result: '0x0000'
@@ -1008,7 +1008,7 @@ describe('SequenceClient', () => {
         chainId: 6,
         tx: {
           to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-          value: ethers.utils.parseEther('1.0'),
+          value: parseEther('1.0'),
           auxiliary: [
             {
               to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',
@@ -1051,7 +1051,7 @@ describe('SequenceClient', () => {
     //
     // const result1 = client.sendTransaction({
     //   to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-    //   value: ethers.utils.parseEther('1.0'),
+    //   value: parseEther('1.0'),
     // })
 
     // await expect(result1).to.be.rejectedWith('Sequence session not connected')
@@ -1059,7 +1059,7 @@ describe('SequenceClient', () => {
 
     const result2 = await client.sendTransaction({
       to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-      value: ethers.utils.parseEther('1.0')
+      value: parseEther('1.0')
     })
 
     expect(result2).to.equal('0x0000')
@@ -1088,7 +1088,7 @@ describe('SequenceClient', () => {
       [
         {
           to: '0x88E1627e95071d140Abaec34574ee4AC991295fC',
-          value: ethers.utils.parseEther('1.0')
+          value: parseEther('1.0')
         },
         {
           to: '0xD20bC67fD6feFad616Ed6B29d6d15884E08b6D86',

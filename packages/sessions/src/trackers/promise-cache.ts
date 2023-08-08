@@ -52,6 +52,8 @@ type Entry = {
 function deterministically(_key: string, value: any): any {
   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
     return Object.fromEntries(Object.entries(value).sort())
+  } else if (typeof value === 'bigint') {
+    return value.toString()
   }
 
   return value
