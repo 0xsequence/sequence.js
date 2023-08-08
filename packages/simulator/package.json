@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/simulator",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "simulator sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/simulator",
   "source": "src/index.ts",

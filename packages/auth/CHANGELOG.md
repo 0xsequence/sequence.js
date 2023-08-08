@@ -1,5 +1,26 @@
 # @0xsequence/auth
 
+## 1.1.4
+
+### Patch Changes
+
+- network: rename base-mainnet to base
+- provider: override isDefaultChain with ConnectOptions.networkId if provided
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.1.4
+  - @0xsequence/account@1.1.4
+  - @0xsequence/api@1.1.4
+  - @0xsequence/core@1.1.4
+  - @0xsequence/indexer@1.1.4
+  - @0xsequence/metadata@1.1.4
+  - @0xsequence/migration@1.1.4
+  - @0xsequence/network@1.1.4
+  - @0xsequence/sessions@1.1.4
+  - @0xsequence/signhub@1.1.4
+  - @0xsequence/utils@1.1.4
+  - @0xsequence/wallet@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

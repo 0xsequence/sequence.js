@@ -1,5 +1,15 @@
 # @0xsequence/simulator
 
+## 1.1.4
+
+### Patch Changes
+
+- network: rename base-mainnet to base
+- provider: override isDefaultChain with ConnectOptions.networkId if provided
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

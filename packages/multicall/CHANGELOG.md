@@ -1,5 +1,17 @@
 # @0xsequence/multicall
 
+## 1.1.4
+
+### Patch Changes
+
+- network: rename base-mainnet to base
+- provider: override isDefaultChain with ConnectOptions.networkId if provided
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.1.4
+  - @0xsequence/network@1.1.4
+  - @0xsequence/utils@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes
