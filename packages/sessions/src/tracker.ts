@@ -1,4 +1,5 @@
 import { commons } from '@0xsequence/core'
+import { BigIntish } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export type PresignedConfig = {
@@ -27,7 +28,7 @@ export abstract class ConfigTracker {
 
   savePresignedConfiguration: (args: PresignedConfig) => Promise<void>
 
-  saveWitnesses: (args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }) => Promise<void>
+  saveWitnesses: (args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }) => Promise<void>
 
   configOfImageHash: (args: { imageHash: string; noCache?: boolean }) => Promise<commons.config.Config | undefined>
 
@@ -48,7 +49,7 @@ export abstract class ConfigTracker {
       wallet: string
       proof: {
         digest: string
-        chainId: ethers.BigNumber
+        chainId: bigint
         signature: string
       }
     }[]

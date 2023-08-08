@@ -366,6 +366,9 @@ importers:
       '@0xsequence/abi':
         specifier: workspace:*
         version: link:../abi
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../utils
       ethers:
         specifier: '>=5.5'
         version: 5.7.2
@@ -702,6 +705,9 @@ importers:
       '@0xsequence/core':
         specifier: workspace:*
         version: link:../core
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1

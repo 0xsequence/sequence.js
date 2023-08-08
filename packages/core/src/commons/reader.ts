@@ -2,6 +2,7 @@ import { walletContracts } from '@0xsequence/abi'
 import { ethers } from 'ethers'
 import { commons } from '..'
 import { validateEIP6492Offchain } from './validateEIP6492'
+import { BigIntish } from '@0xsequence/utils'
 
 /**
  * Provides stateful information about the wallet.
@@ -10,7 +11,7 @@ export interface Reader {
   isDeployed(wallet: string): Promise<boolean>
   implementation(wallet: string): Promise<string | undefined>
   imageHash(wallet: string): Promise<string | undefined>
-  nonce(wallet: string, space: ethers.BigNumberish): Promise<ethers.BigNumberish>
+  nonce(wallet: string, space: BigIntish): Promise<BigIntish>
   isValidSignature(wallet: string, digest: ethers.BytesLike, signature: ethers.BytesLike): Promise<boolean>
 }
 
@@ -71,7 +72,7 @@ export class OnChainReader implements Reader {
     return undefined
   }
 
-  async nonce(wallet: string, space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
+  async nonce(wallet: string, space: BigIntish = 0): Promise<BigIntish> {
     try {
       const nonce = await this.module(wallet).readNonce(space)
       return nonce

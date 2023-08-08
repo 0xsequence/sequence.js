@@ -1,10 +1,10 @@
 import { ethers, providers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
-import { logger, Optionals } from '@0xsequence/utils'
+import { BigIntish, logger, Optionals } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
-const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
+const DEFAULT_GAS_LIMIT = 800000n
 
 export interface ProviderRelayerOptions {
   provider: providers.Provider
@@ -64,7 +64,7 @@ export abstract class ProviderRelayer implements Relayer {
       await Promise.all(
         transactions.map(async tx => {
           // Respect gasLimit request of the transaction (as long as its not 0)
-          if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
+          if (tx.gasLimit && BigInt(tx.gasLimit || 0) !== 0n) {
             return tx.gasLimit
           }
 
@@ -84,23 +84,25 @@ export abstract class ProviderRelayer implements Relayer {
 
           // TODO: If the wallet address has been deployed, gas limits can be
           // estimated with more accurately by using self-calls with the batch transactions one by one
-          return this.provider.estimateGas({
-            from: wallet,
-            to: tx.to,
-            data: tx.data,
-            value: tx.value
-          })
+          return (
+            await this.provider.estimateGas({
+              from: wallet,
+              to: tx.to,
+              data: tx.data,
+              value: tx.value
+            })
+          ).toBigInt()
         })
       )
     ).map(gasLimit => ({
       executed: true,
       succeeded: true,
-      gasUsed: ethers.BigNumber.from(gasLimit).toNumber(),
-      gasLimit: ethers.BigNumber.from(gasLimit).toNumber()
+      gasUsed: Number(BigInt(gasLimit)),
+      gasLimit: Number(BigInt(gasLimit))
     }))
   }
 
-  async getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish> {
+  async getNonce(address: string, space?: BigIntish, blockTag?: providers.BlockTag): Promise<BigIntish> {
     if (!this.provider) {
       throw new Error('provider is not set')
     }

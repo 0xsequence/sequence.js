@@ -24,7 +24,7 @@ export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesL
   // Split r:s:v
   const r = ethers.utils.hexlify(bytes.slice(0, 32))
   const s = ethers.utils.hexlify(bytes.slice(32, 64))
-  const v = ethers.BigNumber.from(bytes.slice(64, 65)).toNumber()
+  const v = Number(BigInt(ethers.utils.hexlify(bytes.slice(64, 65))))
 
   const splitSignature = { r, s, v }
 

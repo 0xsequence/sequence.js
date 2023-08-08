@@ -3,6 +3,7 @@ import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 import { encodeSigners } from './signature'
 import { SimpleConfig } from '../commons/config'
+import { BigIntish } from '@0xsequence/utils'
 
 //
 // Tree typings - leaves
@@ -10,7 +11,7 @@ import { SimpleConfig } from '../commons/config'
 
 export type SignerLeaf = {
   address: string
-  weight: ethers.BigNumberish
+  weight: BigIntish
   signature?: string
 }
 
@@ -20,8 +21,8 @@ export type SubdigestLeaf = {
 
 export type NestedLeaf = {
   tree: Topology
-  weight: ethers.BigNumberish
-  threshold: ethers.BigNumberish
+  weight: BigIntish
+  threshold: BigIntish
 }
 
 // This is an unknown node
@@ -51,8 +52,8 @@ export function topologyToJSON(tree: Topology): string {
 
   if (isNestedLeaf(tree)) {
     return JSON.stringify({
-      weight: ethers.BigNumber.from(tree.weight).toString(),
-      threshold: ethers.BigNumber.from(tree.threshold).toString(),
+      weight: BigInt(tree.weight).toString(),
+      threshold: BigInt(tree.threshold).toString(),
       tree: topologyToJSON(tree.tree)
     })
   }
@@ -60,7 +61,7 @@ export function topologyToJSON(tree: Topology): string {
   if (isSignerLeaf(tree)) {
     return JSON.stringify({
       address: tree.address,
-      weight: ethers.BigNumber.from(tree.weight).toString()
+      weight: BigInt(tree.weight).toString()
     })
   }
 
@@ -79,8 +80,8 @@ export function topologyFromJSON(json: string | object): Topology {
 
   if (parsed.weight !== undefined && parsed.threshold !== undefined && parsed.tree !== undefined) {
     return {
-      weight: ethers.BigNumber.from(parsed.weight),
-      threshold: ethers.BigNumber.from(parsed.threshold),
+      weight: BigInt(parsed.weight),
+      threshold: BigInt(parsed.threshold),
       tree: topologyFromJSON(parsed.tree)
     }
   }
@@ -88,7 +89,7 @@ export function topologyFromJSON(json: string | object): Topology {
   if (parsed.address !== undefined && parsed.weight !== undefined) {
     return {
       address: parsed.address,
-      weight: ethers.BigNumber.from(parsed.weight)
+      weight: BigInt(parsed.weight)
     }
   }
 
@@ -141,7 +142,7 @@ export function decodeSignerLeaf(encoded: string): SignerLeaf {
     throw new Error('Invalid encoded string length')
   }
 
-  const weight = ethers.BigNumber.from(bytes.slice(0, 12))
+  const weight = BigInt(ethers.utils.hexlify(bytes.slice(0, 12)))
   const address = ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(12)))
 
   return { weight, address }
@@ -201,8 +202,8 @@ export function leftFace(topology: Topology): Topology[] {
 //
 
 export type WalletConfig = commons.config.Config & {
-  threshold: ethers.BigNumberish
-  checkpoint: ethers.BigNumberish
+  threshold: BigIntish
+  checkpoint: BigIntish
   tree: Topology
 }
 
@@ -234,16 +235,16 @@ export function imageHash(config: WalletConfig): string {
 //
 
 export type SimpleNestedMember = {
-  threshold: ethers.BigNumberish
-  weight: ethers.BigNumberish
+  threshold: BigIntish
+  weight: BigIntish
   members: SimpleConfigMember[]
 }
 
 export type SimpleConfigMember = SubdigestLeaf | SignerLeaf | SimpleNestedMember
 
 export type SimpleWalletConfig = {
-  threshold: ethers.BigNumberish
-  checkpoint: ethers.BigNumberish
+  threshold: BigIntish
+  checkpoint: BigIntish
   members: SimpleConfigMember[]
 }
 
@@ -399,7 +400,7 @@ export function signersOf(tree: Topology): { address: string; weight: number }[]
       stack.push(node.left)
       stack.push(node.right)
     } else if (isSignerLeaf(node)) {
-      signers.add({ address: node.address, weight: ethers.BigNumber.from(node.weight).toNumber() })
+      signers.add({ address: node.address, weight: Number(BigInt(node.weight)) })
     }
   }
 
@@ -427,8 +428,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return hasSubdigest(config.tree, subdigest)
   },
 
-  checkpointOf: (config: WalletConfig): ethers.BigNumber => {
-    return ethers.BigNumber.from(config.checkpoint)
+  checkpointOf: (config: WalletConfig): bigint => {
+    return BigInt(config.checkpoint)
   },
 
   signersOf: (config: WalletConfig): { address: string; weight: number }[] => {
@@ -512,11 +513,11 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         throw new Error('Invalid transaction bundle, expected revertOnError')
       }
 
-      if (!ethers.constants.Zero.eq(tx.transactions[0]?.value ?? 0)) {
+      if (BigInt(tx.transactions[0]?.value ?? 0) !== 0n) {
         throw new Error('Invalid transaction bundle, expected value to be 0')
       }
 
-      if (!ethers.constants.Zero.eq(tx.transactions[0]?.gasLimit ?? 0)) {
+      if (BigInt(tx.transactions[0]?.gasLimit ?? 0) !== 0n) {
         throw new Error('Invalid transaction bundle, expected value to be 0')
       }
 
@@ -531,8 +532,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   toJSON: function (config: WalletConfig): string {
     return JSON.stringify({
       version: config.version,
-      threshold: ethers.BigNumber.from(config.threshold).toString(),
-      checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
+      threshold: BigInt(config.threshold).toString(),
+      checkpoint: BigInt(config.checkpoint).toString(),
       tree: topologyToJSON(config.tree)
     })
   },
@@ -541,8 +542,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     const config = JSON.parse(json)
     return {
       version: config.version,
-      threshold: ethers.BigNumber.from(config.threshold),
-      checkpoint: ethers.BigNumber.from(config.checkpoint),
+      threshold: BigInt(config.threshold),
+      checkpoint: BigInt(config.checkpoint),
       tree: topologyFromJSON(config.tree)
     }
   },
@@ -552,8 +553,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     action: {
       add?: commons.config.SimpleSigner[]
       remove?: string[]
-      threshold?: ethers.BigNumberish
-      checkpoint?: ethers.BigNumberish
+      threshold?: BigIntish
+      checkpoint?: BigIntish
     }
   ): WalletConfig {
     const members = topologyToMembers(config.tree)
@@ -596,7 +597,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
       const { encoded, weight } = encodeSigners(config, parts, [], 0)
 
-      if (weight.gte(config.threshold)) {
+      if (weight >= BigInt(config.threshold)) {
         return encoded
       }
     }
@@ -610,7 +611,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
       const { encoded, weight } = encodeSigners(config, parts, [], 0)
 
-      if (weight.gte(config.threshold)) {
+      if (weight >= BigInt(config.threshold)) {
         return encoded
       }
     }
