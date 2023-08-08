@@ -123,12 +123,12 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('arbitrum-goerli')
   },
   {
-    ...networks[ChainId.BASE_GOERLI],
-    ...genUrls('base-goerli')
+    ...networks[ChainId.BASE],
+    ...genUrls('base-mainnet')
   },
   {
-    ...networks[ChainId.BASE_MAINNET],
-    ...genUrls('base-mainnet')
+    ...networks[ChainId.BASE_GOERLI],
+    ...genUrls('base-goerli')
   },
   {
     ...networks[ChainId.HOMEVERSE_TESTNET],

@@ -43,8 +43,8 @@ export enum ChainId {
   AURORA_TESTNET = 1313161556,
 
   // BASE
+  BASE = 8453,
   BASE_GOERLI = 84531,
-  BASE_MAINNET = 8453,
 
   // HOMEVERSE
   HOMEVERSE_TESTNET = 40875,
@@ -317,23 +317,14 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'aurora-testnet',
     title: 'Aurora Testnet',
+    testnet: true,
     blockExplorer: {
       name: 'Aurora Explorer (Testnet)',
       rootUrl: 'https://testnet.aurorascan.dev/'
     }
   },
-  [ChainId.BASE_GOERLI]: {
-    chainId: ChainId.BASE_GOERLI,
-    type: NetworkType.TESTNET,
-    name: 'base-goerli',
-    title: 'Base Goerli',
-    blockExplorer: {
-      name: 'Base Goerli Explorer',
-      rootUrl: 'https://goerli.basescan.org/'
-    }
-  },
-  [ChainId.BASE_MAINNET]: {
-    chainId: ChainId.BASE_MAINNET,
+  [ChainId.BASE]: {
+    chainId: ChainId.BASE,
     type: NetworkType.MAINNET,
     name: 'base-mainnet',
     title: 'Base Mainnet (Coinbase)',
@@ -342,11 +333,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://basescan.org/'
     }
   },
+  [ChainId.BASE_GOERLI]: {
+    chainId: ChainId.BASE_GOERLI,
+    type: NetworkType.TESTNET,
+    name: 'base-goerli',
+    title: 'Base Goerli',
+    testnet: true,
+    blockExplorer: {
+      name: 'Base Goerli Explorer',
+      rootUrl: 'https://goerli.basescan.org/'
+    }
+  },
   [ChainId.HOMEVERSE_TESTNET]: {
     chainId: ChainId.HOMEVERSE_TESTNET,
     type: NetworkType.TESTNET,
     name: 'homeverse-testnet',
     title: 'Oasys Homeverse Testnet',
+    testnet: true,
     blockExplorer: {
       name: 'Oasys Homeverse Explorer (Testnet)',
       rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
