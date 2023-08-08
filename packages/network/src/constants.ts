@@ -326,10 +326,10 @@ export const networks: Record<ChainId, NetworkMetadata> = {
   [ChainId.BASE]: {
     chainId: ChainId.BASE,
     type: NetworkType.MAINNET,
-    name: 'base-mainnet',
-    title: 'Base Mainnet (Coinbase)',
+    name: 'base',
+    title: 'Base (Coinbase)',
     blockExplorer: {
-      name: 'Base Mainnet Explorer',
+      name: 'Base Explorer',
       rootUrl: 'https://basescan.org/'
     }
   },

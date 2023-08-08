@@ -124,7 +124,7 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.BASE],
-    ...genUrls('base-mainnet')
+    ...genUrls('base')
   },
   {
     ...networks[ChainId.BASE_GOERLI],
