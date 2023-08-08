@@ -25,6 +25,7 @@
     "dist"
   ],
   "dependencies": {
+    "@0xsequence/utils": "workspace:*",
     "@0xsequence/abi": "workspace:*"
   }
 }

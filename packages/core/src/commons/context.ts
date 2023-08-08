@@ -3,6 +3,7 @@ import { allVersions } from '..'
 
 import { DeployedWalletContext as context1 } from '../v1'
 import { DeployedWalletContext as context2 } from '../v2'
+import { BigIntish } from '@0xsequence/utils'
 
 export type WalletContext = {
   version: number
@@ -30,7 +31,7 @@ export async function isValidCounterfactual(
   wallet: string,
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,
-  chainId: ethers.BigNumberish,
+  chainId: BigIntish,
   provider: ethers.providers.Provider,
   contexts: { [key: number]: WalletContext }
 ) {

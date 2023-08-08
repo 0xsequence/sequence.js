@@ -1,4 +1,5 @@
-import { BigNumber, BigNumberish, BytesLike, utils, providers } from 'ethers'
+import { BytesLike, utils, providers } from 'ethers'
+import { BigIntish } from '@0xsequence/utils'
 
 export async function gethCall(
   provider: providers.JsonRpcProvider,
@@ -17,8 +18,8 @@ export async function gethCall(
 
 export interface Overrides {
   [address: string]: {
-    balance?: BigNumberish
-    nonce?: BigNumberish
+    balance?: BigIntish
+    nonce?: BigIntish
     code?: BytesLike | utils.Hexable | number | bigint
     state?: StorageOverrides
     stateDiff?: StorageOverrides
@@ -48,8 +49,8 @@ function formatOverrides(overrides: any): Overrides {
 }
 
 const overridesFormat = {
-  balance: skipNullish(BigNumber.from),
-  nonce: skipNullish(BigNumber.from),
+  balance: skipNullish(BigInt),
+  nonce: skipNullish(BigInt),
   code: skipNullish(utils.hexlify),
   state: skipNullish(formatStorageOverrides),
   stateDiff: skipNullish(formatStorageOverrides)

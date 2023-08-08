@@ -4,7 +4,6 @@
 import type {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -16,6 +15,7 @@ import type {
 import type { FunctionFragment, Result, EventFragment } from '@ethersproject/abi'
 import type { Listener, Provider } from '@ethersproject/providers'
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from './common'
+import { BigIntish } from '@0xsequence/utils'
 
 export interface UniversalDeployer2Interface extends utils.Interface {
   functions: {
@@ -24,7 +24,7 @@ export interface UniversalDeployer2Interface extends utils.Interface {
 
   getFunction(nameOrSignatureOrTopic: 'deploy'): FunctionFragment
 
-  encodeFunctionData(functionFragment: 'deploy', values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]): string
+  encodeFunctionData(functionFragment: 'deploy', values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigIntish>]): string
 
   decodeFunctionResult(functionFragment: 'deploy', data: BytesLike): Result
 
@@ -67,21 +67,21 @@ export interface UniversalDeployer2 extends BaseContract {
   functions: {
     deploy(
       _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigNumberish>,
+      _instance: PromiseOrValue<BigIntish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>
   }
 
   deploy(
     _creationCode: PromiseOrValue<BytesLike>,
-    _instance: PromiseOrValue<BigNumberish>,
+    _instance: PromiseOrValue<BigIntish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>
 
   callStatic: {
     deploy(
       _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigNumberish>,
+      _instance: PromiseOrValue<BigIntish>,
       overrides?: CallOverrides
     ): Promise<void>
   }
@@ -94,7 +94,7 @@ export interface UniversalDeployer2 extends BaseContract {
   estimateGas: {
     deploy(
       _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigNumberish>,
+      _instance: PromiseOrValue<BigIntish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>
   }
@@ -102,7 +102,7 @@ export interface UniversalDeployer2 extends BaseContract {
   populateTransaction: {
     deploy(
       _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigNumberish>,
+      _instance: PromiseOrValue<BigIntish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>
   }

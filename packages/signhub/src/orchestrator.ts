@@ -30,6 +30,7 @@ export function isSignerStatusPending(
 
 export interface SignatureOrchestrator {
   getSigners(): Promise<string[]>
+  setSigners(signers: (ethers.Signer | SapientSigner)[]): void
 
   signMessage(args: {
     candidates: string[]

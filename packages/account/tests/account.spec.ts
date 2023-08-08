@@ -485,7 +485,7 @@ describe('Account', () => {
 
         const simpleConfig2 = {
           threshold: 4,
-          checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+          checkpoint: await account.status(0).then(s => BigInt(s.checkpoint) + 1n),
           signers: [
             {
               address: signer2a.address,
@@ -651,7 +651,7 @@ describe('Account', () => {
 
           const simpleConfig3 = {
             threshold: 5,
-            checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint) + 1n),
             signers: [
               {
                 address: signer3a.address,
@@ -742,7 +742,7 @@ describe('Account', () => {
 
           const simpleConfig2 = {
             threshold: 6,
-            checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint) + 1n),
             signers: [
               {
                 address: signer2a.address,
@@ -789,7 +789,7 @@ describe('Account', () => {
       // Old account may be an address that's not even deployed
       const signer1 = randomWallet('Should migrate undeployed account')
 
-      const simpleConfig = {
+      const simpleConfig: commons.config.SimpleConfig = {
         threshold: 1,
         checkpoint: 0,
         signers: [
@@ -1362,7 +1362,7 @@ describe('Account', () => {
     let signer: ethers.Wallet
     let account: Account
 
-    let getNonce: (response: ethers.providers.TransactionResponse) => { space: ethers.BigNumber; nonce: ethers.BigNumber }
+    let getNonce: (response: ethers.providers.TransactionResponse) => { space: bigint; nonce: bigint }
 
     before(async () => {
       const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
@@ -1410,8 +1410,8 @@ describe('Account', () => {
 
       let { space, nonce } = getNonce(response)
 
-      expect(space.eq(6492)).to.be.true
-      expect(nonce.eq(0)).to.be.true
+      expect(space === 6492n).to.be.true
+      expect(nonce === 0n).to.be.true
 
       await response.wait()
 
@@ -1431,8 +1431,8 @@ describe('Account', () => {
       space = encoded.space
       nonce = encoded.nonce
 
-      expect(space.eq(6492)).to.be.true
-      expect(nonce.eq(1)).to.be.true
+      expect(space === 6492n).to.be.true
+      expect(nonce === 1n).to.be.true
     })
 
     it('Should select random nonces by default', async () => {
@@ -1443,8 +1443,8 @@ describe('Account', () => {
 
       const { space: firstSpace, nonce: firstNonce } = getNonce(response)
 
-      expect(firstSpace.eq(0)).to.be.false
-      expect(firstNonce.eq(0)).to.be.true
+      expect(firstSpace === 0n).to.be.false
+      expect(firstNonce === 0n).to.be.true
 
       // not necessary, parallel execution is ok:
       // await response.wait()
@@ -1456,10 +1456,10 @@ describe('Account', () => {
 
       const { space: secondSpace, nonce: secondNonce } = getNonce(response)
 
-      expect(secondSpace.eq(0)).to.be.false
-      expect(secondNonce.eq(0)).to.be.true
+      expect(secondSpace === 0n).to.be.false
+      expect(secondNonce === 0n).to.be.true
 
-      expect(secondSpace.eq(firstSpace)).to.be.false
+      expect(secondSpace === firstSpace).to.be.false
     })
 
     it('Should respect the serial option', async () => {
@@ -1477,8 +1477,8 @@ describe('Account', () => {
 
       let { space, nonce } = getNonce(response)
 
-      expect(space.eq(0)).to.be.true
-      expect(nonce.eq(0)).to.be.true
+      expect(space === 0n).to.be.true
+      expect(nonce === 0n).to.be.true
 
       await response.wait()
 
@@ -1498,8 +1498,8 @@ describe('Account', () => {
       space = encoded.space
       nonce = encoded.nonce
 
-      expect(space.eq(0)).to.be.true
-      expect(nonce.eq(1)).to.be.true
+      expect(space === 0n).to.be.true
+      expect(nonce === 1n).to.be.true
     })
   })
 })

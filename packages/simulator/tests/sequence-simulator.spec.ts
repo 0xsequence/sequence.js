@@ -225,7 +225,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 14442, '0x112233')
                 }
               ]
@@ -237,7 +237,7 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results.every(result => result.executed)).to.be.true
               expect(results.every(result => result.succeeded)).to.be.true
-              expect(results.every(result => result.gasUsed.gt(0))).to.be.true
+              expect(results.every(result => result.gasUsed.gt(0n))).to.be.true
             })
 
             it('should use estimated gas for a single failing transaction', async () => {
@@ -248,7 +248,7 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results.every(result => result.executed)).to.be.true
               expect(results.every(result => !result.succeeded)).to.be.true
-              expect(results.every(result => result.gasUsed.gt(0))).to.be.true
+              expect(results.every(result => result.gasUsed.gt(0n))).to.be.true
             })
           })
 
@@ -265,7 +265,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'setRevertFlag', true)
                 },
                 {
@@ -273,7 +273,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 2, valB)
                 }
               ]
@@ -285,10 +285,10 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results[0].executed).to.be.true
               expect(results[0].succeeded).to.be.true
-              expect(results[0].gasUsed.gt(0)).to.be.true
+              expect(results[0].gasUsed.gt(0n)).to.be.true
               expect(results[1].executed).to.be.true
               expect(results[1].succeeded).to.be.false
-              expect(results[1].gasUsed.gt(0)).to.be.true
+              expect(results[1].gasUsed.gt(0n)).to.be.true
             })
           })
         })

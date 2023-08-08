@@ -1,5 +1,5 @@
 import { ChainId, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
-import { jwtDecodeClaims } from '@0xsequence/utils'
+import { BigIntish, jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
 import { tracker, trackers } from '@0xsequence/sessions'
@@ -146,7 +146,7 @@ export class Session {
     orchestrator: SignatureOrchestrator
     addSigners?: commons.config.SimpleSigner[]
     referenceSigner: string
-    threshold?: ethers.BigNumberish
+    threshold?: BigIntish
     selectWallet: (wallets: string[]) => Promise<string | undefined>
     onAccountAddress?: (address: string) => void
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
@@ -260,7 +260,7 @@ export class Session {
         // Only update the onchain config if the imageHash has changed
         if (account.coders.config.imageHashOf(prevConfig) !== account.coders.config.imageHashOf(nextConfig)) {
           const newConfig = account.coders.config.editConfig(nextConfig, {
-            checkpoint: account.coders.config.checkpointOf(prevConfig).add(1)
+            checkpoint: account.coders.config.checkpointOf(prevConfig) + 1n
           })
 
           await account.updateConfig(newConfig)

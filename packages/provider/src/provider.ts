@@ -5,6 +5,7 @@ import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, Opti
 import { commons } from '@0xsequence/core'
 import { WalletUtils } from './utils/index'
 import { SequenceSigner, SingleNetworkSequenceSigner } from './signer'
+import { BigIntish } from '@0xsequence/utils'
 
 export interface ISequenceProvider {
   readonly _isSequenceProvider: true
@@ -348,7 +349,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   async getStorageAt(
     addressOrName: string | Promise<string>,
-    position: ethers.BigNumberish | Promise<ethers.BigNumberish>,
+    position: BigIntish | Promise<BigIntish>,
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
@@ -443,9 +444,9 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 }
 
-function normalizeChainId(chainId: string | number | bigint | { chainId: string }): number {
+function normalizeChainId(chainId: BigIntish | { chainId: string }): number {
   if (typeof chainId === 'object') return normalizeChainId(chainId.chainId)
-  return ethers.BigNumber.from(chainId).toNumber()
+  return Number(BigInt(chainId))
 }
 
 /**
