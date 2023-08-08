@@ -4,7 +4,7 @@ import * as utils from '@0xsequence/tests'
 
 import { trackers, tracker } from '../src/index'
 import { commons, universal, v2 } from '@0xsequence/core'
-import { ethers } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { Wallet } from '@0xsequence/wallet'
 import { Orchestrator } from '@0xsequence/signhub'
 
@@ -106,21 +106,21 @@ const ConfigCases = [
 
       return {
         version: 2,
-        threshold: ethers.BigNumber.from(2),
-        checkpoint: ethers.BigNumber.from(392919),
+        threshold: 2n,
+        checkpoint: 392919n,
         tree: {
           left: {
             subdigest: ethers.utils.hexlify(ethers.utils.randomBytes(32))
           },
           right: {
             left: {
-              weight: ethers.BigNumber.from(1),
-              threshold: ethers.BigNumber.from(99),
+              weight: 1n,
+              threshold: 99n,
               tree: nested1.tree
             },
             right: {
-              weight: ethers.BigNumber.from(99),
-              threshold: ethers.BigNumber.from(1),
+              weight: 99n,
+              threshold: 1n,
               tree: nested2.tree
             }
           }
@@ -195,7 +195,7 @@ describe('Local config tracker', () => {
     }
   ].map(({ name, getTracker }) => {
     describe(name, () => {
-      let tracker: tracker.ConfigTracker
+      let tracker: tracker.ConfigTracker | trackers.MultipleTracker
 
       beforeEach(() => {
         tracker = getTracker()
@@ -255,8 +255,8 @@ describe('Local config tracker', () => {
 
           const emptyConfig = {
             version: 2,
-            threshold: ethers.BigNumber.from(2),
-            checkpoint: ethers.BigNumber.from(0),
+            threshold: 2n,
+            checkpoint: 0n,
             tree: {
               left: { nodeHash: v2.config.hashNode(config1.tree) },
               right: { nodeHash: v2.config.hashNode(config2.tree) }
@@ -282,8 +282,8 @@ describe('Local config tracker', () => {
           expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
             normalize({
               version: 2,
-              threshold: ethers.BigNumber.from(2),
-              checkpoint: ethers.BigNumber.from(0),
+              threshold: 2n,
+              checkpoint: 0n,
               tree: {
                 left: config1.tree,
                 right: { nodeHash: v2.config.hashNode(config2.tree) }
@@ -303,8 +303,8 @@ describe('Local config tracker', () => {
           expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
             normalize({
               version: 2,
-              threshold: ethers.BigNumber.from(2),
-              checkpoint: ethers.BigNumber.from(0),
+              threshold: 2n,
+              checkpoint: 0n,
               tree: {
                 left: config1.tree,
                 right: config2.tree
@@ -712,7 +712,7 @@ describe('Local config tracker', () => {
           const witness = await tracker.walletsOfSigner({ signer: signer.address })
           expect(witness.length).to.equal(1)
           expect(witness[0].wallet).to.equal(address)
-          expect(witness[0].proof.chainId.toNumber()).to.equal(1)
+          expect(witness[0].proof.chainId).to.equal(1n)
           expect(witness[0].proof.digest).to.equal(digest)
           expect(witness[0].proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
@@ -809,11 +809,11 @@ describe('Local config tracker', () => {
           expect(wallet1Result).to.not.be.undefined
           expect(wallet2Result).to.not.be.undefined
 
-          expect(wallet1Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet1Result?.proof.chainId).to.equal(1n)
           expect(wallet1Result?.proof.digest).to.equal(digest)
           expect(wallet1Result?.proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
-          expect(wallet2Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet2Result?.proof.chainId).to.equal(1n)
           expect(wallet2Result?.proof.digest).to.equal(digest2)
           expect(wallet2Result?.proof.signature).to.equal((decoded2.decoded.tree as v2.signature.SignatureLeaf).signature)
         })
@@ -838,11 +838,11 @@ describe('Local config tracker', () => {
       it('Storing a config should store it in both', async () => {
         const config = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(0),
+          threshold: 1n,
+          checkpoint: 0n,
           tree: {
             address: ethers.Wallet.createRandom().address,
-            weight: ethers.BigNumber.from(1)
+            weight: 1n
           }
         }
 
@@ -860,11 +860,11 @@ describe('Local config tracker', () => {
       it('Retrieving a config from tracker1, should mirror to tracker2', async () => {
         const config = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(0),
+          threshold: 1n,
+          checkpoint: 0n,
           tree: {
             address: ethers.Wallet.createRandom().address,
-            weight: ethers.BigNumber.from(1)
+            weight: 1n
           }
         }
 
@@ -885,18 +885,18 @@ describe('Local config tracker', () => {
       it.skip('Should combine 2 different sources', async () => {
         const node1 = {
           address: ethers.Wallet.createRandom().address,
-          weight: ethers.BigNumber.from(1)
+          weight: 1n
         }
 
         const node2 = {
           address: ethers.Wallet.createRandom().address,
-          weight: ethers.BigNumber.from(1)
+          weight: 1n
         }
 
         const config1 = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(1234),
+          threshold: 1n,
+          checkpoint: 1234n,
           tree: {
             left: {
               nodeHash: v2.config.hashNode(node1)
@@ -907,8 +907,8 @@ describe('Local config tracker', () => {
 
         const config2 = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(1234),
+          threshold: 1n,
+          checkpoint: 1234n,
           tree: {
             left: node1,
             right: {
@@ -919,8 +919,8 @@ describe('Local config tracker', () => {
 
         const configAll = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(1234),
+          threshold: 1n,
+          checkpoint: 1234n,
           tree: {
             left: node1,
             right: node2
@@ -1183,7 +1183,7 @@ describe('Local config tracker', () => {
 function normalize(value: any): any {
   switch (typeof value) {
     case 'object':
-      if (ethers.BigNumber.isBigNumber(value)) {
+      if (BigNumber.isBigNumber(value)) {
         return value.toString()
       }
       return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, normalize(value)]))

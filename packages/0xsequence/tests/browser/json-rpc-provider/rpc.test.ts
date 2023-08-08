@@ -1,4 +1,3 @@
-import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
 
 import { configureLogger } from '@0xsequence/utils'
@@ -17,19 +16,19 @@ export const tests = async () => {
     }
     {
       const chainId = await provider.send('eth_chainId', [])
-      assert.true(ethers.BigNumber.from(chainId).toString() === '31337')
+      assert.true(BigInt(chainId).toString() === '31337')
     }
     {
       const chainId = await provider.send('eth_chainId', [])
-      assert.true(ethers.BigNumber.from(chainId).toString() === '31337')
+      assert.true(BigInt(chainId).toString() === '31337')
     }
     {
       const chainId = await provider.send('eth_chainId', [])
-      assert.true(ethers.BigNumber.from(chainId).toString() === '31337')
+      assert.true(BigInt(chainId).toString() === '31337')
     }
     {
       const chainId = await provider.send('eth_chainId', [])
-      assert.true(ethers.BigNumber.from(chainId).toString() === '31337')
+      assert.true(BigInt(chainId).toString() === '31337')
     }
     {
       const netVersion = await provider.send('net_version', [])

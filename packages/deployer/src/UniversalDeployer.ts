@@ -34,7 +34,7 @@ export class UniversalDeployer {
     contractAlias: string,
     contractFactory: new (signer: ethers.Signer) => T,
     txParams?: ethers.providers.TransactionRequest,
-    instance?: number | ethers.BigNumber,
+    instance?: number | bigint,
     ...args: Parameters<T['deploy']>
   ): Promise<ethers.Contract> => {
     try {
@@ -78,7 +78,7 @@ export class UniversalDeployer {
   }
 
   deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
-    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)) < UNIVERSAL_DEPLOYER_FUNDING) {
+    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)).toBigInt() < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
       const tx = await this.signer.sendTransaction({
         to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
@@ -184,7 +184,7 @@ export class UniversalDeployer {
 
   addressOf = async <T extends ContractFactory>(
     contractFactory: new (signer: ethers.Signer) => T,
-    contractInstance: number | ethers.BigNumber,
+    contractInstance: number | bigint,
     ...args: Parameters<T['deploy']>
   ): Promise<string> => {
     const factory = new contractFactory(this.signer)

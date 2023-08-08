@@ -4,7 +4,7 @@ import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
 import { SequenceMetadata } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
-import { getEthersConnectionInfo } from '@0xsequence/utils'
+import { BigIntish, getEthersConnectionInfo } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export type SessionMeta = {
@@ -18,7 +18,7 @@ export type SessionMeta = {
 export type ServicesSettings = {
   metadata: SessionMeta
   sequenceApiUrl: string
-  sequenceApiChainId: ethers.BigNumberish
+  sequenceApiChainId: BigIntish
   sequenceMetadataUrl: string
 }
 
@@ -201,10 +201,10 @@ export class Services {
   private async isProofStringValid(proofString: string): Promise<boolean> {
     try {
       const ethAuth = new ETHAuth()
-      const chainId = ethers.BigNumber.from(this.settings.sequenceApiChainId)
+      const chainId = BigInt(this.settings.sequenceApiChainId)
       const network = findNetworkConfig(this.account.networks, chainId)
       if (!network) throw Error('No network found')
-      ethAuth.chainId = chainId.toNumber()
+      ethAuth.chainId = Number(chainId)
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
       // -----
@@ -213,7 +213,7 @@ export class Services {
         getEthersConnectionInfo(network.rpcUrl, this.projectAccessKey),
         {
           name: '',
-          chainId: chainId.toNumber()
+          chainId: Number(chainId)
         }
       )
 
@@ -290,10 +290,10 @@ export class Services {
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
-    const chainId = ethers.BigNumber.from(this.settings.sequenceApiChainId)
+    const chainId = BigInt(this.settings.sequenceApiChainId)
     const network = findNetworkConfig(this.account.networks, chainId)
     if (!network) throw Error('No network found')
-    ethAuth.chainId = chainId.toNumber()
+    ethAuth.chainId = Number(chainId)
     // TODO: Modify ETHAuth so it can take a provider instead of a url
     // -----
     // Can't pass jwt here since this is used for getting the jwt
@@ -301,7 +301,7 @@ export class Services {
       getEthersConnectionInfo(network.rpcUrl, this.projectAccessKey),
       {
         name: '',
-        chainId: chainId.toNumber()
+        chainId: Number(chainId)
       }
     )
 

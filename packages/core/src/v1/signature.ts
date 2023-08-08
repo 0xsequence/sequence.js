@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import * as base from '../commons/signature'
 import { AddressMember, WalletConfig } from './config'
 import { isValidSignature, recoverSigner } from '../commons/signer'
+import { BigIntish } from '@0xsequence/utils'
 
 export enum SignaturePartType {
   EOASignature = 0,
@@ -13,7 +14,7 @@ export type Signature = base.Signature<WalletConfig>
 
 export type UnrecoveredSignatureMember = {
   unrecovered: true
-  weight: ethers.BigNumberish
+  weight: BigIntish
   signature: string
   address?: string
   isDynamic: boolean
@@ -22,7 +23,7 @@ export type UnrecoveredSignatureMember = {
 export type UnrecoveredMember = AddressMember | UnrecoveredSignatureMember
 
 export type UnrecoveredSignature = base.UnrecoveredSignature & {
-  threshold: ethers.BigNumberish
+  threshold: BigIntish
   signers: UnrecoveredMember[]
 }
 
@@ -162,13 +163,13 @@ export function encodeSigners(
   config: WalletConfig,
   signatures: Map<string, base.SignaturePart>,
   subdigests: string[],
-  _: ethers.BigNumberish
-): { encoded: string; weight: ethers.BigNumber } {
+  _: BigIntish
+): { encoded: string; weight: bigint } {
   if (subdigests.length !== 0) {
     throw new Error('Explicit subdigests not supported on v1')
   }
 
-  let weight = ethers.BigNumber.from(0)
+  let weight = 0n
   const parts = config.signers.map(s => {
     if (!signatures.has(s.address)) {
       return s
@@ -177,7 +178,7 @@ export function encodeSigners(
     const signature = signatures.get(s.address)!
     const bytes = ethers.utils.arrayify(signature.signature)
 
-    weight = weight.add(s.weight)
+    weight = weight + BigInt(s.weight)
 
     if (signature.isDynamic || bytes.length !== 66) {
       return {
@@ -222,17 +223,17 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
     config: WalletConfig,
     signatures: Map<string, base.SignaturePart>,
     subdigests: string[],
-    chainId: ethers.BigNumberish
+    chainId: BigIntish
   ): {
     encoded: string
-    weight: ethers.BigNumber
+    weight: bigint
   } => {
     return encodeSigners(config, signatures, subdigests, chainId)
   },
 
   hasEnoughSigningPower: (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
     const { weight } = SignatureCoder.encodeSigners(config, signatures, [], 0)
-    return weight.gte(config.threshold)
+    return weight >= BigInt(config.threshold)
   },
 
   chainSignatures: (

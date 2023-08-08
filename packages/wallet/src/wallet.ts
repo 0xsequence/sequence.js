@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { SignatureOrchestrator, SignerState, Status } from '@0xsequence/signhub'
-import { Deferrable, subDigestOf } from '@0xsequence/utils'
+import { BigIntish, Deferrable, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
@@ -21,7 +21,7 @@ export type WalletOptions<
   context: commons.context.WalletContext
   config: Y
 
-  chainId: ethers.BigNumberish
+  chainId: BigIntish
   address: string
 
   orchestrator: SignatureOrchestrator
@@ -65,7 +65,7 @@ export class Wallet<
   public context: commons.context.WalletContext
   public config: Y
   public address: string
-  public chainId: ethers.BigNumberish
+  public chainId: BigIntish
 
   public provider?: ethers.providers.Provider
   public relayer?: Relayer
@@ -79,7 +79,7 @@ export class Wallet<
   private _reader?: commons.reader.Reader
 
   constructor(options: WalletOptions<T, Y, Z>) {
-    if (ethers.constants.Zero.eq(options.chainId) && !options.coders.signature.supportsNoChainId) {
+    if (BigInt(options.chainId) === 0n && !options.coders.signature.supportsNoChainId) {
       throw new Error(`Sequence version ${options.config.version} doesn't support chainId 0`)
     }
 
@@ -240,7 +240,7 @@ export class Wallet<
     return this.coders.config.update.buildTransaction(this.address, config, this.context)
   }
 
-  async getNonce(space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
+  async getNonce(space: BigIntish = 0): Promise<BigIntish> {
     const nonce = await this.reader().nonce(this.address, space)
     if (nonce === undefined) throw new Error('Unable to determine nonce')
     return nonce
@@ -298,14 +298,12 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async fetchNonceOrSpace(
-    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish } | { serial: boolean }
-  ): Promise<ethers.BigNumberish> {
+  async fetchNonceOrSpace(nonce?: BigIntish | { space: BigIntish } | { serial: boolean }): Promise<BigIntish> {
     let spaceValue
 
     if (nonce && (nonce as any).space !== undefined) {
       // specified nonce "space"
-      spaceValue = ethers.BigNumber.from((nonce as any).space)
+      spaceValue = BigInt((nonce as any).space)
     } else if (nonce === undefined) {
       // default is random, aka parallel
       return this.randomNonce()
@@ -314,7 +312,7 @@ export class Wallet<
       spaceValue = 0
     } else {
       // specific nonce is used
-      return nonce as ethers.BigNumberish
+      return nonce as BigIntish
     }
 
     const resultNonce = await this.reader().nonce(this.address, spaceValue)
@@ -323,15 +321,15 @@ export class Wallet<
   }
 
   // Generate nonce with random space
-  randomNonce(): ethers.BigNumberish {
-    const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
+  randomNonce(): BigIntish {
+    const randomNonceSpace = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
     const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
     return randomNonce
   }
 
   async signTransactions(
     txs: Deferrable<commons.transaction.Transactionish>,
-    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish } | { serial: boolean },
+    nonce?: BigIntish | { space: BigIntish } | { serial: boolean },
     metadata?: object
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
@@ -392,11 +390,11 @@ export class Wallet<
     txs: Deferrable<commons.transaction.Transactionish>,
     options?: {
       quote?: FeeQuote
-      nonce?: ethers.BigNumberish
+      nonce?: BigIntish
       serial?: boolean
     }
   ): Promise<ethers.providers.TransactionResponse> {
-    let nonce: ethers.BigNumberish | { serial: boolean }
+    let nonce: BigIntish | { serial: boolean }
     if (options?.nonce !== undefined) {
       // specific nonce is used
       nonce = options.nonce
@@ -421,7 +419,7 @@ export class Wallet<
 
     const simulations = await relayer.simulate(this.address, ...transactions)
     return transactions.map((tx, i) => {
-      const gasLimit = tx.gasLimit ? ethers.BigNumber.from(tx.gasLimit).toNumber() : simulations[i].gasLimit
+      const gasLimit = tx.gasLimit ? Number(BigInt(tx.gasLimit)) : simulations[i].gasLimit
       return { ...tx, ...simulations[i], gasLimit }
     })
   }
