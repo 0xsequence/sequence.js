@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.1.5
+
+### Patch Changes
+
+- account: re-compute meta-transaction id for wallet deployment transactions
+- Updated dependencies
+  - @0xsequence/core@1.1.5
+  - @0xsequence/migration@1.1.5
+  - @0xsequence/replacer@1.1.5
+
 ## 1.1.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.1.5
+
+### Patch Changes
+
+- account: re-compute meta-transaction id for wallet deployment transactions
+
 ## 1.1.4
 
 ### Patch Changes
