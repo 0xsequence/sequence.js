@@ -40,11 +40,11 @@ let defaultChainId: number
 
 let callback: (chainId: number) => void
 
-let onDefaultChainIdChanged = (cb: (chainId: number) => void) => {
+const onDefaultChainIdChanged = (cb: (chainId: number) => void) => {
   callback = cb
 }
 
-let setDefaultChainId = (chainId: number) => {
+const setDefaultChainId = (chainId: number) => {
   defaultChainId = chainId
   callback(chainId)
 }
@@ -84,7 +84,7 @@ describe('SequenceSigner', () => {
 
   describe('client proxy methods', () => {
     describe('getWalletConfig', () => {
-      let returnWalletConfig = {
+      const returnWalletConfig = {
         version: 1,
         threshold: 5,
         signers: [
