@@ -373,7 +373,7 @@ export class Account {
       return bundle
     }
 
-    return {
+    const decoratedBundle = {
       entrypoint: bootstrapBundle.entrypoint,
       chainId: bundle.chainId,
       intent: bundle.intent,
@@ -389,6 +389,17 @@ export class Account {
         }
       ]
     }
+
+    // Re-compute the meta-transaction id to use the guest module subdigest
+    if (!status.onChain.deployed) {
+      decoratedBundle.intent.id = commons.transaction.subdigestOfGuestModuleTransactions(
+        this.contexts[this.version].guestModule,
+        decoratedBundle.chainId,
+        decoratedBundle.transactions
+      )
+    }
+
+    return decoratedBundle
   }
 
   decorateSignature<T extends ethers.BytesLike>(
