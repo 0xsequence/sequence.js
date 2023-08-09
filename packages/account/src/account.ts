@@ -691,12 +691,14 @@ export class Account {
     signedBundle: commons.transaction.IntendedTransactionBundle,
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
-    pstatus?: AccountStatus
+    pstatus?: AccountStatus,
+    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
     const status = pstatus || (await this.status(signedBundle.chainId))
     this.mustBeFullyMigrated(status)
 
     const decoratedBundle = this.decorateTransactions(signedBundle, status)
+    callback?.(decoratedBundle)
 
     return this.relayer(chainId).relay(decoratedBundle, quote)
   }
@@ -775,13 +777,13 @@ export class Account {
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     skipPreDecorate: boolean = false,
-    callback?: (signed: commons.transaction.SignedTransactionBundle) => void
+    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
     const status = await this.status(chainId)
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
     const signed = await this.signTransactions(predecorated, chainId)
-    if (callback) callback(signed)
-    return this.sendSignedTransactions(signed, chainId, quote)
+    // TODO: is it safe to pass status again here?
+    return this.sendSignedTransactions(signed, chainId, quote, undefined, callback)
   }
 
   async signTypedData(
