@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.1.6
+
+### Patch Changes
+
+- metadata: searchMetadata: add chainID and excludeTokenMetadata filters
+- Updated dependencies
+  - @0xsequence/core@1.1.6
+
 ## 1.1.5
 
 ### Patch Changes

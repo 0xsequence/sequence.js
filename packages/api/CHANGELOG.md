@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.1.6
+
+### Patch Changes
+
+- metadata: searchMetadata: add chainID and excludeTokenMetadata filters
+
 ## 1.1.5
 
 ### Patch Changes
