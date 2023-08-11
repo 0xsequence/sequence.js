@@ -1,5 +1,19 @@
 # @0xsequence/account
 
+## 1.1.7
+
+### Patch Changes
+
+- adding signInWith connect settings option to allow dapps to automatically login their users with a certain provider optimizing the normal authentication flow
+- Updated dependencies
+  - @0xsequence/core@1.1.7
+  - @0xsequence/migration@1.1.7
+  - @0xsequence/network@1.1.7
+  - @0xsequence/relayer@1.1.7
+  - @0xsequence/sessions@1.1.7
+  - @0xsequence/utils@1.1.7
+  - @0xsequence/wallet@1.1.7
+
 ## 1.1.6
 
 ### Patch Changes

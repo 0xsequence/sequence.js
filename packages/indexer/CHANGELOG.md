@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.1.7
+
+### Patch Changes
+
+- adding signInWith connect settings option to allow dapps to automatically login their users with a certain provider optimizing the normal authentication flow
+
 ## 1.1.6
 
 ### Patch Changes

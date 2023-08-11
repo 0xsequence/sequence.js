@@ -1,5 +1,13 @@
 # @0xsequence/core
 
+## 1.1.7
+
+### Patch Changes
+
+- adding signInWith connect settings option to allow dapps to automatically login their users with a certain provider optimizing the normal authentication flow
+- Updated dependencies
+  - @0xsequence/abi@1.1.7
+
 ## 1.1.6
 
 ### Patch Changes
