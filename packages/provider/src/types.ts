@@ -234,6 +234,11 @@ export interface Settings {
    * to set when you open the wallet for user. */
   lockFundingCurrencyToDefault?: boolean
 
+  /** Specify an auth provider to allow dapp to specify ahead of time which auth method to redirect to.
+   * Will be ignored if user is already signed in.
+   */
+  signInWith?: SignInOption
+
   /** Specify an email address to allow user automatically sign in with the email option.
    * Will be ignored if user is already signed in.
    */
