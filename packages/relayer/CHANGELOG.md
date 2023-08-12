@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 1.1.8
+
+### Patch Changes
+
+- metadata: searchMetadata: add types filter
+- Updated dependencies
+  - @0xsequence/abi@1.1.8
+  - @0xsequence/core@1.1.8
+  - @0xsequence/utils@1.1.8
+
 ## 1.1.7
 
 ### Patch Changes

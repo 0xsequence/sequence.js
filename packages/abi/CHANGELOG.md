@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.1.8
+
+### Patch Changes
+
+- metadata: searchMetadata: add types filter
+
 ## 1.1.7
 
 ### Patch Changes
