@@ -28,7 +28,6 @@ describe('Wallet (primitive)', () => {
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
   })
-
   ;(
     [
       {

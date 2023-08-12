@@ -150,7 +150,6 @@ describe('Local config tracker', () => {
   before(async () => {
     provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
   })
-
   ;[
     {
       name: 'Using memory store',
