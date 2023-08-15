@@ -48,6 +48,7 @@ export enum ChainId {
 
   // HOMEVERSE
   HOMEVERSE_TESTNET = 40875,
+  HOMEVERSE = 19011,
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -342,6 +343,16 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Base Goerli Explorer',
       rootUrl: 'https://goerli.basescan.org/'
+    }
+  },
+  [ChainId.HOMEVERSE]: {
+    chainId: ChainId.HOMEVERSE,
+    type: NetworkType.MAINNET,
+    name: 'homeverse',
+    title: 'Oasys Homeverse',
+    blockExplorer: {
+      name: 'Oasys Homeverse Explorer',
+      rootUrl: 'https://explorer.oasys.homeverse.games/'
     }
   },
   [ChainId.HOMEVERSE_TESTNET]: {
