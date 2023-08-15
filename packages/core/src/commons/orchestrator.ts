@@ -35,10 +35,6 @@ export function isWalletSignRequestMetadata(obj: any): obj is WalletSignRequestM
  * Request metadata, used by the wallet to pass additional information through the orchestrator.
  */
 export type WalletDeployMetadata = {
-  includeChildren: boolean // Whether to include children in deployment, default false
-  ignoreDeployed: boolean // Whether to ignore already deployed wallets, default false
-}
-
-export function isWalletDeployMetadata(obj: any): obj is WalletDeployMetadata {
-  return obj && obj.includeChildren !== undefined && obj.ignoreDeployed !== undefined
+  includeChildren?: boolean // Whether to include children in deployment, default false
+  ignoreDeployed?: boolean // Whether to ignore already deployed wallets, default false
 }
