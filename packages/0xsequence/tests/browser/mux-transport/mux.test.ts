@@ -112,7 +112,9 @@ export const tests = async () => {
       proxyTransport: { enabled: true, appPort: ch.app }
     },
     new MemoryItemStore(),
-    31337
+    {
+      defaultChainId: 31337
+    }
   )
 
   // provider + signer, by default if a chainId is not specified it will direct

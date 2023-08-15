@@ -26,6 +26,9 @@ export interface ProviderConfig {
   // need to match
   defaultNetwork?: ChainIdLike
 
+  // defaultEIP6492 defines if EIP-6492 is enabled by default when signing messages.
+  defaultEIP6492?: boolean
+
   // networks is a configuration list of networks used by the wallet. This list
   // is combined with the network list specified by sequence.js.
   // notice that this can only replace the rpc urls on the dapp side,
@@ -115,9 +118,16 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   const itemStore = config.localStorage || useBestStore()
 
   // Create client, provider and return signer
-  const client = new SequenceClient(config.transports, itemStore, defaultNetwork)
-  sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
+  const client = new SequenceClient(
+    config.transports,
+    itemStore,
+    {
+      defaultChainId: defaultNetwork,
+      defaultEIP6492: config.defaultEIP6492
+    }
+  )
 
+  sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
   return sequenceWalletProvider
 }
 
