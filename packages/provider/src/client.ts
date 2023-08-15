@@ -348,6 +348,12 @@ export class SequenceClient {
   // Working with sendAsync is less idiomatic
   // but transport uses it instead of send, so we wrap it
   send(request: JsonRpcRequest, chainId?: number): Promise<any> {
+
+    // Internally when sending requests we use `legacy_sign`
+    // to avoid the default EIP6492 behavior overriding an explicit
+    // "legacy sign" request, so we map the method here.
+    request.method = this.mapSignMethod(request.method)
+
     return new Promise((resolve, reject) => {
       this.transport.sendAsync(
         request,
@@ -380,23 +386,63 @@ export class SequenceClient {
     return connectedSession.networks
   }
 
-  private usesEIP6492(options?: OptionalEIP6492): boolean {
+  // NOTICE: `legacy_sign` will get overriden by `send`
+  // it is done this way to ensure that:
+  //  - `send` handles `personal_sign` as a request for the default sign method
+  //  - explicit `personal_sign` is not replaced by `sequence_sign` (if default is EI6492)
+  private signMethod(options?: OptionalEIP6492) {
     if (options?.eip6492 === undefined) {
-      return this.defaultEIP6492
+      return 'personal_sign'
     }
 
-    return options.eip6492
+    return options.eip6492 ? 'sequence_sign' : 'legacy_sign'
+  }
+
+  private signTypedDataMethod(options?: OptionalEIP6492) {
+    if (options?.eip6492 === undefined) {
+      return 'eth_signTypedData_v4'
+    }
+
+    return options.eip6492 ? 'sequence_signTypedData_v4' : 'legacy_signTypedData_v4'
+  }
+
+  private mapSignMethod(method: string): string {
+    if (method === 'personal_sign') {
+      if (this.defaultEIP6492) {
+        return 'sequence_sign'
+      } else {
+        return 'personal_sign'
+      }
+    }
+
+    if (method === 'eth_signTypedData_v4') {
+      if (this.defaultEIP6492) {
+        return 'sequence_signTypedData_v4'
+      } else {
+        return 'eth_signTypedData_v4'
+      }
+    }
+
+    if (method === 'legacy_sign') {
+      return 'personal_sign'
+    }
+
+    if (method === 'legacy_signTypedData_v4') {
+      return 'eth_signTypedData_v4'
+    }
+
+    return method
   }
 
   async signMessage(message: ethers.BytesLike, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
-    const method = this.usesEIP6492(options) ? 'sequence_sign' : 'personal_sign'
+    const method = this.signMethod(options)
 
     // Address is ignored by the wallet webapp
     return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
   }
 
   async signTypedData(typedData: TypedData, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
-    const method = this.usesEIP6492(options) ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4'
+    const method = this.signTypedDataMethod(options)
 
     // TODO: Stop using ethers for this, this is the only place where we use it
     // and it makes the client depend on ethers.
