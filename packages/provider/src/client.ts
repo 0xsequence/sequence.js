@@ -132,11 +132,7 @@ export class SequenceClient {
 
   public readonly defaultEIP6492: boolean
 
-  constructor(
-    transport: ProviderTransport | MuxTransportTemplate,
-    store: ItemStore,
-    options?: SequenceClientOptions | number
-  ) {
+  constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions | number) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
     } else if (isProviderTransport(transport)) {

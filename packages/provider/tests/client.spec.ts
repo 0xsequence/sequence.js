@@ -1286,35 +1286,38 @@ describe('SequenceClient', () => {
         walletContext: sampleContext
       }
 
-      const client = new SequenceClient({
-        ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-          if (requests === 0) {
-            expect(request.method).to.equal('personal_sign')
-            requests++
-            callback(undefined, { result: '0x445566' } as any)
-          } else if (requests === 1) {
-            expect(request.method).to.equal('eth_signTypedData_v4')
-            requests++
-            callback(undefined, { result: '0x112233' } as any)
-          } else {
-            expect.fail('Should not have called sendAsync')
-          }
+      const client = new SequenceClient(
+        {
+          ...basicMockTransport,
+          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+            if (requests === 0) {
+              expect(request.method).to.equal('personal_sign')
+              requests++
+              callback(undefined, { result: '0x445566' } as any)
+            } else if (requests === 1) {
+              expect(request.method).to.equal('eth_signTypedData_v4')
+              requests++
+              callback(undefined, { result: '0x112233' } as any)
+            } else {
+              expect.fail('Should not have called sendAsync')
+            }
+          },
+          openWallet: () => {
+            return Promise.resolve(true)
+          },
+          waitUntilOpened: async () => {
+            return session
+          },
+          waitUntilConnected: async () => {
+            return { connected: true, session }
+          },
+          isOpened: () => {
+            return true
+          },
+          closeWallet: () => {}
         },
-        openWallet: () => {
-          return Promise.resolve(true)
-        },
-        waitUntilOpened: async () => {
-          return session
-        },
-        waitUntilConnected: async () => {
-          return { connected: true, session }
-        },
-        isOpened: () => {
-          return true
-        },
-        closeWallet: () => {}
-      }, useBestStore())
+        useBestStore()
+      )
 
       await client.connect({ app: 'This is a test' })
 
@@ -1355,35 +1358,39 @@ describe('SequenceClient', () => {
         walletContext: sampleContext
       }
 
-      const client = new SequenceClient({
-        ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-          if (requests === 0) {
-            expect(request.method).to.equal('sequence_sign')
-            requests++
-            callback(undefined, { result: '0x445566' } as any)
-          } else if (requests === 1) {
-            expect(request.method).to.equal('sequence_signTypedData_v4')
-            requests++
-            callback(undefined, { result: '0x112233' } as any)
-          } else {
-            expect.fail('Should not have called sendAsync')
-          }
+      const client = new SequenceClient(
+        {
+          ...basicMockTransport,
+          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+            if (requests === 0) {
+              expect(request.method).to.equal('sequence_sign')
+              requests++
+              callback(undefined, { result: '0x445566' } as any)
+            } else if (requests === 1) {
+              expect(request.method).to.equal('sequence_signTypedData_v4')
+              requests++
+              callback(undefined, { result: '0x112233' } as any)
+            } else {
+              expect.fail('Should not have called sendAsync')
+            }
+          },
+          openWallet: () => {
+            return Promise.resolve(true)
+          },
+          waitUntilOpened: async () => {
+            return session
+          },
+          waitUntilConnected: async () => {
+            return { connected: true, session }
+          },
+          isOpened: () => {
+            return true
+          },
+          closeWallet: () => {}
         },
-        openWallet: () => {
-          return Promise.resolve(true)
-        },
-        waitUntilOpened: async () => {
-          return session
-        },
-        waitUntilConnected: async () => {
-          return { connected: true, session }
-        },
-        isOpened: () => {
-          return true
-        },
-        closeWallet: () => {}
-      }, useBestStore(), { defaultEIP6492: true })
+        useBestStore(),
+        { defaultEIP6492: true }
+      )
 
       await client.connect({ app: 'This is a test' })
 
