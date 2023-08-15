@@ -35,7 +35,7 @@ export class GuardSigner implements signers.SapientSigner {
   }
 
   async decorateTransactions(
-    bundle: commons.transaction.IntendedTransactionBundle,
+    bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     return Promise.resolve(bundle)
   }

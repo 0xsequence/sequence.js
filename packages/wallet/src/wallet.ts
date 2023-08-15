@@ -4,9 +4,9 @@ import { isSignerStatusSigned, Orchestrator, Status } from '@0xsequence/signhub'
 import { Deferrable, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
-import { WalletDeployMetadata } from "@0xsequence/core/src/commons"
+import { WalletDeployMetadata } from '@0xsequence/core/src/commons'
 
-import { resolveArrayProperties } from "./utils"
+import { resolveArrayProperties } from './utils'
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -171,15 +171,13 @@ export class Wallet<
       entrypoint: this.context.guestModule,
       chainId: this.chainId,
       intent: decorated.intent,
-      transactions,
+      transactions
     }
   }
 
-  async buildEIP6492Signature(
-    signature: string,
-  ): Promise<string> {
+  async buildEIP6492Signature(signature: string): Promise<string> {
     // Deployment must include children for EIP6492 to validate
-    const deployTx = await this.buildDeployTransaction({includeChildren: true, ignoreDeployed: true})
+    const deployTx = await this.buildDeployTransaction({ includeChildren: true, ignoreDeployed: true })
     if (deployTx == null) {
       // Already deployed. Skip wrapping
       return signature
@@ -194,14 +192,11 @@ export class Wallet<
       [deployTx.entrypoint, commons.transaction.encodeBundleExecData(deployTx), signature]
     )
 
-    return ethers.utils.solidityPack(
-      ['bytes', 'bytes32'],
-      [encoded, commons.EIP6492.EIP_6492_SUFFIX]
-    )
+    return ethers.utils.solidityPack(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
   }
 
   async buildDeployTransaction(metadata?: WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | null> {
-    if (metadata?.ignoreDeployed && await this.reader().isDeployed(this.address)) {
+    if (metadata?.ignoreDeployed && (await this.reader().isDeployed(this.address))) {
       return null
     }
 
@@ -228,8 +223,11 @@ export class Wallet<
       // Already deployed
       return null
     }
-    if (!this.relayer) throw new Error("Wallet deploy requires a relayer")
-    return this.relayer.relay({ ...deployTx, chainId: this.chainId, intent: {
+    if (!this.relayer) throw new Error('Wallet deploy requires a relayer')
+    return this.relayer.relay({
+      ...deployTx,
+      chainId: this.chainId,
+      intent: {
         id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
         wallet: this.address
       }
@@ -270,15 +268,15 @@ export class Wallet<
   async signDigest(
     digest: ethers.utils.BytesLike,
     request?: {
-      message?: ethers.utils.BytesLike,
-      transactions?: commons.transaction.Transaction[],
-      nested?: commons.WalletSignRequestMetadata,
-      useEip6492?: true, // If true, EIP6492 can be used
-    },
+      message?: ethers.utils.BytesLike
+      transactions?: commons.transaction.Transaction[]
+      nested?: commons.WalletSignRequestMetadata
+      useEip6492?: true // If true, EIP6492 can be used
+    }
   ): Promise<string> {
     const addEip6492IfRequired = async (signature: string): Promise<string> => {
       const canUseEip6492 = request?.useEip6492 === true
-      if (!canUseEip6492 || await this.reader().isDeployed(this.address)) {
+      if (!canUseEip6492 || (await this.reader().isDeployed(this.address))) {
         // Deployed - Return
         return signature
       }
@@ -301,7 +299,7 @@ export class Wallet<
       chainId: this.chainId,
       address: this.address,
       config: this.config,
-      ...request,
+      ...request
     }
     // Don't propagate useEip6492 as signature verification will fail
     // addEip6492IfRequired will include deployment of children
@@ -330,9 +328,12 @@ export class Wallet<
     return addEip6492IfRequired(encodedSignature)
   }
 
-  signMessage(message: ethers.BytesLike, request?: {
-    useEip6492?: true
-  }): Promise<string> {
+  signMessage(
+    message: ethers.BytesLike,
+    request?: {
+      useEip6492?: true
+    }
+  ): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message), { message, ...request })
   }
 
