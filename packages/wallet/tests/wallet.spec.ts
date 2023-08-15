@@ -103,7 +103,7 @@ describe('Wallet (primitive)', () => {
         await wallet.deploy({ includeChildren: true, ignoreDeployed: true })
         expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
         expect(await nestedWallet.reader().isDeployed(wallet.address)).to.be.true
-      });
+      })
 
       //
       // Run tests using different combinations of signers
@@ -324,7 +324,7 @@ describe('Wallet (primitive)', () => {
             const digest = ethers.utils.keccak256(message)
 
             expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
-          });
+          })
 
           //
           // Run tests for deployed and undeployed wallets

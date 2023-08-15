@@ -17,11 +17,7 @@ export class GuardSigner implements signers.SapientSigner {
     }
   > = new Map()
 
-  constructor(
-    public readonly address: string,
-    public readonly url: string,
-    public readonly appendSuffix: boolean = false
-  ) {
+  constructor(public readonly address: string, public readonly url: string, public readonly appendSuffix: boolean = false) {
     this.guard = new Guard(url, fetch)
   }
 
@@ -34,7 +30,7 @@ export class GuardSigner implements signers.SapientSigner {
   }
 
   async decorateTransactions(
-    bundle: commons.transaction.IntendedTransactionBundle,
+    bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     return Promise.resolve(bundle)
   }

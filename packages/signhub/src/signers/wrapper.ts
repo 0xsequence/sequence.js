@@ -1,13 +1,10 @@
 import { ethers } from 'ethers'
-import { commons } from "@0xsequence/core"
+import { commons } from '@0xsequence/core'
 import { Status } from '../orchestrator'
 import { SapientSigner } from './signer'
 
 export class SignerWrapper implements SapientSigner {
-  constructor(
-    public signer: ethers.Signer,
-    public eoa: boolean = true
-  ) {}
+  constructor(public signer: ethers.Signer, public eoa: boolean = true) {}
 
   getAddress(): Promise<string> {
     return this.signer.getAddress()
@@ -21,7 +18,7 @@ export class SignerWrapper implements SapientSigner {
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
-      return bundle
+    return bundle
   }
 
   async requestSignature(

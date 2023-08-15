@@ -18,13 +18,13 @@ export type WalletSignRequestMetadata = {
   //       how close are we to the threshold. This can be used to display
   //       a progress bar or something similar.
 
-  message?: ethers.utils.BytesLike,
-  transactions?: commons.transaction.Transaction[],
-  useEip6492?: true, // If true, EIP6492 can be used
+  message?: ethers.utils.BytesLike
+  transactions?: commons.transaction.Transaction[]
+  useEip6492?: true // If true, EIP6492 can be used
 
   // This is used only when a Sequence wallet is nested in another Sequence wallet
   // it contains the original metadata of the parent wallet.
-  parent?: WalletSignRequestMetadata,
+  parent?: WalletSignRequestMetadata
 }
 
 export function isWalletSignRequestMetadata(obj: any): obj is WalletSignRequestMetadata {
@@ -35,8 +35,8 @@ export function isWalletSignRequestMetadata(obj: any): obj is WalletSignRequestM
  * Request metadata, used by the wallet to pass additional information through the orchestrator.
  */
 export type WalletDeployMetadata = {
-  includeChildren: boolean, // Whether to include children in deployment, default false
-  ignoreDeployed: boolean, // Whether to ignore already deployed wallets, default false
+  includeChildren: boolean // Whether to include children in deployment, default false
+  ignoreDeployed: boolean // Whether to ignore already deployed wallets, default false
 }
 
 export function isWalletDeployMetadata(obj: any): obj is WalletDeployMetadata {

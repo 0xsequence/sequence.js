@@ -1,7 +1,7 @@
-import { ethers } from "ethers"
-import { commons } from "@0xsequence/core"
-import { isSapientSigner, SapientSigner } from "./signers/signer"
-import { SignerWrapper } from "./signers/wrapper"
+import { ethers } from 'ethers'
+import { commons } from '@0xsequence/core'
+import { isSapientSigner, SapientSigner } from './signers/signer'
+import { SignerWrapper } from './signers/wrapper'
 
 export type Status = {
   ended: boolean
@@ -53,10 +53,7 @@ export class Orchestrator {
 
   private count = 0
 
-  constructor(
-    signers: (ethers.Signer | SapientSigner)[],
-    public tag: string = Orchestrator.randomTag()
-  ) {
+  constructor(signers: (ethers.Signer | SapientSigner)[], public tag: string = Orchestrator.randomTag()) {
     this.setSigners(signers)
   }
 
@@ -106,7 +103,7 @@ export class Orchestrator {
   }
 
   async decorateTransactions(
-    bundle: commons.transaction.IntendedTransactionBundle,
+    bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     for (const signer of this.signers) {
       bundle = await signer.decorateTransactions(bundle)
