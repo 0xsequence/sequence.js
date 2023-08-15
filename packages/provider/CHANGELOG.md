@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.1.9
+
+### Patch Changes
+
+- Custom default EIP6492 on client
+- Updated dependencies
+  - @0xsequence/abi@1.1.9
+  - @0xsequence/account@1.1.9
+  - @0xsequence/auth@1.1.9
+  - @0xsequence/core@1.1.9
+  - @0xsequence/migration@1.1.9
+  - @0xsequence/network@1.1.9
+  - @0xsequence/relayer@1.1.9
+  - @0xsequence/utils@1.1.9
+  - @0xsequence/wallet@1.1.9
+
 ## 1.1.8
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @0xsequence/guard
 
+## 1.1.9
+
+### Patch Changes
+
+- Custom default EIP6492 on client
+- Updated dependencies
+  - @0xsequence/core@1.1.9
+  - @0xsequence/signhub@1.1.9
+
 ## 1.1.8
 
 ### Patch Changes

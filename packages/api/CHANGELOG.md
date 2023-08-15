@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.1.9
+
+### Patch Changes
+
+- Custom default EIP6492 on client
+
 ## 1.1.8
 
 ### Patch Changes
