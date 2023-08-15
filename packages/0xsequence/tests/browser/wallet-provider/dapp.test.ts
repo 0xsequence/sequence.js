@@ -28,7 +28,7 @@ export const tests = async () => {
 
   const hardhatProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
 
-  const client = new SequenceClient(transportsConfig, new MemoryItemStore(), 31337)
+  const client = new SequenceClient(transportsConfig, new MemoryItemStore(), { defaultChainId: 31337 })
   const wallet = new SequenceProvider(client, chainId => {
     if (chainId === 31337) {
       return hardhatProvider

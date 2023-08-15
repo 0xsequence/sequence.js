@@ -253,7 +253,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result = await client.openWallet(path, intent)
@@ -297,7 +299,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     client.setDefaultChainId(3)
@@ -319,7 +323,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     client.closeWallet()
@@ -338,7 +344,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result1 = client.isOpened()
@@ -395,7 +403,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result1 = client.isConnected()
@@ -437,7 +447,9 @@ describe('SequenceClient', () => {
         isOpened: () => true
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result = await client.connect({ app: 'This is a test' })
@@ -463,7 +475,9 @@ describe('SequenceClient', () => {
         isOpened: () => true
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result = await client.connect({ app: 'This is a test' })
@@ -495,7 +509,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     expect(calledSendAsync).to.equal(0)
@@ -530,7 +546,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result = client.send({ method: 'eth_chainId', params: [] })
@@ -546,7 +564,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const request = { method: 'eth_chainId', params: [] }
@@ -593,7 +613,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result1 = client.getNetworks()
@@ -647,7 +669,9 @@ describe('SequenceClient', () => {
         closeWallet: () => {}
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result1 = new Promise(() => client.getAddress())
@@ -708,7 +732,9 @@ describe('SequenceClient', () => {
         closeWallet: () => {}
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result1 = client.signMessage('0x1234')
@@ -894,7 +920,9 @@ describe('SequenceClient', () => {
         closeWallet: () => {}
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result1 = client.signTypedData(requests[0].data)
@@ -990,7 +1018,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     // NOTICE: eth_sendTransaction doesn't require the address, so we don't attempt
@@ -1071,7 +1101,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     const result = await client.getWalletContext()
@@ -1139,7 +1171,9 @@ describe('SequenceClient', () => {
         }
       },
       useBestStore(),
-      2
+      {
+        defaultChainId: 2
+      }
     )
 
     // NOTICE: sequence_getWalletConfig doesn't require the address, so we don't attempt
@@ -1166,8 +1200,8 @@ describe('SequenceClient', () => {
     it('should react to default chainId change', async () => {
       const store = useBestStore()
 
-      const client1 = new SequenceClient(basicMockTransport, store, 2)
-      const client2 = new SequenceClient(basicMockTransport, store, 2)
+      const client1 = new SequenceClient(basicMockTransport, store, { defaultChainId: 2 })
+      const client2 = new SequenceClient(basicMockTransport, store, { defaultChainId: 2 })
 
       expect(client1.getChainId()).to.equal(2)
       expect(client2.getChainId()).to.equal(2)
@@ -1181,8 +1215,8 @@ describe('SequenceClient', () => {
     it('should converge after default chainId change (different initial chain ids)', async () => {
       const store = useBestStore()
 
-      const client1 = new SequenceClient(basicMockTransport, store, 2)
-      const client2 = new SequenceClient(basicMockTransport, store, 5)
+      const client1 = new SequenceClient(basicMockTransport, store, { defaultChainId: 2 })
+      const client2 = new SequenceClient(basicMockTransport, store, { defaultChainId: 5 })
 
       expect(client1.getChainId()).to.equal(2)
       expect(client2.getChainId()).to.equal(5)
@@ -1196,8 +1230,8 @@ describe('SequenceClient', () => {
     it('should emit an event when default chainId changes', async () => {
       const store = useBestStore()
 
-      const client1 = new SequenceClient(basicMockTransport, store, 2)
-      const client2 = new SequenceClient(basicMockTransport, store, 2)
+      const client1 = new SequenceClient(basicMockTransport, store, { defaultChainId: 2 })
+      const client2 = new SequenceClient(basicMockTransport, store, { defaultChainId: 2 })
 
       let called1 = 0
       client1.onDefaultChainIdChanged(chainId => {
@@ -1215,6 +1249,146 @@ describe('SequenceClient', () => {
 
       expect(called1).to.equal(1)
       expect(called2).to.equal(1)
+    })
+  })
+
+  describe('Default EIP6492', () => {
+    it('Should default to legacy signatures', async () => {
+      let requests: number = 0
+
+      const data = {
+        domain: {
+          name: 'App1',
+          version: '1',
+          chainId: 2,
+          verifyingContract: ethers.Wallet.createRandom().address
+        },
+        types: {
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'age', type: 'uint256' }
+          ]
+        },
+        message: {
+          name: 'Alice',
+          age: '28'
+        }
+      }
+
+      const session = {
+        accountAddress: ethers.Wallet.createRandom().address,
+        networks: allNetworks,
+        walletContext: sampleContext
+      }
+
+      const client = new SequenceClient({
+        ...basicMockTransport,
+        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          if (requests === 0) {
+            expect(request.method).to.equal('personal_sign')
+            requests++
+            callback(undefined, { result: '0x445566' } as any)
+          } else if (requests === 1) {
+            expect(request.method).to.equal('eth_signTypedData_v4')
+            requests++
+            callback(undefined, { result: '0x112233' } as any)
+          } else {
+            expect.fail('Should not have called sendAsync')
+          }
+        },
+        openWallet: () => {
+          return Promise.resolve(true)
+        },
+        waitUntilOpened: async () => {
+          return session
+        },
+        waitUntilConnected: async () => {
+          return { connected: true, session }
+        },
+        isOpened: () => {
+          return true
+        },
+        closeWallet: () => {}
+      }, useBestStore())
+
+      await client.connect({ app: 'This is a test' })
+
+      expect(client.defaultEIP6492).to.be.false
+
+      const result1 = await client.signMessage('0x112233')
+      expect(result1).to.equal('0x445566')
+
+      const result2 = await client.signTypedData(data)
+      expect(result2).to.equal('0x112233')
+    })
+
+    it('Should default to EIP6492 signatures', async () => {
+      let requests: number = 0
+
+      const data = {
+        domain: {
+          name: 'App1',
+          version: '1',
+          chainId: 2,
+          verifyingContract: ethers.Wallet.createRandom().address
+        },
+        types: {
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'age', type: 'uint256' }
+          ]
+        },
+        message: {
+          name: 'Alice',
+          age: '28'
+        }
+      }
+
+      const session = {
+        accountAddress: ethers.Wallet.createRandom().address,
+        networks: allNetworks,
+        walletContext: sampleContext
+      }
+
+      const client = new SequenceClient({
+        ...basicMockTransport,
+        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          if (requests === 0) {
+            expect(request.method).to.equal('sequence_sign')
+            requests++
+            callback(undefined, { result: '0x445566' } as any)
+          } else if (requests === 1) {
+            expect(request.method).to.equal('sequence_signTypedData_v4')
+            requests++
+            callback(undefined, { result: '0x112233' } as any)
+          } else {
+            expect.fail('Should not have called sendAsync')
+          }
+        },
+        openWallet: () => {
+          return Promise.resolve(true)
+        },
+        waitUntilOpened: async () => {
+          return session
+        },
+        waitUntilConnected: async () => {
+          return { connected: true, session }
+        },
+        isOpened: () => {
+          return true
+        },
+        closeWallet: () => {}
+      }, useBestStore(), { defaultEIP6492: true })
+
+      await client.connect({ app: 'This is a test' })
+
+      expect(client.defaultEIP6492).to.be.true
+
+      const result1 = await client.signMessage('0x112233')
+      expect(result1).to.equal('0x445566')
+
+      const result2 = await client.signTypedData(data)
+      expect(result2).to.equal('0x112233')
     })
   })
 })

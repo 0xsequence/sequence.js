@@ -112,10 +112,15 @@ export class DefaultChainIdTracker {
   }
 }
 
+export type SequenceClientOptions = {
+  defaultChainId?: number
+  defaultEIP6492?: boolean
+}
+
 /**
  *  This is a wallet client for sequence wallet-webapp. It connects using *some* transport
  *  and it allows to perform all sequence specific (or write) operations related to the wallet.
- *
+ *s
  *  It doesn't implement a full ethereum Provider, it doesn't include read-only methods.
  */
 export class SequenceClient {
@@ -125,7 +130,13 @@ export class SequenceClient {
 
   public readonly transport: ProviderTransport
 
-  constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, defaultChainId?: number) {
+  public readonly defaultEIP6492: boolean
+
+  constructor(
+    transport: ProviderTransport | MuxTransportTemplate,
+    store: ItemStore,
+    options?: SequenceClientOptions
+  ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
     } else if (isProviderTransport(transport)) {
@@ -135,7 +146,8 @@ export class SequenceClient {
     }
 
     this.session = new SequenceClientSession(store)
-    this.defaultChainId = new DefaultChainIdTracker(store, defaultChainId)
+    this.defaultChainId = new DefaultChainIdTracker(store, options?.defaultChainId)
+    this.defaultEIP6492 = options?.defaultEIP6492 ?? false
 
     this.transport.on('accountsChanged', (accounts: string[]) => {
       if (accounts.length > 1) {
@@ -366,15 +378,23 @@ export class SequenceClient {
     return connectedSession.networks
   }
 
+  private usesEIP6492(options?: OptionalEIP6492): boolean {
+    if (options?.eip6492 === undefined) {
+      return this.defaultEIP6492
+    }
+
+    return options.eip6492
+  }
+
   async signMessage(message: ethers.BytesLike, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
-    const method = options?.eip6492 ? 'sequence_sign' : 'personal_sign'
+    const method = this.usesEIP6492(options) ? 'sequence_sign' : 'personal_sign'
 
     // Address is ignored by the wallet webapp
     return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
   }
 
   async signTypedData(typedData: TypedData, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
-    const method = options?.eip6492 ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4'
+    const method = this.usesEIP6492(options) ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4'
 
     // TODO: Stop using ethers for this, this is the only place where we use it
     // and it makes the client depend on ethers.
