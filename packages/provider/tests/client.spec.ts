@@ -1250,6 +1250,11 @@ describe('SequenceClient', () => {
       expect(called1).to.equal(1)
       expect(called2).to.equal(1)
     })
+
+    it('should define default network without any object', async () => {
+      const client = new SequenceClient(basicMockTransport, useBestStore(), 999)
+      expect(client.getChainId()).to.equal(999)
+    })
   })
 
   describe('Default EIP6492', () => {
