@@ -13,8 +13,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
   }
 
   async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null> {
-    const metadataOrEmpty = commons.isWalletDeployMetadata(metadata) ? metadata : undefined
-    return await this.wallet.buildDeployTransaction(metadataOrEmpty)
+    return await this.wallet.buildDeployTransaction(metadata as commons.WalletDeployMetadata | undefined)
   }
 
   async decorateTransactions(
