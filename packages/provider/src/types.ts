@@ -184,6 +184,9 @@ export interface ConnectOptions {
    * is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
 
+  /** clientVersion is the sequence.js version of the dapp client. */
+  clientVersion?: string
+
   /** Options to further customize the wallet experience. */
   settings?: Settings
 }
