@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.1.10
+
+### Patch Changes
+
+- handle default EIP6492 on send
+- Updated dependencies
+  - @0xsequence/core@1.1.10
+  - @0xsequence/migration@1.1.10
+  - @0xsequence/replacer@1.1.10
+
 ## 1.1.9
 
 ### Patch Changes

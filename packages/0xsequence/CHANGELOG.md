@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.1.10
+
+### Patch Changes
+
+- handle default EIP6492 on send
+- Updated dependencies
+  - @0xsequence/abi@1.1.10
+  - @0xsequence/account@1.1.10
+  - @0xsequence/api@1.1.10
+  - @0xsequence/auth@1.1.10
+  - @0xsequence/core@1.1.10
+  - @0xsequence/guard@1.1.10
+  - @0xsequence/indexer@1.1.10
+  - @0xsequence/metadata@1.1.10
+  - @0xsequence/migration@1.1.10
+  - @0xsequence/multicall@1.1.10
+  - @0xsequence/network@1.1.10
+  - @0xsequence/provider@1.1.10
+  - @0xsequence/relayer@1.1.10
+  - @0xsequence/sessions@1.1.10
+  - @0xsequence/signhub@1.1.10
+  - @0xsequence/utils@1.1.10
+  - @0xsequence/wallet@1.1.10
+
 ## 1.1.9
 
 ### Patch Changes

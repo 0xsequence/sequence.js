@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.1.10
+
+### Patch Changes
+
+- handle default EIP6492 on send
+- Updated dependencies
+  - @0xsequence/abi@1.1.10
+  - @0xsequence/network@1.1.10
+  - @0xsequence/utils@1.1.10
+
 ## 1.1.9
 
 ### Patch Changes

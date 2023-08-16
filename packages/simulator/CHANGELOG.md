@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.1.10
+
+### Patch Changes
+
+- handle default EIP6492 on send
+- Updated dependencies
+  - @0xsequence/core@1.1.10
+
 ## 1.1.9
 
 ### Patch Changes

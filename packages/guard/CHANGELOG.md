@@ -1,5 +1,14 @@
 # @0xsequence/guard
 
+## 1.1.10
+
+### Patch Changes
+
+- handle default EIP6492 on send
+- Updated dependencies
+  - @0xsequence/core@1.1.10
+  - @0xsequence/signhub@1.1.10
+
 ## 1.1.9
 
 ### Patch Changes
