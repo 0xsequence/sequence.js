@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.1.11
+
+### Patch Changes
+
+- add homeverse configs
+
 ## 1.1.10
 
 ### Patch Changes

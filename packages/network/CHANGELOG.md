@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.1.11
+
+### Patch Changes
+
+- add homeverse configs
+- Updated dependencies
+  - @0xsequence/core@1.1.11
+  - @0xsequence/indexer@1.1.11
+  - @0xsequence/relayer@1.1.11
+  - @0xsequence/utils@1.1.11
+
 ## 1.1.10
 
 ### Patch Changes

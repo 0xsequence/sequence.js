@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.1.11
+
+### Patch Changes
+
+- add homeverse configs
+- Updated dependencies
+  - @0xsequence/abi@1.1.11
+  - @0xsequence/account@1.1.11
+  - @0xsequence/auth@1.1.11
+  - @0xsequence/core@1.1.11
+  - @0xsequence/migration@1.1.11
+  - @0xsequence/network@1.1.11
+  - @0xsequence/relayer@1.1.11
+  - @0xsequence/utils@1.1.11
+  - @0xsequence/wallet@1.1.11
+
 ## 1.1.10
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @0xsequence/guard
 
+## 1.1.11
+
+### Patch Changes
+
+- add homeverse configs
+- Updated dependencies
+  - @0xsequence/core@1.1.11
+  - @0xsequence/signhub@1.1.11
+
 ## 1.1.10
 
 ### Patch Changes
