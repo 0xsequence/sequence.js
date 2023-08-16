@@ -1258,7 +1258,7 @@ describe('SequenceClient', () => {
   })
 
   describe('Default EIP6492', () => {
-    it('Should default to legacy signatures', async () => {
+    it('should default to legacy signatures', async () => {
       let requests: number = 0
 
       const data = {
@@ -1330,7 +1330,7 @@ describe('SequenceClient', () => {
       expect(result2).to.equal('0x112233')
     })
 
-    it('Should default to EIP6492 signatures', async () => {
+    it('should default to EIP6492 signatures', async () => {
       let requests: number = 0
 
       const data = {
@@ -1400,6 +1400,211 @@ describe('SequenceClient', () => {
       expect(result1).to.equal('0x445566')
 
       const result2 = await client.signTypedData(data)
+      expect(result2).to.equal('0x112233')
+    })
+
+    it('should default to legacy when calling send', async () => {
+      let requests: number = 0
+
+      const data = {
+        domain: {
+          name: 'App1',
+          version: '1',
+          chainId: 2,
+          verifyingContract: ethers.Wallet.createRandom().address
+        },
+        types: {
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'age', type: 'uint256' }
+          ]
+        },
+        message: {
+          name: 'Alice',
+          age: '28'
+        }
+      }
+
+      const session = {
+        accountAddress: ethers.Wallet.createRandom().address,
+        networks: allNetworks,
+        walletContext: sampleContext
+      }
+
+      const client = new SequenceClient({
+        ...basicMockTransport,
+        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          if (requests === 0) {
+            expect(request.method).to.equal('personal_sign')
+            requests++
+            callback(undefined, { result: '0x445566' } as any)
+          } else if (requests === 1) {
+            expect(request.method).to.equal('eth_signTypedData_v4')
+            requests++
+            callback(undefined, { result: '0x112233' } as any)
+          } else {
+            expect.fail('Should not have called sendAsync')
+          }
+        },
+        openWallet: () => {
+          return Promise.resolve(true)
+        },
+        waitUntilOpened: async () => {
+          return session
+        },
+        waitUntilConnected: async () => {
+          return { connected: true, session }
+        },
+        isOpened: () => {
+          return true
+        },
+        closeWallet: () => {}
+      }, useBestStore())
+
+      await client.connect({ app: 'This is a test' })
+
+      expect(client.defaultEIP6492).to.be.false
+
+      const result1 = await client.send({ method: 'personal_sign', params: ['0x112233'] })
+      expect(result1).to.equal('0x445566')
+
+      const result2 = await client.send({ method: 'eth_signTypedData_v4', params: [data] })
+      expect(result2).to.equal('0x112233')
+    })
+
+    it('should default to EIP6492 when calling send', async () => {
+      let requests: number = 0
+
+      const data = {
+        domain: {
+          name: 'App1',
+          version: '1',
+          chainId: 2,
+          verifyingContract: ethers.Wallet.createRandom().address
+        },
+        types: {
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'age', type: 'uint256' }
+          ]
+        },
+        message: {
+          name: 'Alice',
+          age: '28'
+        }
+      }
+
+      const session = {
+        accountAddress: ethers.Wallet.createRandom().address,
+        networks: allNetworks,
+        walletContext: sampleContext
+      }
+
+      const client = new SequenceClient({
+        ...basicMockTransport,
+        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          if (requests === 0) {
+            expect(request.method).to.equal('sequence_sign')
+            requests++
+            callback(undefined, { result: '0x445566' } as any)
+          } else if (requests === 1) {
+            expect(request.method).to.equal('sequence_signTypedData_v4')
+            requests++
+            callback(undefined, { result: '0x112233' } as any)
+          } else {
+            expect.fail('Should not have called sendAsync')
+          }
+        },
+        openWallet: () => {
+          return Promise.resolve(true)
+        },
+        waitUntilOpened: async () => {
+          return session
+        },
+        waitUntilConnected: async () => {
+          return { connected: true, session }
+        },
+        isOpened: () => {
+          return true
+        },
+        closeWallet: () => {}
+      }, useBestStore(), { defaultEIP6492: true })
+
+      await client.connect({ app: 'This is a test' })
+
+      expect(client.defaultEIP6492).to.be.true
+
+      const result1 = await client.send({ method: 'personal_sign', params: ['0x112233'] })
+      expect(result1).to.equal('0x445566')
+
+      const result2 = await client.send({ method: 'eth_signTypedData_v4', params: [data] })
+      expect(result2).to.equal('0x112233')
+    })
+
+    it('should not override method if default is not set', async () => {
+      let requests: number = 0
+
+      const data = {
+        domain: {
+          name: 'App1',
+          version: '1',
+          chainId: 2,
+          verifyingContract: ethers.Wallet.createRandom().address
+        },
+        types: {
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'age', type: 'uint256' }
+          ]
+        },
+        message: {
+          name: 'Alice',
+          age: '28'
+        }
+      }
+
+      const session = {
+        accountAddress: ethers.Wallet.createRandom().address,
+        networks: allNetworks,
+        walletContext: sampleContext
+      }
+
+      const client = new SequenceClient({
+        ...basicMockTransport,
+        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          if (requests === 0) {
+            expect(request.method).to.equal('sequence_sign')
+            requests++
+            callback(undefined, { result: '0x445566' } as any)
+          } else if (requests === 1) {
+            expect(request.method).to.equal('sequence_signTypedData_v4')
+            requests++
+            callback(undefined, { result: '0x112233' } as any)
+          } else {
+            expect.fail('Should not have called sendAsync')
+          }
+        },
+        openWallet: () => {
+          return Promise.resolve(true)
+        },
+        waitUntilOpened: async () => {
+          return session
+        },
+        waitUntilConnected: async () => {
+          return { connected: true, session }
+        },
+        isOpened: () => {
+          return true
+        },
+        closeWallet: () => {}
+      }, useBestStore())
+
+      await client.connect({ app: 'This is a test' })
+
+      const result1 = await client.send({ method: 'sequence_sign', params: ['0x112233'] })
+      expect(result1).to.equal('0x445566')
+
+      const result2 = await client.send({ method: 'sequence_signTypedData_v4', params: [data] })
       expect(result2).to.equal('0x112233')
     })
   })
