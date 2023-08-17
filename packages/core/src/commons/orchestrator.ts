@@ -20,7 +20,7 @@ export type WalletSignRequestMetadata = {
 
   message?: ethers.utils.BytesLike
   transactions?: commons.transaction.Transaction[]
-  useEip6492?: true // If true, EIP6492 can be used
+  useEip6492?: boolean // If true, EIP6492 can be used
 
   // This is used only when a Sequence wallet is nested in another Sequence wallet
   // it contains the original metadata of the parent wallet.

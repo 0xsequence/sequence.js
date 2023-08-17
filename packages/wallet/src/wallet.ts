@@ -4,7 +4,6 @@ import { isSignerStatusSigned, Orchestrator, Status } from '@0xsequence/signhub'
 import { Deferrable, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
-import { WalletDeployMetadata } from '@0xsequence/core/src/commons'
 
 import { resolveArrayProperties } from './utils'
 
@@ -151,10 +150,7 @@ export class Wallet<
       {
         to: decorated.entrypoint,
         data: commons.transaction.encodeBundleExecData(decorated),
-        gasLimit: 0,
-        delegateCall: false,
         revertOnError: true,
-        value: 0
       }
     ]
 
@@ -178,7 +174,7 @@ export class Wallet<
   async buildEIP6492Signature(signature: string): Promise<string> {
     // Deployment must include children for EIP6492 to validate
     const deployTx = await this.buildDeployTransaction({ includeChildren: true, ignoreDeployed: true })
-    if (deployTx == null) {
+    if (deployTx === undefined) {
       // Already deployed. Skip wrapping
       return signature
     }
@@ -195,9 +191,9 @@ export class Wallet<
     return ethers.utils.solidityPack(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
   }
 
-  async buildDeployTransaction(metadata?: WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | null> {
+  async buildDeployTransaction(metadata?: commons.WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | undefined> {
     if (metadata?.ignoreDeployed && (await this.reader().isDeployed(this.address))) {
-      return null
+      return
     }
 
     const imageHash = this.coders.config.imageHashOf(this.config)
@@ -217,11 +213,11 @@ export class Wallet<
     return bundle
   }
 
-  async deploy(metadata?: WalletDeployMetadata): Promise<ethers.providers.TransactionResponse | null> {
+  async deploy(metadata?: commons.WalletDeployMetadata): Promise<ethers.providers.TransactionResponse | undefined> {
     const deployTx = await this.buildDeployTransaction(metadata)
-    if (deployTx == null) {
+    if (deployTx === undefined) {
       // Already deployed
-      return null
+      return
     }
     if (!this.relayer) throw new Error('Wallet deploy requires a relayer')
     return this.relayer.relay({
@@ -271,7 +267,7 @@ export class Wallet<
       message?: ethers.utils.BytesLike
       transactions?: commons.transaction.Transaction[]
       nested?: commons.WalletSignRequestMetadata
-      useEip6492?: true // If true, EIP6492 can be used
+      useEip6492?: boolean // If true, EIP6492 can be used
     }
   ): Promise<string> {
     const addEip6492IfRequired = async (signature: string): Promise<string> => {
@@ -281,7 +277,7 @@ export class Wallet<
         return signature
       }
       // Not deployed. Wrap with EIP6492
-      return this.buildEIP6492Signature(await signature)
+      return this.buildEIP6492Signature(signature)
     }
 
     // The subdigest may be statically defined on the configuration
@@ -331,7 +327,7 @@ export class Wallet<
   signMessage(
     message: ethers.BytesLike,
     request?: {
-      useEip6492?: true
+      useEip6492?: boolean
     }
   ): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message), { message, ...request })

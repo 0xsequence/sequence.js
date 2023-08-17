@@ -252,7 +252,7 @@ describe('Orchestrator', () => {
           return '0x1234'
         },
         buildDeployTransaction(metadata) {
-          return Promise.resolve(null)
+          return Promise.resolve(undefined)
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle
@@ -292,7 +292,7 @@ describe('Orchestrator', () => {
           return '0x1234'
         },
         buildDeployTransaction(metadata) {
-          return Promise.resolve(null)
+          return Promise.resolve(undefined)
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle
@@ -336,7 +336,7 @@ describe('Orchestrator', () => {
           return '0x1234'
         },
         buildDeployTransaction(metadata) {
-          return Promise.resolve(null)
+          return Promise.resolve(undefined)
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle
@@ -378,7 +378,7 @@ describe('Orchestrator', () => {
           return '0x5678'
         },
         buildDeployTransaction(metadata) {
-          return Promise.resolve(null)
+          return Promise.resolve(undefined)
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle
@@ -442,7 +442,7 @@ describe('Orchestrator', () => {
           return '0x1234'
         },
         buildDeployTransaction(metadata) {
-          return Promise.resolve(null)
+          return Promise.resolve(undefined)
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle
@@ -522,7 +522,7 @@ describe('Orchestrator', () => {
           return '0x1'
         },
         async buildDeployTransaction(metadata: Object) {
-          return null
+          return undefined
         },
         async decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle

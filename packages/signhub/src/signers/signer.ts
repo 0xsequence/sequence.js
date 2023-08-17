@@ -6,7 +6,7 @@ export interface SapientSigner {
   getAddress(): Promise<string>
 
   // Note: This probably doesn't belong here as this isn't directly related to signing
-  buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null>
+  buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined>
 
   /**
    * Modify the transaction bundle before it is sent.
