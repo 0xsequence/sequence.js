@@ -90,11 +90,11 @@ export class Orchestrator {
     ])
   }
 
-  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null> {
-    let bundle: commons.transaction.TransactionBundle | null = null
+  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+    let bundle: commons.transaction.TransactionBundle | undefined
     for (const signer of this.signers) {
       const newBundle = await signer.buildDeployTransaction(metadata)
-      if (bundle === null) {
+      if (bundle === undefined) {
         // Use first bundle as base
         bundle = newBundle
       } else if (newBundle?.transactions) {

@@ -13,9 +13,9 @@ export class SignerWrapper implements SapientSigner {
     return this.signer.getAddress()
   }
 
-  async buildDeployTransaction(): Promise<commons.transaction.TransactionBundle | null> {
+  async buildDeployTransaction(_metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
     // Wrapped signers don't require deployment
-    return null
+    return
   }
 
   async decorateTransactions(

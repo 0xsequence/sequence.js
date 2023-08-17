@@ -12,8 +12,8 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.address
   }
 
-  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | null> {
-    return await this.wallet.buildDeployTransaction(metadata as commons.WalletDeployMetadata | undefined)
+  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+    return this.wallet.buildDeployTransaction(metadata as commons.WalletDeployMetadata | undefined)
   }
 
   async decorateTransactions(
