@@ -4,7 +4,10 @@ import { Status } from '../orchestrator'
 import { SapientSigner } from './signer'
 
 export class SignerWrapper implements SapientSigner {
-  constructor(public signer: ethers.Signer, public eoa: boolean = true) {}
+  constructor(
+    public signer: ethers.Signer,
+    public eoa: boolean = true
+  ) {}
 
   getAddress(): Promise<string> {
     return this.signer.getAddress()

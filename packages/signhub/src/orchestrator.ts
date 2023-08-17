@@ -53,7 +53,10 @@ export class Orchestrator {
 
   private count = 0
 
-  constructor(signers: (ethers.Signer | SapientSigner)[], public tag: string = Orchestrator.randomTag()) {
+  constructor(
+    signers: (ethers.Signer | SapientSigner)[],
+    public tag: string = Orchestrator.randomTag()
+  ) {
     this.setSigners(signers)
   }
 
