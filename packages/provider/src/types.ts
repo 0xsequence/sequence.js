@@ -208,6 +208,8 @@ export interface Settings {
    * the connect/authorize process */
   bannerUrl?: string
 
+  bannerSize?: 'small' | 'medium' | 'large'
+
   /** Specify payment providers to use. If not specified,
    * all available payment providers will be enabled.
    * Note that this setting will not be persisted, use wallet.open with 'openWithOptions' intent
