@@ -253,7 +253,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       if (!account) throw new Error('WalletRequestHandler: wallet account is not configured')
 
       // fetch the provider for the specific chain, or undefined will select defaultChain
-      const provider = this.account?.provider(chainId ?? this.defaultChainId())
+      const provider = this.account?.providerFor(chainId ?? this.defaultChainId())
       if (!provider) throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${chainId}`)
       const jsonRpcProvider = provider instanceof ethers.providers.JsonRpcProvider ? provider : undefined
 

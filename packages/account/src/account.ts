@@ -1,11 +1,11 @@
 import { commons, universal } from '@0xsequence/core'
 import { migrator, defaults, version } from '@0xsequence/migration'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
-import { encodeTypedDataDigest, getDefaultConnectionInfo } from '@0xsequence/utils'
-import { Wallet } from '@0xsequence/wallet'
+import { Deferrable, encodeTypedDataDigest, getDefaultConnectionInfo } from '@0xsequence/utils'
+import { Wallet, resolveArrayProperties } from '@0xsequence/wallet'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 
 export type AccountStatus = {
@@ -82,7 +82,7 @@ class Chain0Reader implements commons.reader.Reader {
   }
 }
 
-export class Account {
+export class Account implements ethers.Signer {
   public readonly address: string
 
   public readonly networks: NetworkConfig[]
@@ -105,6 +105,90 @@ export class Account {
     this.migrations = options.migrations || defaults.DefaultMigrations
     this.migrator = new migrator.Migrator(options.tracker, this.migrations, this.contexts)
   }
+
+  //
+  // start ethers.Signer required methods
+  //
+
+  _isSigner: boolean = true
+
+  signTransaction(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
+    throw new Error('Method not implemented.')
+  }
+
+  connect(_provider: ethers.providers.Provider): ethers.Signer {
+    throw new Error('Method not implemented.')
+  }
+
+  getBalance(_blockTag?: ethers.providers.BlockTag | undefined): Promise<ethers.BigNumber> {
+    throw new Error('Method not implemented.')
+  }
+
+  getTransactionCount(_blockTag?: ethers.providers.BlockTag | undefined): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+
+  estimateGas(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<ethers.BigNumber> {
+    throw new Error('Method not implemented.')
+  }
+
+  call(
+    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    _blockTag?: ethers.providers.BlockTag | undefined
+  ): Promise<string> {
+    throw new Error('Method not implemented.')
+  }
+
+  getChainId(): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+
+  getGasPrice(): Promise<ethers.BigNumber> {
+    throw new Error('Method not implemented.')
+  }
+
+  getFeeData(): Promise<ethers.providers.FeeData> {
+    throw new Error('Method not implemented.')
+  }
+
+  private ensProvider() {
+    return this.networks.find((n) => n.chainId === 1)?.provider
+  }
+
+  async resolveName(name: string): Promise<string> {
+    const provider = this.ensProvider()
+
+    if (!provider) {
+      throw new Error('ENS network not found.')
+    }
+
+    const result = await provider.resolveName(name)
+    if (!result) {
+      throw new Error('Name not resolved.')
+    }
+
+    return result
+  }
+
+  checkTransaction(
+    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
+  ): ethers.utils.Deferrable<ethers.providers.TransactionRequest> {
+    throw new Error('Method not implemented.')
+  }
+
+  populateTransaction(
+    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
+  ): Promise<ethers.providers.TransactionRequest> {
+    throw new Error('Method not implemented.')
+  }
+
+  _checkProvider(_operation?: string | undefined): void {
+    throw new Error('Method not implemented.')
+  }
+
+  //
+  // start ethers.Signer required methods
+  //
 
   static async new(options: {
     config: commons.config.SimpleConfig
@@ -156,6 +240,10 @@ export class Account {
     }
   }
 
+  get provider() {
+    return this.providerFor(this.defaultNetwork())
+  }
+
   network(chainId: ethers.BigNumberish): NetworkConfig {
     const tcid = ethers.BigNumber.from(chainId)
     const found = this.networks.find(n => tcid.eq(n.chainId))
@@ -163,7 +251,11 @@ export class Account {
     return found
   }
 
-  provider(chainId: ethers.BigNumberish): ethers.providers.Provider {
+  defaultNetwork(): ChainId {
+    return this.networks[0].chainId
+  }
+
+  providerFor(chainId: ethers.BigNumberish): ethers.providers.Provider {
     const found = this.network(chainId)
     if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
     return (
@@ -180,7 +272,7 @@ export class Account {
 
     // TODO: Networks should be able to provide a reader directly
     // and we should default to the on-chain reader
-    return new commons.reader.OnChainReader(this.provider(chainId))
+    return new commons.reader.OnChainReader(this.providerFor(chainId))
   }
 
   relayer(chainId: ethers.BigNumberish): Relayer {
@@ -599,7 +691,7 @@ export class Account {
 
   signMessage(
     message: ethers.BytesLike,
-    chainId: ethers.BigNumberish,
+    chainId: ethers.BigNumberish = this.defaultNetwork(),
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message), chainId, true, cantValidateBehavior)
@@ -784,13 +876,20 @@ export class Account {
   }
 
   async sendTransaction(
-    txs: commons.transaction.Transactionish,
-    chainId: ethers.BigNumberish,
+    txsPromise: Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish,
+    chainId: ethers.BigNumberish = this.defaultNetwork(),
     quote?: FeeQuote,
     skipPreDecorate: boolean = false,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
-    const status = await this.status(chainId)
+    const [
+      status,
+      txs
+    ] = await Promise.all([
+      this.status(chainId),
+      resolveArrayProperties(txsPromise)
+    ])
+
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
     const signed = await this.signTransactions(predecorated, chainId)
     // TODO: is it safe to pass status again here?
