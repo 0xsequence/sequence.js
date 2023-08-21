@@ -55,10 +55,7 @@ export type WalletV1 = Wallet<v1.config.WalletConfig, v1.signature.Signature, v1
  * it doesn't have any knowledge of any on-chain state, instead it relies solely on the information
  * provided by the user. This building block is used to create higher level abstractions.
  *
- * Wallet can also be used to create Sequence wallets, but it's not recommended to use it directly
- *
- * @notice: TODO: This class is meant to replace the one in ../wallet.ts !!!
- *
+ * Wallet can also be used to create Sequence wallets, but it's not recommended to use it directly.
  */
 export class Wallet<
   Y extends commons.config.Config = commons.config.Config,
