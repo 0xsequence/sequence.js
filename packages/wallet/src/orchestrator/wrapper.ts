@@ -38,7 +38,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
 
     // For Sequence nested signatures we must use `signDigest` and not `signMessage`
     // otherwise the wallet will hash the digest and the signature will be invalid.
-    callbacks.onSignature(await this.wallet.signDigest(message, { useEip6492: metadata.useEip6492, nested: metadata }))
+    callbacks.onSignature(await this.wallet.signDigest(message, { nested: metadata }))
 
     return true
   }

@@ -168,26 +168,6 @@ export class Wallet<
     }
   }
 
-  async buildEIP6492Signature(signature: string): Promise<string> {
-    // Deployment must include children for EIP6492 to validate
-    const deployTx = await this.buildDeployTransaction({ includeChildren: true, ignoreDeployed: true })
-    if (deployTx === undefined) {
-      // Already deployed. Skip wrapping
-      return signature
-    }
-
-    if (deployTx.transactions.length === 0) {
-      throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
-    }
-
-    const encoded = ethers.utils.defaultAbiCoder.encode(
-      ['address', 'bytes', 'bytes'],
-      [deployTx.entrypoint, commons.transaction.encodeBundleExecData(deployTx), signature]
-    )
-
-    return ethers.utils.solidityPack(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
-  }
-
   async buildDeployTransaction(metadata?: commons.WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | undefined> {
     if (metadata?.ignoreDeployed && (await this.reader().isDeployed(this.address))) {
       return
@@ -264,25 +244,13 @@ export class Wallet<
       message?: ethers.utils.BytesLike
       transactions?: commons.transaction.Transaction[]
       nested?: commons.WalletSignRequestMetadata
-      useEip6492?: boolean // If true, EIP6492 can be used
     }
   ): Promise<string> {
-    const addEip6492IfRequired = async (signature: string): Promise<string> => {
-      const canUseEip6492 = request?.useEip6492 === true
-      if (!canUseEip6492 || (await this.reader().isDeployed(this.address))) {
-        // Deployed - Return
-        return signature
-      }
-      // Not deployed. Wrap with EIP6492
-      return this.buildEIP6492Signature(signature)
-    }
-
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
     const subdigest = subDigestOf(this.address, this.chainId, digest)
     if (this.coders.config.hasSubdigest(this.config, subdigest)) {
-      const signature = this.coders.signature.encodeSigners(this.config, new Map(), [subdigest], this.chainId).encoded
-      return addEip6492IfRequired(signature)
+      return this.coders.signature.encodeSigners(this.config, new Map(), [subdigest], this.chainId).encoded
     }
 
     // We build the metadata object, this contains additional information
@@ -294,9 +262,6 @@ export class Wallet<
       config: this.config,
       ...request
     }
-    // Don't propagate useEip6492 as signature verification will fail
-    // addEip6492IfRequired will include deployment of children
-    metadata.useEip6492 = undefined
 
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
     // to reach the threshold we returns true, that means the orchestrator will stop asking
@@ -317,17 +282,13 @@ export class Wallet<
     })
 
     const parts = statusToSignatureParts(signature)
-    const encodedSignature = this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
-    return addEip6492IfRequired(encodedSignature)
+    return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
   }
 
   signMessage(
     message: ethers.BytesLike,
-    request?: {
-      useEip6492?: boolean
-    }
   ): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message), { message, ...request })
+    return this.signDigest(ethers.utils.keccak256(message), { message })
   }
 
   signTransactionBundle(bundle: commons.transaction.TransactionBundle): Promise<commons.transaction.SignedTransactionBundle> {

@@ -303,29 +303,6 @@ describe('Wallet (primitive)', () => {
             })
           }
 
-          it('Should sign and validate a message using EIP6492', async () => {
-            const wallet = Wallet.newWallet({
-              coders: coders,
-              context: contexts[version],
-              config,
-              orchestrator,
-              chainId: provider.network.chainId,
-              provider,
-              relayer
-            })
-
-            expect(await wallet.reader().isDeployed(wallet.address)).to.be.false
-
-            const message = ethers.utils.toUtf8Bytes(
-              `This is a random message: ${ethers.utils.hexlify(ethers.utils.randomBytes(96))}`
-            )
-
-            const signature = await wallet.signMessage(message, { useEip6492: true })
-            const digest = ethers.utils.keccak256(message)
-
-            expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
-          })
-
           //
           // Run tests for deployed and undeployed wallets
           // transactions should be decorated automatically
