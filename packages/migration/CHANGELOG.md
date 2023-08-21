@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.1.12
+
+### Patch Changes
+
+- provider: adding bannerSize to ConnectOptions
+- Updated dependencies
+  - @0xsequence/abi@1.1.12
+  - @0xsequence/core@1.1.12
+  - @0xsequence/wallet@1.1.12
+
 ## 1.1.11
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.1.12
+
+### Patch Changes
+
+- provider: adding bannerSize to ConnectOptions
+
 ## 1.1.11
 
 ### Patch Changes
