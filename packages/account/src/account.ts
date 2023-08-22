@@ -4,9 +4,10 @@ import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
-import { Deferrable, encodeTypedDataDigest, getDefaultConnectionInfo } from '@0xsequence/utils'
-import { Wallet, resolveArrayProperties } from '@0xsequence/wallet'
+import { encodeTypedDataDigest, getDefaultConnectionInfo } from '@0xsequence/utils'
+import { Wallet } from '@0xsequence/wallet'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { AccountSigner, AccountSignerOptions } from './signer'
 
 export type AccountStatus = {
   original: {
@@ -82,7 +83,7 @@ class Chain0Reader implements commons.reader.Reader {
   }
 }
 
-export class Account implements ethers.Signer {
+export class Account {
   public readonly address: string
 
   public readonly networks: NetworkConfig[]
@@ -130,6 +131,10 @@ export class Account implements ethers.Signer {
 
   estimateGas(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<ethers.BigNumber> {
     throw new Error('Method not implemented.')
+  }
+
+  getSigner(chainId: ChainId, options?: AccountSignerOptions): AccountSigner {
+    return new AccountSigner(this, chainId, options)
   }
 
   call(
@@ -876,19 +881,13 @@ export class Account implements ethers.Signer {
   }
 
   async sendTransaction(
-    txsPromise: Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish,
+    txs: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish = this.defaultNetwork(),
     quote?: FeeQuote,
     skipPreDecorate: boolean = false,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
-    const [
-      status,
-      txs
-    ] = await Promise.all([
-      this.status(chainId),
-      resolveArrayProperties(txsPromise)
-    ])
+    const status = await this.status(chainId)
 
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
     const signed = await this.signTransactions(predecorated, chainId)

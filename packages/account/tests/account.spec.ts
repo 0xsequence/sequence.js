@@ -1117,7 +1117,7 @@ describe('Account', () => {
 })
 
 let nowCalls = 0
-function now(): number {
+export function now(): number {
   if (deterministic) {
     return Date.parse('2023-02-14T00:00:00.000Z') + 1000 * nowCalls++
   } else {
@@ -1125,17 +1125,17 @@ function now(): number {
   }
 }
 
-function randomWallet(entropy: number | string): ethers.Wallet {
+export function randomWallet(entropy: number | string): ethers.Wallet {
   return new ethers.Wallet(randomBytes(32, entropy))
 }
 
-function randomFraction(entropy: number | string): number {
+export function randomFraction(entropy: number | string): number {
   const bytes = randomBytes(7, entropy)
   bytes[0] &= 0x1f
   return bytes.reduce((sum, byte) => 256 * sum + byte) / Number.MAX_SAFE_INTEGER
 }
 
-function randomBytes(length: number, entropy: number | string): Uint8Array {
+export function randomBytes(length: number, entropy: number | string): Uint8Array {
   if (deterministic) {
     let bytes = ''
     while (bytes.length < 2 * length) {
