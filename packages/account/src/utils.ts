@@ -1,5 +1,8 @@
 import { ethers } from "ethers"
-import { isPromise } from "util/types"
+
+function isPromise(value: any): value is Promise<any> {
+  return !!value && typeof value.then === 'function'
+}
 
 export function isDeferrable<T>(value: any): value is ethers.utils.Deferrable<T> {
   // The value is deferrable if any of the properties is a Promises
