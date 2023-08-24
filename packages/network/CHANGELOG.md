@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.1.12
+
+### Patch Changes
+
+- provider: adding bannerSize to ConnectOptions
+- Updated dependencies
+  - @0xsequence/core@1.1.12
+  - @0xsequence/indexer@1.1.12
+  - @0xsequence/relayer@1.1.12
+  - @0xsequence/utils@1.1.12
+
 ## 1.1.11
 
 ### Patch Changes

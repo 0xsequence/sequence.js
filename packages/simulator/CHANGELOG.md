@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.1.12
+
+### Patch Changes
+
+- provider: adding bannerSize to ConnectOptions
+- Updated dependencies
+  - @0xsequence/core@1.1.12
+
 ## 1.1.11
 
 ### Patch Changes

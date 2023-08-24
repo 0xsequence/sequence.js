@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.1.12
+
+### Patch Changes
+
+- provider: adding bannerSize to ConnectOptions
+- Updated dependencies
+  - @0xsequence/abi@1.1.12
+  - @0xsequence/network@1.1.12
+  - @0xsequence/utils@1.1.12
+
 ## 1.1.11
 
 ### Patch Changes
