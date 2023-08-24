@@ -56,7 +56,7 @@ export class Session {
 
   async dump(): Promise<SessionDumpV2> {
     const base = {
-      version: 2 as 2,
+      version: 2 as const,
       address: this.account.address,
     }
 
