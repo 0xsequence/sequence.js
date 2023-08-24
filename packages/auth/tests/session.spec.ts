@@ -91,7 +91,8 @@ describe('Wallet integration', function () {
         chainId,
         provider: ethnode.provider,
         isDefaultChain: true,
-        relayer
+        relayer,
+        rpcUrl: ''
       }
     ] as NetworkConfig[]
 
@@ -115,13 +116,18 @@ describe('Wallet integration', function () {
     orchestrator = new Orchestrator([])
 
     simpleSettings = {
-      sequenceApiUrl: '',
-      sequenceApiChainId: chainId,
-      sequenceMetadataUrl: '',
       contexts,
       networks,
       orchestrator,
-      tracker
+      tracker,
+      services: {
+        metadata: {
+          name: 'test'
+        },
+        sequenceApiUrl: '',
+        sequenceApiChainId: chainId,
+        sequenceMetadataUrl: '',
+      }
     }
   })
 
@@ -134,9 +140,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async ws => {
         expect(ws.length).to.equal(0)
         return undefined
@@ -170,9 +173,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async ws => {
         expect(ws.length).to.equal(0)
         return undefined
@@ -202,9 +202,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async ws => ws[0] ?? undefined,
       editConfigOnMigration: config => config
     })
@@ -215,9 +212,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: newSigner.address, weight: 1 }],
       threshold: 2,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async ws => {
         expect(ws.length).to.equal(1)
         return ws[0]
@@ -247,9 +241,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async () => undefined,
       editConfigOnMigration: config => config
     })
@@ -263,9 +254,6 @@ describe('Wallet integration', function () {
         { address: newSigner.address, weight: 1 }
       ],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async wallets => {
         expect(wallets.length).to.equal(1)
         return undefined
@@ -285,9 +273,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async () => undefined,
       editConfigOnMigration: config => config
     })
@@ -297,9 +282,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 2 }],
       threshold: 2,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async () => undefined,
       editConfigOnMigration: config => config
     })
@@ -310,9 +292,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: newSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async wallets => {
         expect(wallets.length).to.equal(2)
         expect(wallets).to.include(oldSession1.account.address)
@@ -329,9 +308,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: newSigner.address, weight: 1 }],
       threshold: 1,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async wallets => {
         expect(wallets.length).to.equal(2)
         expect(wallets).to.include(oldSession1.account.address)
@@ -366,9 +342,6 @@ describe('Wallet integration', function () {
         }
       ],
       threshold: 2,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async () => undefined,
       editConfigOnMigration: config => config
     })
@@ -382,9 +355,6 @@ describe('Wallet integration', function () {
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: signer2.address, weight: 1 }],
       threshold: 2,
-      metadata: {
-        name: 'Test'
-      },
       selectWallet: async wallets => {
         expect(wallets.length).to.equal(1)
         return wallets[0]
@@ -445,9 +415,6 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async wallets => {
           expect(wallets.length).to.equal(1)
           return wallets[0]
@@ -517,9 +484,6 @@ describe('Wallet integration', function () {
           referenceSigner: referenceSigner.address,
           addSigners: [{ address: newSigner2.address, weight: 1 }],
           threshold: 2,
-          metadata: {
-            name: 'Test'
-          },
           selectWallet: async wallets => {
             expect(wallets.length).to.equal(1)
             return wallets[0]
@@ -572,8 +536,10 @@ describe('Wallet integration', function () {
     beforeEach(() => {
       settings = {
         ...simpleSettings,
-        sequenceApiUrl,
-        sequenceMetadataUrl: ''
+        services: {
+          ...simpleSettings.services!,
+          sequenceApiUrl
+        }
       }
 
       fakeJwt = ethers.utils.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`))
@@ -646,16 +612,13 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      await session.auth()
+      await session.services?.auth()
       expect(totalCount).to.equal(1)
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
       expect(proofAddress).to.equal(session.account.address)
     })
 
@@ -668,9 +631,6 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
@@ -681,18 +641,14 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async ws => ws[0],
         editConfigOnMigration: config => config
       })
 
-      await session.auth()
-      await session._initialAuthRequest
+      await session.services?.auth()
 
       expect(totalCount).to.equal(1)
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
       expect(proofAddress).to.equal(session.account.address)
     })
 
@@ -705,19 +661,16 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      await session._initialAuthRequest
+      await session.services?._initialAuthRequest
 
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address]).to.equal(1)
 
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
     })
 
     it('Should get JWT during session opening', async () => {
@@ -731,14 +684,11 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      await expect(session._initialAuthRequest).to.be.rejected
+      await expect(session.services?._initialAuthRequest).to.be.rejected
 
       const newSigner = randomWallet('Should get JWT during session opening 2')
       orchestrator.setSigners([referenceSigner, newSigner])
@@ -748,9 +698,6 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async ws => {
           expect(ws.length).to.equal(1)
           return ws[0]
@@ -758,12 +705,12 @@ describe('Wallet integration', function () {
         editConfigOnMigration: config => config
       })
 
-      await session._initialAuthRequest
+      await session.services?._initialAuthRequest
 
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address]).to.equal(1)
 
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
     })
 
     it('Should get API with lazy JWT during first session creation', async () => {
@@ -775,26 +722,23 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      const api = await session.getAPIClient()
+      const api = await session.services?.getAPIClient()
 
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address]).to.equal(1)
 
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
 
       server.forPost('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
 
-      await api.friendList({ page: {} })
+      await api!.friendList({ page: {} })
     })
 
     it('Should get API with lazy JWT during session opening', async () => {
@@ -807,9 +751,6 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
@@ -822,26 +763,23 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async ws => ws[0],
         editConfigOnMigration: config => config
       })
 
-      const api = await session.getAPIClient()
+      const api = await session.services?.getAPIClient()
 
       expect(totalCount).to.equal(1)
       expect(recoverCount[session.account.address]).to.equal(1)
 
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
 
       server.forPost('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
 
-      await api.friendList({ page: {} })
+      await api!.friendList({ page: {} })
     })
 
     it('Should call callbacks on JWT token', async () => {
@@ -853,17 +791,14 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
       let calledCallback = 0
-      session.onAuth(() => calledCallback++)
+      session.services?.onAuth(() => calledCallback++)
 
-      await session._initialAuthRequest
+      await session.services?._initialAuthRequest
 
       expect(calledCallback).to.equal(1)
     })
@@ -879,9 +814,6 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
@@ -897,17 +829,14 @@ describe('Wallet integration', function () {
           { address: newSigner.address, weight: 1 }
         ],
         threshold: 2,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async ws => ws[0],
         editConfigOnMigration: config => config
       })
 
       let calledCallback = 0
-      session.onAuth(() => calledCallback++)
+      session.services?.onAuth(() => calledCallback++)
 
-      await session._initialAuthRequest
+      await session.services?._initialAuthRequest
 
       expect(calledCallback).to.equal(1)
     })
@@ -922,17 +851,14 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
       alwaysFail = true
-      await expect(session.auth()).to.be.rejected
+      await expect(session.services?.auth()).to.be.rejected
       expect(totalCount).to.equal(5)
-      expect(session._jwt).to.be.undefined
+      expect(session.services?.status.jwt).to.be.undefined
     })
 
     it('Should get API with JWT already present', async () => {
@@ -946,9 +872,6 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
@@ -961,29 +884,26 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async ws => ws[0],
         editConfigOnMigration: config => config
       })
 
-      await session._initialAuthRequest
+      await session.services?._initialAuthRequest
       const totalCountBefore = totalCount
 
       // This should use the already existing JWT
-      const api = await session.getAPIClient()
+      const api = await session.services?.getAPIClient()
 
       expect(totalCount).to.equal(totalCountBefore)
       expect(recoverCount[session.account.address]).to.equal(1)
-      expect(await session._jwt?.token).to.equal(fakeJwt)
+      expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
 
       server.forPost('/rpc/API/FriendList').thenCallback(async request => {
         const hasToken = request.headers['authorization']!.includes(fakeJwt)
         return { statusCode: hasToken ? 200 : 401, body: JSON.stringify({}) }
       })
 
-      await api.friendList({ page: {} })
+      await api!.friendList({ page: {} })
     })
 
     it('Should fail to get API with false tryAuth and no JWT', async () => {
@@ -997,23 +917,20 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      await expect(session._initialAuthRequest).to.be.rejected
+      await expect(session.services?._initialAuthRequest).to.be.rejected
 
       alwaysFail = false
 
-      const apiPromise = session.getAPIClient(false)
+      const apiPromise = session.services?.getAPIClient(false)
 
       await expect(apiPromise).to.be.rejected
 
       expect(totalCount).to.equal(0)
-      expect(session._jwt).to.be.undefined
+      expect(session.services?.status.jwt).to.be.undefined
     })
 
     it('Should fail to get API without api url', async () => {
@@ -1025,19 +942,16 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      const apiPromise = session.getAPIClient()
+      const apiPromise = session.services?.getAPIClient()
 
       await expect(apiPromise).to.be.rejected
 
       expect(totalCount).to.equal(0)
-      expect(session._jwt).to.be.undefined
+      expect(session.services?.status.jwt?.token).to.be.undefined
     })
 
     it('Should fail to get JWT with no api configured', async () => {
@@ -1049,17 +963,14 @@ describe('Wallet integration', function () {
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      await expect(session.auth()).to.be.rejected
+      await expect(session.services?.auth()).to.be.rejected
 
       expect(totalCount).to.equal(0)
-      expect(session._jwt).to.be.undefined
+      expect(session.services?.status.jwt?.token).to.be.undefined
     })
 
     it('Should reuse outstanding JWT requests', async () => {
@@ -1073,9 +984,6 @@ describe('Wallet integration', function () {
         referenceSigner: await referenceSigner.getAddress(),
         addSigners: [{ address: await referenceSigner.getAddress(), weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
@@ -1085,7 +993,7 @@ describe('Wallet integration', function () {
 
       const signingRequestsBefore = referenceSigner.signingRequests
 
-      await expect(session._initialAuthRequest).to.be.rejected
+      await expect(session.services?._initialAuthRequest).to.be.rejected
 
       alwaysFail = false
       totalCount = 0
@@ -1093,7 +1001,7 @@ describe('Wallet integration', function () {
       // Create a bunch of API clients concurrently
       const requests: any[] = []
       while (requests.length < 10) {
-        requests.push(session.getAPIClient())
+        requests.push(session.services?.getAPIClient())
       }
       await expect(Promise.all(requests)).to.be.fulfilled
 
@@ -1112,9 +1020,6 @@ describe('Wallet integration', function () {
         referenceSigner: await referenceSigner.getAddress(),
         addSigners: [{ address: await referenceSigner.getAddress(), weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
@@ -1124,13 +1029,13 @@ describe('Wallet integration', function () {
 
       const signingRequestsBefore = referenceSigner.signingRequests
 
-      await expect(session._initialAuthRequest).to.be.rejected
+      await expect(session.services?._initialAuthRequest).to.be.rejected
 
       totalCount = 0
 
       // Create a bunch of API clients sequentially
       for (let i = 0; i < 10; i++) {
-        await expect(session.getAPIClient()).to.be.rejected
+        await expect(session.services?.getAPIClient()).to.be.rejected
       }
 
       expect(totalCount).to.equal(10)
@@ -1146,16 +1051,13 @@ describe('Wallet integration', function () {
         referenceSigner: await referenceSigner.getAddress(),
         addSigners: [{ address: await referenceSigner.getAddress(), weight: 1 }],
         threshold: 1,
-        metadata: {
-          name: 'Test'
-        },
         selectWallet: async () => undefined,
         editConfigOnMigration: config => config
       })
 
-      await session._initialAuthRequest
+      await session.services?._initialAuthRequest
 
-      const api = await session.getAPIClient()
+      const api = await session.services?.getAPIClient()
 
       const okResponses = [true]
       server.forPost('/rpc/API/FriendList').thenCallback(async () => {
@@ -1164,7 +1066,7 @@ describe('Wallet integration', function () {
 
       totalCount = 0
 
-      await expect(api.friendList({ page: {} })).to.be.fulfilled
+      await expect(api!.friendList({ page: {} })).to.be.fulfilled
 
       // no re-authentication since it succeeded
       expect(totalCount).to.equal(0)
@@ -1192,23 +1094,28 @@ describe('Wallet integration', function () {
         orchestrator.setSigners([referenceSigner])
 
         const session = await Session.open({
-          settings,
+          settings: {
+            ...settings,
+            services: {
+              ...settings.services!,
+              metadata: {
+                name: 'Test',
+                expiration: 240
+              }
+            }
+          },
           referenceSigner: referenceSigner.address,
           addSigners: [{ address: referenceSigner.address, weight: 1 }],
           threshold: 1,
-          metadata: {
-            name: 'Test',
-            expiration: 240
-          },
           selectWallet: async () => undefined,
           editConfigOnMigration: config => config
         })
 
-        await session._initialAuthRequest
+        await session.services?._initialAuthRequest
 
         expect(totalCount).to.equal(1)
-        expect(await session._jwt?.token).to.equal(fakeJwt)
-        expect(session._jwt?.expiration).to.equal(baseTime + 240 - 60)
+        expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
+        expect(session.services?.status.jwt?.expiration).to.equal(baseTime + 240 - 60)
 
         // Force expire (1 hour)
         const newBaseTime = baseTime + 60 * 60
@@ -1216,11 +1123,11 @@ describe('Wallet integration', function () {
 
         fakeJwt = ethers.utils.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2'))
 
-        await session.getAPIClient()
+        await session.services?.getAPIClient()
 
         expect(totalCount).to.equal(2)
-        expect(await session._jwt?.token).to.equal(fakeJwt)
-        expect(session._jwt?.expiration).to.equal(newBaseTime + 240 - 60)
+        expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
+        expect(session.services?.status.jwt?.expiration).to.equal(newBaseTime + 240 - 60)
       })
 
       it('Should force min expiration time', async () => {
@@ -1231,23 +1138,28 @@ describe('Wallet integration', function () {
         orchestrator.setSigners([referenceSigner])
 
         const session = await Session.open({
-          settings,
+          settings: {
+            ...settings,
+            services: {
+              ...settings.services!,
+              metadata: {
+                name: 'Test',
+                expiration: 1,
+              }
+            }
+          },
           referenceSigner: referenceSigner.address,
           addSigners: [{ address: referenceSigner.address, weight: 1 }],
           threshold: 1,
-          metadata: {
-            name: 'Test',
-            expiration: 1
-          },
           selectWallet: async () => undefined,
           editConfigOnMigration: config => config
         })
 
-        await session._initialAuthRequest
+        await session.services?._initialAuthRequest
 
         expect(totalCount).to.equal(1)
-        expect(await session._jwt?.token).to.equal(fakeJwt)
-        expect(session._jwt?.expiration).to.equal(baseTime + 120 - 60)
+        expect(await session.services?.status.jwt?.token).to.equal(fakeJwt)
+        expect(session.services?.status.jwt?.expiration).to.equal(baseTime + 120 - 60)
       })
     })
   })
@@ -1294,6 +1206,80 @@ describe('Wallet integration', function () {
 
       // decoded proofs can be validated like so
       expect(ethauth.validateProof(decodedProof)).to.eventually.be.true
+    })
+  })
+  describe('session without services', () => {
+    let noServiceSettings: SessionSettings
+
+    before(() => {
+      noServiceSettings = {
+        ...simpleSettings,
+        services: undefined
+      }
+    })
+
+    it('should open a session without services', async () => {
+      const referenceSigner = randomWallet('should open a session without services')
+      orchestrator.setSigners([referenceSigner])
+
+      const session = await Session.open({
+        settings: noServiceSettings,
+        referenceSigner: referenceSigner.address,
+        addSigners: [{ address: referenceSigner.address, weight: 1 }],
+        threshold: 1,
+        selectWallet: async () => {
+          return undefined
+        },
+        editConfigOnMigration: config => config
+      })
+
+      expect(session.services).to.be.undefined
+    })
+
+    it('should dump a session without services', async () => {
+      const referenceSigner = randomWallet('should dump a session without services')
+      orchestrator.setSigners([referenceSigner])
+
+      const session = await Session.open({
+        settings: noServiceSettings,
+        referenceSigner: referenceSigner.address,
+        addSigners: [{ address: referenceSigner.address, weight: 1 }],
+        threshold: 1,
+        selectWallet: async () => {
+          return undefined
+        },
+        editConfigOnMigration: config => config
+      })
+
+      const dump = await session.dump()
+      expect(dump).to.not.be.undefined
+      expect(dump.jwt).to.be.undefined
+      expect(dump.metadata).to.be.undefined
+    })
+
+    it('should load dump without services', async () => {
+      const referenceSigner = randomWallet('should load dump without services')
+      orchestrator.setSigners([referenceSigner])
+
+      const session = await Session.open({
+        settings: noServiceSettings,
+        referenceSigner: referenceSigner.address,
+        addSigners: [{ address: referenceSigner.address, weight: 1 }],
+        threshold: 1,
+        selectWallet: async () => {
+          return undefined
+        },
+        editConfigOnMigration: config => config
+      })
+
+      const dump = await session.dump()
+      const newSession = await Session.load({
+        settings: noServiceSettings,
+        dump: dump,
+        editConfigOnMigration: config => config
+      })
+
+      expect(newSession.services).to.be.undefined
     })
   })
 })
