@@ -106,7 +106,8 @@ describe('Orchestrator', () => {
           throw new Error('This is a broken signer.')
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           throw new Error('This is a broken signer.')
         },
@@ -194,7 +195,8 @@ describe('Orchestrator', () => {
           throw new Error('This is a reject signer.')
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           throw new Error('This is a rejected signer.')
         },
@@ -255,7 +257,8 @@ describe('Orchestrator', () => {
           return Promise.resolve(undefined)
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
@@ -295,7 +298,8 @@ describe('Orchestrator', () => {
           return Promise.resolve(undefined)
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
@@ -339,7 +343,8 @@ describe('Orchestrator', () => {
           return Promise.resolve(undefined)
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
@@ -381,7 +386,8 @@ describe('Orchestrator', () => {
           return Promise.resolve(undefined)
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
@@ -445,7 +451,8 @@ describe('Orchestrator', () => {
           return Promise.resolve(undefined)
         },
         decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
@@ -525,7 +532,8 @@ describe('Orchestrator', () => {
           return undefined
         },
         async decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           // Add a transaction on each call
           bundle.transactions.push({
@@ -586,7 +594,8 @@ describe('Orchestrator', () => {
           }
         },
         async decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle
+          bundle: commons.transaction.IntendedTransactionBundle,
+          metadata: Object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return bundle
         },

@@ -3,6 +3,19 @@ import { commons } from '..'
 import { Config } from './config'
 
 /**
+ * Request metadata, used by the account to pass additional information through the orchestrator.
+ */
+export type AccountSignRequestMetadata = {
+  chainId: ethers.BigNumberish,
+  decorate?: boolean,
+  cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
+}
+
+export function isAccountSignRequestMetadata(obj: any): obj is AccountSignRequestMetadata {
+  return obj && obj.chainId !== undefined
+}
+
+/**
  * Request metadata, used by the wallet to pass additional information through the orchestrator.
  */
 export type WalletSignRequestMetadata = {

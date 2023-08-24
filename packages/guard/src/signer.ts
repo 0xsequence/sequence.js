@@ -34,10 +34,18 @@ export class GuardSigner implements signers.SapientSigner {
     throw new Error('Guard client cannot be deployed.')
   }
 
+  async predecorateTransactions(
+    txs: commons.transaction.Transactionish,
+    _metadata: Object
+  ): Promise<commons.transaction.Transactionish> {
+    return txs
+  }
+
   async decorateTransactions(
-    bundle: commons.transaction.IntendedTransactionBundle
+    bundle: commons.transaction.IntendedTransactionBundle,
+    _metadata: Object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
-    return Promise.resolve(bundle)
+    return bundle
   }
 
   async requestSignature(

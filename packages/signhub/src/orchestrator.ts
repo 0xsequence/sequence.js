@@ -106,10 +106,11 @@ export class Orchestrator {
   }
 
   async decorateTransactions(
-    bundle: commons.transaction.IntendedTransactionBundle
+    bundle: commons.transaction.IntendedTransactionBundle,
+    metadata?: Object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     for (const signer of this.signers) {
-      bundle = await signer.decorateTransactions(bundle)
+      bundle = await signer.decorateTransactions(bundle, metadata ?? {})
     }
     return bundle
   }

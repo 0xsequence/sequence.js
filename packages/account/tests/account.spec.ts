@@ -12,6 +12,7 @@ import { ethers } from 'ethers'
 import hardhat from 'hardhat'
 
 import { Account } from '../src/account'
+import { AccountOrchestratorWrapper } from '../src/orchestrator/wrapper'
 
 const { expect } = chai.use(chaiAsPromised)
 
@@ -33,6 +34,40 @@ describe('Account', () => {
     contexts: commons.context.VersionedContext
     networks: NetworkConfig[]
     tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
+  }
+
+  const createNestedAccount = async (entropy: string, bootstrapInner = true, bootstrapOuter = true) => {
+    const signer = randomWallet(entropy)
+
+    const configInner = {
+      threshold: 1,
+      checkpoint: Math.floor(now() / 1000),
+      signers: [{ address: signer.address, weight: 1 }]
+    }
+    const accountInner = await Account.new({
+      ...defaultArgs,
+      config: configInner,
+      orchestrator: new Orchestrator([signer])
+    })
+    if (bootstrapInner) {
+      await accountInner.doBootstrap(networks[0].chainId)
+    }
+
+    const configOuter = {
+      threshold: 1,
+      checkpoint: Math.floor(now() / 1000),
+      signers: [{ address: accountInner.address, weight: 1 }]
+    }
+    const accountOuter = await Account.new({
+      ...defaultArgs,
+      config: configOuter,
+      orchestrator: new Orchestrator([new AccountOrchestratorWrapper(accountInner)])
+    })
+    if (bootstrapOuter) {
+      await accountOuter.doBootstrap(networks[0].chainId)
+    }
+
+    return {signer, accountInner, accountOuter}
   }
 
   before(async () => {
@@ -98,6 +133,52 @@ describe('Account', () => {
       expect(status.fullyMigrated).to.be.true
       expect(status.onChain.deployed).to.be.true
       expect(status.onChain.version).to.equal(2)
+    })
+
+    it.only('Should create new nested accounts', async () => {
+      const { accountInner, accountOuter } = await createNestedAccount('create new nested accounts', false, false)
+
+      await accountOuter.sendTransaction([], networks[0].chainId)
+
+      const statusOuter = await accountOuter.status(networks[0].chainId)
+
+      console.log(1)
+      expect(statusOuter.fullyMigrated).to.be.true
+      console.log(2)
+      expect(statusOuter.onChain.deployed).to.be.true
+      console.log(3)
+      expect(statusOuter.onChain.version).to.equal(2)
+
+      const statusInner = await accountInner.status(networks[0].chainId)
+      console.log(4)
+      expect(statusInner.fullyMigrated).to.be.true
+      console.log(5)
+      expect(statusInner.onChain.deployed).to.be.true
+      console.log(6)
+      expect(statusInner.onChain.version).to.equal(2)
+    })
+
+    it('Should send tx on nested accounts', async () => {
+      const { accountInner, accountOuter } = await createNestedAccount('sent tx on nested accounts', true, true)
+
+      await accountOuter.sendTransaction([], networks[0].chainId)
+
+      const statusOuter = await accountOuter.status(networks[0].chainId)
+
+      console.log(1)
+      expect(statusOuter.fullyMigrated).to.be.true
+      console.log(2)
+      expect(statusOuter.onChain.deployed).to.be.true
+      console.log(3)
+      expect(statusOuter.onChain.version).to.equal(2)
+
+      const statusInner = await accountInner.status(networks[0].chainId)
+      console.log(4)
+      expect(statusInner.fullyMigrated).to.be.true
+      console.log(5)
+      expect(statusInner.onChain.deployed).to.be.true
+      console.log(6)
+      expect(statusInner.onChain.version).to.equal(2)
     })
 
     it('Should send transactions on multiple networks', async () => {
@@ -184,6 +265,23 @@ describe('Account', () => {
       expect(valid).to.be.true
     })
 
+    it('Should sign and validate a message with nested account', async () => {
+
+      const { accountOuter } = await createNestedAccount('sign and validate nested')
+
+      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const sig = await accountOuter.signMessage(msg, networks[0].chainId)
+
+      const valid = await commons.EIP1271.isValidEIP1271Signature(
+        accountOuter.address,
+        ethers.utils.keccak256(msg),
+        sig,
+        networks[0].provider!
+      )
+
+      expect(valid).to.be.true
+    })
+
     it('Should update account to new configuration', async () => {
       const signer = randomWallet('Should update account to new configuration')
       const simpleConfig1 = {
@@ -250,6 +348,54 @@ describe('Account', () => {
       expect(valid).to.be.true
     })
 
+    it('Should sign and validate a message without being deployed with nested account', async () => {
+
+      const { accountOuter } = await createNestedAccount('sign and validate nested undeployed', true, false)
+
+      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const sig = await accountOuter.signMessage(msg, networks[0].chainId, 'eip6492')
+
+      const valid = await accountOuter.reader(networks[0].chainId).isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
+
+      expect(valid).to.be.true
+    })
+
+    it('Should sign and validate a message with undeployed nested account and signer', async () => {
+      // Testing that an undeployed account doesn't error as other signer can satisfy threshold
+      const signerA = randomWallet('Nested account signer A')
+      const signerB = randomWallet('Nested account signer B')
+
+      const configInner = {
+        threshold: 1,
+        checkpoint: Math.floor(now() / 1000),
+        signers: [{ address: signerA.address, weight: 1 }]
+      }
+      const accountInner = await Account.new({
+        ...defaultArgs,
+        config: configInner,
+        orchestrator: new Orchestrator([signerA])
+      }) // Undeployed
+
+      const configOuter = {
+        threshold: 1,
+        checkpoint: Math.floor(now() / 1000),
+        signers: [{ address: accountInner.address, weight: 1 }, { address: signerB.address, weight: 1 }]
+      }
+      const accountOuter = await Account.new({
+        ...defaultArgs,
+        config: configOuter,
+        orchestrator: new Orchestrator([new AccountOrchestratorWrapper(accountInner), signerB])
+      })
+      await accountOuter.doBootstrap(networks[0].chainId)
+
+      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const sig = await accountOuter.signMessage(msg, networks[0].chainId)
+
+      const valid = await accountOuter.reader(networks[0].chainId).isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
+
+      expect(valid).to.be.true
+    })
+
     it('Should refuse to sign when not deployed', async () => {
       const signer = randomWallet('Should refuse to sign when not deployed')
       const config = {
@@ -266,6 +412,15 @@ describe('Account', () => {
 
       const msg = ethers.utils.toUtf8Bytes('Hello World')
       const sig = account.signMessage(msg, networks[0].chainId, 'throw')
+
+      expect(sig).to.be.rejected
+    })
+
+    it('Should refuse to sign when not deployed (nested)', async () => {
+      const { accountOuter } = await createNestedAccount('refuse to sign undeployed', false, false)
+
+      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const sig = accountOuter.signMessage(msg, networks[0].chainId, 'eip6492') // Note EIP-6492 throws when nested not deployed
 
       expect(sig).to.be.rejected
     })
@@ -317,6 +472,56 @@ describe('Account', () => {
 
       it('Should send a transaction', async () => {
         const tx = await account.sendTransaction([], networks[0].chainId)
+        expect(tx).to.not.be.undefined
+
+        const status = await account.status(networks[0].chainId)
+        expect(status.fullyMigrated).to.be.true
+        expect(status.onChain.deployed).to.be.true
+        expect(status.onChain.imageHash).to.equal(status.imageHash)
+      })
+
+      it.only('Should send a transaction on nested account', async () => {
+        const configOuter = {
+          threshold: 1,
+          checkpoint: Math.floor(now() / 1000),
+          signers: [{ address: account.address, weight: 1 }]
+        }
+        const accountOuter = await Account.new({
+          ...defaultArgs,
+          config: configOuter,
+          orchestrator: new Orchestrator([new AccountOrchestratorWrapper(account)])
+        })
+        await accountOuter.doBootstrap(networks[0].chainId)
+
+        const tx = await accountOuter.sendTransaction([], networks[0].chainId)
+        expect(tx).to.not.be.undefined
+
+        const statusOuter = await accountOuter.status(networks[0].chainId)
+        console.log('checking outer status')
+        expect(statusOuter.fullyMigrated).to.be.true
+        expect(statusOuter.onChain.deployed).to.be.true
+        expect(statusOuter.onChain.imageHash).to.equal(statusOuter.imageHash)
+        console.log('checking inner status')
+
+        const status = await account.status(networks[0].chainId)
+        expect(status.fullyMigrated).to.be.true
+        expect(status.onChain.deployed).to.be.true
+        expect(status.onChain.imageHash).to.equal(status.imageHash)
+      })
+
+      it.only('Should send a transaction on undeployed nested account', async () => {
+        const configOuter = {
+          threshold: 1,
+          checkpoint: Math.floor(now() / 1000),
+          signers: [{ address: account.address, weight: 1 }]
+        }
+        const accountOuter = await Account.new({
+          ...defaultArgs,
+          config: configOuter,
+          orchestrator: new Orchestrator([new AccountOrchestratorWrapper(account)])
+        })
+
+        const tx = await accountOuter.sendTransaction([], networks[0].chainId)
         expect(tx).to.not.be.undefined
 
         const status = await account.status(networks[0].chainId)

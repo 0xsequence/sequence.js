@@ -369,11 +369,15 @@ export class Account {
     return txs
   }
 
-  decorateTransactions(
+  async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
     status: AccountStatus
-  ): commons.transaction.IntendedTransactionBundle {
-    const bootstrapBundle = this.buildBootstrapTransactions(status, bundle.chainId)
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+    console.log('Decorating transactions on account')
+    // Allow children to decorate
+    // const decorated = await this.orchestrator.decorateTransactions(bundle, {chainId: bundle.chainId})
+
+    const bootstrapBundle = await this.buildBootstrapTransactions(status, bundle.chainId)
     if (bootstrapBundle.transactions.length === 0) {
       return bundle
     }
@@ -407,12 +411,12 @@ export class Account {
     return decoratedBundle
   }
 
-  decorateSignature<T extends ethers.BytesLike>(
+  async decorateSignature<T extends ethers.BytesLike>(
     signature: T,
     status: Partial<Pick<AccountStatus, 'presignedConfigurations'>>
   ): Promise<T | string> {
     if (!status.presignedConfigurations || status.presignedConfigurations.length === 0) {
-      return new Promise(resolve => resolve(signature))
+      return signature
     }
 
     const coder = this.coders.signature
@@ -478,8 +482,8 @@ export class Account {
     return decorated
   }
 
-  private buildEIP6492Signature(signature: string, status: AccountStatus, chainId: ethers.BigNumberish): string {
-    const bootstrapBundle = this.buildBootstrapTransactions(status, chainId)
+  private async buildEIP6492Signature(signature: string, status: AccountStatus, chainId: ethers.BigNumberish): Promise<string> {
+    const bootstrapBundle = await this.buildBootstrapTransactions(status, chainId)
     if (bootstrapBundle.transactions.length === 0) {
       throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
     }
@@ -550,8 +554,10 @@ export class Account {
    *  by any of the migrations.
    *
    */
-  buildBootstrapTransactions(status: AccountStatus, chainId: ethers.BigNumberish): commons.transaction.IntendedTransactionBundle {
-    const transactions: commons.transaction.Transaction[] = []
+  async buildBootstrapTransactions(status: AccountStatus, chainId: ethers.BigNumberish): Promise<commons.transaction.IntendedTransactionBundle> {
+
+    const bundle = await this.orchestrator.buildDeployTransaction({ chainId })
+    const transactions: commons.transaction.Transaction[] = bundle?.transactions ?? []
 
     // Add wallet deployment if needed
     if (!status.onChain.deployed) {
@@ -716,7 +722,7 @@ export class Account {
     const status = pstatus || (await this.status(signedBundle.chainId))
     this.mustBeFullyMigrated(status)
 
-    const decoratedBundle = this.decorateTransactions(signedBundle, status)
+    const decoratedBundle = await this.decorateTransactions(signedBundle, status)
     callback?.(decoratedBundle)
 
     return this.relayer(chainId).relay(decoratedBundle, quote)
@@ -769,7 +775,7 @@ export class Account {
       nonce: 0 // The relayer also ignored the nonce
     }
 
-    const decoratedBundle = this.decorateTransactions(signedBundle, wstatus)
+    const decoratedBundle = await this.decorateTransactions(signedBundle, wstatus)
     const data = commons.transaction.encodeBundleExecData(decoratedBundle)
     const res = await this.relayer(chainId).getFeeOptionsRaw(decoratedBundle.entrypoint, data, options)
     return { ...res, decorated: decoratedBundle }
