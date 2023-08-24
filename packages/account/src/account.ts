@@ -107,93 +107,9 @@ export class Account {
     this.migrator = new migrator.Migrator(options.tracker, this.migrations, this.contexts)
   }
 
-  //
-  // start ethers.Signer required methods
-  //
-
-  _isSigner: boolean = true
-
-  signTransaction(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
-    throw new Error('Method not implemented.')
-  }
-
-  connect(_provider: ethers.providers.Provider): ethers.Signer {
-    throw new Error('Method not implemented.')
-  }
-
-  getBalance(_blockTag?: ethers.providers.BlockTag | undefined): Promise<ethers.BigNumber> {
-    throw new Error('Method not implemented.')
-  }
-
-  getTransactionCount(_blockTag?: ethers.providers.BlockTag | undefined): Promise<number> {
-    throw new Error('Method not implemented.')
-  }
-
-  estimateGas(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<ethers.BigNumber> {
-    throw new Error('Method not implemented.')
-  }
-
   getSigner(chainId: ChainId, options?: AccountSignerOptions): AccountSigner {
     return new AccountSigner(this, chainId, options)
   }
-
-  call(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    _blockTag?: ethers.providers.BlockTag | undefined
-  ): Promise<string> {
-    throw new Error('Method not implemented.')
-  }
-
-  getChainId(): Promise<number> {
-    throw new Error('Method not implemented.')
-  }
-
-  getGasPrice(): Promise<ethers.BigNumber> {
-    throw new Error('Method not implemented.')
-  }
-
-  getFeeData(): Promise<ethers.providers.FeeData> {
-    throw new Error('Method not implemented.')
-  }
-
-  private ensProvider() {
-    return this.networks.find((n) => n.chainId === 1)?.provider
-  }
-
-  async resolveName(name: string): Promise<string> {
-    const provider = this.ensProvider()
-
-    if (!provider) {
-      throw new Error('ENS network not found.')
-    }
-
-    const result = await provider.resolveName(name)
-    if (!result) {
-      throw new Error('Name not resolved.')
-    }
-
-    return result
-  }
-
-  checkTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): ethers.utils.Deferrable<ethers.providers.TransactionRequest> {
-    throw new Error('Method not implemented.')
-  }
-
-  populateTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): Promise<ethers.providers.TransactionRequest> {
-    throw new Error('Method not implemented.')
-  }
-
-  _checkProvider(_operation?: string | undefined): void {
-    throw new Error('Method not implemented.')
-  }
-
-  //
-  // start ethers.Signer required methods
-  //
 
   static async new(options: {
     config: commons.config.SimpleConfig
@@ -245,19 +161,11 @@ export class Account {
     }
   }
 
-  get provider() {
-    return this.providerFor(this.defaultNetwork())
-  }
-
   network(chainId: ethers.BigNumberish): NetworkConfig {
     const tcid = ethers.BigNumber.from(chainId)
     const found = this.networks.find(n => tcid.eq(n.chainId))
     if (!found) throw new Error(`Network not found for chainId ${chainId}`)
     return found
-  }
-
-  defaultNetwork(): ChainId {
-    return this.networks[0].chainId
   }
 
   providerFor(chainId: ethers.BigNumberish): ethers.providers.Provider {
@@ -696,7 +604,7 @@ export class Account {
 
   signMessage(
     message: ethers.BytesLike,
-    chainId: ethers.BigNumberish = this.defaultNetwork(),
+    chainId: ethers.BigNumberish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message), chainId, true, cantValidateBehavior)
@@ -882,7 +790,7 @@ export class Account {
 
   async sendTransaction(
     txs: commons.transaction.Transactionish,
-    chainId: ethers.BigNumberish = this.defaultNetwork(),
+    chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     skipPreDecorate: boolean = false,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
