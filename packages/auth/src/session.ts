@@ -1,4 +1,4 @@
-import { NetworkConfig, findNetworkConfig } from '@0xsequence/network'
+import { NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
@@ -38,7 +38,12 @@ export type SessionSettings = {
   contexts: commons.context.VersionedContext
   networks: NetworkConfig[]
   tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
-  orchestrator: Orchestrator
+}
+
+export const SessionSettingsDefault: SessionSettings = {
+  contexts: commons.context.defaultContexts,
+  networks: allNetworks,
+  tracker: new trackers.remote.RemoteConfigTracker('https://sessions.sequence.app'),
 }
 
 export class Session {
@@ -66,23 +71,24 @@ export class Session {
   }
 
   static async open(args: {
-    settings: SessionSettings
-    addSigners: commons.config.SimpleSigner[]
+    settings?: Partial<SessionSettings>
+    orchestrator: Orchestrator
+    addSigners?: commons.config.SimpleSigner[]
     referenceSigner: string
-    threshold: ethers.BigNumberish
-    selectWallet: (wallets: string[]) => Promise<string | undefined>
-    editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
+    threshold?: ethers.BigNumberish
+    selectWallet?: (wallets: string[]) => Promise<string | undefined>
+    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const { referenceSigner, threshold, addSigners, selectWallet, settings, editConfigOnMigration, onMigration } = args
-    const { contexts, networks, tracker, orchestrator } = settings
+    const { referenceSigner, threshold, addSigners, selectWallet, settings, editConfigOnMigration, onMigration, orchestrator } = args
+    const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
 
     // The reference network is mainnet, if mainnet is not available, we use the first network
     const referenceChainId = findNetworkConfig(networks, 1)?.chainId ?? networks[0]?.chainId
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
-    const selectedWallet = await selectWallet(foundWallets.map(w => w.wallet))
+    const selectedWallet = selectWallet ? await selectWallet(foundWallets.map(w => w.wallet)) : foundWallets[0]?.wallet
 
     let account: Account
 
@@ -102,7 +108,7 @@ export class Session {
 
       // NOTICE: We are performing the wallet update on a single chain, assuming that
       // all other networks have the same configuration. This is not always true.
-      if (addSigners.length > 0) {
+      if (addSigners && addSigners.length > 0) {
         // New wallets never need migrations
         // (because we create them on the latest version)
         let status = await account.status(referenceChainId)
@@ -127,7 +133,7 @@ export class Session {
               throw Error('Migration cancelled, cannot open session')
             }
 
-            const { failedChains } = await account.signAllMigrations(editConfigOnMigration)
+            const { failedChains } = await account.signAllMigrations(editConfigOnMigration || ((c) => c))
             if (failedChains.some(c => CRITICAL_CHAINS.includes(c))) {
               throw Error(`Failed to sign migrations on ${failedChains.join(', ')}`)
             }
@@ -157,15 +163,32 @@ export class Session {
         }
 
         const prevConfig = status.config
-        const newConfig = account.coders.config.editConfig(prevConfig, {
+        const nextConfig = account.coders.config.editConfig(prevConfig, {
           add: addSigners,
-          checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
           threshold
         })
 
-        await account.updateConfig(newConfig)
+        // Only update the onchain config if the imageHash has changed
+        if (
+          account.coders.config.imageHashOf(prevConfig) !==
+          account.coders.config.imageHashOf(nextConfig)
+        ) {
+          const newConfig = account.coders.config.editConfig(nextConfig, {
+            checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
+          })
+
+          await account.updateConfig(newConfig)
+        }
       }
     } else {
+      if (!addSigners || addSigners.length === 0) {
+        throw Error('Cannot create new account without signers')
+      }
+
+      if (!threshold) {
+        throw Error('Cannot create new account without threshold')
+      }
+
       // fresh account
       account = await Account.new({
         config: { threshold, checkpoint: 0, signers: addSigners },
@@ -187,29 +210,30 @@ export class Session {
       }
     }
 
-    let services: Services | undefined
+    let servicesObj: Services | undefined
 
-    if (settings.services) {
-      services = new Services(account, settings.services)
-      services.auth() // fire and forget
+    if (services) {
+      servicesObj = new Services(account, services)
+      servicesObj.auth() // fire and forget
     }
 
     return new Session(
       networks,
       contexts,
       account,
-      services
+      servicesObj
     )
   }
 
   static async load(args: {
-    settings: SessionSettings
+    settings?: Partial<SessionSettings>
+    orchestrator: Orchestrator
     dump: SessionDumpV1 | SessionDumpV2
     editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const { dump, settings, editConfigOnMigration, onMigration } = args
-    const { contexts, networks, tracker, orchestrator } = settings
+    const { dump, settings, editConfigOnMigration, onMigration, orchestrator } = args
+    const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
 
     let account: Account
 
@@ -256,12 +280,12 @@ export class Session {
       throw Error('Invalid dump format')
     }
 
-    let services: Services | undefined
+    let servicesObj: Services | undefined
 
-    if (settings.services) {
-      services = new Services(
+    if (services) {
+      servicesObj = new Services(
         account,
-        settings.services,
+        services,
         dump.jwt && {
           jwt: {
             token: Promise.resolve(dump.jwt.token),
@@ -276,7 +300,7 @@ export class Session {
       networks,
       contexts,
       account,
-      services
+      servicesObj
     )
   }
 }

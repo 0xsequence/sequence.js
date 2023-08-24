@@ -118,7 +118,6 @@ describe('Wallet integration', function () {
     simpleSettings = {
       contexts,
       networks,
-      orchestrator,
       tracker,
       services: {
         metadata: {
@@ -136,6 +135,7 @@ describe('Wallet integration', function () {
     orchestrator.setSigners([referenceSigner])
 
     const session = await Session.open({
+      orchestrator,
       settings: simpleSettings,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
@@ -170,6 +170,7 @@ describe('Wallet integration', function () {
 
     const session = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
@@ -184,6 +185,7 @@ describe('Wallet integration', function () {
 
     const session2 = await Session.load({
       settings: simpleSettings,
+      orchestrator,
       dump,
       editConfigOnMigration: config => config
     })
@@ -199,6 +201,7 @@ describe('Wallet integration', function () {
 
     const session = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
@@ -209,6 +212,7 @@ describe('Wallet integration', function () {
     const newSigner = randomWallet('Should open an existing session 2')
     const session2 = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: newSigner.address, weight: 1 }],
       threshold: 2,
@@ -238,6 +242,7 @@ describe('Wallet integration', function () {
 
     const oldSession = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
@@ -248,6 +253,7 @@ describe('Wallet integration', function () {
     const newSigner = randomWallet('Should create a new account if selectWallet returns undefined 2')
     const newSession = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [
         { address: referenceSigner.address, weight: 1 },
@@ -270,6 +276,7 @@ describe('Wallet integration', function () {
 
     const oldSession1 = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
@@ -279,6 +286,7 @@ describe('Wallet integration', function () {
 
     const oldSession2 = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: referenceSigner.address, weight: 2 }],
       threshold: 2,
@@ -289,6 +297,7 @@ describe('Wallet integration', function () {
     const newSigner = randomWallet('Should select between two wallets using selectWallet 2')
     const newSession1 = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: newSigner.address, weight: 1 }],
       threshold: 1,
@@ -305,6 +314,7 @@ describe('Wallet integration', function () {
 
     const newSession2 = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: newSigner.address, weight: 1 }],
       threshold: 1,
@@ -330,6 +340,7 @@ describe('Wallet integration', function () {
 
     const session = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [
         {
@@ -352,6 +363,7 @@ describe('Wallet integration', function () {
 
     const newSession = await Session.open({
       settings: simpleSettings,
+      orchestrator,
       referenceSigner: referenceSigner.address,
       addSigners: [{ address: signer2.address, weight: 1 }],
       threshold: 2,
@@ -412,6 +424,7 @@ describe('Wallet integration', function () {
 
       const newSession = await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 1,
@@ -433,6 +446,7 @@ describe('Wallet integration', function () {
     it('Should open and migrate dump', async () => {
       const newSession = await Session.load({
         settings: simpleSettings,
+        orchestrator,
         dump: v1SessionDump,
         editConfigOnMigration: config => config
       })
@@ -481,6 +495,7 @@ describe('Wallet integration', function () {
 
         const newSession = await Session.open({
           settings: simpleSettings,
+          orchestrator,
           referenceSigner: referenceSigner.address,
           addSigners: [{ address: newSigner2.address, weight: 1 }],
           threshold: 2,
@@ -503,6 +518,7 @@ describe('Wallet integration', function () {
       it('Should open and migrate dump', async () => {
         const newSession = await Session.load({
           settings: simpleSettings,
+          orchestrator,
           dump: v1SessionDump,
           editConfigOnMigration: config => config
         })
@@ -609,6 +625,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -628,6 +645,7 @@ describe('Wallet integration', function () {
 
       await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -638,6 +656,7 @@ describe('Wallet integration', function () {
       const newSigner = randomWallet('Should get JWT after updating session 2')
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 1,
@@ -658,6 +677,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -681,6 +701,7 @@ describe('Wallet integration', function () {
 
       let session = await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -695,6 +716,7 @@ describe('Wallet integration', function () {
 
       session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
@@ -719,6 +741,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -748,6 +771,7 @@ describe('Wallet integration', function () {
 
       await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -760,6 +784,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
@@ -788,6 +813,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -811,6 +837,7 @@ describe('Wallet integration', function () {
 
       await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -823,6 +850,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [
           { address: referenceSigner.address, weight: 1 },
@@ -848,6 +876,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -869,6 +898,7 @@ describe('Wallet integration', function () {
 
       await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -881,6 +911,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: newSigner.address, weight: 1 }],
         threshold: 2,
@@ -914,6 +945,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -939,6 +971,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -960,6 +993,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings: simpleSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -981,6 +1015,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: await referenceSigner.getAddress(),
         addSigners: [{ address: await referenceSigner.getAddress(), weight: 1 }],
         threshold: 1,
@@ -1017,6 +1052,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: await referenceSigner.getAddress(),
         addSigners: [{ address: await referenceSigner.getAddress(), weight: 1 }],
         threshold: 1,
@@ -1048,6 +1084,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings,
+        orchestrator,
         referenceSigner: await referenceSigner.getAddress(),
         addSigners: [{ address: await referenceSigner.getAddress(), weight: 1 }],
         threshold: 1,
@@ -1104,6 +1141,7 @@ describe('Wallet integration', function () {
               }
             }
           },
+          orchestrator,
           referenceSigner: referenceSigner.address,
           addSigners: [{ address: referenceSigner.address, weight: 1 }],
           threshold: 1,
@@ -1148,6 +1186,7 @@ describe('Wallet integration', function () {
               }
             }
           },
+          orchestrator,
           referenceSigner: referenceSigner.address,
           addSigners: [{ address: referenceSigner.address, weight: 1 }],
           threshold: 1,
@@ -1224,6 +1263,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings: noServiceSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -1242,6 +1282,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings: noServiceSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -1263,6 +1304,7 @@ describe('Wallet integration', function () {
 
       const session = await Session.open({
         settings: noServiceSettings,
+        orchestrator,
         referenceSigner: referenceSigner.address,
         addSigners: [{ address: referenceSigner.address, weight: 1 }],
         threshold: 1,
@@ -1274,6 +1316,7 @@ describe('Wallet integration', function () {
 
       const dump = await session.dump()
       const newSession = await Session.load({
+        orchestrator,
         settings: noServiceSettings,
         dump: dump,
         editConfigOnMigration: config => config
