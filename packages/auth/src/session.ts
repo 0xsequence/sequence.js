@@ -70,6 +70,32 @@ export class Session {
     return base
   }
 
+  static async singleSigner(args: {
+    settings?: Partial<SessionSettings>,
+    signer: ethers.Signer,
+    selectWallet?: (wallets: string[]) => Promise<string | undefined>,
+    onMigration?: (account: Account) => Promise<boolean>,
+    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config,
+  }): Promise<Session> {
+    const { signer } = args
+
+    const orchestrator = new Orchestrator([signer])
+    const referenceSigner = await signer.getAddress()
+    const threshold = 1
+    const addSigners = [{
+      weight: 1,
+      address: referenceSigner
+    }]
+
+    return Session.open({
+      ...args,
+      orchestrator,
+      referenceSigner,
+      threshold,
+      addSigners
+    })
+  }
+
   static async open(args: {
     settings?: Partial<SessionSettings>
     orchestrator: Orchestrator

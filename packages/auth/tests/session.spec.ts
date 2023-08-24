@@ -1325,6 +1325,69 @@ describe('Wallet integration', function () {
       expect(newSession.services).to.be.undefined
     })
   })
+
+  describe('single signer session', () => {
+    it('should create a new single signer session', async () => {
+      const signer = randomWallet('should create a new single signer session')
+
+      const session = await Session.singleSigner({
+        settings: simpleSettings,
+        signer: signer
+      })
+
+      expect(session.account.address).to.not.be.undefined
+
+      const status = await session.account.status(networks[0].chainId)
+      const config = status.config as v2.config.WalletConfig
+
+      expect(config.threshold).to.equal(1)
+      expect(v2.config.isSignerLeaf(config.tree)).to.be.true
+      expect(config.tree as v2.config.SignerLeaf).to.deep.equal({
+        weight: 1,
+        address: signer.address
+      })
+    })
+
+    it('should open same single signer session twice', async () => {
+      const signer = randomWallet('should open same single signer session twice')
+
+      const session1 = await Session.singleSigner({
+        settings: simpleSettings,
+        signer: signer
+      })
+
+      const address1 = session1.account.address
+      const status1 = await session1.account.status(networks[0].chainId)
+
+      const session2 = await Session.singleSigner({
+        settings: simpleSettings,
+        signer: signer
+      })
+
+      const address2 = session2.account.address
+      const status2 = await session2.account.status(networks[0].chainId)
+
+      expect(address1).to.equal(address2)
+
+      // should not change the config!
+      expect(status1.config).to.deep.equal(status2.config)
+    })
+
+    it('should send a transaction from a single signer session', async () => {
+      const signer = randomWallet('should send a transaction from a single signer session')
+
+      const session = await Session.singleSigner({
+        settings: simpleSettings,
+        signer: signer
+      })
+
+      const receipt = await session.account.sendTransaction({
+        to: ethers.Wallet.createRandom().address,
+      }, networks[0].chainId)
+
+      expect(receipt.hash).to.not.be.undefined
+    })
+  })
 })
 
 let nowCalls = 0
