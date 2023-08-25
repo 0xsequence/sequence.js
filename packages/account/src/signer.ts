@@ -6,6 +6,7 @@ import { FeeOption, proto } from "@0xsequence/relayer"
 import { isDeferrable } from "./utils"
 
 export type AccountSignerOptions = {
+  nonceSpace?: ethers.BigNumberish,
   cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw',
   stubSignatureOverrides?: Map<string, string>,
   selectFee?: (
@@ -148,7 +149,12 @@ export class AccountSigner implements ethers.Signer {
     return this.account.sendTransaction(
       finalTransactions,
       this.chainId,
-      prepare.feeQuote
+      prepare.feeQuote,
+      undefined,
+      undefined,
+      this.options?.nonceSpace ? {
+        nonceSpace: this.options.nonceSpace
+      } : undefined
     )
   }
 

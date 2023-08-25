@@ -613,6 +613,116 @@ describe('Account signer', () => {
           })
         })
       })
+
+      describe('multiple nonce spaces', async () => {
+        it('should send transactions on multiple nonce spaces at once', async () => {
+          const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
+          const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
+          const signer3 = account.getSigner(chainId, { nonceSpace: ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20))) })
+          const signer4 = account.getSigner(chainId, { nonceSpace: '0x04' })
+          const signer5 = account.getSigner(chainId, { nonceSpace: '0xffffffffffffffffffffffffffffffffffffffff' })
+
+          const results = await Promise.all([
+            signer1.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer2.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer3.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer4.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer5.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            })
+          ])
+
+          expect(results).to.have.lengthOf(5)
+          expect(results[0]).to.exist
+          expect(results[0].hash).to.exist
+          expect(results[1]).to.exist
+          expect(results[1].hash).to.exist
+          expect(results[2]).to.exist
+          expect(results[2].hash).to.exist
+          expect(results[3]).to.exist
+          expect(results[3].hash).to.exist
+          expect(results[4]).to.exist
+          expect(results[4].hash).to.exist
+
+          // hashes should be different
+          for (let i = 0; i < results.length; i++) {
+            for (let j = i + 1; j < results.length; j++) {
+              expect(results[i].hash).to.not.equal(results[j].hash)
+            }
+          }
+        })
+
+        it('should send multiple transactions on multiple nonce spaces at once', async () => {
+          const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
+          const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
+          const signer3 = account.getSigner(chainId, { nonceSpace: ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20))) })
+          const signer4 = account.getSigner(chainId, { nonceSpace: '0x04' })
+          const signer5 = account.getSigner(chainId, { nonceSpace: '0xffffffffffffffffffffffffffffffffffffffff' })
+
+          await Promise.all([
+            signer1.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer2.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer3.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer4.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer5.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            })
+          ])
+
+          const results = await Promise.all([
+            signer1.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer2.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer3.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer4.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            }),
+            signer5.sendTransaction({
+              to: ethers.Wallet.createRandom().address,
+            })
+          ])
+
+          expect(results).to.have.lengthOf(5)
+          expect(results[0]).to.exist
+          expect(results[0].hash).to.exist
+          expect(results[1]).to.exist
+          expect(results[1].hash).to.exist
+          expect(results[2]).to.exist
+          expect(results[2].hash).to.exist
+          expect(results[3]).to.exist
+          expect(results[3].hash).to.exist
+          expect(results[4]).to.exist
+          expect(results[4].hash).to.exist
+
+          // hashes should be different
+          for (let i = 0; i < results.length; i++) {
+            for (let j = i + 1; j < results.length; j++) {
+              expect(results[i].hash).to.not.equal(results[j].hash)
+            }
+          }
+        })
+      })
     })
   })
 })

@@ -613,13 +613,16 @@ export class Account {
   async signTransactions(
     txs: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish,
-    pstatus?: AccountStatus
+    pstatus?: AccountStatus,
+    options?: {
+      nonceSpace?: ethers.BigNumberish
+    }
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const status = pstatus || (await this.status(chainId))
     this.mustBeFullyMigrated(status)
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await wallet.signTransactions(txs)
+    const signed = await wallet.signTransactions(txs, options?.nonceSpace && { space: options?.nonceSpace })
 
     return {
       ...signed,
@@ -793,12 +796,15 @@ export class Account {
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     skipPreDecorate: boolean = false,
-    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
+    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
+    options?: {
+      nonceSpace?: ethers.BigNumberish
+    }
   ): Promise<ethers.providers.TransactionResponse> {
     const status = await this.status(chainId)
 
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
-    const signed = await this.signTransactions(predecorated, chainId)
+    const signed = await this.signTransactions(predecorated, chainId, undefined, options)
     // TODO: is it safe to pass status again here?
     return this.sendSignedTransactions(signed, chainId, quote, undefined, callback)
   }

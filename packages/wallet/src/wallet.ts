@@ -276,9 +276,27 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
+  async nonceFor(
+    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }
+  ): Promise<ethers.BigNumberish> {
+    let spaceValue
+  
+    if (nonce && (nonce as any).space) {
+      spaceValue = ethers.BigNumber.from((nonce as any).space)
+    } else if (nonce === undefined) {
+      spaceValue = 0
+    } else {
+      return nonce as ethers.BigNumberish
+    }
+  
+    const resultNonce = await this.reader().nonce(this.address, spaceValue)
+    if (resultNonce === undefined) throw new Error('Unable to determine nonce')
+    return commons.transaction.encodeNonce(spaceValue, resultNonce)
+  }
+
   async signTransactions(
     txs: Deferrable<commons.transaction.Transactionish>,
-    nonce?: ethers.BigNumberish
+    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
@@ -297,12 +315,7 @@ export class Wallet<
       })
     }
 
-    let defaultedNonce = nonce
-    if (defaultedNonce === undefined) {
-      defaultedNonce = await this.reader().nonce(this.address, 0)
-      if (defaultedNonce === undefined) throw new Error('Unable to determine nonce')
-    }
-
+    const defaultedNonce = await this.nonceFor(nonce)
     const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
     const signature = await this.signDigest(digest, { transactions })
 
