@@ -5,7 +5,7 @@ import { ethers } from 'ethers'
 import { tracker, trackers } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
 import { migrator } from '@0xsequence/migration'
-import { commons, v1 } from '@0xsequence/core'
+import { commons, universal, v1 } from '@0xsequence/core'
 import { Services, ServicesSettings, SessionJWT, SessionMeta } from './services'
 
 export interface SessionDumpV1 {
@@ -87,12 +87,41 @@ export class Session {
       address: referenceSigner
     }]
 
+    const selectWallet = args.selectWallet || (async (wallets: string[]) => {
+      if (wallets.length === 0) return undefined
+
+      // Find a wallet that was originally created
+      // as a 1/1 of the reference signer
+      const tracker = args.settings?.tracker ?? SessionSettingsDefault.tracker
+
+      const configs = await Promise.all(wallets.map(async (wallet) => {
+        const imageHash = await tracker.imageHashOfCounterfactualWallet({ wallet })
+
+        return {
+          wallet,
+          config: imageHash && await tracker.configOfImageHash({ imageHash: imageHash.imageHash })
+        }
+      }))
+
+      for (const config of configs) {
+        const coder = config.config && universal.genericCoderFor(config.config.version)
+        const signers = coder && config.config && coder.config.signersOf(config.config)
+
+        if (signers && signers.length === 1 && signers[0].address === referenceSigner) {
+          return config.wallet
+        }
+      }
+
+      return undefined
+    })
+
     return Session.open({
       ...args,
       orchestrator,
       referenceSigner,
       threshold,
-      addSigners
+      addSigners,
+      selectWallet
     })
   }
 
@@ -102,7 +131,7 @@ export class Session {
     addSigners?: commons.config.SimpleSigner[]
     referenceSigner: string
     threshold?: ethers.BigNumberish
-    selectWallet?: (wallets: string[]) => Promise<string | undefined>
+    selectWallet: (wallets: string[]) => Promise<string | undefined>
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
@@ -114,7 +143,7 @@ export class Session {
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
-    const selectedWallet = selectWallet ? await selectWallet(foundWallets.map(w => w.wallet)) : foundWallets[0]?.wallet
+    const selectedWallet = await selectWallet(foundWallets.map(w => w.wallet))
 
     let account: Account
 
