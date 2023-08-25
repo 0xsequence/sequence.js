@@ -1,5 +1,27 @@
 # @0xsequence/auth
 
+## 0.0.0-20230825081759
+
+### Minor Changes
+
+- Simpler support for sessions
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/migration@0.0.0-20230825081759
+  - @0xsequence/metadata@0.0.0-20230825081759
+  - @0xsequence/sessions@0.0.0-20230825081759
+  - @0xsequence/account@0.0.0-20230825081759
+  - @0xsequence/indexer@0.0.0-20230825081759
+  - @0xsequence/network@0.0.0-20230825081759
+  - @0xsequence/signhub@0.0.0-20230825081759
+  - @0xsequence/wallet@0.0.0-20230825081759
+  - @0xsequence/utils@0.0.0-20230825081759
+  - @0xsequence/core@0.0.0-20230825081759
+  - @0xsequence/abi@0.0.0-20230825081759
+  - @0xsequence/api@0.0.0-20230825081759
+
 ## 1.1.12
 
 ### Patch Changes

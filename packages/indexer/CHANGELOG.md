@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 0.0.0-20230825081759
+
+### Minor Changes
+
+- Simpler support for sessions
+
 ## 1.1.12
 
 ### Patch Changes
