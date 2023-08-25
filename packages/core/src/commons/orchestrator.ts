@@ -3,19 +3,6 @@ import { commons } from '..'
 import { Config } from './config'
 
 /**
- * Request metadata, used by the account to pass additional information through the orchestrator.
- */
-export type AccountSignRequestMetadata = {
-  chainId: ethers.BigNumberish,
-  decorate?: boolean,
-  cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
-}
-
-export function isAccountSignRequestMetadata(obj: any): obj is AccountSignRequestMetadata {
-  return obj && obj.chainId !== undefined
-}
-
-/**
  * Request metadata, used by the wallet to pass additional information through the orchestrator.
  */
 export type WalletSignRequestMetadata = {
@@ -37,6 +24,9 @@ export type WalletSignRequestMetadata = {
   // This is used only when a Sequence wallet is nested in another Sequence wallet
   // it contains the original metadata of the parent wallet.
   parent?: WalletSignRequestMetadata
+
+  decorate?: boolean,
+  cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
 }
 
 export function isWalletSignRequestMetadata(obj: any): obj is WalletSignRequestMetadata {

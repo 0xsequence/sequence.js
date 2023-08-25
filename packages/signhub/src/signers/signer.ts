@@ -8,12 +8,11 @@ export interface SapientSigner {
   buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined>
 
   /**
-   * Append transactions prior to decoration.
+   * Get signed transactions to be included in the next request.
    */
-  predecorateTransactions(
-    txs: commons.transaction.Transactionish,
+  predecorateSignedTransactions(
     metadata: Object
-  ): Promise<commons.transaction.Transactionish>
+  ): Promise<commons.transaction.SignedTransactionBundle[]>
 
   /**
    * Modify the transaction bundle before it is sent.

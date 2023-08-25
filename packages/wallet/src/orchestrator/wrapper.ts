@@ -16,12 +16,11 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.buildDeployTransaction(metadata as commons.WalletDeployMetadata | undefined)
   }
 
-  async predecorateTransactions(
-    txs: commons.transaction.Transactionish,
+  async predecorateSignedTransactions(
     _metadata: Object
-  ): Promise<commons.transaction.Transactionish> {
-    // Wallets don't predecorate
-    return txs
+  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+    // Wallets do not predecorate as they have no off chain knowledge
+    return []
   }
 
   async decorateTransactions(

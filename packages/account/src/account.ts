@@ -1,4 +1,5 @@
 import { commons, universal } from '@0xsequence/core'
+import { WalletSignRequestMetadata } from '@0xsequence/core/src/commons'
 import { migrator, defaults, version } from '@0xsequence/migration'
 import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
@@ -352,6 +353,21 @@ export class Account {
     }
   }
 
+  async predecorateSignedTransactions(
+    status: AccountStatus,
+    chainId: ethers.BigNumberish
+  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+    // Request signed predecorate transactions from child wallets
+    const bundles = await this.orchestrator.predecorateSignedTransactions({chainId})
+    // Get signed predecorate transaction
+    const predecorated = await this.predecorateTransactions([], status, chainId);
+    if (commons.transaction.fromTransactionish(this.address, predecorated).length > 0){
+      // Sign it
+      bundles.push(await this.signTransactions(predecorated, chainId))
+    }
+    return bundles
+  }
+
   async predecorateTransactions(
     txs: commons.transaction.Transactionish,
     status: AccountStatus,
@@ -370,32 +386,45 @@ export class Account {
   }
 
   async decorateTransactions(
-    bundle: commons.transaction.IntendedTransactionBundle,
-    status: AccountStatus
+    bundles: commons.transaction.IntendedTransactionBundle | commons.transaction.IntendedTransactionBundle[],
+    status: AccountStatus,
+    chainId?: ethers.BigNumberish
   ): Promise<commons.transaction.IntendedTransactionBundle> {
-    console.log('Decorating transactions on account')
-    // Allow children to decorate
-    // const decorated = await this.orchestrator.decorateTransactions(bundle, {chainId: bundle.chainId})
-
-    const bootstrapBundle = await this.buildBootstrapTransactions(status, bundle.chainId)
-    if (bootstrapBundle.transactions.length === 0) {
-      return bundle
+    if (!Array.isArray(bundles)) {
+      // Recurse with array
+      return this.decorateTransactions([bundles], status, chainId)
     }
 
+    // Default to chainId of first bundle when not supplied
+    chainId = chainId ?? bundles[0].chainId
+
+    const bootstrapBundle = await this.buildBootstrapTransactions(status, chainId)
+    const hasBootstrapTxs = bootstrapBundle.transactions.length > 0
+
+    if (!hasBootstrapTxs && bundles.length === 1) {
+      return bundles[0]
+    }
+
+    // Intent defaults to first bundle when no bootstrap transaction
+    const {entrypoint} = hasBootstrapTxs ? bootstrapBundle : bundles[0]
+
     const decoratedBundle = {
-      entrypoint: bootstrapBundle.entrypoint,
-      chainId: bundle.chainId,
-      intent: bundle.intent,
+      entrypoint,
+      chainId,
+      // Intent of the first bundle is used
+      intent: bundles[0].intent,
       transactions: [
         ...bootstrapBundle.transactions,
-        {
-          to: bundle.entrypoint,
-          data: commons.transaction.encodeBundleExecData(bundle),
-          gasLimit: 0,
-          delegateCall: false,
-          revertOnError: true,
-          value: 0
-        }
+        ...bundles.map((bundle): commons.transaction.Transaction => (
+          {
+            to: bundle.entrypoint,
+            data: commons.transaction.encodeBundleExecData(bundle),
+            gasLimit: 0,
+            delegateCall: false,
+            revertOnError: true,
+            value: 0
+          }
+        ))
       ]
     }
 
@@ -403,7 +432,7 @@ export class Account {
     if (!status.onChain.deployed) {
       decoratedBundle.intent.id = commons.transaction.subdigestOfGuestModuleTransactions(
         this.contexts[this.version].guestModule,
-        decoratedBundle.chainId,
+        chainId,
         decoratedBundle.transactions
       )
     }
@@ -438,7 +467,8 @@ export class Account {
     digest: ethers.BytesLike,
     chainId: ethers.BigNumberish,
     decorate: boolean = true,
-    cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
+    cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore',
+    metadata?: Object | WalletSignRequestMetadata
   ): Promise<string> {
     // If we are signing a digest for chainId zero then we can never be fully migrated
     // because Sequence v1 doesn't allow for signing a message on "all chains"
@@ -446,10 +476,8 @@ export class Account {
     // So we ignore the state on "chain zero" and instead use one of the states of the networks
     // wallet-webapp should ensure the wallet is as migrated as possible, trying to mimic
     // the behaviour of being migrated on all chains
-
     const chainRef = ethers.constants.Zero.eq(chainId) ? this.networks[0].chainId : chainId
     const status = await this.status(chainRef)
-
     this.mustBeFullyMigrated(status)
 
     // Check if we can validate onchain and what to do if we can't
@@ -459,7 +487,7 @@ export class Account {
     }
 
     const wallet = this.walletForStatus(chainId, status)
-    const signature = await wallet.signDigest(digest)
+    const signature = await wallet.signDigest(digest, metadata)
 
     const decorated = decorate ? this.decorateSignature(signature, status) : signature
 
@@ -567,6 +595,7 @@ export class Account {
 
       transactions.push(...deployTransaction.transactions)
     }
+    const len = transactions.length
 
     // Get pending migrations
     transactions.push(
@@ -628,7 +657,17 @@ export class Account {
     this.mustBeFullyMigrated(status)
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await wallet.signTransactions(txs, options?.nonceSpace && { space: options?.nonceSpace })
+
+    const metadata: WalletSignRequestMetadata = {
+      address: this.address,
+      digest: '', // Set in wallet.signTransactions
+      chainId,
+      config: { version: this.version },
+      decorate: true,
+      cantValidateBehavior: 'ignore',
+    }
+
+    const signed = await wallet.signTransactions(txs, options?.nonceSpace && { space: options?.nonceSpace }, metadata)
 
     return {
       ...signed,
@@ -713,13 +752,14 @@ export class Account {
   }
 
   async sendSignedTransactions(
-    signedBundle: commons.transaction.IntendedTransactionBundle,
+    signedBundle: commons.transaction.IntendedTransactionBundle | commons.transaction.IntendedTransactionBundle[],
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     pstatus?: AccountStatus,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
-    const status = pstatus || (await this.status(signedBundle.chainId))
+    const firstChainId = Array.isArray(signedBundle) ? signedBundle[0].chainId : signedBundle.chainId
+    const status = pstatus || (await this.status(firstChainId))
     this.mustBeFullyMigrated(status)
 
     const decoratedBundle = await this.decorateTransactions(signedBundle, status)
@@ -812,13 +852,27 @@ export class Account {
     options?: {
       nonceSpace?: ethers.BigNumberish
     }
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.providers.TransactionResponse | undefined> {
     const status = await this.status(chainId)
 
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
-    const signed = await this.signTransactions(predecorated, chainId, undefined, options)
-    // TODO: is it safe to pass status again here?
-    return this.sendSignedTransactions(signed, chainId, quote, undefined, callback)
+    const hasTxs = commons.transaction.fromTransactionish(this.address, predecorated).length > 0
+    const signed = hasTxs ? await this.signTransactions(predecorated, chainId, undefined, options) : undefined
+
+    const childBundles = await this.orchestrator.predecorateSignedTransactions({chainId})
+
+    const bundles: commons.transaction.SignedTransactionBundle[] = []
+    if (signed !== undefined && signed.transactions.length > 0) {
+      bundles.push(signed)
+    }
+    bundles.push(...(childBundles.filter(b => b.transactions.length > 0)))
+
+    if (bundles.length === 0) {
+      // Nothing to send?
+      return
+    }
+
+    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback)
   }
 
   async signTypedData(

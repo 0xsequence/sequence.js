@@ -6,6 +6,7 @@ import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
 import { resolveArrayProperties } from './utils'
+import { WalletSignRequestMetadata } from '@0xsequence/core/src/commons'
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -238,13 +239,15 @@ export class Wallet<
     return this.coders.config.update.buildTransaction(this.address, config, this.context)
   }
 
+  async getNonce(space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
+    const nonce = await this.reader().nonce(this.address, space)
+    if (nonce === undefined) throw new Error('Unable to determine nonce')
+    return nonce
+  }
+
   async signDigest(
     digest: ethers.utils.BytesLike,
-    request?: {
-      message?: ethers.utils.BytesLike
-      transactions?: commons.transaction.Transaction[]
-      nested?: commons.WalletSignRequestMetadata
-    }
+    metadata?: Object | WalletSignRequestMetadata,
   ): Promise<string> {
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
@@ -255,12 +258,12 @@ export class Wallet<
 
     // We build the metadata object, this contains additional information
     // that may be needed to sign the digest (by the other signers, or by the guard)
-    const metadata: commons.WalletSignRequestMetadata = {
+    const childMetadata: commons.WalletSignRequestMetadata = {
+      ...metadata, // Keep other metadata fields
       digest,
       chainId: this.chainId,
       address: this.address,
       config: this.config,
-      ...request
     }
 
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
@@ -270,11 +273,11 @@ export class Wallet<
     const signature = await this.orchestrator.signMessage({
       candidates: this.coders.config.signersOf(this.config).map(s => s.address),
       message: subdigestBytes,
-      metadata,
-      callback: (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
+      metadata: childMetadata,
+      callback: (status: Status, onNewMetadata: (_metadata: Object) => void): boolean => {
         const parts = statusToSignatureParts(status)
 
-        const newMetadata = { ...metadata, parts }
+        const newMetadata = { ...childMetadata, parts }
         onNewMetadata(newMetadata)
 
         return this.coders.signature.hasEnoughSigningPower(this.config, parts)
@@ -317,7 +320,8 @@ export class Wallet<
 
   async signTransactions(
     txs: Deferrable<commons.transaction.Transactionish>,
-    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }
+    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish },
+    metadata?: Object | WalletSignRequestMetadata
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
@@ -338,7 +342,12 @@ export class Wallet<
 
     const defaultedNonce = await this.fetchNonceOrSpace(nonce)
     const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
-    const signature = await this.signDigest(digest, { transactions })
+    const meta = {
+      digest,
+      transactions,
+      ...metadata,
+    }
+    const signature = await this.signDigest(digest, meta)
 
     return {
       intent: {

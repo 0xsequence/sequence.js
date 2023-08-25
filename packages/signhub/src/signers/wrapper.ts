@@ -18,11 +18,10 @@ export class SignerWrapper implements SapientSigner {
     return
   }
 
-  async predecorateTransactions(
-    txs: commons.transaction.Transactionish,
+  async predecorateSignedTransactions(
     _metadata: Object
-  ): Promise<commons.transaction.Transactionish> {
-    return txs
+  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+    return []
   }
 
   async decorateTransactions(

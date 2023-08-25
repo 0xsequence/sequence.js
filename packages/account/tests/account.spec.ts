@@ -36,6 +36,8 @@ describe('Account', () => {
     tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
   }
 
+  let defaultTx: commons.transaction.Transaction
+
   const createNestedAccount = async (entropy: string, bootstrapInner = true, bootstrapOuter = true) => {
     const signer = randomWallet(entropy)
 
@@ -70,12 +72,30 @@ describe('Account', () => {
     return {signer, accountInner, accountOuter}
   }
 
+  const getEth = async (address: string, signer?: ethers.Signer) => {
+    if (signer === undefined) {
+      // Do both networks
+      await getEth(address, signer1)
+      await getEth(address, signer2)
+      return
+    }
+    // Signer sends the address some ETH for defaultTx use
+    const tx = await signer.sendTransaction({
+      to: address,
+      value: 10, // Should be plenty
+    })
+    await tx.wait()
+  }
+
   before(async () => {
     provider1 = new ethers.providers.Web3Provider(hardhat.network.provider.send)
     provider2 = new ethers.providers.JsonRpcProvider('http://127.0.0.1:7048')
 
     // TODO: Implement migrations on local config tracker
-    tracker = new trackers.local.LocalConfigTracker(provider1) as any
+    tracker = new trackers.local.LocalConfigTracker(provider1)
+
+    signer1 = provider1.getSigner()
+    signer2 = provider2.getSigner()
 
     networks = [
       {
@@ -83,29 +103,31 @@ describe('Account', () => {
         name: 'hardhat',
         provider: provider1,
         rpcUrl: '',
-        relayer: new LocalRelayer(provider1.getSigner())
+        relayer: new LocalRelayer(signer1)
       },
       {
         chainId: 31338,
         name: 'hardhat2',
         provider: provider2,
         rpcUrl: 'http://127.0.0.1:7048',
-        relayer: new LocalRelayer(provider2.getSigner())
+        relayer: new LocalRelayer(signer2)
       }
     ]
 
-    signer1 = provider1.getSigner()
-    signer2 = provider2.getSigner()
-
-    contexts = await utils.context.deploySequenceContexts(signer1)
-    const context2 = await utils.context.deploySequenceContexts(signer2)
-
-    expect(contexts).to.deep.equal(context2)
+    const context1 = utils.context.deploySequenceContexts(signer1)
+    const context2 = utils.context.deploySequenceContexts(signer2)
+    expect(await context1).to.deep.equal(await context2)
+    contexts = await context1
 
     defaultArgs = {
       contexts,
       networks,
       tracker
+    }
+
+    defaultTx = {
+      to: await signer1.getAddress(),
+      value: 1,
     }
   })
 
@@ -127,7 +149,9 @@ describe('Account', () => {
       expect(account).to.be.instanceOf(Account)
       expect(account.address).to.not.be.undefined
 
-      await account.sendTransaction([], networks[0].chainId)
+      await getEth(account.address)
+      const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
+      expect(tx).to.not.be.undefined
 
       const status = await account.status(networks[0].chainId)
       expect(status.fullyMigrated).to.be.true
@@ -135,49 +159,39 @@ describe('Account', () => {
       expect(status.onChain.version).to.equal(2)
     })
 
-    it.only('Should create new nested accounts', async () => {
+    it('Should create new nested accounts', async () => {
       const { accountInner, accountOuter } = await createNestedAccount('create new nested accounts', false, false)
 
-      await accountOuter.sendTransaction([], networks[0].chainId)
+      await getEth(accountOuter.address)
+      await accountOuter.sendTransaction([defaultTx], networks[0].chainId)
 
       const statusOuter = await accountOuter.status(networks[0].chainId)
 
-      console.log(1)
       expect(statusOuter.fullyMigrated).to.be.true
-      console.log(2)
       expect(statusOuter.onChain.deployed).to.be.true
-      console.log(3)
       expect(statusOuter.onChain.version).to.equal(2)
 
       const statusInner = await accountInner.status(networks[0].chainId)
-      console.log(4)
       expect(statusInner.fullyMigrated).to.be.true
-      console.log(5)
       expect(statusInner.onChain.deployed).to.be.true
-      console.log(6)
       expect(statusInner.onChain.version).to.equal(2)
     })
 
     it('Should send tx on nested accounts', async () => {
       const { accountInner, accountOuter } = await createNestedAccount('sent tx on nested accounts', true, true)
 
-      await accountOuter.sendTransaction([], networks[0].chainId)
+      await getEth(accountOuter.address)
+      await accountOuter.sendTransaction([defaultTx], networks[0].chainId)
 
       const statusOuter = await accountOuter.status(networks[0].chainId)
 
-      console.log(1)
       expect(statusOuter.fullyMigrated).to.be.true
-      console.log(2)
       expect(statusOuter.onChain.deployed).to.be.true
-      console.log(3)
       expect(statusOuter.onChain.version).to.equal(2)
 
       const statusInner = await accountInner.status(networks[0].chainId)
-      console.log(4)
       expect(statusInner.fullyMigrated).to.be.true
-      console.log(5)
       expect(statusInner.onChain.deployed).to.be.true
-      console.log(6)
       expect(statusInner.onChain.version).to.equal(2)
     })
 
@@ -195,8 +209,9 @@ describe('Account', () => {
         orchestrator: new Orchestrator([signer])
       })
 
-      await account.sendTransaction([], networks[0].chainId)
-      await account.sendTransaction([], networks[1].chainId)
+      await getEth(account.address)
+      await account.sendTransaction([defaultTx], networks[0].chainId)
+      await account.sendTransaction([defaultTx], networks[1].chainId)
 
       const status1 = await account.status(networks[0].chainId)
       const status2 = await account.status(networks[1].chainId)
@@ -228,7 +243,8 @@ describe('Account', () => {
         orchestrator: new Orchestrator(rsigners.slice(0, 4))
       })
 
-      await account.sendTransaction([], networks[0].chainId)
+      await getEth(account.address)
+      await account.sendTransaction([defaultTx], networks[0].chainId)
 
       const status = await account.status(networks[0].chainId)
       expect(status.fullyMigrated).to.be.true
@@ -446,6 +462,7 @@ describe('Account', () => {
           config: simpleConfig1,
           orchestrator: new Orchestrator([signer1])
         })
+        await getEth(account.address)
 
         signer2a = randomWallet(`After upgrading ${signerIndex++}`)
         signer2b = randomWallet(`After upgrading ${signerIndex++}`)
@@ -471,7 +488,7 @@ describe('Account', () => {
       })
 
       it('Should send a transaction', async () => {
-        const tx = await account.sendTransaction([], networks[0].chainId)
+        const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
         expect(tx).to.not.be.undefined
 
         const status = await account.status(networks[0].chainId)
@@ -480,7 +497,7 @@ describe('Account', () => {
         expect(status.onChain.imageHash).to.equal(status.imageHash)
       })
 
-      it.only('Should send a transaction on nested account', async () => {
+      it('Should send a transaction on nested account', async () => {
         const configOuter = {
           threshold: 1,
           checkpoint: Math.floor(now() / 1000),
@@ -491,17 +508,16 @@ describe('Account', () => {
           config: configOuter,
           orchestrator: new Orchestrator([new AccountOrchestratorWrapper(account)])
         })
+
         await accountOuter.doBootstrap(networks[0].chainId)
 
         const tx = await accountOuter.sendTransaction([], networks[0].chainId)
         expect(tx).to.not.be.undefined
 
         const statusOuter = await accountOuter.status(networks[0].chainId)
-        console.log('checking outer status')
         expect(statusOuter.fullyMigrated).to.be.true
         expect(statusOuter.onChain.deployed).to.be.true
         expect(statusOuter.onChain.imageHash).to.equal(statusOuter.imageHash)
-        console.log('checking inner status')
 
         const status = await account.status(networks[0].chainId)
         expect(status.fullyMigrated).to.be.true
@@ -509,7 +525,7 @@ describe('Account', () => {
         expect(status.onChain.imageHash).to.equal(status.imageHash)
       })
 
-      it.only('Should send a transaction on undeployed nested account', async () => {
+      it('Should send a transaction on undeployed nested account', async () => {
         const configOuter = {
           threshold: 1,
           checkpoint: Math.floor(now() / 1000),
@@ -521,7 +537,8 @@ describe('Account', () => {
           orchestrator: new Orchestrator([new AccountOrchestratorWrapper(account)])
         })
 
-        const tx = await accountOuter.sendTransaction([], networks[0].chainId)
+        await getEth(accountOuter.address)
+        const tx = await accountOuter.sendTransaction([defaultTx], networks[0].chainId)
         expect(tx).to.not.be.undefined
 
         const status = await account.status(networks[0].chainId)
@@ -550,12 +567,12 @@ describe('Account', () => {
 
       it('Should fail to use old signer', async () => {
         account.setOrchestrator(new Orchestrator([signer1]))
-        const tx = account.sendTransaction([], networks[0].chainId)
+        const tx = account.sendTransaction([defaultTx], networks[0].chainId)
         await expect(tx).to.be.rejected
       })
 
       it('Should send a transaction on a different network', async () => {
-        const tx = await account.sendTransaction([], networks[1].chainId)
+        const tx = await account.sendTransaction([defaultTx], networks[1].chainId)
         expect(tx).to.not.be.undefined
 
         const status = await account.status(networks[1].chainId)
@@ -571,10 +588,11 @@ describe('Account', () => {
             address: account.address,
             orchestrator: new Orchestrator([signer2a, signer2b])
           })
+          await getEth(account.address)
         })
 
         it('Should send a transaction', async () => {
-          const tx = await account.sendTransaction([], networks[0].chainId)
+          const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
           expect(tx).to.not.be.undefined
 
           const status = await account.status(networks[0].chainId)
@@ -649,7 +667,7 @@ describe('Account', () => {
         })
 
         it('Should send a transaction', async () => {
-          const tx = await account.sendTransaction([], networks[0].chainId)
+          const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
           expect(tx).to.not.be.undefined
 
           const status = await account.status(networks[0].chainId)
@@ -682,11 +700,11 @@ describe('Account', () => {
 
       describe('After sending a transaction', () => {
         beforeEach(async () => {
-          await account.sendTransaction([], networks[0].chainId)
+          await account.sendTransaction([defaultTx], networks[0].chainId)
         })
 
         it('Should send a transaction in a different network', async () => {
-          const tx = await account.sendTransaction([], networks[1].chainId)
+          const tx = await account.sendTransaction([defaultTx], networks[1].chainId)
           expect(tx).to.not.be.undefined
 
           const status = await account.status(networks[1].chainId)
@@ -696,7 +714,7 @@ describe('Account', () => {
         })
 
         it('Should send a second transaction', async () => {
-          const tx = await account.sendTransaction([], networks[0].chainId)
+          const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
           expect(tx).to.not.be.undefined
         })
 
@@ -787,7 +805,8 @@ describe('Account', () => {
       expect(status.version).to.equal(1)
 
       // Sending a transaction should fail (not fully migrated)
-      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
+      await getEth(account.address)
+      await expect(account.sendTransaction([defaultTx], networks[0].chainId)).to.be.rejected
 
       // Should sign migration using the account
       await account.signAllMigrations(c => c)
@@ -801,7 +820,7 @@ describe('Account', () => {
       expect(status2.version).to.equal(2)
 
       // Send a transaction
-      const tx = await account.sendTransaction([], networks[0].chainId)
+      const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
       expect(tx).to.not.be.undefined
 
       const status3 = await account.status(networks[0].chainId)
@@ -813,7 +832,7 @@ describe('Account', () => {
       expect(status3.version).to.equal(2)
 
       // Send another transaction on another chain
-      const tx2 = await account.sendTransaction([], networks[1].chainId)
+      const tx2 = await account.sendTransaction([defaultTx], networks[1].chainId)
       expect(tx2).to.not.be.undefined
 
       const status4 = await account.status(networks[1].chainId)
@@ -896,8 +915,9 @@ describe('Account', () => {
       expect(status2.version).to.equal(1)
 
       // Signing transactions (on both networks) and signing messages should fail
-      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
-      await expect(account.sendTransaction([], networks[1].chainId)).to.be.rejected
+      await getEth(account.address)
+      await expect(account.sendTransaction([defaultTx], networks[0].chainId)).to.be.rejected
+      await expect(account.sendTransaction([defaultTx], networks[1].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[1].chainId)).to.be.rejected
 
@@ -907,7 +927,7 @@ describe('Account', () => {
       // and should take the wallet on-chain up to speed
       const configv2 = v2.config.ConfigCoder.fromSimple(simpleConfig)
 
-      const tx1 = await account.sendTransaction([], networks[0].chainId)
+      const tx1 = await account.sendTransaction([defaultTx], networks[0].chainId)
       expect(tx1).to.not.be.undefined
 
       const status1b = await account.status(networks[0].chainId)
@@ -918,7 +938,7 @@ describe('Account', () => {
       expect(status1b.imageHash).to.equal(v2.config.ConfigCoder.imageHashOf(configv2))
       expect(status1b.version).to.equal(2)
 
-      const tx2 = await account.sendTransaction([], networks[1].chainId)
+      const tx2 = await account.sendTransaction([defaultTx], networks[1].chainId)
       expect(tx2).to.not.be.undefined
 
       const status2b = await account.status(networks[1].chainId)
@@ -1024,8 +1044,9 @@ describe('Account', () => {
       expect(status2.imageHash).to.equal(imageHash1a)
 
       // Signing transactions (on both networks) and signing messages should fail
-      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
-      await expect(account.sendTransaction([], networks[1].chainId)).to.be.rejected
+      await getEth(account.address)
+      await expect(account.sendTransaction([defaultTx], networks[0].chainId)).to.be.rejected
+      await expect(account.sendTransaction([defaultTx], networks[1].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[1].chainId)).to.be.rejected
 
@@ -1055,8 +1076,8 @@ describe('Account', () => {
 
       // Sending a transaction should work for network 1
       // but fail for network 0, same with signing messages
-      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
-      await expect(account.sendTransaction([], networks[1].chainId)).to.be.fulfilled
+      await expect(account.sendTransaction([defaultTx], networks[0].chainId)).to.be.rejected
+      await expect(account.sendTransaction([defaultTx], networks[1].chainId)).to.be.fulfilled
 
       await expect(account.signMessage('0x00', networks[0].chainId)).to.be.rejected
       await expect(account.signMessage('0x00', networks[1].chainId)).to.be.fulfilled
@@ -1065,8 +1086,8 @@ describe('Account', () => {
       account.setOrchestrator(new Orchestrator([signer1, signer2]))
       await account.signAllMigrations(c => c)
 
-      await expect(account.sendTransaction([], networks[0].chainId)).to.be.fulfilled
-      await expect(account.sendTransaction([], networks[1].chainId)).to.be.fulfilled
+      await expect(account.sendTransaction([defaultTx], networks[0].chainId)).to.be.fulfilled
+      await expect(account.sendTransaction([defaultTx], networks[1].chainId)).to.be.fulfilled
 
       await expect(account.signMessage('0x00', networks[0].chainId)).to.be.fulfilled
       await expect(account.signMessage('0x00', networks[1].chainId)).to.be.fulfilled
@@ -1159,7 +1180,8 @@ describe('Account', () => {
       expect(status.version).to.equal(1)
 
       // Sending a transaction should fail (not fully migrated)
-      await expect(account.sendTransaction([], networks[0].chainId)).to.be.rejected
+      await getEth(account.address)
+      await expect(account.sendTransaction([defaultTx], networks[0].chainId)).to.be.rejected
 
       // Should sign migration using the account
       await account.signAllMigrations(c => {
@@ -1177,7 +1199,7 @@ describe('Account', () => {
 
       // Send a transaction
       orchestrator.setSigners([signer2])
-      const tx = await account.sendTransaction([], networks[0].chainId)
+      const tx = await account.sendTransaction([defaultTx], networks[0].chainId)
       expect(tx).to.not.be.undefined
 
       const status3 = await account.status(networks[0].chainId)
@@ -1189,7 +1211,7 @@ describe('Account', () => {
       expect(status3.version).to.equal(2)
 
       // Send another transaction on another chain
-      const tx2 = await account.sendTransaction([], networks[1].chainId)
+      const tx2 = await account.sendTransaction([defaultTx], networks[1].chainId)
       expect(tx2).to.not.be.undefined
 
       const status4 = await account.status(networks[1].chainId)

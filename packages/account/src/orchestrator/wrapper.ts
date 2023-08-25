@@ -1,6 +1,5 @@
 import { commons } from '@0xsequence/core'
 import { signers, Status } from '@0xsequence/signhub'
-import { Wallet } from '@0xsequence/wallet'
 import { ethers } from 'ethers'
 import { Account } from '../account'
 
@@ -34,13 +33,12 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.buildBootstrapTransactions(status, chainId)
   }
 
-  async predecorateTransactions(
-    txs: commons.transaction.Transactionish,
+  async predecorateSignedTransactions(
     metadata: Object
-  ): Promise<commons.transaction.Transactionish> {
+  ): Promise<commons.transaction.SignedTransactionBundle[]> {
     const chainId = this.getChainIdFromMetadata(metadata)
     const status = await this.account.status(chainId)
-    return this.account.predecorateTransactions(txs, status, chainId)
+    return this.account.predecorateSignedTransactions(status, chainId)
   }
 
   async decorateTransactions(
@@ -62,9 +60,8 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
       onStatus: (situation: string) => void
     }
   ): Promise<boolean> {
-    console.log('Signing digest for account orchestrator')
-    if (!commons.isAccountSignRequestMetadata(metadata)) {
-      throw new Error('AccountOrchestratorWrapper only supports account metadata requests')
+    if (!commons.isWalletSignRequestMetadata(metadata)) {
+      throw new Error('AccountOrchestratorWrapper only supports wallet metadata requests')
     }
 
     const { chainId, decorate } = metadata
@@ -75,7 +72,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     // For Sequence nested signatures we must use `signDigest` and not `signMessage`
     // otherwise the account will hash the digest and the signature will be invalid.
     try {
-      callbacks.onSignature(await this.account.signDigest(message, chainId, decorate, cantValidateBehavior))
+      callbacks.onSignature(await this.account.signDigest(message, chainId, decorate, cantValidateBehavior, metadata))
     } catch (err) {
       callbacks.onRejection('Unable to sign account')
       return false

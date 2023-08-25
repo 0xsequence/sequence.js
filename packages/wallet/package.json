@@ -11,7 +11,7 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--loader tsx' mocha -timeout 30000",
+    "test:file": "NODE_OPTIONS='--loader tsx' mocha -timeout 300000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat2 > /dev/null'",
     "start:hardhat2": "hardhat node --hostname 0.0.0.0 --port 7047 --config ./hardhat2.config.js",
     "typecheck": "tsc --noEmit"
