@@ -1,5 +1,32 @@
 # 0xsequence
 
+## 0.0.0-20230825151821
+
+### Minor Changes
+
+- Add support for custom nonce space
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/migration@0.0.0-20230825151821
+  - @0xsequence/multicall@0.0.0-20230825151821
+  - @0xsequence/metadata@0.0.0-20230825151821
+  - @0xsequence/provider@0.0.0-20230825151821
+  - @0xsequence/sessions@0.0.0-20230825151821
+  - @0xsequence/account@0.0.0-20230825151821
+  - @0xsequence/indexer@0.0.0-20230825151821
+  - @0xsequence/network@0.0.0-20230825151821
+  - @0xsequence/relayer@0.0.0-20230825151821
+  - @0xsequence/signhub@0.0.0-20230825151821
+  - @0xsequence/wallet@0.0.0-20230825151821
+  - @0xsequence/guard@0.0.0-20230825151821
+  - @0xsequence/utils@0.0.0-20230825151821
+  - @0xsequence/auth@0.0.0-20230825151821
+  - @0xsequence/core@0.0.0-20230825151821
+  - @0xsequence/abi@0.0.0-20230825151821
+  - @0xsequence/api@0.0.0-20230825151821
+
 ## 0.0.0-20230825081759
 
 ### Minor Changes

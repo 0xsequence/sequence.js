@@ -1,5 +1,17 @@
 # @0xsequence/replacer
 
+## 0.0.0-20230825151821
+
+### Minor Changes
+
+- Add support for custom nonce space
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@0.0.0-20230825151821
+  - @0xsequence/abi@0.0.0-20230825151821
+
 ## 0.0.0-20230825081759
 
 ### Minor Changes
