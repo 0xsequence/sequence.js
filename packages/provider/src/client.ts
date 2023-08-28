@@ -19,6 +19,8 @@ import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
 import { ethers } from 'ethers'
 
+import packageJson from '../package.json'
+
 /**
  *  This session class is meant to persist the state of the wallet connection
  *  whitin the dapp. This enables the client to retain the wallet address (and some more)
@@ -304,7 +306,10 @@ export class SequenceClient {
       }
     }
 
-    await this.openWallet(undefined, { type: 'connect', options: { ...options, networkId: this.getChainId() } })
+    await this.openWallet(undefined, {
+      type: 'connect',
+      options: { ...options, networkId: this.getChainId(), clientVersion: packageJson.version }
+    })
 
     const connectDetails = await this.transport.waitUntilConnected().catch((error): ConnectDetails => {
       if (error instanceof Error) {
@@ -344,7 +349,6 @@ export class SequenceClient {
   // Working with sendAsync is less idiomatic
   // but transport uses it instead of send, so we wrap it
   send(request: JsonRpcRequest, chainId?: number): Promise<any> {
-
     // Internally when sending requests we use `legacy_sign`
     // to avoid the default EIP6492 behavior overriding an explicit
     // "legacy sign" request, so we map the method here.
