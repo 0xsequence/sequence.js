@@ -211,7 +211,7 @@ export interface Settings {
    * the connect/authorize process */
   bannerUrl?: string
 
-  bannerSize?: 'small' | 'medium' | 'large'
+  bannerSize?: BannerSize
 
   /** Specify payment providers to use. If not specified,
    * all available payment providers will be enabled.
@@ -266,6 +266,7 @@ export type ThemeOption = 'light' | 'dark' | string
 export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
 export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 export type SignInOption = 'email' | 'google' | 'apple' | 'facebook' | 'discord' | 'twitch'
+export type BannerSize = 'small' | 'medium' // | 'large'
 
 export interface ConnectDetails {
   // chainId (in hex) and error are defined by EIP-1193 expected fields
