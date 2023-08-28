@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 1.1.13
+
+### Patch Changes
+
+- provider: pass client version with connect options
+- provider: removing large from BannerSize
+
 ## 1.1.12
 
 ### Patch Changes

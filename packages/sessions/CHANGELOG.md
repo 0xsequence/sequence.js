@@ -1,5 +1,17 @@
 # @0xsequence/sessions
 
+## 1.1.13
+
+### Patch Changes
+
+- provider: pass client version with connect options
+- provider: removing large from BannerSize
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.1.13
+  - @0xsequence/migration@1.1.13
+  - @0xsequence/replacer@1.1.13
+
 ## 1.1.12
 
 ### Patch Changes
