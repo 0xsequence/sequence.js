@@ -165,7 +165,7 @@ export interface ConnectOptions {
    * be determined and verified for integrity, and can be omitted. */
   origin?: string
 
-  /** expiry number (in seconds) to expire connect session. default is 1 week of seconds. */
+  /** expiry number (in seconds) that is used for ETHAuth proof. Default is 1 week in seconds. */
   expiry?: number
 
   /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
