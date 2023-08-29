@@ -394,7 +394,7 @@ importers:
         version: 2.0.0(hardhat@2.17.1)(web3@1.10.0)
       '@typechain/ethers-v5':
         specifier: ^10.1.1
-        version: 10.2.0(@ethersproject/abi@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/providers@5.7.2)(ethers@5.7.2)(typechain@8.1.1)(typescript@5.1.6)
+        version: 10.2.0(@ethersproject/abi@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/providers@5.7.2)(ethers@5.7.2)(typechain@8.1.1)(typescript@4.9.4)
       dotenv:
         specifier: ^16.0.3
         version: 16.0.3
@@ -403,7 +403,7 @@ importers:
         version: 5.7.2
       typechain:
         specifier: ^8.1.1
-        version: 8.1.1(typescript@5.1.6)
+        version: 8.1.1(typescript@4.9.4)
 
   packages/estimator:
     dependencies:
@@ -704,6 +704,12 @@ importers:
         specifier: ^3.7.2
         version: 3.7.3
     devDependencies:
+      ethers:
+        specifier: ^5.7.2
+        version: 5.7.2
+
+  packages/waas:
+    dependencies:
       ethers:
         specifier: ^5.7.2
         version: 5.7.2
@@ -3765,7 +3771,7 @@ packages:
       hardhat: ^2.0.0
     dependencies:
       ethers: 5.7.2
-      hardhat: 2.17.1(ts-node@10.9.1)(typescript@5.1.6)
+      hardhat: 2.17.1(ts-node@10.9.1)(typescript@4.9.4)
     dev: true
 
   /@nomiclabs/hardhat-web3@2.0.0(hardhat@2.17.1)(web3@1.10.0):
@@ -3775,7 +3781,7 @@ packages:
       web3: ^1.0.0-beta.36
     dependencies:
       '@types/bignumber.js': 5.0.0
-      hardhat: 2.17.1(ts-node@10.9.1)(typescript@5.1.6)
+      hardhat: 2.17.1(ts-node@10.9.1)(typescript@4.9.4)
       web3: 1.10.0
     dev: true
 
@@ -4081,7 +4087,7 @@ packages:
     resolution: {integrity: sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==}
     dev: true
 
-  /@typechain/ethers-v5@10.2.0(@ethersproject/abi@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/providers@5.7.2)(ethers@5.7.2)(typechain@8.1.1)(typescript@5.1.6):
+  /@typechain/ethers-v5@10.2.0(@ethersproject/abi@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/providers@5.7.2)(ethers@5.7.2)(typechain@8.1.1)(typescript@4.9.4):
     resolution: {integrity: sha512-ikaq0N/w9fABM+G01OFmU3U3dNnyRwEahkdvi9mqy1a3XwKiPZaF/lu54OcNaEWnpvEYyhhS0N7buCtLQqC92w==}
     peerDependencies:
       '@ethersproject/abi': ^5.0.0
@@ -4096,9 +4102,9 @@ packages:
       '@ethersproject/providers': 5.7.2
       ethers: 5.7.2
       lodash: 4.17.21
-      ts-essentials: 7.0.3(typescript@5.1.6)
-      typechain: 8.1.1(typescript@5.1.6)
-      typescript: 5.1.6
+      ts-essentials: 7.0.3(typescript@4.9.4)
+      typechain: 8.1.1(typescript@4.9.4)
+      typescript: 4.9.4
     dev: true
 
   /@types/async-eventemitter@0.2.1:
@@ -4114,7 +4120,7 @@ packages:
   /@types/bn.js@4.11.6:
     resolution: {integrity: sha512-pqr857jrp2kPuO9uRjZ3PwnJTjoQy+fcdxvBTvHm6dkmEL9q+hDD/2j/0ELOBPtPnS8LjCX0gI9nbl8lVkadpg==}
     dependencies:
-      '@types/node': 20.4.2
+      '@types/node': 18.16.1
     dev: true
 
   /@types/bn.js@5.1.1:
@@ -4190,7 +4196,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.4.2
+      '@types/node': 18.16.1
     dev: true
 
   /@types/html-minifier-terser@6.1.0:
@@ -4253,14 +4259,6 @@ packages:
     resolution: {integrity: sha512-DZxSZWXxFfOlx7k7Rv4LAyiMroaxa3Ly/7OOzZO8cBNho0YzAi4qlbrx8W27JGqG57IgR/6J7r+nOJWw6kcvZA==}
     dev: true
 
-  /@types/node@20.4.2:
-    resolution: {integrity: sha512-Dd0BYtWgnWJKwO1jkmTrzofjK2QXXcai0dmtzvIBhcA+RsG5h8R3xlyta0kGOZRNfL9GuRtb1knmPEhQrePCEw==}
-    dev: true
-
-  /@types/node@20.4.5:
-    resolution: {integrity: sha512-rt40Nk13II9JwQBdeYqmbn2Q6IVTA5uPhvSO+JVqdXw/6/4glI6oR9ezty/A9Hg5u7JH4OmYmuQ+XvjKm0Datg==}
-    dev: true
-
   /@types/normalize-package-data@2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
     dev: true
@@ -4268,7 +4266,7 @@ packages:
   /@types/pbkdf2@3.1.0:
     resolution: {integrity: sha512-Cf63Rv7jCQ0LaL8tNXmEyqTHuIJxRdlS5vMh1mj5voN4+QFhVZnlZruezqpWYDiJ8UTzhP0VmeLXCmBk66YrMQ==}
     dependencies:
-      '@types/node': 20.4.2
+      '@types/node': 18.16.1
     dev: true
 
   /@types/prettier@2.7.2:
@@ -4278,7 +4276,7 @@ packages:
   /@types/readable-stream@2.3.15:
     resolution: {integrity: sha512-oM5JSKQCcICF1wvGgmecmHldZ48OZamtMxcGGVICOJA8o8cahXC1zEVAif8iwoc5j8etxFaRFnf095+CDsuoFQ==}
     dependencies:
-      '@types/node': 20.4.5
+      '@types/node': 18.16.1
       safe-buffer: 5.1.2
     dev: true
 
@@ -4297,7 +4295,7 @@ packages:
   /@types/secp256k1@4.0.3:
     resolution: {integrity: sha512-Da66lEIFeIz9ltsdMZcpQvmrmmoqrfju8pm1BH8WbYjZSwUgCwXLb9C+9XYogwBITnbsSaMdVPb2ekf7TV+03w==}
     dependencies:
-      '@types/node': 20.4.2
+      '@types/node': 18.16.1
     dev: true
 
   /@types/seedrandom@3.0.1:
@@ -8978,7 +8976,7 @@ packages:
       - utf-8-validate
     dev: true
 
-  /hardhat@2.17.1(ts-node@10.9.1)(typescript@5.1.6):
+  /hardhat@2.17.1(ts-node@10.9.1)(typescript@4.9.4):
     resolution: {integrity: sha512-1PxRkfjhEzXs/wDxI5YgzYBxNmvzifBTjYzuopwel+vXpAhCudplusJthN5eig0FTs4qbi828DBIITEDh8x9LA==}
     hasBin: true
     peerDependencies:
@@ -9036,7 +9034,7 @@ packages:
       stacktrace-parser: 0.1.10
       ts-node: 10.9.1(@types/node@18.16.1)(typescript@4.9.4)
       tsort: 0.0.1
-      typescript: 5.1.6
+      typescript: 4.9.4
       undici: 5.22.1
       uuid: 8.3.2
       ws: 7.5.9
@@ -10055,7 +10053,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 20.4.2
+      '@types/node': 18.16.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true
@@ -13704,12 +13702,12 @@ packages:
       string-format: 2.0.0
     dev: true
 
-  /ts-essentials@7.0.3(typescript@5.1.6):
+  /ts-essentials@7.0.3(typescript@4.9.4):
     resolution: {integrity: sha512-8+gr5+lqO3G84KdiTSMRLtuyJ+nTBVRKuCrK4lidMPdVeEp0uqC875uE5NMcaA7YYMN7XsNiFQuMvasF8HT/xQ==}
     peerDependencies:
       typescript: '>=3.7.0'
     dependencies:
-      typescript: 5.1.6
+      typescript: 4.9.4
     dev: true
 
   /ts-node@10.9.1(@types/node@18.16.1)(typescript@4.9.4):
@@ -13886,7 +13884,7 @@ packages:
     resolution: {integrity: sha512-dzlvlNlt6AXU7EBSfpAscydQ7gXB+pPGsPnfJnZpiNJBDj7IaJzQlBZYGdEi4R9HmPdBv2XmWJ6YUtoTa7lmCw==}
     dev: true
 
-  /typechain@8.1.1(typescript@5.1.6):
+  /typechain@8.1.1(typescript@4.9.4):
     resolution: {integrity: sha512-uF/sUvnXTOVF2FHKhQYnxHk4su4JjZR8vr4mA2mBaRwHTbwh0jIlqARz9XJr1tA0l7afJGvEa1dTSi4zt039LQ==}
     hasBin: true
     peerDependencies:
@@ -13901,8 +13899,8 @@ packages:
       mkdirp: 1.0.4
       prettier: 2.8.8
       ts-command-line-args: 2.3.1
-      ts-essentials: 7.0.3(typescript@5.1.6)
-      typescript: 5.1.6
+      ts-essentials: 7.0.3(typescript@4.9.4)
+      typescript: 4.9.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -13929,12 +13927,6 @@ packages:
   /typescript@4.9.4:
     resolution: {integrity: sha512-Uz+dTXYzxXXbsFpM86Wh3dKCxrQqUcVMxwU54orwlJjOpO3ao8L7j5lH+dWfTwgCwIuM9GQ2kvVotzYJMXTBZg==}
     engines: {node: '>=4.2.0'}
-    dev: true
-
-  /typescript@5.1.6:
-    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
-    engines: {node: '>=14.17'}
-    hasBin: true
     dev: true
 
   /typeson-registry@1.0.0-alpha.39:

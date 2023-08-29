@@ -1,0 +1,23 @@
+{
+  "name": "@0xsequence/waas",
+  "version": "1.1.13",
+  "description": "waas session client",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-waas.cjs.js",
+  "module": "dist/0xsequence-waas.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "pnpm test:file tests/**/*.spec.ts",
+    "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
