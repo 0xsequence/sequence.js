@@ -20,7 +20,8 @@ export class GuardSigner implements signers.SapientSigner {
   constructor(
     public readonly address: string,
     public readonly url: string,
-    public readonly appendSuffix: boolean = false
+    public readonly appendSuffix: boolean = false,
+    private readonly onError?: (err: Error) => void
   ) {
     this.guard = new Guard(url, fetch)
   }
@@ -103,10 +104,12 @@ export class GuardSigner implements signers.SapientSigner {
         this.requests.delete(id)
       }
     } catch (e) {
+      console.log('in GuardSigner.evaluateRequest: ', e)
       // The guard signer may reject the request for a number of reasons
       // like for example, if it's being the first signer (it waits for other signers to sign first)
-      // for now we ignore all errors, but we should probably handle them
-      // TODO: Filter real errors from control flow errors
+      if (e.cause.includes('signer does not match latest image hash')) {
+        this.onError?.(e)
+      }
     }
   }
 
