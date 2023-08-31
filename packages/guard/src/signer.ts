@@ -104,12 +104,10 @@ export class GuardSigner implements signers.SapientSigner {
         this.requests.delete(id)
       }
     } catch (e) {
-      console.log('in GuardSigner.evaluateRequest: ', e)
       // The guard signer may reject the request for a number of reasons
       // like for example, if it's being the first signer (it waits for other signers to sign first)
-      if (e.cause.includes('signer does not match latest image hash')) {
-        this.onError?.(e)
-      }
+      // We always forward the error here and filter on client side.
+      this.onError?.(e)
     }
   }
 
