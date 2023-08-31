@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.1.14
+
+### Patch Changes
+
+- guard: add GuardSigner.onError
+
 ## 1.1.13
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.1.14
+
+### Patch Changes
+
+- guard: add GuardSigner.onError
+- Updated dependencies
+  - @0xsequence/core@1.1.14
+  - @0xsequence/indexer@1.1.14
+  - @0xsequence/relayer@1.1.14
+  - @0xsequence/utils@1.1.14
+
 ## 1.1.13
 
 ### Patch Changes
