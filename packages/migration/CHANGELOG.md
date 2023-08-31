@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.1.15
+
+### Patch Changes
+
+- guard: remove error filtering
+- Updated dependencies
+  - @0xsequence/abi@1.1.15
+  - @0xsequence/core@1.1.15
+  - @0xsequence/wallet@1.1.15
+
 ## 1.1.14
 
 ### Patch Changes

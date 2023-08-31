@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.1.15
+
+### Patch Changes
+
+- guard: remove error filtering
+- Updated dependencies
+  - @0xsequence/abi@1.1.15
+  - @0xsequence/core@1.1.15
+  - @0xsequence/network@1.1.15
+  - @0xsequence/relayer@1.1.15
+  - @0xsequence/signhub@1.1.15
+  - @0xsequence/utils@1.1.15
+
 ## 1.1.14
 
 ### Patch Changes

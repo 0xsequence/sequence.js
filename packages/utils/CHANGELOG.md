@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.1.15
+
+### Patch Changes
+
+- guard: remove error filtering
+
 ## 1.1.14
 
 ### Patch Changes

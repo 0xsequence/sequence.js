@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.1.15
+
+### Patch Changes
+
+- guard: remove error filtering
+- Updated dependencies
+  - @0xsequence/abi@1.1.15
+  - @0xsequence/account@1.1.15
+  - @0xsequence/api@1.1.15
+  - @0xsequence/auth@1.1.15
+  - @0xsequence/core@1.1.15
+  - @0xsequence/guard@1.1.15
+  - @0xsequence/indexer@1.1.15
+  - @0xsequence/metadata@1.1.15
+  - @0xsequence/migration@1.1.15
+  - @0xsequence/multicall@1.1.15
+  - @0xsequence/network@1.1.15
+  - @0xsequence/provider@1.1.15
+  - @0xsequence/relayer@1.1.15
+  - @0xsequence/sessions@1.1.15
+  - @0xsequence/signhub@1.1.15
+  - @0xsequence/utils@1.1.15
+  - @0xsequence/wallet@1.1.15
+
 ## 1.1.14
 
 ### Patch Changes
