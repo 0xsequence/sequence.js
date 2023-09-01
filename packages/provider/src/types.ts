@@ -165,7 +165,7 @@ export interface ConnectOptions {
    * be determined and verified for integrity, and can be omitted. */
   origin?: string
 
-  /** expiry number (in seconds) to expire connect session. default is 1 week of seconds. */
+  /** expiry number (in seconds) that is used for ETHAuth proof. Default is 1 week in seconds. */
   expiry?: number
 
   /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
@@ -183,6 +183,9 @@ export interface ConnectOptions {
   /** keepWalletOpened will keep the wallet window opened after connecting. The default
    * is to automatically close the wallet after connecting. */
   keepWalletOpened?: boolean
+
+  /** clientVersion is the sequence.js version of the dapp client. */
+  clientVersion?: string
 
   /** Options to further customize the wallet experience. */
   settings?: Settings
@@ -208,7 +211,7 @@ export interface Settings {
    * the connect/authorize process */
   bannerUrl?: string
 
-  bannerSize?: 'small' | 'medium' | 'large'
+  bannerSize?: BannerSize
 
   /** Specify payment providers to use. If not specified,
    * all available payment providers will be enabled.
@@ -263,6 +266,7 @@ export type ThemeOption = 'light' | 'dark' | string
 export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
 export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 export type SignInOption = 'email' | 'google' | 'apple' | 'facebook' | 'discord' | 'twitch'
+export type BannerSize = 'small' | 'medium' // | 'large'
 
 export interface ConnectDetails {
   // chainId (in hex) and error are defined by EIP-1193 expected fields

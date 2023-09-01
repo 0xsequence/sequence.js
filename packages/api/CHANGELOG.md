@@ -1,16 +1,23 @@
 # @0xsequence/api
 
-## 0.0.0-20230825151821
+## 1.1.15
 
-### Minor Changes
+### Patch Changes
 
-- Add support for custom nonce space
+- guard: remove error filtering
 
-## 0.0.0-20230825081759
+## 1.1.14
 
-### Minor Changes
+### Patch Changes
 
-- Simpler support for sessions
+- guard: add GuardSigner.onError
+
+## 1.1.13
+
+### Patch Changes
+
+- provider: pass client version with connect options
+- provider: removing large from BannerSize
 
 ## 1.1.12
 

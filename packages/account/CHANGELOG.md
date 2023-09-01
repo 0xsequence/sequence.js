@@ -1,38 +1,48 @@
 # @0xsequence/account
 
-## 0.0.0-20230825151821
-
-### Minor Changes
-
-- Add support for custom nonce space
+## 1.1.15
 
 ### Patch Changes
 
+- guard: remove error filtering
 - Updated dependencies
-  - @0xsequence/migration@0.0.0-20230825151821
-  - @0xsequence/sessions@0.0.0-20230825151821
-  - @0xsequence/network@0.0.0-20230825151821
-  - @0xsequence/relayer@0.0.0-20230825151821
-  - @0xsequence/wallet@0.0.0-20230825151821
-  - @0xsequence/utils@0.0.0-20230825151821
-  - @0xsequence/core@0.0.0-20230825151821
+  - @0xsequence/core@1.1.15
+  - @0xsequence/migration@1.1.15
+  - @0xsequence/network@1.1.15
+  - @0xsequence/relayer@1.1.15
+  - @0xsequence/sessions@1.1.15
+  - @0xsequence/utils@1.1.15
+  - @0xsequence/wallet@1.1.15
 
-## 0.0.0-20230825081759
-
-### Minor Changes
-
-- Simpler support for sessions
+## 1.1.14
 
 ### Patch Changes
 
+- guard: add GuardSigner.onError
 - Updated dependencies
-  - @0xsequence/migration@0.0.0-20230825081759
-  - @0xsequence/sessions@0.0.0-20230825081759
-  - @0xsequence/network@0.0.0-20230825081759
-  - @0xsequence/relayer@0.0.0-20230825081759
-  - @0xsequence/wallet@0.0.0-20230825081759
-  - @0xsequence/utils@0.0.0-20230825081759
-  - @0xsequence/core@0.0.0-20230825081759
+  - @0xsequence/core@1.1.14
+  - @0xsequence/migration@1.1.14
+  - @0xsequence/network@1.1.14
+  - @0xsequence/relayer@1.1.14
+  - @0xsequence/sessions@1.1.14
+  - @0xsequence/utils@1.1.14
+  - @0xsequence/wallet@1.1.14
+
+## 1.1.13
+
+### Patch Changes
+
+- provider: pass client version with connect options
+- provider: removing large from BannerSize
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.1.13
+  - @0xsequence/migration@1.1.13
+  - @0xsequence/network@1.1.13
+  - @0xsequence/relayer@1.1.13
+  - @0xsequence/sessions@1.1.13
+  - @0xsequence/utils@1.1.13
+  - @0xsequence/wallet@1.1.13
 
 ## 1.1.12
 

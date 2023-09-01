@@ -20,7 +20,8 @@ export class GuardSigner implements signers.SapientSigner {
   constructor(
     public readonly address: string,
     public readonly url: string,
-    public readonly appendSuffix: boolean = false
+    public readonly appendSuffix: boolean = false,
+    private readonly onError?: (err: Error) => void
   ) {
     this.guard = new Guard(url, fetch)
   }
@@ -105,8 +106,8 @@ export class GuardSigner implements signers.SapientSigner {
     } catch (e) {
       // The guard signer may reject the request for a number of reasons
       // like for example, if it's being the first signer (it waits for other signers to sign first)
-      // for now we ignore all errors, but we should probably handle them
-      // TODO: Filter real errors from control flow errors
+      // We always forward the error here and filter on client side.
+      this.onError?.(e)
     }
   }
 
