@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { Email, OAuthIdToken, PhoneNumber, SessionPayload, SessionReceipt, openSession } from "./payloads/session"
+import { SessionPayload, SessionReceipt, openSession } from "./payloads/session"
 import { Store, StoreObj } from "./store"
 import { TransactionsPayload, sendTransactions } from "./payloads/wallet"
 
@@ -31,13 +31,13 @@ export class Sequence {
    * @returns a session payload that **must** be sent to the waas API to complete the sign-in
    * @throws {Error} If the session is already signed in or there is a pending sign-in
    */
-  async signIn(proof: OAuthIdToken | Email | PhoneNumber): Promise<SessionPayload> {
+  async signIn(): Promise<SessionPayload> {
     const status = await this.status.get()
     if (status !== 'signed-out') {
       throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
     }
 
-    const result = await openSession(proof)
+    const result = await openSession()
 
     await Promise.all([
       this.status.set('signed-in'),

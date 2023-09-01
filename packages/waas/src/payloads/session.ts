@@ -3,28 +3,6 @@ import { ethers } from 'ethers'
 
 export type SessionPayload = {
   signer: string;
-
-  proof?: OAuthIdToken | Email | PhoneNumber;
-}
-
-export type OAuthIdToken = {
-  iss: string; // Issuer
-  sub: string; // Subject
-  aud: string; // Audience
-  exp: number; // Expiration Time
-  nbf: number; // Not Before
-  iat: number; // Issued At
-  jti: string; // JWT ID
-  email?: string; // User's email
-  phone_number?: string; // User's phone number
-}
-
-export type Email = {
-  email: string;
-}
-
-export type PhoneNumber = {
-  phoneNumber: string;
 }
 
 export type SessionReceipt = {
@@ -51,16 +29,13 @@ export function isSessionReceipt(receipt: any): receipt is SessionReceipt {
   )
 }
 
-export async function openSession(
-  proof: OAuthIdToken | Email | PhoneNumber
-): Promise<{ payload: SessionPayload, signer: ethers.Wallet }> {
+export async function openSession(): Promise<{ payload: SessionPayload, signer: ethers.Wallet }> {
   const signer = ethers.Wallet.createRandom()
 
   return {
     signer,
     payload: {
-      signer: signer.address,
-      proof
+      signer: signer.address
     }
   }
 }
