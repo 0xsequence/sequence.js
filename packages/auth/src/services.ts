@@ -27,18 +27,14 @@ export type SessionJWT = {
   expiration: number
 }
 
-type SessionJWTPromise = {
+export type SessionJWTPromise = {
   token: Promise<string>
   expiration: number
 }
 
-type ProofStringPromise = {
+export type ProofStringPromise = {
   proofString: Promise<string>
   expiration: number
-}
-
-function getJWTExpiration(jwt: string): number {
-  return jwtDecodeClaims<{ exp: number }>(jwt).exp
 }
 
 // Default session expiration of ETHAuth token (1 week)
@@ -83,6 +79,7 @@ export class Services {
 
   onAuth(cb: (result: PromiseSettledResult<void>) => void) {
     this.onAuthCallbacks.push(cb)
+    return () => this.onAuthCallbacks = this.onAuthCallbacks.filter(c => c !== cb)
   }
 
   async dump(): Promise<{
@@ -108,12 +105,12 @@ export class Services {
       if (!url) throw Error('No sequence api url')
   
       let jwtAuth: string | undefined
-      for (let i = 0; ; i++) {
+      for (let i = 1; ; i++) {
         try {
           jwtAuth = (await this.getJWT(true)).token
           break
         } catch (error) {
-          if (i === maxTries - 1) {
+          if (i === maxTries) {
             console.error(`couldn't authenticate after ${maxTries} attempts`, error)
             throw error
           }

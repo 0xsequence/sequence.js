@@ -276,7 +276,7 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async nonceFor(
+  async fetchNonceOrSpace(
     nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }
   ): Promise<ethers.BigNumberish> {
     let spaceValue
@@ -315,7 +315,7 @@ export class Wallet<
       })
     }
 
-    const defaultedNonce = await this.nonceFor(nonce)
+    const defaultedNonce = await this.fetchNonceOrSpace(nonce)
     const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
     const signature = await this.signDigest(digest, { transactions })
 

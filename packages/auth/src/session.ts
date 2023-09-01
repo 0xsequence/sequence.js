@@ -104,10 +104,14 @@ export class Session {
       }))
 
       for (const config of configs) {
-        const coder = config.config && universal.genericCoderFor(config.config.version)
-        const signers = coder && config.config && coder.config.signersOf(config.config)
+        if (!config.config) {
+          continue
+        }
 
-        if (signers && signers.length === 1 && signers[0].address === referenceSigner) {
+        const coder = universal.genericCoderFor(config.config.version)
+        const signers = coder.config.signersOf(config.config)
+    
+        if (signers.length === 1 && signers[0].address === referenceSigner) {
           return config.wallet
         }
       }
