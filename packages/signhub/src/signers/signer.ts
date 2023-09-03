@@ -46,7 +46,9 @@ export interface SapientSigner {
 
 export function isSapientSigner(signer: ethers.Signer | SapientSigner): signer is SapientSigner {
   return (
+    (signer as SapientSigner).getAddress !== undefined &&
     (signer as SapientSigner).buildDeployTransaction !== undefined &&
+    (signer as SapientSigner).predecorateSignedTransactions !== undefined &&
     (signer as SapientSigner).decorateTransactions !== undefined &&
     (signer as SapientSigner).requestSignature !== undefined &&
     (signer as SapientSigner).notifyStatusChange !== undefined

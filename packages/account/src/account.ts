@@ -758,8 +758,10 @@ export class Account {
     pstatus?: AccountStatus,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
   ): Promise<ethers.providers.TransactionResponse> {
-    const firstChainId = Array.isArray(signedBundle) ? signedBundle[0].chainId : signedBundle.chainId
-    const status = pstatus || (await this.status(firstChainId))
+    if (!Array.isArray(signedBundle)) {
+      return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback)
+    }
+    const status = pstatus || (await this.status(signedBundle[0].chainId))
     this.mustBeFullyMigrated(status)
 
     const decoratedBundle = await this.decorateTransactions(signedBundle, status)

@@ -3,12 +3,11 @@ import { signers, Status } from '@0xsequence/signhub'
 import { ethers } from 'ethers'
 import { Account } from '../account'
 
-export type AccountWrapperDecorateMetadata = {
-  chainId?: ethers.BigNumberish
+export type MetadataWithChainId = {
+  chainId: ethers.BigNumberish
 }
 
-// Implements a wrapper for using Sequence accounts as nested signers
-// in the signhub orchestrator. It only works for nested signatures.
+// Implements a wrapper for using Sequence accounts as nested signers in the signhub orchestrator.
 export class AccountOrchestratorWrapper implements signers.SapientSigner {
   constructor(public account: Account) {}
 
@@ -16,15 +15,14 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.address
   }
 
-  getChainIdFromMetadata(metadata: Object): ethers.BigNumberish {
-    let { chainId } = metadata as AccountWrapperDecorateMetadata
+  getChainIdFromMetadata(metadata: Object): ethers.BigNumber {
     try {
-      chainId = ethers.BigNumber.from(chainId)
+      const { chainId } = metadata as MetadataWithChainId
+      return ethers.BigNumber.from(chainId)
     } catch (err) {
       // Invalid metadata object
-      throw new Error('AccountOrchestratorWrapper only supports account status callbacks')
+      throw new Error('AccountOrchestratorWrapper only supports metadata with chain id')
     }
-    return chainId
   }
 
   async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
