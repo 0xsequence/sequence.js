@@ -1,12 +1,13 @@
 import { commons, universal } from '@0xsequence/core'
 import { migrator, defaults, version } from '@0xsequence/migration'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
 import { encodeTypedDataDigest, getDefaultConnectionInfo } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { AccountSigner, AccountSignerOptions } from './signer'
 
 export type AccountStatus = {
   original: {
@@ -106,6 +107,10 @@ export class Account {
     this.migrator = new migrator.Migrator(options.tracker, this.migrations, this.contexts)
   }
 
+  getSigner(chainId: ChainId, options?: AccountSignerOptions): AccountSigner {
+    return new AccountSigner(this, chainId, options)
+  }
+
   static async new(options: {
     config: commons.config.SimpleConfig
     tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
@@ -163,7 +168,7 @@ export class Account {
     return found
   }
 
-  provider(chainId: ethers.BigNumberish): ethers.providers.Provider {
+  providerFor(chainId: ethers.BigNumberish): ethers.providers.Provider {
     const found = this.network(chainId)
     if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
     return (
@@ -180,7 +185,7 @@ export class Account {
 
     // TODO: Networks should be able to provide a reader directly
     // and we should default to the on-chain reader
-    return new commons.reader.OnChainReader(this.provider(chainId))
+    return new commons.reader.OnChainReader(this.providerFor(chainId))
   }
 
   relayer(chainId: ethers.BigNumberish): Relayer {
@@ -608,13 +613,16 @@ export class Account {
   async signTransactions(
     txs: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish,
-    pstatus?: AccountStatus
+    pstatus?: AccountStatus,
+    options?: {
+      nonceSpace?: ethers.BigNumberish
+    }
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const status = pstatus || (await this.status(chainId))
     this.mustBeFullyMigrated(status)
 
     const wallet = this.walletForStatus(chainId, status)
-    const signed = await wallet.signTransactions(txs)
+    const signed = await wallet.signTransactions(txs, options?.nonceSpace && { space: options?.nonceSpace })
 
     return {
       ...signed,
@@ -788,11 +796,15 @@ export class Account {
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     skipPreDecorate: boolean = false,
-    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
+    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
+    options?: {
+      nonceSpace?: ethers.BigNumberish
+    }
   ): Promise<ethers.providers.TransactionResponse> {
     const status = await this.status(chainId)
+
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
-    const signed = await this.signTransactions(predecorated, chainId)
+    const signed = await this.signTransactions(predecorated, chainId, undefined, options)
     // TODO: is it safe to pass status again here?
     return this.sendSignedTransactions(signed, chainId, quote, undefined, callback)
   }

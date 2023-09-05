@@ -3,8 +3,8 @@ import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { ChainIdLike, toChainIdNumber } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 import { Signer } from '@0xsequence/wallet'
-import { DEFAULT_SESSION_EXPIRATION } from './session'
 import { Account } from '@0xsequence/account'
+import { DEFAULT_SESSION_EXPIRATION } from './services'
 
 export interface AuthorizationOptions {
   // app name string, ie 'Skyweaver'

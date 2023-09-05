@@ -1,6 +1,9 @@
 import { ethers } from 'ethers'
 import { allVersions } from '..'
 
+import { DeployedWalletContext as context1 } from '../v1'
+import { DeployedWalletContext as context2 } from '../v2'
+
 export type WalletContext = {
   version: number
   factory: string
@@ -101,4 +104,9 @@ export function isValidVersionedContext(contexts: VersionedContext): boolean {
 export function latestContext(contexts: VersionedContext): WalletContext {
   const versions = Object.keys(contexts).length
   return contexts[versions]
+}
+
+export const defaultContexts: VersionedContext = {
+  1: context1,
+  2: context2
 }
