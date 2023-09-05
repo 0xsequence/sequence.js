@@ -1,5 +1,16 @@
 # @0xsequence/core
 
+## 1.2.0
+
+### Minor Changes
+
+- split services from session, better local support
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@1.2.0
+
 ## 1.1.15
 
 ### Patch Changes

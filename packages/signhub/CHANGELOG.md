@@ -1,5 +1,11 @@
 # @0xsequence/signhub
 
+## 1.2.0
+
+### Minor Changes
+
+- split services from session, better local support
+
 ## 1.1.15
 
 ### Patch Changes
