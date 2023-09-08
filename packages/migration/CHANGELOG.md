@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.2.1
+
+### Patch Changes
+
+- auth: use sequence api chain id as reference chain id if available
+- Updated dependencies
+  - @0xsequence/abi@1.2.1
+  - @0xsequence/core@1.2.1
+  - @0xsequence/wallet@1.2.1
+
 ## 1.2.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.2.1
+
+### Patch Changes
+
+- auth: use sequence api chain id as reference chain id if available
+
 ## 1.2.0
 
 ### Minor Changes
