@@ -34,7 +34,7 @@ export function isSessionDumpV2(obj: any): obj is SessionDumpV2 {
 export const CRITICAL_CHAINS = [1, 137]
 
 export type SessionSettings = {
-  services?: ServicesSettings,
+  services?: ServicesSettings
   contexts: commons.context.VersionedContext
   networks: NetworkConfig[]
   tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
@@ -43,7 +43,7 @@ export type SessionSettings = {
 export const SessionSettingsDefault: SessionSettings = {
   contexts: commons.context.defaultContexts,
   networks: allNetworks,
-  tracker: new trackers.remote.RemoteConfigTracker('https://sessions.sequence.app'),
+  tracker: new trackers.remote.RemoteConfigTracker('https://sessions.sequence.app')
 }
 
 export class Session {
@@ -57,7 +57,7 @@ export class Session {
   async dump(): Promise<SessionDumpV2> {
     const base = {
       version: 2 as const,
-      address: this.account.address,
+      address: this.account.address
     }
 
     if (this.services) {
@@ -71,53 +71,59 @@ export class Session {
   }
 
   static async singleSigner(args: {
-    settings?: Partial<SessionSettings>,
-    signer: ethers.Signer,
-    selectWallet?: (wallets: string[]) => Promise<string | undefined>,
-    onMigration?: (account: Account) => Promise<boolean>,
-    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config,
+    settings?: Partial<SessionSettings>
+    signer: ethers.Signer
+    selectWallet?: (wallets: string[]) => Promise<string | undefined>
+    onMigration?: (account: Account) => Promise<boolean>
+    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
   }): Promise<Session> {
     const { signer } = args
 
     const orchestrator = new Orchestrator([signer])
     const referenceSigner = await signer.getAddress()
     const threshold = 1
-    const addSigners = [{
-      weight: 1,
-      address: referenceSigner
-    }]
-
-    const selectWallet = args.selectWallet || (async (wallets: string[]) => {
-      if (wallets.length === 0) return undefined
-
-      // Find a wallet that was originally created
-      // as a 1/1 of the reference signer
-      const tracker = args.settings?.tracker ?? SessionSettingsDefault.tracker
-
-      const configs = await Promise.all(wallets.map(async (wallet) => {
-        const imageHash = await tracker.imageHashOfCounterfactualWallet({ wallet })
-
-        return {
-          wallet,
-          config: imageHash && await tracker.configOfImageHash({ imageHash: imageHash.imageHash })
-        }
-      }))
-
-      for (const config of configs) {
-        if (!config.config) {
-          continue
-        }
-
-        const coder = universal.genericCoderFor(config.config.version)
-        const signers = coder.config.signersOf(config.config)
-    
-        if (signers.length === 1 && signers[0].address === referenceSigner) {
-          return config.wallet
-        }
+    const addSigners = [
+      {
+        weight: 1,
+        address: referenceSigner
       }
+    ]
 
-      return undefined
-    })
+    const selectWallet =
+      args.selectWallet ||
+      (async (wallets: string[]) => {
+        if (wallets.length === 0) return undefined
+
+        // Find a wallet that was originally created
+        // as a 1/1 of the reference signer
+        const tracker = args.settings?.tracker ?? SessionSettingsDefault.tracker
+
+        const configs = await Promise.all(
+          wallets.map(async wallet => {
+            const imageHash = await tracker.imageHashOfCounterfactualWallet({ wallet })
+
+            return {
+              wallet,
+              config: imageHash && (await tracker.configOfImageHash({ imageHash: imageHash.imageHash }))
+            }
+          })
+        )
+
+        for (const config of configs) {
+          if (!config.config) {
+            continue
+          }
+
+          const coder = universal.genericCoderFor(config.config.version)
+          const signers = coder.config.signersOf(config.config)
+
+          if (signers.length === 1 && signers[0].address === referenceSigner) {
+            return config.wallet
+          }
+        }
+
+        return undefined
+      })
 
     return Session.open({
       ...args,
@@ -139,7 +145,8 @@ export class Session {
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const { referenceSigner, threshold, addSigners, selectWallet, settings, editConfigOnMigration, onMigration, orchestrator } = args
+    const { referenceSigner, threshold, addSigners, selectWallet, settings, editConfigOnMigration, onMigration, orchestrator } =
+      args
     const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
 
     // The reference network is mainnet, if mainnet is not available, we use the first network
@@ -193,7 +200,7 @@ export class Session {
               throw Error('Migration cancelled, cannot open session')
             }
 
-            const { failedChains } = await account.signAllMigrations(editConfigOnMigration || ((c) => c))
+            const { failedChains } = await account.signAllMigrations(editConfigOnMigration || (c => c))
             if (failedChains.some(c => CRITICAL_CHAINS.includes(c))) {
               throw Error(`Failed to sign migrations on ${failedChains.join(', ')}`)
             }
@@ -229,12 +236,9 @@ export class Session {
         })
 
         // Only update the onchain config if the imageHash has changed
-        if (
-          account.coders.config.imageHashOf(prevConfig) !==
-          account.coders.config.imageHashOf(nextConfig)
-        ) {
+        if (account.coders.config.imageHashOf(prevConfig) !== account.coders.config.imageHashOf(nextConfig)) {
           const newConfig = account.coders.config.editConfig(nextConfig, {
-            checkpoint: account.coders.config.checkpointOf(prevConfig).add(1),
+            checkpoint: account.coders.config.checkpointOf(prevConfig).add(1)
           })
 
           await account.updateConfig(newConfig)
@@ -277,12 +281,7 @@ export class Session {
       servicesObj.auth() // fire and forget
     }
 
-    return new Session(
-      networks,
-      contexts,
-      account,
-      servicesObj
-    )
+    return new Session(networks, contexts, account, servicesObj)
   }
 
   static async load(args: {
@@ -356,12 +355,6 @@ export class Session {
       )
     }
 
-    return new Session(
-      networks,
-      contexts,
-      account,
-      servicesObj
-    )
+    return new Session(networks, contexts, account, servicesObj)
   }
 }
-

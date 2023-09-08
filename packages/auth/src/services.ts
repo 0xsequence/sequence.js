@@ -1,11 +1,11 @@
-import { Account } from "@0xsequence/account"
-import { SequenceAPIClient } from "@0xsequence/api"
-import { ETHAuth, Proof } from "@0xsequence/ethauth"
-import { Indexer, SequenceIndexerClient } from "@0xsequence/indexer"
-import { SequenceMetadataClient } from "@0xsequence/metadata"
-import { ChainIdLike, findNetworkConfig } from "@0xsequence/network"
-import { getDefaultConnectionInfo, jwtDecodeClaims } from "@0xsequence/utils"
-import { ethers } from "ethers"
+import { Account } from '@0xsequence/account'
+import { SequenceAPIClient } from '@0xsequence/api'
+import { ETHAuth, Proof } from '@0xsequence/ethauth'
+import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
+import { SequenceMetadataClient } from '@0xsequence/metadata'
+import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
+import { getDefaultConnectionInfo, jwtDecodeClaims } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
 export type SessionMeta = {
   // name of the app requesting the session, used with ETHAuth
@@ -16,10 +16,10 @@ export type SessionMeta = {
 }
 
 export type ServicesSettings = {
-  metadata: SessionMeta,
-  sequenceApiUrl: string,
-  sequenceApiChainId: ethers.BigNumberish,
-  sequenceMetadataUrl: string,
+  metadata: SessionMeta
+  sequenceApiUrl: string
+  sequenceApiChainId: ethers.BigNumberish
+  sequenceMetadataUrl: string
 }
 
 export type SessionJWT = {
@@ -61,7 +61,7 @@ export class Services {
     public readonly account: Account,
     public readonly settings: ServicesSettings,
     public readonly status: {
-      jwt?: SessionJWTPromise,
+      jwt?: SessionJWTPromise
       metadata?: SessionMeta
     } = {}
   ) {}
@@ -71,19 +71,16 @@ export class Services {
   }
 
   get expiration(): number {
-    return Math.max(
-      this.settings.metadata.expiration ??
-      DEFAULT_SESSION_EXPIRATION
-    , 120)
+    return Math.max(this.settings.metadata.expiration ?? DEFAULT_SESSION_EXPIRATION, 120)
   }
 
   onAuth(cb: (result: PromiseSettledResult<void>) => void) {
     this.onAuthCallbacks.push(cb)
-    return () => this.onAuthCallbacks = this.onAuthCallbacks.filter(c => c !== cb)
+    return () => (this.onAuthCallbacks = this.onAuthCallbacks.filter(c => c !== cb))
   }
 
   async dump(): Promise<{
-    jwt?: SessionJWT,
+    jwt?: SessionJWT
     metadata?: SessionMeta
   }> {
     if (!this.status.jwt) return { metadata: this.settings.metadata }
@@ -103,7 +100,7 @@ export class Services {
     this._initialAuthRequest = (async () => {
       const url = this.settings.sequenceApiUrl
       if (!url) throw Error('No sequence api url')
-  
+
       let jwtAuth: string | undefined
       for (let i = 1; ; i++) {
         try {
@@ -116,7 +113,7 @@ export class Services {
           }
         }
       }
-  
+
       return new SequenceAPIClient(url, jwtAuth)
     })()
 
@@ -205,10 +202,9 @@ export class Services {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
-      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(
-        getDefaultConnectionInfo(network.rpcUrl), {
-          name: '',
-          chainId: chainId.toNumber()
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+        name: '',
+        chainId: chainId.toNumber()
       })
 
       await ethAuth.decodeProof(proofString)
@@ -218,7 +214,6 @@ export class Services {
       return false
     }
   }
-
 
   async getAPIClient(tryAuth: boolean = true): Promise<SequenceAPIClient> {
     if (!this.apiClient) {
@@ -306,12 +301,7 @@ export class Services {
         // (torus + guard), but if we ever decide to allow cross-device login, then it will not work, because
         // those other signers may not be part of the configuration.
         //
-        this.account.signDigest(
-          proof.messageDigest(),
-          this.settings.sequenceApiChainId,
-          true,
-          'eip6492'
-        )
+        this.account.signDigest(proof.messageDigest(), this.settings.sequenceApiChainId, true, 'eip6492')
       )
         .then(s => {
           proof.signature = s

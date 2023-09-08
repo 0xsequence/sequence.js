@@ -93,22 +93,18 @@ describe('Account signer', () => {
         orchestrator: new Orchestrator([accountSigner])
       })
     })
-
-    ;([
-      31337,
-      31338
-    ]).map((chainId: number) => {
+    ;[31337, 31338].map((chainId: number) => {
       context(`for chain ${chainId}`, () => {
         it('should send transaction', async () => {
           const signer = account.getSigner(chainId)
 
           const res = await signer.sendTransaction({
-            to: ethers.Wallet.createRandom().address,
+            to: ethers.Wallet.createRandom().address
           })
-    
+
           expect(res).to.exist
           expect(res.hash).to.exist
-    
+
           expect(await signer.provider.getTransaction(res.hash)).to.exist
         })
 
@@ -117,16 +113,16 @@ describe('Account signer', () => {
 
           const res = await signer.sendTransaction([
             {
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             },
             {
-              to: ethers.Wallet.createRandom().address,
-            },
+              to: ethers.Wallet.createRandom().address
+            }
           ])
-    
+
           expect(res).to.exist
           expect(res.hash).to.exist
-    
+
           expect(await signer.provider.getTransaction(res.hash)).to.exist
         })
 
@@ -136,13 +132,13 @@ describe('Account signer', () => {
           expect(await signer.provider.getCode(account.address)).to.equal('0x')
 
           await signer.sendTransaction({
-            to: ethers.Wallet.createRandom().address,
+            to: ethers.Wallet.createRandom().address
           })
 
           expect(await signer.provider.getCode(account.address)).to.not.equal('0x')
 
           const res = await signer.sendTransaction({
-            to: ethers.Wallet.createRandom().address,
+            to: ethers.Wallet.createRandom().address
           })
 
           expect(res).to.exist
@@ -154,15 +150,14 @@ describe('Account signer', () => {
         it('should fail to sign message because not deployed', async () => {
           const signer = account.getSigner(chainId)
 
-          await expect(signer.signMessage(ethers.utils.randomBytes(32)))
-            .to.be.rejectedWith('Wallet cannot validate onchain')
+          await expect(signer.signMessage(ethers.utils.randomBytes(32))).to.be.rejectedWith('Wallet cannot validate onchain')
         })
 
         it('should sign message after deployment', async () => {
           const signer = account.getSigner(chainId)
 
           await signer.sendTransaction({
-            to: ethers.Wallet.createRandom().address,
+            to: ethers.Wallet.createRandom().address
           })
 
           expect(await signer.provider.getCode(account.address)).to.not.equal('0x')
@@ -185,14 +180,14 @@ describe('Account signer', () => {
         })
 
         it('should return chainId', async () => {
-          expect(chainId).to.equal(await account.getSigner(chainId).getChainId()) 
+          expect(chainId).to.equal(await account.getSigner(chainId).getChainId())
         })
 
         it('should call select fee even if there is no fee', async () => {
           let callsToSelectFee = 0
 
           const tx = {
-            to: ethers.Wallet.createRandom().address,
+            to: ethers.Wallet.createRandom().address
           }
 
           const signer = account.getSigner(chainId, {
@@ -235,9 +230,7 @@ describe('Account signer', () => {
                 return { options: this.feeOptions, quote: this.quote } as any
               }
 
-              async getFeeOptionsRaw(
-                _entrypoint: string, _data: ethers.utils.BytesLike
-              ): Promise<{ options: FeeOption[] }> {
+              async getFeeOptionsRaw(_entrypoint: string, _data: ethers.utils.BytesLike): Promise<{ options: FeeOption[] }> {
                 return { options: this.feeOptions, quote: this.quote } as any
               }
 
@@ -261,14 +254,10 @@ describe('Account signer', () => {
             getAccount = async (feeOptions: FeeOption[], feeQuote: FeeQuote) => {
               return Account.new({
                 ...defaultArgs,
-                networks: defaultArgs.networks.map((n) => {
+                networks: defaultArgs.networks.map(n => {
                   return {
                     ...n,
-                    relayer: new LocalRelayerWithFee(
-                      chainId === 31337 ? signer1 : signer2,
-                      feeOptions,
-                      feeQuote
-                    )
+                    relayer: new LocalRelayerWithFee(chainId === 31337 ? signer1 : signer2, feeOptions, feeQuote)
                   }
                 }),
                 config,
@@ -278,18 +267,20 @@ describe('Account signer', () => {
           })
 
           it('should automatically select native fee', async () => {
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'native',
-                symbol: 'ETH',
-                type: proto.FeeTokenType.UNKNOWN,
-                logoURL: ''
-              },
-              to: ethers.Wallet.createRandom().address,
-              value: '12',
-              gasLimit: 100000
-            }]
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'native',
+                  symbol: 'ETH',
+                  type: proto.FeeTokenType.UNKNOWN,
+                  logoURL: ''
+                },
+                to: ethers.Wallet.createRandom().address,
+                value: '12',
+                gasLimit: 100000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -305,7 +296,7 @@ describe('Account signer', () => {
             })
 
             const res = await signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.exist
@@ -315,18 +306,20 @@ describe('Account signer', () => {
           })
 
           it('should reject if balance is not enough', async () => {
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'native',
-                symbol: 'ETH',
-                type: proto.FeeTokenType.UNKNOWN,
-                logoURL: ''
-              },
-              to: ethers.Wallet.createRandom().address,
-              value: ethers.utils.parseEther('12').toString(),
-              gasLimit: 100000
-            }]
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'native',
+                  symbol: 'ETH',
+                  type: proto.FeeTokenType.UNKNOWN,
+                  logoURL: ''
+                },
+                to: ethers.Wallet.createRandom().address,
+                value: ethers.utils.parseEther('12').toString(),
+                gasLimit: 100000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -342,34 +335,31 @@ describe('Account signer', () => {
             })
 
             const res = signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.be.rejectedWith('No fee option available - not enough balance')
           })
 
           it('should automatically select ERC20 fee', async () => {
-            const token = await createERC20(
-              (chainId === 31337 ? signer1 : signer2),
-              "Test Token",
-              "TEST",
-              18
-            )
+            const token = await createERC20(chainId === 31337 ? signer1 : signer2, 'Test Token', 'TEST', 18)
 
             const recipient = ethers.Wallet.createRandom().address
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'TEST',
-                symbol: 'TEST',
-                type: proto.FeeTokenType.ERC20_TOKEN,
-                logoURL: '',
-                contractAddress: token.address
-              },
-              to: recipient,
-              value: ethers.utils.parseEther('250').toString(),
-              gasLimit: 400000
-            }]
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'TEST',
+                  symbol: 'TEST',
+                  type: proto.FeeTokenType.ERC20_TOKEN,
+                  logoURL: '',
+                  contractAddress: token.address
+                },
+                to: recipient,
+                value: ethers.utils.parseEther('250').toString(),
+                gasLimit: 400000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -382,7 +372,7 @@ describe('Account signer', () => {
             await token.mint(account.address, ethers.utils.parseEther('6000'))
 
             const res = await signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.exist
@@ -393,27 +383,24 @@ describe('Account signer', () => {
           })
 
           it('should reject ERC20 fee if not enough balance', async () => {
-            const token = await createERC20(
-              (chainId === 31337 ? signer1 : signer2),
-              "Test Token",
-              "TEST",
-              18
-            )
+            const token = await createERC20(chainId === 31337 ? signer1 : signer2, 'Test Token', 'TEST', 18)
 
             const recipient = ethers.Wallet.createRandom().address
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'TEST',
-                symbol: 'TEST',
-                type: proto.FeeTokenType.ERC20_TOKEN,
-                logoURL: '',
-                contractAddress: token.address
-              },
-              to: recipient,
-              value: ethers.utils.parseEther('250').toString(),
-              gasLimit: 400000
-            }]
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'TEST',
+                  symbol: 'TEST',
+                  type: proto.FeeTokenType.ERC20_TOKEN,
+                  logoURL: '',
+                  contractAddress: token.address
+                },
+                to: recipient,
+                value: ethers.utils.parseEther('250').toString(),
+                gasLimit: 400000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -424,45 +411,43 @@ describe('Account signer', () => {
             const signer = account.getSigner(chainId)
 
             const res = signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.be.rejectedWith('No fee option available - not enough balance')
           })
 
           it('should automatically select ERC20 fee if user has no ETH', async () => {
-            const token = await createERC20(
-              (chainId === 31337 ? signer1 : signer2),
-              "Test Token",
-              "TEST",
-              18
-            )
+            const token = await createERC20(chainId === 31337 ? signer1 : signer2, 'Test Token', 'TEST', 18)
 
             const recipient = ethers.Wallet.createRandom().address
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'native',
-                symbol: 'ETH',
-                type: proto.FeeTokenType.UNKNOWN,
-                logoURL: ''
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'native',
+                  symbol: 'ETH',
+                  type: proto.FeeTokenType.UNKNOWN,
+                  logoURL: ''
+                },
+                to: recipient,
+                value: ethers.utils.parseEther('12').toString(),
+                gasLimit: 100000
               },
-              to: recipient,
-              value: ethers.utils.parseEther('12').toString(),
-              gasLimit: 100000
-            }, {
-              token: {
-                chainId,
-                name: 'TEST',
-                symbol: 'TEST',
-                type: proto.FeeTokenType.ERC20_TOKEN,
-                logoURL: '',
-                contractAddress: token.address
-              },
-              to: recipient,
-              value: ethers.utils.parseEther('11').toString(),
-              gasLimit: 400000
-            }]
+              {
+                token: {
+                  chainId,
+                  name: 'TEST',
+                  symbol: 'TEST',
+                  type: proto.FeeTokenType.ERC20_TOKEN,
+                  logoURL: '',
+                  contractAddress: token.address
+                },
+                to: recipient,
+                value: ethers.utils.parseEther('11').toString(),
+                gasLimit: 400000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -475,7 +460,7 @@ describe('Account signer', () => {
             await token.mint(account.address, ethers.utils.parseEther('11'))
 
             const res = await signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.exist
@@ -488,37 +473,35 @@ describe('Account signer', () => {
           it('should select fee using callback (first option)', async () => {
             const recipient = ethers.Wallet.createRandom().address
 
-            const token = await createERC20(
-              (chainId === 31337 ? signer1 : signer2),
-              "Test Token",
-              "TEST",
-              18
-            )
+            const token = await createERC20(chainId === 31337 ? signer1 : signer2, 'Test Token', 'TEST', 18)
 
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'native',
-                symbol: 'ETH',
-                type: proto.FeeTokenType.UNKNOWN,
-                logoURL: ''
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'native',
+                  symbol: 'ETH',
+                  type: proto.FeeTokenType.UNKNOWN,
+                  logoURL: ''
+                },
+                to: recipient,
+                value: '5',
+                gasLimit: 100000
               },
-              to: recipient,
-              value: '5',
-              gasLimit: 100000
-            }, {
-              token: {
-                chainId,
-                name: 'TEST',
-                symbol: 'TEST',
-                type: proto.FeeTokenType.ERC20_TOKEN,
-                logoURL: '',
-                contractAddress: token.address
-              },
-              to: recipient,
-              value: ethers.utils.parseEther('11').toString(),
-              gasLimit: 400000
-            }]
+              {
+                token: {
+                  chainId,
+                  name: 'TEST',
+                  symbol: 'TEST',
+                  type: proto.FeeTokenType.ERC20_TOKEN,
+                  logoURL: '',
+                  contractAddress: token.address
+                },
+                to: recipient,
+                value: ethers.utils.parseEther('11').toString(),
+                gasLimit: 400000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -539,7 +522,7 @@ describe('Account signer', () => {
             })
 
             const res = await signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.exist
@@ -553,37 +536,35 @@ describe('Account signer', () => {
           it('should select fee using callback (second option)', async () => {
             const recipient = ethers.Wallet.createRandom().address
 
-            const token = await createERC20(
-              (chainId === 31337 ? signer1 : signer2),
-              "Test Token",
-              "TEST",
-              18
-            )
+            const token = await createERC20(chainId === 31337 ? signer1 : signer2, 'Test Token', 'TEST', 18)
 
-            const feeOptions: FeeOption[] = [{
-              token: {
-                chainId,
-                name: 'native',
-                symbol: 'ETH',
-                type: proto.FeeTokenType.UNKNOWN,
-                logoURL: ''
+            const feeOptions: FeeOption[] = [
+              {
+                token: {
+                  chainId,
+                  name: 'native',
+                  symbol: 'ETH',
+                  type: proto.FeeTokenType.UNKNOWN,
+                  logoURL: ''
+                },
+                to: recipient,
+                value: '5',
+                gasLimit: 100000
               },
-              to: recipient,
-              value: '5',
-              gasLimit: 100000
-            }, {
-              token: {
-                chainId,
-                name: 'TEST',
-                symbol: 'TEST',
-                type: proto.FeeTokenType.ERC20_TOKEN,
-                logoURL: '',
-                contractAddress: token.address
-              },
-              to: recipient,
-              value: ethers.utils.parseEther('11').toString(),
-              gasLimit: 400000
-            }]
+              {
+                token: {
+                  chainId,
+                  name: 'TEST',
+                  symbol: 'TEST',
+                  type: proto.FeeTokenType.ERC20_TOKEN,
+                  logoURL: '',
+                  contractAddress: token.address
+                },
+                to: recipient,
+                value: ethers.utils.parseEther('11').toString(),
+                gasLimit: 400000
+              }
+            ]
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
@@ -601,7 +582,7 @@ describe('Account signer', () => {
             await token.mint(account.address, ethers.utils.parseEther('11'))
 
             const res = await signer.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
 
             expect(res).to.exist
@@ -618,25 +599,27 @@ describe('Account signer', () => {
         it('should send transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const signer3 = account.getSigner(chainId, { nonceSpace: ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20))) })
+          const signer3 = account.getSigner(chainId, {
+            nonceSpace: ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
+          })
           const signer4 = account.getSigner(chainId, { nonceSpace: '0x04' })
           const signer5 = account.getSigner(chainId, { nonceSpace: '0xffffffffffffffffffffffffffffffffffffffff' })
 
           const results = await Promise.all([
             signer1.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer2.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer3.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer4.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer5.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
           ])
 
@@ -663,43 +646,45 @@ describe('Account signer', () => {
         it('should send multiple transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const signer3 = account.getSigner(chainId, { nonceSpace: ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20))) })
+          const signer3 = account.getSigner(chainId, {
+            nonceSpace: ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
+          })
           const signer4 = account.getSigner(chainId, { nonceSpace: '0x04' })
           const signer5 = account.getSigner(chainId, { nonceSpace: '0xffffffffffffffffffffffffffffffffffffffff' })
 
           await Promise.all([
             signer1.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer2.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer3.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer4.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer5.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
           ])
 
           const results = await Promise.all([
             signer1.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer2.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer3.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer4.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             }),
             signer5.sendTransaction({
-              to: ethers.Wallet.createRandom().address,
+              to: ethers.Wallet.createRandom().address
             })
           ])
 

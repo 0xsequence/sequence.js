@@ -276,11 +276,9 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async fetchNonceOrSpace(
-    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }
-  ): Promise<ethers.BigNumberish> {
+  async fetchNonceOrSpace(nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }): Promise<ethers.BigNumberish> {
     let spaceValue
-  
+
     if (nonce && (nonce as any).space) {
       spaceValue = ethers.BigNumber.from((nonce as any).space)
     } else if (nonce === undefined) {
@@ -288,7 +286,7 @@ export class Wallet<
     } else {
       return nonce as ethers.BigNumberish
     }
-  
+
     const resultNonce = await this.reader().nonce(this.address, spaceValue)
     if (resultNonce === undefined) throw new Error('Unable to determine nonce')
     return commons.transaction.encodeNonce(spaceValue, resultNonce)

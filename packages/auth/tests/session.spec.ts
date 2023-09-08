@@ -125,7 +125,7 @@ describe('Wallet integration', function () {
         },
         sequenceApiUrl: '',
         sequenceApiChainId: chainId,
-        sequenceMetadataUrl: '',
+        sequenceMetadataUrl: ''
       }
     }
   })
@@ -1182,7 +1182,7 @@ describe('Wallet integration', function () {
               ...settings.services!,
               metadata: {
                 name: 'Test',
-                expiration: 1,
+                expiration: 1
               }
             }
           },
@@ -1381,9 +1381,12 @@ describe('Wallet integration', function () {
         signer: signer
       })
 
-      const receipt = await session.account.sendTransaction({
-        to: ethers.Wallet.createRandom().address,
-      }, networks[0].chainId)
+      const receipt = await session.account.sendTransaction(
+        {
+          to: ethers.Wallet.createRandom().address
+        },
+        networks[0].chainId
+      )
 
       expect(receipt.hash).to.not.be.undefined
     })
