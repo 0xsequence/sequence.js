@@ -1,22 +1,19 @@
 
 import { ethers } from 'ethers'
+import { BasePacket } from '.'
 
-export type SessionPayload = {
+export type SessionPacket = BasePacket & {
+  code: 'openSession'
   signer: string;
+  proof: {
+    email?: string;
+    idToken?: string;
+  }
 }
 
 export type SessionReceipt = {
   signer: string;
   wallet: string;
-}
-
-export function isSessionPayload(payload: any): payload is SessionPayload {
-  return (
-    typeof payload === 'object' &&
-    typeof payload.signer === 'string' &&
-    typeof payload.idToken === 'string' &&
-    ethers.utils.isAddress(payload.signer)
-  )
 }
 
 export function isSessionReceipt(receipt: any): receipt is SessionReceipt {
@@ -29,13 +26,15 @@ export function isSessionReceipt(receipt: any): receipt is SessionReceipt {
   )
 }
 
-export async function openSession(): Promise<{ payload: SessionPayload, signer: ethers.Wallet }> {
+export async function openSession(): Promise<{ packet: SessionPacket, signer: ethers.Wallet }> {
   const signer = ethers.Wallet.createRandom()
 
   return {
     signer,
-    payload: {
-      signer: signer.address
-    }
+    packet: {
+      code: 'openSession',
+      signer: signer.address,
+      proof: {} // Will be added server-side
+    },
   }
 }
