@@ -1,4 +1,4 @@
-import { NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
 import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
@@ -143,7 +143,8 @@ export class Session {
     const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
 
     // The reference network is mainnet, if mainnet is not available, we use the first network
-    const referenceChainId = findNetworkConfig(networks, 1)?.chainId ?? networks[0]?.chainId
+    const referenceChainId =
+      findNetworkConfig(networks, settings?.services?.sequenceApiChainId ?? ChainId.MAINNET)?.chainId ?? networks[0]?.chainId
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
