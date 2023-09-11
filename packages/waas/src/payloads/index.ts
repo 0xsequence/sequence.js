@@ -15,7 +15,16 @@ export type Payload<T extends BasePacket> = {
   signatures: Signature[]
 }
 
+export function hashPacket(packet: Payload<BasePacket> | BasePacket): ethers.Bytes {
+  if ('version' in packet) {
+    packet = packet.packet
+  }
+
+  const encoded = ethers.utils.toUtf8Bytes(JSON.stringify(packet, null, 0))
+  return ethers.utils.arrayify(ethers.utils.keccak256(encoded))
+}
+
 export function signPacket(signer: ethers.Signer, packed: BasePacket): Promise<string> {
-  const encoded = ethers.utils.toUtf8Bytes(JSON.stringify(packed, null, 0))
-  return signer.signMessage(encoded)
+  const hash = hashPacket(packed)
+  return signer.signMessage(hash)
 }
