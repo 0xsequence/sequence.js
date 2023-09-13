@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 1.2.2
+
+### Patch Changes
+
+- provider: allow createContract calls
+- core: check for explicit zero address in contract deployments
+
 ## 1.2.1
 
 ### Patch Changes

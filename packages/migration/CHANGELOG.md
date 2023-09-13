@@ -1,5 +1,17 @@
 # @0xsequence/migration
 
+## 1.2.2
+
+### Patch Changes
+
+- provider: allow createContract calls
+- core: check for explicit zero address in contract deployments
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.2.2
+  - @0xsequence/core@1.2.2
+  - @0xsequence/wallet@1.2.2
+
 ## 1.2.1
 
 ### Patch Changes
