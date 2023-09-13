@@ -135,7 +135,7 @@ export function toSequenceTransaction(
   wallet: string,
   tx: ethers.providers.TransactionRequest
 ): { nonce?: ethers.BigNumberish; transaction: Transaction } {
-  if (tx.to) {
+  if (tx.to && tx.to !== ethers.constants.AddressZero) {
     return {
       nonce: tx.nonce,
       transaction: {
