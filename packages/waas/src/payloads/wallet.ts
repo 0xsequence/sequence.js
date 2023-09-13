@@ -3,7 +3,7 @@ import { BasePacket } from "."
 
 export type TransactionsPacket = BasePacket & {
   wallet: string;
-  chainId: number;
+  network: string;
 
   transactions: TransactionSubpacket[]
 }
@@ -57,7 +57,7 @@ export function sendTransactions(
   return {
     code: 'sendTransactions',
     wallet,
-    chainId,
+    network: chainId.toString(),
     transactions: transactions.map(tx => {
       if (!tx.to || tx.to === ethers.constants.AddressZero) {
         throw new Error('Contract creation not supported')
@@ -83,7 +83,7 @@ export function sendERC20(
   return {
     code: 'sendTransactions',
     wallet,
-    chainId,
+    network: chainId.toString(),
     transactions: [
       {
         type: 'erc20send',
@@ -107,7 +107,7 @@ export function sendERC721(
   return {
     code: 'sendTransactions',
     wallet,
-    chainId,
+    network: chainId.toString(),
     transactions: [
       {
         type: 'erc721send',
@@ -135,7 +135,7 @@ export function sendERC1155(
   return {
     code: 'sendTransactions',
     wallet,
-    chainId,
+    network: chainId.toString(),
     transactions: [
       {
         type: 'erc1155send',
@@ -159,10 +159,10 @@ export function combinePackets(
   }
 
   // Ensure that all packets are for the same network and wallet
-  const chainId = packets[0].chainId
+  const network = packets[0].network
   const wallet = packets[0].wallet
 
-  if (!packets.every(p => p.chainId === chainId)) {
+  if (!packets.every(p => p.network === network)) {
     throw new Error('All packets must have the same chainId')
   }
 
@@ -172,7 +172,7 @@ export function combinePackets(
 
   return {
     code: 'sendTransactions',
-    chainId,
+    network,
     wallet,
     transactions: packets.reduce((acc, p) => acc.concat(p.transactions), [] as TransactionSubpacket[])
   }
