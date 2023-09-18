@@ -15,6 +15,9 @@ export interface AuthorizationOptions {
 
   // expiry in seconds encoded in the message
   expiry?: number
+
+  // nonce for the authorization request
+  nonce?: number
 }
 
 export interface ETHAuthProof {
@@ -45,6 +48,7 @@ export const signAuthorization = async (
   }
   proof.claims.app = options.app
   proof.claims.ogn = options.origin
+  proof.claims.n = options.nonce
 
   proof.setExpiryIn(options.expiry ? Math.max(options.expiry, 200) : DEFAULT_SESSION_EXPIRATION)
 
