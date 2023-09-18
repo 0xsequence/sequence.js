@@ -159,10 +159,8 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       const authOptions: AuthorizationOptions = {
         app: options.app,
         origin: options.origin,
-        expiry: options.expiry
-      }
-      if (options.authorizeNonce) {
-        authOptions.nonce = options.authorizeNonce
+        expiry: options.expiry,
+        nonce = options.authorizeNonce
       }
       // if (typeof(options.authorize) === 'object') {
       //   authOptions = { ...authOptions, ...options.authorize }
