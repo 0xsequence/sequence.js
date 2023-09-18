@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.2.3
+
+### Patch Changes
+
+- auth, provider: connect to accept optional authorizeNonce
+- Updated dependencies
+  - @0xsequence/core@1.2.3
+
 ## 1.2.2
 
 ### Patch Changes

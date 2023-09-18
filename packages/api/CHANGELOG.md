@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.2.3
+
+### Patch Changes
+
+- auth, provider: connect to accept optional authorizeNonce
+
 ## 1.2.2
 
 ### Patch Changes
