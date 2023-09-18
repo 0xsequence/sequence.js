@@ -160,7 +160,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         app: options.app,
         origin: options.origin,
         expiry: options.expiry,
-        nonce = options.authorizeNonce
+        nonce: options.authorizeNonce
       }
       // if (typeof(options.authorize) === 'object') {
       //   authOptions = { ...authOptions, ...options.authorize }
