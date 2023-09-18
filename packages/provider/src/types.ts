@@ -171,8 +171,7 @@ export interface ConnectOptions {
   /** authorize will perform an ETHAuth eip712 signing and return the proof to the dapp. */
   authorize?: boolean
 
-  /** authorizeNonce number is an optional number to be passed toe ETHAuth nonce claim for extra
-   * challenge and security feature. **/
+  /** authorizeNonce is an optional number to be passed as ETHAuth's nonce claim for replay protection. **/
   authorizeNonce?: number
 
   /** authorizeVersion is the version of the SDK that will validate the ETHAuth proof. */
