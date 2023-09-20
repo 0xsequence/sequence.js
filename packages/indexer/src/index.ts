@@ -29,7 +29,10 @@ const fetch = typeof global === 'object' ? global.fetch : window.fetch
 export class SequenceIndexerClient extends IndexerRpc {
   constructor(
     hostname: string,
-    public jwtAuth?: string
+    public authorization?: {
+      jwtAuth?: string
+      tokenKey?: string
+    }
   ) {
     super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
     this.fetch = this._fetch
@@ -39,8 +42,15 @@ export class SequenceIndexerClient extends IndexerRpc {
     // automatically include jwt auth header to requests
     // if its been set on the api client
     const headers: { [key: string]: any } = {}
-    if (this.jwtAuth && this.jwtAuth.length > 0) {
-      headers['Authorization'] = `BEARER ${this.jwtAuth}`
+
+    const {jwtAuth, tokenKey} = this.authorization || {}
+
+    if (jwtAuth && jwtAuth.length > 0) {
+      headers['Authorization'] = `BEARER ${jwtAuth}`
+    }
+
+    if (tokenKey && tokenKey.length > 0) {
+      headers['X-Sequence-Token-Key'] = `${tokenKey}`
     }
 
     // before the request is made
