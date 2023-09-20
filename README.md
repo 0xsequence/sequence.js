@@ -94,12 +94,10 @@ and enjoyable.
 
 ## How to do a snapshot release
 
-NOTE: snapshot release is for dev preview, it's similar to the above, but:
+Snapshot releases are versioned as 0.0.0-YYYYmmddHHMMSS and are intended for testing builds only.
 
-1. `pnpm changeset`
-2. `pnpm changeset version --snapshot`
-3. `pnpm changeset publish --tag snapshot`
-
+1. `pnpm changeset` (the message is not important -- select all packages even if unchanged)
+2. `pnpm snapshot`
 
 ## NOTES
 
