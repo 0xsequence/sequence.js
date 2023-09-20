@@ -96,8 +96,8 @@ and enjoyable.
 
 Snapshot releases are versioned as 0.0.0-YYYYmmddHHMMSS and are intended for testing builds only.
 
-1. `pnpm changeset` (the message is not important -- select all packages even if unchanged)
-2. `pnpm snapshot`
+1. `pnpm snapshot` (select all packages even if unchanged, the message is not important)
+2. Do not commit any changes to package.json's or CHANGELOG.md's that happened during 1.
 
 ## NOTES
 
