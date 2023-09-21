@@ -266,7 +266,7 @@ export interface Settings {
  * you can use the camel case version of the name in the wallet settings.
  * For example: "Blue Dark" on wallet UI can be passed as "blueDark" */
 export type ThemeOption = 'light' | 'dark' | string
-export type PaymentProviderOption = 'moonpay' | 'wyre' | 'ramp'
+export type PaymentProviderOption = 'ramp' | 'moonpay' | 'transak' | 'onmeta' | 'paytrie' | 'sardine'
 export type CurrencyOption = 'usdc' | 'eth' | 'matic'
 export type SignInOption = 'email' | 'google' | 'apple' | 'facebook' | 'discord' | 'twitch'
 export type BannerSize = 'small' | 'medium' // | 'large'
