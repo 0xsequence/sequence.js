@@ -24,3 +24,23 @@ export class StoreObj<T extends string | undefined> {
     }
   }
 }
+
+export class LocalStore implements Store {
+  constructor() {
+    if (!window.localStorage) {
+      throw new Error('No localStorage')
+    }
+  }
+
+  async get(key: string): Promise<string | null> {
+    return window.localStorage.getItem(key)
+  }
+
+  async set(key: string, value: string | null): Promise<void> {
+    if (!value) {
+      window.localStorage.removeItem(key)
+    } else {
+      window.localStorage.setItem(key, value)
+    }
+  }
+}

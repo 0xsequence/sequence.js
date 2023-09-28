@@ -1,8 +1,9 @@
 import { ethers } from "ethers"
-import { SessionPacket, SessionReceipt, openSession } from "./payloads/session"
+import { SessionPacket, openSession } from "./payloads/packets/session"
 import { Store, StoreObj } from "./store"
-import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/wallet"
 import { BasePacket, Payload, signPacket } from "./payloads"
+import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
+import { OpenSessionResponse } from "./payloads/responses"
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -13,13 +14,17 @@ const SEQUENCE_WAAS_STATUS_KEY = '@0xsequence.waas.status'
 export class Sequence {
   readonly VERSION = '0.0.0-dev1'
 
-  private readonly status = new StoreObj<status>(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
-  private readonly signer = new StoreObj<string | undefined>(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
-  private readonly wallet = new StoreObj<string | undefined>(this.store, SEQUENCE_WAAS_WALLET_KEY, undefined)
+  private readonly status: StoreObj<status>
+  private readonly signer: StoreObj<string | undefined>
+  private readonly wallet: StoreObj<string | undefined>
 
   constructor (
     private readonly store: Store,
-  ) {}
+  ) {
+    this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
+    this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
+    this.wallet = new StoreObj(this.store, SEQUENCE_WAAS_WALLET_KEY, undefined)
+  }
 
   private async getWalletAddress() {
     if (!(await this.isSignedIn())) {
@@ -79,14 +84,14 @@ export class Sequence {
    */
   async signIn(): Promise<Payload<SessionPacket>> {
     const status = await this.status.get()
-    if (status !== 'signed-out') {
-      throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
-    }
+    // if (status !== 'signed-out') {
+    //   throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
+    // }
 
     const result = await openSession()
 
     await Promise.all([
-      this.status.set('signed-in'),
+      this.status.set('pending'),
       this.signer.set(result.signer.privateKey)
     ])
 
@@ -113,25 +118,33 @@ export class Sequence {
    * @returns The wallet address of the user that signed in
    * @throws {Error} If there is no pending sign-in or the receipt is invalid
    */
-  async completeSignIn(receipt: SessionReceipt) {
+  async completeSignIn(receipt: OpenSessionResponse): Promise<string> {
+    if ((receipt as any).result) {
+      return this.completeSignIn((receipt as any).result)
+    }
+
     const status = await this.status.get()
     const signerPk = await this.signer.get()
+
+    if (receipt.code !== 'sessionOpened') {
+      throw new Error('Invalid receipt')
+    }
 
     if (status !== 'pending' || !signerPk) {
       throw new Error('No pending sign in')
     }
 
     const signer = new ethers.Wallet(signerPk)
-    if (signer.address !== receipt.signer) {
+    if (signer.address.toLowerCase() !== receipt.data.sessionId.toLowerCase()) {
       throw new Error('Invalid signer')
     }
 
     await Promise.all([
       this.status.set('signed-in'),
-      this.signer.set(receipt.wallet)
+      this.wallet.set(receipt.data.wallet)
     ])
 
-    return receipt.wallet
+    return receipt.data.wallet
   }
 
   async isSignedIn() {

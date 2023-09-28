@@ -713,6 +713,9 @@ importers:
       ethers:
         specifier: ^5.7.2
         version: 5.7.2
+      json-canonicalize:
+        specifier: ^1.0.6
+        version: 1.0.6
 
   packages/wallet:
     dependencies:
@@ -10128,6 +10131,10 @@ packages:
   /json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
     dev: true
+
+  /json-canonicalize@1.0.6:
+    resolution: {integrity: sha512-kP2iYpOS5SZHYhIaR1t9oG80d4uTY3jPoaBj+nimy3njtJk8+sRsVatN8pyJRDRtk9Su3+6XqA2U8k0dByJBUQ==}
+    dev: false
 
   /json-parse-better-errors@1.0.2:
     resolution: {integrity: sha512-mrqyZKfX5EhL7hvqcV6WG1yYjnjeuYDzDhhcAAUrq8Po85NBQBJP+ZDUT75qZQ98IkUoBqdkExkukOU7Ts2wrw==}

@@ -1,5 +1,16 @@
 # @0xsequence/simulator
 
+## 0.0.0-20230922164806
+
+### Minor Changes
+
+- WaaS initial implementatino
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@0.0.0-20230922164806
+
 ## 1.1.13
 
 ### Patch Changes

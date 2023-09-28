@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/account",
-  "version": "1.1.13",
+  "version": "0.0.0-20230922164806",
   "description": "tools for migrating sequence wallets to new versions",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/account",
   "source": "src/index.ts",
