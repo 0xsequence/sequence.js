@@ -65,8 +65,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
       if (!networks || networks.length === 0) {
         this.notifyChainChanged('0x0')
       } else {
-        this.notifyChainChanged(ethers.utils.hexlify(networks.find(network => network.isDefaultChain)!.chainId))
+        this.notifyChainChanged(ethers.utils.hexValue(networks.find(network => network.isDefaultChain)!.chainId))
       }
+    })
+
+    this.walletRequestHandler.on('chainChanged', (chainIdHex: string, origin?: string) => {
+      this.notifyChainChanged(chainIdHex, origin)
     })
 
     this.walletRequestHandler.on('walletContext', (walletContext: commons.context.VersionedContext) => {
@@ -210,15 +214,16 @@ export abstract class BaseWalletTransport implements WalletTransport {
       idx: -1,
       type: EventType.ACCOUNTS_CHANGED,
       data: accounts,
-      origin: origin
+      origin
     })
   }
 
-  notifyChainChanged(chainIdHex: string) {
+  notifyChainChanged(chainIdHex: string, origin?: string) {
     this.sendMessage({
       idx: -1,
       type: EventType.CHAIN_CHANGED,
-      data: chainIdHex
+      data: chainIdHex,
+      origin
     })
   }
 

@@ -771,13 +771,17 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.events.emit('disconnect')
   }
 
+  notifyChainChanged(chainId: number, origin?: string) {
+    this.events.emit('chainChanged', ethers.utils.hexValue(chainId), origin)
+  }
+
   async notifyNetworks(networks?: NetworkConfig[]) {
     const n = networks || (await this.getNetworks(true))
     this.events.emit('networks', n)
     if (n.length > 0) {
       const defaultNetwork = n.find(network => network.chainId === this.defaultChainId())
       if (defaultNetwork) {
-        this.events.emit('chainChanged', ethers.utils.hexlify(defaultNetwork.chainId))
+        this.events.emit('chainChanged', ethers.utils.hexValue(defaultNetwork.chainId))
       }
     } else {
       this.events.emit('chainChanged', '0x0')

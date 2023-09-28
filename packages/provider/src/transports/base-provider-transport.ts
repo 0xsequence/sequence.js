@@ -240,7 +240,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
 
     // CHAIN_CHANGED -- when a user changes their default chain
     if (message.type === EventType.CHAIN_CHANGED) {
-      this.events.emit('chainChanged', message.data)
+      this.events.emit('chainChanged', message.data, message.origin)
       return
     }
 

@@ -189,6 +189,10 @@ export class SequenceClient {
       this.callbacks.close?.forEach(cb => cb())
     })
 
+    this.transport.on('chainChanged', (chainIdHex, origin) => {
+      this.callbacks.chainChanged?.forEach(cb => cb(chainIdHex, origin))
+    })
+
     // We don't listen for the transport chainChanged event
     // instead we handle it locally, so we listen for changes in the store
     this.defaultChainId.onDefaultChainIdChanged((chainId: number) => {
@@ -240,6 +244,10 @@ export class SequenceClient {
   // @deprecated
   onWalletContext(callback: WalletEventTypes['walletContext']) {
     return this.registerCallback('walletContext', callback)
+  }
+
+  onChainChanged(callback: WalletEventTypes['chainChanged']) {
+    return this.registerCallback('chainChanged', callback)
   }
 
   onDefaultChainIdChanged(callback: WalletEventTypes['chainChanged']) {
