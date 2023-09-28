@@ -1,4 +1,5 @@
 import { ethers } from "ethers"
+import { canonicalize } from 'json-canonicalize'
 
 export type BasePacket = {
   code: string
@@ -20,7 +21,7 @@ export function hashPacket(packet: Payload<BasePacket> | BasePacket): ethers.Byt
     packet = packet.packet
   }
 
-  const encoded = ethers.utils.toUtf8Bytes(JSON.stringify(packet, null, 0))
+  const encoded = ethers.utils.toUtf8Bytes(canonicalize(packet))
   return ethers.utils.arrayify(ethers.utils.keccak256(encoded))
 }
 
@@ -28,3 +29,5 @@ export function signPacket(signer: ethers.Signer, packed: BasePacket): Promise<s
   const hash = hashPacket(packed)
   return signer.signMessage(hash)
 }
+
+export * as packets from './packets'

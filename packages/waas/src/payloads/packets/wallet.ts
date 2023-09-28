@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { BasePacket } from "."
+import { BasePacket } from ".."
 
 export type TransactionsPacket = BasePacket & {
   wallet: string;
@@ -55,7 +55,7 @@ export function sendTransactions(
   chainId: number
 ): TransactionsPacket {
   return {
-    code: 'sendTransactions',
+    code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
     transactions: transactions.map(tx => {
@@ -81,7 +81,7 @@ export function sendERC20(
   chainId: number
 ): TransactionsPacket {
   return {
-    code: 'sendTransactions',
+    code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
     transactions: [
@@ -105,7 +105,7 @@ export function sendERC721(
   data?: string
 ): TransactionsPacket {
   return {
-    code: 'sendTransactions',
+    code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
     transactions: [
@@ -133,7 +133,7 @@ export function sendERC1155(
   data?: string
 ): TransactionsPacket {
   return {
-    code: 'sendTransactions',
+    code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
     transactions: [
@@ -171,7 +171,7 @@ export function combinePackets(
   }
 
   return {
-    code: 'sendTransactions',
+    code: 'sendTransaction',
     network,
     wallet,
     transactions: packets.reduce((acc, p) => acc.concat(p.transactions), [] as TransactionSubpacket[])
