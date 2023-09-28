@@ -1,5 +1,12 @@
 # @0xsequence/abi
 
+## 1.2.4
+
+### Patch Changes
+
+- provider: Adding missing payment provider types to PaymentProviderOption
+- provider: WalletRequestHandler.notifyChainChanged
+
 ## 1.2.3
 
 ### Patch Changes

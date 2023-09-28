@@ -1,5 +1,31 @@
 # 0xsequence
 
+## 1.2.4
+
+### Patch Changes
+
+- provider: Adding missing payment provider types to PaymentProviderOption
+- provider: WalletRequestHandler.notifyChainChanged
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.2.4
+  - @0xsequence/account@1.2.4
+  - @0xsequence/api@1.2.4
+  - @0xsequence/auth@1.2.4
+  - @0xsequence/core@1.2.4
+  - @0xsequence/guard@1.2.4
+  - @0xsequence/indexer@1.2.4
+  - @0xsequence/metadata@1.2.4
+  - @0xsequence/migration@1.2.4
+  - @0xsequence/multicall@1.2.4
+  - @0xsequence/network@1.2.4
+  - @0xsequence/provider@1.2.4
+  - @0xsequence/relayer@1.2.4
+  - @0xsequence/sessions@1.2.4
+  - @0xsequence/signhub@1.2.4
+  - @0xsequence/utils@1.2.4
+  - @0xsequence/wallet@1.2.4
+
 ## 1.2.3
 
 ### Patch Changes

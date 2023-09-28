@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.2.4
+
+### Patch Changes
+
+- provider: Adding missing payment provider types to PaymentProviderOption
+- provider: WalletRequestHandler.notifyChainChanged
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.2.4
+  - @0xsequence/signhub@1.2.4
+
 ## 1.2.3
 
 ### Patch Changes
