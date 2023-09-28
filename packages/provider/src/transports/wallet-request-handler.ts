@@ -771,8 +771,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     this.events.emit('disconnect')
   }
 
-  notifyChainChanged(chainId: number, origin: string) {
-    console.log('-- notifyChainChanged', chainId, origin)
+  notifyChainChanged(chainId: number, origin?: string) {
     this.events.emit('chainChanged', ethers.utils.hexValue(chainId), origin)
   }
 
