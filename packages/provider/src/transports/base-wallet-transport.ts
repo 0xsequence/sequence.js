@@ -48,10 +48,10 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.notifyConnect(connectDetails)
     })
 
-    this.walletRequestHandler.on('disconnect', (error?: ProviderRpcError) => {
+    this.walletRequestHandler.on('disconnect', (error?: ProviderRpcError, origin?: string) => {
       if (!this.registered) return
       // means user has logged out the app / disconnected wallet from the app
-      this.notifyDisconnect(error)
+      this.notifyDisconnect(error, origin)
     })
 
     this.walletRequestHandler.on('accountsChanged', (accounts: string[], origin?: string) => {
@@ -201,11 +201,12 @@ export abstract class BaseWalletTransport implements WalletTransport {
     })
   }
 
-  notifyDisconnect(error?: ProviderRpcError) {
+  notifyDisconnect(error?: ProviderRpcError, origin?: string) {
     this.sendMessage({
       idx: -1,
       type: EventType.DISCONNECT,
-      data: error ? { error } : null
+      data: error ? { error } : null,
+      origin
     })
   }
 
