@@ -71,6 +71,16 @@ export class Sequence {
     }
   }
 
+  public async getSignerAddress() {
+    const signerPk = await this.signer.get()
+    if (!signerPk) {
+      throw new Error('No signer')
+    }
+
+    const signer = new ethers.Wallet(signerPk)
+    return signer.address
+  }
+
   /**
    * This method will initiate a sign-in process with the waas API. It must be performed
    * when the user wants to sign in to the app, in parallel with the authentication of the
@@ -225,14 +235,14 @@ export class Sequence {
   async validateSession(): Promise<Payload<ValidateSessionPacket>> {
     const packet = {
       code: 'validateSession',
-      session: await this.getWalletAddress()
+      session: await this.getSignerAddress()
     } as ValidateSessionPacket
 
     return this.buildPayload(packet)
   }
 
   async isSessionValid(): Promise<boolean> {
-    const sessionAddress = await this.getWalletAddress()
+    const sessionAddress = await this.getSignerAddress()
     const guardClient = new Guard(this.guardUrl, fetch)
 
     try {
