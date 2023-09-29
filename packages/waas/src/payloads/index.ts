@@ -31,3 +31,4 @@ export function signPacket(signer: ethers.Signer, packed: BasePacket): Promise<s
 }
 
 export * as packets from './packets'
+export * as responses from './responses'

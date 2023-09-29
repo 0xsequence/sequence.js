@@ -1,9 +1,10 @@
 import { ethers } from "ethers"
-import { SessionPacket, openSession } from "./payloads/packets/session"
+import { SessionPacket, ValidateSessionPacket, openSession } from "./payloads/packets/session"
 import { Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
 import { OpenSessionResponse } from "./payloads/responses"
+import { Guard } from "./clients/guard.gen"
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -20,6 +21,7 @@ export class Sequence {
 
   constructor (
     private readonly store: Store,
+    private readonly guardUrl: string
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
@@ -218,6 +220,42 @@ export class Sequence {
 
     const packet = sendERC1155(await this.getWalletAddress(), token, to, values, chainId)
     return this.buildPayload(packet)
+  }
+
+  async validateSession(): Promise<Payload<ValidateSessionPacket>> {
+    const packet = {
+      code: 'validateSession',
+      session: await this.getWalletAddress()
+    } as ValidateSessionPacket
+
+    return this.buildPayload(packet)
+  }
+
+  async isSessionValid(): Promise<boolean> {
+    const sessionAddress = await this.getWalletAddress()
+    const guardClient = new Guard(this.guardUrl, fetch)
+
+    try {
+      const res = await guardClient.getSession({ sessionAddress } as any)
+      if (res.validated) {
+        return true
+      }
+    } catch {}
+
+    return false
+  }
+
+  async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000): Promise<boolean> {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      if (await this.isSessionValid()) {
+        return true
+      }
+      await new Promise(resolve => setTimeout(resolve, pollRate))
+    }
+
+    return false
   }
 
   async batch(
