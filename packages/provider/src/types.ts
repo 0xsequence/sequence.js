@@ -129,7 +129,7 @@ export interface WalletEventTypes {
   close: (error?: ProviderRpcError) => void
 
   connect: (connectDetails: ConnectDetails) => void
-  disconnect: (error?: ProviderRpcError) => void
+  disconnect: (error?: ProviderRpcError, origin?: string) => void
 
   accountsChanged: (accounts: string[], origin?: string) => void
   chainChanged: (chainIdHex: string, origin?: string) => void

@@ -169,8 +169,8 @@ export class SequenceClient {
       )
     })
 
-    this.transport.on('disconnect', error => {
-      this.callbacks.disconnect?.forEach(cb => cb(error))
+    this.transport.on('disconnect', (error, origin) => {
+      this.callbacks.disconnect?.forEach(cb => cb(error, origin))
     })
 
     this.transport.on('networks', networks => {
