@@ -11,6 +11,11 @@ export type SessionPacket = BasePacket & {
   }
 }
 
+export type ValidateSessionPacket = BasePacket & {
+  code: 'validateSession',
+  session: string
+}
+
 export async function openSession(): Promise<{ packet: SessionPacket, signer: ethers.Wallet }> {
   const signer = ethers.Wallet.createRandom()
 
