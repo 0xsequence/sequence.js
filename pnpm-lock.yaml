@@ -438,12 +438,18 @@ importers:
 
   packages/guard:
     dependencies:
+      '@0xsequence/account':
+        specifier: workspace:*
+        version: link:../account
       '@0xsequence/core':
         specifier: workspace:*
         version: link:../core
       '@0xsequence/signhub':
         specifier: workspace:*
         version: link:../signhub
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../utils
       ethers:
         specifier: ^5.7.2
         version: 5.7.2

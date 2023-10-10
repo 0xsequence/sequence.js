@@ -13,8 +13,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@0xsequence/account": "workspace:*",
     "@0xsequence/core": "workspace:*",
     "@0xsequence/signhub": "workspace:*",
+    "@0xsequence/utils": "workspace:*",
     "ethers": "^5.7.2"
   },
   "files": [
