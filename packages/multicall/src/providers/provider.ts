@@ -33,6 +33,8 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
     multicall?: Multicall | Partial<MulticallOptions>
   ) {
     super(provider.getNetwork())
+
+    this.listenerCount = provider.listenerCount.bind(provider)
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
 
     ProxyMethods.forEach(m => {
@@ -41,8 +43,6 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
       }
     })
   }
-
-  listenerCount = this.provider.listenerCount
 
   getResolver = async (name: string | Promise<string>) => {
     const provider = this.provider as ethers.providers.BaseProvider
