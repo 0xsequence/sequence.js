@@ -31,8 +31,8 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  // TODO: Import from global pre-defiend contracts
-  contract: '0xD7042Bf5C8Cc253301B01D7143166E17D5BF4f74',
+  // SequenceUtils: v2
+  contract: '0xdbbFa3cB3B087B64F4ef5E3D20Dda2488AA244e6',
   verbose: false
 }
 
@@ -85,7 +85,10 @@ export class Multicall {
 
     // Read items from queue
     const limit = Math.min(this.options.batchSize, this.queue.length)
-    if (limit === 0) return
+    if (limit === 0) {
+      if (this.options.verbose) console.log('Skip multicall, empty queue')
+      return
+    }
 
     // Skip multicall on single item
     if (limit === 1) {
@@ -105,6 +108,7 @@ export class Multicall {
     if (this.options.verbose) console.log('Updated queue', this.queue.length)
 
     if (this.queue.length !== 0) {
+      if (this.options.verbose) console.log('Scheduling next batch')
       this.scheduleExecution()
     }
 
@@ -143,7 +147,10 @@ export class Multicall {
     if (discartItems.length !== 0) {
       if (this.options.verbose) console.log('Forwarding incompatible calls', discartItems.length)
       this.forward(discartItems)
-      if (items.length === 0) return
+      if (items.length === 0) {
+        if (this.options.verbose) console.log('Skip multicall, all calls are incompatible')
+        return
+      }
     }
 
     // Aggregate all calls
@@ -196,14 +203,19 @@ export class Multicall {
     if (discartItems.length !== 0) {
       if (this.options.verbose) console.log('Forwarding calls on error', discartItems.length)
       this.forward(discartItems)
-      if (items.length === 0) return
+      if (items.length === 0) {
+        if (this.options.verbose) console.log('Skip multicall, all calls had encoding errors')
+        return
+      }
     }
 
     // Encode multicall
     let encodedCall: string
     try {
+      if (this.options.verbose) console.log('Encoding multicall')
       encodedCall = this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('multiCall'), [callParams])
-    } catch {
+    } catch (err) {
+      if (this.options.verbose) console.warn('Error encoding multicall, forwarding one by one', err)
       this.forward(items)
       return
     }
@@ -241,6 +253,7 @@ export class Multicall {
     // Forward all calls to middleware
     // @ts-ignore
     if (res.error) {
+      if (this.options.verbose) console.warn('Error calling multicall, forwarding one by one', res.error)
       return this.forward(items)
     }
 
@@ -249,7 +262,8 @@ export class Multicall {
     try {
       // @ts-ignore
       decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('multiCall'), res.result)
-    } catch {
+    } catch (err) {
+      if (this.options.verbose) console.warn('Error decoding multicall result, forwarding one by one', err)
       this.forward(items)
       return
     }
@@ -259,6 +273,7 @@ export class Multicall {
     if (this.options.verbose) console.log('Got response for', items.length)
     items.forEach((item, index) => {
       if (!decoded[0][index]) {
+        if (this.options.verbose) console.warn(`Multicall error for ${item.request.method} not found`)
         this.forward(item)
       } else {
         switch (item.request.method) {
