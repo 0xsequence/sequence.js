@@ -1,5 +1,13 @@
 # @0xsequence/core
 
+## 1.2.5
+
+### Patch Changes
+
+- Multicall default configuration fixes
+- Updated dependencies
+  - @0xsequence/abi@1.2.5
+
 ## 1.2.4
 
 ### Patch Changes

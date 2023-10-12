@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.2.5
+
+### Patch Changes
+
+- Multicall default configuration fixes
+- Updated dependencies
+  - @0xsequence/abi@1.2.5
+  - @0xsequence/account@1.2.5
+  - @0xsequence/api@1.2.5
+  - @0xsequence/core@1.2.5
+  - @0xsequence/indexer@1.2.5
+  - @0xsequence/metadata@1.2.5
+  - @0xsequence/migration@1.2.5
+  - @0xsequence/network@1.2.5
+  - @0xsequence/sessions@1.2.5
+  - @0xsequence/signhub@1.2.5
+  - @0xsequence/utils@1.2.5
+  - @0xsequence/wallet@1.2.5
+
 ## 1.2.4
 
 ### Patch Changes

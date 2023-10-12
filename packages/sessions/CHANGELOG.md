@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.2.5
+
+### Patch Changes
+
+- Multicall default configuration fixes
+- Updated dependencies
+  - @0xsequence/core@1.2.5
+  - @0xsequence/migration@1.2.5
+  - @0xsequence/replacer@1.2.5
+
 ## 1.2.4
 
 ### Patch Changes

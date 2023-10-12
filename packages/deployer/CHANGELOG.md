@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.2.5
+
+### Patch Changes
+
+- Multicall default configuration fixes
+- Updated dependencies
+  - @0xsequence/utils@1.2.5
+
 ## 1.2.4
 
 ### Patch Changes

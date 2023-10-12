@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.2.5
+
+### Patch Changes
+
+- Multicall default configuration fixes
+
 ## 1.2.4
 
 ### Patch Changes
