@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.2.6
+
+### Patch Changes
+
+- Fix bind multicall provider
+
 ## 1.2.5
 
 ### Patch Changes

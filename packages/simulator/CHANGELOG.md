@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.2.6
+
+### Patch Changes
+
+- Fix bind multicall provider
+- Updated dependencies
+  - @0xsequence/core@1.2.6
+
 ## 1.2.5
 
 ### Patch Changes
