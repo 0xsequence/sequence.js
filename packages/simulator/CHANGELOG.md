@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.2.7
+
+### Patch Changes
+
+- add x-sequence-token-key to clients
+- Updated dependencies
+  - @0xsequence/core@1.2.7
+
 ## 1.2.6
 
 ### Patch Changes

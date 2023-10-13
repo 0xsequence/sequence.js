@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.2.7
+
+### Patch Changes
+
+- add x-sequence-token-key to clients
+- Updated dependencies
+  - @0xsequence/utils@1.2.7
+
 ## 1.2.6
 
 ### Patch Changes

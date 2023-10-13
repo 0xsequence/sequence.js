@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.2.7
+
+### Patch Changes
+
+- add x-sequence-token-key to clients
+- Updated dependencies
+  - @0xsequence/abi@1.2.7
+  - @0xsequence/account@1.2.7
+  - @0xsequence/auth@1.2.7
+  - @0xsequence/core@1.2.7
+  - @0xsequence/migration@1.2.7
+  - @0xsequence/network@1.2.7
+  - @0xsequence/relayer@1.2.7
+  - @0xsequence/utils@1.2.7
+  - @0xsequence/wallet@1.2.7
+
 ## 1.2.6
 
 ### Patch Changes
