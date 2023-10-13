@@ -114,7 +114,9 @@ export class Services {
         }
       }
 
-      return new SequenceAPIClient(url, jwtAuth)
+      return new SequenceAPIClient(url, {
+        jwtAuth
+      })
     })()
 
     return this._initialAuthRequest
@@ -221,7 +223,7 @@ export class Services {
       if (!url) throw Error('No sequence api url')
 
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.apiClient = new SequenceAPIClient(url, jwtAuth)
+      this.apiClient = new SequenceAPIClient(url, { jwtAuth })
     }
 
     return this.apiClient
