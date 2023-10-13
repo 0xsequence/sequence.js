@@ -28,6 +28,10 @@ export class Sequence {
     this.wallet = new StoreObj(this.store, SEQUENCE_WAAS_WALLET_KEY, undefined)
   }
 
+  async getAddress() {
+    return this.getWalletAddress()
+  }
+
   private async getWalletAddress() {
     if (!(await this.isSignedIn())) {
       throw new Error('Not signed in')
