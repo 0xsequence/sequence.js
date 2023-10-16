@@ -1,9 +1,22 @@
 import { ethers } from "ethers";
 import { Sequence } from "./sequence"
-import { Store } from "./store"
+import { LocalStore, Store } from "./store"
 import { Payload } from "./payloads";
 import { SendTransactionResponse, isSendTransactionResponse, isValidationRequiredResponse } from "./payloads/responses";
 import { WaasAuthenticator, Session } from "./clients/authenticator.gen";
+import { DEFAULTS } from "./defaults";
+
+export interface AuthConfig {
+  key: string
+}
+
+type ExtendedConfig = {
+  rpcServer: string;
+  kmsRegion: string;
+  idpRegion: string;
+  keyId: string;
+  identityPoolId: string;
+}
 
 export class SequenceAuth {
   private waas: Sequence
@@ -11,13 +24,16 @@ export class SequenceAuth {
 
   private validationRequiredCallback: (() => void)[] = []
 
+  public readonly config: AuthConfig & ExtendedConfig
+
   constructor (
-    private readonly url: string,
-    private readonly store: Store,
-    private readonly guardUrl: string
+    config: AuthConfig & Partial<ExtendedConfig>,
+    private readonly store: Store = new LocalStore(),
+    private readonly guardUrl: string = DEFAULTS.guard
   ) {
+    this.config = { ...DEFAULTS.auth, ...config }
     this.waas = new Sequence(this.store, this.guardUrl)
-    this.client = new WaasAuthenticator(this.url, window.fetch)
+    this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
   }
 
   private async sendIntent(intent: Payload<any>) {

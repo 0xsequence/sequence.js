@@ -1,10 +1,11 @@
 import { ethers } from "ethers"
 import { SessionPacket, ValidateSessionPacket, openSession } from "./payloads/packets/session"
-import { Store, StoreObj } from "./store"
+import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
 import { OpenSessionResponse } from "./payloads/responses"
 import { Guard } from "./clients/guard.gen"
+import { DEFAULTS } from "./defaults"
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -20,8 +21,8 @@ export class Sequence {
   private readonly wallet: StoreObj<string | undefined>
 
   constructor (
-    private readonly store: Store,
-    private readonly guardUrl: string
+    private readonly store: Store = new LocalStore(),
+    private readonly guardUrl: string = DEFAULTS.guard
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
