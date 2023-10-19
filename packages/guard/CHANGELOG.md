@@ -1,5 +1,14 @@
 # @0xsequence/guard
 
+## 1.2.8
+
+### Patch Changes
+
+- rename X-Sequence-Token-Key header to X-Access-Key
+- Updated dependencies
+  - @0xsequence/core@1.2.8
+  - @0xsequence/signhub@1.2.8
+
 ## 1.2.7
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.2.8
+
+### Patch Changes
+
+- rename X-Sequence-Token-Key header to X-Access-Key
+
 ## 1.2.7
 
 ### Patch Changes

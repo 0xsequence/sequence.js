@@ -1,5 +1,19 @@
 # @0xsequence/account
 
+## 1.2.8
+
+### Patch Changes
+
+- rename X-Sequence-Token-Key header to X-Access-Key
+- Updated dependencies
+  - @0xsequence/core@1.2.8
+  - @0xsequence/migration@1.2.8
+  - @0xsequence/network@1.2.8
+  - @0xsequence/relayer@1.2.8
+  - @0xsequence/sessions@1.2.8
+  - @0xsequence/utils@1.2.8
+  - @0xsequence/wallet@1.2.8
+
 ## 1.2.7
 
 ### Patch Changes
