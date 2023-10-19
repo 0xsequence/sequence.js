@@ -13,7 +13,8 @@ export function signMessage(wallet: string, chainId: number, message: string): S
     code: 'signMessage',
     wallet: wallet,
     network: chainId.toString(),
-    message: message
+    message: message.startsWith('0x') ?
+        message : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(message))
   }
 }
 
