@@ -31,7 +31,7 @@ export class SequenceIndexerClient extends IndexerRpc {
     hostname: string,
     public authorization?: {
       jwtAuth?: string
-      tokenKey?: string
+      accessKey?: string
     }
   ) {
     super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
@@ -43,14 +43,14 @@ export class SequenceIndexerClient extends IndexerRpc {
     // if its been set on the api client
     const headers: { [key: string]: any } = {}
 
-    const {jwtAuth, tokenKey} = this.authorization || {}
+    const { jwtAuth, accessKey } = this.authorization || {}
 
     if (jwtAuth && jwtAuth.length > 0) {
       headers['Authorization'] = `BEARER ${jwtAuth}`
     }
 
-    if (tokenKey && tokenKey.length > 0) {
-      headers['X-Sequence-Token-Key'] = `${tokenKey}`
+    if (accessKey && accessKey.length > 0) {
+      headers['X-Access-Key'] = `${accessKey}`
     }
 
     // before the request is made
