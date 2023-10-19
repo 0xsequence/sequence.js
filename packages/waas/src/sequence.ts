@@ -2,7 +2,7 @@ import { ethers } from "ethers"
 import { SessionPacket, ValidateSessionPacket, openSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
-import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
+import { SignMessagePacket, TransactionsPacket, signMessage, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
 import { OpenSessionResponse } from "./payloads/responses"
 import { Guard } from "./clients/guard.gen"
 import { DEFAULTS } from "./defaults"
@@ -49,7 +49,7 @@ export class Sequence {
   /**
    * Builds a payload that can be sent to the WaaS API to sign a transaction.
    * It automatically signs the payload, and attaches the current wallet address.
-   * 
+   *
    * @param packet The action already packed into a packet
    * @returns A payload that can be sent to the WaaS API
    */
@@ -90,11 +90,11 @@ export class Sequence {
    * This method will initiate a sign-in process with the waas API. It must be performed
    * when the user wants to sign in to the app, in parallel with the authentication of the
    * application's own authentication system.
-   * 
+   *
    * This method begins the sign-in process, but does not complete it. The returned payload
    * must be sent to the waas API to complete the sign-in. The waas API will return a receipt
-   * that must be sent to the `completeSignIn` method to complete the sign-in. 
-   * 
+   * that must be sent to the `completeSignIn` method to complete the sign-in.
+   *
    * @param proof Information about the user that can be used to prove their identity
    * @returns a session payload that **must** be sent to the waas API to complete the sign-in
    * @throws {Error} If the session is already signed in or there is a pending sign-in
@@ -125,12 +125,12 @@ export class Sequence {
   /**
    * This method will complete a sign-in process with the waas API. It must be performed
    * after the `signIn` method, when the waas API has returned a receipt.
-   * 
+   *
    * This method completes the sign-in process by validating the receipt's proof.
    * If the proof is invalid or there is no pending sign-in, it will throw an error.
-   * 
+   *
    * After this method is called, the wallet is ready to be used to sign transactions.
-   * 
+   *
    * @param receipt The receipt returned by the waas API after the `signIn` method
    * @returns The wallet address of the user that signed in
    * @throws {Error} If there is no pending sign-in or the receipt is invalid
@@ -174,12 +174,31 @@ export class Sequence {
   //
 
   /**
+   * This method can be used to sign message using waas API. It can only be used
+   * after successfully signing in with the `signIn` and `completeSignIn` methods.
+   *
+   * The method does not sign the message. It only returns a payload
+   * that must be sent to the waas API to complete the sign process.
+   *
+   * @param chainId The network on which the message will be signed
+   * @param message  The message that will be signed
+   * @return a payload that must be sent to the waas API to complete sign process
+   */
+  async   signMessage(
+      chainId: number,
+        message: string
+  ): Promise<Payload<SignMessagePacket>> {
+            const packet = signMessage(await this.getWalletAddress(), chainId, message)
+    return   this.buildPayload(packet)
+  }
+
+  /**
    * This method can be used to send transactions to the waas API. It can only be used
    * after successfully signing in with the `signIn` and `completeSignIn` methods.
-   * 
+   *
    * The method does not send the transactions to the network. It only returns a payload
    * that must be sent to the waas API to complete the transaction.
-   * 
+   *
    * @param transactions The transactions to be sent
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
