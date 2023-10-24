@@ -5,7 +5,7 @@ import { migrator } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { tracker, trackers } from '@0xsequence/sessions'
-import { Orchestrator } from '@0xsequence/signhub'
+import { Orchestrator, SignatureOrchestrator } from '@0xsequence/signhub'
 import * as utils from '@0xsequence/tests'
 import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 import * as chai from 'chai'
@@ -70,7 +70,7 @@ describe('Wallet integration', function () {
   let networks: NetworkConfig[]
 
   let tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
-  let orchestrator: Orchestrator
+  let orchestrator: SignatureOrchestrator
   let simpleSettings: SessionSettings
 
   before(async () => {

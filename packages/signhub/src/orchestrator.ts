@@ -39,6 +39,26 @@ export function isSignerStatusPending(status: SignerStatus): status is SignerSta
 
 export const InitialSituation = 'Initial'
 
+export interface SignatureOrchestrator {
+  getSigners(): Promise<string[]>
+
+  signMessage(args: {
+    candidates: string[]
+    message: ethers.BytesLike
+    metadata: object
+    callback: (status: Status, onNewMetadata: (metadata: object) => void) => boolean
+  }): Promise<Status>
+
+  buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined>
+
+  predecorateSignedTransactions(metadata?: object): Promise<commons.transaction.SignedTransactionBundle[]>
+
+  decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle,
+    metadata?: object
+  ): Promise<commons.transaction.IntendedTransactionBundle>
+}
+
 /**
  * Orchestrates actions of collective signers.
  * This includes the signing of a single digests and transactions by multiple signers.

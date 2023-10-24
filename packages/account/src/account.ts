@@ -4,7 +4,7 @@ import { migrator, defaults, version } from '@0xsequence/migration'
 import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
-import { Orchestrator } from '@0xsequence/signhub'
+import { SignatureOrchestrator } from '@0xsequence/signhub'
 import { encodeTypedDataDigest, getEthersConnectionInfo } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
@@ -49,7 +49,7 @@ export type AccountOptions = {
   migrations?: migrator.Migrations
 
   // Orchestrator manages signing messages and transactions
-  orchestrator: Orchestrator
+  orchestrator: SignatureOrchestrator
 
   // Networks information and providers
   networks: NetworkConfig[]
@@ -97,7 +97,7 @@ export class Account {
   public readonly migrator: migrator.Migrator
   public readonly migrations: migrator.Migrations
 
-  private orchestrator: Orchestrator
+  private orchestrator: SignatureOrchestrator
 
   private jwt?: string
 
@@ -122,7 +122,7 @@ export class Account {
     config: commons.config.SimpleConfig
     tracker: tracker.ConfigTracker & migrator.PresignedMigrationTracker
     contexts: commons.context.VersionedContext
-    orchestrator: Orchestrator
+    orchestrator: SignatureOrchestrator
     networks: NetworkConfig[]
     migrations?: migrator.Migrations
   }): Promise<Account> {
@@ -202,7 +202,7 @@ export class Account {
     return new RpcRelayer({ ...found.relayer, jwtAuth: this.jwt })
   }
 
-  setOrchestrator(orchestrator: Orchestrator) {
+  setOrchestrator(orchestrator: SignatureOrchestrator) {
     this.orchestrator = orchestrator
   }
 

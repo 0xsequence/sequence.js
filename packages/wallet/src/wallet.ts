@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
-import { isSignerStatusSigned, Orchestrator, Status } from '@0xsequence/signhub'
+import { isSignerStatusSigned, SignatureOrchestrator, Status } from '@0xsequence/signhub'
 import { Deferrable, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
@@ -25,7 +25,7 @@ export type WalletOptions<
   chainId: ethers.BigNumberish
   address: string
 
-  orchestrator: Orchestrator
+  orchestrator: SignatureOrchestrator
   reader?: commons.reader.Reader
 
   provider?: ethers.providers.Provider
@@ -76,7 +76,7 @@ export class Wallet<
     config: commons.config.ConfigCoder<Y>
   }
 
-  private orchestrator: Orchestrator
+  private orchestrator: SignatureOrchestrator
   private _reader?: commons.reader.Reader
 
   constructor(options: WalletOptions<T, Y, Z>) {
@@ -117,7 +117,7 @@ export class Wallet<
     this.config = config
   }
 
-  setOrchestrator(orchestrator: Orchestrator) {
+  setOrchestrator(orchestrator: SignatureOrchestrator) {
     this.orchestrator = orchestrator
   }
 

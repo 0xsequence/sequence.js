@@ -5,7 +5,7 @@ import { commons, v1, v2 } from '@0xsequence/core'
 import { context } from '@0xsequence/tests'
 import { ethers } from 'ethers'
 import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
-import { Orchestrator, signers as hubsigners } from '@0xsequence/signhub'
+import { Orchestrator, SignatureOrchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
 
 const { expect } = chai
@@ -267,7 +267,7 @@ describe('Wallet (primitive)', () => {
         }
       ].map(({ name, signers }) => {
         describe(`Using ${name}`, () => {
-          let orchestrator: Orchestrator
+          let orchestrator: SignatureOrchestrator
           let config: commons.config.Config
 
           beforeEach(async () => {

@@ -3,7 +3,7 @@ import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
 import { tracker, trackers } from '@0xsequence/sessions'
-import { Orchestrator, signers } from '@0xsequence/signhub'
+import { Orchestrator, SignatureOrchestrator, signers } from '@0xsequence/signhub'
 import { migrator } from '@0xsequence/migration'
 import { commons, universal, v1 } from '@0xsequence/core'
 import { Services, ServicesSettings, SessionJWT, SessionMeta } from './services'
@@ -137,7 +137,7 @@ export class Session {
 
   static async open(args: {
     settings?: Partial<SessionSettings>
-    orchestrator: Orchestrator
+    orchestrator: SignatureOrchestrator
     addSigners?: commons.config.SimpleSigner[]
     referenceSigner: string
     threshold?: ethers.BigNumberish
@@ -292,7 +292,7 @@ export class Session {
 
   static async load(args: {
     settings?: Partial<SessionSettings>
-    orchestrator: Orchestrator
+    orchestrator: SignatureOrchestrator
     dump: SessionDumpV1 | SessionDumpV2
     editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
