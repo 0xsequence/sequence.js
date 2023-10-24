@@ -1,6 +1,23 @@
 import { ethers } from "ethers"
 import { BasePacket } from ".."
 
+export type SignMessagePacket = BasePacket & {
+  wallet: string;
+  network: string;
+
+  message: string
+}
+
+export function signMessage(wallet: string, chainId: number, message: string): SignMessagePacket {
+  return {
+    code: 'signMessage',
+    wallet: wallet,
+    network: chainId.toString(),
+    message: message.startsWith('0x') ?
+        message : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(message))
+  }
+}
+
 export type TransactionsPacket = BasePacket & {
   wallet: string;
   network: string;
@@ -8,11 +25,11 @@ export type TransactionsPacket = BasePacket & {
   transactions: TransactionSubpacket[]
 }
 
-export type TransactionSubpacket = 
+export type TransactionSubpacket =
   RawTransactionSubpacket |
   SendERC20Subpacket |
   SendERC721Subpacket |
-  SendERC1155Subpacket 
+  SendERC1155Subpacket
 
 
 export type RawTransactionSubpacket = {
