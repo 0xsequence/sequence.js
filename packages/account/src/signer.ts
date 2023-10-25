@@ -125,7 +125,10 @@ export class AccountSigner implements ethers.Signer {
   }
 
   async sendTransaction(
-    txsPromise: ethers.utils.Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish
+    txsPromise: ethers.utils.Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish,
+    options?: {
+      simulateForFeeOptions?: boolean
+    }
   ): Promise<ethers.providers.TransactionResponse> {
     const txs = isDeferrable(txsPromise)
       ? await ethers.utils.resolveProperties(txsPromise as ethers.utils.Deferrable<ethers.providers.TransactionRequest>)
@@ -134,7 +137,8 @@ export class AccountSigner implements ethers.Signer {
     const prepare = await this.account.prepareTransactions({
       txs,
       chainId: this.chainId,
-      stubSignatureOverrides: this.options?.stubSignatureOverrides ?? new Map()
+      stubSignatureOverrides: this.options?.stubSignatureOverrides ?? new Map(),
+      simulateForFeeOptions: options?.simulateForFeeOptions
     })
 
     const selectMethod = this.options?.selectFee ?? this.defaultSelectFee.bind(this)

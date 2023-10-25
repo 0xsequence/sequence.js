@@ -26,7 +26,13 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     return { options: [] }
   }
 
-  async getFeeOptionsRaw(_entrypoint: string, _data: BytesLike): Promise<{ options: FeeOption[] }> {
+  async getFeeOptionsRaw(
+    _entrypoint: string,
+    _data: BytesLike,
+    _options?: {
+      simulate?: boolean
+    }
+  ): Promise<{ options: FeeOption[] }> {
     return { options: [] }
   }
 

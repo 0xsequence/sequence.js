@@ -20,7 +20,7 @@ export class SequenceAPIClient extends ApiRpc {
     // automatically include jwt auth header to requests
     // if its been set on the api client
     const headers: { [key: string]: any } = {}
-    
+
     const { jwtAuth, accessKey } = this.authorization || {}
 
     if (jwtAuth && jwtAuth.length > 0) {
