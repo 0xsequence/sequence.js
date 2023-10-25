@@ -17,7 +17,13 @@ export interface Relayer {
   // getFeeOptionsRaw returns the fee options that the relayer will accept as payment.
   // If a quote is returned, it may be passed back to the relayer for dispatch.
   // It doesn't make any assumptions about the transaction format.
-  getFeeOptionsRaw(entrypoint: string, data: ethers.utils.BytesLike): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
+  getFeeOptionsRaw(
+    entrypoint: string,
+    data: ethers.utils.BytesLike,
+    options?: {
+      simulate?: boolean
+    }
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
   // gasRefundOptions returns the transactions which can be included to refund a
   // relayer for submitting your transaction to a network.

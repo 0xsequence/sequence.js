@@ -735,7 +735,10 @@ export class Account {
     txs: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish,
     stubSignatureOverrides: Map<string, string>,
-    status?: AccountStatus
+    status?: AccountStatus,
+    options?: {
+      simulate?: boolean
+    }
   ): Promise<{
     options: FeeOption[]
     quote?: FeeQuote
@@ -768,7 +771,7 @@ export class Account {
 
     const decoratedBundle = this.decorateTransactions(signedBundle, wstatus)
     const data = commons.transaction.encodeBundleExecData(decoratedBundle)
-    const res = await this.relayer(chainId).getFeeOptionsRaw(decoratedBundle.entrypoint, data)
+    const res = await this.relayer(chainId).getFeeOptionsRaw(decoratedBundle.entrypoint, data, options)
     return { ...res, decorated: decoratedBundle }
   }
 
@@ -776,11 +779,14 @@ export class Account {
     txs: commons.transaction.Transactionish
     chainId: ethers.BigNumberish
     stubSignatureOverrides: Map<string, string>
+    simulateForFeeOptions?: boolean
   }): Promise<PreparedTransactions> {
     const status = await this.status(args.chainId)
 
     const transactions = await this.fillGasLimits(args.txs, args.chainId, status)
-    const gasRefundQuote = await this.gasRefundQuotes(transactions, args.chainId, args.stubSignatureOverrides, status)
+    const gasRefundQuote = await this.gasRefundQuotes(transactions, args.chainId, args.stubSignatureOverrides, status, {
+      simulate: args.simulateForFeeOptions
+    })
     const flatDecorated = commons.transaction.unwind(this.address, gasRefundQuote.decorated.transactions)
 
     return {
