@@ -1,5 +1,17 @@
 # @0xsequence/sessions
 
+## 1.2.9
+
+### Patch Changes
+
+- account: AccountSigner.sendTransaction simulateForFeeOptions
+- relayer: update bindings
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.2.9
+  - @0xsequence/migration@1.2.9
+  - @0xsequence/replacer@1.2.9
+
 ## 1.2.8
 
 ### Patch Changes

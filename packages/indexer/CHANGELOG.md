@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 1.2.9
+
+### Patch Changes
+
+- account: AccountSigner.sendTransaction simulateForFeeOptions
+- relayer: update bindings
+
 ## 1.2.8
 
 ### Patch Changes
