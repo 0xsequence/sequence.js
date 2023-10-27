@@ -14,6 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.429.0",
+    "@aws-sdk/credential-providers": "^3.429.0",
     "ethers": "^5.7.2",
     "json-canonicalize": "^1.0.6"
   },

@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { SessionPacket, ValidateSessionPacket, openSession } from "./payloads/packets/session"
+import { SessionPacket, SessionPacketProof, ValidateSessionPacket, openSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
@@ -76,6 +76,16 @@ export class Sequence {
     }
   }
 
+  public async signUsingSessionKey(message: string | Uint8Array) {
+    const signerPk = await this.signer.get()
+    if (!signerPk) {
+      throw new Error('No signer')
+    }
+
+    const signer = new ethers.Wallet(signerPk)
+    return signer.signMessage(message)
+  }
+
   public async getSignerAddress() {
     const signerPk = await this.signer.get()
     if (!signerPk) {
@@ -99,13 +109,13 @@ export class Sequence {
    * @returns a session payload that **must** be sent to the waas API to complete the sign-in
    * @throws {Error} If the session is already signed in or there is a pending sign-in
    */
-  async signIn(): Promise<Payload<SessionPacket>> {
+  async signIn(proof?: SessionPacketProof): Promise<Payload<SessionPacket>> {
     const status = await this.status.get()
     // if (status !== 'signed-out') {
     //   throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
     // }
 
-    const result = await openSession()
+    const result = await openSession(proof)
 
     await Promise.all([
       this.status.set('pending'),
