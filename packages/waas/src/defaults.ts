@@ -7,5 +7,6 @@ export const DEFAULTS = {
     idpRegion: 'us-east-2',
     keyId: '',
     identityPoolId: '',
+    endpoint: '',
   }
 }

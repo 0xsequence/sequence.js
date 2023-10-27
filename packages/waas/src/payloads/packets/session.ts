@@ -2,13 +2,15 @@
 import { ethers } from 'ethers'
 import { BasePacket } from '..'
 
+export type SessionPacketProof = {
+  email?: string;
+  idToken?: string;
+}
+
 export type SessionPacket = BasePacket & {
   code: 'openSession'
   session: string;
-  proof: {
-    email?: string;
-    idToken?: string;
-  }
+  proof: SessionPacketProof
 }
 
 export type ValidateSessionPacket = BasePacket & {
@@ -16,7 +18,7 @@ export type ValidateSessionPacket = BasePacket & {
   session: string
 }
 
-export async function openSession(): Promise<{ packet: SessionPacket, signer: ethers.Wallet }> {
+export async function openSession(proof: SessionPacketProof = {}): Promise<{ packet: SessionPacket, signer: ethers.Wallet }> {
   const signer = ethers.Wallet.createRandom()
 
   return {
@@ -24,7 +26,7 @@ export async function openSession(): Promise<{ packet: SessionPacket, signer: et
     packet: {
       code: 'openSession',
       session: signer.address,
-      proof: {} // Will be added server-side
+      proof // May be defined server side
     },
   }
 }
