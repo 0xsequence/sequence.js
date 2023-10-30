@@ -29,7 +29,8 @@ export type TransactionSubpacket =
   RawTransactionSubpacket |
   SendERC20Subpacket |
   SendERC721Subpacket |
-  SendERC1155Subpacket
+  SendERC1155Subpacket |
+  DelayedEncodeSubpacket
 
 
 export type RawTransactionSubpacket = {
@@ -64,6 +65,19 @@ export type SendERC1155Subpacket = {
     amount: string
   }[],
   data?: string
+}
+
+export type DelayedEncodeData = {
+  abi: string,
+  func: string,
+  args: (string | DelayedEncodeData)[] | { [key: string]: (string | DelayedEncodeData) }
+}
+
+export type DelayedEncodeSubpacket = {
+  type: 'delayedEncode',
+  to: string,
+  value: string,
+  data: DelayedEncodeData
 }
 
 export function sendTransactions(
@@ -163,6 +177,34 @@ export function sendERC1155(
           amount: ethers.BigNumber.from(v.amount).toString()
         })),
         data
+      }
+    ]
+  }
+}
+
+export function sendDelayedEncode(
+  wallet: string,
+  to: string,
+  value: ethers.BigNumberish,
+  abi: string,
+  func: string,
+  args: string[] | { [key: string]: string },
+  chainId: number
+): TransactionsPacket {
+  return {
+    code: 'sendTransaction',
+    wallet: ethers.constants.AddressZero,
+    network: chainId.toString(),
+    transactions: [
+      {
+        type: 'delayedEncode',
+        to,
+        value: ethers.BigNumber.from(value).toString(),
+        data: {
+          abi,
+          func,
+          args
+        }
       }
     ]
   }
