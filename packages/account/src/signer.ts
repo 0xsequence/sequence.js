@@ -157,7 +157,7 @@ export class AccountSigner implements ethers.Signer {
             nonceSpace: this.options.nonceSpace
           }
         : undefined
-    )
+    ) as Promise<ethers.providers.TransactionResponse> // Will always have a transaction response
   }
 
   getBalance(blockTag?: ethers.providers.BlockTag | undefined): Promise<ethers.BigNumber> {
