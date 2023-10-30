@@ -2,10 +2,11 @@ import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { isSignerStatusSigned, Orchestrator, Status } from '@0xsequence/signhub'
 import { Deferrable, subDigestOf } from '@0xsequence/utils'
-import { FeeQuote, Relayer, SimulateResult } from '@0xsequence/relayer'
+import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
 import { resolveArrayProperties } from './utils'
+import { WalletSignRequestMetadata } from '@0xsequence/core/src/commons'
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -55,10 +56,7 @@ export type WalletV1 = Wallet<v1.config.WalletConfig, v1.signature.Signature, v1
  * it doesn't have any knowledge of any on-chain state, instead it relies solely on the information
  * provided by the user. This building block is used to create higher level abstractions.
  *
- * Wallet can also be used to create Sequence wallets, but it's not recommended to use it directly
- *
- * @notice: TODO: This class is meant to replace the one in ../wallet.ts !!!
- *
+ * Wallet can also be used to create Sequence wallets, but it's not recommended to use it directly.
  */
 export class Wallet<
   Y extends commons.config.Config = commons.config.Config,
@@ -138,9 +136,27 @@ export class Wallet<
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle
   ): Promise<commons.transaction.IntendedTransactionBundle> {
-    if (await this.reader().isDeployed(this.address)) return bundle
+    // Allow children to decorate
+    const decorated = await this.orchestrator.decorateTransactions(bundle)
 
-    const deployTx = this.buildDeployTransaction()
+    if (await this.reader().isDeployed(this.address)) {
+      // Deployed - No decorating at this level
+      return decorated
+    }
+
+    const transactions: commons.transaction.Transaction[] = [
+      {
+        to: decorated.entrypoint,
+        data: commons.transaction.encodeBundleExecData(decorated),
+        revertOnError: true,
+      }
+    ]
+
+    // Add deployment tx
+    const deployTx = await this.buildDeployTransaction()
+    if (deployTx) {
+      transactions.unshift(...deployTx.transactions)
+    }
 
     // TODO: If entrypoint is guestModule we can flatten the bundle
     // and avoid calling guestModule twice
@@ -148,33 +164,39 @@ export class Wallet<
     return {
       entrypoint: this.context.guestModule,
       chainId: this.chainId,
-      intent: bundle.intent,
-      transactions: [
-        ...deployTx.transactions,
-        {
-          to: bundle.entrypoint,
-          data: commons.transaction.encodeBundleExecData(bundle),
-          gasLimit: 0,
-          delegateCall: false,
-          revertOnError: true,
-          value: 0
-        }
-      ]
+      intent: decorated.intent,
+      transactions
     }
   }
 
-  buildDeployTransaction(): commons.transaction.TransactionBundle {
+  async buildDeployTransaction(metadata?: commons.WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | undefined> {
+    if (metadata?.ignoreDeployed && (await this.reader().isDeployed(this.address))) {
+      return
+    }
+
     const imageHash = this.coders.config.imageHashOf(this.config)
 
     if (commons.context.addressOf(this.context, imageHash) !== this.address) {
       throw new Error(`First address of config ${imageHash} doesn't match wallet address ${this.address}`)
     }
 
-    return Wallet.buildDeployTransaction(this.context, imageHash)
+    const bundle = Wallet.buildDeployTransaction(this.context, imageHash)
+    if (metadata?.includeChildren) {
+      const childBundle = await this.orchestrator.buildDeployTransaction(metadata)
+      if (childBundle) {
+        // Deploy children first
+        bundle.transactions = childBundle.transactions.concat(bundle.transactions)
+      }
+    }
+    return bundle
   }
 
-  deploy(): Promise<ethers.providers.TransactionResponse> {
-    const deployTx = this.buildDeployTransaction()
+  async deploy(metadata?: commons.WalletDeployMetadata): Promise<ethers.providers.TransactionResponse | undefined> {
+    const deployTx = await this.buildDeployTransaction(metadata)
+    if (deployTx === undefined) {
+      // Already deployed
+      return
+    }
     if (!this.relayer) throw new Error('Wallet deploy requires a relayer')
     return this.relayer.relay({
       ...deployTx,
@@ -217,13 +239,15 @@ export class Wallet<
     return this.coders.config.update.buildTransaction(this.address, config, this.context)
   }
 
+  async getNonce(space: ethers.BigNumberish = 0): Promise<ethers.BigNumberish> {
+    const nonce = await this.reader().nonce(this.address, space)
+    if (nonce === undefined) throw new Error('Unable to determine nonce')
+    return nonce
+  }
+
   async signDigest(
     digest: ethers.utils.BytesLike,
-    request?: {
-      message?: ethers.utils.BytesLike
-      transactions?: commons.transaction.Transaction[]
-      nested?: commons.WalletSignRequestMetadata
-    }
+    metadata?: Object | WalletSignRequestMetadata,
   ): Promise<string> {
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
@@ -234,12 +258,12 @@ export class Wallet<
 
     // We build the metadata object, this contains additional information
     // that may be needed to sign the digest (by the other signers, or by the guard)
-    const metadata: commons.WalletSignRequestMetadata = {
+    const childMetadata: commons.WalletSignRequestMetadata = {
+      ...metadata, // Keep other metadata fields
       digest,
       chainId: this.chainId,
       address: this.address,
       config: this.config,
-      ...request
     }
 
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
@@ -249,11 +273,11 @@ export class Wallet<
     const signature = await this.orchestrator.signMessage({
       candidates: this.coders.config.signersOf(this.config).map(s => s.address),
       message: subdigestBytes,
-      metadata,
-      callback: (status: Status, onNewMetadata: (metadata: Object) => void): boolean => {
+      metadata: childMetadata,
+      callback: (status: Status, onNewMetadata: (_metadata: Object) => void): boolean => {
         const parts = statusToSignatureParts(status)
 
-        const newMetadata = { ...metadata, parts }
+        const newMetadata = { ...childMetadata, parts }
         onNewMetadata(newMetadata)
 
         return this.coders.signature.hasEnoughSigningPower(this.config, parts)
@@ -264,7 +288,9 @@ export class Wallet<
     return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
   }
 
-  signMessage(message: ethers.BytesLike): Promise<string> {
+  signMessage(
+    message: ethers.BytesLike,
+  ): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message), { message })
   }
 
@@ -294,7 +320,8 @@ export class Wallet<
 
   async signTransactions(
     txs: Deferrable<commons.transaction.Transactionish>,
-    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }
+    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish },
+    metadata?: Object | WalletSignRequestMetadata
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
@@ -315,7 +342,12 @@ export class Wallet<
 
     const defaultedNonce = await this.fetchNonceOrSpace(nonce)
     const digest = commons.transaction.digestOfTransactions(defaultedNonce, transactions)
-    const signature = await this.signDigest(digest, { transactions })
+    const meta = {
+      digest,
+      transactions,
+      ...metadata,
+    }
+    const signature = await this.signDigest(digest, meta)
 
     return {
       intent: {

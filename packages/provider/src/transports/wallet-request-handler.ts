@@ -424,7 +424,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
           if (this.prompter === null) {
             // prompter is null, so we'll send from here
             const txnResponse = await account.sendTransaction(transactionParams, chainId ?? this.defaultChainId())
-            txnHash = txnResponse.hash
+            txnHash = txnResponse?.hash ?? ''
           } else {
             // prompt user to provide the response
             txnHash = await this.prompter.promptSendTransaction(transactionParams, chainId, this.connectOptions)

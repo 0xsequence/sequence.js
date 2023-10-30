@@ -3,8 +3,7 @@ import { commons } from '..'
 import { Config } from './config'
 
 /**
- * Request metadata, used to by the wallet to pass additional information to the
- * orchestrator.
+ * Request metadata, used by the wallet to pass additional information through the orchestrator.
  */
 export type WalletSignRequestMetadata = {
   address: string
@@ -25,8 +24,19 @@ export type WalletSignRequestMetadata = {
   // This is used only when a Sequence wallet is nested in another Sequence wallet
   // it contains the original metadata of the parent wallet.
   parent?: WalletSignRequestMetadata
+
+  decorate?: boolean,
+  cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
 }
 
 export function isWalletSignRequestMetadata(obj: any): obj is WalletSignRequestMetadata {
   return obj && obj.address && obj.digest && obj.chainId !== undefined && obj.config
+}
+
+/**
+ * Request metadata, used by the wallet to pass additional information through the orchestrator.
+ */
+export type WalletDeployMetadata = {
+  includeChildren?: boolean // Whether to include children in deployment, default false
+  ignoreDeployed?: boolean // Whether to ignore already deployed wallets, default false
 }

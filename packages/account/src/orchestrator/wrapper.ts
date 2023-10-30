@@ -1,0 +1,87 @@
+import { commons } from '@0xsequence/core'
+import { signers, Status } from '@0xsequence/signhub'
+import { ethers } from 'ethers'
+import { Account } from '../account'
+
+export type MetadataWithChainId = {
+  chainId: ethers.BigNumberish
+}
+
+// Implements a wrapper for using Sequence accounts as nested signers in the signhub orchestrator.
+export class AccountOrchestratorWrapper implements signers.SapientSigner {
+  constructor(public account: Account) {}
+
+  async getAddress(): Promise<string> {
+    return this.account.address
+  }
+
+  getChainIdFromMetadata(metadata: Object): ethers.BigNumber {
+    try {
+      const { chainId } = metadata as MetadataWithChainId
+      return ethers.BigNumber.from(chainId)
+    } catch (err) {
+      // Invalid metadata object
+      throw new Error('AccountOrchestratorWrapper only supports metadata with chain id')
+    }
+  }
+
+  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+    const chainId = this.getChainIdFromMetadata(metadata)
+    const status = await this.account.status(chainId)
+    return this.account.buildBootstrapTransactions(status, chainId)
+  }
+
+  async predecorateSignedTransactions(
+    metadata: Object
+  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+    const chainId = this.getChainIdFromMetadata(metadata)
+    const status = await this.account.status(chainId)
+    return this.account.predecorateSignedTransactions(status, chainId)
+  }
+
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle,
+    metadata: Object
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+    const chainId = this.getChainIdFromMetadata(metadata)
+    const status = await this.account.status(chainId)
+    return this.account.decorateTransactions(bundle, status)
+  }
+
+  async requestSignature(
+    _id: string,
+    message: ethers.utils.BytesLike,
+    metadata: Object,
+    callbacks: {
+      onSignature: (signature: ethers.utils.BytesLike) => void
+      onRejection: (error: string) => void
+      onStatus: (situation: string) => void
+    }
+  ): Promise<boolean> {
+    if (!commons.isWalletSignRequestMetadata(metadata)) {
+      throw new Error('AccountOrchestratorWrapper only supports wallet metadata requests')
+    }
+
+    const { chainId, decorate } = metadata
+    // EIP-6492 not supported on nested signatures
+    // Default to throw instead of ignore. Ignoring should be explicit
+    const cantValidateBehavior = metadata.cantValidateBehavior ?? 'throw'
+
+    // For Sequence nested signatures we must use `signDigest` and not `signMessage`
+    // otherwise the account will hash the digest and the signature will be invalid.
+    try {
+      callbacks.onSignature(await this.account.signDigest(message, chainId, decorate, cantValidateBehavior, metadata))
+    } catch (err) {
+      callbacks.onRejection('Unable to sign account')
+      return false
+    }
+
+    return true
+  }
+
+  notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
+
+  suffix(): ethers.utils.BytesLike {
+    return [3]
+  }
+}

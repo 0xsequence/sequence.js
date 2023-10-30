@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { commons } from '@0xsequence/core'
 import { isSapientSigner, SapientSigner } from './signers/signer'
 import { SignerWrapper } from './signers/wrapper'
 
@@ -39,10 +40,12 @@ export function isSignerStatusPending(status: SignerStatus): status is SignerSta
 export const InitialSituation = 'Initial'
 
 /**
- * It orchestrates the signing of a single digest by multiple signers.
+ * Orchestrates actions of collective signers.
+ * This includes the signing of a single digests and transactions by multiple signers.
  * It can provide internal visibility of the signing process, and it also
  * provides the internal signers with additional information about the
- * message being signed.
+ * message being signed. Transaction decoration can be used to ensure on-chain state
+ * is correctly managed during the signing process.
  */
 export class Orchestrator {
   private observers: ((status: Status, metadata: Object) => void)[] = []
@@ -85,6 +88,41 @@ export class Orchestrator {
       ...this.signers.map(async signer => signer.notifyStatusChange(id, status, metadata)),
       ...this.observers.map(async observer => observer(status, metadata))
     ])
+  }
+
+  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+    let bundle: commons.transaction.TransactionBundle | undefined
+    for (const signer of this.signers) {
+      const newBundle = await signer.buildDeployTransaction(metadata)
+      if (bundle === undefined) {
+        // Use first bundle as base
+        bundle = newBundle
+      } else if (newBundle?.transactions) {
+        // Combine deploy transactions
+        bundle.transactions = newBundle.transactions.concat(bundle.transactions)
+      }
+    }
+    return bundle
+  }
+
+  async predecorateSignedTransactions(
+    metadata?: Object
+  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+    const output: commons.transaction.SignedTransactionBundle[] = []
+    for (const signer of this.signers) {
+      output.push(...(await signer.predecorateSignedTransactions(metadata ?? {})))
+    }
+    return output
+  }
+
+  async decorateTransactions(
+    bundle: commons.transaction.IntendedTransactionBundle,
+    metadata?: Object
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
+    for (const signer of this.signers) {
+      bundle = await signer.decorateTransactions(bundle, metadata ?? {})
+    }
+    return bundle
   }
 
   signMessage(args: {
