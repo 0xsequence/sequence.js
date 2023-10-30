@@ -258,7 +258,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Avalanche',
     blockExplorer: {
       name: 'Snowtrace',
-      rootUrl: 'https://snowtrace.io/'
+      rootUrl: 'https://subnets.avax.network/c-chain/'
     }
   },
   [ChainId.AVALANCHE_TESTNET]: {
@@ -269,7 +269,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'Snowtrace (Testnet)',
-      rootUrl: 'https://testnet.snowtrace.io/'
+      rootUrl: 'https://subnets-test.avax.network/c-chain/'
     }
   },
   [ChainId.FANTOM]: {
