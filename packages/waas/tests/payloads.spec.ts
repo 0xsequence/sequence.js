@@ -33,8 +33,8 @@ describe('Payloads', () => {
     }
 
     const hash = hashPacket(payloads)
-    expect(ethers.utils.hexlify(hash)).to.equal('0x21d0eeb9c2cd78933e3b44d5ae7ff6c76db2f89e2e35167d34149b607238bcae')
-    expect(sessionSignature).to.equal('0xb84ebe339b75ef144065c1dd824d119228fb8128eeb1e74cc39faf6dab76de6b508b4fae06ba88e209ce4e8736085140ac7827293e25f7e3ecd44222bfca76251c')
+    expect(ethers.utils.hexlify(hash)).to.equal('0x5a4fc6915903806d66e785444fc7ce645814b4c46e16624ba115bd3beb5a762a')
+    expect(sessionSignature).to.equal('0xfc02326d953a6e22dafba0a1b06cefd8b524cdefcbbefcd243f578c8c0634d925f05496ab9f1be5d84caa3b40533b9569d9112a9da2fa94605cb1c8b7312a9c21b')
   })
 
   it('Should sign a message payload', async () => {
@@ -58,8 +58,8 @@ describe('Payloads', () => {
     }
 
     const hash = hashPacket(payloads)
-    expect(ethers.utils.hexlify(hash)).to.equal('0x26abd75b9e3f2f8f8a777f8e0ac628edb136dbe82a461c9c7ee4b102d654cb87')
-    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0xfa8697812a75e3893b7d498695fe699bcf00cfc84a6ca8815bd0a23021e631176dcbfeb7f07b942386277ebc821dc15ac6520e80e4d6d3947e556376d5a74e051c')
+    expect(ethers.utils.hexlify(hash)).to.equal('0xf811404061b84abc22011ff0ae291ad61268396f8da1137ce5d8b19202dff4d7')
+    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0x0fcfce66291c21110d2c88b77c966a7806c9691517b2479693bfb8db475ecc8002b1c5cf52a45281fc0398992ad8b7b6d0bc49567673fba3e2d11866900f36a11c')
   })
 
   it('Should sign transaction payload', async () => {
@@ -96,12 +96,34 @@ describe('Payloads', () => {
           amount: "1"
         }],
         data: "0x223344"
-      }]
+      }, {
+				"type": "delayedEncode",
+        "to": "0x140d72763D1ce39Ad4E2e73EC6e8FC53E5b73B64",
+        "value": "0",
+				"data": {
+					"abi": "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_orderId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_maxCost\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"_fees\",\"type\":\"address[]\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"fillOrKillOrder\",\"outputs\":[],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_val\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_data\",\"type\":\"string\"}],\"name\":\"notExpired\",\"outputs\":[],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"otherMethods\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+					"func": "fillOrKillOrder",
+					"args": [
+						"48774435471364917511246724398022004900255301025912680232738918790354204737320",
+						"1000000000000000000",
+						"[\"0x8541D65829f98f7D71A4655cCD7B2bB8494673bF\"]",
+						{
+							"abi": "notExpired(uint256,string)",
+							"func": "notExpired",
+							"args": [
+								"1600000000",
+								"Nov 1st, 2020"
+							]
+						}
+					]
+				}
+			}]
     }
     
-  
     const sessionSigner = new ethers.Wallet('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    console.log("signer address", sessionSigner.address)
     const sessionSignature = await signPacket(sessionSigner, transactionPacket)
+    console.log("sessionSignature", sessionSignature)
 
     const payloads: Payload<typeof transactionPacket> = {
       version: '1',
@@ -113,7 +135,7 @@ describe('Payloads', () => {
     }
 
     const hash = hashPacket(payloads)
-    expect(ethers.utils.hexlify(hash)).to.equal('0xf7bbc2ad0d74cccdc1d6a8eae95f39f6f3f7d29f571e8ced744f626168913a00')
-    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0x71a0d20a974e8a7cc3643c9ab0cf6f52bbeda20bf486449a6287c09c5f6c7d0a478a5ed8d0747f83c9a8851d9b87c05c1c74e28a0a3a428aef7b067c4bcbb1bb1b')
+    expect(ethers.utils.hexlify(hash)).to.equal('0x437629d2d86800f7d568ce8f1575cbcb6ec9b30cb3d661bc245fefc6a5f8cf7a')
+    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0xfaf2c6af7a18344c4055d61c3475a6e2f43425961fa59bb6309a846ab582b0781016ec62d264eaa732136f9ad371a8da7e638105e1d1c3a9798f45da0807f9801c')
   })
 })
