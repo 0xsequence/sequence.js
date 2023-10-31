@@ -3,7 +3,7 @@ import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
 import { tracker, trackers } from '@0xsequence/sessions'
-import { Orchestrator } from '@0xsequence/signhub'
+import { Orchestrator, signers } from '@0xsequence/signhub'
 import { migrator } from '@0xsequence/migration'
 import { commons, universal, v1 } from '@0xsequence/core'
 import { Services, ServicesSettings, SessionJWT, SessionMeta } from './services'
@@ -72,7 +72,7 @@ export class Session {
 
   static async singleSigner(args: {
     settings?: Partial<SessionSettings>
-    signer: ethers.Signer
+    signer: ethers.Signer | signers.SapientSigner
     selectWallet?: (wallets: string[]) => Promise<string | undefined>
     onMigration?: (account: Account) => Promise<boolean>
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
