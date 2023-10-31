@@ -117,6 +117,28 @@ export class Sequence {
   }
 
   /**
+   * This method will return session id.
+   *
+   * @returns an id of the session
+   */
+  public async getSessionID(): Promise<string> {
+    return this.getSignerAddress()
+  }
+
+  /**
+   * This method will return shortened version of a session id. This id
+   * is used in session verification emails sent from sequence. It should
+   * be shown to user upon receiving validationRequired response and starting
+   * session validation.
+   *
+   * @returns an shortened version of session id
+   */
+  public async getSessionShortID(): Promise<string> {
+    const sessionID = await this.getSessionID()
+    return sessionID.substring(2, 8)
+  }
+
+  /**
    * This method will initiate a sign-in process with the waas API. It must be performed
    * when the user wants to sign in to the app, in parallel with the authentication of the
    * application's own authentication system.
