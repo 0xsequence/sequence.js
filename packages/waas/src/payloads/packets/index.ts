@@ -1,3 +1,3 @@
 
 export * as session from './session'
-export * as wallet from './wallet'
+export * as wallet from './transactions'

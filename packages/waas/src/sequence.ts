@@ -2,16 +2,28 @@ import { ethers } from "ethers"
 import { SessionPacket, SessionPacketProof, ValidateSessionPacket, openSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
-import { SignMessagePacket, TransactionsPacket, signMessage, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions } from "./payloads/packets/wallet"
+import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args } from "./payloads/packets/transactions"
 import { OpenSessionResponse } from "./payloads/responses"
 import { Guard } from "./clients/guard.gen"
 import { DEFAULTS } from "./defaults"
+import { SignMessageArgs, SignMessagePacket, signMessage } from "./payloads/packets/messages"
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
 const SEQUENCE_WAAS_WALLET_KEY = '@0xsequence.waas.wallet'
 const SEQUENCE_WAAS_SIGNER_KEY = '@0xsequence.waas.signer'
 const SEQUENCE_WAAS_STATUS_KEY = '@0xsequence.waas.status'
+
+// 5 minutes of default lifespan
+const DEFAULT_LIFESPAN = 5 * 60
+
+export type ExtraArgs = {
+  lifespan?: number
+}
+
+export type ExtraTransactionArgs = ExtraArgs & {
+  identifier: string,
+}
 
 export class Sequence {
   readonly VERSION = '0.0.0-dev1'
@@ -44,6 +56,14 @@ export class Sequence {
     }
 
     return wallet
+  }
+
+  private async commonArgs(overrides: { identifier: string, lifespan?: number }) {
+    return {
+      identifier: overrides?.identifier,
+      wallet: await this.getWalletAddress(),
+      lifespan: overrides?.lifespan ?? DEFAULT_LIFESPAN
+    }
   }
 
   /**
@@ -115,7 +135,7 @@ export class Sequence {
     //   throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
     // }
 
-    const result = await openSession(proof)
+    const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
 
     await Promise.all([
       this.status.set('pending'),
@@ -194,12 +214,14 @@ export class Sequence {
    * @param message  The message that will be signed
    * @return a payload that must be sent to the waas API to complete sign process
    */
-  async   signMessage(
-      chainId: number,
-        message: string
-  ): Promise<Payload<SignMessagePacket>> {
-            const packet = signMessage(await this.getWalletAddress(), chainId, message)
-    return   this.buildPayload(packet)
+  async signMessage(args: SignMessageArgs & ExtraArgs): Promise<Payload<SignMessagePacket>> {
+    const packet = signMessage({
+      lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress(),
+      ...args
+    })
+
+    return this.buildPayload(packet)
   }
 
   /**
@@ -213,56 +235,35 @@ export class Sequence {
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
    */
-  async sendTransaction(
-    chainId: number,
-    ...transactions: ethers.providers.TransactionRequest[]
-  ): Promise<Payload<TransactionsPacket>> {
-    const packet = sendTransactions(await this.getWalletAddress(), transactions, chainId)
+  async sendTransaction(args: SendTransactionsArgs & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+    const packet = sendTransactions({ ...await this.commonArgs(args), ...args })
     return this.buildPayload(packet)
   }
 
-  async sendERC20(
-    chainId: number,
-    token: string,
-    to: string,
-    value: ethers.BigNumberish
-  ): Promise<Payload<TransactionsPacket>> {
-    if (token.toLowerCase() === to.toLowerCase()) {
+  async sendERC20(args: SendERC20Args & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC20')
     }
 
-    const packet = sendERC20(await this.getWalletAddress(), token, to, value, chainId)
+    const packet = sendERC20({ ...await this.commonArgs(args), ...args })
     return this.buildPayload(packet)
   }
 
-  async sendERC721(
-    chainId: number,
-    token: string,
-    to: string,
-    id: string
-  ): Promise<Payload<TransactionsPacket>> {
-    if (token.toLowerCase() === to.toLowerCase()) {
+  async sendERC721(args: SendERC721Args & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC721')
     }
 
-    const packet = sendERC721(await this.getWalletAddress(), token, to, id, chainId)
+    const packet = sendERC721({ ... await this.commonArgs(args), ...args })
     return this.buildPayload(packet)
   }
 
-  async sendERC1155(
-    chainId: number,
-    token: string,
-    to: string,
-    values: {
-      id: string,
-      amount: ethers.BigNumberish
-    }[]
-  ): Promise<Payload<TransactionsPacket>> {
-    if (token.toLowerCase() === to.toLowerCase()) {
+  async sendERC1155(args: SendERC1155Args & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC1155')
     }
 
-    const packet = sendERC1155(await this.getWalletAddress(), token, to, values, chainId)
+    const packet = sendERC1155({ ... await this.commonArgs(args), ...args })
     return this.buildPayload(packet)
   }
 
