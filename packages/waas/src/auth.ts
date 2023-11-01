@@ -1,5 +1,4 @@
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
-import { ethers } from "ethers";
 import { Sequence } from "./sequence"
 import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
@@ -8,10 +7,11 @@ import { WaasAuthenticator, Session, RegisterSessionPayload } from "./clients/au
 import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
+import { SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
 
 export interface AuthConfig {
   key: string,
-  teenant: number,
+  tenant: number,
 }
 
 export type ExtendedAuthConfig = {
@@ -34,6 +34,11 @@ function encodeHex(data: string | Uint8Array) {
   ).join("")
 }
 
+export type CommonAuthArgs = {
+  identifier?: string,
+  chainId: number,
+  onValidationRequired?: () => boolean
+}
 export class SequenceAuth {
   private waas: Sequence
   private client: WaasAuthenticator
@@ -109,7 +114,7 @@ export class SequenceAuth {
     })
 
     const payload: RegisterSessionPayload = {
-      projectId: this.config.teenant,
+      projectId: this.config.tenant,
       idToken: creds.idToken,
       sessionAddress: waaspayload.packet.session,
       friendlyName: name,
@@ -119,7 +124,7 @@ export class SequenceAuth {
     const { args, headers } = await this.preparePayload(kmsClient, payload)
     const res = await this.client.registerSession(args, {
       ...headers,
-      'X-Sequence-Tenant': this.config.teenant,
+      'X-Sequence-Tenant': this.config.tenant,
     })
 
     await this.waas.completeSignIn({
@@ -157,7 +162,7 @@ export class SequenceAuth {
     const payloadSig = await this.waas.signUsingSessionKey(payloadCiphertext)
 
     return {
-      headers: { 'X-Sequence-Tenant': this.config.teenant },
+      headers: { 'X-Sequence-Tenant': this.config.tenant },
       args: { encryptedPayloadKey, payloadCiphertext, payloadSig },
     }
   }
@@ -199,132 +204,57 @@ export class SequenceAuth {
     return this.waas.waitForSessionValid(timeout, pollRate)
   }
 
-  async sendTransaction(
-    options: {
-      chainId: number,
-      onValidationRequired?: () => boolean
-    },
-    ...transactions: ethers.providers.TransactionRequest[]
-  ): Promise<SendTransactionResponse> {
-    const intent = await this.waas.sendTransaction(options.chainId, ...transactions)
-    const response = await this.sendIntent(intent)
-
-    if (isSendTransactionResponse(response)) {
-      return response
+  async useIdentifier<T extends CommonAuthArgs>(args: T): Promise<T & { identifier: string }> {
+    if (args.identifier) {
+      return args as T & { identifier: string }
     }
 
-    if (isValidationRequiredResponse(response)) {
-      const proceed = await this.handleValidationRequired(options.onValidationRequired)
-      if (proceed) {
-        return this.sendTransaction({
-          ...options,
-          onValidationRequired: () => {
-            console.warn('Validation required callback called twice')
-            return false
-          }
-        }, ...transactions)
-      }
-    }
-
-    return Promise.reject(new Error('Invalid response'))
+    // Generate a new identifier
+    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSignerAddress()}`
+    return { ...args, identifier } as T & { identifier: string }
   }
 
-  async sendERC20(
-    options: {
-      chainId: number,
-      onValidationRequired?: () => boolean
-    },
-    token: string,
-    to: string,
-    value: ethers.BigNumberish
-  ): Promise<SendTransactionResponse> {
-    const intent = await this.waas.sendERC20(options.chainId, token, to, value)
+  private async trySendIntent<T>(
+    args: CommonAuthArgs,
+    intent: Payload<any>,
+    isExpectedResponse: (response: any) => response is T
+  ): Promise<T> {
     const response = await this.sendIntent(intent)
 
-    if (isSendTransactionResponse(response)) {
+    if (isExpectedResponse(response)) {
       return response
     }
 
     if (isValidationRequiredResponse(response)) {
-      const proceed = await this.handleValidationRequired(options.onValidationRequired)
+      const proceed = await this.handleValidationRequired(args.onValidationRequired)
       if (proceed) {
-        return this.sendERC20({
-          ...options,
-          onValidationRequired: () => {
-            console.warn('Validation required callback called twice')
-            return false
-          }
-        }, token, to, value)
+        const response2 = await this.sendIntent(intent)
+        if (isExpectedResponse(response2)) {
+          return response2
+        }
       }
     }
 
-    return Promise.reject(new Error('Invalid response'))
+    throw new Error(JSON.stringify(response))
   }
 
-  async sendERC721(
-    options: {
-      chainId: number,
-      onValidationRequired?: () => boolean
-    },
-    token: string,
-    to: string,
-    id: string
-  ): Promise<SendTransactionResponse> {
-    const intent = await this.waas.sendERC721(options.chainId, token, to, id)
-    const response = await this.sendIntent(intent)
-
-    if (isSendTransactionResponse(response)) {
-      return response
-    }
-
-    if (isValidationRequiredResponse(response)) {
-      const proceed = await this.handleValidationRequired(options.onValidationRequired)
-      if (proceed) {
-        return this.sendERC721({
-          ...options,
-          onValidationRequired: () => {
-            console.warn('Validation required callback called twice')
-            return false
-          }
-        }, token, to, id)
-      }
-    }
-
-    return Promise.reject(new Error('Invalid response'))
+  async sendTransaction(args: SendTransactionsArgs & CommonAuthArgs): Promise<SendTransactionResponse> {
+    const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSendTransactionResponse)
   }
 
-  async sendERC1155(
-    options: {
-      chainId: number,
-      onValidationRequired?: () => boolean
-    },
-    token: string,
-    to: string,
-    values: {
-      id: string,
-      amount: ethers.BigNumberish
-    }[]
-  ): Promise<SendTransactionResponse> {
-    const intent = await this.waas.sendERC1155(options.chainId, token, to, values)
-    const response = await this.sendIntent(intent)
+  async sendERC20(args: SendERC20Args & CommonAuthArgs): Promise<SendTransactionResponse> {
+    const intent = await this.waas.sendERC20(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSendTransactionResponse)
+  }
 
-    if (isSendTransactionResponse(response)) {
-      return response
-    }
+  async sendERC721(args: SendERC721Args & CommonAuthArgs): Promise<SendTransactionResponse> {
+    const intent = await this.waas.sendERC721(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSendTransactionResponse)
+  }
 
-    if (isValidationRequiredResponse(response)) {
-      const proceed = await this.handleValidationRequired(options.onValidationRequired)
-      if (proceed) {
-        return this.sendERC1155({
-          ...options,
-          onValidationRequired: () => {
-            console.warn('Validation required callback called twice')
-            return false
-          }
-        }, token, to, values)
-      }
-    }
-
-    return Promise.reject(new Error('Invalid response'))
+  async sendERC1155(args: SendERC1155Args & CommonAuthArgs): Promise<SendTransactionResponse> {
+    const intent = await this.waas.sendERC1155(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSendTransactionResponse)
   }
 }

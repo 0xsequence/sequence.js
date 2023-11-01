@@ -2,7 +2,7 @@ import * as chai from 'chai'
 import { ethers } from 'ethers'
 
 import { Payload, hashPacket, signPacket } from '../src/payloads'
-import { TransactionsPacket } from '../src/payloads/wallet'
+import { TransactionsPacket } from '../src/payloads/packets/transactions'
 
 const { expect } = chai
 
@@ -10,6 +10,9 @@ describe('Payloads', () => {
   it('Should sign a payload', async () => {
     const transactionsPacket: TransactionsPacket = {
       code: 'sendTransactions',
+      identifier: 'test-identifier',
+      issued: 1600000000,
+      expires: 1600000000 + 86400,
       wallet: '0xD67FC48b298B09Ed3D03403d930769C527186c4e',
       network: '1',
       transactions: [{
@@ -33,13 +36,15 @@ describe('Payloads', () => {
     }
 
     const hash = hashPacket(payloads)
-    expect(ethers.utils.hexlify(hash)).to.equal('0x5a4fc6915903806d66e785444fc7ce645814b4c46e16624ba115bd3beb5a762a')
-    expect(sessionSignature).to.equal('0xfc02326d953a6e22dafba0a1b06cefd8b524cdefcbbefcd243f578c8c0634d925f05496ab9f1be5d84caa3b40533b9569d9112a9da2fa94605cb1c8b7312a9c21b')
+    expect(ethers.utils.hexlify(hash)).to.equal('0x893060f818437f8e3d9b4d8e103c5eb3c325fa25dd0221fb7b61cca6dd03a79e')
+    expect(sessionSignature).to.equal('0xcca6253c4fd281247ddd0fa487252ef91932eaec8d68b61f0901ccaa70345bf66fdbbd98ed3e3c9752f9e35ef2a7bc88dd9c8ae23c594241b476fe988824ab881c')
   })
 
   it('Should sign a message payload', async () => {
     const messagePacket = {
       code: 'signMessage',
+      issued: 1600000000,
+      expires: 1600000000 + 86400,
       wallet: '0xD67FC48b298B09Ed3D03403d930769C527186c4e',
       network: '1',
       message: '0xdeadbeef'
@@ -58,13 +63,16 @@ describe('Payloads', () => {
     }
 
     const hash = hashPacket(payloads)
-    expect(ethers.utils.hexlify(hash)).to.equal('0xf811404061b84abc22011ff0ae291ad61268396f8da1137ce5d8b19202dff4d7')
-    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0x0fcfce66291c21110d2c88b77c966a7806c9691517b2479693bfb8db475ecc8002b1c5cf52a45281fc0398992ad8b7b6d0bc49567673fba3e2d11866900f36a11c')
+    expect(ethers.utils.hexlify(hash)).to.equal('0x5b15538a25716e951630dde1cf38ae056d764976145d1134576461203a621ddb')
+    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0x827b2a2afbf4a8a79e761fdb26e567b519a56a06e897dce5517b3ccfb408b55f20aaba276c1dade28112f51fe7262fbd0508da0019c0f8582c41b2be451ddede1b')
   })
 
   it('Should sign transaction payload', async () => {
     const transactionPacket: TransactionsPacket = {
       code: 'sendTransaction',
+      identifier: 'test-identifier',
+      issued: 1600000000,
+      expires: 1600000000 + 86400,
       wallet: '0xD67FC48b298B09Ed3D03403d930769C527186c4e',
       network: '10',
       transactions: [{
@@ -121,9 +129,7 @@ describe('Payloads', () => {
     }
     
     const sessionSigner = new ethers.Wallet('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
-    console.log("signer address", sessionSigner.address)
     const sessionSignature = await signPacket(sessionSigner, transactionPacket)
-    console.log("sessionSignature", sessionSignature)
 
     const payloads: Payload<typeof transactionPacket> = {
       version: '1',
@@ -135,7 +141,7 @@ describe('Payloads', () => {
     }
 
     const hash = hashPacket(payloads)
-    expect(ethers.utils.hexlify(hash)).to.equal('0x437629d2d86800f7d568ce8f1575cbcb6ec9b30cb3d661bc245fefc6a5f8cf7a')
-    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0xfaf2c6af7a18344c4055d61c3475a6e2f43425961fa59bb6309a846ab582b0781016ec62d264eaa732136f9ad371a8da7e638105e1d1c3a9798f45da0807f9801c')
+    expect(ethers.utils.hexlify(hash)).to.equal('0x2feb22d5631075041c5aaafce98da8950d706a9eca8d9ea2b28ea95142d8e890')
+    expect(ethers.utils.hexlify(sessionSignature)).to.equal('0xdd137166e6e73fcaa710e822aa3eef3d501ef1b7969d59e8583cb602a32233e0628d4e28ea5a562a1ccf6bd85bfccfcd1004673a28763640cca33002fbedbb3a1b')
   })
 })

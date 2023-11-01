@@ -3,6 +3,8 @@ import { canonicalize } from 'json-canonicalize'
 
 export type BasePacket = {
   code: string
+  issued: number
+  expires: number
 }
 
 export type Signature = {

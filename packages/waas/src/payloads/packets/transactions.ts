@@ -1,26 +1,11 @@
 import { ethers } from "ethers"
 import { BasePacket } from ".."
-
-export type SignMessagePacket = BasePacket & {
-  wallet: string;
-  network: string;
-
-  message: string
-}
-
-export function signMessage(wallet: string, chainId: number, message: string): SignMessagePacket {
-  return {
-    code: 'signMessage',
-    wallet: wallet,
-    network: chainId.toString(),
-    message: message.startsWith('0x') ?
-        message : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(message))
-  }
-}
+import { useLifespan } from "./utils";
 
 export type TransactionsPacket = BasePacket & {
   wallet: string;
   network: string;
+  identifier: string;
 
   transactions: TransactionSubpacket[]
 }
@@ -80,12 +65,61 @@ export type DelayedEncodeSubpacket = {
   data: DelayedEncodeData
 }
 
-export function sendTransactions(
-  wallet: string,
+export type SendTransactionsArgs = {
   transactions: ethers.providers.TransactionRequest[],
-  chainId: number
-): TransactionsPacket {
+  chainId: number,
+}
+
+export type SendERC20Args = {
+  chainId: number,
+  token: string,
+  to: string,
+  value: ethers.BigNumberish,
+}
+
+export type SendERC721Args = {
+  chainId: number,
+  token: string,
+  to: string,
+  id: string,
+  safe?: boolean,
+  data?: string,
+}
+
+export type SendERC1155Args = {
+  chainId: number,
+  token: string,
+  to: string,
+  values: {
+    id: string,
+    amount: ethers.BigNumberish
+  }[],
+  data?: string,
+}
+
+export type SendDelayedEncodeArgs = {
+  chainId: number,
+  to: string,
+  value: ethers.BigNumberish,
+  abi: string,
+  func: string,
+  args: string[] | { [key: string]: string },
+}
+
+export function sendTransactions({
+  wallet,
+  transactions,
+  chainId,
+  lifespan,
+  identifier
+}: SendTransactionsArgs & {
+  wallet: string,
+  lifespan: number,
+  identifier: string
+}): TransactionsPacket {
   return {
+    ...useLifespan(lifespan),
+    identifier,
     code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
@@ -104,14 +138,22 @@ export function sendTransactions(
   }
 }
 
-export function sendERC20(
+export function sendERC20({
+  wallet,
+  token,
+  to,
+  value,
+  chainId,
+  lifespan,
+  identifier
+}: SendERC20Args & {
   wallet: string,
-  token: string,
-  to: string,
-  value: ethers.BigNumberish,
-  chainId: number
-): TransactionsPacket {
+  lifespan: number,
+  identifier: string
+}): TransactionsPacket {
   return {
+    ...useLifespan(lifespan),
+    identifier,
     code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
@@ -126,16 +168,24 @@ export function sendERC20(
   }
 }
 
-export function sendERC721(
+export function sendERC721({
+  wallet,
+  token,
+  to,
+  id,
+  chainId,
+  lifespan,
+  identifier,
+  safe,
+  data
+}: SendERC721Args & {
   wallet: string,
-  token: string,
-  to: string,
-  id: string,
-  chainId: number,
-  safe?: boolean,
-  data?: string
-): TransactionsPacket {
+  lifespan: number,
+  identifier: string,
+}): TransactionsPacket {
   return {
+    ...useLifespan(lifespan),
+    identifier,
     code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
@@ -152,18 +202,23 @@ export function sendERC721(
   }
 }
 
-export function sendERC1155(
+export function sendERC1155({
+  wallet,
+  token,
+  to,
+  values,
+  chainId,
+  lifespan,
+  identifier,
+  data
+}: SendERC1155Args & {
   wallet: string,
-  token: string,
-  to: string,
-  vals: {
-    id: string,
-    amount: ethers.BigNumberish
-  }[],
-  chainId: number,
-  data?: string
-): TransactionsPacket {
+  lifespan: number,
+  identifier: string,
+}): TransactionsPacket {
   return {
+    ...useLifespan(lifespan),
+    identifier,
     code: 'sendTransaction',
     wallet,
     network: chainId.toString(),
@@ -172,7 +227,7 @@ export function sendERC1155(
         type: 'erc1155send',
         token,
         to,
-        vals: vals.map(v => ({
+        vals: values.map(v => ({
           id: v.id,
           amount: ethers.BigNumber.from(v.amount).toString()
         })),
@@ -182,18 +237,26 @@ export function sendERC1155(
   }
 }
 
-export function sendDelayedEncode(
+export function sendDelayedEncode({
+  wallet,
+  to,
+  value,
+  abi,
+  func,
+  args,
+  chainId,
+  lifespan,
+  identifier
+}: SendDelayedEncodeArgs & {
   wallet: string,
-  to: string,
-  value: ethers.BigNumberish,
-  abi: string,
-  func: string,
-  args: string[] | { [key: string]: string },
-  chainId: number
-): TransactionsPacket {
+  lifespan: number,
+  identifier: string
+}): TransactionsPacket {
   return {
+    ...useLifespan(lifespan),
+    identifier,
     code: 'sendTransaction',
-    wallet: ethers.constants.AddressZero,
+    wallet,
     network: chainId.toString(),
     transactions: [
       {
@@ -220,6 +283,8 @@ export function combinePackets(
   // Ensure that all packets are for the same network and wallet
   const network = packets[0].network
   const wallet = packets[0].wallet
+  const lifespan = packets[0].expires - packets[0].issued
+  const identifier = packets[0].identifier
 
   if (!packets.every(p => p.network === network)) {
     throw new Error('All packets must have the same chainId')
@@ -230,6 +295,8 @@ export function combinePackets(
   }
 
   return {
+    ...useLifespan(lifespan),
+    identifier,
     code: 'sendTransaction',
     network,
     wallet,
