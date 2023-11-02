@@ -243,7 +243,10 @@ export class SequenceAuth {
       // const packet = await this.waas.signOut({ sessionId })
       // const result = await this.sendIntent(packet)
       // console.log("TODO: Handle got result from drop session", result)
-      const payload: DropSessionPayload = { sessionId: closeSessionId }
+      const payload: DropSessionPayload = {
+        dropSessionId: closeSessionId,
+        sessionId: thisSessionId,
+      }
 
       const { args, headers } = await this.preparePayload(payload)
       await this.client.dropSession(args, headers)
