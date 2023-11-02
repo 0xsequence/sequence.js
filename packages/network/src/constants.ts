@@ -22,7 +22,7 @@ export enum ChainId {
 
   // Arbitrum One
   ARBITRUM = 42161,
-  ARBITRUM_GOERLI = 421613,
+  ARBITRUM_SEPOLIA = 421614,
 
   // Arbitrum Nova
   ARBITRUM_NOVA = 42170,
@@ -222,15 +222,15 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://arbiscan.io/'
     }
   },
-  [ChainId.ARBITRUM_GOERLI]: {
-    chainId: ChainId.ARBITRUM_GOERLI,
+  [ChainId.ARBITRUM_SEPOLIA]: {
+    chainId: ChainId.ARBITRUM_SEPOLIA,
     type: NetworkType.TESTNET,
-    name: 'arbitrum-goerli',
-    title: 'Arbitrum Goerli',
+    name: 'arbitrum-sepolia',
+    title: 'Arbitrum Sepolia',
     testnet: true,
     blockExplorer: {
-      name: 'Arbiscan (Testnet)',
-      rootUrl: 'https://testnet.arbiscan.io/'
+      name: 'Arbiscan (Sepolia Testnet)',
+      rootUrl: 'https://sepolia.arbiscan.io/'
     }
   },
   [ChainId.ARBITRUM_NOVA]: {
