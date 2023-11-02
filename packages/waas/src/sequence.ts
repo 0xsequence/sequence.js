@@ -154,7 +154,7 @@ export class Sequence {
   async signIn(proof?: SessionPacketProof): Promise<Payload<OpenSessionPacket>> {
     const status = await this.status.get()
     if (status !== 'signed-out') {
-      throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
+      await this.completeSignOut()
     }
 
     const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
@@ -307,7 +307,13 @@ export class Sequence {
     return this.buildPayload(packet)
   }
 
-  async validateSession(deviceMetadata: string, redirectURL?: string): Promise<Payload<ValidateSessionPacket>> {
+  async validateSession({
+    deviceMetadata,
+    redirectURL
+  }: {
+    deviceMetadata: string,
+    redirectURL?: string
+  }): Promise<Payload<ValidateSessionPacket>> {
     const packet = {
       code: 'validateSession',
       session: await this.getSignerAddress(),
