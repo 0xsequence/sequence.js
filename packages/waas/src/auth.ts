@@ -2,18 +2,21 @@ import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { Sequence } from "./sequence"
 import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
-import { SendTransactionResponse, isSendTransactionResponse, isValidationRequiredResponse } from "./payloads/responses";
-import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload } from "./clients/authenticator.gen";
+import { SendTransactionResponse, SignedMessageResponse, isSendTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
+import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload, DropSessionPayload } from "./clients/authenticator.gen";
 import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
 import { SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
+import { SignMessageArgs } from './payloads/packets/messages';
 
-export type Sessions = Session[]
+export type Sessions = (Session & { isThis: boolean })[]
 
 export interface AuthConfig {
   key: string,
   tenant: number,
+
+  redirectURL?: string,
 }
 
 export type ExtendedAuthConfig = {
@@ -40,11 +43,17 @@ function decodeHex(hex: string) {
   return new Uint8Array(hex.substring(2).match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
 }
 
+export type ValidationArgs = {
+  onValidationRequired?: () => boolean
+  redirectURL?: string
+}
+
 export type CommonAuthArgs = {
+  validation?: ValidationArgs,
   identifier?: string,
   chainId: number,
-  onValidationRequired?: () => boolean
 }
+
 export class SequenceAuth {
   private waas: Sequence
   private client: WaasAuthenticator
@@ -54,6 +63,7 @@ export class SequenceAuth {
   public readonly config: AuthConfig & ExtendedAuthConfig
 
   private readonly kmsKey: StoreObj<string | undefined>
+  private readonly deviceName: StoreObj<string | undefined>
 
   constructor (
     config: AuthConfig & Partial<ExtendedAuthConfig>,
@@ -64,6 +74,7 @@ export class SequenceAuth {
     this.waas = new Sequence(this.store, this.guardUrl)
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
     this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
+    this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
   }
 
   async onValidationRequired(callback: () => void) {
@@ -73,8 +84,11 @@ export class SequenceAuth {
     }
   }
 
-  private async handleValidationRequired(extraCallback?: () => boolean): Promise<boolean> {
-    const proceed = extraCallback ? extraCallback() : true
+  private async handleValidationRequired({
+    onValidationRequired,
+    redirectURL,
+  }: ValidationArgs = {}): Promise<boolean> {
+    const proceed = onValidationRequired ? onValidationRequired() : true
     if (!proceed) {
       return false
     }
@@ -83,7 +97,11 @@ export class SequenceAuth {
       callback()
     }
 
-    const intent = await this.waas.validateSession()
+    const intent = await this.waas.validateSession({
+      redirectURL,
+      deviceMetadata: await this.deviceName.get() ?? 'Unknown device',
+    })
+
     await this.sendIntent(intent)
 
     return this.waas.waitForSessionValid()
@@ -199,11 +217,12 @@ export class SequenceAuth {
     await this.waas.completeSignIn({
       code: 'sessionOpened',
       data: {
-        sessionId: res.session.address,
+        sessionId: res.session.id,
         wallet: res.data.wallet
       }
     })
 
+    this.deviceName.set(name)
     return res.session.address
   }
 
@@ -216,10 +235,18 @@ export class SequenceAuth {
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string, strict?: boolean } = {}) {
+    const thisSessionId = await this.waas.getSessionID()
+    const closeSessionId = sessionId || thisSessionId
+
     try {
-      const packet = await this.waas.signOut({ sessionId })
-      const result = await this.sendIntent(packet)
-      console.log("TODO: Handle got result from drop session", result)
+      // TODO: Use signed intents for dropping sessions
+      // const packet = await this.waas.signOut({ sessionId })
+      // const result = await this.sendIntent(packet)
+      // console.log("TODO: Handle got result from drop session", result)
+      const payload: DropSessionPayload = { sessionId: closeSessionId }
+
+      const { args, headers } = await this.preparePayload(payload)
+      await this.client.dropSession(args, headers)
     } catch (e) {
       if (strict) {
         throw e
@@ -228,8 +255,11 @@ export class SequenceAuth {
       console.error(e)
     }
 
-    await this.waas.completeSignOut()
-    this.kmsKey.set(undefined)
+    if (closeSessionId.toLowerCase() === thisSessionId.toLowerCase()) {
+      await this.waas.completeSignOut()
+      this.kmsKey.set(undefined)
+      this.deviceName.set(undefined)
+    }
   }
 
   async listSessions(): Promise<Sessions> {
@@ -237,9 +267,13 @@ export class SequenceAuth {
       sessionId: await this.waas.getSessionID(),
     }
 
+    const thisSessionAddress = await this.waas.getSessionID().then(id => id.toLowerCase())
     const { args, headers } = await this.preparePayload(payload)
     const res = await this.client.listSessions(args, headers)
-    return res.sessions
+    return res.sessions.map(session => ({
+      ...session,
+      isThis: session.address.toLowerCase() === thisSessionAddress,
+    }))
   }
 
   // WaaS specific methods
@@ -247,12 +281,12 @@ export class SequenceAuth {
     return this.waas.getAddress()
   }
 
-  async validateSession() {
+  async validateSession(args?: ValidationArgs) {
     if (await this.waas.isSessionValid()) {
       return true
     }
 
-    return this.handleValidationRequired()
+    return this.handleValidationRequired(args)
   }
 
   async isSessionValid() {
@@ -285,7 +319,8 @@ export class SequenceAuth {
     }
 
     if (isValidationRequiredResponse(response)) {
-      const proceed = await this.handleValidationRequired(args.onValidationRequired)
+      const proceed = await this.handleValidationRequired(args.validation)
+
       if (proceed) {
         const response2 = await this.sendIntent(intent)
         if (isExpectedResponse(response2)) {
@@ -295,6 +330,11 @@ export class SequenceAuth {
     }
 
     throw new Error(JSON.stringify(response))
+  }
+
+  async signMessage(args: SignMessageArgs & CommonAuthArgs): Promise<SignedMessageResponse> {
+    const intent = await this.waas.signMessage(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
 
   async sendTransaction(args: SendTransactionsArgs & CommonAuthArgs): Promise<SendTransactionResponse> {
