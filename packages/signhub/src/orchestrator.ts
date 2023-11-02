@@ -212,10 +212,14 @@ export class Orchestrator {
         const signer = this.signers[i]
         const promise = accepted[i]
 
-        if (promise.status === 'rejected' || promise.value === false) {
-          const prejected = promise as PromiseRejectedResult
-          console.warn(`Signer ${await signer.getAddress()} rejected the request ${prejected.reason}`)
-          status.signers[await signer.getAddress()] = { rejected: true, error: prejected.reason.toString() }
+        if (promise.status === 'rejected') {
+          const address = await signer.getAddress()
+          console.warn(`signer ${address} rejected the request: ${promise.reason}`)
+          status.signers[address] = { rejected: true, error: `signer ${address} rejected the request: ${promise.reason}` }
+        } else if (!promise.value) {
+          const address = await signer.getAddress()
+          console.warn(`signer ${address} rejected the request`)
+          status.signers[address] = { rejected: true, error: `signer ${address} rejected the request` }
         }
       }
 
