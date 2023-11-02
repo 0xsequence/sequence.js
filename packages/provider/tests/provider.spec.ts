@@ -490,7 +490,7 @@ describe('SequenceProvider', () => {
       expect(provider.toChainId('bsc-testnet')).to.equal(97)
       expect(provider.toChainId('optimism')).to.equal(10)
       expect(provider.toChainId('arbitrum')).to.equal(42161)
-      expect(provider.toChainId('arbitrum-goerli')).to.equal(421613)
+      expect(provider.toChainId('arbitrum-sepolia')).to.equal(421614)
       expect(provider.toChainId('arbitrum-nova')).to.equal(42170)
       expect(provider.toChainId('avalanche')).to.equal(43114)
     })
