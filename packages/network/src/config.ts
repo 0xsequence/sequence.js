@@ -119,8 +119,8 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('bsc-testnet')
   },
   {
-    ...networks[ChainId.ARBITRUM_GOERLI],
-    ...genUrls('arbitrum-goerli')
+    ...networks[ChainId.ARBITRUM_SEPOLIA],
+    ...genUrls('arbitrum-sepolia')
   },
   {
     ...networks[ChainId.BASE],
