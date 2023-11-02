@@ -17,6 +17,8 @@ export type SessionPacket = BasePacket & {
 export type ValidateSessionPacket = BasePacket & {
   code: 'validateSession',
   session: string
+  deviceMetadata: string,
+  redirectURL: string,
 }
 
 export async function openSession({

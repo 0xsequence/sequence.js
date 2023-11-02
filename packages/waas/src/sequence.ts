@@ -289,10 +289,12 @@ export class Sequence {
     return this.buildPayload(packet)
   }
 
-  async validateSession(): Promise<Payload<ValidateSessionPacket>> {
+  async validateSession(deviceMetadata: string, redirectURL?: string): Promise<Payload<ValidateSessionPacket>> {
     const packet = {
       code: 'validateSession',
-      session: await this.getSignerAddress()
+      session: await this.getSignerAddress(),
+      deviceMetadata: deviceMetadata,
+      redirectURL: redirectURL,
     } as ValidateSessionPacket
 
     return this.buildPayload(packet)
