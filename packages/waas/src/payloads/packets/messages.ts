@@ -1,9 +1,8 @@
 import { ethers } from "ethers"
-import { BasePacket } from ".."
+import { BasePacketForWallet } from ".."
 import { useLifespan } from "./utils"
 
-export type SignMessagePacket = BasePacket & {
-  wallet: string;
+export type SignMessagePacket = BasePacketForWallet & {
   network: string;
 
   message: string

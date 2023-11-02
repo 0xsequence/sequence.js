@@ -3,11 +3,13 @@ import { Sequence } from "./sequence"
 import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
 import { SendTransactionResponse, isSendTransactionResponse, isValidationRequiredResponse } from "./payloads/responses";
-import { WaasAuthenticator, Session, RegisterSessionPayload } from "./clients/authenticator.gen";
+import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload } from "./clients/authenticator.gen";
 import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
 import { SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
+
+export type Sessions = Session[]
 
 export interface AuthConfig {
   key: string,
@@ -34,6 +36,10 @@ function encodeHex(data: string | Uint8Array) {
   ).join("")
 }
 
+function decodeHex(hex: string) {
+  return new Uint8Array(hex.substring(2).match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
+}
+
 export type CommonAuthArgs = {
   identifier?: string,
   chainId: number,
@@ -47,7 +53,7 @@ export class SequenceAuth {
 
   public readonly config: AuthConfig & ExtendedAuthConfig
 
-  private readonly jwtCredentials: StoreObj<string | undefined>
+  private readonly kmsKey: StoreObj<string | undefined>
 
   constructor (
     config: AuthConfig & Partial<ExtendedAuthConfig>,
@@ -57,11 +63,7 @@ export class SequenceAuth {
     this.config = { ...DEFAULTS.auth, ...config }
     this.waas = new Sequence(this.store, this.guardUrl)
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
-  }
-
-  private async sendIntent(intent: Payload<any>) {
-    throw new Error('Not implemented')
-    // return this.client.sendIntent({ intentJson: JSON.stringify(intent, null, 0) })
+    this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
   }
 
   async onValidationRequired(callback: () => void) {
@@ -87,6 +89,71 @@ export class SequenceAuth {
     return this.waas.waitForSessionValid()
   }
 
+  private async useStoredCypherKey(): Promise<{ encryptedPayloadKey: string, plainHex: string }> {
+    const raw = await this.kmsKey.get()
+    if (!raw) {
+      throw new Error('No stored key')
+    }
+
+    const decoded = JSON.parse(raw)
+    if (decoded.encryptedPayloadKey && decoded.plainHex) {
+      return decoded
+    }
+
+    throw new Error('Invalid stored key')
+  }
+
+  private async saveCypherKey(kmsClient: KMSClient) {
+    const dataKeyRes = await kmsClient.send(new GenerateDataKeyCommand({
+      KeyId: this.config.keyId,
+      KeySpec: 'AES_256',
+    }))
+
+    if (!dataKeyRes.CiphertextBlob || !dataKeyRes.Plaintext) {
+      throw new Error("invalid response from KMS")
+    }
+
+
+    return this.kmsKey.set(JSON.stringify({
+      encryptedPayloadKey: encodeHex(dataKeyRes.CiphertextBlob),
+      plainHex: encodeHex(dataKeyRes.Plaintext),
+    }))
+  }
+
+  private async sendIntent(intent: Payload<any>) {
+    const payload: SendIntentPayload = {
+      sessionId: await this.waas.getSessionID(),
+      intentJson: JSON.stringify(intent, null, 0),
+    }
+
+    const { args, headers } = await this.preparePayload(payload)
+    return this.client.sendIntent(args, headers)
+  }
+
+  private async preparePayload(payload: Object) {
+    const { encryptedPayloadKey, plainHex } = await this.useStoredCypherKey()
+
+    const cbcParams = {
+      name: 'AES-CBC',
+      iv: window.crypto.getRandomValues(new Uint8Array(16))
+    }
+
+    const key = await window.crypto.subtle.importKey("raw", decodeHex(plainHex), cbcParams, false, ['encrypt'])
+    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload))
+    const encrypted = await window.crypto.subtle.encrypt(cbcParams, key, payloadBytes)
+    const payloadCiphertext = encodeHex(new Uint8Array([ ...cbcParams.iv, ...new Uint8Array(encrypted) ]))
+    const payloadSig = await this.waas.signUsingSessionKey(payloadBytes)
+ 
+    return {
+      headers: { 'X-Sequence-Tenant': this.config.tenant },
+      args: { encryptedPayloadKey, payloadCiphertext, payloadSig },
+    }
+  }
+
+  async isSignedIn() {
+    return this.waas.isSignedIn()
+  }
+
   async signIn(creds: Identity, name: string) {
     // TODO: Be smarter about this, for cognito (or some other cases) we may
     // want to send the email instead of the idToken
@@ -107,11 +174,16 @@ export class SequenceAuth {
       credentials: fromCognitoIdentityPool({
         identityPoolId: this.config.identityPoolId,
         logins: {
-          [decoded.iss]: creds.idToken,
+          [decoded.iss
+            .replace('https://', '')
+            .replace('http://', '')
+          ]: creds.idToken,
         },
         clientConfig: { region: this.config.idpRegion },
       }),
     })
+
+    await this.saveCypherKey(kmsClient)
 
     const payload: RegisterSessionPayload = {
       projectId: this.config.tenant,
@@ -121,66 +193,53 @@ export class SequenceAuth {
       intentJSON: JSON.stringify(waaspayload, null, 0),
     }
 
-    const { args, headers } = await this.preparePayload(kmsClient, payload)
-    const res = await this.client.registerSession(args, {
-      ...headers,
-      'X-Sequence-Tenant': this.config.tenant,
-    })
+    const { args, headers } = await this.preparePayload(payload)
+    const res = await this.client.registerSession(args, headers)
 
     await this.waas.completeSignIn({
       code: 'sessionOpened',
       data: {
-        sessionId: res.session.id,
-        wallet: res.session.address
+        sessionId: res.session.address,
+        wallet: res.data.wallet
       }
     })
 
     return res.session.address
   }
 
-  private async preparePayload(kmsClient: KMSClient, payload: Object) {
-    const dataKeyRes = await kmsClient.send(new GenerateDataKeyCommand({
-      KeyId: this.config.keyId,
-      KeySpec: 'AES_256',
-    }))
-
-    if (!dataKeyRes.CiphertextBlob || !dataKeyRes.Plaintext) {
-      throw new Error("invalid response from KMS")
-    }
-
-    const encryptedPayloadKey = encodeHex(dataKeyRes.CiphertextBlob)
-
-    const cbcParams = {
-      name: 'AES-CBC',
-      iv: window.crypto.getRandomValues(new Uint8Array(16))
-    }
-    const key = await window.crypto.subtle.importKey("raw", dataKeyRes.Plaintext, cbcParams, false, ['encrypt'])
-
-    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload))
-    const encrypted = await window.crypto.subtle.encrypt(cbcParams, key, payloadBytes)
-    const payloadCiphertext = encodeHex(new Uint8Array([ ...cbcParams.iv, ...new Uint8Array(encrypted) ]))
-    const payloadSig = await this.waas.signUsingSessionKey(payloadCiphertext)
-
-    return {
-      headers: { 'X-Sequence-Tenant': this.config.tenant },
-      args: { encryptedPayloadKey, payloadCiphertext, payloadSig },
-    }
-  }
-
   private async refreshSession() {
     throw new Error('Not implemented')
-    // return this.client.refreshSession()
   }
 
-  async dropSession(id: string) {
-    throw new Error('Not implemented')
-    // return this.client.dropSession({ id })
+  async getSessionID() {
+    return this.waas.getSessionID()
   }
 
-  async listSessions(): Promise<Session[]> {
-    throw new Error('Not implemented')
-    // const res = await this.client.listSessions()
-    // return res.sessions
+  async dropSession({ sessionId, strict }: { sessionId?: string, strict?: boolean } = {}) {
+    try {
+      const packet = await this.waas.signOut({ sessionId })
+      const result = await this.sendIntent(packet)
+      console.log("TODO: Handle got result from drop session", result)
+    } catch (e) {
+      if (strict) {
+        throw e
+      }
+
+      console.error(e)
+    }
+
+    await this.waas.completeSignOut()
+    this.kmsKey.set(undefined)
+  }
+
+  async listSessions(): Promise<Sessions> {
+    const payload: ListSessionsPayload = {
+      sessionId: await this.waas.getSessionID(),
+    }
+
+    const { args, headers } = await this.preparePayload(payload)
+    const res = await this.client.listSessions(args, headers)
+    return res.sessions
   }
 
   // WaaS specific methods

@@ -1,6 +1,6 @@
 
 import { ethers } from 'ethers'
-import { BasePacket } from '..'
+import { BasePacket, BasePacketForWallet } from '..'
 import { useLifespan } from './utils'
 
 export type SessionPacketProof = {
@@ -8,7 +8,7 @@ export type SessionPacketProof = {
   idToken?: string;
 }
 
-export type SessionPacket = BasePacket & {
+export type OpenSessionPacket = BasePacket & {
   code: 'openSession'
   session: string;
   proof: SessionPacketProof
@@ -25,7 +25,7 @@ export async function openSession({
 }: {
   proof: SessionPacketProof | undefined,
   lifespan: number
-}): Promise<{ packet: SessionPacket, signer: ethers.Wallet }> {
+}): Promise<{ packet: OpenSessionPacket, signer: ethers.Wallet }> {
   const signer = ethers.Wallet.createRandom()
 
   return {
@@ -36,5 +36,27 @@ export async function openSession({
       session: signer.address,
       proof // May be defined server side
     },
+  }
+}
+
+export type CloseSessionPacket = BasePacketForWallet & {
+  code: 'closeSession'
+  session: string
+}
+
+export async function closeSession({
+  session,
+  wallet,
+  lifespan
+}: {
+  session: string,
+  wallet: string,
+  lifespan: number
+}): Promise<CloseSessionPacket> {
+  return {
+    ...useLifespan(lifespan),
+    code: 'closeSession',
+    wallet,
+    session,
   }
 }
