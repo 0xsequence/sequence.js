@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { SessionPacket, SessionPacketProof, ValidateSessionPacket, openSession } from "./payloads/packets/session"
+import { OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, closeSession, openSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args } from "./payloads/packets/transactions"
@@ -151,11 +151,11 @@ export class Sequence {
    * @returns a session payload that **must** be sent to the waas API to complete the sign-in
    * @throws {Error} If the session is already signed in or there is a pending sign-in
    */
-  async signIn(proof?: SessionPacketProof): Promise<Payload<SessionPacket>> {
+  async signIn(proof?: SessionPacketProof): Promise<Payload<OpenSessionPacket>> {
     const status = await this.status.get()
-    // if (status !== 'signed-out') {
-    //   throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
-    // }
+    if (status !== 'signed-out') {
+      throw new Error(status === 'pending' ? 'Pending sign in' : 'Already signed in')
+    }
 
     const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
 
@@ -172,6 +172,24 @@ export class Sequence {
       // because the session is not yet open, so it can't be used to sign.
       signatures: []
     }
+  }
+
+  async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
+    const packet = await closeSession({
+      lifespan: lifespan || DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress(),
+      session: sessionId || await this.getSignerAddress(),
+    })
+
+    return this.buildPayload(packet)
+  }
+
+  async completeSignOut() {
+    await Promise.all([
+      this.status.set('signed-out'),
+      this.signer.set(undefined),
+      this.wallet.set(undefined)
+    ])
   }
 
   /**

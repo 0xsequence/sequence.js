@@ -1,9 +1,8 @@
 import { ethers } from "ethers"
-import { BasePacket } from ".."
+import { BasePacketForWallet } from ".."
 import { useLifespan } from "./utils";
 
-export type TransactionsPacket = BasePacket & {
-  wallet: string;
+export type TransactionsPacket = BasePacketForWallet & {
   network: string;
   identifier: string;
 

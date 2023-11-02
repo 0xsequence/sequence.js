@@ -7,6 +7,10 @@ export type BasePacket = {
   expires: number
 }
 
+export type BasePacketForWallet = BasePacket & {
+  wallet: string
+}
+
 export type Signature = {
   session: string,
   signature: string
