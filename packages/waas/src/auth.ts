@@ -1,5 +1,5 @@
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
-import { Sequence } from "./sequence"
+import { SequenceWaaSBase } from "./base"
 import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
 import { SendTransactionResponse, SignedMessageResponse, isSendTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
@@ -7,19 +7,26 @@ import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, 
 import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
-import { SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
+import { SendDelayedEncodeArgs, SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
 import { SignMessageArgs } from './payloads/packets/messages';
+import { SimpleNetwork, WithSimpleNetwork } from './networks';
 
 export type Sessions = (Session & { isThis: boolean })[]
 
-export interface AuthConfig {
-  key: string,
-  tenant: number,
-
-  redirectURL?: string,
+export type SequenceExplicitConfig = {
+  secret?: string,
+  tenant?: number,
 }
 
-export type ExtendedAuthConfig = {
+export type SequenceKeyConfig = {
+  key: string,
+}
+
+export type SequenceConfig = (SequenceExplicitConfig | SequenceKeyConfig) & {
+  network?: SimpleNetwork,
+}
+
+export type ExtendedSequenceConfig = {
   rpcServer: string;
   kmsRegion: string;
   idpRegion: string;
@@ -51,27 +58,54 @@ export type ValidationArgs = {
 export type CommonAuthArgs = {
   validation?: ValidationArgs,
   identifier?: string,
-  chainId: number,
 }
 
-export class SequenceAuth {
-  private waas: Sequence
+export function parseApiKey<T>(key: string): Partial<T> {
+  const json = Buffer.from(key, 'base64').toString('utf8')
+  return JSON.parse(json)
+}
+
+
+export function defaultArgsOrFail(
+  config: SequenceConfig & Partial<ExtendedSequenceConfig>
+): Required<SequenceExplicitConfig> & ExtendedSequenceConfig {
+  const key = (config as any).key
+  const keyOverrides = key ? parseApiKey<SequenceExplicitConfig & ExtendedSequenceConfig>(key) : {}
+  const preconfig = { ...DEFAULTS.auth, ...config, ...keyOverrides }
+
+  if (preconfig.network === undefined) {
+    preconfig.network = 1
+  }
+
+  if (preconfig.tenant === undefined) {
+    throw new Error('Missing tenant')
+  }
+
+  if (preconfig.secret === undefined) {
+    throw new Error('Missing secret')
+  }
+
+  return preconfig as Required<SequenceExplicitConfig> & ExtendedSequenceConfig
+}
+
+export class Sequence {
+  private waas: SequenceWaaSBase
   private client: WaasAuthenticator
 
   private validationRequiredCallback: (() => void)[] = []
 
-  public readonly config: AuthConfig & ExtendedAuthConfig
+  public readonly config: Required<SequenceExplicitConfig> & ExtendedSequenceConfig
 
   private readonly kmsKey: StoreObj<string | undefined>
   private readonly deviceName: StoreObj<string | undefined>
 
   constructor (
-    config: AuthConfig & Partial<ExtendedAuthConfig>,
+    config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     private readonly store: Store = new LocalStore(),
     private readonly guardUrl: string = DEFAULTS.guard
   ) {
-    this.config = { ...DEFAULTS.auth, ...config }
-    this.waas = new Sequence(this.store, this.guardUrl)
+    this.config = defaultArgsOrFail(config)
+    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store, this.guardUrl)
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
     this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
@@ -163,7 +197,10 @@ export class SequenceAuth {
     const payloadSig = await this.waas.signUsingSessionKey(payloadBytes)
  
     return {
-      headers: { 'X-Sequence-Tenant': this.config.tenant },
+      headers: {
+        'X-Sequence-Tenant': this.config.tenant,
+        'X-Sequence-Secret': this.config.secret,
+      },
       args: { encryptedPayloadKey, payloadCiphertext, payloadSig },
     }
   }
@@ -335,28 +372,33 @@ export class SequenceAuth {
     throw new Error(JSON.stringify(response))
   }
 
-  async signMessage(args: SignMessageArgs & CommonAuthArgs): Promise<SignedMessageResponse> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<SignedMessageResponse> {
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
 
-  async sendTransaction(args: SendTransactionsArgs & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<SendTransactionResponse> {
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSendTransactionResponse)
   }
 
-  async sendERC20(args: SendERC20Args & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & CommonAuthArgs): Promise<SendTransactionResponse> {
     const intent = await this.waas.sendERC20(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSendTransactionResponse)
   }
 
-  async sendERC721(args: SendERC721Args & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & CommonAuthArgs): Promise<SendTransactionResponse> {
     const intent = await this.waas.sendERC721(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSendTransactionResponse)
   }
 
-  async sendERC1155(args: SendERC1155Args & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & CommonAuthArgs): Promise<SendTransactionResponse> {
     const intent = await this.waas.sendERC1155(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSendTransactionResponse)
+  }
+
+  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<SendTransactionResponse> {
+    const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSendTransactionResponse)
   }
 }
