@@ -2,11 +2,12 @@ import { ethers } from "ethers"
 import { OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, closeSession, openSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
-import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args } from "./payloads/packets/transactions"
+import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args, SendDelayedEncodeArgs, sendDelayedEncode } from "./payloads/packets/transactions"
 import { OpenSessionResponse } from "./payloads/responses"
 import { Guard } from "./clients/guard.gen"
 import { DEFAULTS } from "./defaults"
 import { SignMessageArgs, SignMessagePacket, signMessage } from "./payloads/packets/messages"
+import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from "./networks"
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -25,7 +26,11 @@ export type ExtraTransactionArgs = ExtraArgs & {
   identifier: string,
 }
 
-export class Sequence {
+export type SequenceBaseConfig = {
+  network: SimpleNetwork,
+}
+
+export class SequenceWaaSBase {
   readonly VERSION = '0.0.0-dev1'
 
   private readonly status: StoreObj<status>
@@ -33,6 +38,7 @@ export class Sequence {
   private readonly wallet: StoreObj<string | undefined>
 
   constructor (
+    public readonly config = { network: 1 } as SequenceBaseConfig,
     private readonly store: Store = new LocalStore(),
     private readonly guardUrl: string = DEFAULTS.guard
   ) {
@@ -58,11 +64,22 @@ export class Sequence {
     return wallet
   }
 
-  private async commonArgs(overrides: { identifier: string, lifespan?: number }) {
+  private async commonArgs<T>(args: T & {
+    identifier: string,
+    lifespan?: number,
+    network?: SimpleNetwork,
+  }): Promise<T & {
+    identifier: string,
+    wallet: string,
+    lifespan: number,
+    chainId: number
+  }> {
     return {
-      identifier: overrides?.identifier,
+      ...args,
+      identifier: args?.identifier,
       wallet: await this.getWalletAddress(),
-      lifespan: overrides?.lifespan ?? DEFAULT_LIFESPAN
+      lifespan: args?.lifespan ?? DEFAULT_LIFESPAN,
+      chainId: toNetworkID(args.network || this.config.network),
     }
   }
 
@@ -254,8 +271,9 @@ export class Sequence {
    * @param message  The message that will be signed
    * @return a payload that must be sent to the waas API to complete sign process
    */
-  async signMessage(args: SignMessageArgs & ExtraArgs): Promise<Payload<SignMessagePacket>> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & ExtraArgs): Promise<Payload<SignMessagePacket>> {
     const packet = signMessage({
+      chainId: toNetworkID(args.network || this.config.network),
       lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
       ...args
@@ -275,35 +293,40 @@ export class Sequence {
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
    */
-  async sendTransaction(args: SendTransactionsArgs & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
-    const packet = sendTransactions({ ...await this.commonArgs(args), ...args })
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+    const packet = sendTransactions(await this.commonArgs(args))
     return this.buildPayload(packet)
   }
 
-  async sendERC20(args: SendERC20Args & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
     if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC20')
     }
 
-    const packet = sendERC20({ ...await this.commonArgs(args), ...args })
+    const packet = sendERC20(await this.commonArgs(args))
     return this.buildPayload(packet)
   }
 
-  async sendERC721(args: SendERC721Args & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
     if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC721')
     }
 
-    const packet = sendERC721({ ... await this.commonArgs(args), ...args })
+    const packet = sendERC721(await this.commonArgs(args))
     return this.buildPayload(packet)
   }
 
-  async sendERC1155(args: SendERC1155Args & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
     if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC1155')
     }
 
-    const packet = sendERC1155({ ... await this.commonArgs(args), ...args })
+    const packet = sendERC1155(await this.commonArgs(args))
+    return this.buildPayload(packet)
+  }
+
+  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+    const packet = sendDelayedEncode(await this.commonArgs(args))
     return this.buildPayload(packet)
   }
 
