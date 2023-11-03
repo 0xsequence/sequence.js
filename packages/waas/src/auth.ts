@@ -14,8 +14,8 @@ import { SimpleNetwork, WithSimpleNetwork } from './networks';
 export type Sessions = (Session & { isThis: boolean })[]
 
 export type SequenceExplicitConfig = {
-  secret?: string,
-  tenant?: number,
+  secret: string,
+  tenant: number,
 }
 
 export type SequenceKeyConfig = {
@@ -199,7 +199,7 @@ export class Sequence {
     return {
       headers: {
         'X-Sequence-Tenant': this.config.tenant,
-        'X-Sequence-Secret': this.config.secret,
+        // 'X-Sequence-Secret': this.config.secret,
       },
       args: { encryptedPayloadKey, payloadCiphertext, payloadSig },
     }
