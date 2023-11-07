@@ -49,7 +49,7 @@ export interface LocalTrackerDBSchema extends DBSchema {
   }
 }
 
-export function recreateBigNumbers<T extends Object | undefined>(object: T): T | undefined {
+export function recreateBigNumbers<T extends object | undefined>(object: T): T | undefined {
   if (object === undefined) return undefined
 
   const result = {} as any

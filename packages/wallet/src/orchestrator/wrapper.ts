@@ -12,18 +12,18 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.address
   }
 
-  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+  async buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
     return this.wallet.buildDeployTransaction(metadata as commons.WalletDeployMetadata | undefined)
   }
 
-  async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
     // Wallets do not predecorate as they have no off chain knowledge
     return []
   }
 
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    _metadata: Object
+    _metadata: object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     return this.wallet.decorateTransactions(bundle)
   }
@@ -31,7 +31,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
   async requestSignature(
     _id: string,
     message: ethers.utils.BytesLike,
-    metadata: Object,
+    metadata: object,
     callbacks: {
       onSignature: (signature: ethers.utils.BytesLike) => void
       onRejection: (error: string) => void
@@ -49,7 +49,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return true
   }
 
-  notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
+  notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
   suffix(): ethers.utils.BytesLike {
     return [3]

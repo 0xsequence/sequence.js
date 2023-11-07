@@ -66,7 +66,7 @@ export function topologyToJSON(tree: Topology): string {
   return JSON.stringify(tree)
 }
 
-export function topologyFromJSON(json: string | Object): Topology {
+export function topologyFromJSON(json: string | object): Topology {
   const parsed = typeof json === 'string' ? JSON.parse(json) : json
 
   if (parsed.left !== undefined && parsed.right !== undefined) {

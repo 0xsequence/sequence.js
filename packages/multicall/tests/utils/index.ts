@@ -4,7 +4,7 @@ export type SpyProxyHooks<K, T extends (...args: any[]) => any> = {
   callback: (...params: Parameters<T>) => boolean | void
 }
 
-export const SpyProxy = <T extends Object>(obj: T, ...hooks: SpyProxyHooks<T, (...args: any[]) => any>[]): T => {
+export const SpyProxy = <T extends object>(obj: T, ...hooks: SpyProxyHooks<T, (...args: any[]) => any>[]): T => {
   const handler = {
     get: function (target: T, prop: keyof T, receiver: any) {
       if (target[prop] instanceof Function) {

@@ -13,18 +13,18 @@ export class SignerWrapper implements SapientSigner {
     return this.signer.getAddress()
   }
 
-  async buildDeployTransaction(_metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+  async buildDeployTransaction(_metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
     // Wrapped signers don't require deployment
     return
   }
 
-  async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
     return []
   }
 
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    _metadata: Object
+    _metadata: object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     return bundle
   }
@@ -32,7 +32,7 @@ export class SignerWrapper implements SapientSigner {
   async requestSignature(
     _id: string,
     message: ethers.BytesLike,
-    _metadata: Object,
+    _metadata: object,
     callbacks: {
       onSignature: (signature: ethers.BytesLike) => void
       onRejection: (error: string) => void
@@ -43,7 +43,7 @@ export class SignerWrapper implements SapientSigner {
     return true
   }
 
-  notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
+  notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
   suffix(): ethers.BytesLike {
     return [2]

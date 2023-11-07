@@ -48,7 +48,7 @@ export const InitialSituation = 'Initial'
  * is correctly managed during the signing process.
  */
 export class Orchestrator {
-  private observers: ((status: Status, metadata: Object) => void)[] = []
+  private observers: ((status: Status, metadata: object) => void)[] = []
   private signers: SapientSigner[] = []
 
   private count = 0
@@ -76,21 +76,21 @@ export class Orchestrator {
     return Promise.all(this.signers.map(async s => s.getAddress()))
   }
 
-  subscribe(observer: (status: Status, metadata: Object) => void): () => void {
+  subscribe(observer: (status: Status, metadata: object) => void): () => void {
     this.observers.push(observer)
     return () => {
       this.observers = this.observers.filter(o => o !== observer)
     }
   }
 
-  private async notifyObservers(id: string, status: Status, metadata: Object) {
+  private async notifyObservers(id: string, status: Status, metadata: object) {
     await Promise.all([
       ...this.signers.map(async signer => signer.notifyStatusChange(id, status, metadata)),
       ...this.observers.map(async observer => observer(status, metadata))
     ])
   }
 
-  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+  async buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
     let bundle: commons.transaction.TransactionBundle | undefined
     for (const signer of this.signers) {
       const newBundle = await signer.buildDeployTransaction(metadata)
@@ -105,7 +105,7 @@ export class Orchestrator {
     return bundle
   }
 
-  async predecorateSignedTransactions(metadata?: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(metadata?: object): Promise<commons.transaction.SignedTransactionBundle[]> {
     const output: commons.transaction.SignedTransactionBundle[] = []
     for (const signer of this.signers) {
       output.push(...(await signer.predecorateSignedTransactions(metadata ?? {})))
@@ -115,7 +115,7 @@ export class Orchestrator {
 
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    metadata?: Object
+    metadata?: object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     for (const signer of this.signers) {
       bundle = await signer.decorateTransactions(bundle, metadata ?? {})
@@ -126,8 +126,8 @@ export class Orchestrator {
   signMessage(args: {
     candidates?: string[]
     message: ethers.BytesLike
-    metadata?: Object
-    callback?: (status: Status, onNewMetadata: (metadata: Object) => void) => boolean
+    metadata?: object
+    callback?: (status: Status, onNewMetadata: (metadata: object) => void) => boolean
   }): Promise<Status> {
     const id = this.pullId()
 
@@ -136,7 +136,7 @@ export class Orchestrator {
       const status: Status = { ended: false, message, signers: {} }
       let lastMetadata = metadata ?? {}
 
-      const onNewMetadata = (newMetadata: Object) => {
+      const onNewMetadata = (newMetadata: object) => {
         lastMetadata = newMetadata
         this.notifyObservers(id, status, lastMetadata)
       }

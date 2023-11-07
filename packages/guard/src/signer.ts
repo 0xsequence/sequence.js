@@ -30,17 +30,17 @@ export class GuardSigner implements signers.SapientSigner {
     return this.address
   }
 
-  buildDeployTransaction(_metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+  buildDeployTransaction(_metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
     throw new Error('Guard client cannot be deployed.')
   }
 
-  async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
     return []
   }
 
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    _metadata: Object
+    _metadata: object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     return bundle
   }
@@ -48,7 +48,7 @@ export class GuardSigner implements signers.SapientSigner {
   async requestSignature(
     id: string,
     _message: BytesLike,
-    metadata: Object,
+    metadata: object,
     callbacks: {
       onSignature: (signature: BytesLike) => void
       onRejection: (error: string) => void
@@ -66,7 +66,7 @@ export class GuardSigner implements signers.SapientSigner {
     return true
   }
 
-  notifyStatusChange(id: string, status: Status, metadata: Object): void {
+  notifyStatusChange(id: string, status: Status, metadata: object): void {
     if (!this.requests.has(id)) return
 
     if (!commons.isWalletSignRequestMetadata(metadata)) {

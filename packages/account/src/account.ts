@@ -468,7 +468,7 @@ export class Account {
     chainId: ethers.BigNumberish,
     decorate: boolean = true,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore',
-    metadata?: Object | WalletSignRequestMetadata
+    metadata?: object
   ): Promise<string> {
     // If we are signing a digest for chainId zero then we can never be fully migrated
     // because Sequence v1 doesn't allow for signing a message on "all chains"

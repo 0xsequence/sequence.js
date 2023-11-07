@@ -105,19 +105,19 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           throw new Error('This is a broken signer.')
         },
-        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           throw new Error('This is a broken signer.')
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           throw new Error('This is a broken signer.')
         },
         requestSignature: async function (
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -197,19 +197,19 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           throw new Error('This is a reject signer.')
         },
-        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           throw new Error('This is a reject signer.')
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           throw new Error('This is a rejected signer.')
         },
         requestSignature: async function (
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -262,19 +262,19 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
         requestSignature: async function (
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -306,19 +306,19 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
         requestSignature: async function (
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -354,19 +354,19 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
         requestSignature: async function (
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -377,7 +377,7 @@ describe('Orchestrator', () => {
           callbacks.onSignature('0x5678')
           return true
         },
-        notifyStatusChange: function (id: string, status: Status, metadata: Object): void {
+        notifyStatusChange: function (id: string, status: Status, metadata: object): void {
           try {
             if (firstCall) {
               expect(metadata).to.be.deep.equal({ test: 'test' })
@@ -400,19 +400,19 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
         requestSignature: async function (
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -423,7 +423,7 @@ describe('Orchestrator', () => {
           callbacks.onSignature('0x9012')
           return true
         },
-        notifyStatusChange: function (id: string, status: Status, metadata: Object): void {
+        notifyStatusChange: function (id: string, status: Status, metadata: object): void {
           try {
             if (firstCall) {
               expect(metadata).to.be.deep.equal({ test: 'test' })
@@ -443,7 +443,7 @@ describe('Orchestrator', () => {
       const signature = await orchestrator.signMessage({
         message: ogMessage,
         metadata: { test: 'test' },
-        callback: (s: Status, onNewMetadata: (metadata: Object) => void) => {
+        callback: (s: Status, onNewMetadata: (metadata: object) => void) => {
           if (firstCall) {
             firstCall = false
             onNewMetadata({ hello: 'world' })
@@ -468,12 +468,12 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
@@ -549,15 +549,15 @@ describe('Orchestrator', () => {
         getAddress: async function (): Promise<string> {
           return '0x1'
         },
-        async buildDeployTransaction(metadata: Object) {
+        async buildDeployTransaction(metadata: object) {
           return undefined
         },
-        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return []
         },
         async decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           // Add a transaction on each call
           bundle.transactions.push({
@@ -568,7 +568,7 @@ describe('Orchestrator', () => {
         async requestSignature(
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -606,7 +606,7 @@ describe('Orchestrator', () => {
         getAddress: async function (): Promise<string> {
           return '0x1'
         },
-        async buildDeployTransaction(metadata: Object) {
+        async buildDeployTransaction(metadata: object) {
           return {
             entrypoint: 'entrypoint1',
             transactions: [
@@ -617,19 +617,19 @@ describe('Orchestrator', () => {
             ]
           }
         },
-        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return []
         },
         async decorateTransactions(
           bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: Object
+          metadata: object
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return bundle
         },
         async requestSignature(
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void
@@ -647,7 +647,7 @@ describe('Orchestrator', () => {
         getAddress: async function (): Promise<string> {
           return '0x2'
         },
-        async buildDeployTransaction(metadata: Object) {
+        async buildDeployTransaction(metadata: object) {
           return {
             entrypoint: 'entrypoint2',
             transactions: [
@@ -658,7 +658,7 @@ describe('Orchestrator', () => {
             ]
           }
         },
-        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return []
         },
         async decorateTransactions(
@@ -669,7 +669,7 @@ describe('Orchestrator', () => {
         async requestSignature(
           id: string,
           message: ethers.utils.BytesLike,
-          metadata: Object,
+          metadata: object,
           callbacks: {
             onSignature: (signature: ethers.utils.BytesLike) => void
             onRejection: (error: string) => void

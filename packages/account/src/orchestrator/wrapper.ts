@@ -15,7 +15,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.address
   }
 
-  getChainIdFromMetadata(metadata: Object): ethers.BigNumber {
+  getChainIdFromMetadata(metadata: object): ethers.BigNumber {
     try {
       const { chainId } = metadata as MetadataWithChainId
       return ethers.BigNumber.from(chainId)
@@ -25,13 +25,13 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     }
   }
 
-  async buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined> {
+  async buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
     const chainId = this.getChainIdFromMetadata(metadata)
     const status = await this.account.status(chainId)
     return this.account.buildBootstrapTransactions(status, chainId)
   }
 
-  async predecorateSignedTransactions(metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
     const chainId = this.getChainIdFromMetadata(metadata)
     const status = await this.account.status(chainId)
     return this.account.predecorateSignedTransactions(status, chainId)
@@ -39,7 +39,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
 
   async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    metadata: Object
+    metadata: object
   ): Promise<commons.transaction.IntendedTransactionBundle> {
     const chainId = this.getChainIdFromMetadata(metadata)
     const status = await this.account.status(chainId)
@@ -49,7 +49,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
   async requestSignature(
     _id: string,
     message: ethers.utils.BytesLike,
-    metadata: Object,
+    metadata: object,
     callbacks: {
       onSignature: (signature: ethers.utils.BytesLike) => void
       onRejection: (error: string) => void
@@ -77,7 +77,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return true
   }
 
-  notifyStatusChange(_i: string, _s: Status, _m: Object): void {}
+  notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
   suffix(): ethers.utils.BytesLike {
     return [3]
