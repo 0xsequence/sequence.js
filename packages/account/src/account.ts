@@ -358,10 +358,10 @@ export class Account {
     chainId: ethers.BigNumberish
   ): Promise<commons.transaction.SignedTransactionBundle[]> {
     // Request signed predecorate transactions from child wallets
-    const bundles = await this.orchestrator.predecorateSignedTransactions({chainId})
+    const bundles = await this.orchestrator.predecorateSignedTransactions({ chainId })
     // Get signed predecorate transaction
-    const predecorated = await this.predecorateTransactions([], status, chainId);
-    if (commons.transaction.fromTransactionish(this.address, predecorated).length > 0){
+    const predecorated = await this.predecorateTransactions([], status, chainId)
+    if (commons.transaction.fromTransactionish(this.address, predecorated).length > 0) {
       // Sign it
       bundles.push(await this.signTransactions(predecorated, chainId))
     }
@@ -406,7 +406,7 @@ export class Account {
     }
 
     // Intent defaults to first bundle when no bootstrap transaction
-    const {entrypoint} = hasBootstrapTxs ? bootstrapBundle : bundles[0]
+    const { entrypoint } = hasBootstrapTxs ? bootstrapBundle : bundles[0]
 
     const decoratedBundle = {
       entrypoint,
@@ -415,16 +415,16 @@ export class Account {
       intent: bundles[0].intent,
       transactions: [
         ...bootstrapBundle.transactions,
-        ...bundles.map((bundle): commons.transaction.Transaction => (
-          {
+        ...bundles.map(
+          (bundle): commons.transaction.Transaction => ({
             to: bundle.entrypoint,
             data: commons.transaction.encodeBundleExecData(bundle),
             gasLimit: 0,
             delegateCall: false,
             revertOnError: true,
             value: 0
-          }
-        ))
+          })
+        )
       ]
     }
 
@@ -582,8 +582,10 @@ export class Account {
    *  by any of the migrations.
    *
    */
-  async buildBootstrapTransactions(status: AccountStatus, chainId: ethers.BigNumberish): Promise<commons.transaction.IntendedTransactionBundle> {
-
+  async buildBootstrapTransactions(
+    status: AccountStatus,
+    chainId: ethers.BigNumberish
+  ): Promise<commons.transaction.IntendedTransactionBundle> {
     const bundle = await this.orchestrator.buildDeployTransaction({ chainId })
     const transactions: commons.transaction.Transaction[] = bundle?.transactions ?? []
 
@@ -664,7 +666,7 @@ export class Account {
       chainId,
       config: { version: this.version },
       decorate: true,
-      cantValidateBehavior: 'ignore',
+      cantValidateBehavior: 'ignore'
     }
 
     const signed = await wallet.signTransactions(txs, options?.nonceSpace && { space: options?.nonceSpace }, metadata)
@@ -861,13 +863,13 @@ export class Account {
     const hasTxs = commons.transaction.fromTransactionish(this.address, predecorated).length > 0
     const signed = hasTxs ? await this.signTransactions(predecorated, chainId, undefined, options) : undefined
 
-    const childBundles = await this.orchestrator.predecorateSignedTransactions({chainId})
+    const childBundles = await this.orchestrator.predecorateSignedTransactions({ chainId })
 
     const bundles: commons.transaction.SignedTransactionBundle[] = []
     if (signed !== undefined && signed.transactions.length > 0) {
       bundles.push(signed)
     }
-    bundles.push(...(childBundles.filter(b => b.transactions.length > 0)))
+    bundles.push(...childBundles.filter(b => b.transactions.length > 0))
 
     if (bundles.length === 0) {
       // Nothing to send?

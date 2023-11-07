@@ -18,9 +18,7 @@ export class SignerWrapper implements SapientSigner {
     return
   }
 
-  async predecorateSignedTransactions(
-    _metadata: Object
-  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
     return []
   }
 

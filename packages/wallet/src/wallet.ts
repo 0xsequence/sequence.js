@@ -148,7 +148,7 @@ export class Wallet<
       {
         to: decorated.entrypoint,
         data: commons.transaction.encodeBundleExecData(decorated),
-        revertOnError: true,
+        revertOnError: true
       }
     ]
 
@@ -169,7 +169,9 @@ export class Wallet<
     }
   }
 
-  async buildDeployTransaction(metadata?: commons.WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | undefined> {
+  async buildDeployTransaction(
+    metadata?: commons.WalletDeployMetadata
+  ): Promise<commons.transaction.TransactionBundle | undefined> {
     if (metadata?.ignoreDeployed && (await this.reader().isDeployed(this.address))) {
       return
     }
@@ -245,10 +247,7 @@ export class Wallet<
     return nonce
   }
 
-  async signDigest(
-    digest: ethers.utils.BytesLike,
-    metadata?: Object | WalletSignRequestMetadata,
-  ): Promise<string> {
+  async signDigest(digest: ethers.utils.BytesLike, metadata?: Object | WalletSignRequestMetadata): Promise<string> {
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
     const subdigest = subDigestOf(this.address, this.chainId, digest)
@@ -263,7 +262,7 @@ export class Wallet<
       digest,
       chainId: this.chainId,
       address: this.address,
-      config: this.config,
+      config: this.config
     }
 
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
@@ -288,9 +287,7 @@ export class Wallet<
     return this.coders.signature.encodeSigners(this.config, parts, [], this.chainId).encoded
   }
 
-  signMessage(
-    message: ethers.BytesLike,
-  ): Promise<string> {
+  signMessage(message: ethers.BytesLike): Promise<string> {
     return this.signDigest(ethers.utils.keccak256(message), { message })
   }
 
@@ -345,7 +342,7 @@ export class Wallet<
     const meta = {
       digest,
       transactions,
-      ...metadata,
+      ...metadata
     }
     const signature = await this.signDigest(digest, meta)
 

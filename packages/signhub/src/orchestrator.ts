@@ -105,9 +105,7 @@ export class Orchestrator {
     return bundle
   }
 
-  async predecorateSignedTransactions(
-    metadata?: Object
-  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(metadata?: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
     const output: commons.transaction.SignedTransactionBundle[] = []
     for (const signer of this.signers) {
       output.push(...(await signer.predecorateSignedTransactions(metadata ?? {})))

@@ -105,9 +105,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           throw new Error('This is a broken signer.')
         },
-        async predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           throw new Error('This is a broken signer.')
         },
         decorateTransactions(
@@ -199,9 +197,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           throw new Error('This is a reject signer.')
         },
-        async predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           throw new Error('This is a reject signer.')
         },
         decorateTransactions(
@@ -266,9 +262,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
@@ -312,9 +306,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
@@ -362,9 +354,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
@@ -410,9 +400,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
@@ -480,9 +468,7 @@ describe('Orchestrator', () => {
         buildDeployTransaction(metadata) {
           return Promise.resolve(undefined)
         },
-        predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return Promise.resolve([])
         },
         decorateTransactions(
@@ -566,9 +552,7 @@ describe('Orchestrator', () => {
         async buildDeployTransaction(metadata: Object) {
           return undefined
         },
-        async predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return []
         },
         async decorateTransactions(
@@ -633,9 +617,7 @@ describe('Orchestrator', () => {
             ]
           }
         },
-        async predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return []
         },
         async decorateTransactions(
@@ -676,9 +658,7 @@ describe('Orchestrator', () => {
             ]
           }
         },
-        async predecorateSignedTransactions(
-          _metadata: Object
-        ): Promise<commons.transaction.SignedTransactionBundle[]> {
+        async predecorateSignedTransactions(_metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
           return []
         },
         async decorateTransactions(

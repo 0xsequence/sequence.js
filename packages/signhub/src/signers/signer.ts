@@ -10,9 +10,7 @@ export interface SapientSigner {
   /**
    * Get signed transactions to be included in the next request.
    */
-  predecorateSignedTransactions(
-    metadata: Object
-  ): Promise<commons.transaction.SignedTransactionBundle[]>
+  predecorateSignedTransactions(metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]>
 
   /**
    * Modify the transaction bundle before it is sent.

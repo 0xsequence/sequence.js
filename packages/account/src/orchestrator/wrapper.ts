@@ -31,9 +31,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.buildBootstrapTransactions(status, chainId)
   }
 
-  async predecorateSignedTransactions(
-    metadata: Object
-  ): Promise<commons.transaction.SignedTransactionBundle[]> {
+  async predecorateSignedTransactions(metadata: Object): Promise<commons.transaction.SignedTransactionBundle[]> {
     const chainId = this.getChainIdFromMetadata(metadata)
     const status = await this.account.status(chainId)
     return this.account.predecorateSignedTransactions(status, chainId)
