@@ -9,7 +9,7 @@ export class SequenceAPIClient extends ApiRpc {
     hostname: string,
     public authorization?: {
       jwtAuth?: string
-      accessKey?: string
+      accessKey?: string // TODO: rename + move, etc..
     }
   ) {
     super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)

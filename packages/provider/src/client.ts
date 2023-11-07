@@ -125,6 +125,8 @@ export type SequenceClientOptions = {
  *s
  *  It doesn't implement a full ethereum Provider, it doesn't include read-only methods.
  */
+
+// TODO: rename Client to transport.. or something.. like SequenceTransport ..
 export class SequenceClient {
   private readonly session: SequenceClientSession
   private readonly defaultChainId: DefaultChainIdTracker

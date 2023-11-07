@@ -16,6 +16,9 @@ import { SequenceClient } from './client'
 import { SequenceProvider } from './provider'
 
 export interface ProviderConfig {
+  // ..
+  projectAccessKey?: string
+
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
   localStorage?: ItemStore
@@ -78,6 +81,7 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   }) ?? []) as NetworkConfig[]
 
   // Override any information about the networks using the config
+  // TODO: build rpcUrl with projectAccessKey ..
   const combinedNetworks = allNetworks
     .map(n => {
       const network = config.networks?.find(cn => cn.chainId === n.chainId)
@@ -85,7 +89,7 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
     })
     .concat(newNetworks)
 
-  // This build a "public rpc" on demand, we build them on demand because we don't want to
+  // This builds a "public rpc" on demand, we build them on demand because we don't want to
   // generate a bunch of providers for networks that aren't used.
   const providerForChainId = (chainId: number) => {
     if (!rpcProviders[chainId]) {
@@ -138,6 +142,5 @@ export const getWallet = () => {
   if (!sequenceWalletProvider) {
     throw new Error('Wallet has not been initialized, call sequence.initWallet(config) first.')
   }
-
   return sequenceWalletProvider
 }

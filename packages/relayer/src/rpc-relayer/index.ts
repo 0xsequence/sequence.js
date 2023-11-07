@@ -18,6 +18,7 @@ const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALL
 export interface RpcRelayerOptions {
   provider: ethers.providers.Provider | { url: string }
   url: string
+  // TODO: add jwtAuth? and projectAccessKey? ..
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
@@ -31,6 +32,7 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
 
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
+// TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer
   public readonly provider: ethers.providers.Provider

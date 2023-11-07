@@ -2,8 +2,8 @@ export * from './indexer.gen'
 
 import { Indexer as IndexerRpc } from './indexer.gen'
 
-// TODO: rename to SequenceIndexerNetworks
-export enum SequenceIndexerServices {
+// TODO: can we build this list from our network configs instead..?
+export enum SequenceIndexerNetworks {
   MAINNET = 'https://mainnet-indexer.sequence.app',
 
   POLYGON = 'https://polygon-indexer.sequence.app',
@@ -26,13 +26,16 @@ export enum SequenceIndexerServices {
 
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
-export class SequenceIndexerClient extends IndexerRpc {
+
+export class SequenceIndexer extends IndexerRpc {
   constructor(
     hostname: string,
-    public authorization?: {
-      jwtAuth?: string
-      accessKey?: string
-    }
+    public projectAccessKey?: string,
+    public jwtAuth?: string
+    // public authorization?: {
+    //   projectAccessKey?: string
+    //   jwtAuth?: string
+    // }
   ) {
     super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
     this.fetch = this._fetch
@@ -43,14 +46,16 @@ export class SequenceIndexerClient extends IndexerRpc {
     // if its been set on the api client
     const headers: { [key: string]: any } = {}
 
-    const { jwtAuth, accessKey } = this.authorization || {}
+    // const { jwtAuth, projectAccessKey } = this.authorization || {}
+    const jwtAuth = this.jwtAuth
+    const projectAccessKey = this.projectAccessKey
 
     if (jwtAuth && jwtAuth.length > 0) {
       headers['Authorization'] = `BEARER ${jwtAuth}`
     }
 
-    if (accessKey && accessKey.length > 0) {
-      headers['X-Access-Key'] = `${accessKey}`
+    if (projectAccessKey && projectAccessKey.length > 0) {
+      headers['X-Access-Key'] = `${projectAccessKey}`
     }
 
     // before the request is made
