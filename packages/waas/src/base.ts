@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, closeSession, openSession } from "./payloads/packets/session"
+import { GetSessionPacket, OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, closeSession, getSession, openSession, validateSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args, SendDelayedEncodeArgs, sendDelayedEncode } from "./payloads/packets/transactions"
@@ -337,12 +337,23 @@ export class SequenceWaaSBase {
     deviceMetadata: string,
     redirectURL?: string
   }): Promise<Payload<ValidateSessionPacket>> {
-    const packet = {
-      code: 'validateSession',
+    const packet = await validateSession({
+      lifespan: DEFAULT_LIFESPAN,
       session: await this.getSignerAddress(),
-      deviceMetadata: deviceMetadata,
-      redirectURL: redirectURL,
-    } as ValidateSessionPacket
+      deviceMetadata,
+      redirectURL,
+      wallet: await this.getWalletAddress(),
+    })
+
+    return this.buildPayload(packet)
+  }
+
+  async getSession(): Promise<Payload<GetSessionPacket>> {
+    const packet = await getSession({
+      session: await this.getSignerAddress(),
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+    })
 
     return this.buildPayload(packet)
   }
