@@ -14,11 +14,16 @@ export type OpenSessionPacket = BasePacket & {
   proof: SessionPacketProof
 }
 
-export type ValidateSessionPacket = BasePacket & {
+export type ValidateSessionPacket = BasePacketForWallet & {
   code: 'validateSession',
-  session: string
+  session: string,
   deviceMetadata: string,
-  redirectURL: string,
+  redirectURL?: string,
+}
+
+export type GetSessionPacket = BasePacketForWallet & {
+  code: 'getSession',
+  session: string
 }
 
 export async function openSession({
@@ -60,5 +65,31 @@ export async function closeSession({
     code: 'closeSession',
     wallet,
     session,
+  }
+}
+
+export async function validateSession(args: {
+  wallet: string,
+  session: string
+  deviceMetadata: string,
+  redirectURL?: string,
+} & { lifespan: number }): Promise<ValidateSessionPacket> {
+  return {
+    ...useLifespan(args.lifespan),
+    ...args,
+    code: 'validateSession'
+  }
+}
+
+export async function getSession(
+  args: {
+    wallet: string,
+    session: string
+  } & { lifespan: number }
+): Promise<GetSessionPacket> {
+  return {
+    ...useLifespan(args.lifespan),
+    ...args,
+    code: 'getSession'
   }
 }

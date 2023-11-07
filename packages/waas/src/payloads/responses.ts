@@ -35,6 +35,20 @@ export type SignedMessageResponse = {
   }
 }
 
+export type ValidateSessionResponse = {
+  code: 'startedSessionValidation',
+  data: {}
+}
+
+export type GetSessionResponse = {
+  code: 'getSessionResponse'
+  data: {
+    session: string
+    wallet: string
+    validated: boolean
+  }
+}
+
 export function isOpenSessionResponse(receipt: any): receipt is OpenSessionResponse {
   return (
     typeof receipt === 'object' &&
@@ -74,5 +88,25 @@ export function isValidationRequiredResponse(receipt: any): receipt is Validatio
     receipt.code === 'validationRequired' &&
     typeof receipt.data === 'object' &&
     typeof receipt.data.sessionId === 'string'
+  )
+}
+
+export function isValidateSessionResponse(receipt: any): receipt is ValidateSessionResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'startedSessionValidation' &&
+    typeof receipt.data === 'object'
+  )
+}
+
+export function isGetSessionResponse(receipt: any): receipt is GetSessionResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'getSessionResponse' &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.session === 'string' &&
+    typeof receipt.data.wallet === 'string'
   )
 }

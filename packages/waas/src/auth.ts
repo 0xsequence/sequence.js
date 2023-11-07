@@ -2,7 +2,7 @@ import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { SequenceWaaSBase } from "./base"
 import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
-import { SendTransactionResponse, SignedMessageResponse, isSendTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
+import { SendTransactionResponse, SignedMessageResponse, isGetSessionResponse, isSendTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
 import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload, DropSessionPayload } from "./clients/authenticator.gen";
 import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
@@ -10,6 +10,7 @@ import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
 import { SendDelayedEncodeArgs, SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
 import { SignMessageArgs } from './payloads/packets/messages';
 import { SimpleNetwork, WithSimpleNetwork } from './networks';
+import { getSession } from './payloads/packets/session';
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -138,7 +139,7 @@ export class Sequence {
 
     await this.sendIntent(intent)
 
-    return this.waas.waitForSessionValid()
+    return this.waitForSessionValid()
   }
 
   private async useStoredCypherKey(): Promise<{ encryptedPayloadKey: string, plainHex: string }> {
@@ -329,12 +330,29 @@ export class Sequence {
     return this.handleValidationRequired(args)
   }
 
-  async isSessionValid() {
-    return this.waas.isSessionValid()
+  async isSessionValid(): Promise<boolean> {
+    const payload = await this.waas.getSession()
+    const result = await this.sendIntent(payload)
+
+    if (!isGetSessionResponse(result)) {
+      throw new Error(`Invalid response: ${JSON.stringify(result)}`)
+    }
+
+    return result.data.validated
   }
 
-  async waitForSessionValid(timeout: number, pollRate: number) {
-    return this.waas.waitForSessionValid(timeout, pollRate)
+  async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000) {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      if (await this.isSessionValid()) {
+        return true
+      }
+
+      await new Promise(resolve => setTimeout(resolve, pollRate))
+    }
+
+    return false
   }
 
   async useIdentifier<T extends CommonAuthArgs>(args: T): Promise<T & { identifier: string }> {
