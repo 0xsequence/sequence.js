@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/replacer",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "description": "EIP-5719 client implementation",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/replacer",
   "source": "src/index.ts",
