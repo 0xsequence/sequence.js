@@ -1,4 +1,4 @@
-import { ethers } from "ethers"
+import { TransactionsPacket } from "./packets/transactions"
 
 export type PayloadResponse = {
   code: string
@@ -12,12 +12,53 @@ export type ValidationRequiredResponse = {
   }
 }
 
-export type SendTransactionResponse = {
+type MetaTxnReceiptLog = {
+  address: string;
+  topics: string[];
+  data: string;
+}
+
+type MetaTxnReceipt = {
+  id: string;
+  status: string;
+  revertReason?: string | null;
+  index: number;
+  logs: MetaTxnReceiptLog[];
+  receipts: MetaTxnReceipt[];
+  txnReceipt: string;
+}
+
+type SimulateResult = {
+  executed: boolean;
+  succeeded: boolean;
+  result: string | null;
+  reason: string | null;
+  gasUsed: number;
+  gasLimit: number;
+}
+
+export type SentTransactionResponse = {
   code: 'transactionReceipt'
   data: {
-    txHash: string
+    txHash: string,
+    metaTxHash: string,
+    request: TransactionsPacket,
+    receipt: MetaTxnReceipt,
+    nativeReceipt?: any | null,
+    simulations?: SimulateResult[]
   }
 }
+
+export type TransactionFailedResponse = {
+  code: 'transactionFailed',
+  data: {
+    error: string,
+    request: TransactionsPacket,
+    simulations: SimulateResult[]
+  }
+}
+
+export type MaySentTransactionResponse = SentTransactionResponse | TransactionFailedResponse
 
 export type OpenSessionResponse = {
   code: 'sessionOpened'
@@ -60,14 +101,32 @@ export function isOpenSessionResponse(receipt: any): receipt is OpenSessionRespo
   )
 }
 
-export function isSendTransactionResponse(receipt: any): receipt is SendTransactionResponse {
+export function isSentTransactionResponse(receipt: any): receipt is SentTransactionResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
     receipt.code === 'transactionReceipt' &&
     typeof receipt.data === 'object' &&
-    typeof receipt.data.txHash === 'string'
+    typeof receipt.data.txHash === 'string' &&
+    typeof receipt.data.receipt === 'object' &&
+    typeof receipt.data.request === 'object'
   )
+}
+
+export function isFailedTransactionResponse(receipt: any): receipt is TransactionFailedResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'transactionFailed' &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.request === 'object' &&
+    Array.isArray(receipt.data.simulations) &&
+    typeof receipt.data.error === 'string'
+  )
+}
+
+export function isMaySentTransactionResponse(receipt: any): receipt is MaySentTransactionResponse {
+  return isSentTransactionResponse(receipt) || isFailedTransactionResponse(receipt)
 }
 
 export function isSignedMessageResponse(receipt: any): receipt is SignedMessageResponse {
