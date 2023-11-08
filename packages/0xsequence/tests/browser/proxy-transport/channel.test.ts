@@ -110,7 +110,7 @@ export const tests = async () => {
   walletProvider.register()
 
   // setup web3 provider
-  const client = new SequenceClient(walletProvider, new MemoryItemStore(), { defaultChainId: 31337 })
+  const client = new SequenceClient('', walletProvider, new MemoryItemStore(), { defaultChainId: 31337 })
   const connectPromise = client.connect({ app: 'proxy-transport-channel test', keepWalletOpened: true })
 
   // fake/force an async wallet initialization for the wallet-request handler. This is the behaviour

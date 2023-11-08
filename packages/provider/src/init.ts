@@ -131,7 +131,7 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   const itemStore = config.localStorage || useBestStore()
 
   // Create client, provider and return signer
-  const client = new SequenceClient(config.transports, itemStore, {
+  const client = new SequenceClient(projectAccessKey, config.transports, itemStore, {
     defaultChainId: defaultNetwork,
     defaultEIP6492: config.defaultEIP6492
   })

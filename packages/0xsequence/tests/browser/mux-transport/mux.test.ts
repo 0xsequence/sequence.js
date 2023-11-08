@@ -107,6 +107,7 @@ export const tests = async () => {
 
   // wallet client with multiple message provider transports enabled
   const client = new SequenceClient(
+    '',
     {
       windowTransport: { enabled: true },
       proxyTransport: { enabled: true, appPort: ch.app }
