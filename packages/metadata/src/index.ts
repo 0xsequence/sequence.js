@@ -6,10 +6,33 @@ const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
 export class SequenceMetadataClient extends MetadataRpc {
   constructor(
-    hostname: string = 'https://metadata.sequence.app'
-    // TODO: add jwtAuth? and projectAccessKey? ...
-    // .. see indexer
+    hostname: string = 'https://metadata.sequence.app',
+    public projectAccessKey?: string,
+    public jwtAuth?: string
   ) {
     super(hostname.endsWith('/') ? hostname.slice(0, -1) : hostname, fetch)
+    this.fetch = this._fetch
+  }
+
+  _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+    // automatically include jwt auth header to requests
+    // if its been set on the api client
+    const headers: { [key: string]: any } = {}
+
+    const jwtAuth = this.jwtAuth
+    const projectAccessKey = this.projectAccessKey
+
+    if (jwtAuth && jwtAuth.length > 0) {
+      headers['Authorization'] = `BEARER ${jwtAuth}`
+    }
+
+    if (projectAccessKey && projectAccessKey.length > 0) {
+      headers['X-Access-Key'] = `${projectAccessKey}`
+    }
+
+    // before the request is made
+    init!.headers = { ...init!.headers, ...headers }
+
+    return fetch(input, init)
   }
 }

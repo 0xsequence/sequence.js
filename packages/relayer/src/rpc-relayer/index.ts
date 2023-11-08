@@ -18,7 +18,8 @@ const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALL
 export interface RpcRelayerOptions {
   provider: ethers.providers.Provider | { url: string }
   url: string
-  // TODO: add jwtAuth? and projectAccessKey? ..
+  projectAccessKey?: string
+  jwtAuth?: string
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
@@ -37,11 +38,33 @@ export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer
   public readonly provider: ethers.providers.Provider
 
-  constructor(options: RpcRelayerOptions) {
-    this.service = new proto.Relayer(options.url, fetch)
+  constructor(public options: RpcRelayerOptions) {
+    this.service = new proto.Relayer(options.url, this._fetch)
     this.provider = ethers.providers.Provider.isProvider(options.provider)
       ? options.provider
       : new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(options.provider.url))
+  }
+
+  _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+    // automatically include jwt auth header to requests
+    // if its been set on the api client
+    const headers: { [key: string]: any } = {}
+
+    const jwtAuth = this.options.jwtAuth
+    const projectAccessKey = this.options.projectAccessKey
+
+    if (jwtAuth && jwtAuth.length > 0) {
+      headers['Authorization'] = `BEARER ${jwtAuth}`
+    }
+
+    if (projectAccessKey && projectAccessKey.length > 0) {
+      headers['X-Access-Key'] = `${projectAccessKey}`
+    }
+
+    // before the request is made
+    init!.headers = { ...init!.headers, ...headers }
+
+    return fetch(input, init)
   }
 
   async waitReceipt(
