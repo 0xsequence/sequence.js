@@ -4,18 +4,19 @@ import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
 import { MaySentTransactionResponse, SignedMessageResponse, isGetSessionResponse, isMaySentTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
 import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload, DropSessionPayload } from "./clients/authenticator.gen";
-import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
 import { SendDelayedEncodeArgs, SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
 import { SignMessageArgs } from './payloads/packets/messages';
 import { SimpleNetwork, WithSimpleNetwork } from './networks';
+import { TEMPLATE_LOCAL } from './defaults';
 
 export type Sessions = (Session & { isThis: boolean })[]
 
 export type SequenceExplicitConfig = {
   secret: string,
   tenant: number,
+  identityPoolId: string,
 }
 
 export type SequenceKeyConfig = {
@@ -31,8 +32,7 @@ export type ExtendedSequenceConfig = {
   kmsRegion: string;
   idpRegion: string;
   keyId: string;
-  identityPoolId: string;
-  endpoint: string;
+  endpoint?: string;
 }
 
 export type Identity = {
@@ -65,13 +65,13 @@ export function parseApiKey<T>(key: string): Partial<T> {
   return JSON.parse(json)
 }
 
-
 export function defaultArgsOrFail(
-  config: SequenceConfig & Partial<ExtendedSequenceConfig>
+  config: SequenceConfig & Partial<ExtendedSequenceConfig>,
+  preset: ExtendedSequenceConfig
 ): Required<SequenceExplicitConfig> & ExtendedSequenceConfig {
   const key = (config as any).key
   const keyOverrides = key ? parseApiKey<SequenceExplicitConfig & ExtendedSequenceConfig>(key) : {}
-  const preconfig = { ...DEFAULTS.auth, ...config, ...keyOverrides }
+  const preconfig = { ...preset, ...config, ...keyOverrides }
 
   if (preconfig.network === undefined) {
     preconfig.network = 1
@@ -83,6 +83,10 @@ export function defaultArgsOrFail(
 
   if (preconfig.secret === undefined) {
     throw new Error('Missing secret')
+  }
+
+  if (preconfig.identityPoolId === undefined) {
+    throw new Error('Missing identityPoolId')
   }
 
   return preconfig as Required<SequenceExplicitConfig> & ExtendedSequenceConfig
@@ -101,11 +105,11 @@ export class Sequence {
 
   constructor (
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
-    private readonly store: Store = new LocalStore(),
-    private readonly guardUrl: string = DEFAULTS.guard
+    preset: ExtendedSequenceConfig = TEMPLATE_LOCAL,
+    private readonly store: Store = new LocalStore()
   ) {
-    this.config = defaultArgsOrFail(config)
-    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store, this.guardUrl)
+    this.config = defaultArgsOrFail(config, preset)
+    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store)
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
     this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)

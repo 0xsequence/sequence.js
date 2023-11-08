@@ -5,9 +5,9 @@ import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args, SendDelayedEncodeArgs, sendDelayedEncode } from "./payloads/packets/transactions"
 import { OpenSessionResponse } from "./payloads/responses"
 import { Guard } from "./clients/guard.gen"
-import { DEFAULTS } from "./defaults"
 import { SignMessageArgs, SignMessagePacket, signMessage } from "./payloads/packets/messages"
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from "./networks"
+import { DEFAULT_GUARD } from "./defaults"
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -40,7 +40,7 @@ export class SequenceWaaSBase {
   constructor (
     public readonly config = { network: 1 } as SequenceBaseConfig,
     private readonly store: Store = new LocalStore(),
-    private readonly guardUrl: string = DEFAULTS.guard
+    private readonly guardUrl: string = DEFAULT_GUARD
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
