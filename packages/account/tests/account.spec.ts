@@ -69,7 +69,7 @@ describe('Account', () => {
       await accountOuter.doBootstrap(networks[0].chainId)
     }
 
-    return {signer, accountInner, accountOuter}
+    return { signer, accountInner, accountOuter }
   }
 
   const getEth = async (address: string, signer?: ethers.Signer) => {
@@ -82,7 +82,7 @@ describe('Account', () => {
     // Signer sends the address some ETH for defaultTx use
     const tx = await signer.sendTransaction({
       to: address,
-      value: 10, // Should be plenty
+      value: 10 // Should be plenty
     })
     await tx.wait()
   }
@@ -127,7 +127,7 @@ describe('Account', () => {
 
     defaultTx = {
       to: await signer1.getAddress(),
-      value: 1,
+      value: 1
     }
   })
 
@@ -282,7 +282,6 @@ describe('Account', () => {
     })
 
     it('Should sign and validate a message with nested account', async () => {
-
       const { accountOuter } = await createNestedAccount('sign and validate nested')
 
       const msg = ethers.utils.toUtf8Bytes('Hello World')
@@ -365,13 +364,14 @@ describe('Account', () => {
     })
 
     it('Should sign and validate a message without being deployed with nested account', async () => {
-
       const { accountOuter } = await createNestedAccount('sign and validate nested undeployed', true, false)
 
       const msg = ethers.utils.toUtf8Bytes('Hello World')
       const sig = await accountOuter.signMessage(msg, networks[0].chainId, 'eip6492')
 
-      const valid = await accountOuter.reader(networks[0].chainId).isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
+      const valid = await accountOuter
+        .reader(networks[0].chainId)
+        .isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -395,7 +395,10 @@ describe('Account', () => {
       const configOuter = {
         threshold: 1,
         checkpoint: Math.floor(now() / 1000),
-        signers: [{ address: accountInner.address, weight: 1 }, { address: signerB.address, weight: 1 }]
+        signers: [
+          { address: accountInner.address, weight: 1 },
+          { address: signerB.address, weight: 1 }
+        ]
       }
       const accountOuter = await Account.new({
         ...defaultArgs,
@@ -407,7 +410,9 @@ describe('Account', () => {
       const msg = ethers.utils.toUtf8Bytes('Hello World')
       const sig = await accountOuter.signMessage(msg, networks[0].chainId)
 
-      const valid = await accountOuter.reader(networks[0].chainId).isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
+      const valid = await accountOuter
+        .reader(networks[0].chainId)
+        .isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
 
       expect(valid).to.be.true
     })

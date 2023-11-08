@@ -25,7 +25,7 @@ export type WalletSignRequestMetadata = {
   // it contains the original metadata of the parent wallet.
   parent?: WalletSignRequestMetadata
 
-  decorate?: boolean,
+  decorate?: boolean
   cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
 }
 

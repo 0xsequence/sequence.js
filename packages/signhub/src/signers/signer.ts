@@ -5,21 +5,19 @@ import { Status } from '../orchestrator'
 export interface SapientSigner {
   getAddress(): Promise<string>
 
-  buildDeployTransaction(metadata: Object): Promise<commons.transaction.TransactionBundle | undefined>
+  buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined>
 
   /**
    * Get signed transactions to be included in the next request.
    */
-  predecorateSignedTransactions(
-    metadata: Object
-  ): Promise<commons.transaction.SignedTransactionBundle[]>
+  predecorateSignedTransactions(metadata: object): Promise<commons.transaction.SignedTransactionBundle[]>
 
   /**
    * Modify the transaction bundle before it is sent.
    */
   decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    metadata: Object
+    metadata: object
   ): Promise<commons.transaction.IntendedTransactionBundle>
 
   /**
@@ -28,7 +26,7 @@ export interface SapientSigner {
   requestSignature(
     id: string,
     message: ethers.BytesLike,
-    metadata: Object,
+    metadata: object,
     callbacks: {
       onSignature: (signature: ethers.BytesLike) => void
       onRejection: (error: string) => void
@@ -39,7 +37,7 @@ export interface SapientSigner {
   /**
    * Notify the signer of a status change.
    */
-  notifyStatusChange(id: string, status: Status, metadata: Object): void
+  notifyStatusChange(id: string, status: Status, metadata: object): void
 
   suffix(): ethers.BytesLike
 }
