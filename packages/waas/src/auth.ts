@@ -61,8 +61,7 @@ export type CommonAuthArgs = {
 }
 
 export function parseApiKey<T>(key: string): Partial<T> {
-  const json = Buffer.from(key, 'base64').toString('utf8')
-  return JSON.parse(json)
+  return JSON.parse(atob(key))
 }
 
 export function defaultArgsOrFail(
