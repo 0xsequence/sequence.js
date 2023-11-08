@@ -136,7 +136,12 @@ export class SequenceClient {
 
   public readonly defaultEIP6492: boolean
 
-  constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions | number) {
+  constructor(
+    public projectAccessKey: string,
+    transport: ProviderTransport | MuxTransportTemplate,
+    store: ItemStore,
+    options?: SequenceClientOptions | number
+  ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
     } else if (isProviderTransport(transport)) {
@@ -303,6 +308,8 @@ export class SequenceClient {
     if (options?.refresh === true) {
       this.disconnect()
     }
+
+    options.projectAccessKey = this.projectAccessKey
 
     if (options) {
       if (options.authorize) {
