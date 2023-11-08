@@ -2,7 +2,7 @@ import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { SequenceWaaSBase } from "./base"
 import { LocalStore, Store, StoreObj } from "./store"
 import { Payload } from "./payloads";
-import { SendTransactionResponse, SignedMessageResponse, isGetSessionResponse, isSendTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
+import { MaySentTransactionResponse, SignedMessageResponse, isGetSessionResponse, isMaySentTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
 import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload, DropSessionPayload } from "./clients/authenticator.gen";
 import { DEFAULTS } from "./defaults"
 import { jwtDecode } from "jwt-decode"
@@ -10,7 +10,6 @@ import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
 import { SendDelayedEncodeArgs, SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
 import { SignMessageArgs } from './payloads/packets/messages';
 import { SimpleNetwork, WithSimpleNetwork } from './networks';
-import { getSession } from './payloads/packets/session';
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -395,28 +394,28 @@ export class Sequence {
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
 
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isSendTransactionResponse)
+    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
-  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendERC20(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isSendTransactionResponse)
+    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
-  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendERC721(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isSendTransactionResponse)
+    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
-  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendERC1155(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isSendTransactionResponse)
+    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
-  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<SendTransactionResponse> {
+  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isSendTransactionResponse)
+    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 }
