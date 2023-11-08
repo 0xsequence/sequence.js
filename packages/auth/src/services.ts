@@ -63,7 +63,8 @@ export class Services {
     public readonly status: {
       jwt?: SessionJWTPromise
       metadata?: SessionMeta
-    } = {}
+    } = {},
+    public readonly projectAccessKey?: string
   ) {}
 
   private now(): number {
@@ -114,9 +115,7 @@ export class Services {
         }
       }
 
-      return new SequenceAPIClient(url, {
-        jwtAuth
-      })
+      return new SequenceAPIClient(url, this.projectAccessKey, jwtAuth)
     })()
 
     return this._initialAuthRequest
@@ -204,6 +203,7 @@ export class Services {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
+      // QUESTION/TODO: should we make projectAccessKey non-optional in services so we can be sure this provider will have proper rpcUrl?
       ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
         name: '',
         chainId: chainId.toNumber()
@@ -223,21 +223,22 @@ export class Services {
       if (!url) throw Error('No sequence api url')
 
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.apiClient = new SequenceAPIClient(url, { jwtAuth })
+      this.apiClient = new SequenceAPIClient(url, this.projectAccessKey, jwtAuth)
     }
 
     return this.apiClient
   }
 
-  getMetadataClient(): SequenceMetadataClient {
+  async getMetadataClient(tryAuth: boolean = true): Promise<SequenceMetadataClient> {
     if (!this.metadataClient) {
-      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl)
+      const jwtAuth = (await this.getJWT(tryAuth)).token
+      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl, this.projectAccessKey, jwtAuth)
     }
 
     return this.metadataClient
   }
 
-  async getIndexerClient(chainId: ChainIdLike): Promise<Indexer> {
+  async getIndexerClient(chainId: ChainIdLike, tryAuth: boolean = true): Promise<Indexer> {
     const network = findNetworkConfig(this.account.networks, chainId)
     if (!network) {
       throw Error(`No network for chain ${chainId}`)
@@ -247,7 +248,8 @@ export class Services {
       if (network.indexer) {
         this.indexerClients.set(network.chainId, network.indexer)
       } else if (network.indexerUrl) {
-        this.indexerClients.set(network.chainId, new SequenceIndexer(network.indexerUrl))
+        const jwtAuth = (await this.getJWT(tryAuth)).token
+        this.indexerClients.set(network.chainId, new SequenceIndexer(network.indexerUrl, this.projectAccessKey, jwtAuth))
       } else {
         throw Error(`No indexer url for chain ${chainId}`)
       }
@@ -285,6 +287,7 @@ export class Services {
     if (!network) throw Error('No network found')
     ethAuth.chainId = chainId.toNumber()
     // TODO: Modify ETHAuth so it can take a provider instead of a url
+    // QUESTION/TODO: should we make projectAccessKey non-optional in services so we can be sure this provider will have proper rpcUrl?
     ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
       name: '',
       chainId: chainId.toNumber()
