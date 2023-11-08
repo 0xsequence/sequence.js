@@ -1,5 +1,21 @@
 # @0xsequence/replacer
 
+## 1.3.0
+
+### Minor Changes
+
+- signhub: account children
+
+### Patch Changes
+
+- guard: do not throw when building deploy transaction
+- network: snowtrace.io -> subnets.avax.network/c-chain
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.3.0
+  - @0xsequence/core@1.3.0
+
 ## 1.2.9
 
 ### Patch Changes

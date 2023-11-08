@@ -1,5 +1,16 @@
 # @0xsequence/metadata
 
+## 1.3.0
+
+### Minor Changes
+
+- signhub: account children
+
+### Patch Changes
+
+- guard: do not throw when building deploy transaction
+- network: snowtrace.io -> subnets.avax.network/c-chain
+
 ## 1.2.9
 
 ### Patch Changes
