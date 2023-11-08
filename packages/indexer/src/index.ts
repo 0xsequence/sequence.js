@@ -15,7 +15,7 @@ export class SequenceIndexer extends IndexerRpc {
   }
 
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
-    // automatically include jwt auth header to requests
+    // automatically include jwt and access key auth header to requests
     // if its been set on the api client
     const headers: { [key: string]: any } = {}
 
@@ -27,7 +27,7 @@ export class SequenceIndexer extends IndexerRpc {
     }
 
     if (projectAccessKey && projectAccessKey.length > 0) {
-      headers['X-Access-Key'] = `${projectAccessKey}`
+      headers['X-Access-Key'] = projectAccessKey
     }
 
     // before the request is made
