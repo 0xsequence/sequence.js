@@ -1,7 +1,7 @@
 import { Account } from '@0xsequence/account'
 import { SequenceAPIClient } from '@0xsequence/api'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
-import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
+import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
 import { getDefaultConnectionInfo, jwtDecodeClaims } from '@0xsequence/utils'
@@ -247,7 +247,7 @@ export class Services {
       if (network.indexer) {
         this.indexerClients.set(network.chainId, network.indexer)
       } else if (network.indexerUrl) {
-        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl))
+        this.indexerClients.set(network.chainId, new SequenceIndexer(network.indexerUrl))
       } else {
         throw Error(`No indexer url for chain ${chainId}`)
       }
