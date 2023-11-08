@@ -10,12 +10,15 @@ import { SendDelayedEncodeArgs, SendERC1155Args, SendERC20Args, SendERC721Args, 
 import { SignMessageArgs } from './payloads/packets/messages';
 import { SimpleNetwork, WithSimpleNetwork } from './networks';
 import { TEMPLATE_LOCAL } from './defaults';
+import { EmailAuth } from './email';
 
 export type Sessions = (Session & { isThis: boolean })[]
 
 export type SequenceExplicitConfig = {
   secret: string,
   tenant: number,
+
+  emailClientId?: string,
   identityPoolId: string,
 }
 
@@ -32,6 +35,7 @@ export type ExtendedSequenceConfig = {
   kmsRegion: string;
   idpRegion: string;
   keyId: string;
+  emailRegion?: string;
   endpoint?: string;
 }
 
@@ -102,6 +106,8 @@ export class Sequence {
   private readonly kmsKey: StoreObj<string | undefined>
   private readonly deviceName: StoreObj<string | undefined>
 
+  private emailClient: EmailAuth | undefined
+
   constructor (
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     preset: ExtendedSequenceConfig = TEMPLATE_LOCAL,
@@ -112,6 +118,23 @@ export class Sequence {
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
     this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
+  }
+
+  public get email() {
+    if (this.emailClient) {
+      return this.emailClient
+    }
+
+    if (!this.config.emailRegion) {
+      throw new Error('Missing emailRegion')
+    }
+
+    if (!this.config.emailClientId) {
+      throw new Error('Missing emailClientId')
+    }
+
+    this.emailClient = new EmailAuth(this.config.emailRegion, this.config.emailClientId)
+    return this.emailClient
   }
 
   async onValidationRequired(callback: () => void) {
