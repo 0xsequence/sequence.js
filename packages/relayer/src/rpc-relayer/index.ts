@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { getDefaultConnectionInfo, logger } from '@0xsequence/utils'
+import { getEthersConnectionInfo, logger } from '@0xsequence/utils'
 
 export { proto }
 
@@ -40,25 +40,29 @@ export class RpcRelayer implements Relayer {
 
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
-    this.provider = ethers.providers.Provider.isProvider(options.provider)
-      ? options.provider
-      : new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(options.provider.url))
+
+    if (ethers.providers.Provider.isProvider(options.provider)) {
+      this.provider = options.provider
+    } else {
+      const { jwtAuth, projectAccessKey } = this.options
+      const providerConnectionInfo = getEthersConnectionInfo(options.provider.url, projectAccessKey, jwtAuth)
+      this.provider = new ethers.providers.StaticJsonRpcProvider(providerConnectionInfo)
+    }
   }
 
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
-    // automatically include jwt auth header to requests
+    // automatically include jwt and access key auth header to requests
     // if its been set on the api client
     const headers: { [key: string]: any } = {}
 
-    const jwtAuth = this.options.jwtAuth
-    const projectAccessKey = this.options.projectAccessKey
+    const { jwtAuth, projectAccessKey } = this.options
 
     if (jwtAuth && jwtAuth.length > 0) {
       headers['Authorization'] = `BEARER ${jwtAuth}`
     }
 
     if (projectAccessKey && projectAccessKey.length > 0) {
-      headers['X-Access-Key'] = `${projectAccessKey}`
+      headers['X-Access-Key'] = projectAccessKey
     }
 
     // before the request is made
