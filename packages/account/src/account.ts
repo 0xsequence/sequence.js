@@ -53,6 +53,9 @@ export type AccountOptions = {
 
   // Networks information and providers
   networks: NetworkConfig[]
+
+  // Jwt
+  jwt?: string
 }
 
 export interface PreparedTransactions {
@@ -96,6 +99,8 @@ export class Account {
 
   private orchestrator: Orchestrator
 
+  private jwt?: string
+
   constructor(options: AccountOptions) {
     this.address = ethers.utils.getAddress(options.address)
 
@@ -103,6 +108,7 @@ export class Account {
     this.tracker = options.tracker
     this.networks = options.networks
     this.orchestrator = options.orchestrator
+    this.jwt = options.jwt
 
     this.migrations = options.migrations || defaults.DefaultMigrations
     this.migrator = new migrator.Migrator(options.tracker, this.migrations, this.contexts)
@@ -193,11 +199,15 @@ export class Account {
     const found = this.network(chainId)
     if (!found.relayer) throw new Error(`Relayer not found for chainId ${chainId}`)
     if (isRelayer(found.relayer)) return found.relayer
-    return new RpcRelayer(found.relayer)
+    return new RpcRelayer({ ...found.relayer, jwtAuth: this.jwt })
   }
 
   setOrchestrator(orchestrator: Orchestrator) {
     this.orchestrator = orchestrator
+  }
+
+  setJwt(jwt: string) {
+    this.jwt = jwt
   }
 
   contextFor(version: number): commons.context.WalletContext {

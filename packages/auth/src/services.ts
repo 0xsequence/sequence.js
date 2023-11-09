@@ -51,7 +51,7 @@ export class Services {
   // proof strings are indexed by account address and app name, see getProofStringKey()
   private readonly proofStrings: Map<string, ProofStringPromise> = new Map()
 
-  private onAuthCallbacks: ((result: PromiseSettledResult<void>) => void)[] = []
+  private onAuthCallbacks: ((result: PromiseSettledResult<string>) => void)[] = []
 
   private apiClient: SequenceAPIClient | undefined
   private metadataClient: SequenceMetadataClient | undefined
@@ -63,8 +63,7 @@ export class Services {
     public readonly status: {
       jwt?: SessionJWTPromise
       metadata?: SessionMeta
-    } = {},
-    public readonly projectAccessKey?: string
+    } = {}
   ) {}
 
   private now(): number {
@@ -75,7 +74,7 @@ export class Services {
     return Math.max(this.settings.metadata.expiration ?? DEFAULT_SESSION_EXPIRATION, 120)
   }
 
-  onAuth(cb: (result: PromiseSettledResult<void>) => void) {
+  onAuth(cb: (result: PromiseSettledResult<string>) => void) {
     this.onAuthCallbacks.push(cb)
     return () => (this.onAuthCallbacks = this.onAuthCallbacks.filter(c => c !== cb))
   }
@@ -115,7 +114,7 @@ export class Services {
         }
       }
 
-      return new SequenceAPIClient(url, this.projectAccessKey, jwtAuth)
+      return new SequenceAPIClient(url, undefined, jwtAuth)
     })()
 
     return this._initialAuthRequest
@@ -171,10 +170,10 @@ export class Services {
     this.status.jwt = jwt
 
     jwt.token
-      .then(() => {
+      .then(token => {
         this.onAuthCallbacks.forEach(cb => {
           try {
-            cb({ status: 'fulfilled', value: undefined })
+            cb({ status: 'fulfilled', value: token })
           } catch {}
         })
       })
