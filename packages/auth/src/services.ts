@@ -202,7 +202,7 @@ export class Services {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
-      // TODO: Make sure 'network.rpcUrl' has the proper projectAccessKey
+      // TODO: Make sure 'network.rpcUrl' has the proper projectAccessKey or auth header
       ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
         name: '',
         chainId: chainId.toNumber()
@@ -222,7 +222,7 @@ export class Services {
       if (!url) throw Error('No sequence api url')
 
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.apiClient = new SequenceAPIClient(url, this.projectAccessKey, jwtAuth)
+      this.apiClient = new SequenceAPIClient(url, undefined, jwtAuth)
     }
 
     return this.apiClient
@@ -231,7 +231,7 @@ export class Services {
   async getMetadataClient(tryAuth: boolean = true): Promise<SequenceMetadataClient> {
     if (!this.metadataClient) {
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl, this.projectAccessKey, jwtAuth)
+      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl, undefined, jwtAuth)
     }
 
     return this.metadataClient
@@ -248,7 +248,7 @@ export class Services {
         this.indexerClients.set(network.chainId, network.indexer)
       } else if (network.indexerUrl) {
         const jwtAuth = (await this.getJWT(tryAuth)).token
-        this.indexerClients.set(network.chainId, new SequenceIndexer(network.indexerUrl, this.projectAccessKey, jwtAuth))
+        this.indexerClients.set(network.chainId, new SequenceIndexer(network.indexerUrl, undefined, jwtAuth))
       } else {
         throw Error(`No indexer url for chain ${chainId}`)
       }
