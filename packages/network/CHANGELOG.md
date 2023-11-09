@@ -1,5 +1,19 @@
 # @0xsequence/network
 
+## 1.4.0
+
+### Minor Changes
+
+- project access key support
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.4.0
+  - @0xsequence/indexer@1.4.0
+  - @0xsequence/relayer@1.4.0
+  - @0xsequence/utils@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

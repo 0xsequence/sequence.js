@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.4.0
+
+### Minor Changes
+
+- project access key support
+
 ## 1.3.0
 
 ### Minor Changes

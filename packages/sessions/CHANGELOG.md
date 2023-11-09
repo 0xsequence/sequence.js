@@ -1,5 +1,18 @@
 # @0xsequence/sessions
 
+## 1.4.0
+
+### Minor Changes
+
+- project access key support
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.4.0
+  - @0xsequence/migration@1.4.0
+  - @0xsequence/replacer@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes
