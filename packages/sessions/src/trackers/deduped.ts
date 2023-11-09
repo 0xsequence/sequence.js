@@ -1,8 +1,9 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { BigNumber, BigNumberish } from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { PromiseCache } from './promise-cache'
+import { LocalConfigTracker } from './local'
 
 export function isDedupedTracker(tracker: any): tracker is DedupedTracker {
   return tracker instanceof DedupedTracker
@@ -88,5 +89,11 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     signer: string
   }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
     return this.cache.do('walletsOfSigner', this.window, args => this.tracker.walletsOfSigner(args), args)
+  }
+
+  updateProvider(provider: ethers.providers.Provider) {
+    if (this.tracker instanceof LocalConfigTracker) {
+      this.tracker.updateProvider(provider)
+    }
   }
 }

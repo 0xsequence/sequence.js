@@ -587,4 +587,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     // Return the first valid candidate
     return candidates[0]
   }
+
+  updateProvider(provider: ethers.providers.Provider) {
+    this.provider = provider
+  }
 }
