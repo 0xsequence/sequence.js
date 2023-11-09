@@ -95,7 +95,7 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
     .concat(newNetworks)
     .map(network => {
       const toAppend = projectAccessKey ? `/${projectAccessKey}` : ''
-      network.rpcUrl + toAppend
+      network.rpcUrl = network.rpcUrl + toAppend
       return network
     })
 
