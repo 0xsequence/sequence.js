@@ -125,6 +125,8 @@ export type SequenceClientOptions = {
  *s
  *  It doesn't implement a full ethereum Provider, it doesn't include read-only methods.
  */
+
+// TODO: rename Client to transport.. or something.. like SequenceTransport ..
 export class SequenceClient {
   private readonly session: SequenceClientSession
   private readonly defaultChainId: DefaultChainIdTracker
@@ -134,7 +136,12 @@ export class SequenceClient {
 
   public readonly defaultEIP6492: boolean
 
-  constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions | number) {
+  constructor(
+    transport: ProviderTransport | MuxTransportTemplate,
+    store: ItemStore,
+    options?: SequenceClientOptions | number,
+    public projectAccessKey?: string
+  ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
     } else if (isProviderTransport(transport)) {
@@ -301,6 +308,8 @@ export class SequenceClient {
     if (options?.refresh === true) {
       this.disconnect()
     }
+
+    options.projectAccessKey = this.projectAccessKey
 
     if (options) {
       if (options.authorize) {

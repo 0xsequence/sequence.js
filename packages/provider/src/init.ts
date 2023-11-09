@@ -16,6 +16,9 @@ import { SequenceClient } from './client'
 import { SequenceProvider } from './provider'
 
 export interface ProviderConfig {
+  // Access key for the project that can be obtained from Sequence Builder on sequence.build
+  projectAccessKey?: string
+
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
   localStorage?: ItemStore
@@ -55,6 +58,12 @@ export const DefaultProviderConfig = {
 let sequenceWalletProvider: SequenceProvider | undefined
 
 export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
+  const projectAccessKey = partialConfig?.projectAccessKey
+
+  if (!projectAccessKey) {
+    console.warn('Please pass a projectAccessKey in initWallet config as it will be required in near future.')
+  }
+
   if (sequenceWalletProvider) {
     return sequenceWalletProvider
   }
@@ -84,8 +93,13 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
       return network ? { ...n, ...network } : n
     })
     .concat(newNetworks)
+    .map(network => {
+      const toAppend = projectAccessKey ? `/${projectAccessKey}` : ''
+      network.rpcUrl = network.rpcUrl + toAppend
+      return network
+    })
 
-  // This build a "public rpc" on demand, we build them on demand because we don't want to
+  // This builds a "public rpc" on demand, we build them on demand because we don't want to
   // generate a bunch of providers for networks that aren't used.
   const providerForChainId = (chainId: number) => {
     if (!rpcProviders[chainId]) {
@@ -118,10 +132,15 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   const itemStore = config.localStorage || useBestStore()
 
   // Create client, provider and return signer
-  const client = new SequenceClient(config.transports, itemStore, {
-    defaultChainId: defaultNetwork,
-    defaultEIP6492: config.defaultEIP6492
-  })
+  const client = new SequenceClient(
+    config.transports,
+    itemStore,
+    {
+      defaultChainId: defaultNetwork,
+      defaultEIP6492: config.defaultEIP6492
+    },
+    projectAccessKey
+  )
 
   sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
   return sequenceWalletProvider
@@ -138,6 +157,5 @@ export const getWallet = () => {
   if (!sequenceWalletProvider) {
     throw new Error('Wallet has not been initialized, call sequence.initWallet(config) first.')
   }
-
   return sequenceWalletProvider
 }

@@ -279,6 +279,12 @@ export class Session {
     if (services) {
       servicesObj = new Services(account, services)
       servicesObj.auth() // fire and forget
+
+      servicesObj.onAuth(result => {
+        if (result.status === 'fulfilled') {
+          account.setJwt(result.value)
+        }
+      })
     }
 
     return new Session(networks, contexts, account, servicesObj)
@@ -309,7 +315,8 @@ export class Session {
         tracker,
         networks,
         contexts,
-        orchestrator
+        orchestrator,
+        jwt: dump.jwt?.token
       })
 
       // TODO: This property may not hold if the user adds a new network
@@ -333,7 +340,8 @@ export class Session {
         tracker,
         networks,
         contexts,
-        orchestrator
+        orchestrator,
+        jwt: dump.jwt?.token
       })
     } else {
       throw Error('Invalid dump format')

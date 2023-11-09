@@ -381,7 +381,8 @@ describe('SequenceClient', () => {
               app: 'This is a test',
               authorizeVersion: 2,
               networkId: 2,
-              clientVersion: packageJson.version
+              clientVersion: packageJson.version,
+              projectAccessKey: undefined
             }
           })
 

@@ -165,6 +165,10 @@ export interface ConnectOptions {
    * be determined and verified for integrity, and can be omitted. */
   origin?: string
 
+  /** access key for the project that can be obtained from Sequence Builder on sequence.build.
+   * This value will be automatically populated using the key passed in initWallet. */
+  projectAccessKey?: string
+
   /** expiry number (in seconds) that is used for ETHAuth proof. Default is 1 week in seconds. */
   expiry?: number
 

@@ -180,7 +180,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     }
 
     // Build session response for connect details
-    connectDetails.session = await this.walletSession(chainId)
+    connectDetails.session = this.walletSession(chainId)
 
     return connectDetails
   }

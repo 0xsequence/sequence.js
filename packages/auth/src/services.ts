@@ -1,10 +1,10 @@
 import { Account } from '@0xsequence/account'
 import { SequenceAPIClient } from '@0xsequence/api'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
-import { Indexer, SequenceIndexerClient } from '@0xsequence/indexer'
+import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
-import { getDefaultConnectionInfo, jwtDecodeClaims } from '@0xsequence/utils'
+import { getEthersConnectionInfo } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export type SessionMeta = {
@@ -51,7 +51,7 @@ export class Services {
   // proof strings are indexed by account address and app name, see getProofStringKey()
   private readonly proofStrings: Map<string, ProofStringPromise> = new Map()
 
-  private onAuthCallbacks: ((result: PromiseSettledResult<void>) => void)[] = []
+  private onAuthCallbacks: ((result: PromiseSettledResult<string>) => void)[] = []
 
   private apiClient: SequenceAPIClient | undefined
   private metadataClient: SequenceMetadataClient | undefined
@@ -74,7 +74,7 @@ export class Services {
     return Math.max(this.settings.metadata.expiration ?? DEFAULT_SESSION_EXPIRATION, 120)
   }
 
-  onAuth(cb: (result: PromiseSettledResult<void>) => void) {
+  onAuth(cb: (result: PromiseSettledResult<string>) => void) {
     this.onAuthCallbacks.push(cb)
     return () => (this.onAuthCallbacks = this.onAuthCallbacks.filter(c => c !== cb))
   }
@@ -114,9 +114,7 @@ export class Services {
         }
       }
 
-      return new SequenceAPIClient(url, {
-        jwtAuth
-      })
+      return new SequenceAPIClient(url, undefined, jwtAuth)
     })()
 
     return this._initialAuthRequest
@@ -172,10 +170,10 @@ export class Services {
     this.status.jwt = jwt
 
     jwt.token
-      .then(() => {
+      .then(token => {
         this.onAuthCallbacks.forEach(cb => {
           try {
-            cb({ status: 'fulfilled', value: undefined })
+            cb({ status: 'fulfilled', value: token })
           } catch {}
         })
       })
@@ -204,7 +202,9 @@ export class Services {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
-      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+      // -----
+      // Can't pass jwt here since this is used for getting the jwt
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
         name: '',
         chainId: chainId.toNumber()
       })
@@ -223,21 +223,22 @@ export class Services {
       if (!url) throw Error('No sequence api url')
 
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.apiClient = new SequenceAPIClient(url, { jwtAuth })
+      this.apiClient = new SequenceAPIClient(url, undefined, jwtAuth)
     }
 
     return this.apiClient
   }
 
-  getMetadataClient(): SequenceMetadataClient {
+  async getMetadataClient(tryAuth: boolean = true): Promise<SequenceMetadataClient> {
     if (!this.metadataClient) {
-      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl)
+      const jwtAuth = (await this.getJWT(tryAuth)).token
+      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl, undefined, jwtAuth)
     }
 
     return this.metadataClient
   }
 
-  async getIndexerClient(chainId: ChainIdLike): Promise<Indexer> {
+  async getIndexerClient(chainId: ChainIdLike, tryAuth: boolean = true): Promise<Indexer> {
     const network = findNetworkConfig(this.account.networks, chainId)
     if (!network) {
       throw Error(`No network for chain ${chainId}`)
@@ -247,7 +248,8 @@ export class Services {
       if (network.indexer) {
         this.indexerClients.set(network.chainId, network.indexer)
       } else if (network.indexerUrl) {
-        this.indexerClients.set(network.chainId, new SequenceIndexerClient(network.indexerUrl))
+        const jwtAuth = (await this.getJWT(tryAuth)).token
+        this.indexerClients.set(network.chainId, new SequenceIndexer(network.indexerUrl, undefined, jwtAuth))
       } else {
         throw Error(`No indexer url for chain ${chainId}`)
       }
@@ -285,7 +287,9 @@ export class Services {
     if (!network) throw Error('No network found')
     ethAuth.chainId = chainId.toNumber()
     // TODO: Modify ETHAuth so it can take a provider instead of a url
-    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+    // -----
+    // Can't pass jwt here since this is used for getting the jwt
+    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
       name: '',
       chainId: chainId.toNumber()
     })
