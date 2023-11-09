@@ -4,7 +4,7 @@ import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
 import { SequenceMetadataClient } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
-import { getDefaultConnectionInfo, jwtDecodeClaims } from '@0xsequence/utils'
+import { getEthersConnectionInfo } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export type SessionMeta = {
@@ -203,7 +203,7 @@ export class Services {
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
       // TODO: Make sure 'network.rpcUrl' has the proper projectAccessKey or auth header
-      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
         name: '',
         chainId: chainId.toNumber()
       })
@@ -287,7 +287,7 @@ export class Services {
     ethAuth.chainId = chainId.toNumber()
     // TODO: Modify ETHAuth so it can take a provider instead of a url
     // TODO: Make sure 'network.rpcUrl' has the proper projectAccessKey
-    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(network.rpcUrl), {
+    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
       name: '',
       chainId: chainId.toNumber()
     })

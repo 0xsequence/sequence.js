@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { getDefaultConnectionInfo, isBigNumberish, Optionals } from '@0xsequence/utils'
+import { getEthersConnectionInfo, isBigNumberish, Optionals } from '@0xsequence/utils'
 
 const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
 
@@ -43,7 +43,7 @@ export class OverwriterEstimator {
   constructor(options: OverwriterEstimatorOptions) {
     this.provider =
       typeof options.rpc === 'string'
-        ? new ethers.providers.StaticJsonRpcProvider(getDefaultConnectionInfo(options.rpc))
+        ? new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(options.rpc))
         : options.rpc
     this.options = { ...OverwriterEstimatorDefaults, ...options }
   }
