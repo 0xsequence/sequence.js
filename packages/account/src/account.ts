@@ -180,7 +180,7 @@ export class Account {
     if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
     return (
       found.provider ||
-      new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(found.rpcUrl), {
+      new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, undefined, this.jwt), {
         name: '',
         chainId: ethers.BigNumber.from(chainId).toNumber()
       })
