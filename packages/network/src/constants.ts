@@ -31,16 +31,8 @@ export enum ChainId {
   AVALANCHE = 43114,
   AVALANCHE_TESTNET = 43113,
 
-  // Fantom
-  FANTOM = 250,
-  FANTOM_TESTNET = 4002,
-
   // Gnosis Chain (XDAI)
   GNOSIS = 100,
-
-  // AURORA
-  AURORA = 1313161554,
-  AURORA_TESTNET = 1313161556,
 
   // BASE
   BASE = 8453,
@@ -272,27 +264,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://subnets-test.avax.network/c-chain/'
     }
   },
-  [ChainId.FANTOM]: {
-    chainId: ChainId.FANTOM,
-    type: NetworkType.MAINNET,
-    name: 'fantom',
-    title: 'Fantom',
-    blockExplorer: {
-      name: 'FTMScan',
-      rootUrl: 'https://ftmscan.com/'
-    }
-  },
-  [ChainId.FANTOM_TESTNET]: {
-    chainId: ChainId.FANTOM_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'fantom-testnet',
-    title: 'Fantom Testnet',
-    testnet: true,
-    blockExplorer: {
-      name: 'FTMScan (Testnet)',
-      rootUrl: 'https://testnet.ftmscan.com/'
-    }
-  },
   [ChainId.GNOSIS]: {
     chainId: ChainId.GNOSIS,
     type: NetworkType.MAINNET,
@@ -301,27 +272,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Gnosis Chain Explorer',
       rootUrl: 'https://blockscout.com/xdai/mainnet/'
-    }
-  },
-  [ChainId.AURORA]: {
-    chainId: ChainId.AURORA,
-    type: NetworkType.MAINNET,
-    name: 'aurora',
-    title: 'Aurora',
-    blockExplorer: {
-      name: 'Aurora Explorer',
-      rootUrl: 'https://aurorascan.dev/'
-    }
-  },
-  [ChainId.AURORA_TESTNET]: {
-    chainId: ChainId.AURORA_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'aurora-testnet',
-    title: 'Aurora Testnet',
-    testnet: true,
-    blockExplorer: {
-      name: 'Aurora Explorer (Testnet)',
-      rootUrl: 'https://testnet.aurorascan.dev/'
     }
   },
   [ChainId.BASE]: {
