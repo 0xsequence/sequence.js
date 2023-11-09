@@ -231,7 +231,6 @@ describe('SequenceClient', () => {
     } as OpenWalletIntent
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         openWallet: (path: string, intent: OpenWalletIntent, chainId?: number) => {
@@ -278,7 +277,6 @@ describe('SequenceClient', () => {
     } as OpenWalletIntent
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         openWallet: (path: string, intent: OpenWalletIntent, chainId?: number) => {
@@ -319,7 +317,6 @@ describe('SequenceClient', () => {
     let calledCloseWallet = 0
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         closeWallet: () => {
@@ -340,7 +337,6 @@ describe('SequenceClient', () => {
     let calledIsOpened = 0
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         isOpened: () => {
@@ -375,7 +371,6 @@ describe('SequenceClient', () => {
     }
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         openWallet: (path?: string, intent?: OpenWalletIntent) => {
@@ -441,7 +436,6 @@ describe('SequenceClient', () => {
 
   it('should handle fail to connect', async () => {
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         openWallet: () => Promise.resolve(true),
@@ -470,7 +464,6 @@ describe('SequenceClient', () => {
 
   it('should handle reject connect', async () => {
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         openWallet: () => Promise.resolve(true),
@@ -508,7 +501,6 @@ describe('SequenceClient', () => {
     ] as { chainId: number; req: JsonRpcRequest; res: JsonRpcResponse }[]
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -550,7 +542,6 @@ describe('SequenceClient', () => {
 
   it('should handle error during arbitrary send', async () => {
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -569,7 +560,6 @@ describe('SequenceClient', () => {
 
   it('should fail is response is empty', async () => {
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -598,7 +588,6 @@ describe('SequenceClient', () => {
     }
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
@@ -666,7 +655,6 @@ describe('SequenceClient', () => {
     }
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         openWallet: () => {
@@ -720,7 +708,6 @@ describe('SequenceClient', () => {
     ] as { eip6492: boolean; chainId: number; message: ethers.BytesLike; result: string }[]
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -905,7 +892,6 @@ describe('SequenceClient', () => {
     ] as { eip6492: boolean; chainId: number; data: TypedData; result: string }[]
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -1021,7 +1007,6 @@ describe('SequenceClient', () => {
     ] as { chainId: number; tx: ExtendedTransactionRequest; result: string }[]
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -1108,7 +1093,6 @@ describe('SequenceClient', () => {
     let calledSendAsync = 0
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
@@ -1176,7 +1160,6 @@ describe('SequenceClient', () => {
     ] as { chainId: number; result: commons.config.Config }[]
 
     const client = new SequenceClient(
-      '',
       {
         ...basicMockTransport,
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {

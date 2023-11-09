@@ -202,7 +202,6 @@ export class Services {
       ethAuth.chainId = chainId.toNumber()
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
-      // TODO: Make sure 'network.rpcUrl' has the proper projectAccessKey or auth header
       ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
         name: '',
         chainId: chainId.toNumber()
@@ -286,7 +285,6 @@ export class Services {
     if (!network) throw Error('No network found')
     ethAuth.chainId = chainId.toNumber()
     // TODO: Modify ETHAuth so it can take a provider instead of a url
-    // TODO: Make sure 'network.rpcUrl' has the proper projectAccessKey
     ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
       name: '',
       chainId: chainId.toNumber()

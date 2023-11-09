@@ -137,10 +137,10 @@ export class SequenceClient {
   public readonly defaultEIP6492: boolean
 
   constructor(
-    public projectAccessKey: string,
     transport: ProviderTransport | MuxTransportTemplate,
     store: ItemStore,
-    options?: SequenceClientOptions | number
+    options?: SequenceClientOptions | number,
+    public projectAccessKey?: string
   ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)

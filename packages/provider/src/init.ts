@@ -17,7 +17,7 @@ import { SequenceProvider } from './provider'
 
 export interface ProviderConfig {
   // Access key for the project that can be obtained from Sequence Builder on sequence.build
-  projectAccessKey: string
+  projectAccessKey?: string
 
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
@@ -61,7 +61,7 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   const projectAccessKey = partialConfig?.projectAccessKey
 
   if (!projectAccessKey) {
-    throw new Error('initWallet: projectAccessKey is missing')
+    console.warn('Please pass a projectAccessKey in initWallet config as it will be required in near future.')
   }
 
   if (sequenceWalletProvider) {
@@ -94,7 +94,8 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
     })
     .concat(newNetworks)
     .map(network => {
-      network.rpcUrl + `/${projectAccessKey}`
+      const toAppend = projectAccessKey ? `/${projectAccessKey}` : ''
+      network.rpcUrl + toAppend
       return network
     })
 
@@ -131,10 +132,15 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   const itemStore = config.localStorage || useBestStore()
 
   // Create client, provider and return signer
-  const client = new SequenceClient(projectAccessKey, config.transports, itemStore, {
-    defaultChainId: defaultNetwork,
-    defaultEIP6492: config.defaultEIP6492
-  })
+  const client = new SequenceClient(
+    config.transports,
+    itemStore,
+    {
+      defaultChainId: defaultNetwork,
+      defaultEIP6492: config.defaultEIP6492
+    },
+    projectAccessKey
+  )
 
   sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
   return sequenceWalletProvider
