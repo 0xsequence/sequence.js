@@ -1,5 +1,15 @@
 # @0xsequence/metadata
 
+## 1.4.1
+
+### Patch Changes
+
+- network: remove unused networks
+- signhub: orchestrator interface
+- guard: auth methods interface
+- guard: update bindings for pin and totp
+- guard: no more retry logic
+
 ## 1.4.0
 
 ### Minor Changes
