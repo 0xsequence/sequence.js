@@ -221,7 +221,7 @@ export class Sequence {
     const encrypted = await window.crypto.subtle.encrypt(cbcParams, key, payloadBytes)
     const payloadCiphertext = encodeHex(new Uint8Array([ ...cbcParams.iv, ...new Uint8Array(encrypted) ]))
     const payloadSig = await this.waas.signUsingSessionKey(payloadBytes)
- 
+
     return {
       headers: {
         'X-Sequence-Tenant': this.config.tenant,
@@ -353,6 +353,10 @@ export class Sequence {
     }
 
     return this.handleValidationRequired(args)
+  }
+
+  async finishValidateSession(salt: string, challenge: string) {
+
   }
 
   async isSessionValid(): Promise<boolean> {
