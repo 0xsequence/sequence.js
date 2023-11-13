@@ -21,6 +21,12 @@ export type ValidateSessionPacket = BasePacketForWallet & {
   redirectURL?: string,
 }
 
+export type FinishValidateSessionPacket = BasePacket & {
+  code: 'finishValidateSessionPacketCode',
+  salt: string,
+  challenge: string,
+}
+
 export type GetSessionPacket = BasePacketForWallet & {
   code: 'getSession',
   session: string
@@ -78,6 +84,15 @@ export async function validateSession(args: {
     ...useLifespan(args.lifespan),
     ...args,
     code: 'validateSession'
+  }
+}
+
+export function finishValidateSession(salt: string, challenge: string, lifespan: number): FinishValidateSessionPacket {
+  return {
+    ...useLifespan(lifespan),
+    code: 'finishValidateSessionPacketCode',
+    salt: salt,
+    challenge: challenge,
   }
 }
 

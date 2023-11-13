@@ -1,5 +1,5 @@
 import { ethers } from "ethers"
-import { GetSessionPacket, OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, closeSession, getSession, openSession, validateSession } from "./payloads/packets/session"
+import { GetSessionPacket, OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, FinishValidateSessionPacket, closeSession, getSession, openSession, validateSession, finishValidateSession } from "./payloads/packets/session"
 import { LocalStore, Store, StoreObj } from "./store"
 import { BasePacket, Payload, signPacket } from "./payloads"
 import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args, SendDelayedEncodeArgs, sendDelayedEncode } from "./payloads/packets/transactions"
@@ -355,6 +355,11 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN,
     })
 
+    return this.buildPayload(packet)
+  }
+
+  async finishValidateSession(salt: string, challenge: string): Promise<Payload<FinishValidateSessionPacket>> {
+    const packet = finishValidateSession(salt, challenge, DEFAULT_LIFESPAN)
     return this.buildPayload(packet)
   }
 
