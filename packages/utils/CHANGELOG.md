@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.4.2
+
+### Patch Changes
+
+- guard: update bindings
+
 ## 1.4.1
 
 ### Patch Changes

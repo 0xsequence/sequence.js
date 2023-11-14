@@ -1,5 +1,15 @@
 # @0xsequence/estimator
 
+## 1.4.2
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.4.2
+  - @0xsequence/core@1.4.2
+  - @0xsequence/utils@1.4.2
+
 ## 1.4.1
 
 ### Patch Changes

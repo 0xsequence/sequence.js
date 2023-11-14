@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.4.2
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/core@1.4.2
+  - @0xsequence/migration@1.4.2
+  - @0xsequence/replacer@1.4.2
+
 ## 1.4.1
 
 ### Patch Changes

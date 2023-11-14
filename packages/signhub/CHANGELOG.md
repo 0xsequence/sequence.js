@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.4.2
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/core@1.4.2
+
 ## 1.4.1
 
 ### Patch Changes
