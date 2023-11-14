@@ -86,7 +86,7 @@ export class GuardSigner implements signers.SapientSigner {
 
   notifyStatusChange(_id: string, _status: Status, _metadata: object): void {}
 
-  async getAuthMethods(proof: OwnershipProof): Promise<AuthMethod[]> {
+  async getAuthMethods(proof: OwnershipProof): Promise<{ methods: AuthMethod[]; active: boolean }> {
     let response: AuthMethodsReturn
 
     if ('jwt' in proof) {
@@ -104,7 +104,7 @@ export class GuardSigner implements signers.SapientSigner {
       })
     }
 
-    return response.methods.map(parseAuthMethod)
+    return { ...response, methods: response.methods.map(parseAuthMethod) }
   }
 
   async setPin(pin: string | undefined, proof: AuthUpdateProof): Promise<void> {
