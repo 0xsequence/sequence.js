@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.4.3
+
+### Patch Changes
+
+- guard: return active status from GuardSigner.getAuthMethods
+- Updated dependencies
+  - @0xsequence/abi@1.4.3
+  - @0xsequence/account@1.4.3
+  - @0xsequence/api@1.4.3
+  - @0xsequence/core@1.4.3
+  - @0xsequence/indexer@1.4.3
+  - @0xsequence/metadata@1.4.3
+  - @0xsequence/migration@1.4.3
+  - @0xsequence/network@1.4.3
+  - @0xsequence/sessions@1.4.3
+  - @0xsequence/signhub@1.4.3
+  - @0xsequence/utils@1.4.3
+  - @0xsequence/wallet@1.4.3
+
 ## 1.4.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.4.3
+
+### Patch Changes
+
+- guard: return active status from GuardSigner.getAuthMethods
+
 ## 1.4.2
 
 ### Patch Changes

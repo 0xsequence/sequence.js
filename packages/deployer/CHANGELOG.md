@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.4.3
+
+### Patch Changes
+
+- guard: return active status from GuardSigner.getAuthMethods
+- Updated dependencies
+  - @0xsequence/utils@1.4.3
+
 ## 1.4.2
 
 ### Patch Changes
