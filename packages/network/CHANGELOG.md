@@ -1,5 +1,18 @@
 # @0xsequence/network
 
+## 1.4.4
+
+### Patch Changes
+
+- indexer: update bindings
+- auth: handle jwt expiry
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.4.4
+  - @0xsequence/indexer@1.4.4
+  - @0xsequence/relayer@1.4.4
+  - @0xsequence/utils@1.4.4
+
 ## 1.4.3
 
 ### Patch Changes

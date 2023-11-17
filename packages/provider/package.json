@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/provider",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "provider sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/provider",
   "source": "src/index.ts",

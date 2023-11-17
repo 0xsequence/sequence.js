@@ -1,5 +1,17 @@
 # @0xsequence/migration
 
+## 1.4.4
+
+### Patch Changes
+
+- indexer: update bindings
+- auth: handle jwt expiry
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.4.4
+  - @0xsequence/core@1.4.4
+  - @0xsequence/wallet@1.4.4
+
 ## 1.4.3
 
 ### Patch Changes

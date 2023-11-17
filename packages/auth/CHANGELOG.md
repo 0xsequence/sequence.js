@@ -1,5 +1,26 @@
 # @0xsequence/auth
 
+## 1.4.4
+
+### Patch Changes
+
+- indexer: update bindings
+- auth: handle jwt expiry
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.4.4
+  - @0xsequence/account@1.4.4
+  - @0xsequence/api@1.4.4
+  - @0xsequence/core@1.4.4
+  - @0xsequence/indexer@1.4.4
+  - @0xsequence/metadata@1.4.4
+  - @0xsequence/migration@1.4.4
+  - @0xsequence/network@1.4.4
+  - @0xsequence/sessions@1.4.4
+  - @0xsequence/signhub@1.4.4
+  - @0xsequence/utils@1.4.4
+  - @0xsequence/wallet@1.4.4
+
 ## 1.4.3
 
 ### Patch Changes

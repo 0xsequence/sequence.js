@@ -1,5 +1,12 @@
 # @0xsequence/utils
 
+## 1.4.4
+
+### Patch Changes
+
+- indexer: update bindings
+- auth: handle jwt expiry
+
 ## 1.4.3
 
 ### Patch Changes
