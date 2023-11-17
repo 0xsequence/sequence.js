@@ -1,13 +1,37 @@
-import { ethers } from "ethers"
-import { GetSessionPacket, OpenSessionPacket, SessionPacketProof, ValidateSessionPacket, closeSession, getSession, openSession, validateSession } from "./payloads/packets/session"
-import { LocalStore, Store, StoreObj } from "./store"
-import { BasePacket, Payload, signPacket } from "./payloads"
-import { TransactionsPacket, combinePackets, sendERC1155, sendERC20, sendERC721, sendTransactions, SendTransactionsArgs, SendERC20Args, SendERC721Args, SendERC1155Args, SendDelayedEncodeArgs, sendDelayedEncode } from "./payloads/packets/transactions"
-import { OpenSessionResponse } from "./payloads/responses"
-import { Guard } from "./clients/guard.gen"
-import { SignMessageArgs, SignMessagePacket, signMessage } from "./payloads/packets/messages"
-import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from "./networks"
-import { DEFAULT_GUARD } from "./defaults"
+import { ethers } from 'ethers'
+import {
+  GetSessionPacket,
+  OpenSessionPacket,
+  SessionPacketProof,
+  ValidateSessionPacket,
+  FinishValidateSessionPacket,
+  closeSession,
+  getSession,
+  openSession,
+  validateSession,
+  finishValidateSession
+} from './payloads/packets/session'
+import { LocalStore, Store, StoreObj } from './store'
+import { BasePacket, Payload, signPacket } from './payloads'
+import {
+  TransactionsPacket,
+  combinePackets,
+  sendERC1155,
+  sendERC20,
+  sendERC721,
+  sendTransactions,
+  SendTransactionsArgs,
+  SendERC20Args,
+  SendERC721Args,
+  SendERC1155Args,
+  SendDelayedEncodeArgs,
+  sendDelayedEncode
+} from './payloads/packets/transactions'
+import { OpenSessionResponse } from './payloads/responses'
+import { Guard } from './clients/guard.gen'
+import { SignMessageArgs, SignMessagePacket, signMessage } from './payloads/packets/messages'
+import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
+import { DEFAULT_GUARD } from './defaults'
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -23,11 +47,11 @@ export type ExtraArgs = {
 }
 
 export type ExtraTransactionArgs = ExtraArgs & {
-  identifier: string,
+  identifier: string
 }
 
 export type SequenceBaseConfig = {
-  network: SimpleNetwork,
+  network: SimpleNetwork
 }
 
 export class SequenceWaaSBase {
@@ -37,7 +61,7 @@ export class SequenceWaaSBase {
   private readonly signer: StoreObj<string | undefined>
   private readonly wallet: StoreObj<string | undefined>
 
-  constructor (
+  constructor(
     public readonly config = { network: 1 } as SequenceBaseConfig,
     private readonly store: Store = new LocalStore(),
     private readonly guardUrl: string = DEFAULT_GUARD
@@ -64,22 +88,26 @@ export class SequenceWaaSBase {
     return wallet
   }
 
-  private async commonArgs<T>(args: T & {
-    identifier: string,
-    lifespan?: number,
-    network?: SimpleNetwork,
-  }): Promise<T & {
-    identifier: string,
-    wallet: string,
-    lifespan: number,
-    chainId: number
-  }> {
+  private async commonArgs<T>(
+    args: T & {
+      identifier: string
+      lifespan?: number
+      network?: SimpleNetwork
+    }
+  ): Promise<
+    T & {
+      identifier: string
+      wallet: string
+      lifespan: number
+      chainId: number
+    }
+  > {
     return {
       ...args,
       identifier: args?.identifier,
       wallet: await this.getWalletAddress(),
       lifespan: args?.lifespan ?? DEFAULT_LIFESPAN,
-      chainId: toNetworkID(args.network || this.config.network),
+      chainId: toNetworkID(args.network || this.config.network)
     }
   }
 
@@ -106,10 +134,12 @@ export class SequenceWaaSBase {
     return {
       version: this.VERSION,
       packet,
-      signatures: [{
-        session: signer.address,
-        signature
-      }]
+      signatures: [
+        {
+          session: signer.address,
+          signature
+        }
+      ]
     }
   }
 
@@ -176,10 +206,7 @@ export class SequenceWaaSBase {
 
     const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
 
-    await Promise.all([
-      this.status.set('pending'),
-      this.signer.set(result.signer.privateKey)
-    ])
+    await Promise.all([this.status.set('pending'), this.signer.set(result.signer.privateKey)])
 
     return {
       version: this.VERSION,
@@ -195,18 +222,14 @@ export class SequenceWaaSBase {
     const packet = await closeSession({
       lifespan: lifespan || DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
-      session: sessionId || await this.getSignerAddress(),
+      session: sessionId || (await this.getSignerAddress())
     })
 
     return this.buildPayload(packet)
   }
 
   async completeSignOut() {
-    await Promise.all([
-      this.status.set('signed-out'),
-      this.signer.set(undefined),
-      this.wallet.set(undefined)
-    ])
+    await Promise.all([this.status.set('signed-out'), this.signer.set(undefined), this.wallet.set(undefined)])
   }
 
   /**
@@ -243,10 +266,7 @@ export class SequenceWaaSBase {
       throw new Error('Invalid signer')
     }
 
-    await Promise.all([
-      this.status.set('signed-in'),
-      this.wallet.set(receipt.data.wallet)
-    ])
+    await Promise.all([this.status.set('signed-in'), this.wallet.set(receipt.data.wallet)])
 
     return receipt.data.wallet
   }
@@ -293,7 +313,9 @@ export class SequenceWaaSBase {
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
    */
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+  async sendTransaction(
+    args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs
+  ): Promise<Payload<TransactionsPacket>> {
     const packet = sendTransactions(await this.commonArgs(args))
     return this.buildPayload(packet)
   }
@@ -325,7 +347,9 @@ export class SequenceWaaSBase {
     return this.buildPayload(packet)
   }
 
-  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
+  async callContract(
+    args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs
+  ): Promise<Payload<TransactionsPacket>> {
     const packet = sendDelayedEncode(await this.commonArgs(args))
     return this.buildPayload(packet)
   }
@@ -334,7 +358,7 @@ export class SequenceWaaSBase {
     deviceMetadata,
     redirectURL
   }: {
-    deviceMetadata: string,
+    deviceMetadata: string
     redirectURL?: string
   }): Promise<Payload<ValidateSessionPacket>> {
     const packet = await validateSession({
@@ -342,7 +366,7 @@ export class SequenceWaaSBase {
       session: await this.getSignerAddress(),
       deviceMetadata,
       redirectURL,
-      wallet: await this.getWalletAddress(),
+      wallet: await this.getWalletAddress()
     })
 
     return this.buildPayload(packet)
@@ -352,9 +376,16 @@ export class SequenceWaaSBase {
     const packet = await getSession({
       session: await this.getSignerAddress(),
       wallet: await this.getWalletAddress(),
-      lifespan: DEFAULT_LIFESPAN,
+      lifespan: DEFAULT_LIFESPAN
     })
 
+    return this.buildPayload(packet)
+  }
+
+  async finishValidateSession(salt: string, challenge: string): Promise<Payload<FinishValidateSessionPacket>> {
+    const session = await this.getSignerAddress()
+    const wallet = await this.getWalletAddress()
+    const packet = finishValidateSession(wallet, session, salt, challenge, DEFAULT_LIFESPAN)
     return this.buildPayload(packet)
   }
 
@@ -385,9 +416,7 @@ export class SequenceWaaSBase {
     return false
   }
 
-  async batch(
-    payloads: Payload<TransactionsPacket>[]
-  ): Promise<Payload<TransactionsPacket>> {
+  async batch(payloads: Payload<TransactionsPacket>[]): Promise<Payload<TransactionsPacket>> {
     const combined = combinePackets(payloads.map(p => p.packet))
     return this.buildPayload(combined)
   }

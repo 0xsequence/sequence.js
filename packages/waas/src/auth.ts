@@ -1,42 +1,63 @@
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
-import { SequenceWaaSBase } from "./base"
-import { LocalStore, Store, StoreObj } from "./store"
-import { Payload } from "./payloads";
-import { MaySentTransactionResponse, SignedMessageResponse, isGetSessionResponse, isMaySentTransactionResponse, isSignedMessageResponse, isValidationRequiredResponse } from "./payloads/responses";
-import { WaasAuthenticator, Session, RegisterSessionPayload, SendIntentPayload, ListSessionsPayload, DropSessionPayload } from "./clients/authenticator.gen";
-import { jwtDecode } from "jwt-decode"
+import { SequenceWaaSBase } from './base'
+import { LocalStore, Store, StoreObj } from './store'
+import { Payload } from './payloads'
+import {
+  MaySentTransactionResponse,
+  SignedMessageResponse,
+  isGetSessionResponse,
+  isMaySentTransactionResponse,
+  isSignedMessageResponse,
+  isValidationRequiredResponse
+} from './payloads/responses'
+import {
+  WaasAuthenticator,
+  Session,
+  RegisterSessionPayload,
+  SendIntentPayload,
+  ListSessionsPayload,
+  DropSessionPayload,
+  SendIntentReturn
+} from './clients/authenticator.gen'
+import { jwtDecode } from 'jwt-decode'
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
-import { SendDelayedEncodeArgs, SendERC1155Args, SendERC20Args, SendERC721Args, SendTransactionsArgs } from './payloads/packets/transactions';
-import { SignMessageArgs } from './payloads/packets/messages';
-import { SimpleNetwork, WithSimpleNetwork } from './networks';
-import { TEMPLATE_LOCAL } from './defaults';
-import { EmailAuth } from './email';
+import {
+  SendDelayedEncodeArgs,
+  SendERC1155Args,
+  SendERC20Args,
+  SendERC721Args,
+  SendTransactionsArgs
+} from './payloads/packets/transactions'
+import { SignMessageArgs } from './payloads/packets/messages'
+import { SimpleNetwork, WithSimpleNetwork } from './networks'
+import { TEMPLATE_LOCAL } from './defaults'
+import { EmailAuth } from './email'
 
 export type Sessions = (Session & { isThis: boolean })[]
 
 export type SequenceExplicitConfig = {
-  secret: string,
-  tenant: number,
+  secret: string
+  tenant: number
 
-  emailClientId?: string,
-  identityPoolId: string,
+  emailClientId?: string
+  identityPoolId: string
 }
 
 export type SequenceKeyConfig = {
-  key: string,
+  key: string
 }
 
 export type SequenceConfig = (SequenceExplicitConfig | SequenceKeyConfig) & {
-  network?: SimpleNetwork,
+  network?: SimpleNetwork
 }
 
 export type ExtendedSequenceConfig = {
-  rpcServer: string;
-  kmsRegion: string;
-  idpRegion: string;
-  keyId: string;
-  emailRegion?: string;
-  endpoint?: string;
+  rpcServer: string
+  kmsRegion: string
+  idpRegion: string
+  keyId: string
+  emailRegion?: string
+  endpoint?: string
 }
 
 export type Identity = {
@@ -44,14 +65,21 @@ export type Identity = {
 }
 
 function encodeHex(data: string | Uint8Array) {
-  return "0x" + Array.from(
-    typeof(data) === 'string' ? new TextEncoder().encode(data) : data,
-    byte => byte.toString(16).padStart(2, '0'),
-  ).join("")
+  return (
+    '0x' +
+    Array.from(typeof data === 'string' ? new TextEncoder().encode(data) : data, byte => byte.toString(16).padStart(2, '0')).join(
+      ''
+    )
+  )
 }
 
 function decodeHex(hex: string) {
-  return new Uint8Array(hex.substring(2).match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
+  return new Uint8Array(
+    hex
+      .substring(2)
+      .match(/.{1,2}/g)!
+      .map(byte => parseInt(byte, 16))
+  )
 }
 
 export type ValidationArgs = {
@@ -60,8 +88,8 @@ export type ValidationArgs = {
 }
 
 export type CommonAuthArgs = {
-  validation?: ValidationArgs,
-  identifier?: string,
+  validation?: ValidationArgs
+  identifier?: string
 }
 
 export function parseApiKey<T>(key: string): Partial<T> {
@@ -99,7 +127,7 @@ export class Sequence {
   private waas: SequenceWaaSBase
   private client: WaasAuthenticator
 
-  private validationRequiredCallback: (() => void)[] = []
+  private validationRequiredCallback: ((salt: string) => void)[] = []
 
   public readonly config: Required<SequenceExplicitConfig> & ExtendedSequenceConfig
 
@@ -108,7 +136,7 @@ export class Sequence {
 
   private emailClient: EmailAuth | undefined
 
-  constructor (
+  constructor(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     preset: ExtendedSequenceConfig = TEMPLATE_LOCAL,
     private readonly store: Store = new LocalStore()
@@ -137,37 +165,34 @@ export class Sequence {
     return this.emailClient
   }
 
-  async onValidationRequired(callback: () => void) {
+  async onValidationRequired(callback: (salt: string) => void) {
     this.validationRequiredCallback.push(callback)
     return () => {
       this.validationRequiredCallback = this.validationRequiredCallback.filter(c => c !== callback)
     }
   }
 
-  private async handleValidationRequired({
-    onValidationRequired,
-    redirectURL,
-  }: ValidationArgs = {}): Promise<boolean> {
+  private async handleValidationRequired({ onValidationRequired, redirectURL }: ValidationArgs = {}): Promise<boolean> {
+    const intent = await this.waas.validateSession({
+      redirectURL,
+      deviceMetadata: (await this.deviceName.get()) ?? 'Unknown device'
+    })
+
+    const sendIntent = await this.sendIntent(intent)
+
     const proceed = onValidationRequired ? onValidationRequired() : true
     if (!proceed) {
       return false
     }
 
     for (const callback of this.validationRequiredCallback) {
-      callback()
+      callback(sendIntent.data.salt)
     }
-
-    const intent = await this.waas.validateSession({
-      redirectURL,
-      deviceMetadata: await this.deviceName.get() ?? 'Unknown device',
-    })
-
-    await this.sendIntent(intent)
 
     return this.waitForSessionValid()
   }
 
-  private async useStoredCypherKey(): Promise<{ encryptedPayloadKey: string, plainHex: string }> {
+  private async useStoredCypherKey(): Promise<{ encryptedPayloadKey: string; plainHex: string }> {
     const raw = await this.kmsKey.get()
     if (!raw) {
       throw new Error('No stored key')
@@ -182,29 +207,33 @@ export class Sequence {
   }
 
   private async saveCypherKey(kmsClient: KMSClient) {
-    const dataKeyRes = await kmsClient.send(new GenerateDataKeyCommand({
-      KeyId: this.config.keyId,
-      KeySpec: 'AES_256',
-    }))
+    const dataKeyRes = await kmsClient.send(
+      new GenerateDataKeyCommand({
+        KeyId: this.config.keyId,
+        KeySpec: 'AES_256'
+      })
+    )
 
     if (!dataKeyRes.CiphertextBlob || !dataKeyRes.Plaintext) {
-      throw new Error("invalid response from KMS")
+      throw new Error('invalid response from KMS')
     }
 
-
-    return this.kmsKey.set(JSON.stringify({
-      encryptedPayloadKey: encodeHex(dataKeyRes.CiphertextBlob),
-      plainHex: encodeHex(dataKeyRes.Plaintext),
-    }))
+    return this.kmsKey.set(
+      JSON.stringify({
+        encryptedPayloadKey: encodeHex(dataKeyRes.CiphertextBlob),
+        plainHex: encodeHex(dataKeyRes.Plaintext)
+      })
+    )
   }
 
   private async sendIntent(intent: Payload<any>) {
     const payload: SendIntentPayload = {
       sessionId: await this.waas.getSessionID(),
-      intentJson: JSON.stringify(intent, null, 0),
+      intentJson: JSON.stringify(intent, null, 0)
     }
 
     const { args, headers } = await this.preparePayload(payload)
+
     return this.client.sendIntent(args, headers)
   }
 
@@ -216,18 +245,18 @@ export class Sequence {
       iv: window.crypto.getRandomValues(new Uint8Array(16))
     }
 
-    const key = await window.crypto.subtle.importKey("raw", decodeHex(plainHex), cbcParams, false, ['encrypt'])
+    const key = await window.crypto.subtle.importKey('raw', decodeHex(plainHex), cbcParams, false, ['encrypt'])
     const payloadBytes = new TextEncoder().encode(JSON.stringify(payload))
     const encrypted = await window.crypto.subtle.encrypt(cbcParams, key, payloadBytes)
-    const payloadCiphertext = encodeHex(new Uint8Array([ ...cbcParams.iv, ...new Uint8Array(encrypted) ]))
+    const payloadCiphertext = encodeHex(new Uint8Array([...cbcParams.iv, ...new Uint8Array(encrypted)]))
     const payloadSig = await this.waas.signUsingSessionKey(payloadBytes)
- 
+
     return {
       headers: {
-        'X-Sequence-Tenant': this.config.tenant,
+        'X-Sequence-Tenant': this.config.tenant
         // 'X-Sequence-Secret': this.config.secret,
       },
-      args: { encryptedPayloadKey, payloadCiphertext, payloadSig },
+      args: { encryptedPayloadKey, payloadCiphertext, payloadSig }
     }
   }
 
@@ -255,13 +284,10 @@ export class Sequence {
       credentials: fromCognitoIdentityPool({
         identityPoolId: this.config.identityPoolId,
         logins: {
-          [decoded.iss
-            .replace('https://', '')
-            .replace('http://', '')
-          ]: creds.idToken,
+          [decoded.iss.replace('https://', '').replace('http://', '')]: creds.idToken
         },
-        clientConfig: { region: this.config.idpRegion },
-      }),
+        clientConfig: { region: this.config.idpRegion }
+      })
     })
 
     await this.saveCypherKey(kmsClient)
@@ -271,7 +297,7 @@ export class Sequence {
       idToken: creds.idToken,
       sessionAddress: waaspayload.packet.session,
       friendlyName: name,
-      intentJSON: JSON.stringify(waaspayload, null, 0),
+      intentJSON: JSON.stringify(waaspayload, null, 0)
     }
 
     const { args, headers } = await this.preparePayload(payload)
@@ -297,7 +323,7 @@ export class Sequence {
     return this.waas.getSessionID()
   }
 
-  async dropSession({ sessionId, strict }: { sessionId?: string, strict?: boolean } = {}) {
+  async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
     const thisSessionId = await this.waas.getSessionID()
     const closeSessionId = sessionId || thisSessionId
 
@@ -308,7 +334,7 @@ export class Sequence {
       // console.log("TODO: Handle got result from drop session", result)
       const payload: DropSessionPayload = {
         dropSessionId: closeSessionId,
-        sessionId: thisSessionId,
+        sessionId: thisSessionId
       }
 
       const { args, headers } = await this.preparePayload(payload)
@@ -330,7 +356,7 @@ export class Sequence {
 
   async listSessions(): Promise<Sessions> {
     const payload: ListSessionsPayload = {
-      sessionId: await this.waas.getSessionID(),
+      sessionId: await this.waas.getSessionID()
     }
 
     const thisSessionAddress = await this.waas.getSessionID().then(id => id.toLowerCase())
@@ -338,7 +364,7 @@ export class Sequence {
     const res = await this.client.listSessions(args, headers)
     return res.sessions.map(session => ({
       ...session,
-      isThis: session.address.toLowerCase() === thisSessionAddress,
+      isThis: session.address.toLowerCase() === thisSessionAddress
     }))
   }
 
@@ -353,6 +379,11 @@ export class Sequence {
     }
 
     return this.handleValidationRequired(args)
+  }
+
+  async finishValidateSession(salt: string, challenge: string): Promise<SendIntentReturn> {
+    const intent = await this.waas.finishValidateSession(salt, challenge)
+    return this.sendIntent(intent)
   }
 
   async isSessionValid(): Promise<boolean> {
