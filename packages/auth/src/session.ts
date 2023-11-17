@@ -310,13 +310,15 @@ export class Session {
         dump.config.address ||
         commons.context.addressOf(contexts[1], v1.config.ConfigCoder.imageHashOf({ ...dump.config, version: 1 }))
 
+      const jwtExpired = (dump.jwt?.expiration ?? 0) < Math.floor(Date.now() / 1000)
+
       account = new Account({
         address: oldAddress,
         tracker,
         networks,
         contexts,
         orchestrator,
-        jwt: dump.jwt?.token
+        jwt: jwtExpired ? undefined : dump.jwt?.token
       })
 
       // TODO: This property may not hold if the user adds a new network
@@ -335,13 +337,15 @@ export class Session {
 
       // We may need to update the JWT if the account has been migrated
     } else if (isSessionDumpV2(dump)) {
+      const jwtExpired = (dump.jwt?.expiration ?? 0) < Math.floor(Date.now() / 1000)
+
       account = new Account({
         address: dump.address,
         tracker,
         networks,
         contexts,
         orchestrator,
-        jwt: dump.jwt?.token
+        jwt: jwtExpired ? undefined : dump.jwt?.token
       })
     } else {
       throw Error('Invalid dump format')
