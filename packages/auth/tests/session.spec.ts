@@ -141,7 +141,7 @@ describe('Wallet integration', function () {
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
       selectWallet: async ws => {
-        expect(ws.length).to.equal(0)
+        expect(ws.length).to.equal(1)
         return undefined
       },
       editConfigOnMigration: config => config
@@ -175,7 +175,7 @@ describe('Wallet integration', function () {
       addSigners: [{ address: referenceSigner.address, weight: 1 }],
       threshold: 1,
       selectWallet: async ws => {
-        expect(ws.length).to.equal(0)
+        expect(ws.length).to.equal(1)
         return undefined
       },
       editConfigOnMigration: config => config
