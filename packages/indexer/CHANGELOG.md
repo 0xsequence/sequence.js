@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 1.4.5
+
+### Patch Changes
+
+- indexer/metadata: update client bindings
+- auth: selectWallet with new address
+
 ## 1.4.4
 
 ### Patch Changes

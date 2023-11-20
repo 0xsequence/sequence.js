@@ -1,5 +1,17 @@
 # @0xsequence/estimator
 
+## 1.4.5
+
+### Patch Changes
+
+- indexer/metadata: update client bindings
+- auth: selectWallet with new address
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.4.5
+  - @0xsequence/core@1.4.5
+  - @0xsequence/utils@1.4.5
+
 ## 1.4.4
 
 ### Patch Changes
