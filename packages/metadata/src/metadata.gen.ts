@@ -6,13 +6,13 @@
 // webrpc-gen -schema=metadata.ridl -target=typescript@v0.10.0 -client -out=./clients/metadata.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "ef61b3481a4dd4aa5b6a283701d4c15001552e0e"
+export const WebRPCSchemaHash = 'ef61b3481a4dd4aa5b6a283701d4c15001552e0e'
 
 //
 // Types
@@ -57,19 +57,18 @@ export interface RuntimeStatus {
   checks: RuntimeChecks
 }
 
-export interface RuntimeChecks {
-}
+export interface RuntimeChecks {}
 
 export interface ContractIndex {
   chainId: number
   address: string
   type: ContractType
-  metadata: {[key: string]: any}
+  metadata: { [key: string]: any }
   contentHash: number
   deployed: boolean
   bytecodeHash: string
   notFound: boolean
-  
+
   updatedAt: string
 }
 
@@ -78,8 +77,8 @@ export interface TokenIndex {
   chainId: number
   contractAddress: string
   tokenId: string
-  metadata: {[key: string]: any}
-  
+  metadata: { [key: string]: any }
+
   notFound?: boolean
   lastFetched?: string
   fetchCount?: number
@@ -97,7 +96,7 @@ export interface ContractInfo {
   deployed: boolean
   bytecodeHash: string
   extensions: ContractInfoExtensions
-  
+
   updatedAt: string
 }
 
@@ -119,14 +118,14 @@ export interface TokenMetadata {
   description: string
   image: string
   decimals: number
-  properties: {[key: string]: any}
+  properties: { [key: string]: any }
   video: string
   audio: string
   image_data: string
   external_url: string
   background_color: string
   animation_url: string
-  attributes: Array<{[key: string]: any}>
+  attributes: Array<{ [key: string]: any }>
   updatedAt: string
 }
 
@@ -183,26 +182,26 @@ export interface Metadata {
   projectSetTokenMetadata(args: ProjectSetTokenMetadataArgs, headers?: object): Promise<ProjectSetTokenMetadataReturn>
   getNiftyswapTokenQuantity(args: GetNiftyswapTokenQuantityArgs, headers?: object): Promise<GetNiftyswapTokenQuantityReturn>
   getNiftyswapUnitPrices(args: GetNiftyswapUnitPricesArgs, headers?: object): Promise<GetNiftyswapUnitPricesReturn>
-  getNiftyswapUnitPricesWithQuantities(args: GetNiftyswapUnitPricesWithQuantitiesArgs, headers?: object): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn>
+  getNiftyswapUnitPricesWithQuantities(
+    args: GetNiftyswapUnitPricesWithQuantitiesArgs,
+    headers?: object
+  ): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
 export interface GetTokenMetadataArgs {
   chainID: string
@@ -211,7 +210,7 @@ export interface GetTokenMetadataArgs {
 }
 
 export interface GetTokenMetadataReturn {
-  tokenMetadata: Array<TokenMetadata>  
+  tokenMetadata: Array<TokenMetadata>
 }
 export interface RefreshTokenMetadataArgs {
   chainID: string
@@ -221,15 +220,15 @@ export interface RefreshTokenMetadataArgs {
 }
 
 export interface RefreshTokenMetadataReturn {
-  status: {[key: string]: boolean}  
+  status: { [key: string]: boolean }
 }
 export interface GetTokenMetadataBatchArgs {
   chainID: string
-  contractTokenMap: {[key: string]: Array<string>}
+  contractTokenMap: { [key: string]: Array<string> }
 }
 
 export interface GetTokenMetadataBatchReturn {
-  contractTokenMetadata: {[key: string]: Array<TokenMetadata>}  
+  contractTokenMetadata: { [key: string]: Array<TokenMetadata> }
 }
 export interface SearchTokenMetadataArgs {
   chainID: string
@@ -240,7 +239,7 @@ export interface SearchTokenMetadataArgs {
 
 export interface SearchTokenMetadataReturn {
   page: Page
-  tokenMetadata: Array<TokenMetadata>  
+  tokenMetadata: Array<TokenMetadata>
 }
 export interface SearchTokenIDsArgs {
   chainID: string
@@ -251,7 +250,7 @@ export interface SearchTokenIDsArgs {
 
 export interface SearchTokenIDsReturn {
   page: Page
-  tokenIds: Array<string>  
+  tokenIds: Array<string>
 }
 export interface TokenCollectionFiltersArgs {
   chainID: string
@@ -259,7 +258,7 @@ export interface TokenCollectionFiltersArgs {
 }
 
 export interface TokenCollectionFiltersReturn {
-  filters: Array<PropertyFilter>  
+  filters: Array<PropertyFilter>
 }
 export interface GetContractInfoArgs {
   chainID: string
@@ -267,7 +266,7 @@ export interface GetContractInfoArgs {
 }
 
 export interface GetContractInfoReturn {
-  contractInfo: ContractInfo  
+  contractInfo: ContractInfo
 }
 export interface GetContractInfoBatchArgs {
   chainID: string
@@ -275,21 +274,21 @@ export interface GetContractInfoBatchArgs {
 }
 
 export interface GetContractInfoBatchReturn {
-  contractInfoMap: {[key: string]: ContractInfo}  
+  contractInfoMap: { [key: string]: ContractInfo }
 }
 export interface SearchContractInfoArgs {
   contractAddress: string
 }
 
 export interface SearchContractInfoReturn {
-  contractInfoList: Array<ContractInfo>  
+  contractInfoList: Array<ContractInfo>
 }
 export interface SearchContractInfoBatchArgs {
   contractAddresses: Array<string>
 }
 
 export interface SearchContractInfoBatchReturn {
-  contractInfoByChain: {[key: string]: Array<ContractInfo>}  
+  contractInfoByChain: { [key: string]: Array<ContractInfo> }
 }
 export interface SearchMetadataArgs {
   filter: string
@@ -300,7 +299,7 @@ export interface SearchMetadataArgs {
 
 export interface SearchMetadataReturn {
   tokenMetadata: Array<TokenMetadata>
-  contractInfo: Array<ContractInfo>  
+  contractInfo: Array<ContractInfo>
 }
 export interface ProjectSetTokenMetadataArgs {
   projectID?: number
@@ -309,7 +308,7 @@ export interface ProjectSetTokenMetadataArgs {
 }
 
 export interface ProjectSetTokenMetadataReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface GetNiftyswapTokenQuantityArgs {
   chainID: string
@@ -318,7 +317,7 @@ export interface GetNiftyswapTokenQuantityArgs {
 }
 
 export interface GetNiftyswapTokenQuantityReturn {
-  quantity: {[key: string]: string}  
+  quantity: { [key: string]: string }
 }
 export interface GetNiftyswapUnitPricesArgs {
   chainID: string
@@ -328,7 +327,7 @@ export interface GetNiftyswapUnitPricesArgs {
 }
 
 export interface GetNiftyswapUnitPricesReturn {
-  prices: {[key: string]: string}  
+  prices: { [key: string]: string }
 }
 export interface GetNiftyswapUnitPricesWithQuantitiesArgs {
   chainID: string
@@ -338,11 +337,9 @@ export interface GetNiftyswapUnitPricesWithQuantitiesArgs {
 }
 
 export interface GetNiftyswapUnitPricesWithQuantitiesReturn {
-  prices: {[key: string]: GetNiftyswapUnitPricesResponse}  
+  prices: { [key: string]: GetNiftyswapUnitPricesResponse }
 }
 
-
-  
 //
 // Client
 //
@@ -359,236 +356,201 @@ export class Metadata implements Metadata {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <boolean>(_data.status)
+          status: <boolean>_data.status
         }
       })
     })
   }
-  
+
   version = (headers?: object): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          version: <Version>(_data.version)
+          version: <Version>_data.version
         }
       })
     })
   }
-  
+
   runtimeStatus = (headers?: object): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers)
-      ).then((res) => {
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <RuntimeStatus>(_data.status)
+          status: <RuntimeStatus>_data.status
         }
       })
     })
   }
-  
+
   getTokenMetadata = (args: GetTokenMetadataArgs, headers?: object): Promise<GetTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('GetTokenMetadata'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetTokenMetadata'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata)
+          tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata
         }
       })
     })
   }
-  
+
   refreshTokenMetadata = (args: RefreshTokenMetadataArgs, headers?: object): Promise<RefreshTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('RefreshTokenMetadata'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('RefreshTokenMetadata'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          status: <{[key: string]: boolean}>(_data.status)
+          status: <{ [key: string]: boolean }>_data.status
         }
       })
     })
   }
-  
+
   getTokenMetadataBatch = (args: GetTokenMetadataBatchArgs, headers?: object): Promise<GetTokenMetadataBatchReturn> => {
-    return this.fetch(
-      this.url('GetTokenMetadataBatch'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetTokenMetadataBatch'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          contractTokenMetadata: <{[key: string]: Array<TokenMetadata>}>(_data.contractTokenMetadata)
+          contractTokenMetadata: <{ [key: string]: Array<TokenMetadata> }>_data.contractTokenMetadata
         }
       })
     })
   }
-  
+
   searchTokenMetadata = (args: SearchTokenMetadataArgs, headers?: object): Promise<SearchTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('SearchTokenMetadata'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SearchTokenMetadata'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata)
+          page: <Page>_data.page,
+          tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata
         }
       })
     })
   }
-  
+
   searchTokenIDs = (args: SearchTokenIDsArgs, headers?: object): Promise<SearchTokenIDsReturn> => {
-    return this.fetch(
-      this.url('SearchTokenIDs'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SearchTokenIDs'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          page: <Page>(_data.page), 
-          tokenIds: <Array<string>>(_data.tokenIds)
+          page: <Page>_data.page,
+          tokenIds: <Array<string>>_data.tokenIds
         }
       })
     })
   }
-  
+
   tokenCollectionFilters = (args: TokenCollectionFiltersArgs, headers?: object): Promise<TokenCollectionFiltersReturn> => {
-    return this.fetch(
-      this.url('TokenCollectionFilters'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('TokenCollectionFilters'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          filters: <Array<PropertyFilter>>(_data.filters)
+          filters: <Array<PropertyFilter>>_data.filters
         }
       })
     })
   }
-  
+
   getContractInfo = (args: GetContractInfoArgs, headers?: object): Promise<GetContractInfoReturn> => {
-    return this.fetch(
-      this.url('GetContractInfo'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetContractInfo'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          contractInfo: <ContractInfo>(_data.contractInfo)
+          contractInfo: <ContractInfo>_data.contractInfo
         }
       })
     })
   }
-  
+
   getContractInfoBatch = (args: GetContractInfoBatchArgs, headers?: object): Promise<GetContractInfoBatchReturn> => {
-    return this.fetch(
-      this.url('GetContractInfoBatch'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetContractInfoBatch'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          contractInfoMap: <{[key: string]: ContractInfo}>(_data.contractInfoMap)
+          contractInfoMap: <{ [key: string]: ContractInfo }>_data.contractInfoMap
         }
       })
     })
   }
-  
+
   searchContractInfo = (args: SearchContractInfoArgs, headers?: object): Promise<SearchContractInfoReturn> => {
-    return this.fetch(
-      this.url('SearchContractInfo'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SearchContractInfo'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          contractInfoList: <Array<ContractInfo>>(_data.contractInfoList)
+          contractInfoList: <Array<ContractInfo>>_data.contractInfoList
         }
       })
     })
   }
-  
+
   searchContractInfoBatch = (args: SearchContractInfoBatchArgs, headers?: object): Promise<SearchContractInfoBatchReturn> => {
-    return this.fetch(
-      this.url('SearchContractInfoBatch'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SearchContractInfoBatch'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          contractInfoByChain: <{[key: string]: Array<ContractInfo>}>(_data.contractInfoByChain)
+          contractInfoByChain: <{ [key: string]: Array<ContractInfo> }>_data.contractInfoByChain
         }
       })
     })
   }
-  
+
   searchMetadata = (args: SearchMetadataArgs, headers?: object): Promise<SearchMetadataReturn> => {
-    return this.fetch(
-      this.url('SearchMetadata'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('SearchMetadata'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata), 
-          contractInfo: <Array<ContractInfo>>(_data.contractInfo)
+          tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata,
+          contractInfo: <Array<ContractInfo>>_data.contractInfo
         }
       })
     })
   }
-  
+
   projectSetTokenMetadata = (args: ProjectSetTokenMetadataArgs, headers?: object): Promise<ProjectSetTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('ProjectSetTokenMetadata'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('ProjectSetTokenMetadata'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          ok: <boolean>(_data.ok)
+          ok: <boolean>_data.ok
         }
       })
     })
   }
-  
-  getNiftyswapTokenQuantity = (args: GetNiftyswapTokenQuantityArgs, headers?: object): Promise<GetNiftyswapTokenQuantityReturn> => {
-    return this.fetch(
-      this.url('GetNiftyswapTokenQuantity'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  getNiftyswapTokenQuantity = (
+    args: GetNiftyswapTokenQuantityArgs,
+    headers?: object
+  ): Promise<GetNiftyswapTokenQuantityReturn> => {
+    return this.fetch(this.url('GetNiftyswapTokenQuantity'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          quantity: <{[key: string]: string}>(_data.quantity)
+          quantity: <{ [key: string]: string }>_data.quantity
         }
       })
     })
   }
-  
+
   getNiftyswapUnitPrices = (args: GetNiftyswapUnitPricesArgs, headers?: object): Promise<GetNiftyswapUnitPricesReturn> => {
-    return this.fetch(
-      this.url('GetNiftyswapUnitPrices'),
-      createHTTPRequest(args, headers)).then((res) => {
+    return this.fetch(this.url('GetNiftyswapUnitPrices'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          prices: <{[key: string]: string}>(_data.prices)
+          prices: <{ [key: string]: string }>_data.prices
         }
       })
     })
   }
-  
-  getNiftyswapUnitPricesWithQuantities = (args: GetNiftyswapUnitPricesWithQuantitiesArgs, headers?: object): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn> => {
-    return this.fetch(
-      this.url('GetNiftyswapUnitPricesWithQuantities'),
-      createHTTPRequest(args, headers)).then((res) => {
+
+  getNiftyswapUnitPricesWithQuantities = (
+    args: GetNiftyswapUnitPricesWithQuantitiesArgs,
+    headers?: object
+  ): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn> => {
+    return this.fetch(this.url('GetNiftyswapUnitPricesWithQuantities'), createHTTPRequest(args, headers)).then(res => {
       return buildResponse(res).then(_data => {
         return {
-          prices: <{[key: string]: GetNiftyswapUnitPricesResponse}>(_data.prices)
+          prices: <{ [key: string]: GetNiftyswapUnitPricesResponse }>_data.prices
         }
       })
     })
   }
-  
 }
 
-  
 export interface WebRPCError extends Error {
   code: string
   msg: string
-	status: number
+  status: number
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -604,7 +566,7 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
+    } catch (err) {
       throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
     }
     if (!res.ok) {
