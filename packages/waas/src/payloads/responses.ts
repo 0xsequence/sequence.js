@@ -81,6 +81,13 @@ export type ValidateSessionResponse = {
   data: {}
 }
 
+export type FinishValidateSessionResponse = {
+    code: 'finishedSessionValidation',
+    data: {
+      isValid: boolean
+    }
+}
+
 export type GetSessionResponse = {
   code: 'getSessionResponse'
   data: {
@@ -155,6 +162,15 @@ export function isValidateSessionResponse(receipt: any): receipt is ValidateSess
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
     receipt.code === 'startedSessionValidation' &&
+    typeof receipt.data === 'object'
+  )
+}
+
+export function isFinishValidateSessionResponse(receipt: any): receipt is FinishValidateSessionResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'finishedSessionValidation' &&
     typeof receipt.data === 'object'
   )
 }

@@ -8,7 +8,8 @@ import {
   isGetSessionResponse,
   isMaySentTransactionResponse,
   isSignedMessageResponse,
-  isValidationRequiredResponse
+  isValidationRequiredResponse,
+  isFinishValidateSessionResponse
 } from './payloads/responses'
 import {
   WaasAuthenticator,
@@ -84,7 +85,6 @@ function decodeHex(hex: string) {
 
 export type ValidationArgs = {
   onValidationRequired?: () => boolean
-  redirectURL?: string
 }
 
 export type CommonAuthArgs = {
@@ -127,7 +127,8 @@ export class Sequence {
   private waas: SequenceWaaSBase
   private client: WaasAuthenticator
 
-  private validationRequiredCallback: ((salt: string) => void)[] = []
+  private validationRequiredCallback: (() => void)[] = []
+  private validationRequiredSalt: string
 
   public readonly config: Required<SequenceExplicitConfig> & ExtendedSequenceConfig
 
@@ -165,28 +166,28 @@ export class Sequence {
     return this.emailClient
   }
 
-  async onValidationRequired(callback: (salt: string) => void) {
+  async onValidationRequired(callback: () => void) {
     this.validationRequiredCallback.push(callback)
     return () => {
       this.validationRequiredCallback = this.validationRequiredCallback.filter(c => c !== callback)
     }
   }
 
-  private async handleValidationRequired({ onValidationRequired, redirectURL }: ValidationArgs = {}): Promise<boolean> {
-    const intent = await this.waas.validateSession({
-      redirectURL,
-      deviceMetadata: (await this.deviceName.get()) ?? 'Unknown device'
-    })
-
-    const sendIntent = await this.sendIntent(intent)
-
+  private async handleValidationRequired({ onValidationRequired }: ValidationArgs = {}): Promise<boolean> {
     const proceed = onValidationRequired ? onValidationRequired() : true
     if (!proceed) {
       return false
     }
 
+    const intent = await this.waas.validateSession({
+      deviceMetadata: (await this.deviceName.get()) ?? 'Unknown device'
+    })
+
+    const sendIntent = await this.sendIntent(intent)
+    this.validationRequiredSalt = sendIntent.data.salt
+
     for (const callback of this.validationRequiredCallback) {
-      callback(sendIntent.data.salt)
+      callback()
     }
 
     return this.waitForSessionValid()
@@ -381,9 +382,17 @@ export class Sequence {
     return this.handleValidationRequired(args)
   }
 
-  async finishValidateSession(salt: string, challenge: string): Promise<SendIntentReturn> {
-    const intent = await this.waas.finishValidateSession(salt, challenge)
-    return this.sendIntent(intent)
+  async finishValidateSession(challenge: string): Promise<boolean> {
+    const intent = await this.waas.finishValidateSession(this.validationRequiredSalt, challenge)
+    this.validationRequiredSalt = ""
+
+    const result = await this.sendIntent(intent)
+
+    if (!isFinishValidateSessionResponse(result)) {
+      throw new Error(`Invalid response: ${JSON.stringify(result)}`)
+    }
+
+    return result.data.isValid
   }
 
   async isSessionValid(): Promise<boolean> {
