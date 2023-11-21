@@ -384,7 +384,6 @@ export class Sequence {
 
   async finishValidateSession(challenge: string): Promise<boolean> {
     const intent = await this.waas.finishValidateSession(this.validationRequiredSalt, challenge)
-    this.validationRequiredSalt = ""
 
     const result = await this.sendIntent(intent)
 
@@ -392,6 +391,7 @@ export class Sequence {
       throw new Error(`Invalid response: ${JSON.stringify(result)}`)
     }
 
+    this.validationRequiredSalt = ""
     return result.data.isValid
   }
 
