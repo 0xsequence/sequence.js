@@ -1,10 +1,10 @@
 export enum ChainId {
   // Ethereum
   MAINNET = 1,
-  ROPSTEN = 3,
-  RINKEBY = 4,
-  GOERLI = 5,
-  KOVAN = 42,
+  ROPSTEN = 3, // network is deprecated
+  RINKEBY = 4, // network is deprecated
+  GOERLI = 5, // network is deprecated
+  KOVAN = 42, // network is deprecated
   SEPOLIA = 11155111,
 
   // Polygon
@@ -18,10 +18,13 @@ export enum ChainId {
 
   // Optimism
   OPTIMISM = 10,
-  OPTIMISM_TESTNET = 69,
+  OPTIMISM_KOVAN = 69, // network is deprecated
+  OPTIMISM_GOERLI = 420, // network is deprecated
+  OPTIMISM_SEPOLIA = 11155420,
 
   // Arbitrum One
   ARBITRUM = 42161,
+  ARBITRUM_GOERLI = 421613, // network is deprecated
   ARBITRUM_SEPOLIA = 421614,
 
   // Arbitrum Nova
@@ -66,7 +69,8 @@ export interface NetworkMetadata {
   title?: string
   blockExplorer?: BlockExplorerConfig
   ensAddress?: string
-  testnet?: boolean // Deprecated
+  testnet?: boolean // Deprecated field, use type instead
+  deprecated?: boolean
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -91,7 +95,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Etherscan (Ropsten)',
       rootUrl: 'https://ropsten.etherscan.io/'
     },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+    deprecated: true
   },
   [ChainId.RINKEBY]: {
     chainId: ChainId.RINKEBY,
@@ -103,7 +108,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Etherscan (Rinkeby)',
       rootUrl: 'https://rinkeby.etherscan.io/'
     },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+    deprecated: true
   },
   [ChainId.GOERLI]: {
     chainId: ChainId.GOERLI,
@@ -115,7 +121,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Etherscan (Goerli)',
       rootUrl: 'https://goerli.etherscan.io/'
     },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+    deprecated: true
   },
   [ChainId.KOVAN]: {
     chainId: ChainId.KOVAN,
@@ -126,7 +133,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Etherscan (Kovan)',
       rootUrl: 'https://kovan.etherscan.io/'
-    }
+    },
+    deprecated: true
   },
   [ChainId.SEPOLIA]: {
     chainId: ChainId.SEPOLIA,
@@ -201,15 +209,39 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://optimistic.etherscan.io/'
     }
   },
-  [ChainId.OPTIMISM_TESTNET]: {
-    chainId: ChainId.OPTIMISM_TESTNET,
+  [ChainId.OPTIMISM_KOVAN]: {
+    chainId: ChainId.OPTIMISM_KOVAN,
     type: NetworkType.TESTNET,
-    name: 'optimism-testnet',
+    name: 'optimism-kovan',
     title: 'Optimistic Kovan',
     testnet: true,
     blockExplorer: {
-      name: 'Etherscan (Optimism Testnet)',
+      name: 'Etherscan (Optimism Kovan)',
       rootUrl: 'https://kovan-optimistic.etherscan.io/'
+    },
+    deprecated: true
+  },
+  [ChainId.OPTIMISM_GOERLI]: {
+    chainId: ChainId.OPTIMISM_GOERLI,
+    type: NetworkType.TESTNET,
+    name: 'optimism-goerli',
+    title: 'Optimistic Goerli',
+    testnet: true,
+    blockExplorer: {
+      name: 'Etherscan (Optimism Goerli)',
+      rootUrl: 'https://goerli-optimistic.etherscan.io/'
+    },
+    deprecated: true
+  },
+  [ChainId.OPTIMISM_SEPOLIA]: {
+    chainId: ChainId.OPTIMISM_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'optimism-sepolia',
+    title: 'Optimistic Sepolia',
+    testnet: true,
+    blockExplorer: {
+      name: 'Etherscan (Optimism Sepolia)',
+      rootUrl: 'https://sepolia-optimistic.etherscan.io/'
     }
   },
   [ChainId.ARBITRUM]: {
@@ -221,6 +253,18 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Arbiscan',
       rootUrl: 'https://arbiscan.io/'
     }
+  },
+  [ChainId.ARBITRUM_GOERLI]: {
+    chainId: ChainId.ARBITRUM_GOERLI,
+    type: NetworkType.TESTNET,
+    name: 'arbitrum-goerli',
+    title: 'Arbitrum Goerli',
+    testnet: true,
+    blockExplorer: {
+      name: 'Arbiscan (Goerli Testnet)',
+      rootUrl: 'https://testnet.arbiscan.io/'
+    },
+    deprecated: true
   },
   [ChainId.ARBITRUM_SEPOLIA]: {
     chainId: ChainId.ARBITRUM_SEPOLIA,
