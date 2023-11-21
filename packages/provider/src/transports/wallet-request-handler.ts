@@ -145,7 +145,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
       }
     }
 
-    const networkId = options?.networkId ?? this.defaultChainId() ?? ChainId.MAINNET
+    const networkId = options?.networkId ?? this.defaultChainId() ?? ChainId.ETHEREUM
     const chainId = findSupportedNetwork(networkId)!.chainId
 
     const connectDetails: ConnectDetails = {
