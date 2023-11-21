@@ -90,6 +90,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('optimism')
   },
   {
+    ...networks[ChainId.OPTIMISM_SEPOLIA],
+    ...genUrls('optimism-sepolia')
+  },
+  {
     ...networks[ChainId.POLYGON_ZKEVM],
     ...genUrls('polygon-zkevm')
   },
@@ -104,7 +108,8 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.GOERLI],
-    ...genUrls('goerli')
+    ...genUrls('goerli'),
+    disabled: true
   },
   {
     ...networks[ChainId.SEPOLIA],
@@ -119,16 +124,16 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('bsc-testnet')
   },
   {
-    ...networks[ChainId.ARBITRUM_GOERLI],
-    ...genUrls('arbitrum-goerli')
+    ...networks[ChainId.ARBITRUM_SEPOLIA],
+    ...genUrls('arbitrum-sepolia')
   },
   {
     ...networks[ChainId.BASE],
     ...genUrls('base')
   },
   {
-    ...networks[ChainId.BASE_GOERLI],
-    ...genUrls('base-goerli')
+    ...networks[ChainId.BASE_SEPOLIA],
+    ...genUrls('base-sepolia')
   },
   {
     ...networks[ChainId.HOMEVERSE_TESTNET],
