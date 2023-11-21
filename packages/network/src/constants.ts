@@ -1,6 +1,6 @@
 export enum ChainId {
   // Ethereum
-  MAINNET = 1,
+  ETHEREUM = 1,
   ROPSTEN = 3, // network is deprecated
   RINKEBY = 4, // network is deprecated
   GOERLI = 5, // network is deprecated
@@ -39,7 +39,8 @@ export enum ChainId {
 
   // BASE
   BASE = 8453,
-  BASE_GOERLI = 84531,
+  BASE_GOERLI = 84531, // network is deprecated
+  BASE_SEPOLIA = 84532,
 
   // HOMEVERSE
   HOMEVERSE_TESTNET = 40875,
@@ -74,10 +75,10 @@ export interface NetworkMetadata {
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
-  [ChainId.MAINNET]: {
-    chainId: ChainId.MAINNET,
+  [ChainId.ETHEREUM]: {
+    chainId: ChainId.ETHEREUM,
     type: NetworkType.MAINNET,
-    name: 'mainnet',
+    name: 'ethereum',
     title: 'Ethereum',
     blockExplorer: {
       name: 'Etherscan',
@@ -337,7 +338,20 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Base Goerli Explorer',
       rootUrl: 'https://goerli.basescan.org/'
-    }
+    },
+    deprecated: true
+  },
+  [ChainId.BASE_SEPOLIA]: {
+    chainId: ChainId.BASE_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'base-sepolia',
+    title: 'Base Sepolia',
+    testnet: true,
+    blockExplorer: {
+      name: 'Base Sepolia Explorer',
+      rootUrl: 'https://base-sepolia.blockscout.com/'
+    },
+    deprecated: true
   },
   [ChainId.HOMEVERSE]: {
     chainId: ChainId.HOMEVERSE,

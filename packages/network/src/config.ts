@@ -66,8 +66,8 @@ export const allNetworks = validateAndSortNetworks([
     isAuthChain: true
   } as LegacyNetworkConfig,
   {
-    ...networks[ChainId.MAINNET],
-    ...genUrls('mainnet')
+    ...networks[ChainId.ETHEREUM],
+    ...genUrls('ethereum')
   },
   {
     ...networks[ChainId.BSC],
@@ -107,6 +107,11 @@ export const allNetworks = validateAndSortNetworks([
     disabled: true
   },
   {
+    ...networks[ChainId.GOERLI],
+    ...genUrls('goerli'),
+    disabled: true
+  },
+  {
     ...networks[ChainId.SEPOLIA],
     ...genUrls('sepolia')
   },
@@ -127,8 +132,8 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('base')
   },
   {
-    ...networks[ChainId.BASE_GOERLI],
-    ...genUrls('base-goerli')
+    ...networks[ChainId.BASE_SEPOLIA],
+    ...genUrls('base-sepolia')
   },
   {
     ...networks[ChainId.HOMEVERSE_TESTNET],
