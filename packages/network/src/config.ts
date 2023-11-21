@@ -101,11 +101,11 @@ export const allNetworks = validateAndSortNetworks([
     ...networks[ChainId.GNOSIS],
     ...genUrls('gnosis')
   },
-  // {
-  //   ...networks[ChainId.RINKEBY],
-  //   ...genUrls('rinkeby'),
-  //   disabled: true
-  // },
+  {
+    ...networks[ChainId.RINKEBY],
+    ...genUrls('rinkeby'),
+    disabled: true
+  },
   {
     ...networks[ChainId.SEPOLIA],
     ...genUrls('sepolia')
