@@ -1,6 +1,6 @@
 export enum ChainId {
   // Ethereum
-  ETHEREUM = 1,
+  MAINNET = 1,
   ROPSTEN = 3, // network is deprecated
   RINKEBY = 4, // network is deprecated
   GOERLI = 5, // network is deprecated
@@ -75,8 +75,8 @@ export interface NetworkMetadata {
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
-  [ChainId.ETHEREUM]: {
-    chainId: ChainId.ETHEREUM,
+  [ChainId.MAINNET]: {
+    chainId: ChainId.MAINNET,
     type: NetworkType.MAINNET,
     name: 'mainnet',
     title: 'Ethereum',

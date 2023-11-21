@@ -66,7 +66,7 @@ export const allNetworks = validateAndSortNetworks([
     isAuthChain: true
   } as LegacyNetworkConfig,
   {
-    ...networks[ChainId.ETHEREUM],
+    ...networks[ChainId.MAINNET],
     ...genUrls('mainnet')
   },
   {

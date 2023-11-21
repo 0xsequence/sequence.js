@@ -151,7 +151,7 @@ export class Session {
 
     // The reference network is mainnet, if mainnet is not available, we use the first network
     const referenceChainId =
-      findNetworkConfig(networks, settings?.services?.sequenceApiChainId ?? ChainId.ETHEREUM)?.chainId ?? networks[0]?.chainId
+      findNetworkConfig(networks, settings?.services?.sequenceApiChainId ?? ChainId.MAINNET)?.chainId ?? networks[0]?.chainId
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
