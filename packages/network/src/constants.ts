@@ -70,7 +70,7 @@ export interface NetworkMetadata {
   blockExplorer?: BlockExplorerConfig
   ensAddress?: string
   testnet?: boolean // Deprecated field, use type instead
-  deprecated?: boolean
+  deprecated?: boolean // The actual network is deprecated
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {

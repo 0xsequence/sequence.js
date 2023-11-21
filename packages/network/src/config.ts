@@ -90,6 +90,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('optimism')
   },
   {
+    ...networks[ChainId.OPTIMISM_SEPOLIA],
+    ...genUrls('optimism-sepolia')
+  },
+  {
     ...networks[ChainId.POLYGON_ZKEVM],
     ...genUrls('polygon-zkevm')
   },
@@ -97,15 +101,11 @@ export const allNetworks = validateAndSortNetworks([
     ...networks[ChainId.GNOSIS],
     ...genUrls('gnosis')
   },
-  {
-    ...networks[ChainId.RINKEBY],
-    ...genUrls('rinkeby'),
-    disabled: true
-  },
-  {
-    ...networks[ChainId.GOERLI],
-    ...genUrls('goerli')
-  },
+  // {
+  //   ...networks[ChainId.RINKEBY],
+  //   ...genUrls('rinkeby'),
+  //   disabled: true
+  // },
   {
     ...networks[ChainId.SEPOLIA],
     ...genUrls('sepolia')
