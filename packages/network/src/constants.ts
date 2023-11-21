@@ -78,7 +78,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
   [ChainId.ETHEREUM]: {
     chainId: ChainId.ETHEREUM,
     type: NetworkType.MAINNET,
-    name: 'ethereum',
+    name: 'mainnet',
     title: 'Ethereum',
     blockExplorer: {
       name: 'Etherscan',
