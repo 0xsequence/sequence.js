@@ -900,6 +900,44 @@ export class Account {
     return this.signDigest(digest, chainId, true, cantValidateBehavior)
   }
 
+  async getSigners(): Promise<Array<{ address: string; network: ChainId; weight: number }>> {
+    const last = <T>(ts: T[]): T | undefined => (ts.length ? ts[ts.length - 1] : undefined)
+
+    return (
+      await Promise.all(
+        this.networks.map(async network => {
+          const { chainId } = network
+          const status = await this.status(chainId)
+
+          let latestImageHash = last(status.presignedConfigurations)?.nextImageHash
+          if (!latestImageHash) {
+            if (status.onChain.version !== status.version) {
+              const migration = last(status.signedMigrations)
+              if (migration) {
+                const { toVersion, toConfig } = migration
+                const coder = universal.genericCoderFor(toVersion)
+                latestImageHash = coder.config.imageHashOf(toConfig)
+              }
+            }
+          }
+          if (!latestImageHash) {
+            latestImageHash = status.onChain.imageHash
+          }
+
+          const latestConfig = await this.tracker.configOfImageHash({ imageHash: latestImageHash })
+          if (!latestConfig) {
+            throw new Error(`unable to find config for image hash ${latestImageHash}`)
+          }
+
+          const coder = universal.genericCoderFor(latestConfig.version)
+          const signers = coder.config.signersOf(latestConfig)
+
+          return signers.map(signer => ({ ...signer, network: chainId }))
+        })
+      )
+    ).flat()
+  }
+
   async getAllSigners(): Promise<
     {
       address: string
