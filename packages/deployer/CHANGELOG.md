@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.4.7
+
+### Patch Changes
+
+- update indexer client bindings
+- Updated dependencies
+  - @0xsequence/utils@1.4.7
+
 ## 1.4.6
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.4.7
+
+### Patch Changes
+
+- update indexer client bindings
+- Updated dependencies
+  - @0xsequence/account@1.4.7
+  - @0xsequence/core@1.4.7
+  - @0xsequence/signhub@1.4.7
+  - @0xsequence/utils@1.4.7
+
 ## 1.4.6
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.4.7
+
+### Patch Changes
+
+- update indexer client bindings
+
 ## 1.4.6
 
 ### Patch Changes

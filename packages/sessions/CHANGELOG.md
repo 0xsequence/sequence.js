@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.4.7
+
+### Patch Changes
+
+- update indexer client bindings
+- Updated dependencies
+  - @0xsequence/core@1.4.7
+  - @0xsequence/migration@1.4.7
+  - @0xsequence/replacer@1.4.7
+
 ## 1.4.6
 
 ### Patch Changes

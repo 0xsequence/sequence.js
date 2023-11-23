@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.4.7
+
+### Patch Changes
+
+- update indexer client bindings
+- Updated dependencies
+  - @0xsequence/core@1.4.7
+  - @0xsequence/indexer@1.4.7
+  - @0xsequence/relayer@1.4.7
+  - @0xsequence/utils@1.4.7
+
 ## 1.4.6
 
 ### Patch Changes

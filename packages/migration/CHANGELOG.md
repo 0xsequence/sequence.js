@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.4.7
+
+### Patch Changes
+
+- update indexer client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.4.7
+  - @0xsequence/core@1.4.7
+  - @0xsequence/wallet@1.4.7
+
 ## 1.4.6
 
 ### Patch Changes
