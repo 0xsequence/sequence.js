@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 1.4.6
+
+### Patch Changes
+
+- - add sepolia networks, mark goerli as deprecated
+  - update indexer client bindings
+- Updated dependencies
+  - @0xsequence/core@1.4.6
+  - @0xsequence/migration@1.4.6
+  - @0xsequence/replacer@1.4.6
+
 ## 1.4.5
 
 ### Patch Changes

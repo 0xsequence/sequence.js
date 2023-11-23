@@ -1,5 +1,17 @@
 # @0xsequence/guard
 
+## 1.4.6
+
+### Patch Changes
+
+- - add sepolia networks, mark goerli as deprecated
+  - update indexer client bindings
+- Updated dependencies
+  - @0xsequence/account@1.4.6
+  - @0xsequence/core@1.4.6
+  - @0xsequence/signhub@1.4.6
+  - @0xsequence/utils@1.4.6
+
 ## 1.4.5
 
 ### Patch Changes

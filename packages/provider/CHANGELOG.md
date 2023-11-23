@@ -1,5 +1,22 @@
 # @0xsequence/provider
 
+## 1.4.6
+
+### Patch Changes
+
+- - add sepolia networks, mark goerli as deprecated
+  - update indexer client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.4.6
+  - @0xsequence/account@1.4.6
+  - @0xsequence/auth@1.4.6
+  - @0xsequence/core@1.4.6
+  - @0xsequence/migration@1.4.6
+  - @0xsequence/network@1.4.6
+  - @0xsequence/relayer@1.4.6
+  - @0xsequence/utils@1.4.6
+  - @0xsequence/wallet@1.4.6
+
 ## 1.4.5
 
 ### Patch Changes

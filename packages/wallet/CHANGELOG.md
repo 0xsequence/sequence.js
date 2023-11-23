@@ -1,5 +1,19 @@
 # @0xsequence/wallet
 
+## 1.4.6
+
+### Patch Changes
+
+- - add sepolia networks, mark goerli as deprecated
+  - update indexer client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.4.6
+  - @0xsequence/core@1.4.6
+  - @0xsequence/network@1.4.6
+  - @0xsequence/relayer@1.4.6
+  - @0xsequence/signhub@1.4.6
+  - @0xsequence/utils@1.4.6
+
 ## 1.4.5
 
 ### Patch Changes
