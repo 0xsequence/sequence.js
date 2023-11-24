@@ -905,34 +905,38 @@ export class Account {
 
     return (
       await Promise.all(
-        this.networks.map(async network => {
-          const { chainId } = network
-          const status = await this.status(chainId)
+        this.networks.map(async ({ chainId, name }) => {
+          try {
+            const status = await this.status(chainId)
 
-          let latestImageHash = last(status.presignedConfigurations)?.nextImageHash
-          if (!latestImageHash) {
-            if (status.onChain.version !== status.version) {
-              const migration = last(status.signedMigrations)
-              if (migration) {
-                const { toVersion, toConfig } = migration
-                const coder = universal.genericCoderFor(toVersion)
-                latestImageHash = coder.config.imageHashOf(toConfig)
+            let latestImageHash = last(status.presignedConfigurations)?.nextImageHash
+            if (!latestImageHash) {
+              if (status.onChain.version !== status.version) {
+                const migration = last(status.signedMigrations)
+                if (migration) {
+                  const { toVersion, toConfig } = migration
+                  const coder = universal.genericCoderFor(toVersion)
+                  latestImageHash = coder.config.imageHashOf(toConfig)
+                }
               }
             }
-          }
-          if (!latestImageHash) {
-            latestImageHash = status.onChain.imageHash
-          }
+            if (!latestImageHash) {
+              latestImageHash = status.onChain.imageHash
+            }
 
-          const latestConfig = await this.tracker.configOfImageHash({ imageHash: latestImageHash })
-          if (!latestConfig) {
-            throw new Error(`unable to find config for image hash ${latestImageHash}`)
+            const latestConfig = await this.tracker.configOfImageHash({ imageHash: latestImageHash })
+            if (!latestConfig) {
+              throw new Error(`unable to find config for image hash ${latestImageHash}`)
+            }
+
+            const coder = universal.genericCoderFor(latestConfig.version)
+            const signers = coder.config.signersOf(latestConfig)
+
+            return signers.map(signer => ({ ...signer, network: chainId }))
+          } catch (error) {
+            console.warn(`unable to get signers on network ${chainId} ${name}`, error)
+            return []
           }
-
-          const coder = universal.genericCoderFor(latestConfig.version)
-          const signers = coder.config.signersOf(latestConfig)
-
-          return signers.map(signer => ({ ...signer, network: chainId }))
         })
       )
     ).flat()
