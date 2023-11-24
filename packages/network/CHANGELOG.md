@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.4.8
+
+### Patch Changes
+
+- account: Account.getSigners
+- Updated dependencies
+  - @0xsequence/core@1.4.8
+  - @0xsequence/indexer@1.4.8
+  - @0xsequence/relayer@1.4.8
+  - @0xsequence/utils@1.4.8
+
 ## 1.4.7
 
 ### Patch Changes

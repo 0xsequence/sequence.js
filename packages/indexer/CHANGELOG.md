@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.4.8
+
+### Patch Changes
+
+- account: Account.getSigners
+
 ## 1.4.7
 
 ### Patch Changes
