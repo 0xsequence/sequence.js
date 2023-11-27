@@ -4,7 +4,7 @@ import { Metadata as MetadataRpc } from './metadata.gen'
 
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
-export class SequenceMetadataClient extends MetadataRpc {
+export class SequenceMetadata extends MetadataRpc {
   constructor(
     hostname: string = 'https://metadata.sequence.app',
     public projectAccessKey?: string,

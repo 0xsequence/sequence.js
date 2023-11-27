@@ -2,7 +2,7 @@ import { Account } from '@0xsequence/account'
 import { SequenceAPIClient } from '@0xsequence/api'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
-import { SequenceMetadataClient } from '@0xsequence/metadata'
+import { SequenceMetadata } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
 import { getEthersConnectionInfo } from '@0xsequence/utils'
 import { ethers } from 'ethers'
@@ -54,7 +54,7 @@ export class Services {
   private onAuthCallbacks: ((result: PromiseSettledResult<string>) => void)[] = []
 
   private apiClient: SequenceAPIClient | undefined
-  private metadataClient: SequenceMetadataClient | undefined
+  private metadataClient: SequenceMetadata | undefined
   private indexerClients: Map<number, Indexer> = new Map()
 
   constructor(
@@ -229,10 +229,10 @@ export class Services {
     return this.apiClient
   }
 
-  async getMetadataClient(tryAuth: boolean = true): Promise<SequenceMetadataClient> {
+  async getMetadataClient(tryAuth: boolean = true): Promise<SequenceMetadata> {
     if (!this.metadataClient) {
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.metadataClient = new SequenceMetadataClient(this.settings.sequenceMetadataUrl, undefined, jwtAuth)
+      this.metadataClient = new SequenceMetadata(this.settings.sequenceMetadataUrl, undefined, jwtAuth)
     }
 
     return this.metadataClient
