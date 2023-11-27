@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.4.9
+
+### Patch Changes
+
+- rename SequenceMetadataClient to SequenceMetadata
+- Updated dependencies
+  - @0xsequence/account@1.4.9
+  - @0xsequence/core@1.4.9
+  - @0xsequence/signhub@1.4.9
+  - @0xsequence/utils@1.4.9
+
 ## 1.4.8
 
 ### Patch Changes

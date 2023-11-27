@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.4.9
+
+### Patch Changes
+
+- rename SequenceMetadataClient to SequenceMetadata
+
 ## 1.4.8
 
 ### Patch Changes

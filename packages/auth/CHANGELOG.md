@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.4.9
+
+### Patch Changes
+
+- rename SequenceMetadataClient to SequenceMetadata
+- Updated dependencies
+  - @0xsequence/abi@1.4.9
+  - @0xsequence/account@1.4.9
+  - @0xsequence/api@1.4.9
+  - @0xsequence/core@1.4.9
+  - @0xsequence/indexer@1.4.9
+  - @0xsequence/metadata@1.4.9
+  - @0xsequence/migration@1.4.9
+  - @0xsequence/network@1.4.9
+  - @0xsequence/sessions@1.4.9
+  - @0xsequence/signhub@1.4.9
+  - @0xsequence/utils@1.4.9
+  - @0xsequence/wallet@1.4.9
+
 ## 1.4.8
 
 ### Patch Changes
