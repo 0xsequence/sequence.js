@@ -732,7 +732,7 @@ importers:
         specifier: ^3.429.0
         version: 3.429.0
       ethers:
-        specifier: ^5.7.2
+        specifier: '>=5.5'
         version: 5.7.2
       json-canonicalize:
         specifier: ^1.0.6
