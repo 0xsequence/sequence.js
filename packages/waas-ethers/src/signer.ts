@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { CommonAuthArgs, Sequence, networks } from '@0xsequence/waas'
 
 export class SequenceSigner extends ethers.Signer {
@@ -14,6 +14,16 @@ export class SequenceSigner extends ethers.Signer {
     return this.sequence.getAddress()
   }
 
+  // Ensure that sequence and the provider are on matching networks
+  private async _ensureNetworkMatch(providerRequired: boolean): Promise<void> {
+    if (providerRequired && !this.provider) {
+      throw new Error('Provider is required')
+    }
+    if (this.provider && (await this.provider.getNetwork()).chainId !== networks.toNetworkID(this.sequence.getNetwork())) {
+      throw new Error('Provider and WaaS configured with different networks')
+    }
+  }
+
   async getSimpleNetwork(): Promise<networks.SimpleNetwork | undefined> {
     if (this.provider) {
       return this.provider.getNetwork().then(n => n.chainId)
@@ -22,6 +32,8 @@ export class SequenceSigner extends ethers.Signer {
   }
 
   async signMessage(message: ethers.utils.Bytes | string, authArgs?: CommonAuthArgs): Promise<string> {
+    await this._ensureNetworkMatch(false)
+
     const args = {
       message: message.toString(),
       network: await this.getSimpleNetwork(),
@@ -39,9 +51,7 @@ export class SequenceSigner extends ethers.Signer {
     transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     authArgs?: CommonAuthArgs
   ): Promise<ethers.providers.TransactionResponse> {
-    if (!this.provider || (await this.provider.getNetwork()).chainId !== networks.toNetworkID(this.sequence.getNetwork())) {
-      throw new Error('Provider and WaaS configured with different networks')
-    }
+    await this._ensureNetworkMatch(true)
 
     const args = {
       transactions: [await ethers.utils.resolveProperties(transaction)],
@@ -58,18 +68,7 @@ export class SequenceSigner extends ethers.Signer {
     if (response.code === 'transactionReceipt') {
       // Success
       const { txHash } = response.data
-      try {
-        return (await ethers.utils.poll(
-          async () => {
-            const tx = await this.provider!!.getTransaction(txHash)
-            return tx ? this.provider!!._wrapTransaction(tx, txHash) : undefined
-          },
-          { onceBlock: this.provider }
-        )) as ethers.providers.TransactionResponse
-      } catch (err) {
-        err.transactionHash = txHash
-        throw err
-      }
+      return this.provider!!.getTransaction(txHash)
     }
 
     // Impossible
@@ -78,5 +77,51 @@ export class SequenceSigner extends ethers.Signer {
 
   connect(provider: ethers.providers.BaseProvider, sequence?: Sequence): SequenceSigner {
     return new SequenceSigner(sequence ?? this.sequence, provider)
+  }
+
+  //
+  // Provider required
+  //
+  async getBalance(blockTag?: ethers.providers.BlockTag): Promise<BigNumber> {
+    await this._ensureNetworkMatch(true)
+    return super.getBalance(blockTag)
+  }
+
+  async getTransactionCount(_blockTag?: ethers.providers.BlockTag): Promise<number> {
+    throw new Error('SequenceSigner does not support getTransactionCount')
+  }
+
+  async estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<BigNumber> {
+    await this._ensureNetworkMatch(true)
+    //FIXME This won't be accurate
+    return super.estimateGas(transaction)
+  }
+
+  async call(
+    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    blockTag?: ethers.providers.BlockTag
+  ): Promise<string> {
+    await this._ensureNetworkMatch(true)
+    return super.call(transaction, blockTag)
+  }
+
+  async getChainId(): Promise<number> {
+    await this._ensureNetworkMatch(true) // Prevent mismatched configurations
+    return super.getChainId()
+  }
+
+  async getGasPrice(): Promise<BigNumber> {
+    await this._ensureNetworkMatch(true)
+    return super.getGasPrice()
+  }
+
+  async getFeeData(): Promise<ethers.providers.FeeData> {
+    await this._ensureNetworkMatch(true)
+    return super.getFeeData()
+  }
+
+  async resolveName(name: string): Promise<string> {
+    await this._ensureNetworkMatch(true)
+    return super.resolveName(name)
   }
 }
