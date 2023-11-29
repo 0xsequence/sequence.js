@@ -68,6 +68,7 @@ export class SequenceSigner extends ethers.Signer {
     if (response.code === 'transactionReceipt') {
       // Success
       const { txHash } = response.data
+      // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
       return this.provider!!.getTransaction(txHash)
     }
 
