@@ -733,6 +733,15 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
 
+  packages/waas-ethers:
+    dependencies:
+      '@0xsequence/waas':
+        specifier: workspace:*
+        version: link:../waas
+      ethers:
+        specifier: '>=5.5'
+        version: 5.7.2
+
   packages/wallet:
     dependencies:
       '@0xsequence/abi':

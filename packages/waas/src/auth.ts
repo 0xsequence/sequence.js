@@ -378,6 +378,10 @@ export class Sequence {
     return this.waas.getAddress()
   }
 
+  getNetwork(): SimpleNetwork {
+    return this.waas.config.network
+  }
+
   async validateSession(args?: ValidationArgs) {
     if (await this.waas.isSessionValid()) {
       return true
@@ -395,7 +399,7 @@ export class Sequence {
       throw new Error(`Invalid response: ${JSON.stringify(result)}`)
     }
 
-    this.validationRequiredSalt = ""
+    this.validationRequiredSalt = ''
     return result.data.isValid
   }
 
