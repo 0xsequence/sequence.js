@@ -7,7 +7,6 @@ export class SequenceSigner extends ethers.Signer {
     readonly provider?: ethers.providers.BaseProvider
   ) {
     super()
-    //FIXME A way to ensure the provider and sequence are on the same network
   }
 
   async getAddress(): Promise<string> {
