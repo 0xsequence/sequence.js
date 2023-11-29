@@ -1,0 +1,26 @@
+{
+  "name": "@0xsequence/waas-ethers",
+  "version": "0.0.0",
+  "description": "waas ethers wrapper",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-waas-ethers.cjs.js",
+  "module": "dist/0xsequence-waas-ethers.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "pnpm test:file tests/**/*.spec.ts",
+    "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/waas": "workspace:*"
+  },
+  "peerDependencies": {
+    "ethers": ">=5.5"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
