@@ -265,7 +265,7 @@ export class Sequence {
     return this.waas.isSignedIn()
   }
 
-  async signIn(creds: Identity, name: string) {
+  async signIn(creds: Identity, name: string): Promise<{ sessionId: string, wallet: string }> {
     // TODO: Be smarter about this, for cognito (or some other cases) we may
     // want to send the email instead of the idToken
     const waaspayload = await this.waas.signIn({
@@ -313,7 +313,11 @@ export class Sequence {
     })
 
     this.deviceName.set(name)
-    return res.session.address
+
+    return {
+      sessionId: res.session.id,
+      wallet: res.data.wallet
+    }
   }
 
   private async refreshSession() {
