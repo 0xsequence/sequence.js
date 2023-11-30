@@ -378,10 +378,6 @@ export class Sequence {
     return this.waas.getAddress()
   }
 
-  getNetwork(): SimpleNetwork {
-    return this.waas.config.network
-  }
-
   async validateSession(args?: ValidationArgs) {
     if (await this.waas.isSessionValid()) {
       return true
