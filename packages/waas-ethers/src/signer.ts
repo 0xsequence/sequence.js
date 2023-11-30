@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers'
-import { CommonAuthArgs, Sequence, networks } from '@0xsequence/waas'
+import { CommonAuthArgs, ExtendedSequenceConfig, Sequence, SequenceConfig, networks, store } from '@0xsequence/waas'
 
 export class SequenceSigner extends ethers.Signer {
   constructor(
@@ -7,6 +7,15 @@ export class SequenceSigner extends ethers.Signer {
     readonly provider?: ethers.providers.BaseProvider
   ) {
     super()
+  }
+
+  public static fromConfig(
+    config: SequenceConfig & Partial<ExtendedSequenceConfig>,
+    preset?: ExtendedSequenceConfig,
+    store?: store.Store,
+    provider?: ethers.providers.BaseProvider
+  ): SequenceSigner {
+    return new SequenceSigner(new Sequence(config, preset, store), provider)
   }
 
   async getAddress(): Promise<string> {
