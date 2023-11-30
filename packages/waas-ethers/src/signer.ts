@@ -13,12 +13,12 @@ export class SequenceSigner extends ethers.Signer {
     return this.sequence.getAddress()
   }
 
-  // Ensure that sequence and the provider are on matching networks
-  private async _ensureNetworkMatch(providerRequired: boolean): Promise<void> {
+  // Ensure the provider has a sequence supported network
+  private async _ensureNetworkValid(providerRequired: boolean): Promise<void> {
     if (providerRequired && !this.provider) {
       throw new Error('Provider is required')
     }
-    if (this.provider && (await this.provider.getNetwork()).chainId !== networks.toNetworkID(this.sequence.getNetwork())) {
+    if (this.provider && networks.isSimpleNetwork((await this.provider.getNetwork()).chainId)) {
       throw new Error('Provider and WaaS configured with different networks')
     }
   }
@@ -31,7 +31,7 @@ export class SequenceSigner extends ethers.Signer {
   }
 
   async signMessage(message: ethers.utils.Bytes | string, authArgs?: CommonAuthArgs): Promise<string> {
-    await this._ensureNetworkMatch(false)
+    await this._ensureNetworkValid(false)
 
     const args = {
       message: message.toString(),
@@ -50,7 +50,7 @@ export class SequenceSigner extends ethers.Signer {
     transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     authArgs?: CommonAuthArgs
   ): Promise<ethers.providers.TransactionResponse> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
 
     const args = {
       transactions: [await ethers.utils.resolveProperties(transaction)],
@@ -83,7 +83,7 @@ export class SequenceSigner extends ethers.Signer {
   // Provider required
   //
   async getBalance(blockTag?: ethers.providers.BlockTag): Promise<BigNumber> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
     return super.getBalance(blockTag)
   }
 
@@ -92,7 +92,7 @@ export class SequenceSigner extends ethers.Signer {
   }
 
   async estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<BigNumber> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
     //FIXME This won't be accurate
     return super.estimateGas(transaction)
   }
@@ -101,27 +101,27 @@ export class SequenceSigner extends ethers.Signer {
     transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
     blockTag?: ethers.providers.BlockTag
   ): Promise<string> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
     return super.call(transaction, blockTag)
   }
 
   async getChainId(): Promise<number> {
-    await this._ensureNetworkMatch(true) // Prevent mismatched configurations
+    await this._ensureNetworkValid(true) // Prevent mismatched configurations
     return super.getChainId()
   }
 
   async getGasPrice(): Promise<BigNumber> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
     return super.getGasPrice()
   }
 
   async getFeeData(): Promise<ethers.providers.FeeData> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
     return super.getFeeData()
   }
 
   async resolveName(name: string): Promise<string> {
-    await this._ensureNetworkMatch(true)
+    await this._ensureNetworkValid(true)
     return super.resolveName(name)
   }
 }
