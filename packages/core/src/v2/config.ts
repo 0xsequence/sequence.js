@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 import { encodeSigners } from './signature'
+import { SimpleConfig } from '../commons/config'
 
 //
 // Tree typings - leaves
@@ -434,20 +435,10 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return signersOf(config.tree)
   },
 
-  fromSimple: (config: {
-    threshold: ethers.BigNumberish
-    checkpoint: ethers.BigNumberish
-    signers: { address: string; weight: ethers.BigNumberish }[]
-  }): WalletConfig => {
+  fromSimple: (config: SimpleConfig): WalletConfig => {
     return toWalletConfig({
-      threshold: config.threshold,
-      checkpoint: config.checkpoint,
-      members: config.signers.map(signer => {
-        return {
-          address: signer.address,
-          weight: signer.weight
-        }
-      })
+      ...config,
+      members: [...config.signers, ...(config.subdigests ?? []).map(subdigest => ({ subdigest }))]
     })
   },
 
