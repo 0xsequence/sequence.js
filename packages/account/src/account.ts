@@ -1,3 +1,4 @@
+import { walletContracts } from '@0xsequence/abi'
 import { commons, universal } from '@0xsequence/core'
 import { WalletSignRequestMetadata } from '@0xsequence/core/src/commons'
 import { migrator, defaults, version } from '@0xsequence/migration'
@@ -524,6 +525,50 @@ export class Account {
     }
 
     return decorated
+  }
+
+  buildOnChainSignature(digest: ethers.BytesLike): { bundle: commons.transaction.TransactionBundle; signature: string } {
+    const subdigest = commons.signature.subdigestOf({ digest: ethers.utils.hexlify(digest), chainId: 0, address: this.address })
+    const hexSubdigest = ethers.utils.hexlify(subdigest)
+    const config = this.coders.config.fromSimple({
+      // Threshold *only* needs to be > 0, this is not a magic number
+      // we only use 2 ** 15 because it may lead to lower gas costs in some chains
+      threshold: 32768,
+      checkpoint: 0,
+      signers: [],
+      subdigests: [hexSubdigest]
+    })
+
+    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const bundle: commons.transaction.TransactionBundle = {
+      entrypoint: this.address,
+      transactions: [
+        {
+          to: this.address,
+          data: walletInterface.encodeFunctionData(
+            // *NEVER* use updateImageHash here, as it would effectively destroy the wallet
+            // setExtraImageHash sets an additional imageHash, without changing the current one
+            'setExtraImageHash',
+            [
+              this.coders.config.imageHashOf(config),
+              // 2 ** 255 instead of max uint256, to have more zeros in the calldata
+              '57896044618658097711785492504343953926634992332820282019728792003956564819968'
+            ]
+          ),
+          // Conservative gas limit, used because the current relayer
+          // has trouble estimating gas for this transaction
+          gasLimit: 250000
+        }
+      ]
+    }
+
+    // Fire and forget request to save the config
+    this.tracker.saveWalletConfig({ config })
+
+    // Encode a signature proof for the given subdigest
+    // use `chainId = 0` to make it simpler, as this signature is only a proof
+    const signature = this.coders.signature.encodeSigners(config, new Map(), [hexSubdigest], 0).encoded
+    return { bundle, signature }
   }
 
   private async buildEIP6492Signature(signature: string, status: AccountStatus, chainId: ethers.BigNumberish): Promise<string> {

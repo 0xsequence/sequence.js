@@ -257,6 +257,9 @@ importers:
 
   packages/account:
     dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../abi
       '@0xsequence/core':
         specifier: workspace:*
         version: link:../core

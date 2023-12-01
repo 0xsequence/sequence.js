@@ -136,5 +136,23 @@ export const abi = [
     ],
     payable: true,
     stateMutability: 'payable'
+  },
+  {
+    type: 'function',
+    name: 'setExtraImageHash',
+    constant: false,
+    inputs: [
+      {
+        type: 'bytes32',
+        name: 'imageHash'
+      },
+      {
+        type: 'uint256',
+        name: 'expiration'
+      }
+    ],
+    outputs: [],
+    payable: false,
+    stateMutability: 'nonpayable'
   }
 ]
