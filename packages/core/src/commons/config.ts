@@ -12,6 +12,7 @@ export type SimpleConfig = {
   threshold: ethers.BigNumberish
   checkpoint: ethers.BigNumberish
   signers: SimpleSigner[]
+  subdigests?: string[]
 }
 
 export interface ConfigCoder<T extends Config = Config> {

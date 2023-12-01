@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 import { encodeSigners } from './signature'
+import { SimpleConfig } from '../commons/config'
 
 export type AddressMember = {
   weight: ethers.BigNumberish
@@ -49,13 +50,13 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     return config.signers.map(s => ({ address: s.address, weight: ethers.BigNumber.from(s.weight).toNumber() }))
   },
 
-  fromSimple: (config: {
-    threshold: ethers.BigNumberish
-    checkpoint: ethers.BigNumberish
-    signers: { address: string; weight: ethers.BigNumberish }[]
-  }): WalletConfig => {
+  fromSimple: (config: SimpleConfig): WalletConfig => {
     if (!ethers.constants.Zero.eq(config.checkpoint)) {
       throw new Error('v1 wallet config does not support checkpoint')
+    }
+
+    if (config.subdigests && config.subdigests.length > 0) {
+      throw new Error('v1 wallet config does not support subdigests')
     }
 
     return {
