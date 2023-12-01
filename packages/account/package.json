@@ -17,6 +17,7 @@
     "test:coverage": "nyc pnpm test"
   },
   "dependencies": {
+    "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*",
     "@0xsequence/migration": "workspace:*",
     "@0xsequence/network": "workspace:*",
