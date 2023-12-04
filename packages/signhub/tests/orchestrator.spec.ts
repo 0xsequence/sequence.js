@@ -114,16 +114,7 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           throw new Error('This is a broken signer.')
         },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
+        sign(_message, _metadata) {
           throw new Error('This is a broken signer.')
         },
         notifyStatusChange: function (id: string, status: Status): void {},
@@ -206,18 +197,8 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           throw new Error('This is a rejected signer.')
         },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
-          callbacks.onRejection('This is a rejected signer.')
-          return true
+        async sign(_message, _metadata) {
+          throw new Error('This is a rejected signer.')
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
@@ -271,19 +252,9 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
+        async sign(message, _metadata) {
           expect(message).to.be.equal(ogMessage)
-          callbacks.onSignature('0x5678')
-          return true
+          return '0x5678'
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
@@ -315,19 +286,9 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
+        async sign(_message, metadata) {
           expect(metadata).to.be.deep.equal({ test: 'test' })
-          callbacks.onSignature('0x5678')
-          return true
+          return '0x5678'
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
@@ -363,19 +324,9 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
+        async sign(_message, metadata) {
           expect(metadata).to.be.deep.equal({ test: 'test' })
-          callbacks.onSignature('0x5678')
-          return true
+          return '0x5678'
         },
         notifyStatusChange: function (id: string, status: Status, metadata: object): void {
           try {
@@ -409,19 +360,9 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return Promise.resolve(bundle)
         },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
+        async sign(_message, metadata) {
           expect(metadata).to.be.deep.equal({ test: 'test' })
-          callbacks.onSignature('0x9012')
-          return true
+          return '0x9012'
         },
         notifyStatusChange: function (id: string, status: Status, metadata: object): void {
           try {
@@ -457,62 +398,6 @@ describe('Orchestrator', () => {
       expect((signature.signers['0x1234'] as any).signature).to.be.equal('0x5678')
       expect((signature.signers['0x5678'] as any).signature).to.be.equal('0x9012')
       if (errorOnNotify) throw errorOnNotify
-    })
-
-    it('Should generate distinct and incremental ids', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
-      const signer: SapientSigner = {
-        getAddress: async function (): Promise<string> {
-          return '0x1234'
-        },
-        buildDeployTransaction(metadata) {
-          return Promise.resolve(undefined)
-        },
-        predecorateSignedTransactions(_metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
-          return Promise.resolve([])
-        },
-        decorateTransactions(
-          bundle: commons.transaction.IntendedTransactionBundle,
-          metadata: object
-        ): Promise<commons.transaction.IntendedTransactionBundle> {
-          return Promise.resolve(bundle)
-        },
-        requestSignature: async function (
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: any,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
-          if (metadata.tag === 'test1') {
-            expect(id).to.be.equal('test-0')
-          }
-          if (metadata.tag === 'test2') {
-            expect(id).to.be.equal('test-1')
-          }
-          if (metadata.tag === 'test3') {
-            expect(id).to.be.equal('test-2')
-          }
-          callbacks.onSignature('0x5678')
-          return true
-        },
-        notifyStatusChange: function (id: string, status: Status): void {},
-        suffix: function () {
-          return [2]
-        }
-      }
-
-      const orchestrator = new Orchestrator([signer], 'test')
-      const res1 = await orchestrator.signMessage({ message: ogMessage, metadata: { tag: 'test1' } })
-      const res2 = await orchestrator.signMessage({ message: ogMessage, metadata: { tag: 'test2' } })
-      const res3 = await orchestrator.signMessage({ message: ogMessage, metadata: { tag: 'test3' } })
-
-      expect((res1.signers['0x1234'] as any).signature).to.be.equal('0x5678')
-      expect((res2.signers['0x1234'] as any).signature).to.be.equal('0x5678')
-      expect((res3.signers['0x1234'] as any).signature).to.be.equal('0x5678')
     })
 
     it('Should auto-generate random tag', () => {
@@ -565,17 +450,8 @@ describe('Orchestrator', () => {
           })
           return bundle
         },
-        async requestSignature(
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
-          return true
+        sign(_message, _metadata) {
+          throw new Error('unreachable')
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
@@ -626,17 +502,8 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return bundle
         },
-        async requestSignature(
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
-          return true
+        sign(_message, _metadata) {
+          throw new Error('unreachable')
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
@@ -666,17 +533,8 @@ describe('Orchestrator', () => {
         ): Promise<commons.transaction.IntendedTransactionBundle> {
           return bundle
         },
-        async requestSignature(
-          id: string,
-          message: ethers.utils.BytesLike,
-          metadata: object,
-          callbacks: {
-            onSignature: (signature: ethers.utils.BytesLike) => void
-            onRejection: (error: string) => void
-            onStatus: (situation: string) => void
-          }
-        ): Promise<boolean> {
-          return true
+        sign(_message, _metadata) {
+          throw new Error('unreachable')
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {

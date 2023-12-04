@@ -190,21 +190,17 @@ export class Orchestrator {
         signers.map(async s => {
           const saddr = await s.getAddress()
           status.signers[saddr] = { situation: InitialSituation }
-          return s.requestSignature(id, message, metadata ?? {}, {
-            onSignature: signature => {
-              const suffix = s.suffix()
-              status.signers[saddr] = { signature, suffix }
-              onStatusUpdate()
-            },
-            onRejection: error => {
-              status.signers[saddr] = { rejected: true, error }
-              onStatusUpdate()
-            },
-            onStatus: situation => {
-              status.signers[saddr] = { situation }
-              onStatusUpdate()
-            }
-          })
+          try {
+            const signature = await s.sign(message, metadata ?? {})
+            const suffix = s.suffix()
+            status.signers[saddr] = { signature, suffix }
+            onStatusUpdate()
+            return true
+          } catch (error) {
+            status.signers[saddr] = { rejected: true, error }
+            onStatusUpdate()
+            return false
+          }
         })
       )
 

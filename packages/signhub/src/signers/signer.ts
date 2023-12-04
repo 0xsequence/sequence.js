@@ -23,16 +23,7 @@ export interface SapientSigner {
   /**
    * Request a signature from the signer.
    */
-  requestSignature(
-    id: string,
-    message: ethers.BytesLike,
-    metadata: object,
-    callbacks: {
-      onSignature: (signature: ethers.BytesLike) => void
-      onRejection: (error: string) => void
-      onStatus: (situation: string) => void
-    }
-  ): Promise<boolean>
+  sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike>
 
   /**
    * Notify the signer of a status change.
@@ -48,7 +39,7 @@ export function isSapientSigner(signer: ethers.Signer | SapientSigner): signer i
     (signer as SapientSigner).buildDeployTransaction !== undefined &&
     (signer as SapientSigner).predecorateSignedTransactions !== undefined &&
     (signer as SapientSigner).decorateTransactions !== undefined &&
-    (signer as SapientSigner).requestSignature !== undefined &&
+    (signer as SapientSigner).sign !== undefined &&
     (signer as SapientSigner).notifyStatusChange !== undefined
   )
 }
