@@ -37,21 +37,9 @@ export class GuardSigner implements signers.SapientSigner {
     return bundle
   }
 
-  async requestSignature(
-    _id: string,
-    message: BytesLike,
-    metadata: object,
-    callbacks: {
-      onSignature: (signature: BytesLike) => void
-      onRejection: (error: string) => void
-      onStatus: (situation: string) => void
-    }
-  ): Promise<boolean> {
-    const { onSignature, onRejection } = callbacks
-
+  async sign(message: BytesLike, metadata: object): Promise<BytesLike> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
-      onRejection('expected sequence signature request metadata')
-      return false
+      throw new Error('expected sequence signature request metadata')
     }
 
     const guardTotpCode = (metadata as { guardTotpCode?: string }).guardTotpCode
@@ -61,8 +49,8 @@ export class GuardSigner implements signers.SapientSigner {
     const coder = universal.genericCoderFor(metadata.config.version)
     const { encoded } = coder.signature.encodeSigners(metadata.config, metadata.parts ?? new Map(), [], metadata.chainId)
 
-    try {
-      const { sig: signature } = await this.guard.signWith({
+    return (
+      await this.guard.signWith({
         signer: this.address,
         request: {
           msg: ethers.utils.hexlify(message),
@@ -71,17 +59,7 @@ export class GuardSigner implements signers.SapientSigner {
         },
         token: guardTotpCode ? { id: AuthMethod.TOTP, token: guardTotpCode } : undefined
       })
-
-      if (ethers.utils.arrayify(signature).length === 0) {
-        throw new Error('guard response contained no signature data')
-      }
-
-      onSignature(signature)
-      return true
-    } catch (error) {
-      onRejection(`unable to request guard signature: ${error.message ?? error.msg ?? error}`)
-      return false
-    }
+    ).sig
   }
 
   notifyStatusChange(_id: string, _status: Status, _metadata: object): void {}
@@ -248,27 +226,13 @@ async function signOwnershipProof(
     const timestamp = new Date()
     const typedData = getOwnershipProofTypedData(proof.walletAddress, timestamp)
     const digest = encodeTypedDataDigest(typedData)
-    const randomId = ethers.utils.hexlify(ethers.utils.randomBytes(32))
 
-    return new Promise((resolve, reject) =>
-      signer.requestSignature(
-        randomId,
-        digest,
-        {},
-        {
-          onSignature(signature) {
-            resolve({
-              walletAddress: proof.walletAddress,
-              timestamp,
-              signerAddress,
-              signature: ethers.utils.hexlify(signature)
-            })
-          },
-          onRejection: reject,
-          onStatus(_situation) {}
-        }
-      )
-    )
+    return {
+      walletAddress: proof.walletAddress,
+      timestamp,
+      signerAddress,
+      signature: ethers.utils.hexlify(await signer.sign(digest, {}))
+    }
   }
 }
 

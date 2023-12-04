@@ -29,18 +29,8 @@ export class SignerWrapper implements SapientSigner {
     return bundle
   }
 
-  async requestSignature(
-    _id: string,
-    message: ethers.BytesLike,
-    _metadata: object,
-    callbacks: {
-      onSignature: (signature: ethers.BytesLike) => void
-      onRejection: (error: string) => void
-      onStatus: (situation: string) => void
-    }
-  ): Promise<boolean> {
-    callbacks.onSignature(await this.signer.signMessage(message))
-    return true
+  sign(message: ethers.utils.BytesLike, metadata: object): Promise<ethers.utils.BytesLike> {
+    return this.signer.signMessage(message)
   }
 
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
