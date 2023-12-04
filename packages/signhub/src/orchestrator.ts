@@ -9,35 +9,24 @@ export type Status = {
   signers: { [signer: string]: SignerStatus }
 }
 
-export type SignerStatusPending = {
-  situation?: string
+export enum SignerState {
+  INITIAL,
+  SIGNING,
+  SIGNED,
+  ERROR
 }
 
-export type SignerStatusRejected = {
-  rejected: true
-  error?: string
+export type SignerStatus =
+  | { state: SignerState.INITIAL }
+  | { state: SignerState.SIGNING; request: Promise<ethers.BytesLike> }
+  | { state: SignerState.SIGNED; signature: ethers.BytesLike; suffix: ethers.BytesLike }
+  | { state: SignerState.ERROR; error: any }
+
+export function isSignerStatusPending(
+  status?: SignerStatus
+): status is undefined | { state: SignerState.INITIAL } | { state: SignerState.SIGNING; request: Promise<ethers.BytesLike> } {
+  return status === undefined || status.state === SignerState.INITIAL || status.state === SignerState.SIGNING
 }
-
-export type SignerStatusSigned = {
-  signature: ethers.BytesLike
-  suffix: ethers.BytesLike
-}
-
-export type SignerStatus = SignerStatusPending | SignerStatusRejected | SignerStatusSigned
-
-export function isSignerStatusRejected(status: SignerStatus): status is SignerStatusRejected {
-  return (status as SignerStatusRejected).rejected
-}
-
-export function isSignerStatusSigned(status: SignerStatus): status is SignerStatusSigned {
-  return (status as SignerStatusSigned).signature !== undefined
-}
-
-export function isSignerStatusPending(status: SignerStatus): status is SignerStatusPending {
-  return !isSignerStatusRejected(status) && !isSignerStatusSigned(status)
-}
-
-export const InitialSituation = 'Initial'
 
 export interface SignatureOrchestrator {
   getSigners(): Promise<string[]>
@@ -189,17 +178,22 @@ export class Orchestrator {
       const accepted = await Promise.allSettled(
         signers.map(async s => {
           const saddr = await s.getAddress()
-          status.signers[saddr] = { situation: InitialSituation }
-          try {
-            const signature = await s.sign(message, metadata ?? {})
-            const suffix = s.suffix()
-            status.signers[saddr] = { signature, suffix }
-            onStatusUpdate()
-            return true
-          } catch (error) {
-            status.signers[saddr] = { rejected: true, error }
-            onStatusUpdate()
-            return false
+
+          status.signers[saddr] = {
+            state: SignerState.SIGNING,
+            request: s
+              .sign(message, metadata ?? {})
+              .then(signature => {
+                const suffix = s.suffix()
+                status.signers[saddr] = { state: SignerState.SIGNED, signature, suffix }
+                onStatusUpdate()
+                return signature
+              })
+              .catch(error => {
+                status.signers[saddr] = { state: SignerState.ERROR, error }
+                onStatusUpdate()
+                throw error
+              })
           }
         })
       )
@@ -211,11 +205,10 @@ export class Orchestrator {
         if (promise.status === 'rejected') {
           const address = await signer.getAddress()
           console.warn(`signer ${address} rejected the request: ${promise.reason}`)
-          status.signers[address] = { rejected: true, error: `signer ${address} rejected the request: ${promise.reason}` }
-        } else if (!promise.value) {
-          const address = await signer.getAddress()
-          console.warn(`signer ${address} rejected the request`)
-          status.signers[address] = { rejected: true, error: `signer ${address} rejected the request` }
+          status.signers[address] = {
+            state: SignerState.ERROR,
+            error: new Error(`signer ${address} rejected the request: ${promise.reason}`)
+          }
         }
       }
 
