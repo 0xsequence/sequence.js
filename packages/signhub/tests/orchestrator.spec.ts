@@ -1,7 +1,7 @@
 import * as chai from 'chai'
 import { ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
-import { isSignerStatusPending, isSignerStatusRejected, isSignerStatusSigned, Orchestrator, Status } from '../src'
+import { isSignerStatusPending, Orchestrator, SignerState, Status } from '../src'
 import { SapientSigner } from '../src/signers'
 
 const { expect } = chai
@@ -37,7 +37,7 @@ describe('Orchestrator', () => {
           expect(status.signers).to.have.property(signer.address)
           const signerStatus = status.signers[signer.address]
 
-          if (isSignerStatusRejected(signerStatus)) {
+          if (signerStatus.state === SignerState.ERROR) {
             numErrors++
           }
 
@@ -45,7 +45,7 @@ describe('Orchestrator', () => {
             numPending++
           }
 
-          if (isSignerStatusSigned(signerStatus)) {
+          if (signerStatus.state === SignerState.SIGNED) {
             numSignatures++
           }
         }
@@ -140,7 +140,7 @@ describe('Orchestrator', () => {
           expect(status.signers).to.have.property(await signer.getAddress())
           const signerStatus = status.signers[await signer.getAddress()]
 
-          if (isSignerStatusRejected(signerStatus)) {
+          if (signerStatus.state === SignerState.ERROR) {
             numErrors++
           }
 
@@ -148,7 +148,7 @@ describe('Orchestrator', () => {
             numPending++
           }
 
-          if (isSignerStatusSigned(signerStatus)) {
+          if (signerStatus.state === SignerState.SIGNED) {
             numSignatures++
           }
         }
@@ -156,25 +156,25 @@ describe('Orchestrator', () => {
         callbackCallsA++
 
         expect(numErrors).to.be.equal(1)
-        expect(numSignatures).to.be.equal(Math.max(callbackCallsA, 3))
-        expect(numPending).to.be.equal(Math.min(signers.length - callbackCallsA, 0))
+        expect(numSignatures).to.be.equal(2)
+        expect(numPending).to.be.equal(0)
       })
 
       const signature = await orchestrator.signMessage({ message: '0x1234' })
-      expect(Object.keys(signature.signers)).to.have.lengthOf(signers.length)
+      expect(Object.keys(signature.signers)).to.have.lengthOf(2)
 
       for (const signer of signers) {
         const address = await signer.getAddress()
         const status = signature.signers[address]
 
         if (address === (await brokenSigner.getAddress())) {
-          if (isSignerStatusRejected(status)) {
-            expect(status.error).to.contain('This is a broken signer.')
+          if (status.state === SignerState.ERROR) {
+            expect(status.error.message).to.contain('This is a broken signer.')
           } else {
             expect.fail('Signer should be rejected')
           }
         } else {
-          expect(isSignerStatusSigned(status)).to.be.true
+          expect(status.state === SignerState.SIGNED).to.be.true
         }
       }
     })
@@ -223,13 +223,13 @@ describe('Orchestrator', () => {
         const status = signature.signers[address]
 
         if (address === (await rejectSigner.getAddress())) {
-          if (isSignerStatusRejected(status)) {
-            expect(status.error).to.contain('This is a rejected signer.')
+          if (status.state === SignerState.ERROR) {
+            expect(status.error.message).to.contain('This is a rejected signer.')
           } else {
             expect.fail('Signer should be rejected')
           }
         } else {
-          expect(isSignerStatusSigned(status)).to.be.true
+          expect(status.state === SignerState.SIGNED).to.be.true
         }
       }
     })

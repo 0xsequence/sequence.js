@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
-import { isSignerStatusSigned, SignatureOrchestrator, Status } from '@0xsequence/signhub'
+import { SignatureOrchestrator, SignerState, Status } from '@0xsequence/signhub'
 import { Deferrable, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
@@ -37,7 +37,7 @@ const statusToSignatureParts = (status: Status) => {
 
   for (const signer of Object.keys(status.signers)) {
     const value = status.signers[signer]
-    if (isSignerStatusSigned(value)) {
+    if (value.state === SignerState.SIGNED) {
       const suffix = ethers.utils.arrayify(value.suffix)
       const suffixed = ethers.utils.solidityPack(['bytes', 'bytes'], [value.signature, suffix])
 
