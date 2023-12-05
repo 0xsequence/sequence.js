@@ -155,13 +155,7 @@ export class Session {
     if (!referenceChainId) throw Error('No reference chain found')
 
     const foundWallets = await tracker.walletsOfSigner({ signer: referenceSigner })
-
-    let selectedWallet: string | undefined
-    let didSelectWallet = false
-    if (foundWallets.length) {
-      selectedWallet = await selectWallet(foundWallets.map(w => w.wallet))
-      didSelectWallet = true
-    }
+    const selectedWallet = await selectWallet(foundWallets.map(w => w.wallet))
 
     let account: Account
 
@@ -267,9 +261,6 @@ export class Session {
         orchestrator,
         networks
       })
-
-      selectedWallet = await selectWallet([account.address])
-      didSelectWallet = true
 
       // sign a digest and send it to the tracker
       // otherwise the tracker will not know about this account
