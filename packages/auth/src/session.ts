@@ -74,6 +74,7 @@ export class Session {
     settings?: Partial<SessionSettings>
     signer: ethers.Signer | signers.SapientSigner
     selectWallet?: (wallets: string[]) => Promise<string | undefined>
+    onAccountAddress?: (address: string) => void
     onMigration?: (account: Account) => Promise<boolean>
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
   }): Promise<Session> {
@@ -142,11 +143,22 @@ export class Session {
     referenceSigner: string
     threshold?: ethers.BigNumberish
     selectWallet: (wallets: string[]) => Promise<string | undefined>
+    onAccountAddress?: (address: string) => void
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
   }): Promise<Session> {
-    const { referenceSigner, threshold, addSigners, selectWallet, settings, editConfigOnMigration, onMigration, orchestrator } =
-      args
+    const {
+      referenceSigner,
+      threshold,
+      addSigners,
+      selectWallet,
+      onAccountAddress,
+      settings,
+      editConfigOnMigration,
+      onMigration,
+      orchestrator
+    } = args
+
     const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
 
     // The reference network is mainnet, if mainnet is not available, we use the first network
@@ -160,6 +172,8 @@ export class Session {
     let account: Account
 
     if (selectedWallet) {
+      onAccountAddress?.(selectedWallet)
+
       // existing account, lets update it
       account = new Account({
         address: selectedWallet,
@@ -261,6 +275,8 @@ export class Session {
         orchestrator,
         networks
       })
+
+      onAccountAddress?.(account.address)
 
       // sign a digest and send it to the tracker
       // otherwise the tracker will not know about this account
