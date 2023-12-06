@@ -1,5 +1,23 @@
 # @0xsequence/guard
 
+## 1.5.0
+
+### Minor Changes
+
+- signhub: add 'signing' signer status
+
+### Patch Changes
+
+- auth: Session.open: onAccountAddress callback
+- account: allow empty transaction bundles
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/account@1.5.0
+  - @0xsequence/core@1.5.0
+  - @0xsequence/signhub@1.5.0
+  - @0xsequence/utils@1.5.0
+
 ## 1.4.9
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/metadata
 
+## 1.5.0
+
+### Minor Changes
+
+- signhub: add 'signing' signer status
+
+### Patch Changes
+
+- auth: Session.open: onAccountAddress callback
+- account: allow empty transaction bundles
+
 ## 1.4.9
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @0xsequence/deployer
 
+## 1.5.0
+
+### Minor Changes
+
+- signhub: add 'signing' signer status
+
+### Patch Changes
+
+- auth: Session.open: onAccountAddress callback
+- account: allow empty transaction bundles
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/utils@1.5.0
+
 ## 1.4.9
 
 ### Patch Changes
