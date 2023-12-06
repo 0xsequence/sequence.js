@@ -422,7 +422,7 @@ export class Account {
       entrypoint,
       chainId,
       // Intent of the first bundle is used
-      intent: bundles[0].intent,
+      intent: bundles[0]?.intent,
       transactions: [
         ...bootstrapBundle.transactions,
         ...bundles.map(
@@ -440,11 +440,17 @@ export class Account {
 
     // Re-compute the meta-transaction id to use the guest module subdigest
     if (!status.onChain.deployed) {
-      decoratedBundle.intent.id = commons.transaction.subdigestOfGuestModuleTransactions(
+      const id = commons.transaction.subdigestOfGuestModuleTransactions(
         this.contexts[this.version].guestModule,
         chainId,
         decoratedBundle.transactions
       )
+
+      if (decoratedBundle.intent === undefined) {
+        decoratedBundle.intent = { id, wallet: this.address }
+      } else {
+        decoratedBundle.intent.id = id
+      }
     }
 
     return decoratedBundle
@@ -773,10 +779,10 @@ export class Account {
     if (!Array.isArray(signedBundle)) {
       return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback)
     }
-    const status = pstatus || (await this.status(signedBundle[0].chainId))
+    const status = pstatus || (await this.status(chainId))
     this.mustBeFullyMigrated(status)
 
-    const decoratedBundle = await this.decorateTransactions(signedBundle, status)
+    const decoratedBundle = await this.decorateTransactions(signedBundle, status, chainId)
     callback?.(decoratedBundle)
 
     return this.relayer(chainId).relay(decoratedBundle, quote)
@@ -880,11 +886,6 @@ export class Account {
       bundles.push(signed)
     }
     bundles.push(...childBundles.filter(b => b.transactions.length > 0))
-
-    if (bundles.length === 0) {
-      // Nothing to send?
-      return
-    }
 
     return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback)
   }
