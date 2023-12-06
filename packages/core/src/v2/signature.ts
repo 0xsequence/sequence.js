@@ -438,7 +438,7 @@ export function encodeTree(
   if (isSubdigestLeaf(topology)) {
     const include = subdigests.includes(topology.subdigest)
     return {
-      encoded: partEncoder.node(hashNode(topology)),
+      encoded: partEncoder.subdigest(topology.subdigest),
       weight: include ? ethers.constants.MaxUint256 : ethers.constants.Zero
     }
   }
