@@ -368,6 +368,20 @@ export class Wallet<
     return this.relayer.relay(signedBundle, quote)
   }
 
+  // sendTransaction will dispatch the transaction to the relayer for submission to the network
+  // but with a random nonce so that txn from this wallet can be executed in any order,
+  // which allows for parallel transaction submission.
+  async sendParallelTransaction(
+    txs: Deferrable<commons.transaction.Transactionish>,
+    quote?: FeeQuote
+  ): Promise<ethers.providers.TransactionResponse> {
+    // Generate nonce with random space
+    const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
+    const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
+    return this.sendTransaction(txs, randomNonce, quote)
+  }
+
+  // .........
   async sendTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
     nonce?: ethers.BigNumberish,

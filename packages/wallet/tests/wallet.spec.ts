@@ -391,6 +391,103 @@ describe('Wallet (primitive)', () => {
                 expect(await wallet.reader().imageHash(wallet.address)).to.equal(coders.config.imageHashOf(newConfig))
                 expect(await wallet.reader().implementation(wallet.address)).to.not.equal(prevImplentation)
               })
+
+              describe('parallel transactions', async () => {
+                let testAccount: ethers.providers.JsonRpcSigner
+                let testAccountAddress: string
+                let toBalanceBefore: ethers.BigNumber
+
+                beforeEach(async () => {
+                  testAccount = provider.getSigner(5)
+                  testAccountAddress = await testAccount.getAddress()
+  
+                  const ethAmount = ethers.utils.parseEther('100')
+                  const txResp = await testAccount.sendTransaction({
+                    to: await wallet.getAddress(),
+                    value: ethAmount
+                  })
+                  await provider.getTransactionReceipt(txResp.hash)
+                  toBalanceBefore = await provider.getBalance(testAccountAddress)
+                })
+        
+                it('Should send an async transaction', async () => {
+                  const ethAmount = ethers.utils.parseEther('1.0')
+              
+                  const tx: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount
+                  }
+        
+                  await wallet.sendTransaction(tx)
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
+                  const sent = toBalanceAfter.sub(toBalanceBefore)
+                  expect(sent.toString()).to.be.eq(ethAmount.toString())
+                })
+        
+                it('Should send two async transactions at once', async () => {
+                  const ethAmount1 = ethers.utils.parseEther('1.0')
+                  const ethAmount2 = ethers.utils.parseEther('2.0')
+                  const ethAmount3 = ethers.utils.parseEther('5.0')
+              
+                  const tx1: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount1
+                  }
+
+                  const tx2: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount2
+                  }
+
+                  const tx3: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount3
+                  }
+        
+                  // Just to force deployment
+                  const deployWalletTx = {to: ethers.constants.AddressZero}
+                  await wallet.sendTransaction(deployWalletTx)
+        
+                  // Send txns in parallel, but independently
+                  await Promise.all([
+                    wallet.sendTransaction(tx1),
+                    wallet.sendTransaction(tx2),
+                    wallet.sendTransaction(tx3)
+                  ])
+        
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
+                  const sent = toBalanceAfter.sub(toBalanceBefore)
+                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
+                })
+        
+                it('Should send multiple async transactions in one batch, async', async () => {
+                  const ethAmount1 = ethers.utils.parseEther('1.0')
+                  const ethAmount2 = ethers.utils.parseEther('2.0')
+                  const ethAmount3 = ethers.utils.parseEther('5.0')
+
+                  const tx1: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount1
+                  }
+
+                  const tx2: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount2
+                  }
+
+                  const tx3: ethers.providers.TransactionRequest = {
+                    to: testAccountAddress,
+                    value: ethAmount3
+                  }
+
+                  // Send txns in parallel, but independently
+                  await wallet.sendTransaction([tx1, tx2, tx3])
+
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
+                  const sent = toBalanceAfter.sub(toBalanceBefore)
+                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
+                })
+              })
             })
           })
         })
