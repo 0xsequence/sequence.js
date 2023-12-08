@@ -90,11 +90,13 @@ export interface ProviderMessageTransport {
 
 export type WindowSessionParam = 'sid' | 'net' | 'intent'
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface WindowSessionParams extends URLSearchParams {
   get(name: WindowSessionParam): string | null
   set(name: WindowSessionParam, value: string): void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class WindowSessionParams extends URLSearchParams {
   static new(init?: Record<WindowSessionParam, string> | string) {
     return new URLSearchParams(init) as WindowSessionParams
