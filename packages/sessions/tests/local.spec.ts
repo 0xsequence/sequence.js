@@ -148,7 +148,7 @@ describe('Local config tracker', () => {
   let provider: ethers.providers.Web3Provider
 
   before(async () => {
-    provider = new ethers.providers.Web3Provider(hardhat.network.provider.send)
+    provider = new ethers.providers.Web3Provider(hardhat.network.provider as any)
   })
   ;[
     {

@@ -11,7 +11,7 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--loader tsx' mocha -timeout 300000",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha -timeout 300000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat2 > /dev/null'",
     "start:hardhat2": "hardhat node --hostname 0.0.0.0 --port 7047 --config ./hardhat2.config.js",
     "typecheck": "tsc --noEmit"
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@0xsequence/ethauth": "^0.8.1",
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^1.10.0",
+    "@0xsequence/wallet-contracts": "^2.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "ethers": "^5.7.2",
     "web3": "^1.8.1"

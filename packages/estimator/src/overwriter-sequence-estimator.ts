@@ -39,7 +39,7 @@ export class OverwriterSequenceEstimator implements Estimator {
         return a.weight.sub(b.weight).toNumber()
       })
       .filter(s => {
-        if (totalWeight >= config.threshold) {
+        if (totalWeight >= (config.threshold as number)) {
           return false
         } else {
           totalWeight += s.weight.toNumber()

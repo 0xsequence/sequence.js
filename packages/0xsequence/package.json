@@ -10,7 +10,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
-    "test:run": "NODE_OPTIONS='--loader tsx' ava --serial --fail-fast --timeout 5m",
+    "test:run": "NODE_OPTIONS='--import tsx' ava --serial --fail-fast --timeout 5m",
     "test:only": "pnpm test:run --match",
     "test:watch": "pnpm test:run --watch",
     "test:server": "webpack serve --config tests/webpack.config.js",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^1.10.0",
+    "@0xsequence/wallet-contracts": "^2.0.0",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
     "ethers": "^5.7.2",
