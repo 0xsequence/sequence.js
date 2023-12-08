@@ -29,6 +29,7 @@
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*",
     "@0xsequence/wallet": "workspace:*",
+    "@databeat/tracker": "^0.7.0",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill": "^0.10.0"
   },
@@ -37,8 +38,8 @@
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
-    "hardhat": "^2.12.2",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "hardhat": "^2.12.2"
   },
   "files": [
     "src",

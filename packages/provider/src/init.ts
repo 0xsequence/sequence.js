@@ -17,7 +17,7 @@ import { SequenceProvider } from './provider'
 
 export interface ProviderConfig {
   // Access key for the project that can be obtained from Sequence Builder on sequence.build
-  projectAccessKey?: string
+  projectAccessKey: string
 
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
@@ -43,6 +43,9 @@ export interface ProviderConfig {
 
   // transports for dapp to wallet jron-rpc communication
   transports?: MuxTransportTemplate
+
+  // analytics .... (default: true)
+  analytics?: boolean
 }
 
 export const DefaultProviderConfig = {
@@ -52,17 +55,14 @@ export const DefaultProviderConfig = {
     proxyTransport: { enabled: false }
   },
 
-  defaultNetwork: 1
+  defaultNetwork: 1,
+  analytics: true
 }
 
 let sequenceWalletProvider: SequenceProvider | undefined
 
 export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
   const projectAccessKey = partialConfig?.projectAccessKey
-
-  if (!projectAccessKey) {
-    console.warn('Please pass a projectAccessKey in initWallet config as it will be required in near future.')
-  }
 
   if (sequenceWalletProvider) {
     return sequenceWalletProvider
@@ -137,9 +137,10 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
     itemStore,
     {
       defaultChainId: defaultNetwork,
-      defaultEIP6492: config.defaultEIP6492
-    },
-    projectAccessKey
+      defaultEIP6492: config.defaultEIP6492,
+      projectAccessKey: projectAccessKey,
+      analytics: partialConfig?.analytics
+    }
   )
 
   sequenceWalletProvider = new SequenceProvider(client, providerForChainId)

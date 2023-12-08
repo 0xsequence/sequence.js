@@ -117,6 +117,8 @@ export class DefaultChainIdTracker {
 export type SequenceClientOptions = {
   defaultChainId?: number
   defaultEIP6492?: boolean
+  projectAccessKey?: string
+  analytics?: boolean
 }
 
 /**
@@ -135,12 +137,13 @@ export class SequenceClient {
   public readonly transport: ProviderTransport
 
   public readonly defaultEIP6492: boolean
+  public readonly projectAccessKey?: string
+  public readonly analytics?: boolean
 
   constructor(
     transport: ProviderTransport | MuxTransportTemplate,
     store: ItemStore,
-    options?: SequenceClientOptions | number,
-    public projectAccessKey?: string
+    options?: SequenceClientOptions | number
   ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
@@ -323,6 +326,7 @@ export class SequenceClient {
       }
     }
 
+    // TODO: projectAccessKey ......???
     await this.openWallet(undefined, {
       type: 'connect',
       options: { ...options, networkId: this.getChainId(), clientVersion: packageJson.version }
