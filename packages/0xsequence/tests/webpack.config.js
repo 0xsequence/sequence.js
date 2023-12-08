@@ -119,7 +119,7 @@ module.exports = {
         options: {
           presets: ['@babel/preset-typescript'],
           plugins: [
-            [require.resolve('@babel/plugin-proposal-class-properties'), { loose: true }]
+            [require.resolve('@babel/plugin-transform-class-properties'), { loose: true }]
           ],
           cacheCompression: false,
           compact: false,
