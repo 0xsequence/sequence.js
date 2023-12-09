@@ -418,7 +418,7 @@ describe('Wallet (primitive)', () => {
                     value: ethAmount
                   }
         
-                  await wallet.sendParallelTransaction(tx)
+                  await wallet.sendTransaction(tx)
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
                   expect(sent.toString()).to.be.eq(ethAmount.toString())
@@ -446,9 +446,9 @@ describe('Wallet (primitive)', () => {
                 
                   // Send txns in parallel, but independently
                   await Promise.all([
-                    wallet.sendParallelTransaction(tx1),
-                    wallet.sendParallelTransaction(tx2),
-                    wallet.sendParallelTransaction(tx3)
+                    wallet.sendTransaction(tx1),
+                    wallet.sendTransaction(tx2),
+                    wallet.sendTransaction(tx3)
                   ])
         
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
@@ -477,7 +477,7 @@ describe('Wallet (primitive)', () => {
                   }
 
                   // Send txns in parallel, but independently
-                  await wallet.sendParallelTransaction([tx1, tx2, tx3])
+                  await wallet.sendTransaction([tx1, tx2, tx3])
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)

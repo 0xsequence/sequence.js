@@ -371,18 +371,24 @@ export class Wallet<
   // sendTransaction will dispatch the transaction to the relayer for submission to the network
   // but with a random nonce so that txn from this wallet can be executed in any order,
   // which allows for parallel transaction submission.
-  async sendParallelTransaction(
+  //
+  // The send a transaction in serial, see the sendSerialTransaction method.
+  async sendTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
     quote?: FeeQuote
   ): Promise<ethers.providers.TransactionResponse> {
     // Generate nonce with random space
     const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
     const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
-    return this.sendTransaction(txs, randomNonce, quote)
+    return this.sendSerialTransaction(txs, randomNonce, quote)
   }
 
-  // .........
-  async sendTransaction(
+  // sendSerialTransaction will dispatch the transaction to the relayer for submission to the network
+  // with the given nonce, which allows for serial transaction submission.
+  //
+  // This is essentially the standard transaction mining model, where one transaction
+  // nonces must be ordered and mined in serially.
+  async sendSerialTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
     nonce?: ethers.BigNumberish,
     quote?: FeeQuote
