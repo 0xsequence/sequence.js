@@ -872,7 +872,8 @@ export class Account {
     skipPreDecorate: boolean = false,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
     options?: {
-      nonceSpace?: ethers.BigNumberish
+      nonceSpace?: ethers.BigNumberish,
+      serial?: boolean
     }
   ): Promise<ethers.providers.TransactionResponse | undefined> {
     const status = await this.status(chainId)
