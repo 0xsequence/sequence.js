@@ -6,7 +6,6 @@ import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
 import { resolveArrayProperties } from './utils'
-import { WalletSignRequestMetadata } from '@0xsequence/core/src/commons'
 
 export type WalletOptions<
   T extends commons.signature.Signature<Y>,
@@ -299,14 +298,20 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async fetchNonceOrSpace(nonce?: ethers.BigNumberish | { space: ethers.BigNumberish }): Promise<ethers.BigNumberish> {
+  async fetchNonceOrSpace(nonce?: ethers.BigNumberish | { space: ethers.BigNumberish } | { serial: boolean }): Promise<ethers.BigNumberish> {
     let spaceValue
 
-    if (nonce && (nonce as any).space) {
+    if (nonce && (nonce as any).space !== undefined) {
+      // specified nonce "space"
       spaceValue = ethers.BigNumber.from((nonce as any).space)
     } else if (nonce === undefined) {
+      // default is random, aka parallel
+      return this.randomNonce()
+    } else if (nonce && (nonce as any).serial === true) {
+      // next nonce determined from the chain
       spaceValue = 0
     } else {
+      // specific nonce is used
       return nonce as ethers.BigNumberish
     }
 
@@ -315,9 +320,16 @@ export class Wallet<
     return commons.transaction.encodeNonce(spaceValue, resultNonce)
   }
 
+  // Generate nonce with random space
+  randomNonce(): ethers.BigNumberish {
+    const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
+    const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
+    return randomNonce
+  }  
+
   async signTransactions(
     txs: Deferrable<commons.transaction.Transactionish>,
-    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish },
+    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish } | { serial: boolean },
     metadata?: object
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
@@ -368,34 +380,36 @@ export class Wallet<
     return this.relayer.relay(signedBundle, quote)
   }
 
-  // sendTransaction will dispatch the transaction to the relayer for submission to the network
-  // but with a random nonce so that txn from this wallet can be executed in any order,
-  // which allows for parallel transaction submission.
+  // sendTransaction will dispatch the transaction to the relayer for submission to the network.
+  // This method is able to send transactions in serial or parallel (default). You can specify
+  // a specific nonce, or let the wallet determine the next nonce on-chain (serial:true).
   //
-  // The send a transaction in serial, see the sendSerialTransaction method.
+  // By default, nonces are generated randomly and assigned so transactioned can be executed
+  // in parallel. However, if you'd like to execute serially, pass { serial: true } as an option.
   async sendTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
-    quote?: FeeQuote
+    options?: {
+      quote?: FeeQuote,
+      nonce?: ethers.BigNumberish,
+      serial?: boolean
+    }
   ): Promise<ethers.providers.TransactionResponse> {
-    // Generate nonce with random space
-    const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
-    const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
-    return this.sendSerialTransaction(txs, randomNonce, quote)
-  }
+    let nonce: ethers.BigNumberish
+    if (options?.nonce !== undefined) {
+      // specific nonce is used
+      nonce = options.nonce
+    } else if (options?.serial) {
+      // next nonce on wallet is used and detected on-chain
+      nonce = 0
+    } else {
+      // default is random, aka parallel
+      nonce = this.randomNonce()
+    }
 
-  // sendSerialTransaction will dispatch the transaction to the relayer for submission to the network
-  // with the given nonce, which allows for serial transaction submission.
-  //
-  // This is essentially the standard transaction mining model, where one transaction
-  // nonces must be ordered and mined in serially.
-  async sendSerialTransaction(
-    txs: Deferrable<commons.transaction.Transactionish>,
-    nonce?: ethers.BigNumberish,
-    quote?: FeeQuote
-  ): Promise<ethers.providers.TransactionResponse> {
     const signed = await this.signTransactions(txs, nonce)
     const decorated = await this.decorateTransactions(signed)
-    return this.sendSignedTransaction(decorated, quote)
+    return this.sendSignedTransaction(decorated, options?.quote)
+
   }
 
   async fillGasLimits(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SimulatedTransaction[]> {

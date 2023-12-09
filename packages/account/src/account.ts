@@ -668,7 +668,8 @@ export class Account {
     chainId: ethers.BigNumberish,
     pstatus?: AccountStatus,
     options?: {
-      nonceSpace?: ethers.BigNumberish
+      nonceSpace?: ethers.BigNumberish,
+      serial?: boolean
     }
   ): Promise<commons.transaction.SignedTransactionBundle> {
     const status = pstatus || (await this.status(chainId))
@@ -685,7 +686,8 @@ export class Account {
       cantValidateBehavior: 'ignore'
     }
 
-    const signed = await wallet.signTransactions(txs, options?.nonceSpace && { space: options?.nonceSpace }, metadata)
+    const nonceOptions = options?.nonceSpace && { space: options?.nonceSpace, serial: options?.serial }
+    const signed = await wallet.signTransactions(txs, nonceOptions, metadata)
 
     return {
       ...signed,
