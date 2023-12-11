@@ -1,5 +1,15 @@
 # @0xsequence/metadata
 
+## 1.6.0
+
+### Minor Changes
+
+- account, wallet: parallel transactions by default
+
+### Patch Changes
+
+- provider: emit disconnect on sign out
+
 ## 1.5.0
 
 ### Minor Changes

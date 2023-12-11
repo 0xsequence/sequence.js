@@ -1,5 +1,23 @@
 # @0xsequence/wallet
 
+## 1.6.0
+
+### Minor Changes
+
+- account, wallet: parallel transactions by default
+
+### Patch Changes
+
+- provider: emit disconnect on sign out
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.6.0
+  - @0xsequence/core@1.6.0
+  - @0xsequence/network@1.6.0
+  - @0xsequence/relayer@1.6.0
+  - @0xsequence/signhub@1.6.0
+  - @0xsequence/utils@1.6.0
+
 ## 1.5.0
 
 ### Minor Changes
