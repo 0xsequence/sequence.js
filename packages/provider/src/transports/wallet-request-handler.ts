@@ -815,6 +815,14 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   setAccount(account: Account | null | undefined) {
+    if (account === this.account) {
+      return
+    }
+
+    if (this.account) {
+      this.notifyDisconnect()
+    }
+
     this.account = account
 
     if (account !== undefined) {
