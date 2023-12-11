@@ -110,6 +110,10 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   signOut() {
+    if (this.account) {
+      this.notifyDisconnect()
+    }
+
     // signed out state
     this.setAccount(null)
   }
