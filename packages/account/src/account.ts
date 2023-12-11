@@ -668,7 +668,7 @@ export class Account {
     chainId: ethers.BigNumberish,
     pstatus?: AccountStatus,
     options?: {
-      nonceSpace?: ethers.BigNumberish,
+      nonceSpace?: ethers.BigNumberish
       serial?: boolean
     }
   ): Promise<commons.transaction.SignedTransactionBundle> {
@@ -872,7 +872,7 @@ export class Account {
     skipPreDecorate: boolean = false,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
     options?: {
-      nonceSpace?: ethers.BigNumberish,
+      nonceSpace?: ethers.BigNumberish
       serial?: boolean
     }
   ): Promise<ethers.providers.TransactionResponse | undefined> {

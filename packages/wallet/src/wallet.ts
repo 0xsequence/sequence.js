@@ -298,7 +298,9 @@ export class Wallet<
     return this.signTransactions(bundle.transactions, bundle.nonce)
   }
 
-  async fetchNonceOrSpace(nonce?: ethers.BigNumberish | { space: ethers.BigNumberish } | { serial: boolean }): Promise<ethers.BigNumberish> {
+  async fetchNonceOrSpace(
+    nonce?: ethers.BigNumberish | { space: ethers.BigNumberish } | { serial: boolean }
+  ): Promise<ethers.BigNumberish> {
     let spaceValue
 
     if (nonce && (nonce as any).space !== undefined) {
@@ -325,7 +327,7 @@ export class Wallet<
     const randomNonceSpace = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(20)))
     const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
     return randomNonce
-  }  
+  }
 
   async signTransactions(
     txs: Deferrable<commons.transaction.Transactionish>,
@@ -389,8 +391,8 @@ export class Wallet<
   async sendTransaction(
     txs: Deferrable<commons.transaction.Transactionish>,
     options?: {
-      quote?: FeeQuote,
-      nonce?: ethers.BigNumberish,
+      quote?: FeeQuote
+      nonce?: ethers.BigNumberish
       serial?: boolean
     }
   ): Promise<ethers.providers.TransactionResponse> {
@@ -409,7 +411,6 @@ export class Wallet<
     const signed = await this.signTransactions(txs, nonce)
     const decorated = await this.decorateTransactions(signed)
     return this.sendSignedTransaction(decorated, options?.quote)
-
   }
 
   async fillGasLimits(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SimulatedTransaction[]> {

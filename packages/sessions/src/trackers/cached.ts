@@ -35,8 +35,8 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
             ? result1
             : result2
           : result1.length < result2.length
-          ? result1
-          : result2
+            ? result1
+            : result2
     } else {
       // Otherwise we need to check the checkpoints
       // this requires us to fetch the config for each image hash
