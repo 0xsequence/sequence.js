@@ -1,5 +1,24 @@
 # @0xsequence/account
 
+## 1.6.1
+
+### Patch Changes
+
+- core: add simple config from subdigest support
+- core: fix encode tree with subdigest
+- account: implement buildOnChainSignature on Account
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.6.1
+  - @0xsequence/core@1.6.1
+  - @0xsequence/migration@1.6.1
+  - @0xsequence/network@1.6.1
+  - @0xsequence/relayer@1.6.1
+  - @0xsequence/sessions@1.6.1
+  - @0xsequence/utils@1.6.1
+  - @0xsequence/wallet@1.6.1
+
 ## 1.6.0
 
 ### Minor Changes
