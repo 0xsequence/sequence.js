@@ -200,6 +200,15 @@ jobs:
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter utils test
 
+  tests-waas:
+    name: Run waas tests
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/install-dependencies
+      - run: pnpm --filter waas test
+
   tests-wallet:
     name: Run wallet tests
     runs-on: ubuntu-latest
