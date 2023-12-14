@@ -72,13 +72,18 @@ export class Session {
 
   static async singleSigner(args: {
     settings?: Partial<SessionSettings>
-    signer: ethers.Signer | signers.SapientSigner
+    signer: ethers.Signer | signers.SapientSigner | string
     selectWallet?: (wallets: string[]) => Promise<string | undefined>
     onAccountAddress?: (address: string) => void
     onMigration?: (account: Account) => Promise<boolean>
-    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
+    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config,
+    projectAccessKey: string
   }): Promise<Session> {
-    const { signer } = args
+    let { signer } = args
+
+    if (typeof signer === 'string') {
+      signer = new ethers.Wallet(signer)
+    }
 
     const orchestrator = new Orchestrator([signer])
     const referenceSigner = await signer.getAddress()
@@ -145,7 +150,8 @@ export class Session {
     selectWallet: (wallets: string[]) => Promise<string | undefined>
     onAccountAddress?: (address: string) => void
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
-    onMigration?: (account: Account) => Promise<boolean>
+    onMigration?: (account: Account) => Promise<boolean>,
+    projectAccessKey?: string
   }): Promise<Session> {
     const {
       referenceSigner,
@@ -156,7 +162,8 @@ export class Session {
       settings,
       editConfigOnMigration,
       onMigration,
-      orchestrator
+      orchestrator,
+      projectAccessKey
     } = args
 
     const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
@@ -180,7 +187,8 @@ export class Session {
         tracker,
         networks,
         contexts,
-        orchestrator
+        orchestrator,
+        projectAccessKey
       })
 
       // Get the latest configuration of the wallet (on the reference chain)
