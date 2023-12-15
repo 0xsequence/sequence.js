@@ -760,7 +760,7 @@ describe('SequenceSigner', () => {
         name: 'Sequence',
         version: '1',
         chainId: 31337,
-        verifyingContract: ethers.utils.hexlify(ethers.utils.randomBytes(20))
+        verifyingContract: ethers.utils.hexlify(ethers.utils.randomBytes(12))
       }
       expectedTypes = {
         EIP712Domain: [
@@ -778,7 +778,7 @@ describe('SequenceSigner', () => {
       }
       expectedMessage = {
         nonce: 1,
-        from: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+        from: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
         to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
         data: ethers.utils.hexlify(ethers.utils.randomBytes(32))
       }
@@ -905,7 +905,7 @@ describe('SequenceSigner', () => {
       callsToSendTransaction = 0
 
       expectedTransactionRequest = {
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+        to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
         value: ethers.utils.parseEther('1.0'),
         data: ethers.utils.hexlify(ethers.utils.randomBytes(55)),
         gasLimit: 40000
@@ -1000,16 +1000,16 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       expectedTransactionRequest = [
         {
-          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
           value: ethers.utils.parseEther('1.0'),
           data: ethers.utils.hexlify(ethers.utils.randomBytes(55))
         },
         {
-          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
           data: ethers.utils.hexlify(ethers.utils.randomBytes(1))
         },
         {
-          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
           value: 2
         }
       ]
@@ -1023,7 +1023,7 @@ describe('SequenceSigner', () => {
     it('shoud send deffered transaction', async () => {
       expectedOptions = { chainId: 31338 }
       const expected = {
-        to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+        to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
         value: ethers.utils.parseEther('1.0').toString()
       }
 
@@ -1049,11 +1049,11 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const expected = [
         {
-          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
           value: ethers.utils.parseEther('1.0').toString()
         },
         {
-          to: ethers.utils.hexlify(ethers.utils.randomBytes(20)),
+          to: ethers.utils.hexlify(ethers.utils.randomBytes(12)),
           data: ethers.utils.hexlify(ethers.utils.randomBytes(111))
         }
       ]
