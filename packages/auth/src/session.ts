@@ -76,7 +76,7 @@ export class Session {
     selectWallet?: (wallets: string[]) => Promise<string | undefined>
     onAccountAddress?: (address: string) => void
     onMigration?: (account: Account) => Promise<boolean>
-    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config,
+    editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
     projectAccessKey: string
   }): Promise<Session> {
     let { signer } = args
@@ -150,7 +150,7 @@ export class Session {
     selectWallet: (wallets: string[]) => Promise<string | undefined>
     onAccountAddress?: (address: string) => void
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config
-    onMigration?: (account: Account) => Promise<boolean>,
+    onMigration?: (account: Account) => Promise<boolean>
     projectAccessKey?: string
   }): Promise<Session> {
     const {
@@ -281,7 +281,8 @@ export class Session {
         tracker,
         contexts,
         orchestrator,
-        networks
+        networks,
+        projectAccessKey
       })
 
       onAccountAddress?.(account.address)

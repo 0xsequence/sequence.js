@@ -132,6 +132,7 @@ export class Account {
     orchestrator: SignatureOrchestrator
     networks: NetworkConfig[]
     migrations?: migrator.Migrations
+    projectAccessKey?: string
   }): Promise<Account> {
     const mig = new migrator.Migrator(options.tracker, options.migrations ?? defaults.DefaultMigrations, options.contexts)
 
@@ -151,7 +152,8 @@ export class Account {
       contexts: options.contexts,
       networks: options.networks,
       orchestrator: options.orchestrator,
-      migrations: options.migrations
+      migrations: options.migrations,
+      projectAccessKey: options.projectAccessKey
     })
   }
 
