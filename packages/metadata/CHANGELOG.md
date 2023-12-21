@@ -1,5 +1,12 @@
 # @0xsequence/metadata
 
+## 1.6.2
+
+### Patch Changes
+
+- auth: projectAccessKey option
+- wallet: use 12 bytes for random space
+
 ## 1.6.1
 
 ### Patch Changes

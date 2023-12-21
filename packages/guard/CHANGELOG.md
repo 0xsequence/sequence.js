@@ -1,5 +1,18 @@
 # @0xsequence/guard
 
+## 1.6.2
+
+### Patch Changes
+
+- auth: projectAccessKey option
+- wallet: use 12 bytes for random space
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/account@1.6.2
+  - @0xsequence/core@1.6.2
+  - @0xsequence/signhub@1.6.2
+  - @0xsequence/utils@1.6.2
+
 ## 1.6.1
 
 ### Patch Changes

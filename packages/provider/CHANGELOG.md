@@ -1,5 +1,23 @@
 # @0xsequence/provider
 
+## 1.6.2
+
+### Patch Changes
+
+- auth: projectAccessKey option
+- wallet: use 12 bytes for random space
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.6.2
+  - @0xsequence/account@1.6.2
+  - @0xsequence/auth@1.6.2
+  - @0xsequence/core@1.6.2
+  - @0xsequence/migration@1.6.2
+  - @0xsequence/network@1.6.2
+  - @0xsequence/relayer@1.6.2
+  - @0xsequence/utils@1.6.2
+  - @0xsequence/wallet@1.6.2
+
 ## 1.6.1
 
 ### Patch Changes
