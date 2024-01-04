@@ -9,7 +9,6 @@ export enum EventType {
 
   // SIGN_MESSAGE
   // SEND_TRANSACTION ......
-  // props...? from the dapp, etc...... prob pass the "origin".....
 }
 
 export type EventTypes = keyof typeof EventType
