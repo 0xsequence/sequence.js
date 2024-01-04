@@ -17,6 +17,7 @@ import {
 import { commons } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
+import { Analytics, setupAnalytics } from './analytics'
 import { ethers } from 'ethers'
 
 import packageJson from '../package.json'
@@ -138,12 +139,12 @@ export class SequenceClient {
 
   public readonly defaultEIP6492: boolean
   public readonly projectAccessKey?: string
-  public readonly analytics?: boolean
+  public readonly analytics?: Analytics
 
   constructor(
     transport: ProviderTransport | MuxTransportTemplate,
     store: ItemStore,
-    options?: SequenceClientOptions | number
+    options?: SequenceClientOptions
   ) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
@@ -209,6 +210,13 @@ export class SequenceClient {
       const chainIdHex = ethers.utils.hexValue(chainId)
       this.callbacks.chainChanged?.forEach(cb => cb(chainIdHex))
     })
+
+    if (options?.projectAccessKey) {
+      this.projectAccessKey = options.projectAccessKey
+    }
+    if (this.projectAccessKey && options?.analytics) {
+      this.analytics = setupAnalytics(this.projectAccessKey, '')
+    }
   }
 
   // Callbacks
@@ -326,7 +334,6 @@ export class SequenceClient {
       }
     }
 
-    // TODO: projectAccessKey ......???
     await this.openWallet(undefined, {
       type: 'connect',
       options: { ...options, networkId: this.getChainId(), clientVersion: packageJson.version }
