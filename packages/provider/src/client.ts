@@ -215,7 +215,9 @@ export class SequenceClient {
       this.projectAccessKey = options.projectAccessKey
     }
     if (this.projectAccessKey && options?.analytics) {
-      this.analytics = setupAnalytics(this.projectAccessKey, '')
+      this.analytics = setupAnalytics(this.projectAccessKey)
+    } else {
+      this.analytics = setupAnalytics('') // noop analytics
     }
   }
 
