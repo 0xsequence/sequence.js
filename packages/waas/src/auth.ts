@@ -18,7 +18,8 @@ import {
   SendIntentPayload,
   ListSessionsPayload,
   DropSessionPayload,
-  SendIntentReturn
+  SendIntentReturn,
+  ChainListReturn
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
@@ -487,5 +488,9 @@ export class Sequence {
   async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isMaySentTransactionResponse)
+  }
+
+  async chainList(): Promise<ChainListReturn> {
+    return this.client.chainList()
   }
 }
