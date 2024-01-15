@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.6.3
+
+### Patch Changes
+
+- network list update
+- Updated dependencies
+  - @0xsequence/core@1.6.3
+
 ## 1.6.2
 
 ### Patch Changes

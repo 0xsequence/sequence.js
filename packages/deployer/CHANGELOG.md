@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.6.3
+
+### Patch Changes
+
+- network list update
+- Updated dependencies
+  - @0xsequence/utils@1.6.3
+
 ## 1.6.2
 
 ### Patch Changes
