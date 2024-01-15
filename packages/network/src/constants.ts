@@ -350,8 +350,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Base Sepolia Explorer',
       rootUrl: 'https://base-sepolia.blockscout.com/'
-    },
-    deprecated: true
+    }
   },
   [ChainId.HOMEVERSE]: {
     chainId: ChainId.HOMEVERSE,
