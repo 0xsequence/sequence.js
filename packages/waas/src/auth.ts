@@ -34,8 +34,6 @@ import { SignMessageArgs } from './payloads/packets/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { TEMPLATE_LOCAL } from './defaults'
 import { EmailAuth } from './email'
-import { base64 } from "ethers/lib/utils";
-import { BigNumber } from "ethers";
 
 export type Sessions = (Session & { isThis: boolean })[]
 
