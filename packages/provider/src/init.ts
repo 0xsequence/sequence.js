@@ -63,8 +63,7 @@ let sequenceWalletProvider: SequenceProvider | undefined
  * @throws Error if projectAccessKey is not provided, empty string or is not string.
  */
 export const initWallet = (projectAccessKey: string, partialConfig?: Partial<ProviderConfig>) => {
-  if (!projectAccessKey || projectAccessKey === '' || typeof projectAccessKey !== 'string') {
-    console.error('Please pass a projectAccessKey in initWallet. (You can get one on sequence.build)')
+  if (!projectAccessKey || typeof projectAccessKey !== 'string') {
     throw new Error('Please pass a projectAccessKey in initWallet.')
   }
 
