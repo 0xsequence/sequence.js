@@ -40,6 +40,7 @@ import { BigNumber } from "ethers";
 export type Sessions = (Session & { isThis: boolean })[]
 
 export type SequenceExplicitConfig = {
+  projectId: number
   accessKey: string
 
   emailClientId?: string
@@ -108,6 +109,10 @@ export function defaultArgsOrFail(
 
   if (preconfig.network === undefined) {
     preconfig.network = 1
+  }
+
+  if (preconfig.projectId === undefined) {
+    throw new Error('Missing project id')
   }
 
   if (preconfig.accessKey === undefined) {
@@ -290,12 +295,8 @@ export class Sequence {
 
     await this.saveCypherKey(kmsClient)
 
-    const projectId = BigNumber.from(
-        base64.decode(this.config.accessKey).slice(-8)
-    )
-
     const payload: RegisterSessionPayload = {
-      projectId: projectId.toNumber(),
+      projectId: this.config.projectId,
       idToken: creds.idToken,
       sessionAddress: waaspayload.packet.session,
       friendlyName: name,
