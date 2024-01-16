@@ -1,5 +1,23 @@
 # @0xsequence/signhub
 
+## 1.6.3
+
+### Patch Changes
+
+- network list update
+- Updated dependencies
+  - @0xsequence/core@1.6.3
+
+## 1.6.2
+
+### Patch Changes
+
+- auth: projectAccessKey option
+- wallet: use 12 bytes for random space
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.6.2
+
 ## 1.6.1
 
 ### Patch Changes

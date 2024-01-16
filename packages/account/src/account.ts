@@ -57,6 +57,9 @@ export type AccountOptions = {
 
   // Jwt
   jwt?: string
+
+  // Project access key
+  projectAccessKey?: string
 }
 
 export interface PreparedTransactions {
@@ -102,6 +105,8 @@ export class Account {
 
   private jwt?: string
 
+  private projectAccessKey?: string
+
   constructor(options: AccountOptions) {
     this.address = ethers.utils.getAddress(options.address)
 
@@ -110,6 +115,7 @@ export class Account {
     this.networks = options.networks
     this.orchestrator = options.orchestrator
     this.jwt = options.jwt
+    this.projectAccessKey = options.projectAccessKey
 
     this.migrations = options.migrations || defaults.DefaultMigrations
     this.migrator = new migrator.Migrator(options.tracker, this.migrations, this.contexts)
@@ -126,6 +132,7 @@ export class Account {
     orchestrator: SignatureOrchestrator
     networks: NetworkConfig[]
     migrations?: migrator.Migrations
+    projectAccessKey?: string
   }): Promise<Account> {
     const mig = new migrator.Migrator(options.tracker, options.migrations ?? defaults.DefaultMigrations, options.contexts)
 
@@ -145,7 +152,8 @@ export class Account {
       contexts: options.contexts,
       networks: options.networks,
       orchestrator: options.orchestrator,
-      migrations: options.migrations
+      migrations: options.migrations,
+      projectAccessKey: options.projectAccessKey
     })
   }
 
@@ -181,7 +189,7 @@ export class Account {
     if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
     return (
       found.provider ||
-      new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, undefined, this.jwt), {
+      new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, this.projectAccessKey, this.jwt), {
         name: '',
         chainId: ethers.BigNumber.from(chainId).toNumber()
       })
@@ -200,7 +208,7 @@ export class Account {
     const found = this.network(chainId)
     if (!found.relayer) throw new Error(`Relayer not found for chainId ${chainId}`)
     if (isRelayer(found.relayer)) return found.relayer
-    return new RpcRelayer({ ...found.relayer, jwtAuth: this.jwt })
+    return new RpcRelayer({ ...found.relayer, projectAccessKey: this.projectAccessKey, jwtAuth: this.jwt })
   }
 
   setOrchestrator(orchestrator: SignatureOrchestrator) {

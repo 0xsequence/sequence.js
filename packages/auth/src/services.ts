@@ -57,14 +57,19 @@ export class Services {
   private metadataClient: SequenceMetadata | undefined
   private indexerClients: Map<number, Indexer> = new Map()
 
+  private projectAccessKey?: string
+
   constructor(
     public readonly account: Account,
     public readonly settings: ServicesSettings,
     public readonly status: {
       jwt?: SessionJWTPromise
       metadata?: SessionMeta
-    } = {}
-  ) {}
+    } = {},
+    projectAccessKey?: string
+  ) {
+    this.projectAccessKey = projectAccessKey
+  }
 
   private now(): number {
     return Math.floor(Date.now() / 1000)
@@ -204,10 +209,13 @@ export class Services {
       // TODO: Modify ETHAuth so it can take a provider instead of a url
       // -----
       // Can't pass jwt here since this is used for getting the jwt
-      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
-        name: '',
-        chainId: chainId.toNumber()
-      })
+      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(
+        getEthersConnectionInfo(network.rpcUrl, this.projectAccessKey),
+        {
+          name: '',
+          chainId: chainId.toNumber()
+        }
+      )
 
       await ethAuth.decodeProof(proofString)
 
@@ -289,10 +297,13 @@ export class Services {
     // TODO: Modify ETHAuth so it can take a provider instead of a url
     // -----
     // Can't pass jwt here since this is used for getting the jwt
-    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(network.rpcUrl), {
-      name: '',
-      chainId: chainId.toNumber()
-    })
+    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(
+      getEthersConnectionInfo(network.rpcUrl, this.projectAccessKey),
+      {
+        name: '',
+        chainId: chainId.toNumber()
+      }
+    )
 
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 
