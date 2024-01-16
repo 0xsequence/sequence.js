@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 1.6.3
+
+### Patch Changes
+
+- network list update
+- Updated dependencies
+  - @0xsequence/abi@1.6.3
+  - @0xsequence/core@1.6.3
+  - @0xsequence/migration@1.6.3
+  - @0xsequence/network@1.6.3
+  - @0xsequence/relayer@1.6.3
+  - @0xsequence/sessions@1.6.3
+  - @0xsequence/utils@1.6.3
+  - @0xsequence/wallet@1.6.3
+
 ## 1.6.2
 
 ### Patch Changes
