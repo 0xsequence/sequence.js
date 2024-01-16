@@ -34,12 +34,14 @@ import { SignMessageArgs } from './payloads/packets/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { TEMPLATE_LOCAL } from './defaults'
 import { EmailAuth } from './email'
+import { base64 } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
 
 export type Sessions = (Session & { isThis: boolean })[]
 
 export type SequenceExplicitConfig = {
-  secret: string
-  tenant: number
+  projectId: number
+  accessKey: string
 
   emailClientId?: string
   identityPoolId: string
@@ -109,12 +111,12 @@ export function defaultArgsOrFail(
     preconfig.network = 1
   }
 
-  if (preconfig.tenant === undefined) {
-    throw new Error('Missing tenant')
+  if (preconfig.projectId === undefined) {
+    throw new Error('Missing project id')
   }
 
-  if (preconfig.secret === undefined) {
-    throw new Error('Missing secret')
+  if (preconfig.accessKey === undefined) {
+    throw new Error('Missing access key')
   }
 
   if (preconfig.identityPoolId === undefined) {
@@ -255,8 +257,7 @@ export class Sequence {
 
     return {
       headers: {
-        'X-Sequence-Tenant': this.config.tenant
-        // 'X-Sequence-Secret': this.config.secret,
+        'X-Access-Key': this.config.accessKey
       },
       args: { encryptedPayloadKey, payloadCiphertext, payloadSig }
     }
@@ -295,7 +296,7 @@ export class Sequence {
     await this.saveCypherKey(kmsClient)
 
     const payload: RegisterSessionPayload = {
-      projectId: this.config.tenant,
+      projectId: this.config.projectId,
       idToken: creds.idToken,
       sessionAddress: waaspayload.packet.session,
       friendlyName: name,
