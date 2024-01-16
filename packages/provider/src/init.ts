@@ -16,9 +16,6 @@ import { SequenceClient } from './client'
 import { SequenceProvider } from './provider'
 
 export interface ProviderConfig {
-  // Access key for the project that can be obtained from Sequence Builder on sequence.build
-  projectAccessKey?: string
-
   // The local storage dependency for the wallet provider, defaults to window.localStorage.
   // For example, this option should be used when using React Native since window.localStorage is not available.
   localStorage?: ItemStore
@@ -57,11 +54,17 @@ export const DefaultProviderConfig = {
 
 let sequenceWalletProvider: SequenceProvider | undefined
 
-export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
-  const projectAccessKey = partialConfig?.projectAccessKey
-
-  if (!projectAccessKey) {
-    console.warn('Please pass a projectAccessKey in initWallet config as it will be required in near future.')
+/**
+ * Initializes a wallet with the provided project access key and optional configuration.
+ *
+ * @param projectAccessKey - Access key for the project that can be obtained from Sequence Builder on sequence.build
+ * @param partialConfig - Optional partial configuration for the wallet.
+ * @returns The initialized wallet provider.
+ * @throws Error if projectAccessKey is not provided, empty string or is not string.
+ */
+export const initWallet = (projectAccessKey: string, partialConfig?: Partial<ProviderConfig>) => {
+  if (!projectAccessKey || typeof projectAccessKey !== 'string') {
+    throw new Error('Please pass a projectAccessKey in initWallet.')
   }
 
   if (sequenceWalletProvider) {
@@ -94,8 +97,7 @@ export const initWallet = (partialConfig?: Partial<ProviderConfig>) => {
     })
     .concat(newNetworks)
     .map(network => {
-      const toAppend = projectAccessKey ? `/${projectAccessKey}` : ''
-      network.rpcUrl = network.rpcUrl + toAppend
+      network.rpcUrl = network.rpcUrl + `/${projectAccessKey}`
       return network
     })
 
