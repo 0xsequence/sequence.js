@@ -32,24 +32,14 @@ import {
 } from './payloads/packets/transactions'
 import { SignMessageArgs } from './payloads/packets/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
-import { TEMPLATE_LOCAL } from './defaults'
+import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
 
 export type Sessions = (Session & { isThis: boolean })[]
 
-export type SequenceExplicitConfig = {
-  projectId: number
-  accessKey: string
-
-  emailClientId?: string
-  identityPoolId: string
-}
-
-export type SequenceKeyConfig = {
-  key: string
-}
-
-export type SequenceConfig = (SequenceExplicitConfig | SequenceKeyConfig) & {
+export type SequenceConfig = {
+  projectAccessKey: string
+  waasConfigKey: string
   network?: SimpleNetwork
 }
 
@@ -60,6 +50,12 @@ export type ExtendedSequenceConfig = {
   keyId: string
   emailRegion?: string
   endpoint?: string
+}
+
+export type WaaSConfigKey = {
+  projectId: number
+  identityPoolId: string
+  emailClientId?: string
 }
 
 export type Identity = {
@@ -93,16 +89,16 @@ export type CommonAuthArgs = {
   identifier?: string
 }
 
-export function parseApiKey<T>(key: string): Partial<T> {
+export function parseSequenceWaaSConfigKey<T>(key: string): Partial<T> {
   return JSON.parse(atob(key))
 }
 
 export function defaultArgsOrFail(
   config: SequenceConfig & Partial<ExtendedSequenceConfig>,
   preset: ExtendedSequenceConfig
-): Required<SequenceExplicitConfig> & ExtendedSequenceConfig {
-  const key = (config as any).key
-  const keyOverrides = key ? parseApiKey<SequenceExplicitConfig & ExtendedSequenceConfig>(key) : {}
+): Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig {
+  const key = (config as any).waasConfigKey
+  const keyOverrides = key ? parseSequenceWaaSConfigKey<SequenceConfig & WaaSConfigKey & ExtendedSequenceConfig>(key) : {}
   const preconfig = { ...preset, ...config, ...keyOverrides }
 
   if (preconfig.network === undefined) {
@@ -113,7 +109,7 @@ export function defaultArgsOrFail(
     throw new Error('Missing project id')
   }
 
-  if (preconfig.accessKey === undefined) {
+  if (preconfig.projectAccessKey === undefined) {
     throw new Error('Missing access key')
   }
 
@@ -121,7 +117,7 @@ export function defaultArgsOrFail(
     throw new Error('Missing identityPoolId')
   }
 
-  return preconfig as Required<SequenceExplicitConfig> & ExtendedSequenceConfig
+  return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 }
 
 export class Sequence {
@@ -131,7 +127,7 @@ export class Sequence {
   private validationRequiredCallback: (() => void)[] = []
   private validationRequiredSalt: string
 
-  public readonly config: Required<SequenceExplicitConfig> & ExtendedSequenceConfig
+  public readonly config: Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 
   private readonly kmsKey: StoreObj<string | undefined>
   private readonly deviceName: StoreObj<string | undefined>
@@ -140,7 +136,7 @@ export class Sequence {
 
   constructor(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
-    preset: ExtendedSequenceConfig = TEMPLATE_LOCAL,
+    preset: ExtendedSequenceConfig = LOCAL,
     private readonly store: Store = new LocalStore()
   ) {
     this.config = defaultArgsOrFail(config, preset)
@@ -255,7 +251,7 @@ export class Sequence {
 
     return {
       headers: {
-        'X-Access-Key': this.config.accessKey
+        'X-Access-Key': this.config.projectAccessKey
       },
       args: { encryptedPayloadKey, payloadCiphertext, payloadSig }
     }
