@@ -141,11 +141,7 @@ export class SequenceClient {
   public readonly projectAccessKey?: string
   public readonly analytics?: Analytics
 
-  constructor(
-    transport: ProviderTransport | MuxTransportTemplate,
-    store: ItemStore,
-    options?: SequenceClientOptions
-  ) {
+  constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
     } else if (isProviderTransport(transport)) {
