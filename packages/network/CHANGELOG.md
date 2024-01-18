@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.7.1
+
+### Patch Changes
+
+- network: add missing avalanche logoURI
+- Updated dependencies
+  - @0xsequence/core@1.7.1
+  - @0xsequence/indexer@1.7.1
+  - @0xsequence/relayer@1.7.1
+  - @0xsequence/utils@1.7.1
+
 ## 1.7.0
 
 ### Minor Changes

@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.7.1
+
+### Patch Changes
+
+- network: add missing avalanche logoURI
+- Updated dependencies
+  - @0xsequence/abi@1.7.1
+  - @0xsequence/account@1.7.1
+  - @0xsequence/auth@1.7.1
+  - @0xsequence/core@1.7.1
+  - @0xsequence/migration@1.7.1
+  - @0xsequence/network@1.7.1
+  - @0xsequence/relayer@1.7.1
+  - @0xsequence/utils@1.7.1
+  - @0xsequence/wallet@1.7.1
+
 ## 1.7.0
 
 ### Minor Changes

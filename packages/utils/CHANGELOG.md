@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.7.1
+
+### Patch Changes
+
+- network: add missing avalanche logoURI
+
 ## 1.7.0
 
 ### Minor Changes
