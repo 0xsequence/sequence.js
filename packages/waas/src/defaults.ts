@@ -1,7 +1,4 @@
 
-export const DEFAULT_GUARD = 'https://guard2.sequence.app'
-
-
 // todo: add production template
 /*export const PROD = {
 }*/

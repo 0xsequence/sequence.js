@@ -375,7 +375,7 @@ export class Sequence {
   }
 
   async validateSession(args?: ValidationArgs) {
-    if (await this.waas.isSessionValid()) {
+    if (await this.isSessionValid()) {
       return true
     }
 
