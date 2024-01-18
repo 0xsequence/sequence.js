@@ -313,6 +313,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'avalanche',
     title: 'Avalanche',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.AVALANCHE}.webp`,
     blockExplorer: {
       name: 'Snowtrace',
       rootUrl: 'https://subnets.avax.network/c-chain/'
