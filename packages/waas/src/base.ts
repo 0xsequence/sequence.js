@@ -28,10 +28,8 @@ import {
   sendDelayedEncode
 } from './payloads/packets/transactions'
 import { OpenSessionResponse } from './payloads/responses'
-import { Guard } from './clients/guard.gen'
 import { SignMessageArgs, SignMessagePacket, signMessage } from './payloads/packets/messages'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
-import { DEFAULT_GUARD } from './defaults'
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -63,8 +61,7 @@ export class SequenceWaaSBase {
 
   constructor(
     public readonly config = { network: 1 } as SequenceBaseConfig,
-    private readonly store: Store = new LocalStore(),
-    private readonly guardUrl: string = DEFAULT_GUARD
+    private readonly store: Store = new LocalStore()
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
@@ -387,33 +384,6 @@ export class SequenceWaaSBase {
     const wallet = await this.getWalletAddress()
     const packet = finishValidateSession(wallet, session, salt, challenge, DEFAULT_LIFESPAN)
     return this.buildPayload(packet)
-  }
-
-  async isSessionValid(): Promise<boolean> {
-    const sessionAddress = await this.getSignerAddress()
-    const guardClient = new Guard(this.guardUrl, fetch)
-
-    try {
-      const res = await guardClient.getSession({ sessionAddress } as any)
-      if (res.validated) {
-        return true
-      }
-    } catch {}
-
-    return false
-  }
-
-  async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000): Promise<boolean> {
-    const start = Date.now()
-
-    while (Date.now() - start < timeout) {
-      if (await this.isSessionValid()) {
-        return true
-      }
-      await new Promise(resolve => setTimeout(resolve, pollRate))
-    }
-
-    return false
   }
 
   async batch(payloads: Payload<TransactionsPacket>[]): Promise<Payload<TransactionsPacket>> {
