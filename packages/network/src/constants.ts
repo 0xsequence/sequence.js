@@ -68,6 +68,7 @@ export interface NetworkMetadata {
   type?: NetworkType
   name: string
   title?: string
+  logoURI?: string
   blockExplorer?: BlockExplorerConfig
   ensAddress?: string
   testnet?: boolean // Deprecated field, use type instead
@@ -80,6 +81,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'mainnet',
     title: 'Ethereum',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MAINNET}.webp`,
     blockExplorer: {
       name: 'Etherscan',
       rootUrl: 'https://etherscan.io/'
@@ -91,6 +93,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'ropsten',
     title: 'Ropsten',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROPSTEN}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Ropsten)',
@@ -104,6 +107,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'rinkeby',
     title: 'Rinkeby',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.RINKEBY}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Rinkeby)',
@@ -117,6 +121,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'goerli',
     title: 'Goerli',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.GOERLI}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Goerli)',
@@ -130,6 +135,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'kovan',
     title: 'Kovan',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.KOVAN}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Kovan)',
@@ -142,6 +148,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'sepolia',
     title: 'Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Sepolia)',
@@ -153,6 +160,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'polygon',
     title: 'Polygon',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON}.webp`,
     blockExplorer: {
       name: 'Polygonscan',
       rootUrl: 'https://polygonscan.com/'
@@ -163,6 +171,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'mumbai',
     title: 'Polygon Mumbai',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_MUMBAI}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Polygonscan (Mumbai)',
@@ -174,6 +183,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'polygon-zkevm',
     title: 'Polygon zkEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_ZKEVM}.webp`,
     blockExplorer: {
       name: 'Polygonscan (zkEVM)',
       rootUrl: 'https://zkevm.polygonscan.com/'
@@ -184,6 +194,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'bsc',
     title: 'BNB Smart Chain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BSC}.webp`,
     blockExplorer: {
       name: 'BSCScan',
       rootUrl: 'https://bscscan.com/'
@@ -194,6 +205,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'bsc-testnet',
     title: 'BNB Smart Chain Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BSC_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'BSCScan (Testnet)',
@@ -205,6 +217,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'optimism',
     title: 'Optimism',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM}.webp`,
     blockExplorer: {
       name: 'Etherscan (Optimism)',
       rootUrl: 'https://optimistic.etherscan.io/'
@@ -215,6 +228,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'optimism-kovan',
     title: 'Optimistic Kovan',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_KOVAN}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Kovan)',
@@ -227,6 +241,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'optimism-goerli',
     title: 'Optimistic Goerli',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_GOERLI}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Goerli)',
@@ -239,6 +254,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'optimism-sepolia',
     title: 'Optimistic Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Sepolia)',
@@ -250,6 +266,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'arbitrum',
     title: 'Arbitrum One',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM}.webp`,
     blockExplorer: {
       name: 'Arbiscan',
       rootUrl: 'https://arbiscan.io/'
@@ -260,6 +277,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'arbitrum-goerli',
     title: 'Arbitrum Goerli',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM_GOERLI}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Arbiscan (Goerli Testnet)',
@@ -272,6 +290,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'arbitrum-sepolia',
     title: 'Arbitrum Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM_SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Arbiscan (Sepolia Testnet)',
@@ -283,6 +302,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'arbitrum-nova',
     title: 'Arbitrum Nova',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM_NOVA}.webp`,
     blockExplorer: {
       name: 'Arbiscan Nova',
       rootUrl: 'https://nova.arbiscan.io/'
@@ -303,6 +323,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'avalanche-testnet',
     title: 'Avalanche Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.AVALANCHE_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Snowtrace (Testnet)',
@@ -314,6 +335,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'gnosis',
     title: 'Gnosis Chain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.GNOSIS}.webp`,
     blockExplorer: {
       name: 'Gnosis Chain Explorer',
       rootUrl: 'https://blockscout.com/xdai/mainnet/'
@@ -324,6 +346,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'base',
     title: 'Base (Coinbase)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BASE}.webp`,
     blockExplorer: {
       name: 'Base Explorer',
       rootUrl: 'https://basescan.org/'
@@ -334,6 +357,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'base-goerli',
     title: 'Base Goerli',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BASE_GOERLI}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Base Goerli Explorer',
@@ -346,6 +370,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'base-sepolia',
     title: 'Base Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BASE_SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Base Sepolia Explorer',
@@ -357,6 +382,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.MAINNET,
     name: 'homeverse',
     title: 'Oasys Homeverse',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE}.webp`,
     blockExplorer: {
       name: 'Oasys Homeverse Explorer',
       rootUrl: 'https://explorer.oasys.homeverse.games/'
@@ -367,6 +393,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'homeverse-testnet',
     title: 'Oasys Homeverse Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Oasys Homeverse Explorer (Testnet)',
