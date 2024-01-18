@@ -486,6 +486,8 @@ export class Sequence {
   }
 
   async chainList(): Promise<ChainListReturn> {
-    return this.client.chainList()
+    return this.client.chainList({
+      'X-Access-Key': this.config.projectAccessKey
+    })
   }
 }
