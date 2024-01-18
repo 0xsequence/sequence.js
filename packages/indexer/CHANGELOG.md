@@ -1,5 +1,15 @@
 # @0xsequence/indexer
 
+## 1.7.0
+
+### Minor Changes
+
+- provider: projectAccessKey is now required
+
+### Patch Changes
+
+- network: add NetworkMetadata.logoURI property for all networks
+
 ## 1.6.3
 
 ### Patch Changes

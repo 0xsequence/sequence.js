@@ -1,5 +1,25 @@
 # @0xsequence/account
 
+## 1.7.0
+
+### Minor Changes
+
+- provider: projectAccessKey is now required
+
+### Patch Changes
+
+- network: add NetworkMetadata.logoURI property for all networks
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.7.0
+  - @0xsequence/core@1.7.0
+  - @0xsequence/migration@1.7.0
+  - @0xsequence/network@1.7.0
+  - @0xsequence/relayer@1.7.0
+  - @0xsequence/sessions@1.7.0
+  - @0xsequence/utils@1.7.0
+  - @0xsequence/wallet@1.7.0
+
 ## 1.6.3
 
 ### Patch Changes
