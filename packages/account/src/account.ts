@@ -739,7 +739,12 @@ export class Account {
       cantValidateBehavior: 'ignore'
     }
 
-    const nonceOptions = options?.nonceSpace && { space: options?.nonceSpace, serial: options?.serial }
+    const nonceOptions = options?.serial
+      ? { serial: true }
+      : options?.nonceSpace !== undefined
+        ? { space: options.nonceSpace }
+        : undefined
+
     const signed = await wallet.signTransactions(txs, nonceOptions, metadata)
 
     return {

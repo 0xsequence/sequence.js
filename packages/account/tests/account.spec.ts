@@ -1,3 +1,4 @@
+import { walletContracts } from '@0xsequence/abi'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 import { NetworkConfig } from '@0xsequence/network'
@@ -1344,6 +1345,151 @@ describe('Account', () => {
           expect(valid).to.be.false
         })
       })
+    })
+  })
+
+  describe('Nonce selection', async () => {
+    let signer: ethers.Wallet
+    let account: Account
+
+    let getNonce: (response: ethers.providers.TransactionResponse) => { space: ethers.BigNumber; nonce: ethers.BigNumber }
+
+    before(async () => {
+      const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
+
+      getNonce = ({ data }) => {
+        const [_, encoded] = mainModule.decodeFunctionData('execute', data)
+        const [space, nonce] = commons.transaction.decodeNonce(encoded)
+        return { space, nonce }
+      }
+
+      signer = randomWallet('Nonce selection')
+
+      const config = {
+        threshold: 1,
+        checkpoint: Math.floor(now() / 1000),
+        signers: [{ address: signer.address, weight: 1 }]
+      }
+
+      account = await Account.new({
+        ...defaultArgs,
+        config,
+        orchestrator: new Orchestrator([signer])
+      })
+
+      // use a deployed account, otherwise we end up testing the decorated bundle nonce
+      const response = await account.sendTransaction([], networks[0].chainId)
+      await response?.wait()
+
+      await getEth(account.address, signer1)
+      await getEth(account.address, signer2)
+    })
+
+    it('Should use explicitly set nonces', async () => {
+      let response = await account.sendTransaction(
+        { to: await signer1.getAddress(), value: 1 },
+        networks[0].chainId,
+        undefined,
+        undefined,
+        undefined,
+        { nonceSpace: 6492 }
+      )
+      if (!response) {
+        throw new Error('expected response')
+      }
+
+      let { space, nonce } = getNonce(response)
+
+      expect(space.eq(6492)).to.be.true
+      expect(nonce.eq(0)).to.be.true
+
+      await response.wait()
+
+      response = await account.sendTransaction(
+        { to: await signer1.getAddress(), value: 1 },
+        networks[0].chainId,
+        undefined,
+        undefined,
+        undefined,
+        { nonceSpace: 6492 }
+      )
+      if (!response) {
+        throw new Error('expected response')
+      }
+
+      const encoded = getNonce(response)
+      space = encoded.space
+      nonce = encoded.nonce
+
+      expect(space.eq(6492)).to.be.true
+      expect(nonce.eq(1)).to.be.true
+    })
+
+    it('Should select random nonces by default', async () => {
+      let response = await account.sendTransaction({ to: await signer1.getAddress(), value: 1 }, networks[0].chainId)
+      if (!response) {
+        throw new Error('expected response')
+      }
+
+      const { space: firstSpace, nonce: firstNonce } = getNonce(response)
+
+      expect(firstSpace.eq(0)).to.be.false
+      expect(firstNonce.eq(0)).to.be.true
+
+      // not necessary, parallel execution is ok:
+      // await response.wait()
+
+      response = await account.sendTransaction({ to: await signer1.getAddress(), value: 1 }, networks[0].chainId)
+      if (!response) {
+        throw new Error('expected response')
+      }
+
+      const { space: secondSpace, nonce: secondNonce } = getNonce(response)
+
+      expect(secondSpace.eq(0)).to.be.false
+      expect(secondNonce.eq(0)).to.be.true
+
+      expect(secondSpace.eq(firstSpace)).to.be.false
+    })
+
+    it('Should respect the serial option', async () => {
+      let response = await account.sendTransaction(
+        { to: await signer1.getAddress(), value: 1 },
+        networks[0].chainId,
+        undefined,
+        undefined,
+        undefined,
+        { serial: true }
+      )
+      if (!response) {
+        throw new Error('expected response')
+      }
+
+      let { space, nonce } = getNonce(response)
+
+      expect(space.eq(0)).to.be.true
+      expect(nonce.eq(0)).to.be.true
+
+      await response.wait()
+
+      response = await account.sendTransaction(
+        { to: await signer1.getAddress(), value: 1 },
+        networks[0].chainId,
+        undefined,
+        undefined,
+        undefined,
+        { serial: true }
+      )
+      if (!response) {
+        throw new Error('expected response')
+      }
+
+      const encoded = getNonce(response)
+      space = encoded.space
+      nonce = encoded.nonce
+
+      expect(space.eq(0)).to.be.true
+      expect(nonce.eq(1)).to.be.true
     })
   })
 })

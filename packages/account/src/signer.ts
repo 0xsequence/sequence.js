@@ -152,7 +152,7 @@ export class AccountSigner implements ethers.Signer {
       prepare.feeQuote,
       undefined,
       undefined,
-      this.options?.nonceSpace
+      this.options?.nonceSpace !== undefined
         ? {
             nonceSpace: this.options.nonceSpace
           }
