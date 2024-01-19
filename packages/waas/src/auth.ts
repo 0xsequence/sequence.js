@@ -18,8 +18,7 @@ import {
   SendIntentPayload,
   ListSessionsPayload,
   DropSessionPayload,
-  SendIntentReturn,
-  ChainListReturn
+  Chain
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
 import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
@@ -88,6 +87,10 @@ export type CommonAuthArgs = {
   validation?: ValidationArgs
   identifier?: string
 }
+
+export type Network = Chain
+
+export type NetworkList = Network[]
 
 export function parseSequenceWaaSConfigKey<T>(key: string): Partial<T> {
   return JSON.parse(atob(key))
@@ -485,9 +488,19 @@ export class Sequence {
     return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
-  async chainList(): Promise<ChainListReturn> {
-    return this.client.chainList({
+  async networkList(): Promise<NetworkList> {
+    let networks: NetworkList = []
+    const chainList = await this.client.chainList({
       'X-Access-Key': this.config.projectAccessKey
     })
+
+    for (const chain of chainList.chains) {
+      networks.push({
+        id: chain.id,
+        name: chain.name,
+        isEnabled: chain.isEnabled,
+      })
+    }
+    return networks
   }
 }
