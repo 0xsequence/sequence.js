@@ -489,7 +489,7 @@ export class Sequence {
   }
 
   async networkList(): Promise<NetworkList> {
-    let networks: NetworkList = []
+    const networks: NetworkList = []
     const chainList = await this.client.chainList({
       'X-Access-Key': this.config.projectAccessKey
     })
