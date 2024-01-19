@@ -463,6 +463,8 @@ export class SequenceClient {
   async signMessage(message: ethers.BytesLike, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
     const method = this.signMethod(options)
 
+    this.analytics?.track({ event: 'SIGN_MESSAGE_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
+
     // Address is ignored by the wallet webapp
     return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
   }
@@ -479,6 +481,8 @@ export class SequenceClient {
     // - The one provided in the typedData.domain.chainId
     // - The default chainId
 
+    this.analytics?.track({ event: 'SIGN_TYPED_DATA_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
+
     return this.send(
       { method, params: [this.getAddress(), encoded] },
       options?.chainId ||
@@ -493,6 +497,8 @@ export class SequenceClient {
   ): Promise<string> {
     const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
+
+    this.analytics?.track({ event: 'SEND_TRANSACTION_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
     return this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId)
   }

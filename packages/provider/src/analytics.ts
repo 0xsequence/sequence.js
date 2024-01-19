@@ -3,12 +3,12 @@ import { Databeat, Event as DatabeatEvent, Auth, isBrowser } from '@databeat/tra
 export enum EventType {
   // Core types part of Databeat
   INIT,
-  VIEW
+  VIEW,
 
-  // CONNECT, OPEN, DISCONNECT, ......
-
-  // SIGN_MESSAGE
-  // SEND_TRANSACTION ......
+  // Provider specific
+  SIGN_MESSAGE_REQUEST,
+  SIGN_TYPED_DATA_REQUEST,
+  SEND_TRANSACTION_REQUEST
 }
 
 export type EventTypes = keyof typeof EventType
