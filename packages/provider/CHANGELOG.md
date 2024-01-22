@@ -1,5 +1,23 @@
 # @0xsequence/provider
 
+## 1.7.2
+
+### Patch Changes
+
+- 0xsequence: ChainId should not be exported as a type
+- account, wallet: fix nonce selection
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.7.2
+  - @0xsequence/account@1.7.2
+  - @0xsequence/auth@1.7.2
+  - @0xsequence/core@1.7.2
+  - @0xsequence/migration@1.7.2
+  - @0xsequence/network@1.7.2
+  - @0xsequence/relayer@1.7.2
+  - @0xsequence/utils@1.7.2
+  - @0xsequence/wallet@1.7.2
+
 ## 1.7.1
 
 ### Patch Changes

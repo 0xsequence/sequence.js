@@ -1,5 +1,12 @@
 # @0xsequence/api
 
+## 1.7.2
+
+### Patch Changes
+
+- 0xsequence: ChainId should not be exported as a type
+- account, wallet: fix nonce selection
+
 ## 1.7.1
 
 ### Patch Changes
