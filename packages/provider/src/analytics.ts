@@ -24,11 +24,11 @@ export const setupAnalytics = (projectAccessKey: string, server?: string) => {
   }
 
   // disable tracking if projectAccessKey is not set
-  const noop = !(projectAccessKey && projectAccessKey.length > 0)
+  const noop = !projectAccessKey
 
   // auth
   const auth: Auth = {}
-  if (projectAccessKey && projectAccessKey.length > 0) {
+  if (projectAccessKey) {
     auth.headers = { 'X-Access-Key': projectAccessKey }
   }
 
@@ -40,10 +40,7 @@ export const setupAnalytics = (projectAccessKey: string, server?: string) => {
       if (!isBrowser()) {
         return {}
       } else {
-        const origin = window.location.origin
-        return {
-          origin
-        }
+        return { origin: window.location.origin }
       }
     }
   })
