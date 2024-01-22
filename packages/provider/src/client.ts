@@ -150,7 +150,7 @@ export class SequenceClient {
       throw new Error('Invalid transport')
     }
 
-    const defaultChainId = options?.defaultChainId ?? 1
+    const defaultChainId = options?.defaultChainId
     this.defaultEIP6492 = options?.defaultEIP6492 ?? false
 
     this.session = new SequenceClientSession(store)
