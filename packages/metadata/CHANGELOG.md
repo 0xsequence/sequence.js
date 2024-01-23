@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.8.0
+
+### Minor Changes
+
+- provider: project analytics
+
 ## 1.7.2
 
 ### Patch Changes

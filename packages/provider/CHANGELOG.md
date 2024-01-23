@@ -1,5 +1,24 @@
 # @0xsequence/provider
 
+## 1.8.0
+
+### Minor Changes
+
+- provider: project analytics
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@1.8.0
+  - @0xsequence/account@1.8.0
+  - @0xsequence/auth@1.8.0
+  - @0xsequence/core@1.8.0
+  - @0xsequence/migration@1.8.0
+  - @0xsequence/network@1.8.0
+  - @0xsequence/relayer@1.8.0
+  - @0xsequence/utils@1.8.0
+  - @0xsequence/wallet@1.8.0
+
 ## 1.7.2
 
 ### Patch Changes
