@@ -1,23 +1,11 @@
+import { networks, ChainId } from '@0xsequence/network'
 
 const RPC_BASE = 'https://nodes.sequence.app/'
 
-const nameToId = {
-  'mainnet': 1,
-  'goerli': 5,
-  'polygon': 137,
-  'polygon-zkevm': 1101,
-  'mumbai': 80001,
-  'bsc': 56,
-  'bsc-testnet': 97,
-  'arbitrum': 42161,
-  'arbitrum-nova': 42170,
-  'arbitrum-goerli': 421613,
-  'optimism': 10,
-  'gnosis': 100,
-  'avalanche': 43114,
-  'avalanche-testnet': 43113,
-  'base-goerli': 84531,
-}
+const nameToId = Object.entries(networks).reduce((acc, [key, value]) => {
+  acc[value.name] = value.chainId;
+  return acc;
+}, {} as { [name: string]: typeof networks[ChainId.MAINNET]['chainId'] });
 
 type NameToIdType = typeof nameToId
 type IdToNameType = { [K in keyof NameToIdType as NameToIdType[K]]: K }

@@ -722,6 +722,9 @@ importers:
 
   packages/waas:
     dependencies:
+      '@0xsequence/network':
+        specifier: ^1.7.2
+        version: 1.7.2(ethers@5.7.2)
       '@aws-sdk/client-cognito-identity-provider':
         specifier: ^3.445.0
         version: 3.445.0
@@ -796,6 +799,19 @@ importers:
 
 packages:
 
+  /@0xsequence/abi@1.7.2:
+    resolution: {integrity: sha512-cCCtgDouHB53sXfnNocCMsk8llfSQJJVVO9tzPU7d7boDSDmRkpqJrA3v6lfu39W4OmOwFOjDzlZHdNBmEjfUg==}
+    dev: false
+
+  /@0xsequence/core@1.7.2(ethers@5.7.2):
+    resolution: {integrity: sha512-43LxM03PFgr9cbEUTvq8RcPjLm26i5+dCXj7BMYdnfN/N6Wy0uTRF/dbM7GKLuExSM0qt6TYG52lGDBxXZzWdQ==}
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      '@0xsequence/abi': 1.7.2
+      ethers: 5.7.2
+    dev: false
+
   /@0xsequence/ethauth@0.8.1(ethers@5.7.2):
     resolution: {integrity: sha512-P21cxRSS+2mDAqFVAJt0lwQFtbObX+Ewlj8DMyDELp81+QbfHFh6LCyu8dTXNdBx6UbmRFOCSBno5Txd50cJPQ==}
     peerDependencies:
@@ -803,6 +819,42 @@ packages:
     dependencies:
       ethers: 5.7.2
       js-base64: 3.7.3
+
+  /@0xsequence/indexer@1.7.2:
+    resolution: {integrity: sha512-pJjLoPwatr5WKDTmr32SmNMRUqNv/VRdr4bzd/UxqcChoSS5NG4ho53i+XCBIuBPPHxrfexXFXaNgLxlXQZ/vQ==}
+    dev: false
+
+  /@0xsequence/network@1.7.2(ethers@5.7.2):
+    resolution: {integrity: sha512-zBKAMbbfJ9x6Gqn/e7vRB5c+OnO+v3eldVn1yOn5I1h+bQ+yFLWtVlDoc5PCnwasf+e4SukRtlid7X8DH2q8vA==}
+    peerDependencies:
+      ethers: '>=5.5 < 6'
+    dependencies:
+      '@0xsequence/core': 1.7.2(ethers@5.7.2)
+      '@0xsequence/indexer': 1.7.2
+      '@0xsequence/relayer': 1.7.2(ethers@5.7.2)
+      '@0xsequence/utils': 1.7.2(ethers@5.7.2)
+      ethers: 5.7.2
+    dev: false
+
+  /@0xsequence/relayer@1.7.2(ethers@5.7.2):
+    resolution: {integrity: sha512-Ybuf51gwKHNqAxMKFL69ExTwKRrMiOnKJmvgJiWhAsj8n3evvk9bCdzQc/3uygg04ymCz3jcTpVhA8VKbuDh+A==}
+    peerDependencies:
+      ethers: '>=5.5 < 6'
+    dependencies:
+      '@0xsequence/abi': 1.7.2
+      '@0xsequence/core': 1.7.2(ethers@5.7.2)
+      '@0xsequence/utils': 1.7.2(ethers@5.7.2)
+      ethers: 5.7.2
+    dev: false
+
+  /@0xsequence/utils@1.7.2(ethers@5.7.2):
+    resolution: {integrity: sha512-9sguNnSdrypqy/4x74NgqEY2/jPhZTywrp6fjehHt3FwXqsDdmT9BirrfR5jY+5IEvIarbD5+C3czhHn/HL8Bg==}
+    peerDependencies:
+      ethers: '>=5.5 < 6'
+    dependencies:
+      ethers: 5.7.2
+      js-base64: 3.7.3
+    dev: false
 
   /@0xsequence/wallet-contracts@1.10.0:
     resolution: {integrity: sha512-NfPBJkp6/ApjVuTqQMgJvpN5lWyNc9bHm9ZITEi3X3nREf5126RLEXCyThChapkmcglHnQn+ndA8j6bfcpFEAg==}
