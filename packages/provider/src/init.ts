@@ -40,6 +40,9 @@ export interface ProviderConfig {
 
   // transports for dapp to wallet jron-rpc communication
   transports?: MuxTransportTemplate
+
+  // analytics .... (default: true)
+  analytics?: boolean
 }
 
 export const DefaultProviderConfig = {
@@ -49,7 +52,8 @@ export const DefaultProviderConfig = {
     proxyTransport: { enabled: false }
   },
 
-  defaultNetwork: 1
+  defaultNetwork: 1,
+  analytics: true
 }
 
 let sequenceWalletProvider: SequenceProvider | undefined
@@ -134,15 +138,12 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
   const itemStore = config.localStorage || useBestStore()
 
   // Create client, provider and return signer
-  const client = new SequenceClient(
-    config.transports,
-    itemStore,
-    {
-      defaultChainId: defaultNetwork,
-      defaultEIP6492: config.defaultEIP6492
-    },
-    projectAccessKey
-  )
+  const client = new SequenceClient(config.transports, itemStore, {
+    defaultChainId: defaultNetwork,
+    defaultEIP6492: config.defaultEIP6492,
+    projectAccessKey: projectAccessKey,
+    analytics: config.analytics
+  })
 
   sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
   return sequenceWalletProvider
