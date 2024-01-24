@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 1.8.1
+
+### Patch Changes
+
+- update to analytics provider
+- Updated dependencies
+  - @0xsequence/abi@1.8.1
+  - @0xsequence/core@1.8.1
+
 ## 1.8.0
 
 ### Minor Changes

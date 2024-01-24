@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.8.1
+
+### Patch Changes
+
+- update to analytics provider
+- Updated dependencies
+  - @0xsequence/account@1.8.1
+  - @0xsequence/core@1.8.1
+  - @0xsequence/signhub@1.8.1
+  - @0xsequence/utils@1.8.1
+
 ## 1.8.0
 
 ### Minor Changes
