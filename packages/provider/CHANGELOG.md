@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.8.2
+
+### Patch Changes
+
+- provider: don't initialize analytics unless explicitly requested
+- Updated dependencies
+  - @0xsequence/abi@1.8.2
+  - @0xsequence/account@1.8.2
+  - @0xsequence/auth@1.8.2
+  - @0xsequence/core@1.8.2
+  - @0xsequence/migration@1.8.2
+  - @0xsequence/network@1.8.2
+  - @0xsequence/relayer@1.8.2
+  - @0xsequence/utils@1.8.2
+  - @0xsequence/wallet@1.8.2
+
 ## 1.8.1
 
 ### Patch Changes

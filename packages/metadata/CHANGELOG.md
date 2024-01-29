@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.8.2
+
+### Patch Changes
+
+- provider: don't initialize analytics unless explicitly requested
+
 ## 1.8.1
 
 ### Patch Changes
