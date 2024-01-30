@@ -33,22 +33,20 @@ export type GetSessionPacket = BasePacketForWallet & {
 }
 
 export async function openSession({
+  signer,
   proof = {},
   lifespan
 }: {
+  signer: ethers.Signer
   proof: SessionPacketProof | undefined
   lifespan: number
-}): Promise<{ packet: OpenSessionPacket; signer: ethers.Wallet }> {
-  const signer = ethers.Wallet.createRandom()
+}): Promise<OpenSessionPacket> {
 
   return {
-    signer,
-    packet: {
-      ...useLifespan(lifespan),
-      code: 'openSession',
-      session: signer.address,
-      proof // May be defined server side
-    }
+    ...useLifespan(lifespan),
+    code: 'openSession',
+    session: await signer.getAddress(),
+    proof // May be defined server side
   }
 }
 
