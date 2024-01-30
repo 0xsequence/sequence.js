@@ -31,6 +31,7 @@ export function hashPacket(packet: Payload<BasePacket> | BasePacket): ethers.Byt
   return ethers.utils.arrayify(ethers.utils.keccak256(encoded))
 }
 
+// todo: use generic signer interface
 export function signPacket(signer: ethers.Signer, packed: BasePacket): Promise<string> {
   const hash = hashPacket(packed)
   return signer.signMessage(hash)

@@ -125,6 +125,7 @@ export class SequenceWaaSBase {
       throw new Error('No signer')
     }
 
+    // todo: use generic signer interface
     const signer = new ethers.Wallet(signerPk)
     const signature = await signPacket(signer, packet)
 

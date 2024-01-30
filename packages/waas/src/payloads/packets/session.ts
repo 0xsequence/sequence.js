@@ -39,7 +39,10 @@ export async function openSession({
   proof: SessionPacketProof | undefined
   lifespan: number
 }): Promise<{ packet: OpenSessionPacket; signer: ethers.Wallet }> {
+  // todo: use generic signer interface
   const signer = ethers.Wallet.createRandom()
+
+  //window.crypto.subtle.generateKey("ECDSA_secP256r1", true, ["sign", "verify"])
 
   return {
     signer,
