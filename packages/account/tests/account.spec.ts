@@ -475,7 +475,7 @@ describe('Account', () => {
 
         const simpleConfig2 = {
           threshold: 4,
-          checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+          checkpoint: await account.status(0).then(s => BigInt(s.checkpoint).add(1)),
           signers: [
             {
               address: signer2a.address,
@@ -641,7 +641,7 @@ describe('Account', () => {
 
           const simpleConfig3 = {
             threshold: 5,
-            checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint).add(1)),
             signers: [
               {
                 address: signer3a.address,
@@ -732,7 +732,7 @@ describe('Account', () => {
 
           const simpleConfig2 = {
             threshold: 6,
-            checkpoint: await account.status(0).then(s => ethers.BigNumber.from(s.checkpoint).add(1)),
+            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint).add(1)),
             signers: [
               {
                 address: signer2a.address,
@@ -1352,7 +1352,7 @@ describe('Account', () => {
     let signer: ethers.Wallet
     let account: Account
 
-    let getNonce: (response: ethers.providers.TransactionResponse) => { space: ethers.BigNumber; nonce: ethers.BigNumber }
+    let getNonce: (response: ethers.providers.TransactionResponse) => { space: bigint; nonce: bigint }
 
     before(async () => {
       const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)

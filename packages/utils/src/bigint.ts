@@ -1,4 +1,27 @@
+import { utils } from 'ethers'
+
+/**
+ *  Any type that can be used where a numeric value is needed.
+ */
+export type Numeric = number | bigint
+
+/**
+ *  Any type that can be used where a big number is needed.
+ */
+export type BigIntish = string | Numeric
+
 export const MAX_UINT_256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+
+// ethers implement this method but doesn't exports it
+export const isBigIntish = (value: any): value is BigIntish => {
+  return (
+    value != null &&
+    ((typeof value === 'number' && value % 1 === 0) ||
+      (typeof value === 'string' && !!value.match(/^-?[0-9]+$/)) ||
+      utils.isHexString(value) ||
+      typeof value === 'bigint')
+  )
+}
 
 // Even length zero-padded hex string with 0x prefix
 export const toHexString = (value: bigint): string => {
@@ -34,7 +57,7 @@ export const parseUnits = (value: string, decimals: number = 18): bigint => {
 
     const rounded = Math.round(Number(`${unit}.${right}`))
     if (rounded > 9) {
-      fraction = `${BigInt(left) + BigInt(1)}0`.padStart(left.length + 1, '0')
+      fraction = `${BigInt(left) + 1n}0`.padStart(left.length + 1, '0')
     } else {
       fraction = `${left}${rounded}`
     }
@@ -52,7 +75,8 @@ export const parseUnits = (value: string, decimals: number = 18): bigint => {
   return BigInt(`${negative ? '-' : ''}${integer}${fraction}`)
 }
 
-// from viem
+export const parseEther = (value: string): bigint => parseUnits(value, 18)
+
 export const formatUnits = (value: bigint, decimals: number = 18): string => {
   let display = value.toString()
 
@@ -69,3 +93,5 @@ export const formatUnits = (value: bigint, decimals: number = 18): string => {
   fraction = fraction.replace(/(0+)$/, '')
   return `${negative ? '-' : ''}${integer || '0'}${fraction ? `.${fraction}` : ''}`
 }
+
+export const formatEther = (value: bigint): string => formatUnits(value, 18)

@@ -225,7 +225,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 14442, '0x112233')
                 }
               ]
@@ -265,7 +265,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'setRevertFlag', true)
                 },
                 {
@@ -273,7 +273,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 2, valB)
                 }
               ]

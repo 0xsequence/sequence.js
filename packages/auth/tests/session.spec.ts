@@ -154,12 +154,12 @@ describe('Wallet integration', function () {
     expect(v2.config.isWalletConfig(status.config)).to.equal(true)
     const configv2 = status.config as v2.config.WalletConfig
 
-    expect(ethers.BigNumber.from(configv2.threshold)).to.deep.equal(ethers.BigNumber.from(1))
+    expect(BigInt(configv2.threshold)).to.deep.equal(1n)
     expect(v2.config.isSignerLeaf(configv2.tree)).to.equal(true)
 
     const leaf = configv2.tree as v2.config.SignerLeaf
     expect(leaf.address).to.equal(referenceSigner.address)
-    expect(ethers.BigNumber.from(leaf.weight)).to.deep.equal(ethers.BigNumber.from(1))
+    expect(BigInt(leaf.weight)).to.deep.equal(1n)
 
     await session.account.sendTransaction({ to: referenceSigner.address }, networks[0].chainId)
   })
@@ -226,14 +226,14 @@ describe('Wallet integration', function () {
     const newConfig = (await session2.account.status(networks[0].chainId).then(s => s.config)) as v2.config.WalletConfig
 
     expect(session2.account.address).to.equal(session.account.address)
-    expect(ethers.BigNumber.from(newConfig.threshold)).to.deep.equal(ethers.BigNumber.from(2))
+    expect(BigInt(newConfig.threshold)).to.deep.equal(2n)
 
     const newSigners = v2.config.signersOf(newConfig.tree).map(s => s.address)
     expect(newSigners.length).to.equal(2)
     expect(newSigners).to.include(newSigner.address)
     expect(newSigners).to.include(referenceSigner.address)
-    expect(ethers.BigNumber.from((newConfig.tree as any).left.weight)).to.deep.equal(ethers.BigNumber.from(1))
-    expect(ethers.BigNumber.from((newConfig.tree as any).right.weight)).to.deep.equal(ethers.BigNumber.from(1))
+    expect(BigInt((newConfig.tree as any).left.weight)).to.deep.equal(1n)
+    expect(BigInt((newConfig.tree as any).right.weight)).to.deep.equal(1n)
   })
 
   it('Should create a new account if selectWallet returns undefined', async () => {

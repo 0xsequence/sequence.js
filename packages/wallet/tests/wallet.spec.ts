@@ -8,6 +8,7 @@ import { ethers } from 'ethers'
 import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, SignatureOrchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
+import { parseEther } from '@0xsequence/utils'
 
 const { expect } = chai
 
@@ -110,7 +111,7 @@ describe('Wallet (primitive)', () => {
         let signer: ethers.Wallet
         let wallet: Wallet
 
-        let getNonce: (response: ethers.providers.TransactionResponse) => { space: ethers.BigNumber; nonce: ethers.BigNumber }
+        let getNonce: (response: ethers.providers.TransactionResponse) => { space: bigint; nonce: bigint }
 
         before(async () => {
           const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
@@ -139,7 +140,7 @@ describe('Wallet (primitive)', () => {
 
           await wallet.deploy({ includeChildren: true, ignoreDeployed: true })
 
-          await (await signers[0].sendTransaction({ to: wallet.address, value: ethers.utils.parseEther('1') })).wait()
+          await (await signers[0].sendTransaction({ to: wallet.address, value: parseEther('1') })).wait()
         })
 
         it('Should use explicitly set nonces', async () => {
@@ -500,13 +501,13 @@ describe('Wallet (primitive)', () => {
               describe('parallel transactions', async () => {
                 let testAccount: ethers.providers.JsonRpcSigner
                 let testAccountAddress: string
-                let toBalanceBefore: ethers.BigNumber
+                let toBalanceBefore: bigint
 
                 beforeEach(async () => {
                   testAccount = provider.getSigner(5)
                   testAccountAddress = await testAccount.getAddress()
 
-                  const ethAmount = ethers.utils.parseEther('100')
+                  const ethAmount = parseEther('100')
                   const txResp = await testAccount.sendTransaction({
                     to: await wallet.getAddress(),
                     value: ethAmount
@@ -516,7 +517,7 @@ describe('Wallet (primitive)', () => {
                 })
 
                 it('Should send an async transaction', async () => {
-                  const ethAmount = ethers.utils.parseEther('1.0')
+                  const ethAmount = parseEther('1.0')
 
                   const tx: ethers.providers.TransactionRequest = {
                     to: testAccountAddress,
@@ -530,9 +531,9 @@ describe('Wallet (primitive)', () => {
                 })
 
                 it('Should send two async transactions at once', async () => {
-                  const ethAmount1 = ethers.utils.parseEther('1.0')
-                  const ethAmount2 = ethers.utils.parseEther('2.0')
-                  const ethAmount3 = ethers.utils.parseEther('5.0')
+                  const ethAmount1 = parseEther('1.0')
+                  const ethAmount2 = parseEther('2.0')
+                  const ethAmount3 = parseEther('5.0')
 
                   const tx1: ethers.providers.TransactionRequest = {
                     to: testAccountAddress,
@@ -558,9 +559,9 @@ describe('Wallet (primitive)', () => {
                 })
 
                 it('Should send multiple async transactions in one batch, async', async () => {
-                  const ethAmount1 = ethers.utils.parseEther('1.0')
-                  const ethAmount2 = ethers.utils.parseEther('2.0')
-                  const ethAmount3 = ethers.utils.parseEther('5.0')
+                  const ethAmount1 = parseEther('1.0')
+                  const ethAmount2 = parseEther('2.0')
+                  const ethAmount3 = parseEther('5.0')
 
                   const tx1: ethers.providers.TransactionRequest = {
                     to: testAccountAddress,

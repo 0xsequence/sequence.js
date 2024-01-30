@@ -237,7 +237,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 14442, '0x112233')
                 }
               ]
@@ -247,8 +247,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 10000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 10000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
 
               expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
             })
@@ -257,8 +257,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(txs)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 10000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 10000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
 
               expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
             })
@@ -268,8 +268,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 10000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 10000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
 
               expect((await callReceiver.lastValA()).toNumber()).to.equal(0)
             })
@@ -288,7 +288,7 @@ describe('Wallet integration', function () {
                   revertOnError: false,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'setRevertFlag', false)
                 },
                 {
@@ -296,7 +296,7 @@ describe('Wallet integration', function () {
                   revertOnError: true,
                   gasLimit: 0,
                   to: callReceiver.address,
-                  value: ethers.constants.Zero,
+                  value: 0n,
                   data: await encodeData(callReceiver, 'testCall', 2, valB)
                 }
               ]
@@ -306,8 +306,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(estimation.total.toNumber(), 30000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(estimation.total.toNumber())
+              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 30000)
+              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
 
               expect(ethers.utils.hexlify(await callReceiver.lastValB())).to.equal(ethers.utils.hexlify(valB))
             })

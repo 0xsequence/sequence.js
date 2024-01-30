@@ -1,4 +1,5 @@
-import { ethers, BigNumberish } from 'ethers'
+import { ethers } from 'ethers'
+import { BigIntish } from '@0xsequence/utils'
 import { ChainIdLike } from '.'
 import { NetworkConfig } from './config'
 
@@ -13,7 +14,7 @@ export const getChainId = (chainId: ChainIdLike): number => {
   if ((<NetworkConfig>chainId).chainId) {
     return (<NetworkConfig>chainId).chainId
   }
-  return ethers.BigNumber.from(chainId as BigNumberish).toNumber()
+  return Number(BigInt(chainId as BigIntish))
 }
 
 export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {
@@ -138,7 +139,7 @@ export const validateAndSortNetworks = (networks: NetworkConfig[]) => {
 export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLike): NetworkConfig | undefined => {
   if (typeof chainId === 'string') {
     if (chainId.startsWith('0x')) {
-      const id = ethers.BigNumber.from(chainId).toNumber()
+      const id = Number(BigInt(chainId))
       return networks.find(n => n.chainId === id)
     } else {
       return networks.find(n => n.name === chainId || `${n.chainId}` === chainId)

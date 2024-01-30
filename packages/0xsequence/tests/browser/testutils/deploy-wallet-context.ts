@@ -40,7 +40,7 @@
 
 //     // Universal deployer for deterministic contract addresses
 //     const universalDeployer = new UniversalDeployer('local', wallet.provider as ethers.providers.JsonRpcProvider)
-//     const txParams = { gasLimit: 8000000, gasPrice: ethers.BigNumber.from(10).pow(9).mul(10) }
+//     const txParams = { gasLimit: 8000000, gasPrice: 10n.pow(9).mul(10) }
 
 //     const walletFactory = await universalDeployer.deploy('WalletFactory', Factory__factory as any, txParams)
 //     const mainModule = await universalDeployer.deploy('MainModule', MainModule__factory as any, txParams, 0, walletFactory.address)

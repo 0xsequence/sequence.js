@@ -510,15 +510,13 @@ describe('SequenceProvider', () => {
     })
 
     it('should work when passing a BigNumber', () => {
-      expect(provider.toChainId(ethers.BigNumber.from(1))).to.equal(1)
-      expect(provider.toChainId(ethers.BigNumber.from(31337))).to.equal(31337)
-      expect(provider.toChainId(ethers.BigNumber.from(31338))).to.equal(31338)
+      expect(provider.toChainId(1n)).to.equal(1)
+      expect(provider.toChainId(31337n)).to.equal(31337)
+      expect(provider.toChainId(31338n)).to.equal(31338)
     })
 
     it('should fail if network is not supported - BigNumber', () => {
-      expect(() => provider.toChainId(ethers.BigNumber.from(99999))).to.throw(
-        `Unsupported network ${ethers.BigNumber.from(99999)}`
-      )
+      expect(() => provider.toChainId(99999n)).to.throw(`Unsupported network ${99999n}`)
     })
 
     it('should return undefined if passed undefined', () => {
@@ -724,14 +722,14 @@ describe('SequenceProvider', () => {
             if (chainId === 31337) {
               return {
                 ...hardhat1Provider,
-                getGasPrice: async () => ethers.BigNumber.from(1)
+                getGasPrice: async () => 1n
               } as unknown as ethers.providers.JsonRpcProvider
             }
 
             if (chainId === 31338) {
               return {
                 ...hardhat2Provider,
-                getGasPrice: async () => ethers.BigNumber.from(2)
+                getGasPrice: async () => 2n
               } as unknown as ethers.providers.JsonRpcProvider
             }
 
@@ -740,20 +738,20 @@ describe('SequenceProvider', () => {
         })
 
         it('forward getGasPrice - default', async () => {
-          expect(await provider.getGasPrice()).to.deep.equal(ethers.BigNumber.from(1))
+          expect(await provider.getGasPrice()).to.deep.equal(1n)
 
           provider.setDefaultChainId(31338)
-          expect(await provider.getGasPrice()).to.deep.equal(ethers.BigNumber.from(2))
+          expect(await provider.getGasPrice()).to.deep.equal(2n)
         })
 
         it('forward getGasPrice - specific chain', async () => {
-          expect(await provider.getGasPrice({ chainId: 31337 })).to.deep.equal(ethers.BigNumber.from(1))
-          expect(await provider.getGasPrice({ chainId: 31338 })).to.deep.equal(ethers.BigNumber.from(2))
+          expect(await provider.getGasPrice({ chainId: 31337 })).to.deep.equal(1n)
+          expect(await provider.getGasPrice({ chainId: 31338 })).to.deep.equal(2n)
         })
 
         it('forward getGasPrice - static network provider', async () => {
-          expect(await provider.getProvider('hardhat').getGasPrice()).to.deep.equal(ethers.BigNumber.from(1))
-          expect(await provider.getProvider(31338).getGasPrice()).to.deep.equal(ethers.BigNumber.from(2))
+          expect(await provider.getProvider('hardhat').getGasPrice()).to.deep.equal(1n)
+          expect(await provider.getProvider(31338).getGasPrice()).to.deep.equal(2n)
         })
 
         it('fail to forward getGasPrice - static network provider for different chain', async () => {
@@ -764,8 +762,8 @@ describe('SequenceProvider', () => {
       })
 
       describe('forward getBalance', () => {
-        let b1: ethers.BigNumber
-        let b2: ethers.BigNumber
+        let b1: bigint
+        let b2: bigint
 
         beforeEach(async () => {
           b1 = await hardhat1Provider.getBalance(testAccounts[0].address)
@@ -997,8 +995,8 @@ describe('SequenceProvider', () => {
       })
 
       describe('forward estimateGas', () => {
-        let eg1: ethers.BigNumber
-        let eg2: ethers.BigNumber
+        let eg1: bigint
+        let eg2: bigint
 
         let addr: string
 

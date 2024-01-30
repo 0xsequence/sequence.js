@@ -1,6 +1,5 @@
 export * from './base64'
 export * from './bigint'
-export * from './big-number'
 export * from './digest'
 export * from './is-node-or-browser'
 export * from './jwt-decode'
