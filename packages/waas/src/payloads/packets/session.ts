@@ -1,5 +1,5 @@
-import { ethers } from 'ethers'
 import { BasePacket, BasePacketForWallet } from '..'
+import { Session, newSession } from "../../session";
 import { useLifespan } from './utils'
 
 export type SessionPacketProof = {
@@ -9,73 +9,62 @@ export type SessionPacketProof = {
 
 export type OpenSessionPacket = BasePacket & {
   code: 'openSession'
-  session: string
+  sessionId: string
   proof: SessionPacketProof
 }
 
 export type ValidateSessionPacket = BasePacketForWallet & {
   code: 'validateSession'
-  session: string
+  sessionId: string
   deviceMetadata: string
   redirectURL?: string
 }
 
 export type FinishValidateSessionPacket = BasePacketForWallet & {
   code: 'finishValidateSession'
-  session: string
+  sessionId: string
   salt: string
   challenge: string
 }
 
 export type GetSessionPacket = BasePacketForWallet & {
   code: 'getSession'
-  session: string
-}
-
-export async function openSession({
-  signer,
-  proof = {},
-  lifespan
-}: {
-  signer: ethers.Signer
-  proof: SessionPacketProof | undefined
-  lifespan: number
-}): Promise<OpenSessionPacket> {
-
-  return {
-    ...useLifespan(lifespan),
-    code: 'openSession',
-    session: await signer.getAddress(),
-    proof // May be defined server side
-  }
+  sessionId: string
 }
 
 export type CloseSessionPacket = BasePacketForWallet & {
   code: 'closeSession'
-  session: string
+  sessionId: string
 }
 
-export async function closeSession({
-  session,
-  wallet,
+export type ListSessionsPacket = BasePacketForWallet & {
+  code: 'listSessions'
+}
+
+export async function openSession({
+  proof = {},
   lifespan
 }: {
-  session: string
-  wallet: string
+  proof: SessionPacketProof | undefined
   lifespan: number
-}): Promise<CloseSessionPacket> {
+}): Promise<{ packet: OpenSessionPacket; session: Session }> {
+  const session = await newSession()
+
   return {
-    ...useLifespan(lifespan),
-    code: 'closeSession',
-    wallet,
-    session
+    session,
+    packet: {
+      ...useLifespan(lifespan),
+      code: 'openSession',
+      sessionId: await session.sessionId(),
+      proof // May be defined server side
+    }
   }
 }
 
 export async function validateSession(
   args: {
     wallet: string
-    session: string
+    sessionId: string
     deviceMetadata: string
     redirectURL?: string
   } & { lifespan: number }
@@ -89,7 +78,7 @@ export async function validateSession(
 
 export function finishValidateSession(
   wallet: string,
-  session: string,
+  sessionId: string,
   salt: string,
   challenge: string,
   lifespan: number
@@ -97,17 +86,44 @@ export function finishValidateSession(
   return {
     ...useLifespan(lifespan),
     wallet: wallet,
-    session: session,
+    sessionId: sessionId,
     code: 'finishValidateSession',
     salt: salt,
     challenge: challenge
   }
 }
 
+export async function closeSession({
+                                     sessionId,
+                                     wallet,
+                                     lifespan
+                                   }: {
+  sessionId: string
+  wallet: string
+  lifespan: number
+}): Promise<CloseSessionPacket> {
+  return {
+    ...useLifespan(lifespan),
+    code: 'closeSession',
+    wallet,
+    sessionId
+  }
+}
+
+export async function listSessions(
+  args: { wallet: string } & { lifespan: number }
+): Promise<ListSessionsPacket> {
+  return {
+    ...useLifespan(args.lifespan),
+    ...args,
+    code: 'listSessions'
+  }
+}
+
 export async function getSession(
   args: {
     wallet: string
-    session: string
+    sessionId: string
   } & { lifespan: number }
 ): Promise<GetSessionPacket> {
   return {

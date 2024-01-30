@@ -68,6 +68,17 @@ export type OpenSessionResponse = {
   }
 }
 
+export type CloseSessionResponse = {
+  code: 'sessionClosed'
+}
+
+export type ListSessionsResponse = {
+  code: 'listSessions'
+  data: {
+    sessions: any[]
+  }
+}
+
 export type SignedMessageResponse = {
   code: 'signedMessage'
   data: {
@@ -171,6 +182,15 @@ export function isFinishValidateSessionResponse(receipt: any): receipt is Finish
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
     receipt.code === 'finishedSessionValidation' &&
+    typeof receipt.data === 'object'
+  )
+}
+
+export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'sessionClosed' &&
     typeof receipt.data === 'object'
   )
 }
