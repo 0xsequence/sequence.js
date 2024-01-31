@@ -120,12 +120,7 @@ export class SequenceWaaSBase {
       throw new Error('Not signed in')
     }
 
-    const signerPk = await this.signer.get()
-    if (!signerPk) {
-      throw new Error('No signer')
-    }
-
-    const signer = new ethers.Wallet(signerPk)
+    const signer = await this.getSigner()
     const signature = await signPacket(signer, packet)
 
     return {
@@ -140,23 +135,24 @@ export class SequenceWaaSBase {
     }
   }
 
-  public async signUsingSessionKey(message: string | Uint8Array) {
-    const signerPk = await this.signer.get()
+  private async getSigner() {
+    let signerPk = await this.signer.get()
     if (!signerPk) {
-      throw new Error('No signer')
+      const signer = ethers.Wallet.createRandom()
+      signerPk = signer.privateKey
+      await this.signer.set(signerPk)
     }
 
-    const signer = new ethers.Wallet(signerPk)
+    return new ethers.Wallet(signerPk)
+  }
+
+  public async signUsingSessionKey(message: string | Uint8Array) {
+    const signer = await this.getSigner()
     return signer.signMessage(message)
   }
 
   public async getSignerAddress() {
-    const signerPk = await this.signer.get()
-    if (!signerPk) {
-      throw new Error('No signer')
-    }
-
-    const signer = new ethers.Wallet(signerPk)
+    const signer = await this.getSigner()
     return signer.address
   }
 
@@ -201,13 +197,17 @@ export class SequenceWaaSBase {
       await this.completeSignOut()
     }
 
-    const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
+    const packet = await openSession({
+      signer: await this.getSigner(),
+      proof,
+      lifespan: DEFAULT_LIFESPAN,
+    })
 
-    await Promise.all([this.status.set('pending'), this.signer.set(result.signer.privateKey)])
+    await this.status.set('pending')
 
     return {
       version: this.VERSION,
-      packet: result.packet,
+      packet,
 
       // NOTICE: We don't sign the open session packet.
       // because the session is not yet open, so it can't be used to sign.
