@@ -1019,7 +1019,7 @@ describe('SequenceProvider', () => {
 
         it('forward estimateGas - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect((await provider.estimateGas({ to: addr })).toBigInt).to.equal(eg1)
+          expect((await provider.estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
 
           provider.setDefaultChainId(31338)
           expect((await provider.estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
