@@ -148,8 +148,8 @@ export const findNetworkConfig = (networks: NetworkConfig[], chainId: ChainIdLik
     return networks.find(n => n.chainId === chainId)
   } else if ((<NetworkConfig>chainId).chainId) {
     return networks.find(n => n.chainId === (<NetworkConfig>chainId).chainId)
-  } else if (ethers.BigNumber.isBigNumber(chainId)) {
-    const id = chainId.toNumber()
+  } else if (typeof chainId === 'bigint') {
+    const id = Number(chainId)
     return networks.find(n => n.chainId === id)
   } else {
     return undefined
