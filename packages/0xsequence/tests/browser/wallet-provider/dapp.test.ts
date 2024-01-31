@@ -258,14 +258,14 @@ export const tests = async () => {
   await test('fund sequence wallet', async () => {
     // fund Sequence wallet with some ETH from test seed account
     const testAccount = getEOAWallet(testAccounts[0].privateKey)
-    const walletBalanceBefore = await signer.getBalance()
+    const walletBalanceBefore = (await signer.getBalance()).toBigInt()
 
     const ethAmount = parseEther('10.1234')
     const txResp = await sendETH(testAccount, wallet.getAddress(), ethAmount)
     const txReceipt = await provider.getTransactionReceipt(txResp.hash)
     assert.true(txReceipt.status === 1, 'eth sent from signer1')
 
-    const walletBalanceAfter = await signer.getBalance()
+    const walletBalanceAfter = await (await signer.getBalance()).toBigInt()
     assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
   })
 
@@ -374,16 +374,16 @@ export const tests = async () => {
       value: ethAmount2
     }
 
-    const toBalanceBefore = await provider.getBalance(testAccount.address)
+    const toBalanceBefore = (await provider.getBalance(testAccount.address)).toBigInt()
     const txnResp = await signer.sendTransaction([tx1, tx2])
 
     await txnResp.wait()
 
-    const toBalanceAfter = await provider.getBalance(testAccount.address)
-    const sent = toBalanceAfter.sub(toBalanceBefore)
-    const expected = ethAmount1.add(ethAmount2)
+    const toBalanceAfter = (await provider.getBalance(testAccount.address)).toBigInt()
+    const sent = toBalanceAfter - toBalanceBefore
+    const expected = ethAmount1 + ethAmount2
     assert.true(
-      sent.eq(ethAmount1.add(ethAmount2)),
+      sent === ethAmount1 + ethAmount2,
       `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`
     )
   })
@@ -404,16 +404,16 @@ export const tests = async () => {
       value: ethAmount2
     }
 
-    const toBalanceBefore = await provider.getBalance(testAccount.address)
+    const toBalanceBefore = (await provider.getBalance(testAccount.address)).toBigInt()
     const txnResp = await signer.sendTransaction([tx1, tx2])
 
     await txnResp.wait()
 
-    const toBalanceAfter = await provider.getBalance(testAccount.address)
-    const sent = toBalanceAfter.sub(toBalanceBefore)
-    const expected = ethAmount1.add(ethAmount2)
+    const toBalanceAfter = (await provider.getBalance(testAccount.address)).toBigInt()
+    const sent = toBalanceAfter - toBalanceBefore
+    const expected = ethAmount1 + ethAmount2
     assert.true(
-      sent.eq(ethAmount1.add(ethAmount2)),
+      sent === ethAmount1 + ethAmount2,
       `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`
     )
   })
@@ -434,16 +434,16 @@ export const tests = async () => {
       value: ethAmount2
     }
 
-    const toBalanceBefore = await provider.getBalance(testAccount.address)
+    const toBalanceBefore = (await provider.getBalance(testAccount.address)).toBigInt()
 
     const txnResp = await signer.sendTransaction([tx1, tx2])
     await txnResp.wait()
 
-    const toBalanceAfter = await provider.getBalance(testAccount.address)
-    const sent = toBalanceAfter.sub(toBalanceBefore)
-    const expected = ethAmount1.add(ethAmount2)
+    const toBalanceAfter = (await provider.getBalance(testAccount.address)).toBigInt()
+    const sent = toBalanceAfter - toBalanceBefore
+    const expected = ethAmount1 + ethAmount2
     assert.true(
-      sent.eq(ethAmount1.add(ethAmount2)),
+      sent === ethAmount1 + ethAmount2,
       `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`
     )
   })

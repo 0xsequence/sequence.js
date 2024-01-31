@@ -349,10 +349,10 @@ describe('SequenceSigner', () => {
 
         addr = res.contractAddress
 
-        eg1 = await hardhat1Provider.estimateGas({ to: addr })
-        eg2 = await hardhat2Provider.estimateGas({ to: addr })
+        eg1 = (await hardhat1Provider.estimateGas({ to: addr })).toBigInt()
+        eg2 = (await hardhat2Provider.estimateGas({ to: addr })).toBigInt()
 
-        expect(eg1).to.not.deep.equal(eg2)
+        expect(eg1).to.not.equal(eg2)
 
         signer = new SequenceProvider(basicMockClient, providerFor).getSigner()
       })

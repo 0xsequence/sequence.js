@@ -1332,7 +1332,8 @@ describe('Wallet integration', function () {
 
       const session = await Session.singleSigner({
         settings: simpleSettings,
-        signer: signer
+        signer: signer,
+        projectAccessKey: ''
       })
 
       expect(session.account.address).to.not.be.undefined
@@ -1353,7 +1354,8 @@ describe('Wallet integration', function () {
 
       const session1 = await Session.singleSigner({
         settings: simpleSettings,
-        signer: signer
+        signer: signer,
+        projectAccessKey: ''
       })
 
       const address1 = session1.account.address
@@ -1361,7 +1363,8 @@ describe('Wallet integration', function () {
 
       const session2 = await Session.singleSigner({
         settings: simpleSettings,
-        signer: signer
+        signer: signer,
+        projectAccessKey: ''
       })
 
       const address2 = session2.account.address
@@ -1378,7 +1381,8 @@ describe('Wallet integration', function () {
 
       const session = await Session.singleSigner({
         settings: simpleSettings,
-        signer: signer
+        signer: signer,
+        projectAccessKey: ''
       })
 
       const receipt = await session.account.sendTransaction(
@@ -1388,7 +1392,7 @@ describe('Wallet integration', function () {
         networks[0].chainId
       )
 
-      expect(receipt.hash).to.not.be.undefined
+      expect(receipt!.hash).to.not.be.undefined
     })
   })
 })

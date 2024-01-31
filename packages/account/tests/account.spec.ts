@@ -475,7 +475,7 @@ describe('Account', () => {
 
         const simpleConfig2 = {
           threshold: 4,
-          checkpoint: await account.status(0).then(s => BigInt(s.checkpoint).add(1)),
+          checkpoint: await account.status(0).then(s => BigInt(s.checkpoint) + 1n),
           signers: [
             {
               address: signer2a.address,
@@ -641,7 +641,7 @@ describe('Account', () => {
 
           const simpleConfig3 = {
             threshold: 5,
-            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint).add(1)),
+            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint) + 1n),
             signers: [
               {
                 address: signer3a.address,
@@ -732,7 +732,7 @@ describe('Account', () => {
 
           const simpleConfig2 = {
             threshold: 6,
-            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint).add(1)),
+            checkpoint: await account.status(0).then(s => BigInt(s.checkpoint) + 1n),
             signers: [
               {
                 address: signer2a.address,
@@ -1400,8 +1400,8 @@ describe('Account', () => {
 
       let { space, nonce } = getNonce(response)
 
-      expect(space.eq(6492)).to.be.true
-      expect(nonce.eq(0)).to.be.true
+      expect(space === 6492n).to.be.true
+      expect(nonce === 0n).to.be.true
 
       await response.wait()
 
@@ -1421,8 +1421,8 @@ describe('Account', () => {
       space = encoded.space
       nonce = encoded.nonce
 
-      expect(space.eq(6492)).to.be.true
-      expect(nonce.eq(1)).to.be.true
+      expect(space === 6492n).to.be.true
+      expect(nonce === 1n).to.be.true
     })
 
     it('Should select random nonces by default', async () => {
@@ -1433,8 +1433,8 @@ describe('Account', () => {
 
       const { space: firstSpace, nonce: firstNonce } = getNonce(response)
 
-      expect(firstSpace.eq(0)).to.be.false
-      expect(firstNonce.eq(0)).to.be.true
+      expect(firstSpace === 0n).to.be.false
+      expect(firstNonce === 0n).to.be.true
 
       // not necessary, parallel execution is ok:
       // await response.wait()
@@ -1446,10 +1446,10 @@ describe('Account', () => {
 
       const { space: secondSpace, nonce: secondNonce } = getNonce(response)
 
-      expect(secondSpace.eq(0)).to.be.false
-      expect(secondNonce.eq(0)).to.be.true
+      expect(secondSpace === 0n).to.be.false
+      expect(secondNonce === 0n).to.be.true
 
-      expect(secondSpace.eq(firstSpace)).to.be.false
+      expect(secondSpace === firstSpace).to.be.false
     })
 
     it('Should respect the serial option', async () => {
@@ -1467,8 +1467,8 @@ describe('Account', () => {
 
       let { space, nonce } = getNonce(response)
 
-      expect(space.eq(0)).to.be.true
-      expect(nonce.eq(0)).to.be.true
+      expect(space === 0n).to.be.true
+      expect(nonce === 0n).to.be.true
 
       await response.wait()
 
@@ -1488,8 +1488,8 @@ describe('Account', () => {
       space = encoded.space
       nonce = encoded.nonce
 
-      expect(space.eq(0)).to.be.true
-      expect(nonce.eq(1)).to.be.true
+      expect(space === 0n).to.be.true
+      expect(nonce === 1n).to.be.true
     })
   })
 })

@@ -52,7 +52,7 @@ describe('SequenceClient', () => {
         }
       }
 
-      client = new SequenceClient(mockTransport as unknown as ProviderTransport, useBestStore(), 1)
+      client = new SequenceClient(mockTransport as unknown as ProviderTransport, useBestStore())
     })
 
     it('shoud emit open event', async () => {

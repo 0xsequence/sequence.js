@@ -712,7 +712,7 @@ describe('Local config tracker', () => {
           const witness = await tracker.walletsOfSigner({ signer: signer.address })
           expect(witness.length).to.equal(1)
           expect(witness[0].wallet).to.equal(address)
-          expect(witness[0].proof.chainId.toNumber()).to.equal(1)
+          expect(witness[0].proof.chainId).to.equal(1n)
           expect(witness[0].proof.digest).to.equal(digest)
           expect(witness[0].proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
@@ -809,11 +809,11 @@ describe('Local config tracker', () => {
           expect(wallet1Result).to.not.be.undefined
           expect(wallet2Result).to.not.be.undefined
 
-          expect(wallet1Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet1Result?.proof.chainId).to.equal(1n)
           expect(wallet1Result?.proof.digest).to.equal(digest)
           expect(wallet1Result?.proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
-          expect(wallet2Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet2Result?.proof.chainId).to.equal(1n)
           expect(wallet2Result?.proof.digest).to.equal(digest2)
           expect(wallet2Result?.proof.signature).to.equal((decoded2.decoded.tree as v2.signature.SignatureLeaf).signature)
         })

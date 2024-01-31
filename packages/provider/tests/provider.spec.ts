@@ -766,16 +766,16 @@ describe('SequenceProvider', () => {
         let b2: bigint
 
         beforeEach(async () => {
-          b1 = await hardhat1Provider.getBalance(testAccounts[0].address)
-          b2 = await hardhat2Provider.getBalance(testAccounts[1].address)
+          b1 = (await hardhat1Provider.getBalance(testAccounts[0].address)).toBigInt()
+          b2 = (await hardhat2Provider.getBalance(testAccounts[1].address)).toBigInt()
 
-          if (b1.eq(b2)) {
+          if (b1 === b2) {
             await testAccounts[1].sendTransaction({
               to: ethers.Wallet.createRandom().address,
               value: 1
             })
 
-            b2 = await hardhat2Provider.getBalance(testAccounts[1].address)
+            b2 = (await hardhat2Provider.getBalance(testAccounts[1].address)).toBigInt()
           }
 
           expect(b1).to.not.deep.equal(b2)
@@ -1011,10 +1011,10 @@ describe('SequenceProvider', () => {
 
           addr = res.contractAddress
 
-          eg1 = await hardhat1Provider.estimateGas({ to: addr })
-          eg2 = await hardhat2Provider.estimateGas({ to: addr })
+          eg1 = (await hardhat1Provider.estimateGas({ to: addr })).toBigInt()
+          eg2 = (await hardhat2Provider.estimateGas({ to: addr })).toBigInt()
 
-          expect(eg1).to.not.deep.equal(eg2)
+          expect(eg1).to.not.equal(eg2)
         })
 
         it('forward estimateGas - default', async () => {

@@ -30,18 +30,19 @@ describe('Wallet (primitive)', () => {
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
   })
-  ;(
-    [
-      {
-        version: 1,
-        coders: { signature: v1.signature.SignatureCoder, config: v1.config.ConfigCoder }
-      },
-      {
-        version: 2,
-        coders: { signature: v2.signature.SignatureCoder, config: v2.config.ConfigCoder }
-      }
-    ] as { version: number; coders: Coders }[]
-  ).map(({ version, coders }) => {
+
+  const config: { version: keyof typeof contexts; coders: Coders }[] = [
+    {
+      version: 1,
+      coders: { signature: v1.signature.SignatureCoder, config: v1.config.ConfigCoder }
+    },
+    {
+      version: 2,
+      coders: { signature: v2.signature.SignatureCoder, config: v2.config.ConfigCoder }
+    }
+  ]
+
+  config.map(({ version, coders }) => {
     describe(`Using v${version} version`, () => {
       it('Should deploy a new wallet', async () => {
         const signer = ethers.Wallet.createRandom()
@@ -151,8 +152,8 @@ describe('Wallet (primitive)', () => {
 
           let { space, nonce } = getNonce(response)
 
-          expect(space.eq(6492)).to.be.true
-          expect(nonce.eq(0)).to.be.true
+          expect(space === 6492n).to.be.true
+          expect(nonce === 0n).to.be.true
 
           await response.wait()
 
@@ -165,8 +166,8 @@ describe('Wallet (primitive)', () => {
           space = encoded.space
           nonce = encoded.nonce
 
-          expect(space.eq(6492)).to.be.true
-          expect(nonce.eq(1)).to.be.true
+          expect(space === 6492n).to.be.true
+          expect(nonce === 1n).to.be.true
         })
 
         it('Should select random nonces by default', async () => {
@@ -174,8 +175,8 @@ describe('Wallet (primitive)', () => {
 
           const { space: firstSpace, nonce: firstNonce } = getNonce(response)
 
-          expect(firstSpace.eq(0)).to.be.false
-          expect(firstNonce.eq(0)).to.be.true
+          expect(firstSpace === 0n).to.be.false
+          expect(firstNonce === 0n).to.be.true
 
           // not necessary, parallel execution is ok:
           // await response.wait()
@@ -184,10 +185,10 @@ describe('Wallet (primitive)', () => {
 
           const { space: secondSpace, nonce: secondNonce } = getNonce(response)
 
-          expect(secondSpace.eq(0)).to.be.false
-          expect(secondNonce.eq(0)).to.be.true
+          expect(secondSpace === 0n).to.be.false
+          expect(secondNonce === 0n).to.be.true
 
-          expect(secondSpace.eq(firstSpace)).to.be.false
+          expect(secondSpace === firstSpace).to.be.false
         })
 
         it('Should respect the serial option', async () => {
@@ -195,8 +196,8 @@ describe('Wallet (primitive)', () => {
 
           let { space, nonce } = getNonce(response)
 
-          expect(space.eq(0)).to.be.true
-          expect(nonce.eq(0)).to.be.true
+          expect(space === 0n).to.be.true
+          expect(nonce === 0n).to.be.true
 
           await response.wait()
 
@@ -206,8 +207,8 @@ describe('Wallet (primitive)', () => {
           space = encoded.space
           nonce = encoded.nonce
 
-          expect(space.eq(0)).to.be.true
-          expect(nonce.eq(1)).to.be.true
+          expect(space === 0n).to.be.true
+          expect(nonce === 1n).to.be.true
         })
       })
 
@@ -513,7 +514,7 @@ describe('Wallet (primitive)', () => {
                     value: ethAmount
                   })
                   await provider.getTransactionReceipt(txResp.hash)
-                  toBalanceBefore = await provider.getBalance(testAccountAddress)
+                  toBalanceBefore = (await provider.getBalance(testAccountAddress)).toBigInt()
                 })
 
                 it('Should send an async transaction', async () => {
@@ -555,7 +556,7 @@ describe('Wallet (primitive)', () => {
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
+                  expect(sent.toString()).to.be.eq((ethAmount1 + ethAmount2 + ethAmount3).toString())
                 })
 
                 it('Should send multiple async transactions in one batch, async', async () => {
@@ -583,7 +584,7 @@ describe('Wallet (primitive)', () => {
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
+                  expect(sent.toString()).to.be.eq((ethAmount1 + ethAmount2 + ethAmount3).toString())
                 })
               })
             })
