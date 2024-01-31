@@ -52,7 +52,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   fromSimple: (config: SimpleConfig): WalletConfig => {
-    if (config.checkpoint !== 0n) {
+    if (BigInt(config.checkpoint) !== 0n) {
       throw new Error('v1 wallet config does not support checkpoint')
     }
 
@@ -157,7 +157,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   ): WalletConfig {
     const newSigners = config.signers.slice()
 
-    if (action.checkpoint && action.checkpoint !== 0n) {
+    if (action.checkpoint && BigInt(action.checkpoint) !== 0n) {
       throw new Error('v1 wallet config does not support checkpoint')
     }
 

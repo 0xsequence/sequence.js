@@ -76,9 +76,9 @@ describe('Account signer', () => {
   })
 
   describe('with new account', () => {
-    var account: Account
-    var config: any
-    var accountSigner: ethers.Wallet
+    let account: Account
+    let config: any
+    let accountSigner: ethers.Wallet
 
     beforeEach(async () => {
       accountSigner = randomWallet('Should create a new account')
@@ -211,8 +211,8 @@ describe('Account signer', () => {
         })
 
         describe('select fee', () => {
-          var account: never
-          var getAccount: (feeOptions: FeeOption[], feeQuote: FeeQuote) => Promise<Account>
+          let account: never
+          let getAccount: (feeOptions: FeeOption[], feeQuote: FeeQuote) => Promise<Account>
 
           beforeEach(async () => {
             class LocalRelayerWithFee extends LocalRelayer {
@@ -384,7 +384,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect(await token.balanceOf(recipient)).to.deep.equal(parseEther('250'))
+            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('250'))
           })
 
           it('should reject ERC20 fee if not enough balance', async () => {
@@ -472,7 +472,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect(await token.balanceOf(recipient)).to.deep.equal(parseEther('11'))
+            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('11'))
           })
 
           it('should select fee using callback (first option)', async () => {
@@ -534,7 +534,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect(await signer.provider.getBalance(recipient)).to.deep.equal(BigInt('5'))
+            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.deep.equal(5n)
             expect(await token.balanceOf(recipient)).to.deep.equal(parseEther('0'))
           })
 
@@ -594,8 +594,8 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect(await signer.provider.getBalance(recipient)).to.deep.equal(BigInt('0'))
-            expect(await token.balanceOf(recipient)).to.deep.equal(parseEther('11'))
+            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.equal(0n)
+            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('11'))
           })
         })
       })

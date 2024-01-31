@@ -779,7 +779,7 @@ describe('Account', () => {
       // Old account may be an address that's not even deployed
       const signer1 = randomWallet('Should migrate undeployed account')
 
-      const simpleConfig = {
+      const simpleConfig: commons.config.SimpleConfig = {
         threshold: 1,
         checkpoint: 0,
         signers: [
