@@ -11,6 +11,7 @@ import {
   validateSession,
   finishValidateSession
 } from './payloads/packets/session'
+import { createSigner } from "./payloads/packets/signer";
 import { LocalStore, Store, StoreObj } from './store'
 import { BasePacket, Payload, signPacket } from './payloads'
 import {
@@ -147,7 +148,7 @@ export class SequenceWaaSBase {
       throw new Error('No signer')
     }
 
-    const signer = new ethers.Wallet(signerPk)
+    const signer = await createSigner(signerPk)
     return signer.signMessage(message)
   }
 

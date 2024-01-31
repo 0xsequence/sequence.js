@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { BasePacket, BasePacketForWallet } from '..'
+import { createRandomSigner, Signer } from "./signer";
 import { useLifespan } from './utils'
 
 export type SessionPacketProof = {
@@ -38,18 +39,15 @@ export async function openSession({
 }: {
   proof: SessionPacketProof | undefined
   lifespan: number
-}): Promise<{ packet: OpenSessionPacket; signer: ethers.Wallet }> {
-  // todo: use generic signer interface
-  const signer = ethers.Wallet.createRandom()
-
-  //window.crypto.subtle.generateKey("ECDSA_secP256r1", true, ["sign", "verify"])
+}): Promise<{ packet: OpenSessionPacket; signer: Signer }> {
+  const signer = await createRandomSigner()
 
   return {
     signer,
     packet: {
       ...useLifespan(lifespan),
       code: 'openSession',
-      session: signer.address,
+      session: await signer.getAddress(),
       proof // May be defined server side
     }
   }
