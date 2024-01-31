@@ -534,8 +534,8 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.deep.equal(5n)
-            expect(await token.balanceOf(recipient)).to.deep.equal(parseEther('0'))
+            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.equal(5n)
+            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('0'))
           })
 
           it('should select fee using callback (second option)', async () => {
