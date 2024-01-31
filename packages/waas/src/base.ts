@@ -203,7 +203,7 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN,
     })
 
-    await Promise.all([this.status.set('pending')])
+    await this.status.set('pending')
 
     return {
       version: this.VERSION,
