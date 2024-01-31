@@ -509,7 +509,7 @@ describe('SequenceProvider', () => {
       expect(() => provider.toChainId(fakeNetwork)).to.throw(`Unsupported network ${fakeNetwork}`)
     })
 
-    it('should work when passing a BigNumber', () => {
+    it('should work when passing a BigInt', () => {
       expect(provider.toChainId(1n)).to.equal(1)
       expect(provider.toChainId(31337n)).to.equal(31337)
       expect(provider.toChainId(31338n)).to.equal(31338)
