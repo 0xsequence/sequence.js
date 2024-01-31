@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.8.3
+
+### Patch Changes
+
+- api: introduce basic linked wallet support
+- Updated dependencies
+  - @0xsequence/abi@1.8.3
+  - @0xsequence/account@1.8.3
+  - @0xsequence/auth@1.8.3
+  - @0xsequence/core@1.8.3
+  - @0xsequence/migration@1.8.3
+  - @0xsequence/network@1.8.3
+  - @0xsequence/relayer@1.8.3
+  - @0xsequence/utils@1.8.3
+  - @0xsequence/wallet@1.8.3
+
 ## 1.8.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.8.3
+
+### Patch Changes
+
+- api: introduce basic linked wallet support
+
 ## 1.8.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.8.3
+
+### Patch Changes
+
+- api: introduce basic linked wallet support
+- Updated dependencies
+  - @0xsequence/core@1.8.3
+
 ## 1.8.2
 
 ### Patch Changes
