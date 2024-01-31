@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import {
   ConnectOptions,
   OpenWalletIntent,
@@ -722,14 +722,14 @@ describe('SequenceProvider', () => {
             if (chainId === 31337) {
               return {
                 ...hardhat1Provider,
-                getGasPrice: async () => 1n
+                getGasPrice: async () => BigNumber.from(1n)
               } as unknown as ethers.providers.JsonRpcProvider
             }
 
             if (chainId === 31338) {
               return {
                 ...hardhat2Provider,
-                getGasPrice: async () => 2n
+                getGasPrice: async () => BigNumber.from(2n)
               } as unknown as ethers.providers.JsonRpcProvider
             }
 
