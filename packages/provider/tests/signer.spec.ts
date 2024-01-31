@@ -361,7 +361,7 @@ describe('SequenceSigner', () => {
         expect((await signer.estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
 
         signer.provider.setDefaultChainId(31338)
-        expect(await signer.estimateGas({ to: addr })).to.deep.equal(eg2)
+        expect((await signer.estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
       })
 
       it('forward estimateGas - specific chain', async () => {
