@@ -1,5 +1,17 @@
 import { utils } from 'ethers'
 
+// Monkey patch toJSON on BigInt to return a string
+
+declare global {
+  interface BigInt {
+    toJSON(): string
+  }
+}
+
+BigInt.prototype.toJSON = function () {
+  return this.toString()
+}
+
 /**
  *  Any type that can be used where a numeric value is needed.
  */
