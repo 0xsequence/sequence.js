@@ -136,6 +136,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('base-sepolia')
   },
   {
+    ...networks[ChainId.HOMEVERSE],
+    ...genUrls('homeverse')
+  },
+  {
     ...networks[ChainId.HOMEVERSE_TESTNET],
     ...genUrls('homeverse-testnet')
   },
