@@ -1019,22 +1019,22 @@ describe('SequenceProvider', () => {
 
         it('forward estimateGas - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.estimateGas({ to: addr })).to.equal(eg1)
+          expect((await provider.estimateGas({ to: addr })).toBigInt).to.equal(eg1)
 
           provider.setDefaultChainId(31338)
-          expect(await provider.estimateGas({ to: addr })).to.equal(eg2)
+          expect((await provider.estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
         })
 
         it('forward estimateGas - specific chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.estimateGas({ to: addr }, { chainId: 31337 })).to.equal(eg1)
-          expect(await provider.estimateGas({ to: addr }, { chainId: 31338 })).to.equal(eg2)
+          expect((await provider.estimateGas({ to: addr }, { chainId: 31337 })).toBigInt()).to.equal(eg1)
+          expect((await provider.estimateGas({ to: addr }, { chainId: 31338 })).toBigInt()).to.equal(eg2)
         })
 
         it('forward estimateGas - static network provider', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getProvider('hardhat').estimateGas({ to: addr })).to.equal(eg1)
-          expect(await provider.getProvider('hardhat2').estimateGas({ to: addr })).to.equal(eg2)
+          expect((await provider.getProvider('hardhat').estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
+          expect((await provider.getProvider('hardhat2').estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
         })
 
         it('fail to forward estimateGas - static network provider for different chain', async () => {
