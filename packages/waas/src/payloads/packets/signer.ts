@@ -1,3 +1,4 @@
+import { base64Encode } from "@0xsequence/utils";
 import { ethers } from "ethers";
 
 export type Signer = {
@@ -42,12 +43,12 @@ async function newSigner(publicKey: CryptoKey, privateKey: CryptoKey): Promise<S
   // todo: encrypt keys
 
   const encoder = new TextEncoder()
+  const decoder = new TextDecoder()
   return {
     privateKey: ethers.utils.hexlify(encoder.encode(JSON.stringify(keys))),
     getAddress: async () => {
       const pubRaw = await window.crypto.subtle.exportKey('raw', publicKey)
-      const address = ethers.utils.computeAddress(Array.from(new Uint8Array(pubRaw)))
-      return 'r1:'+address
+      return 'r1:'+ethers.utils.hexlify(new Uint8Array(pubRaw))
     },
     signMessage: async (message: string | Uint8Array) => {
       if (typeof message === 'string') {
@@ -58,8 +59,8 @@ async function newSigner(publicKey: CryptoKey, privateKey: CryptoKey): Promise<S
           message = encoder.encode(message)
         }
       }
-      const signature = await window.crypto.subtle.sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, privateKey, message)
-      return 'r1:'+ethers.utils.hexlify(new Uint8Array(signature))
+      const signatureBuff = await window.crypto.subtle.sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, privateKey, ethers.utils.arrayify(ethers.utils.keccak256(message)))
+      return 'r1:'+ethers.utils.hexlify(new Uint8Array(signatureBuff))
     }
   }
 }
