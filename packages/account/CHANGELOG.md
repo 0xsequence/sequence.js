@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 1.8.4
+
+### Patch Changes
+
+- network: add homeverse to networks list
+- Updated dependencies
+  - @0xsequence/abi@1.8.4
+  - @0xsequence/core@1.8.4
+  - @0xsequence/migration@1.8.4
+  - @0xsequence/network@1.8.4
+  - @0xsequence/relayer@1.8.4
+  - @0xsequence/sessions@1.8.4
+  - @0xsequence/utils@1.8.4
+  - @0xsequence/wallet@1.8.4
+
 ## 1.8.3
 
 ### Patch Changes

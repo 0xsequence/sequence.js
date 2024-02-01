@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.8.4
+
+### Patch Changes
+
+- network: add homeverse to networks list
+
 ## 1.8.3
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.8.4
+
+### Patch Changes
+
+- network: add homeverse to networks list
+- Updated dependencies
+  - @0xsequence/core@1.8.4
+  - @0xsequence/migration@1.8.4
+  - @0xsequence/replacer@1.8.4
+
 ## 1.8.3
 
 ### Patch Changes
