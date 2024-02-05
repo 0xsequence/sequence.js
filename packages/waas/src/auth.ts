@@ -228,8 +228,13 @@ export class Sequence {
   }
 
   private async sendIntent(intent: Payload<any>) {
+    const sessionId = await this.waas.getSessionID()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
     const payload: SendIntentPayload = {
-      sessionId: await this.waas.getSessionID() || '',
+      sessionId: sessionId,
       intentJson: JSON.stringify(intent, null, 0)
     }
 
@@ -328,7 +333,11 @@ export class Sequence {
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
-    const thisSessionId = await this.waas.getSessionID() || ''
+    const thisSessionId = await this.waas.getSessionID()
+    if (!thisSessionId) {
+      throw new Error('session not open')
+    }
+
     const closeSessionId = sessionId || thisSessionId
 
     try {
@@ -359,16 +368,20 @@ export class Sequence {
   }
 
   async listSessions(): Promise<Sessions> {
-    const payload: ListSessionsPayload = {
-      sessionId: await this.waas.getSessionID() || ''
+    const sessionId = await this.waas.getSessionID()
+    if (!sessionId) {
+      throw new Error('session not open')
     }
 
-    const thisSessionID = await this.waas.getSessionID()
+    const payload: ListSessionsPayload = {
+      sessionId: sessionId
+    }
+
     const { args, headers } = await this.preparePayload(payload)
     const res = await this.client.listSessions(args, headers)
     return res.sessions.map(session => ({
       ...session,
-      isThis: session.id === thisSessionID
+      isThis: session.id === sessionId
     }))
   }
 

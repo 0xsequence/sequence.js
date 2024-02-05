@@ -131,12 +131,17 @@ export class SequenceWaaSBase {
     const signer = await PayloadSigners.newPayloadSigner(signerPk)
     const signature = await signPacket(signer, packet)
 
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
     return {
       version: this.VERSION,
       packet,
       signatures: [
         {
-          sessionId: await this.sessionId.get() || '',
+          sessionId,
           signature
         }
       ]
@@ -206,10 +211,15 @@ export class SequenceWaaSBase {
   }
 
   async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
+    sessionId = sessionId || await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
     const packet = await closeSession({
       lifespan: lifespan || DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
-      sessionId: sessionId || (await this.sessionId.get() || '')
+      sessionId: sessionId
     })
 
     return this.buildPayload(packet)
@@ -343,10 +353,14 @@ export class SequenceWaaSBase {
     deviceMetadata: string
     redirectURL?: string
   }): Promise<Payload<ValidateSessionPacket>> {
-    // todo: provide session id
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
     const packet = await validateSession({
       lifespan: DEFAULT_LIFESPAN,
-      sessionId: await this.sessionId.get() || '',
+      sessionId: sessionId,
       deviceMetadata,
       redirectURL,
       wallet: await this.getWalletAddress()
@@ -356,9 +370,13 @@ export class SequenceWaaSBase {
   }
 
   async getSession(): Promise<Payload<GetSessionPacket>> {
-    // todo: session id
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
     const packet = await getSession({
-      sessionId: await this.sessionId.get() || '',
+      sessionId: sessionId,
       wallet: await this.getWalletAddress(),
       lifespan: DEFAULT_LIFESPAN
     })
@@ -367,8 +385,11 @@ export class SequenceWaaSBase {
   }
 
   async finishValidateSession(salt: string, challenge: string): Promise<Payload<FinishValidateSessionPacket>> {
-    // todo: session id
-    const sessionId = await this.sessionId.get() || ''
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
     const wallet = await this.getWalletAddress()
     const packet = finishValidateSession(wallet, sessionId, salt, challenge, DEFAULT_LIFESPAN)
     return this.buildPayload(packet)
