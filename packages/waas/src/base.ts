@@ -35,7 +35,7 @@ type status = 'pending' | 'signed-in' | 'signed-out'
 
 const SEQUENCE_WAAS_WALLET_KEY = '@0xsequence.waas.wallet'
 const SEQUENCE_WAAS_SESSION_ID_KEY = '@0xsequence.waas.session_id'
-const SEQUENCE_WAAS_SIGNER_KEY = '@0xsequence.waas.signer'
+const SEQUENCE_WAAS_PAYLOAD_SIGNER_KEY = '@0xsequence.waas.payload_signer'
 const SEQUENCE_WAAS_STATUS_KEY = '@0xsequence.waas.status'
 
 // 5 minutes of default lifespan
@@ -58,7 +58,7 @@ export class SequenceWaaSBase {
 
   private readonly status: StoreObj<status>
   private readonly sessionId: StoreObj<string | undefined>
-  private readonly signer: StoreObj<string | undefined>
+  private readonly payloadSigner: StoreObj<string | undefined>
   private readonly wallet: StoreObj<string | undefined>
 
   constructor(
@@ -67,7 +67,7 @@ export class SequenceWaaSBase {
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.sessionId = new StoreObj(this.store, SEQUENCE_WAAS_SESSION_ID_KEY, undefined)
-    this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
+    this.payloadSigner = new StoreObj(this.store, SEQUENCE_WAAS_PAYLOAD_SIGNER_KEY, undefined)
     this.wallet = new StoreObj(this.store, SEQUENCE_WAAS_WALLET_KEY, undefined)
   }
 
@@ -123,7 +123,7 @@ export class SequenceWaaSBase {
       throw new Error('Not signed in')
     }
 
-    const signerPk = await this.signer.get()
+    const signerPk = await this.payloadSigner.get()
     if (!signerPk) {
       throw new Error('No signer')
     }
@@ -145,7 +145,7 @@ export class SequenceWaaSBase {
   }
 
   public async signUsingSessionKey(message: string | Uint8Array) {
-    const signerPk = await this.signer.get()
+    const signerPk = await this.payloadSigner.get()
     if (!signerPk) {
       throw new Error('No signer')
     }
@@ -155,7 +155,7 @@ export class SequenceWaaSBase {
   }
 
   public async getSignerVerifier() {
-    const signerPk = await this.signer.get()
+    const signerPk = await this.payloadSigner.get()
     if (!signerPk) {
       throw new Error('No signer')
     }
@@ -194,7 +194,7 @@ export class SequenceWaaSBase {
 
     const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
 
-    await Promise.all([this.status.set('pending'), this.signer.set(result.signer.privateKey)])
+    await Promise.all([this.status.set('pending'), this.payloadSigner.set(result.signer.privateKey)])
 
     return {
       version: this.VERSION,
@@ -217,7 +217,7 @@ export class SequenceWaaSBase {
   }
 
   async completeSignOut() {
-    await Promise.all([this.status.set('signed-out'), this.signer.set(undefined), this.wallet.set(undefined), this.sessionId.set(undefined)])
+    await Promise.all([this.status.set('signed-out'), this.payloadSigner.set(undefined), this.wallet.set(undefined), this.sessionId.set(undefined)])
   }
 
   /**
@@ -239,7 +239,7 @@ export class SequenceWaaSBase {
     }
 
     const status = await this.status.get()
-    const signerPk = await this.signer.get()
+    const signerPk = await this.payloadSigner.get()
 
     if (receipt.code !== 'sessionOpened') {
       throw new Error('Invalid receipt')
