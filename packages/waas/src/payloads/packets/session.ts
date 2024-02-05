@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { BasePacket, BasePacketForWallet } from '..'
-import { createRandomSigner, Signer } from "./signer";
+import { PayloadSigner, newRandomPayloadSigner } from "../signers";
 import { useLifespan } from './utils'
 
 export type SessionPacketProof = {
@@ -39,15 +39,15 @@ export async function openSession({
 }: {
   proof: SessionPacketProof | undefined
   lifespan: number
-}): Promise<{ packet: OpenSessionPacket; signer: Signer }> {
-  const signer = await createRandomSigner()
+}): Promise<{ packet: OpenSessionPacket; signer: PayloadSigner }> {
+  const signer = await newRandomPayloadSigner()
 
   return {
     signer,
     packet: {
       ...useLifespan(lifespan),
       code: 'openSession',
-      sessionVerifier: await signer.getAddress(),
+      sessionVerifier: await signer.verifier(),
       proof // May be defined server side
     }
   }

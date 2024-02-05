@@ -11,9 +11,8 @@ import {
   validateSession,
   finishValidateSession
 } from './payloads/packets/session'
-import { createSigner } from "./payloads/packets/signer";
 import { LocalStore, Store, StoreObj } from './store'
-import { BasePacket, Payload, signPacket } from './payloads'
+import { BasePacket, Payload, PayloadSigners, signPacket } from './payloads'
 import {
   TransactionsPacket,
   combinePackets,
@@ -35,7 +34,7 @@ import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 type status = 'pending' | 'signed-in' | 'signed-out'
 
 const SEQUENCE_WAAS_WALLET_KEY = '@0xsequence.waas.wallet'
-const SEQUENCE_WAAS_SESSION_KEY = '@0xsequence.waas.session'
+const SEQUENCE_WAAS_SESSION_ID_KEY = '@0xsequence.waas.session_id'
 const SEQUENCE_WAAS_SIGNER_KEY = '@0xsequence.waas.signer'
 const SEQUENCE_WAAS_STATUS_KEY = '@0xsequence.waas.status'
 
@@ -67,7 +66,7 @@ export class SequenceWaaSBase {
     private readonly store: Store = new LocalStore()
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
-    this.sessionId = new StoreObj(this.store, SEQUENCE_WAAS_SESSION_KEY, undefined)
+    this.sessionId = new StoreObj(this.store, SEQUENCE_WAAS_SESSION_ID_KEY, undefined)
     this.signer = new StoreObj(this.store, SEQUENCE_WAAS_SIGNER_KEY, undefined)
     this.wallet = new StoreObj(this.store, SEQUENCE_WAAS_WALLET_KEY, undefined)
   }
@@ -130,7 +129,7 @@ export class SequenceWaaSBase {
     }
 
     // todo: use generic signer interface
-    const signer = await createSigner(signerPk)
+    const signer = await PayloadSigners.newPayloadSigner(signerPk)
     const signature = await signPacket(signer, packet)
 
     return {
@@ -151,18 +150,18 @@ export class SequenceWaaSBase {
       throw new Error('No signer')
     }
 
-    const signer = await createSigner(signerPk)
+    const signer = await PayloadSigners.newPayloadSigner(signerPk)
     return signer.signMessage(message)
   }
 
-  public async getSignerAddress() {
+  public async getSignerVerifier() {
     const signerPk = await this.signer.get()
     if (!signerPk) {
       throw new Error('No signer')
     }
 
-    const signer = await createSigner(signerPk)
-    return signer.getAddress()
+    const signer = await PayloadSigners.newPayloadSigner(signerPk)
+    return signer.verifier()
   }
 
   /**
@@ -211,7 +210,7 @@ export class SequenceWaaSBase {
     const packet = await closeSession({
       lifespan: lifespan || DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
-      sessionId: sessionId || (await this.getSignerAddress())
+      sessionId: sessionId || (await this.sessionId.get() || '')
     })
 
     return this.buildPayload(packet)
@@ -350,7 +349,7 @@ export class SequenceWaaSBase {
     // todo: provide session id
     const packet = await validateSession({
       lifespan: DEFAULT_LIFESPAN,
-      sessionId: await this.getSignerAddress(),
+      sessionId: await this.sessionId.get() || '',
       deviceMetadata,
       redirectURL,
       wallet: await this.getWalletAddress()
@@ -362,7 +361,7 @@ export class SequenceWaaSBase {
   async getSession(): Promise<Payload<GetSessionPacket>> {
     // todo: session id
     const packet = await getSession({
-      sessionId: await this.getSignerAddress(),
+      sessionId: await this.sessionId.get() || '',
       wallet: await this.getWalletAddress(),
       lifespan: DEFAULT_LIFESPAN
     })
@@ -372,7 +371,7 @@ export class SequenceWaaSBase {
 
   async finishValidateSession(salt: string, challenge: string): Promise<Payload<FinishValidateSessionPacket>> {
     // todo: session id
-    const sessionId = await this.getSignerAddress()
+    const sessionId = await this.sessionId.get() || ''
     const wallet = await this.getWalletAddress()
     const packet = finishValidateSession(wallet, sessionId, salt, challenge, DEFAULT_LIFESPAN)
     return this.buildPayload(packet)

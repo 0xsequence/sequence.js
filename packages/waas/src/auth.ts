@@ -429,7 +429,7 @@ export class Sequence {
     }
 
     // Generate a new identifier
-    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSignerAddress()}`
+    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSignerVerifier()}`
     return { ...args, identifier } as T & { identifier: string }
   }
 

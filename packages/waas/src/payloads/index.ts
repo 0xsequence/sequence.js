@@ -1,6 +1,6 @@
 import { ethers } from "ethers"
 import { canonicalize } from 'json-canonicalize'
-import { Signer } from "./packets/signer";
+import { PayloadSigner } from "./signers";
 
 export type BasePacket = {
   code: string
@@ -33,10 +33,11 @@ export function hashPacket(packet: Payload<BasePacket> | BasePacket): ethers.Byt
 }
 
 // todo: use generic signer interface
-export function signPacket(signer: Signer, packed: BasePacket): Promise<string> {
+export function signPacket(signer: PayloadSigner, packed: BasePacket): Promise<string> {
   const hash = hashPacket(packed)
   return signer.signMessage(new Uint8Array(hash))
 }
 
 export * as packets from './packets'
 export * as responses from './responses'
+export * as PayloadSigners from './signers'
