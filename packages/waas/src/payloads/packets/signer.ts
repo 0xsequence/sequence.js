@@ -48,7 +48,7 @@ async function newSigner(publicKey: CryptoKey, privateKey: CryptoKey): Promise<S
     privateKey: ethers.utils.hexlify(encoder.encode(JSON.stringify(keys))),
     getAddress: async () => {
       const pubRaw = await window.crypto.subtle.exportKey('raw', publicKey)
-      return ethers.utils.hexlify(new Uint8Array(pubRaw))
+      return 'r1:'+ethers.utils.hexlify(new Uint8Array(pubRaw))
     },
     signMessage: async (message: string | Uint8Array) => {
       if (typeof message === 'string') {
@@ -59,8 +59,8 @@ async function newSigner(publicKey: CryptoKey, privateKey: CryptoKey): Promise<S
           message = encoder.encode(message)
         }
       }
-      const signatureBuff = await window.crypto.subtle.sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, privateKey, ethers.utils.arrayify(ethers.utils.keccak256(message)))
-      return ethers.utils.hexlify(new Uint8Array(signatureBuff))
+      const signatureBuff = await window.crypto.subtle.sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, privateKey, message)
+      return 'r1:'+ethers.utils.hexlify(new Uint8Array(signatureBuff))
     }
   }
 }

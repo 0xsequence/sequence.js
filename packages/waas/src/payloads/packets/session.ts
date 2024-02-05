@@ -10,27 +10,27 @@ export type SessionPacketProof = {
 
 export type OpenSessionPacket = BasePacket & {
   code: 'openSession'
-  session: string
+  sessionVerifier: string
   proof: SessionPacketProof
 }
 
 export type ValidateSessionPacket = BasePacketForWallet & {
   code: 'validateSession'
-  session: string
+  sessionId: string
   deviceMetadata: string
   redirectURL?: string
 }
 
 export type FinishValidateSessionPacket = BasePacketForWallet & {
   code: 'finishValidateSession'
-  session: string
+  sessionId: string
   salt: string
   challenge: string
 }
 
 export type GetSessionPacket = BasePacketForWallet & {
   code: 'getSession'
-  session: string
+  sessionId: string
 }
 
 export async function openSession({
@@ -47,7 +47,7 @@ export async function openSession({
     packet: {
       ...useLifespan(lifespan),
       code: 'openSession',
-      session: await signer.getAddress(),
+      sessionVerifier: await signer.getAddress(),
       proof // May be defined server side
     }
   }
@@ -55,15 +55,15 @@ export async function openSession({
 
 export type CloseSessionPacket = BasePacketForWallet & {
   code: 'closeSession'
-  session: string
+  sessionId: string
 }
 
 export async function closeSession({
-  session,
+  sessionId,
   wallet,
   lifespan
 }: {
-  session: string
+  sessionId: string
   wallet: string
   lifespan: number
 }): Promise<CloseSessionPacket> {
@@ -71,14 +71,14 @@ export async function closeSession({
     ...useLifespan(lifespan),
     code: 'closeSession',
     wallet,
-    session
+    sessionId
   }
 }
 
 export async function validateSession(
   args: {
     wallet: string
-    session: string
+    sessionId: string
     deviceMetadata: string
     redirectURL?: string
   } & { lifespan: number }
@@ -92,7 +92,7 @@ export async function validateSession(
 
 export function finishValidateSession(
   wallet: string,
-  session: string,
+  sessionId: string,
   salt: string,
   challenge: string,
   lifespan: number
@@ -100,7 +100,7 @@ export function finishValidateSession(
   return {
     ...useLifespan(lifespan),
     wallet: wallet,
-    session: session,
+    sessionId: sessionId,
     code: 'finishValidateSession',
     salt: salt,
     challenge: challenge
@@ -110,7 +110,7 @@ export function finishValidateSession(
 export async function getSession(
   args: {
     wallet: string
-    session: string
+    sessionId: string
   } & { lifespan: number }
 ): Promise<GetSessionPacket> {
   return {

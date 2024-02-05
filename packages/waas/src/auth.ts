@@ -229,7 +229,7 @@ export class Sequence {
 
   private async sendIntent(intent: Payload<any>) {
     const payload: SendIntentPayload = {
-      sessionId: await this.waas.getSessionID(),
+      sessionId: await this.waas.getSessionID() || '',
       intentJson: JSON.stringify(intent, null, 0)
     }
 
@@ -295,7 +295,7 @@ export class Sequence {
     const payload: RegisterSessionPayload = {
       projectId: this.config.projectId,
       idToken: creds.idToken,
-      sessionAddress: waaspayload.packet.session,
+      sessionVerifier: waaspayload.packet.sessionVerifier,
       friendlyName: name,
       intentJSON: JSON.stringify(waaspayload, null, 0)
     }
@@ -328,7 +328,7 @@ export class Sequence {
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
-    const thisSessionId = await this.waas.getSessionID()
+    const thisSessionId = await this.waas.getSessionID() || ''
     const closeSessionId = sessionId || thisSessionId
 
     try {
@@ -351,7 +351,7 @@ export class Sequence {
       console.error(e)
     }
 
-    if (closeSessionId.toLowerCase() === thisSessionId.toLowerCase()) {
+    if (closeSessionId === thisSessionId) {
       await this.waas.completeSignOut()
       this.kmsKey.set(undefined)
       this.deviceName.set(undefined)
@@ -360,15 +360,15 @@ export class Sequence {
 
   async listSessions(): Promise<Sessions> {
     const payload: ListSessionsPayload = {
-      sessionId: await this.waas.getSessionID()
+      sessionId: await this.waas.getSessionID() || ''
     }
 
-    const thisSessionAddress = await this.waas.getSessionID().then(id => id.toLowerCase())
+    const thisSessionID = await this.waas.getSessionID()
     const { args, headers } = await this.preparePayload(payload)
     const res = await this.client.listSessions(args, headers)
     return res.sessions.map(session => ({
       ...session,
-      isThis: session.address.toLowerCase() === thisSessionAddress
+      isThis: session.id === thisSessionID
     }))
   }
 
