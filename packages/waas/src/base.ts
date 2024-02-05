@@ -248,8 +248,6 @@ export class SequenceWaaSBase {
       throw new Error('No pending sign in')
     }
 
-    console.log('receipt.data', receipt.data)
-
     await Promise.all([this.status.set('signed-in'), this.wallet.set(receipt.data.wallet), this.sessionId.set(receipt.data.sessionId)])
 
     return receipt.data.wallet
