@@ -1,4 +1,3 @@
-import { ethers } from 'ethers'
 import { BasePacket, BasePacketForWallet } from '..'
 import { PayloadSigner, newRandomPayloadSigner } from "../signers";
 import { useLifespan } from './utils'
