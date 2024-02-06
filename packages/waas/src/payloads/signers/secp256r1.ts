@@ -1,7 +1,8 @@
 import { ethers } from "ethers";
-import { PayloadSigner } from "./index";
+import { SessionSigner } from "./index";
+import { KeyTypes } from './keyTypes'
 
-export async function newSECP256R1Signer(privateKey: string): Promise<PayloadSigner> {
+export async function newSECP256R1Signer(privateKey: string): Promise<SessionSigner> {
   const [pubKey, privKey] = await loadSECP256R1Keys(privateKey)
 
   const exPrivateKey = await window.crypto.subtle.exportKey('jwk', privKey)
@@ -11,11 +12,17 @@ export async function newSECP256R1Signer(privateKey: string): Promise<PayloadSig
   const encoder = new TextEncoder()
   return {
     privateKey: ethers.utils.hexlify(encoder.encode(JSON.stringify(keys))),
-    verifier: async () => {
-      const pubRaw = await window.crypto.subtle.exportKey('raw', pubKey)
-      return 'r1:'+ethers.utils.hexlify(new Uint8Array(pubRaw))
+    publicKey: async () => {
+      const pubKeyRaw = await window.crypto.subtle.exportKey('raw', pubKey)
+      const pubKeyTypedRaw = new Uint8Array(pubKeyRaw.byteLength + 1)
+
+      // set the first byte to the key type
+      pubKeyTypedRaw[0] = KeyTypes.ECDSAP256R1
+      pubKeyTypedRaw.set(new Uint8Array(pubKeyRaw), 1)
+
+      return ethers.utils.hexlify(pubKeyTypedRaw)
     },
-    signMessage: async (message: string | Uint8Array) => {
+    sign: async (message: string | Uint8Array) => {
       if (typeof message === 'string') {
         if (message.startsWith('0x')) {
           message = message.slice(2)
@@ -25,12 +32,12 @@ export async function newSECP256R1Signer(privateKey: string): Promise<PayloadSig
         }
       }
       const signatureBuff = await window.crypto.subtle.sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, privKey, message)
-      return 'r1:'+ethers.utils.hexlify(new Uint8Array(signatureBuff))
+      return ethers.utils.hexlify(new Uint8Array(signatureBuff))
     }
   }
 }
 
-export async function newSECP256R1RandomSigner(): Promise<PayloadSigner> {
+export async function newSECP256R1RandomSigner(): Promise<SessionSigner> {
   const generatedKeys = await window.crypto.subtle.generateKey(
     {
       name: "ECDSA",

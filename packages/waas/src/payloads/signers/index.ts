@@ -1,14 +1,14 @@
 import { newSECP256K1RandomSigner, newSECP256K1Signer } from "./secp256k1";
 import { newSECP256R1Signer, newSECP256R1RandomSigner } from "./secp256r1";
 
-export type PayloadSigner = {
+export type SessionSigner = {
   privateKey: string
 
-  verifier(): Promise<string>
-  signMessage(message: string | Uint8Array): Promise<string>
+  publicKey(): Promise<string>
+  sign(message: string | Uint8Array): Promise<string>
 }
 
-export async function newPayloadSigner(privateKey: string): Promise<PayloadSigner> {
+export async function newPayloadSigner(privateKey: string): Promise<SessionSigner> {
   if (window.crypto !== undefined) {
     return newSECP256R1Signer(privateKey)
   } else {
@@ -16,7 +16,7 @@ export async function newPayloadSigner(privateKey: string): Promise<PayloadSigne
   }
 }
 
-export async function newRandomPayloadSigner(): Promise<PayloadSigner> {
+export async function newRandomPayloadSigner(): Promise<SessionSigner> {
   if (window.crypto !== undefined) {
     return newSECP256R1RandomSigner()
   } else {

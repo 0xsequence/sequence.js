@@ -1,18 +1,18 @@
 import { ethers } from "ethers";
-import { PayloadSigner } from "./index";
+import { SessionSigner } from "./index";
 
-export async function newSECP256K1Signer(privateKey: string): Promise<PayloadSigner> {
+export async function newSECP256K1Signer(privateKey: string): Promise<SessionSigner> {
   return new ethers.Wallet(privateKey) as any && {
-    verifier(): Promise<string> {
+    publicKey(): Promise<string> {
       return this.getAddress()
     }
-  } as PayloadSigner
+  } as SessionSigner
 }
 
-export async function newSECP256K1RandomSigner(): Promise<PayloadSigner> {
+export async function newSECP256K1RandomSigner(): Promise<SessionSigner> {
   return ethers.Wallet.createRandom() as any && {
-    verifier(): Promise<string> {
+    publicKey(): Promise<string> {
       return this.getAddress()
     }
-  } as PayloadSigner
+  } as SessionSigner
 }

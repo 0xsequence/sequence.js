@@ -300,7 +300,7 @@ export class Sequence {
     const payload: RegisterSessionPayload = {
       projectId: this.config.projectId,
       idToken: creds.idToken,
-      sessionVerifier: waaspayload.packet.sessionVerifier,
+      sessionId: waaspayload.packet.sessionId,
       friendlyName: name,
       intentJSON: JSON.stringify(waaspayload, null, 0)
     }

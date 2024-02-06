@@ -155,7 +155,7 @@ export class SequenceWaaSBase {
     }
 
     const signer = await PayloadSigners.newPayloadSigner(signerPk)
-    return signer.signMessage(message)
+    return signer.sign(message)
   }
 
   public async getSignerVerifier() {
@@ -165,7 +165,7 @@ export class SequenceWaaSBase {
     }
 
     const signer = await PayloadSigners.newPayloadSigner(signerPk)
-    return signer.verifier()
+    return signer.publicKey()
   }
 
   /**
