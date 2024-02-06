@@ -118,10 +118,6 @@ export class SequenceWaaSBase {
    * @returns A payload that can be sent to the WaaS API
    */
   private async buildPayload<T extends BasePacket>(packet: T): Promise<Payload<T>> {
-    if (!(await this.isSignedIn())) {
-      throw new Error('Not signed in')
-    }
-
     const signerPk = await this.payloadSigner.get()
     if (!signerPk) {
       throw new Error('No signer')
@@ -131,10 +127,7 @@ export class SequenceWaaSBase {
     const signer = await PayloadSigners.newPayloadSigner(signerPk)
     const signature = await signPacket(signer, packet)
 
-    const sessionId = await this.sessionId.get()
-    if (!sessionId) {
-      throw new Error('session not open')
-    }
+    const sessionId = await signer.publicKey()
 
     return {
       version: this.VERSION,
@@ -200,14 +193,7 @@ export class SequenceWaaSBase {
 
     await Promise.all([this.status.set('pending'), this.payloadSigner.set(result.signer.privateKey)])
 
-    return {
-      version: this.VERSION,
-      packet: result.packet,
-
-      // NOTICE: We don't sign the open session packet.
-      // because the session is not yet open, so it can't be used to sign.
-      signatures: []
-    }
+    return this.buildPayload(result.packet)
   }
 
   async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
