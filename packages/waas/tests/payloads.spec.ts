@@ -3,6 +3,7 @@ import { ethers } from 'ethers'
 
 import { Payload, hashPacket, signPacket } from '../src/payloads'
 import { TransactionsPacket } from '../src/payloads/packets/transactions'
+import { newSECP256K1SessionFromPrivateKey, newSession } from "../src/session";
 
 const { expect } = chai
 
@@ -23,19 +24,20 @@ describe('Payloads', () => {
       }]
     }
 
-    const sessionSigner = new ethers.Wallet('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
-    const sessionSignature = await signPacket(sessionSigner, transactionsPacket)
+    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const sessionSignature = await signPacket(session, transactionsPacket)
 
     const payloads: Payload<TransactionsPacket> = {
       version: '1',
       packet: transactionsPacket,
       signatures: [{
-        session: sessionSigner.address,
+        sessionId: await session.sessionId(),
         signature: sessionSignature
       }]
     }
 
     const hash = hashPacket(payloads)
+
     expect(ethers.utils.hexlify(hash)).to.equal('0x893060f818437f8e3d9b4d8e103c5eb3c325fa25dd0221fb7b61cca6dd03a79e')
     expect(sessionSignature).to.equal('0xcca6253c4fd281247ddd0fa487252ef91932eaec8d68b61f0901ccaa70345bf66fdbbd98ed3e3c9752f9e35ef2a7bc88dd9c8ae23c594241b476fe988824ab881c')
   })
@@ -50,14 +52,14 @@ describe('Payloads', () => {
       message: '0xdeadbeef'
     }
 
-    const sessionSigner = new ethers.Wallet('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
-    const sessionSignature = await signPacket(sessionSigner, messagePacket)
+    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const sessionSignature = await signPacket(session, messagePacket)
 
     const payloads: Payload<typeof messagePacket> = {
       version: '1',
       packet: messagePacket,
       signatures: [{
-        session: sessionSigner.address,
+        sessionId: await session.sessionId(),
         signature: sessionSignature
       }]
     }
@@ -127,15 +129,15 @@ describe('Payloads', () => {
 				}
 			}]
     }
-    
-    const sessionSigner = new ethers.Wallet('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
-    const sessionSignature = await signPacket(sessionSigner, transactionPacket)
+
+    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const sessionSignature = await signPacket(session, transactionPacket)
 
     const payloads: Payload<typeof transactionPacket> = {
       version: '1',
       packet: transactionPacket,
       signatures: [{
-        session: sessionSigner.address,
+        sessionId: await session.sessionId(),
         signature: sessionSignature
       }]
     }

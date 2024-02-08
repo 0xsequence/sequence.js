@@ -27,8 +27,8 @@ export async function newSECP256K1SessionFromSessionId(sessionId: string): Promi
   } as Session
 }
 
-export async function newSECP256K1Session(): Promise<Session> {
-  const wallet = ethers.Wallet.createRandom()
+export async function newSECP256K1SessionFromPrivateKey(privateKey: string): Promise<Session> {
+  const wallet = new ethers.Wallet(privateKey)
 
   const db = await openDB(idbName, 1, {
     upgrade(db) {
@@ -39,11 +39,16 @@ export async function newSECP256K1Session(): Promise<Session> {
   const sessionId = await wallet.getAddress()
 
   const tx = db.transaction(idbStoreName, 'readwrite');
-  await db.put(idbStoreName, wallet.privateKey, sessionId)
+  await db.put(idbStoreName, privateKey, sessionId)
   await tx.done;
 
   db.close()
 
   return newSECP256K1SessionFromSessionId(sessionId)
+}
+
+export async function newSECP256K1Session(): Promise<Session> {
+  const wallet = ethers.Wallet.createRandom()
+  return newSECP256K1SessionFromPrivateKey(wallet.privateKey)
 }
 

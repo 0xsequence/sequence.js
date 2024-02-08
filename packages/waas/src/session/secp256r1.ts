@@ -44,6 +44,24 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string): Promi
   }
 }
 
+export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair): Promise<Session> {
+  const sessionId = await pubKeyToSessionId(keyPair.publicKey)
+
+  const db = await openDB(idbName, 1, {
+    upgrade(db) {
+      db.createObjectStore(idbStoreName);
+    },
+  });
+
+  const tx = db.transaction(idbStoreName, 'readwrite');
+  await db.put(idbStoreName, keyPair, sessionId)
+  await tx.done;
+
+  db.close()
+
+  return newSECP256R1SessionFromSessionId(sessionId)
+}
+
 export async function newSECP256R1Session(): Promise<Session> {
   const generatedKeys = await window.crypto.subtle.generateKey(
     {
@@ -53,22 +71,7 @@ export async function newSECP256R1Session(): Promise<Session> {
     false,
     ["sign", "verify"],
   )
-
-  const sessionId = await pubKeyToSessionId(generatedKeys.publicKey)
-
-  const db = await openDB(idbName, 1, {
-    upgrade(db) {
-      db.createObjectStore(idbStoreName);
-    },
-  });
-
-  const tx = db.transaction(idbStoreName, 'readwrite');
-  await db.put(idbStoreName, generatedKeys, sessionId)
-  await tx.done;
-
-  db.close()
-
-  return newSECP256R1SessionFromSessionId(sessionId)
+  return newSECP256R1SessionFromKeyPair(generatedKeys)
 }
 
 async function pubKeyToSessionId(pubKey: CryptoKey): Promise<string> {
