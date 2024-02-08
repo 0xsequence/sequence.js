@@ -1,5 +1,6 @@
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { SequenceWaaSBase } from './base'
+import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
 import { Payload } from './payloads'
 import {
@@ -228,7 +229,7 @@ export class Sequence {
   }
 
   private async sendIntent(intent: Payload<any>) {
-    const sessionId = await this.waas.getSessionID()
+    const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
       throw new Error('session not open')
     }
@@ -329,11 +330,11 @@ export class Sequence {
   }
 
   async getSessionID() {
-    return this.waas.getSessionID()
+    return this.waas.getSessionId()
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
-    const thisSessionId = await this.waas.getSessionID()
+    const thisSessionId = await this.waas.getSessionId()
     if (!thisSessionId) {
       throw new Error('session not open')
     }
@@ -361,6 +362,8 @@ export class Sequence {
     }
 
     if (closeSessionId === thisSessionId) {
+      console.log('clearing session')
+      await (await newSessionFromSessionId(thisSessionId)).clear()
       await this.waas.completeSignOut()
       this.kmsKey.set(undefined)
       this.deviceName.set(undefined)
@@ -368,7 +371,7 @@ export class Sequence {
   }
 
   async listSessions(): Promise<Sessions> {
-    const sessionId = await this.waas.getSessionID()
+    const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
       throw new Error('session not open')
     }
@@ -442,7 +445,7 @@ export class Sequence {
     }
 
     // Generate a new identifier
-    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSignerVerifier()}`
+    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSessionId()}`
     return { ...args, identifier } as T & { identifier: string }
   }
 

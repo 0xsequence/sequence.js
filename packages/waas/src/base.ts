@@ -11,7 +11,8 @@ import {
   finishValidateSession
 } from './payloads/packets/session'
 import { LocalStore, Store, StoreObj } from './store'
-import { BasePacket, Payload, PayloadSigners, signPacket } from './payloads'
+import { BasePacket, Payload, signPacket } from './payloads'
+import { newSessionFromSessionId } from "./session";
 import {
   TransactionsPacket,
   combinePackets,
@@ -34,7 +35,6 @@ type status = 'pending' | 'signed-in' | 'signed-out'
 
 const SEQUENCE_WAAS_WALLET_KEY = '@0xsequence.waas.wallet'
 const SEQUENCE_WAAS_SESSION_ID_KEY = '@0xsequence.waas.session_id'
-const SEQUENCE_WAAS_PAYLOAD_SIGNER_KEY = '@0xsequence.waas.payload_signer'
 const SEQUENCE_WAAS_STATUS_KEY = '@0xsequence.waas.status'
 
 // 5 minutes of default lifespan
@@ -57,7 +57,6 @@ export class SequenceWaaSBase {
 
   private readonly status: StoreObj<status>
   private readonly sessionId: StoreObj<string | undefined>
-  private readonly payloadSigner: StoreObj<string | undefined>
   private readonly wallet: StoreObj<string | undefined>
 
   constructor(
@@ -66,7 +65,6 @@ export class SequenceWaaSBase {
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.sessionId = new StoreObj(this.store, SEQUENCE_WAAS_SESSION_ID_KEY, undefined)
-    this.payloadSigner = new StoreObj(this.store, SEQUENCE_WAAS_PAYLOAD_SIGNER_KEY, undefined)
     this.wallet = new StoreObj(this.store, SEQUENCE_WAAS_WALLET_KEY, undefined)
   }
 
@@ -118,16 +116,13 @@ export class SequenceWaaSBase {
    * @returns A payload that can be sent to the WaaS API
    */
   private async buildPayload<T extends BasePacket>(packet: T): Promise<Payload<T>> {
-    const signerPk = await this.payloadSigner.get()
-    if (!signerPk) {
-      throw new Error('No signer')
+    const sessionId = await this.sessionId.get()
+    if (sessionId === undefined) {
+      throw new Error('session not open')
     }
 
-    // todo: use generic signer interface
-    const signer = await PayloadSigners.newPayloadSigner(signerPk)
-    const signature = await signPacket(signer, packet)
-
-    const sessionId = await signer.publicKey()
+    const session = await newSessionFromSessionId(sessionId)
+    const signature = await signPacket(session, packet)
 
     return {
       version: this.VERSION,
@@ -142,23 +137,13 @@ export class SequenceWaaSBase {
   }
 
   public async signUsingSessionKey(message: string | Uint8Array) {
-    const signerPk = await this.payloadSigner.get()
-    if (!signerPk) {
-      throw new Error('No signer')
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
     }
 
-    const signer = await PayloadSigners.newPayloadSigner(signerPk)
+    const signer = await newSessionFromSessionId(sessionId)
     return signer.sign(message)
-  }
-
-  public async getSignerVerifier() {
-    const signerPk = await this.payloadSigner.get()
-    if (!signerPk) {
-      throw new Error('No signer')
-    }
-
-    const signer = await PayloadSigners.newPayloadSigner(signerPk)
-    return signer.publicKey()
   }
 
   /**
@@ -166,7 +151,7 @@ export class SequenceWaaSBase {
    *
    * @returns an id of the session
    */
-  public async getSessionID(): Promise<string | undefined> {
+  public async getSessionId(): Promise<string | undefined> {
     return this.sessionId.get()
   }
 
@@ -191,7 +176,7 @@ export class SequenceWaaSBase {
 
     const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
 
-    await Promise.all([this.status.set('pending'), this.payloadSigner.set(result.signer.privateKey)])
+    await Promise.all([this.status.set('pending'), this.sessionId.set(await result.session.sessionId())])
 
     return this.buildPayload(result.packet)
   }
@@ -212,7 +197,7 @@ export class SequenceWaaSBase {
   }
 
   async completeSignOut() {
-    await Promise.all([this.status.set('signed-out'), this.payloadSigner.set(undefined), this.wallet.set(undefined), this.sessionId.set(undefined)])
+    await Promise.all([this.status.set('signed-out'), this.wallet.set(undefined), this.sessionId.set(undefined)])
   }
 
   /**
@@ -234,13 +219,12 @@ export class SequenceWaaSBase {
     }
 
     const status = await this.status.get()
-    const signerPk = await this.payloadSigner.get()
 
     if (receipt.code !== 'sessionOpened') {
       throw new Error('Invalid receipt')
     }
 
-    if (status !== 'pending' || !signerPk) {
+    if (status !== 'pending') {
       throw new Error('No pending sign in')
     }
 

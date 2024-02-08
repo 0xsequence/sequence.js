@@ -737,6 +737,9 @@ importers:
       ethers:
         specifier: '>=5.5'
         version: 5.7.2
+      idb:
+        specifier: ^7.1.1
+        version: 7.1.1
       json-canonicalize:
         specifier: ^1.0.6
         version: 1.0.6

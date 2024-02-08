@@ -1,5 +1,5 @@
 import { BasePacket, BasePacketForWallet } from '..'
-import { SessionSigner, newRandomPayloadSigner } from "../signers";
+import { Session, newSession } from "../../session";
 import { useLifespan } from './utils'
 
 export type SessionPacketProof = {
@@ -38,15 +38,15 @@ export async function openSession({
 }: {
   proof: SessionPacketProof | undefined
   lifespan: number
-}): Promise<{ packet: OpenSessionPacket; signer: SessionSigner }> {
-  const signer = await newRandomPayloadSigner()
+}): Promise<{ packet: OpenSessionPacket; session: Session }> {
+  const session = await newSession()
 
   return {
-    signer,
+    session,
     packet: {
       ...useLifespan(lifespan),
       code: 'openSession',
-      sessionId: await signer.publicKey(),
+      sessionId: await session.sessionId(),
       proof // May be defined server side
     }
   }
