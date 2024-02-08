@@ -5,6 +5,8 @@ import { Payload, hashPacket, signPacket } from '../src/payloads'
 import { TransactionsPacket } from '../src/payloads/packets/transactions'
 import { newSECP256K1SessionFromPrivateKey, newSession } from "../src/session";
 
+import "fake-indexeddb/auto";
+
 const { expect } = chai
 
 describe('Payloads', () => {

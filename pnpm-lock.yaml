@@ -750,6 +750,9 @@ importers:
       '@types/jwt-decode':
         specifier: ^3.1.0
         version: 3.1.0
+      fake-indexeddb:
+        specifier: ^4.0.1
+        version: 4.0.1
 
   packages/waas-ethers:
     dependencies:
@@ -8794,6 +8797,7 @@ packages:
 
   /domexception@1.0.1:
     resolution: {integrity: sha512-raigMkn7CJNNo6Ihro1fzG7wr3fHuYVytzquZKX5n0yizGsTcYgzdIUwj1X9pK0VvjeihV+XiclP+DjwbsSKug==}
+    deprecated: Use your platform's native DOMException instead
     dependencies:
       webidl-conversions: 4.0.2
     dev: true

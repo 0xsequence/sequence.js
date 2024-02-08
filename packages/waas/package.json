@@ -30,6 +30,7 @@
     "ethers": ">=5.5"
   },
   "devDependencies": {
-    "@types/jwt-decode": "^3.1.0"
+    "@types/jwt-decode": "^3.1.0",
+    "fake-indexeddb": "^4.0.1"
   }
 }
