@@ -81,14 +81,3 @@ async function pubKeyToSessionId(pubKey: CryptoKey): Promise<string> {
 
   return ethers.utils.hexlify(pubKeyTypedRaw)
 }
-
-async function loadSECP256R1Keys(privateKey: string): Promise<CryptoKey[]> {
-  const decoder = new TextDecoder()
-  const privateKeyBytes = ethers.utils.arrayify(privateKey)
-  const keysFromJson = JSON.parse(decoder.decode(privateKeyBytes))
-
-  const pubKey = await window.crypto.subtle.importKey('jwk', keysFromJson[0], {name: 'ECDSA', namedCurve: 'P-256'}, true, ['verify'])
-  const privKey = await window.crypto.subtle.importKey('jwk', keysFromJson[1], {name: 'ECDSA', namedCurve: 'P-256'}, true, ['sign'])
-  return [pubKey, privKey]
-}
-
