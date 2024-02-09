@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.8.5
+
+### Patch Changes
+
+- guard: signOwnershipProof and isSignedOwnershipProof
+- Updated dependencies
+  - @0xsequence/abi@1.8.5
+  - @0xsequence/account@1.8.5
+  - @0xsequence/api@1.8.5
+  - @0xsequence/auth@1.8.5
+  - @0xsequence/core@1.8.5
+  - @0xsequence/guard@1.8.5
+  - @0xsequence/indexer@1.8.5
+  - @0xsequence/metadata@1.8.5
+  - @0xsequence/migration@1.8.5
+  - @0xsequence/multicall@1.8.5
+  - @0xsequence/network@1.8.5
+  - @0xsequence/provider@1.8.5
+  - @0xsequence/relayer@1.8.5
+  - @0xsequence/sessions@1.8.5
+  - @0xsequence/signhub@1.8.5
+  - @0xsequence/utils@1.8.5
+  - @0xsequence/wallet@1.8.5
+
 ## 1.8.4
 
 ### Patch Changes

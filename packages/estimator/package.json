@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/estimator",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "description": "estimator sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/estimator",
   "source": "src/index.ts",

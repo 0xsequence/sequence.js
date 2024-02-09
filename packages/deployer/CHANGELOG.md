@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.8.5
+
+### Patch Changes
+
+- guard: signOwnershipProof and isSignedOwnershipProof
+- Updated dependencies
+  - @0xsequence/utils@1.8.5
+
 ## 1.8.4
 
 ### Patch Changes

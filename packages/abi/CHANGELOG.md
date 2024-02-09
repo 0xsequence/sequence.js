@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.8.5
+
+### Patch Changes
+
+- guard: signOwnershipProof and isSignedOwnershipProof
+
 ## 1.8.4
 
 ### Patch Changes
