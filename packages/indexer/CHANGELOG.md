@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.8.6
+
+### Patch Changes
+
+- guard: SignedOwnershipProof
+
 ## 1.8.5
 
 ### Patch Changes

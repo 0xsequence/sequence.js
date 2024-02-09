@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.8.6
+
+### Patch Changes
+
+- guard: SignedOwnershipProof
+- Updated dependencies
+  - @0xsequence/abi@1.8.6
+  - @0xsequence/core@1.8.6
+  - @0xsequence/network@1.8.6
+  - @0xsequence/relayer@1.8.6
+  - @0xsequence/signhub@1.8.6
+  - @0xsequence/utils@1.8.6
+
 ## 1.8.5
 
 ### Patch Changes

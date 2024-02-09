@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.8.6
+
+### Patch Changes
+
+- guard: SignedOwnershipProof
+- Updated dependencies
+  - @0xsequence/core@1.8.6
+  - @0xsequence/migration@1.8.6
+  - @0xsequence/replacer@1.8.6
+
 ## 1.8.5
 
 ### Patch Changes
