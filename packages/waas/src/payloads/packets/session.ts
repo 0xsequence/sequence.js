@@ -32,6 +32,15 @@ export type GetSessionPacket = BasePacketForWallet & {
   sessionId: string
 }
 
+export type CloseSessionPacket = BasePacketForWallet & {
+  code: 'closeSession'
+  sessionId: string
+}
+
+export type ListSessionsPacket = BasePacketForWallet & {
+  code: 'listSessions'
+}
+
 export async function openSession({
   proof = {},
   lifespan
@@ -49,28 +58,6 @@ export async function openSession({
       sessionId: await session.sessionId(),
       proof // May be defined server side
     }
-  }
-}
-
-export type CloseSessionPacket = BasePacketForWallet & {
-  code: 'closeSession'
-  sessionId: string
-}
-
-export async function closeSession({
-  sessionId,
-  wallet,
-  lifespan
-}: {
-  sessionId: string
-  wallet: string
-  lifespan: number
-}): Promise<CloseSessionPacket> {
-  return {
-    ...useLifespan(lifespan),
-    code: 'closeSession',
-    wallet,
-    sessionId
   }
 }
 
@@ -103,6 +90,33 @@ export function finishValidateSession(
     code: 'finishValidateSession',
     salt: salt,
     challenge: challenge
+  }
+}
+
+export async function closeSession({
+                                     sessionId,
+                                     wallet,
+                                     lifespan
+                                   }: {
+  sessionId: string
+  wallet: string
+  lifespan: number
+}): Promise<CloseSessionPacket> {
+  return {
+    ...useLifespan(lifespan),
+    code: 'closeSession',
+    wallet,
+    sessionId
+  }
+}
+
+export async function listSessions(
+  args: { wallet: string } & { lifespan: number }
+): Promise<ListSessionsPacket> {
+  return {
+    ...useLifespan(args.lifespan),
+    ...args,
+    code: 'listSessions'
   }
 }
 

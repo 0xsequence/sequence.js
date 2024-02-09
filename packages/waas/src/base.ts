@@ -7,8 +7,9 @@ import {
   closeSession,
   getSession,
   openSession,
+  listSessions,
   validateSession,
-  finishValidateSession
+  finishValidateSession,
 } from './payloads/packets/session'
 import { LocalStore, Store, StoreObj } from './store'
 import { BasePacket, Payload, signPacket } from './payloads'
@@ -191,6 +192,25 @@ export class SequenceWaaSBase {
       lifespan: lifespan || DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
       sessionId: sessionId
+    })
+
+    return this.buildPayload(packet)
+  }
+
+  async signOutSession(sessionId: string) {
+    const packet = await closeSession({
+      lifespan: DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress(),
+      sessionId: sessionId
+    })
+
+    return this.buildPayload(packet)
+  }
+
+  async listSessions() {
+    const packet = await listSessions({
+      lifespan: DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress(),
     })
 
     return this.buildPayload(packet)

@@ -1,4 +1,3 @@
-import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { SequenceWaaSBase } from './base'
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
@@ -15,14 +14,9 @@ import {
 import {
   WaasAuthenticator,
   Session,
-  RegisterSessionPayload,
-  SendIntentPayload,
-  ListSessionsPayload,
-  DropSessionPayload,
   Chain
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
-import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
 import {
   SendDelayedEncodeArgs,
   SendERC1155Args,
@@ -45,9 +39,6 @@ export type SequenceConfig = {
 
 export type ExtendedSequenceConfig = {
   rpcServer: string
-  kmsRegion: string
-  idpRegion: string
-  keyId: string
   emailRegion?: string
   endpoint?: string
 }
@@ -133,7 +124,6 @@ export class Sequence {
 
   public readonly config: Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 
-  private readonly kmsKey: StoreObj<string | undefined>
   private readonly deviceName: StoreObj<string | undefined>
 
   private emailClient: EmailAuth | undefined
@@ -146,7 +136,6 @@ export class Sequence {
     this.config = defaultArgsOrFail(config, preset)
     this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store)
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
-    this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
   }
 
@@ -194,38 +183,10 @@ export class Sequence {
     return this.waitForSessionValid()
   }
 
-  private async useStoredCypherKey(): Promise<{ encryptedPayloadKey: string; plainHex: string }> {
-    const raw = await this.kmsKey.get()
-    if (!raw) {
-      throw new Error('No stored key')
+  private headers() {
+    return {
+      'X-Access-Key': this.config.projectAccessKey
     }
-
-    const decoded = JSON.parse(raw)
-    if (decoded.encryptedPayloadKey && decoded.plainHex) {
-      return decoded
-    }
-
-    throw new Error('Invalid stored key')
-  }
-
-  private async saveCypherKey(kmsClient: KMSClient) {
-    const dataKeyRes = await kmsClient.send(
-      new GenerateDataKeyCommand({
-        KeyId: this.config.keyId,
-        KeySpec: 'AES_256'
-      })
-    )
-
-    if (!dataKeyRes.CiphertextBlob || !dataKeyRes.Plaintext) {
-      throw new Error('invalid response from KMS')
-    }
-
-    return this.kmsKey.set(
-      JSON.stringify({
-        encryptedPayloadKey: encodeHex(dataKeyRes.CiphertextBlob),
-        plainHex: encodeHex(dataKeyRes.Plaintext)
-      })
-    )
   }
 
   private async sendIntent(intent: Payload<any>) {
@@ -234,36 +195,7 @@ export class Sequence {
       throw new Error('session not open')
     }
 
-    const payload: SendIntentPayload = {
-      sessionId: sessionId,
-      intentJson: JSON.stringify(intent, null, 0)
-    }
-
-    const { args, headers } = await this.preparePayload(payload)
-
-    return this.client.sendIntent(args, headers)
-  }
-
-  private async preparePayload(payload: Object) {
-    const { encryptedPayloadKey, plainHex } = await this.useStoredCypherKey()
-
-    const cbcParams = {
-      name: 'AES-CBC',
-      iv: window.crypto.getRandomValues(new Uint8Array(16))
-    }
-
-    const key = await window.crypto.subtle.importKey('raw', decodeHex(plainHex), cbcParams, false, ['encrypt'])
-    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload))
-    const encrypted = await window.crypto.subtle.encrypt(cbcParams, key, payloadBytes)
-    const payloadCiphertext = encodeHex(new Uint8Array([...cbcParams.iv, ...new Uint8Array(encrypted)]))
-    const payloadSig = await this.waas.signUsingSessionKey(payloadBytes)
-
-    return {
-      headers: {
-        'X-Access-Key': this.config.projectAccessKey
-      },
-      args: { encryptedPayloadKey, payloadCiphertext, payloadSig }
-    }
+    return this.client.sendIntent({intent: intent}, this.headers())
   }
 
   async isSignedIn() {
@@ -284,30 +216,12 @@ export class Sequence {
       throw new Error('Invalid idToken')
     }
 
-    const kmsClient = new KMSClient({
-      region: this.config.kmsRegion,
-      endpoint: this.config.endpoint,
-      credentials: fromCognitoIdentityPool({
-        identityPoolId: this.config.identityPoolId,
-        logins: {
-          [decoded.iss.replace('https://', '').replace('http://', '')]: creds.idToken
-        },
-        clientConfig: { region: this.config.idpRegion }
-      })
-    })
-
-    await this.saveCypherKey(kmsClient)
-
-    const payload: RegisterSessionPayload = {
-      projectId: this.config.projectId,
-      idToken: creds.idToken,
-      sessionId: waaspayload.packet.sessionId,
+    const args = {
+      intent: waaspayload,
       friendlyName: name,
-      intentJSON: JSON.stringify(waaspayload, null, 0)
     }
 
-    const { args, headers } = await this.preparePayload(payload)
-    const res = await this.client.registerSession(args, headers)
+    const res = await this.client.registerSession(args, this.headers())
 
     await this.waas.completeSignIn({
       code: 'sessionOpened',
@@ -342,17 +256,12 @@ export class Sequence {
     const closeSessionId = sessionId || thisSessionId
 
     try {
-      // TODO: Use signed intents for dropping sessions
-      // const packet = await this.waas.signOut({ sessionId })
-      // const result = await this.sendIntent(packet)
-      // console.log("TODO: Handle got result from drop session", result)
-      const payload: DropSessionPayload = {
-        dropSessionId: closeSessionId,
-        sessionId: thisSessionId
-      }
+      const intent = await this.waas.signOutSession(closeSessionId)
+      const result = this.sendIntent(intent)
 
-      const { args, headers } = await this.preparePayload(payload)
-      await this.client.dropSession(args, headers)
+      if (!isFinishValidateSessionResponse(result)) {
+        throw new Error(`Invalid response: ${JSON.stringify(result)}`)
+      }
     } catch (e) {
       if (strict) {
         throw e
@@ -365,7 +274,6 @@ export class Sequence {
       console.log('clearing session')
       await (await newSessionFromSessionId(thisSessionId)).clear()
       await this.waas.completeSignOut()
-      this.kmsKey.set(undefined)
       this.deviceName.set(undefined)
     }
   }
@@ -376,13 +284,10 @@ export class Sequence {
       throw new Error('session not open')
     }
 
-    const payload: ListSessionsPayload = {
-      sessionId: sessionId
-    }
+    const intent = await this.waas.listSessions()
+    const res = await this.sendIntent(intent)
 
-    const { args, headers } = await this.preparePayload(payload)
-    const res = await this.client.listSessions(args, headers)
-    return res.sessions.map(session => ({
+    return (res.data as Session[]).map(session => ({
       ...session,
       isThis: session.id === sessionId
     }))
@@ -403,7 +308,6 @@ export class Sequence {
 
   async finishValidateSession(challenge: string): Promise<boolean> {
     const intent = await this.waas.finishValidateSession(this.validationRequiredSalt, challenge)
-
     const result = await this.sendIntent(intent)
 
     if (!isFinishValidateSessionResponse(result)) {
@@ -415,8 +319,8 @@ export class Sequence {
   }
 
   async isSessionValid(): Promise<boolean> {
-    const payload = await this.waas.getSession()
-    const result = await this.sendIntent(payload)
+    const intent = await this.waas.getSession()
+    const result = await this.sendIntent(intent)
 
     if (!isGetSessionResponse(result)) {
       throw new Error(`Invalid response: ${JSON.stringify(result)}`)
