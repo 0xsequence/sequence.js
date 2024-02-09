@@ -209,13 +209,13 @@ export type OwnershipProof =
       signer: ethers.Signer | signers.SapientSigner
     }
 
-function isSignedOwnershipProof(
+export function isSignedOwnershipProof(
   proof: OwnershipProof
 ): proof is { walletAddress: string; timestamp: Date; signerAddress: string; signature: string } {
   return 'signerAddress' in proof && typeof proof.signerAddress === 'string'
 }
 
-async function signOwnershipProof(
+export async function signOwnershipProof(
   proof: Exclude<OwnershipProof, { jwt: string }>
 ): Promise<{ walletAddress: string; timestamp: Date; signerAddress: string; signature: string }> {
   if (isSignedOwnershipProof(proof)) {
