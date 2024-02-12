@@ -1,7 +1,6 @@
 import { SequenceWaaSBase } from './base'
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
-import { Payload } from './payloads'
 import {
   MaySentTransactionResponse,
   SignedMessageResponse,
@@ -18,16 +17,17 @@ import {
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
 import {
-  SendDelayedEncodeArgs,
+  // TODO: SendDelayedEncodeArgs,
   SendERC1155Args,
   SendERC20Args,
   SendERC721Args,
   SendTransactionsArgs
-} from './payloads/packets/transactions'
-import { SignMessageArgs } from './payloads/packets/messages'
+} from './intents'
+import { SignMessageArgs } from './intents/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
+import { SignedIntent} from "./intents";
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -45,7 +45,6 @@ export type ExtendedSequenceConfig = {
 
 export type WaaSConfigKey = {
   projectId: number
-  identityPoolId: string
   emailClientId?: string
 }
 
@@ -106,10 +105,6 @@ export function defaultArgsOrFail(
 
   if (preconfig.projectAccessKey === undefined) {
     throw new Error('Missing access key')
-  }
-
-  if (preconfig.identityPoolId === undefined) {
-    throw new Error('Missing identityPoolId')
   }
 
   return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
@@ -189,12 +184,13 @@ export class Sequence {
     }
   }
 
-  private async sendIntent(intent: Payload<any>) {
+  private async sendIntent(intent: SignedIntent<any>) {
     const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
       throw new Error('session not open')
     }
 
+    // TODO sendIntent
     return this.client.sendIntent({intent: intent}, this.headers())
   }
 
@@ -221,6 +217,7 @@ export class Sequence {
       friendlyName: name,
     }
 
+    // TODO: registerSession
     const res = await this.client.registerSession(args, this.headers())
 
     await this.waas.completeSignIn({
@@ -355,7 +352,7 @@ export class Sequence {
 
   private async trySendIntent<T>(
     args: CommonAuthArgs,
-    intent: Payload<any>,
+    intent: SignedIntent<any>,
     isExpectedResponse: (response: any) => response is T
   ): Promise<T> {
     const response = await this.sendIntent(intent)
@@ -403,10 +400,13 @@ export class Sequence {
     return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
+  /*
+  TODO:
   async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
+   */
 
   async networkList(): Promise<NetworkList> {
     const networks: NetworkList = []

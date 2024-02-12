@@ -1,22 +1,15 @@
 import {
-  GetSessionPacket,
-  OpenSessionPacket,
-  SessionPacketProof,
-  ValidateSessionPacket,
-  FinishValidateSessionPacket,
   closeSession,
   getSession,
   openSession,
   listSessions,
   validateSession,
-  finishValidateSession,
-} from './payloads/packets/session'
+  finishValidateSession, SignedIntent, signIntent, Intent,
+} from './intents'
 import { LocalStore, Store, StoreObj } from './store'
-import { BasePacket, Payload, signPacket } from './payloads'
 import { newSessionFromSessionId } from "./session";
 import {
-  TransactionsPacket,
-  combinePackets,
+  combineTransactionIntents,
   sendERC1155,
   sendERC20,
   sendERC721,
@@ -25,12 +18,20 @@ import {
   SendERC20Args,
   SendERC721Args,
   SendERC1155Args,
-  SendDelayedEncodeArgs,
-  sendDelayedEncode
-} from './payloads/packets/transactions'
+  // TODO: SendDelayedEncodeArgs,
+  // TODO: sendDelayedEncode
+} from './intents'
 import { OpenSessionResponse } from './payloads/responses'
-import { SignMessageArgs, SignMessagePacket, signMessage } from './payloads/packets/messages'
+import { SignMessageArgs, signMessage } from './intents'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
+import {
+  IntentDataFinishValidateSession,
+  IntentDataGetSession,
+  IntentDataOpenSession,
+  IntentDataSendTransaction,
+  IntentDataSignMessage,
+  IntentDataValidateSession
+} from "./clients/intent.gen";
 
 type status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -116,25 +117,14 @@ export class SequenceWaaSBase {
    * @param packet The action already packed into a packet
    * @returns A payload that can be sent to the WaaS API
    */
-  private async buildPayload<T extends BasePacket>(packet: T): Promise<Payload<T>> {
+  private async buildPayload<T>(intent: Intent<T>): Promise<SignedIntent<T>> {
     const sessionId = await this.sessionId.get()
     if (sessionId === undefined) {
       throw new Error('session not open')
     }
 
     const session = await newSessionFromSessionId(sessionId)
-    const signature = await signPacket(session, packet)
-
-    return {
-      version: this.VERSION,
-      packet,
-      signatures: [
-        {
-          sessionId,
-          signature
-        }
-      ]
-    }
+    return signIntent(session, intent)
   }
 
   public async signUsingSessionKey(message: string | Uint8Array) {
@@ -169,17 +159,17 @@ export class SequenceWaaSBase {
    * @returns a session payload that **must** be sent to the waas API to complete the sign-in
    * @throws {Error} If the session is already signed in or there is a pending sign-in
    */
-  async signIn(proof?: SessionPacketProof): Promise<Payload<OpenSessionPacket>> {
+  async signIn({ idToken }: { idToken: string }): Promise<SignedIntent<IntentDataOpenSession>> {
     const status = await this.status.get()
     if (status !== 'signed-out') {
       await this.completeSignOut()
     }
 
-    const result = await openSession({ proof, lifespan: DEFAULT_LIFESPAN })
+    const intent = await openSession({ idToken, lifespan: DEFAULT_LIFESPAN })
 
-    await Promise.all([this.status.set('pending'), this.sessionId.set(await result.session.sessionId())])
+    await Promise.all([this.status.set('pending'), this.sessionId.set(intent.data.sessionId)])
 
-    return this.buildPayload(result.packet)
+    return this.buildPayload(intent)
   }
 
   async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
@@ -188,32 +178,30 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const packet = await closeSession({
+    const intent = closeSession({
       lifespan: lifespan || DEFAULT_LIFESPAN,
-      wallet: await this.getWalletAddress(),
       sessionId: sessionId
     })
 
-    return this.buildPayload(packet)
+    return this.buildPayload(intent)
   }
 
   async signOutSession(sessionId: string) {
-    const packet = await closeSession({
+    const intent = closeSession({
       lifespan: DEFAULT_LIFESPAN,
-      wallet: await this.getWalletAddress(),
       sessionId: sessionId
     })
 
-    return this.buildPayload(packet)
+    return this.buildPayload(intent)
   }
 
   async listSessions() {
-    const packet = await listSessions({
+    const intent = listSessions({
       lifespan: DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
     })
 
-    return this.buildPayload(packet)
+    return this.buildPayload(intent)
   }
 
   async completeSignOut() {
@@ -273,12 +261,12 @@ export class SequenceWaaSBase {
    * @param message  The message that will be signed
    * @return a payload that must be sent to the waas API to complete sign process
    */
-  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & ExtraArgs): Promise<Payload<SignMessagePacket>> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & ExtraArgs): Promise<SignedIntent<IntentDataSignMessage>> {
     const packet = signMessage({
       chainId: toNetworkID(args.network || this.config.network),
+      ...args,
       lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
       wallet: await this.getWalletAddress(),
-      ...args
     })
 
     return this.buildPayload(packet)
@@ -295,98 +283,96 @@ export class SequenceWaaSBase {
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
    */
-  async sendTransaction(
-    args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs
-  ): Promise<Payload<TransactionsPacket>> {
-    const packet = sendTransactions(await this.commonArgs(args))
-    return this.buildPayload(packet)
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    const intent = sendTransactions(await this.commonArgs(args))
+    return this.buildPayload(intent)
   }
 
-  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
-    if (args.token.toLowerCase() === args.to.toLowerCase()) {
+  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC20')
     }
 
-    const packet = sendERC20(await this.commonArgs(args))
-    return this.buildPayload(packet)
+    const intent = sendERC20(await this.commonArgs(args))
+    return this.buildPayload(intent)
   }
 
-  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
-    if (args.token.toLowerCase() === args.to.toLowerCase()) {
+  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC721')
     }
 
-    const packet = sendERC721(await this.commonArgs(args))
-    return this.buildPayload(packet)
+    const intent = sendERC721(await this.commonArgs(args))
+    return this.buildPayload(intent)
   }
 
-  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs): Promise<Payload<TransactionsPacket>> {
-    if (args.token.toLowerCase() === args.to.toLowerCase()) {
+  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC1155')
     }
 
-    const packet = sendERC1155(await this.commonArgs(args))
-    return this.buildPayload(packet)
+    const intent = sendERC1155(await this.commonArgs(args))
+    return this.buildPayload(intent)
   }
 
-  async callContract(
-    args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs
-  ): Promise<Payload<TransactionsPacket>> {
-    const packet = sendDelayedEncode(await this.commonArgs(args))
-    return this.buildPayload(packet)
+  /*
+  TODO:
+  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs>): Promise<SignedIntent<IntentDataSendTransaction>> {
+    const intent = sendDelayedEncode(await this.commonArgs(args))
+    return this.buildPayload(intent)
   }
+   */
 
-  async validateSession({
-    deviceMetadata,
-    redirectURL
-  }: {
-    deviceMetadata: string
-    redirectURL?: string
-  }): Promise<Payload<ValidateSessionPacket>> {
+  async validateSession({ deviceMetadata }: { deviceMetadata: string }): Promise<SignedIntent<IntentDataValidateSession>> {
     const sessionId = await this.sessionId.get()
     if (!sessionId) {
       throw new Error('session not open')
     }
 
-    const packet = await validateSession({
+    const intent = await validateSession({
       lifespan: DEFAULT_LIFESPAN,
       sessionId: sessionId,
       deviceMetadata,
-      redirectURL,
       wallet: await this.getWalletAddress()
     })
 
-    return this.buildPayload(packet)
+    return this.buildPayload(intent)
   }
 
-  async getSession(): Promise<Payload<GetSessionPacket>> {
+  async getSession(): Promise<SignedIntent<IntentDataGetSession>> {
     const sessionId = await this.sessionId.get()
     if (!sessionId) {
       throw new Error('session not open')
     }
 
-    const packet = await getSession({
-      sessionId: sessionId,
+    const intent = getSession({
+      sessionId,
       wallet: await this.getWalletAddress(),
       lifespan: DEFAULT_LIFESPAN
     })
 
-    return this.buildPayload(packet)
+    return this.buildPayload(intent)
   }
 
-  async finishValidateSession(salt: string, challenge: string): Promise<Payload<FinishValidateSessionPacket>> {
+  async finishValidateSession(salt: string, challenge: string): Promise<SignedIntent<IntentDataFinishValidateSession>> {
     const sessionId = await this.sessionId.get()
     if (!sessionId) {
       throw new Error('session not open')
     }
 
     const wallet = await this.getWalletAddress()
-    const packet = finishValidateSession(wallet, sessionId, salt, challenge, DEFAULT_LIFESPAN)
-    return this.buildPayload(packet)
+    const intent = finishValidateSession({
+      sessionId,
+      wallet,
+      lifespan: DEFAULT_LIFESPAN,
+      salt,
+      challenge,
+    })
+    return this.buildPayload(intent)
   }
 
-  async batch(payloads: Payload<TransactionsPacket>[]): Promise<Payload<TransactionsPacket>> {
-    const combined = combinePackets(payloads.map(p => p.packet))
+  async batch(intents: Intent<IntentDataSendTransaction>[]): Promise<SignedIntent<IntentDataSendTransaction>> {
+    const combined = combineTransactionIntents(intents)
     return this.buildPayload(combined)
   }
 }
