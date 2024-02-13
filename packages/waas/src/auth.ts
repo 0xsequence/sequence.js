@@ -170,7 +170,7 @@ export class Sequence {
     })
 
     const sendIntent = await this.sendIntent(intent)
-    this.validationRequiredSalt = sendIntent.response.data.salt
+    this.validationRequiredSalt = sendIntent.data.salt
 
     for (const callback of this.validationRequiredCallback) {
       callback()
@@ -192,7 +192,8 @@ export class Sequence {
     }
 
     // TODO sendIntent
-    return this.client.sendIntent({intent: intent}, this.headers())
+    const res = await this.client.sendIntent({intent: intent}, this.headers())
+    return res.response
   }
 
   async isSignedIn() {
@@ -287,7 +288,7 @@ export class Sequence {
     const intent = await this.waas.listSessions()
     const res = await this.sendIntent(intent)
 
-    return (res.response.data as Session[]).map(session => ({
+    return (res.data as Session[]).map(session => ({
       ...session,
       isThis: session.id === sessionId
     }))
@@ -315,7 +316,7 @@ export class Sequence {
     }
 
     this.validationRequiredSalt = ''
-    return result.response.data.isValid
+    return result.data.isValid
   }
 
   async isSessionValid(): Promise<boolean> {
@@ -326,7 +327,7 @@ export class Sequence {
       throw new Error(`Invalid response: ${JSON.stringify(result)}`)
     }
 
-    return result.response.data.validated
+    return result.data.validated
   }
 
   async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000) {
