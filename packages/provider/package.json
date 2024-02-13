@@ -29,7 +29,7 @@
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*",
     "@0xsequence/wallet": "workspace:*",
-    "@databeat/tracker": "^0.8.1",
+    "@databeat/tracker": "^0.9.1",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill": "^0.10.0"
   },
