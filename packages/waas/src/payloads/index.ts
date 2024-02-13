@@ -38,5 +38,4 @@ export function signPacket(session: Session, packed: BasePacket): Promise<string
   return session.sign(new Uint8Array(hash))
 }
 
-export * as packets from './packets'
-export * as responses from './responses'
+export * as responses from '../intents/responses'

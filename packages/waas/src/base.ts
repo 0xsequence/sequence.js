@@ -21,7 +21,7 @@ import {
   // TODO: SendDelayedEncodeArgs,
   // TODO: sendDelayedEncode
 } from './intents'
-import { OpenSessionResponse } from './payloads/responses'
+import { OpenSessionResponse } from './intents/responses'
 import { SignMessageArgs, signMessage } from './intents'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 import {
@@ -166,6 +166,8 @@ export class SequenceWaaSBase {
     }
 
     const intent = await openSession({ idToken, lifespan: DEFAULT_LIFESPAN })
+
+    console.log('intent', intent)
 
     await Promise.all([this.status.set('pending'), this.sessionId.set(intent.data.sessionId)])
 

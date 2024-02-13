@@ -1,4 +1,5 @@
 import { SequenceWaaSBase } from './base'
+import { IntentResponseSignedMessage } from "./clients/intent.gen";
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -9,7 +10,7 @@ import {
   isSignedMessageResponse,
   isValidationRequiredResponse,
   isFinishValidateSessionResponse
-} from './payloads/responses'
+} from './intents/responses'
 import {
   WaasAuthenticator,
   Session,
@@ -169,7 +170,7 @@ export class Sequence {
     })
 
     const sendIntent = await this.sendIntent(intent)
-    this.validationRequiredSalt = sendIntent.data.salt
+    this.validationRequiredSalt = sendIntent.response.data.salt
 
     for (const callback of this.validationRequiredCallback) {
       callback()
@@ -217,6 +218,8 @@ export class Sequence {
       friendlyName: name,
     }
 
+    console.log('waaspayload', waaspayload)
+
     // TODO: registerSession
     const res = await this.client.registerSession(args, this.headers())
 
@@ -224,7 +227,7 @@ export class Sequence {
       code: 'sessionOpened',
       data: {
         sessionId: res.session.id,
-        wallet: res.data.wallet
+        wallet: res.response.data.wallet
       }
     })
 
@@ -232,7 +235,7 @@ export class Sequence {
 
     return {
       sessionId: res.session.id,
-      wallet: res.data.wallet
+      wallet: res.response.data.wallet
     }
   }
 
@@ -284,7 +287,7 @@ export class Sequence {
     const intent = await this.waas.listSessions()
     const res = await this.sendIntent(intent)
 
-    return (res.data as Session[]).map(session => ({
+    return (res.response.data as Session[]).map(session => ({
       ...session,
       isThis: session.id === sessionId
     }))
@@ -312,7 +315,7 @@ export class Sequence {
     }
 
     this.validationRequiredSalt = ''
-    return result.data.isValid
+    return result.response.data.isValid
   }
 
   async isSessionValid(): Promise<boolean> {
@@ -323,7 +326,7 @@ export class Sequence {
       throw new Error(`Invalid response: ${JSON.stringify(result)}`)
     }
 
-    return result.data.validated
+    return result.response.data.validated
   }
 
   async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000) {
@@ -375,7 +378,7 @@ export class Sequence {
     throw new Error(JSON.stringify(response))
   }
 
-  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<SignedMessageResponse> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<IntentResponseSignedMessage> {
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
