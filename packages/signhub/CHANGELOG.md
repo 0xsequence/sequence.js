@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.8.7
+
+### Patch Changes
+
+- provider: update databeat to 0.9.1
+- Updated dependencies
+  - @0xsequence/core@1.8.7
+
 ## 1.8.6
 
 ### Patch Changes

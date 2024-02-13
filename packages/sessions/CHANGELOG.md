@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.8.7
+
+### Patch Changes
+
+- provider: update databeat to 0.9.1
+- Updated dependencies
+  - @0xsequence/core@1.8.7
+  - @0xsequence/migration@1.8.7
+  - @0xsequence/replacer@1.8.7
+
 ## 1.8.6
 
 ### Patch Changes
