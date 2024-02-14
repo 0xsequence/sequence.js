@@ -158,7 +158,7 @@ describe('Multicall integration', function () {
 
         engine.push(providerAsMiddleware(new MulticallExternalProvider(new JsonRpcExternalProvider(ganache.spyProxy!), conf)))
 
-        return new ethers.providers.Web3Provider(providerFromEngine(engine))
+        return new ethers.BrowserProvider(providerFromEngine(engine))
       }
     },
     {
@@ -206,7 +206,7 @@ describe('Multicall integration', function () {
 
         engine.push(providerAsMiddleware(new MulticallExternalProvider(new JsonRpcExternalProvider(ganache.provider!), conf)))
 
-        return new ethers.providers.Web3Provider(providerFromEngine(engine))
+        return new ethers.BrowserProvider(providerFromEngine(engine))
       },
       ignoreCount: true
     },

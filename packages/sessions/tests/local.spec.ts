@@ -145,10 +145,10 @@ const randomContext = () => {
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 describe('Local config tracker', () => {
-  let provider: ethers.providers.Web3Provider
+  let provider: ethers.BrowserProvider
 
   before(async () => {
-    provider = new ethers.providers.Web3Provider(hardhat.network.provider as any)
+    provider = new ethers.BrowserProvider(hardhat.network.provider as any)
   })
   ;[
     {

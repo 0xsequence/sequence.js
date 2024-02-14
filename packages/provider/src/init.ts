@@ -120,7 +120,7 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
         new JsonRpcSender(baseProvider)
       )
 
-      rpcProviders[chainId] = new ethers.providers.Web3Provider(router, chainId)
+      rpcProviders[chainId] = new ethers.BrowserProvider(router, chainId)
     }
 
     return rpcProviders[chainId]

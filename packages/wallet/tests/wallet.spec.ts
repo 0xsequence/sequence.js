@@ -25,7 +25,7 @@ describe('Wallet (primitive)', () => {
   let relayer: LocalRelayer
 
   before(async () => {
-    provider = new ethers.providers.Web3Provider(hardhat.network.provider as any)
+    provider = new ethers.BrowserProvider(hardhat.network.provider as any)
     signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
