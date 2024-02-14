@@ -280,11 +280,11 @@ export const tests = async () => {
       // via the relayer
       {
         const walletAddress = wallet.getAddress()
-        const walletBalanceBefore = await signer.getBalance()
+        const walletBalanceBefore = (await signer.getBalance()).toBigInt()
 
         // send eth from sequence smart wallet to another test account
         const toAddress = testAccounts[1].address
-        const toBalanceBefore = await provider.getBalance(toAddress)
+        const toBalanceBefore = (await provider.getBalance(toAddress)).toBigInt()
 
         const ethAmount = parseEther('1.4242')
 
@@ -334,15 +334,15 @@ export const tests = async () => {
         }
 
         // Ensure fromAddress sent their eth
-        const walletBalanceAfter = await signer.getBalance()
-        const sent = walletBalanceAfter.sub(walletBalanceBefore).mul(-1)
+        const walletBalanceAfter = (await signer.getBalance()).toBigInt()
+        const sent = (walletBalanceAfter - walletBalanceBefore) * -1n
 
-        assert.true(sent.eq(ethAmount), `wallet sent ${sent} eth while expected ${ethAmount}`)
+        assert.true(sent === ethAmount, `wallet sent ${sent} eth while expected ${ethAmount}`)
 
         // Ensure toAddress received their eth
-        const toBalanceAfter = await provider.getBalance(toAddress)
-        const received = toBalanceAfter.sub(toBalanceBefore)
-        assert.true(received.eq(ethAmount), `toAddress received ${received} eth while expected ${ethAmount}`)
+        const toBalanceAfter = (await provider.getBalance(toAddress)).toBigInt()
+        const received = toBalanceAfter - toBalanceBefore
+        assert.true(received === ethAmount, `toAddress received ${received} eth while expected ${ethAmount}`)
 
         // Extra checks
         if (opts.gasLimit) {
