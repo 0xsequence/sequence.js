@@ -288,14 +288,14 @@ export class Multicall {
             item.callback(undefined, {
               jsonrpc: item.request.jsonrpc!,
               id: item.request.id!,
-              result: ethers.utils.defaultAbiCoder.decode(['bytes'], decoded[1][index])[0]
+              result: ethers.AbiCoder.defaultAbiCoder().decode(['bytes'], decoded[1][index])[0]
             })
             break
           case JsonRpcMethod.ethGetBalance:
             item.callback(undefined, {
               jsonrpc: item.request.jsonrpc!,
               id: item.request.id!,
-              result: ethers.utils.defaultAbiCoder.decode(['uint256'], decoded[1][index])[0]
+              result: ethers.AbiCoder.defaultAbiCoder().decode(['uint256'], decoded[1][index])[0]
             })
             break
         }

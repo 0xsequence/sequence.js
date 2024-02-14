@@ -81,7 +81,7 @@ export function intendTransactionBundle(
 
 export function intendedTransactionID(bundle: IntendedTransactionBundle) {
   return ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
+    ethers.AbiCoder.defaultAbiCoder().encode(
       ['address', 'uint256', 'bytes32'],
       [bundle.intent.wallet, bundle.chainId, bundle.intent.id]
     )
@@ -89,13 +89,13 @@ export function intendedTransactionID(bundle: IntendedTransactionBundle) {
 }
 
 export function unpackMetaTransactionsData(data: BytesLike): [bigint, TransactionEncoded[]] {
-  const res = ethers.utils.defaultAbiCoder.decode(['uint256', MetaTransactionsType], data)
+  const res = ethers.AbiCoder.defaultAbiCoder().decode(['uint256', MetaTransactionsType], data)
   if (res.length !== 2 || !res[0] || !res[1]) throw new Error('Invalid meta transaction data')
   return [res[0], res[1]]
 }
 
 export function packMetaTransactionsData(nonce: BigIntish, txs: Transaction[]): string {
-  return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
+  return ethers.AbiCoder.defaultAbiCoder().encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
 export function digestOfTransactions(nonce: BigIntish, txs: Transaction[]) {
@@ -111,7 +111,7 @@ export function subdigestOfGuestModuleTransactions(guestModule: string, chainId:
     address: guestModule,
     chainId,
     digest: ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(['string', MetaTransactionsType], ['guest:', sequenceTxAbiEncode(txs)])
+      ethers.AbiCoder.defaultAbiCoder().encode(['string', MetaTransactionsType], ['guest:', sequenceTxAbiEncode(txs)])
     )
   })
 }
@@ -289,7 +289,7 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
     if (tx.to === wallet && ethers.utils.hexlify(txData.slice(0, 4)) === selfExecuteSelector) {
       // Decode as selfExecute call
       const data = txData.slice(4)
-      const decoded = ethers.utils.defaultAbiCoder.decode([selfExecuteAbi], data)[0]
+      const decoded = ethers.AbiCoder.defaultAbiCoder().decode([selfExecuteAbi], data)[0]
       unwound.push(
         ...unwind(
           tx.to,

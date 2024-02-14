@@ -171,7 +171,7 @@ export class GuardSigner implements signers.SapientSigner {
   }
 
   private packMsgAndSig(address: string, msg: BytesLike, sig: BytesLike, chainId: BigIntish): string {
-    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [address, chainId, msg, sig])
+    return ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes', 'bytes'], [address, chainId, msg, sig])
   }
 
   suffix(): BytesLike {

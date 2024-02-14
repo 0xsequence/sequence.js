@@ -114,7 +114,7 @@ export class RpcRelayer implements Relayer {
   }
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
-    const coder = ethers.utils.defaultAbiCoder
+    const coder = ethers.AbiCoder.defaultAbiCoder()
     const encoded = coder.encode(
       [commons.transaction.MetaTransactionsType],
       [commons.transaction.sequenceTxAbiEncode(transactions)]

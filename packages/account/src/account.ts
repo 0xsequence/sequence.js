@@ -592,7 +592,7 @@ export class Account {
       throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
     }
 
-    const encoded = ethers.utils.defaultAbiCoder.encode(
+    const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
       ['address', 'bytes', 'bytes'],
       [bootstrapBundle.entrypoint, commons.transaction.encodeBundleExecData(bootstrapBundle), signature]
     )
