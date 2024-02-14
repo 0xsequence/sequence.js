@@ -49,7 +49,7 @@ export class OnChainReader implements Reader {
   }
 
   async implementation(wallet: string): Promise<string | undefined> {
-    const position = ethers.utils.defaultAbiCoder.encode(['address'], [wallet])
+    const position = ethers.AbiCoder.defaultAbiCoder().encode(['address'], [wallet])
     const val = await this.provider.getStorageAt(wallet, position).then(c => ethers.getBytes(c))
 
     if (val.length === 20) {
@@ -57,7 +57,7 @@ export class OnChainReader implements Reader {
     }
 
     if (val.length === 32) {
-      return ethers.utils.defaultAbiCoder.decode(['address'], val)[0]
+      return ethers.AbiCoder.defaultAbiCoder().decode(['address'], val)[0]
     }
 
     return undefined
