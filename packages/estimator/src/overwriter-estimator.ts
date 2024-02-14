@@ -13,7 +13,7 @@ function toQuantity(number: BigIntish | string): string {
 
 function tryDecodeError(bytes: ethers.BytesLike): string {
   try {
-    return ethers.utils.toUtf8String('0x' + ethers.utils.hexlify(bytes).substr(138))
+    return ethers.utils.toUtf8String('0x' + ethers.toBeHex(bytes).substr(138))
   } catch (e) {
     return 'UNKNOWN_ERROR'
   }
@@ -99,7 +99,7 @@ export class OverwriterEstimator {
           return {
             ...p,
             [address]: {
-              code: o.code ? ethers.utils.hexlify(o.code) : undefined,
+              code: o.code ? ethers.toBeHex(o.code) : undefined,
               nonce: o.nonce ? toHexNumber(o.nonce) : undefined,
               balance: o.balance ? toHexNumber(o.balance) : undefined,
               state: o.state ? o.state : undefined,

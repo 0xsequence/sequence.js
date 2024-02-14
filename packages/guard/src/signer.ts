@@ -53,7 +53,7 @@ export class GuardSigner implements signers.SapientSigner {
       await this.guard.signWith({
         signer: this.address,
         request: {
-          msg: ethers.utils.hexlify(message),
+          msg: ethers.toBeHex(message),
           auxData: this.packMsgAndSig(metadata.address, metadata.digest, encoded, metadata.chainId),
           chainId: Number(BigInt(metadata.chainId))
         },
@@ -229,7 +229,7 @@ export async function signOwnershipProof(proof: Exclude<OwnershipProof, { jwt: s
       walletAddress: proof.walletAddress,
       timestamp,
       signerAddress,
-      signature: ethers.utils.hexlify(await signer.sign(digest, {}))
+      signature: ethers.toBeHex(await signer.sign(digest, {}))
     }
   }
 }

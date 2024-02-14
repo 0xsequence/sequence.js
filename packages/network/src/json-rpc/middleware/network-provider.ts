@@ -21,7 +21,7 @@ export const networkProviderMiddleware =
           return
 
         case 'eth_chainId':
-          callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.utils.hexlify(networkChainId) })
+          callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.toBeHex(networkChainId) })
           return
 
         default:

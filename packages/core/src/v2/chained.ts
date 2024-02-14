@@ -14,8 +14,8 @@ export function messageSetImageHash(imageHash: string) {
 export function decodeMessageSetImageHash(message: ethers.BytesLike): string | undefined {
   const arr = ethers.getBytes(message)
   if (arr.length !== 64) return undefined
-  if (ethers.utils.hexlify(arr.slice(0, 32)) !== SetImageHashPrefix) return undefined
-  return ethers.utils.hexlify(arr.slice(32, 64))
+  if (ethers.toBeHex(arr.slice(0, 32)) !== SetImageHashPrefix) return undefined
+  return ethers.toBeHex(arr.slice(32, 64))
 }
 
 export function isMessageSetImageHash(message: ethers.BytesLike): boolean {

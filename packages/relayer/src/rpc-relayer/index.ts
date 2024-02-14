@@ -170,7 +170,7 @@ export class RpcRelayer implements Relayer {
     const { options: feeOptions, quote } = await this.service.feeOptions({
       wallet: entrypoint,
       to: entrypoint,
-      data: ethers.utils.hexlify(data),
+      data: ethers.toBeHex(data),
       simulate: options?.simulate
     })
 
