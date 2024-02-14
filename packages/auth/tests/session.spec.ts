@@ -25,7 +25,7 @@ const deterministic = false
 type EthereumInstance = {
   chainId?: number
   providerUrl?: string
-  provider?: ethers.providers.JsonRpcProvider
+  provider?: ethers.JsonRpcProvider
   signer?: AbstractSigner
 }
 
@@ -76,7 +76,7 @@ describe('Wallet integration', function () {
   before(async () => {
     // Provider from hardhat without a server instance
     ethnode.providerUrl = `http://127.0.0.1:9546/`
-    ethnode.provider = new ethers.providers.JsonRpcProvider(ethnode.providerUrl)
+    ethnode.provider = new ethers.JsonRpcProvider(ethnode.providerUrl)
 
     const chainId = (await ethnode.provider.getNetwork()).chainId
     ethnode.signer = ethnode.provider.getSigner()

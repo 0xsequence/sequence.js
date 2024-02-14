@@ -9,14 +9,14 @@ const CallReceiverMockArtifact = require('@0xsequence/wallet-contracts/artifacts
 
 describe('estimator', function () {
   let url: string
-  let provider: ethers.providers.JsonRpcProvider
+  let provider: ethers.JsonRpcProvider
   let callReceiver: CallReceiverMock
 
   let estimator: OverwriterEstimator
 
   before(async () => {
     url = 'http://127.0.0.1:10045/'
-    provider = new ethers.providers.JsonRpcProvider(url)
+    provider = new ethers.JsonRpcProvider(url)
 
     callReceiver = (await new ethers.ContractFactory(
       CallReceiverMockArtifact.abi,

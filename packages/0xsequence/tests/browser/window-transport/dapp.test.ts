@@ -13,7 +13,7 @@ walletProvider.register()
 
 export const tests = async () => {
   await (async () => {
-    const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+    const provider = new ethers.JsonRpcProvider('http://localhost:8545')
     const signer = provider.getSigner()
     return context.deploySequenceContexts(signer)
   })()

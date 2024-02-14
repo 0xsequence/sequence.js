@@ -23,7 +23,7 @@ export interface JsonRpcProviderOptions {
 }
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
-export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
+export class JsonRpcProvider extends ethers.JsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
 
