@@ -17,10 +17,10 @@
     "js-base64": "^3.7.2"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": ">=6"
   },
   "devDependencies": {
-    "ethers": "^5.7.2"
+    "ethers": "^6.11.1"
   },
   "files": [
     "src",

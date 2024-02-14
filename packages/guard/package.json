@@ -17,7 +17,7 @@
     "@0xsequence/core": "workspace:*",
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/utils": "workspace:*",
-    "ethers": "^5.7.2"
+    "ethers": "^6.11.1"
   },
   "files": [
     "src",

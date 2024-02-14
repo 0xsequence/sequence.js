@@ -21,12 +21,12 @@
     "@0xsequence/wallet-contracts": "^1.10.0"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/tests": "workspace:*",
-    "ethers": "^5.7.2"
+    "ethers": "^6.11.1"
   },
   "files": [
     "src",
