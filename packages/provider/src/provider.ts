@@ -57,7 +57,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   constructor(
     public readonly client: SequenceClient,
-    private readonly providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
+    private readonly providerFor: (networkId: number) => ethers.JsonRpcProvider,
     public readonly networks: NetworkConfig[] = allNetworks
   ) {
     // We support a lot of networks
@@ -223,7 +223,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
    *  This returns a subprovider, this is a regular non-sequence provider that
    *  can be used to fulfill read only requests on a given network.
    */
-  async _getSubprovider(chainId?: ChainIdLike): Promise<ethers.providers.JsonRpcProvider> {
+  async _getSubprovider(chainId?: ChainIdLike): Promise<ethers.JsonRpcProvider> {
     const useChainId = await this.useChainId(chainId)
 
     // Whoever implements providerFrom should memoize the generated provider
@@ -463,7 +463,7 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
 
   constructor(
     client: SequenceClient,
-    providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
+    providerFor: (networkId: number) => ethers.JsonRpcProvider,
     public readonly chainId: ChainIdLike
   ) {
     super(client, providerFor)

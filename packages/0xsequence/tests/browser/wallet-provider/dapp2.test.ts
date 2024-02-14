@@ -14,7 +14,7 @@ export const tests = async () => {
     walletAppURL: 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   }
 
-  const hardhatProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const hardhatProvider = new ethers.JsonRpcProvider('http://localhost:8545')
 
   const client = new SequenceClient(transportsConfig, new MemoryItemStore(), { defaultChainId: 31338 })
   const provider = new SequenceProvider(client, chainId => {
@@ -23,7 +23,7 @@ export const tests = async () => {
     }
 
     if (chainId === 31338) {
-      return new ethers.providers.JsonRpcProvider('http://localhost:9545')
+      return new ethers.JsonRpcProvider('http://localhost:9545')
     }
 
     throw new Error(`No provider for chainId ${chainId}`)

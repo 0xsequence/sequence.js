@@ -29,14 +29,14 @@ describe('Wallet integration', function () {
   let hookCaller: HookCallerMock
 
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>
-  let provider: ethers.providers.JsonRpcProvider
+  let provider: ethers.JsonRpcProvider
   let signers: ethers.Signer[]
 
   let estimator: OverwriterSequenceEstimator
 
   before(async () => {
     const url = 'http://127.0.0.1:10045/'
-    provider = new ethers.providers.JsonRpcProvider(url)
+    provider = new ethers.JsonRpcProvider(url)
 
     signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
 

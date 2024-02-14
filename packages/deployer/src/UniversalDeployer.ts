@@ -24,7 +24,7 @@ export class UniversalDeployer {
 
   constructor(
     public networkName: string,
-    public provider: ethers.providers.JsonRpcProvider,
+    public provider: ethers.JsonRpcProvider,
     public signerOverride?: ethers.Signer
   ) {
     this.signer = signerOverride || provider.getSigner()

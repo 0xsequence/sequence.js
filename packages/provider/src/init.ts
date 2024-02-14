@@ -85,7 +85,7 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
     }
   }
 
-  const rpcProviders: Record<number, ethers.providers.JsonRpcProvider> = {}
+  const rpcProviders: Record<number, ethers.JsonRpcProvider> = {}
 
   // Find any new networks that aren't already defined in sequence.js
   // and add them to the list of networks, (they must have a rpcUrl and chainId)
@@ -120,7 +120,7 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
         throw new Error(`no rpcUrl found for chainId: ${chainId}`)
       }
 
-      const baseProvider = new ethers.providers.JsonRpcProvider(rpcUrl)
+      const baseProvider = new ethers.JsonRpcProvider(rpcUrl)
       const router = new JsonRpcRouter(
         [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()],
         new JsonRpcSender(baseProvider)

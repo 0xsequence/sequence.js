@@ -24,7 +24,7 @@ function toHexNumber(number: BigIntish): string {
 }
 
 export type OverwriterEstimatorOptions = {
-  rpc: string | ethers.providers.JsonRpcProvider
+  rpc: string | ethers.JsonRpcProvider
   dataZeroCost?: number
   dataOneCost?: number
   baseCost?: number

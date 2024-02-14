@@ -16,8 +16,8 @@ import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/networ
 import { ExtendedTransactionRequest } from '../src/extended'
 import { TypedData, parseEther } from '@0xsequence/utils'
 
-const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:9595')
-const hardhat2Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8595')
+const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595')
+const hardhat2Provider = new ethers.JsonRpcProvider('http://127.0.0.1:8595')
 
 const testAccounts = [
   new ethers.Wallet('0xcd0434442164a4a6ef9bb677da8dc326fddf412cad4df65e1a3f2555aee5e2b3').connect(hardhat1Provider),
@@ -434,14 +434,14 @@ describe('SequenceSigner', () => {
             return {
               ...hardhat1Provider,
               getGasPrice: async () => 1n
-            } as unknown as ethers.providers.JsonRpcProvider
+            } as unknown as ethers.JsonRpcProvider
           }
 
           if (chainId === 31338) {
             return {
               ...hardhat2Provider,
               getGasPrice: async () => 2n
-            } as unknown as ethers.providers.JsonRpcProvider
+            } as unknown as ethers.JsonRpcProvider
           }
 
           throw new Error(`No provider for chainId ${chainId}`)
@@ -474,12 +474,12 @@ describe('SequenceSigner', () => {
 
     describe('ENS', () => {
       let signer: SequenceSigner
-      let mainnetProvider: ethers.providers.JsonRpcProvider
+      let mainnetProvider: ethers.JsonRpcProvider
 
       let vitalikAddr: string | null
 
       before(async () => {
-        mainnetProvider = new ethers.providers.JsonRpcProvider('https://nodes.sequence.app/mainnet')
+        mainnetProvider = new ethers.JsonRpcProvider('https://nodes.sequence.app/mainnet')
         vitalikAddr = await mainnetProvider.resolveName('vitalik.eth')
       })
 
