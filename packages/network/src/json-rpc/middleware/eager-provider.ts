@@ -34,7 +34,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
         case 'eth_chainId':
           if (this.options.chainId) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.utils.hexlify(this.options.chainId) })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.toBeHex(this.options.chainId) })
             return
           }
           break

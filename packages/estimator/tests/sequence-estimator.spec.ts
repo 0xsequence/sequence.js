@@ -309,7 +309,7 @@ describe('Wallet integration', function () {
               expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 30000)
               expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
 
-              expect(ethers.utils.hexlify(await callReceiver.lastValB())).to.equal(ethers.utils.hexlify(valB))
+              expect(ethers.toBeHex(await callReceiver.lastValB())).to.equal(ethers.toBeHex(valB))
             })
           })
         })

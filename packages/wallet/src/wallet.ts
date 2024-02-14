@@ -203,7 +203,7 @@ export class Wallet<
       ...deployTx,
       chainId: this.chainId,
       intent: {
-        id: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+        id: ethers.toBeHex(ethers.utils.randomBytes(32)),
         wallet: this.address
       }
     })
@@ -322,7 +322,7 @@ export class Wallet<
 
   // Generate nonce with random space
   randomNonce(): BigIntish {
-    const randomNonceSpace = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
+    const randomNonceSpace = BigInt(ethers.toBeHex(ethers.utils.randomBytes(12)))
     const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
     return randomNonce
   }

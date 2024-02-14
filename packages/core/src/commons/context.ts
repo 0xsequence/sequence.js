@@ -40,13 +40,13 @@ export async function isValidCounterfactual(
   const res = await Promise.all(
     allVersions.map(async version => {
       try {
-        const decoded = version.signature.SignatureCoder.decode(ethers.utils.hexlify(signature))
+        const decoded = version.signature.SignatureCoder.decode(ethers.toBeHex(signature))
 
         const recovered1 = await version.signature.SignatureCoder.recover(
           decoded as any,
           {
             address: wallet,
-            digest: ethers.utils.hexlify(digest),
+            digest: ethers.toBeHex(digest),
             chainId
           },
           provider
@@ -65,7 +65,7 @@ export async function isValidCounterfactual(
           decoded as any,
           {
             address: wallet,
-            digest: ethers.utils.hexlify(digest),
+            digest: ethers.toBeHex(digest),
             chainId
           },
           provider

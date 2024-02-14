@@ -400,7 +400,7 @@ describe('Wallet (primitive)', () => {
               expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
 
               const message = ethers.utils.toUtf8Bytes(
-                `This is a random message: ${ethers.utils.hexlify(ethers.utils.randomBytes(96))}`
+                `This is a random message: ${ethers.toBeHex(ethers.utils.randomBytes(96))}`
               )
 
               const signature = await wallet.signMessage(message)

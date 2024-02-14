@@ -52,7 +52,7 @@ describe('Multicall integration', function () {
         return {
           account: account,
           secretKey: account.privateKey,
-          balance: ethers.utils.hexlify(ethers.utils.randomBytes(9))
+          balance: ethers.toBeHex(ethers.utils.randomBytes(9))
         }
       })
 
@@ -263,8 +263,8 @@ describe('Multicall integration', function () {
         it('Should aggregate three calls', async () => {
           const callMockB = await createCallMock()
 
-          const randomData1 = ethers.utils.hexlify(ethers.utils.randomBytes(33))
-          const randomData2 = ethers.utils.hexlify(ethers.utils.randomBytes(42))
+          const randomData1 = ethers.toBeHex(ethers.utils.randomBytes(33))
+          const randomData2 = ethers.toBeHex(ethers.utils.randomBytes(42))
 
           await callMock.testCall(55122, randomData1)
           await callMockB.testCall(2, randomData2)
@@ -292,7 +292,7 @@ describe('Multicall integration', function () {
 
           const randomValues = Array(62)
             .fill(0)
-            .map(() => ethers.utils.hexlify(ethers.utils.randomBytes(getRandomInt(0, 41))))
+            .map(() => ethers.toBeHex(ethers.utils.randomBytes(getRandomInt(0, 41))))
           await Promise.all(randomValues.map((v, i) => callMocks[i].testCall(0, v)))
 
           const values = await Promise.all(callMocks.map(c => c.connect(provider).lastValB()))
@@ -321,7 +321,7 @@ describe('Multicall integration', function () {
 
           const randomValues = Array(numberOfCalls)
             .fill(0)
-            .map(() => ethers.utils.hexlify(ethers.utils.randomBytes(getRandomInt(0, 41))))
+            .map(() => ethers.toBeHex(ethers.utils.randomBytes(getRandomInt(0, 41))))
           await Promise.all(randomValues.slice(0, mid).map((v, i) => callMocks[i].testCall(0, v)))
           await Promise.all(randomValues.slice(mid).map((v, i) => callMocks[i + mid].testCall(0, v)))
 
@@ -426,7 +426,7 @@ describe('Multicall integration', function () {
         })
 
         it('Should call getStorageAt', async () => {
-          const random = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const random = ethers.toBeHex(ethers.utils.randomBytes(32))
           await callMock.testCall(random, '0x00')
           const storageAt = ethers.zeroPadValue(await provider.getStorageAt(callMock.address, 0), 32)
           expect(storageAt).to.equal(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [random]))

@@ -116,13 +116,13 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     return Object.entries(wallets).map(([wallet, { digest, chainID, type, signature }]) => {
       switch (type) {
         case SignatureType.EIP712:
-          signature += ethers.utils.hexlify(commons.signer.SigType.EIP712).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.EIP712).slice(2)
           break
         case SignatureType.EthSign:
-          signature += ethers.utils.hexlify(commons.signer.SigType.ETH_SIGN).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.ETH_SIGN).slice(2)
           break
         case SignatureType.EIP1271:
-          signature += ethers.utils.hexlify(commons.signer.SigType.WALLET_BYTES32).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.WALLET_BYTES32).slice(2)
           break
       }
 
@@ -335,7 +335,7 @@ function encodeTransaction(transaction: commons.transaction.Transaction): Transa
   return {
     to: transaction.to,
     value: transaction.value !== undefined ? numberString(transaction.value) : undefined,
-    data: transaction.data !== undefined ? ethers.utils.hexlify(transaction.data) : undefined,
+    data: transaction.data !== undefined ? ethers.toBeHex(transaction.data) : undefined,
     gasLimit: transaction.gasLimit !== undefined ? numberString(transaction.gasLimit) : undefined,
     delegateCall: transaction.delegateCall,
     revertOnError: transaction.revertOnError
