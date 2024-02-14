@@ -520,7 +520,7 @@ describe('Wallet (primitive)', () => {
                 it('Should send an async transaction', async () => {
                   const ethAmount = parseEther('1.0')
 
-                  const tx: ethers.providers.TransactionRequest = {
+                  const tx: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount
                   }
@@ -536,17 +536,17 @@ describe('Wallet (primitive)', () => {
                   const ethAmount2 = parseEther('2.0')
                   const ethAmount3 = parseEther('5.0')
 
-                  const tx1: ethers.providers.TransactionRequest = {
+                  const tx1: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount1
                   }
 
-                  const tx2: ethers.providers.TransactionRequest = {
+                  const tx2: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount2
                   }
 
-                  const tx3: ethers.providers.TransactionRequest = {
+                  const tx3: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount3
                   }
@@ -564,17 +564,17 @@ describe('Wallet (primitive)', () => {
                   const ethAmount2 = parseEther('2.0')
                   const ethAmount3 = parseEther('5.0')
 
-                  const tx1: ethers.providers.TransactionRequest = {
+                  const tx1: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount1
                   }
 
-                  const tx2: ethers.providers.TransactionRequest = {
+                  const tx2: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount2
                   }
 
-                  const tx3: ethers.providers.TransactionRequest = {
+                  const tx3: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount3
                   }

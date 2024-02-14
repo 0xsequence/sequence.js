@@ -358,7 +358,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   async call(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>,
     blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
@@ -366,7 +366,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.call(transaction, blockTag)
   }
 
-  async estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>, optionals?: OptionalChainIdLike) {
+  async estimateGas(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.estimateGas(transaction)
   }

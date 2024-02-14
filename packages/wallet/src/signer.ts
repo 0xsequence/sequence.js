@@ -47,7 +47,7 @@ export abstract class Signer extends AbstractSigner {
   // sendTransactionBatch provides the ability to send an array/batch of transactions as a single native on-chain transaction.
   // This method works identically to sendTransaction but offers a different syntax for convience, readability and type clarity.
   abstract sendTransactionBatch(
-    transactions: Deferrable<ethers.providers.TransactionRequest[] | commons.transaction.Transaction[]>,
+    transactions: Deferrable<ethers.TransactionRequest[] | commons.transaction.Transaction[]>,
     chainId?: ChainIdLike,
     allSigners?: boolean,
     quote?: FeeQuote

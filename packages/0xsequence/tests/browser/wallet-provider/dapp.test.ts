@@ -306,7 +306,7 @@ export const tests = async () => {
         const beforeWalletDeployed = (await hardhatProvider.getCode(wallet.getAddress())) !== '0x'
 
         // NOTE/TODO: gasPrice even if set will be set again by the LocalRelayer, we should allow it to be overridden
-        const tx: ethers.providers.TransactionRequest = {
+        const tx: ethers.TransactionRequest = {
           from: walletAddress,
           to: toAddress,
           value: ethAmount
@@ -365,11 +365,11 @@ export const tests = async () => {
     const ethAmount1 = parseEther('1.234')
     const ethAmount2 = parseEther('0.456')
 
-    const tx1: ethers.providers.TransactionRequest = {
+    const tx1: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount1
     }
-    const tx2: ethers.providers.TransactionRequest = {
+    const tx2: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount2
     }
@@ -394,12 +394,12 @@ export const tests = async () => {
     const ethAmount1 = parseEther('1.234')
     const ethAmount2 = parseEther('0.456')
 
-    const tx1: ethers.providers.TransactionRequest = {
+    const tx1: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount1
     }
 
-    const tx2: ethers.providers.TransactionRequest = {
+    const tx2: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount2
     }

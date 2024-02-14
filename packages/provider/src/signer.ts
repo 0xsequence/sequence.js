@@ -33,9 +33,7 @@ export interface ISequenceSigner extends ethers.Signer {
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   // It supports any kind of transaction, including regular ethers transactions, and Sequence transactions.
   sendTransaction(
-    transaction:
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>[] | ethers.utils.Deferrable<ethers.TransactionRequest>,
     options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
 
@@ -125,9 +123,7 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async sendTransaction(
-    transaction:
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>[] | ethers.utils.Deferrable<ethers.TransactionRequest>,
     options?: OptionalChainIdLike
   ) {
     const chainId = this.useChainId(options?.chainId)
@@ -164,14 +160,14 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async estimateGas(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>,
     optionals?: OptionalChainIdLike
   ): Promise<BigNumber> {
     return this.getProvider(optionals?.chainId).estimateGas(transaction)
   }
 
   async call(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>,
     blockTag?: ethers.providers.BlockTag | undefined,
     optionals?: OptionalChainIdLike
   ): Promise<string> {
@@ -208,15 +204,13 @@ export class SequenceSigner implements ISequenceSigner {
     // We always have a provider, so this is a noop
   }
 
-  populateTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): Promise<ethers.providers.TransactionRequest> {
+  populateTransaction(_transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<ethers.TransactionRequest> {
     throw new Error('SequenceSigner does not support populateTransaction')
   }
 
   checkTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): ethers.utils.Deferrable<ethers.providers.TransactionRequest> {
+    _transaction: ethers.utils.Deferrable<ethers.TransactionRequest>
+  ): ethers.utils.Deferrable<ethers.TransactionRequest> {
     throw new Error('SequenceSigner does not support checkTransaction')
   }
 

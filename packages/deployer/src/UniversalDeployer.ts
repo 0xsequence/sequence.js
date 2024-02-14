@@ -33,7 +33,7 @@ export class UniversalDeployer {
   deploy = async <T extends ContractFactory>(
     contractAlias: string,
     contractFactory: new (signer: ethers.Signer) => T,
-    txParams?: ethers.providers.TransactionRequest,
+    txParams?: ethers.TransactionRequest,
     instance?: number | bigint,
     ...args: Parameters<T['deploy']>
   ): Promise<ethers.Contract> => {
@@ -77,7 +77,7 @@ export class UniversalDeployer {
     }
   }
 
-  deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
+  deployUniversalDeployer = async (txParams?: ethers.TransactionRequest) => {
     if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
       const tx = await this.signer.sendTransaction({
@@ -107,7 +107,7 @@ export class UniversalDeployer {
   }
 
   // Deploy universal deployer via universal deployer 1
-  deployUniversalDeployer2 = async (txParams?: ethers.providers.TransactionRequest) => {
+  deployUniversalDeployer2 = async (txParams?: ethers.TransactionRequest) => {
     const universalDeployerCode = await this.provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)
     if (universalDeployerCode === '0x') {
       await this.deployUniversalDeployer(txParams)

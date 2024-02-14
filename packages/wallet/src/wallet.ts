@@ -430,7 +430,7 @@ export class Wallet<
     return this
   }
 
-  signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<string> {
     throw new Error('Method not implemented.')
   }
 }
