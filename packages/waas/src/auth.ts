@@ -18,7 +18,7 @@ import {
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
 import {
-  // TODO: SendDelayedEncodeArgs,
+  SendDelayedEncodeArgs,
   SendERC1155Args,
   SendERC20Args,
   SendERC721Args,
@@ -401,13 +401,10 @@ export class Sequence {
     return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
 
-  /*
-  TODO:
   async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isMaySentTransactionResponse)
   }
-   */
 
   async networkList(): Promise<NetworkList> {
     const networks: NetworkList = []

@@ -1,10 +1,13 @@
 import {
+  Intent,
+  SignedIntent,
   closeSession,
   getSession,
   openSession,
   listSessions,
   validateSession,
-  finishValidateSession, SignedIntent, signIntent, Intent,
+  finishValidateSession,
+  signIntent, sendDelayedEncode
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import { newSessionFromSessionId } from "./session";
@@ -18,8 +21,7 @@ import {
   SendERC20Args,
   SendERC721Args,
   SendERC1155Args,
-  // TODO: SendDelayedEncodeArgs,
-  // TODO: sendDelayedEncode
+  SendDelayedEncodeArgs,
 } from './intents'
 import { OpenSessionResponse } from './intents/responses'
 import { SignMessageArgs, signMessage } from './intents'
@@ -315,13 +317,10 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  /*
-  TODO:
-  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs>): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendDelayedEncode(await this.commonArgs(args))
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
-   */
 
   async validateSession({ deviceMetadata }: { deviceMetadata: string }): Promise<SignedIntent<IntentDataValidateSession>> {
     const sessionId = await this.sessionId.get()
