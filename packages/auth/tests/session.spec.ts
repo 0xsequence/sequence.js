@@ -147,7 +147,7 @@ describe('Wallet integration', function () {
       editConfigOnMigration: config => config
     })
 
-    expect(session.account.address).to.not.equal(ethers.constants.AddressZero)
+    expect(session.account.address).to.not.equal(ethers.ZeroAddress)
 
     const status = await session.account.status(networks[0].chainId)
 

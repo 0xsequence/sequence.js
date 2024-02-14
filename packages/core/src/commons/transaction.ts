@@ -127,7 +127,7 @@ export function toSequenceTransaction(
   wallet: string,
   tx: ethers.TransactionRequest
 ): { nonce?: BigIntish; transaction: Transaction } {
-  if (tx.to && tx.to !== ethers.constants.AddressZero) {
+  if (tx.to && tx.to !== ethers.ZeroAddress) {
     return {
       nonce: tx.nonce ? BigNumber.from(tx.nonce) : undefined,
       transaction: {
@@ -171,7 +171,7 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
     delegateCall: t.delegateCall === true,
     revertOnError: t.revertOnError === true,
     gasLimit: t.gasLimit !== undefined ? t.gasLimit : 0n,
-    target: t.to ?? ethers.constants.AddressZero,
+    target: t.to ?? ethers.ZeroAddress,
     value: t.value !== undefined ? t.value : 0n,
     data: t.data !== undefined ? t.data : []
   }))
