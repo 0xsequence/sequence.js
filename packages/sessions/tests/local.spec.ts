@@ -195,7 +195,7 @@ describe('Local config tracker', () => {
     }
   ].map(({ name, getTracker }) => {
     describe(name, () => {
-      let tracker: tracker.ConfigTracker
+      let tracker: tracker.ConfigTracker | trackers.MultipleTracker
 
       beforeEach(() => {
         tracker = getTracker()

@@ -528,7 +528,7 @@ describe('Wallet (primitive)', () => {
                   await wallet.sendTransaction(tx)
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq(ethAmount.toString())
+                  expect(sent.toString()).to.be.equal(ethAmount.toString())
                 })
 
                 it('Should send two async transactions at once', async () => {
@@ -556,7 +556,7 @@ describe('Wallet (primitive)', () => {
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq((ethAmount1 + ethAmount2 + ethAmount3).toString())
+                  expect(sent.toString()).to.be.equal((ethAmount1 + ethAmount2 + ethAmount3).toString())
                 })
 
                 it('Should send multiple async transactions in one batch, async', async () => {
@@ -584,7 +584,7 @@ describe('Wallet (primitive)', () => {
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq((ethAmount1 + ethAmount2 + ethAmount3).toString())
+                  expect(sent.toString()).to.be.equal((ethAmount1 + ethAmount2 + ethAmount3).toString())
                 })
               })
             })

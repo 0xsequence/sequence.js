@@ -146,7 +146,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     return result
   }
 
-  async saveWitnesses(args: { wallet: string; digest: string; chainId: bigint; signatures: string[] }): Promise<void> {
+  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
     await Promise.all(this.trackers.map(t => t.saveWitnesses(args)))
   }
 

@@ -251,8 +251,8 @@ export const tests = async () => {
 
   await test('getBalance', async () => {
     // technically, the mock-wallet's single signer owner has some ETH..
-    const balanceSigner1 = await provider.getBalance('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853')
-    assert.true(balanceSigner1.gt(0n), 'signer1 balance > 0')
+    const balanceSigner1 = (await provider.getBalance('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853')).toBigInt()
+    assert.true(balanceSigner1 > 0n, 'signer1 balance > 0')
   })
 
   await test('fund sequence wallet', async () => {
@@ -265,7 +265,7 @@ export const tests = async () => {
     const txReceipt = await provider.getTransactionReceipt(txResp.hash)
     assert.true(txReceipt.status === 1, 'eth sent from signer1')
 
-    const walletBalanceAfter = await (await signer.getBalance()).toBigInt()
+    const walletBalanceAfter = (await signer.getBalance()).toBigInt()
     assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
   })
 

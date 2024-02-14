@@ -237,7 +237,7 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results.every(result => result.executed)).to.be.true
               expect(results.every(result => result.succeeded)).to.be.true
-              expect(results.every(result => result.gasUsed.gt(0))).to.be.true
+              expect(results.every(result => result.gasUsed.gt(0n))).to.be.true
             })
 
             it('should use estimated gas for a single failing transaction', async () => {
@@ -248,7 +248,7 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results.every(result => result.executed)).to.be.true
               expect(results.every(result => !result.succeeded)).to.be.true
-              expect(results.every(result => result.gasUsed.gt(0))).to.be.true
+              expect(results.every(result => result.gasUsed.gt(0n))).to.be.true
             })
           })
 
@@ -285,10 +285,10 @@ describe('Wallet integration', function () {
               expect(results).to.have.lengthOf(txs.length)
               expect(results[0].executed).to.be.true
               expect(results[0].succeeded).to.be.true
-              expect(results[0].gasUsed.gt(0)).to.be.true
+              expect(results[0].gasUsed.gt(0n)).to.be.true
               expect(results[1].executed).to.be.true
               expect(results[1].succeeded).to.be.false
-              expect(results[1].gasUsed.gt(0)).to.be.true
+              expect(results[1].gasUsed.gt(0n)).to.be.true
             })
           })
         })
