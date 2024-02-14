@@ -192,7 +192,7 @@ export class Wallet<
     return bundle
   }
 
-  async deploy(metadata?: commons.WalletDeployMetadata): Promise<ethers.providers.TransactionResponse | undefined> {
+  async deploy(metadata?: commons.WalletDeployMetadata): Promise<ethers.TransactionResponse | undefined> {
     const deployTx = await this.buildDeployTransaction(metadata)
     if (deployTx === undefined) {
       // Already deployed
@@ -375,7 +375,7 @@ export class Wallet<
   async sendSignedTransaction(
     signedBundle: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.TransactionResponse> {
     if (!this.relayer) throw new Error('Wallet sendTransaction requires a relayer')
     return this.relayer.relay(signedBundle, quote)
   }
@@ -393,7 +393,7 @@ export class Wallet<
       nonce?: BigIntish
       serial?: boolean
     }
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.TransactionResponse> {
     let nonce: BigIntish | { serial: boolean }
     if (options?.nonce !== undefined) {
       // specific nonce is used

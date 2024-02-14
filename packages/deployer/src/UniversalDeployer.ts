@@ -94,7 +94,7 @@ export class UniversalDeployer {
     }
 
     prompt.start('Deploying universal deployer contract')
-    const tx2 = await this.provider.sendTransaction(UNIVERSAL_DEPLOYER_TX)
+    const tx2 = await this.provider.broadcastTransaction(UNIVERSAL_DEPLOYER_TX)
     // await tx2.wait()
 
     // const universalDeployerCodeCheck = await this.provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)

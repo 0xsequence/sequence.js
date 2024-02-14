@@ -112,7 +112,7 @@ describe('Wallet (primitive)', () => {
         let signer: ethers.Wallet
         let wallet: Wallet
 
-        let getNonce: (response: ethers.providers.TransactionResponse) => { space: bigint; nonce: bigint }
+        let getNonce: (response: ethers.TransactionResponse) => { space: bigint; nonce: bigint }
 
         before(async () => {
           const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
