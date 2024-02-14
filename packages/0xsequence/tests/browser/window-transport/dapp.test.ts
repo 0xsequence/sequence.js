@@ -27,7 +27,7 @@ export const tests = async () => {
 
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
   // ..
-  const provider = new ethers.providers.Web3Provider(walletProvider)
+  const provider = new ethers.BrowserProvider(walletProvider)
   const signer = provider.getSigner()
   const address = await signer.getAddress()
   const chainId = await signer.getChainId()
