@@ -472,12 +472,12 @@ export const tests = async () => {
     // initial balances
     {
       const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
-      const walletBalanceBefore = await testAccount.getBalance()
+      const walletBalanceBefore = (await testAccount.getBalance()).toBigInt()
 
       const mainTestAccount = getEOAWallet(testAccounts[0].privateKey, wallet.getProvider())
-      const mainWalletBalanceBefore = await mainTestAccount.getBalance()
+      const mainWalletBalanceBefore = (await mainTestAccount.getBalance()).toBigInt()
 
-      assert.true(walletBalanceBefore.toString() !== mainWalletBalanceBefore.toString(), 'balances across networks do not match')
+      assert.true(walletBalanceBefore !== mainWalletBalanceBefore, 'balances across networks do not match')
 
       // test different code paths lead to same results
       assert.equal(
@@ -495,7 +495,7 @@ export const tests = async () => {
     // first, lets move some ETH info the wallet from teh testnet seed account
     {
       const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
-      const walletBalanceBefore = await signer2.getBalance()
+      const walletBalanceBefore = (await signer2.getBalance()).toBigInt()
 
       const ethAmount = parseEther('4.2')
 
@@ -505,19 +505,19 @@ export const tests = async () => {
       const txReceipt = await (await sendETH(testAccount, wallet.getAddress(), ethAmount)).wait()
       assert.true(txReceipt.status === 1, 'eth sent')
 
-      const walletBalanceAfter = await signer2.getBalance()
-      assert.true(walletBalanceAfter.sub(walletBalanceBefore).eq(ethAmount), `wallet received ${ethAmount} eth`)
+      const walletBalanceAfter = (await signer2.getBalance()).toBigInt()
+      assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
     }
 
     // using sequence wallet on the authChain, send eth back to anotehr seed account via
     // the authChain relayer
     {
       const walletAddress = wallet.getAddress()
-      const walletBalanceBefore = await signer2.getBalance()
+      const walletBalanceBefore = (await signer2.getBalance()).toBigInt()
 
       // send eth from sequence smart wallet to another test account
       const toAddress = testAccounts[1].address
-      const toBalanceBefore = await provider2.getBalance(toAddress)
+      const toBalanceBefore = (await provider2.getBalance(toAddress)).toBigInt()
 
       const ethAmount = parseEther('1.1234')
 
@@ -532,12 +532,14 @@ export const tests = async () => {
       assert.true((await hardhatProvider.getCode(walletAddress)) !== '0x', 'wallet must be in deployed state after the txn')
 
       // Ensure fromAddress sent their eth
-      const walletBalanceAfter = await signer2.getBalance()
-      assert.true(walletBalanceAfter.sub(walletBalanceBefore).mul(-1).eq(ethAmount), `wallet sent ${ethAmount} eth`)
+      const walletBalanceAfter = (await signer2.getBalance()).toBigInt()
+      const sent = (walletBalanceAfter - walletBalanceBefore) * -1n
+
+      assert.true(sent === ethAmount, `wallet sent ${ethAmount} eth`)
 
       // Ensure toAddress received their eth
-      const toBalanceAfter = await provider2.getBalance(toAddress)
-      assert.true(toBalanceAfter.sub(toBalanceBefore).eq(ethAmount), `toAddress received ${ethAmount} eth`)
+      const toBalanceAfter = (await provider2.getBalance(toAddress)).toBigInt()
+      assert.true(toBalanceAfter - toBalanceBefore === ethAmount, `toAddress received ${ethAmount} eth`)
     }
   })
 }
