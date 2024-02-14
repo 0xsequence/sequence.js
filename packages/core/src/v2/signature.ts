@@ -81,7 +81,7 @@ export function isUnrecoveredSignatureLeaf(leaf: UnrecoveredTopology): leaf is U
 }
 
 export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology {
-  let arr = ethers.utils.arrayify(body)
+  let arr = ethers.getBytes(body)
 
   let pointer: undefined | (Omit<UnrecoveredNode, 'right'> & Pick<Partial<UnrecoveredNode>, 'right'>)
 
@@ -285,11 +285,11 @@ export const partEncoder = {
     return ethers.solidityPacked(['uint8', 'bytes32'], [SignaturePartType.Node, nodeHash])
   },
   branch: (tree: ethers.BytesLike): string => {
-    const arr = ethers.utils.arrayify(tree)
+    const arr = ethers.getBytes(tree)
     return ethers.solidityPacked(['uint8', 'uint24', 'bytes'], [SignaturePartType.Branch, arr.length, arr])
   },
   nested: (weight: BigIntish, threshold: BigIntish, tree: ethers.BytesLike): string => {
-    const arr = ethers.utils.arrayify(tree)
+    const arr = ethers.getBytes(tree)
     return ethers.solidityPacked(
       ['uint8', 'uint8', 'uint16', 'uint24', 'bytes'],
       [SignaturePartType.Nested, weight, threshold, arr.length, arr]
@@ -302,7 +302,7 @@ export const partEncoder = {
     return ethers.solidityPacked(['uint8', 'uint8', 'bytes'], [SignaturePartType.Signature, weight, signature])
   },
   dynamicSignature: (weight: BigIntish, address: ethers.BytesLike, signature: ethers.BytesLike): string => {
-    const arrSignature = ethers.utils.arrayify(signature)
+    const arrSignature = ethers.getBytes(signature)
     return ethers.solidityPacked(
       ['uint8', 'uint8', 'address', 'uint24', 'bytes'],
       [SignaturePartType.DynamicSignature, weight, address, arrSignature.length, arrSignature]
@@ -525,7 +525,7 @@ export function isChainedSignature(sig: any): sig is ChainedSignature {
 }
 
 export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignature | UnrecoveredChainedSignature {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
   const type = bytes[0]
 
   switch (type) {
@@ -547,7 +547,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
 }
 
 export function decodeSignatureBody(signature: ethers.BytesLike): UnrecoveredConfig {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
 
   const threshold = (bytes[0] << 8) | bytes[1]
   const checkpoint = (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5]
@@ -558,7 +558,7 @@ export function decodeSignatureBody(signature: ethers.BytesLike): UnrecoveredCon
 }
 
 export function decodeChainedSignature(signature: ethers.BytesLike): UnrecoveredChainedSignature {
-  const arr = ethers.utils.arrayify(signature)
+  const arr = ethers.getBytes(signature)
   const type = arr[0]
 
   if (type !== SignatureType.Chained) {
@@ -645,7 +645,7 @@ export async function recoverSignature(
 
 export function encodeChain(main: ethers.BytesLike, suffix: ethers.BytesLike[]): string {
   const allSignatures = [main, ...(suffix || [])]
-  const encodedMap = allSignatures.map(s => ethers.utils.arrayify(encodeSignature(s)))
+  const encodedMap = allSignatures.map(s => ethers.getBytes(encodeSignature(s)))
 
   const body = ethers.solidityPacked(encodedMap.map(() => ['uint24', 'bytes']).flat(), encodedMap.map(s => [s.length, s]).flat())
 
@@ -692,8 +692,8 @@ export function encodeSignatureBody(decoded: WalletConfig | UnrecoveredConfig): 
 
 export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): string {
   if (isNode(tree) || isUnrecoveredNode(tree)) {
-    const encodedRight = ethers.utils.arrayify(encodeSignatureTree(tree.right))
-    const encodedLeft = ethers.utils.arrayify(encodeSignatureTree(tree.left))
+    const encodedRight = ethers.getBytes(encodeSignatureTree(tree.right))
+    const encodedLeft = ethers.getBytes(encodeSignatureTree(tree.left))
     const isBranching = isNode(tree.right) || isUnrecoveredNode(tree.right)
 
     if (isBranching) {
@@ -707,7 +707,7 @@ export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): strin
   }
 
   if (isNestedLeaf(tree) || isUnrecoveredNestedLeaf(tree)) {
-    const nested = ethers.utils.arrayify(encodeSignatureTree(tree.tree))
+    const nested = ethers.getBytes(encodeSignatureTree(tree.tree))
 
     return ethers.solidityPacked(
       ['uint8', 'uint8', 'uint16', 'uint24', 'bytes'],
@@ -716,7 +716,7 @@ export function encodeSignatureTree(tree: UnrecoveredTopology | Topology): strin
   }
 
   if (isUnrecoveredSignatureLeaf(tree) || (isSignerLeaf(tree) && tree.signature !== undefined)) {
-    const signature = ethers.utils.arrayify(tree.signature!)
+    const signature = ethers.getBytes(tree.signature!)
 
     if ((tree as { isDynamic?: boolean }).isDynamic || signature.length !== SignaturePartTypeLength) {
       if (!tree.address) throw new Error(`Dynamic signature leaf must have address`)

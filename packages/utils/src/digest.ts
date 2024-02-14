@@ -3,9 +3,9 @@ import { BigIntish } from './bigint'
 
 export const encodeMessageDigest = (message: string | Uint8Array) => {
   if (typeof message === 'string') {
-    return ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message)))
+    return ethers.getBytes(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message)))
   } else {
-    return ethers.utils.arrayify(ethers.utils.keccak256(message))
+    return ethers.getBytes(ethers.utils.keccak256(message))
   }
 }
 

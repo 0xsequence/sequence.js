@@ -23,7 +23,7 @@ export class OverwriterSequenceEstimator implements Estimator {
         index: i,
         address: s.address,
         weight: BigInt(s.weight),
-        isEOA: await this.estimator.provider.getCode(s.address).then(c => ethers.utils.arrayify(c).length === 0)
+        isEOA: await this.estimator.provider.getCode(s.address).then(c => ethers.getBytes(c).length === 0)
       }))
     )
 

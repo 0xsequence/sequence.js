@@ -37,7 +37,7 @@ const statusToSignatureParts = (status: Status) => {
   for (const signer of Object.keys(status.signers)) {
     const value = status.signers[signer]
     if (value.state === SignerState.SIGNED) {
-      const suffix = ethers.utils.arrayify(value.suffix)
+      const suffix = ethers.getBytes(value.suffix)
       const suffixed = ethers.solidityPacked(['bytes', 'bytes'], [value.signature, suffix])
 
       parts.set(signer, { signature: suffixed, isDynamic: suffix.length !== 1 || suffix[0] !== 2 })
@@ -267,7 +267,7 @@ export class Wallet<
     // We ask the orchestrator to sign the digest, as soon as we have enough signature parts
     // to reach the threshold we returns true, that means the orchestrator will stop asking
     // and we can encode the final signature
-    const subdigestBytes = ethers.utils.arrayify(subdigest)
+    const subdigestBytes = ethers.getBytes(subdigest)
     const signature = await this.orchestrator.signMessage({
       candidates: this.coders.config.signersOf(this.config).map(s => s.address),
       message: subdigestBytes,

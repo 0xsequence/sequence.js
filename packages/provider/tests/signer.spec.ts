@@ -738,7 +738,7 @@ describe('SequenceSigner', () => {
     })
 
     it('should pass array instead of string', async () => {
-      expectedSignMessage = ethers.utils.arrayify(ethers.utils.randomBytes(199))
+      expectedSignMessage = ethers.getBytes(ethers.utils.randomBytes(199))
       expectedOptions = { chainId: 31337, eip6492: true }
       expect(await signer.signMessage(expectedSignMessage)).to.equal(returnValue)
     })
@@ -945,7 +945,7 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31337 }
       const tx = await signer.sendTransaction(expectedTransactionRequest)
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -954,7 +954,7 @@ describe('SequenceSigner', () => {
       signer.provider.setDefaultChainId(31338)
       const tx = await signer.sendTransaction(expectedTransactionRequest)
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -962,7 +962,7 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 31338 })
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -970,7 +970,7 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 'hardhat2' })
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -978,7 +978,7 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const tx = await signer.getSigner(31338).sendTransaction(expectedTransactionRequest)
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -986,7 +986,7 @@ describe('SequenceSigner', () => {
       expectedOptions = { chainId: 31338 }
       const tx = await signer.getSigner(31338).sendTransaction(expectedTransactionRequest, { chainId: 'hardhat2' })
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -1016,7 +1016,7 @@ describe('SequenceSigner', () => {
 
       const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 31338 })
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -1042,7 +1042,7 @@ describe('SequenceSigner', () => {
 
       const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
     })
 
     it('shoud send array of deffered transactions', async () => {
@@ -1085,7 +1085,7 @@ describe('SequenceSigner', () => {
 
       const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
       expect(tx.wait()).to.be.fulfilled
-      expect(ethers.utils.arrayify(tx.hash)).to.have.lengthOf(32)
+      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
     })
   })
 })

@@ -1416,7 +1416,7 @@ function randomBytes(length: number, entropy: number | string): Uint8Array {
     while (bytes.length < 2 * length) {
       bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
     }
-    return ethers.utils.arrayify(`0x${bytes.slice(0, 2 * length)}`)
+    return ethers.getBytes(`0x${bytes.slice(0, 2 * length)}`)
   } else {
     return ethers.utils.randomBytes(length)
   }

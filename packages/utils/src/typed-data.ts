@@ -20,5 +20,5 @@ export const encodeTypedDataHash = (typedData: TypedData): string => {
 }
 
 export const encodeTypedDataDigest = (typedData: TypedData): Uint8Array => {
-  return ethers.utils.arrayify(encodeTypedDataHash(typedData))
+  return ethers.getBytes(encodeTypedDataHash(typedData))
 }

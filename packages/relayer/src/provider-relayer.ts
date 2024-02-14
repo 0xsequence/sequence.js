@@ -70,7 +70,7 @@ export abstract class ProviderRelayer implements Relayer {
           }
 
           // Fee can't be estimated for self-called if wallet hasn't been deployed
-          if (tx.to === wallet && (await this.provider.getCode(wallet).then(code => ethers.utils.arrayify(code).length === 0))) {
+          if (tx.to === wallet && (await this.provider.getCode(wallet).then(code => ethers.getBytes(code).length === 0))) {
             return DEFAULT_GAS_LIMIT
           }
 

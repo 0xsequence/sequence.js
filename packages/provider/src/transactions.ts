@@ -11,7 +11,7 @@ export function validateTransactionRequest(wallet: string, transaction: commons.
 function validateTransaction(wallet: string, transaction: commons.transaction.Transaction) {
   if (transaction.to.toLowerCase() === wallet.toLowerCase()) {
     if (transaction.data) {
-      const data = ethers.utils.arrayify(transaction.data)
+      const data = ethers.getBytes(transaction.data)
       if (data.length >= 4 && !isCreateContractCall(data)) {
         throw new Error('self calls are forbidden')
       }
