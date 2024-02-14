@@ -84,14 +84,12 @@ export abstract class ProviderRelayer implements Relayer {
 
           // TODO: If the wallet address has been deployed, gas limits can be
           // estimated with more accurately by using self-calls with the batch transactions one by one
-          return (
-            await this.provider.estimateGas({
-              from: wallet,
-              to: tx.to,
-              data: tx.data,
-              value: tx.value
-            })
-          ).toBigInt()
+          return await this.provider.estimateGas({
+            from: wallet,
+            to: tx.to,
+            data: tx.data,
+            value: tx.value
+          })
         })
       )
     ).map(gasLimit => ({
