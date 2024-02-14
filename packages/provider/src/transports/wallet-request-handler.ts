@@ -154,7 +154,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
 
     const connectDetails: ConnectDetails = {
       connected: true,
-      chainId: ethers.utils.hexValue(chainId)
+      chainId: ethers.toQuantity(chainId)
     }
 
     if (options && options.authorize) {
@@ -776,7 +776,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
   }
 
   notifyChainChanged(chainId: number, origin?: string) {
-    this.events.emit('chainChanged', ethers.utils.hexValue(chainId), origin)
+    this.events.emit('chainChanged', ethers.toQuantity(chainId), origin)
   }
 
   async notifyNetworks(networks?: NetworkConfig[]) {
@@ -785,7 +785,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
     if (n.length > 0) {
       const defaultNetwork = n.find(network => network.chainId === this.defaultChainId())
       if (defaultNetwork) {
-        this.events.emit('chainChanged', ethers.utils.hexValue(defaultNetwork.chainId))
+        this.events.emit('chainChanged', ethers.toQuantity(defaultNetwork.chainId))
       }
     } else {
       this.events.emit('chainChanged', '0x0')

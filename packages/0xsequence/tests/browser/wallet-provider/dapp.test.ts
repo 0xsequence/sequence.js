@@ -134,7 +134,7 @@ export const tests = async () => {
       assert.equal(netVersion, '31337', 'net_version check')
 
       const chainId = await provider.send('eth_chainId', [])
-      assert.equal(chainId, ethers.utils.hexValue(31337), 'eth_chainId check')
+      assert.equal(chainId, ethers.toQuantity(31337), 'eth_chainId check')
 
       const chainId2 = await signer.getChainId()
       assert.equal(chainId2, 31337, 'chainId check')
@@ -152,7 +152,7 @@ export const tests = async () => {
       assert.equal(netVersion, '31338', '2nd chain, net_version check - 4')
 
       const chainId = await provider2.send('eth_chainId', [])
-      assert.equal(chainId, ethers.utils.hexValue(31338), '2nd chain, eth_chainId check - 5')
+      assert.equal(chainId, ethers.toQuantity(31338), '2nd chain, eth_chainId check - 5')
 
       const chainId2 = await provider2.getSigner().getChainId()
       assert.equal(chainId2, 31338, '2nd chain, chainId check - 6')

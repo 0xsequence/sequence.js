@@ -240,7 +240,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   async perform(method: string, params: any): Promise<any> {
     // First we check if the method should be handled by the client
     if (method === 'eth_chainId') {
-      return ethers.utils.hexValue(await this.useChainId())
+      return ethers.toQuantity(await this.useChainId())
     }
 
     if (method === 'eth_accounts') {
