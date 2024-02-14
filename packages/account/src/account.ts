@@ -592,7 +592,7 @@ export class Account {
       [bootstrapBundle.entrypoint, commons.transaction.encodeBundleExecData(bootstrapBundle), signature]
     )
 
-    return ethers.utils.solidityPack(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
+    return ethers.solidityPacked(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
   }
 
   async editConfig(changes: { add?: commons.config.SimpleSigner[]; remove?: string[]; threshold?: BigIntish }): Promise<void> {

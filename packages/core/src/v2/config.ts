@@ -132,7 +132,7 @@ export function isTopology(topology: any): topology is Topology {
 }
 
 export function encodeSignerLeaf(leaf: SignerLeaf): string {
-  return ethers.utils.solidityPack(['uint96', 'address'], [leaf.weight, leaf.address])
+  return ethers.solidityPacked(['uint96', 'address'], [leaf.weight, leaf.address])
 }
 
 export function decodeSignerLeaf(encoded: string): SignerLeaf {

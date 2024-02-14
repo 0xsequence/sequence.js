@@ -104,21 +104,21 @@ export function encodeSignature(signature: Signature | UnrecoveredSignature | et
 
   const encodedSigners = signers.map(s => {
     if (isAddressMember(s)) {
-      return ethers.utils.solidityPack(['uint8', 'uint8', 'address'], [SignaturePartType.Address, s.weight, s.address])
+      return ethers.solidityPacked(['uint8', 'uint8', 'address'], [SignaturePartType.Address, s.weight, s.address])
     }
 
     if (s.isDynamic) {
       const bytes = ethers.utils.arrayify(s.signature)
-      return ethers.utils.solidityPack(
+      return ethers.solidityPacked(
         ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
         [SignaturePartType.DynamicSignature, s.weight, s.address, bytes.length, bytes]
       )
     }
 
-    return ethers.utils.solidityPack(['uint8', 'uint8', 'bytes'], [SignaturePartType.EOASignature, s.weight, s.signature])
+    return ethers.solidityPacked(['uint8', 'uint8', 'bytes'], [SignaturePartType.EOASignature, s.weight, s.signature])
   })
 
-  return ethers.utils.solidityPack(['uint16', ...new Array(encodedSigners.length).fill('bytes')], [threshold, ...encodedSigners])
+  return ethers.solidityPacked(['uint16', ...new Array(encodedSigners.length).fill('bytes')], [threshold, ...encodedSigners])
 }
 
 export async function recoverSignature(

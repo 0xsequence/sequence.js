@@ -29,7 +29,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         ethers.utils.keccak256(
           ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, signer.weight, signer.address])
         ),
-      ethers.utils.solidityPack(['uint256'], [config.threshold])
+      ethers.solidityPacked(['uint256'], [config.threshold])
     )
   },
 

@@ -191,15 +191,12 @@ export class UniversalDeployer {
     const deployTx = await factory.getDeployTransaction(...args)
     const deployData = deployTx.data
 
-    const codeHash = ethers.utils.keccak256(ethers.utils.solidityPack(['bytes'], [deployData]))
+    const codeHash = ethers.utils.keccak256(ethers.solidityPacked(['bytes'], [deployData]))
 
-    const salt = ethers.utils.solidityPack(['uint256'], [contractInstance])
+    const salt = ethers.solidityPacked(['uint256'], [contractInstance])
 
     const hash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ['bytes1', 'address', 'bytes32', 'bytes32'],
-        ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash]
-      )
+      ethers.solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
     )
 
     return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))

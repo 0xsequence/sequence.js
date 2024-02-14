@@ -8,7 +8,7 @@ export function hashSetImageHash(imageHash: string): string {
 }
 
 export function messageSetImageHash(imageHash: string) {
-  return ethers.utils.solidityPack(['bytes32', 'bytes32'], [SetImageHashPrefix, imageHash])
+  return ethers.solidityPacked(['bytes32', 'bytes32'], [SetImageHashPrefix, imageHash])
 }
 
 export function decodeMessageSetImageHash(message: ethers.BytesLike): string | undefined {

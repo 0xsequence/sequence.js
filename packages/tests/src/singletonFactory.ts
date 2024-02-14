@@ -71,7 +71,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   const address = ethers.utils.getAddress(
     ethers.utils.hexDataSlice(
       ethers.utils.keccak256(
-        ethers.utils.solidityPack(
+        ethers.solidityPacked(
           ['bytes1', 'address', 'bytes32', 'bytes32'],
           ['0xff', singletonFactory.address, ethers.constants.HashZero, ethers.utils.keccak256(data)]
         )
