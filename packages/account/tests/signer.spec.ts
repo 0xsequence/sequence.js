@@ -384,7 +384,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('250'))
+            expect(await token.balanceOf(recipient)).to.equal(parseEther('250'))
           })
 
           it('should reject ERC20 fee if not enough balance', async () => {
@@ -472,7 +472,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('11'))
+            expect(await token.balanceOf(recipient)).to.equal(parseEther('11'))
           })
 
           it('should select fee using callback (first option)', async () => {
@@ -534,8 +534,8 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.equal(5n)
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('0'))
+            expect(await signer.provider.getBalance(recipient)).to.equal(5n)
+            expect(await token.balanceOf(recipient)).to.equal(parseEther('0'))
           })
 
           it('should select fee using callback (second option)', async () => {
@@ -594,8 +594,8 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.equal(0n)
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('11'))
+            expect(await signer.provider.getBalance(recipient)).to.equal(0n)
+            expect(await token.balanceOf(recipient)).to.equal(parseEther('11'))
           })
         })
       })

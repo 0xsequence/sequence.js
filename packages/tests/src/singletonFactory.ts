@@ -41,7 +41,7 @@ export async function mustExistEIP2470(signer: ethers.Signer): Promise<ethers.Co
   if (!provider) throw new Error('signer has no provider')
 
   if (!(await isContract(provider, address))) {
-    const balanceDeployer = (await provider.getBalance(deployment.deployer)).toBigInt()
+    const balanceDeployer = await provider.getBalance(deployment.deployer)
     if (balanceDeployer < deployment.funding) {
       await signer.sendTransaction({
         to: deployment.deployer,

@@ -133,13 +133,13 @@ export function toSequenceTransaction(
 ): { nonce?: BigIntish; transaction: Transaction } {
   if (tx.to && tx.to !== ethers.constants.AddressZero) {
     return {
-      nonce: tx.nonce ? BigNumber.from(tx.nonce).toBigInt() : undefined,
+      nonce: tx.nonce ? BigNumber.from(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
-        gasLimit: BigNumber.from(tx.gasLimit || 0).toBigInt(),
+        gasLimit: BigNumber.from(tx.gasLimit || 0),
         to: tx.to,
-        value: BigNumber.from(tx.value || 0).toBigInt(),
+        value: BigNumber.from(tx.value || 0),
         data: tx.data || '0x'
       }
     }
@@ -148,13 +148,13 @@ export function toSequenceTransaction(
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
 
     return {
-      nonce: tx.nonce ? BigNumber.from(tx.nonce).toBigInt() : undefined,
+      nonce: tx.nonce ? BigNumber.from(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
-        gasLimit: tx.gasLimit ? BigNumber.from(tx.gasLimit).toBigInt() : undefined,
+        gasLimit: tx.gasLimit ? BigNumber.from(tx.gasLimit) : undefined,
         to: wallet,
-        value: BigNumber.from(tx.value || 0).toBigInt(),
+        value: BigNumber.from(tx.value || 0),
         data: data
       }
     }

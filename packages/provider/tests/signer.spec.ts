@@ -349,8 +349,8 @@ describe('SequenceSigner', () => {
 
         addr = res.contractAddress
 
-        eg1 = (await hardhat1Provider.estimateGas({ to: addr })).toBigInt()
-        eg2 = (await hardhat2Provider.estimateGas({ to: addr })).toBigInt()
+        eg1 = await hardhat1Provider.estimateGas({ to: addr })
+        eg2 = await hardhat2Provider.estimateGas({ to: addr })
 
         expect(eg1).to.not.equal(eg2)
 
@@ -358,20 +358,20 @@ describe('SequenceSigner', () => {
       })
 
       it('forward estimateGas - default', async () => {
-        expect((await signer.estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
+        expect(await signer.estimateGas({ to: addr })).to.equal(eg1)
 
         signer.provider.setDefaultChainId(31338)
-        expect((await signer.estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
+        expect(await signer.estimateGas({ to: addr })).to.equal(eg2)
       })
 
       it('forward estimateGas - specific chain', async () => {
-        expect((await signer.estimateGas({ to: addr }, { chainId: 31337 })).toBigInt()).to.equal(eg1)
-        expect((await signer.estimateGas({ to: addr }, { chainId: 31338 })).toBigInt()).to.equal(eg2)
+        expect(await signer.estimateGas({ to: addr }, { chainId: 31337 })).to.equal(eg1)
+        expect(await signer.estimateGas({ to: addr }, { chainId: 31338 })).to.equal(eg2)
       })
 
       it('forward estimateGas - static network provider', async () => {
-        expect((await signer.getSigner('hardhat').estimateGas({ to: addr })).toBigInt()).to.equal(eg1)
-        expect((await signer.getSigner('hardhat2').estimateGas({ to: addr })).toBigInt()).to.equal(eg2)
+        expect(await signer.getSigner('hardhat').estimateGas({ to: addr })).to.equal(eg1)
+        expect(await signer.getSigner('hardhat2').estimateGas({ to: addr })).to.equal(eg2)
       })
 
       it('fail to forward estimateGas - static network provider for different chain', async () => {

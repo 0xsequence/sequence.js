@@ -78,7 +78,7 @@ export class UniversalDeployer {
   }
 
   deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
-    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)).toBigInt() < UNIVERSAL_DEPLOYER_FUNDING) {
+    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
       const tx = await this.signer.sendTransaction({
         to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,

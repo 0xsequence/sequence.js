@@ -514,7 +514,7 @@ describe('Wallet (primitive)', () => {
                     value: ethAmount
                   })
                   await provider.getTransactionReceipt(txResp.hash)
-                  toBalanceBefore = (await provider.getBalance(testAccountAddress)).toBigInt()
+                  toBalanceBefore = await provider.getBalance(testAccountAddress)
                 })
 
                 it('Should send an async transaction', async () => {
@@ -526,7 +526,7 @@ describe('Wallet (primitive)', () => {
                   }
 
                   await wallet.sendTransaction(tx)
-                  const toBalanceAfter = (await provider.getBalance(testAccountAddress)).toBigInt()
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter - toBalanceBefore
                   expect(sent).to.be.equal(ethAmount)
                 })
@@ -554,7 +554,7 @@ describe('Wallet (primitive)', () => {
                   // Send txns in parallel, but independently
                   await Promise.all([wallet.sendTransaction(tx1), wallet.sendTransaction(tx2), wallet.sendTransaction(tx3)])
 
-                  const toBalanceAfter = (await provider.getBalance(testAccountAddress)).toBigInt()
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter - toBalanceBefore
                   expect(sent).to.be.equal(ethAmount1 + ethAmount2 + ethAmount3)
                 })
@@ -582,7 +582,7 @@ describe('Wallet (primitive)', () => {
                   // Send txns in parallel, but independently
                   await wallet.sendTransaction([tx1, tx2, tx3])
 
-                  const toBalanceAfter = (await provider.getBalance(testAccountAddress)).toBigInt()
+                  const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter - toBalanceBefore
                   expect(sent).to.be.equal(ethAmount1 + ethAmount2 + ethAmount3)
                 })
