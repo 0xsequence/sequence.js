@@ -591,7 +591,7 @@ export function decodeChainedSignature(signature: ethers.BytesLike): Unrecovered
 export function setImageHashStruct(imageHash: string) {
   return ethers.solidityPacked(
     ['bytes32', 'bytes32'],
-    [ethers.utils.solidityKeccak256(['string'], ['SetImageHash(bytes32 imageHash)']), imageHash]
+    [ethers.solidityPackedKeccak256(['string'], ['SetImageHash(bytes32 imageHash)']), imageHash]
   )
 }
 
