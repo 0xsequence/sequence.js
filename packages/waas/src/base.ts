@@ -117,7 +117,7 @@ export class SequenceWaaSBase {
    * @param packet The action already packed into a packet
    * @returns A payload that can be sent to the WaaS API
    */
-  private async buildPayload<T>(intent: Intent<T>): Promise<SignedIntent<T>> {
+  private async signIntent<T>(intent: Intent<T>): Promise<SignedIntent<T>> {
     const sessionId = await this.sessionId.get()
     if (sessionId === undefined) {
       throw new Error('session not open')
@@ -167,11 +167,9 @@ export class SequenceWaaSBase {
 
     const intent = await openSession({ idToken, lifespan: DEFAULT_LIFESPAN })
 
-    console.log('intent', intent)
-
     await Promise.all([this.status.set('pending'), this.sessionId.set(intent.data.sessionId)])
 
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
@@ -185,7 +183,7 @@ export class SequenceWaaSBase {
       sessionId: sessionId
     })
 
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async signOutSession(sessionId: string) {
@@ -194,7 +192,7 @@ export class SequenceWaaSBase {
       sessionId: sessionId
     })
 
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async listSessions() {
@@ -203,7 +201,7 @@ export class SequenceWaaSBase {
       wallet: await this.getWalletAddress(),
     })
 
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async completeSignOut() {
@@ -271,7 +269,7 @@ export class SequenceWaaSBase {
       wallet: await this.getWalletAddress(),
     })
 
-    return this.buildPayload(packet)
+    return this.signIntent(packet)
   }
 
   /**
@@ -287,7 +285,7 @@ export class SequenceWaaSBase {
    */
   async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendTransactions(await this.commonArgs(args))
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
@@ -296,7 +294,7 @@ export class SequenceWaaSBase {
     }
 
     const intent = sendERC20(await this.commonArgs(args))
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
@@ -305,7 +303,7 @@ export class SequenceWaaSBase {
     }
 
     const intent = sendERC721(await this.commonArgs(args))
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
@@ -314,7 +312,7 @@ export class SequenceWaaSBase {
     }
 
     const intent = sendERC1155(await this.commonArgs(args))
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   /*
@@ -338,7 +336,7 @@ export class SequenceWaaSBase {
       wallet: await this.getWalletAddress()
     })
 
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async getSession(): Promise<SignedIntent<IntentDataGetSession>> {
@@ -353,7 +351,7 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN
     })
 
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async finishValidateSession(salt: string, challenge: string): Promise<SignedIntent<IntentDataFinishValidateSession>> {
@@ -370,11 +368,11 @@ export class SequenceWaaSBase {
       salt,
       challenge,
     })
-    return this.buildPayload(intent)
+    return this.signIntent(intent)
   }
 
   async batch(intents: Intent<IntentDataSendTransaction>[]): Promise<SignedIntent<IntentDataSendTransaction>> {
     const combined = combineTransactionIntents(intents)
-    return this.buildPayload(combined)
+    return this.signIntent(combined)
   }
 }
