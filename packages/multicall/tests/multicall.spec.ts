@@ -83,7 +83,7 @@ describe('Multicall integration', function () {
       SequenceUtilsArtifact.abi,
       SequenceUtilsArtifact.bytecode,
       ganache.signer
-    ).deploy(ethers.constants.AddressZero, ethers.constants.AddressZero)
+    ).deploy(ethers.ZeroAddress, ethers.ZeroAddress)
 
     // Create provider
     ganache.spyProxy = SpyProxy(

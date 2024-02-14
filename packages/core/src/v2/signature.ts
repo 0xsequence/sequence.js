@@ -824,7 +824,7 @@ export async function trimUnrecoveredTree(
         // If both weights are 0 then it means we don't have any signatures yet
         // because of that, we should be able to "recover" the tree with any subdigest
         // and still get the valid node hash (there shouldn't be any signatures to verify)
-        const recovered = await recoverTopology(tree, ethers.constants.HashZero, undefined as any)
+        const recovered = await recoverTopology(tree, ethers.ZeroHash, undefined as any)
 
         return {
           weight: 0,
@@ -854,7 +854,7 @@ export async function trimUnrecoveredTree(
       try {
         // If the nested leaf is empty, we can recover it with any subdigest
         // and still get the valid node hash (there shouldn't be any signatures to verify)
-        const recovered = await recoverTopology(tree, ethers.constants.HashZero, undefined as any)
+        const recovered = await recoverTopology(tree, ethers.ZeroHash, undefined as any)
 
         return {
           weight: 0,

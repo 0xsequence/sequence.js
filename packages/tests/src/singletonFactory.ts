@@ -73,7 +73,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
       ethers.utils.keccak256(
         ethers.solidityPacked(
           ['bytes1', 'address', 'bytes32', 'bytes32'],
-          ['0xff', singletonFactory.address, ethers.constants.HashZero, ethers.utils.keccak256(data)]
+          ['0xff', singletonFactory.address, ethers.ZeroHash, ethers.utils.keccak256(data)]
         )
       ),
       12
@@ -85,7 +85,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   }
 
   const maxGasLimit = await provider.getBlock('latest').then(b => b.gasLimit.div(2))
-  await singletonFactory.deploy(data, ethers.constants.HashZero, { gasLimit: maxGasLimit }).then((tx: any) => tx.wait())
+  await singletonFactory.deploy(data, ethers.ZeroHash, { gasLimit: maxGasLimit }).then((tx: any) => tx.wait())
 
   if (!(await isContract(provider, address))) {
     throw new Error('contract deployment failed')
