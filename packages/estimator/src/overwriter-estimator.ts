@@ -37,13 +37,13 @@ export const OverwriterEstimatorDefaults: Required<Optionals<OverwriterEstimator
 }
 
 export class OverwriterEstimator {
-  public provider: ethers.providers.JsonRpcProvider
+  public provider: ethers.JsonRpcProvider
   public options: Required<OverwriterEstimatorOptions>
 
   constructor(options: OverwriterEstimatorOptions) {
     this.provider =
       typeof options.rpc === 'string'
-        ? new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(options.rpc))
+        ? new ethers.JsonRpcProvider(getEthersConnectionInfo(options.rpc), undefined, { staticNetwork: true })
         : options.rpc
     this.options = { ...OverwriterEstimatorDefaults, ...options }
   }

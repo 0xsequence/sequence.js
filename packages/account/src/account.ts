@@ -184,14 +184,18 @@ export class Account {
     return found
   }
 
-  providerFor(chainId: BigIntish): ethers.providers.Provider {
+  providerFor(chainId: BigIntish): ethers.Provider {
     const found = this.network(chainId)
-    if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
+    if (!found.provider && !found.rpcUrl) {
+      throw new Error(`Provider not found for chainId ${chainId}`)
+    }
+
+    const network = new ethers.Network(found.name, found.chainId)
+
     return (
       found.provider ||
-      new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, this.projectAccessKey, this.jwt), {
-        name: '',
-        chainId: Number(BigInt(chainId))
+      new ethers.JsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, this.projectAccessKey, this.jwt), network, {
+        staticNetwork: network
       })
     )
   }

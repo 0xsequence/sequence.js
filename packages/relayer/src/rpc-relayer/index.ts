@@ -36,17 +36,17 @@ const fetch = typeof global === 'object' ? global.fetch : window.fetch
 // TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer
-  public readonly provider: ethers.providers.Provider
+  public readonly provider: ethers.Provider
 
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
 
-    if (ethers.providers.Provider.isProvider(options.provider)) {
+    if (ethers.Provider.isProvider(options.provider)) {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
       const providerConnectionInfo = getEthersConnectionInfo(options.provider.url, projectAccessKey, jwtAuth)
-      this.provider = new ethers.providers.StaticJsonRpcProvider(providerConnectionInfo)
+      this.provider = new ethers.JsonRpcProvider(providerConnectionInfo, undefined, { staticNetwork: true })
     }
   }
 
