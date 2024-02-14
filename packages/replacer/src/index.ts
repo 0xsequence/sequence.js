@@ -5,7 +5,7 @@ import { commons } from '@0xsequence/core'
 
 export * from './cached'
 
-export function eip5719Contract(address: string, provider: ethers.providers.Provider): ethers.Contract {
+export function eip5719Contract(address: string, provider: ethers.Provider): ethers.Contract {
   // TODO: for some reason walletContracts is not being loaded from local
   // remove this code once fixed
   const abi = [
@@ -31,19 +31,19 @@ export function eip5719Contract(address: string, provider: ethers.providers.Prov
   return new ethers.Contract(address, abi, provider)
 }
 
-export function eip1271Contract(address: string, provider: ethers.providers.Provider): ethers.Contract {
+export function eip1271Contract(address: string, provider: ethers.Provider): ethers.Contract {
   return new ethers.Contract(address, walletContracts.erc1271.abi, provider)
 }
 
 export async function isValidSignature(
   address: string,
-  provider: ethers.providers.Provider,
+  provider: ethers.Provider,
   digest: ethers.BytesLike,
   signature: ethers.BytesLike
 ): Promise<boolean> {
   // First we try to validate the signature using Ethers
   try {
-    const addr = ethers.utils.recoverAddress(digest, signature)
+    const addr = ethers.recoverAddress(digest, ethers.hexlify(signature))
     if (addr.toLowerCase() === address.toLowerCase()) return true
   } catch {}
 
@@ -72,7 +72,7 @@ async function tryAwait<T>(promise: Promise<T>): Promise<T | undefined> {
 
 export async function runByEIP5719(
   address: string,
-  provider: ethers.providers.Provider,
+  provider: ethers.Provider,
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,
   solver?: URISolver,
@@ -94,10 +94,11 @@ export async function runByEIP5719(
   const altUri = await tryAwait(eip5719Contract(address, provider).getAlternativeSignature(digest) as Promise<string>)
   if (!altUri || altUri === '') throw new Error('EIP5719 - Invalid signature and no alternative signature')
 
-  const altSignature = ethers.utils.hexlify(await (solver || new URISolverIPFS()).resolve(altUri))
+  const altSignature = ethers.hexlify(await (solver || new URISolverIPFS()).resolve(altUri))
   if (!altSignature || altSignature === '') throw new Error('EIP5719 - Empty alternative signature')
-  if (altSignature === ethers.utils.hexlify(signature)) throw new Error('EIP5719 - Alternative signature is invalid or the same')
-
+  if (altSignature === ethers.hexlify(signature)) {
+    throw new Error('EIP5719 - Alternative signature is invalid or the same')
+  }
   return runByEIP5719(address, provider, digest, altSignature, solver, tries + 1)
 }
 

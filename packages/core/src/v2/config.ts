@@ -3,7 +3,6 @@ import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 import { encodeSigners } from './signature'
 import { SimpleConfig } from '../commons/config'
-import { BigIntish } from '@0xsequence/utils'
 
 //
 // Tree typings - leaves
@@ -11,7 +10,7 @@ import { BigIntish } from '@0xsequence/utils'
 
 export type SignerLeaf = {
   address: string
-  weight: BigIntish
+  weight: ethers.BigNumberish
   signature?: string
 }
 
@@ -21,8 +20,8 @@ export type SubdigestLeaf = {
 
 export type NestedLeaf = {
   tree: Topology
-  weight: BigIntish
-  threshold: BigIntish
+  weight: ethers.BigNumberish
+  threshold: ethers.BigNumberish
 }
 
 // This is an unknown node
@@ -132,24 +131,24 @@ export function isTopology(topology: any): topology is Topology {
 }
 
 export function encodeSignerLeaf(leaf: SignerLeaf): string {
-  return ethers.utils.solidityPack(['uint96', 'address'], [leaf.weight, leaf.address])
+  return ethers.solidityPacked(['uint96', 'address'], [leaf.weight, leaf.address])
 }
 
 export function decodeSignerLeaf(encoded: string): SignerLeaf {
-  const bytes = ethers.utils.arrayify(encoded)
+  const bytes = ethers.getBytes(encoded)
 
   if (bytes.length !== 32) {
     throw new Error('Invalid encoded string length')
   }
 
-  const weight = BigInt(ethers.utils.hexlify(bytes.slice(0, 12)))
-  const address = ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(12)))
+  const weight = BigInt(ethers.hexlify(bytes.slice(0, 12)))
+  const address = ethers.getAddress(ethers.hexlify(bytes.slice(12)))
 
   return { weight, address }
 }
 
 export function isEncodedSignerLeaf(encoded: string): boolean {
-  const bytes = ethers.utils.arrayify(encoded)
+  const bytes = ethers.getBytes(encoded)
 
   if (bytes.length !== 32) {
     return false
@@ -165,12 +164,12 @@ export function hashNode(node: Node | Leaf): string {
   }
 
   if (isSubdigestLeaf(node)) {
-    return ethers.utils.solidityKeccak256(['string', 'bytes32'], ['Sequence static digest:\n', node.subdigest])
+    return ethers.solidityPackedKeccak256(['string', 'bytes32'], ['Sequence static digest:\n', node.subdigest])
   }
 
   if (isNestedLeaf(node)) {
     const nested = hashNode(node.tree)
-    return ethers.utils.solidityKeccak256(
+    return ethers.solidityPackedKeccak256(
       ['string', 'bytes32', 'uint256', 'uint256'],
       ['Sequence nested config:\n', nested, node.threshold, node.weight]
     )
@@ -180,7 +179,7 @@ export function hashNode(node: Node | Leaf): string {
     return node.nodeHash
   }
 
-  return ethers.utils.solidityKeccak256(['bytes32', 'bytes32'], [hashNode(node.left), hashNode(node.right)])
+  return ethers.solidityPackedKeccak256(['bytes32', 'bytes32'], [hashNode(node.left), hashNode(node.right)])
 }
 
 export function leftFace(topology: Topology): Topology[] {
@@ -202,8 +201,8 @@ export function leftFace(topology: Topology): Topology[] {
 //
 
 export type WalletConfig = commons.config.Config & {
-  threshold: BigIntish
-  checkpoint: BigIntish
+  threshold: ethers.BigNumberish
+  checkpoint: ethers.BigNumberish
   tree: Topology
 }
 
@@ -218,9 +217,9 @@ export function isWalletConfig(config: any): config is WalletConfig {
 }
 
 export function imageHash(config: WalletConfig): string {
-  return ethers.utils.solidityKeccak256(
+  return ethers.solidityPackedKeccak256(
     ['bytes32', 'uint256'],
-    [ethers.utils.solidityKeccak256(['bytes32', 'uint256'], [hashNode(config.tree), config.threshold]), config.checkpoint]
+    [ethers.solidityPackedKeccak256(['bytes32', 'uint256'], [hashNode(config.tree), config.threshold]), config.checkpoint]
   )
 }
 
@@ -235,16 +234,16 @@ export function imageHash(config: WalletConfig): string {
 //
 
 export type SimpleNestedMember = {
-  threshold: BigIntish
-  weight: BigIntish
+  threshold: ethers.BigNumberish
+  weight: ethers.BigNumberish
   members: SimpleConfigMember[]
 }
 
 export type SimpleConfigMember = SubdigestLeaf | SignerLeaf | SimpleNestedMember
 
 export type SimpleWalletConfig = {
-  threshold: BigIntish
-  checkpoint: BigIntish
+  threshold: ethers.BigNumberish
+  checkpoint: ethers.BigNumberish
   members: SimpleConfigMember[]
 }
 
@@ -464,14 +463,14 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       _context: commons.context.WalletContext,
       _kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new ethers.utils.Interface(walletContracts.mainModuleUpgradable.abi)
+      const module = new ethers.Interface(walletContracts.mainModuleUpgradable.abi)
 
       return {
         entrypoint: wallet,
         transactions: [
           {
             to: wallet,
-            data: module.encodeFunctionData(module.getFunction('updateImageHash'), [ConfigCoder.imageHashOf(config)]),
+            data: module.encodeFunctionData(module.getFunction('updateImageHash')!, [ConfigCoder.imageHashOf(config)]),
             gasLimit: 0,
             delegateCall: false,
             revertOnError: true,
@@ -485,7 +484,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       newImageHash: string
       kind: 'first' | 'later' | undefined
     } {
-      const module = new ethers.utils.Interface(walletContracts.mainModuleUpgradable.abi)
+      const module = new ethers.Interface(walletContracts.mainModuleUpgradable.abi)
 
       if (tx.transactions.length !== 1) {
         throw new Error('Invalid transaction bundle, expected 1 transaction')
@@ -496,7 +495,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         throw new Error('Invalid transaction bundle, expected data')
       }
 
-      const decoded = module.decodeFunctionData(module.getFunction('updateImageHash'), data)
+      const decoded = module.decodeFunctionData(module.getFunction('updateImageHash')!, data)
       if (!decoded) {
         throw new Error('Invalid transaction bundle, expected valid data')
       }
@@ -553,8 +552,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     action: {
       add?: commons.config.SimpleSigner[]
       remove?: string[]
-      threshold?: BigIntish
-      checkpoint?: BigIntish
+      threshold?: ethers.BigNumberish
+      checkpoint?: ethers.BigNumberish
     }
   ): WalletConfig {
     const members = topologyToMembers(config.tree)

@@ -17,6 +17,13 @@ const testResults: Entry[] = []
 window.__testResults = testResults
 
 export const test = async (title: string, run: () => void) => {
+  console.log(`\n
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║ ${title}${' '.repeat(77 - title.length)}║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝\n`)
+
   const entry: Entry = {
     title: title,
     pass: null,

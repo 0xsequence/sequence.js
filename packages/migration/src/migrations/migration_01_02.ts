@@ -28,7 +28,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
     }
 
     const context = contexts[2]
-    const contract = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
     // WARNING: v1 wallets CAN NOT use v2 configurations so we ALWAYS need to update
     // both the implementation and the configuration at the same time
@@ -45,7 +45,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
           gasLimit: 0,
           revertOnError: true,
           delegateCall: false,
-          data: contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
+          data: contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
         },
         ...updateBundle.transactions
       ]
@@ -92,11 +92,11 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
     }
 
     const context = contexts[2]
-    const contract = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
-    const data1 = ethers.utils.hexlify(tx.transactions[0].data || [])
-    const expectData1 = ethers.utils.hexlify(
-      contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
+    const data1 = ethers.hexlify(tx.transactions[0].data || new Uint8Array())
+    const expectData1 = ethers.hexlify(
+      contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
     )
 
     if (data1 !== expectData1) {

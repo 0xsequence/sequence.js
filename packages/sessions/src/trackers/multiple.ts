@@ -1,8 +1,9 @@
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { migrator } from '@0xsequence/migration'
-import { BigIntish } from '@0xsequence/utils'
+
 import { commons, universal } from '@0xsequence/core'
 import { LocalConfigTracker } from './local'
+import { ethers } from 'ethers'
 
 export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val: T) => boolean): Promise<T> {
   return new Promise(resolve => {
@@ -146,7 +147,12 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     return result
   }
 
-  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
+  async saveWitnesses(args: {
+    wallet: string
+    digest: string
+    chainId: ethers.BigNumberish
+    signatures: string[]
+  }): Promise<void> {
     await Promise.all(this.trackers.map(t => t.saveWitnesses(args)))
   }
 
@@ -213,7 +219,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     // TODO: Backfeed migration results to other trackers
     const results = await Promise.all(this.trackers.map(t => t.getMigration(address, fromImageHash, fromVersion, chainId)))

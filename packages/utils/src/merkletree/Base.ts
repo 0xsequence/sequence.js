@@ -85,7 +85,7 @@ export class Base {
 
   static bufferify(value: Uint8Array | string): Uint8Array {
     if (typeof value === 'string') {
-      return ethers.utils.arrayify(value)
+      return ethers.getBytes(value)
     }
     return value
   }
@@ -95,9 +95,7 @@ export class Base {
   }
 
   static bufferToHex(value: Uint8Array, withPrefix: boolean = true): string {
-    const prefixed = ethers.utils.hexlify(value, {
-      allowMissingPrefix: true
-    })
+    const prefixed = ethers.hexlify(value)
     return withPrefix ? prefixed : prefixed.substring(2)
   }
 

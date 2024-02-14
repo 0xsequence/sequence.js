@@ -119,7 +119,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -202,7 +202,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -235,7 +235,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should pass the correct message to the signer', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
+      const ogMessage = ethers.randomBytes(99)
       const signer: SapientSigner = {
         getAddress: async function (): Promise<string> {
           return '0x1234'
@@ -258,7 +258,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -269,7 +269,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should pass metadata to signer', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
+      const ogMessage = ethers.randomBytes(99)
       const signer: SapientSigner = {
         getAddress: async function (): Promise<string> {
           return '0x1234'
@@ -292,7 +292,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -303,7 +303,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should pass updated metadata to signer', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
+      const ogMessage = ethers.randomBytes(99)
 
       let firstCall = true
       let errorOnNotify: any = undefined
@@ -340,7 +340,7 @@ describe('Orchestrator', () => {
           }
         },
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -376,7 +376,7 @@ describe('Orchestrator', () => {
           }
         },
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -408,7 +408,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should only sign with candidates', async () => {
-      const message = ethers.utils.randomBytes(99)
+      const message = ethers.randomBytes(99)
 
       const signer1 = ethers.Wallet.createRandom()
       const signer2 = ethers.Wallet.createRandom()
@@ -455,7 +455,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [0]
+          return new Uint8Array([0])
         }
       }
 
@@ -507,7 +507,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [0]
+          return new Uint8Array([0])
         }
       }
       const signer2: SapientSigner = {
@@ -538,7 +538,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [0]
+          return new Uint8Array([0])
         }
       }
 

@@ -1,17 +1,16 @@
 import { ethers } from 'ethers'
 import { WalletContext } from './context'
 import * as transaction from './transaction'
-import { BigIntish } from '@0xsequence/utils'
 
 export type Config = {
   version: number
 }
 
-export type SimpleSigner = { address: string; weight: BigIntish }
+export type SimpleSigner = { address: string; weight: ethers.BigNumberish }
 
 export type SimpleConfig = {
-  threshold: BigIntish
-  checkpoint: BigIntish
+  threshold: ethers.BigNumberish
+  checkpoint: ethers.BigNumberish
   signers: SimpleSigner[]
   subdigests?: string[]
 }
@@ -38,8 +37,8 @@ export interface ConfigCoder<T extends Config = Config> {
     action: {
       add?: SimpleSigner[]
       remove?: string[]
-      threshold?: BigIntish
-      checkpoint?: BigIntish
+      threshold?: ethers.BigNumberish
+      checkpoint?: ethers.BigNumberish
     }
   ) => T
 

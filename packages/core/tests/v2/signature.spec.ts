@@ -533,7 +533,7 @@ describe('v2 signature utils', () => {
     })
 
     it('Fail to decode invalid signature part type', () => {
-      const invalidSignature = ethers.utils.solidityPack(
+      const invalidSignature = ethers.solidityPacked(
         ['bytes', 'uint8'],
         ['0x0001ffffffff', Object.keys(SignaturePartType).length / 2]
       )

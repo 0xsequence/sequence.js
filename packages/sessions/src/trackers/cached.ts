@@ -1,8 +1,7 @@
 import { commons, universal } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
-import { BigIntish } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
 export class CachedTracker implements migrator.PresignedMigrationTracker, ConfigTracker {
   constructor(
@@ -145,7 +144,12 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     return Array.from(wallets.values())
   }
 
-  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
+  async saveWitnesses(args: {
+    wallet: string
+    digest: string
+    chainId: ethers.BigNumberish
+    signatures: string[]
+  }): Promise<void> {
     await Promise.all([this.tracker.saveWitnesses(args), this.cache.saveWitnesses(args)])
   }
 
@@ -153,7 +157,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     // We first check the cache, if it's not there, we check the tracker
     // NOTICE: we could eventually try to combine the two, but now we just have 1 migration

@@ -8,7 +8,7 @@ export const ValidateSequenceWalletProof = (
   tracker: tracker.ConfigTracker,
   context: commons.context.WalletContext
 ): ValidatorFunc => {
-  return async (_provider: ethers.providers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean }> => {
+  return async (_provider: ethers.JsonRpcProvider, chainId: number, proof: Proof): Promise<{ isValid: boolean }> => {
     const digest = proof.messageDigest()
     const isValid = await readerFor(chainId).isValidSignature(proof.address, digest, proof.signature)
     return { isValid }

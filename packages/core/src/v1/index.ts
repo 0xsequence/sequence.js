@@ -1,6 +1,7 @@
 import { WalletContext } from '../commons/context'
 
 export * as config from './config'
+export * as context from './context'
 export * as signature from './signature'
 
 export const version = 1
