@@ -16,7 +16,7 @@ interface BaseArgs {
   chainId: number,
 }
 
-export type SendTransactionsArgs = BaseArgs & {
+export type SendTransactionsArgs = {
   transactions: Transaction[],
 }
 
@@ -57,12 +57,12 @@ export type SendDelayedEncodeArgs = {
 }
 
 export function sendTransactions({
-                                   lifespan,
-                                   wallet,
-                                   identifier,
-                                   chainId,
-                                   transactions
-                                 }: SendTransactionsArgs): Intent<IntentDataSendTransaction> {
+ lifespan,
+ wallet,
+ identifier,
+ chainId,
+ transactions
+}: SendTransactionsArgs & BaseArgs): Intent<IntentDataSendTransaction> {
   return makeIntent('sendTransaction', lifespan, {
     identifier,
     wallet,
@@ -87,9 +87,9 @@ export function sendTransactions({
 }
 
 export function sendERC20({
-                            token, to, value,
-                            ...args
-                          }: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
+  token, to, value,
+  ...args
+}: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
   return sendTransactions({
     transactions: [erc20({ tokenAddress: token, to, value: value.toString() })],
     ...args
@@ -97,9 +97,9 @@ export function sendERC20({
 }
 
 export function sendERC721({
-                             token, to, id, safe, data,
-                             ...args
-                           }: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
+ token, to, id, safe, data,
+ ...args
+}: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
   return sendTransactions({
     transactions: [erc721({ tokenAddress: token, to, id, data, safe })],
     ...args

@@ -45,7 +45,6 @@ export class SequenceSigner extends ethers.Signer {
     const args = {
       message: message.toString(),
       network: await this.getSimpleNetwork(),
-      lifespan: 60,
       ...authArgs
     }
     return this.sequence.signMessage(args).then(response => response.signature)
@@ -65,8 +64,6 @@ export class SequenceSigner extends ethers.Signer {
     const args = {
       transactions: [await ethers.utils.resolveProperties(transaction)],
       network: await this.getSimpleNetwork(),
-      identifier: 'ethers',
-      lifespan: 60,
       ...authArgs
     }
     const response = await this.sequence.sendTransaction(args)
