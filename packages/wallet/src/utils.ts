@@ -1,20 +1,15 @@
-import { ethers, utils } from 'ethers'
+import { ethers } from 'ethers'
 
-export async function resolveArrayProperties<T>(
-  object: Readonly<utils.Deferrable<T>> | Readonly<utils.Deferrable<T>>[]
-): Promise<T> {
+export async function resolveArrayProperties<T>(object: Readonly<T> | Readonly<T>[]): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
-    return Promise.all(object.map(o => utils.resolveProperties(o))) as any
+    return Promise.all(object.map(o => ethers.resolveProperties(o))) as any
   }
 
-  return utils.resolveProperties(object)
+  return ethers.resolveProperties(object)
 }
 
-export async function findLatestLog(
-  provider: ethers.providers.Provider,
-  filter: ethers.providers.Filter
-): Promise<ethers.providers.Log | undefined> {
+export async function findLatestLog(provider: ethers.Provider, filter: ethers.Filter): Promise<ethers.Log | undefined> {
   const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : (filter.toBlock as number)
   const fromBlock = filter.fromBlock as number
 

@@ -41,15 +41,19 @@ export async function mustExistEIP2470(signer: ethers.Signer): Promise<ethers.Co
   if (!provider) throw new Error('signer has no provider')
 
   if (!(await isContract(provider, address))) {
-    const balanceDeployer = (await provider.getBalance(deployment.deployer)).toBigInt()
+    const balanceDeployer = await provider.getBalance(deployment.deployer)
     if (balanceDeployer < deployment.funding) {
-      await signer.sendTransaction({
-        to: deployment.deployer,
-        value: deployment.funding - balanceDeployer
-      })
+      await signer
+        .sendTransaction({
+          to: deployment.deployer,
+          value: deployment.funding - balanceDeployer
+        })
+        .then(tx => tx.wait())
     }
 
-    await provider.sendTransaction(deployment.tx)
+    const res = await provider.broadcastTransaction(deployment.tx)
+    await res.wait()
+
     if (!(await isContract(provider, address))) {
       throw new Error('EIP2470 deployment failed')
     }
@@ -58,22 +62,28 @@ export async function mustExistEIP2470(signer: ethers.Signer): Promise<ethers.Co
   return new ethers.Contract(address, abi, signer)
 }
 
-export async function deployContract(signer: ethers.Signer, artifact: Artifact, ...args: any[]): Promise<ethers.Contract> {
+export async function deployContract(
+  signer: ethers.Signer,
+  artifact: Artifact,
+  ...args: any[]
+): Promise<[ethers.Contract, Promise<boolean>]> {
   const provider = signer.provider
   if (!provider) throw new Error('signer has no provider')
 
   const singletonFactory = await mustExistEIP2470(signer)
 
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode)
-  const data = factory.getDeployTransaction(...args).data
+
+  const data = (await factory.getDeployTransaction(...args)).data
+
   if (!data) throw new Error('no deploy data')
 
-  const address = ethers.utils.getAddress(
-    ethers.utils.hexDataSlice(
-      ethers.utils.keccak256(
-        ethers.utils.solidityPack(
+  const address = ethers.getAddress(
+    ethers.dataSlice(
+      ethers.keccak256(
+        ethers.solidityPacked(
           ['bytes1', 'address', 'bytes32', 'bytes32'],
-          ['0xff', singletonFactory.address, ethers.constants.HashZero, ethers.utils.keccak256(data)]
+          ['0xff', await singletonFactory.getAddress(), ethers.ZeroHash, ethers.keccak256(data)]
         )
       ),
       12
@@ -81,15 +91,16 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   )
 
   if (await isContract(provider, address)) {
-    return new ethers.Contract(address, artifact.abi, signer)
+    return [new ethers.Contract(address, artifact.abi, signer), Promise.resolve(true)]
   }
 
-  const maxGasLimit = await provider.getBlock('latest').then(b => b.gasLimit.div(2))
-  await singletonFactory.deploy(data, ethers.constants.HashZero, { gasLimit: maxGasLimit }).then((tx: any) => tx.wait())
+  const maxGasLimit = await provider.getBlock('latest').then(b => (b?.gasLimit ? b.gasLimit / 2n : 0n))
+  const tx = await singletonFactory.deploy(data, ethers.ZeroHash, { gasLimit: maxGasLimit })
 
-  if (!(await isContract(provider, address))) {
-    throw new Error('contract deployment failed')
-  }
+  // if (!(await isContract(provider, address))) {
+  //   throw new Error('contract deployment failed')
+  // }
+  const waitPromise = tx.wait().then(() => isContract(provider, address))
 
-  return new ethers.Contract(address, artifact.abi, signer)
+  return [new ethers.Contract(address, artifact.abi, signer), waitPromise]
 }

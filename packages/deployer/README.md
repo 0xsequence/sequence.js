@@ -9,9 +9,9 @@ For more info, see [0xsequence project page](https://github.com/0xsequence/seque
 # How to use
 
 1. `yarn add @0xsequence/deployer`
-1. Import UniversalDeployer into script
-1. Create UniversalDeployer instance
-1. Deploy contracts
+2. Import UniversalDeployer into script
+3. Create UniversalDeployer instance
+4. Deploy contracts
 
 An `instance` number can be passed if multiple instance of the same contract need to be deployed on the same chain. The default instance number is 0, if none is passed.
 

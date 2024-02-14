@@ -1,4 +1,4 @@
-import { utils } from 'ethers'
+import { ethers } from 'ethers'
 
 // Monkey patch toJSON on BigInt to return a string
 
@@ -12,37 +12,24 @@ BigInt.prototype.toJSON = function () {
   return this.toString()
 }
 
-/**
- *  Any type that can be used where a numeric value is needed.
- */
-export type Numeric = number | bigint
-
-/**
- *  Any type that can be used where a big number is needed.
- */
-export type BigIntish = string | Numeric
-
 export const MAX_UINT_256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 // ethers implement this method but doesn't exports it
-export const isBigIntish = (value: any): value is BigIntish => {
+export const isBigNumberish = (value: any): value is ethers.BigNumberish => {
   return (
     value != null &&
     ((typeof value === 'number' && value % 1 === 0) ||
       (typeof value === 'string' && !!value.match(/^-?[0-9]+$/)) ||
-      utils.isHexString(value) ||
+      ethers.isHexString(value) ||
       typeof value === 'bigint')
   )
 }
 
 // Even length zero-padded hex string with 0x prefix
 export const toHexString = (value: bigint): string => {
-  let result = value.toString(16)
-  const desiredLength = 2 * Math.round(result.length / 2)
+  const result = value.toString(16)
 
-  result = result.padStart(desiredLength, '0')
-
-  return '0x' + result
+  return `${result.length % 2 === 0 ? '0x' : '0x0'}${result}`
 }
 
 export const parseUnits = (value: string, decimals: number = 18): bigint => {
@@ -53,7 +40,7 @@ export const parseUnits = (value: string, decimals: number = 18): bigint => {
     integer = integer.slice(1)
   }
 
-  // trim leading zeros.
+  // trim trailing zeros.
   fraction = fraction.replace(/(0+)$/, '')
 
   // round off if the fraction is larger than the number of decimals.

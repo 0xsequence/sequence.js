@@ -447,7 +447,7 @@ export class SequenceWaaS {
 
   async getSessionHash() {
     const sessionId = (await this.waas.getSessionId()).toLowerCase()
-    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionId))
+    return ethers.id(sessionId)
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {

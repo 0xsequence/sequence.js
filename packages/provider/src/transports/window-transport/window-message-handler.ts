@@ -10,7 +10,8 @@ import {
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/utils'
+import { logger, base64DecodeObject } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -30,7 +31,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
 
     // record open details (sessionId + default network) from the window url
-    const { pathname, search: rawParams } = new URL(windowHref || window.location.href)
+    const { search: rawParams } = new URL(windowHref || window.location.href)
 
     let session: TransportSession | null = this.getWindowTransportSession(rawParams)
 
@@ -92,7 +93,14 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // Wallet always expects json-rpc request messages from a dapp
     let request: ProviderMessageRequest
     try {
-      request = JSON.parse(event.data)
+      request = JSON.parse(event.data, (key, value) => {
+        // BigNumber compatibility with older versions of sequence.js
+        if (isBigNumberSerialized(value)) {
+          return BigInt(value.hex)
+        }
+
+        return value
+      })
     } catch (err) {
       // event is not a ProviderMessage JSON object, skip
       return
@@ -160,4 +168,8 @@ export class WindowMessageHandler extends BaseWalletTransport {
       intent: base64DecodeObject<OpenWalletIntent>(params.get('intent'))
     }
   }
+}
+
+const isBigNumberSerialized = (value: any): boolean => {
+  return typeof value === 'object' && value.type === 'BigNumber' && ethers.isHexString(value.hex)
 }

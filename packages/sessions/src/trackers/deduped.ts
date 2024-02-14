@@ -1,6 +1,6 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { BigIntish } from '@0xsequence/utils'
+
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { PromiseCache } from './promise-cache'
@@ -34,7 +34,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     return this.cache.do(
       'getMigration',
@@ -63,7 +63,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     return this.cache.do('savePresignedConfiguration', undefined, args => this.tracker.savePresignedConfiguration(args), args)
   }
 
-  saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
+  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }): Promise<void> {
     return this.cache.do('saveWitnesses', undefined, args => this.tracker.saveWitnesses(args), args)
   }
 
@@ -92,7 +92,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     return this.cache.do('walletsOfSigner', this.window, args => this.tracker.walletsOfSigner(args), args)
   }
 
-  updateProvider(provider: ethers.providers.Provider) {
+  updateProvider(provider: ethers.Provider) {
     if (this.tracker instanceof LocalConfigTracker) {
       this.tracker.updateProvider(provider)
     }

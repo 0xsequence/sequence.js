@@ -10,7 +10,7 @@ import * as utils from '@0xsequence/tests'
 import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 import * as chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers } from 'ethers'
 import * as mockServer from 'mockttp'
 import { Session, SessionDumpV1, SessionSettings, ValidateSequenceWalletProof } from '../src'
 import { delay, mockDate } from './utils'
@@ -25,14 +25,14 @@ const deterministic = false
 type EthereumInstance = {
   chainId?: number
   providerUrl?: string
-  provider?: ethers.providers.JsonRpcProvider
-  signer?: AbstractSigner
+  provider?: ethers.JsonRpcProvider
+  signer?: ethers.Signer
 }
 
-class CountingSigner extends AbstractSigner {
+class CountingSigner extends ethers.AbstractSigner {
   private _signingRequests: number = 0
 
-  constructor(private readonly signer: AbstractSigner) {
+  constructor(private readonly signer: ethers.Signer) {
     super()
   }
 
@@ -44,17 +44,26 @@ class CountingSigner extends AbstractSigner {
     return this.signer.getAddress()
   }
 
-  signMessage(message: ethers.Bytes | string): Promise<string> {
+  signMessage(message: ethers.BytesLike): Promise<string> {
     this._signingRequests++
     return this.signer.signMessage(message)
   }
 
-  signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.TransactionRequest): Promise<string> {
     this._signingRequests++
     return this.signer.signTransaction(transaction)
   }
 
-  connect(provider: ethers.providers.Provider): ethers.Signer {
+  signTypedData(
+    domain: ethers.TypedDataDomain,
+    types: Record<string, ethers.TypedDataField[]>,
+    value: Record<string, any>
+  ): Promise<string> {
+    this._signingRequests++
+    return this.signer.signTypedData(domain, types, value)
+  }
+
+  connect(provider: ethers.Provider): ethers.Signer {
     return this.signer.connect(provider)
   }
 }
@@ -76,11 +85,11 @@ describe('Wallet integration', function () {
   before(async () => {
     // Provider from hardhat without a server instance
     ethnode.providerUrl = `http://127.0.0.1:9546/`
-    ethnode.provider = new ethers.providers.JsonRpcProvider(ethnode.providerUrl)
+    ethnode.provider = new ethers.JsonRpcProvider(ethnode.providerUrl)
 
     const chainId = (await ethnode.provider.getNetwork()).chainId
-    ethnode.signer = ethnode.provider.getSigner()
-    ethnode.chainId = chainId
+    ethnode.signer = await ethnode.provider.getSigner()
+    ethnode.chainId = Number(chainId)
 
     // Deploy local relayer
     relayer = new LocalRelayer(ethnode.signer)
@@ -88,7 +97,7 @@ describe('Wallet integration', function () {
     networks = [
       {
         name: 'local',
-        chainId,
+        chainId: Number(chainId),
         provider: ethnode.provider,
         isDefaultChain: true,
         relayer,
@@ -108,14 +117,14 @@ describe('Wallet integration', function () {
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ethnode.signer
-    ).deploy()) as CallReceiverMock
+    )
+      .deploy()
+      .then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     // Deploy hook caller mock
-    hookCaller = (await new ethers.ContractFactory(
-      HookCallerMockArtifact.abi,
-      HookCallerMockArtifact.bytecode,
-      ethnode.signer
-    ).deploy()) as HookCallerMock
+    hookCaller = (await new ethers.ContractFactory(HookCallerMockArtifact.abi, HookCallerMockArtifact.bytecode, ethnode.signer)
+      .deploy()
+      .then(tx => tx.waitForDeployment())) as HookCallerMock
 
     tracker = new trackers.local.LocalConfigTracker(ethnode.provider!)
     orchestrator = new Orchestrator([])
@@ -152,19 +161,19 @@ describe('Wallet integration', function () {
       editConfigOnMigration: config => config
     })
 
-    expect(session.account.address).to.not.equal(ethers.constants.AddressZero)
+    expect(session.account.address).to.not.equal(ethers.ZeroAddress)
 
     const status = await session.account.status(networks[0].chainId)
 
     expect(v2.config.isWalletConfig(status.config)).to.equal(true)
     const configv2 = status.config as v2.config.WalletConfig
 
-    expect(BigInt(configv2.threshold)).to.deep.equal(1n)
+    expect(BigInt(configv2.threshold)).to.equal(1n)
     expect(v2.config.isSignerLeaf(configv2.tree)).to.equal(true)
 
     const leaf = configv2.tree as v2.config.SignerLeaf
     expect(leaf.address).to.equal(referenceSigner.address)
-    expect(BigInt(leaf.weight)).to.deep.equal(1n)
+    expect(BigInt(leaf.weight)).to.equal(1n)
 
     await session.account.sendTransaction({ to: referenceSigner.address }, networks[0].chainId)
   })
@@ -231,14 +240,14 @@ describe('Wallet integration', function () {
     const newConfig = (await session2.account.status(networks[0].chainId).then(s => s.config)) as v2.config.WalletConfig
 
     expect(session2.account.address).to.equal(session.account.address)
-    expect(BigInt(newConfig.threshold)).to.deep.equal(2n)
+    expect(BigInt(newConfig.threshold)).to.equal(2n)
 
     const newSigners = v2.config.signersOf(newConfig.tree).map(s => s.address)
     expect(newSigners.length).to.equal(2)
     expect(newSigners).to.include(newSigner.address)
     expect(newSigners).to.include(referenceSigner.address)
-    expect(BigInt((newConfig.tree as any).left.weight)).to.deep.equal(1n)
-    expect(BigInt((newConfig.tree as any).right.weight)).to.deep.equal(1n)
+    expect(BigInt((newConfig.tree as any).left.weight)).to.equal(1n)
+    expect(BigInt((newConfig.tree as any).right.weight)).to.equal(1n)
   })
 
   it('Should create a new account if selectWallet returns undefined', async () => {
@@ -563,7 +572,7 @@ describe('Wallet integration', function () {
         }
       }
 
-      fakeJwt = ethers.utils.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`))
+      fakeJwt = ethers.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`))
 
       server = mockServer.getLocal()
       server.start(8099)
@@ -587,7 +596,7 @@ describe('Wallet integration', function () {
 
         try {
           const proof = await ethauth.decodeProof((await request.body.getJson())!['ewtString'])
-          proofAddress = ethers.utils.getAddress(proof.address)
+          proofAddress = ethers.getAddress(proof.address)
 
           if (recoverCount[proofAddress]) {
             recoverCount[proofAddress]++
@@ -1164,7 +1173,7 @@ describe('Wallet integration', function () {
         const newBaseTime = baseTime + 60 * 60
         setDate(newBaseTime)
 
-        fakeJwt = ethers.utils.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2'))
+        fakeJwt = ethers.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2'))
 
         await session.services?.getAPIClient()
 
@@ -1397,7 +1406,7 @@ describe('Wallet integration', function () {
         networks[0].chainId
       )
 
-      expect(receipt!.hash).to.not.be.undefined
+      expect(receipt?.hash).to.not.be.undefined
     })
   })
 })
@@ -1412,17 +1421,17 @@ function now(): number {
 }
 
 function randomWallet(entropy: number | string): ethers.Wallet {
-  return new ethers.Wallet(randomBytes(32, entropy))
+  return new ethers.Wallet(ethers.hexlify(randomBytes(32, entropy)))
 }
 
 function randomBytes(length: number, entropy: number | string): Uint8Array {
   if (deterministic) {
     let bytes = ''
     while (bytes.length < 2 * length) {
-      bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
+      bytes += ethers.id(`${bytes}${entropy}`).slice(2)
     }
-    return ethers.utils.arrayify(`0x${bytes.slice(0, 2 * length)}`)
+    return ethers.getBytes(`0x${bytes.slice(0, 2 * length)}`)
   } else {
-    return ethers.utils.randomBytes(length)
+    return ethers.randomBytes(length)
   }
 }

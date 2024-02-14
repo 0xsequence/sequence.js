@@ -1,8 +1,7 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
-import { BigIntish } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
 export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   constructor(private readonly tracker: ConfigTracker & migrator.PresignedMigrationTracker) {}
@@ -23,7 +22,7 @@ export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return this.tracker.savePresignedConfiguration(args)
   }
 
-  saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
+  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }): Promise<void> {
     console.debug('? saveWitnesses')
     debug(args, '? ')
     return this.tracker.saveWitnesses(args)
@@ -67,7 +66,7 @@ export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigr
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     console.debug('? getMigration')
     debug({ address, fromImageHash, fromVersion, chainId }, '? ')

@@ -15,7 +15,7 @@ import {
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
 import { FeeOption, FeeTokenType } from './responses'
-import { BigIntish, toHexString } from '@0xsequence/utils'
+import { toHexString } from '@0xsequence/utils'
 
 interface BaseArgs {
   lifespan: number
@@ -37,7 +37,7 @@ export type SendERC20Args = TransactionFeeArgs & {
   chainId: number
   token: string
   to: string
-  value: BigIntish
+  value: ethers.BigNumberish
 }
 
 export type SendERC721Args = TransactionFeeArgs & {
@@ -55,7 +55,7 @@ export type SendERC1155Args = TransactionFeeArgs & {
   to: string
   values: {
     id: string
-    amount: BigIntish
+    amount: ethers.BigNumberish
   }[]
   data?: string
 }
@@ -63,7 +63,7 @@ export type SendERC1155Args = TransactionFeeArgs & {
 export type SendDelayedEncodeArgs = TransactionFeeArgs & {
   chainId: number
   to: string
-  value: BigIntish
+  value: ethers.BigNumberish
   abi: string
   func: string
   args: string[] | { [key: string]: string }

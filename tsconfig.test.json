@@ -7,11 +7,9 @@
     "allowSyntheticDefaultImports": true,
     "strictNullChecks": false,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "lib": ["dom.iterable", "dom", "es2020"],
     "types": ["node", "mocha", "puppeteer"]
   },
-  "include": [
-    "./src/**/*",
-    "./tests/**/*"
-  ]
+  "include": ["./src/**/*", "./tests/**/*"]
 }

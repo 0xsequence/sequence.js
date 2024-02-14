@@ -4,7 +4,6 @@ import { ethers } from 'ethers'
 import { CachedEIP5719 } from '@0xsequence/replacer'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from './stores'
-import { BigIntish } from '@0xsequence/utils'
 
 export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private cachedEIP5719: CachedEIP5719
@@ -13,7 +12,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
     // For now, it's recommended to use Mainnet as the provider.
-    public provider: ethers.providers.Provider,
+    public provider: ethers.Provider,
     private store: TrackerStore = new MemoryTrackerStore(),
     public useEIP5719: boolean = false
   ) {
@@ -225,7 +224,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const decoded = v2.signature.SignatureCoder.decode(args.signature)
     const nextImageHash = universal.genericCoderFor(args.nextConfig.version).config.imageHashOf(args.nextConfig)
     const message = v2.chained.messageSetImageHash(nextImageHash)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
     const payload = {
       message,
       address: args.wallet,
@@ -337,7 +336,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
                 return [signer, undefined]
               }
 
-              const replacedSignature = ethers.utils.hexlify(
+              const replacedSignature = ethers.hexlify(
                 this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, payload.subdigest, signature) : signature
               )
 
@@ -385,7 +384,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     ]
   }
 
-  saveWitnesses = async (args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> => {
+  saveWitnesses = async (args: {
+    wallet: string
+    digest: string
+    chainId: ethers.BigNumberish
+    signatures: string[]
+  }): Promise<void> => {
     const payload = {
       digest: args.digest,
       address: args.wallet,
@@ -449,7 +453,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         proof: {
           digest: payload.digest,
           chainId: BigInt(payload.chainId),
-          signature: ethers.utils.hexlify(signature)
+          signature: ethers.hexlify(signature)
         }
       })
     }
@@ -474,7 +478,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
     // Split signature and save each part
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
     const payload = { chainId: signed.tx.chainId, message, address, digest }
     const subdigest = commons.signature.subdigestOf(payload)
 
@@ -500,7 +504,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     // Get the current config and all possible migration payloads
     const [currentConfig, txs] = await Promise.all([
@@ -542,7 +546,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
                   return [signer, undefined]
                 }
 
-                const replacedSignature = ethers.utils.hexlify(
+                const replacedSignature = ethers.hexlify(
                   this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
                 )
 
@@ -584,7 +588,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return candidates[0]
   }
 
-  updateProvider(provider: ethers.providers.Provider) {
+  updateProvider(provider: ethers.Provider) {
     this.provider = provider
   }
 }

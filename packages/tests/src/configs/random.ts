@@ -1,15 +1,14 @@
 import { v1, v2 } from '@0xsequence/core'
 import { ethers } from 'ethers'
 import { maxForBits, randomBigInt, randomBool } from '../utils'
-import { BigIntish } from '@0xsequence/utils'
 
 export function genRandomV1Config(
-  threshold: BigIntish = randomBigInt(0, maxForBits(16)),
-  numSigners: BigIntish = randomBigInt(1, 24)
+  threshold: ethers.BigNumberish = randomBigInt(0, maxForBits(16)),
+  numSigners: ethers.BigNumberish = randomBigInt(1, 24)
 ): v1.config.WalletConfig {
   const signers: v1.config.AddressMember[] = []
 
-  for (let i = 0n; i < BigInt(numSigners); i = i + 1n) {
+  for (let i = 0n; i < BigInt(numSigners); i++) {
     signers.push({
       address: ethers.Wallet.createRandom().address,
       weight: randomBigInt(0, maxForBits(8))
@@ -20,14 +19,14 @@ export function genRandomV1Config(
 }
 
 export function genRandomV2Config(
-  threshold: BigIntish = randomBigInt(0, maxForBits(16)),
-  checkpoint: BigIntish = randomBigInt(0, maxForBits(32)),
-  numSigners: BigIntish = randomBigInt(1, 24),
-  numSubdigests: BigIntish = randomBigInt(0, 24),
+  threshold: ethers.BigNumberish = randomBigInt(0, maxForBits(16)),
+  checkpoint: ethers.BigNumberish = randomBigInt(0, maxForBits(32)),
+  numSigners: ethers.BigNumberish = randomBigInt(1, 24),
+  numSubdigests: ethers.BigNumberish = randomBigInt(0, 24),
   useMerkleTopology: boolean = randomBool()
 ): v2.config.WalletConfig {
   const signers: v2.config.SignerLeaf[] = []
-  for (let i = 0n; i < BigInt(numSigners); i = i + 1n) {
+  for (let i = 0n; i < BigInt(numSigners); i++) {
     signers.push({
       address: ethers.Wallet.createRandom().address,
       weight: randomBigInt(0, maxForBits(8))
@@ -35,9 +34,9 @@ export function genRandomV2Config(
   }
 
   const subdigests: v2.config.SubdigestLeaf[] = []
-  for (let i = 0n; i < BigInt(numSubdigests); i = i + 1n) {
+  for (let i = 0n; i < BigInt(numSubdigests); i++) {
     subdigests.push({
-      subdigest: ethers.utils.hexlify(ethers.utils.randomBytes(32))
+      subdigest: ethers.hexlify(ethers.randomBytes(32))
     })
   }
 

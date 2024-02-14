@@ -2,15 +2,15 @@ import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import {
   ChainIdLike,
-  JsonRpcHandler,
+  EIP1193Provider,
   JsonRpcRequest,
   JsonRpcResponse,
   NetworkConfig,
-  ProviderRpcError as NetworkProviderRpcError
+  JsonRpcErrorPayload
 } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
-export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface ProviderTransport extends EIP1193Provider, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
@@ -42,7 +42,7 @@ export function isProviderTransport(transport: any): transport is ProviderTransp
   )
 }
 
-export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface WalletTransport extends EIP1193Provider, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
@@ -61,18 +61,20 @@ export interface ProviderMessage<T> {
   data: T // the ethereum json-rpc payload
   chainId?: number // chain id which the message is intended
   origin?: string // origin of the message
+  clientVersion: string // client version of the message
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
 
-export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
+// Older versions of sequence.js will require a JsonRpcResponse result type, but newer versions use raw EIP1193 results
+export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse | any>
 
 // ProviderMessageCallback is used to respond to ProviderMessage requests. The error
 // argument is for exceptions during the execution, and response is the response payload
 // which may contain the result or an error payload from the wallet.
 export type ProviderMessageResponseCallback = (error?: ProviderRpcError, response?: ProviderMessageResponse) => void
 
-export type ProviderRpcError = NetworkProviderRpcError
+export type ProviderRpcError = JsonRpcErrorPayload
 
 export interface ProviderMessageRequestHandler {
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet.
@@ -373,8 +375,3 @@ export type OptionalEIP6492 =
       eip6492?: boolean
     }
   | undefined
-
-// This is required by viem, it expects a provider to have an EIP-1193 compliant `request` attribute.
-export interface EIP1193Provider {
-  request: (request: { method: string; params?: Array<any> }) => Promise<any>
-}

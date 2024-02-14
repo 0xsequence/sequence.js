@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "1.10.15",
+  "version": "2.0.0-alpha.1",
   "description": "auth sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
   "source": "src/index.ts",
@@ -11,7 +11,7 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 30000",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 60000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat > /dev/null' ",
     "start:hardhat": "hardhat node --port 9546",
     "typecheck": "tsc --noEmit"
@@ -21,7 +21,7 @@
     "@0xsequence/account": "workspace:*",
     "@0xsequence/api": "workspace:*",
     "@0xsequence/core": "workspace:*",
-    "@0xsequence/ethauth": "^0.8.1",
+    "@0xsequence/ethauth": "^1.0.0",
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",
@@ -32,13 +32,13 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^1.10.0",
+    "@0xsequence/wallet-contracts": "^3.0.1",
     "concurrently": "^7.5.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.13.0",
     "hardhat": "^2.20.1",
     "mockttp": "^3.6.0"
   },

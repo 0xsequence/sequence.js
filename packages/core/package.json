@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/core",
-  "version": "1.10.15",
+  "version": "2.0.0-alpha.1",
   "description": "core primitives for interacting with the sequence wallet contracts",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/core",
   "source": "src/index.ts",
@@ -11,10 +11,10 @@
   "scripts": {
     "test": "pnpm test:file tests/**/*.spec.ts",
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
-    "test:coverage": "nyc yarn test"
+    "test:coverage": "nyc pnpm test"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",

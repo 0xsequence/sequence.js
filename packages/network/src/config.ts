@@ -1,13 +1,13 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
-import { isBigIntish, BigIntish } from '@0xsequence/utils'
+import { isBigNumberish } from '@0xsequence/utils'
 import { ChainId, NetworkMetadata, networks } from './constants'
 
 export type NetworkConfig = NetworkMetadata & {
   rpcUrl: string
-  provider?: providers.Provider
+  provider?: ethers.Provider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
@@ -30,14 +30,14 @@ export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): Netwo
   return findNetworkConfig(allNetworks, chainIdOrName)
 }
 
-export type ChainIdLike = NetworkConfig | BigIntish
+export type ChainIdLike = NetworkConfig | ethers.BigNumberish
 
 export function toChainIdNumber(chainIdLike: ChainIdLike): bigint {
   if (typeof chainIdLike === 'bigint') {
     return chainIdLike
   }
 
-  if (isBigIntish(chainIdLike)) {
+  if (isBigNumberish(chainIdLike)) {
     return BigInt(chainIdLike)
   }
 

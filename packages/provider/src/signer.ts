@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 
 import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
 import { SequenceClient } from './client'
@@ -8,7 +8,7 @@ import { resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
 import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 
-export interface ISequenceSigner extends ethers.Signer {
+export interface ISequenceSigner extends Omit<ethers.Signer, 'connect'> {
   getProvider(): SequenceProvider
   getProvider(chainId: ChainIdLike): SingleNetworkSequenceProvider
   getProvider(chainId?: ChainIdLike): SequenceProvider | SingleNetworkSequenceProvider
@@ -19,6 +19,8 @@ export interface ISequenceSigner extends ethers.Signer {
 
   getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
   getNetworks(): Promise<NetworkConfig[]>
+
+  connect: (provider: SequenceProvider) => SequenceSigner
 
   signMessage(message: ethers.BytesLike, options?: OptionalChainIdLike & OptionalEIP6492): Promise<string>
 
@@ -33,9 +35,7 @@ export interface ISequenceSigner extends ethers.Signer {
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   // It supports any kind of transaction, including regular ethers transactions, and Sequence transactions.
   sendTransaction(
-    transaction:
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.TransactionRequest[] | ethers.TransactionRequest,
     options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
 
@@ -45,7 +45,6 @@ export interface ISequenceSigner extends ethers.Signer {
 export class SequenceSigner implements ISequenceSigner {
   private readonly singleNetworkSigners: { [chainId: number]: SingleNetworkSequenceSigner } = {}
 
-  readonly _isSigner: boolean = true
   readonly _isSequenceSigner: boolean = true
 
   get utils(): WalletUtils {
@@ -63,7 +62,7 @@ export class SequenceSigner implements ISequenceSigner {
 
   // This method shouldn't be used directly
   // it exists to maintain compatibility with ethers.Signer
-  connect(provider: ethers.providers.Provider): SequenceSigner {
+  connect(provider: ethers.Provider): SequenceSigner {
     if (!SequenceProvider.is(provider)) {
       throw new Error('SequenceSigner can only be connected to a SequenceProvider')
     }
@@ -124,25 +123,28 @@ export class SequenceSigner implements ISequenceSigner {
     return this.provider.getProvider(chainId)
   }
 
-  async sendTransaction(
-    transaction:
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    options?: OptionalChainIdLike
-  ) {
+  async sendTransaction(transaction: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainIdLike) {
     const chainId = this.useChainId(options?.chainId)
     const resolved = await resolveArrayProperties(transaction)
     const txHash = await this.client.sendTransaction(resolved, { chainId })
     const provider = this.getProvider(chainId)
 
     try {
-      return (await ethers.utils.poll(
-        async () => {
+      const result = await new Promise<ethers.TransactionResponse>(resolve => {
+        const check = async () => {
           const tx = await provider.getTransaction(txHash)
-          return tx ? provider._wrapTransaction(tx, txHash) : undefined
-        },
-        { onceBlock: provider }
-      )) as ethers.providers.TransactionResponse
+
+          if (tx !== null) {
+            return resolve(tx)
+          }
+
+          await provider.once('block', check)
+        }
+
+        check()
+      })
+
+      return result
     } catch (err) {
       err.transactionHash = txHash
       throw err
@@ -158,35 +160,24 @@ export class SequenceSigner implements ISequenceSigner {
     return this.client.getNetworks()
   }
 
-  async getBalance(blockTag?: ethers.providers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<BigNumber> {
+  async getBalance(blockTag?: ethers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<bigint> {
     const provider = this.getProvider(optionals?.chainId)
     return provider.getBalance(this.getAddress(), blockTag)
   }
 
-  async estimateGas(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    optionals?: OptionalChainIdLike
-  ): Promise<BigNumber> {
+  async estimateGas(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike): Promise<bigint> {
     return this.getProvider(optionals?.chainId).estimateGas(transaction)
   }
 
-  async call(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    blockTag?: ethers.providers.BlockTag | undefined,
-    optionals?: OptionalChainIdLike
-  ): Promise<string> {
-    return this.getProvider(optionals?.chainId).call(transaction, blockTag)
+  async call(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike): Promise<string> {
+    return this.getProvider(optionals?.chainId).call(transaction)
   }
 
   getChainId(): Promise<number> {
     return Promise.resolve(this.client.getChainId())
   }
 
-  async getGasPrice(optionals?: OptionalChainIdLike): Promise<BigNumber> {
-    return this.getProvider(optionals?.chainId).getGasPrice()
-  }
-
-  async getFeeData(optionals?: OptionalChainIdLike): Promise<ethers.providers.FeeData> {
+  async getFeeData(optionals?: OptionalChainIdLike): Promise<ethers.FeeData> {
     return this.getProvider(optionals?.chainId).getFeeData()
   }
 
@@ -194,7 +185,7 @@ export class SequenceSigner implements ISequenceSigner {
     const res = await this.provider.resolveName(name)
 
     // For some reason ethers.Signer expects this to return `string`
-    // but ethers.providers.Provider expects this to return `string | null`.
+    // but ethers.Provider expects this to return `string | null`.
     // The signer doesn't have any other source of information, so we'll
     // fail if the provider doesn't return a result.
     if (res === null) {
@@ -208,25 +199,29 @@ export class SequenceSigner implements ISequenceSigner {
     // We always have a provider, so this is a noop
   }
 
-  populateTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): Promise<ethers.providers.TransactionRequest> {
+  getNonce(_blockTag?: ethers.BlockTag): Promise<number> {
+    throw new Error('SequenceSigner does not support getNonce')
+  }
+
+  populateCall(_transaction: ethers.TransactionRequest): Promise<ethers.TransactionLike<string>> {
+    throw new Error('SequenceSigner does not support populateCall')
+  }
+
+  populateTransaction(_transaction: ethers.TransactionRequest): Promise<ethers.TransactionLike<string>> {
     throw new Error('SequenceSigner does not support populateTransaction')
   }
 
-  checkTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): ethers.utils.Deferrable<ethers.providers.TransactionRequest> {
+  checkTransaction(_transaction: ethers.TransactionRequest): ethers.TransactionRequest {
     throw new Error('SequenceSigner does not support checkTransaction')
   }
 
-  getTransactionCount(_blockTag?: ethers.providers.BlockTag | undefined): Promise<number> {
+  getTransactionCount(_blockTag?: ethers.BlockTag): Promise<number> {
     // We could try returning the sequence nonce here
     // but we aren't sure how ethers will use this nonce
     throw new Error('SequenceSigner does not support getTransactionCount')
   }
 
-  signTransaction(_transaction: ethers.utils.Deferrable<commons.transaction.Transactionish>): Promise<string> {
+  signTransaction(_transaction: commons.transaction.Transactionish): Promise<string> {
     // We could implement signTransaction/sendTransaction here
     // but first we need a way of serializing these signed transactions
     // and it could lead to more trouble, because the dapp could try to send this transaction

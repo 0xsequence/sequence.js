@@ -3,16 +3,15 @@ import { walletContracts } from '@0xsequence/abi'
 import { commons } from '..'
 import { encodeSigners } from './signature'
 import { SimpleConfig } from '../commons/config'
-import { BigIntish } from '@0xsequence/utils'
 
 export type AddressMember = {
-  weight: BigIntish
+  weight: ethers.BigNumberish
   address: string
   signature?: string
 }
 
 export type WalletConfig = commons.config.Config & {
-  threshold: BigIntish
+  threshold: ethers.BigNumberish
   signers: AddressMember[]
 }
 
@@ -26,10 +25,10 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   imageHashOf: (config: WalletConfig): string => {
     return config.signers.reduce(
       (imageHash, signer) =>
-        ethers.utils.keccak256(
-          ethers.utils.defaultAbiCoder.encode(['bytes32', 'uint8', 'address'], [imageHash, signer.weight, signer.address])
+        ethers.keccak256(
+          ethers.AbiCoder.defaultAbiCoder().encode(['bytes32', 'uint8', 'address'], [imageHash, signer.weight, signer.address])
         ),
-      ethers.utils.solidityPack(['uint256'], [config.threshold])
+      ethers.solidityPacked(['uint256'], [config.threshold])
     )
   },
 
@@ -48,7 +47,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   },
 
   signersOf: (config: WalletConfig): { address: string; weight: number }[] => {
-    return config.signers.map(s => ({ address: s.address, weight: Number(BigInt(s.weight)) }))
+    return config.signers.map(s => ({ address: s.address, weight: Number(s.weight) }))
   },
 
   fromSimple: (config: SimpleConfig): WalletConfig => {
@@ -76,14 +75,14 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       context: commons.context.WalletContext,
       kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new ethers.utils.Interface([...walletContracts.mainModule.abi, ...walletContracts.mainModuleUpgradable.abi])
+      const module = new ethers.Interface([...walletContracts.mainModule.abi, ...walletContracts.mainModuleUpgradable.abi])
 
       const transactions: commons.transaction.Transaction[] = []
 
       if (!kind || kind === 'first') {
         transactions.push({
           to: wallet,
-          data: module.encodeFunctionData(module.getFunction('updateImplementation'), [context.mainModuleUpgradable]),
+          data: module.encodeFunctionData(module.getFunction('updateImplementation')!, [context.mainModuleUpgradable]),
           gasLimit: 0,
           delegateCall: false,
           revertOnError: true,
@@ -93,7 +92,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
       transactions.push({
         to: wallet,
-        data: module.encodeFunctionData(module.getFunction('updateImageHash'), [ConfigCoder.imageHashOf(config)]),
+        data: module.encodeFunctionData(module.getFunction('updateImageHash')!, [ConfigCoder.imageHashOf(config)]),
         gasLimit: 0,
         delegateCall: false,
         revertOnError: true,
@@ -151,8 +150,8 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
     action: {
       add?: commons.config.SimpleSigner[]
       remove?: string[]
-      threshold?: BigIntish
-      checkpoint?: BigIntish
+      threshold?: ethers.BigNumberish
+      checkpoint?: ethers.BigNumberish
     }
   ): WalletConfig {
     const newSigners = config.signers.slice()
@@ -205,7 +204,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
     const signers = config.signers
 
-    for (const { address } of signers.sort(({ weight: a }, { weight: b }) => Number(BigInt(a) - BigInt(b)))) {
+    for (const { address } of signers.sort(({ weight: a }, { weight: b }) => Number(a) - Number(b))) {
       const signature =
         '0x4e82f02f388a12b5f9d29eaf2452dd040c0ee5804b4e504b4dd64e396c6c781f2c7624195acba242dd825bfd25a290912e3c230841fd55c9a734c4de8d9899451b02'
       parts.set(address, { signature, isDynamic: false })

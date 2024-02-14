@@ -4,7 +4,7 @@ import * as utils from '@0xsequence/tests'
 
 import { trackers, tracker } from '../src/index'
 import { commons, universal, v2 } from '@0xsequence/core'
-import { ethers, BigNumber } from 'ethers'
+import { ethers } from 'ethers'
 import { Wallet } from '@0xsequence/wallet'
 import { Orchestrator } from '@0xsequence/signhub'
 
@@ -110,7 +110,7 @@ const ConfigCases = [
         checkpoint: 392919n,
         tree: {
           left: {
-            subdigest: ethers.utils.hexlify(ethers.utils.randomBytes(32))
+            subdigest: ethers.hexlify(ethers.randomBytes(32))
           },
           right: {
             left: {
@@ -138,17 +138,17 @@ const randomContext = () => {
     mainModuleUpgradable: ethers.Wallet.createRandom().address,
     guestModule: ethers.Wallet.createRandom().address,
 
-    walletCreationCode: ethers.utils.hexlify(ethers.utils.randomBytes(32))
+    walletCreationCode: ethers.hexlify(ethers.randomBytes(32))
   }
 }
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 describe('Local config tracker', () => {
-  let provider: ethers.providers.Web3Provider
+  let provider: ethers.BrowserProvider
 
   before(async () => {
-    provider = new ethers.providers.Web3Provider(hardhat.network.provider as any)
+    provider = new ethers.BrowserProvider(hardhat.network.provider, undefined, { cacheTimeout: -1 })
   })
   ;[
     {
@@ -195,7 +195,7 @@ describe('Local config tracker', () => {
     }
   ].map(({ name, getTracker }) => {
     describe(name, () => {
-      let tracker: tracker.ConfigTracker | trackers.MultipleTracker
+      let tracker: tracker.ConfigTracker
 
       beforeEach(() => {
         tracker = getTracker()
@@ -314,7 +314,7 @@ describe('Local config tracker', () => {
         })
 
         it('Should return undefined for unknown imageHash', async () => {
-          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const imageHash = ethers.hexlify(ethers.randomBytes(32))
           expect(await tracker.configOfImageHash({ imageHash })).to.be.undefined
         })
 
@@ -382,11 +382,11 @@ describe('Local config tracker', () => {
         let context: commons.context.WalletContext
 
         before(async () => {
-          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+          context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
         })
 
         it('Should return return empty chained configuration if config is not known', async () => {
-          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const imageHash = ethers.hexlify(ethers.randomBytes(32))
           const res = await tracker.loadPresignedConfiguration({
             wallet: ethers.Wallet.createRandom().address,
             fromImageHash: imageHash
@@ -675,7 +675,7 @@ describe('Local config tracker', () => {
         let context: commons.context.WalletContext
 
         before(async () => {
-          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+          context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
         })
 
         it('Should retrieve no witness for never used signer', async () => {
@@ -698,7 +698,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest = ethers.hexlify(ethers.randomBytes(32))
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
@@ -717,7 +717,7 @@ describe('Local config tracker', () => {
           expect(witness[0].proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
           // Adding a second witness should not change anything
-          const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest2 = ethers.hexlify(ethers.randomBytes(32))
           const signature2 = await wallet.signDigest(digest2)
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
           await tracker.saveWitnesses({
@@ -731,7 +731,7 @@ describe('Local config tracker', () => {
           expect(witness2.length).to.equal(1)
 
           // Adding a witness for a different chain should not change anything
-          const digest3 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest3 = ethers.hexlify(ethers.randomBytes(32))
           const wallet2 = new Wallet({
             config,
             chainId: 2,
@@ -767,7 +767,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest = ethers.hexlify(ethers.randomBytes(32))
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
@@ -790,7 +790,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest2 = ethers.hexlify(ethers.randomBytes(32))
           const signature2 = await wallet2.signDigest(digest2)
 
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
@@ -984,7 +984,7 @@ describe('Local config tracker', () => {
       let context: commons.context.WalletContext
 
       before(async () => {
-        context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+        context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
       })
 
       it('Should store chained config in both', async () => {
@@ -1183,12 +1183,9 @@ describe('Local config tracker', () => {
 function normalize(value: any): any {
   switch (typeof value) {
     case 'object':
-      if (BigNumber.isBigNumber(value)) {
-        return value.toString()
-      }
       return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, normalize(value)]))
     case 'number':
-      return `${value}`
+      return BigInt(value)
     default:
       return value
   }
