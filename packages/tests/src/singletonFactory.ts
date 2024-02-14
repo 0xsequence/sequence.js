@@ -69,7 +69,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   if (!data) throw new Error('no deploy data')
 
   const address = ethers.utils.getAddress(
-    ethers.utils.hexDataSlice(
+    ethers.dataSlice(
       ethers.utils.keccak256(
         ethers.solidityPacked(
           ['bytes1', 'address', 'bytes32', 'bytes32'],

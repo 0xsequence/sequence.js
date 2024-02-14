@@ -199,6 +199,6 @@ export class UniversalDeployer {
       ethers.solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
     )
 
-    return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+    return ethers.utils.getAddress(ethers.dataSlice(hash, 12))
   }
 }

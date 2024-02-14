@@ -24,7 +24,7 @@ export function addressOf(context: WalletContext, imageHash: ethers.BytesLike) {
     ethers.solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', context.factory, imageHash, codeHash])
   )
 
-  return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+  return ethers.utils.getAddress(ethers.dataSlice(hash, 12))
 }
 
 export async function isValidCounterfactual(
