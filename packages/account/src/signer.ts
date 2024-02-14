@@ -130,7 +130,7 @@ export class AccountSigner implements ethers.Signer {
     options?: {
       simulateForFeeOptions?: boolean
     }
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.TransactionResponse> {
     const txs = isDeferrable(txsPromise)
       ? await ethers.utils.resolveProperties(txsPromise as ethers.utils.Deferrable<ethers.TransactionRequest>)
       : txsPromise
@@ -158,7 +158,7 @@ export class AccountSigner implements ethers.Signer {
             nonceSpace: this.options.nonceSpace
           }
         : undefined
-    ) as Promise<ethers.providers.TransactionResponse> // Will always have a transaction response
+    ) as Promise<ethers.TransactionResponse> // Will always have a transaction response
   }
 
   getBalance(blockTag?: ethers.providers.BlockTag | undefined): Promise<BigNumber> {

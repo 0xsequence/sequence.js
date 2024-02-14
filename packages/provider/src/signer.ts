@@ -138,7 +138,7 @@ export class SequenceSigner implements ISequenceSigner {
           return tx ? provider._wrapTransaction(tx, txHash) : undefined
         },
         { onceBlock: provider }
-      )) as ethers.providers.TransactionResponse
+      )) as ethers.TransactionResponse
     } catch (err) {
       err.transactionHash = txHash
       throw err

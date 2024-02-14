@@ -32,7 +32,7 @@ export interface TransactionEncoded {
 
 export type Transactionish = ethers.TransactionRequest | ethers.TransactionRequest[] | Transaction | Transaction[]
 
-export interface TransactionResponse<R = any> extends ethers.providers.TransactionResponse {
+export interface TransactionResponse<R = any> extends ethers.TransactionResponse {
   receipt?: R
 }
 
