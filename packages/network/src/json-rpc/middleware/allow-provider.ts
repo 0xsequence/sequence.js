@@ -1,13 +1,12 @@
 import {
-  JsonRpcHandlerFunc,
   JsonRpcRequest,
-  JsonRpcResponseCallback,
+  EIP1193ProviderFunc,
   JsonRpcMiddleware,
   JsonRpcMiddlewareHandler
 } from '../types'
 
 export class AllowProvider implements JsonRpcMiddlewareHandler {
-  sendAsyncMiddleware: JsonRpcMiddleware
+  requestHandler: JsonRpcMiddleware
 
   private isAllowedFunc: (request: JsonRpcRequest) => boolean
 
@@ -18,25 +17,25 @@ export class AllowProvider implements JsonRpcMiddlewareHandler {
       this.isAllowedFunc = (request: JsonRpcRequest): boolean => true
     }
 
-    this.sendAsyncMiddleware = allowProviderMiddleware(this.isAllowedFunc)
+    this.requestHandler = allowProviderMiddleware(this.isAllowedFunc)
   }
 
   setIsAllowedFunc(fn: (request: JsonRpcRequest) => boolean) {
     this.isAllowedFunc = fn
-    this.sendAsyncMiddleware = allowProviderMiddleware(this.isAllowedFunc)
+    this.requestHandler = allowProviderMiddleware(this.isAllowedFunc)
   }
 }
 
 export const allowProviderMiddleware =
   (isAllowed: (request: JsonRpcRequest) => boolean): JsonRpcMiddleware =>
-  (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-      // ensure precondition is met or do not allow the request to continue
-      if (!isAllowed(request)) {
-        throw new Error('allowProvider middleware precondition is unmet.')
-      }
+    (next: EIP1193ProviderFunc) => {
+      return (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<any> => {
+        // ensure precondition is met or do not allow the request to continue
+        if (!isAllowed(request)) {
+          throw new Error('allowProvider middleware precondition is unmet.')
+        }
 
-      // request is allowed. keep going..
-      next(request, callback, chainId)
+        // request is allowed. keep going..
+        return next(request)
+      }
     }
-  }

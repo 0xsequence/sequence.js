@@ -1,11 +1,10 @@
 import { ethers } from 'ethers'
 import { SequenceClient } from './client'
-import { ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
-import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, OptionalChainIdLike, WalletSession } from './types'
+import { EIP1193Provider, ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
+import { ConnectDetails, ConnectOptions, OpenWalletIntent, OptionalChainIdLike, WalletSession } from './types'
 import { commons } from '@0xsequence/core'
 import { WalletUtils } from './utils/index'
 import { SequenceSigner, SingleNetworkSequenceSigner } from './signer'
-import { BigIntish } from '@0xsequence/utils'
 
 export interface ISequenceProvider {
   readonly _isSequenceProvider: true
@@ -47,7 +46,10 @@ export interface ISequenceProvider {
   utils: WalletUtils
 }
 
-export class SequenceProvider extends ethers.providers.BaseProvider implements ISequenceProvider, EIP1193Provider {
+const EIP1193EventTypes = ['connect', 'disconnect', 'chainChanged', 'accountsChanged'] as const
+type EIP1193EventType = (typeof EIP1193EventTypes)[number]
+
+export class SequenceProvider extends ethers.AbstractProvider implements ISequenceProvider, EIP1193Provider {
   private readonly singleNetworkProviders: { [chainId: number]: SingleNetworkSequenceProvider } = {}
 
   readonly _isSequenceProvider = true
@@ -55,30 +57,37 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   readonly signer: SequenceSigner
 
+  readonly eip1193EventListeners = new Map<EIP1193EventType, Set<ethers.Listener>>()
+
   constructor(
     public readonly client: SequenceClient,
-    private readonly providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
-    public readonly networks: NetworkConfig[] = allNetworks
+    private readonly providerFor: (networkId: number) => ethers.JsonRpcProvider,
+    public readonly networks: NetworkConfig[] = allNetworks,
+    public options?: ethers.AbstractProviderOptions
   ) {
     // We support a lot of networks
     // but we start with the default one
-    super(client.getChainId())
+    super(client.getChainId(), options)
 
     // Emit events as defined by EIP-1193
     client.onConnect(details => {
-      this.emit('connect', details)
+      //this.emit('connect', details)
+      this.eip1193EventListeners.get('connect')?.forEach(listener => listener(details))
     })
 
     client.onDisconnect(error => {
-      this.emit('disconnect', error)
+      //this.emit('disconnect', error)
+      this.eip1193EventListeners.get('disconnect')?.forEach(listener => listener(error))
     })
 
     client.onDefaultChainIdChanged(chainId => {
-      this.emit('chainChanged', chainId)
+      //this.emit('chainChanged', chainId)
+      this.eip1193EventListeners.get('chainChanged')?.forEach(listener => listener(chainId))
     })
 
     client.onAccountsChanged(accounts => {
-      this.emit('accountsChanged', accounts)
+      //this.emit('accountsChanged', accounts)
+      this.eip1193EventListeners.get('accountsChanged')?.forEach(listener => listener(accounts))
     })
 
     // NOTICE: We don't emit 'open' and 'close' events
@@ -94,6 +103,36 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
     // Create a utils instance
     this.utils = new WalletUtils(this.signer)
+  }
+
+  async on(event: ethers.ProviderEvent | EIP1193EventType, listener: ethers.Listener): Promise<this> {
+    if (EIP1193EventTypes.includes(event as EIP1193EventType)) {
+      const listeners = this.eip1193EventListeners.get(event as EIP1193EventType) || new Set()
+      listeners.add(listener)
+      this.eip1193EventListeners.set(event as EIP1193EventType, listeners)
+
+      return this
+    }
+
+    return super.on(event, listener) as Promise<this>
+  }
+
+  async off(event: ethers.ProviderEvent | EIP1193EventType, listener?: ethers.Listener | undefined): Promise<this> {
+    if (EIP1193EventTypes.includes(event as EIP1193EventType)) {
+      const listeners = this.eip1193EventListeners.get(event as EIP1193EventType)
+
+      if (listeners) {
+        if (listener) {
+          listeners.delete(listener)
+        } else {
+          listeners.clear()
+        }
+      }
+
+      return this
+    }
+
+    return super.off(event, listener) as Promise<this>
   }
 
   getSigner(): SequenceSigner
@@ -207,13 +246,18 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   getProvider(chainId?: ChainIdLike) {
     // The provider without a chainId is... this one
     if (!chainId) {
-      return this
+      return this as SequenceProvider
     }
 
     const useChainId = this.toChainId(chainId)
 
     if (!this.singleNetworkProviders[useChainId]) {
-      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(this.client, this.providerFor, useChainId)
+      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(
+        this.client,
+        this.providerFor,
+        useChainId,
+        this.options
+      )
     }
 
     return this.singleNetworkProviders[useChainId]
@@ -223,7 +267,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
    *  This returns a subprovider, this is a regular non-sequence provider that
    *  can be used to fulfill read only requests on a given network.
    */
-  async _getSubprovider(chainId?: ChainIdLike): Promise<ethers.providers.JsonRpcProvider> {
+  async _getSubprovider(chainId?: ChainIdLike): Promise<ethers.JsonRpcProvider> {
     const useChainId = await this.useChainId(chainId)
 
     // Whoever implements providerFrom should memoize the generated provider
@@ -237,10 +281,23 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider
   }
 
+  async _perform(req: ethers.PerformActionRequest): Promise<any> {
+    const { method, ...args } = req
+
+    const provider = await this._getSubprovider()
+    const prepared = provider.getRpcRequest(req) ?? { method, args: Object.values(args) }
+
+    if (!prepared) {
+      throw new Error(`Unsupported method ${req.method}`)
+    }
+
+    return provider.send(prepared.method, prepared.args)
+  }
+
   async perform(method: string, params: any): Promise<any> {
     // First we check if the method should be handled by the client
     if (method === 'eth_chainId') {
-      return ethers.utils.hexValue(await this.useChainId())
+      return ethers.toQuantity(await this.useChainId())
     }
 
     if (method === 'eth_accounts') {
@@ -269,14 +326,10 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     ) {
       // We pass the chainId to the client, if we don't pass one
       // the client will use its own default chainId
-      return this.client.send({ method, params }, this.getChainId())
+      return this.client.request({ method, params, chainId: this.getChainId() })
     }
 
-    // Forward call to the corresponding provider
-    // we use the provided chainId, or the default one provided by the client
-    const provider = await this._getSubprovider()
-    const prepared = provider.prepareRequest(method, params) ?? [method, params]
-    return provider.send(prepared[0], prepared[1])
+    return this._perform({ method, ...params })
   }
 
   send(method: string, params: any): Promise<any> {
@@ -287,15 +340,21 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return this.perform(request.method, request.params)
   }
 
-  async detectNetwork(): Promise<ethers.providers.Network> {
+  async _detectNetwork(): Promise<ethers.Network> {
     const chainId = this.client.getChainId()
-    const network = findNetworkConfig(this.networks, chainId)
+    const found = findNetworkConfig(this.networks, chainId)
 
-    if (!network) {
+    if (!found) {
       throw new Error(`Unknown network ${chainId}`)
     }
 
+    const network = new ethers.Network(found.name, found.chainId)
+
     return network
+  }
+
+  async detectNetwork(): Promise<ethers.Network> {
+    return this._detectNetwork()
   }
 
   // Override most of the methods, so we add support for an optional chainId
@@ -315,76 +374,61 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.getBlockNumber()
   }
 
-  async getGasPrice(optionals?: OptionalChainIdLike) {
+  async getFeeData(optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.getGasPrice()
+    return await provider.getFeeData()
   }
 
-  async getBalance(
-    addressOrName: string | Promise<string>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getBalance(addressOrName: string | Promise<string>, blockTag?: ethers.BlockTag, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getBalance(addressOrName, blockTag)
   }
 
   async getTransactionCount(
     addressOrName: string | Promise<string>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    blockTag?: ethers.BlockTag,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransactionCount(addressOrName, blockTag)
   }
 
-  async getCode(
-    addressOrName: string | Promise<string>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getCode(addressOrName: string | Promise<string>, blockTag?: ethers.BlockTag, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getCode(addressOrName, blockTag)
   }
 
-  async getStorageAt(
+  async getStorage(
     addressOrName: string | Promise<string>,
-    position: BigIntish | Promise<BigIntish>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    position: ethers.BigNumberish,
+    blockTag?: ethers.BlockTag,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.getStorageAt(addressOrName, position, blockTag)
+    return provider.getStorage(addressOrName, position, blockTag)
   }
 
-  async call(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async call(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.call(transaction, blockTag)
+    return provider.call(transaction)
   }
 
-  async estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>, optionals?: OptionalChainIdLike) {
+  async estimateGas(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.estimateGas(transaction)
   }
 
-  async getBlock(
-    blockHashOrBlockTag: ethers.providers.BlockTag | string | Promise<ethers.providers.BlockTag | string>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getBlock(blockHashOrBlockTag: ethers.BlockTag | string, prefetchTxs?: boolean, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.getBlock(blockHashOrBlockTag)
+    return provider.getBlock(blockHashOrBlockTag, prefetchTxs)
   }
 
-  async getTransaction(transactionHash: string | Promise<string>, optionals?: OptionalChainIdLike) {
+  async getTransaction(transactionHash: string, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransaction(transactionHash)
   }
 
-  async getLogs(filter: ethers.providers.Filter | Promise<ethers.providers.Filter>, optionals?: OptionalChainIdLike) {
+  async getLogs(filter: ethers.Filter, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getLogs(filter)
   }
@@ -406,8 +450,8 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.getResolver(name)
   }
 
-  async resolveName(name: string | Promise<string>) {
-    if (ethers.utils.isAddress(await name)) {
+  async resolveName(name: string) {
+    if (ethers.isAddress(await name)) {
       return name
     }
 
@@ -420,7 +464,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.resolveName(name)
   }
 
-  async lookupAddress(address: string | Promise<string>) {
+  async lookupAddress(address: string) {
     if (!(await this.supportsENS())) {
       return null
     }
@@ -444,7 +488,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 }
 
-function normalizeChainId(chainId: BigIntish | { chainId: string }): number {
+function normalizeChainId(chainId: ethers.BigNumberish | { chainId: string }): number {
   if (typeof chainId === 'object') return normalizeChainId(chainId.chainId)
   return Number(BigInt(chainId))
 }
@@ -463,10 +507,11 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
 
   constructor(
     client: SequenceClient,
-    providerFor: (networkId: number) => ethers.providers.JsonRpcProvider,
-    public readonly chainId: ChainIdLike
+    providerFor: (networkId: number) => ethers.JsonRpcProvider,
+    public readonly chainId: ChainIdLike,
+    options?: ethers.AbstractProviderOptions
   ) {
-    super(client, providerFor)
+    super(client, providerFor, undefined, options)
   }
 
   private _useChainId(chainId?: ChainIdLike): number {
@@ -487,15 +532,17 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
     return super.toChainId(this.chainId)
   }
 
-  async getNetwork(): Promise<NetworkConfig> {
+  async getNetwork(): Promise<ethers.Network> {
     const networks = await this.client.getNetworks()
-    const res = findNetworkConfig(networks, this.chainId)
+    const found = findNetworkConfig(networks, this.chainId)
 
-    if (!res) {
+    if (!found) {
       throw new Error(`Unsupported network ${this.chainId}`)
     }
 
-    return res
+    const network = new ethers.Network(found.name, found.chainId)
+
+    return network
   }
 
   /**

@@ -1,9 +1,8 @@
 import { commons } from '@0xsequence/core'
 import { Wallet } from '@0xsequence/wallet'
-import { ethers } from 'ethers'
 
 import { Migration } from './migrations'
-import { BigIntish } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
 export type UnsignedMigration = {
   tx: commons.transaction.TransactionBundle
@@ -21,7 +20,7 @@ export interface PresignedMigrationTracker {
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<SignedMigration | undefined>
 
   saveMigration(address: string, signed: SignedMigration, contexts: commons.context.VersionedContext): Promise<void>
@@ -63,7 +62,7 @@ export class Migrator {
     address: string
     fromImageHash: string
     fromVersion: number
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   }): Promise<{
     lastVersion: number
     lastImageHash: string

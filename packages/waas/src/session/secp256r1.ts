@@ -33,19 +33,19 @@ export async function newSECP256R1SessionFromSessionId(
       pubKeyTypedRaw[0] = KeyTypes.ECDSAP256R1
       pubKeyTypedRaw.set(new Uint8Array(pubKeyRaw), 1)
 
-      return ethers.utils.hexlify(pubKeyTypedRaw)
+      return ethers.hexlify(pubKeyTypedRaw)
     },
     sign: async (message: string | Uint8Array) => {
       if (typeof message === 'string') {
         if (message.startsWith('0x')) {
           message = message.slice(2)
-          message = ethers.utils.arrayify(message)
+          message = ethers.getBytes(message)
         } else {
           message = encoder.encode(message)
         }
       }
       const signatureBuff = await cryptoBackend.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } }, keys.privateKey, message)
-      return ethers.utils.hexlify(new Uint8Array(signatureBuff))
+      return ethers.hexlify(new Uint8Array(signatureBuff))
     },
     clear: async () => {
       await secureStoreBackend.delete(idbName, idbStoreName, sessionId)
@@ -88,5 +88,5 @@ async function pubKeyToSessionId(cryptoBackend: SubtleCryptoBackend, pubKey: Cry
   pubKeyTypedRaw[0] = KeyTypes.ECDSAP256R1
   pubKeyTypedRaw.set(new Uint8Array(pubKeyRaw), 1)
 
-  return ethers.utils.hexlify(pubKeyTypedRaw)
+  return ethers.hexlify(pubKeyTypedRaw)
 }

@@ -1,5 +1,5 @@
 import { ChainId, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
-import { BigIntish, jwtDecodeClaims } from '@0xsequence/utils'
+import { jwtDecodeClaims } from '@0xsequence/utils'
 import { Account } from '@0xsequence/account'
 import { ethers } from 'ethers'
 import { tracker, trackers } from '@0xsequence/sessions'
@@ -146,7 +146,7 @@ export class Session {
     orchestrator: SignatureOrchestrator
     addSigners?: commons.config.SimpleSigner[]
     referenceSigner: string
-    threshold?: BigIntish
+    threshold?: ethers.BigNumberish
     selectWallet: (wallets: string[]) => Promise<string | undefined>
     onAccountAddress?: (address: string) => void
     editConfigOnMigration?: (config: commons.config.Config) => commons.config.Config

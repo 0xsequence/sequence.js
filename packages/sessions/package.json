@@ -10,14 +10,14 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
+    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000",
     "test:coverage": "nyc pnpm test"
   },
   "dependencies": {
     "@0xsequence/core": "workspace:*",
     "@0xsequence/migration": "workspace:*",
     "@0xsequence/replacer": "workspace:*",
-    "ethers": "^5.5.2",
+    "ethers": "corbanbrook/ethers.js",
     "idb": "^7.1.1"
   },
   "devDependencies": {

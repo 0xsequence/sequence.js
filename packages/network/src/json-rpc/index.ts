@@ -1,5 +1,5 @@
 export * from './types'
 export * from './router'
-export * from './sender'
+export * from './handler'
 export * from './middleware'
 export * from './utils'

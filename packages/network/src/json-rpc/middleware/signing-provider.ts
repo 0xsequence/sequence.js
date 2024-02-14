@@ -1,4 +1,4 @@
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler, JsonRpcHandler } from '../types'
+import { EIP1193Provider, EIP1193ProviderFunc, JsonRpcMiddlewareHandler } from '../types'
 
 export const SignerJsonRpcMethods = [
   'personal_sign',
@@ -30,22 +30,21 @@ export const SignerJsonRpcMethods = [
 ]
 
 export class SigningProvider implements JsonRpcMiddlewareHandler {
-  private provider: JsonRpcHandler
+  private provider: EIP1193Provider
 
-  constructor(provider: JsonRpcHandler) {
+  constructor(provider: EIP1193Provider) {
     this.provider = provider
   }
 
-  sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
+    return (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<any> => {
       // Forward signing requests to the signing provider
       if (SignerJsonRpcMethods.includes(request.method)) {
-        this.provider.sendAsync(request, callback, chainId)
-        return
+        return this.provider.request(request)
       }
 
       // Continue to next handler
-      next(request, callback, chainId)
+      return next(request)
     }
   }
 }

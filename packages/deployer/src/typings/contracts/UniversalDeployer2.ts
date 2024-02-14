@@ -3,107 +3,130 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
+  BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils
-} from 'ethers'
-import type { FunctionFragment, Result, EventFragment } from '@ethersproject/abi'
-import type { Listener, Provider } from '@ethersproject/providers'
-import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from './common'
-import { BigIntish } from '@0xsequence/utils'
+  FunctionFragment,
+  Result,
+  Interface,
+  EventFragment,
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
+import type {
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
+  TypedListener,
+  TypedContractMethod,
+} from "./common";
 
-export interface UniversalDeployer2Interface extends utils.Interface {
-  functions: {
-    'deploy(bytes,uint256)': FunctionFragment
-  }
+export interface UniversalDeployer2Interface extends Interface {
+  getFunction(nameOrSignature: "deploy"): FunctionFragment;
 
-  getFunction(nameOrSignatureOrTopic: 'deploy'): FunctionFragment
+  getEvent(nameOrSignatureOrTopic: "Deploy"): EventFragment;
 
-  encodeFunctionData(functionFragment: 'deploy', values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigIntish>]): string
+  encodeFunctionData(
+    functionFragment: "deploy",
+    values: [BytesLike, BigNumberish]
+  ): string;
 
-  decodeFunctionResult(functionFragment: 'deploy', data: BytesLike): Result
-
-  events: {
-    'Deploy(address)': EventFragment
-  }
-
-  getEvent(nameOrSignatureOrTopic: 'Deploy'): EventFragment
+  decodeFunctionResult(functionFragment: "deploy", data: BytesLike): Result;
 }
 
-export interface DeployEventObject {
-  _addr: string
+export namespace DeployEvent {
+  export type InputTuple = [_addr: AddressLike];
+  export type OutputTuple = [_addr: string];
+  export interface OutputObject {
+    _addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DeployEvent = TypedEvent<[string], DeployEventObject>
-
-export type DeployEventFilter = TypedEventFilter<DeployEvent>
 
 export interface UniversalDeployer2 extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this
-  attach(addressOrName: string): this
-  deployed(): Promise<this>
+  connect(runner?: ContractRunner | null): UniversalDeployer2;
+  waitForDeployment(): Promise<this>;
 
-  interface: UniversalDeployer2Interface
+  interface: UniversalDeployer2Interface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(eventFilter?: TypedEventFilter<TEvent>): Array<TypedListener<TEvent>>
-  listeners(eventName?: string): Array<Listener>
-  removeAllListeners<TEvent extends TypedEvent>(eventFilter: TypedEventFilter<TEvent>): this
-  removeAllListeners(eventName?: string): this
-  off: OnEvent<this>
-  on: OnEvent<this>
-  once: OnEvent<this>
-  removeListener: OnEvent<this>
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    deploy(
-      _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigIntish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
-  }
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  deploy(
-    _creationCode: PromiseOrValue<BytesLike>,
-    _instance: PromiseOrValue<BigIntish>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-  callStatic: {
-    deploy(
-      _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigIntish>,
-      overrides?: CallOverrides
-    ): Promise<void>
-  }
+  deploy: TypedContractMethod<
+    [_creationCode: BytesLike, _instance: BigNumberish],
+    [void],
+    "payable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "deploy"
+  ): TypedContractMethod<
+    [_creationCode: BytesLike, _instance: BigNumberish],
+    [void],
+    "payable"
+  >;
+
+  getEvent(
+    key: "Deploy"
+  ): TypedContractEvent<
+    DeployEvent.InputTuple,
+    DeployEvent.OutputTuple,
+    DeployEvent.OutputObject
+  >;
 
   filters: {
-    'Deploy(address)'(_addr?: null): DeployEventFilter
-    Deploy(_addr?: null): DeployEventFilter
-  }
-
-  estimateGas: {
-    deploy(
-      _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigIntish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
-  }
-
-  populateTransaction: {
-    deploy(
-      _creationCode: PromiseOrValue<BytesLike>,
-      _instance: PromiseOrValue<BigIntish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
-  }
+    "Deploy(address)": TypedContractEvent<
+      DeployEvent.InputTuple,
+      DeployEvent.OutputTuple,
+      DeployEvent.OutputObject
+    >;
+    Deploy: TypedContractEvent<
+      DeployEvent.InputTuple,
+      DeployEvent.OutputTuple,
+      DeployEvent.OutputObject
+    >;
+  };
 }

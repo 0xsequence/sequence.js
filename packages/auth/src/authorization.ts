@@ -35,7 +35,7 @@ export const signAuthorization = async (
   chainId: ChainIdLike,
   options: AuthorizationOptions
 ): Promise<ETHAuthProof> => {
-  const address = ethers.utils.getAddress(await signer.getAddress())
+  const address = ethers.getAddress(await signer.getAddress())
   if (!address || address === '' || address === '0x') {
     throw ErrAccountIsRequired
   }

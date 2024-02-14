@@ -17,10 +17,10 @@
     "js-base64": "^3.7.2"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
-    "ethers": "^5.7.2"
+    "ethers": "corbanbrook/ethers.js"
   },
   "files": [
     "src",
