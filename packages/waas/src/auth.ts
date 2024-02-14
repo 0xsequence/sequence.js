@@ -29,6 +29,7 @@ import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
 import { SignedIntent} from "./intents";
+import {ethers} from "ethers";
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -229,7 +230,7 @@ export class Sequence {
       }
     })
 
-    this.deviceName.set(name)
+    await this.deviceName.set(name)
 
     return {
       sessionId: res.session.id,
@@ -241,8 +242,15 @@ export class Sequence {
     throw new Error('Not implemented')
   }
 
-  async getSessionID() {
+  async getSessionId() {
     return this.waas.getSessionId()
+  }
+
+  async getSessionHash() {
+    const sessionId = (await this.waas.getSessionId()).toLowerCase()
+    const sessionHash = ethers.utils.keccak256(sessionId)
+    console.log({ sessionId, sessionHash })
+    return sessionHash
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {

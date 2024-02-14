@@ -10,7 +10,7 @@ import {
   signIntent, sendDelayedEncode
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
-import { newSessionFromSessionId } from "./session";
+import {newSession, newSessionFromSessionId} from "./session";
 import {
   combineTransactionIntents,
   sendERC1155,
@@ -144,8 +144,14 @@ export class SequenceWaaSBase {
    *
    * @returns an id of the session
    */
-  public async getSessionId(): Promise<string | undefined> {
-    return this.sessionId.get()
+  public async getSessionId(): Promise<string> {
+    let sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      const session = await newSession()
+      sessionId = await session.sessionId()
+      await this.sessionId.set(sessionId)
+    }
+    return sessionId
   }
 
   /**
@@ -167,7 +173,8 @@ export class SequenceWaaSBase {
       await this.completeSignOut()
     }
 
-    const intent = await openSession({ idToken, lifespan: DEFAULT_LIFESPAN })
+    const sessionId = await this.getSessionId()
+    const intent = await openSession({ idToken, sessionId, lifespan: DEFAULT_LIFESPAN })
 
     await Promise.all([this.status.set('pending'), this.sessionId.set(intent.data.sessionId)])
 
@@ -238,7 +245,7 @@ export class SequenceWaaSBase {
       throw new Error('No pending sign in')
     }
 
-    await Promise.all([this.status.set('signed-in'), this.wallet.set(receipt.data.wallet), this.sessionId.set(receipt.data.sessionId)])
+    await Promise.all([this.status.set('signed-in'), this.wallet.set(receipt.data.wallet)])
 
     return receipt.data.wallet
   }

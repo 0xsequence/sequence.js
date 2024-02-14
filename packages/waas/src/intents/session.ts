@@ -1,4 +1,3 @@
-import { newSession } from "../session"
 import { Intent, makeIntent } from "./base"
 import {
   IntentDataCloseSession,
@@ -14,16 +13,15 @@ interface BaseArgs {
 }
 
 export type OpenSessionArgs = BaseArgs & {
+  sessionId: string,
   idToken: string,
 }
 
 export async function openSession(
-  { lifespan, idToken }: OpenSessionArgs
+  { lifespan, sessionId, idToken }: OpenSessionArgs
 ): Promise<Intent<IntentDataOpenSession>> {
-  const session = await newSession()
-
   return makeIntent('openSession', lifespan, {
-      sessionId: await session.sessionId(),
+      sessionId,
       idToken,
   })
 }
