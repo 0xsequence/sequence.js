@@ -49,39 +49,73 @@ export function sendTransactions({
     })
 }
 
-export type SendERC20Args = BaseArgs & Omit<TransactionERC20, 'type'>
+export type SendERC20Args = {
+    chainId: number,
+    token: string,
+    to: string,
+    value: ethers.BigNumberish,
+}
+
+export type SendERC721Args = {
+    chainId: number,
+    token: string,
+    to: string,
+    id: string,
+    safe?: boolean,
+    data?: string,
+}
+
+export type SendERC1155Args = {
+    chainId: number,
+    token: string,
+    to: string,
+    values: {
+        id: string,
+        amount: ethers.BigNumberish
+    }[],
+    data?: string,
+}
+
+export type SendDelayedEncodeArgs = {
+    chainId: number,
+    to: string,
+    value: ethers.BigNumberish,
+    abi: string,
+    func: string,
+    args: string[] | { [key: string]: string },
+}
 
 export function sendERC20({
-    tokenAddress, to, value,
+    token, to, value,
     ...args
-}: SendERC20Args): Intent<IntentDataSendTransaction> {
+}: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
     return sendTransactions({
-        transactions: [erc20({ tokenAddress, to, value })],
+        transactions: [erc20({ tokenAddress: token, to, value: value.toString() })],
         ...args
     })
 }
-
-export type SendERC721Args = BaseArgs & Omit<TransactionERC721, 'type'>
 
 export function sendERC721({
-    tokenAddress, to, id, safe, data,
+    token, to, id, safe, data,
     ...args
-}: SendERC721Args): Intent<IntentDataSendTransaction> {
+}: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
     return sendTransactions({
-        transactions: [erc721({ tokenAddress, to, id, data, safe })],
+        transactions: [erc721({ tokenAddress: token, to, id, data, safe })],
         ...args
     })
 }
 
-type ERC1155Args = Omit<TransactionERC1155, 'type'|'vals'> & { values: { id: string, amount: ethers.BigNumberish }[] }
-export type SendERC1155Args = BaseArgs & ERC1155Args
-
 export function sendERC1155({
-    tokenAddress, to, values, data,
+    token, to, values, data,
     ...args
-}: SendERC1155Args): Intent<IntentDataSendTransaction> {
+}: SendERC1155Args & BaseArgs): Intent<IntentDataSendTransaction> {
+    const vals = values.map(v => ({
+        id: v.id,
+        amount: ethers.BigNumber.from(v.amount).toString(),
+    }))
+
     return sendTransactions({
-        transactions: [erc1155({ tokenAddress, to, values, data })],
+        transactions: [erc1155({ tokenAddress: token, to, vals, data })],
         ...args
     })
 }
@@ -103,10 +137,10 @@ export function erc721(data: Omit<TransactionERC721, 'type'>): Transaction {
     return { type: 'erc720send', ...data }
 }
 
-export function erc1155({ values, ...data }: ERC1155Args): Transaction {
+export function erc1155({ vals, ...data }: Omit<TransactionERC1155, 'type'>): Transaction {
     return {
         type: 'erc1155send',
-        vals: values.map(v => ({
+        vals: vals.map(v => ({
             id: v.id,
             amount: ethers.BigNumber.from(v.amount).toString(),
         })),

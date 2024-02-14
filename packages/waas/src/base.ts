@@ -285,13 +285,13 @@ export class SequenceWaaSBase {
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
    */
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendTransactions(await this.commonArgs(args))
     return this.buildPayload(intent)
   }
 
-  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
-    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
+  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC20')
     }
 
@@ -299,8 +299,8 @@ export class SequenceWaaSBase {
     return this.buildPayload(intent)
   }
 
-  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
-    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
+  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC721')
     }
 
@@ -308,8 +308,8 @@ export class SequenceWaaSBase {
     return this.buildPayload(intent)
   }
 
-  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
-    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
+  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC1155')
     }
 
