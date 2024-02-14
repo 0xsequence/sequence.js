@@ -9,7 +9,7 @@ import {
   TransactionRaw
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
-import { BigIntish } from '@0xsequence/utils'
+import { toHexString } from '@0xsequence/utils'
 
 interface BaseArgs {
   lifespan: number
@@ -26,7 +26,7 @@ export type SendERC20Args = {
   chainId: number
   token: string
   to: string
-  value: BigIntish
+  value: ethers.BigNumberish
 }
 
 export type SendERC721Args = {
@@ -44,7 +44,7 @@ export type SendERC1155Args = {
   to: string
   values: {
     id: string
-    amount: BigIntish
+    amount: ethers.BigNumberish
   }[]
   data?: string
 }
@@ -52,7 +52,7 @@ export type SendERC1155Args = {
 export type SendDelayedEncodeArgs = {
   chainId: number
   to: string
-  value: BigIntish
+  value: ethers.BigNumberish
   abi: string
   func: string
   args: string[] | { [key: string]: string }
@@ -70,7 +70,7 @@ export function sendTransactions({
     wallet,
     network: chainId.toString(),
     transactions: transactions.map(tx => {
-      if (!tx.to || tx.to === ethers.constants.AddressZero) {
+      if (!tx.to || tx.to === ethers.ZeroAddress) {
         throw new Error('Contract creation not supported')
       }
 
@@ -81,8 +81,8 @@ export function sendTransactions({
       return {
         type: 'transaction',
         to: tx.to,
-        value: ethers.BigNumber.from(tx.value || 0).toHexString(),
-        data: ethers.utils.hexlify(tx.data || [])
+        value: toHexString(BigInt(tx.value || 0)),
+        data: ethers.hexlify(tx.data || new Uint8Array([]))
       }
     })
   })
@@ -152,7 +152,7 @@ export function sendDelayedEncode({
 }
 
 export type Transaction =
-  | ethers.providers.TransactionRequest
+  | ethers.TransactionRequest
   | TransactionRaw
   | TransactionERC20
   | TransactionERC721
@@ -218,6 +218,6 @@ export function combineTransactionIntents(intents: Intent<IntentDataSendTransact
   })
 }
 
-function isEthersTx(tx: Transaction): tx is ethers.providers.TransactionRequest {
+function isEthersTx(tx: Transaction): tx is ethers.TransactionRequest {
   return !['transaction', 'erc20send', 'erc721send', 'erc1155send', 'delayedEncode'].includes(tx.type as any)
 }

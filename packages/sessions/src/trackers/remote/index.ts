@@ -3,7 +3,6 @@ import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../../tracker'
 import { Sessions, SignatureType, Transaction } from './sessions.gen'
-import { BigIntish } from '@0xsequence/utils'
 
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
@@ -41,7 +40,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     const config = args.nextConfig
     const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
     const message = v2.signature.setImageHashStruct(imageHash)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
 
     await this.sessions.saveSignature({
       wallet: args.wallet,
@@ -52,7 +51,12 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     })
   }
 
-  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigIntish; signatures: string[] }): Promise<void> {
+  async saveWitnesses(args: {
+    wallet: string
+    digest: string
+    chainId: ethers.BigNumberish
+    signatures: string[]
+  }): Promise<void> {
     let filteredSignatures = args.signatures
     if (this.onlyRecoverable) {
       filteredSignatures = filteredSignatures.filter(signature => {
@@ -116,13 +120,13 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     return Object.entries(wallets).map(([wallet, { digest, chainID, type, signature }]) => {
       switch (type) {
         case SignatureType.EIP712:
-          signature += ethers.utils.hexlify(commons.signer.SigType.EIP712).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.EIP712).slice(2)
           break
         case SignatureType.EthSign:
-          signature += ethers.utils.hexlify(commons.signer.SigType.ETH_SIGN).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.ETH_SIGN).slice(2)
           break
         case SignatureType.EIP1271:
-          signature += ethers.utils.hexlify(commons.signer.SigType.WALLET_BYTES32).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.WALLET_BYTES32).slice(2)
           break
       }
 
@@ -141,7 +145,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     wallet: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     const chainIdString = numberString(chainId)
     const { migrations } = await this.sessions.migrations({ wallet, fromVersion, fromImageHash, chainID: chainIdString })
@@ -335,18 +339,18 @@ function encodeTransaction(transaction: commons.transaction.Transaction): Transa
   return {
     to: transaction.to,
     value: transaction.value !== undefined ? numberString(transaction.value) : undefined,
-    data: transaction.data !== undefined ? ethers.utils.hexlify(transaction.data) : undefined,
+    data: transaction.data !== undefined ? ethers.hexlify(transaction.data) : undefined,
     gasLimit: transaction.gasLimit !== undefined ? numberString(transaction.gasLimit) : undefined,
     delegateCall: transaction.delegateCall,
     revertOnError: transaction.revertOnError
   }
 }
 
-function numberNumber(n: BigIntish): number {
+function numberNumber(n: ethers.BigNumberish): number {
   return Number(BigInt(n))
 }
 
-function numberString(n: BigIntish): string {
+function numberString(n: ethers.BigNumberish): string {
   return BigInt(n).toString()
 }
 

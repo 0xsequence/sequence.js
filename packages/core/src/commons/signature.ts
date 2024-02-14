@@ -1,6 +1,5 @@
 import { ethers } from 'ethers'
 import * as config from './config'
-import { BigIntish } from '@0xsequence/utils'
 
 export type SignaturePart = {
   signature: string
@@ -21,7 +20,7 @@ export type UnrecoveredSignature = {
 export type SignedPayload = {
   message?: ethers.BytesLike
   digest: string
-  chainId: BigIntish
+  chainId: ethers.BigNumberish
   address: string
 }
 
@@ -35,7 +34,7 @@ export interface SignatureCoder<
 
   trim: (data: string) => Promise<string>
 
-  recover: (data: Z, payload: SignedPayload, provider: ethers.providers.Provider) => Promise<T>
+  recover: (data: Z, payload: SignedPayload, provider: ethers.Provider) => Promise<T>
 
   supportsNoChainId: boolean
 
@@ -43,7 +42,7 @@ export interface SignatureCoder<
     config: Y,
     signatures: Map<string, SignaturePart>,
     subdigests: string[],
-    chainId: BigIntish
+    chainId: ethers.BigNumberish
   ) => {
     encoded: string
     weight: bigint
@@ -61,7 +60,7 @@ export interface SignatureCoder<
 }
 
 export function subdigestOf(payload: SignedPayload) {
-  return ethers.utils.solidityKeccak256(
+  return ethers.solidityPackedKeccak256(
     ['bytes', 'uint256', 'address', 'bytes32'],
     ['0x1901', payload.chainId, payload.address, payload.digest]
   )

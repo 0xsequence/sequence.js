@@ -10,7 +10,7 @@ import {
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/utils'
+import { logger, base64DecodeObject } from '@0xsequence/utils'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -30,7 +30,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
 
     // record open details (sessionId + default network) from the window url
-    const { pathname, search: rawParams } = new URL(windowHref || window.location.href)
+    const { search: rawParams } = new URL(windowHref || window.location.href)
 
     let session: TransportSession | null = this.getWindowTransportSession(rawParams)
 

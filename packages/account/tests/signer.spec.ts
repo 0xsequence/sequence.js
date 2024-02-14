@@ -19,8 +19,8 @@ import { parseEther } from '@0xsequence/utils'
 const { expect } = chai.use(chaiAsPromised)
 
 describe('Account signer', () => {
-  let provider1: ethers.providers.JsonRpcProvider
-  let provider2: ethers.providers.JsonRpcProvider
+  let provider1: ethers.BrowserProvider
+  let provider2: ethers.JsonRpcProvider
 
   let signer1: ethers.Signer
   let signer2: ethers.Signer
@@ -37,31 +37,31 @@ describe('Account signer', () => {
   }
 
   before(async () => {
-    provider1 = new ethers.providers.Web3Provider(hardhat.network.provider as any)
-    provider2 = new ethers.providers.JsonRpcProvider('http://127.0.0.1:7048')
+    provider1 = new ethers.BrowserProvider(hardhat.network.provider as any, undefined, { cacheTimeout: -1 })
+    provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048')
+
+    signer1 = await provider1.getSigner()
+    signer2 = await provider2.getSigner()
 
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1) as any
-
+    ;('')
     networks = [
       {
         chainId: 31337,
         name: 'hardhat',
         provider: provider1,
         rpcUrl: '',
-        relayer: new LocalRelayer(provider1.getSigner())
+        relayer: new LocalRelayer(signer1)
       },
       {
         chainId: 31338,
         name: 'hardhat2',
         provider: provider2,
         rpcUrl: 'http://127.0.0.1:7048',
-        relayer: new LocalRelayer(provider2.getSigner())
+        relayer: new LocalRelayer(signer2)
       }
     ]
-
-    signer1 = provider1.getSigner()
-    signer2 = provider2.getSigner()
 
     contexts = await utils.context.deploySequenceContexts(signer1)
     const context2 = await utils.context.deploySequenceContexts(signer2)
@@ -151,7 +151,7 @@ describe('Account signer', () => {
         it('should fail to sign message because not deployed', async () => {
           const signer = account.getSigner(chainId)
 
-          await expect(signer.signMessage(ethers.utils.randomBytes(32))).to.be.rejectedWith('Wallet cannot validate onchain')
+          await expect(signer.signMessage(ethers.randomBytes(32))).to.be.rejectedWith('Wallet cannot validate onchain')
         })
 
         it('should sign message after deployment', async () => {
@@ -163,7 +163,7 @@ describe('Account signer', () => {
 
           expect(await signer.provider.getCode(account.address)).to.not.equal('0x')
 
-          const signature = await signer.signMessage(ethers.utils.randomBytes(32))
+          const signature = await signer.signMessage(ethers.randomBytes(32))
           expect(signature).to.exist
           expect(signature).to.not.equal('0x')
         })
@@ -171,7 +171,7 @@ describe('Account signer', () => {
         it('should sign a message (undeployed) when using EIP6492', async () => {
           const signer = account.getSigner(chainId, { cantValidateBehavior: 'eip6492' })
 
-          const signature = await signer.signMessage(ethers.utils.randomBytes(32))
+          const signature = await signer.signMessage(ethers.randomBytes(32))
           expect(signature).to.exist
           expect(signature).to.not.equal('0x')
         })
@@ -233,7 +233,7 @@ describe('Account signer', () => {
 
               async getFeeOptionsRaw(
                 _entrypoint: string,
-                _data: ethers.utils.BytesLike,
+                _data: ethers.BytesLike,
                 _options?: { simulate?: boolean }
               ): Promise<{ options: FeeOption[] }> {
                 return { options: this.feeOptions, quote: this.quote } as any
@@ -250,7 +250,7 @@ describe('Account signer', () => {
                 signedTxs: commons.transaction.IntendedTransactionBundle,
                 quote?: FeeQuote | undefined,
                 waitForReceipt?: boolean | undefined
-              ): Promise<commons.transaction.TransactionResponse<ethers.providers.TransactionReceipt>> {
+              ): Promise<commons.transaction.TransactionResponse<ethers.TransactionReceipt>> {
                 expect(quote).to.equal(this.quote)
                 return super.relay(signedTxs, quote, waitForReceipt)
               }
@@ -289,7 +289,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -328,7 +328,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -358,7 +358,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('250').toString(),
@@ -368,13 +368,13 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
             const signer = account.getSigner(chainId)
 
-            await token.mint(account.address, parseEther('6000'))
+            await token.getFunction('mint')(account.address, parseEther('6000'))
 
             const res = await signer.sendTransaction({
               to: ethers.Wallet.createRandom().address
@@ -384,7 +384,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('250'))
+            expect(await token.getFunction('balanceOf')(recipient)).to.equal(parseEther('250'))
           })
 
           it('should reject ERC20 fee if not enough balance', async () => {
@@ -399,7 +399,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('250').toString(),
@@ -409,7 +409,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -446,7 +446,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('11').toString(),
@@ -456,13 +456,13 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
             const signer = account.getSigner(chainId)
 
-            await token.mint(account.address, parseEther('11'))
+            await token.getFunction('mint')(account.address, parseEther('11'))
 
             const res = await signer.sendTransaction({
               to: ethers.Wallet.createRandom().address
@@ -472,7 +472,7 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('11'))
+            expect(await token.getFunction('balanceOf')(recipient)).to.equal(parseEther('11'))
           })
 
           it('should select fee using callback (first option)', async () => {
@@ -500,7 +500,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('11').toString(),
@@ -510,7 +510,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -534,8 +534,8 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.equal(5n)
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('0'))
+            expect(await signer.provider.getBalance(recipient)).to.equal(5n)
+            expect(await token.getFunction('balanceOf')(recipient)).to.equal(parseEther('0'))
           })
 
           it('should select fee using callback (second option)', async () => {
@@ -563,7 +563,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('11').toString(),
@@ -573,7 +573,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -584,7 +584,7 @@ describe('Account signer', () => {
               }
             })
 
-            await token.mint(account.address, parseEther('11'))
+            await token.getFunction('mint')(account.address, parseEther('11'))
 
             const res = await signer.sendTransaction({
               to: ethers.Wallet.createRandom().address
@@ -594,8 +594,8 @@ describe('Account signer', () => {
             expect(res.hash).to.exist
 
             expect(await signer.provider.getTransaction(res.hash)).to.exist
-            expect((await signer.provider.getBalance(recipient)).toBigInt()).to.equal(0n)
-            expect((await token.balanceOf(recipient)).toBigInt()).to.equal(parseEther('11'))
+            expect(await signer.provider.getBalance(recipient)).to.equal(0n)
+            expect(await token.getFunction('balanceOf')(recipient)).to.equal(parseEther('11'))
           })
         })
       })
@@ -603,7 +603,7 @@ describe('Account signer', () => {
       it('should send transactions on multiple nonce spaces one by one', async () => {
         const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
         const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-        const randomSpace = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
+        const randomSpace = BigInt(ethers.hexlify(ethers.randomBytes(12)))
         const signer3 = account.getSigner(chainId, {
           nonceSpace: randomSpace
         })
@@ -669,7 +669,7 @@ describe('Account signer', () => {
         it('should send transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const randomSpace = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
+          const randomSpace = BigInt(ethers.hexlify(ethers.randomBytes(12)))
           const signer3 = account.getSigner(chainId, {
             nonceSpace: randomSpace
           })
@@ -747,7 +747,7 @@ describe('Account signer', () => {
         it('should send 100 parallel transactions using different spaces', async () => {
           const signers = new Array(100).fill(0).map(() =>
             account.getSigner(chainId, {
-              nonceSpace: BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
+              nonceSpace: BigInt(ethers.hexlify(ethers.randomBytes(12)))
             })
           )
 
@@ -782,7 +782,7 @@ describe('Account signer', () => {
         it('should send multiple transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const randomSpace = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(12)))
+          const randomSpace = BigInt(ethers.hexlify(ethers.randomBytes(12)))
 
           const signer3 = account.getSigner(chainId, {
             nonceSpace: randomSpace

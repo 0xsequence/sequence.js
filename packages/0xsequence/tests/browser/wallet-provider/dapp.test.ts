@@ -2,7 +2,7 @@ import { commons, v2 } from '@0xsequence/core'
 import { SequenceClient, SequenceProvider, DefaultProviderConfig, MemoryItemStore } from '@0xsequence/provider'
 import { context } from '@0xsequence/tests'
 import { configureLogger, parseEther } from '@0xsequence/utils'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
 import { testAccounts, getEOAWallet, sendETH } from '../testutils'
 
@@ -21,12 +21,12 @@ export const tests = async () => {
   // Deploy Sequence WalletContext (deterministic).
   //
   const deployedWalletContext = await (async () => {
-    const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-    const signer = provider.getSigner()
+    const provider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
+    const signer = await provider.getSigner()
     return context.deploySequenceContexts(signer)
   })()
 
-  const hardhatProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const hardhatProvider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
 
   const client = new SequenceClient(transportsConfig, new MemoryItemStore(), { defaultChainId: 31337 })
   const wallet = new SequenceProvider(client, chainId => {
@@ -35,7 +35,7 @@ export const tests = async () => {
     }
 
     if (chainId === 31338) {
-      return new ethers.providers.JsonRpcProvider('http://localhost:9545')
+      return new ethers.JsonRpcProvider('http://localhost:9545', undefined, { cacheTimeout: -1 })
     }
 
     throw new Error(`No provider for chainId ${chainId}`)
@@ -107,7 +107,7 @@ export const tests = async () => {
 
   await test('getAddress', async () => {
     const address = wallet.getAddress()
-    assert.true(ethers.utils.isAddress(address), 'wallet address is valid')
+    assert.true(ethers.isAddress(address), 'wallet address is valid')
   })
 
   await test('getWalletConfig', async () => {
@@ -118,7 +118,7 @@ export const tests = async () => {
     assert.true(BigInt(config.threshold) === 2n, 'config, 2 threshold')
     assert.true(BigInt(config.checkpoint) === 0n, 'config, 0 checkpoint')
     assert.true(v2.config.isSignerLeaf(config.tree), 'config, isSignerLeaf')
-    assert.true(ethers.utils.isAddress((config.tree as v2.config.SignerLeaf).address), 'config, signer address')
+    assert.true(ethers.isAddress((config.tree as v2.config.SignerLeaf).address), 'config, signer address')
     assert.true(BigInt((config.tree as v2.config.SignerLeaf).weight) === 2n, 'config, signer weight')
   })
 
@@ -128,13 +128,13 @@ export const tests = async () => {
       assert.equal(provider.getChainId(), 31337, 'provider chainId is 31337')
 
       const network = await provider.getNetwork()
-      assert.equal(network.chainId, 31337, 'chain id match')
+      assert.equal(network.chainId, 31337n, 'chain id match')
 
       const netVersion = await provider.send('net_version', [])
       assert.equal(netVersion, '31337', 'net_version check')
 
       const chainId = await provider.send('eth_chainId', [])
-      assert.equal(chainId, ethers.utils.hexValue(31337), 'eth_chainId check')
+      assert.equal(chainId, ethers.toQuantity(31337), 'eth_chainId check')
 
       const chainId2 = await signer.getChainId()
       assert.equal(chainId2, 31337, 'chainId check')
@@ -146,13 +146,13 @@ export const tests = async () => {
       assert.equal(provider2.getChainId(), 31338, '2nd chain, chainId is 31338 - 2')
 
       const network = await provider2.getNetwork()
-      assert.equal(network.chainId, 31338, '2nd chain, chain id match - 3')
+      assert.equal(network.chainId, 31338n, '2nd chain, chain id match - 3')
 
       const netVersion = await provider2.send('net_version', [])
       assert.equal(netVersion, '31338', '2nd chain, net_version check - 4')
 
       const chainId = await provider2.send('eth_chainId', [])
-      assert.equal(chainId, ethers.utils.hexValue(31338), '2nd chain, eth_chainId check - 5')
+      assert.equal(chainId, ethers.toQuantity(31338), '2nd chain, eth_chainId check - 5')
 
       const chainId2 = await provider2.getSigner().getChainId()
       assert.equal(chainId2, 31338, '2nd chain, chainId check - 6')
@@ -170,7 +170,7 @@ export const tests = async () => {
     const chainId = wallet.getChainId()
 
     const message = 'hihi'
-    const message2 = ethers.utils.toUtf8Bytes('hihi')
+    const message2 = ethers.toUtf8Bytes(message)
 
     // Sign the message
     const sigs = await Promise.all(
@@ -189,6 +189,9 @@ export const tests = async () => {
         return sig
       })
     )
+
+    assert.equal(sigs[0], sigs[1], 'signatures should match even if message type is different')
+
     const sig = sigs[0]
 
     // Verify the signature
@@ -200,14 +203,14 @@ export const tests = async () => {
     const address = wallet.getAddress()
     const chainId = wallet.getChainId()
 
-    const domain: TypedDataDomain = {
+    const domain: ethers.TypedDataDomain = {
       name: 'Ether Mail',
       version: '1',
       chainId: chainId,
       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
     }
 
-    const types: { [key: string]: TypedDataField[] } = {
+    const types: { [key: string]: ethers.TypedDataField[] } = {
       Person: [
         { name: 'name', type: 'string' },
         { name: 'wallet', type: 'address' }
@@ -251,21 +254,21 @@ export const tests = async () => {
 
   await test('getBalance', async () => {
     // technically, the mock-wallet's single signer owner has some ETH..
-    const balanceSigner1 = (await provider.getBalance('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853')).toBigInt()
+    const balanceSigner1 = await provider.getBalance('0x4e37E14f5d5AAC4DF1151C6E8DF78B7541680853')
     assert.true(balanceSigner1 > 0n, 'signer1 balance > 0')
   })
 
   await test('fund sequence wallet', async () => {
     // fund Sequence wallet with some ETH from test seed account
     const testAccount = getEOAWallet(testAccounts[0].privateKey)
-    const walletBalanceBefore = (await signer.getBalance()).toBigInt()
+    const walletBalanceBefore = await signer.getBalance()
 
     const ethAmount = parseEther('10.1234')
     const txResp = await sendETH(testAccount, wallet.getAddress(), ethAmount)
     const txReceipt = await provider.getTransactionReceipt(txResp.hash)
-    assert.true(txReceipt.status === 1, 'eth sent from signer1')
+    assert.true(txReceipt!.status === 1, 'eth sent from signer1')
 
-    const walletBalanceAfter = (await signer.getBalance()).toBigInt()
+    const walletBalanceAfter = await signer.getBalance()
     assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
   })
 
@@ -280,11 +283,11 @@ export const tests = async () => {
       // via the relayer
       {
         const walletAddress = wallet.getAddress()
-        const walletBalanceBefore = (await signer.getBalance()).toBigInt()
+        const walletBalanceBefore = await signer.getBalance()
 
         // send eth from sequence smart wallet to another test account
         const toAddress = testAccounts[1].address
-        const toBalanceBefore = (await provider.getBalance(toAddress)).toBigInt()
+        const toBalanceBefore = await provider.getBalance(toAddress)
 
         const ethAmount = parseEther('1.4242')
 
@@ -306,7 +309,7 @@ export const tests = async () => {
         const beforeWalletDeployed = (await hardhatProvider.getCode(wallet.getAddress())) !== '0x'
 
         // NOTE/TODO: gasPrice even if set will be set again by the LocalRelayer, we should allow it to be overridden
-        const tx: ethers.providers.TransactionRequest = {
+        const tx: ethers.TransactionRequest = {
           from: walletAddress,
           to: toAddress,
           value: ethAmount
@@ -320,7 +323,7 @@ export const tests = async () => {
         const txResp = await signer.sendTransaction(tx)
         const txReceipt = await txResp.wait()
 
-        assert.true(txReceipt.status === 1, 'txn sent successfully')
+        assert.true(txReceipt!.status === 1, 'txn sent successfully')
         assert.true(
           (await hardhatProvider.getCode(wallet.getAddress())) !== '0x',
           'wallet must be in deployed state after the txn'
@@ -328,19 +331,19 @@ export const tests = async () => {
 
         // transaction is sent to the deployed wallet, if the wallet is deployed.. otherwise its sent to guestModule
         if (beforeWalletDeployed) {
-          assert.equal(txReceipt.to, wallet.getAddress(), 'recipient is correct')
+          assert.equal(txReceipt!.to, wallet.getAddress(), 'recipient is correct')
         } else {
-          assert.equal(txReceipt.to, walletContext[2].guestModule, 'recipient is correct')
+          assert.equal(txReceipt!.to, walletContext[2].guestModule, 'recipient is correct')
         }
 
         // Ensure fromAddress sent their eth
-        const walletBalanceAfter = (await signer.getBalance()).toBigInt()
+        const walletBalanceAfter = await signer.getBalance()
         const sent = (walletBalanceAfter - walletBalanceBefore) * -1n
 
         assert.true(sent === ethAmount, `wallet sent ${sent} eth while expected ${ethAmount}`)
 
         // Ensure toAddress received their eth
-        const toBalanceAfter = (await provider.getBalance(toAddress)).toBigInt()
+        const toBalanceAfter = await provider.getBalance(toAddress)
         const received = toBalanceAfter - toBalanceBefore
         assert.true(received === ethAmount, `toAddress received ${received} eth while expected ${ethAmount}`)
 
@@ -348,7 +351,7 @@ export const tests = async () => {
         if (opts.gasLimit) {
           // In our test, we are passing a high gas limit for an internal transaction, so overall
           // transaction must be higher than this value if it used our value correctly
-          assert.true(txResp.gasLimit.gte(opts.gasLimit), 'sendETH, using higher gasLimit')
+          assert.true(txResp.gasLimit >= BigInt(opts.gasLimit), 'sendETH, using higher gasLimit')
         }
       }
     })
@@ -365,21 +368,21 @@ export const tests = async () => {
     const ethAmount1 = parseEther('1.234')
     const ethAmount2 = parseEther('0.456')
 
-    const tx1: ethers.providers.TransactionRequest = {
+    const tx1: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount1
     }
-    const tx2: ethers.providers.TransactionRequest = {
+    const tx2: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount2
     }
 
-    const toBalanceBefore = (await provider.getBalance(testAccount.address)).toBigInt()
+    const toBalanceBefore = await provider.getBalance(testAccount.address)
     const txnResp = await signer.sendTransaction([tx1, tx2])
 
     await txnResp.wait()
 
-    const toBalanceAfter = (await provider.getBalance(testAccount.address)).toBigInt()
+    const toBalanceAfter = await provider.getBalance(testAccount.address)
     const sent = toBalanceAfter - toBalanceBefore
     const expected = ethAmount1 + ethAmount2
     assert.true(
@@ -394,22 +397,22 @@ export const tests = async () => {
     const ethAmount1 = parseEther('1.234')
     const ethAmount2 = parseEther('0.456')
 
-    const tx1: ethers.providers.TransactionRequest = {
+    const tx1: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount1
     }
 
-    const tx2: ethers.providers.TransactionRequest = {
+    const tx2: ethers.TransactionRequest = {
       to: testAccount.address,
       value: ethAmount2
     }
 
-    const toBalanceBefore = (await provider.getBalance(testAccount.address)).toBigInt()
+    const toBalanceBefore = await provider.getBalance(testAccount.address)
     const txnResp = await signer.sendTransaction([tx1, tx2])
 
     await txnResp.wait()
 
-    const toBalanceAfter = (await provider.getBalance(testAccount.address)).toBigInt()
+    const toBalanceAfter = await provider.getBalance(testAccount.address)
     const sent = toBalanceAfter - toBalanceBefore
     const expected = ethAmount1 + ethAmount2
     assert.true(
@@ -434,12 +437,12 @@ export const tests = async () => {
       value: ethAmount2
     }
 
-    const toBalanceBefore = (await provider.getBalance(testAccount.address)).toBigInt()
+    const toBalanceBefore = await provider.getBalance(testAccount.address)
 
     const txnResp = await signer.sendTransaction([tx1, tx2])
     await txnResp.wait()
 
-    const toBalanceAfter = (await provider.getBalance(testAccount.address)).toBigInt()
+    const toBalanceAfter = await provider.getBalance(testAccount.address)
     const sent = toBalanceAfter - toBalanceBefore
     const expected = ethAmount1 + ethAmount2
     assert.true(
@@ -472,30 +475,32 @@ export const tests = async () => {
     // initial balances
     {
       const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
-      const walletBalanceBefore = (await testAccount.getBalance()).toBigInt()
+      // const walletBalanceBefore = await testAccount.getBalance()
+      const walletBalanceBefore = await provider2.getBalance(await testAccount.getAddress())
 
       const mainTestAccount = getEOAWallet(testAccounts[0].privateKey, wallet.getProvider())
-      const mainWalletBalanceBefore = (await mainTestAccount.getBalance()).toBigInt()
+      //const mainWalletBalanceBefore = await mainTestAccount.getBalance()
+      const mainWalletBalanceBefore = await provider.getBalance(await mainTestAccount.getAddress())
 
       assert.true(walletBalanceBefore !== mainWalletBalanceBefore, 'balances across networks do not match')
 
       // test different code paths lead to same results
-      assert.equal(
-        (await provider2.getBalance(await testAccount.getAddress())).toString(),
-        (await testAccount.getBalance()).toString(),
-        'balance match 1'
-      )
-      assert.equal(
-        (await provider.getBalance(await mainTestAccount.getAddress())).toString(),
-        (await mainTestAccount.getBalance()).toString(),
-        'balance match 2'
-      )
+      // assert.equal(
+      //   (await provider2.getBalance(await testAccount.getAddress())).toString(),
+      //   (await testAccount.getBalance()).toString(),
+      //   'balance match 1'
+      // )
+      // assert.equal(
+      //   (await provider.getBalance(await mainTestAccount.getAddress())).toString(),
+      //   (await mainTestAccount.getBalance()).toString(),
+      //   'balance match 2'
+      // )
     }
 
     // first, lets move some ETH info the wallet from teh testnet seed account
     {
       const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
-      const walletBalanceBefore = (await signer2.getBalance()).toBigInt()
+      const walletBalanceBefore = await signer2.getBalance()
 
       const ethAmount = parseEther('4.2')
 
@@ -503,9 +508,9 @@ export const tests = async () => {
       // const txReceipt = await provider2.getTransactionReceipt(txResp.hash)
 
       const txReceipt = await (await sendETH(testAccount, wallet.getAddress(), ethAmount)).wait()
-      assert.true(txReceipt.status === 1, 'eth sent')
+      assert.true(txReceipt!.status === 1, 'eth sent')
 
-      const walletBalanceAfter = (await signer2.getBalance()).toBigInt()
+      const walletBalanceAfter = await signer2.getBalance()
       assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
     }
 
@@ -513,11 +518,11 @@ export const tests = async () => {
     // the authChain relayer
     {
       const walletAddress = wallet.getAddress()
-      const walletBalanceBefore = (await signer2.getBalance()).toBigInt()
+      const walletBalanceBefore = await signer2.getBalance()
 
       // send eth from sequence smart wallet to another test account
       const toAddress = testAccounts[1].address
-      const toBalanceBefore = (await provider2.getBalance(toAddress)).toBigInt()
+      const toBalanceBefore = await provider2.getBalance(toAddress)
 
       const ethAmount = parseEther('1.1234')
 
@@ -528,17 +533,17 @@ export const tests = async () => {
       }
       const txReceipt = await (await signer2.sendTransaction(tx)).wait()
 
-      assert.true(txReceipt.status === 1, 'txn sent successfully')
+      assert.true(txReceipt!.status === 1, 'txn sent successfully')
       assert.true((await hardhatProvider.getCode(walletAddress)) !== '0x', 'wallet must be in deployed state after the txn')
 
       // Ensure fromAddress sent their eth
-      const walletBalanceAfter = (await signer2.getBalance()).toBigInt()
+      const walletBalanceAfter = await signer2.getBalance()
       const sent = (walletBalanceAfter - walletBalanceBefore) * -1n
 
       assert.true(sent === ethAmount, `wallet sent ${ethAmount} eth`)
 
       // Ensure toAddress received their eth
-      const toBalanceAfter = (await provider2.getBalance(toAddress)).toBigInt()
+      const toBalanceAfter = await provider2.getBalance(toAddress)
       assert.true(toBalanceAfter - toBalanceBefore === ethAmount, `toAddress received ${ethAmount} eth`)
     }
   })

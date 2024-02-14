@@ -1,13 +1,14 @@
 import { ethers } from 'ethers'
 import {
   JsonRpcRouter,
-  JsonRpcSender,
-  loggingProviderMiddleware,
   EagerProvider,
   SingleflightMiddleware,
   CachedProvider,
   JsonRpcMiddleware,
-  JsonRpcMiddlewareHandler
+  JsonRpcMiddlewareHandler,
+  JsonRpcHandler,
+  EIP1193Provider,
+  JsonRpcSender
 } from './json-rpc'
 import { ChainId, networks } from './constants'
 
@@ -23,18 +24,23 @@ export interface JsonRpcProviderOptions {
 }
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
-export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
-  private _chainId?: number
-  private _sender: JsonRpcSender
+export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Provider, JsonRpcSender {
+  #chainId?: number
+  #nextId: number = 1
+  #sender: EIP1193Provider
 
-  constructor(url: ethers.utils.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
-    super(url, options?.chainId)
+  constructor(
+    public url: string | ethers.FetchRequest | undefined,
+    options?: JsonRpcProviderOptions,
+    jsonRpcApiProviderOptions?: ethers.JsonRpcApiProviderOptions
+  ) {
+    super(url, options?.chainId, jsonRpcApiProviderOptions)
 
     const chainId = options?.chainId
     const middlewares = options?.middlewares
     const blockCache = options?.blockCache
 
-    this._chainId = chainId
+    this.#chainId = chainId
 
     // NOTE: it will either use the middleware stack passed to the constructor
     // or it will use the default caching middleware provider. It does not concat them,
@@ -47,52 +53,86 @@ export class JsonRpcProvider extends ethers.providers.JsonRpcProvider {
         new SingleflightMiddleware(),
         new CachedProvider({ defaultChainId: chainId, blockCache: blockCache })
       ],
-      new JsonRpcSender(this.fetch, chainId)
+      new JsonRpcHandler(this.fetch, chainId)
     )
 
-    this._sender = new JsonRpcSender(router, chainId)
+    this.#sender = router
   }
 
-  async getNetwork(): Promise<ethers.providers.Network> {
-    const chainId = this._chainId
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+    return await this.#sender.request(request)
+  }
+
+  send(method: string, params?: any[] | Record<string, any>, chainId?: number): Promise<any> {
+    return this.request({ method, params: params as any, chainId })
+  }
+
+  async getNetwork(): Promise<ethers.Network> {
+    const chainId = this.#chainId
     if (chainId) {
       const network = networks[chainId as ChainId]
       const name = network?.name || ''
       const ensAddress = network?.ensAddress
-      return {
-        name: name,
-        chainId: chainId,
-        ensAddress: ensAddress
-      }
+      return ethers.Network.from({
+        name,
+        chainId,
+        ensAddress
+      })
     } else {
       const chainIdHex = await this.send('eth_chainId', [])
-      this._chainId = Number(BigInt(chainIdHex))
+      this.#chainId = Number(BigInt(chainIdHex))
       return this.getNetwork()
     }
   }
 
-  send = (method: string, params: Array<any>): Promise<any> => {
-    return this._sender.send(method, params)
-  }
+  private fetch = async (request: { method: string; params?: any[]; chainId?: number }): Promise<any> => {
+    if (this.url === undefined) {
+      throw new Error('missing provider URL')
+    }
 
-  private fetch = (method: string, params: Array<any>): Promise<any> => {
-    const request = {
-      method: method,
-      params: params,
-      id: this._nextId++,
+    const { method, params } = request
+
+    const jsonRpcRequest = {
+      method,
+      params,
+      id: this.#nextId++,
       jsonrpc: '2.0'
     }
 
-    const result = ethers.utils.fetchJson(this.connection, JSON.stringify(request), getResult).then(
-      result => {
-        return result
-      },
-      error => {
-        throw error
-      }
-    )
+    // const result = ethers.fetchJson(this.connection, JSON.stringify(request), getResult).then(
+    //   result => {
+    //     return result
+    //   },
+    //   error => {
+    //     throw error
+    //   }
+    // )
 
-    return result
+    const fetchRequest = typeof this.url === 'string' ? new ethers.FetchRequest(this.url) : this.url
+    fetchRequest.body = JSON.stringify(jsonRpcRequest)
+
+    // TODOXXX: what about headers, etc..?
+    // we probably need these in the options of the construtor, etc..
+
+    try {
+      const res = await fetchRequest.send()
+
+      if (res.body) {
+        try {
+          const result = JSON.parse(ethers.toUtf8String(res.body))
+
+          // TODO: Process result
+
+          return getResult(result)
+        } catch (err) {
+          throw new Error('invalid JSON response')
+        }
+      }
+
+      return null
+    } catch (err) {
+      throw err
+    }
   }
 }
 

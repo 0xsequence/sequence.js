@@ -17,7 +17,7 @@
     "@0xsequence/core": "workspace:*",
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/utils": "workspace:*",
-    "ethers": "^5.7.2"
+    "ethers": "corbanbrook/ethers.js"
   },
   "files": [
     "src",

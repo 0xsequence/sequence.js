@@ -16,11 +16,11 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ethers": "^5.7.2",
+    "ethers": "corbanbrook/ethers.js",
     "web3": "^1.8.1"
   },
   "files": [

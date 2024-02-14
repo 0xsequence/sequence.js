@@ -180,18 +180,21 @@ export const EIP_6492_SUFFIX = '0x6492649264926492649264926492649264926492649264
 // the contract on some of the popular chains, and calling the contract
 // if the provider is one of those chains
 export async function validateEIP6492Offchain(
-  provider: ethers.providers.Provider,
+  provider: ethers.Provider,
   signer: string,
-  hash: ethers.utils.BytesLike,
-  signature: ethers.utils.BytesLike
+  hash: ethers.BytesLike,
+  signature: ethers.BytesLike
 ): Promise<boolean> {
-  return (
-    '0x01' ===
-    (await provider.call({
-      data: ethers.utils.concat([
+  try {
+    const result = await provider.call({
+      data: ethers.concat([
         EIP_6492_OFFCHAIN_DEPLOY_CODE,
-        new ethers.utils.AbiCoder().encode(['address', 'bytes32', 'bytes'], [signer, hash, signature])
+        new ethers.AbiCoder().encode(['address', 'bytes32', 'bytes'], [signer, hash, signature])
       ])
-    }))
-  )
+    })
+
+    return result === '0x01'
+  } catch (err) {
+    return false
+  }
 }

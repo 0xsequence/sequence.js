@@ -20,8 +20,8 @@ const { expect } = chai.use(chaiAsPromised)
 const deterministic = false
 
 describe('Account', () => {
-  let provider1: ethers.providers.JsonRpcProvider
-  let provider2: ethers.providers.JsonRpcProvider
+  let provider1: ethers.BrowserProvider
+  let provider2: ethers.JsonRpcProvider
 
   let signer1: ethers.Signer
   let signer2: ethers.Signer
@@ -89,14 +89,14 @@ describe('Account', () => {
   }
 
   before(async () => {
-    provider1 = new ethers.providers.Web3Provider(hardhat.network.provider as any)
-    provider2 = new ethers.providers.JsonRpcProvider('http://127.0.0.1:7048')
+    provider1 = new ethers.BrowserProvider(hardhat.network.provider as any, undefined, { cacheTimeout: -1 })
+    provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048', undefined, { cacheTimeout: -1 })
 
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1)
 
-    signer1 = provider1.getSigner()
-    signer2 = provider2.getSigner()
+    signer1 = await provider1.getSigner()
+    signer2 = await provider2.getSigner()
 
     networks = [
       {
@@ -269,12 +269,12 @@ describe('Account', () => {
 
       await account.doBootstrap(networks[0].chainId)
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = await account.signMessage(msg, networks[0].chainId)
 
       const valid = await commons.EIP1271.isValidEIP1271Signature(
         account.address,
-        ethers.utils.keccak256(msg),
+        ethers.keccak256(msg),
         sig,
         networks[0].provider!
       )
@@ -285,12 +285,12 @@ describe('Account', () => {
     it('Should sign and validate a message with nested account', async () => {
       const { accountOuter } = await createNestedAccount('sign and validate nested')
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = await accountOuter.signMessage(msg, networks[0].chainId)
 
       const valid = await commons.EIP1271.isValidEIP1271Signature(
         accountOuter.address,
-        ethers.utils.keccak256(msg),
+        ethers.keccak256(msg),
         sig,
         networks[0].provider!
       )
@@ -356,10 +356,10 @@ describe('Account', () => {
         orchestrator: new Orchestrator([signer])
       })
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-      const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+      const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -367,12 +367,12 @@ describe('Account', () => {
     it('Should sign and validate a message without being deployed with nested account', async () => {
       const { accountOuter } = await createNestedAccount('sign and validate nested undeployed', true, false)
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = await accountOuter.signMessage(msg, networks[0].chainId, 'eip6492')
 
       const valid = await accountOuter
         .reader(networks[0].chainId)
-        .isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
+        .isValidSignature(accountOuter.address, ethers.keccak256(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -408,12 +408,12 @@ describe('Account', () => {
       })
       await accountOuter.doBootstrap(networks[0].chainId)
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = await accountOuter.signMessage(msg, networks[0].chainId)
 
       const valid = await accountOuter
         .reader(networks[0].chainId)
-        .isValidSignature(accountOuter.address, ethers.utils.keccak256(msg), sig)
+        .isValidSignature(accountOuter.address, ethers.keccak256(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -432,7 +432,7 @@ describe('Account', () => {
         orchestrator: new Orchestrator([signer])
       })
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = account.signMessage(msg, networks[0].chainId, 'throw')
 
       expect(sig).to.be.rejected
@@ -441,7 +441,7 @@ describe('Account', () => {
     it('Should refuse to sign when not deployed (nested)', async () => {
       const { accountOuter } = await createNestedAccount('refuse to sign undeployed', false, false)
 
-      const msg = ethers.utils.toUtf8Bytes('Hello World')
+      const msg = ethers.toUtf8Bytes('Hello World')
       const sig = accountOuter.signMessage(msg, networks[0].chainId, 'eip6492') // Note EIP-6492 throws when nested not deployed
 
       expect(sig).to.be.rejected
@@ -554,7 +554,7 @@ describe('Account', () => {
       })
 
       it('Should sign a message', async () => {
-        const msg = ethers.utils.toUtf8Bytes('Hello World')
+        const msg = ethers.toUtf8Bytes('Hello World')
         const sig = await account.signMessage(msg, networks[0].chainId)
 
         const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
@@ -563,7 +563,7 @@ describe('Account', () => {
 
         const valid = await commons.EIP1271.isValidEIP1271Signature(
           account.address,
-          ethers.utils.keccak256(msg),
+          ethers.keccak256(msg),
           sig,
           networks[0].provider!
         )
@@ -608,7 +608,7 @@ describe('Account', () => {
         })
 
         it('Should sign a message', async () => {
-          const msg = ethers.utils.toUtf8Bytes('Hello World')
+          const msg = ethers.toUtf8Bytes('Hello World')
           const sig = await account.signMessage(msg, networks[0].chainId)
 
           const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
@@ -617,7 +617,7 @@ describe('Account', () => {
 
           const valid = await commons.EIP1271.isValidEIP1271Signature(
             account.address,
-            ethers.utils.keccak256(msg),
+            ethers.keccak256(msg),
             sig,
             networks[0].provider!
           )
@@ -683,7 +683,7 @@ describe('Account', () => {
         })
 
         it('Should sign a message', async () => {
-          const msg = ethers.utils.toUtf8Bytes('Hello World')
+          const msg = ethers.toUtf8Bytes('Hello World')
           const sig = await account.signMessage(msg, networks[0].chainId)
 
           const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
@@ -695,7 +695,7 @@ describe('Account', () => {
 
           const valid = await commons.EIP1271.isValidEIP1271Signature(
             account.address,
-            ethers.utils.keccak256(msg),
+            ethers.keccak256(msg),
             sig,
             networks[0].provider!
           )
@@ -935,6 +935,7 @@ describe('Account', () => {
 
       const tx1 = await account.sendTransaction([defaultTx], networks[0].chainId)
       expect(tx1).to.not.be.undefined
+      await tx1!.wait()
 
       const status1b = await account.status(networks[0].chainId)
       expect(status1b.fullyMigrated).to.be.true
@@ -1266,81 +1267,79 @@ describe('Account', () => {
         })
 
         it('Should validate a message signed by undeployed migrated wallet', async () => {
-          const msg = ethers.utils.toUtf8Bytes('I like that you are reading our tests')
+          const msg = ethers.toUtf8Bytes('I like that you are reading our tests')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-          const valid = await account
-            .reader(networks[0].chainId)
-            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
 
           expect(valid).to.be.true
         })
 
         it('Should reject a message signed by undeployed migrated wallet (if set the throw)', async () => {
-          const msg = ethers.utils.toUtf8Bytes('I do not know what to write here anymore')
+          const msg = ethers.toUtf8Bytes('I do not know what to write here anymore')
           const sig = account.signMessage(msg, networks[0].chainId, 'throw')
 
           await expect(sig).to.be.rejected
         })
 
         it('Should return an invalid signature by undeployed migrated wallet (if set to ignore)', async () => {
-          const msg = ethers.utils.toUtf8Bytes('Sending a hug')
+          const msg = ethers.toUtf8Bytes('Sending a hug')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
 
-          const valid = await account
-            .reader(networks[0].chainId)
-            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
 
           expect(valid).to.be.false
         })
 
         it('Should validate a message signed by deployed migrated wallet (deployed with v1)', async () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
-          await signer1.sendTransaction({
-            to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx)
-          })
+          await signer1
+            .sendTransaction({
+              to: deployTx.entrypoint,
+              data: commons.transaction.encodeBundleExecData(deployTx)
+            })
+            .then(t => t.wait())
 
-          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
-          const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
+          const msg = ethers.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-          const valid = await account
-            .reader(networks[0].chainId)
-            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
 
           expect(valid).to.be.true
         })
 
         it('Should fail to sign a message signed by deployed migrated wallet (deployed with v1) if throw', async () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
-          await signer1.sendTransaction({
-            to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx)
-          })
+          await signer1
+            .sendTransaction({
+              to: deployTx.entrypoint,
+              data: commons.transaction.encodeBundleExecData(deployTx)
+            })
+            .then(tx => tx.wait())
 
-          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
-          const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
+          const msg = ethers.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = account.signMessage(msg, networks[0].chainId, 'throw')
           expect(sig).to.be.rejected
         })
 
         it('Should return an invalid signature by deployed migrated wallet (deployed with v1) if ignore', async () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
-          await signer1.sendTransaction({
-            to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx)
-          })
+          await signer1
+            .sendTransaction({
+              to: deployTx.entrypoint,
+              data: commons.transaction.encodeBundleExecData(deployTx)
+            })
+            .then(tx => tx.wait())
 
-          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
-          const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
+          const msg = ethers.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
-          const valid = await account
-            .reader(networks[0].chainId)
-            .isValidSignature(account.address, ethers.utils.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
 
           expect(valid).to.be.false
         })
@@ -1352,10 +1351,10 @@ describe('Account', () => {
     let signer: ethers.Wallet
     let account: Account
 
-    let getNonce: (response: ethers.providers.TransactionResponse) => { space: bigint; nonce: bigint }
+    let getNonce: (response: ethers.TransactionResponse) => { space: bigint; nonce: bigint }
 
     before(async () => {
-      const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
+      const mainModule = new ethers.Interface(walletContracts.mainModule.abi)
 
       getNonce = ({ data }) => {
         const [_, encoded] = mainModule.decodeFunctionData('execute', data)
@@ -1504,7 +1503,7 @@ export function now(): number {
 }
 
 export function randomWallet(entropy: number | string): ethers.Wallet {
-  return new ethers.Wallet(randomBytes(32, entropy))
+  return new ethers.Wallet(ethers.hexlify(randomBytes(32, entropy)))
 }
 
 export function randomFraction(entropy: number | string): number {
@@ -1517,10 +1516,10 @@ export function randomBytes(length: number, entropy: number | string): Uint8Arra
   if (deterministic) {
     let bytes = ''
     while (bytes.length < 2 * length) {
-      bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
+      bytes += ethers.id(`${bytes}${entropy}`).slice(2)
     }
-    return ethers.utils.arrayify(`0x${bytes.slice(0, 2 * length)}`)
+    return ethers.getBytes(`0x${bytes.slice(0, 2 * length)}`)
   } else {
-    return ethers.utils.randomBytes(length)
+    return ethers.randomBytes(length)
   }
 }

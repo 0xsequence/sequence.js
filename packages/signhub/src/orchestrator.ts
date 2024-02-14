@@ -30,7 +30,6 @@ export function isSignerStatusPending(
 
 export interface SignatureOrchestrator {
   getSigners(): Promise<string[]>
-  setSigners(signers: (ethers.Signer | SapientSigner)[]): void
 
   signMessage(args: {
     candidates: string[]
@@ -71,7 +70,7 @@ export class Orchestrator {
   }
 
   private static randomTag(): string {
-    return `default-${ethers.utils.hexlify(ethers.utils.randomBytes(8)).slice(2)}`
+    return `default-${ethers.hexlify(ethers.randomBytes(8)).slice(2)}`
   }
 
   private pullId(): string {

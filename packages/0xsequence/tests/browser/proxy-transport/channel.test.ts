@@ -64,14 +64,14 @@ export const tests = async () => {
 
   // relayer account is same as owner here
   const relayer = new LocalRelayer(owner)
-  const rpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-  const contexts = await utils.context.deploySequenceContexts(rpcProvider.getSigner())
+  const rpcProvider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
+  const contexts = await utils.context.deploySequenceContexts(await rpcProvider.getSigner())
 
   const networks = [
     {
       name: 'hardhat',
       chainId: 31337,
-      rpcUrl: rpcProvider.connection.url,
+      rpcUrl: rpcProvider._getConnection().url,
       provider: rpcProvider,
       relayer: relayer,
       isDefaultChain: true
@@ -122,30 +122,27 @@ export const tests = async () => {
   const address = client.getAddress()
 
   await test('verifying getAddress result', async () => {
-    assert.equal(address, ethers.utils.getAddress('0x91A858FbBa42E7EE200b4303b1A8B2F0BD139663'), 'wallet address')
+    assert.equal(address, ethers.getAddress('0x91A858FbBa42E7EE200b4303b1A8B2F0BD139663'), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
-    await walletProvider.sendAsync({ jsonrpc: '2.0', id: 88, method: 'eth_accounts', params: [] }, (err, resp) => {
-      assert.true(!err, 'error is empty')
-      assert.true(!!resp, 'response successful')
-      assert.true(resp!.result == address, 'response address check')
-    })
+    const result = await walletProvider.request({ method: 'eth_accounts', params: [] })
+    assert.true(result[0] === address, 'response address check')
   })
 
   await test('get chain id', async () => {
     const chainIdClient = client.getChainId()
     assert.equal(chainIdClient, 31337, 'chain id match')
 
-    const netVersion = await client.send({ method: 'net_version' })
+    const netVersion = await client.request({ method: 'net_version' })
     assert.equal(netVersion, '31337', 'net_version check')
 
-    const chainId = await client.send({ method: 'eth_chainId' })
+    const chainId = await client.request({ method: 'eth_chainId' })
     assert.equal(chainId, '0x7a69', 'eth_chainId check')
   })
 
   await test('sign a message and validate/recover', async () => {
-    const message = ethers.utils.toUtf8Bytes('hihi')
+    const message = ethers.toUtf8Bytes('hihi')
 
     //
     // Sign the message

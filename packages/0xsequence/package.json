@@ -37,7 +37,6 @@
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",
-    "@0xsequence/multicall": "workspace:*",
     "@0xsequence/network": "workspace:*",
     "@0xsequence/provider": "workspace:*",
     "@0xsequence/relayer": "workspace:*",
@@ -47,14 +46,14 @@
     "@0xsequence/wallet": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^2.0.0",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
-    "ethers": "^5.7.2",
+    "ethers": "corbanbrook/ethers.js",
     "ganache": "^7.5.0",
     "hardhat": "^2.20.1",
     "html-webpack-plugin": "^5.3.1",

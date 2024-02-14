@@ -2,10 +2,9 @@ import { commons } from '@0xsequence/core'
 import { signers, Status } from '@0xsequence/signhub'
 import { ethers } from 'ethers'
 import { Account } from '../account'
-import { BigIntish } from '@0xsequence/utils'
 
 export type MetadataWithChainId = {
-  chainId: BigIntish
+  chainId: ethers.BigNumberish
 }
 
 // Implements a wrapper for using Sequence accounts as nested signers in the signhub orchestrator.
@@ -47,7 +46,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.decorateTransactions(bundle, status)
   }
 
-  sign(message: ethers.utils.BytesLike, metadata: object): Promise<ethers.utils.BytesLike> {
+  sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
       throw new Error('AccountOrchestratorWrapper only supports wallet metadata requests')
     }
@@ -64,7 +63,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
 
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
-  suffix(): ethers.utils.BytesLike {
-    return [3]
+  suffix(): ethers.BytesLike {
+    return new Uint8Array([3])
   }
 }

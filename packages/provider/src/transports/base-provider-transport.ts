@@ -17,7 +17,7 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { NetworkConfig } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
@@ -89,9 +89,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     )
   }
 
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    // here, we receive the message from the dapp provider call
-
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     if (this.state === OpenState.CLOSED) {
       // flag the wallet to auto-close once user submits input. ie.
       // prompting to sign a message or transaction
@@ -104,24 +102,20 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // NOTE: if we're not signed in, then the provider will fail, users must first connect+sign in.
     //
     // TODO: how does this behave with a session has expired?
-    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method }, chainId)
+    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method }, request.chainId)
 
-    // send message request, await, and then execute callback after receiving the response
-    try {
-      if (!this.isOpened()) {
-        await this.waitUntilOpened() // will throw on timeout
-      }
-
-      const response = await this.sendMessageRequest({
-        idx: nextMessageIdx(),
-        type: EventType.MESSAGE,
-        data: request,
-        chainId: chainId
-      })
-      callback(undefined, response.data)
-    } catch (err) {
-      callback(err)
+    if (!this.isOpened()) {
+      await this.waitUntilOpened() // will throw on timeout
     }
+
+    const response = await this.sendMessageRequest({
+      idx: nextMessageIdx(),
+      type: EventType.MESSAGE,
+      data: request,
+      chainId: request.chainId
+    })
+
+    return response.data
   }
 
   // handleMessage will handle message received from the remote wallet
@@ -228,7 +222,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       this.accountsChangedPayload = { accounts: [] }
       if (message.data && message.data.length > 0) {
         this.accountsChangedPayload = {
-          accounts: [ethers.utils.getAddress(message.data[0])],
+          accounts: [ethers.getAddress(message.data[0])],
           origin: message.origin
         }
         this.events.emit('accountsChanged', this.accountsChangedPayload.accounts, this.accountsChangedPayload.origin)

@@ -1,5 +1,4 @@
 import { ethers } from 'ethers'
-import { BigIntish } from '@0xsequence/utils'
 import { ChainIdLike } from '.'
 import { NetworkConfig } from './config'
 
@@ -14,7 +13,7 @@ export const getChainId = (chainId: ChainIdLike): number => {
   if ((<NetworkConfig>chainId).chainId) {
     return (<NetworkConfig>chainId).chainId
   }
-  return Number(BigInt(chainId as BigIntish))
+  return Number(BigInt(chainId as ethers.BigNumberish))
 }
 
 export const maybeChainId = (chainId?: ChainIdLike): number | undefined => {

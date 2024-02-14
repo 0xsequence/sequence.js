@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { ethers, ContractFactory, ContractTransaction } from 'ethers'
+import { ethers } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from './typings/contracts'
 import {
@@ -16,31 +16,39 @@ import { createLogger, Logger } from './utils/logger'
 let prompt: Logger
 createLogger().then(logger => (prompt = logger))
 
-ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF)
-
 export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
-  private signer: ethers.Signer
+  private signer: ethers.Signer | undefined
 
   constructor(
     public networkName: string,
-    public provider: ethers.providers.JsonRpcProvider,
+    public provider: ethers.JsonRpcProvider,
     public signerOverride?: ethers.Signer
   ) {
-    this.signer = signerOverride || provider.getSigner()
+    if (signerOverride) {
+      this.signer = signerOverride
+    } else {
+      provider.getSigner().then(signer => (this.signer = signer))
+    }
   }
 
-  deploy = async <T extends ContractFactory>(
+  deploy = async <T extends ethers.ContractFactory>(
     contractAlias: string,
     contractFactory: new (signer: ethers.Signer) => T,
-    txParams?: ethers.providers.TransactionRequest,
+    txParams?: ethers.TransactionRequest,
     instance?: number | bigint,
     ...args: Parameters<T['deploy']>
-  ): Promise<ethers.Contract> => {
+  ): Promise<ethers.BaseContract> => {
     try {
+      if (!this.signer) {
+        throw new Error('No signer found')
+      }
+
       // Deploy universal deployer 2 if not yet deployed on chain_id
       const universalDeployer2Code = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
-      if (universalDeployer2Code === '0x') await this.deployUniversalDeployer2(txParams)
+      if (universalDeployer2Code === '0x') {
+        await this.deployUniversalDeployer2(txParams)
+      }
 
       // Deploying contract
       prompt.start(`Deploying ${contractAlias}`)
@@ -48,7 +56,7 @@ export class UniversalDeployer {
       const deployTx = await factory.getDeployTransaction(...args)
 
       // Make sure instance number is specified
-      const instanceNumber = instance !== undefined ? instance : 0
+      const instanceNumber = instance !== undefined ? BigInt(instance) : 0n
 
       // Verify if contract already deployed
       const contractAddress = await this.addressOf(contractFactory, instanceNumber, ...args)
@@ -58,8 +66,7 @@ export class UniversalDeployer {
 
       if (contractCode === '0x') {
         // Deploy contract if not already deployed
-        const tx = (await deployer.functions.deploy(deployTx.data!, instanceNumber, txParams)) as ContractTransaction
-        await tx.wait()
+        await deployer.deploy.staticCallResult(deployTx.data!, instanceNumber, txParams!)
 
         // Verify that the deployment was successful since tx won't revert
         const postDeployCode = await this.provider.getCode(contractAddress)
@@ -69,7 +76,7 @@ export class UniversalDeployer {
       }
 
       const contract = factory.attach(contractAddress)
-      this.deployedInstances.push({ contractAlias, contract })
+      this.deployedInstances.push({ contractAddress, contractAlias, contract })
 
       return contract
     } catch (error) {
@@ -77,8 +84,12 @@ export class UniversalDeployer {
     }
   }
 
-  deployUniversalDeployer = async (txParams?: ethers.providers.TransactionRequest) => {
-    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)).toBigInt() < UNIVERSAL_DEPLOYER_FUNDING) {
+  deployUniversalDeployer = async (txParams?: ethers.TransactionRequest) => {
+    if (!this.signer) {
+      throw new Error('No signer found')
+    }
+
+    if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
       const tx = await this.signer.sendTransaction({
         to: EOA_UNIVERSAL_DEPLOYER_ADDRESS,
@@ -86,7 +97,7 @@ export class UniversalDeployer {
         ...txParams
       })
       const receipt = await tx.wait()
-      if (receipt.status !== 1) {
+      if (!receipt || receipt.status !== 1) {
         prompt.fail('txn receipt status failed')
       } else {
         prompt.succeed()
@@ -94,8 +105,7 @@ export class UniversalDeployer {
     }
 
     prompt.start('Deploying universal deployer contract')
-    const tx2 = await this.provider.sendTransaction(UNIVERSAL_DEPLOYER_TX)
-    // await tx2.wait()
+    await this.provider.broadcastTransaction(UNIVERSAL_DEPLOYER_TX)
 
     // const universalDeployerCodeCheck = await this.provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)
     // if (universalDeployerCodeCheck === '0x') {
@@ -107,7 +117,11 @@ export class UniversalDeployer {
   }
 
   // Deploy universal deployer via universal deployer 1
-  deployUniversalDeployer2 = async (txParams?: ethers.providers.TransactionRequest) => {
+  deployUniversalDeployer2 = async (txParams?: ethers.TransactionRequest) => {
+    if (!this.signer) {
+      throw new Error('No signer found')
+    }
+
     const universalDeployerCode = await this.provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)
     if (universalDeployerCode === '0x') {
       await this.deployUniversalDeployer(txParams)
@@ -120,11 +134,11 @@ export class UniversalDeployer {
     // the UNIVERSAL_DEPLOYER_2_BYTECODE changes of the deployer -- which should never really happen.
 
     prompt.start('Deploying universal deployer 2 contract')
-    const tx = (await this.signer.sendTransaction({
+    const tx = await this.signer.sendTransaction({
       to: UNIVERSAL_DEPLOYER_ADDRESS,
       data: UNIVERSAL_DEPLOYER_2_BYTECODE,
       ...txParams
-    })) as ContractTransaction
+    })
     await tx.wait()
 
     // const universalDeployer2CodeCheck = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
@@ -139,26 +153,26 @@ export class UniversalDeployer {
   getDeployment = () => {
     return this.deployedInstances.reduce(
       (list, instance) => {
-        const { contract, contractAlias } = instance
-        list[contractAlias] = contract
+        const { contractAddress, contractAlias } = instance
+        list[contractAlias] = contractAddress
         return list
       },
-      {} as { [key: string]: ethers.Contract | { address: string } }
+      {} as { [key: string]: string }
     )
   }
 
   getDeploymentList = () =>
-    this.deployedInstances.map(({ contract, contractAlias }) => {
+    this.deployedInstances.map(({ contractAddress, contractAlias, contract }) => {
       if (contract as ethers.Contract) {
         return {
           contractName: contractAlias,
-          address: contract.address
+          contractAddress
           // abi: contract.interface.abi
         }
       } else {
         return {
           contractName: contractAlias,
-          address: contract.address
+          contractAddress
         }
       }
     })
@@ -175,33 +189,34 @@ export class UniversalDeployer {
     )
   }
 
-  manualDeploymentRegistration = (contractAlias: string, address: string) => {
+  manualDeploymentRegistration = (contractAlias: string, contractAddress: string) => {
     this.deployedInstances.push({
       contractAlias,
-      contract: { address: address }
+      contractAddress
     })
   }
 
-  addressOf = async <T extends ContractFactory>(
+  addressOf = async <T extends ethers.ContractFactory>(
     contractFactory: new (signer: ethers.Signer) => T,
     contractInstance: number | bigint,
     ...args: Parameters<T['deploy']>
   ): Promise<string> => {
+    if (!this.signer) {
+      throw new Error('No signer found')
+    }
+
     const factory = new contractFactory(this.signer)
     const deployTx = await factory.getDeployTransaction(...args)
     const deployData = deployTx.data
 
-    const codeHash = ethers.utils.keccak256(ethers.utils.solidityPack(['bytes'], [deployData]))
+    const codeHash = ethers.keccak256(ethers.solidityPacked(['bytes'], [deployData]))
 
-    const salt = ethers.utils.solidityPack(['uint256'], [contractInstance])
+    const salt = ethers.solidityPacked(['uint256'], [contractInstance])
 
-    const hash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ['bytes1', 'address', 'bytes32', 'bytes32'],
-        ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash]
-      )
+    const hash = ethers.keccak256(
+      ethers.solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
     )
 
-    return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+    return ethers.getAddress(ethers.dataSlice(hash, 12))
   }
 }

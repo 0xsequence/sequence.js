@@ -1,4 +1,4 @@
-import { utils } from 'ethers'
+import { ethers } from 'ethers'
 
 // Monkey patch toJSON on BigInt to return a string
 
@@ -12,25 +12,15 @@ BigInt.prototype.toJSON = function () {
   return this.toString()
 }
 
-/**
- *  Any type that can be used where a numeric value is needed.
- */
-export type Numeric = number | bigint
-
-/**
- *  Any type that can be used where a big number is needed.
- */
-export type BigIntish = string | Numeric
-
 export const MAX_UINT_256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 // ethers implement this method but doesn't exports it
-export const isBigIntish = (value: any): value is BigIntish => {
+export const isBigNumberish = (value: any): value is ethers.BigNumberish => {
   return (
     value != null &&
     ((typeof value === 'number' && value % 1 === 0) ||
       (typeof value === 'string' && !!value.match(/^-?[0-9]+$/)) ||
-      utils.isHexString(value) ||
+      ethers.isHexString(value) ||
       typeof value === 'bigint')
   )
 }

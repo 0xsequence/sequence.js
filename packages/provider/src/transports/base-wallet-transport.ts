@@ -14,7 +14,7 @@ import {
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, findSupportedNetwork } from '@0xsequence/network'
+import { NetworkConfig, findSupportedNetwork } from '@0xsequence/network'
 import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from '@0xsequence/utils'
 import { AuthorizationOptions } from '@0xsequence/auth'
 
@@ -65,7 +65,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
       if (!networks || networks.length === 0) {
         this.notifyChainChanged('0x0')
       } else {
-        this.notifyChainChanged(ethers.utils.hexValue(networks.find(network => network.isDefaultChain)!.chainId))
+        this.notifyChainChanged(ethers.toQuantity(networks.find(network => network.isDefaultChain)!.chainId))
       }
     })
 
@@ -96,7 +96,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     throw new Error('abstract method')
   }
 

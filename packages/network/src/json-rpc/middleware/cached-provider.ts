@@ -1,4 +1,4 @@
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
+import { EIP1193ProviderFunc, JsonRpcRequest, JsonRpcMiddlewareHandler } from '../types'
 
 export interface CachedProviderOptions {
   // defaultChainId passes a chainId to provider handler if one isn't passed.
@@ -52,48 +52,38 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
     }
   }
 
-  sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
+    return async (request: { jsonrpc: '2.0'; id?: number; method: string; params?: any[]; chainId?: number }): Promise<any> => {
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
-        const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
+        const key = this.cacheKey(request.method, request.params! as any[], request.chainId || this.defaultChainId)
         const result = this.getCacheValue(key)
         if (result && result !== '') {
-          callback(undefined, {
-            jsonrpc: '2.0',
+          return {
             id: request.id!,
-            result: result
-          })
-          return
+            result
+          }
         }
       }
 
       // Continue down the handler chain
-      next(
-        request,
-        (error: any, response?: JsonRpcResponse, chainId?: number) => {
-          // Store result in cache and continue
-          if (
-            this.cachableJsonRpcMethods.includes(request.method) ||
-            this.cachableJsonRpcMethodsByBlock.includes(request.method)
-          ) {
-            if (response && response.result && this.shouldCacheResponse(request, response)) {
-              // cache the value
-              const key = this.cacheKey(request.method, request.params!, chainId || this.defaultChainId)
+      const result = await next(request)
 
-              if (this.cachableJsonRpcMethods.includes(request.method)) {
-                this.setCacheValue(key, response.result)
-              } else {
-                this.setCacheByBlockValue(key, response.result)
-              }
-            }
+      // Store result in cache and continue
+      if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
+        if (result && this.shouldCacheResponse(request, result)) {
+          // cache the value
+          const key = this.cacheKey(request.method, request.params! as any[], request.chainId || this.defaultChainId)
+
+          if (this.cachableJsonRpcMethods.includes(request.method)) {
+            this.setCacheValue(key, result)
+          } else {
+            this.setCacheByBlockValue(key, result)
           }
+        }
+      }
 
-          // Exec next handler
-          callback(error, response)
-        },
-        chainId || this.defaultChainId
-      )
+      return result
     }
   }
 
@@ -149,14 +139,14 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
     }
   }
 
-  shouldCacheResponse = (request: JsonRpcRequest, response?: JsonRpcResponse): boolean => {
+  shouldCacheResponse = (request: JsonRpcRequest, result?: any): boolean => {
     // skip if we do not have response result
-    if (!response || !response.result) {
+    if (!result) {
       return false
     }
 
     // skip caching eth_getCode where resposne value is '0x' or empty
-    if (request.method === 'eth_getCode' && response.result.length <= 2) {
+    if (request.method === 'eth_getCode' && result.length <= 2) {
       return false
     }
 

@@ -30,7 +30,7 @@ export async function isValidEIP1271Signature(
   address: string,
   digest: string,
   signature: ethers.BytesLike,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> {
   const contract = new ethers.Contract(address, EIP1271_ABI, provider)
   const result = await contract.isValidSignature(digest, signature)
