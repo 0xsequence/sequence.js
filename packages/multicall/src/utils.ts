@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers'
 import { BigIntish } from '@0xsequence/utils'
 
 export async function safeSolve<T>(promise: Promise<T>, def: T | ((e: any) => T)): Promise<T> {
@@ -36,13 +35,5 @@ export function parseBlockTag(cand: string | BigIntish | undefined): BlockTag {
 }
 
 export function eqBlockTag(a: BlockTag, b: BlockTag): boolean {
-  if (a === b) return true
-
-  if (BigNumber.isBigNumber(a)) {
-    if (BigNumber.isBigNumber(b)) return a.eq(b)
-    return false
-  }
-
-  if (BigNumber.isBigNumber(b)) return false
   return a === b
 }

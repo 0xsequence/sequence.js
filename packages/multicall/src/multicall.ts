@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
@@ -237,7 +237,7 @@ export class Multicall {
             value: 0,
             data: encodedCall!
           },
-          BigNumber.isBigNumber(blockTag) ? blockTag.toNumber() : blockTag
+          blockTag
         ]
         // @ts-ignore
       }),

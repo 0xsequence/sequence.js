@@ -1,7 +1,7 @@
 import { commons, v2 } from '@0xsequence/core'
 import { SequenceClient, SequenceProvider, DefaultProviderConfig, MemoryItemStore } from '@0xsequence/provider'
 import { context } from '@0xsequence/tests'
-import { configureLogger, parseEther, parseUnits } from '@0xsequence/utils'
+import { configureLogger, parseEther } from '@0xsequence/utils'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { test, assert } from '../../utils/assert'
 import { testAccounts, getEOAWallet, sendETH } from '../testutils'
