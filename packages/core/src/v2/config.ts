@@ -165,12 +165,12 @@ export function hashNode(node: Node | Leaf): string {
   }
 
   if (isSubdigestLeaf(node)) {
-    return ethers.utils.solidityKeccak256(['string', 'bytes32'], ['Sequence static digest:\n', node.subdigest])
+    return ethers.solidityPackedKeccak256(['string', 'bytes32'], ['Sequence static digest:\n', node.subdigest])
   }
 
   if (isNestedLeaf(node)) {
     const nested = hashNode(node.tree)
-    return ethers.utils.solidityKeccak256(
+    return ethers.solidityPackedKeccak256(
       ['string', 'bytes32', 'uint256', 'uint256'],
       ['Sequence nested config:\n', nested, node.threshold, node.weight]
     )
@@ -180,7 +180,7 @@ export function hashNode(node: Node | Leaf): string {
     return node.nodeHash
   }
 
-  return ethers.utils.solidityKeccak256(['bytes32', 'bytes32'], [hashNode(node.left), hashNode(node.right)])
+  return ethers.solidityPackedKeccak256(['bytes32', 'bytes32'], [hashNode(node.left), hashNode(node.right)])
 }
 
 export function leftFace(topology: Topology): Topology[] {
@@ -218,9 +218,9 @@ export function isWalletConfig(config: any): config is WalletConfig {
 }
 
 export function imageHash(config: WalletConfig): string {
-  return ethers.utils.solidityKeccak256(
+  return ethers.solidityPackedKeccak256(
     ['bytes32', 'uint256'],
-    [ethers.utils.solidityKeccak256(['bytes32', 'uint256'], [hashNode(config.tree), config.threshold]), config.checkpoint]
+    [ethers.solidityPackedKeccak256(['bytes32', 'uint256'], [hashNode(config.tree), config.threshold]), config.checkpoint]
   )
 }
 

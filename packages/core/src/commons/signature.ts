@@ -61,7 +61,7 @@ export interface SignatureCoder<
 }
 
 export function subdigestOf(payload: SignedPayload) {
-  return ethers.utils.solidityKeccak256(
+  return ethers.solidityPackedKeccak256(
     ['bytes', 'uint256', 'address', 'bytes32'],
     ['0x1901', payload.chainId, payload.address, payload.digest]
   )
