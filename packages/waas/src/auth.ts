@@ -219,8 +219,6 @@ export class Sequence {
       friendlyName: name,
     }
 
-    console.log('waaspayload', waaspayload)
-
     // TODO: registerSession
     const res = await this.client.registerSession(args, this.headers())
 

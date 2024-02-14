@@ -237,7 +237,6 @@ export class WaasAuthenticator implements WaasAuthenticator {
   }
 
   registerSession = (args: RegisterSessionArgs, headers?: object, signal?: AbortSignal): Promise<RegisterSessionReturn> => {
-    console.log('args', args)
     return this.fetch(
       this.url('RegisterSession'),
       createHTTPRequest(args, headers, signal)).then((res) => {
@@ -387,8 +386,6 @@ export class WaasAuthenticatorAdmin implements WaasAuthenticatorAdmin {
 }
 
   const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
-    console.log('body', body)
-    console.log('bodyJson', JSON.stringify(body || {}))
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
