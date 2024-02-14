@@ -11,7 +11,7 @@ export type AccountSignerOptions = {
   cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
   stubSignatureOverrides?: Map<string, string>
   selectFee?: (
-    txs: ethers.utils.Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish,
+    txs: ethers.utils.Deferrable<ethers.TransactionRequest> | commons.transaction.Transactionish,
     options: FeeOption[]
   ) => Promise<FeeOption | undefined>
 }
@@ -85,7 +85,7 @@ export class AccountSigner implements ethers.Signer {
   }
 
   private async defaultSelectFee(
-    _txs: ethers.utils.Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish,
+    _txs: ethers.utils.Deferrable<ethers.TransactionRequest> | commons.transaction.Transactionish,
     options: FeeOption[]
   ): Promise<FeeOption | undefined> {
     // If no options, return undefined
@@ -126,13 +126,13 @@ export class AccountSigner implements ethers.Signer {
   }
 
   async sendTransaction(
-    txsPromise: ethers.utils.Deferrable<ethers.providers.TransactionRequest> | commons.transaction.Transactionish,
+    txsPromise: ethers.utils.Deferrable<ethers.TransactionRequest> | commons.transaction.Transactionish,
     options?: {
       simulateForFeeOptions?: boolean
     }
   ): Promise<ethers.providers.TransactionResponse> {
     const txs = isDeferrable(txsPromise)
-      ? await ethers.utils.resolveProperties(txsPromise as ethers.utils.Deferrable<ethers.providers.TransactionRequest>)
+      ? await ethers.utils.resolveProperties(txsPromise as ethers.utils.Deferrable<ethers.TransactionRequest>)
       : txsPromise
 
     const prepare = await this.account.prepareTransactions({
@@ -166,7 +166,7 @@ export class AccountSigner implements ethers.Signer {
   }
 
   call(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>,
     blockTag?: ethers.providers.BlockTag | undefined
   ): Promise<string> {
     return this.provider.call(transaction, blockTag)
@@ -182,7 +182,7 @@ export class AccountSigner implements ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
-  signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<string> {
     throw new Error('Method not implemented.')
   }
 
@@ -190,7 +190,7 @@ export class AccountSigner implements ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
-  estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<BigNumber> {
+  estimateGas(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<BigNumber> {
     throw new Error('Method not implemented.')
   }
 
@@ -207,14 +207,12 @@ export class AccountSigner implements ethers.Signer {
   }
 
   checkTransaction(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): ethers.utils.Deferrable<ethers.providers.TransactionRequest> {
+    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>
+  ): ethers.utils.Deferrable<ethers.TransactionRequest> {
     throw new Error('Method not implemented.')
   }
 
-  populateTransaction(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>
-  ): Promise<ethers.providers.TransactionRequest> {
+  populateTransaction(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<ethers.TransactionRequest> {
     throw new Error('Method not implemented.')
   }
 

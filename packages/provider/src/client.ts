@@ -497,10 +497,7 @@ export class SequenceClient {
     )
   }
 
-  async sendTransaction(
-    tx: ethers.providers.TransactionRequest[] | ethers.providers.TransactionRequest,
-    options?: OptionalChainId
-  ): Promise<string> {
+  async sendTransaction(tx: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainId): Promise<string> {
     const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
 

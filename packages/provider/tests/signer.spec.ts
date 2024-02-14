@@ -894,8 +894,8 @@ describe('SequenceSigner', () => {
   describe('sendTransaction', () => {
     let callsToSendTransaction: number
     let expectedTransactionRequest:
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
-      | ethers.utils.Deferrable<ethers.providers.TransactionRequest>
+      | ethers.utils.Deferrable<ethers.TransactionRequest>[]
+      | ethers.utils.Deferrable<ethers.TransactionRequest>
 
     let expectedOptions: OptionalChainIdLike
 
@@ -918,8 +918,8 @@ describe('SequenceSigner', () => {
           ...basicMockClient,
           sendTransaction: async (
             transactionRequest:
-              | ethers.utils.Deferrable<ethers.providers.TransactionRequest>[]
-              | ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+              | ethers.utils.Deferrable<ethers.TransactionRequest>[]
+              | ethers.utils.Deferrable<ethers.TransactionRequest>,
             options: OptionalChainIdLike
           ) => {
             expect(transactionRequest).to.deep.equal(expectedTransactionRequest)

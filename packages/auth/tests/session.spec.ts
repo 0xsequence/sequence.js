@@ -49,7 +49,7 @@ class CountingSigner extends AbstractSigner {
     return this.signer.signMessage(message)
   }
 
-  signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<string> {
     this._signingRequests++
     return this.signer.signTransaction(transaction)
   }

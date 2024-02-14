@@ -30,11 +30,7 @@ export interface TransactionEncoded {
   data: BytesLike
 }
 
-export type Transactionish =
-  | ethers.providers.TransactionRequest
-  | ethers.providers.TransactionRequest[]
-  | Transaction
-  | Transaction[]
+export type Transactionish = ethers.TransactionRequest | ethers.TransactionRequest[] | Transaction | Transaction[]
 
 export interface TransactionResponse<R = any> extends ethers.providers.TransactionResponse {
   receipt?: R
@@ -122,14 +118,14 @@ export function subdigestOfGuestModuleTransactions(guestModule: string, chainId:
 
 export function toSequenceTransactions(
   wallet: string,
-  txs: (Transaction | ethers.providers.TransactionRequest)[]
+  txs: (Transaction | ethers.TransactionRequest)[]
 ): { nonce?: BigIntish; transaction: Transaction }[] {
   return txs.map(tx => toSequenceTransaction(wallet, tx))
 }
 
 export function toSequenceTransaction(
   wallet: string,
-  tx: ethers.providers.TransactionRequest
+  tx: ethers.TransactionRequest
 ): { nonce?: BigIntish; transaction: Transaction } {
   if (tx.to && tx.to !== ethers.constants.AddressZero) {
     return {

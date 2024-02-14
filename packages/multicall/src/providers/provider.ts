@@ -86,7 +86,7 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
   }
 
   async call(
-    transaction: utils.Deferrable<ethers.providers.TransactionRequest>,
+    transaction: utils.Deferrable<ethers.TransactionRequest>,
     blockTag?: string | number | Promise<ethers.providers.BlockTag>
   ): Promise<string> {
     return this.rpcCall(JsonRpcMethod.ethCall, transaction, blockTag)

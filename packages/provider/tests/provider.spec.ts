@@ -1443,7 +1443,7 @@ describe('SequenceProvider', () => {
           let calledCount: number
 
           let expectedChainId: number
-          let expectedTx: ethers.providers.TransactionRequest
+          let expectedTx: ethers.TransactionRequest
 
           beforeEach(async () => {
             calledCount = 0
