@@ -45,4 +45,4 @@ export function rpcNode(network: SimpleNetwork): string {
   return RPC_BASE + nameOfNetwork(network)
 }
 
-export type WithSimpleNetwork<T> = Omit<T, 'chainId'> & { network?: SimpleNetwork }
+export type WithSimpleNetwork<T> = Omit<T, 'chainId'|'wallet'> & { network?: SimpleNetwork }

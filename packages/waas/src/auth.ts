@@ -1,7 +1,7 @@
 import { SequenceWaaSBase } from './base'
+import { IntentResponseSignedMessage } from "./clients/intent.gen";
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
-import { Payload } from './payloads'
 import {
   MaySentTransactionResponse,
   SignedMessageResponse,
@@ -10,7 +10,7 @@ import {
   isSignedMessageResponse,
   isValidationRequiredResponse,
   isFinishValidateSessionResponse
-} from './payloads/responses'
+} from './intents/responses'
 import {
   WaasAuthenticator,
   Session,
@@ -23,11 +23,12 @@ import {
   SendERC20Args,
   SendERC721Args,
   SendTransactionsArgs
-} from './payloads/packets/transactions'
-import { SignMessageArgs } from './payloads/packets/messages'
+} from './intents'
+import { SignMessageArgs } from './intents/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
+import { SignedIntent} from "./intents";
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -45,7 +46,6 @@ export type ExtendedSequenceConfig = {
 
 export type WaaSConfigKey = {
   projectId: number
-  identityPoolId: string
   emailClientId?: string
 }
 
@@ -106,10 +106,6 @@ export function defaultArgsOrFail(
 
   if (preconfig.projectAccessKey === undefined) {
     throw new Error('Missing access key')
-  }
-
-  if (preconfig.identityPoolId === undefined) {
-    throw new Error('Missing identityPoolId')
   }
 
   return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
@@ -189,13 +185,15 @@ export class Sequence {
     }
   }
 
-  private async sendIntent(intent: Payload<any>) {
+  private async sendIntent(intent: SignedIntent<any>) {
     const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
       throw new Error('session not open')
     }
 
-    return this.client.sendIntent({intent: intent}, this.headers())
+    // TODO sendIntent
+    const res = await this.client.sendIntent({intent: intent}, this.headers())
+    return res.response
   }
 
   async isSignedIn() {
@@ -205,7 +203,7 @@ export class Sequence {
   async signIn(creds: Identity, name: string): Promise<{ sessionId: string, wallet: string }> {
     // TODO: Be smarter about this, for cognito (or some other cases) we may
     // want to send the email instead of the idToken
-    const waaspayload = await this.waas.signIn({
+    const signInIntent = await this.waas.signIn({
       idToken: creds.idToken
     })
 
@@ -217,7 +215,7 @@ export class Sequence {
     }
 
     const args = {
-      intent: waaspayload,
+      intent: signInIntent,
       friendlyName: name,
     }
 
@@ -227,7 +225,7 @@ export class Sequence {
       code: 'sessionOpened',
       data: {
         sessionId: res.session.id,
-        wallet: res.data.wallet
+        wallet: res.response.data.wallet
       }
     })
 
@@ -235,7 +233,7 @@ export class Sequence {
 
     return {
       sessionId: res.session.id,
-      wallet: res.data.wallet
+      wallet: res.response.data.wallet
     }
   }
 
@@ -355,7 +353,7 @@ export class Sequence {
 
   private async trySendIntent<T>(
     args: CommonAuthArgs,
-    intent: Payload<any>,
+    intent: SignedIntent<any>,
     isExpectedResponse: (response: any) => response is T
   ): Promise<T> {
     const response = await this.sendIntent(intent)
@@ -378,7 +376,7 @@ export class Sequence {
     throw new Error(JSON.stringify(response))
   }
 
-  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<SignedMessageResponse> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<IntentResponseSignedMessage> {
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
