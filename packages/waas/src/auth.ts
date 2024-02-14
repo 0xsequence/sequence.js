@@ -1,4 +1,4 @@
-import { SequenceWaaSBase } from './base'
+import {Observer, SequenceWaaSBase} from './base'
 import { IntentResponseSignedMessage } from "./clients/intent.gen";
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
@@ -248,7 +248,7 @@ export class Sequence {
 
   async getSessionHash() {
     const sessionId = (await this.waas.getSessionId()).toLowerCase()
-    const sessionHash = ethers.utils.keccak256(sessionId)
+    const sessionHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionId))
     console.log({ sessionId, sessionHash })
     return sessionHash
   }
@@ -428,5 +428,9 @@ export class Sequence {
       })
     }
     return networks
+  }
+
+  onSessionStateChanged(callback: Observer<string>) {
+    return this.waas.onSessionStateChanged(callback)
   }
 }

@@ -35,7 +35,7 @@ import {
   IntentDataValidateSession
 } from "./clients/intent.gen";
 
-type status = 'pending' | 'signed-in' | 'signed-out'
+type Status = 'pending' | 'signed-in' | 'signed-out'
 
 const SEQUENCE_WAAS_WALLET_KEY = '@0xsequence.waas.wallet'
 const SEQUENCE_WAAS_SESSION_ID_KEY = '@0xsequence.waas.session_id'
@@ -56,12 +56,16 @@ export type SequenceBaseConfig = {
   network: SimpleNetwork
 }
 
+export type Observer<T> = (value: T | null) => any
+
 export class SequenceWaaSBase {
   readonly VERSION = '0.0.0-dev1'
 
-  private readonly status: StoreObj<status>
+  private readonly status: StoreObj<Status>
   private readonly sessionId: StoreObj<string | undefined>
   private readonly wallet: StoreObj<string | undefined>
+
+  private sessionObservers: Observer<string>[] = []
 
   constructor(
     public readonly config = { network: 1 } as SequenceBaseConfig,
@@ -139,19 +143,32 @@ export class SequenceWaaSBase {
     return signer.sign(message)
   }
 
+  private gettingSessionIdPromise: Promise<string> | undefined;
+
   /**
    * This method will return session id.
    *
    * @returns an id of the session
    */
   public async getSessionId(): Promise<string> {
-    let sessionId = await this.sessionId.get()
-    if (!sessionId) {
-      const session = await newSession()
-      sessionId = await session.sessionId()
-      await this.sessionId.set(sessionId)
+    if (this.gettingSessionIdPromise) {
+      return this.gettingSessionIdPromise
     }
-    return sessionId
+
+    const promiseGenerator = async () => {
+      let sessionId = await this.sessionId.get()
+      if (!sessionId) {
+        const session = await newSession()
+        sessionId = await session.sessionId()
+        await this.sessionId.set(sessionId)
+        this.signalObservers(this.sessionObservers, sessionId)
+      }
+      this.gettingSessionIdPromise = undefined
+      return sessionId
+    }
+
+    this.gettingSessionIdPromise = promiseGenerator()
+    return this.gettingSessionIdPromise
   }
 
   /**
@@ -171,14 +188,27 @@ export class SequenceWaaSBase {
     const status = await this.status.get()
     if (status !== 'signed-out') {
       await this.completeSignOut()
+      throw new Error('you are already signed in') // TODO change this awful msg
     }
 
-    const sessionId = await this.getSessionId()
-    const intent = await openSession({ idToken, sessionId, lifespan: DEFAULT_LIFESPAN })
+    try {
+      const sessionId = await this.getSessionId()
+      const intent = await openSession({ idToken, sessionId, lifespan: DEFAULT_LIFESPAN })
 
-    await Promise.all([this.status.set('pending'), this.sessionId.set(intent.data.sessionId)])
+      await this.status.set('pending')
 
-    return this.signIntent(intent)
+      return this.signIntent(intent)
+    } catch (e) {
+      await this.completeSignOut()
+      throw e
+    }
+  }
+
+  onSessionStateChanged(callback: Observer<string>): () => void {
+    this.sessionObservers.push(callback)
+    return () => {
+      this.sessionObservers = this.sessionObservers.filter(o => o != callback)
+    }
   }
 
   async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
@@ -215,6 +245,7 @@ export class SequenceWaaSBase {
 
   async completeSignOut() {
     await Promise.all([this.status.set('signed-out'), this.wallet.set(undefined), this.sessionId.set(undefined)])
+    this.signalObservers(this.sessionObservers, null)
   }
 
   /**
@@ -380,5 +411,9 @@ export class SequenceWaaSBase {
   async batch(intents: Intent<IntentDataSendTransaction>[]): Promise<SignedIntent<IntentDataSendTransaction>> {
     const combined = combineTransactionIntents(intents)
     return this.signIntent(combined)
+  }
+
+  private signalObservers<T>(observers: Observer<T>[], value: T | null) {
+    observers.forEach(observer => observer(value))
   }
 }
