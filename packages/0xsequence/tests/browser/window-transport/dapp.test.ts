@@ -124,7 +124,7 @@ export const tests = async () => {
     //
 
     const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
-    const messageDigest = ethers.utils.arrayify(messageHash)
+    const messageDigest = ethers.getBytes(messageHash)
     const isValid = await isValidSignature(address, messageDigest, sig, provider)
     assert.true(isValid, 'signature is valid - 6')
 

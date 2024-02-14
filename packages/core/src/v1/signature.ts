@@ -44,7 +44,7 @@ export function isUnrecoveredSignature(signature: Signature | UnrecoveredSignatu
 }
 
 export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignature {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
 
   const threshold = (bytes[0] << 8) | bytes[1]
   const signers: UnrecoveredMember[] = []
@@ -108,7 +108,7 @@ export function encodeSignature(signature: Signature | UnrecoveredSignature | et
     }
 
     if (s.isDynamic) {
-      const bytes = ethers.utils.arrayify(s.signature)
+      const bytes = ethers.getBytes(s.signature)
       return ethers.solidityPacked(
         ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
         [SignaturePartType.DynamicSignature, s.weight, s.address, bytes.length, bytes]
@@ -176,7 +176,7 @@ export function encodeSigners(
     }
 
     const signature = signatures.get(s.address)!
-    const bytes = ethers.utils.arrayify(signature.signature)
+    const bytes = ethers.getBytes(signature.signature)
 
     weight = weight + BigInt(s.weight)
 

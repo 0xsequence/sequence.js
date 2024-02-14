@@ -1301,7 +1301,7 @@ describe('Account', () => {
             data: commons.transaction.encodeBundleExecData(deployTx)
           })
 
-          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
           const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
@@ -1320,7 +1320,7 @@ describe('Account', () => {
             data: commons.transaction.encodeBundleExecData(deployTx)
           })
 
-          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
           const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = account.signMessage(msg, networks[0].chainId, 'throw')
@@ -1334,7 +1334,7 @@ describe('Account', () => {
             data: commons.transaction.encodeBundleExecData(deployTx)
           })
 
-          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.utils.arrayify(c).length)).to.not.equal(0)
+          expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
           const msg = ethers.utils.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
@@ -1519,7 +1519,7 @@ export function randomBytes(length: number, entropy: number | string): Uint8Arra
     while (bytes.length < 2 * length) {
       bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
     }
-    return ethers.utils.arrayify(`0x${bytes.slice(0, 2 * length)}`)
+    return ethers.getBytes(`0x${bytes.slice(0, 2 * length)}`)
   } else {
     return ethers.utils.randomBytes(length)
   }

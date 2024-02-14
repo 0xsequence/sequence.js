@@ -8,15 +8,15 @@ export enum SigType {
 }
 
 export function canRecover(signature: ethers.BytesLike) {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
   const type = bytes[bytes.length - 1]
 
   return type === SigType.EIP712 || type === SigType.ETH_SIGN
 }
 
 export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesLike) {
-  const bytes = ethers.utils.arrayify(signature)
-  const digestBytes = ethers.utils.arrayify(digest)
+  const bytes = ethers.getBytes(signature)
+  const digestBytes = ethers.getBytes(digest)
 
   // type is last byte
   const type = bytes[bytes.length - 1]
@@ -45,7 +45,7 @@ export function isValidSignature(
   signature: ethers.BytesLike,
   provider: ethers.providers.Provider
 ) {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
 
   // type is last byte
   const type = bytes[bytes.length - 1]
@@ -62,7 +62,7 @@ export function isValidSignature(
 }
 
 export function tryRecoverSigner(digest: ethers.BytesLike, signature: ethers.BytesLike): string | undefined {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
   if (bytes.length !== 66) return undefined
 
   try {

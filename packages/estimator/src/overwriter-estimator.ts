@@ -49,7 +49,7 @@ export class OverwriterEstimator {
   }
 
   txBaseCost(data: ethers.BytesLike): number {
-    const bytes = ethers.utils.arrayify(data)
+    const bytes = ethers.getBytes(data)
     return (
       Number(
         bytes.reduce((p, c) => (c == 0 ? p + BigInt(this.options.dataZeroCost) : p + BigInt(this.options.dataOneCost)), 0n)

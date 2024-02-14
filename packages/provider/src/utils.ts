@@ -8,7 +8,7 @@ const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
 export const messageToBytes = (message: BytesLike): Uint8Array => {
   if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
-    return ethers.utils.arrayify(message)
+    return ethers.getBytes(message)
   }
 
   return ethers.utils.toUtf8Bytes(message)

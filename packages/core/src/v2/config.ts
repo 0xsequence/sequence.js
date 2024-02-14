@@ -136,7 +136,7 @@ export function encodeSignerLeaf(leaf: SignerLeaf): string {
 }
 
 export function decodeSignerLeaf(encoded: string): SignerLeaf {
-  const bytes = ethers.utils.arrayify(encoded)
+  const bytes = ethers.getBytes(encoded)
 
   if (bytes.length !== 32) {
     throw new Error('Invalid encoded string length')
@@ -149,7 +149,7 @@ export function decodeSignerLeaf(encoded: string): SignerLeaf {
 }
 
 export function isEncodedSignerLeaf(encoded: string): boolean {
-  const bytes = ethers.utils.arrayify(encoded)
+  const bytes = ethers.getBytes(encoded)
 
   if (bytes.length !== 32) {
     return false

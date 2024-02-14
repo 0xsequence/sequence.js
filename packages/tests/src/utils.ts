@@ -31,5 +31,5 @@ export function randomBool(): boolean {
 
 export async function isContract(provider: ethers.providers.Provider, address: string): Promise<boolean> {
   const c = await provider.getCode(address)
-  return ethers.utils.arrayify(c).length > 0
+  return ethers.getBytes(c).length > 0
 }

@@ -284,7 +284,7 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
   const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
 
   for (const tx of transactions) {
-    const txData = ethers.utils.arrayify(tx.data || '0x')
+    const txData = ethers.getBytes(tx.data || '0x')
 
     if (tx.to === wallet && ethers.utils.hexlify(txData.slice(0, 4)) === selfExecuteSelector) {
       // Decode as selfExecute call
