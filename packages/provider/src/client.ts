@@ -493,7 +493,7 @@ export class SequenceClient {
 
     return this.send(
       { method, params: [this.getAddress(), encoded] },
-      options?.chainId || (typedData.domain.chainId && Number(BigInt(typedData.domain.chainId)) || this.getChainId()
+      options?.chainId || (typedData.domain.chainId && Number(BigInt(typedData.domain.chainId))) || this.getChainId()
     )
   }
 
