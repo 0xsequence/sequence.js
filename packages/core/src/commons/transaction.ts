@@ -80,7 +80,7 @@ export function intendTransactionBundle(
 }
 
 export function intendedTransactionID(bundle: IntendedTransactionBundle) {
-  return ethers.utils.keccak256(
+  return ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(
       ['address', 'uint256', 'bytes32'],
       [bundle.intent.wallet, bundle.chainId, bundle.intent.id]
@@ -99,7 +99,7 @@ export function packMetaTransactionsData(nonce: BigIntish, txs: Transaction[]): 
 }
 
 export function digestOfTransactions(nonce: BigIntish, txs: Transaction[]) {
-  return ethers.utils.keccak256(packMetaTransactionsData(nonce, txs))
+  return ethers.keccak256(packMetaTransactionsData(nonce, txs))
 }
 
 export function subdigestOfTransactions(address: string, chainId: BigIntish, nonce: BigIntish, txs: Transaction[]): string {
@@ -110,7 +110,7 @@ export function subdigestOfGuestModuleTransactions(guestModule: string, chainId:
   return subdigestOf({
     address: guestModule,
     chainId,
-    digest: ethers.utils.keccak256(
+    digest: ethers.keccak256(
       ethers.AbiCoder.defaultAbiCoder().encode(['string', MetaTransactionsType], ['guest:', sequenceTxAbiEncode(txs)])
     )
   })
@@ -140,7 +140,7 @@ export function toSequenceTransaction(
       }
     }
   } else {
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
 
     return {
@@ -247,7 +247,7 @@ export function isSignedTransactionBundle(cand: any): cand is SignedTransactionB
 }
 
 export function encodeBundleExecData(bundle: TransactionBundle): string {
-  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
   return walletInterface.encodeFunctionData(
     walletInterface.getFunction('execute'),
     isSignedTransactionBundle(bundle)
@@ -281,7 +281,7 @@ export const selfExecuteAbi = `tuple(
 export const unwind = (wallet: string, transactions: Transaction[]): Transaction[] => {
   const unwound: Transaction[] = []
 
-  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
 
   for (const tx of transactions) {
     const txData = ethers.getBytes(tx.data || '0x')

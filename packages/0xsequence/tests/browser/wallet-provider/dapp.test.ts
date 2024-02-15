@@ -107,7 +107,7 @@ export const tests = async () => {
 
   await test('getAddress', async () => {
     const address = wallet.getAddress()
-    assert.true(ethers.utils.isAddress(address), 'wallet address is valid')
+    assert.true(ethers.isAddress(address), 'wallet address is valid')
   })
 
   await test('getWalletConfig', async () => {
@@ -118,7 +118,7 @@ export const tests = async () => {
     assert.true(BigInt(config.threshold) === 2n, 'config, 2 threshold')
     assert.true(BigInt(config.checkpoint) === 0n, 'config, 0 checkpoint')
     assert.true(v2.config.isSignerLeaf(config.tree), 'config, isSignerLeaf')
-    assert.true(ethers.utils.isAddress((config.tree as v2.config.SignerLeaf).address), 'config, signer address')
+    assert.true(ethers.isAddress((config.tree as v2.config.SignerLeaf).address), 'config, signer address')
     assert.true(BigInt((config.tree as v2.config.SignerLeaf).weight) === 2n, 'config, signer weight')
   })
 
@@ -170,7 +170,7 @@ export const tests = async () => {
     const chainId = wallet.getChainId()
 
     const message = 'hihi'
-    const message2 = ethers.utils.toUtf8Bytes('hihi')
+    const message2 = ethers.toUtf8Bytes('hihi')
 
     // Sign the message
     const sigs = await Promise.all(

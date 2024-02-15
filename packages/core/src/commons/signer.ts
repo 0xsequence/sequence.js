@@ -29,11 +29,11 @@ export function recoverSigner(digest: ethers.BytesLike, signature: ethers.BytesL
   const splitSignature = { r, s, v }
 
   if (type === SigType.EIP712) {
-    return ethers.utils.recoverAddress(digestBytes, splitSignature)
+    return ethers.recoverAddress(digestBytes, splitSignature)
   }
 
   if (type === SigType.ETH_SIGN) {
-    return ethers.utils.recoverAddress(ethers.utils.hashMessage(digestBytes), splitSignature)
+    return ethers.recoverAddress(ethers.hashMessage(digestBytes), splitSignature)
   }
 
   throw new Error(`Unsupported signature type: ${type}`)

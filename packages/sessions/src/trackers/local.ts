@@ -225,7 +225,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const decoded = v2.signature.SignatureCoder.decode(args.signature)
     const nextImageHash = universal.genericCoderFor(args.nextConfig.version).config.imageHashOf(args.nextConfig)
     const message = v2.chained.messageSetImageHash(nextImageHash)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
     const payload = {
       message,
       address: args.wallet,
@@ -474,7 +474,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
     // Split signature and save each part
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
     const payload = { chainId: signed.tx.chainId, message, address, digest }
     const subdigest = commons.signature.subdigestOf(payload)
 

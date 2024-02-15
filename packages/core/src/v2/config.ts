@@ -464,7 +464,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       _context: commons.context.WalletContext,
       _kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new ethers.utils.Interface(walletContracts.mainModuleUpgradable.abi)
+      const module = new ethers.Interface(walletContracts.mainModuleUpgradable.abi)
 
       return {
         entrypoint: wallet,
@@ -485,7 +485,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       newImageHash: string
       kind: 'first' | 'later' | undefined
     } {
-      const module = new ethers.utils.Interface(walletContracts.mainModuleUpgradable.abi)
+      const module = new ethers.Interface(walletContracts.mainModuleUpgradable.abi)
 
       if (tx.transactions.length !== 1) {
         throw new Error('Invalid transaction bundle, expected 1 transaction')

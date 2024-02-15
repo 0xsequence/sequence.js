@@ -27,7 +27,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
 
-  constructor(url: ethers.utils.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
+  constructor(url: ethers.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
     super(url, options?.chainId)
 
     const chainId = options?.chainId
@@ -83,7 +83,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
       jsonrpc: '2.0'
     }
 
-    const result = ethers.utils.fetchJson(this.connection, JSON.stringify(request), getResult).then(
+    const result = ethers.fetchJson(this.connection, JSON.stringify(request), getResult).then(
       result => {
         return result
       },

@@ -13,7 +13,7 @@ function toQuantity(number: BigIntish | string): string {
 
 function tryDecodeError(bytes: ethers.BytesLike): string {
   try {
-    return ethers.utils.toUtf8String('0x' + ethers.toBeHex(bytes).substr(138))
+    return ethers.toUtf8String('0x' + ethers.toBeHex(bytes).substr(138))
   } catch (e) {
     return 'UNKNOWN_ERROR'
   }
@@ -84,7 +84,7 @@ export class OverwriterEstimator {
     const data = args.data ? args.data : []
     const from = args.from ? ethers.getAddress(args.from) : ethers.Wallet.createRandom().address
 
-    const gasEstimatorInterface = new ethers.utils.Interface(GasEstimator.abi)
+    const gasEstimatorInterface = new ethers.Interface(GasEstimator.abi)
     const encodedEstimate = gasEstimatorInterface.encodeFunctionData('estimate', [args.to, data])
 
     const providedOverwrites = args.overwrites

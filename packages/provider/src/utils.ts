@@ -4,14 +4,14 @@ import { AccountStatus } from '@0xsequence/account'
 import { commons } from '@0xsequence/core'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 
-const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
+const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
 export const messageToBytes = (message: BytesLike): Uint8Array => {
-  if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
+  if (ethers.isBytes(message) || ethers.isHexString(message)) {
     return ethers.getBytes(message)
   }
 
-  return ethers.utils.toUtf8Bytes(message)
+  return ethers.toUtf8Bytes(message)
 }
 
 export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
@@ -19,7 +19,7 @@ export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes
   } else {
-    return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+    return ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes])
   }
 }
 
@@ -47,7 +47,7 @@ export const trimEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
   let prefixAsNumber: number
 
   try {
-    prefixAsNumber = Number(ethers.utils.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
+    prefixAsNumber = Number(ethers.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   } catch {
     prefixAsNumber = Number(ethers.toBeHex(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   }
@@ -201,12 +201,12 @@ export function useBestStore(): ItemStore {
 }
 
 export async function resolveArrayProperties<T>(
-  object: Readonly<ethers.utils.Deferrable<T>> | Readonly<ethers.utils.Deferrable<T>>[]
+  object: Readonly<ethers.Deferrable<T>> | Readonly<ethers.Deferrable<T>>[]
 ): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
-    return Promise.all(object.map(o => ethers.utils.resolveProperties(o))) as any
+    return Promise.all(object.map(o => ethers.resolveProperties(o))) as any
   }
 
-  return ethers.utils.resolveProperties(object)
+  return ethers.resolveProperties(object)
 }

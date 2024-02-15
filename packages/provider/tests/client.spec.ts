@@ -898,7 +898,7 @@ describe('SequenceClient', () => {
           const req = requests[calledSendAsync]
           calledSendAsync++
 
-          const encoded = ethers.utils._TypedDataEncoder.getPayload(req!.data.domain, req!.data.types, req!.data.message)
+          const encoded = ethers._TypedDataEncoder.getPayload(req!.data.domain, req!.data.types, req!.data.message)
 
           expect(request).to.deep.equal({
             method: req?.eip6492 ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4',

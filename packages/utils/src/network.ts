@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-export const getEthersConnectionInfo = (url: string, projectAccessKey?: string, jwt?: string): ethers.utils.ConnectionInfo => {
+export const getEthersConnectionInfo = (url: string, projectAccessKey?: string, jwt?: string): ethers.ConnectionInfo => {
   const headers: {
     [key: string]: string | number
   } = {}

@@ -28,7 +28,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
     }
 
     const context = contexts[2]
-    const contract = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
     // WARNING: v1 wallets CAN NOT use v2 configurations so we ALWAYS need to update
     // both the implementation and the configuration at the same time
@@ -92,7 +92,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
     }
 
     const context = contexts[2]
-    const contract = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
     const data1 = ethers.toBeHex(tx.transactions[0].data || [])
     const expectData1 = ethers.toBeHex(

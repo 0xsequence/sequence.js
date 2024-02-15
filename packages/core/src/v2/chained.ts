@@ -4,7 +4,7 @@ import { ethers } from 'ethers'
 export const SetImageHashPrefix = '0x8713a7c4465f6fbee2b6e9d6646d1d9f83fec929edfc4baf661f3c865bdd04d1'
 
 export function hashSetImageHash(imageHash: string): string {
-  return ethers.utils.keccak256(messageSetImageHash(imageHash))
+  return ethers.keccak256(messageSetImageHash(imageHash))
 }
 
 export function messageSetImageHash(imageHash: string) {

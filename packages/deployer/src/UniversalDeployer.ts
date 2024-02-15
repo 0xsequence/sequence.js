@@ -16,7 +16,7 @@ import { createLogger, Logger } from './utils/logger'
 let prompt: Logger
 createLogger().then(logger => (prompt = logger))
 
-ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF)
+ethers.Logger.setLogLevel(ethers.Logger.levels.OFF)
 
 export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
@@ -191,11 +191,11 @@ export class UniversalDeployer {
     const deployTx = await factory.getDeployTransaction(...args)
     const deployData = deployTx.data
 
-    const codeHash = ethers.utils.keccak256(ethers.solidityPacked(['bytes'], [deployData]))
+    const codeHash = ethers.keccak256(ethers.solidityPacked(['bytes'], [deployData]))
 
     const salt = ethers.solidityPacked(['uint256'], [contractInstance])
 
-    const hash = ethers.utils.keccak256(
+    const hash = ethers.keccak256(
       ethers.solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', UNIVERSAL_DEPLOYER_2_ADDRESS, salt, codeHash])
     )
 

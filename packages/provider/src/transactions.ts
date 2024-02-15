@@ -24,7 +24,7 @@ function validateTransaction(wallet: string, transaction: commons.transaction.Tr
 }
 
 function isCreateContractCall(data: ethers.BytesLike): boolean {
-  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
   try {
     walletInterface.decodeFunctionData('createContract', data)
     return true

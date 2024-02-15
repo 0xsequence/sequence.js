@@ -49,7 +49,7 @@ class CountingSigner extends AbstractSigner {
     return this.signer.signMessage(message)
   }
 
-  signTransaction(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.Deferrable<ethers.TransactionRequest>): Promise<string> {
     this._signingRequests++
     return this.signer.signTransaction(transaction)
   }
@@ -1414,10 +1414,10 @@ function randomBytes(length: number, entropy: number | string): Uint8Array {
   if (deterministic) {
     let bytes = ''
     while (bytes.length < 2 * length) {
-      bytes += ethers.utils.id(`${bytes}${entropy}`).slice(2)
+      bytes += ethers.id(`${bytes}${entropy}`).slice(2)
     }
     return ethers.getBytes(`0x${bytes.slice(0, 2 * length)}`)
   } else {
-    return ethers.utils.randomBytes(length)
+    return ethers.randomBytes(length)
   }
 }

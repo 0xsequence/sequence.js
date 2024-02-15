@@ -151,7 +151,7 @@ describe('Account signer', () => {
         it('should fail to sign message because not deployed', async () => {
           const signer = account.getSigner(chainId)
 
-          await expect(signer.signMessage(ethers.utils.randomBytes(32))).to.be.rejectedWith('Wallet cannot validate onchain')
+          await expect(signer.signMessage(ethers.randomBytes(32))).to.be.rejectedWith('Wallet cannot validate onchain')
         })
 
         it('should sign message after deployment', async () => {
@@ -163,7 +163,7 @@ describe('Account signer', () => {
 
           expect(await signer.provider.getCode(account.address)).to.not.equal('0x')
 
-          const signature = await signer.signMessage(ethers.utils.randomBytes(32))
+          const signature = await signer.signMessage(ethers.randomBytes(32))
           expect(signature).to.exist
           expect(signature).to.not.equal('0x')
         })
@@ -171,7 +171,7 @@ describe('Account signer', () => {
         it('should sign a message (undeployed) when using EIP6492', async () => {
           const signer = account.getSigner(chainId, { cantValidateBehavior: 'eip6492' })
 
-          const signature = await signer.signMessage(ethers.utils.randomBytes(32))
+          const signature = await signer.signMessage(ethers.randomBytes(32))
           expect(signature).to.exist
           expect(signature).to.not.equal('0x')
         })
@@ -289,7 +289,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -328,7 +328,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -368,7 +368,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -409,7 +409,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -456,7 +456,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -510,7 +510,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -573,7 +573,7 @@ describe('Account signer', () => {
 
             const feeQuote: FeeQuote = {
               _tag: 'FeeQuote',
-              _quote: ethers.utils.randomBytes(99)
+              _quote: ethers.randomBytes(99)
             }
 
             const account = await getAccount(feeOptions, feeQuote)
@@ -603,7 +603,7 @@ describe('Account signer', () => {
       it('should send transactions on multiple nonce spaces one by one', async () => {
         const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
         const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-        const randomSpace = BigInt(ethers.toBeHex(ethers.utils.randomBytes(12)))
+        const randomSpace = BigInt(ethers.toBeHex(ethers.randomBytes(12)))
         const signer3 = account.getSigner(chainId, {
           nonceSpace: randomSpace
         })
@@ -669,7 +669,7 @@ describe('Account signer', () => {
         it('should send transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const randomSpace = BigInt(ethers.toBeHex(ethers.utils.randomBytes(12)))
+          const randomSpace = BigInt(ethers.toBeHex(ethers.randomBytes(12)))
           const signer3 = account.getSigner(chainId, {
             nonceSpace: randomSpace
           })
@@ -747,7 +747,7 @@ describe('Account signer', () => {
         it('should send 100 parallel transactions using different spaces', async () => {
           const signers = new Array(100).fill(0).map(() =>
             account.getSigner(chainId, {
-              nonceSpace: BigInt(ethers.toBeHex(ethers.utils.randomBytes(12)))
+              nonceSpace: BigInt(ethers.toBeHex(ethers.randomBytes(12)))
             })
           )
 
@@ -782,7 +782,7 @@ describe('Account signer', () => {
         it('should send multiple transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const randomSpace = BigInt(ethers.toBeHex(ethers.utils.randomBytes(12)))
+          const randomSpace = BigInt(ethers.toBeHex(ethers.randomBytes(12)))
 
           const signer3 = account.getSigner(chainId, {
             nonceSpace: randomSpace

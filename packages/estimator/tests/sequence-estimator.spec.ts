@@ -74,7 +74,7 @@ describe('Wallet integration', function () {
       {
         name: 'single signer wallet',
         getWallet: async () => {
-          // const pk = ethers.utils.randomBytes(32)
+          // const pk = ethers.randomBytes(32)
           // const wallet = await Wallet.singleOwner(pk, context)
           // return wallet.connect(ethnode.provider, relayer)
           const signer = ethers.Wallet.createRandom()
@@ -280,7 +280,7 @@ describe('Wallet integration', function () {
 
             beforeEach(async () => {
               await callReceiver.setRevertFlag(true)
-              valB = ethers.utils.randomBytes(99)
+              valB = ethers.randomBytes(99)
 
               txs = [
                 {

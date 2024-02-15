@@ -43,7 +43,7 @@ export async function isValidSignature(
 ): Promise<boolean> {
   // First we try to validate the signature using Ethers
   try {
-    const addr = ethers.utils.recoverAddress(digest, signature)
+    const addr = ethers.recoverAddress(digest, signature)
     if (addr.toLowerCase() === address.toLowerCase()) return true
   } catch {}
 
