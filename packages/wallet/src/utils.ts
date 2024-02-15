@@ -1,14 +1,13 @@
-import { ethers, utils } from 'ethers'
+import { Deferrable } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
-export async function resolveArrayProperties<T>(
-  object: Readonly<utils.Deferrable<T>> | Readonly<utils.Deferrable<T>>[]
-): Promise<T> {
+export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
-    return Promise.all(object.map(o => utils.resolveProperties(o))) as any
+    return Promise.all(object.map(o => ethers.resolveProperties(o))) as any
   }
 
-  return utils.resolveProperties(object)
+  return ethers.resolveProperties(object)
 }
 
 export async function findLatestLog(provider: ethers.Provider, filter: ethers.Filter): Promise<ethers.Log | undefined> {
