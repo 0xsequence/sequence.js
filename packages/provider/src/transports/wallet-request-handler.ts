@@ -36,7 +36,7 @@ import {
 } from '../types'
 import { prefixEIP191Message } from '../utils'
 
-type ExternalProvider = providers.ExternalProvider
+type ExternalProvider = ethers.ExternalProvider
 
 const SIGNER_READY_TIMEOUT = 10000
 

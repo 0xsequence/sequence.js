@@ -1,4 +1,4 @@
-import { ethers, providers, Signer } from 'ethers'
+import { ethers, Signer } from 'ethers'
 import * as Ganache from 'ganache'
 import { CallReceiverMock } from '@0xsequence/wallet-contracts'
 import { JsonRpcRouter, JsonRpcExternalProvider } from '@0xsequence/network'
@@ -26,8 +26,8 @@ const GANACHE_PORT = 38546
 type GanacheInstance = {
   server?: any
   serverUri?: string
-  provider?: providers.JsonRpcProvider
-  spyProxy?: providers.JsonRpcProvider
+  provider?: ethers.JsonRpcProvider
+  spyProxy?: ethers.JsonRpcProvider
   signer?: Signer
   chainId?: number
 }
@@ -76,7 +76,7 @@ describe('Multicall integration', function () {
 
     await ganache.server.listen(GANACHE_PORT)
     ganache.serverUri = `http://127.0.0.1:${GANACHE_PORT}/`
-    ganache.provider = new providers.JsonRpcProvider(ganache.serverUri)
+    ganache.provider = new ethers.JsonRpcProvider(ganache.serverUri)
     ganache.signer = ganache.provider.getSigner()
 
     utilsContract = await new ethers.ContractFactory(
@@ -142,14 +142,14 @@ describe('Multicall integration', function () {
     {
       name: 'Json Rpc Router (Sequence)',
       provider: (options?: Partial<MulticallOptions>) =>
-        new providers.Web3Provider(
+        new ethers.BrowserProvider(
           new JsonRpcRouter([multicallMiddleware(options)], new JsonRpcExternalProvider(ganache.spyProxy!))
         )
     },
     {
       name: 'Ether.js external provider wrapper',
       provider: (conf?: Partial<MulticallOptions>) =>
-        new providers.Web3Provider(new MulticallExternalProvider(new JsonRpcExternalProvider(ganache.spyProxy!), conf))
+        new ethers.BrowserProvider(new MulticallExternalProvider(new JsonRpcExternalProvider(ganache.spyProxy!), conf))
     },
     {
       name: 'Provider Engine (json-rpc-engine)',
@@ -177,7 +177,7 @@ describe('Multicall integration', function () {
             }
           }
         })
-        return new providers.Web3Provider(new MulticallExternalProvider(spyHttpProvider as any, conf))
+        return new ethers.BrowserProvider(new MulticallExternalProvider(spyHttpProvider as any, conf))
       }
     },
     {
@@ -188,7 +188,7 @@ describe('Multicall integration', function () {
     {
       name: 'Json Rpc Router (Sequence) (without proxy)',
       provider: (options?: Partial<MulticallOptions>) =>
-        new providers.Web3Provider(
+        new ethers.BrowserProvider(
           new JsonRpcRouter([multicallMiddleware(options)], new JsonRpcExternalProvider(ganache.provider!))
         ),
       ignoreCount: true
@@ -196,7 +196,7 @@ describe('Multicall integration', function () {
     {
       name: 'Ether.js external provider wrapper (without proxy)',
       provider: (conf?: Partial<MulticallOptions>) =>
-        new providers.Web3Provider(new MulticallExternalProvider(new JsonRpcExternalProvider(ganache.provider!), conf)),
+        new ethers.BrowserProvider(new MulticallExternalProvider(new JsonRpcExternalProvider(ganache.provider!), conf)),
       ignoreCount: true
     },
     {
@@ -226,7 +226,7 @@ describe('Multicall integration', function () {
             }
           }
         })
-        return new providers.Web3Provider(new MulticallExternalProvider(web3HttpProvider as any, conf))
+        return new ethers.BrowserProvider(new MulticallExternalProvider(web3HttpProvider as any, conf))
       },
       ignoreCount: true
     }

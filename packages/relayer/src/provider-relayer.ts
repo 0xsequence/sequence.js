@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { BigIntish, logger, Optionals } from '@0xsequence/utils'
@@ -7,7 +7,7 @@ import { commons } from '@0xsequence/core'
 const DEFAULT_GAS_LIMIT = 800000n
 
 export interface ProviderRelayerOptions {
-  provider: providers.Provider
+  provider: ethers.Provider
   waitPollRate?: number
   deltaBlocksLog?: number
   fromBlockLog?: number
@@ -20,11 +20,11 @@ export const ProviderRelayerDefaults: Required<Optionals<ProviderRelayerOptions>
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return obj.provider !== undefined && providers.Provider.isProvider(obj.provider)
+  return obj.provider !== undefined && ethers.Provider.isProvider(obj.provider)
 }
 
 export abstract class ProviderRelayer implements Relayer {
-  public provider: providers.Provider
+  public provider: ethers.Provider
   public waitPollRate: number
   public deltaBlocksLog: number
   public fromBlockLog: number
@@ -96,7 +96,7 @@ export abstract class ProviderRelayer implements Relayer {
     }))
   }
 
-  async getNonce(address: string, space?: BigIntish, blockTag?: providers.BlockTag): Promise<BigIntish> {
+  async getNonce(address: string, space?: BigIntish, blockTag?: ethers.BlockTag): Promise<BigIntish> {
     if (!this.provider) {
       throw new Error('provider is not set')
     }
@@ -119,7 +119,7 @@ export abstract class ProviderRelayer implements Relayer {
     timeout?: number,
     delay: number = this.waitPollRate,
     maxFails: number = 5
-  ): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
+  ): Promise<ethers.TransactionResponse & { receipt: ethers.TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
       metaTxnId = commons.transaction.intendedTransactionID(metaTxnId)
     }
@@ -151,7 +151,7 @@ export abstract class ProviderRelayer implements Relayer {
       throw new Error(`timed out after ${fails} failed attempts${errorMessage ? `: ${errorMessage}` : ''}`)
     }
 
-    const waitReceipt = async (): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> => {
+    const waitReceipt = async (): Promise<ethers.TransactionResponse & { receipt: ethers.TransactionReceipt }> => {
       // Transactions can only get executed on nonce change
       // get all nonce changes and look for metaTxnIds in between logs
       let lastBlock: number = this.fromBlockLog
@@ -229,7 +229,7 @@ export abstract class ProviderRelayer implements Relayer {
     if (timeout !== undefined) {
       return Promise.race([
         waitReceipt(),
-        new Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }>((_, reject) =>
+        new Promise<ethers.TransactionResponse & { receipt: ethers.TransactionReceipt }>((_, reject) =>
           setTimeout(() => {
             timedOut = true
             reject(`Timeout waiting for transaction receipt ${metaTxnId}`)

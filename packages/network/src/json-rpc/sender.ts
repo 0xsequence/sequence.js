@@ -1,4 +1,4 @@
-import { providers } from 'ethers'
+import { ethers } from 'ethers'
 import {
   JsonRpcRequest,
   JsonRpcResponse,
@@ -10,7 +10,7 @@ import {
 } from './types'
 import { isJsonRpcProvider, isJsonRpcHandler } from './utils'
 
-type ExternalProvider = providers.ExternalProvider
+type ExternalProvider = ethers.ExternalProvider
 
 let _nextId = 0
 
@@ -19,7 +19,7 @@ export class JsonRpcSender implements JsonRpcHandler {
   readonly request: JsonRpcRequestFunc
   readonly defaultChainId?: number
 
-  constructor(provider: providers.JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: number) {
+  constructor(provider: ethers.JsonRpcProvider | JsonRpcHandler | JsonRpcFetchFunc, defaultChainId?: number) {
     this.defaultChainId = defaultChainId
 
     if (isJsonRpcProvider(provider)) {
@@ -78,7 +78,7 @@ export class JsonRpcSender implements JsonRpcHandler {
 }
 
 export class JsonRpcExternalProvider implements ExternalProvider, JsonRpcHandler {
-  constructor(private provider: providers.JsonRpcProvider) {}
+  constructor(private provider: ethers.JsonRpcProvider) {}
 
   sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) => {
     this.provider
