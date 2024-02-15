@@ -20,7 +20,7 @@ export interface Relayer {
   // It doesn't make any assumptions about the transaction format.
   getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }

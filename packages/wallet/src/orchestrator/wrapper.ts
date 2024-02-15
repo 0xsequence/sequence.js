@@ -28,7 +28,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
     return this.wallet.decorateTransactions(bundle)
   }
 
-  sign(message: ethers.utils.BytesLike, metadata: object): Promise<ethers.utils.BytesLike> {
+  sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
       throw new Error('SequenceOrchestratorWrapper only supports nested Sequence signatures')
     }
@@ -40,7 +40,7 @@ export class SequenceOrchestratorWrapper implements signers.SapientSigner {
 
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
-  suffix(): ethers.utils.BytesLike {
+  suffix(): ethers.BytesLike {
     return [3]
   }
 }

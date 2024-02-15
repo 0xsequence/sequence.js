@@ -29,7 +29,7 @@ export class SignerWrapper implements SapientSigner {
     return bundle
   }
 
-  sign(message: ethers.utils.BytesLike, metadata: object): Promise<ethers.utils.BytesLike> {
+  sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
     return this.signer.signMessage(message)
   }
 

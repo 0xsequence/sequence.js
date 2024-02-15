@@ -8,7 +8,7 @@ import { BigIntish } from '@0xsequence/utils'
  */
 export type WalletSignRequestMetadata = {
   address: string
-  digest: ethers.utils.BytesLike
+  digest: ethers.BytesLike
   chainId: BigIntish
 
   config: Config
@@ -19,7 +19,7 @@ export type WalletSignRequestMetadata = {
   //       how close are we to the threshold. This can be used to display
   //       a progress bar or something similar.
 
-  message?: ethers.utils.BytesLike
+  message?: ethers.BytesLike
   transactions?: commons.transaction.Transaction[]
 
   // This is used only when a Sequence wallet is nested in another Sequence wallet

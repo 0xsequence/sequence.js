@@ -639,7 +639,7 @@ describe('SequenceSigner', () => {
     let signer: SequenceSigner
 
     let callsToSignMessage: number
-    let expectedSignMessage: ethers.utils.BytesLike
+    let expectedSignMessage: ethers.BytesLike
     let expectedOptions: OptionalEIP6492 & OptionalChainId
     let returnValue: string
 
