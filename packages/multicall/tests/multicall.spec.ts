@@ -440,7 +440,7 @@ describe('Multicall integration', function () {
         })
 
         it('Should detect network', async () => {
-          const net = await (provider as ethers.BaseProvider).detectNetwork()
+          const net = await (provider as ethers.AbstractProvider).detectNetwork()
           expect(net.chainId).to.equal(1337)
         })
 
