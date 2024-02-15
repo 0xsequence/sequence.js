@@ -1,6 +1,6 @@
 import { OverwriterEstimator } from './overwriter-estimator'
 import { walletContracts } from '@0xsequence/abi'
-import { ethers, utils } from 'ethers'
+import { ethers } from 'ethers'
 import { Estimator } from './estimator'
 import { commons, v2 } from '@0xsequence/core'
 import { mainModuleGasEstimation } from './builds'
@@ -16,7 +16,7 @@ export class OverwriterSequenceEstimator implements Estimator {
     nonce: BigIntish,
     ...transactions: commons.transaction.Transaction[]
   ): Promise<{ transactions: commons.transaction.Transaction[]; total: bigint }> {
-    const walletInterface = new utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
 
     const allSigners = await Promise.all(
       v2.config.signersOf(config.tree).map(async (s, i) => ({

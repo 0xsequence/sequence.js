@@ -17,7 +17,7 @@ import type { Listener, Provider } from '@ethersproject/providers'
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from './common'
 import { BigIntish } from '@0xsequence/utils'
 
-export interface UniversalDeployer2Interface extends utils.Interface {
+export interface UniversalDeployer2Interface extends ethers.Interface {
   functions: {
     'deploy(bytes,uint256)': FunctionFragment
   }
