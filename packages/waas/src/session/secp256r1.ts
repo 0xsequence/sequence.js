@@ -4,8 +4,8 @@ import { KeyTypes } from './keyTypes'
 
 import { openDB } from 'idb';
 
-const idbName = 'waas-session-p256r1'
-const idbStoreName = 'waas-session'
+const idbName = 'seq-waas-session-p256r1'
+const idbStoreName = 'seq-waas-session'
 
 export async function newSECP256R1SessionFromSessionId(sessionId: string): Promise<Session> {
   const db = await openDB(idbName);
@@ -39,7 +39,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string): Promi
       return ethers.utils.hexlify(new Uint8Array(signatureBuff))
     },
     clear: async () => {
-      await db.delete('waas-session', sessionId)
+      await db.delete(idbStoreName, sessionId)
     }
   }
 }

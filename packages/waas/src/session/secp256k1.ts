@@ -2,8 +2,8 @@ import { ethers } from "ethers";
 import { openDB } from "idb";
 import { Session } from "./index";
 
-const idbName = 'waas-session-p256k1'
-const idbStoreName = 'waas-session'
+const idbName = 'seq-waas-session-p256k1'
+const idbStoreName = 'seq-waas-session'
 
 export async function newSECP256K1SessionFromSessionId(sessionId: string): Promise<Session> {
   const db = await openDB(idbName);

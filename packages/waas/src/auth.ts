@@ -3,13 +3,22 @@ import { IntentResponseSignedMessage } from "./clients/intent.gen";
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
 import {
+  SendDelayedEncodeArgs,
+  SendERC1155Args,
+  SendERC20Args,
+  SendERC721Args,
+  SignMessageArgs,
+  SendTransactionsArgs,
+  SignedIntent
+} from './intents'
+import {
   MaySentTransactionResponse,
   SignedMessageResponse,
   isGetSessionResponse,
   isMaySentTransactionResponse,
   isSignedMessageResponse,
   isValidationRequiredResponse,
-  isFinishValidateSessionResponse
+  isFinishValidateSessionResponse, isCloseSessionResponse
 } from './intents/responses'
 import {
   WaasAuthenticator,
@@ -17,18 +26,9 @@ import {
   Chain
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
-import {
-  SendDelayedEncodeArgs,
-  SendERC1155Args,
-  SendERC20Args,
-  SendERC721Args,
-  SendTransactionsArgs
-} from './intents'
-import { SignMessageArgs } from './intents/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
-import { SignedIntent} from "./intents";
 import {ethers} from "ethers";
 
 export type Sessions = (Session & { isThis: boolean })[]
@@ -42,7 +42,6 @@ export type SequenceConfig = {
 export type ExtendedSequenceConfig = {
   rpcServer: string
   emailRegion?: string
-  endpoint?: string
 }
 
 export type WaaSConfigKey = {
@@ -112,7 +111,7 @@ export function defaultArgsOrFail(
   return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 }
 
-export class Sequence {
+export class SequenceWaaS {
   private waas: SequenceWaaSBase
   private client: WaasAuthenticator
 
@@ -192,7 +191,6 @@ export class Sequence {
       throw new Error('session not open')
     }
 
-    // TODO sendIntent
     const res = await this.client.sendIntent({intent: intent}, this.headers())
     return res.response
   }
@@ -220,21 +218,26 @@ export class Sequence {
       friendlyName: name,
     }
 
-    const res = await this.client.registerSession(args, this.headers())
+    await this.deviceName.set(name)
 
-    await this.waas.completeSignIn({
-      code: 'sessionOpened',
-      data: {
+    try {
+      const res = await this.client.registerSession(args, this.headers())
+
+      await this.waas.completeSignIn({
+        code: 'sessionOpened',
+        data: {
+          sessionId: res.session.id,
+          wallet: res.response.data.wallet
+        }
+      })
+
+      return {
         sessionId: res.session.id,
         wallet: res.response.data.wallet
       }
-    })
-
-    await this.deviceName.set(name)
-
-    return {
-      sessionId: res.session.id,
-      wallet: res.response.data.wallet
+    } catch (e) {
+      await this.waas.completeSignOut()
+      throw e
     }
   }
 
@@ -248,9 +251,7 @@ export class Sequence {
 
   async getSessionHash() {
     const sessionId = (await this.waas.getSessionId()).toLowerCase()
-    const sessionHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionId))
-    console.log({ sessionId, sessionHash })
-    return sessionHash
+    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionId))
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
@@ -263,9 +264,9 @@ export class Sequence {
 
     try {
       const intent = await this.waas.signOutSession(closeSessionId)
-      const result = this.sendIntent(intent)
+      const result = await this.sendIntent(intent)
 
-      if (!isFinishValidateSessionResponse(result)) {
+      if (!isCloseSessionResponse(result)) {
         throw new Error(`Invalid response: ${JSON.stringify(result)}`)
       }
     } catch (e) {
@@ -277,10 +278,10 @@ export class Sequence {
     }
 
     if (closeSessionId === thisSessionId) {
-      console.log('clearing session')
-      await (await newSessionFromSessionId(thisSessionId)).clear()
+      const session = await newSessionFromSessionId(thisSessionId)
+      session.clear()
       await this.waas.completeSignOut()
-      this.deviceName.set(undefined)
+      await this.deviceName.set(undefined)
     }
   }
 

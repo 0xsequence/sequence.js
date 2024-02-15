@@ -7,24 +7,24 @@ import {
   listSessions,
   validateSession,
   finishValidateSession,
-  signIntent, sendDelayedEncode
-} from './intents'
-import { LocalStore, Store, StoreObj } from './store'
-import {newSession, newSessionFromSessionId} from "./session";
-import {
-  combineTransactionIntents,
+  signIntent,
+  signMessage,
+  sendDelayedEncode,
   sendERC1155,
   sendERC20,
   sendERC721,
   sendTransactions,
+  combineTransactionIntents,
+  SignMessageArgs,
   SendTransactionsArgs,
   SendERC20Args,
   SendERC721Args,
   SendERC1155Args,
   SendDelayedEncodeArgs,
 } from './intents'
+import { LocalStore, Store, StoreObj } from './store'
+import {newSession, newSessionFromSessionId} from "./session";
 import { OpenSessionResponse } from './intents/responses'
-import { SignMessageArgs, signMessage } from './intents'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 import {
   IntentDataFinishValidateSession,
@@ -191,17 +191,12 @@ export class SequenceWaaSBase {
       throw new Error('you are already signed in') // TODO change this awful msg
     }
 
-    try {
-      const sessionId = await this.getSessionId()
-      const intent = await openSession({ idToken, sessionId, lifespan: DEFAULT_LIFESPAN })
+    const sessionId = await this.getSessionId()
+    const intent = await openSession({ idToken, sessionId, lifespan: DEFAULT_LIFESPAN })
 
-      await this.status.set('pending')
+    await this.status.set('pending')
 
-      return this.signIntent(intent)
-    } catch (e) {
-      await this.completeSignOut()
-      throw e
-    }
+    return this.signIntent(intent)
   }
 
   onSessionStateChanged(callback: Observer<string>): () => void {

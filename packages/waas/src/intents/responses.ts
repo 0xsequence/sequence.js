@@ -199,8 +199,7 @@ export function isCloseSessionResponse(receipt: any): receipt is IntentResponseS
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
-    receipt.code === 'sessionClosed' &&
-    typeof receipt.data === 'object'
+    receipt.code === 'sessionClosed'
   )
 }
 
