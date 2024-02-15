@@ -13,7 +13,7 @@ import {
   NetworkConfig
 } from '@0xsequence/network'
 import { logger, toHexString, TypedData } from '@0xsequence/utils'
-import { BigNumber, ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import { fromExtended } from '../extended'

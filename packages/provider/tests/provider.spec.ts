@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import {
   ConnectOptions,
   OpenWalletIntent,
@@ -515,7 +515,7 @@ describe('SequenceProvider', () => {
       expect(provider.toChainId(31338n)).to.equal(31338)
     })
 
-    it('should fail if network is not supported - BigNumber', () => {
+    it('should fail if network is not supported - BigInt', () => {
       expect(() => provider.toChainId(99999n)).to.throw(`Unsupported network ${99999n}`)
     })
 
@@ -722,14 +722,14 @@ describe('SequenceProvider', () => {
             if (chainId === 31337) {
               return {
                 ...hardhat1Provider,
-                getGasPrice: async () => BigNumber.from(1n)
+                getGasPrice: async () => 1n
               } as unknown as ethers.JsonRpcProvider
             }
 
             if (chainId === 31338) {
               return {
                 ...hardhat2Provider,
-                getGasPrice: async () => BigNumber.from(2n)
+                getGasPrice: async () => 2n
               } as unknown as ethers.JsonRpcProvider
             }
 

@@ -1,4 +1,4 @@
-import { utils } from 'ethers'
+import { ethers } from 'ethers'
 
 // Monkey patch toJSON on BigInt to return a string
 
@@ -30,7 +30,7 @@ export const isBigIntish = (value: any): value is BigIntish => {
     value != null &&
     ((typeof value === 'number' && value % 1 === 0) ||
       (typeof value === 'string' && !!value.match(/^-?[0-9]+$/)) ||
-      utils.isHexString(value) ||
+      ethers.isHexString(value) ||
       typeof value === 'bigint')
   )
 }

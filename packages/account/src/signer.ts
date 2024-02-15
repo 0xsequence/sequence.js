@@ -1,6 +1,6 @@
 import { ChainId } from '@0xsequence/network'
 import { Account } from './account'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
 import { FeeOption, proto } from '@0xsequence/relayer'
 import { isDeferrable } from './utils'
@@ -161,7 +161,7 @@ export class AccountSigner implements ethers.Signer {
     ) as Promise<ethers.TransactionResponse> // Will always have a transaction response
   }
 
-  getBalance(blockTag?: ethers.BlockTag | undefined): Promise<BigNumber> {
+  getBalance(blockTag?: ethers.BlockTag | undefined): Promise<bigint> {
     return this.provider.getBalance(this.account.address, blockTag)
   }
 
@@ -187,7 +187,7 @@ export class AccountSigner implements ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
-  estimateGas(transaction: ethers.Deferrable<ethers.TransactionRequest>): Promise<BigNumber> {
+  estimateGas(transaction: ethers.Deferrable<ethers.TransactionRequest>): Promise<bigint> {
     throw new Error('Method not implemented.')
   }
 
@@ -195,7 +195,7 @@ export class AccountSigner implements ethers.Signer {
     return Promise.resolve(Number(BigInt(this.chainId)))
   }
 
-  getGasPrice(): Promise<BigNumber> {
+  getGasPrice(): Promise<bigint> {
     throw new Error('Method not implemented.')
   }
 

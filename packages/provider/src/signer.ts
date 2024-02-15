@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 
 import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
 import { SequenceClient } from './client'
@@ -8,7 +8,7 @@ import { resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
 import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 
-export interface ISequenceSigner extends ethers.Signer {
+export interface ISequenceSigner extends ethers.AbstractSigner {
   getProvider(): SequenceProvider
   getProvider(chainId: ChainIdLike): SingleNetworkSequenceProvider
   getProvider(chainId?: ChainIdLike): SequenceProvider | SingleNetworkSequenceProvider
@@ -154,15 +154,12 @@ export class SequenceSigner implements ISequenceSigner {
     return this.client.getNetworks()
   }
 
-  async getBalance(blockTag?: ethers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<BigNumber> {
+  async getBalance(blockTag?: ethers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<bigint> {
     const provider = this.getProvider(optionals?.chainId)
     return provider.getBalance(this.getAddress(), blockTag)
   }
 
-  async estimateGas(
-    transaction: ethers.Deferrable<ethers.TransactionRequest>,
-    optionals?: OptionalChainIdLike
-  ): Promise<BigNumber> {
+  async estimateGas(transaction: ethers.Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike): Promise<bigint> {
     return this.getProvider(optionals?.chainId).estimateGas(transaction)
   }
 
@@ -178,7 +175,7 @@ export class SequenceSigner implements ISequenceSigner {
     return Promise.resolve(this.client.getChainId())
   }
 
-  async getGasPrice(optionals?: OptionalChainIdLike): Promise<BigNumber> {
+  async getGasPrice(optionals?: OptionalChainIdLike): Promise<bigint> {
     return this.getProvider(optionals?.chainId).getGasPrice()
   }
 
