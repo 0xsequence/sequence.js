@@ -1,4 +1,4 @@
-import { BytesLike, Signer as AbstractSigner, providers, TypedDataDomain, TypedDataField, ethers } from 'ethers'
+import { BytesLike, AbstractSigner, TypedDataDomain, TypedDataField, ethers } from 'ethers'
 import { NetworkConfig, ChainIdLike } from '@0xsequence/network'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { Deferrable } from '@0xsequence/utils'
