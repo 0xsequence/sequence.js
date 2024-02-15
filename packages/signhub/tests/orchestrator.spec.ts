@@ -235,7 +235,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should pass the correct message to the signer', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
+      const ogMessage = ethers.randomBytes(99)
       const signer: SapientSigner = {
         getAddress: async function (): Promise<string> {
           return '0x1234'
@@ -269,7 +269,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should pass metadata to signer', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
+      const ogMessage = ethers.randomBytes(99)
       const signer: SapientSigner = {
         getAddress: async function (): Promise<string> {
           return '0x1234'
@@ -303,7 +303,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should pass updated metadata to signer', async () => {
-      const ogMessage = ethers.utils.randomBytes(99)
+      const ogMessage = ethers.randomBytes(99)
 
       let firstCall = true
       let errorOnNotify: any = undefined
@@ -408,7 +408,7 @@ describe('Orchestrator', () => {
     })
 
     it('Should only sign with candidates', async () => {
-      const message = ethers.utils.randomBytes(99)
+      const message = ethers.randomBytes(99)
 
       const signer1 = ethers.Wallet.createRandom()
       const signer2 = ethers.Wallet.createRandom()

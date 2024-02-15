@@ -41,7 +41,7 @@ export class Multicall {
 
   readonly batchableJsonRpcMethods = [JsonRpcMethod.ethCall, JsonRpcMethod.ethGetCode, JsonRpcMethod.ethGetBalance]
 
-  readonly multicallInterface = new ethers.utils.Interface(walletContracts.sequenceUtils.abi)
+  readonly multicallInterface = new ethers.Interface(walletContracts.sequenceUtils.abi)
 
   public options: MulticallOptions
 
@@ -258,7 +258,7 @@ export class Multicall {
     }
 
     // Decode result from multicall
-    let decoded: ethers.utils.Result
+    let decoded: ethers.Result
     try {
       // @ts-ignore
       decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('multiCall'), res.result)

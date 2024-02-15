@@ -203,7 +203,7 @@ export class Wallet<
       ...deployTx,
       chainId: this.chainId,
       intent: {
-        id: ethers.toBeHex(ethers.utils.randomBytes(32)),
+        id: ethers.toBeHex(ethers.randomBytes(32)),
         wallet: this.address
       }
     })
@@ -213,7 +213,7 @@ export class Wallet<
     context: commons.context.WalletContext,
     imageHash: string
   ): commons.transaction.TransactionBundle {
-    const factoryInterface = new ethers.utils.Interface(walletContracts.factory.abi)
+    const factoryInterface = new ethers.Interface(walletContracts.factory.abi)
 
     return {
       entrypoint: context.guestModule,
@@ -287,7 +287,7 @@ export class Wallet<
   }
 
   signMessage(message: ethers.BytesLike): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message), { message })
+    return this.signDigest(ethers.keccak256(message), { message })
   }
 
   signTransactionBundle(bundle: commons.transaction.TransactionBundle): Promise<commons.transaction.SignedTransactionBundle> {
@@ -322,7 +322,7 @@ export class Wallet<
 
   // Generate nonce with random space
   randomNonce(): BigIntish {
-    const randomNonceSpace = BigInt(ethers.toBeHex(ethers.utils.randomBytes(12)))
+    const randomNonceSpace = BigInt(ethers.toBeHex(ethers.randomBytes(12)))
     const randomNonce = commons.transaction.encodeNonce(randomNonceSpace, 0)
     return randomNonce
   }
@@ -430,7 +430,7 @@ export class Wallet<
     return this
   }
 
-  signTransaction(transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.Deferrable<ethers.TransactionRequest>): Promise<string> {
     throw new Error('Method not implemented.')
   }
 }

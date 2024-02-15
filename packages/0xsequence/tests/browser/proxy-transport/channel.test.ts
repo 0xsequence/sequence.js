@@ -145,7 +145,7 @@ export const tests = async () => {
   })
 
   await test('sign a message and validate/recover', async () => {
-    const message = ethers.utils.toUtf8Bytes('hihi')
+    const message = ethers.toUtf8Bytes('hihi')
 
     //
     // Sign the message

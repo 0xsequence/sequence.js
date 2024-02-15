@@ -26,7 +26,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
   imageHashOf: (config: WalletConfig): string => {
     return config.signers.reduce(
       (imageHash, signer) =>
-        ethers.utils.keccak256(
+        ethers.keccak256(
           ethers.AbiCoder.defaultAbiCoder().encode(['bytes32', 'uint8', 'address'], [imageHash, signer.weight, signer.address])
         ),
       ethers.solidityPacked(['uint256'], [config.threshold])
@@ -76,7 +76,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       context: commons.context.WalletContext,
       kind?: 'first' | 'later' | undefined
     ): commons.transaction.TransactionBundle => {
-      const module = new ethers.utils.Interface([...walletContracts.mainModule.abi, ...walletContracts.mainModuleUpgradable.abi])
+      const module = new ethers.Interface([...walletContracts.mainModule.abi, ...walletContracts.mainModuleUpgradable.abi])
 
       const transactions: commons.transaction.Transaction[] = []
 

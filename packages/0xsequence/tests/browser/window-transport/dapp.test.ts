@@ -33,7 +33,7 @@ export const tests = async () => {
   const chainId = await signer.getChainId()
 
   await test('getAddress', async () => {
-    assert.true(ethers.utils.isAddress(address), 'wallet address')
+    assert.true(ethers.isAddress(address), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
@@ -64,7 +64,7 @@ export const tests = async () => {
 
   // NOTE: when a dapp wants to verify SmartWallet signed messages, they will need to verify against EIP-1271
   await test('sign a message and validate/recover', async () => {
-    const message = ethers.utils.toUtf8Bytes('hihi')
+    const message = ethers.toUtf8Bytes('hihi')
 
     // TODO: signer should be a Sequence signer, and should be able to specify the chainId
     // however, for a single wallet, it can check the chainId and throw if doesnt match, for multi-wallet it will select
@@ -123,7 +123,7 @@ export const tests = async () => {
     // Verify the message signature
     //
 
-    const messageHash = ethers.utils._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
+    const messageHash = ethers._TypedDataEncoder.hash(typedData.domain, typedData.types, typedData.message)
     const messageDigest = ethers.getBytes(messageHash)
     const isValid = await isValidSignature(address, messageDigest, sig, provider)
     assert.true(isValid, 'signature is valid - 6')

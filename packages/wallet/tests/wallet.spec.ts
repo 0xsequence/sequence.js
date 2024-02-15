@@ -115,7 +115,7 @@ describe('Wallet (primitive)', () => {
         let getNonce: (response: ethers.TransactionResponse) => { space: bigint; nonce: bigint }
 
         before(async () => {
-          const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
+          const mainModule = new ethers.Interface(walletContracts.mainModule.abi)
 
           getNonce = ({ data }) => {
             const [_, encoded] = mainModule.decodeFunctionData('execute', data)
@@ -399,12 +399,10 @@ describe('Wallet (primitive)', () => {
               await wallet.deploy()
               expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
 
-              const message = ethers.utils.toUtf8Bytes(
-                `This is a random message: ${ethers.toBeHex(ethers.utils.randomBytes(96))}`
-              )
+              const message = ethers.toUtf8Bytes(`This is a random message: ${ethers.toBeHex(ethers.randomBytes(96))}`)
 
               const signature = await wallet.signMessage(message)
-              const digest = ethers.utils.keccak256(message)
+              const digest = ethers.keccak256(message)
 
               expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
             })

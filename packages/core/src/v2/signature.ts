@@ -633,7 +633,7 @@ export async function recoverSignature(
     mutatedPayload = {
       ...mutatedPayload,
       message: nextMessage,
-      digest: ethers.utils.keccak256(nextMessage)
+      digest: ethers.keccak256(nextMessage)
     }
   }
 
@@ -655,7 +655,7 @@ export function encodeChain(main: ethers.BytesLike, suffix: ethers.BytesLike[]):
 export function encodeSignature(
   decoded: UnrecoveredChainedSignature | ChainedSignature | UnrecoveredSignature | Signature | ethers.BytesLike
 ): string {
-  if (ethers.utils.isBytesLike(decoded)) return ethers.toBeHex(decoded)
+  if (ethers.isBytesLike(decoded)) return ethers.toBeHex(decoded)
 
   if (isUnrecoveredChainedSignature(decoded) || isChainedSignature(decoded)) {
     return encodeChain(encodeSignature(decoded), (decoded.suffix || []).map(encodeSignature))
@@ -956,8 +956,8 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
     // Notice: v2 expects suffix to be reversed
     // that being: from signed to current imageHash
     const reversed = suffix.reverse()
-    const mraw = ethers.utils.isBytesLike(main) ? main : encodeSignature(main)
-    const sraw = reversed.map(s => (ethers.utils.isBytesLike(s) ? s : encodeSignature(s)))
+    const mraw = ethers.isBytesLike(main) ? main : encodeSignature(main)
+    const sraw = reversed.map(s => (ethers.isBytesLike(s) ? s : encodeSignature(s)))
     return encodeChain(mraw, sraw)
   },
 

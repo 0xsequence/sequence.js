@@ -33,7 +33,7 @@ export interface ISequenceSigner extends ethers.Signer {
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   // It supports any kind of transaction, including regular ethers transactions, and Sequence transactions.
   sendTransaction(
-    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>[] | ethers.utils.Deferrable<ethers.TransactionRequest>,
+    transaction: ethers.Deferrable<ethers.TransactionRequest>[] | ethers.Deferrable<ethers.TransactionRequest>,
     options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
 
@@ -123,7 +123,7 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async sendTransaction(
-    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>[] | ethers.utils.Deferrable<ethers.TransactionRequest>,
+    transaction: ethers.Deferrable<ethers.TransactionRequest>[] | ethers.Deferrable<ethers.TransactionRequest>,
     options?: OptionalChainIdLike
   ) {
     const chainId = this.useChainId(options?.chainId)
@@ -132,7 +132,7 @@ export class SequenceSigner implements ISequenceSigner {
     const provider = this.getProvider(chainId)
 
     try {
-      return (await ethers.utils.poll(
+      return (await ethers.poll(
         async () => {
           const tx = await provider.getTransaction(txHash)
           return tx ? provider._wrapTransaction(tx, txHash) : undefined
@@ -160,14 +160,14 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async estimateGas(
-    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>,
+    transaction: ethers.Deferrable<ethers.TransactionRequest>,
     optionals?: OptionalChainIdLike
   ): Promise<BigNumber> {
     return this.getProvider(optionals?.chainId).estimateGas(transaction)
   }
 
   async call(
-    transaction: ethers.utils.Deferrable<ethers.TransactionRequest>,
+    transaction: ethers.Deferrable<ethers.TransactionRequest>,
     blockTag?: ethers.providers.BlockTag | undefined,
     optionals?: OptionalChainIdLike
   ): Promise<string> {
@@ -204,13 +204,11 @@ export class SequenceSigner implements ISequenceSigner {
     // We always have a provider, so this is a noop
   }
 
-  populateTransaction(_transaction: ethers.utils.Deferrable<ethers.TransactionRequest>): Promise<ethers.TransactionRequest> {
+  populateTransaction(_transaction: ethers.Deferrable<ethers.TransactionRequest>): Promise<ethers.TransactionRequest> {
     throw new Error('SequenceSigner does not support populateTransaction')
   }
 
-  checkTransaction(
-    _transaction: ethers.utils.Deferrable<ethers.TransactionRequest>
-  ): ethers.utils.Deferrable<ethers.TransactionRequest> {
+  checkTransaction(_transaction: ethers.Deferrable<ethers.TransactionRequest>): ethers.Deferrable<ethers.TransactionRequest> {
     throw new Error('SequenceSigner does not support checkTransaction')
   }
 
@@ -220,7 +218,7 @@ export class SequenceSigner implements ISequenceSigner {
     throw new Error('SequenceSigner does not support getTransactionCount')
   }
 
-  signTransaction(_transaction: ethers.utils.Deferrable<commons.transaction.Transactionish>): Promise<string> {
+  signTransaction(_transaction: ethers.Deferrable<commons.transaction.Transactionish>): Promise<string> {
     // We could implement signTransaction/sendTransaction here
     // but first we need a way of serializing these signed transactions
     // and it could lead to more trouble, because the dapp could try to send this transaction

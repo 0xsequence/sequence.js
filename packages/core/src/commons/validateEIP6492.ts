@@ -188,9 +188,9 @@ export async function validateEIP6492Offchain(
   return (
     '0x01' ===
     (await provider.call({
-      data: ethers.utils.concat([
+      data: ethers.concat([
         EIP_6492_OFFCHAIN_DEPLOY_CODE,
-        new ethers.utils.AbiCoder().encode(['address', 'bytes32', 'bytes'], [signer, hash, signature])
+        new ethers.AbiCoder().encode(['address', 'bytes32', 'bytes'], [signer, hash, signature])
       ])
     }))
   )

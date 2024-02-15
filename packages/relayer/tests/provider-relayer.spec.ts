@@ -91,7 +91,7 @@ describe('Wallet integration', function () {
         it('Should get receipt of success transaction', async () => {
           const txn = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.utils.randomBytes(43),
+            data: ethers.randomBytes(43),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
@@ -114,7 +114,7 @@ describe('Wallet integration', function () {
           const txns = [
             {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.utils.randomBytes(43),
+              data: ethers.randomBytes(43),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
@@ -123,7 +123,7 @@ describe('Wallet integration', function () {
             },
             {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.utils.randomBytes(43),
+              data: ethers.randomBytes(43),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
@@ -149,7 +149,7 @@ describe('Wallet integration', function () {
           const txns = [
             {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.utils.randomBytes(43),
+              data: ethers.randomBytes(43),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
@@ -239,7 +239,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.utils.randomBytes(43),
+                  data: ethers.randomBytes(43),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000,
@@ -252,7 +252,7 @@ describe('Wallet integration', function () {
 
           const txn = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.utils.randomBytes(43),
+            data: ethers.randomBytes(43),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
@@ -273,7 +273,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.utils.randomBytes(43),
+                  data: ethers.randomBytes(43),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000,
@@ -321,7 +321,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.utils.randomBytes(43),
+                  data: ethers.randomBytes(43),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000,
@@ -351,7 +351,7 @@ describe('Wallet integration', function () {
 
           const txn = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.utils.randomBytes(43),
+            data: ethers.randomBytes(43),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
@@ -403,7 +403,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.utils.randomBytes(43),
+                  data: ethers.randomBytes(43),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000
@@ -455,7 +455,7 @@ describe('Wallet integration', function () {
         it('Should timeout receipt if transaction is never sent', async () => {
           const txn = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.utils.randomBytes(43),
+            data: ethers.randomBytes(43),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
@@ -477,7 +477,7 @@ describe('Wallet integration', function () {
                 await wallet.sendTransaction(
                   {
                     to: ethers.Wallet.createRandom().address,
-                    data: ethers.utils.randomBytes(43),
+                    data: ethers.randomBytes(43),
                     delegateCall: false,
                     revertOnError: false,
                     gasLimit: 140000,
@@ -507,7 +507,7 @@ describe('Wallet integration', function () {
 
             const txn = {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.utils.randomBytes(43),
+              data: ethers.randomBytes(43),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000

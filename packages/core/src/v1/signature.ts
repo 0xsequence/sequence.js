@@ -98,7 +98,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
 }
 
 export function encodeSignature(signature: Signature | UnrecoveredSignature | ethers.BytesLike): string {
-  if (ethers.utils.isBytesLike(signature)) return ethers.toBeHex(signature)
+  if (ethers.isBytesLike(signature)) return ethers.toBeHex(signature)
 
   const { signers, threshold } = isUnrecoveredSignature(signature) ? signature : signature.config
 

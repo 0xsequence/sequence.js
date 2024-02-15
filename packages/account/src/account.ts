@@ -487,7 +487,7 @@ export class Account {
   }
 
   async publishWitness(): Promise<void> {
-    const digest = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`This is a Sequence account woo! ${Date.now()}`))
+    const digest = ethers.keccak256(ethers.toUtf8Bytes(`This is a Sequence account woo! ${Date.now()}`))
     const signature = await this.signDigest(digest, 0, false)
     const decoded = this.coders.signature.decode(signature)
     const signatures = this.coders.signature.signaturesOfDecoded(decoded)
@@ -553,7 +553,7 @@ export class Account {
       subdigests: [hexSubdigest]
     })
 
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
     const bundle: commons.transaction.TransactionBundle = {
       entrypoint: this.address,
       transactions: [
@@ -715,7 +715,7 @@ export class Account {
     chainId: BigIntish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message), chainId, true, cantValidateBehavior)
+    return this.signDigest(ethers.keccak256(message), chainId, true, cantValidateBehavior)
   }
 
   async signTransactions(
@@ -884,7 +884,7 @@ export class Account {
     const stubSignature = wallet.coders.config.buildStubSignature(wallet.config, stubSignatureOverrides)
 
     // Now we can decorate the transactions as always, but we need to manually build the signed bundle
-    const intentId = ethers.toBeHex(ethers.utils.randomBytes(32))
+    const intentId = ethers.toBeHex(ethers.randomBytes(32))
     const signedBundle: commons.transaction.SignedTransactionBundle = {
       chainId,
       intent: {

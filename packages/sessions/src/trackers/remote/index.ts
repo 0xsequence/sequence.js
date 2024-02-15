@@ -41,7 +41,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     const config = args.nextConfig
     const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
     const message = v2.signature.setImageHashStruct(imageHash)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
 
     await this.sessions.saveSignature({
       wallet: args.wallet,
