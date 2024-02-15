@@ -118,7 +118,7 @@ export function subdigestOfGuestModuleTransactions(guestModule: string, chainId:
 
 export function toSequenceTransactions(
   wallet: string,
-  txs: (Transaction | ethers.TransactionRequest)[]
+  txs: ethers.TransactionRequest[]
 ): { nonce?: BigIntish; transaction: Transaction }[] {
   return txs.map(tx => toSequenceTransaction(wallet, tx))
 }
@@ -134,14 +134,16 @@ export function toSequenceTransaction(
         delegateCall: false,
         revertOnError: false,
         gasLimit: BigInt(tx.gasLimit || 0),
-        to: tx.to,
+        // XXX: `tx.to` could also be ethers Addressable type which returns a getAddress promise
+        // Keeping this as is for now so we don't have to change everything to async
+        to: tx.to as string,
         value: BigInt(tx.value || 0),
         data: tx.data || '0x'
       }
     }
   } else {
     const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
-    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
+    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract')!, [tx.data])
 
     return {
       nonce: tx.nonce ? BigInt(tx.nonce) : undefined,
@@ -173,7 +175,7 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
     gasLimit: t.gasLimit !== undefined ? t.gasLimit : 0n,
     target: t.to ?? ethers.ZeroAddress,
     value: t.value !== undefined ? t.value : 0n,
-    data: t.data !== undefined ? t.data : []
+    data: t.data !== undefined ? t.data : new Uint8Array()
   }))
 }
 
@@ -249,7 +251,7 @@ export function isSignedTransactionBundle(cand: any): cand is SignedTransactionB
 export function encodeBundleExecData(bundle: TransactionBundle): string {
   const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
   return walletInterface.encodeFunctionData(
-    walletInterface.getFunction('execute'),
+    walletInterface.getFunction('execute')!,
     isSignedTransactionBundle(bundle)
       ? [
           // Signed transaction bundle has all 3 parameters
@@ -286,7 +288,7 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
   for (const tx of transactions) {
     const txData = ethers.getBytes(tx.data || '0x')
 
-    if (tx.to === wallet && ethers.toBeHex(txData.slice(0, 4)) === selfExecuteSelector) {
+    if (tx.to === wallet && ethers.toBeHex(ethers.hexlify(txData.slice(0, 4))) === selfExecuteSelector) {
       // Decode as selfExecute call
       const data = txData.slice(4)
       const decoded = ethers.AbiCoder.defaultAbiCoder().decode([selfExecuteAbi], data)[0]
