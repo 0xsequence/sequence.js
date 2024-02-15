@@ -16,7 +16,7 @@ const FINAL_STATUSES = [
 const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions {
-  provider: ethers.providers.Provider | { url: string }
+  provider: ethers.Provider | { url: string }
   url: string
   projectAccessKey?: string
   jwtAuth?: string
@@ -24,10 +24,7 @@ export interface RpcRelayerOptions {
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
   return (
-    obj.url !== undefined &&
-    typeof obj.url === 'string' &&
-    obj.provider !== undefined &&
-    ethers.providers.Provider.isProvider(obj.provider)
+    obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && ethers.Provider.isProvider(obj.provider)
   )
 }
 
@@ -234,10 +231,10 @@ export class RpcRelayer implements Relayer {
         hash: signedTxs.intent.id,
         confirmations: 0,
         from: signedTxs.intent.wallet,
-        wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+        wait: (_confirmations?: number): Promise<ethers.TransactionReceipt> => Promise.reject(new Error('impossible'))
       }
 
-      const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
+      const wait = async (confirmations?: number): Promise<ethers.TransactionReceipt> => {
         if (!this.provider) {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }

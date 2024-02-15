@@ -29,7 +29,7 @@ export function randomBool(): boolean {
   return Math.random() >= 0.5
 }
 
-export async function isContract(provider: ethers.providers.Provider, address: string): Promise<boolean> {
+export async function isContract(provider: ethers.Provider, address: string): Promise<boolean> {
   const c = await provider.getCode(address)
   return ethers.getBytes(c).length > 0
 }

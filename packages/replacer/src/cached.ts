@@ -3,7 +3,7 @@ import { runByEIP5719, URISolver } from '.'
 
 export class CachedEIP5719 {
   constructor(
-    public provider: ethers.providers.Provider,
+    public provider: ethers.Provider,
     public solver?: URISolver,
     public window: number = 1000
   ) {}

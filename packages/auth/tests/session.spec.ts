@@ -54,7 +54,7 @@ class CountingSigner extends AbstractSigner {
     return this.signer.signTransaction(transaction)
   }
 
-  connect(provider: ethers.providers.Provider): ethers.Signer {
+  connect(provider: ethers.Provider): ethers.Signer {
     return this.signer.connect(provider)
   }
 }

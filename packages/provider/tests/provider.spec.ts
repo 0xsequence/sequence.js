@@ -49,7 +49,7 @@ const basicMockClient = {
   onAccountsChanged: () => {}
 } as unknown as SequenceClient
 
-async function waitUntilNoFail(provider: ethers.providers.Provider, timeout = 20000): Promise<void> {
+async function waitUntilNoFail(provider: ethers.Provider, timeout = 20000): Promise<void> {
   const start = Date.now()
   while (Date.now() - start < timeout) {
     try {
@@ -1046,8 +1046,8 @@ describe('SequenceProvider', () => {
       })
 
       describe('forward getBlock', () => {
-        let b1: ethers.providers.Block
-        let b2: ethers.providers.Block
+        let b1: ethers.Block
+        let b2: ethers.Block
 
         beforeEach(async () => {
           b1 = await hardhat1Provider.getBlock(1)
@@ -1133,8 +1133,8 @@ describe('SequenceProvider', () => {
       describe('forward getLogs', () => {
         let t1: string
 
-        let r1: Array<ethers.providers.Log>
-        let r2: Array<ethers.providers.Log>
+        let r1: Array<ethers.Log>
+        let r2: Array<ethers.Log>
 
         beforeEach(async () => {
           // Deploy a contract that emits a single LOG0 event (during deployment)

@@ -92,7 +92,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     return this.cache.do('walletsOfSigner', this.window, args => this.tracker.walletsOfSigner(args), args)
   }
 
-  updateProvider(provider: ethers.providers.Provider) {
+  updateProvider(provider: ethers.Provider) {
     if (this.tracker instanceof LocalConfigTracker) {
       this.tracker.updateProvider(provider)
     }

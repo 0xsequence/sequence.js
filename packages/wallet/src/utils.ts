@@ -11,10 +11,7 @@ export async function resolveArrayProperties<T>(
   return utils.resolveProperties(object)
 }
 
-export async function findLatestLog(
-  provider: ethers.providers.Provider,
-  filter: ethers.providers.Filter
-): Promise<ethers.providers.Log | undefined> {
+export async function findLatestLog(provider: ethers.Provider, filter: ethers.Filter): Promise<ethers.Log | undefined> {
   const toBlock = filter.toBlock === 'latest' ? await provider.getBlockNumber() : (filter.toBlock as number)
   const fromBlock = filter.fromBlock as number
 

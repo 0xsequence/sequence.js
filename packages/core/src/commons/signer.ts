@@ -43,7 +43,7 @@ export function isValidSignature(
   address: string,
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ) {
   const bytes = ethers.getBytes(signature)
 

@@ -47,7 +47,7 @@ export interface ISequenceProvider {
   utils: WalletUtils
 }
 
-export class SequenceProvider extends ethers.providers.BaseProvider implements ISequenceProvider, EIP1193Provider {
+export class SequenceProvider extends ethers.BaseProvider implements ISequenceProvider, EIP1193Provider {
   private readonly singleNetworkProviders: { [chainId: number]: SingleNetworkSequenceProvider } = {}
 
   readonly _isSequenceProvider = true
@@ -287,7 +287,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return this.perform(request.method, request.params)
   }
 
-  async detectNetwork(): Promise<ethers.providers.Network> {
+  async detectNetwork(): Promise<ethers.Network> {
     const chainId = this.client.getChainId()
     const network = findNetworkConfig(this.networks, chainId)
 
@@ -322,7 +322,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   async getBalance(
     addressOrName: string | Promise<string>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
@@ -331,7 +331,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   async getTransactionCount(
     addressOrName: string | Promise<string>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
@@ -340,7 +340,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   async getCode(
     addressOrName: string | Promise<string>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
@@ -350,7 +350,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   async getStorageAt(
     addressOrName: string | Promise<string>,
     position: BigIntish | Promise<BigIntish>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
@@ -359,7 +359,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
 
   async call(
     transaction: ethers.Deferrable<ethers.TransactionRequest>,
-    blockTag?: ethers.providers.BlockTag | Promise<ethers.providers.BlockTag>,
+    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
@@ -372,7 +372,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
   }
 
   async getBlock(
-    blockHashOrBlockTag: ethers.providers.BlockTag | string | Promise<ethers.providers.BlockTag | string>,
+    blockHashOrBlockTag: ethers.BlockTag | string | Promise<ethers.BlockTag | string>,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
@@ -384,7 +384,7 @@ export class SequenceProvider extends ethers.providers.BaseProvider implements I
     return provider.getTransaction(transactionHash)
   }
 
-  async getLogs(filter: ethers.providers.Filter | Promise<ethers.providers.Filter>, optionals?: OptionalChainIdLike) {
+  async getLogs(filter: ethers.Filter | Promise<ethers.Filter>, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getLogs(filter)
   }

@@ -32,7 +32,7 @@ export async function isValidCounterfactual(
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,
   chainId: BigIntish,
-  provider: ethers.providers.Provider,
+  provider: ethers.Provider,
   contexts: { [key: number]: WalletContext }
 ) {
   // We don't know the version of the signature

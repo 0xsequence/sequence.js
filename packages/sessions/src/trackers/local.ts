@@ -13,7 +13,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
     // For now, it's recommended to use Mainnet as the provider.
-    public provider: ethers.providers.Provider,
+    public provider: ethers.Provider,
     private store: TrackerStore = new MemoryTrackerStore(),
     public useEIP5719: boolean = false
   ) {
@@ -584,7 +584,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return candidates[0]
   }
 
-  updateProvider(provider: ethers.providers.Provider) {
+  updateProvider(provider: ethers.Provider) {
     this.provider = provider
   }
 }

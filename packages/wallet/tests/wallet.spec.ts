@@ -498,7 +498,7 @@ describe('Wallet (primitive)', () => {
               })
 
               describe('parallel transactions', async () => {
-                let testAccount: ethers.providers.JsonRpcSigner
+                let testAccount: ethers.JsonRpcSigner
                 let testAccountAddress: string
                 let toBalanceBefore: bigint
 
