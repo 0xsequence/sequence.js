@@ -65,6 +65,6 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
   suffix(): ethers.BytesLike {
-    return [3]
+    return new Uint8Array([3])
   }
 }
