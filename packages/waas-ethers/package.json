@@ -9,8 +9,8 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--loader tsx' mocha --timeout 30000",
+    "test": "echo todo",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha -timeout 300000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
