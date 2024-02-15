@@ -348,7 +348,7 @@ export const tests = async () => {
         if (opts.gasLimit) {
           // In our test, we are passing a high gas limit for an internal transaction, so overall
           // transaction must be higher than this value if it used our value correctly
-          assert.true(txResp.gasLimit.gte(opts.gasLimit), 'sendETH, using higher gasLimit')
+          assert.true(txResp.gasLimit >= BigInt(opts.gasLimit), 'sendETH, using higher gasLimit')
         }
       }
     })

@@ -10,7 +10,7 @@ import * as utils from '@0xsequence/tests'
 import { CallReceiverMock, HookCallerMock } from '@0xsequence/wallet-contracts'
 import * as chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { ethers, Signer as AbstractSigner } from 'ethers'
+import { ethers } from 'ethers'
 import * as mockServer from 'mockttp'
 import { Session, SessionDumpV1, SessionSettings, ValidateSequenceWalletProof } from '../src'
 import { delay, mockDate } from './utils'
@@ -26,13 +26,13 @@ type EthereumInstance = {
   chainId?: number
   providerUrl?: string
   provider?: ethers.JsonRpcProvider
-  signer?: AbstractSigner
+  signer?: ethers.AbstractSigner
 }
 
-class CountingSigner extends AbstractSigner {
+class CountingSigner extends ethers.AbstractSigner {
   private _signingRequests: number = 0
 
-  constructor(private readonly signer: AbstractSigner) {
+  constructor(private readonly signer: ethers.AbstractSigner) {
     super()
   }
 
@@ -49,7 +49,7 @@ class CountingSigner extends AbstractSigner {
     return this.signer.signMessage(message)
   }
 
-  signTransaction(transaction: ethers.Deferrable<ethers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.TransactionRequest): Promise<string> {
     this._signingRequests++
     return this.signer.signTransaction(transaction)
   }

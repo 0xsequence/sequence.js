@@ -351,12 +351,12 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider.getStorage(addressOrName, position, blockTag)
   }
 
-  async call(transaction: ethers.Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike) {
+  async call(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.call(transaction)
   }
 
-  async estimateGas(transaction: ethers.Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike) {
+  async estimateGas(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.estimateGas(transaction)
   }
