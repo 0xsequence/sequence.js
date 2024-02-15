@@ -1496,7 +1496,7 @@ export function now(): number {
 }
 
 export function randomWallet(entropy: number | string): ethers.Wallet {
-  return new ethers.Wallet(randomBytes(32, entropy))
+  return new ethers.Wallet(ethers.hexlify(randomBytes(32, entropy)))
 }
 
 export function randomFraction(entropy: number | string): number {

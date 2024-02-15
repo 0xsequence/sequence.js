@@ -71,7 +71,7 @@ export class Orchestrator {
   }
 
   private static randomTag(): string {
-    return `default-${ethers.toBeHex(ethers.randomBytes(8)).slice(2)}`
+    return `default-${ethers.toBeHex(ethers.hexlify(ethers.randomBytes(8))).slice(2)}`
   }
 
   private pullId(): string {
