@@ -25,7 +25,7 @@ export const ProxyMethods = [
   'getBlockWithTransactions'
 ]
 
-export class MulticallProvider extends ethers.BaseProvider {
+export class MulticallProvider extends ethers.AbstractProvider {
   private multicall: Multicall
 
   constructor(
@@ -45,7 +45,7 @@ export class MulticallProvider extends ethers.BaseProvider {
   }
 
   getResolver = async (name: string | Promise<string>) => {
-    const provider = this.provider as ethers.BaseProvider
+    const provider = this.provider as ethers.AbstractProvider
 
     if (provider.getResolver) {
       const ogResolver = await provider.getResolver(await name)

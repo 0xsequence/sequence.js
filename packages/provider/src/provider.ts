@@ -47,7 +47,7 @@ export interface ISequenceProvider {
   utils: WalletUtils
 }
 
-export class SequenceProvider extends ethers.BaseProvider implements ISequenceProvider, EIP1193Provider {
+export class SequenceProvider extends ethers.AbstractProvider implements ISequenceProvider, EIP1193Provider {
   private readonly singleNetworkProviders: { [chainId: number]: SingleNetworkSequenceProvider } = {}
 
   readonly _isSequenceProvider = true
@@ -275,8 +275,8 @@ export class SequenceProvider extends ethers.BaseProvider implements ISequencePr
     // Forward call to the corresponding provider
     // we use the provided chainId, or the default one provided by the client
     const provider = await this._getSubprovider()
-    const prepared = provider.prepareRequest(method, params) ?? [method, params]
-    return provider.send(prepared[0], prepared[1])
+    const prepared = provider.getRpcRequest({ method: 'getBlockNumber', args: params }) ?? { method, args: params }
+    return provider.send(prepared.method, prepared.args)
   }
 
   send(method: string, params: any): Promise<any> {
@@ -289,11 +289,13 @@ export class SequenceProvider extends ethers.BaseProvider implements ISequencePr
 
   async detectNetwork(): Promise<ethers.Network> {
     const chainId = this.client.getChainId()
-    const network = findNetworkConfig(this.networks, chainId)
+    const found = findNetworkConfig(this.networks, chainId)
 
-    if (!network) {
+    if (!found) {
       throw new Error(`Unknown network ${chainId}`)
     }
+
+    const network = new ethers.Network(found.name, found.chainId)
 
     return network
   }
@@ -320,50 +322,38 @@ export class SequenceProvider extends ethers.BaseProvider implements ISequencePr
     return provider.getGasPrice()
   }
 
-  async getBalance(
-    addressOrName: string | Promise<string>,
-    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getBalance(addressOrName: string | Promise<string>, blockTag?: ethers.BlockTag, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getBalance(addressOrName, blockTag)
   }
 
   async getTransactionCount(
     addressOrName: string | Promise<string>,
-    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
+    blockTag?: ethers.BlockTag,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransactionCount(addressOrName, blockTag)
   }
 
-  async getCode(
-    addressOrName: string | Promise<string>,
-    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getCode(addressOrName: string | Promise<string>, blockTag?: ethers.BlockTag, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getCode(addressOrName, blockTag)
   }
 
   async getStorageAt(
     addressOrName: string | Promise<string>,
-    position: BigIntish | Promise<BigIntish>,
-    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
+    position: BigIntish,
+    blockTag?: ethers.BlockTag,
     optionals?: OptionalChainIdLike
   ) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.getStorageAt(addressOrName, position, blockTag)
+    return provider.getStorage(addressOrName, position, blockTag)
   }
 
-  async call(
-    transaction: ethers.Deferrable<ethers.TransactionRequest>,
-    blockTag?: ethers.BlockTag | Promise<ethers.BlockTag>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async call(transaction: ethers.Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.call(transaction, blockTag)
+    return provider.call(transaction)
   }
 
   async estimateGas(transaction: ethers.Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike) {
@@ -371,20 +361,17 @@ export class SequenceProvider extends ethers.BaseProvider implements ISequencePr
     return provider.estimateGas(transaction)
   }
 
-  async getBlock(
-    blockHashOrBlockTag: ethers.BlockTag | string | Promise<ethers.BlockTag | string>,
-    optionals?: OptionalChainIdLike
-  ) {
+  async getBlock(blockHashOrBlockTag: ethers.BlockTag | string, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getBlock(blockHashOrBlockTag)
   }
 
-  async getTransaction(transactionHash: string | Promise<string>, optionals?: OptionalChainIdLike) {
+  async getTransaction(transactionHash: string, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getTransaction(transactionHash)
   }
 
-  async getLogs(filter: ethers.Filter | Promise<ethers.Filter>, optionals?: OptionalChainIdLike) {
+  async getLogs(filter: ethers.Filter, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
     return provider.getLogs(filter)
   }
