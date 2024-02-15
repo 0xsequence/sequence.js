@@ -47,7 +47,7 @@ export class SequenceSigner extends ethers.Signer {
       network: await this.getSimpleNetwork(),
       ...authArgs
     }
-    return this.sequence.signMessage(args).then(response => response.signature)
+    return this.sequence.signMessage(args).then(response => response.data.signature)
   }
 
   async signTransaction(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
