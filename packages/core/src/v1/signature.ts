@@ -67,13 +67,13 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
       case SignaturePartType.Address:
         signers.push({
           weight,
-          address: ethers.utils.getAddress(ethers.toBeHex(bytes.slice(i, i + 20)))
+          address: ethers.getAddress(ethers.toBeHex(bytes.slice(i, i + 20)))
         })
         i += 20
         break
 
       case SignaturePartType.DynamicSignature:
-        const address = ethers.utils.getAddress(ethers.toBeHex(bytes.slice(i, i + 20)))
+        const address = ethers.getAddress(ethers.toBeHex(bytes.slice(i, i + 20)))
         i += 20
 
         const size = (bytes[i] << 8) | bytes[i + 1]

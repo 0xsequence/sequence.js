@@ -82,14 +82,14 @@ export class OverwriterEstimator {
   }): Promise<bigint> {
     const blockTag = args.blockTag ? toQuantity(args.blockTag) : 'latest'
     const data = args.data ? args.data : []
-    const from = args.from ? ethers.utils.getAddress(args.from) : ethers.Wallet.createRandom().address
+    const from = args.from ? ethers.getAddress(args.from) : ethers.Wallet.createRandom().address
 
     const gasEstimatorInterface = new ethers.utils.Interface(GasEstimator.abi)
     const encodedEstimate = gasEstimatorInterface.encodeFunctionData('estimate', [args.to, data])
 
     const providedOverwrites = args.overwrites
       ? Object.keys(args.overwrites).reduce((p, a) => {
-          const address = ethers.utils.getAddress(a)
+          const address = ethers.getAddress(a)
           const o = args.overwrites![a]
 
           if (address === from) {
