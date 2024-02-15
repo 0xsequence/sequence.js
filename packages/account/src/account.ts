@@ -889,7 +889,7 @@ export class Account {
     const stubSignature = wallet.coders.config.buildStubSignature(wallet.config, stubSignatureOverrides)
 
     // Now we can decorate the transactions as always, but we need to manually build the signed bundle
-    const intentId = ethers.toBeHex(ethers.randomBytes(32))
+    const intentId = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
     const signedBundle: commons.transaction.SignedTransactionBundle = {
       chainId,
       intent: {

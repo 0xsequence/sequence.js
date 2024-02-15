@@ -110,7 +110,7 @@ const ConfigCases = [
         checkpoint: 392919n,
         tree: {
           left: {
-            subdigest: ethers.toBeHex(ethers.randomBytes(32))
+            subdigest: ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           },
           right: {
             left: {
@@ -138,7 +138,7 @@ const randomContext = () => {
     mainModuleUpgradable: ethers.Wallet.createRandom().address,
     guestModule: ethers.Wallet.createRandom().address,
 
-    walletCreationCode: ethers.toBeHex(ethers.randomBytes(32))
+    walletCreationCode: ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
   }
 }
 
@@ -314,7 +314,7 @@ describe('Local config tracker', () => {
         })
 
         it('Should return undefined for unknown imageHash', async () => {
-          const imageHash = ethers.toBeHex(ethers.randomBytes(32))
+          const imageHash = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           expect(await tracker.configOfImageHash({ imageHash })).to.be.undefined
         })
 
@@ -386,7 +386,7 @@ describe('Local config tracker', () => {
         })
 
         it('Should return return empty chained configuration if config is not known', async () => {
-          const imageHash = ethers.toBeHex(ethers.randomBytes(32))
+          const imageHash = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           const res = await tracker.loadPresignedConfiguration({
             wallet: ethers.Wallet.createRandom().address,
             fromImageHash: imageHash
@@ -698,7 +698,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest = ethers.toBeHex(ethers.randomBytes(32))
+          const digest = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
@@ -717,7 +717,7 @@ describe('Local config tracker', () => {
           expect(witness[0].proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
           // Adding a second witness should not change anything
-          const digest2 = ethers.toBeHex(ethers.randomBytes(32))
+          const digest2 = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           const signature2 = await wallet.signDigest(digest2)
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
           await tracker.saveWitnesses({
@@ -731,7 +731,7 @@ describe('Local config tracker', () => {
           expect(witness2.length).to.equal(1)
 
           // Adding a witness for a different chain should not change anything
-          const digest3 = ethers.toBeHex(ethers.randomBytes(32))
+          const digest3 = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           const wallet2 = new Wallet({
             config,
             chainId: 2,
@@ -767,7 +767,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest = ethers.toBeHex(ethers.randomBytes(32))
+          const digest = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
@@ -790,7 +790,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest2 = ethers.toBeHex(ethers.randomBytes(32))
+          const digest2 = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
           const signature2 = await wallet2.signDigest(digest2)
 
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)

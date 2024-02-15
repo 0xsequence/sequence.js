@@ -8,7 +8,7 @@ export function deployContract(signer: ethers.Signer, artifact: Artifact, ...arg
 }
 
 export function randomBigInt(min: BigIntish = 0, max: BigIntish = MAX_UINT_256): bigint {
-  const randomHex = ethers.toBeHex(ethers.randomBytes(32))
+  const randomHex = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
   const randomNumber = BigInt(randomHex)
   const minNumber = BigInt(min)
   const maxNumber = BigInt(max)
