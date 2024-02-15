@@ -1,4 +1,4 @@
-import { providers } from 'ethers'
+import { ethers } from 'ethers'
 import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 import { SignerJsonRpcMethods } from './signing-provider'
 import { logger } from '@0xsequence/utils'
@@ -6,7 +6,7 @@ import { logger } from '@0xsequence/utils'
 export class PublicProvider implements JsonRpcMiddlewareHandler {
   private privateJsonRpcMethods = ['net_version', 'eth_chainId', 'eth_accounts', ...SignerJsonRpcMethods]
 
-  private provider?: providers.JsonRpcProvider
+  private provider?: ethers.JsonRpcProvider
   private rpcUrl?: string
 
   constructor(rpcUrl?: string) {
@@ -50,7 +50,7 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
       this.rpcUrl = rpcUrl
       // TODO: maybe use @0xsequence/network JsonRpcProvider here instead,
       // which supports better caching.
-      this.provider = new providers.JsonRpcProvider(rpcUrl)
+      this.provider = new ethers.JsonRpcProvider(rpcUrl)
     }
   }
 }

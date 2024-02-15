@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
@@ -7,7 +7,7 @@ import { ChainId, NetworkMetadata, networks } from './constants'
 
 export type NetworkConfig = NetworkMetadata & {
   rpcUrl: string
-  provider?: providers.Provider
+  provider?: ethers.Provider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions

@@ -10,7 +10,7 @@ export abstract class Signer extends AbstractSigner {
     return isSequenceSigner(cand)
   }
 
-  abstract getProvider(chainId?: number): Promise<providers.JsonRpcProvider | undefined>
+  abstract getProvider(chainId?: number): Promise<ethers.JsonRpcProvider | undefined>
   abstract getRelayer(chainId?: number): Promise<Relayer | undefined>
 
   // abstract getWalletContext(): Promise<WalletContext>

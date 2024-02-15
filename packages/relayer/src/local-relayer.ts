@@ -1,24 +1,28 @@
-import { Signer as AbstractSigner, providers, BytesLike } from 'ethers'
+import { ethers } from 'ethers'
 import { logger } from '@0xsequence/utils'
 import { FeeOption, FeeQuote, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 import { commons } from '@0xsequence/core'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
-  signer: AbstractSigner
+  signer: ethers.AbstractSigner
 }
 
 export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
-  return obj.signer !== undefined && AbstractSigner.isSigner(obj.signer)
+  return obj.signer !== undefined && ethers.AbstractSigner.isSigner(obj.signer)
 }
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
-  private signer: AbstractSigner
-  private txnOptions: providers.TransactionRequest
+  private signer: ethers.AbstractSigner
+  private txnOptions: ethers.TransactionRequest
 
-  constructor(options: LocalRelayerOptions | AbstractSigner) {
-    super(AbstractSigner.isSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
-    this.signer = AbstractSigner.isSigner(options) ? options : options.signer
+  constructor(options: LocalRelayerOptions | ethers.AbstractSigner) {
+    super(
+      ethers.AbstractSigner.isSigner(options)
+        ? { provider: options.provider! }
+        : { ...options, provider: options.signer.provider! }
+    )
+    this.signer = ethers.AbstractSigner.isSigner(options) ? options : options.signer
     if (!this.signer.provider) throw new Error('Signer must have a provider')
   }
 
@@ -28,7 +32,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
 
   async getFeeOptionsRaw(
     _entrypoint: string,
-    _data: BytesLike,
+    _data: ethers.BytesLike,
     _options?: {
       simulate?: boolean
     }
@@ -41,7 +45,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     return options
   }
 
-  setTransactionOptions(transactionRequest: providers.TransactionRequest) {
+  setTransactionOptions(transactionRequest: ethers.TransactionRequest) {
     this.txnOptions = transactionRequest
   }
 
@@ -49,7 +53,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
     waitForReceipt: boolean = true
-  ): Promise<commons.transaction.TransactionResponse<providers.TransactionReceipt>> {
+  ): Promise<commons.transaction.TransactionResponse<ethers.TransactionReceipt>> {
     if (quote !== undefined) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }

@@ -1,13 +1,13 @@
-import { BytesLike, utils, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { BigIntish } from '@0xsequence/utils'
 
 export async function gethCall(
-  provider: providers.JsonRpcProvider,
-  transaction: providers.TransactionRequest,
-  block?: providers.BlockTag,
+  provider: ethers.JsonRpcProvider,
+  transaction: ethers.TransactionRequest,
+  block?: ethers.BlockTag,
   overrides?: Overrides
 ) {
-  const formatter = providers.JsonRpcProvider.getFormatter()
+  const formatter = ethers.JsonRpcProvider.getFormatter()
 
   return provider.send('eth_call', [
     formatter.transactionRequest(transaction),
@@ -20,7 +20,7 @@ export interface Overrides {
   [address: string]: {
     balance?: BigIntish
     nonce?: BigIntish
-    code?: BytesLike | utils.Hexable | number | bigint
+    code?: ethers.BytesLike | ethers.Hexable | number | bigint
     state?: StorageOverrides
     stateDiff?: StorageOverrides
   }
@@ -38,9 +38,9 @@ function formatOverrides(overrides: any): Overrides {
   const formatted: Overrides = {}
 
   for (const [key, value] of Object.entries(overrides)) {
-    if (utils.isHexString(key, 20)) {
+    if (ethers.isHexString(key, 20)) {
       try {
-        formatted[key] = providers.Formatter.check(overridesFormat, value)
+        formatted[key] = ethers.Formatter.check(overridesFormat, value)
       } catch {}
     }
   }
@@ -51,7 +51,7 @@ function formatOverrides(overrides: any): Overrides {
 const overridesFormat = {
   balance: skipNullish(BigInt),
   nonce: skipNullish(BigInt),
-  code: skipNullish(utils.hexlify),
+  code: skipNullish(ethers.hexlify),
   state: skipNullish(formatStorageOverrides),
   stateDiff: skipNullish(formatStorageOverrides)
 }
@@ -64,10 +64,10 @@ function formatStorageOverrides(overrides: any): StorageOverrides {
   const formatted: StorageOverrides = {}
 
   for (const [key, value] of Object.entries(overrides)) {
-    if (utils.isHexString(key, 32)) {
+    if (ethers.isHexString(key, 32)) {
       try {
-        const hash = utils.hexlify(value as any)
-        if (utils.isHexString(hash, 32)) {
+        const hash = ethers.hexlify(value as any)
+        if (ethers.isHexString(hash, 32)) {
           formatted[key] = hash
         }
       } catch {}
