@@ -18,11 +18,10 @@ describe('estimator', function () {
     url = 'http://127.0.0.1:10045/'
     provider = new ethers.JsonRpcProvider(url)
 
-    callReceiver = (await new ethers.ContractFactory(
-      CallReceiverMockArtifact.abi,
-      CallReceiverMockArtifact.bytecode,
-      provider.getSigner()
-    ).deploy()) as unknown as CallReceiverMock
+    const signer = await provider.getSigner()
+    const contractFactory = new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signer)
+
+    callReceiver = (await contractFactory.deploy()) as unknown as CallReceiverMock
 
     estimator = new OverwriterEstimator({ rpc: url })
   })
