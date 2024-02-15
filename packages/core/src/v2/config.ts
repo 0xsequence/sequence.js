@@ -143,7 +143,7 @@ export function decodeSignerLeaf(encoded: string): SignerLeaf {
   }
 
   const weight = BigInt(ethers.toBeHex(bytes.slice(0, 12)))
-  const address = ethers.utils.getAddress(ethers.toBeHex(bytes.slice(12)))
+  const address = ethers.getAddress(ethers.toBeHex(bytes.slice(12)))
 
   return { weight, address }
 }

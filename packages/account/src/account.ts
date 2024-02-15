@@ -108,7 +108,7 @@ export class Account {
   private projectAccessKey?: string
 
   constructor(options: AccountOptions) {
-    this.address = ethers.utils.getAddress(options.address)
+    this.address = ethers.getAddress(options.address)
 
     this.contexts = options.contexts
     this.tracker = options.tracker

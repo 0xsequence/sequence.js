@@ -582,7 +582,7 @@ describe('Wallet integration', function () {
 
         try {
           const proof = await ethauth.decodeProof((await request.body.getJson())!['ewtString'])
-          proofAddress = ethers.utils.getAddress(proof.address)
+          proofAddress = ethers.getAddress(proof.address)
 
           if (recoverCount[proofAddress]) {
             recoverCount[proofAddress]++

@@ -128,7 +128,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
       case SignaturePartType.Address:
         {
           const weight = arr[0]
-          const address = ethers.utils.getAddress(ethers.toBeHex(arr.slice(1, 21)))
+          const address = ethers.getAddress(ethers.toBeHex(arr.slice(1, 21)))
 
           pointer = append(pointer, {
             address,
@@ -141,7 +141,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
       case SignaturePartType.DynamicSignature:
         {
           const weight = arr[0]
-          const address = ethers.utils.getAddress(ethers.toBeHex(arr.slice(1, 21)))
+          const address = ethers.getAddress(ethers.toBeHex(arr.slice(1, 21)))
           const size = (arr[21] << 16) | (arr[22] << 8) | arr[23]
           const signature = ethers.toBeHex(arr.slice(24, 24 + size))
 

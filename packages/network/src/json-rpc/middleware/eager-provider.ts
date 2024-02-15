@@ -41,7 +41,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
         case 'eth_accounts':
           if (this.options.accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.utils.getAddress(this.options.accountAddress)] })
+            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.getAddress(this.options.accountAddress)] })
             return
           }
           break

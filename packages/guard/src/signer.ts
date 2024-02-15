@@ -267,7 +267,7 @@ export function getOwnershipProofTypedData(wallet: string, timestamp: Date): Typ
       ]
     },
     message: {
-      wallet: ethers.utils.getAddress(wallet),
+      wallet: ethers.getAddress(wallet),
       timestamp: toUTCString(timestamp)
     }
   }

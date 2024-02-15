@@ -446,7 +446,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         case 'eth_signTransaction': {
           // https://eth.wiki/json-rpc/API#eth_signTransaction
           const [transaction] = request.params!
-          const sender = ethers.utils.getAddress(transaction.from)
+          const sender = ethers.getAddress(transaction.from)
 
           if (sender !== account.address) {
             throw new Error('sender address does not match wallet')
@@ -485,7 +485,7 @@ export class WalletRequestHandler implements ExternalProvider, JsonRpcHandler, P
         }
 
         case 'eth_getTransactionCount': {
-          const address = ethers.utils.getAddress(request.params![0] as string)
+          const address = ethers.getAddress(request.params![0] as string)
           const tag = request.params![1]
 
           // TODO: Maybe we should fetch this data from the relayer or from the reader

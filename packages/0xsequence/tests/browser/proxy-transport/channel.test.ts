@@ -122,7 +122,7 @@ export const tests = async () => {
   const address = client.getAddress()
 
   await test('verifying getAddress result', async () => {
-    assert.equal(address, ethers.utils.getAddress('0x91A858FbBa42E7EE200b4303b1A8B2F0BD139663'), 'wallet address')
+    assert.equal(address, ethers.getAddress('0x91A858FbBa42E7EE200b4303b1A8B2F0BD139663'), 'wallet address')
   })
 
   await test('sending a json-rpc request', async () => {
