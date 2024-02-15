@@ -61,7 +61,7 @@ export class SequenceSigner implements ISequenceSigner {
 
   // This method shouldn't be used directly
   // it exists to maintain compatibility with ethers.Signer
-  connect(provider: ethers.providers.Provider): SequenceSigner {
+  connect(provider: ethers.Provider): SequenceSigner {
     if (!SequenceProvider.is(provider)) {
       throw new Error('SequenceSigner can only be connected to a SequenceProvider')
     }
@@ -154,7 +154,7 @@ export class SequenceSigner implements ISequenceSigner {
     return this.client.getNetworks()
   }
 
-  async getBalance(blockTag?: ethers.providers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<BigNumber> {
+  async getBalance(blockTag?: ethers.BlockTag | undefined, optionals?: OptionalChainIdLike): Promise<BigNumber> {
     const provider = this.getProvider(optionals?.chainId)
     return provider.getBalance(this.getAddress(), blockTag)
   }
@@ -168,7 +168,7 @@ export class SequenceSigner implements ISequenceSigner {
 
   async call(
     transaction: ethers.Deferrable<ethers.TransactionRequest>,
-    blockTag?: ethers.providers.BlockTag | undefined,
+    blockTag?: ethers.BlockTag | undefined,
     optionals?: OptionalChainIdLike
   ): Promise<string> {
     return this.getProvider(optionals?.chainId).call(transaction, blockTag)
@@ -182,7 +182,7 @@ export class SequenceSigner implements ISequenceSigner {
     return this.getProvider(optionals?.chainId).getGasPrice()
   }
 
-  async getFeeData(optionals?: OptionalChainIdLike): Promise<ethers.providers.FeeData> {
+  async getFeeData(optionals?: OptionalChainIdLike): Promise<ethers.FeeData> {
     return this.getProvider(optionals?.chainId).getFeeData()
   }
 
@@ -190,7 +190,7 @@ export class SequenceSigner implements ISequenceSigner {
     const res = await this.provider.resolveName(name)
 
     // For some reason ethers.Signer expects this to return `string`
-    // but ethers.providers.Provider expects this to return `string | null`.
+    // but ethers.Provider expects this to return `string | null`.
     // The signer doesn't have any other source of information, so we'll
     // fail if the provider doesn't return a result.
     if (res === null) {
@@ -212,7 +212,7 @@ export class SequenceSigner implements ISequenceSigner {
     throw new Error('SequenceSigner does not support checkTransaction')
   }
 
-  getTransactionCount(_blockTag?: ethers.providers.BlockTag | undefined): Promise<number> {
+  getTransactionCount(_blockTag?: ethers.BlockTag | undefined): Promise<number> {
     // We could try returning the sequence nonce here
     // but we aren't sure how ethers will use this nonce
     throw new Error('SequenceSigner does not support getTransactionCount')

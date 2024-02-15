@@ -180,7 +180,7 @@ export const EIP_6492_SUFFIX = '0x6492649264926492649264926492649264926492649264
 // the contract on some of the popular chains, and calling the contract
 // if the provider is one of those chains
 export async function validateEIP6492Offchain(
-  provider: ethers.providers.Provider,
+  provider: ethers.Provider,
   signer: string,
   hash: ethers.BytesLike,
   signature: ethers.BytesLike

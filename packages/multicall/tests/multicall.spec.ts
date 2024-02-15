@@ -34,8 +34,8 @@ type GanacheInstance = {
 
 describe('Multicall integration', function () {
   const ganache: GanacheInstance = {}
-  let provider: ethers.providers.Provider
-  let brokenProvider: ethers.providers.Provider
+  let provider: ethers.Provider
+  let brokenProvider: ethers.Provider
 
   let callMock: CallReceiverMock
 
@@ -440,7 +440,7 @@ describe('Multicall integration', function () {
         })
 
         it('Should detect network', async () => {
-          const net = await (provider as ethers.providers.BaseProvider).detectNetwork()
+          const net = await (provider as ethers.BaseProvider).detectNetwork()
           expect(net.chainId).to.equal(1337)
         })
 

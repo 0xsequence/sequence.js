@@ -124,7 +124,7 @@ export function encodeSignature(signature: Signature | UnrecoveredSignature | et
 export async function recoverSignature(
   data: UnrecoveredSignature,
   payload: base.SignedPayload,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<Signature> {
   const subdigest = base.subdigestOf(payload)
   const signers = await Promise.all(
@@ -215,7 +215,7 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
 
   supportsNoChainId: true,
 
-  recover: (data: UnrecoveredSignature, payload: base.SignedPayload, provider: ethers.providers.Provider): Promise<Signature> => {
+  recover: (data: UnrecoveredSignature, payload: base.SignedPayload, provider: ethers.Provider): Promise<Signature> => {
     return recoverSignature(data, payload, provider)
   },
 

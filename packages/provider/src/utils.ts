@@ -67,7 +67,7 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> => {
   const reader = new commons.reader.OnChainReader(provider)
   return reader.isValidSignature(address, digest, sig)
@@ -78,7 +78,7 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> => {
   const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
@@ -90,7 +90,7 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> => {
   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider)
 }

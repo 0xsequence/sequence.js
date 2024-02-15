@@ -226,7 +226,7 @@ export class InvalidSignatureLeafError extends Error {
 export async function recoverTopology(
   unrecovered: UnrecoveredTopology,
   subdigest: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<Topology> {
   if (isUnrecoveredNode(unrecovered)) {
     const [left, right] = await Promise.all([
@@ -598,7 +598,7 @@ export function setImageHashStruct(imageHash: string) {
 export async function recoverSignature(
   signature: UnrecoveredSignature | UnrecoveredChainedSignature,
   payload: base.SignedPayload | { subdigest: string },
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<Signature | ChainedSignature> {
   const signedPayload = (payload as { subdigest: string }).subdigest === undefined ? (payload as base.SignedPayload) : undefined
 
@@ -927,7 +927,7 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
   recover: (
     data: UnrecoveredSignature | UnrecoveredChainedSignature,
     payload: base.SignedPayload,
-    provider: ethers.providers.Provider
+    provider: ethers.Provider
   ): Promise<Signature> => {
     return recoverSignature(data, payload, provider)
   },

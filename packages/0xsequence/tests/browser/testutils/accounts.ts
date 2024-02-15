@@ -28,7 +28,7 @@ export const testAccounts = [
   }
 ]
 
-export const getEOAWallet = (privateKey: string, provider?: string | ethers.providers.Provider): EOAWallet => {
+export const getEOAWallet = (privateKey: string, provider?: string | ethers.Provider): EOAWallet => {
   // defaults
   if (!provider) {
     provider = 'http://localhost:8545'

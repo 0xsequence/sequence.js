@@ -161,14 +161,11 @@ export class AccountSigner implements ethers.Signer {
     ) as Promise<ethers.TransactionResponse> // Will always have a transaction response
   }
 
-  getBalance(blockTag?: ethers.providers.BlockTag | undefined): Promise<BigNumber> {
+  getBalance(blockTag?: ethers.BlockTag | undefined): Promise<BigNumber> {
     return this.provider.getBalance(this.account.address, blockTag)
   }
 
-  call(
-    transaction: ethers.Deferrable<ethers.TransactionRequest>,
-    blockTag?: ethers.providers.BlockTag | undefined
-  ): Promise<string> {
+  call(transaction: ethers.Deferrable<ethers.TransactionRequest>, blockTag?: ethers.BlockTag | undefined): Promise<string> {
     return this.provider.call(transaction, blockTag)
   }
 
@@ -178,7 +175,7 @@ export class AccountSigner implements ethers.Signer {
     return res
   }
 
-  connect(_provider: ethers.providers.Provider): ethers.Signer {
+  connect(_provider: ethers.Provider): ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
@@ -186,7 +183,7 @@ export class AccountSigner implements ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
-  getTransactionCount(blockTag?: ethers.providers.BlockTag | undefined): Promise<number> {
+  getTransactionCount(blockTag?: ethers.BlockTag | undefined): Promise<number> {
     throw new Error('Method not implemented.')
   }
 
@@ -202,7 +199,7 @@ export class AccountSigner implements ethers.Signer {
     throw new Error('Method not implemented.')
   }
 
-  getFeeData(): Promise<ethers.providers.FeeData> {
+  getFeeData(): Promise<ethers.FeeData> {
     throw new Error('Method not implemented.')
   }
 

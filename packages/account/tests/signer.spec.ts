@@ -250,7 +250,7 @@ describe('Account signer', () => {
                 signedTxs: commons.transaction.IntendedTransactionBundle,
                 quote?: FeeQuote | undefined,
                 waitForReceipt?: boolean | undefined
-              ): Promise<commons.transaction.TransactionResponse<ethers.providers.TransactionReceipt>> {
+              ): Promise<commons.transaction.TransactionResponse<ethers.TransactionReceipt>> {
                 expect(quote).to.equal(this.quote)
                 return super.relay(signedTxs, quote, waitForReceipt)
               }

@@ -27,7 +27,7 @@ export type WalletOptions<
   orchestrator: SignatureOrchestrator
   reader?: commons.reader.Reader
 
-  provider?: ethers.providers.Provider
+  provider?: ethers.Provider
   relayer?: Relayer
 }
 
@@ -67,7 +67,7 @@ export class Wallet<
   public address: string
   public chainId: BigIntish
 
-  public provider?: ethers.providers.Provider
+  public provider?: ethers.Provider
   public relayer?: Relayer
 
   public coders: {
@@ -424,7 +424,7 @@ export class Wallet<
     })
   }
 
-  connect(provider: ethers.providers.Provider, relayer?: Relayer): Wallet<Y, T, Z> {
+  connect(provider: ethers.Provider, relayer?: Relayer): Wallet<Y, T, Z> {
     this.provider = provider
     this.relayer = relayer
     return this

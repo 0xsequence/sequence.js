@@ -23,7 +23,7 @@ export class OnChainReader implements Reader {
   // Simple cache to avoid re-fetching the same data
   private isDeployedCache: Set<string> = new Set()
 
-  constructor(public readonly provider: ethers.providers.Provider) {}
+  constructor(public readonly provider: ethers.Provider) {}
 
   private module(address: string) {
     return new ethers.Contract(

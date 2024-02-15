@@ -53,7 +53,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     this._sender = new JsonRpcSender(router, chainId)
   }
 
-  async getNetwork(): Promise<ethers.providers.Network> {
+  async getNetwork(): Promise<ethers.Network> {
     const chainId = this._chainId
     if (chainId) {
       const network = networks[chainId as ChainId]
