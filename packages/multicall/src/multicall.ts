@@ -173,7 +173,7 @@ export class Multicall {
               target: this.options.contract,
               gasLimit: 0,
               value: 0,
-              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callCode'), [
+              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callCode')!, [
                 v.request.params![0]
               ])
             }
@@ -184,7 +184,7 @@ export class Multicall {
               target: this.options.contract,
               gasLimit: 0,
               value: 0,
-              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callBalanceOf'), [
+              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callBalanceOf')!, [
                 v.request.params![0]
               ])
             }
@@ -213,7 +213,7 @@ export class Multicall {
     let encodedCall: string
     try {
       if (this.options.verbose) console.log('Encoding multicall')
-      encodedCall = this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('multiCall'), [callParams])
+      encodedCall = this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('multiCall')!, [callParams])
     } catch (err) {
       if (this.options.verbose) console.warn('Error encoding multicall, forwarding one by one', err)
       this.forward(items)
@@ -261,7 +261,7 @@ export class Multicall {
     let decoded: ethers.Result
     try {
       // @ts-ignore
-      decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('multiCall'), res.result)
+      decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('multiCall')!, res.result)
     } catch (err) {
       if (this.options.verbose) console.warn('Error decoding multicall result, forwarding one by one', err)
       this.forward(items)

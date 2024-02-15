@@ -220,7 +220,7 @@ export class Wallet<
       transactions: [
         {
           to: context.factory,
-          data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy'), [context.mainModule, imageHash]),
+          data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy')!, [context.mainModule, imageHash]),
           gasLimit: 100000,
           delegateCall: false,
           revertOnError: true,
