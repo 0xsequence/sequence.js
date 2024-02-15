@@ -207,7 +207,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
   getProvider(chainId?: ChainIdLike) {
     // The provider without a chainId is... this one
     if (!chainId) {
-      return this
+      return this as SequenceProvider
     }
 
     const useChainId = this.toChainId(chainId)
@@ -275,7 +275,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     // Forward call to the corresponding provider
     // we use the provided chainId, or the default one provided by the client
     const provider = await this._getSubprovider()
-    const prepared = provider.getRpcRequest({ method: 'getBlockNumber', args: params }) ?? { method, args: params }
+    const prepared = provider.getRpcRequest({ method, args: params }) ?? { method, args: params }
     return provider.send(prepared.method, prepared.args)
   }
 
@@ -361,9 +361,9 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider.estimateGas(transaction)
   }
 
-  async getBlock(blockHashOrBlockTag: ethers.BlockTag | string, optionals?: OptionalChainIdLike) {
+  async getBlock(blockHashOrBlockTag: ethers.BlockTag | string, prefetchTxs?: boolean, optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.getBlock(blockHashOrBlockTag)
+    return provider.getBlock(blockHashOrBlockTag, prefetchTxs)
   }
 
   async getTransaction(transactionHash: string, optionals?: OptionalChainIdLike) {
@@ -393,7 +393,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider.getResolver(name)
   }
 
-  async resolveName(name: string | Promise<string>) {
+  async resolveName(name: string) {
     if (ethers.isAddress(await name)) {
       return name
     }
@@ -407,7 +407,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider.resolveName(name)
   }
 
-  async lookupAddress(address: string | Promise<string>) {
+  async lookupAddress(address: string) {
     if (!(await this.supportsENS())) {
       return null
     }
@@ -474,15 +474,17 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
     return super.toChainId(this.chainId)
   }
 
-  async getNetwork(): Promise<NetworkConfig> {
+  async getNetwork(): Promise<ethers.Network> {
     const networks = await this.client.getNetworks()
-    const res = findNetworkConfig(networks, this.chainId)
+    const found = findNetworkConfig(networks, this.chainId)
 
-    if (!res) {
+    if (!found) {
       throw new Error(`Unsupported network ${this.chainId}`)
     }
 
-    return res
+    const network = new ethers.Network(found.name, found.chainId)
+
+    return network
   }
 
   /**
