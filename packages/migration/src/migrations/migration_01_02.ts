@@ -45,7 +45,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
           gasLimit: 0,
           revertOnError: true,
           delegateCall: false,
-          data: contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
+          data: contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
         },
         ...updateBundle.transactions
       ]
@@ -96,7 +96,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
 
     const data1 = ethers.toBeHex(tx.transactions[0].data || [])
     const expectData1 = ethers.toBeHex(
-      contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
+      contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
     )
 
     if (data1 !== expectData1) {

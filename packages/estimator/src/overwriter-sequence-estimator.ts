@@ -117,7 +117,7 @@ export class OverwriterSequenceEstimator implements Estimator {
       ...encoded.map(async (_, i) => {
         return this.estimator.estimate({
           to: address,
-          data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [
+          data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [
             encoded.slice(0, i),
             nonce,
             stubSignature
@@ -127,7 +127,7 @@ export class OverwriterSequenceEstimator implements Estimator {
       }),
       this.estimator.estimate({
         to: address, // Compute full gas estimation with all transaction
-        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute'), [encoded, nonce, stubSignature]),
+        data: walletInterface.encodeFunctionData(walletInterface.getFunction('execute')!, [encoded, nonce, stubSignature]),
         overwrites: sequenceOverwrites
       })
     ])

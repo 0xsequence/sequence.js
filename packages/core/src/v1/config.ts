@@ -83,7 +83,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
       if (!kind || kind === 'first') {
         transactions.push({
           to: wallet,
-          data: module.encodeFunctionData(module.getFunction('updateImplementation'), [context.mainModuleUpgradable]),
+          data: module.encodeFunctionData(module.getFunction('updateImplementation')!, [context.mainModuleUpgradable]),
           gasLimit: 0,
           delegateCall: false,
           revertOnError: true,
@@ -93,7 +93,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
 
       transactions.push({
         to: wallet,
-        data: module.encodeFunctionData(module.getFunction('updateImageHash'), [ConfigCoder.imageHashOf(config)]),
+        data: module.encodeFunctionData(module.getFunction('updateImageHash')!, [ConfigCoder.imageHashOf(config)]),
         gasLimit: 0,
         delegateCall: false,
         revertOnError: true,

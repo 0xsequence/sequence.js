@@ -471,7 +471,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         transactions: [
           {
             to: wallet,
-            data: module.encodeFunctionData(module.getFunction('updateImageHash'), [ConfigCoder.imageHashOf(config)]),
+            data: module.encodeFunctionData(module.getFunction('updateImageHash')!, [ConfigCoder.imageHashOf(config)]),
             gasLimit: 0,
             delegateCall: false,
             revertOnError: true,
@@ -496,7 +496,7 @@ export const ConfigCoder: commons.config.ConfigCoder<WalletConfig> = {
         throw new Error('Invalid transaction bundle, expected data')
       }
 
-      const decoded = module.decodeFunctionData(module.getFunction('updateImageHash'), data)
+      const decoded = module.decodeFunctionData(module.getFunction('updateImageHash')!, data)
       if (!decoded) {
         throw new Error('Invalid transaction bundle, expected valid data')
       }
