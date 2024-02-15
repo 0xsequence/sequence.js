@@ -233,7 +233,7 @@ describe('Account signer', () => {
 
               async getFeeOptionsRaw(
                 _entrypoint: string,
-                _data: ethers.utils.BytesLike,
+                _data: ethers.BytesLike,
                 _options?: { simulate?: boolean }
               ): Promise<{ options: FeeOption[] }> {
                 return { options: this.feeOptions, quote: this.quote } as any

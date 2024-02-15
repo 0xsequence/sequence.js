@@ -162,7 +162,7 @@ export class RpcRelayer implements Relayer {
 
   async getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }

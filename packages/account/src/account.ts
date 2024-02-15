@@ -86,7 +86,7 @@ class Chain0Reader implements commons.reader.Reader {
     return 0n
   }
 
-  async isValidSignature(_wallet: string, _digest: ethers.utils.BytesLike, _signature: ethers.utils.BytesLike): Promise<boolean> {
+  async isValidSignature(_wallet: string, _digest: ethers.BytesLike, _signature: ethers.BytesLike): Promise<boolean> {
     throw new Error('Method not supported.')
   }
 }

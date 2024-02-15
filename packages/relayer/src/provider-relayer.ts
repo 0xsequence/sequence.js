@@ -45,7 +45,7 @@ export abstract class ProviderRelayer implements Relayer {
 
   abstract getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }

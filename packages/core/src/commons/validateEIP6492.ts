@@ -182,8 +182,8 @@ export const EIP_6492_SUFFIX = '0x6492649264926492649264926492649264926492649264
 export async function validateEIP6492Offchain(
   provider: ethers.providers.Provider,
   signer: string,
-  hash: ethers.utils.BytesLike,
-  signature: ethers.utils.BytesLike
+  hash: ethers.BytesLike,
+  signature: ethers.BytesLike
 ): Promise<boolean> {
   return (
     '0x01' ===

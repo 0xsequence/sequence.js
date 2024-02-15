@@ -246,7 +246,7 @@ export class Wallet<
     return nonce
   }
 
-  async signDigest(digest: ethers.utils.BytesLike, metadata?: object): Promise<string> {
+  async signDigest(digest: ethers.BytesLike, metadata?: object): Promise<string> {
     // The subdigest may be statically defined on the configuration
     // in that case we just encode the proof, no need to sign anything
     const subdigest = subDigestOf(this.address, this.chainId, digest)
