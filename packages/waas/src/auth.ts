@@ -1,7 +1,16 @@
-import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
-import { SequenceWaaSBase } from './base'
+import {Observer, SequenceWaaSBase} from './base'
+import { IntentResponseSignedMessage } from "./clients/intent.gen";
+import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
-import { Payload } from './payloads'
+import {
+  SendDelayedEncodeArgs,
+  SendERC1155Args,
+  SendERC20Args,
+  SendERC721Args,
+  SignMessageArgs,
+  SendTransactionsArgs,
+  SignedIntent
+} from './intents'
 import {
   MaySentTransactionResponse,
   SignedMessageResponse,
@@ -9,30 +18,18 @@ import {
   isMaySentTransactionResponse,
   isSignedMessageResponse,
   isValidationRequiredResponse,
-  isFinishValidateSessionResponse
-} from './payloads/responses'
+  isFinishValidateSessionResponse, isCloseSessionResponse
+} from './intents/responses'
 import {
   WaasAuthenticator,
   Session,
-  RegisterSessionPayload,
-  SendIntentPayload,
-  ListSessionsPayload,
-  DropSessionPayload,
   Chain
 } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
-import { GenerateDataKeyCommand, KMSClient } from '@aws-sdk/client-kms'
-import {
-  SendDelayedEncodeArgs,
-  SendERC1155Args,
-  SendERC20Args,
-  SendERC721Args,
-  SendTransactionsArgs
-} from './payloads/packets/transactions'
-import { SignMessageArgs } from './payloads/packets/messages'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
+import {ethers} from "ethers";
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -44,16 +41,11 @@ export type SequenceConfig = {
 
 export type ExtendedSequenceConfig = {
   rpcServer: string
-  kmsRegion: string
-  idpRegion: string
-  keyId: string
   emailRegion?: string
-  endpoint?: string
 }
 
 export type WaaSConfigKey = {
   projectId: number
-  identityPoolId: string
   emailClientId?: string
 }
 
@@ -116,14 +108,10 @@ export function defaultArgsOrFail(
     throw new Error('Missing access key')
   }
 
-  if (preconfig.identityPoolId === undefined) {
-    throw new Error('Missing identityPoolId')
-  }
-
   return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 }
 
-export class Sequence {
+export class SequenceWaaS {
   private waas: SequenceWaaSBase
   private client: WaasAuthenticator
 
@@ -132,7 +120,6 @@ export class Sequence {
 
   public readonly config: Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 
-  private readonly kmsKey: StoreObj<string | undefined>
   private readonly deviceName: StoreObj<string | undefined>
 
   private emailClient: EmailAuth | undefined
@@ -145,7 +132,6 @@ export class Sequence {
     this.config = defaultArgsOrFail(config, preset)
     this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store)
     this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
-    this.kmsKey = new StoreObj(this.store, '@0xsequence.waas.auth.key', undefined)
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
   }
 
@@ -193,71 +179,20 @@ export class Sequence {
     return this.waitForSessionValid()
   }
 
-  private async useStoredCypherKey(): Promise<{ encryptedPayloadKey: string; plainHex: string }> {
-    const raw = await this.kmsKey.get()
-    if (!raw) {
-      throw new Error('No stored key')
-    }
-
-    const decoded = JSON.parse(raw)
-    if (decoded.encryptedPayloadKey && decoded.plainHex) {
-      return decoded
-    }
-
-    throw new Error('Invalid stored key')
-  }
-
-  private async saveCypherKey(kmsClient: KMSClient) {
-    const dataKeyRes = await kmsClient.send(
-      new GenerateDataKeyCommand({
-        KeyId: this.config.keyId,
-        KeySpec: 'AES_256'
-      })
-    )
-
-    if (!dataKeyRes.CiphertextBlob || !dataKeyRes.Plaintext) {
-      throw new Error('invalid response from KMS')
-    }
-
-    return this.kmsKey.set(
-      JSON.stringify({
-        encryptedPayloadKey: encodeHex(dataKeyRes.CiphertextBlob),
-        plainHex: encodeHex(dataKeyRes.Plaintext)
-      })
-    )
-  }
-
-  private async sendIntent(intent: Payload<any>) {
-    const payload: SendIntentPayload = {
-      sessionId: await this.waas.getSessionID(),
-      intentJson: JSON.stringify(intent, null, 0)
-    }
-
-    const { args, headers } = await this.preparePayload(payload)
-
-    return this.client.sendIntent(args, headers)
-  }
-
-  private async preparePayload(payload: Object) {
-    const { encryptedPayloadKey, plainHex } = await this.useStoredCypherKey()
-
-    const cbcParams = {
-      name: 'AES-CBC',
-      iv: window.crypto.getRandomValues(new Uint8Array(16))
-    }
-
-    const key = await window.crypto.subtle.importKey('raw', decodeHex(plainHex), cbcParams, false, ['encrypt'])
-    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload))
-    const encrypted = await window.crypto.subtle.encrypt(cbcParams, key, payloadBytes)
-    const payloadCiphertext = encodeHex(new Uint8Array([...cbcParams.iv, ...new Uint8Array(encrypted)]))
-    const payloadSig = await this.waas.signUsingSessionKey(payloadBytes)
-
+  private headers() {
     return {
-      headers: {
-        'X-Access-Key': this.config.projectAccessKey
-      },
-      args: { encryptedPayloadKey, payloadCiphertext, payloadSig }
+      'X-Access-Key': this.config.projectAccessKey
     }
+  }
+
+  private async sendIntent(intent: SignedIntent<any>) {
+    const sessionId = await this.waas.getSessionId()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
+    const res = await this.client.sendIntent({intent: intent}, this.headers())
+    return res.response
   }
 
   async isSignedIn() {
@@ -267,7 +202,7 @@ export class Sequence {
   async signIn(creds: Identity, name: string): Promise<{ sessionId: string, wallet: string }> {
     // TODO: Be smarter about this, for cognito (or some other cases) we may
     // want to send the email instead of the idToken
-    const waaspayload = await this.waas.signIn({
+    const signInIntent = await this.waas.signIn({
       idToken: creds.idToken
     })
 
@@ -278,44 +213,31 @@ export class Sequence {
       throw new Error('Invalid idToken')
     }
 
-    const kmsClient = new KMSClient({
-      region: this.config.kmsRegion,
-      endpoint: this.config.endpoint,
-      credentials: fromCognitoIdentityPool({
-        identityPoolId: this.config.identityPoolId,
-        logins: {
-          [decoded.iss.replace('https://', '').replace('http://', '')]: creds.idToken
-        },
-        clientConfig: { region: this.config.idpRegion }
-      })
-    })
-
-    await this.saveCypherKey(kmsClient)
-
-    const payload: RegisterSessionPayload = {
-      projectId: this.config.projectId,
-      idToken: creds.idToken,
-      sessionAddress: waaspayload.packet.session,
+    const args = {
+      intent: signInIntent,
       friendlyName: name,
-      intentJSON: JSON.stringify(waaspayload, null, 0)
     }
 
-    const { args, headers } = await this.preparePayload(payload)
-    const res = await this.client.registerSession(args, headers)
+    await this.deviceName.set(name)
 
-    await this.waas.completeSignIn({
-      code: 'sessionOpened',
-      data: {
+    try {
+      const res = await this.client.registerSession(args, this.headers())
+
+      await this.waas.completeSignIn({
+        code: 'sessionOpened',
+        data: {
+          sessionId: res.session.id,
+          wallet: res.response.data.wallet
+        }
+      })
+
+      return {
         sessionId: res.session.id,
-        wallet: res.data.wallet
+        wallet: res.response.data.wallet
       }
-    })
-
-    this.deviceName.set(name)
-
-    return {
-      sessionId: res.session.id,
-      wallet: res.data.wallet
+    } catch (e) {
+      await this.waas.completeSignOut()
+      throw e
     }
   }
 
@@ -323,26 +245,30 @@ export class Sequence {
     throw new Error('Not implemented')
   }
 
-  async getSessionID() {
-    return this.waas.getSessionID()
+  async getSessionId() {
+    return this.waas.getSessionId()
+  }
+
+  async getSessionHash() {
+    const sessionId = (await this.waas.getSessionId()).toLowerCase()
+    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionId))
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
-    const thisSessionId = await this.waas.getSessionID()
+    const thisSessionId = await this.waas.getSessionId()
+    if (!thisSessionId) {
+      throw new Error('session not open')
+    }
+
     const closeSessionId = sessionId || thisSessionId
 
     try {
-      // TODO: Use signed intents for dropping sessions
-      // const packet = await this.waas.signOut({ sessionId })
-      // const result = await this.sendIntent(packet)
-      // console.log("TODO: Handle got result from drop session", result)
-      const payload: DropSessionPayload = {
-        dropSessionId: closeSessionId,
-        sessionId: thisSessionId
-      }
+      const intent = await this.waas.signOutSession(closeSessionId)
+      const result = await this.sendIntent(intent)
 
-      const { args, headers } = await this.preparePayload(payload)
-      await this.client.dropSession(args, headers)
+      if (!isCloseSessionResponse(result)) {
+        throw new Error(`Invalid response: ${JSON.stringify(result)}`)
+      }
     } catch (e) {
       if (strict) {
         throw e
@@ -351,24 +277,26 @@ export class Sequence {
       console.error(e)
     }
 
-    if (closeSessionId.toLowerCase() === thisSessionId.toLowerCase()) {
+    if (closeSessionId === thisSessionId) {
+      const session = await newSessionFromSessionId(thisSessionId)
+      session.clear()
       await this.waas.completeSignOut()
-      this.kmsKey.set(undefined)
-      this.deviceName.set(undefined)
+      await this.deviceName.set(undefined)
     }
   }
 
   async listSessions(): Promise<Sessions> {
-    const payload: ListSessionsPayload = {
-      sessionId: await this.waas.getSessionID()
+    const sessionId = await this.waas.getSessionId()
+    if (!sessionId) {
+      throw new Error('session not open')
     }
 
-    const thisSessionAddress = await this.waas.getSessionID().then(id => id.toLowerCase())
-    const { args, headers } = await this.preparePayload(payload)
-    const res = await this.client.listSessions(args, headers)
-    return res.sessions.map(session => ({
+    const intent = await this.waas.listSessions()
+    const res = await this.sendIntent(intent)
+
+    return (res.data as Session[]).map(session => ({
       ...session,
-      isThis: session.address.toLowerCase() === thisSessionAddress
+      isThis: session.id === sessionId
     }))
   }
 
@@ -387,7 +315,6 @@ export class Sequence {
 
   async finishValidateSession(challenge: string): Promise<boolean> {
     const intent = await this.waas.finishValidateSession(this.validationRequiredSalt, challenge)
-
     const result = await this.sendIntent(intent)
 
     if (!isFinishValidateSessionResponse(result)) {
@@ -399,8 +326,8 @@ export class Sequence {
   }
 
   async isSessionValid(): Promise<boolean> {
-    const payload = await this.waas.getSession()
-    const result = await this.sendIntent(payload)
+    const intent = await this.waas.getSession()
+    const result = await this.sendIntent(intent)
 
     if (!isGetSessionResponse(result)) {
       throw new Error(`Invalid response: ${JSON.stringify(result)}`)
@@ -429,13 +356,13 @@ export class Sequence {
     }
 
     // Generate a new identifier
-    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSignerAddress()}`
+    const identifier = `ts-sdk-${Date.now()}-${await this.waas.getSessionId()}`
     return { ...args, identifier } as T & { identifier: string }
   }
 
   private async trySendIntent<T>(
     args: CommonAuthArgs,
-    intent: Payload<any>,
+    intent: SignedIntent<any>,
     isExpectedResponse: (response: any) => response is T
   ): Promise<T> {
     const response = await this.sendIntent(intent)
@@ -458,7 +385,7 @@ export class Sequence {
     throw new Error(JSON.stringify(response))
   }
 
-  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<SignedMessageResponse> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<IntentResponseSignedMessage> {
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
@@ -502,5 +429,9 @@ export class Sequence {
       })
     }
     return networks
+  }
+
+  onSessionStateChanged(callback: Observer<string>) {
+    return this.waas.onSessionStateChanged(callback)
   }
 }

@@ -1,9 +1,9 @@
 import { BigNumber, ethers } from 'ethers'
-import { CommonAuthArgs, ExtendedSequenceConfig, Sequence, SequenceConfig, networks, store } from '@0xsequence/waas'
+import { CommonAuthArgs, ExtendedSequenceConfig, SequenceWaaS, SequenceConfig, networks, store } from '@0xsequence/waas'
 
 export class SequenceSigner extends ethers.Signer {
   constructor(
-    private readonly sequence: Sequence,
+    private readonly sequence: SequenceWaaS,
     readonly provider?: ethers.providers.BaseProvider
   ) {
     super()
@@ -15,7 +15,7 @@ export class SequenceSigner extends ethers.Signer {
     store?: store.Store,
     provider?: ethers.providers.BaseProvider
   ): SequenceSigner {
-    return new SequenceSigner(new Sequence(config, preset, store), provider)
+    return new SequenceSigner(new SequenceWaaS(config, preset, store), provider)
   }
 
   async getAddress(): Promise<string> {
@@ -47,7 +47,7 @@ export class SequenceSigner extends ethers.Signer {
       network: await this.getSimpleNetwork(),
       ...authArgs
     }
-    return this.sequence.signMessage(args).then(response => response.data.signature)
+    return this.sequence.signMessage(args).then(response => response.signature)
   }
 
   async signTransaction(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
@@ -84,7 +84,7 @@ export class SequenceSigner extends ethers.Signer {
     throw new Error('Unknown return value')
   }
 
-  connect(provider: ethers.providers.BaseProvider, sequence?: Sequence): SequenceSigner {
+  connect(provider: ethers.providers.BaseProvider, sequence?: SequenceWaaS): SequenceSigner {
     return new SequenceSigner(sequence ?? this.sequence, provider)
   }
 

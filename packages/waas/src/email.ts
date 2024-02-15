@@ -77,13 +77,13 @@ export class EmailAuth {
     }
   }
 
-  public async finalizeAuth({ instance, email, answer, sessionAddress }: { instance: string, email: string, answer: string, sessionAddress: string }): Promise<Identity> {
+  public async finalizeAuth({ instance, email, answer, sessionHash }: { instance: string, email: string, answer: string, sessionHash: string }): Promise<Identity> {
     const res = await this.cognito().send(new RespondToAuthChallengeCommand({
       ClientId: this.clientId,
       Session: instance,
       ChallengeName: 'CUSTOM_CHALLENGE',
       ChallengeResponses: { USERNAME: email, ANSWER: answer },
-      ClientMetadata: { sessionAddress },
+      ClientMetadata: { SESSION_HASH: sessionHash },
     }))
 
     if (!res.AuthenticationResult || !res.AuthenticationResult.IdToken) {
