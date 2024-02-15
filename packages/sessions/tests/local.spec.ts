@@ -4,7 +4,7 @@ import * as utils from '@0xsequence/tests'
 
 import { trackers, tracker } from '../src/index'
 import { commons, universal, v2 } from '@0xsequence/core'
-import { ethers, BigNumber } from 'ethers'
+import { ethers } from 'ethers'
 import { Wallet } from '@0xsequence/wallet'
 import { Orchestrator } from '@0xsequence/signhub'
 
@@ -1183,9 +1183,6 @@ describe('Local config tracker', () => {
 function normalize(value: any): any {
   switch (typeof value) {
     case 'object':
-      if (BigNumber.isBigNumber(value)) {
-        return value.toString()
-      }
       return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, normalize(value)]))
     case 'number':
       return `${value}`

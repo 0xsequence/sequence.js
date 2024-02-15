@@ -2,7 +2,7 @@ import { Account } from '@0xsequence/account'
 import { commons, universal } from '@0xsequence/core'
 import { signers, Status } from '@0xsequence/signhub'
 import { BigIntish, encodeTypedDataDigest, TypedData } from '@0xsequence/utils'
-import { BigNumber, BytesLike, ethers, TypedDataDomain } from 'ethers'
+import { BytesLike, ethers, TypedDataDomain } from 'ethers'
 import { AuthMethodsReturn, Guard, RecoveryCode as GuardRecoveryCode } from './guard.gen'
 
 const fetch = typeof global === 'object' ? global.fetch : window.fetch
@@ -245,7 +245,7 @@ async function signAuthUpdateProof(proof: AuthUpdateProof): Promise<{ jwt: strin
       typedData.domain,
       typedData.types,
       typedData.message,
-      BigNumber.from(typedData.domain.chainId).toNumber() ?? 1,
+      typedData.domain.chainId ? Number(BigInt(typedData.domain.chainId)) : 1,
       'eip6492'
     )
 

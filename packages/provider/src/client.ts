@@ -18,7 +18,7 @@ import { commons } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
 import { Analytics, setupAnalytics } from './analytics'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 
 import packageJson from '../package.json'
 
@@ -493,7 +493,7 @@ export class SequenceClient {
 
     return this.send(
       { method, params: [this.getAddress(), encoded] },
-      options?.chainId || (typedData.domain.chainId && BigNumber.from(typedData.domain.chainId).toNumber()) || this.getChainId()
+      options?.chainId || (typedData.domain.chainId && Number(BigInt(typedData.domain.chainId)) || this.getChainId()
     )
   }
 

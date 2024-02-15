@@ -1,4 +1,4 @@
-import { BigNumber, BytesLike, ethers } from 'ethers'
+import { BytesLike, ethers } from 'ethers'
 import { BigIntish } from '@0xsequence/utils'
 import { subdigestOf } from './signature'
 import { walletContracts } from '@0xsequence/abi'
@@ -129,13 +129,13 @@ export function toSequenceTransaction(
 ): { nonce?: BigIntish; transaction: Transaction } {
   if (tx.to && tx.to !== ethers.ZeroAddress) {
     return {
-      nonce: tx.nonce ? BigNumber.from(tx.nonce) : undefined,
+      nonce: tx.nonce ? BigInt(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
-        gasLimit: BigNumber.from(tx.gasLimit || 0),
+        gasLimit: BigInt(tx.gasLimit || 0),
         to: tx.to,
-        value: BigNumber.from(tx.value || 0),
+        value: BigInt(tx.value || 0),
         data: tx.data || '0x'
       }
     }
@@ -144,13 +144,13 @@ export function toSequenceTransaction(
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
 
     return {
-      nonce: tx.nonce ? BigNumber.from(tx.nonce) : undefined,
+      nonce: tx.nonce ? BigInt(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
-        gasLimit: tx.gasLimit ? BigNumber.from(tx.gasLimit) : undefined,
+        gasLimit: tx.gasLimit ? BigInt(tx.gasLimit) : undefined,
         to: wallet,
-        value: BigNumber.from(tx.value || 0),
+        value: BigInt(tx.value || 0),
         data: data
       }
     }

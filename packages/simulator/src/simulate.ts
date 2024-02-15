@@ -1,16 +1,16 @@
-import { BigNumber, providers, utils } from 'ethers'
+import { ethers } from 'ethers'
 import { gethCall } from './geth-call'
 import { commons } from '@0xsequence/core'
 
 const simulatorArtifact = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/MainModuleGasEstimation.sol/MainModuleGasEstimation.json')
-const simulatorInterface = new utils.Interface(simulatorArtifact.abi)
+const simulatorInterface = new ethers.Interface(simulatorArtifact.abi)
 const simulatorBytecode = simulatorArtifact.deployedBytecode
 
 export async function simulate(
-  provider: providers.JsonRpcProvider,
+  provider: ethers.JsonRpcProvider,
   wallet: string,
   transactions: commons.transaction.Transaction[],
-  block?: providers.BlockTag
+  block?: ethers.BlockTag
 ): Promise<Result[]> {
   const encodedTransactions = commons.transaction.sequenceTxAbiEncode(transactions)
   const data = simulatorInterface.encodeFunctionData('simulateExecute', [encodedTransactions])
@@ -24,5 +24,5 @@ export interface Result {
   executed: boolean
   succeeded: boolean
   result: string
-  gasUsed: BigNumber
+  gasUsed: bigint
 }

@@ -1,12 +1,13 @@
-import { utils } from 'ethers'
+import { ethers } from 'ethers'
 
-type Deferrable<T> = utils.Deferrable<T>
+// Makes all properties in T optionally deferrable
+export type Deferrable<T> = {
+  [K in keyof T]: T[K] | Promise<T[K]>
+}
 
-const { defineReadOnly, getStatic, resolveProperties, checkProperties, shallowCopy, deepCopy } = utils
+const { defineProperties, resolveProperties } = ethers
 
-export type { Deferrable }
-
-export { defineReadOnly, getStatic, resolveProperties, checkProperties, shallowCopy, deepCopy }
+export { defineProperties, resolveProperties }
 
 export type Optionals<T extends object> = Omit<
   T,
