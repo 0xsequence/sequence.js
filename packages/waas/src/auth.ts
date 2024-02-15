@@ -385,7 +385,7 @@ export class SequenceWaaS {
     throw new Error(JSON.stringify(response))
   }
 
-  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<IntentResponseSignedMessage> {
+  async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<SignedMessageResponse> {
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }

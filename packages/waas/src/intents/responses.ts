@@ -9,9 +9,9 @@ import {
   IntentResponseValidationRequired
 } from "../clients/intent.gen"
 
-export type PayloadResponse = {
+export type PayloadResponse<T> = {
   code: string
-  data: any
+  data: T
 }
 
 export type ValidationRequiredResponse = {
@@ -156,7 +156,7 @@ export function isMaySentTransactionResponse(receipt: any): receipt is MaySentTr
   return isSentTransactionResponse(receipt) || isFailedTransactionResponse(receipt)
 }
 
-export function isSignedMessageResponse(receipt: any): receipt is IntentResponseSignedMessage {
+export function isSignedMessageResponse(receipt: any): receipt is SignedMessageResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
@@ -167,7 +167,7 @@ export function isSignedMessageResponse(receipt: any): receipt is IntentResponse
   )
 }
 
-export function isValidationRequiredResponse(receipt: any): receipt is IntentResponseValidationRequired {
+export function isValidationRequiredResponse(receipt: any): receipt is ValidationRequiredResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
@@ -177,7 +177,7 @@ export function isValidationRequiredResponse(receipt: any): receipt is IntentRes
   )
 }
 
-export function isValidateSessionResponse(receipt: any): receipt is IntentResponseValidateSession {
+export function isValidateSessionResponse(receipt: any): receipt is ValidateSessionResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
@@ -186,7 +186,7 @@ export function isValidateSessionResponse(receipt: any): receipt is IntentRespon
   )
 }
 
-export function isFinishValidateSessionResponse(receipt: any): receipt is IntentResponseValidationFinished {
+export function isFinishValidateSessionResponse(receipt: any): receipt is FinishValidateSessionResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
@@ -195,7 +195,7 @@ export function isFinishValidateSessionResponse(receipt: any): receipt is Intent
   )
 }
 
-export function isCloseSessionResponse(receipt: any): receipt is IntentResponseSessionClosed {
+export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
@@ -203,7 +203,7 @@ export function isCloseSessionResponse(receipt: any): receipt is IntentResponseS
   )
 }
 
-export function isGetSessionResponse(receipt: any): receipt is IntentResponseGetSession {
+export function isGetSessionResponse(receipt: any): receipt is GetSessionResponse {
   return (
     typeof receipt === 'object' &&
     typeof receipt.code === 'string' &&
