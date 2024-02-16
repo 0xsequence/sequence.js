@@ -5,7 +5,7 @@ import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 import { commons } from '@0xsequence/core'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
-  signer: ethers.AbstractSigner
+  signer: ethers.Signer
 }
 
 export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
@@ -13,7 +13,7 @@ export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
 }
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
-  private signer: ethers.AbstractSigner
+  private signer: ethers.Signer
   private txnOptions: ethers.TransactionRequest
 
   constructor(options: LocalRelayerOptions | ethers.AbstractSigner) {

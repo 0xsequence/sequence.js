@@ -901,7 +901,7 @@ describe('SequenceProvider', () => {
         })
       })
 
-      describe('forward getStorageAt', () => {
+      describe('forward getStorage', () => {
         const expected = '0x0000000000000000000000000000000000000000000000000000000000112233'
         const empty = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
@@ -917,34 +917,34 @@ describe('SequenceProvider', () => {
 
           addr = res.contractAddress
 
-          expect(await hardhat1Provider.getStorageAt(addr, '0x445566')).to.equal(expected)
-          expect(await hardhat2Provider.getStorageAt(addr, '0x445566')).to.equal(empty)
+          expect(await hardhat1Provider.getStorage(addr, '0x445566')).to.equal(expected)
+          expect(await hardhat2Provider.getStorage(addr, '0x445566')).to.equal(empty)
         })
 
-        it('forward getStorageAt - default', async () => {
+        it('forward getStorage - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getStorageAt(addr, '0x445566')).to.equal(expected)
+          expect(await provider.getStorage(addr, '0x445566')).to.equal(expected)
 
           provider.setDefaultChainId(31338)
-          expect(await provider.getStorageAt(addr, '0x445566')).to.equal(empty)
+          expect(await provider.getStorage(addr, '0x445566')).to.equal(empty)
         })
 
-        it('forward getStorageAt - specific chain', async () => {
+        it('forward getStorage - specific chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getStorageAt(addr, '0x445566', undefined, { chainId: 31337 })).to.equal(expected)
-          expect(await provider.getStorageAt(addr, '0x445566', undefined, { chainId: 31338 })).to.equal(empty)
+          expect(await provider.getStorage(addr, '0x445566', undefined, { chainId: 31337 })).to.equal(expected)
+          expect(await provider.getStorage(addr, '0x445566', undefined, { chainId: 31338 })).to.equal(empty)
         })
 
-        it('forward getStorageAt - static network provider', async () => {
+        it('forward getStorage - static network provider', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getProvider('hardhat').getStorageAt(addr, '0x445566')).to.equal(expected)
-          expect(await provider.getProvider('hardhat2').getStorageAt(addr, '0x445566')).to.equal(empty)
+          expect(await provider.getProvider('hardhat').getStorage(addr, '0x445566')).to.equal(expected)
+          expect(await provider.getProvider('hardhat2').getStorage(addr, '0x445566')).to.equal(empty)
         })
 
-        it('fail to forward getStorageAt - static network provider for different chain', async () => {
+        it('fail to forward getStorage - static network provider for different chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           await expect(
-            provider.getProvider('hardhat2').getStorageAt(addr, '0x445566', undefined, { chainId: 31337 })
+            provider.getProvider('hardhat2').getStorage(addr, '0x445566', undefined, { chainId: 31337 })
           ).to.be.rejectedWith('This provider only supports the network 31338, but 31337 was requested.')
         })
       })

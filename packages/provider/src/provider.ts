@@ -341,7 +341,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider.getCode(addressOrName, blockTag)
   }
 
-  async getStorageAt(
+  async getStorage(
     addressOrName: string | Promise<string>,
     position: BigIntish,
     blockTag?: ethers.BlockTag,

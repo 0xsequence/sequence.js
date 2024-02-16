@@ -16,7 +16,7 @@ export const encodeTypedDataHash = (typedData: TypedData): string => {
   // the hash encoder below
   delete types['EIP712Domain']
 
-  return ethers._TypedDataEncoder.hash(typedData.domain, types, typedData.message)
+  return ethers.TypedDataEncoder.hash(typedData.domain, types, typedData.message)
 }
 
 export const encodeTypedDataDigest = (typedData: TypedData): Uint8Array => {
