@@ -7,7 +7,7 @@ import { encodeMessageDigest, TypedData, encodeTypedDataDigest, Deferrable } fro
 const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
 export const messageToBytes = (message: BytesLike): Uint8Array => {
-  if (ethers.isBytes(message) || ethers.isHexString(message)) {
+  if (ethers.isBytesLike(message)) {
     return ethers.getBytes(message)
   }
 

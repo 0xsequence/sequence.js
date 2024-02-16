@@ -16,7 +16,7 @@ const FINAL_STATUSES = [
 const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions {
-  provider: ethers.Provider | { url: string }
+  provider: ethers.AbstractProvider | { url: string }
   url: string
   projectAccessKey?: string
   jwtAuth?: string
@@ -24,7 +24,10 @@ export interface RpcRelayerOptions {
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
   return (
-    obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && ethers.Provider.isProvider(obj.provider)
+    obj.url !== undefined &&
+    typeof obj.url === 'string' &&
+    obj.provider !== undefined &&
+    obj.provider instanceof ethers.AbstractProvider
   )
 }
 
@@ -38,7 +41,7 @@ export class RpcRelayer implements Relayer {
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
 
-    if (ethers.Provider.isProvider(options.provider)) {
+    if (options.provider instanceof ethers.AbstractProvider) {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
@@ -167,7 +170,7 @@ export class RpcRelayer implements Relayer {
     const { options: feeOptions, quote } = await this.service.feeOptions({
       wallet: entrypoint,
       to: entrypoint,
-      data: ethers.toBeHex(data),
+      data: ethers.toBeHex(ethers.hexlify(data)),
       simulate: options?.simulate
     })
 

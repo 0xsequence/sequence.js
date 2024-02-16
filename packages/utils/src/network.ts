@@ -1,6 +1,27 @@
 import { ethers } from 'ethers'
 
-export const getEthersConnectionInfo = (url: string, projectAccessKey?: string, jwt?: string): ethers.ConnectionInfo => {
+export type ConnectionInfo = {
+  url: string
+  headers?: { [key: string]: string | number }
+
+  user?: string
+  password?: string
+
+  allowInsecureAuthentication?: boolean
+  allowGzip?: boolean
+
+  throttleLimit?: number
+  throttleSlotInterval?: number
+  throttleCallback?: (attempt: number, url: string) => Promise<boolean>
+
+  skipFetchSetup?: boolean
+  fetchOptions?: Record<string, string>
+  errorPassThrough?: boolean
+
+  timeout?: number
+}
+
+export const getEthersConnectionInfo = (url: string, projectAccessKey?: string, jwt?: string): ConnectionInfo => {
   const headers: {
     [key: string]: string | number
   } = {}

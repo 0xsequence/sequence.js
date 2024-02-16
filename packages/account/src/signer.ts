@@ -64,8 +64,6 @@ function encodeGasRefundTransaction(option?: FeeOption) {
 }
 
 export class AccountSigner implements ethers.AbstractSigner {
-  public readonly _isSigner = true
-
   constructor(
     public account: Account,
     public chainId: ChainId,

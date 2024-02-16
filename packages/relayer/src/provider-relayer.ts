@@ -20,7 +20,7 @@ export const ProviderRelayerDefaults: Required<Optionals<ProviderRelayerOptions>
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return obj.provider !== undefined && ethers.Provider.isProvider(obj.provider)
+  return obj.provider !== undefined && obj.provider instanceof ethers.AbstractProvider
 }
 
 export abstract class ProviderRelayer implements Relayer {
