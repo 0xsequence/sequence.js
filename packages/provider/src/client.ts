@@ -482,7 +482,7 @@ export class SequenceClient {
 
     // TODO: Stop using ethers for this, this is the only place where we use it
     // and it makes the client depend on ethers.
-    const encoded = ethers._TypedDataEncoder.getPayload(typedData.domain, typedData.types, typedData.message)
+    const encoded = ethers.TypedDataEncoder.getPayload(typedData.domain, typedData.types, typedData.message)
 
     // The sign typed data will use one of the following chainIds, in order:
     // - The one provided in the options
