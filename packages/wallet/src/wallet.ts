@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { SignatureOrchestrator, SignerState, Status } from '@0xsequence/signhub'
-import { BigIntish, Deferrable, subDigestOf } from '@0xsequence/utils'
+import { BigIntish, Deferrable, encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
@@ -61,13 +61,13 @@ export class Wallet<
   Y extends commons.config.Config = commons.config.Config,
   T extends commons.signature.Signature<Y> = commons.signature.Signature<Y>,
   Z extends commons.signature.UnrecoveredSignature = commons.signature.UnrecoveredSignature
-> extends ethers.Signer {
+> extends ethers.AbstractSigner {
   public context: commons.context.WalletContext
   public config: Y
   public address: string
   public chainId: BigIntish
 
-  public provider?: ethers.Provider
+  public provider: ethers.Provider | null
   public relayer?: Relayer
 
   public coders: {
@@ -91,7 +91,7 @@ export class Wallet<
     this.coders = options.coders
     this.address = options.address
     this.chainId = options.chainId
-    this.provider = options.provider
+    this.provider = options.provider ?? null
     this.relayer = options.relayer
 
     this._reader = options.reader
@@ -240,10 +240,10 @@ export class Wallet<
     return this.coders.config.update.buildTransaction(this.address, config, this.context)
   }
 
-  async getNonce(space: BigIntish = 0): Promise<BigIntish> {
+  async getNonce(space: BigIntish = 0): Promise<number> {
     const nonce = await this.reader().nonce(this.address, space)
     if (nonce === undefined) throw new Error('Unable to determine nonce')
-    return nonce
+    return Number(nonce)
   }
 
   async signDigest(digest: ethers.BytesLike, metadata?: object): Promise<string> {
@@ -288,6 +288,16 @@ export class Wallet<
 
   signMessage(message: ethers.BytesLike): Promise<string> {
     return this.signDigest(ethers.keccak256(message), { message })
+  }
+
+  // XXX This method is not implemented in the original code but required by the AbstractSigner interface
+  signTypedData(
+    domain: ethers.TypedDataDomain,
+    types: Record<string, ethers.TypedDataField[]>,
+    value: Record<string, any>
+  ): Promise<string> {
+    const digest = encodeTypedDataDigest({ domain, types, message: value })
+    return this.signDigest(digest)
   }
 
   signTransactionBundle(bundle: commons.transaction.TransactionBundle): Promise<commons.transaction.SignedTransactionBundle> {
