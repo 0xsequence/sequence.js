@@ -338,7 +338,9 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
               }
 
               const replacedSignature = ethers.toBeHex(
-                this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, payload.subdigest, signature) : signature
+                ethers.hexlify(
+                  this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, payload.subdigest, signature) : signature
+                )
               )
 
               const isDynamic = commons.signer.tryRecoverSigner(payload.subdigest, replacedSignature) !== signer
@@ -449,7 +451,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         proof: {
           digest: payload.digest,
           chainId: BigInt(payload.chainId),
-          signature: ethers.toBeHex(signature)
+          signature: ethers.toBeHex(ethers.hexlify(signature))
         }
       })
     }
@@ -543,7 +545,9 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
                 }
 
                 const replacedSignature = ethers.toBeHex(
-                  this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
+                  ethers.hexlify(
+                    this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
+                  )
                 )
 
                 const isDynamic = commons.signer.tryRecoverSigner(subdigest, replacedSignature) !== signer
