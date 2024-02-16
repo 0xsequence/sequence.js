@@ -85,7 +85,7 @@ export abstract class Signer extends AbstractSigner {
 
 export type SignedTransactionsCallback = (signedTxs: commons.transaction.SignedTransactionBundle, metaTxnHash: string) => void
 
-export function isSequenceSigner(signer: AbstractSigner): signer is Signer {
+export function isSequenceSigner(signer: ethers.Signer): signer is Signer {
   const cand = signer as Signer
   return cand && cand.updateConfig !== undefined && cand.publishConfig !== undefined && cand.getWalletConfig !== undefined
 }

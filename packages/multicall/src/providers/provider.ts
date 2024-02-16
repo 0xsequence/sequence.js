@@ -9,7 +9,7 @@ export const ProxyMethods = [
   'getBlockNumber',
   'getGasPrice',
   'getTransactionCount',
-  'getStorageAt',
+  'getStorage',
   'sendTransaction',
   'estimateGas',
   'getBlock',
@@ -50,7 +50,7 @@ export class MulticallProvider extends ethers.AbstractProvider {
     if (provider.getResolver) {
       const ogResolver = await provider.getResolver(await name)
       if (!ogResolver) return null
-      return new ethers.Resolver(this as any, ogResolver.address, ogResolver.name)
+      return new ethers.EnsResolver(this as any, ogResolver.address, ogResolver.name)
     }
 
     return provider.getResolver(await name)

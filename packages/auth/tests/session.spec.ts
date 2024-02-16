@@ -26,13 +26,13 @@ type EthereumInstance = {
   chainId?: number
   providerUrl?: string
   provider?: ethers.JsonRpcProvider
-  signer?: ethers.AbstractSigner
+  signer?: ethers.Signer
 }
 
 class CountingSigner extends ethers.AbstractSigner {
   private _signingRequests: number = 0
 
-  constructor(private readonly signer: ethers.AbstractSigner) {
+  constructor(private readonly signer: ethers.Signer) {
     super()
   }
 

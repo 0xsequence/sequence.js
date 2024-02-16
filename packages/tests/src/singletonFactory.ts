@@ -65,7 +65,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   const singletonFactory = await mustExistEIP2470(signer)
 
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode)
-  const data = factory.getDeployTransaction(...args).data
+  const data = (await factory.getDeployTransaction(...args)).data
   if (!data) throw new Error('no deploy data')
 
   const address = ethers.getAddress(
@@ -84,7 +84,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
     return new ethers.Contract(address, artifact.abi, signer)
   }
 
-  const maxGasLimit = await provider.getBlock('latest').then(b => b.gasLimit.div(2))
+  const maxGasLimit = await provider.getBlock('latest').then(b => (b?.gasLimit ? b.gasLimit / 2n : 0n))
   await singletonFactory.deploy(data, ethers.ZeroHash, { gasLimit: maxGasLimit }).then((tx: any) => tx.wait())
 
   if (!(await isContract(provider, address))) {
