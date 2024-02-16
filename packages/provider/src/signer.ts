@@ -44,7 +44,6 @@ export interface ISequenceSigner extends ethers.AbstractSigner {
 export class SequenceSigner implements ISequenceSigner {
   private readonly singleNetworkSigners: { [chainId: number]: SingleNetworkSequenceSigner } = {}
 
-  readonly _isSigner: boolean = true
   readonly _isSequenceSigner: boolean = true
 
   get utils(): WalletUtils {

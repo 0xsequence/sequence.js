@@ -10,6 +10,7 @@ import {
   JsonRpcMiddlewareHandler
 } from './json-rpc'
 import { ChainId, networks } from './constants'
+import { ConnectionInfo } from '@0xsequence/utils'
 
 export interface JsonRpcProviderOptions {
   // ..
@@ -27,7 +28,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
 
-  constructor(url: ethers.ConnectionInfo | string, options?: JsonRpcProviderOptions) {
+  constructor(url: ConnectionInfo | string, options?: JsonRpcProviderOptions) {
     super(url, options?.chainId)
 
     const chainId = options?.chainId
