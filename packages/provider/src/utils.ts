@@ -14,12 +14,13 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
   return ethers.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
+export const prefixEIP191Message = (message: BytesLike): BytesLike => {
   const messageBytes = messageToBytes(message)
   if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes
   } else {
-    return ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+    const res = ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+    return res
   }
 }
 
@@ -49,7 +50,7 @@ export const trimEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
   try {
     prefixAsNumber = Number(ethers.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   } catch {
-    prefixAsNumber = Number(ethers.toBeHex(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
+    prefixAsNumber = Number(ethers.toBeHex(ethers.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength))))
   }
 
   if (prefixAsNumber > ethereumSignedMessagePartSlicedArray.length || !Number.isInteger(prefixAsNumber)) {
