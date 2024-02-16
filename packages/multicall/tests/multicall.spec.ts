@@ -378,7 +378,7 @@ describe('Multicall integration', function () {
           ])
 
           rawBalances.forEach((bal, i) => {
-            expect(balances[i].toHexString()).to.equal(bal.toHexString())
+            expect(balances[i]).to.equal(bal)
           })
         })
         it('Should call eth_getBalance and eth_getCode', async () => {
@@ -386,7 +386,7 @@ describe('Multicall integration', function () {
           const promiseB = await provider.getBalance(accounts[3].account.address)
 
           expect(await promiseA).to.equal(await ganache.provider!.getCode(callMock.address))
-          expect(promiseB.toHexString()).to.equal((await ganache.provider!.getBalance(accounts[3].account.address)).toHexString())
+          expect(promiseB).to.equal(await ganache.provider!.getBalance(accounts[3].account.address))
 
           if (option.ignoreCount) return
           expect(callCounter).to.equal(1)
@@ -576,7 +576,7 @@ describe('Multicall integration', function () {
               ])
 
               rawBalances.forEach((bal, i) => {
-                expect(balances[i].toHexString()).to.equal(bal.toHexString())
+                expect(balances[i]).to.equal(bal)
               })
             })
 
@@ -585,9 +585,7 @@ describe('Multicall integration', function () {
               const promiseB = await brokenProvider.getBalance(accounts[3].account.address)
 
               expect(await promiseA).to.equal(await ganache.provider!.getCode(callMock.address))
-              expect(promiseB.toHexString()).to.equal(
-                (await ganache.provider!.getBalance(accounts[3].account.address)).toHexString()
-              )
+              expect(promiseB).to.equal(await ganache.provider!.getBalance(accounts[3].account.address))
 
               if (option.ignoreCount) return
               expect(callCounter).to.equal(2 + brokenOption.overhead)

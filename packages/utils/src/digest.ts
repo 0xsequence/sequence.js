@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { BigIntish } from './bigint'
 
-export const encodeMessageDigest = (message: string | Uint8Array) => {
+export const encodeMessageDigest = (message: string | ethers.BytesLike) => {
   if (typeof message === 'string') {
     return ethers.getBytes(ethers.keccak256(ethers.toUtf8Bytes(message)))
   } else {

@@ -20,7 +20,7 @@ export interface Overrides {
   [address: string]: {
     balance?: BigIntish
     nonce?: BigIntish
-    code?: ethers.BytesLike | ethers.Hexable | number | bigint
+    code?: ethers.BytesLike | number | bigint
     state?: StorageOverrides
     stateDiff?: StorageOverrides
   }

@@ -1,14 +1,12 @@
-import { ethers } from 'ethers'
+import { Eip1193Provider } from 'ethers'
 import { Multicall, MulticallOptions } from '../multicall'
 import { JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
 
-type ExternalProvider = ethers.ExternalProvider
-
-export class MulticallExternalProvider implements ExternalProvider {
+export class MulticallExternalProvider implements Eip1193Provider {
   private multicall: Multicall
 
   constructor(
-    private provider: ethers.ExternalProvider,
+    private provider: Eip1193Provider,
     multicall?: Multicall | Partial<MulticallOptions>
   ) {
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall!)
@@ -34,11 +32,7 @@ export class MulticallExternalProvider implements ExternalProvider {
     }
   }
 
-  public get isMetaMask() {
-    return this.provider.isMetaMask
-  }
-
-  public get isStatus() {
-    return this.provider.isStatus
+  async request(request: { method: string; params?: Array<any> | Record<string, any> }): Promise<any> {
+    return this.provider.request(request)
   }
 }

@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, Eip1193Provider } from 'ethers'
 import {
   JsonRpcRequest,
   JsonRpcResponse,
@@ -9,8 +9,6 @@ import {
   JsonRpcVersion
 } from './types'
 import { isJsonRpcProvider, isJsonRpcHandler } from './utils'
-
-type ExternalProvider = ethers.ExternalProvider
 
 let _nextId = 0
 
@@ -77,7 +75,7 @@ export class JsonRpcSender implements JsonRpcHandler {
   }
 }
 
-export class JsonRpcExternalProvider implements ExternalProvider, JsonRpcHandler {
+export class JsonRpcExternalProvider implements Eip1193Provider, JsonRpcHandler {
   constructor(private provider: ethers.JsonRpcProvider) {}
 
   sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) => {
