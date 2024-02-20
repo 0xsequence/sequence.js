@@ -337,7 +337,7 @@ export class WalletRequestHandler implements Eip1193Provider, JsonRpcHandler, Pr
             sig = await this.prompter.promptSignMessage(
               {
                 chainId: chainId,
-                message: prefixedMessage,
+                message: ethers.getBytes(prefixedMessage),
                 eip6492: sequenceVerified
               },
               this.connectOptions

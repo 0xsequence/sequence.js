@@ -43,7 +43,7 @@ export async function isValidSignature(
 ): Promise<boolean> {
   // First we try to validate the signature using Ethers
   try {
-    const addr = ethers.recoverAddress(digest, signature)
+    const addr = ethers.recoverAddress(digest, ethers.hexlify(signature))
     if (addr.toLowerCase() === address.toLowerCase()) return true
   } catch {}
 
@@ -96,8 +96,9 @@ export async function runByEIP5719(
 
   const altSignature = ethers.toBeHex(await (solver || new URISolverIPFS()).resolve(altUri))
   if (!altSignature || altSignature === '') throw new Error('EIP5719 - Empty alternative signature')
-  if (altSignature === ethers.toBeHex(signature)) throw new Error('EIP5719 - Alternative signature is invalid or the same')
-
+  if (altSignature === ethers.toBeHex(ethers.hexlify(signature))) {
+    throw new Error('EIP5719 - Alternative signature is invalid or the same')
+  }
   return runByEIP5719(address, provider, digest, altSignature, solver, tries + 1)
 }
 
