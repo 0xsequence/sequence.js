@@ -335,7 +335,7 @@ function encodeTransaction(transaction: commons.transaction.Transaction): Transa
   return {
     to: transaction.to,
     value: transaction.value !== undefined ? numberString(transaction.value) : undefined,
-    data: transaction.data !== undefined ? ethers.toBeHex(transaction.data) : undefined,
+    data: transaction.data !== undefined ? ethers.toBeHex(ethers.hexlify(transaction.data)) : undefined,
     gasLimit: transaction.gasLimit !== undefined ? numberString(transaction.gasLimit) : undefined,
     delegateCall: transaction.delegateCall,
     revertOnError: transaction.revertOnError

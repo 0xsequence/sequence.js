@@ -13,7 +13,7 @@ function toQuantity(number: BigIntish | string): string {
 
 function tryDecodeError(bytes: ethers.BytesLike): string {
   try {
-    return ethers.toUtf8String('0x' + ethers.toBeHex(bytes).substr(138))
+    return ethers.toUtf8String('0x' + ethers.toBeHex(ethers.hexlify(bytes)).substring(138))
   } catch (e) {
     return 'UNKNOWN_ERROR'
   }

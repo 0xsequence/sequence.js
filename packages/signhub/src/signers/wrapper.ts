@@ -36,6 +36,6 @@ export class SignerWrapper implements SapientSigner {
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
   suffix(): ethers.BytesLike {
-    return [2]
+    return new Uint8Array([2])
   }
 }

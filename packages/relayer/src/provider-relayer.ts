@@ -87,7 +87,7 @@ export abstract class ProviderRelayer implements Relayer {
           return await this.provider.estimateGas({
             from: wallet,
             to: tx.to,
-            data: tx.data,
+            data: tx.data && ethers.hexlify(tx.data),
             value: tx.value
           })
         })
