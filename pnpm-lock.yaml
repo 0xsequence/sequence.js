@@ -398,9 +398,9 @@ importers:
       '@nomiclabs/hardhat-web3':
         specifier: ^2.0.0
         version: 2.0.0(hardhat@2.20.1)(web3@1.10.4)
-      '@typechain/ethers-v5':
-        specifier: ^10.1.1
-        version: 10.2.1(@ethersproject/abi@5.7.0)(@ethersproject/providers@5.7.2)(ethers@6.11.1)(typechain@8.3.2)(typescript@5.3.3)
+      '@typechain/ethers-v6':
+        specifier: ^0.5.1
+        version: 0.5.1(ethers@6.11.1)(typechain@8.3.2)(typescript@5.3.3)
       dotenv:
         specifier: ^16.0.3
         version: 16.4.5
@@ -4714,24 +4714,6 @@ packages:
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
     dev: true
 
-  /@typechain/ethers-v5@10.2.1(@ethersproject/abi@5.7.0)(@ethersproject/providers@5.7.2)(ethers@6.11.1)(typechain@8.3.2)(typescript@5.3.3):
-    resolution: {integrity: sha512-n3tQmCZjRE6IU4h6lqUGiQ1j866n5MTCBJreNEHHVWXa2u9GJTaeYyU1/k+1qLutkyw+sS6VAN+AbeiTqsxd/A==}
-    peerDependencies:
-      '@ethersproject/abi': ^5.0.0
-      '@ethersproject/providers': ^5.0.0
-      ethers: ^5.1.3
-      typechain: ^8.1.1
-      typescript: '>=4.3.0'
-    dependencies:
-      '@ethersproject/abi': 5.7.0
-      '@ethersproject/providers': 5.7.2
-      ethers: 6.11.1
-      lodash: 4.17.21
-      ts-essentials: 7.0.3(typescript@5.3.3)
-      typechain: 8.3.2(typescript@5.3.3)
-      typescript: 5.3.3
-    dev: true
-
   /@typechain/ethers-v5@7.2.0(@ethersproject/abi@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/providers@5.7.2)(ethers@5.7.2)(typechain@5.2.0)(typescript@5.3.3):
     resolution: {integrity: sha512-jfcmlTvaaJjng63QsT49MT6R1HFhtO/TBMWbyzPFSzMmVIqb2tL6prnKBs4ZJrSvmgIXWy+ttSjpaxCTq8D/Tw==}
     peerDependencies:
@@ -4749,6 +4731,20 @@ packages:
       lodash: 4.17.21
       ts-essentials: 7.0.3(typescript@5.3.3)
       typechain: 5.2.0(typescript@5.3.3)
+      typescript: 5.3.3
+    dev: true
+
+  /@typechain/ethers-v6@0.5.1(ethers@6.11.1)(typechain@8.3.2)(typescript@5.3.3):
+    resolution: {integrity: sha512-F+GklO8jBWlsaVV+9oHaPh5NJdd6rAKN4tklGfInX1Q7h0xPgVLP39Jl3eCulPB5qexI71ZFHwbljx4ZXNfouA==}
+    peerDependencies:
+      ethers: 6.x
+      typechain: ^8.3.2
+      typescript: '>=4.7.0'
+    dependencies:
+      ethers: 6.11.1
+      lodash: 4.17.21
+      ts-essentials: 7.0.3(typescript@5.3.3)
+      typechain: 8.3.2(typescript@5.3.3)
       typescript: 5.3.3
     dev: true
 
