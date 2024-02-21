@@ -1,15 +1,15 @@
-import { ethers } from 'ethers'
+import { ethers, Signer } from 'ethers'
 
 import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
 import { SequenceClient } from './client'
 import { commons } from '@0xsequence/core'
 import { ChainIdLike, NetworkConfig } from '@0xsequence/network'
-import { resolveArrayProperties } from './utils'
+import { poll, resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
 import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 import { Deferrable } from '@0xsequence/utils'
 
-export interface ISequenceSigner extends ethers.AbstractSigner {
+export interface ISequenceSigner extends Omit<Signer, 'connect'> {
   getProvider(): SequenceProvider
   getProvider(chainId: ChainIdLike): SingleNetworkSequenceProvider
   getProvider(chainId?: ChainIdLike): SequenceProvider | SingleNetworkSequenceProvider
@@ -20,6 +20,8 @@ export interface ISequenceSigner extends ethers.AbstractSigner {
 
   getWalletConfig(chainId?: ChainIdLike): Promise<commons.config.Config>
   getNetworks(): Promise<NetworkConfig[]>
+
+  connect: (provider: SequenceProvider) => SequenceSigner
 
   signMessage(message: ethers.BytesLike, options?: OptionalChainIdLike & OptionalEIP6492): Promise<string>
 
@@ -132,7 +134,7 @@ export class SequenceSigner implements ISequenceSigner {
     const provider = this.getProvider(chainId)
 
     try {
-      return (await ethers.poll(
+      return (await poll(
         async () => {
           const tx = await provider.getTransaction(txHash)
           return tx ? provider._wrapTransaction(tx, txHash) : undefined
@@ -159,24 +161,16 @@ export class SequenceSigner implements ISequenceSigner {
     return provider.getBalance(this.getAddress(), blockTag)
   }
 
-  async estimateGas(transaction: Deferrable<ethers.TransactionRequest>, optionals?: OptionalChainIdLike): Promise<bigint> {
+  async estimateGas(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike): Promise<bigint> {
     return this.getProvider(optionals?.chainId).estimateGas(transaction)
   }
 
-  async call(
-    transaction: Deferrable<ethers.TransactionRequest>,
-    blockTag?: ethers.BlockTag | undefined,
-    optionals?: OptionalChainIdLike
-  ): Promise<string> {
-    return this.getProvider(optionals?.chainId).call(transaction, blockTag)
+  async call(transaction: ethers.TransactionRequest, optionals?: OptionalChainIdLike): Promise<string> {
+    return this.getProvider(optionals?.chainId).call(transaction)
   }
 
   getChainId(): Promise<number> {
     return Promise.resolve(this.client.getChainId())
-  }
-
-  async getGasPrice(optionals?: OptionalChainIdLike): Promise<bigint> {
-    return this.getProvider(optionals?.chainId).getGasPrice()
   }
 
   async getFeeData(optionals?: OptionalChainIdLike): Promise<ethers.FeeData> {

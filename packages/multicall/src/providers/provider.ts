@@ -7,7 +7,7 @@ import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequ
 export const ProxyMethods = [
   'getNetwork',
   'getBlockNumber',
-  'getGasPrice',
+  'getFeeData',
   'getTransactionCount',
   'getStorage',
   'sendTransaction',
