@@ -534,8 +534,8 @@ export class WalletRequestHandler implements Eip1193Provider, JsonRpcHandler, Pr
         }
 
         case 'eth_gasPrice': {
-          const gasPrice = await provider.getGasPrice()
-          response.result = toHexString(gasPrice)
+          const feeData = await provider.getFeeData()
+          response.result = feeData.gasPrice && toHexString(feeData.gasPrice)
           break
         }
 

@@ -713,7 +713,7 @@ describe('SequenceProvider', () => {
         })
       })
 
-      describe('forward getGasPrice', () => {
+      describe('forward getFeeData', () => {
         let provider: SequenceProvider
 
         beforeEach(() => {
@@ -722,14 +722,14 @@ describe('SequenceProvider', () => {
             if (chainId === 31337) {
               return {
                 ...hardhat1Provider,
-                getGasPrice: async () => 1n
+                getFeeData: async () => ({ gasPrice: 1n })
               } as unknown as ethers.JsonRpcProvider
             }
 
             if (chainId === 31338) {
               return {
                 ...hardhat2Provider,
-                getGasPrice: async () => 2n
+                getFeeData: async () => ({ gasPrice: 2n })
               } as unknown as ethers.JsonRpcProvider
             }
 
@@ -737,24 +737,24 @@ describe('SequenceProvider', () => {
           })
         })
 
-        it('forward getGasPrice - default', async () => {
+        it('forward getFeeData - default', async () => {
           expect((await provider.getFeeData()).gasPrice).to.equal(1n)
 
           provider.setDefaultChainId(31338)
           expect((await provider.getFeeData()).gasPrice).to.equal(2n)
         })
 
-        it('forward getGasPrice - specific chain', async () => {
+        it('forward getFeeData - specific chain', async () => {
           expect((await provider.getFeeData({ chainId: 31337 })).gasPrice).to.equal(1n)
           expect((await provider.getFeeData({ chainId: 31338 })).gasPrice).to.equal(2n)
         })
 
-        it('forward getGasPrice - static network provider', async () => {
+        it('forward getFeeData - static network provider', async () => {
           expect((await provider.getProvider('hardhat').getFeeData()).gasPrice).to.equal(1n)
           expect((await provider.getProvider(31338).getFeeData()).gasPrice).to.equal(2n)
         })
 
-        it('fail to forward getGasPrice - static network provider for different chain', async () => {
+        it('fail to forward getFeeData - static network provider for different chain', async () => {
           await expect(provider.getProvider('hardhat').getFeeData({ chainId: 31338 })).to.be.rejectedWith(
             'This provider only supports the network 31337, but 31338 was requested.'
           )
