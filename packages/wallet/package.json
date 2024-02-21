@@ -28,7 +28,7 @@
     "ethers": ">=6"
   },
   "devDependencies": {
-    "@0xsequence/ethauth": "^0.8.1",
+    "@0xsequence/ethauth": "0xsequence/ethauth.js#ethers-v6",
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^2.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
