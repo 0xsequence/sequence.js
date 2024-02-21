@@ -21,7 +21,7 @@
     "@0xsequence/account": "workspace:*",
     "@0xsequence/api": "workspace:*",
     "@0xsequence/core": "workspace:*",
-    "@0xsequence/ethauth": "^0.8.1",
+    "@0xsequence/ethauth": "0xsequence/ethauth.js#ethers-v6",
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",

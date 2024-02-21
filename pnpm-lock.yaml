@@ -315,8 +315,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@0xsequence/ethauth':
-        specifier: ^0.8.1
-        version: 0.8.1(ethers@6.11.1)
+        specifier: 0xsequence/ethauth.js#ethers-v6
+        version: github.com/0xsequence/ethauth.js/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc(ethers@6.11.1)
       '@0xsequence/indexer':
         specifier: workspace:*
         version: link:../indexer
@@ -751,8 +751,8 @@ importers:
         version: link:../utils
     devDependencies:
       '@0xsequence/ethauth':
-        specifier: ^0.8.1
-        version: 0.8.1(ethers@6.11.1)
+        specifier: 0xsequence/ethauth.js#ethers-v6
+        version: github.com/0xsequence/ethauth.js/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc(ethers@6.11.1)
       '@0xsequence/tests':
         specifier: workspace:*
         version: link:../tests
@@ -770,14 +770,6 @@ importers:
         version: 1.10.3
 
 packages:
-
-  /@0xsequence/ethauth@0.8.1(ethers@6.11.1):
-    resolution: {integrity: sha512-P21cxRSS+2mDAqFVAJt0lwQFtbObX+Ewlj8DMyDELp81+QbfHFh6LCyu8dTXNdBx6UbmRFOCSBno5Txd50cJPQ==}
-    peerDependencies:
-      ethers: '>=5.5'
-    dependencies:
-      ethers: 6.11.1
-      js-base64: 3.7.5
 
   /@0xsequence/wallet-contracts@1.10.0:
     resolution: {integrity: sha512-NfPBJkp6/ApjVuTqQMgJvpN5lWyNc9bHm9ZITEi3X3nREf5126RLEXCyThChapkmcglHnQn+ndA8j6bfcpFEAg==}
@@ -15768,6 +15760,17 @@ packages:
   /zstd-codec@0.1.4:
     resolution: {integrity: sha512-KYnWoFWgGtWyQEKNnUcb3u8ZtKO8dn5d8u+oGpxPlopqsPyv60U8suDyfk7Z7UtAO6Sk5i1aVcAs9RbaB1n36A==}
     dev: true
+
+  github.com/0xsequence/ethauth.js/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc(ethers@6.11.1):
+    resolution: {tarball: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc}
+    id: github.com/0xsequence/ethauth.js/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc
+    name: '@0xsequence/ethauth'
+    version: 0.8.1
+    peerDependencies:
+      ethers: '>=5.5'
+    dependencies:
+      ethers: 6.11.1
+      js-base64: 3.7.5
 
   github.com/ethereumjs/ethereumjs-abi/ee3994657fa7a427238e6ba92a84d0b529bbcde0:
     resolution: {tarball: https://codeload.github.com/ethereumjs/ethereumjs-abi/tar.gz/ee3994657fa7a427238e6ba92a84d0b529bbcde0}
