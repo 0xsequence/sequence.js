@@ -210,10 +210,7 @@ export abstract class ProviderRelayer implements Relayer {
         if (found) {
           return {
             receipt: found,
-            ...(await retry(
-              () => this.provider.getTransaction(found.transactionHash),
-              `unable to get transaction ${found.transactionHash}`
-            ))
+            ...(await retry(() => this.provider.getTransaction(found.hash), `unable to get transaction ${found.hash}`))
           }
         }
 

@@ -517,7 +517,7 @@ export class WalletRequestHandler implements Eip1193Provider, JsonRpcHandler, Pr
 
         case 'eth_call': {
           const [transactionObject, blockTag] = request.params!
-          response.result = await provider.call(transactionObject, blockTag)
+          response.result = await provider.call({ ...transactionObject, blockTag })
           break
         }
 
