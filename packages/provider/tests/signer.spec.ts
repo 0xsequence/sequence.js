@@ -260,67 +260,37 @@ describe('SequenceSigner', () => {
       })
 
       it('should return the balance on default chain', async () => {
-        expect(await signer.getBalance().then(b => b.toNumber())).to.equal(10)
+        expect(await signer.getBalance()).to.equal(10n)
       })
 
       it('should return the balance on default chain after switching networks', async () => {
         signer.provider.setDefaultChainId(31338)
-        expect(await signer.getBalance().then(b => b.toNumber())).to.equal(20)
+        expect(await signer.getBalance()).to.equal(20n)
       })
 
       it('should return the balance on specific chain', async () => {
-        expect(await signer.getBalance(undefined, { chainId: 31337 }).then(b => b.toNumber())).to.equal(10)
-        expect(await signer.getBalance(undefined, { chainId: 31338 }).then(b => b.toNumber())).to.equal(20)
+        expect(await signer.getBalance(undefined, { chainId: 31337 })).to.equal(10n)
+        expect(await signer.getBalance(undefined, { chainId: 31338 })).to.equal(20n)
       })
 
       it('should return the balance on specific chain using string network name', async () => {
-        expect(await signer.getBalance(undefined, { chainId: 'hardhat' }).then(b => b.toNumber())).to.equal(10)
-        expect(await signer.getBalance(undefined, { chainId: 'hardhat2' }).then(b => b.toNumber())).to.equal(20)
+        expect(await signer.getBalance(undefined, { chainId: 'hardhat' })).to.equal(10n)
+        expect(await signer.getBalance(undefined, { chainId: 'hardhat2' })).to.equal(20n)
       })
 
       it('should return the balance on static network signer', async () => {
-        expect(
-          await signer
-            .getSigner(31337)
-            .getBalance()
-            .then(b => b.toNumber())
-        ).to.equal(10)
-        expect(
-          await signer
-            .getSigner(31338)
-            .getBalance()
-            .then(b => b.toNumber())
-        ).to.equal(20)
+        expect(await signer.getSigner(31337).getBalance()).to.equal(10n)
+        expect(await signer.getSigner(31338).getBalance()).to.equal(20n)
       })
 
       it('should return the balance on static network signer using string network name', async () => {
-        expect(
-          await signer
-            .getSigner('hardhat')
-            .getBalance()
-            .then(b => b.toNumber())
-        ).to.equal(10)
-        expect(
-          await signer
-            .getSigner('hardhat2')
-            .getBalance()
-            .then(b => b.toNumber())
-        ).to.equal(20)
+        expect(await signer.getSigner('hardhat').getBalance()).to.equal(10n)
+        expect(await signer.getSigner('hardhat2').getBalance()).to.equal(20n)
       })
 
       it('should return balance on specific chain when passing chainId', async () => {
-        expect(
-          await signer
-            .getSigner('hardhat')
-            .getBalance(undefined, { chainId: 31337 })
-            .then(b => b.toNumber())
-        ).to.equal(10)
-        expect(
-          await signer
-            .getSigner('hardhat2')
-            .getBalance(undefined, { chainId: 31338 })
-            .then(b => b.toNumber())
-        ).to.equal(20)
+        expect(await signer.getSigner('hardhat').getBalance(undefined, { chainId: 31337 })).to.equal(10n)
+        expect(await signer.getSigner('hardhat2').getBalance(undefined, { chainId: 31338 })).to.equal(20n)
       })
 
       it('should fail to return balance on specific chain when passing different chainId', async () => {
@@ -346,6 +316,10 @@ describe('SequenceSigner', () => {
             data: '0x6b621122336000526003601df3600052600c6014f3'
           })
           .then(r => r.wait())
+
+        if (!res?.contractAddress) {
+          throw new Error('Could not get transaction receipt')
+        }
 
         addr = res.contractAddress
 
@@ -393,6 +367,10 @@ describe('SequenceSigner', () => {
           })
           .then(r => r.wait())
 
+        if (!res?.contractAddress) {
+          throw new Error('Could not get transaction receipt')
+        }
+
         addr = res.contractAddress
 
         expect(await hardhat1Provider.call({ to: addr })).to.equal('0x112233')
@@ -408,8 +386,8 @@ describe('SequenceSigner', () => {
       })
 
       it('forward call - specific chain', async () => {
-        expect(await signer.call({ to: addr }, undefined, { chainId: 31337 })).to.equal('0x112233')
-        expect(await signer.call({ to: addr }, undefined, { chainId: 31338 })).to.equal('0x')
+        expect(await signer.call({ to: addr }, { chainId: 31337 })).to.equal('0x112233')
+        expect(await signer.call({ to: addr }, { chainId: 31338 })).to.equal('0x')
       })
 
       it('forward call - static network provider', async () => {
@@ -418,7 +396,7 @@ describe('SequenceSigner', () => {
       })
 
       it('fail to forward call - static network provider for different chain', async () => {
-        await expect(signer.getSigner('hardhat2').call({ to: addr }, undefined, { chainId: 31337 })).to.be.rejectedWith(
+        await expect(signer.getSigner('hardhat2').call({ to: addr }, { chainId: 31337 })).to.be.rejectedWith(
           'This signer only supports the network 31338, but 31337 was requested.'
         )
       })
@@ -449,24 +427,24 @@ describe('SequenceSigner', () => {
       })
 
       it('forward getGasPrice - default', async () => {
-        expect(await signer.getGasPrice()).to.deep.equal(1n)
+        expect((await signer.getFeeData()).gasPrice).to.deep.equal(1n)
 
         signer.provider.setDefaultChainId(31338)
-        expect(await signer.getGasPrice()).to.deep.equal(2n)
+        expect((await signer.getFeeData()).gasPrice).to.deep.equal(2n)
       })
 
       it('forward getGasPrice - specific chain', async () => {
-        expect(await signer.getGasPrice({ chainId: 31337 })).to.deep.equal(1n)
-        expect(await signer.getGasPrice({ chainId: 31338 })).to.deep.equal(2n)
+        expect((await signer.getFeeData({ chainId: 31337 })).gasPrice).to.deep.equal(1n)
+        expect((await signer.getFeeData({ chainId: 31338 })).gasPrice).to.deep.equal(2n)
       })
 
       it('forward getGasPrice - static network provider', async () => {
-        expect(await signer.getSigner('hardhat').getGasPrice()).to.deep.equal(1n)
-        expect(await signer.getSigner(31338).getGasPrice()).to.deep.equal(2n)
+        expect((await signer.getSigner('hardhat').getFeeData()).gasPrice).to.deep.equal(1n)
+        expect((await signer.getSigner(31338).getFeeData()).gasPrice).to.deep.equal(2n)
       })
 
       it('fail to forward getGasPrice - static network provider for different chain', async () => {
-        await expect(signer.getSigner('hardhat').getGasPrice({ chainId: 31338 })).to.be.rejectedWith(
+        await expect(signer.getSigner('hardhat').getFeeData({ chainId: 31338 })).to.be.rejectedWith(
           'This signer only supports the network 31337, but 31338 was requested.'
         )
       })
