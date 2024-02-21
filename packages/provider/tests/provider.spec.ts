@@ -738,24 +738,24 @@ describe('SequenceProvider', () => {
         })
 
         it('forward getGasPrice - default', async () => {
-          expect(await provider.getGasPrice()).to.equal(1n)
+          expect((await provider.getFeeData()).gasPrice).to.equal(1n)
 
           provider.setDefaultChainId(31338)
-          expect(await provider.getGasPrice()).to.equal(2n)
+          expect((await provider.getFeeData()).gasPrice).to.equal(2n)
         })
 
         it('forward getGasPrice - specific chain', async () => {
-          expect(await provider.getGasPrice({ chainId: 31337 })).to.equal(1n)
-          expect(await provider.getGasPrice({ chainId: 31338 })).to.equal(2n)
+          expect((await provider.getFeeData({ chainId: 31337 })).gasPrice).to.equal(1n)
+          expect((await provider.getFeeData({ chainId: 31338 })).gasPrice).to.equal(2n)
         })
 
         it('forward getGasPrice - static network provider', async () => {
-          expect(await provider.getProvider('hardhat').getGasPrice()).to.equal(1n)
-          expect(await provider.getProvider(31338).getGasPrice()).to.equal(2n)
+          expect((await provider.getProvider('hardhat').getFeeData()).gasPrice).to.equal(1n)
+          expect((await provider.getProvider(31338).getFeeData()).gasPrice).to.equal(2n)
         })
 
         it('fail to forward getGasPrice - static network provider for different chain', async () => {
-          await expect(provider.getProvider('hardhat').getGasPrice({ chainId: 31338 })).to.be.rejectedWith(
+          await expect(provider.getProvider('hardhat').getFeeData({ chainId: 31338 })).to.be.rejectedWith(
             'This provider only supports the network 31337, but 31338 was requested.'
           )
         })
@@ -867,6 +867,10 @@ describe('SequenceProvider', () => {
             })
             .then(r => r.wait())
 
+          if (!res?.contractAddress) {
+            throw new Error('Could not get transaction receipt')
+          }
+
           addr = res.contractAddress
 
           expect(await hardhat1Provider.getCode(addr)).to.equal('0x112233')
@@ -915,6 +919,10 @@ describe('SequenceProvider', () => {
             })
             .then(r => r.wait())
 
+          if (!res?.contractAddress) {
+            throw new Error('Could not get transaction receipt')
+          }
+
           addr = res.contractAddress
 
           expect(await hardhat1Provider.getStorage(addr, '0x445566')).to.equal(expected)
@@ -960,6 +968,10 @@ describe('SequenceProvider', () => {
             })
             .then(r => r.wait())
 
+          if (!res?.contractAddress) {
+            throw new Error('Could not get transaction receipt')
+          }
+
           addr = res.contractAddress
 
           expect(await hardhat1Provider.call({ to: addr })).to.equal('0x112233')
@@ -976,8 +988,8 @@ describe('SequenceProvider', () => {
 
         it('forward call - specific chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.call({ to: addr }, undefined, { chainId: 31337 })).to.equal('0x112233')
-          expect(await provider.call({ to: addr }, undefined, { chainId: 31338 })).to.equal('0x')
+          expect(await provider.call({ to: addr }, { chainId: 31337 })).to.equal('0x112233')
+          expect(await provider.call({ to: addr }, { chainId: 31338 })).to.equal('0x')
         })
 
         it('forward call - static network provider', async () => {
@@ -988,7 +1000,7 @@ describe('SequenceProvider', () => {
 
         it('fail to forward call - static network provider for different chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          await expect(provider.getProvider('hardhat2').call({ to: addr }, undefined, { chainId: 31337 })).to.be.rejectedWith(
+          await expect(provider.getProvider('hardhat2').call({ to: addr }, { chainId: 31337 })).to.be.rejectedWith(
             'This provider only supports the network 31338, but 31337 was requested.'
           )
         })
@@ -1008,6 +1020,10 @@ describe('SequenceProvider', () => {
               data: '0x6b621122336000526003601df3600052600c6014f3'
             })
             .then(r => r.wait())
+
+          if (!res?.contractAddress) {
+            throw new Error('Could not get transaction receipt')
+          }
 
           addr = res.contractAddress
 
@@ -1046,8 +1062,8 @@ describe('SequenceProvider', () => {
       })
 
       describe('forward getBlock', () => {
-        let b1: ethers.Block
-        let b2: ethers.Block
+        let b1: ethers.Block | null
+        let b2: ethers.Block | null
 
         beforeEach(async () => {
           b1 = await hardhat1Provider.getBlock(1)
@@ -1066,8 +1082,8 @@ describe('SequenceProvider', () => {
 
         it('forward getBlock - specific chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getBlock(1, { chainId: 31337 })).to.deep.equal(b1)
-          expect(await provider.getBlock(1, { chainId: 31338 })).to.deep.equal(b2)
+          expect(await provider.getBlock(1, undefined, { chainId: 31337 })).to.deep.equal(b1)
+          expect(await provider.getBlock(1, undefined, { chainId: 31338 })).to.deep.equal(b2)
         })
 
         it('forward getBlock - static network provider', async () => {
@@ -1078,7 +1094,7 @@ describe('SequenceProvider', () => {
 
         it('fail to forward getBlock - static network provider for different chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          await expect(provider.getProvider('hardhat2').getBlock(0, { chainId: 31337 })).to.be.rejectedWith(
+          await expect(provider.getProvider('hardhat2').getBlock(0, undefined, { chainId: 31337 })).to.be.rejectedWith(
             'This provider only supports the network 31338, but 31337 was requested.'
           )
         })
@@ -1099,7 +1115,7 @@ describe('SequenceProvider', () => {
 
         it('forward getTransaction - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getTransaction(t1).then(r => r.hash)).to.equal(t1)
+          expect(await provider.getTransaction(t1).then(r => r?.hash)).to.equal(t1)
 
           provider.setDefaultChainId(31338)
           expect(await provider.getTransaction(t1)).to.be.null
@@ -1107,7 +1123,7 @@ describe('SequenceProvider', () => {
 
         it('forward getTransaction - specific chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.getTransaction(t1, { chainId: 31337 }).then(r => r.hash)).to.equal(t1)
+          expect(await provider.getTransaction(t1, { chainId: 31337 }).then(r => r?.hash)).to.equal(t1)
           expect(await provider.getTransaction(t1, { chainId: 31338 })).to.be.null
         })
 
@@ -1117,7 +1133,7 @@ describe('SequenceProvider', () => {
             await provider
               .getProvider('hardhat')
               .getTransaction(t1)
-              .then(r => r.hash)
+              .then(r => r?.hash)
           ).to.equal(t1)
           expect(await provider.getProvider('hardhat2').getTransaction(t1)).to.be.null
         })
@@ -1143,6 +1159,10 @@ describe('SequenceProvider', () => {
               data: '0x60006000a0'
             })
             .then(r => r.wait())
+
+          if (!res?.contractAddress) {
+            throw new Error('Could not get transaction receipt')
+          }
 
           t1 = res.contractAddress
 
@@ -1663,14 +1683,14 @@ describe('SequenceProvider', () => {
         it('should forward method with parameters', async () => {
           await provider.perform('evm_mine', [])
           await provider.perform('evm_mine', [])
-          const block1 = await hardhat1Provider.getBlock(2).then(t => t.hash)
+          const block1 = await hardhat1Provider.getBlock(2).then(t => t?.hash)
           expect(await provider.perform('eth_getBlockByNumber', ['0x2', false]).then(t => t.hash)).to.equal(block1)
         })
 
         it('should forward method using request', async () => {
           await provider.request({ method: 'evm_mine', params: [] })
           await provider.request({ method: 'evm_mine', params: [] })
-          const block1 = await hardhat1Provider.getBlock(2).then(t => t.hash)
+          const block1 = await hardhat1Provider.getBlock(2).then(t => t?.hash)
           expect(await provider.request({ method: 'eth_getBlockByNumber', params: ['0x2', false] }).then(t => t.hash)).to.equal(
             block1
           )
@@ -1726,7 +1746,7 @@ describe('SequenceProvider', () => {
       expect(b1).to.not.equal(b2)
 
       await new Promise(resolve => setTimeout(resolve, 250))
-      const initialBlockNumber = provider.blockNumber
+      const initialBlockNumber = await provider.getBlockNumber()
 
       provider.setDefaultChainId(31338)
 
