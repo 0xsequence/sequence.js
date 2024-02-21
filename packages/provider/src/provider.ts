@@ -317,9 +317,9 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider.getBlockNumber()
   }
 
-  async getGasPrice(optionals?: OptionalChainIdLike) {
+  async getFeeData(optionals?: OptionalChainIdLike) {
     const provider = await this._getSubprovider(optionals?.chainId)
-    return provider.getGasPrice()
+    return await provider.getFeeData()
   }
 
   async getBalance(addressOrName: string | Promise<string>, blockTag?: ethers.BlockTag, optionals?: OptionalChainIdLike) {
