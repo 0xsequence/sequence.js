@@ -748,7 +748,7 @@ describe('SequenceClient', () => {
     const result2 = await client.signMessage('0x1234')
     expect(result2).to.equal('0x0000')
 
-    const result3 = await client.signMessage([4, 2, 9, 1], { eip6492: true, chainId: 2 })
+    const result3 = await client.signMessage(new Uint8Array([4, 2, 9, 1]), { eip6492: true, chainId: 2 })
     expect(result3).to.equal('0x1111')
 
     client.setDefaultChainId(5)
@@ -756,7 +756,7 @@ describe('SequenceClient', () => {
     const result4 = await client.signMessage('0x9993212')
     expect(result4).to.equal('0x2222')
 
-    const result5 = await client.signMessage([4, 2, 9, 1], { eip6492: true, chainId: 6 })
+    const result5 = await client.signMessage(new Uint8Array([4, 2, 9, 1]), { eip6492: true, chainId: 6 })
     expect(result5).to.equal('0x3333')
 
     expect(calledSendAsync).to.equal(4)
