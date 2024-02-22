@@ -77,7 +77,7 @@ describe('Multicall integration', function () {
     await ganache.server.listen(GANACHE_PORT)
     ganache.serverUri = `http://127.0.0.1:${GANACHE_PORT}/`
     ganache.provider = new ethers.JsonRpcProvider(ganache.serverUri)
-    ganache.signer = ganache.provider.getSigner()
+    ganache.signer = await ganache.provider.getSigner()
 
     utilsContract = await new ethers.ContractFactory(
       SequenceUtilsArtifact.abi,

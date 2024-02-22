@@ -22,7 +22,7 @@ export const tests = async () => {
   //
   const deployedWalletContext = await (async () => {
     const provider = new ethers.JsonRpcProvider('http://localhost:8545')
-    const signer = provider.getSigner()
+    const signer = await provider.getSigner()
     return context.deploySequenceContexts(signer)
   })()
 

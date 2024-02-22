@@ -26,7 +26,7 @@ describe('Wallet (primitive)', () => {
 
   before(async () => {
     provider = new ethers.BrowserProvider(hardhat.network.provider as any)
-    signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
+    signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
   })
@@ -53,12 +53,14 @@ describe('Wallet (primitive)', () => {
           signers: [{ address: signer.address, weight: 1 }]
         })
 
+        const network = await provider.getNetwork()
+
         const wallet = Wallet.newWallet({
           coders: coders,
           context: contexts[version],
           config,
           orchestrator: new Orchestrator([new hubsigners.SignerWrapper(signer)]),
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -125,6 +127,8 @@ describe('Wallet (primitive)', () => {
 
           signer = ethers.Wallet.createRandom()
 
+          const network = await provider.getNetwork()
+
           wallet = Wallet.newWallet({
             coders,
             context: contexts[version],
@@ -133,7 +137,7 @@ describe('Wallet (primitive)', () => {
               checkpoint: 0,
               signers: [{ weight: 1, address: signer.address }]
             }),
-            chainId: provider.network.chainId,
+            chainId: network.chainId,
             orchestrator: new Orchestrator([signer]),
             provider,
             relayer
@@ -304,6 +308,8 @@ describe('Wallet (primitive)', () => {
         {
           name: '1/1 signer (nested)',
           signers: async () => {
+            const network = await provider.getNetwork()
+
             const nestedSigner = ethers.Wallet.createRandom()
 
             const nestedConfig = coders.config.fromSimple({
@@ -318,7 +324,7 @@ describe('Wallet (primitive)', () => {
               context: contexts[version],
               config: nestedConfig,
               orchestrator: nestedOrchestrator,
-              chainId: provider.network.chainId,
+              chainId: network.chainId,
               provider,
               relayer
             })
@@ -340,6 +346,7 @@ describe('Wallet (primitive)', () => {
         {
           name: '1/1 signer (undeployed nested)',
           signers: async () => {
+            const network = await provider.getNetwork()
             const nestedSigner = ethers.Wallet.createRandom()
 
             const nestedConfig = coders.config.fromSimple({
@@ -354,7 +361,7 @@ describe('Wallet (primitive)', () => {
               context: contexts[version],
               config: nestedConfig,
               orchestrator: nestedOrchestrator,
-              chainId: provider.network.chainId,
+              chainId: network.chainId,
               provider,
               relayer
             })
@@ -386,12 +393,13 @@ describe('Wallet (primitive)', () => {
           // Skip this as we cannot validate a message with an undeployed nested wallet
           if (name !== '1/1 signer (undeployed nested)') {
             it('Should sign and validate a message', async () => {
+              const network = await provider.getNetwork()
               const wallet = Wallet.newWallet({
                 coders: coders,
                 context: contexts[version],
                 config,
                 orchestrator,
-                chainId: provider.network.chainId,
+                chainId: network.chainId,
                 provider,
                 relayer
               })
@@ -432,12 +440,14 @@ describe('Wallet (primitive)', () => {
               let wallet: Wallet
 
               beforeEach(async () => {
+                const network = await provider.getNetwork()
+
                 wallet = Wallet.newWallet({
                   coders: coders,
                   context: contexts[version],
                   config,
                   orchestrator,
-                  chainId: provider.network.chainId,
+                  chainId: network.chainId,
                   provider,
                   relayer
                 })
@@ -505,7 +515,7 @@ describe('Wallet (primitive)', () => {
                 let toBalanceBefore: bigint
 
                 beforeEach(async () => {
-                  testAccount = provider.getSigner(5)
+                  testAccount = await provider.getSigner(5)
                   testAccountAddress = await testAccount.getAddress()
 
                   const ethAmount = parseEther('100')

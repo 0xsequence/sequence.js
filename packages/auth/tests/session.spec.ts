@@ -79,7 +79,7 @@ describe('Wallet integration', function () {
     ethnode.provider = new ethers.JsonRpcProvider(ethnode.providerUrl)
 
     const chainId = (await ethnode.provider.getNetwork()).chainId
-    ethnode.signer = ethnode.provider.getSigner()
+    ethnode.signer = await ethnode.provider.getSigner()
     ethnode.chainId = chainId
 
     // Deploy local relayer

@@ -14,7 +14,7 @@ walletProvider.register()
 export const tests = async () => {
   await (async () => {
     const provider = new ethers.JsonRpcProvider('http://localhost:8545')
-    const signer = provider.getSigner()
+    const signer = await provider.getSigner()
     return context.deploySequenceContexts(signer)
   })()
 
@@ -28,7 +28,7 @@ export const tests = async () => {
   // TODO: try this again, but turn off hardhat, to ensure our error reponses are working correctly..
   // ..
   const provider = new ethers.BrowserProvider(walletProvider)
-  const signer = provider.getSigner()
+  const signer = await provider.getSigner()
   const address = await signer.getAddress()
   const chainId = await signer.getChainId()
 
