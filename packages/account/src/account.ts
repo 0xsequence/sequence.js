@@ -6,7 +6,7 @@ import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
 import { SignatureOrchestrator } from '@0xsequence/signhub'
-import { BigIntish, encodeTypedDataDigest, getEthersConnectionInfo } from '@0xsequence/utils'
+import { BigIntish, encodeTypedDataDigest, getEthersFetchRequest } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
 import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
 import { AccountSigner, AccountSignerOptions } from './signer'
@@ -194,7 +194,7 @@ export class Account {
 
     return (
       found.provider ||
-      new ethers.JsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, this.projectAccessKey, this.jwt), network, {
+      new ethers.JsonRpcProvider(getEthersFetchRequest(found.rpcUrl, this.projectAccessKey, this.jwt), network, {
         staticNetwork: network
       })
     )
