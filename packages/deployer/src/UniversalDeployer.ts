@@ -12,6 +12,7 @@ import {
 } from './constants'
 import { ContractInstance } from './types'
 import { createLogger, Logger } from './utils/logger'
+import { signer } from '../../core/src/commons'
 
 let prompt: Logger
 createLogger().then(logger => (prompt = logger))
@@ -20,14 +21,18 @@ ethers.Logger.setLogLevel(ethers.Logger.levels.OFF)
 
 export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
-  private signer: ethers.Signer
+  private signer: ethers.Signer | undefined
 
   constructor(
     public networkName: string,
     public provider: ethers.JsonRpcProvider,
     public signerOverride?: ethers.Signer
   ) {
-    this.signer = signerOverride || provider.getSigner()
+    if (signerOverride) {
+      this.signer = signerOverride
+    } else {
+      provider.getSigner().then(signer => (this.signer = signer))
+    }
   }
 
   deploy = async <T extends ContractFactory>(

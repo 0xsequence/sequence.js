@@ -25,7 +25,7 @@ describe('Wallet integration', function () {
 
   before(async () => {
     provider = new ethers.BrowserProvider(hardhat.network.provider as any)
-    signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
+    signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[1])
 
@@ -61,6 +61,8 @@ describe('Wallet integration', function () {
         const signer = ethers.Wallet.createRandom()
         const orchestrator = new Orchestrator([signer])
 
+        const network = await provider.getNetwork()
+
         const config = v2.config.ConfigCoder.fromSimple({
           threshold: 1,
           checkpoint: 0,
@@ -77,7 +79,7 @@ describe('Wallet integration', function () {
           context: contexts[2],
           config,
           orchestrator,
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -98,7 +100,9 @@ describe('Wallet integration', function () {
             value: 0
           }
 
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+          const network = await provider.getNetwork()
+
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -132,8 +136,10 @@ describe('Wallet integration', function () {
             }
           ]
 
+          const network = await provider.getNetwork()
+
           const nonce = 0 //wallet.randomNonce()
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, nonce, txns)
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, nonce, txns)
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -168,8 +174,9 @@ describe('Wallet integration', function () {
             }
           ]
 
+          const network = await provider.getNetwork()
           const nonce = wallet.randomNonce()
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, nonce, txns)
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, nonce, txns)
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -193,7 +200,8 @@ describe('Wallet integration', function () {
             nonce: 0
           }
 
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+          const network = await provider.getNetwork()
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -208,6 +216,7 @@ describe('Wallet integration', function () {
         it('Find correct receipt between multiple other transactions', async () => {
           const altSigner = ethers.Wallet.createRandom()
           const orchestrator = new Orchestrator([altSigner])
+          const network = await provider.getNetwork()
 
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 1,
@@ -227,7 +236,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator,
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
 
           await altWallet.deploy()
@@ -260,7 +269,7 @@ describe('Wallet integration', function () {
             nonce: 0
           }
 
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -294,6 +303,7 @@ describe('Wallet integration', function () {
           // Pre-txs
           const altSigner = ethers.Wallet.createRandom()
           const orchestrator = new Orchestrator([altSigner])
+          const network = await provider.getNetwork()
 
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 1,
@@ -313,7 +323,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator,
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
 
           await Promise.all(
@@ -359,7 +369,7 @@ describe('Wallet integration', function () {
             nonce: 0
           }
 
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -376,6 +386,7 @@ describe('Wallet integration', function () {
           // Pre-txs
           const altSigner = ethers.Wallet.createRandom()
           const orchestrator = new Orchestrator([altSigner])
+          const network = await provider.getNetwork()
 
           const config = v2.config.ConfigCoder.fromSimple({
             threshold: 1,
@@ -395,7 +406,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator,
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
 
           await Promise.all(
@@ -440,7 +451,7 @@ describe('Wallet integration', function () {
             nonce: 0
           }
 
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
 
           const receiptPromise = relayer.wait(id, 10000)
           await new Promise(r => setTimeout(r, 1000))
@@ -463,7 +474,9 @@ describe('Wallet integration', function () {
             nonce: 0
           }
 
-          const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+          const network = await provider.getNetwork()
+
+          const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
           const receiptPromise = relayer.wait(id, 2000)
 
           await expect(receiptPromise).to.be.rejectedWith(`Timeout waiting for transaction receipt ${id}`)
@@ -513,7 +526,9 @@ describe('Wallet integration', function () {
               gasLimit: 140000
             }
 
-            const id = commons.transaction.subdigestOfTransactions(wallet.address, provider.network.chainId, 0, [txn])
+            const network = await provider.getNetwork()
+
+            const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
 
             const receiptPromise = relayer.wait(id, 10000)
             await new Promise(r => setTimeout(r, 1000))

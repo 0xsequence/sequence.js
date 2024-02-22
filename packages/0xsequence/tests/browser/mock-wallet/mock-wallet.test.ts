@@ -27,8 +27,8 @@ const main = async () => {
   //
   // Deploy Sequence WalletContext (deterministic)
   //
-  const deployedWalletContext = await utils.context.deploySequenceContexts(provider.getSigner())
-  await utils.context.deploySequenceContexts(provider2.getSigner())
+  const deployedWalletContext = await utils.context.deploySequenceContexts(await provider.getSigner())
+  await utils.context.deploySequenceContexts(await provider2.getSigner())
 
   // Generate a new wallet every time, otherwise tests will fail
   // due to EIP-6492 being used only sometimes (some tests deploy the wallet)

@@ -382,7 +382,7 @@ describe('Local config tracker', () => {
         let context: commons.context.WalletContext
 
         before(async () => {
-          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+          context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
         })
 
         it('Should return return empty chained configuration if config is not known', async () => {
@@ -675,7 +675,7 @@ describe('Local config tracker', () => {
         let context: commons.context.WalletContext
 
         before(async () => {
-          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+          context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
         })
 
         it('Should retrieve no witness for never used signer', async () => {
@@ -984,7 +984,7 @@ describe('Local config tracker', () => {
       let context: commons.context.WalletContext
 
       before(async () => {
-        context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+        context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
       })
 
       it('Should store chained config in both', async () => {

@@ -38,7 +38,7 @@ describe('Wallet integration', function () {
     const url = 'http://127.0.0.1:10045/'
     provider = new ethers.JsonRpcProvider(url)
 
-    signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
+    signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
 
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
