@@ -28,7 +28,10 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
   private _sender: JsonRpcSender
   private _nextId: number = 1
 
-  constructor(url: string | ethers.FetchRequest | undefined, options?: JsonRpcProviderOptions) {
+  constructor(
+    public url: string | ethers.FetchRequest | undefined,
+    options?: JsonRpcProviderOptions
+  ) {
     super(url, options?.chainId)
 
     const chainId = options?.chainId
@@ -76,24 +79,49 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     return this._sender.send(method, params)
   }
 
-  private fetch = (method: string, params: Array<any>): Promise<any> => {
-    const request = {
-      method: method,
-      params: params,
+  private fetch = async (method: string, params: Array<any>): Promise<any> => {
+    if (this.url === undefined) {
+      throw new Error('missing provider URL')
+    }
+
+    const jsonRpcRequest = {
+      method,
+      params,
       id: this._nextId++,
       jsonrpc: '2.0'
     }
 
-    const result = ethers.fetchJson(this.connection, JSON.stringify(request), getResult).then(
-      result => {
-        return result
-      },
-      error => {
-        throw error
-      }
-    )
+    // const result = ethers.fetchJson(this.connection, JSON.stringify(request), getResult).then(
+    //   result => {
+    //     return result
+    //   },
+    //   error => {
+    //     throw error
+    //   }
+    // )
 
-    return result
+    const fetchRequest = typeof this.url === 'string' ? new ethers.FetchRequest(this.url) : this.url
+    fetchRequest.body = JSON.stringify(jsonRpcRequest)
+
+    try {
+      const res = await fetchRequest.send()
+
+      if (res.body) {
+        try {
+          const result = JSON.parse(ethers.toUtf8String(res.body))
+
+          // TODO: Process result
+
+          return result
+        } catch (err) {
+          throw new Error('invalid JSON response')
+        }
+      }
+
+      return null
+    } catch (err) {
+      throw err
+    }
   }
 }
 
