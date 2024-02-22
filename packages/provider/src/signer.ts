@@ -137,7 +137,7 @@ export class SequenceSigner implements ISequenceSigner {
       return (await poll(
         async () => {
           const tx = await provider.getTransaction(txHash)
-          return tx ? provider._wrapTransaction(tx, txHash) : undefined
+          return tx
         },
         { onceBlock: provider }
       )) as ethers.TransactionResponse
@@ -195,7 +195,19 @@ export class SequenceSigner implements ISequenceSigner {
     // We always have a provider, so this is a noop
   }
 
-  populateTransaction(_transaction: Deferrable<ethers.TransactionRequest>): Promise<ethers.TransactionRequest> {
+  // populateCall(transaction: ethers.PopulatedTransaction): Promise<ethers.PopulatedTransaction> {
+  //   return this.provider.populateCall(transaction)
+  // }
+
+  getNonce(_blockTag?: ethers.BlockTag): Promise<number> {
+    throw new Error('SequenceSigner does not support getNonce')
+  }
+
+  populateCall(_transaction: ethers.TransactionRequest): Promise<ethers.TransactionLike<string>> {
+    throw new Error('SequenceSigner does not support populateCall')
+  }
+
+  populateTransaction(_transaction: ethers.TransactionRequest): Promise<ethers.TransactionLike<string>> {
     throw new Error('SequenceSigner does not support populateTransaction')
   }
 
