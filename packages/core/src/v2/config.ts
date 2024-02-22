@@ -142,8 +142,8 @@ export function decodeSignerLeaf(encoded: string): SignerLeaf {
     throw new Error('Invalid encoded string length')
   }
 
-  const weight = BigInt(ethers.toBeHex(bytes.slice(0, 12)))
-  const address = ethers.getAddress(ethers.toBeHex(bytes.slice(12)))
+  const weight = BigInt(ethers.toBeHex(ethers.hexlify(bytes.slice(0, 12))))
+  const address = ethers.getAddress(ethers.toBeHex(ethers.hexlify(bytes.slice(12))))
 
   return { weight, address }
 }

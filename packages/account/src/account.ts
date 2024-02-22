@@ -547,7 +547,11 @@ export class Account {
   }
 
   buildOnChainSignature(digest: ethers.BytesLike): { bundle: commons.transaction.TransactionBundle; signature: string } {
-    const subdigest = commons.signature.subdigestOf({ digest: ethers.toBeHex(digest), chainId: 0, address: this.address })
+    const subdigest = commons.signature.subdigestOf({
+      digest: ethers.toBeHex(ethers.hexlify(digest)),
+      chainId: 0,
+      address: this.address
+    })
     const hexSubdigest = ethers.toBeHex(subdigest)
     const config = this.coders.config.fromSimple({
       // Threshold *only* needs to be > 0, this is not a magic number
