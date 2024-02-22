@@ -1,26 +1,4 @@
 import { ethers } from 'ethers'
-import { url } from 'inspector'
-
-export type ConnectionInfo = {
-  url: string
-  headers?: { [key: string]: string | number }
-
-  user?: string
-  password?: string
-
-  allowInsecureAuthentication?: boolean
-  allowGzip?: boolean
-
-  throttleLimit?: number
-  throttleSlotInterval?: number
-  throttleCallback?: (attempt: number, url: string) => Promise<boolean>
-
-  skipFetchSetup?: boolean
-  fetchOptions?: Record<string, string>
-  errorPassThrough?: boolean
-
-  timeout?: number
-}
 
 // export const getEthersConnectionInfo = (url: string, projectAccessKey?: string, jwt?: string): ConnectionInfo => {
 //   const headers: {
@@ -48,7 +26,7 @@ export type ConnectionInfo = {
 //   }
 // }
 
-export const getEthersFetchRequest = (url: string, projectAccessKey?: string, jwt?: string): ethers.FetchRequest => {
+export const getFetchRequest = (url: string, projectAccessKey?: string, jwt?: string): ethers.FetchRequest => {
   const req = new ethers.FetchRequest(url)
 
   if (jwt) {

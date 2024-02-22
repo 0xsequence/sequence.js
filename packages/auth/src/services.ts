@@ -4,7 +4,7 @@ import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
 import { SequenceMetadata } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
-import { BigIntish, getEthersFetchRequest } from '@0xsequence/utils'
+import { BigIntish, getFetchRequest } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export type SessionMeta = {
@@ -213,7 +213,7 @@ export class Services {
       // TODO: Modify ETHAuth so it can take a provider instead of a url
       // -----
       // Can't pass jwt here since this is used for getting the jwt
-      ethAuth.provider = new ethers.JsonRpcProvider(getEthersFetchRequest(found.rpcUrl, this.projectAccessKey), network, {
+      ethAuth.provider = new ethers.JsonRpcProvider(getFetchRequest(found.rpcUrl, this.projectAccessKey), network, {
         staticNetwork: network
       })
 
@@ -302,7 +302,7 @@ export class Services {
     // TODO: Modify ETHAuth so it can take a provider instead of a url
     // -----
     // Can't pass jwt here since this is used for getting the jwt
-    ethAuth.provider = new ethers.JsonRpcProvider(getEthersFetchRequest(found.rpcUrl, this.projectAccessKey), network, {
+    ethAuth.provider = new ethers.JsonRpcProvider(getFetchRequest(found.rpcUrl, this.projectAccessKey), network, {
       staticNetwork: network
     })
 

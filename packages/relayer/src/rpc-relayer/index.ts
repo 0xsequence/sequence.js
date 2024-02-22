@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { BigIntish, getEthersFetchRequest, logger, toHexString } from '@0xsequence/utils'
+import { BigIntish, getFetchRequest, logger, toHexString } from '@0xsequence/utils'
 
 export { proto }
 
@@ -45,8 +45,8 @@ export class RpcRelayer implements Relayer {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
-      const providerConnectionInfo = getEthersFetchRequest(options.provider.url, projectAccessKey, jwtAuth)
-      this.provider = new ethers.JsonRpcProvider(providerConnectionInfo, undefined, { staticNetwork: true })
+      const fetchRequest = getFetchRequest(options.provider.url, projectAccessKey, jwtAuth)
+      this.provider = new ethers.JsonRpcProvider(fetchRequest, undefined, { staticNetwork: true })
     }
   }
 

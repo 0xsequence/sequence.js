@@ -6,7 +6,7 @@ import { walletContracts } from '@0xsequence/abi'
 export interface Transaction {
   to: string
   value?: BigIntish
-  data?: BytesLike
+  data?: string
   gasLimit?: BigIntish
   delegateCall?: boolean
   revertOnError?: boolean
@@ -27,7 +27,7 @@ export interface TransactionEncoded {
   gasLimit: BigIntish
   target: string
   value: BigIntish
-  data: BytesLike
+  data: string
 }
 
 export type Transactionish = ethers.TransactionRequest | ethers.TransactionRequest[] | Transaction | Transaction[]
@@ -175,7 +175,7 @@ export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
     gasLimit: t.gasLimit !== undefined ? t.gasLimit : 0n,
     target: t.to ?? ethers.ZeroAddress,
     value: t.value !== undefined ? t.value : 0n,
-    data: t.data !== undefined ? t.data : new Uint8Array()
+    data: t.data !== undefined ? t.data : '0x'
   }))
 }
 
