@@ -234,10 +234,10 @@ export class RpcRelayer implements Relayer {
         hash: signedTxs.intent.id,
         confirmations: 0,
         from: signedTxs.intent.wallet,
-        wait: (_confirmations?: number): Promise<ethers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+        wait: (_confirmations?: number): Promise<ethers.TransactionReceipt | null> => Promise.reject(new Error('impossible'))
       }
 
-      const wait = async (confirmations?: number): Promise<ethers.TransactionReceipt> => {
+      const wait = async (confirmations?: number): Promise<ethers.TransactionReceipt | null> => {
         if (!this.provider) {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }

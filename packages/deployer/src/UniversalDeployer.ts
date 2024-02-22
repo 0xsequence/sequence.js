@@ -17,8 +17,6 @@ import { signer } from '../../core/src/commons'
 let prompt: Logger
 createLogger().then(logger => (prompt = logger))
 
-ethers.Logger.setLogLevel(ethers.Logger.levels.OFF)
-
 export class UniversalDeployer {
   private deployedInstances: ContractInstance[] = []
   private signer: ethers.Signer | undefined
@@ -43,6 +41,10 @@ export class UniversalDeployer {
     ...args: Parameters<T['deploy']>
   ): Promise<ethers.Contract> => {
     try {
+      if (!this.signer) {
+        throw new Error('No signer found')
+      }
+
       // Deploy universal deployer 2 if not yet deployed on chain_id
       const universalDeployer2Code = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
       if (universalDeployer2Code === '0x') await this.deployUniversalDeployer2(txParams)
@@ -83,6 +85,10 @@ export class UniversalDeployer {
   }
 
   deployUniversalDeployer = async (txParams?: ethers.TransactionRequest) => {
+    if (!this.signer) {
+      throw new Error('No signer found')
+    }
+
     if ((await this.provider.getBalance(EOA_UNIVERSAL_DEPLOYER_ADDRESS)) < UNIVERSAL_DEPLOYER_FUNDING) {
       prompt.start("Funding universal deployer's EOA")
       const tx = await this.signer.sendTransaction({
@@ -113,6 +119,10 @@ export class UniversalDeployer {
 
   // Deploy universal deployer via universal deployer 1
   deployUniversalDeployer2 = async (txParams?: ethers.TransactionRequest) => {
+    if (!this.signer) {
+      throw new Error('No signer found')
+    }
+
     const universalDeployerCode = await this.provider.getCode(UNIVERSAL_DEPLOYER_ADDRESS)
     if (universalDeployerCode === '0x') {
       await this.deployUniversalDeployer(txParams)
@@ -192,6 +202,10 @@ export class UniversalDeployer {
     contractInstance: number | bigint,
     ...args: Parameters<T['deploy']>
   ): Promise<string> => {
+    if (!this.signer) {
+      throw new Error('No signer found')
+    }
+
     const factory = new contractFactory(this.signer)
     const deployTx = await factory.getDeployTransaction(...args)
     const deployData = deployTx.data
