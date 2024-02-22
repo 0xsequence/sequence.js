@@ -27,6 +27,7 @@ export interface JsonRpcProviderOptions {
 export class JsonRpcProvider extends ethers.JsonRpcProvider {
   private _chainId?: number
   private _sender: JsonRpcSender
+  private _nextId: number = 1
 
   constructor(url: ConnectionInfo | string, options?: JsonRpcProviderOptions) {
     super(url, options?.chainId)
