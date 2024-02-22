@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { isBigIntish, BigIntish, Optionals, toHexString, getEthersFetchRequest } from '@0xsequence/utils'
+import { isBigIntish, BigIntish, Optionals, toHexString, getFetchRequest } from '@0xsequence/utils'
 
 const GasEstimator = require('@0xsequence/wallet-contracts/artifacts/contracts/modules/utils/GasEstimator.sol/GasEstimator.json')
 
@@ -43,7 +43,7 @@ export class OverwriterEstimator {
   constructor(options: OverwriterEstimatorOptions) {
     this.provider =
       typeof options.rpc === 'string'
-        ? new ethers.JsonRpcProvider(getEthersFetchRequest(options.rpc), undefined, { staticNetwork: true })
+        ? new ethers.JsonRpcProvider(getFetchRequest(options.rpc), undefined, { staticNetwork: true })
         : options.rpc
     this.options = { ...OverwriterEstimatorDefaults, ...options }
   }
@@ -81,7 +81,7 @@ export class OverwriterEstimator {
     blockTag?: string | BigIntish
   }): Promise<bigint> {
     const blockTag = args.blockTag ? toQuantity(args.blockTag) : 'latest'
-    const data = args.data ? args.data : []
+    const data = args.data ? args.data : new Uint8Array([])
     const from = args.from ? ethers.getAddress(args.from) : ethers.Wallet.createRandom().address
 
     const gasEstimatorInterface = new ethers.Interface(GasEstimator.abi)
