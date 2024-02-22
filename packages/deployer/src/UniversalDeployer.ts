@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { ethers, ContractFactory, ContractTransaction } from 'ethers'
+import { ethers, ContractFactory } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from './typings/contracts'
 import {
@@ -39,7 +39,7 @@ export class UniversalDeployer {
     txParams?: ethers.TransactionRequest,
     instance?: number | bigint,
     ...args: Parameters<T['deploy']>
-  ): Promise<ethers.Contract> => {
+  ): Promise<ethers.BaseContract> => {
     try {
       if (!this.signer) {
         throw new Error('No signer found')
@@ -47,7 +47,9 @@ export class UniversalDeployer {
 
       // Deploy universal deployer 2 if not yet deployed on chain_id
       const universalDeployer2Code = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
-      if (universalDeployer2Code === '0x') await this.deployUniversalDeployer2(txParams)
+      if (universalDeployer2Code === '0x') {
+        await this.deployUniversalDeployer2(txParams)
+      }
 
       // Deploying contract
       prompt.start(`Deploying ${contractAlias}`)
@@ -55,7 +57,7 @@ export class UniversalDeployer {
       const deployTx = await factory.getDeployTransaction(...args)
 
       // Make sure instance number is specified
-      const instanceNumber = instance !== undefined ? instance : 0
+      const instanceNumber = instance !== undefined ? BigInt(instance) : 0n
 
       // Verify if contract already deployed
       const contractAddress = await this.addressOf(contractFactory, instanceNumber, ...args)
@@ -65,8 +67,8 @@ export class UniversalDeployer {
 
       if (contractCode === '0x') {
         // Deploy contract if not already deployed
-        const tx = (await deployer.functions.deploy(deployTx.data!, instanceNumber, txParams)) as ContractTransaction
-        await tx.wait()
+        const tx = await deployer.deploy.staticCallResult(deployTx.data!, instanceNumber, txParams!)
+        //await tx.wait()
 
         // Verify that the deployment was successful since tx won't revert
         const postDeployCode = await this.provider.getCode(contractAddress)
@@ -76,7 +78,7 @@ export class UniversalDeployer {
       }
 
       const contract = factory.attach(contractAddress)
-      this.deployedInstances.push({ contractAlias, contract })
+      this.deployedInstances.push({ contractAddress, contractAlias, contract })
 
       return contract
     } catch (error) {
@@ -97,7 +99,7 @@ export class UniversalDeployer {
         ...txParams
       })
       const receipt = await tx.wait()
-      if (receipt.status !== 1) {
+      if (!receipt || receipt.status !== 1) {
         prompt.fail('txn receipt status failed')
       } else {
         prompt.succeed()
@@ -135,11 +137,11 @@ export class UniversalDeployer {
     // the UNIVERSAL_DEPLOYER_2_BYTECODE changes of the deployer -- which should never really happen.
 
     prompt.start('Deploying universal deployer 2 contract')
-    const tx = (await this.signer.sendTransaction({
+    const tx = await this.signer.sendTransaction({
       to: UNIVERSAL_DEPLOYER_ADDRESS,
       data: UNIVERSAL_DEPLOYER_2_BYTECODE,
       ...txParams
-    })) as ContractTransaction
+    })
     await tx.wait()
 
     // const universalDeployer2CodeCheck = await this.provider.getCode(UNIVERSAL_DEPLOYER_2_ADDRESS)
@@ -154,26 +156,26 @@ export class UniversalDeployer {
   getDeployment = () => {
     return this.deployedInstances.reduce(
       (list, instance) => {
-        const { contract, contractAlias } = instance
-        list[contractAlias] = contract
+        const { contractAddress, contractAlias } = instance
+        list[contractAlias] = contractAddress
         return list
       },
-      {} as { [key: string]: ethers.Contract | { address: string } }
+      {} as { [key: string]: string }
     )
   }
 
   getDeploymentList = () =>
-    this.deployedInstances.map(({ contract, contractAlias }) => {
+    this.deployedInstances.map(({ contractAddress, contractAlias, contract }) => {
       if (contract as ethers.Contract) {
         return {
           contractName: contractAlias,
-          address: contract.address
+          contractAddress
           // abi: contract.interface.abi
         }
       } else {
         return {
           contractName: contractAlias,
-          address: contract.address
+          contractAddress
         }
       }
     })
@@ -190,10 +192,10 @@ export class UniversalDeployer {
     )
   }
 
-  manualDeploymentRegistration = (contractAlias: string, address: string) => {
+  manualDeploymentRegistration = (contractAlias: string, contractAddress: string) => {
     this.deployedInstances.push({
       contractAlias,
-      contract: { address: address }
+      contractAddress
     })
   }
 

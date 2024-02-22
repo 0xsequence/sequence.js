@@ -1,12 +1,13 @@
-import { Contract } from 'ethers'
+import { ethers } from 'ethers'
 
 export interface FactoryDeployedContract {
   address: string
 }
 
 export interface ContractInstance {
+  contractAddress: string
   contractAlias: string
-  contract: Contract | { address: string }
+  contract?: ethers.BaseContract
 }
 
 export interface ContractInfo {
