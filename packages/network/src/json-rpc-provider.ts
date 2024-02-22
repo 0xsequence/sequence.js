@@ -60,11 +60,11 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
       const network = networks[chainId as ChainId]
       const name = network?.name || ''
       const ensAddress = network?.ensAddress
-      return {
-        name: name,
-        chainId: chainId,
-        ensAddress: ensAddress
-      }
+      return ethers.Network.from({
+        name,
+        chainId,
+        ensAddress
+      })
     } else {
       const chainIdHex = await this.send('eth_chainId', [])
       this._chainId = Number(BigInt(chainIdHex))

@@ -80,7 +80,7 @@ describe('Wallet integration', function () {
 
     const chainId = (await ethnode.provider.getNetwork()).chainId
     ethnode.signer = await ethnode.provider.getSigner()
-    ethnode.chainId = chainId
+    ethnode.chainId = Number(chainId)
 
     // Deploy local relayer
     relayer = new LocalRelayer(ethnode.signer)
@@ -88,7 +88,7 @@ describe('Wallet integration', function () {
     networks = [
       {
         name: 'local',
-        chainId,
+        chainId: Number(chainId),
         provider: ethnode.provider,
         isDefaultChain: true,
         relayer,
@@ -558,7 +558,7 @@ describe('Wallet integration', function () {
         }
       }
 
-      fakeJwt = ethers.toBeHex(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`))
+      fakeJwt = ethers.toBeHex(ethers.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`)))
 
       server = mockServer.getLocal()
       server.start(8099)
@@ -1159,7 +1159,7 @@ describe('Wallet integration', function () {
         const newBaseTime = baseTime + 60 * 60
         setDate(newBaseTime)
 
-        fakeJwt = ethers.toBeHex(randomBytes(96, 'Should request a new JWT after expiration 2'))
+        fakeJwt = ethers.toBeHex(ethers.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2')))
 
         await session.services?.getAPIClient()
 
@@ -1407,7 +1407,7 @@ function now(): number {
 }
 
 function randomWallet(entropy: number | string): ethers.Wallet {
-  return new ethers.Wallet(randomBytes(32, entropy))
+  return new ethers.Wallet(ethers.hexlify(randomBytes(32, entropy)))
 }
 
 function randomBytes(length: number, entropy: number | string): Uint8Array {

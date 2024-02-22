@@ -84,6 +84,8 @@ describe('Wallet integration', function () {
             signers: [{ weight: 1, address: signer.address }]
           })
 
+          const network = await provider.getNetwork()
+
           return Wallet.newWallet({
             context: contexts[2],
             coders: v2.coders,
@@ -91,7 +93,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator: new Orchestrator([signer]),
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
         }
       },
@@ -106,6 +108,8 @@ describe('Wallet integration', function () {
             signers: signers.map(s => ({ weight: 1, address: s.address }))
           })
 
+          const network = await provider.getNetwork()
+
           return Wallet.newWallet({
             context: contexts[2],
             coders: v2.coders,
@@ -113,7 +117,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator: new Orchestrator([signers[0], signers[1], signers[2]]),
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
         }
       },
@@ -155,6 +159,8 @@ describe('Wallet integration', function () {
             signers: nestedSigners.map(s => ({ weight: 1, address: s.address }))
           })
 
+          const network = await provider.getNetwork()
+
           const nestedWallet = Wallet.newWallet({
             context: contexts[2],
             coders: v2.coders,
@@ -162,7 +168,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator: new Orchestrator([nestedSigners[0], nestedSigners[1]]),
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
 
           await nestedWallet.deploy()
@@ -182,7 +188,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator: new Orchestrator([new SequenceOrchestratorWrapper(nestedWallet), EOAsigners[0], EOAsigners[1]]),
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
         }
       },
@@ -200,6 +206,8 @@ describe('Wallet integration', function () {
             signers: signers.map((s, i) => ({ weight: i <= signersA.length ? 1 : 10, address: s.address }))
           })
 
+          const network = await provider.getNetwork()
+
           return Wallet.newWallet({
             context: contexts[2],
             coders: v2.coders,
@@ -207,7 +215,7 @@ describe('Wallet integration', function () {
             provider,
             relayer,
             orchestrator: new Orchestrator(signersA),
-            chainId: provider.network.chainId
+            chainId: network.chainId
           })
         }
       }
@@ -247,8 +255,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 10000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
+              expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 10000)
+              expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
               expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
             })
@@ -257,8 +265,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(txs)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 10000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
+              expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 10000)
+              expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
               expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
             })
@@ -268,8 +276,8 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 10000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
+              expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 10000)
+              expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
               expect((await callReceiver.lastValA()).toNumber()).to.equal(0)
             })
@@ -306,10 +314,10 @@ describe('Wallet integration', function () {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
               const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
 
-              expect(realTx.gasUsed.toNumber()).to.be.approximately(Number(estimation.total), 30000)
-              expect(realTx.gasUsed.toNumber()).to.be.below(Number(estimation.total))
+              expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 30000)
+              expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
-              expect(ethers.toBeHex(await callReceiver.lastValB())).to.equal(ethers.toBeHex(valB))
+              expect(ethers.toBeHex(await callReceiver.lastValB())).to.equal(ethers.toBeHex(ethers.hexlify(valB)))
             })
           })
         })
