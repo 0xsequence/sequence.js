@@ -119,7 +119,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -202,7 +202,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -258,7 +258,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -292,7 +292,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -340,7 +340,7 @@ describe('Orchestrator', () => {
           }
         },
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -376,7 +376,7 @@ describe('Orchestrator', () => {
           }
         },
         suffix: function () {
-          return [2]
+          return new Uint8Array([2])
         }
       }
 
@@ -455,7 +455,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [0]
+          return new Uint8Array([0])
         }
       }
 
@@ -507,7 +507,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [0]
+          return new Uint8Array([0])
         }
       }
       const signer2: SapientSigner = {
@@ -538,7 +538,7 @@ describe('Orchestrator', () => {
         },
         notifyStatusChange: function (id: string, status: Status): void {},
         suffix: function () {
-          return [0]
+          return new Uint8Array([0])
         }
       }
 
