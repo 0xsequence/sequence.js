@@ -40,28 +40,28 @@ describe('Account signer', () => {
     provider1 = new ethers.BrowserProvider(hardhat.network.provider as any)
     provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048')
 
+    signer1 = await provider1.getSigner()
+    signer2 = await provider2.getSigner()
+
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1) as any
-
+    ;('')
     networks = [
       {
         chainId: 31337,
         name: 'hardhat',
         provider: provider1,
         rpcUrl: '',
-        relayer: new LocalRelayer(provider1.getSigner())
+        relayer: new LocalRelayer(signer1)
       },
       {
         chainId: 31338,
         name: 'hardhat2',
         provider: provider2,
         rpcUrl: 'http://127.0.0.1:7048',
-        relayer: new LocalRelayer(provider2.getSigner())
+        relayer: new LocalRelayer(signer2)
       }
     ]
-
-    signer1 = provider1.getSigner()
-    signer2 = provider2.getSigner()
 
     contexts = await utils.context.deploySequenceContexts(signer1)
     const context2 = await utils.context.deploySequenceContexts(signer2)

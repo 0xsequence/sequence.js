@@ -95,8 +95,8 @@ describe('Account', () => {
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1)
 
-    signer1 = provider1.getSigner()
-    signer2 = provider2.getSigner()
+    signer1 = await provider1.getSigner()
+    signer2 = await provider2.getSigner()
 
     networks = [
       {

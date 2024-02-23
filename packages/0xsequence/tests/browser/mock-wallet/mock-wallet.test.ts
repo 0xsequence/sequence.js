@@ -42,7 +42,7 @@ const main = async () => {
     {
       name: 'hardhat',
       chainId: 31337,
-      rpcUrl: provider.connection.url,
+      rpcUrl: provider._getConnection().url,
       provider: provider,
       relayer: relayer,
       isDefaultChain: true
@@ -50,7 +50,7 @@ const main = async () => {
     {
       name: 'hardhat2',
       chainId: 31338,
-      rpcUrl: provider2.connection.url,
+      rpcUrl: provider2._getConnection().url,
       provider: provider2,
       relayer: relayer2
     }

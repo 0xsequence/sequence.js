@@ -65,13 +65,13 @@ export const tests = async () => {
   // relayer account is same as owner here
   const relayer = new LocalRelayer(owner)
   const rpcProvider = new ethers.JsonRpcProvider('http://localhost:8545')
-  const contexts = await utils.context.deploySequenceContexts(rpcProvider.getSigner())
+  const contexts = await utils.context.deploySequenceContexts(await rpcProvider.getSigner())
 
   const networks = [
     {
       name: 'hardhat',
       chainId: 31337,
-      rpcUrl: rpcProvider.connection.url,
+      rpcUrl: rpcProvider._getConnection().url,
       provider: rpcProvider,
       relayer: relayer,
       isDefaultChain: true
