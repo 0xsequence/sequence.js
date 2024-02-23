@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { isContract } from '../utils'
 import { parseEther } from '@0xsequence/utils'
+import { WalletContext } from '@0xsequence/core/src/v1/context'
 
 // These are the Sequence v1 contracts
 // we use them if they are available
@@ -12,15 +13,7 @@ const predefinedAddresses = {
   multiCallUtils: '0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E'
 }
 
-export async function deployV1Context(signer: ethers.Signer): Promise<{
-  version: 1
-  factory: string
-  mainModule: string
-  mainModuleUpgradable: string
-  guestModule: string
-  multiCallUtils: string
-  walletCreationCode: string
-}> {
+export async function deployV1Context(signer: ethers.Signer): Promise<WalletContext> {
   // See if signer's provider has the contracts already deployed
   const provider = signer.provider
   if (!provider) {
