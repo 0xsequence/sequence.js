@@ -358,7 +358,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('250').toString(),
@@ -399,7 +399,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('250').toString(),
@@ -446,7 +446,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('11').toString(),
@@ -500,7 +500,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('11').toString(),
@@ -563,7 +563,7 @@ describe('Account signer', () => {
                   symbol: 'TEST',
                   type: proto.FeeTokenType.ERC20_TOKEN,
                   logoURL: '',
-                  contractAddress: token.address
+                  contractAddress: await token.getAddress()
                 },
                 to: recipient,
                 value: parseEther('11').toString(),

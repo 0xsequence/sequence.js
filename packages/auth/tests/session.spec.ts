@@ -44,7 +44,7 @@ class CountingSigner extends ethers.AbstractSigner {
     return this.signer.getAddress()
   }
 
-  signMessage(message: ethers.Bytes | string): Promise<string> {
+  signMessage(message: ethers.BytesLike): Promise<string> {
     this._signingRequests++
     return this.signer.signMessage(message)
   }
@@ -52,6 +52,15 @@ class CountingSigner extends ethers.AbstractSigner {
   signTransaction(transaction: ethers.TransactionRequest): Promise<string> {
     this._signingRequests++
     return this.signer.signTransaction(transaction)
+  }
+
+  signTypedData(
+    domain: ethers.TypedDataDomain,
+    types: Record<string, ethers.TypedDataField[]>,
+    value: Record<string, any>
+  ): Promise<string> {
+    this._signingRequests++
+    return this.signer.signTypedData(domain, types, value)
   }
 
   connect(provider: ethers.Provider): ethers.Signer {
