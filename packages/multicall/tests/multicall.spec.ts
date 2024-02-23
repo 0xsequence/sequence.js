@@ -137,7 +137,7 @@ describe('Multicall integration', function () {
   const options = [
     {
       name: 'Ether.js provider wrapper',
-      provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(ganache.spyProxy!, options)
+      provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(ganache.spyProxy!, ganache.chainId, options)
     },
     {
       name: 'Json Rpc Router (Sequence)',
@@ -182,7 +182,7 @@ describe('Multicall integration', function () {
     },
     {
       name: 'Ether.js provider wrapper (without proxy)',
-      provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(ganache.provider!, options),
+      provider: (options?: Partial<MulticallOptions>) => new MulticallProvider(ganache.provider!, ganache.chainId, options),
       ignoreCount: true
     },
     {
