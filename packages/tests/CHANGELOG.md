@@ -1,5 +1,13 @@
 # @0xsequence/tests
 
+## 1.8.8
+
+### Patch Changes
+
+- update metadata bindings
+- Updated dependencies
+  - @0xsequence/core@1.8.8
+
 ## 1.8.7
 
 ### Patch Changes
