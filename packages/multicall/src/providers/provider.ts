@@ -30,9 +30,10 @@ export class MulticallProvider extends ethers.AbstractProvider {
 
   constructor(
     private provider: ethers.Provider,
+    network?: ethers.Networkish,
     multicall?: Multicall | Partial<MulticallOptions>
   ) {
-    super(provider.getNetwork())
+    super(network)
 
     this.listenerCount = provider.listenerCount.bind(provider)
     this.multicall = Multicall.isMulticall(multicall) ? multicall : new Multicall(multicall)
