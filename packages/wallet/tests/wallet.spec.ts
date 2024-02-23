@@ -71,6 +71,7 @@ describe('Wallet (primitive)', () => {
       })
 
       it('Should deploy children', async () => {
+        const network = await provider.getNetwork()
         const nestedSigner = ethers.Wallet.createRandom()
         const nestedConfig = coders.config.fromSimple({
           threshold: 1,
@@ -83,7 +84,7 @@ describe('Wallet (primitive)', () => {
           context: contexts[version],
           config: nestedConfig,
           orchestrator: nestedOrchestrator,
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -98,7 +99,7 @@ describe('Wallet (primitive)', () => {
           context: contexts[version],
           config,
           orchestrator,
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -111,7 +112,7 @@ describe('Wallet (primitive)', () => {
       })
 
       describe('Nonce selection', async () => {
-        let signer: ethers.Wallet
+        let signer: ethers.HDNodeWallet
         let wallet: Wallet
 
         let getNonce: (response: ethers.TransactionResponse) => { space: bigint; nonce: bigint }

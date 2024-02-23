@@ -332,13 +332,13 @@ describe('Multicall integration', function () {
           expect(callCounter).to.equal(3)
         })
         it('Should call eth_getCode', async () => {
-          const code = await Promise.all([provider.getCode(callMock.address), provider.getCode(utilsContract.address)])
+          const code = await Promise.all([provider.getCode(callMock.address), provider.getCode(await utilsContract.getAddress())])
 
           if (!option.ignoreCount) expect(callCounter).to.equal(1)
 
           const rawCode = await Promise.all([
             ganache.provider!.getCode(callMock.address),
-            ganache.provider!.getCode(utilsContract.address)
+            ganache.provider!.getCode(await utilsContract.getAddress())
           ])
 
           expect(rawCode[0]).to.equal(code[0])
@@ -472,7 +472,7 @@ describe('Multicall integration', function () {
           {
             name: 'non-deployed util contract',
             overhead: 0,
-            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) =>
+            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => ethers.Provider) =>
               getProvider({
                 contract: ''
               })
@@ -480,7 +480,7 @@ describe('Multicall integration', function () {
           {
             name: 'EOA address as util contract',
             overhead: 1,
-            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) =>
+            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => ethers.Provider) =>
               getProvider({
                 contract: ethers.Wallet.createRandom().address
               })
@@ -488,7 +488,7 @@ describe('Multicall integration', function () {
           {
             name: 'Broken contract as util contract',
             overhead: 1,
-            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) =>
+            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => ethers.Provider) =>
               getProvider({
                 contract: callMock.address
               })
@@ -496,7 +496,7 @@ describe('Multicall integration', function () {
           {
             name: 'invalid address as util contract',
             overhead: 0,
-            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => providers.Provider) =>
+            brokenProvider: (getProvider: (options?: Partial<MulticallOptions>) => ethers.Provider) =>
               getProvider({
                 contract: 'This is not a valid address'
               })
@@ -512,13 +512,13 @@ describe('Multicall integration', function () {
             it('Should fallback to provider if multicall fails eth_getCode', async () => {
               const code = await Promise.all([
                 brokenProvider.getCode(callMock.address),
-                brokenProvider.getCode(utilsContract.address)
+                brokenProvider.getCode(utilsContract.getAddress())
               ])
 
               if (!option.ignoreCount) expect(callCounter).to.equal(2 + brokenOption.overhead)
               const rawCode = await Promise.all([
                 ganache.provider!.getCode(callMock.address),
-                ganache.provider!.getCode(utilsContract.address)
+                ganache.provider!.getCode(utilsContract.getAddress())
               ])
 
               expect(rawCode[0]).to.equal(code[0])

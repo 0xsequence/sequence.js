@@ -91,9 +91,9 @@ describe('Wallet integration', function () {
 
       describe(`For ${c.name} wallet`, () => {
         it('Should get receipt of success transaction', async () => {
-          const txn = {
+          const txn: commons.transaction.Transaction = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.randomBytes(43),
+            data: ethers.hexlify(ethers.randomBytes(43)),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
@@ -115,24 +115,24 @@ describe('Wallet integration', function () {
         })
 
         it('Should get receipt of success batch transaction', async () => {
-          const txns = [
+          const txns: commons.transaction.Transaction[] = [
             {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.randomBytes(43),
+              data: ethers.hexlify(ethers.randomBytes(43)),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
-              value: 0,
-              nonce: 0
+              value: 0
+              // nonce: 0
             },
             {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.randomBytes(43),
+              data: ethers.hexlify(ethers.randomBytes(43)),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
-              value: 0,
-              nonce: 0
+              value: 0
+              // nonce: 0
             }
           ]
 
@@ -152,15 +152,15 @@ describe('Wallet integration', function () {
         })
 
         it('Should get receipt of batch transaction with failed meta-txs', async () => {
-          const txns = [
+          const txns: commons.transaction.Transaction[] = [
             {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.randomBytes(43),
+              data: ethers.hexlify(ethers.randomBytes(43)),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
-              value: 0,
-              nonce: 0
+              value: 0
+              // nonce: 0
             },
             {
               to: contexts[2].factory,
@@ -169,8 +169,8 @@ describe('Wallet integration', function () {
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000,
-              value: 0,
-              nonce: 0
+              value: 0
+              // nonce: 0
             }
           ]
 
@@ -189,15 +189,15 @@ describe('Wallet integration', function () {
         })
 
         it('Should get receipt of failed transaction', async () => {
-          const txn = {
+          const txn: commons.transaction.Transaction = {
             to: contexts[1].factory,
             // 0xff not a valid factory method
             data: '0xffffffffffff',
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
-            value: 0,
-            nonce: 0
+            value: 0
+            // nonce: 0
           }
 
           const network = await provider.getNetwork()
@@ -248,7 +248,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.randomBytes(43),
+                  data: ethers.hexlify(ethers.randomBytes(43)),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000,
@@ -259,14 +259,14 @@ describe('Wallet integration', function () {
             })
           )
 
-          const txn = {
+          const txn: commons.transaction.Transaction = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.randomBytes(43),
+            data: ethers.hexlify(ethers.randomBytes(43)),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
-            value: 0,
-            nonce: 0
+            value: 0
+            // nonce: 0
           }
 
           const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
@@ -282,7 +282,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.randomBytes(43),
+                  data: ethers.hexlify(ethers.randomBytes(43)),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000,
@@ -331,7 +331,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.randomBytes(43),
+                  data: ethers.hexlify(ethers.randomBytes(43)),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000,
@@ -359,14 +359,14 @@ describe('Wallet integration', function () {
             })
           )
 
-          const txn = {
+          const txn: commons.transaction.Transaction = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.randomBytes(43),
+            data: ethers.hexlify(ethers.randomBytes(43)),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
-            value: 0,
-            nonce: 0
+            value: 0
+            // nonce: 0
           }
 
           const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
@@ -414,7 +414,7 @@ describe('Wallet integration', function () {
               await altWallet.sendTransaction(
                 {
                   to: ethers.Wallet.createRandom().address,
-                  data: ethers.randomBytes(43),
+                  data: ethers.hexlify(ethers.randomBytes(43)),
                   delegateCall: false,
                   revertOnError: false,
                   gasLimit: 140000
@@ -440,15 +440,15 @@ describe('Wallet integration', function () {
             })
           )
 
-          const txn = {
+          const txn: commons.transaction.Transaction = {
             to: contexts[2].factory,
             // 0xff not a valid factory method
             data: '0xffffffffffff',
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
-            value: 0,
-            nonce: 0
+            value: 0
+            // nonce: 0
           }
 
           const id = commons.transaction.subdigestOfTransactions(wallet.address, network.chainId, 0, [txn])
@@ -464,14 +464,14 @@ describe('Wallet integration', function () {
         })
 
         it('Should timeout receipt if transaction is never sent', async () => {
-          const txn = {
+          const txn: commons.transaction.Transaction = {
             to: ethers.Wallet.createRandom().address,
-            data: ethers.randomBytes(43),
+            data: ethers.hexlify(ethers.randomBytes(43)),
             delegateCall: false,
             revertOnError: false,
             gasLimit: 140000,
-            value: 0,
-            nonce: 0
+            value: 0
+            // nonce: 0
           }
 
           const network = await provider.getNetwork()
@@ -490,7 +490,7 @@ describe('Wallet integration', function () {
                 await wallet.sendTransaction(
                   {
                     to: ethers.Wallet.createRandom().address,
-                    data: ethers.randomBytes(43),
+                    data: ethers.hexlify(ethers.randomBytes(43)),
                     delegateCall: false,
                     revertOnError: false,
                     gasLimit: 140000,
@@ -518,9 +518,9 @@ describe('Wallet integration', function () {
               })
             )
 
-            const txn = {
+            const txn: commons.transaction.Transaction = {
               to: ethers.Wallet.createRandom().address,
-              data: ethers.randomBytes(43),
+              data: ethers.hexlify(ethers.randomBytes(43)),
               delegateCall: false,
               revertOnError: false,
               gasLimit: 140000
