@@ -1,39 +1,51 @@
-export const JsonRpcVersion = '2.0'
-
-export interface JsonRpcRequest {
-  jsonrpc?: string
+export type JsonRpcRequest = {
+  jsonrpc: '2.0'
   id?: number
   method: string
-  params?: any[]
+  params?: Array<any> | Record<string, any>
+
+  // ...
+  chainId?: number
 }
 
-export interface JsonRpcResponse {
-  jsonrpc: string
+// export type JsonRpcRequestParams = Array<any> | Record<string, any>
+
+export type JsonRpcResponse = {
   id: number
   result: any
-  error?: ProviderRpcError
+  error?: JsonRpcErrorPayload
 }
 
-export type JsonRpcResponseCallback = (error?: ProviderRpcError, response?: JsonRpcResponse) => void
-
-export type JsonRpcHandlerFunc = (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => void
-
-export interface JsonRpcHandler {
-  sendAsync: JsonRpcHandlerFunc
+export type JsonRpcErrorPayload = {
+  code: number
+  message?: string
+  data?: any
 }
 
-export type JsonRpcFetchFunc = (method: string, params?: any[], chainId?: number) => Promise<any>
+// export type JsonRpcResponseCallback = (error?: ProviderRpcError, response?: JsonRpcResponse) => void
 
-// EIP-1193 function signature
-export type JsonRpcRequestFunc = (request: { method: string; params?: any[] }, chainId?: number) => Promise<any>
+// export type JsonRpcHandlerFunc = (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => void
 
-export type JsonRpcMiddleware = (next: JsonRpcHandlerFunc) => JsonRpcHandlerFunc
+// export interface JsonRpcHandler {
+//   sendAsync: JsonRpcHandlerFunc
+// }
+
+export interface EIP1193Provider<R = any> {
+  request(request: { id?: number, method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<R>;
+}
+
+export type EIP1193ProviderFunc<R = any> = (request: { id?: number, method: string; params?: Array<any> | Record<string, any> }, chainId?: number) => Promise<R>
+
+export type JsonRpcRequestFunc = (method: string, params?:  Array<any> | Record<string, any>, chainId?: number) => Promise<any>
+
+export type JsonRpcMiddleware = (next: EIP1193ProviderFunc) => EIP1193ProviderFunc
 
 export interface JsonRpcMiddlewareHandler {
-  sendAsyncMiddleware: JsonRpcMiddleware
+  requestMiddleware: JsonRpcMiddleware
 }
 
-export interface ProviderRpcError extends Error {
-  code?: number
-  data?: { [key: string]: any }
-}
+// export interface ProviderRpcError extends Error {
+//   code: number
+//   message?: string
+//   data?: any
+// }

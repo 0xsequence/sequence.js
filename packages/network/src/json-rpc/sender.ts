@@ -6,7 +6,6 @@ import {
   JsonRpcHandler,
   JsonRpcFetchFunc,
   JsonRpcRequestFunc,
-  JsonRpcVersion
 } from './types'
 import { isJsonRpcProvider, isJsonRpcHandler } from './utils'
 
@@ -29,7 +28,6 @@ export class JsonRpcSender implements JsonRpcHandler {
           provider.sendAsync(
             {
               // TODO: really shouldn't have to set these here?
-              jsonrpc: JsonRpcVersion,
               id: ++_nextId,
               method,
               params
@@ -75,23 +73,23 @@ export class JsonRpcSender implements JsonRpcHandler {
   }
 }
 
-export class JsonRpcExternalProvider implements Eip1193Provider, JsonRpcHandler {
-  constructor(private provider: ethers.JsonRpcProvider) {}
+// export class JsonRpcExternalProvider implements Eip1193Provider, JsonRpcHandler {
+//   constructor(private provider: ethers.JsonRpcProvider) {}
 
-  sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) => {
-    this.provider
-      .send(request.method, request.params!)
-      .then(r => {
-        callback(undefined, {
-          jsonrpc: '2.0',
-          id: request.id,
-          result: r
-        })
-      })
-      .catch(e => {
-        callback(e, undefined)
-      })
-  }
+//   sendAsync = (request: JsonRpcRequest, callback: JsonRpcResponseCallback | ((error: any, response: any) => void)) => {
+//     this.provider
+//       .send(request.method, request.params!)
+//       .then(r => {
+//         callback(undefined, {
+//           jsonrpc: '2.0',
+//           id: request.id,
+//           result: r
+//         })
+//       })
+//       .catch(e => {
+//         callback(e, undefined)
+//       })
+//   }
 
-  send = this.sendAsync
-}
+//   send = this.sendAsync
+// }
