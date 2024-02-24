@@ -18,7 +18,7 @@ type Coders = {
 }
 
 describe('Wallet (primitive)', () => {
-  let provider: ethers.JsonRpcProvider
+  let provider: ethers.BrowserProvider
   let signers: ethers.Signer[]
 
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>

@@ -1,7 +1,6 @@
 import { BytesLike, AbstractSigner, TypedDataDomain, TypedDataField, ethers } from 'ethers'
 import { NetworkConfig, ChainIdLike } from '@0xsequence/network'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
-import { Deferrable } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
 // TODO: Move to account ?
@@ -38,7 +37,7 @@ export abstract class Signer extends AbstractSigner {
   // sendTransaction takes an unsigned transaction, or list of unsigned transactions, and then has it signed by
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   abstract sendTransaction(
-    transaction: Deferrable<commons.transaction.Transactionish>,
+    transaction: commons.transaction.Transactionish,
     chainId?: ChainIdLike,
     allSigners?: boolean,
     quote?: FeeQuote
@@ -47,7 +46,7 @@ export abstract class Signer extends AbstractSigner {
   // sendTransactionBatch provides the ability to send an array/batch of transactions as a single native on-chain transaction.
   // This method works identically to sendTransaction but offers a different syntax for convience, readability and type clarity.
   abstract sendTransactionBatch(
-    transactions: Deferrable<ethers.TransactionRequest[] | commons.transaction.Transaction[]>,
+    transactions: ethers.TransactionRequest[] | commons.transaction.Transaction[],
     chainId?: ChainIdLike,
     allSigners?: boolean,
     quote?: FeeQuote
@@ -57,7 +56,7 @@ export abstract class Signer extends AbstractSigner {
   // is like calling just sendTransaction(..) above. Also note that sendSignedTransactions is identical
   // to calling getRelayer().relay(signedTxs), but included in this interface for convenience.
   abstract signTransactions(
-    txs: Deferrable<commons.transaction.Transactionish>,
+    txs: commons.transaction.Transactionish,
     chainId?: ChainIdLike,
     allSigners?: boolean
   ): Promise<commons.transaction.SignedTransactionBundle>

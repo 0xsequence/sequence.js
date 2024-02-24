@@ -7,7 +7,6 @@ import { ChainIdLike, NetworkConfig } from '@0xsequence/network'
 import { poll, resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
 import { OptionalChainIdLike, OptionalEIP6492 } from './types'
-import { Deferrable } from '@0xsequence/utils'
 
 export interface ISequenceSigner extends Omit<Signer, 'connect'> {
   getProvider(): SequenceProvider
@@ -36,7 +35,7 @@ export interface ISequenceSigner extends Omit<Signer, 'connect'> {
   // the signer, and finally sends it to the relayer for submission to an Ethereum network.
   // It supports any kind of transaction, including regular ethers transactions, and Sequence transactions.
   sendTransaction(
-    transaction: Deferrable<ethers.TransactionRequest>[] | Deferrable<ethers.TransactionRequest>,
+    transaction: ethers.TransactionRequest[] | ethers.TransactionRequest,
     options?: OptionalChainIdLike
   ): Promise<commons.transaction.TransactionResponse>
 
@@ -125,7 +124,7 @@ export class SequenceSigner implements ISequenceSigner {
   }
 
   async sendTransaction(
-    transaction: Deferrable<ethers.TransactionRequest>[] | Deferrable<ethers.TransactionRequest>,
+    transaction: ethers.TransactionRequest[] | ethers.TransactionRequest,
     options?: OptionalChainIdLike
   ) {
     const chainId = this.useChainId(options?.chainId)
@@ -211,7 +210,7 @@ export class SequenceSigner implements ISequenceSigner {
     throw new Error('SequenceSigner does not support populateTransaction')
   }
 
-  checkTransaction(_transaction: Deferrable<ethers.TransactionRequest>): Deferrable<ethers.TransactionRequest> {
+  checkTransaction(_transaction: ethers.TransactionRequest): ethers.TransactionRequest {
     throw new Error('SequenceSigner does not support checkTransaction')
   }
 
@@ -221,7 +220,7 @@ export class SequenceSigner implements ISequenceSigner {
     throw new Error('SequenceSigner does not support getTransactionCount')
   }
 
-  signTransaction(_transaction: Deferrable<commons.transaction.Transactionish>): Promise<string> {
+  signTransaction(_transaction: commons.transaction.Transactionish): Promise<string> {
     // We could implement signTransaction/sendTransaction here
     // but first we need a way of serializing these signed transactions
     // and it could lead to more trouble, because the dapp could try to send this transaction

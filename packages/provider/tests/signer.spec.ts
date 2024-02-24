@@ -13,8 +13,7 @@ import {
 } from '../src'
 import { expect } from 'chai'
 import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
-import { ExtendedTransactionRequest } from '../src/extended'
-import { Deferrable, TypedData, parseEther } from '@0xsequence/utils'
+import { TypedData, parseEther } from '@0xsequence/utils'
 
 const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595')
 const hardhat2Provider = new ethers.JsonRpcProvider('http://127.0.0.1:8595')
@@ -871,7 +870,7 @@ describe('SequenceSigner', () => {
 
   describe('sendTransaction', () => {
     let callsToSendTransaction: number
-    let expectedTransactionRequest: Deferrable<ethers.TransactionRequest>[] | Deferrable<ethers.TransactionRequest>
+    let expectedTransactionRequest: ethers.TransactionRequest[] | ethers.TransactionRequest
 
     let expectedOptions: OptionalChainIdLike
 
@@ -893,7 +892,7 @@ describe('SequenceSigner', () => {
         {
           ...basicMockClient,
           sendTransaction: async (
-            transactionRequest: Deferrable<ethers.TransactionRequest>[] | Deferrable<ethers.TransactionRequest>,
+            transactionRequest: ethers.TransactionRequest[] | ethers.TransactionRequest,
             options: OptionalChainIdLike
           ) => {
             expect(transactionRequest).to.deep.equal(expectedTransactionRequest)

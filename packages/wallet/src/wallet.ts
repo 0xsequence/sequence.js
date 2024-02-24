@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { SignatureOrchestrator, SignerState, Status } from '@0xsequence/signhub'
-import { BigIntish, Deferrable, encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
+import { BigIntish, encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { walletContracts } from '@0xsequence/abi'
 
@@ -338,7 +338,7 @@ export class Wallet<
   }
 
   async signTransactions(
-    txs: Deferrable<commons.transaction.Transactionish>,
+    txs: commons.transaction.Transactionish,
     nonce?: BigIntish | { space: BigIntish } | { serial: boolean },
     metadata?: object
   ): Promise<commons.transaction.SignedTransactionBundle> {
@@ -397,7 +397,7 @@ export class Wallet<
   // By default, nonces are generated randomly and assigned so transactioned can be executed
   // in parallel. However, if you'd like to execute serially, pass { serial: true } as an option.
   async sendTransaction(
-    txs: Deferrable<commons.transaction.Transactionish>,
+    txs: commons.transaction.Transactionish,
     options?: {
       quote?: FeeQuote
       nonce?: BigIntish
@@ -421,7 +421,7 @@ export class Wallet<
     return this.sendSignedTransaction(decorated, options?.quote)
   }
 
-  async fillGasLimits(txs: Deferrable<commons.transaction.Transactionish>): Promise<commons.transaction.SimulatedTransaction[]> {
+  async fillGasLimits(txs: commons.transaction.Transactionish): Promise<commons.transaction.SimulatedTransaction[]> {
     const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
     const transactions = commons.transaction.fromTransactionish(this.address, transaction)
     const relayer = this.relayer
@@ -440,7 +440,7 @@ export class Wallet<
     return this
   }
 
-  signTransaction(transaction: Deferrable<ethers.TransactionRequest>): Promise<string> {
+  signTransaction(transaction: ethers.TransactionRequest): Promise<string> {
     throw new Error('Method not implemented.')
   }
 }

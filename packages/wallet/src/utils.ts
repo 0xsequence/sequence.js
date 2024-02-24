@@ -1,7 +1,6 @@
-import { Deferrable } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
-export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
+export async function resolveArrayProperties<T>(object: Readonly<T> | Readonly<T>[]): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
     return Promise.all(object.map(o => ethers.resolveProperties(o))) as any

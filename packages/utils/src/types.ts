@@ -1,10 +1,5 @@
 import { ethers } from 'ethers'
 
-// Makes all properties in T optionally deferrable
-export type Deferrable<T> = {
-  [K in keyof T]: T[K] | Promise<T[K]>
-}
-
 const { defineProperties, resolveProperties } = ethers
 
 export { defineProperties, resolveProperties }
