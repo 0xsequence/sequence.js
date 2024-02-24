@@ -2,7 +2,7 @@ import { ethers, BytesLike } from 'ethers'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
 import { commons } from '@0xsequence/core'
-import { encodeMessageDigest, TypedData, encodeTypedDataDigest, Deferrable } from '@0xsequence/utils'
+import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 
 const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
@@ -201,7 +201,7 @@ export function useBestStore(): ItemStore {
   return new MemoryItemStore()
 }
 
-export async function resolveArrayProperties<T>(object: Readonly<Deferrable<T>> | Readonly<Deferrable<T>>[]): Promise<T> {
+export async function resolveArrayProperties<T>(object: Readonly<T> | Readonly<T>[]): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
     return Promise.all(object.map(o => ethers.resolveProperties(o))) as any
