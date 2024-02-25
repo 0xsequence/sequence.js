@@ -12,7 +12,6 @@ import {
 } from './constants'
 import { ContractInstance } from './types'
 import { createLogger, Logger } from './utils/logger'
-import { signer } from '../../core/src/commons'
 
 let prompt: Logger
 createLogger().then(logger => (prompt = logger))
