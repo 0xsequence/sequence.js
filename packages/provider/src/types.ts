@@ -2,15 +2,15 @@ import { ETHAuthProof as AuthETHAuthProof } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import {
   ChainIdLike,
-  JsonRpcHandler,
+  EIP1193Provider,
   JsonRpcRequest,
   JsonRpcResponse,
   NetworkConfig,
-  ProviderRpcError as NetworkProviderRpcError
+  JsonRpcErrorPayload as _JsonRpcErrorPayload
 } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
-export interface ProviderTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface ProviderTransport extends EIP1193Provider<JsonRpcResponse>, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
@@ -42,7 +42,7 @@ export function isProviderTransport(transport: any): transport is ProviderTransp
   )
 }
 
-export interface WalletTransport extends JsonRpcHandler, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface WalletTransport extends EIP1193Provider<JsonRpcResponse>, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
@@ -72,7 +72,7 @@ export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
 // which may contain the result or an error payload from the wallet.
 export type ProviderMessageResponseCallback = (error?: ProviderRpcError, response?: ProviderMessageResponse) => void
 
-export type ProviderRpcError = NetworkProviderRpcError
+export type ProviderRpcError = _JsonRpcErrorPayload
 
 export interface ProviderMessageRequestHandler {
   // sendMessageRequest sends a ProviderMessageRequest over the wire to the wallet.
@@ -373,8 +373,3 @@ export type OptionalEIP6492 =
       eip6492?: boolean
     }
   | undefined
-
-// This is required by viem, it expects a provider to have an EIP-1193 compliant `request` attribute.
-export interface EIP1193Provider {
-  request: (request: { method: string; params?: Array<any> }) => Promise<any>
-}

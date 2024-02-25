@@ -1,33 +1,28 @@
 import { ethers } from 'ethers'
 import {
-  JsonRpcHandlerFunc,
+  EIP1193ProviderFunc,
   JsonRpcRequest,
-  JsonRpcResponseCallback,
-  JsonRpcMiddleware,
-  JsonRpcMiddlewareHandler
+  JsonRpcResponse,
+  JsonRpcMiddleware
 } from '../types'
 
 export const networkProviderMiddleware =
   (getChainId: (request: JsonRpcRequest) => number): JsonRpcMiddleware =>
-  (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-      const networkChainId = getChainId(request)
+    (next: EIP1193ProviderFunc) => {
+      return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
+        const networkChainId = getChainId(request)
 
-      const { id, method } = request
+        switch (request.method) {
+          case 'net_version': {
+            return { jsonrpc: '2.0', id: request.id!, result: `${networkChainId}` }
+          }
 
-      switch (method) {
-        case 'net_version':
-          callback(undefined, { jsonrpc: '2.0', id: id!, result: `${networkChainId}` })
-          return
+          case 'eth_chainId': {
+            return { jsonrpc: '2.0', id: request.id!, result: ethers.toBeHex(networkChainId) }
+          }
+        }
 
-        case 'eth_chainId':
-          callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.toBeHex(networkChainId) })
-          return
-
-        default:
+        // request is allowed. keep going..
+        return next(request)
       }
-
-      // request is allowed. keep going..
-      next(request, callback, chainId)
     }
-  }
