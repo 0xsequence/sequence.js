@@ -199,7 +199,7 @@ export abstract class ProviderRelayer implements Relayer {
 
         // Find a transaction with a TxExecuted log
         const found = txs.find(tx =>
-          tx.logs.find(
+          tx?.logs.find(
             l =>
               (l.topics.length === 0 && l.data.replace('0x', '') === normalMetaTxnId) ||
               (l.topics.length === 1 &&
@@ -212,10 +212,17 @@ export abstract class ProviderRelayer implements Relayer {
 
         // If found return that
         if (found) {
-          return {
-            receipt: found,
-            ...(await retry(() => this.provider.getTransaction(found.hash), `unable to get transaction ${found.hash}`))
+          const response = await retry(() => this.provider.getTransaction(found.hash), `unable to get transaction ${found.hash}`)
+          if (!response) {
+            throw new Error(`Transaction response not found for  ${metaTxnId}`)
           }
+
+          // NOTE: we have to do this, because ethers-v6 uses private fields
+          // and we can't just extend the class and override the method, so
+          // we just modify the response object directly by adding the receipt to it.
+          const out: any = response
+          out.receipt = found
+          return out
         }
 
         // Otherwise wait and try again

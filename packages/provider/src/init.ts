@@ -2,12 +2,13 @@ import {
   CachedProvider,
   ChainIdLike,
   JsonRpcRouter,
-  JsonRpcSender,
+  JsonRpcHandler,
   NetworkConfig,
   allNetworks,
   exceptionProviderMiddleware,
   findNetworkConfig,
-  loggingProviderMiddleware
+  loggingProviderMiddleware,
+  JsonRpcProvider
 } from '@0xsequence/network'
 import { MuxTransportTemplate } from './transports'
 import { ItemStore, useBestStore } from './utils'
@@ -120,13 +121,13 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
         throw new Error(`no rpcUrl found for chainId: ${chainId}`)
       }
 
-      const baseProvider = new ethers.JsonRpcProvider(rpcUrl)
-      const router = new JsonRpcRouter(
-        [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()],
-        new JsonRpcSender(baseProvider)
-      )
-
-      rpcProviders[chainId] = new ethers.BrowserProvider(router, chainId)
+      rpcProviders[chainId] = new JsonRpcProvider(rpcUrl, {
+        middlewares: [
+          loggingProviderMiddleware,
+          exceptionProviderMiddleware,
+          new CachedProvider()
+        ]
+      })
     }
 
     return rpcProviders[chainId]

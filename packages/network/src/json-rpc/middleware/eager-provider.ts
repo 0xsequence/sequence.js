@@ -1,6 +1,6 @@
 import { commons } from '@0xsequence/core'
 import { ethers } from 'ethers'
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
+import { EIP1193ProviderFunc, JsonRpcRequest, JsonRpcMiddlewareHandler } from '../types'
 
 // EagerProvider will eagerly respond to a provider request from pre-initialized data values.
 //
@@ -20,43 +20,37 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
     this.options = options
   }
 
-  sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-      const { id, method } = request
-
-      switch (method) {
+  requestHandler = (next: EIP1193ProviderFunc) => {
+    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<any> => {
+      switch (request.method) {
         case 'net_version':
           if (this.options.chainId) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: `${this.options.chainId}` })
-            return
+            return { jsonrpc: '2.0', id: request.id!, result: `${this.options.chainId}` }
           }
           break
 
         case 'eth_chainId':
           if (this.options.chainId) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: ethers.toBeHex(this.options.chainId) })
-            return
+            return { jsonrpc: '2.0', id: request.id!, result: ethers.toBeHex(this.options.chainId) }
           }
           break
 
         case 'eth_accounts':
           if (this.options.accountAddress) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: [ethers.getAddress(this.options.accountAddress)] })
-            return
+            return { jsonrpc: '2.0', id: request.id!, result: [ethers.getAddress(this.options.accountAddress)] }
           }
           break
 
         case 'sequence_getWalletContext':
           if (this.options.walletContext) {
-            callback(undefined, { jsonrpc: '2.0', id: id!, result: this.options.walletContext })
-            return
+            return { jsonrpc: '2.0', id: request.id!, result: this.options.walletContext }
           }
           break
 
         default:
       }
 
-      next(request, callback, chainId)
+      return next(request)
     }
   }
 }

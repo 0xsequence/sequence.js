@@ -1,13 +1,15 @@
 import { ethers } from 'ethers'
 import {
   JsonRpcRouter,
-  JsonRpcSender,
   loggingProviderMiddleware,
   EagerProvider,
   SingleflightMiddleware,
   CachedProvider,
   JsonRpcMiddleware,
-  JsonRpcMiddlewareHandler
+  JsonRpcMiddlewareHandler,
+  JsonRpcHandler,
+  EIP1193Provider,
+  JsonRpcSender
 } from './json-rpc'
 import { ChainId, networks } from './constants'
 
@@ -23,10 +25,10 @@ export interface JsonRpcProviderOptions {
 }
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
-export class JsonRpcProvider extends ethers.JsonRpcProvider {
-  private _chainId?: number
-  private _sender: JsonRpcSender
-  private _nextId: number = 1
+export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Provider, JsonRpcSender {
+  #chainId?: number
+  #nextId: number = 1
+  #sender: EIP1193Provider
 
   constructor(
     public url: string | ethers.FetchRequest | undefined,
@@ -38,7 +40,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     const middlewares = options?.middlewares
     const blockCache = options?.blockCache
 
-    this._chainId = chainId
+    this.#chainId = chainId
 
     // NOTE: it will either use the middleware stack passed to the constructor
     // or it will use the default caching middleware provider. It does not concat them,
@@ -51,14 +53,22 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
         new SingleflightMiddleware(),
         new CachedProvider({ defaultChainId: chainId, blockCache: blockCache })
       ],
-      new JsonRpcSender(this.fetch, chainId)
+      new JsonRpcHandler(this.fetch, chainId)
     )
 
-    this._sender = new JsonRpcSender(router, chainId)
+    this.#sender = router
+  }
+
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
+    return this.#sender.request(request)
+  }
+
+  send(method: string, params?: any[] | Record<string, any>, chainId?: number): Promise<any> {
+    return this.#sender.request({ method, params: params as any, chainId })
   }
 
   async getNetwork(): Promise<ethers.Network> {
-    const chainId = this._chainId
+    const chainId = this.#chainId
     if (chainId) {
       const network = networks[chainId as ChainId]
       const name = network?.name || ''
@@ -70,24 +80,27 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
       })
     } else {
       const chainIdHex = await this.send('eth_chainId', [])
-      this._chainId = Number(BigInt(chainIdHex))
+      this.#chainId = Number(BigInt(chainIdHex))
       return this.getNetwork()
     }
   }
 
-  send = (method: string, params: Array<any>): Promise<any> => {
-    return this._sender.send(method, params)
-  }
+  // send = (method: string, params: Array<any>): Promise<any> => {
+  //   return this.#sender.request({ method, params, chainId: this.#chainId })
+  // }
 
-  private fetch = async (method: string, params: Array<any>): Promise<any> => {
+  // private fetch = async (method: string, params: Array<any>): Promise<any> => {
+  private fetch = async (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
     if (this.url === undefined) {
       throw new Error('missing provider URL')
     }
 
+    const { method, params } = request
+
     const jsonRpcRequest = {
       method,
       params,
-      id: this._nextId++,
+      id: this.#nextId++,
       jsonrpc: '2.0'
     }
 
@@ -102,6 +115,9 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
 
     const fetchRequest = typeof this.url === 'string' ? new ethers.FetchRequest(this.url) : this.url
     fetchRequest.body = JSON.stringify(jsonRpcRequest)
+
+    // TODOXXX: what about headers, etc..?
+    // we probably need these in the options of the construtor, etc..
 
     try {
       const res = await fetchRequest.send()
@@ -125,13 +141,13 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
   }
 }
 
-function getResult(payload: { error?: { code?: number; data?: any; message?: string }; result?: any }): any {
-  if (payload.error) {
-    // @TODO: not any
-    const error: any = new Error(payload.error.message)
-    error.code = payload.error.code
-    error.data = payload.error.data
-    throw error
-  }
-  return payload.result
-}
+// function getResult(payload: { error?: { code?: number; data?: any; message?: string }; result?: any }): any {
+//   if (payload.error) {
+//     // @TODO: not any
+//     const error: any = new Error(payload.error.message)
+//     error.code = payload.error.code
+//     error.data = payload.error.data
+//     throw error
+//   }
+//   return payload.result
+// }

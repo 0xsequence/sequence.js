@@ -6,14 +6,15 @@ import {
   ChainIdLike,
   findNetworkConfig,
   findSupportedNetwork,
-  JsonRpcHandler,
+  JsonRpcErrorPayload,
   JsonRpcRequest,
   JsonRpcResponse,
   JsonRpcResponseCallback,
-  NetworkConfig
+  NetworkConfig,
+  EIP1193Provider
 } from '@0xsequence/network'
 import { logger, toHexString, TypedData } from '@0xsequence/utils'
-import { Eip1193Provider, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { EventEmitter2 as EventEmitter } from 'eventemitter2'
 
 import { fromExtended } from '../extended'
@@ -43,7 +44,7 @@ export interface WalletSignInOptions {
   defaultNetworkId?: number
 }
 
-export class WalletRequestHandler implements Eip1193Provider, JsonRpcHandler, ProviderMessageRequestHandler {
+export class WalletRequestHandler implements EIP1193Provider, ProviderMessageRequestHandler {
   // signer interface of the wallet. A null value means there is no signer (ie. user not signed in). An undefined
   // value means the signer state is unknown, usually meaning the wallet app is booting up and initializing. Of course
   // a Signer value is the actually interface to a signed-in account
@@ -234,10 +235,23 @@ export class WalletRequestHandler implements Eip1193Provider, JsonRpcHandler, Pr
     })
   }
 
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> {
+    return new Promise<JsonRpcResponse>((resolve, reject) => {
+      this.sendAsync(request, (error?: JsonRpcErrorPayload, response?: JsonRpcResponse) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(response!)
+        }
+      })
+    })
+  }
+
+
   // sendAsync implements the JsonRpcHandler interface for sending JsonRpcRequests to the wallet
+  // TODOXXX -- remove.. use request instead
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     const response: JsonRpcResponse = {
-      jsonrpc: '2.0',
       id: request.id!,
       result: null
     }

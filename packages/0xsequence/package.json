@@ -37,7 +37,6 @@
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",
-    "@0xsequence/multicall": "workspace:*",
     "@0xsequence/network": "workspace:*",
     "@0xsequence/provider": "workspace:*",
     "@0xsequence/relayer": "workspace:*",

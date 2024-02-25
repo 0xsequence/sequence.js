@@ -20,16 +20,9 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=6",
-    "@ethersproject/abi": ">= 5.5",
-    "@ethersproject/providers": ">= 5.5"
+    "ethers": ">=6"
   },
   "devDependencies": {
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
-    "@nomiclabs/hardhat-ethers": "^2.2.1",
-    "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@typechain/ethers-v6": "^0.5.1",
     "dotenv": "^16.0.3",
     "ethers": "^6.11.1",
     "typechain": "^8.1.1"

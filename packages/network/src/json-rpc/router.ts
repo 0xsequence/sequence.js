@@ -1,17 +1,15 @@
 import {
-  JsonRpcHandlerFunc,
-  JsonRpcRequest,
-  JsonRpcResponseCallback,
-  JsonRpcHandler,
+  EIP1193Provider,
+  EIP1193ProviderFunc,
   JsonRpcMiddleware,
-  JsonRpcMiddlewareHandler
+  JsonRpcMiddlewareHandler,
 } from './types'
 
-export class JsonRpcRouter implements JsonRpcHandler {
-  private sender: JsonRpcHandler
-  private handler: JsonRpcHandlerFunc
+export class JsonRpcRouter implements EIP1193Provider {
+  private sender: EIP1193Provider
+  private handler: EIP1193Provider
 
-  constructor(middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>, sender: JsonRpcHandler) {
+  constructor(middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>, sender: EIP1193Provider) {
     this.sender = sender
     if (middlewares) {
       this.setMiddleware(middlewares)
@@ -19,36 +17,32 @@ export class JsonRpcRouter implements JsonRpcHandler {
   }
 
   setMiddleware(middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>) {
-    this.handler = createJsonRpcMiddlewareStack(middlewares, this.sender.sendAsync)
+    this.handler = createJsonRpcMiddlewareStack(middlewares, this.sender)
   }
 
-  sendAsync(request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) {
-    try {
-      this.handler(request, callback, chainId)
-    } catch (err) {
-      callback(err, undefined)
-    }
+  request(request: { id?: number, method: string, params?: any[], chainId?: number }): Promise<any> {
+    return this.handler.request(request)
   }
 }
 
 export const createJsonRpcMiddlewareStack = (
   middlewares: Array<JsonRpcMiddleware | JsonRpcMiddlewareHandler>,
-  handler: JsonRpcHandlerFunc
-): JsonRpcHandlerFunc => {
+  handler: EIP1193Provider
+): EIP1193Provider => {
   if (middlewares.length === 0) return handler
 
   const toMiddleware = (v: any): JsonRpcMiddleware => {
-    if (v.sendAsyncMiddleware) {
-      return (v as JsonRpcMiddlewareHandler).sendAsyncMiddleware
+    if (v.requestMiddleware) {
+      return (v as JsonRpcMiddlewareHandler).requestHandler
     } else {
       return v
     }
   }
 
-  let chain: JsonRpcHandlerFunc
-  chain = toMiddleware(middlewares[middlewares.length - 1])(handler)
+  let chain: EIP1193ProviderFunc
+  chain = toMiddleware(middlewares[middlewares.length - 1])(handler.request)
   for (let i = middlewares.length - 2; i >= 0; i--) {
     chain = toMiddleware(middlewares[i])(chain)
   }
-  return chain
+  return { request: chain }
 }

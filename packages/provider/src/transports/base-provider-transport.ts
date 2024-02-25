@@ -17,7 +17,7 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequence/network'
+import { NetworkConfig, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcResponse, JsonRpcErrorPayload } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
@@ -89,6 +89,19 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     )
   }
 
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> {
+    return new Promise<JsonRpcResponse>((resolve, reject) => {
+      this.sendAsync(request, (error?: JsonRpcErrorPayload, response?: JsonRpcResponse) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(response!)
+        }
+      })
+    })
+  }
+
+  // TODOXXX: refactor and remove this method.. just use request promise..
   sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
     // here, we receive the message from the dapp provider call
 
