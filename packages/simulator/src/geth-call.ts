@@ -7,13 +7,21 @@ export async function gethCall(
   block?: ethers.BlockTag,
   overrides?: Overrides
 ) {
-  const formatter = ethers.JsonRpcProvider.getFormatter()
+  // const formatter = ethers.JsonRpcProvider.getFormatter()
+
+  // TODOXXX review..
+  // return provider.send('eth_call', [
+  //   formatter.transactionRequest(transaction),
+  //   formatter.blockTag(block ?? null),
+  //   ...(overrides ? [formatOverrides(overrides)] : [])
+  // ])
 
   return provider.send('eth_call', [
-    formatter.transactionRequest(transaction),
-    formatter.blockTag(block ?? null),
+    transaction,
+    block ?? null,
     ...(overrides ? [formatOverrides(overrides)] : [])
   ])
+
 }
 
 export interface Overrides {
@@ -37,13 +45,14 @@ function formatOverrides(overrides: any): Overrides {
 
   const formatted: Overrides = {}
 
-  for (const [key, value] of Object.entries(overrides)) {
-    if (ethers.isHexString(key, 20)) {
-      try {
-        formatted[key] = ethers.Formatter.check(overridesFormat, value)
-      } catch {}
-    }
-  }
+  // TODOXXX review..
+  // for (const [key, value] of Object.entries(overrides)) {
+  //   if (ethers.isHexString(key, 20)) {
+  //     try {
+  //       formatted[key] = ethers.Formatter.check(overridesFormat, value)
+  //     } catch {}
+  //   }
+  // }
 
   return formatted
 }

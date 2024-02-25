@@ -256,6 +256,9 @@ export class RpcRelayer implements Relayer {
 
       response.wait = wait
 
+      // NOTE: we just ignore these errors which come from the private fields
+      // of ethers-v6 .. but, we should probably rework this instead..
+      // @ts-ignore
       return response as commons.transaction.TransactionResponse
     }
   }
@@ -286,6 +289,9 @@ export class RpcRelayer implements Relayer {
 
     const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
+    // NOTE: we just ignore these errors which come from the private fields
+    // of ethers-v6 .. but, we should probably rework this instead..
+    // @ts-ignore
     return {
       blockHash: txReceipt.blockHash,
       blockNumber: Number(BigInt(txReceipt.blockNumber)),
