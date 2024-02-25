@@ -9,6 +9,7 @@ export type JsonRpcRequest = {
 }
 
 export type JsonRpcResponse = {
+  jsonrpc?: string
   id: number
   result: any
   error?: JsonRpcErrorPayload
@@ -33,13 +34,13 @@ export interface JsonRpcSender<R = any> {
 
 export type JsonRpcSendFunc<R = any> = (method: string, params?: any[], chainId?: number) => Promise<R>
 
-export type JsonRpcResponseCallback = (error?: JsonRpcErrorPayload, response?: JsonRpcResponse) => void
+export type JsonRpcResponseCallback = (error: JsonRpcErrorPayload | undefined, response?: JsonRpcResponse) => void
 
 export type JsonRpcSendAsyncFunc = (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => void
 
 export type JsonRpcMiddleware = (next: EIP1193ProviderFunc) => EIP1193ProviderFunc
 
 export interface JsonRpcMiddlewareHandler {
-  requestMiddleware: JsonRpcMiddleware
+  requestHandler: JsonRpcMiddleware
 }
 

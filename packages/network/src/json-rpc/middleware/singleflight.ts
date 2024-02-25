@@ -1,4 +1,4 @@
-import { EIP1193ProviderFunc, JsonRpcResponse, JsonRpcErrorPayload, JsonRpcMiddlewareHandler } from '../types'
+import { EIP1193ProviderFunc, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 
 export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
   private singleflightJsonRpcMethods = [
@@ -25,13 +25,13 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
     'eth_getLogs'
   ]
 
-  inflight: { [key: string]: { id: number; callback: (error: any, response?: JsonRpcResponse) => void }[] }
+  inflight: { [key: string]: { id: number; callback: JsonRpcResponseCallback }[] }
 
   constructor() {
     this.inflight = {}
   }
 
-  requestMiddleware = (next: EIP1193ProviderFunc) => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
     return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
       // continue to next handler if method isn't part of methods list
       if (!this.singleflightJsonRpcMethods.includes(request.method)) {

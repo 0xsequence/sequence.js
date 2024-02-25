@@ -1,31 +1,36 @@
+import { ethers } from 'ethers'
 import {
   EIP1193Provider,
   EIP1193ProviderFunc,
   JsonRpcSender
 } from './types'
 
-import { isJsonRpcSender } from './utils'
+import { isJsonRpcSender, isJsonRpcProvider } from './utils'
 
 export class JsonRpcHandler implements EIP1193Provider, JsonRpcSender {
-  #provider: EIP1193ProviderFunc
-  #defaultChainId?: number
+  private provider: EIP1193ProviderFunc
+  private defaultChainId?: number
 
-  constructor(provider: EIP1193ProviderFunc | JsonRpcSender, defaultChainId?: number) {
+  constructor(provider: EIP1193ProviderFunc | JsonRpcSender | ethers.JsonRpcProvider, defaultChainId?: number) {
     if (isJsonRpcSender(provider)) {
-      this.#provider = (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
+      this.provider = (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
         return provider.send(request.method, request.params, request.chainId)
       }
+    } else if (isJsonRpcProvider(provider)) {
+      this.provider = (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
+        return provider.send(request.method, request.params || [])
+      }
     } else {
-      this.#provider = provider
+      this.provider = provider
     }
-    this.#defaultChainId = defaultChainId
+    this.defaultChainId = defaultChainId
   }
 
   request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
     if (!request.chainId) {
-      request.chainId = this.#defaultChainId
+      request.chainId = this.defaultChainId
     }
-    return this.#provider(request)
+    return this.provider(request)
   }
 
   send(method: string, params?: any[], chainId?: number): Promise<any> {

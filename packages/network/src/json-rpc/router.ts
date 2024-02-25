@@ -33,7 +33,7 @@ export const createJsonRpcMiddlewareStack = (
 
   const toMiddleware = (v: any): JsonRpcMiddleware => {
     if (v.requestMiddleware) {
-      return (v as JsonRpcMiddlewareHandler).requestMiddleware
+      return (v as JsonRpcMiddlewareHandler).requestHandler
     } else {
       return v
     }

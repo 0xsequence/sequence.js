@@ -20,34 +20,30 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
     this.options = options
   }
 
-  requestMiddleware = (next: EIP1193ProviderFunc) => {
-    return (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<any> => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
+    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<any> => {
       switch (request.method) {
         case 'net_version':
           if (this.options.chainId) {
-            const response = { jsonrpc: '2.0', id: request.id!, result: `${this.options.chainId}` }
-            return new Promise(resolve => resolve(response))
+            return { jsonrpc: '2.0', id: request.id!, result: `${this.options.chainId}` }
           }
           break
 
         case 'eth_chainId':
           if (this.options.chainId) {
-            const response = { jsonrpc: '2.0', id: request.id!, result: ethers.toBeHex(this.options.chainId) }
-            return new Promise(resolve => resolve(response))
+            return { jsonrpc: '2.0', id: request.id!, result: ethers.toBeHex(this.options.chainId) }
           }
           break
 
         case 'eth_accounts':
           if (this.options.accountAddress) {
-            const response = { jsonrpc: '2.0', id: request.id!, result: [ethers.getAddress(this.options.accountAddress)] }
-            return new Promise(resolve => resolve(response))
+            return { jsonrpc: '2.0', id: request.id!, result: [ethers.getAddress(this.options.accountAddress)] }
           }
           break
 
         case 'sequence_getWalletContext':
           if (this.options.walletContext) {
-            const response = { jsonrpc: '2.0', id: request.id!, result: this.options.walletContext }
-            return new Promise(resolve => resolve(response))
+            return { jsonrpc: '2.0', id: request.id!, result: this.options.walletContext }
           }
           break
 

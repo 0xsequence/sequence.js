@@ -15,7 +15,7 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
     }
   }
 
-  requestMiddleware = (next: EIP1193ProviderFunc) => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
     return (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
       // When provider is configured, send non-private methods to our local public provider
       if (this.provider && !this.privateJsonRpcMethods.includes(request.method)) {
