@@ -21,7 +21,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
   }
 
   requestMiddleware = (next: EIP1193ProviderFunc) => {
-    return (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any>, chainId?: number }): Promise<any> => {
+    return (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<any> => {
       switch (request.method) {
         case 'net_version':
           if (this.options.chainId) {

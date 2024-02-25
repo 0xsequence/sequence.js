@@ -7,8 +7,9 @@ import {
   CachedProvider,
   JsonRpcMiddleware,
   JsonRpcMiddlewareHandler,
+  JsonRpcHandler,
   EIP1193Provider,
-  JsonRpcHandler
+  JsonRpcSender
 } from './json-rpc'
 import { ChainId, networks } from './constants'
 
@@ -24,7 +25,7 @@ export interface JsonRpcProviderOptions {
 }
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
-export class JsonRpcProvider extends ethers.JsonRpcProvider {
+export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Provider, JsonRpcSender {
   #chainId?: number
   #nextId: number = 1
   #sender: EIP1193Provider
@@ -58,8 +59,12 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     this.#sender = router
   }
 
-  request(request: { method: string, params?: Array<any>, chainId?: number }): Promise<any> {
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
     return this.#sender.request(request)
+  }
+
+  send(method: string, params?: any[] | Record<string, any>, chainId?: number): Promise<any> {
+    return this.#sender.request({ method, params: params as any, chainId })
   }
 
   async getNetwork(): Promise<ethers.Network> {
@@ -85,7 +90,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
   // }
 
   // private fetch = async (method: string, params: Array<any>): Promise<any> => {
-  private fetch = async (request: { method: string, params?: Array<any>, chainId?: number }): Promise<any> => {
+  private fetch = async (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
     if (this.url === undefined) {
       throw new Error('missing provider URL')
     }
@@ -112,6 +117,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     fetchRequest.body = JSON.stringify(jsonRpcRequest)
 
     // TODOXXX: what about headers, etc..?
+    // we probably need these in the options of the construtor, etc..
 
     try {
       const res = await fetchRequest.send()

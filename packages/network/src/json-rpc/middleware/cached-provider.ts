@@ -53,11 +53,9 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
   }
 
   requestMiddleware = (next: EIP1193ProviderFunc) => {
-    // return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any>, chainId?: number }): Promise<JsonRpcResponse> => {
+    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
-        // TODO ... request.params type...
         const key = this.cacheKey(request.method, request.params! as any[], request.chainId || this.defaultChainId)
         const result = this.getCacheValue(key)
         if (result && result !== '') {
@@ -90,37 +88,9 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       }
 
       return response
-
-      // next(
-      //   request,
-      //   (error: any, response?: JsonRpcResponse, chainId?: number) => {
-      //     // Store result in cache and continue
-      //     if (
-      //       this.cachableJsonRpcMethods.includes(request.method) ||
-      //       this.cachableJsonRpcMethodsByBlock.includes(request.method)
-      //     ) {
-      //       if (response && response.result && this.shouldCacheResponse(request, response)) {
-      //         // cache the value
-      //         // TODO: request.params type
-      //         const key = this.cacheKey(request.method, request.params! as any[], chainId || this.defaultChainId)
-
-      //         if (this.cachableJsonRpcMethods.includes(request.method)) {
-      //           this.setCacheValue(key, response.result)
-      //         } else {
-      //           this.setCacheByBlockValue(key, response.result)
-      //         }
-      //       }
-      //     }
-
-      //     // Exec next handler
-      //     callback(error, response)
-      //   },
-      //   chainId || this.defaultChainId
-      // )
     }
   }
 
-  // TODO params type..
   cacheKey = (method: string, params: any[], chainId?: number) => {
     let key = ''
     if (chainId) {

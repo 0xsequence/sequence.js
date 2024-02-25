@@ -96,7 +96,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
-  request(request: { method: string, params?: Array<any>, chainId?: number }): Promise<JsonRpcResponse> {
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> {
     throw new Error('abstract method')
   }
 

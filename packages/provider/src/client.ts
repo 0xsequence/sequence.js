@@ -380,7 +380,7 @@ export class SequenceClient {
 
   // Higher level API
 
-  request(request: { method: string, params?:  Array<any>, chainId?: number }): Promise<any> {
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
     // Internally when sending requests we use `legacy_sign`
     // to avoid the default EIP6492 behavior overriding an explicit
     // "legacy sign" request, so we map the method here.

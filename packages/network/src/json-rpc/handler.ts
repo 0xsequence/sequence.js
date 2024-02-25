@@ -12,7 +12,7 @@ export class JsonRpcHandler implements EIP1193Provider, JsonRpcSender {
 
   constructor(provider: EIP1193ProviderFunc | JsonRpcSender, defaultChainId?: number) {
     if (isJsonRpcSender(provider)) {
-      this.#provider = (request: { method: string, params?: Array<any>, chainId?: number }): Promise<any> => {
+      this.#provider = (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
         return provider.send(request.method, request.params, request.chainId)
       }
     } else {
@@ -21,14 +21,14 @@ export class JsonRpcHandler implements EIP1193Provider, JsonRpcSender {
     this.#defaultChainId = defaultChainId
   }
 
-  request(request: { method: string, params?: Array<any>, chainId?: number }): Promise<any> {
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
     if (!request.chainId) {
       request.chainId = this.#defaultChainId
     }
     return this.#provider(request)
   }
 
-  send(method: string, params?: Array<any>, chainId?: number): Promise<any> {
+  send(method: string, params?: any[], chainId?: number): Promise<any> {
     const request = {
       method, params, chainId
     }

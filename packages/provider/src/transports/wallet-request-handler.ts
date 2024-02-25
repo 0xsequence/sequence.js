@@ -235,7 +235,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
     })
   }
 
-  request(request: { method: string, params?: Array<any>, chainId?: number }): Promise<JsonRpcResponse> {
+  request(request: { method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> {
     return new Promise<JsonRpcResponse>((resolve, reject) => {
       this.sendAsync(request, (error?: JsonRpcErrorPayload, response?: JsonRpcResponse) => {
         if (error) {

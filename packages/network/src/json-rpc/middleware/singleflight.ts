@@ -32,14 +32,13 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
   }
 
   requestMiddleware = (next: EIP1193ProviderFunc) => {
-    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any>, chainId?: number }): Promise<JsonRpcResponse> => {
+    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
       // continue to next handler if method isn't part of methods list
       if (!this.singleflightJsonRpcMethods.includes(request.method)) {
         return next(request)
       }
 
-      // TOOD ... params type
-      const key = this.requestKey(request.method, (request.params as any[]) || [], request.chainId)
+      const key = this.requestKey(request.method, request.params || [], request.chainId)
 
       if (!this.inflight[key]) {
         // first request -- init the empty list
