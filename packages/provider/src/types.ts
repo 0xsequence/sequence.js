@@ -10,7 +10,7 @@ import {
 } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
-export interface ProviderTransport extends EIP1193Provider, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface ProviderTransport extends EIP1193Provider<JsonRpcResponse>, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
@@ -42,7 +42,7 @@ export function isProviderTransport(transport: any): transport is ProviderTransp
   )
 }
 
-export interface WalletTransport extends EIP1193Provider, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface WalletTransport extends EIP1193Provider<JsonRpcResponse>, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 

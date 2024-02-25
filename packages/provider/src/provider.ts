@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { SequenceClient } from './client'
-import { ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
-import { ConnectDetails, ConnectOptions, EIP1193Provider, OpenWalletIntent, OptionalChainIdLike, WalletSession } from './types'
+import { EIP1193Provider, ChainIdLike, NetworkConfig, allNetworks, findNetworkConfig } from '@0xsequence/network'
+import { ConnectDetails, ConnectOptions, OpenWalletIntent, OptionalChainIdLike, WalletSession } from './types'
 import { commons } from '@0xsequence/core'
 import { WalletUtils } from './utils/index'
 import { SequenceSigner, SingleNetworkSequenceSigner } from './signer'
@@ -269,12 +269,14 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     ) {
       // We pass the chainId to the client, if we don't pass one
       // the client will use its own default chainId
-      return this.client.send({ method, params }, this.getChainId())
+      return this.client.request({ method, params, chainId: this.getChainId() })
     }
 
     // Forward call to the corresponding provider
     // we use the provided chainId, or the default one provided by the client
     const provider = await this._getSubprovider()
+
+    // @ts-ignore
     const prepared = provider.getRpcRequest({ method, args: params }) ?? { method, args: params }
     return provider.send(prepared.method, prepared.args)
   }

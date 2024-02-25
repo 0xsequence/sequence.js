@@ -519,15 +519,15 @@ describe('SequenceClient', () => {
 
     expect(calledSendAsync).to.equal(0)
 
-    const result1 = await client.send({ method: 'eth_chainId', params: [] })
+    const result1 = await client.request({ method: 'eth_chainId', params: [] })
     expect(result1).to.deep.equal('0x1')
     expect(calledSendAsync).to.equal(1)
 
-    const result2 = await client.send({ method: 'eth_accounts', params: [] }, 2)
+    const result2 = await client.request({ method: 'eth_accounts', params: [], chainId: 2 })
     expect(result2).to.deep.equal('0x12345')
     expect(calledSendAsync).to.equal(2)
 
-    const result3 = await client.send({ method: 'eth_sendTransaction', params: [{ to: '0x1234' }] }, 5)
+    const result3 = await client.request({ method: 'eth_sendTransaction', params: [{ to: '0x1234' }], chainId: 5 })
     expect(result3).to.deep.equal('0x000')
     expect(calledSendAsync).to.equal(3)
 
@@ -535,7 +535,7 @@ describe('SequenceClient', () => {
     // should change the chainId of the request
     client.setDefaultChainId(9)
 
-    const result4 = await client.send({ method: 'non-standard', params: [{ a: 23123, b: true }] })
+    const result4 = await client.request({ method: 'non-standard', params: [{ a: 23123, b: true }] })
     expect(result4).to.deep.equal('0x99')
     expect(calledSendAsync).to.equal(4)
   })
@@ -544,9 +544,10 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-          callback(new Error('Failed to send'))
-        }
+        // TODOXXX
+        // sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        //   callback(new Error('Failed to send'))
+        // }
       },
       useBestStore(),
       {
@@ -554,7 +555,7 @@ describe('SequenceClient', () => {
       }
     )
 
-    const result = client.send({ method: 'eth_chainId', params: [] })
+    const result = client.request({ method: 'eth_chainId', params: [] })
     await expect(result).to.be.rejectedWith('Failed to send')
   })
 
@@ -1466,10 +1467,10 @@ describe('SequenceClient', () => {
 
       expect(client.defaultEIP6492).to.be.false
 
-      const result1 = await client.send({ method: 'personal_sign', params: ['0x112233'] })
+      const result1 = await client.request({ method: 'personal_sign', params: ['0x112233'] })
       expect(result1).to.equal('0x445566')
 
-      const result2 = await client.send({ method: 'eth_signTypedData_v4', params: [data] })
+      const result2 = await client.request({ method: 'eth_signTypedData_v4', params: [data] })
       expect(result2).to.equal('0x112233')
     })
 
@@ -1539,10 +1540,10 @@ describe('SequenceClient', () => {
 
       expect(client.defaultEIP6492).to.be.true
 
-      const result1 = await client.send({ method: 'personal_sign', params: ['0x112233'] })
+      const result1 = await client.request({ method: 'personal_sign', params: ['0x112233'] })
       expect(result1).to.equal('0x445566')
 
-      const result2 = await client.send({ method: 'eth_signTypedData_v4', params: [data] })
+      const result2 = await client.request({ method: 'eth_signTypedData_v4', params: [data] })
       expect(result2).to.equal('0x112233')
     })
 
@@ -1609,10 +1610,10 @@ describe('SequenceClient', () => {
 
       await client.connect({ app: 'This is a test' })
 
-      const result1 = await client.send({ method: 'sequence_sign', params: ['0x112233'] })
+      const result1 = await client.request({ method: 'sequence_sign', params: ['0x112233'] })
       expect(result1).to.equal('0x445566')
 
-      const result2 = await client.send({ method: 'sequence_signTypedData_v4', params: [data] })
+      const result2 = await client.request({ method: 'sequence_signTypedData_v4', params: [data] })
       expect(result2).to.equal('0x112233')
     })
   })
