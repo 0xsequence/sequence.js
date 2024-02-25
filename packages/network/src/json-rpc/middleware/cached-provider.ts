@@ -76,7 +76,6 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       ) {
         if (response && response.result && this.shouldCacheResponse(request, response)) {
           // cache the value
-          // TODO: request.params type
           const key = this.cacheKey(request.method, request.params! as any[], request.chainId || this.defaultChainId)
 
           if (this.cachableJsonRpcMethods.includes(request.method)) {

@@ -79,8 +79,6 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
     } else {
       key = `:${method}:`
     }
-
-    // TODO: params type..
     if (!params || params.length === 0) {
       return key + '[]'
     }
