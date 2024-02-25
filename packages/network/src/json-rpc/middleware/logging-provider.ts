@@ -1,4 +1,4 @@
-import { EIP1193ProviderFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcMiddleware } from '../types'
+import { EIP1193ProviderFunc, JsonRpcResponse, JsonRpcMiddleware } from '../types'
 import { logger } from '@0xsequence/utils'
 
 // TODO: rename to loggerMiddleware

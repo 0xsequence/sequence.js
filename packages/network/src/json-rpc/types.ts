@@ -30,13 +30,18 @@ export type JsonRpcErrorPayload = {
 //   sendAsync: JsonRpcHandlerFunc
 // }
 
+// EIP1193Provider with reponse of R (default any), but in most cases R will be of type JsonRpcResponse.
 export interface EIP1193Provider<R = any> {
-  request(request: { id?: number, method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<R>;
+  request(request: { method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<R>;
 }
 
-export type EIP1193ProviderFunc<R = any> = (request: { id?: number, method: string; params?: Array<any> | Record<string, any> }, chainId?: number) => Promise<R>
+export type EIP1193ProviderFunc<R = any> = (request: { method: string; params?: Array<any> | Record<string, any>, chainId?: number }) => Promise<R>
 
-export type JsonRpcRequestFunc = (method: string, params?:  Array<any> | Record<string, any>, chainId?: number) => Promise<any>
+export interface JsonRpcSender<R = any> {
+  send(method: string, params?:  Array<any> | Record<string, any>, chainId?: number): Promise<R>
+}
+
+export type JsonRpcSendFunc<R = any> = (method: string, params?:  Array<any> | Record<string, any>, chainId?: number) => Promise<R>
 
 export type JsonRpcMiddleware = (next: EIP1193ProviderFunc) => EIP1193ProviderFunc
 
