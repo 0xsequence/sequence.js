@@ -20,7 +20,7 @@ export class JsonRpcRouter implements EIP1193Provider {
     this.handler = createJsonRpcMiddlewareStack(middlewares, this.sender)
   }
 
-  request(request: { id?: number, method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<any> {
+  request(request: { id?: number, method: string, params?: Array<any>, chainId?: number }): Promise<any> {
     return this.handler.request(request)
   }
 }

@@ -3,7 +3,7 @@ import { logger } from '@0xsequence/utils'
 
 // TODO: rename to loggerMiddleware
 export const loggingProviderMiddleware: JsonRpcMiddleware = (next: EIP1193ProviderFunc<JsonRpcResponse>) => {
-  return async (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any> | Record<string, any>, chainId?: number }): Promise<JsonRpcResponse> => {
+  return async (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any>, chainId?: number }): Promise<JsonRpcResponse> => {
     const chainIdLabel = request.chainId ? ` chainId:${request.chainId}` : ''
     logger.info(`[provider request]${chainIdLabel} id:${request.id} method:${request.method} params:`, request.params)
 

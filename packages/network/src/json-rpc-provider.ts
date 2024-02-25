@@ -58,7 +58,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     this.#sender = router
   }
 
-  request(request: { method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<any> {
+  request(request: { method: string, params?: Array<any>, chainId?: number }): Promise<any> {
     return this.#sender.request(request)
   }
 
@@ -80,12 +80,12 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider {
     }
   }
 
-  // send = (method: string, params: Array<any> | Record<string, any>): Promise<any> => {
+  // send = (method: string, params: Array<any>): Promise<any> => {
   //   return this.#sender.request({ method, params, chainId: this.#chainId })
   // }
 
-  // private fetch = async (method: string, params: Array<any> | Record<string, any>): Promise<any> => {
-  private fetch = async (request: { method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<any> => {
+  // private fetch = async (method: string, params: Array<any>): Promise<any> => {
+  private fetch = async (request: { method: string, params?: Array<any>, chainId?: number }): Promise<any> => {
     if (this.url === undefined) {
       throw new Error('missing provider URL')
     }

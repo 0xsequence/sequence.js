@@ -198,7 +198,7 @@ export class MuxMessageProvider implements ProviderTransport {
     return true
   }
 
-  request(request: { method: string, params?: Array<any> | Record<string, any>, chainId?: number }): Promise<JsonRpcResponse> {
+  request(request: { method: string, params?: Array<any>, chainId?: number }): Promise<JsonRpcResponse> {
     if (!this.provider) {
       throw new Error('impossible state, wallet must be opened first')
     }

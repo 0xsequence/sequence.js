@@ -9,7 +9,7 @@ import {
 export const networkProviderMiddleware =
   (getChainId: (request: JsonRpcRequest) => number): JsonRpcMiddleware =>
     (next: EIP1193ProviderFunc) => {
-      return (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any> | Record<string, any>, chainId?: number }): Promise<JsonRpcResponse> => {
+      return (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any>, chainId?: number }): Promise<JsonRpcResponse> => {
         const networkChainId = getChainId(request)
 
         switch (request.method) {

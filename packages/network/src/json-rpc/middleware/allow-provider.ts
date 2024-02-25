@@ -29,7 +29,7 @@ export class AllowProvider implements JsonRpcMiddlewareHandler {
 export const allowProviderMiddleware =
   (isAllowed: (request: JsonRpcRequest) => boolean): JsonRpcMiddleware =>
     (next: EIP1193ProviderFunc) => {
-      return (request: { jsonrpc: '2.0', method: string, params?:  Array<any> | Record<string, any>, chainId?: number }): Promise<any> => {
+      return (request: { jsonrpc: '2.0', method: string, params?:  Array<any>, chainId?: number }): Promise<any> => {
         // ensure precondition is met or do not allow the request to continue
         if (!isAllowed(request)) {
           throw new Error('allowProvider middleware precondition is unmet.')

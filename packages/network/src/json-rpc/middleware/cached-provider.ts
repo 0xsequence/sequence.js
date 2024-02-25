@@ -54,7 +54,7 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
 
   requestMiddleware = (next: EIP1193ProviderFunc) => {
     // return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any> | Record<string, any>, chainId?: number }): Promise<JsonRpcResponse> => {
+    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?:  Array<any>, chainId?: number }): Promise<JsonRpcResponse> => {
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
         // TODO ... request.params type...
