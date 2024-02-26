@@ -58,7 +58,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
         signers.push({
           unrecovered: true,
           weight,
-          signature: ethers.toBeHex(ethers.hexlify(bytes.slice(i, i + 66))),
+          signature: ethers.hexlify(bytes.slice(i, i + 66)),
           isDynamic: false
         })
         i += 66
@@ -67,13 +67,13 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
       case SignaturePartType.Address:
         signers.push({
           weight,
-          address: ethers.getAddress(ethers.toBeHex(ethers.hexlify(bytes.slice(i, i + 20))))
+          address: ethers.getAddress(ethers.hexlify(bytes.slice(i, i + 20)))
         })
         i += 20
         break
 
       case SignaturePartType.DynamicSignature:
-        const address = ethers.getAddress(ethers.toBeHex(ethers.hexlify(bytes.slice(i, i + 20))))
+        const address = ethers.getAddress(ethers.hexlify(bytes.slice(i, i + 20)))
         i += 20
 
         const size = (bytes[i] << 8) | bytes[i + 1]
@@ -82,7 +82,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
         signers.push({
           unrecovered: true,
           weight,
-          signature: ethers.toBeHex(ethers.hexlify(bytes.slice(i, i + size))),
+          signature: ethers.hexlify(bytes.slice(i, i + size)),
           address,
           isDynamic: true
         })
@@ -99,7 +99,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
 
 export function encodeSignature(signature: Signature | UnrecoveredSignature | ethers.BytesLike): string {
   if (ethers.isBytesLike(signature)) {
-    return ethers.toBeHex(ethers.hexlify(signature))
+    return ethers.hexlify(signature)
   }
 
   const { signers, threshold } = isUnrecoveredSignature(signature) ? signature : signature.config

@@ -37,7 +37,7 @@ export function genRandomV2Config(
   const subdigests: v2.config.SubdigestLeaf[] = []
   for (let i = 0n; i < BigInt(numSubdigests); i = i + 1n) {
     subdigests.push({
-      subdigest: ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
+      subdigest: ethers.hexlify(ethers.randomBytes(32))
     })
   }
 

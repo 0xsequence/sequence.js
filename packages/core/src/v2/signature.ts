@@ -113,7 +113,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
       case SignaturePartType.Signature:
         {
           const weight = arr[0]
-          const signature = ethers.toBeHex(ethers.hexlify(arr.slice(1, SignaturePartTypeLength + 1)))
+          const signature = ethers.hexlify(arr.slice(1, SignaturePartTypeLength + 1))
 
           pointer = append(pointer, {
             signature,
@@ -128,7 +128,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
       case SignaturePartType.Address:
         {
           const weight = arr[0]
-          const address = ethers.getAddress(ethers.toBeHex(ethers.hexlify(arr.slice(1, 21))))
+          const address = ethers.getAddress(ethers.hexlify(arr.slice(1, 21)))
 
           pointer = append(pointer, {
             address,
@@ -141,9 +141,9 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
       case SignaturePartType.DynamicSignature:
         {
           const weight = arr[0]
-          const address = ethers.getAddress(ethers.toBeHex(ethers.hexlify(arr.slice(1, 21))))
+          const address = ethers.getAddress(ethers.hexlify(arr.slice(1, 21)))
           const size = (arr[21] << 16) | (arr[22] << 8) | arr[23]
-          const signature = ethers.toBeHex(ethers.hexlify(arr.slice(24, 24 + size)))
+          const signature = ethers.hexlify(arr.slice(24, 24 + size))
 
           pointer = append(pointer, {
             address,
@@ -158,7 +158,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
 
       case SignaturePartType.Node:
         {
-          const nodeHash = ethers.toBeHex(ethers.hexlify(arr.slice(0, 32)))
+          const nodeHash = ethers.hexlify(arr.slice(0, 32))
 
           pointer = append(pointer, { nodeHash })
           arr = arr.slice(32)
@@ -177,7 +177,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
 
       case SignaturePartType.Subdigest:
         {
-          const subdigest = ethers.toBeHex(ethers.hexlify(arr.slice(0, 32)))
+          const subdigest = ethers.hexlify(arr.slice(0, 32))
 
           pointer = append(pointer, { subdigest })
           arr = arr.slice(32)
@@ -655,7 +655,7 @@ export function encodeChain(main: ethers.BytesLike, suffix: ethers.BytesLike[]):
 export function encodeSignature(
   decoded: UnrecoveredChainedSignature | ChainedSignature | UnrecoveredSignature | Signature | ethers.BytesLike
 ): string {
-  if (ethers.isBytesLike(decoded)) return ethers.toBeHex(ethers.hexlify(decoded))
+  if (ethers.isBytesLike(decoded)) return ethers.hexlify(decoded)
 
   if (isUnrecoveredChainedSignature(decoded) || isChainedSignature(decoded)) {
     return encodeChain(encodeSignature(decoded), (decoded.suffix || []).map(encodeSignature))
