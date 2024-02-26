@@ -30,7 +30,6 @@ describe('Wallet integration', function () {
   before(async () => {
     const url = 'http://127.0.0.1:10045/'
     provider = new ethers.JsonRpcProvider(url)
-
     signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
 
     contexts = await context.deploySequenceContexts(signers[0])
@@ -49,7 +48,7 @@ describe('Wallet integration', function () {
 
   beforeEach(async () => {
     await callReceiver.setRevertFlag(false)
-    await callReceiver.testCall(0, [])
+    await callReceiver.testCall(0, new Uint8Array([]))
   })
 
   describe('estimate gas of transactions', () => {
@@ -225,7 +224,7 @@ describe('Wallet integration', function () {
           let txs: commons.transaction.Transaction[]
 
           beforeEach(async () => {
-            await callReceiver.testCall(0, [])
+            await callReceiver.testCall(0, new Uint8Array([]))
             await wallet.deploy()
           })
 
