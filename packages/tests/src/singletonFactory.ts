@@ -49,7 +49,9 @@ export async function mustExistEIP2470(signer: ethers.Signer): Promise<ethers.Co
       })
     }
 
-    await provider.broadcastTransaction(deployment.tx)
+    const res = await provider.broadcastTransaction(deployment.tx)
+    await res.wait()
+
     if (!(await isContract(provider, address))) {
       throw new Error('EIP2470 deployment failed')
     }
