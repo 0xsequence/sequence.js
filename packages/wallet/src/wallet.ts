@@ -83,7 +83,7 @@ export class Wallet<
       throw new Error(`Sequence version ${options.config.version} doesn't support chainId 0`)
     }
 
-    super()
+    super(options.provider ?? null)
 
     this.context = options.context
     this.config = options.config
@@ -91,7 +91,6 @@ export class Wallet<
     this.coders = options.coders
     this.address = options.address
     this.chainId = options.chainId
-    this.provider = options.provider ?? null
     this.relayer = options.relayer
 
     this._reader = options.reader
