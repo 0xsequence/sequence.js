@@ -7,7 +7,12 @@ export async function deployV2Context(signer: ethers.Signer): Promise<WalletCont
   // See if signer's provider has the contracts already deployed
   const factory = await deployContract(signer, v2.factory)
   const mainModuleUpgradable = await deployContract(signer, v2.mainModuleUpgradable)
-  const mainModule = await deployContract(signer, v2.mainModule, factory.address, mainModuleUpgradable.address)
+  const mainModule = await deployContract(
+    signer,
+    v2.mainModule,
+    await factory.getAddress(),
+    await mainModuleUpgradable.getAddress()
+  )
   const guestModule = await deployContract(signer, v2.guestModule)
   const universalSigValidator = await deployContract(signer, v2.universalSigValidator)
 
