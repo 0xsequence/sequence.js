@@ -701,12 +701,12 @@ describe('SequenceClient', () => {
 
     let calledSendAsync = 0
 
-    const requests = [
+    const requests: { eip6492: boolean; chainId: number; message: ethers.BytesLike; result: string }[] = [
       { eip6492: false, chainId: 2, message: '0x1234', result: '0x0000' },
-      { eip6492: true, chainId: 2, message: [4, 2, 9, 1], result: '0x1111' },
+      { eip6492: true, chainId: 2, message: new Uint8Array([4, 2, 9, 1]), result: '0x1111' },
       { eip6492: false, chainId: 5, message: '0x9993212', result: '0x2222' },
-      { eip6492: true, chainId: 6, message: [4, 2, 9, 1], result: '0x3333' }
-    ] as { eip6492: boolean; chainId: number; message: ethers.BytesLike; result: string }[]
+      { eip6492: true, chainId: 6, message: new Uint8Array([4, 2, 9, 1]), result: '0x3333' }
+    ]
 
     const client = new SequenceClient(
       {

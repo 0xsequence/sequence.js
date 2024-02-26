@@ -1724,7 +1724,7 @@ describe('SequenceProvider', () => {
       const provider = new SequenceProvider(basicMockClient, providerFor)
       const initialNetwork = await provider.detectNetwork()
 
-      expect(initialNetwork.chainId).to.equal(31337, 'initial network')
+      expect(initialNetwork.chainId).to.equal(31337n, 'initial network')
 
       provider.setDefaultChainId(31338)
 
