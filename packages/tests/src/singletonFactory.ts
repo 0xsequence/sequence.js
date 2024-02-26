@@ -65,7 +65,9 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   const singletonFactory = await mustExistEIP2470(signer)
 
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode)
+
   const data = (await factory.getDeployTransaction(...args)).data
+
   if (!data) throw new Error('no deploy data')
 
   const address = ethers.getAddress(
@@ -73,7 +75,7 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
       ethers.keccak256(
         ethers.solidityPacked(
           ['bytes1', 'address', 'bytes32', 'bytes32'],
-          ['0xff', singletonFactory.address, ethers.ZeroHash, ethers.keccak256(data)]
+          ['0xff', await singletonFactory.getAddress(), ethers.ZeroHash, ethers.keccak256(data)]
         )
       ),
       12
