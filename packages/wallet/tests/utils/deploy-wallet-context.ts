@@ -11,7 +11,7 @@ const RequireFreshSignerArtifact = require('@0xsequence/wallet-contracts/artifac
 
 export async function deployWalletContext(
   signer: ethers.Signer
-): Promise<[Factory, MainModule, MainModuleUpgradable, GuestModule, SequenceUtils, ethers.Contract]> {
+): Promise<[Factory, MainModule, MainModuleUpgradable, GuestModule, SequenceUtils, ethers.BaseContract]> {
   const factory = (await new ethers.ContractFactory(
     FactoryArtifact.abi,
     FactoryArtifact.bytecode,
