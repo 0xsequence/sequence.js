@@ -66,7 +66,7 @@ describe('Wallet integration', function () {
 
   beforeEach(async () => {
     await callReceiver.setRevertFlag(false)
-    await callReceiver.testCall(0, [])
+    await callReceiver.testCall(0, new Uint8Array([]))
   })
 
   describe('estimate gas of transactions', () => {
@@ -233,7 +233,7 @@ describe('Wallet integration', function () {
           let txs: commons.transaction.Transaction[]
 
           beforeEach(async () => {
-            await callReceiver.testCall(0, [])
+            await callReceiver.testCall(0, new Uint8Array([]))
             await wallet.deploy()
           })
 

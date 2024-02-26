@@ -28,7 +28,7 @@ describe('estimator', function () {
 
   beforeEach(async () => {
     await callReceiver.setRevertFlag(false)
-    await callReceiver.testCall(0, [])
+    await callReceiver.testCall(0, new Uint8Array([]))
   })
 
   it('should estimate the gas of a single call', async () => {
