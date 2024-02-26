@@ -202,7 +202,7 @@ export function decodeSignatureTree(body: ethers.BytesLike): UnrecoveredTopology
         break
 
       default:
-        throw new Error(`Unknown signature part type: ${type}: ${ethers.toBeHex(ethers.hexlify(arr))}`)
+        throw new Error(`Unknown signature part type: ${type}: ${ethers.hexlify(arr)}`)
     }
   }
 
