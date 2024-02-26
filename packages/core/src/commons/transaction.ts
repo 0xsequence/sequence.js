@@ -263,7 +263,7 @@ export function encodeBundleExecData(bundle: TransactionBundle): string {
           // Unsigned bundle may be a GuestModule call, so signature and nonce are missing
           sequenceTxAbiEncode(bundle.transactions),
           0,
-          []
+          new Uint8Array([])
         ]
   )
 }
