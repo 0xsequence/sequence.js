@@ -548,7 +548,7 @@ export class Account {
 
   buildOnChainSignature(digest: ethers.BytesLike): { bundle: commons.transaction.TransactionBundle; signature: string } {
     const subdigest = commons.signature.subdigestOf({
-      digest: ethers.toBeHex(ethers.hexlify(digest)),
+      digest: ethers.hexlify(digest),
       chainId: 0,
       address: this.address
     })
@@ -893,7 +893,7 @@ export class Account {
     const stubSignature = wallet.coders.config.buildStubSignature(wallet.config, stubSignatureOverrides)
 
     // Now we can decorate the transactions as always, but we need to manually build the signed bundle
-    const intentId = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
+    const intentId = ethers.hexlify(ethers.randomBytes(32))
     const signedBundle: commons.transaction.SignedTransactionBundle = {
       chainId,
       intent: {

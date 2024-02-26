@@ -603,7 +603,7 @@ describe('Account signer', () => {
       it('should send transactions on multiple nonce spaces one by one', async () => {
         const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
         const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-        const randomSpace = BigInt(ethers.toBeHex(ethers.hexlify(ethers.randomBytes(12))))
+        const randomSpace = BigInt(ethers.hexlify(ethers.randomBytes(12)))
         const signer3 = account.getSigner(chainId, {
           nonceSpace: randomSpace
         })
@@ -669,7 +669,7 @@ describe('Account signer', () => {
         it('should send transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const randomSpace = BigInt(ethers.toBeHex(ethers.hexlify(ethers.randomBytes(12))))
+          const randomSpace = BigInt(ethers.hexlify(ethers.randomBytes(12)))
           const signer3 = account.getSigner(chainId, {
             nonceSpace: randomSpace
           })
@@ -747,7 +747,7 @@ describe('Account signer', () => {
         it('should send 100 parallel transactions using different spaces', async () => {
           const signers = new Array(100).fill(0).map(() =>
             account.getSigner(chainId, {
-              nonceSpace: BigInt(ethers.toBeHex(ethers.hexlify(ethers.randomBytes(12))))
+              nonceSpace: BigInt(ethers.hexlify(ethers.randomBytes(12)))
             })
           )
 
@@ -782,7 +782,7 @@ describe('Account signer', () => {
         it('should send multiple transactions on multiple nonce spaces at once', async () => {
           const signer1 = account.getSigner(chainId, { nonceSpace: '0x01' })
           const signer2 = account.getSigner(chainId, { nonceSpace: 2 })
-          const randomSpace = BigInt(ethers.toBeHex(ethers.hexlify(ethers.randomBytes(12))))
+          const randomSpace = BigInt(ethers.hexlify(ethers.randomBytes(12)))
 
           const signer3 = account.getSigner(chainId, {
             nonceSpace: randomSpace

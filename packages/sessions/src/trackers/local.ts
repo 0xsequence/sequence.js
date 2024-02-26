@@ -451,7 +451,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         proof: {
           digest: payload.digest,
           chainId: BigInt(payload.chainId),
-          signature: ethers.toBeHex(ethers.hexlify(signature))
+          signature: ethers.hexlify(signature)
         }
       })
     }

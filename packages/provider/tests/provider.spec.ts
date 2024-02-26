@@ -1455,7 +1455,7 @@ describe('SequenceProvider', () => {
 
       describe('sequence client methods', () => {
         describe('perform eth_sendTransaction', async () => {
-          const expectedResult = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(32)))
+          const expectedResult = ethers.hexlify(ethers.randomBytes(32))
 
           let provider: SequenceProvider
           let calledCount: number
@@ -1482,7 +1482,7 @@ describe('SequenceProvider', () => {
             expectedTx = {
               to: ethers.Wallet.createRandom().address,
               value: '9000',
-              data: ethers.toBeHex(ethers.hexlify(ethers.randomBytes(66)))
+              data: ethers.hexlify(ethers.randomBytes(66))
             }
           })
 
@@ -1528,7 +1528,7 @@ describe('SequenceProvider', () => {
         })
         ;['eth_sign', 'personal_sign', 'sequence_sign'].forEach(method => {
           describe(`perform ${method}`, async () => {
-            const expectedResult = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(120)))
+            const expectedResult = ethers.hexlify(ethers.randomBytes(120))
 
             let provider: SequenceProvider
             let calledCount: number
@@ -1554,7 +1554,7 @@ describe('SequenceProvider', () => {
               )
 
               expectedAddress = ethers.Wallet.createRandom().address
-              expectedMessage = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(66)))
+              expectedMessage = ethers.hexlify(ethers.randomBytes(66))
             })
 
             it('should call sign on main provider', async () => {
@@ -1589,7 +1589,7 @@ describe('SequenceProvider', () => {
         })
         ;['eth_signTypedData', 'eth_signTypedData_v4', 'sequence_signTypedData_v4'].forEach(method => {
           describe(`perform ${method}`, async () => {
-            const expectedResult = ethers.toBeHex(ethers.hexlify(ethers.randomBytes(121)))
+            const expectedResult = ethers.hexlify(ethers.randomBytes(121))
 
             let provider: SequenceProvider
             let calledCount: number
@@ -1615,7 +1615,7 @@ describe('SequenceProvider', () => {
               )
 
               expectedAddress = ethers.Wallet.createRandom().address
-              expectedMessage = [{ thisisjustdata: ethers.toBeHex(ethers.hexlify(ethers.randomBytes(66))), sure: 'yes' }]
+              expectedMessage = [{ thisisjustdata: ethers.hexlify(ethers.randomBytes(66)), sure: 'yes' }]
             })
 
             it('should call sign on main provider', async () => {

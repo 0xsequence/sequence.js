@@ -288,7 +288,7 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
   for (const tx of transactions) {
     const txData = ethers.getBytes(tx.data || '0x')
 
-    if (tx.to === wallet && ethers.toBeHex(ethers.hexlify(txData.slice(0, 4))) === selfExecuteSelector) {
+    if (tx.to === wallet && ethers.hexlify(txData.slice(0, 4)) === selfExecuteSelector) {
       // Decode as selfExecute call
       const data = txData.slice(4)
       const decoded = ethers.AbiCoder.defaultAbiCoder().decode([selfExecuteAbi], data)[0]

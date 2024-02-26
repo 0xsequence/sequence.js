@@ -50,7 +50,7 @@ export const trimEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
   try {
     prefixAsNumber = Number(ethers.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   } catch {
-    prefixAsNumber = Number(ethers.toBeHex(ethers.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength))))
+    prefixAsNumber = Number(ethers.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   }
 
   if (prefixAsNumber > ethereumSignedMessagePartSlicedArray.length || !Number.isInteger(prefixAsNumber)) {

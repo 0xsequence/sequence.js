@@ -53,7 +53,7 @@ export class OnChainReader implements Reader {
     const val = await this.provider.getStorage(wallet, position).then(c => ethers.getBytes(c))
 
     if (val.length === 20) {
-      return ethers.getAddress(ethers.toBeHex(ethers.hexlify(val)))
+      return ethers.getAddress(ethers.hexlify(val))
     }
 
     if (val.length === 32) {

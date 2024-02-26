@@ -567,7 +567,7 @@ describe('Wallet integration', function () {
         }
       }
 
-      fakeJwt = ethers.toBeHex(ethers.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`)))
+      fakeJwt = ethers.hexlify(randomBytes(64, `JWT Auth ${fakeJwtIndex++}`))
 
       server = mockServer.getLocal()
       server.start(8099)
@@ -1168,7 +1168,7 @@ describe('Wallet integration', function () {
         const newBaseTime = baseTime + 60 * 60
         setDate(newBaseTime)
 
-        fakeJwt = ethers.toBeHex(ethers.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2')))
+        fakeJwt = ethers.hexlify(randomBytes(96, 'Should request a new JWT after expiration 2'))
 
         await session.services?.getAPIClient()
 
