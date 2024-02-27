@@ -9,6 +9,7 @@ import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, SignatureOrchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { parseEther } from '@0xsequence/utils'
+import { JsonRpcHandler } from '@0xsequence/network'
 
 const { expect } = chai
 
@@ -25,7 +26,9 @@ describe('Wallet (primitive)', () => {
   let relayer: LocalRelayer
 
   before(async () => {
-    provider = new ethers.BrowserProvider(hardhat.network.provider as any)
+    // const rpc = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
+    // provider = new ethers.BrowserProvider(new JsonRpcHandler(rpc))
+    provider = new ethers.BrowserProvider(new JsonRpcHandler(hardhat.network.provider))
     signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
