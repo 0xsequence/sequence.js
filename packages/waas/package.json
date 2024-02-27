@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/waas",
-  "version": "0.0.0-20231129192642",
+  "version": "1.9.0",
   "description": "waas session client",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
   "source": "src/index.ts",
@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/network": "^1.7.2",
+    "@0xsequence/network": "^1.9.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.445.0",
     "idb": "^7.1.1",
     "json-canonicalize": "^1.0.6",

@@ -1,5 +1,16 @@
 # @0xsequence/deployer
 
+## 1.9.0
+
+### Minor Changes
+
+- waas release
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/utils@1.9.0
+
 ## 1.8.8
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.0
+
+### Minor Changes
+
+- waas release
+
 ## 1.8.8
 
 ### Patch Changes

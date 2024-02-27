@@ -1,5 +1,18 @@
 # @0xsequence/sessions
 
+## 1.9.0
+
+### Minor Changes
+
+- waas release
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.9.0
+  - @0xsequence/migration@1.9.0
+  - @0xsequence/replacer@1.9.0
+
 ## 1.8.8
 
 ### Patch Changes
