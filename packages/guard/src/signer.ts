@@ -196,28 +196,26 @@ function parseAuthMethod(method: string): AuthMethod {
   }
 }
 
+export type SignedOwnershipProof = {
+  walletAddress: string
+  timestamp: Date
+  signerAddress: string
+  signature: string
+}
+
 export type OwnershipProof =
+  | SignedOwnershipProof
   | { jwt: string }
-  | {
-      walletAddress: string
-      timestamp: Date
-      signerAddress: string
-      signature: string
-    }
   | {
       walletAddress: string
       signer: ethers.Signer | signers.SapientSigner
     }
 
-function isSignedOwnershipProof(
-  proof: OwnershipProof
-): proof is { walletAddress: string; timestamp: Date; signerAddress: string; signature: string } {
+export function isSignedOwnershipProof(proof: OwnershipProof): proof is SignedOwnershipProof {
   return 'signerAddress' in proof && typeof proof.signerAddress === 'string'
 }
 
-async function signOwnershipProof(
-  proof: Exclude<OwnershipProof, { jwt: string }>
-): Promise<{ walletAddress: string; timestamp: Date; signerAddress: string; signature: string }> {
+export async function signOwnershipProof(proof: Exclude<OwnershipProof, { jwt: string }>): Promise<SignedOwnershipProof> {
   if (isSignedOwnershipProof(proof)) {
     return proof
   } else {

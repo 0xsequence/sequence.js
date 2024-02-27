@@ -17,6 +17,7 @@ import {
 import { commons } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
+import { Analytics, setupAnalytics } from './analytics'
 import { ethers } from 'ethers'
 
 import packageJson from '../package.json'
@@ -117,6 +118,8 @@ export class DefaultChainIdTracker {
 export type SequenceClientOptions = {
   defaultChainId?: number
   defaultEIP6492?: boolean
+  projectAccessKey?: string
+  analytics?: boolean
 }
 
 /**
@@ -135,13 +138,10 @@ export class SequenceClient {
   public readonly transport: ProviderTransport
 
   public readonly defaultEIP6492: boolean
+  public readonly projectAccessKey?: string
+  public readonly analytics?: Analytics
 
-  constructor(
-    transport: ProviderTransport | MuxTransportTemplate,
-    store: ItemStore,
-    options?: SequenceClientOptions | number,
-    public projectAccessKey?: string
-  ) {
+  constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions) {
     if (isMuxTransportTemplate(transport)) {
       this.transport = MuxMessageProvider.new(transport)
     } else if (isProviderTransport(transport)) {
@@ -150,8 +150,8 @@ export class SequenceClient {
       throw new Error('Invalid transport')
     }
 
-    const defaultChainId = typeof options === 'number' ? options : options?.defaultChainId
-    this.defaultEIP6492 = typeof options === 'number' ? false : options?.defaultEIP6492 ?? false
+    const defaultChainId = options?.defaultChainId
+    this.defaultEIP6492 = options?.defaultEIP6492 ?? false
 
     this.session = new SequenceClientSession(store)
     this.defaultChainId = new DefaultChainIdTracker(store, defaultChainId)
@@ -206,6 +206,17 @@ export class SequenceClient {
       const chainIdHex = ethers.utils.hexValue(chainId)
       this.callbacks.chainChanged?.forEach(cb => cb(chainIdHex))
     })
+
+    if (options?.projectAccessKey) {
+      this.projectAccessKey = options.projectAccessKey
+    }
+    if (this.projectAccessKey && options?.analytics) {
+      this.analytics = setupAnalytics(this.projectAccessKey)
+    }
+
+    if (this.session.getSession()?.accountAddress) {
+      this.analytics?.identify(this.session.getSession()?.accountAddress)
+    }
   }
 
   // Callbacks
@@ -348,6 +359,10 @@ export class SequenceClient {
       }
 
       this.session.setSession(connectDetails.session)
+
+      if (connectDetails.session?.accountAddress) {
+        this.analytics?.identify(connectDetails.session.accountAddress)
+      }
     }
 
     return connectDetails
@@ -357,6 +372,8 @@ export class SequenceClient {
     if (this.isOpened()) {
       this.closeWallet()
     }
+
+    this.analytics?.reset()
 
     return this.session.clearSession()
   }
@@ -454,6 +471,8 @@ export class SequenceClient {
   async signMessage(message: ethers.BytesLike, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
     const method = this.signMethod(options)
 
+    this.analytics?.track({ event: 'SIGN_MESSAGE_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
+
     // Address is ignored by the wallet webapp
     return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
   }
@@ -470,6 +489,8 @@ export class SequenceClient {
     // - The one provided in the typedData.domain.chainId
     // - The default chainId
 
+    this.analytics?.track({ event: 'SIGN_TYPED_DATA_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
+
     return this.send(
       { method, params: [this.getAddress(), encoded] },
       options?.chainId ||
@@ -484,6 +505,8 @@ export class SequenceClient {
   ): Promise<string> {
     const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
+
+    this.analytics?.track({ event: 'SEND_TRANSACTION_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
     return this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId)
   }

@@ -1,5 +1,82 @@
 # @0xsequence/indexer
 
+## 1.8.8
+
+### Patch Changes
+
+- update metadata bindings
+
+## 1.8.7
+
+### Patch Changes
+
+- provider: update databeat to 0.9.1
+
+## 1.8.6
+
+### Patch Changes
+
+- guard: SignedOwnershipProof
+
+## 1.8.5
+
+### Patch Changes
+
+- guard: signOwnershipProof and isSignedOwnershipProof
+
+## 1.8.4
+
+### Patch Changes
+
+- network: add homeverse to networks list
+
+## 1.8.3
+
+### Patch Changes
+
+- api: introduce basic linked wallet support
+
+## 1.8.2
+
+### Patch Changes
+
+- provider: don't initialize analytics unless explicitly requested
+
+## 1.8.1
+
+### Patch Changes
+
+- update to analytics provider
+
+## 1.8.0
+
+### Minor Changes
+
+- provider: project analytics
+
+## 1.7.2
+
+### Patch Changes
+
+- 0xsequence: ChainId should not be exported as a type
+- account, wallet: fix nonce selection
+
+## 1.7.1
+
+### Patch Changes
+
+- network: add missing avalanche logoURI
+
+## 1.7.0
+
+### Minor Changes
+
+- provider: projectAccessKey is now required
+
+### Patch Changes
+
+- network: add NetworkMetadata.logoURI property for all networks
+
 ## 1.6.3
 
 ### Patch Changes

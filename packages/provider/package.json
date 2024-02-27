@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/provider",
-  "version": "1.6.3",
+  "version": "1.8.8",
   "description": "provider sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/provider",
   "source": "src/index.ts",
@@ -29,6 +29,7 @@
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*",
     "@0xsequence/wallet": "workspace:*",
+    "@databeat/tracker": "^0.9.1",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill": "^0.10.0"
   },
@@ -37,8 +38,8 @@
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
-    "hardhat": "^2.12.2",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "hardhat": "^2.12.2"
   },
   "files": [
     "src",

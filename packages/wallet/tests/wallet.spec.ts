@@ -1,6 +1,7 @@
 import hardhat from 'hardhat'
 import * as chai from 'chai'
 
+import { walletContracts } from '@0xsequence/abi'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { context } from '@0xsequence/tests'
 import { ethers } from 'ethers'
@@ -103,6 +104,110 @@ describe('Wallet (primitive)', () => {
         await wallet.deploy({ includeChildren: true, ignoreDeployed: true })
         expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
         expect(await nestedWallet.reader().isDeployed(wallet.address)).to.be.true
+      })
+
+      describe('Nonce selection', async () => {
+        let signer: ethers.Wallet
+        let wallet: Wallet
+
+        let getNonce: (response: ethers.providers.TransactionResponse) => { space: ethers.BigNumber; nonce: ethers.BigNumber }
+
+        before(async () => {
+          const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
+
+          getNonce = ({ data }) => {
+            const [_, encoded] = mainModule.decodeFunctionData('execute', data)
+            const [space, nonce] = commons.transaction.decodeNonce(encoded)
+            return { space, nonce }
+          }
+
+          signer = ethers.Wallet.createRandom()
+
+          wallet = Wallet.newWallet({
+            coders,
+            context: contexts[version],
+            config: coders.config.fromSimple({
+              threshold: 1,
+              checkpoint: 0,
+              signers: [{ weight: 1, address: signer.address }]
+            }),
+            chainId: provider.network.chainId,
+            orchestrator: new Orchestrator([signer]),
+            provider,
+            relayer
+          })
+
+          await wallet.deploy({ includeChildren: true, ignoreDeployed: true })
+
+          await (await signers[0].sendTransaction({ to: wallet.address, value: ethers.utils.parseEther('1') })).wait()
+        })
+
+        it('Should use explicitly set nonces', async () => {
+          let response = await wallet.sendTransaction(
+            { to: signers[0].getAddress(), value: 1 },
+            { nonce: commons.transaction.encodeNonce(6492, 0) }
+          )
+
+          let { space, nonce } = getNonce(response)
+
+          expect(space.eq(6492)).to.be.true
+          expect(nonce.eq(0)).to.be.true
+
+          await response.wait()
+
+          response = await wallet.sendTransaction(
+            { to: signers[0].getAddress(), value: 1 },
+            { nonce: commons.transaction.encodeNonce(6492, 1) }
+          )
+
+          const encoded = getNonce(response)
+          space = encoded.space
+          nonce = encoded.nonce
+
+          expect(space.eq(6492)).to.be.true
+          expect(nonce.eq(1)).to.be.true
+        })
+
+        it('Should select random nonces by default', async () => {
+          let response = await wallet.sendTransaction({ to: signers[0].getAddress(), value: 1 })
+
+          const { space: firstSpace, nonce: firstNonce } = getNonce(response)
+
+          expect(firstSpace.eq(0)).to.be.false
+          expect(firstNonce.eq(0)).to.be.true
+
+          // not necessary, parallel execution is ok:
+          // await response.wait()
+
+          response = await wallet.sendTransaction({ to: signers[0].getAddress(), value: 1 })
+
+          const { space: secondSpace, nonce: secondNonce } = getNonce(response)
+
+          expect(secondSpace.eq(0)).to.be.false
+          expect(secondNonce.eq(0)).to.be.true
+
+          expect(secondSpace.eq(firstSpace)).to.be.false
+        })
+
+        it('Should respect the serial option', async () => {
+          let response = await wallet.sendTransaction({ to: signers[0].getAddress(), value: 1 }, { serial: true })
+
+          let { space, nonce } = getNonce(response)
+
+          expect(space.eq(0)).to.be.true
+          expect(nonce.eq(0)).to.be.true
+
+          await response.wait()
+
+          response = await wallet.sendTransaction({ to: signers[0].getAddress(), value: 1 }, { serial: true })
+
+          const encoded = getNonce(response)
+          space = encoded.space
+          nonce = encoded.nonce
+
+          expect(space.eq(0)).to.be.true
+          expect(nonce.eq(1)).to.be.true
+        })
       })
 
       //

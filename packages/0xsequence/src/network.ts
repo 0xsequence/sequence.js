@@ -10,6 +10,5 @@ export type {
   JsonRpcMiddleware,
   JsonRpcMiddlewareHandler,
   NetworkConfig,
-  ChainId,
   ChainIdLike
 } from '@0xsequence/network'

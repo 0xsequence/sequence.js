@@ -396,13 +396,13 @@ export class Wallet<
       serial?: boolean
     }
   ): Promise<ethers.providers.TransactionResponse> {
-    let nonce: ethers.BigNumberish
+    let nonce: ethers.BigNumberish | { serial: boolean }
     if (options?.nonce !== undefined) {
       // specific nonce is used
       nonce = options.nonce
     } else if (options?.serial) {
       // next nonce on wallet is used and detected on-chain
-      nonce = 0
+      nonce = { serial: true }
     } else {
       // default is random, aka parallel
       nonce = this.randomNonce()

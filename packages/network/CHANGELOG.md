@@ -1,5 +1,147 @@
 # @0xsequence/network
 
+## 1.8.8
+
+### Patch Changes
+
+- update metadata bindings
+- Updated dependencies
+  - @0xsequence/core@1.8.8
+  - @0xsequence/indexer@1.8.8
+  - @0xsequence/relayer@1.8.8
+  - @0xsequence/utils@1.8.8
+
+## 1.8.7
+
+### Patch Changes
+
+- provider: update databeat to 0.9.1
+- Updated dependencies
+  - @0xsequence/core@1.8.7
+  - @0xsequence/indexer@1.8.7
+  - @0xsequence/relayer@1.8.7
+  - @0xsequence/utils@1.8.7
+
+## 1.8.6
+
+### Patch Changes
+
+- guard: SignedOwnershipProof
+- Updated dependencies
+  - @0xsequence/core@1.8.6
+  - @0xsequence/indexer@1.8.6
+  - @0xsequence/relayer@1.8.6
+  - @0xsequence/utils@1.8.6
+
+## 1.8.5
+
+### Patch Changes
+
+- guard: signOwnershipProof and isSignedOwnershipProof
+- Updated dependencies
+  - @0xsequence/core@1.8.5
+  - @0xsequence/indexer@1.8.5
+  - @0xsequence/relayer@1.8.5
+  - @0xsequence/utils@1.8.5
+
+## 1.8.4
+
+### Patch Changes
+
+- network: add homeverse to networks list
+- Updated dependencies
+  - @0xsequence/core@1.8.4
+  - @0xsequence/indexer@1.8.4
+  - @0xsequence/relayer@1.8.4
+  - @0xsequence/utils@1.8.4
+
+## 1.8.3
+
+### Patch Changes
+
+- api: introduce basic linked wallet support
+- Updated dependencies
+  - @0xsequence/core@1.8.3
+  - @0xsequence/indexer@1.8.3
+  - @0xsequence/relayer@1.8.3
+  - @0xsequence/utils@1.8.3
+
+## 1.8.2
+
+### Patch Changes
+
+- provider: don't initialize analytics unless explicitly requested
+- Updated dependencies
+  - @0xsequence/core@1.8.2
+  - @0xsequence/indexer@1.8.2
+  - @0xsequence/relayer@1.8.2
+  - @0xsequence/utils@1.8.2
+
+## 1.8.1
+
+### Patch Changes
+
+- update to analytics provider
+- Updated dependencies
+  - @0xsequence/core@1.8.1
+  - @0xsequence/indexer@1.8.1
+  - @0xsequence/relayer@1.8.1
+  - @0xsequence/utils@1.8.1
+
+## 1.8.0
+
+### Minor Changes
+
+- provider: project analytics
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@1.8.0
+  - @0xsequence/indexer@1.8.0
+  - @0xsequence/relayer@1.8.0
+  - @0xsequence/utils@1.8.0
+
+## 1.7.2
+
+### Patch Changes
+
+- 0xsequence: ChainId should not be exported as a type
+- account, wallet: fix nonce selection
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.7.2
+  - @0xsequence/indexer@1.7.2
+  - @0xsequence/relayer@1.7.2
+  - @0xsequence/utils@1.7.2
+
+## 1.7.1
+
+### Patch Changes
+
+- network: add missing avalanche logoURI
+- Updated dependencies
+  - @0xsequence/core@1.7.1
+  - @0xsequence/indexer@1.7.1
+  - @0xsequence/relayer@1.7.1
+  - @0xsequence/utils@1.7.1
+
+## 1.7.0
+
+### Minor Changes
+
+- provider: projectAccessKey is now required
+
+### Patch Changes
+
+- network: add NetworkMetadata.logoURI property for all networks
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.7.0
+  - @0xsequence/indexer@1.7.0
+  - @0xsequence/relayer@1.7.0
+  - @0xsequence/utils@1.7.0
+
 ## 1.6.3
 
 ### Patch Changes
