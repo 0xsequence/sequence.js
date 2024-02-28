@@ -43,10 +43,12 @@ export async function mustExistEIP2470(signer: ethers.Signer): Promise<ethers.Co
   if (!(await isContract(provider, address))) {
     const balanceDeployer = await provider.getBalance(deployment.deployer)
     if (balanceDeployer < deployment.funding) {
-      await signer.sendTransaction({
-        to: deployment.deployer,
-        value: deployment.funding - balanceDeployer
-      })
+      await signer
+        .sendTransaction({
+          to: deployment.deployer,
+          value: deployment.funding - balanceDeployer
+        })
+        .then(tx => tx.wait())
     }
 
     const res = await provider.broadcastTransaction(deployment.tx)
