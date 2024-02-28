@@ -2,6 +2,7 @@ import { Intent, makeIntent } from './base'
 import {
   IntentDataGetTransactionReceipt,
   IntentDataSendTransaction,
+  IntentDataFeeOptions,
   TransactionDelayedEncode,
   TransactionERC1155,
   TransactionERC20,
@@ -18,7 +19,8 @@ interface BaseArgs {
 }
 
 export type SendTransactionsArgs = {
-  transactions: Transaction[]
+  transactions: Transaction[],
+  transactionFeeQuote?: string
 }
 
 export type SendERC20Args = {
@@ -55,6 +57,36 @@ export type SendDelayedEncodeArgs = {
   abi: string
   func: string
   args: string[] | { [key: string]: string }
+}
+
+export function feeOptions({
+                             lifespan,
+                             wallet,
+                             identifier,
+                             chainId,
+                             transactions
+                           }: SendTransactionsArgs & BaseArgs): Intent<IntentDataFeeOptions> {
+  return makeIntent('feeOptions', lifespan, {
+    identifier,
+    wallet,
+    network: chainId.toString(),
+    transactions: transactions.map(tx => {
+      if (!tx.to || tx.to === ethers.constants.AddressZero) {
+        throw new Error('Contract creation not supported')
+      }
+
+      if (!isEthersTx(tx)) {
+        return tx
+      }
+
+      return {
+        type: 'transaction',
+        to: tx.to,
+        value: ethers.BigNumber.from(tx.value || 0).toHexString(),
+        data: ethers.utils.hexlify(tx.data || [])
+      }
+    })
+  })
 }
 
 export function sendTransactions({
@@ -200,6 +232,7 @@ export function combineTransactionIntents(intents: Intent<IntentDataSendTransact
   const wallet = intents[0].data.wallet
   const lifespan = intents[0].expiresAt - intents[0].issuedAt
   const identifier = intents[0].data.identifier
+  const transactionsFeeQuote = intents[0].data.transactionsFeeQuote
 
   if (!intents.every(intent => intent.data.network === network)) {
     throw new Error('All packets must have the same chainId')
@@ -213,7 +246,8 @@ export function combineTransactionIntents(intents: Intent<IntentDataSendTransact
     network,
     wallet,
     identifier,
-    transactions: intents.flatMap(intent => intent.data.transactions)
+    transactions: intents.flatMap(intent => intent.data.transactions),
+    transactionsFeeQuote
   })
 }
 

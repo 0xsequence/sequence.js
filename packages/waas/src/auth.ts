@@ -15,6 +15,8 @@ import {
 import {
   MaySentTransactionResponse,
   SignedMessageResponse,
+  FeeOption,
+  FeeOptionsResponse,
   isGetSessionResponse,
   isMaySentTransactionResponse,
   isSignedMessageResponse,
@@ -22,6 +24,7 @@ import {
   isFinishValidateSessionResponse,
   isCloseSessionResponse,
   isTimedOutTransactionResponse
+  isFeeOptionsResponse,
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
@@ -77,6 +80,11 @@ export type ValidationArgs = {
 export type CommonAuthArgs = {
   validation?: ValidationArgs
   identifier?: string
+}
+
+export type FeeArgs = {
+  feeQuote?: string
+  feeOption?: FeeOption
 }
 
 export type Network = Chain
@@ -411,8 +419,24 @@ export class SequenceWaaS {
     return result
   }
 
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & FeeArgs & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    if (args.feeQuote && args.feeOption) {
+      switch (args.feeOption.token.type) {
+        case 'unknown':
+          args.transactions.push(
+            {
+              to: args.feeOption.to,
+              value: args.feeOption.value
+            }
+          )
+      }
+    }
+
+    console.log('args', args)
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
+
+    console.log('intent', intent)
+
     return this.trySendTransactionIntent(intent, args)
   }
 
@@ -434,6 +458,12 @@ export class SequenceWaaS {
   async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
+  }
+
+  async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<FeeOptionsResponse> {
+    const intent = await this.waas.feeOptions(await this.useIdentifier(args))
+    console.log('feeOptions', intent)
+    return this.trySendIntent(args, intent, isFeeOptionsResponse)
   }
 
   async networkList(): Promise<NetworkList> {
