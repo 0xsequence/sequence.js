@@ -83,8 +83,7 @@ export type CommonAuthArgs = {
 }
 
 export type FeeArgs = {
-  feeQuote?: string
-  feeOption?: FeeOption
+  transactionFeeOption?: FeeOption
 }
 
 export type Network = Chain
@@ -420,23 +419,18 @@ export class SequenceWaaS {
   }
 
   async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & FeeArgs & CommonAuthArgs): Promise<MaySentTransactionResponse> {
-    if (args.feeQuote && args.feeOption) {
-      switch (args.feeOption.token.type) {
+    if (args.transactionFeeQuote && args.transactionFeeOption) {
+      switch (args.transactionFeeOption.token.type) {
         case 'unknown':
           args.transactions.push(
             {
-              to: args.feeOption.to,
-              value: args.feeOption.value
+              to: args.transactionFeeOption.to,
+              value: args.transactionFeeOption.value
             }
           )
       }
     }
-
-    console.log('args', args)
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
-
-    console.log('intent', intent)
-
     return this.trySendTransactionIntent(intent, args)
   }
 
@@ -462,7 +456,6 @@ export class SequenceWaaS {
 
   async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<FeeOptionsResponse> {
     const intent = await this.waas.feeOptions(await this.useIdentifier(args))
-    console.log('feeOptions', intent)
     return this.trySendIntent(args, intent, isFeeOptionsResponse)
   }
 
