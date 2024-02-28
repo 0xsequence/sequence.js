@@ -215,7 +215,7 @@ export class SequenceClient {
     }
 
     if (this.session.getSession()?.accountAddress) {
-      this.analytics?.identify(this.session.getSession()?.accountAddress)
+      this.analytics?.identify(this.session.getSession()?.accountAddress?.toLowerCase())
     }
   }
 
@@ -361,7 +361,7 @@ export class SequenceClient {
       this.session.setSession(connectDetails.session)
 
       if (connectDetails.session?.accountAddress) {
-        this.analytics?.identify(connectDetails.session.accountAddress)
+        this.analytics?.identify(connectDetails.session.accountAddress.toLowerCase())
       }
     }
 
