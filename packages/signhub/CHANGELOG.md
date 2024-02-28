@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.9.1
+
+### Patch Changes
+
+- analytics fix
+- Updated dependencies
+  - @0xsequence/core@1.9.1
+
 ## 1.9.0
 
 ### Minor Changes

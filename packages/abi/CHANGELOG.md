@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.9.1
+
+### Patch Changes
+
+- analytics fix
+
 ## 1.9.0
 
 ### Minor Changes
