@@ -20,7 +20,7 @@ const { expect } = chai.use(chaiAsPromised)
 const deterministic = false
 
 describe('Account', () => {
-  let provider1: ethers.JsonRpcProvider
+  let provider1: ethers.BrowserProvider
   let provider2: ethers.JsonRpcProvider
 
   let signer1: ethers.Signer
