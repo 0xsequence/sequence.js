@@ -21,7 +21,7 @@ describe('estimator', function () {
     const signer = await provider.getSigner()
     const contractFactory = new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signer)
 
-    callReceiver = (await contractFactory.deploy()) as unknown as CallReceiverMock
+    callReceiver = (await contractFactory.deploy().then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     estimator = new OverwriterEstimator({ rpc: url })
   })
@@ -34,7 +34,7 @@ describe('estimator', function () {
   it('should estimate the gas of a single call', async () => {
     const gas = await estimator.estimate({
       to: callReceiver.address,
-      data: await encodeData(callReceiver, 'testCall', 1, '0x112233')
+      data: await encodeData(callReceiver as any, 'testCall', 1, '0x112233')
     })
     const tx = await (await callReceiver.testCall(1, '0x112233')).wait()
     expect(Number(gas)).to.be.above(tx.gasUsed.toNumber())

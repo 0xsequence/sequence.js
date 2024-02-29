@@ -247,15 +247,19 @@ describe('SequenceSigner', () => {
         ).getSigner()
 
         // Send 10 wei in hardhat1 and 20 wei in hardhat2
-        await testAccounts[0].sendTransaction({
-          to: address,
-          value: 10
-        })
+        await testAccounts[0]
+          .sendTransaction({
+            to: address,
+            value: 10
+          })
+          .then(tx => tx.wait())
 
-        await testAccounts[1].sendTransaction({
-          to: address,
-          value: 20
-        })
+        await testAccounts[1]
+          .sendTransaction({
+            to: address,
+            value: 20
+          })
+          .then(tx => tx.wait())
       })
 
       it('should return the balance on default chain', async () => {
@@ -916,50 +920,50 @@ describe('SequenceSigner', () => {
 
     it('should send transaction on default chain', async () => {
       expectedOptions = { chainId: 31337 }
-      const tx = await signer.sendTransaction(expectedTransactionRequest)
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+      const tx = await signer.sendTransaction(expectedTransactionRequest).then(tx => tx.wait())
+      expect(ethers.getBytes(tx!.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
     it('should send transaction on default chain after switching networks', async () => {
       expectedOptions = { chainId: 31338 }
       signer.provider.setDefaultChainId(31338)
-      const tx = await signer.sendTransaction(expectedTransactionRequest)
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+      const tx = await signer.sendTransaction(expectedTransactionRequest).then(tx => tx.wait())
+      expect(ethers.getBytes(tx!.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
     it('should send transaction on specific chain', async () => {
       expectedOptions = { chainId: 31338 }
-      const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 31338 })
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+      const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 31338 }).then(tx => tx.wait())
+      expect(ethers.getBytes(tx!.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
     it('should send transaction on specific chain using string network name', async () => {
       expectedOptions = { chainId: 31338 }
-      const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 'hardhat2' })
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+      const tx = await signer.sendTransaction(expectedTransactionRequest, { chainId: 'hardhat2' }).then(tx => tx.wait())
+      expect(ethers.getBytes(tx!.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
     it('should send transaction on static network signer', async () => {
       expectedOptions = { chainId: 31338 }
-      const tx = await signer.getSigner(31338).sendTransaction(expectedTransactionRequest)
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+      const tx = await signer
+        .getSigner(31338)
+        .sendTransaction(expectedTransactionRequest)
+        .then(tx => tx.wait())
+      expect(ethers.getBytes(tx!.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
     it('should send transaction on static network signer if passing chainId', async () => {
       expectedOptions = { chainId: 31338 }
-      const tx = await signer.getSigner(31338).sendTransaction(expectedTransactionRequest, { chainId: 'hardhat2' })
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+      const tx = await signer
+        .getSigner(31338)
+        .sendTransaction(expectedTransactionRequest, { chainId: 'hardhat2' })
+        .then(tx => tx.wait())
+      expect(ethers.getBytes(tx!.hash)).to.have.lengthOf(32)
       expect(callsToSendTransaction).to.equal(1)
     })
 
@@ -993,72 +997,73 @@ describe('SequenceSigner', () => {
       expect(callsToSendTransaction).to.equal(1)
     })
 
-    it('shoud send deffered transaction', async () => {
-      expectedOptions = { chainId: 31338 }
-      const expected = {
-        to: ethers.hexlify(ethers.randomBytes(12)),
-        value: parseEther('1.0').toString()
-      }
+    // XXX: sendTransaction no longer accepts a deffered transaction
+    // it('shoud send deffered transaction', async () => {
+    //   expectedOptions = { chainId: 31338 }
+    //   const expected = {
+    //     to: ethers.hexlify(ethers.randomBytes(12)),
+    //     value: parseEther('1.0').toString()
+    //   }
 
-      expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
+    //   expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
 
-      const derrered = {
-        to: new Promise<string>(async r => {
-          await new Promise(d => setTimeout(d, 1000))
-          return r(expected.to)
-        }),
-        value: new Promise<string>(async r => {
-          await new Promise(d => setTimeout(d, 600))
-          return r(expected.value)
-        })
-      }
+    //   const derrered = {
+    //     to: new Promise<string>(async r => {
+    //       await new Promise(d => setTimeout(d, 1000))
+    //       return r(expected.to)
+    //     }),
+    //     value: new Promise<string>(async r => {
+    //       await new Promise(d => setTimeout(d, 600))
+    //       return r(expected.value)
+    //     })
+    //   }
 
-      const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
-    })
+    //   const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
+    //   expect(tx.wait()).to.be.fulfilled
+    //   expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+    // })
 
-    it('shoud send array of deffered transactions', async () => {
-      expectedOptions = { chainId: 31338 }
-      const expected = [
-        {
-          to: ethers.hexlify(ethers.randomBytes(12)),
-          value: parseEther('1.0').toString()
-        },
-        {
-          to: ethers.hexlify(ethers.randomBytes(12)),
-          data: ethers.hexlify(ethers.randomBytes(111))
-        }
-      ]
+    // it('shoud send array of deffered transactions', async () => {
+    //   expectedOptions = { chainId: 31338 }
+    //   const expected = [
+    //     {
+    //       to: ethers.hexlify(ethers.randomBytes(12)),
+    //       value: parseEther('1.0').toString()
+    //     },
+    //     {
+    //       to: ethers.hexlify(ethers.randomBytes(12)),
+    //       data: ethers.hexlify(ethers.randomBytes(111))
+    //     }
+    //   ]
 
-      expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
+    //   expectedTransactionRequest = JSON.parse(JSON.stringify(expected))
 
-      const derrered = [
-        {
-          to: new Promise<string>(async r => {
-            await new Promise(d => setTimeout(d, 1000))
-            return r(expected[0].to)
-          }),
-          value: new Promise<string>(async r => {
-            await new Promise(d => setTimeout(d, 600))
-            return r(expected[0].value!)
-          })
-        },
-        {
-          to: new Promise<string>(async r => {
-            await new Promise(d => setTimeout(d, 412))
-            return r(expected[1].to)
-          }),
-          data: new Promise<string>(async r => {
-            await new Promise(d => setTimeout(d, 1001))
-            return r(expected[1].data!)
-          })
-        }
-      ]
+    //   const derrered = [
+    //     {
+    //       to: new Promise<string>(async r => {
+    //         await new Promise(d => setTimeout(d, 1000))
+    //         return r(expected[0].to)
+    //       }),
+    //       value: new Promise<string>(async r => {
+    //         await new Promise(d => setTimeout(d, 600))
+    //         return r(expected[0].value!)
+    //       })
+    //     },
+    //     {
+    //       to: new Promise<string>(async r => {
+    //         await new Promise(d => setTimeout(d, 412))
+    //         return r(expected[1].to)
+    //       }),
+    //       data: new Promise<string>(async r => {
+    //         await new Promise(d => setTimeout(d, 1001))
+    //         return r(expected[1].data!)
+    //       })
+    //     }
+    //   ]
 
-      const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
-      expect(tx.wait()).to.be.fulfilled
-      expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
-    })
+    //   const tx = await signer.sendTransaction(derrered, { chainId: 31338 })
+    //   expect(tx.wait()).to.be.fulfilled
+    //   expect(ethers.getBytes(tx.hash)).to.have.lengthOf(32)
+    // })
   })
 })

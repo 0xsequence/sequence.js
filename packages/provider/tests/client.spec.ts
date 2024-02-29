@@ -503,12 +503,13 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           const command = commands.shift()
           expect(request).to.deep.equal(command?.req)
-          expect(chainId).to.equal(command?.chainId)
-          callback(undefined, command?.res)
+          expect(request.chainId).to.equal(command?.chainId)
+
+          return Promise.resolve(command?.res)
         }
       },
       useBestStore(),
@@ -543,7 +544,7 @@ describe('SequenceClient', () => {
   it('should handle error during arbitrary send', async () => {
     const client = new SequenceClient(
       {
-        ...basicMockTransport,
+        ...basicMockTransport
         // TODOXXX
         // sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
         //   callback(new Error('Failed to send'))
@@ -563,8 +564,11 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-          callback(undefined, undefined)
+        // sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        //   callback(undefined, undefined)
+        // }
+        request(request: JsonRpcRequest): Promise<any> {
+          return Promise.resolve(undefined)
         }
       },
       useBestStore(),
@@ -574,7 +578,7 @@ describe('SequenceClient', () => {
     )
 
     const request = { method: 'eth_chainId', params: [] }
-    const result = client.send(request)
+    const result = await client.request(request)
     await expect(result).to.be.rejectedWith(`Got undefined response for request: ${request}`)
   })
 
@@ -591,17 +595,17 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+        request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           expect(request).to.deep.equal({ method: 'sequence_getNetworks' })
-          callback(undefined, {
+          return Promise.resolve({
             result: [
               {
                 chainId: 5,
                 name: 'test'
               }
             ]
-          } as any)
+          })
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -711,15 +715,15 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           const req = requests.shift()
           expect(request).to.deep.equal({
             method: req?.eip6492 ? 'sequence_sign' : 'personal_sign',
             params: [req?.message, session.accountAddress]
           })
-          expect(chainId).to.equal(req?.chainId)
-          callback(undefined, { result: req?.result } as any)
+          expect(request.chainId).to.equal(req?.chainId)
+          return Promise.resolve({ result: req?.result })
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -895,7 +899,7 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        request(request: JsonRpcRequest): Promise<any> {
           const req = requests[calledSendAsync]
           calledSendAsync++
 
@@ -906,8 +910,8 @@ describe('SequenceClient', () => {
             params: [session.accountAddress, encoded]
           })
 
-          expect(chainId).to.equal(req?.chainId)
-          callback(undefined, { result: req?.result } as any)
+          expect(request.chainId).to.equal(req?.chainId)
+          return Promise.resolve({ result: req?.result })
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -1010,15 +1014,15 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           const req = requests.shift()
           expect(request).to.deep.equal({
             method: 'eth_sendTransaction',
             params: [req?.tx]
           })
-          expect(chainId).to.equal(req?.chainId)
-          callback(undefined, { result: req?.result } as any)
+          expect(request.chainId).to.equal(req?.chainId)
+          return Promise.resolve({ result: req?.result })
         }
       },
       useBestStore(),
@@ -1096,12 +1100,12 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           expect(request).to.deep.equal({
             method: 'sequence_getWalletContext'
           })
-          callback(undefined, { result: sampleContext } as any)
+          return Promise.resolve({ result: sampleContext })
         }
       },
       useBestStore(),
@@ -1163,15 +1167,15 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+        request(request: JsonRpcRequest): Promise<any> {
           const req = results[calledSendAsync]
           calledSendAsync++
           expect(request).to.deep.equal({
             method: 'sequence_getWalletConfig',
             params: [req?.chainId]
           })
-          expect(chainId).to.be.equal(req?.chainId)
-          callback(undefined, { result: req?.result } as any)
+          expect(request.chainId).to.be.equal(req?.chainId)
+          return Promise.resolve({ result: req?.result })
         }
       },
       useBestStore(),
@@ -1288,15 +1292,15 @@ describe('SequenceClient', () => {
       const client = new SequenceClient(
         {
           ...basicMockTransport,
-          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          request(request: JsonRpcRequest): Promise<any> {
             if (requests === 0) {
               expect(request.method).to.equal('personal_sign')
               requests++
-              callback(undefined, { result: '0x445566' } as any)
+              return Promise.resolve('0x445566')
             } else if (requests === 1) {
               expect(request.method).to.equal('eth_signTypedData_v4')
               requests++
-              callback(undefined, { result: '0x112233' } as any)
+              return Promise.resolve('0x112233')
             } else {
               expect.fail('Should not have called sendAsync')
             }
@@ -1360,15 +1364,15 @@ describe('SequenceClient', () => {
       const client = new SequenceClient(
         {
           ...basicMockTransport,
-          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          request(request: JsonRpcRequest): Promise<any> {
             if (requests === 0) {
               expect(request.method).to.equal('sequence_sign')
               requests++
-              callback(undefined, { result: '0x445566' } as any)
+              return Promise.resolve('0x445566')
             } else if (requests === 1) {
               expect(request.method).to.equal('sequence_signTypedData_v4')
               requests++
-              callback(undefined, { result: '0x112233' } as any)
+              return Promise.resolve('0x112233')
             } else {
               expect.fail('Should not have called sendAsync')
             }
@@ -1433,15 +1437,15 @@ describe('SequenceClient', () => {
       const client = new SequenceClient(
         {
           ...basicMockTransport,
-          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          request(request: JsonRpcRequest): Promise<any> {
             if (requests === 0) {
               expect(request.method).to.equal('personal_sign')
               requests++
-              callback(undefined, { result: '0x445566' } as any)
+              return Promise.resolve('0x445566')
             } else if (requests === 1) {
               expect(request.method).to.equal('eth_signTypedData_v4')
               requests++
-              callback(undefined, { result: '0x112233' } as any)
+              return Promise.resolve('0x112233')
             } else {
               expect.fail('Should not have called sendAsync')
             }
@@ -1505,15 +1509,15 @@ describe('SequenceClient', () => {
       const client = new SequenceClient(
         {
           ...basicMockTransport,
-          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          request(request: JsonRpcRequest): Promise<any> {
             if (requests === 0) {
               expect(request.method).to.equal('sequence_sign')
               requests++
-              callback(undefined, { result: '0x445566' } as any)
+              return Promise.resolve('0x445566')
             } else if (requests === 1) {
               expect(request.method).to.equal('sequence_signTypedData_v4')
               requests++
-              callback(undefined, { result: '0x112233' } as any)
+              return Promise.resolve('0x112233')
             } else {
               expect.fail('Should not have called sendAsync')
             }
@@ -1578,15 +1582,15 @@ describe('SequenceClient', () => {
       const client = new SequenceClient(
         {
           ...basicMockTransport,
-          sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+          request(request: JsonRpcRequest): Promise<any> {
             if (requests === 0) {
               expect(request.method).to.equal('sequence_sign')
               requests++
-              callback(undefined, { result: '0x445566' } as any)
+              return Promise.resolve('0x445566')
             } else if (requests === 1) {
               expect(request.method).to.equal('sequence_signTypedData_v4')
               requests++
-              callback(undefined, { result: '0x112233' } as any)
+              return Promise.resolve('0x112233')
             } else {
               expect.fail('Should not have called sendAsync')
             }
