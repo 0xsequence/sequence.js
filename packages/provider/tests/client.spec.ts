@@ -494,11 +494,11 @@ describe('SequenceClient', () => {
     let calledSendAsync = 0
 
     const commands = [
-      { chainId: 2, req: { method: 'eth_chainId', params: [] }, res: { result: '0x1' } },
-      { chainId: 2, req: { method: 'eth_accounts', params: [] }, res: { result: '0x12345' } },
-      { chainId: 5, req: { method: 'eth_sendTransaction', params: [{ to: '0x1234' }] }, res: { result: '0x000' } },
-      { chainId: 9, req: { method: 'non-standard', params: [{ a: 23123, b: true }] }, res: { result: '0x99' } }
-    ] as { chainId: number; req: JsonRpcRequest; res: JsonRpcResponse }[]
+      { chainId: 2, req: { method: 'eth_chainId', params: [] }, res: '0x1' },
+      { chainId: 2, req: { method: 'eth_accounts', params: [] }, res: '0x12345' },
+      { chainId: 5, req: { method: 'eth_sendTransaction', params: [{ to: '0x1234' }] }, res: '0x000' },
+      { chainId: 9, req: { method: 'non-standard', params: [{ a: 23123, b: true }] }, res: '0x99' }
+    ] as { chainId: number; req: JsonRpcRequest; res: any }[]
 
     const client = new SequenceClient(
       {
@@ -544,11 +544,10 @@ describe('SequenceClient', () => {
   it('should handle error during arbitrary send', async () => {
     const client = new SequenceClient(
       {
-        ...basicMockTransport
-        // TODOXXX
-        // sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-        //   callback(new Error('Failed to send'))
-        // }
+        ...basicMockTransport,
+        request(request: JsonRpcRequest): Promise<any> {
+          return Promise.reject(new Error('Failed to send'))
+        }
       },
       useBestStore(),
       {
@@ -564,9 +563,6 @@ describe('SequenceClient', () => {
     const client = new SequenceClient(
       {
         ...basicMockTransport,
-        // sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-        //   callback(undefined, undefined)
-        // }
         request(request: JsonRpcRequest): Promise<any> {
           return Promise.resolve(undefined)
         }
@@ -598,14 +594,12 @@ describe('SequenceClient', () => {
         request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           expect(request).to.deep.equal({ method: 'sequence_getNetworks' })
-          return Promise.resolve({
-            result: [
-              {
-                chainId: 5,
-                name: 'test'
-              }
-            ]
-          })
+          return Promise.resolve([
+            {
+              chainId: 5,
+              name: 'test'
+            }
+          ])
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -723,7 +717,7 @@ describe('SequenceClient', () => {
             params: [req?.message, session.accountAddress]
           })
           expect(request.chainId).to.equal(req?.chainId)
-          return Promise.resolve({ result: req?.result })
+          return Promise.resolve(req?.result)
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -911,7 +905,7 @@ describe('SequenceClient', () => {
           })
 
           expect(request.chainId).to.equal(req?.chainId)
-          return Promise.resolve({ result: req?.result })
+          return Promise.resolve(req?.result)
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -1022,7 +1016,7 @@ describe('SequenceClient', () => {
             params: [req?.tx]
           })
           expect(request.chainId).to.equal(req?.chainId)
-          return Promise.resolve({ result: req?.result })
+          return Promise.resolve(req?.result)
         }
       },
       useBestStore(),
@@ -1105,7 +1099,7 @@ describe('SequenceClient', () => {
           expect(request).to.deep.equal({
             method: 'sequence_getWalletContext'
           })
-          return Promise.resolve({ result: sampleContext })
+          return Promise.resolve(sampleContext)
         }
       },
       useBestStore(),
@@ -1175,7 +1169,7 @@ describe('SequenceClient', () => {
             params: [req?.chainId]
           })
           expect(request.chainId).to.be.equal(req?.chainId)
-          return Promise.resolve({ result: req?.result })
+          return Promise.resolve(req?.result)
         }
       },
       useBestStore(),
