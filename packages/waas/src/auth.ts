@@ -83,7 +83,7 @@ export type CommonAuthArgs = {
 }
 
 export type FeeArgs = {
-  transactionFeeOption?: FeeOption
+  transactionsFeeOption?: FeeOption
 }
 
 export type Network = Chain
@@ -419,13 +419,13 @@ export class SequenceWaaS {
   }
 
   async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & FeeArgs & CommonAuthArgs): Promise<MaySentTransactionResponse> {
-    if (args.transactionFeeQuote && args.transactionFeeOption) {
-      switch (args.transactionFeeOption.token.type) {
+    if (args.transactionsFeeQuote && args.transactionsFeeOption) {
+      switch (args.transactionsFeeOption.token.type) {
         case 'unknown':
           args.transactions.push(
             {
-              to: args.transactionFeeOption.to,
-              value: args.transactionFeeOption.value
+              to: args.transactionsFeeOption.to,
+              value: args.transactionsFeeOption.value
             }
           )
       }

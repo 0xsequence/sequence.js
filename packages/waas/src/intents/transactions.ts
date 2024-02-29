@@ -20,7 +20,7 @@ interface BaseArgs {
 
 export type SendTransactionsArgs = {
   transactions: Transaction[],
-  transactionFeeQuote?: string
+  transactionsFeeQuote?: string
 }
 
 export type SendERC20Args = {
@@ -94,7 +94,8 @@ export function sendTransactions({
   wallet,
   identifier,
   chainId,
-  transactions
+  transactions,
+ transactionsFeeQuote
 }: SendTransactionsArgs & BaseArgs): Intent<IntentDataSendTransaction> {
   return makeIntent('sendTransaction', lifespan, {
     identifier,
@@ -115,7 +116,8 @@ export function sendTransactions({
         value: ethers.BigNumber.from(tx.value || 0).toHexString(),
         data: ethers.utils.hexlify(tx.data || [])
       }
-    })
+    }),
+    transactionsFeeQuote
   })
 }
 
