@@ -46,6 +46,9 @@ export enum ChainId {
   HOMEVERSE_TESTNET = 40875,
   HOMEVERSE = 19011,
 
+  // XAI
+  XAI_SEPOLIA = 37714555429,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -399,6 +402,18 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Oasys Homeverse Explorer (Testnet)',
       rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
+    }
+  },
+  [ChainId.XAI_SEPOLIA]: {
+    chainId: ChainId.XAI_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'xai-sepolia',
+    title: 'XAI Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI_SEPOLIA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'XAI Sepolia Explorer',
+      rootUrl: 'https://xai-sepolia.blockscout.com/'
     }
   },
 
