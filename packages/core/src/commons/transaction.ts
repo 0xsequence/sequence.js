@@ -133,14 +133,14 @@ export function toSequenceTransactions(
 
 export function toSequenceTransaction(
   wallet: string,
-  tx: ethers.providers.TransactionRequest
+  tx: Transaction | ethers.providers.TransactionRequest
 ): { nonce?: ethers.BigNumberish; transaction: Transaction } {
   if (tx.to && tx.to !== ethers.constants.AddressZero) {
     return {
-      nonce: tx.nonce,
+      nonce: 'nonce' in tx ? tx.nonce : undefined,
       transaction: {
-        delegateCall: false,
-        revertOnError: false,
+        delegateCall: 'delegateCall' in tx ? tx.delegateCall : false,
+        revertOnError: 'revertOnError' in tx ? tx.revertOnError : false,
         gasLimit: tx.gasLimit || 0,
         to: tx.to,
         value: tx.value || 0,
@@ -152,10 +152,10 @@ export function toSequenceTransaction(
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
 
     return {
-      nonce: tx.nonce,
+      nonce: 'nonce' in tx ? tx.nonce : undefined,
       transaction: {
-        delegateCall: false,
-        revertOnError: false,
+        delegateCall: 'delegateCall' in tx ? tx.delegateCall : false,
+        revertOnError: 'revertOnError' in tx ? tx.revertOnError : false,
         gasLimit: tx.gasLimit,
         to: wallet,
         value: tx.value || 0,

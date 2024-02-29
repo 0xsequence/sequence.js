@@ -55,6 +55,7 @@ export interface Relayer {
   ): Promise<commons.transaction.TransactionResponse>
 }
 
+export * from './bundler'
 export * from './local-relayer'
 export * from './provider-relayer'
 export * from './rpc-relayer'

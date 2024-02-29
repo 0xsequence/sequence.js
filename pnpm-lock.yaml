@@ -602,6 +602,9 @@ importers:
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:../utils
+      '@0xsequence/wallet-contracts':
+        specifier: ^1.10.0
+        version: 1.10.0
     devDependencies:
       '@0xsequence/signhub':
         specifier: workspace:*
@@ -609,9 +612,6 @@ importers:
       '@0xsequence/tests':
         specifier: workspace:*
         version: link:../tests
-      '@0xsequence/wallet-contracts':
-        specifier: ^1.10.0
-        version: 1.10.0
       ethers:
         specifier: ^5.7.2
         version: 5.7.2
