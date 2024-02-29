@@ -30,7 +30,6 @@ describe('Wallet integration', function () {
 
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>
   let provider: ethers.JsonRpcProvider
-  let signers: ethers.Signer[]
 
   let estimator: OverwriterSequenceEstimator
 
@@ -38,27 +37,23 @@ describe('Wallet integration', function () {
     const url = 'http://127.0.0.1:10045/'
     provider = new ethers.JsonRpcProvider(url)
 
-    signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
+    const signer = await provider.getSigner(0)
 
-    contexts = await context.deploySequenceContexts(signers[0])
-    relayer = new LocalRelayer(signers[0])
+    contexts = await context.deploySequenceContexts(signer)
+    relayer = new LocalRelayer(signer)
 
     // Deploy call receiver mock
-    callReceiver = (await new ethers.ContractFactory(
-      CallReceiverMockArtifact.abi,
-      CallReceiverMockArtifact.bytecode,
-      signers[0]
-    ).deploy({ gasLimit: 1000000 })) as CallReceiverMock
+    callReceiver = (await new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signer)
+      .deploy({ gasLimit: 1000000 })
+      .then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     // Deploy hook caller mock
-    hookCaller = (await new ethers.ContractFactory(
-      HookCallerMockArtifact.abi,
-      HookCallerMockArtifact.bytecode,
-      signers[0]
-    ).deploy({ gasLimit: 1000000 })) as HookCallerMock
+    hookCaller = (await new ethers.ContractFactory(HookCallerMockArtifact.abi, HookCallerMockArtifact.bytecode, signer)
+      .deploy({ gasLimit: 1000000 })
+      .then(tx => tx.waitForDeployment())) as HookCallerMock
 
     // Deploy local relayer
-    relayer = new LocalRelayer({ signer: signers[0] })
+    relayer = new LocalRelayer({ signer })
 
     // Create gas estimator
     estimator = new OverwriterSequenceEstimator(new OverwriterEstimator({ rpc: provider }))
@@ -246,7 +241,7 @@ describe('Wallet integration', function () {
                   gasLimit: 0,
                   to: callReceiver.address,
                   value: 0n,
-                  data: await encodeData(callReceiver, 'testCall', 14442, '0x112233')
+                  data: await encodeData(callReceiver as any, 'testCall', 14442, '0x112233')
                 }
               ]
             })
@@ -297,7 +292,7 @@ describe('Wallet integration', function () {
                   gasLimit: 0,
                   to: callReceiver.address,
                   value: 0n,
-                  data: await encodeData(callReceiver, 'setRevertFlag', false)
+                  data: await encodeData(callReceiver as any, 'setRevertFlag', false)
                 },
                 {
                   delegateCall: false,
@@ -305,7 +300,7 @@ describe('Wallet integration', function () {
                   gasLimit: 0,
                   to: callReceiver.address,
                   value: 0n,
-                  data: await encodeData(callReceiver, 'testCall', 2, valB)
+                  data: await encodeData(callReceiver as any, 'testCall', 2, valB)
                 }
               ]
             })

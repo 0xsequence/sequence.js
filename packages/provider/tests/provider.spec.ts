@@ -1468,12 +1468,12 @@ describe('SequenceProvider', () => {
             provider = new SequenceProvider(
               {
                 ...basicMockClient,
-                send: async (request: JsonRpcRequest, chainId?: number) => {
-                  expect(chainId).to.equal(expectedChainId)
+                request(request: JsonRpcRequest): Promise<any> {
+                  expect(request.chainId).to.equal(expectedChainId)
                   expect(request.method).to.equal('eth_sendTransaction')
                   expect(request.params).to.deep.equal([expectedTx])
                   calledCount++
-                  return expectedResult
+                  return Promise.resolve(expectedResult)
                 }
               } as unknown as SequenceClient,
               providerFor
@@ -1542,12 +1542,12 @@ describe('SequenceProvider', () => {
               provider = new SequenceProvider(
                 {
                   ...basicMockClient,
-                  send: async (request: JsonRpcRequest, chainId?: number) => {
-                    expect(chainId).to.equal(expectedChainId)
+                  request(request: JsonRpcRequest): Promise<any> {
+                    expect(request.chainId).to.equal(expectedChainId)
                     expect(request.method).to.equal(method)
                     expect(request.params).to.deep.equal([expectedAddress, expectedMessage])
                     calledCount++
-                    return expectedResult
+                    return Promise.resolve(expectedResult)
                   }
                 } as unknown as SequenceClient,
                 providerFor
@@ -1603,12 +1603,12 @@ describe('SequenceProvider', () => {
               provider = new SequenceProvider(
                 {
                   ...basicMockClient,
-                  send: async (request: JsonRpcRequest, chainId?: number) => {
-                    expect(chainId).to.equal(expectedChainId)
+                  request(request: JsonRpcRequest): Promise<any> {
+                    expect(request.chainId).to.equal(expectedChainId)
                     expect(request.method).to.equal(method)
                     expect(request.params).to.deep.equal([expectedAddress, expectedMessage])
                     calledCount++
-                    return expectedResult
+                    return Promise.resolve(expectedResult)
                   }
                 } as unknown as SequenceClient,
                 providerFor
@@ -1730,7 +1730,7 @@ describe('SequenceProvider', () => {
 
       await new Promise(resolve => setTimeout(resolve, 100))
       const newNetwork = await provider.detectNetwork()
-      expect(newNetwork.chainId).to.equal(31338, '2nd network')
+      expect(newNetwork.chainId).to.equal(31338n, '2nd network')
     })
 
     it('should update polling block number', async () => {

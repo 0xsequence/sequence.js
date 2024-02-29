@@ -275,11 +275,11 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     // Forward call to the corresponding provider
     // we use the provided chainId, or the default one provided by the client
     const provider = await this._getSubprovider()
-    const prepared = provider.getRpcRequest({ method, ...params }) // ?? { method, args: params }
+    const prepared = provider.getRpcRequest({ method, ...params }) ?? { method, args: params }
 
-    if (!prepared) {
-      throw new Error(`Unsupported method ${method}`)
-    }
+    // if (!prepared) {
+    //   throw new Error(`Unsupported method ${method}`)
+    // }
 
     return provider.send(prepared.method, prepared.args)
   }
