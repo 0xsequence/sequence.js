@@ -147,9 +147,9 @@ describe('Wallet (primitive)', () => {
             relayer
           })
 
-          await wallet.deploy({ includeChildren: true, ignoreDeployed: true })
+          await wallet.deploy({ includeChildren: true, ignoreDeployed: true }).then(tx => tx!.wait())
 
-          await (await signers[0].sendTransaction({ to: wallet.address, value: parseEther('1') })).wait()
+          await signers[0].sendTransaction({ to: wallet.address, value: parseEther('1') }).then(tx => tx.wait())
         })
 
         it('Should use explicitly set nonces', async () => {
@@ -173,6 +173,8 @@ describe('Wallet (primitive)', () => {
           const encoded = getNonce(response)
           space = encoded.space
           nonce = encoded.nonce
+
+          await response.wait()
 
           expect(space === 6492n).to.be.true
           expect(nonce === 1n).to.be.true
@@ -214,6 +216,8 @@ describe('Wallet (primitive)', () => {
           const encoded = getNonce(response)
           space = encoded.space
           nonce = encoded.nonce
+
+          await response.wait()
 
           expect(space === 0n).to.be.true
           expect(nonce === 1n).to.be.true
@@ -458,15 +462,17 @@ describe('Wallet (primitive)', () => {
               })
 
               it('Should send an empty list of transactions', async () => {
-                await wallet.sendTransaction([])
+                await wallet.sendTransaction([]).then(tx => tx.wait())
               })
 
               it('Should send a transaction with an empty call', async () => {
-                await wallet.sendTransaction([
-                  {
-                    to: ethers.Wallet.createRandom().address
-                  }
-                ])
+                await wallet
+                  .sendTransaction([
+                    {
+                      to: ethers.Wallet.createRandom().address
+                    }
+                  ])
+                  .then(tx => tx.wait())
               })
 
               it('Should build and execute a wallet update transaction', async () => {
@@ -505,7 +511,7 @@ describe('Wallet (primitive)', () => {
 
                 const prevImplentation = await wallet.reader().implementation(wallet.address)
 
-                await wallet.sendTransaction(updateTx.transactions)
+                await wallet.sendTransaction(updateTx.transactions).then(tx => tx.wait())
 
                 expect(await wallet.reader().imageHash(wallet.address)).to.equal(coders.config.imageHashOf(newConfig))
                 expect(await wallet.reader().implementation(wallet.address)).to.not.equal(prevImplentation)
@@ -521,11 +527,12 @@ describe('Wallet (primitive)', () => {
                   testAccountAddress = await testAccount.getAddress()
 
                   const ethAmount = parseEther('100')
-                  const txResp = await testAccount.sendTransaction({
-                    to: await wallet.getAddress(),
-                    value: ethAmount
-                  })
-                  await provider.getTransactionReceipt(txResp.hash)
+                  const txResp = await testAccount
+                    .sendTransaction({
+                      to: await wallet.getAddress(),
+                      value: ethAmount
+                    })
+                    .then(tx => tx.wait())
                   toBalanceBefore = await provider.getBalance(testAccountAddress)
                 })
 
@@ -537,7 +544,7 @@ describe('Wallet (primitive)', () => {
                     value: ethAmount
                   }
 
-                  await wallet.sendTransaction(tx)
+                  await wallet.sendTransaction(tx).then(tx => tx.wait())
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter - toBalanceBefore
                   expect(sent).to.be.equal(ethAmount)
@@ -564,7 +571,11 @@ describe('Wallet (primitive)', () => {
                   }
 
                   // Send txns in parallel, but independently
-                  await Promise.all([wallet.sendTransaction(tx1), wallet.sendTransaction(tx2), wallet.sendTransaction(tx3)])
+                  await Promise.all([
+                    wallet.sendTransaction(tx1).then(tx => tx.wait()),
+                    wallet.sendTransaction(tx2).then(tx => tx.wait()),
+                    wallet.sendTransaction(tx3).then(tx => tx.wait())
+                  ])
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter - toBalanceBefore
@@ -592,7 +603,7 @@ describe('Wallet (primitive)', () => {
                   }
 
                   // Send txns in parallel, but independently
-                  await wallet.sendTransaction([tx1, tx2, tx3])
+                  await wallet.sendTransaction([tx1, tx2, tx3]).then(tx => tx.wait())
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
                   const sent = toBalanceAfter - toBalanceBefore
