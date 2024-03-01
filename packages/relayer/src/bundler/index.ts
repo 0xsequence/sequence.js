@@ -76,12 +76,12 @@ export class Bundler implements Relayer {
 
       const token = {
         chainId,
-        name: 'TODO',
-        symbol: 'TODO',
+        name: 'Ether',
+        symbol: 'ETH',
         type: FeeTokenType.UNKNOWN,
-        decimals: 0,
-        logoURL: 'TODO',
-        contractAddress: address
+        decimals: 18,
+        logoURL: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png',
+        contractAddress: undefined
       }
 
       const feeGasLimit = 500000
