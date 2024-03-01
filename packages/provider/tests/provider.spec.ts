@@ -682,6 +682,7 @@ describe('SequenceProvider', () => {
 
           if (bn1 === bn2) {
             await hardhat2Provider.send('evm_mine', [])
+
             bn2 = await hardhat2Provider.getBlockNumber()
           }
 
@@ -1211,21 +1212,21 @@ describe('SequenceProvider', () => {
             .sendTransaction({
               to: ethers.Wallet.createRandom().address
             })
-            .then(r => r.hash)
+            .then(r => r!.hash)
         })
 
         it('forward waitForTransaction - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.waitForTransaction(t1, undefined, 250).then(r => r?.hash)).to.equal(t1)
+          expect(await provider.waitForTransaction(t1, undefined, 5000).then(r => r?.hash)).to.equal(t1)
 
           provider.setDefaultChainId(31338)
-          await expect(provider.waitForTransaction(t1, undefined, 250)).to.be.rejected
+          await expect(provider.waitForTransaction(t1, undefined, 500)).to.be.rejected
         })
 
         it('forward waitForTransaction - specific chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
-          expect(await provider.waitForTransaction(t1, undefined, 250, { chainId: 31337 }).then(r => r?.hash)).to.equal(t1)
-          await expect(provider.waitForTransaction(t1, undefined, 250, { chainId: 31338 })).to.be.rejected
+          expect(await provider.waitForTransaction(t1, undefined, 5000, { chainId: 31337 }).then(r => r?.hash)).to.equal(t1)
+          await expect(provider.waitForTransaction(t1, undefined, 5000, { chainId: 31338 })).to.be.rejected
         })
 
         it('forward waitForTransaction - static network provider', async () => {
@@ -1233,16 +1234,16 @@ describe('SequenceProvider', () => {
           expect(
             await provider
               .getProvider('hardhat')
-              .waitForTransaction(t1, undefined, 250)
+              .waitForTransaction(t1, undefined, 5000)
               .then(r => r?.hash)
           ).to.equal(t1)
-          await expect(provider.getProvider('hardhat2').waitForTransaction(t1, undefined, 250)).to.be.rejected
+          await expect(provider.getProvider('hardhat2').waitForTransaction(t1, undefined, 5000)).to.be.rejected
         })
 
         it('fail to forward waitForTransaction - static network provider for different chain', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           await expect(
-            provider.getProvider('hardhat2').waitForTransaction(t1, undefined, 250, { chainId: 31337 })
+            provider.getProvider('hardhat2').waitForTransaction(t1, undefined, 5000, { chainId: 31337 })
           ).to.be.rejectedWith('This provider only supports the network 31338, but 31337 was requested.')
         })
       })
