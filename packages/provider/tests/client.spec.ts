@@ -726,7 +726,7 @@ describe('SequenceClient', () => {
           expect(request).to.deep.equal({
             method: req?.eip6492 ? 'sequence_sign' : 'personal_sign',
             params: [req?.message, session.accountAddress],
-            chainId: request.chainId
+            chainId: req?.chainId
           })
           expect(request.chainId).to.equal(req?.chainId)
           return Promise.resolve(req?.result)
@@ -918,7 +918,7 @@ describe('SequenceClient', () => {
           expect(request).to.deep.equal({
             method: req?.eip6492 ? 'sequence_signTypedData_v4' : 'eth_signTypedData_v4',
             params: [session.accountAddress, encoded],
-            chainId: request.chainId
+            chainId: req.chainId
           })
 
           expect(request.chainId).to.equal(req?.chainId)
@@ -1028,9 +1028,15 @@ describe('SequenceClient', () => {
         request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           const req = requests.shift()
+
+          if (!request.chainId) {
+            request.chainId = client.getChainId()
+          }
+
           expect(request).to.deep.equal({
             method: 'eth_sendTransaction',
-            params: [req?.tx]
+            params: [req?.tx],
+            chainId: req?.chainId
           })
           expect(request.chainId).to.equal(req?.chainId)
           return Promise.resolve(req?.result)
@@ -1181,9 +1187,15 @@ describe('SequenceClient', () => {
         request(request: JsonRpcRequest): Promise<any> {
           const req = results[calledSendAsync]
           calledSendAsync++
+
+          if (!request.chainId) {
+            request.chainId = client.getChainId()
+          }
+
           expect(request).to.deep.equal({
             method: 'sequence_getWalletConfig',
-            params: [req?.chainId]
+            params: [req?.chainId],
+            chainId: req?.chainId
           })
           expect(request.chainId).to.be.equal(req?.chainId)
           return Promise.resolve(req?.result)
