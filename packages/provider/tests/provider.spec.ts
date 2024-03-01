@@ -5,7 +5,8 @@ import {
   OptionalChainId,
   SequenceClient,
   SequenceProvider,
-  SingleNetworkSequenceProvider
+  SingleNetworkSequenceProvider,
+  WalletEventTypes
 } from '../src'
 import { expect } from 'chai'
 import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
@@ -343,21 +344,23 @@ describe('SequenceProvider', () => {
   describe('provider events', () => {
     let provider: SequenceProvider
 
-    const callbacks: { [event: string]: (data: any) => void } = {}
+    const callbacks: { [event in keyof WalletEventTypes]: (data: any) => any } = {} as any
 
     beforeEach(() => {
-      const usecb = (name: string, cb: (data: any) => any) => {
+      const registerCallback = <K extends keyof WalletEventTypes>(name: K, cb: WalletEventTypes[K]) => {
         callbacks[name] = cb
         return () => {}
       }
 
+      // When SequenceProvider is instantiated it will register callbacks on the client which emit events
+      // We capture these callbacks and call them manually to simulate the events
       provider = new SequenceProvider(
         {
           ...basicMockClient,
-          onConnect: (c: any) => usecb('connect', c),
-          onDisconnect: (c: any) => usecb('disconnect', c),
-          onDefaultChainIdChanged: (c: any) => usecb('chainChanged', c),
-          onAccountsChanged: (c: any) => usecb('accountsChanged', c)
+          onConnect: (cb: WalletEventTypes['connect']) => registerCallback('connect', cb),
+          onDisconnect: (cb: WalletEventTypes['disconnect']) => registerCallback('disconnect', cb),
+          onDefaultChainIdChanged: (cb: WalletEventTypes['chainChanged']) => registerCallback('chainChanged', cb),
+          onAccountsChanged: (cb: WalletEventTypes['accountsChanged']) => registerCallback('accountsChanged', cb)
         } as unknown as SequenceClient,
         providerFor
       )
