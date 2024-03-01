@@ -30,18 +30,14 @@ describe('Wallet integration', function () {
     relayer = new LocalRelayer(signers[1])
 
     // Deploy call receiver mock
-    callReceiver = (await new ethers.ContractFactory(
-      CallReceiverMockArtifact.abi,
-      CallReceiverMockArtifact.bytecode,
-      signers[0]
-    ).deploy()) as CallReceiverMock
+    callReceiver = (await new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signers[0])
+      .deploy()
+      .then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     // Deploy hook caller mock
-    hookCaller = (await new ethers.ContractFactory(
-      HookCallerMockArtifact.abi,
-      HookCallerMockArtifact.bytecode,
-      signers[0]
-    ).deploy()) as HookCallerMock
+    hookCaller = (await new ethers.ContractFactory(HookCallerMockArtifact.abi, HookCallerMockArtifact.bytecode, signers[0])
+      .deploy()
+      .then(tx => tx.waitForDeployment())) as HookCallerMock
   })
 
   describe('Waiting for receipts', () => {

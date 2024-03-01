@@ -112,14 +112,14 @@ describe('Wallet integration', function () {
       CallReceiverMockArtifact.abi,
       CallReceiverMockArtifact.bytecode,
       ethnode.signer
-    ).deploy()) as CallReceiverMock
+    )
+      .deploy()
+      .then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     // Deploy hook caller mock
-    hookCaller = (await new ethers.ContractFactory(
-      HookCallerMockArtifact.abi,
-      HookCallerMockArtifact.bytecode,
-      ethnode.signer
-    ).deploy()) as HookCallerMock
+    hookCaller = (await new ethers.ContractFactory(HookCallerMockArtifact.abi, HookCallerMockArtifact.bytecode, ethnode.signer)
+      .deploy()
+      .then(tx => tx.waitForDeployment())) as HookCallerMock
 
     tracker = new trackers.local.LocalConfigTracker(ethnode.provider!)
     orchestrator = new Orchestrator([])

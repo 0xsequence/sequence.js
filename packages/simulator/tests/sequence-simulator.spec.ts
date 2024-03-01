@@ -36,11 +36,9 @@ describe('Wallet integration', function () {
     relayer = new LocalRelayer(signers[0])
 
     // Deploy call receiver mock
-    callReceiver = (await new ethers.ContractFactory(
-      CallReceiverMockArtifact.abi,
-      CallReceiverMockArtifact.bytecode,
-      signers[0]
-    ).deploy({ gasLimit: 1000000 })) as CallReceiverMock
+    callReceiver = (await new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signers[0])
+      .deploy({ gasLimit: 1000000 })
+      .then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     // Deploy local relayer
     relayer = new LocalRelayer({ signer: signers[0] })
@@ -237,7 +235,7 @@ describe('Wallet integration', function () {
                   gasLimit: 0,
                   to: callReceiver.address,
                   value: 0n,
-                  data: await encodeData(callReceiver, 'testCall', 14442, '0x112233')
+                  data: await encodeData(callReceiver as any, 'testCall', 14442, '0x112233')
                 }
               ]
             })
@@ -277,7 +275,7 @@ describe('Wallet integration', function () {
                   gasLimit: 0,
                   to: callReceiver.address,
                   value: 0n,
-                  data: await encodeData(callReceiver, 'setRevertFlag', true)
+                  data: await encodeData(callReceiver as any, 'setRevertFlag', true)
                 },
                 {
                   delegateCall: false,
@@ -285,7 +283,7 @@ describe('Wallet integration', function () {
                   gasLimit: 0,
                   to: callReceiver.address,
                   value: 0n,
-                  data: await encodeData(callReceiver, 'testCall', 2, valB)
+                  data: await encodeData(callReceiver as any, 'testCall', 2, valB)
                 }
               ]
             })
