@@ -22,7 +22,6 @@ import { Orchestrator } from '@0xsequence/signhub'
 describe('Wallet integration', function () {
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>
   let provider: ethers.JsonRpcProvider
-  let signers: ethers.Signer[]
 
   let relayer: LocalRelayer
   let callReceiver: CallReceiverMock
@@ -30,18 +29,17 @@ describe('Wallet integration', function () {
   before(async () => {
     const url = 'http://127.0.0.1:10045/'
     provider = new ethers.JsonRpcProvider(url)
-    signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
-
-    contexts = await context.deploySequenceContexts(signers[0])
-    relayer = new LocalRelayer(signers[0])
+    const signer = await provider.getSigner(0)
+    contexts = await context.deploySequenceContexts(signer)
+    relayer = new LocalRelayer(signer)
 
     // Deploy call receiver mock
-    callReceiver = (await new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signers[0])
+    callReceiver = (await new ethers.ContractFactory(CallReceiverMockArtifact.abi, CallReceiverMockArtifact.bytecode, signer)
       .deploy({ gasLimit: 1000000 })
       .then(tx => tx.waitForDeployment())) as CallReceiverMock
 
     // Deploy local relayer
-    relayer = new LocalRelayer({ signer: signers[0] })
+    relayer = new LocalRelayer({ signer })
   })
 
   beforeEach(async () => {
