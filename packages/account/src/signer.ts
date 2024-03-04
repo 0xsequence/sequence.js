@@ -29,7 +29,7 @@ function encodeGasRefundTransaction(option?: FeeOption) {
           gasLimit: option.gasLimit,
           to: option.to,
           value: toHexString(value),
-          data: null
+          data: '0x'
         }
       ]
 
@@ -81,14 +81,15 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
     return this.account.signMessage(message, this.chainId, this.options?.cantValidateBehavior ?? 'throw')
   }
 
-  signTypedData(domain: ethers.TypedDataDomain, types: Record<string, Array<ethers.TypedDataField>>, value: Record<string, any>): Promise<string> {
+  signTypedData(
+    domain: ethers.TypedDataDomain,
+    types: Record<string, Array<ethers.TypedDataField>>,
+    value: Record<string, any>
+  ): Promise<string> {
     return this.account.signTypedData(domain, types, value, this.chainId, this.options?.cantValidateBehavior ?? 'throw')
   }
 
-  private async defaultSelectFee(
-    _txs: commons.transaction.Transactionish,
-    options: FeeOption[]
-  ): Promise<FeeOption | undefined> {
+  private async defaultSelectFee(_txs: commons.transaction.Transactionish, options: FeeOption[]): Promise<FeeOption | undefined> {
     // If no options, return undefined
     if (options.length === 0) return undefined
 
