@@ -46,7 +46,7 @@ export enum ChainId {
   HOMEVERSE_TESTNET = 40875,
   HOMEVERSE = 19011,
 
-  // XAI
+  // Xai
   XAI_SEPOLIA = 37714555429,
 
   // HARDHAT TESTNETS
@@ -408,12 +408,12 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.XAI_SEPOLIA,
     type: NetworkType.TESTNET,
     name: 'xai-sepolia',
-    title: 'XAI Sepolia',
+    title: 'Xai Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI_SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'XAI Sepolia Explorer',
-      rootUrl: 'https://xai-sepolia.blockscout.com/'
+      name: 'Xai Sepolia Explorer',
+      rootUrl: 'https://testnet-explorer-v2.xai-chain.net/'
     }
   },
 
