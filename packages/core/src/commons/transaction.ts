@@ -300,10 +300,10 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
       )
     } else {
       try {
-        const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0]
+        const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0] as ethers.Result
         const unwoundTransactions = unwind(
           wallet,
-          innerTransactions.map((tx: TransactionEncoded) => ({ ...tx, to: tx.target }))
+          innerTransactions.map((tx: ethers.Result) => ({ ...tx.toObject(), to: tx.target }))
         )
         unwound.push(...unwoundTransactions)
       } catch {
