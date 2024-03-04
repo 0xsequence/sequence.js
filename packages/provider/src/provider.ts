@@ -47,6 +47,9 @@ export interface ISequenceProvider {
   utils: WalletUtils
 }
 
+const EIP1193EventTypes = ['connect', 'disconnect', 'chainChanged', 'accountsChanged'] as const
+type EIP1193EventType = (typeof EIP1193EventTypes)[number]
+
 export class SequenceProvider extends ethers.AbstractProvider implements ISequenceProvider, EIP1193Provider {
   private readonly singleNetworkProviders: { [chainId: number]: SingleNetworkSequenceProvider } = {}
 
@@ -54,6 +57,8 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
   readonly utils: WalletUtils
 
   readonly signer: SequenceSigner
+
+  readonly eip1193EventListeners = new Map<EIP1193EventType, Set<ethers.Listener>>()
 
   constructor(
     public readonly client: SequenceClient,
@@ -66,19 +71,23 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
 
     // Emit events as defined by EIP-1193
     client.onConnect(details => {
-      this.emit('connect', details)
+      //this.emit('connect', details)
+      this.eip1193EventListeners.get('connect')?.forEach(listener => listener(details))
     })
 
     client.onDisconnect(error => {
-      this.emit('disconnect', error)
+      //this.emit('disconnect', error)
+      this.eip1193EventListeners.get('disconnect')?.forEach(listener => listener(error))
     })
 
     client.onDefaultChainIdChanged(chainId => {
-      this.emit('chainChanged', chainId)
+      //this.emit('chainChanged', chainId)
+      this.eip1193EventListeners.get('chainChanged')?.forEach(listener => listener(chainId))
     })
 
     client.onAccountsChanged(accounts => {
-      this.emit('accountsChanged', accounts)
+      //this.emit('accountsChanged', accounts)
+      this.eip1193EventListeners.get('accountsChanged')?.forEach(listener => listener(accounts))
     })
 
     // NOTICE: We don't emit 'open' and 'close' events
@@ -94,6 +103,36 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
 
     // Create a utils instance
     this.utils = new WalletUtils(this.signer)
+  }
+
+  async on(event: ethers.ProviderEvent | EIP1193EventType, listener: ethers.Listener): Promise<this> {
+    if (EIP1193EventTypes.includes(event as EIP1193EventType)) {
+      const listeners = this.eip1193EventListeners.get(event as EIP1193EventType) || new Set()
+      listeners.add(listener)
+      this.eip1193EventListeners.set(event as EIP1193EventType, listeners)
+
+      return this
+    }
+
+    return super.on(event, listener) as Promise<this>
+  }
+
+  async off(event: ethers.ProviderEvent | EIP1193EventType, listener?: ethers.Listener | undefined): Promise<this> {
+    if (EIP1193EventTypes.includes(event as EIP1193EventType)) {
+      const listeners = this.eip1193EventListeners.get(event as EIP1193EventType)
+
+      if (listeners) {
+        if (listener) {
+          listeners.delete(listener)
+        } else {
+          listeners.clear()
+        }
+      }
+
+      return this
+    }
+
+    return super.off(event, listener) as Promise<this>
   }
 
   getSigner(): SequenceSigner
