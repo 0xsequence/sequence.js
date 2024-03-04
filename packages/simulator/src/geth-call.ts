@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, toBigInt } from 'ethers'
 import { BigIntish } from '@0xsequence/utils'
 
 export async function gethCall(
@@ -16,12 +16,7 @@ export async function gethCall(
   //   ...(overrides ? [formatOverrides(overrides)] : [])
   // ])
 
-  return provider.send('eth_call', [
-    transaction,
-    block ?? null,
-    ...(overrides ? [formatOverrides(overrides)] : [])
-  ])
-
+  return provider.send('eth_call', [transaction, block ?? 'latest', ...(overrides ? [formatOverrides(overrides)] : [])])
 }
 
 export interface Overrides {
@@ -45,24 +40,31 @@ function formatOverrides(overrides: any): Overrides {
 
   const formatted: Overrides = {}
 
-  // TODOXXX review..
-  // for (const [key, value] of Object.entries(overrides)) {
-  //   if (ethers.isHexString(key, 20)) {
-  //     try {
-  //       formatted[key] = ethers.Formatter.check(overridesFormat, value)
-  //     } catch {}
-  //   }
-  // }
+  for (const [key, value] of Object.entries(overrides)) {
+    if (ethers.isHexString(key, 20)) {
+      formatted[key] = {}
+
+      try {
+        for (const [overrideKey, overrideValue] of Object.entries(value as any)) {
+          switch (overrideKey) {
+            case 'balance':
+            case 'nonce':
+              formatted[key][overrideKey] = overrideValue ? toBigInt(overrideValue as any) : undefined
+              break
+            case 'code':
+              formatted[key][overrideKey] = overrideValue ? ethers.hexlify(overrideValue as any) : undefined
+              break
+            case 'state':
+            case 'stateDiff':
+              formatted[key][overrideKey] = overrideValue ? formatStorageOverrides(overrideValue as any) : undefined
+              break
+          }
+        }
+      } catch {}
+    }
+  }
 
   return formatted
-}
-
-const overridesFormat = {
-  balance: skipNullish(BigInt),
-  nonce: skipNullish(BigInt),
-  code: skipNullish(ethers.hexlify),
-  state: skipNullish(formatStorageOverrides),
-  stateDiff: skipNullish(formatStorageOverrides)
 }
 
 function formatStorageOverrides(overrides: any): StorageOverrides {
@@ -84,17 +86,4 @@ function formatStorageOverrides(overrides: any): StorageOverrides {
   }
 
   return formatted
-}
-
-function skipNullish<X, Y>(formatter: (x: X) => Y): (x?: X | null) => Y | undefined {
-  return x => {
-    switch (x) {
-      case null:
-      case undefined:
-        return undefined
-
-      default:
-        return formatter(x)
-    }
-  }
 }

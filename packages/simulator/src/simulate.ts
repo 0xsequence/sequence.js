@@ -17,6 +17,7 @@ export async function simulate(
   const transaction = { to: wallet, data }
   const overrides = { [wallet]: { code: simulatorBytecode } }
   const result = await gethCall(provider, transaction, block, overrides)
+
   return simulatorInterface.decodeFunctionResult('simulateExecute', result)[0]
 }
 
