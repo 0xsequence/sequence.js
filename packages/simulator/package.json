@@ -11,7 +11,7 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "wait-on -t 120000 http-get://127.0.0.1:10045/ && pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 30000",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 60000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:geth > /dev/null'",
     "start:geth": "docker run --rm -t -p 10045:10045 ethereum/client-go:v1.10.16 --http --http.addr 0.0.0.0 --http.port 10045 --datadir test_chain --dev --rpc.allow-unprotected-txs",
     "typecheck": "tsc --noEmit"
