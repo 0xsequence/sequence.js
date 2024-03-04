@@ -12,8 +12,8 @@ import { expect } from 'chai'
 import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
 import { ExtendedTransactionRequest } from '../src/extended'
 
-const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595')
-const hardhat2Provider = new ethers.JsonRpcProvider('http://127.0.0.1:8595')
+const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595', undefined, { cacheTimeout: 0 })
+const hardhat2Provider = new ethers.JsonRpcProvider('http://127.0.0.1:8595', undefined, { cacheTimeout: 0 })
 
 const providerFor = (chainId: number) => {
   if (chainId === 31337) {
@@ -680,34 +680,16 @@ describe('SequenceProvider', () => {
           bn1 = await hardhat1Provider.getBlockNumber()
           bn2 = await hardhat2Provider.getBlockNumber()
 
-          console.log('a: ', bn1, bn2)
-
           if (bn1 === bn2) {
-            try {
-              const res = await hardhat2Provider.send('evm_mine', [])
-              await hardhat2Provider.send('evm_mine', [])
-              await hardhat2Provider.send('evm_mine', [])
-              await hardhat2Provider.send('evm_mine', [])
+            await hardhat2Provider.send('evm_mine', [])
 
-              console.log(await hardhat2Provider.send('eth_blockNumber', []))
-
-              console.log(JSON.stringify(res))
-            } catch (e) {
-              console.error(e)
-            }
-
-            console.log('b:', bn1, bn2)
-
-            bn1 = await hardhat1Provider.getBlockNumber()
             bn2 = await hardhat2Provider.getBlockNumber()
-
-            console.log('c:', bn1, bn2)
           }
 
           expect(bn1).to.not.equal(bn2)
         })
 
-        it.only('forward getBlockNumber - default', async () => {
+        it('forward getBlockNumber - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getBlockNumber()).to.equal(bn1, 'default chain')
 
