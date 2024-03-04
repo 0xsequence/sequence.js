@@ -680,16 +680,34 @@ describe('SequenceProvider', () => {
           bn1 = await hardhat1Provider.getBlockNumber()
           bn2 = await hardhat2Provider.getBlockNumber()
 
-          if (bn1 === bn2) {
-            await hardhat2Provider.send('evm_mine', [])
+          console.log('a: ', bn1, bn2)
 
+          if (bn1 === bn2) {
+            try {
+              const res = await hardhat2Provider.send('evm_mine', [])
+              await hardhat2Provider.send('evm_mine', [])
+              await hardhat2Provider.send('evm_mine', [])
+              await hardhat2Provider.send('evm_mine', [])
+
+              console.log(await hardhat2Provider.send('eth_blockNumber', []))
+
+              console.log(JSON.stringify(res))
+            } catch (e) {
+              console.error(e)
+            }
+
+            console.log('b:', bn1, bn2)
+
+            bn1 = await hardhat1Provider.getBlockNumber()
             bn2 = await hardhat2Provider.getBlockNumber()
+
+            console.log('c:', bn1, bn2)
           }
 
           expect(bn1).to.not.equal(bn2)
         })
 
-        it('forward getBlockNumber - default', async () => {
+        it.only('forward getBlockNumber - default', async () => {
           const provider = new SequenceProvider(basicMockClient, providerFor)
           expect(await provider.getBlockNumber()).to.equal(bn1, 'default chain')
 
