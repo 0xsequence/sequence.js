@@ -33,11 +33,11 @@ describe('estimator', function () {
 
   it('should estimate the gas of a single call', async () => {
     const gas = await estimator.estimate({
-      to: callReceiver.address,
+      to: await (callReceiver as any).getAddress(),
       data: await encodeData(callReceiver as any, 'testCall', 1, '0x112233')
     })
     const tx = await (await callReceiver.testCall(1, '0x112233')).wait()
-    expect(Number(gas)).to.be.above(tx.gasUsed.toNumber())
-    expect(Number(gas)).to.be.approximately(tx.gasUsed.toNumber(), 5000)
+    expect(Number(gas)).to.be.above(Number(tx.gasUsed))
+    expect(Number(gas)).to.be.approximately(Number(tx.gasUsed), 5000)
   })
 })
