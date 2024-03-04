@@ -23,7 +23,7 @@ const { expect } = chai.use(chaiAsPromised)
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
-describe('Wallet integration', function () {
+describe.only('Wallet integration', function () {
   let relayer: LocalRelayer
   let callReceiver: CallReceiverMock
   let hookCaller: HookCallerMock
@@ -40,6 +40,7 @@ describe('Wallet integration', function () {
     const signer = await provider.getSigner(0)
 
     contexts = await context.deploySequenceContexts(signer)
+
     relayer = new LocalRelayer(signer)
 
     // Deploy call receiver mock
@@ -248,12 +249,12 @@ describe('Wallet integration', function () {
 
             it('should use estimated gas for a single transaction', async () => {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
-              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait()
 
               expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 10000)
               expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
-              expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
+              expect(await callReceiver.lastValA()).to.equal(14442n)
             })
 
             it('should predict gas usage for a single transaction', async () => {
@@ -263,7 +264,7 @@ describe('Wallet integration', function () {
               expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 10000)
               expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
-              expect((await callReceiver.lastValA()).toNumber()).to.equal(14442)
+              expect(await callReceiver.lastValA()).to.equal(14442n)
             })
 
             it('should use estimated gas for a single failing transaction', async () => {
@@ -274,7 +275,7 @@ describe('Wallet integration', function () {
               expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 10000)
               expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
 
-              expect((await callReceiver.lastValA()).toNumber()).to.equal(0)
+              expect(await callReceiver.lastValA()).to.equal(0n)
             })
           })
 
@@ -307,7 +308,7 @@ describe('Wallet integration', function () {
 
             it('should use estimated gas for a batch of transactions', async () => {
               const estimation = await estimator.estimateGasLimits(wallet.address, wallet.config, wallet.context, 0, ...txs)
-              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait(1)
+              const realTx = await (await wallet.sendTransaction(estimation.transactions)).wait()
 
               expect(Number(realTx?.gasUsed)).to.be.approximately(Number(estimation.total), 30000)
               expect(Number(realTx?.gasUsed)).to.be.below(Number(estimation.total))
