@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.2
+
+### Patch Changes
+
+- network: add xai-sepolia
+- Updated dependencies
+  - @0xsequence/abi@1.9.2
+  - @0xsequence/core@1.9.2
+  - @0xsequence/wallet@1.9.2
+
 ## 1.9.1
 
 ### Patch Changes

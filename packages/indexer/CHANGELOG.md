@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.9.2
+
+### Patch Changes
+
+- network: add xai-sepolia
+
 ## 1.9.1
 
 ### Patch Changes

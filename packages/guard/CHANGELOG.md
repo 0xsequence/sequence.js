@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.9.2
+
+### Patch Changes
+
+- network: add xai-sepolia
+- Updated dependencies
+  - @0xsequence/account@1.9.2
+  - @0xsequence/core@1.9.2
+  - @0xsequence/signhub@1.9.2
+  - @0xsequence/utils@1.9.2
+
 ## 1.9.1
 
 ### Patch Changes

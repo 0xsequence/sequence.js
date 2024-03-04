@@ -1,5 +1,13 @@
 # @0xsequence/waas
 
+## 1.9.2
+
+### Patch Changes
+
+- network: add xai-sepolia
+- Updated dependencies
+  - @0xsequence/network@1.9.2
+
 ## 1.9.1
 
 ### Patch Changes
