@@ -1,5 +1,15 @@
 # @0xsequence/estimator
 
+## 1.9.4
+
+### Patch Changes
+
+- waas: fix network dependency
+- Updated dependencies
+  - @0xsequence/abi@1.9.4
+  - @0xsequence/core@1.9.4
+  - @0xsequence/utils@1.9.4
+
 ## 1.9.3
 
 ### Patch Changes

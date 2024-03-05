@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.9.4
+
+### Patch Changes
+
+- waas: fix network dependency
+
 ## 1.9.3
 
 ### Patch Changes

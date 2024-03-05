@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.4
+
+### Patch Changes
+
+- waas: fix network dependency
+- Updated dependencies
+  - @0xsequence/abi@1.9.4
+  - @0xsequence/core@1.9.4
+  - @0xsequence/wallet@1.9.4
+
 ## 1.9.3
 
 ### Patch Changes
