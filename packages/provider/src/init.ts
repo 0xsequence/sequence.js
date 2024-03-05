@@ -101,6 +101,12 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
     })
     .concat(newNetworks)
     .map(network => {
+      // don't double-append in the case the user has already included their access key in the rpc URL
+      if (network.rpcUrl.includes(projectAccessKey)) {
+        return network
+      }
+
+      // this will probably break non-sequence RPC provider URLs.
       network.rpcUrl = network.rpcUrl + `/${projectAccessKey}`
       return network
     })
