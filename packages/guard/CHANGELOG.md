@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.9.3
+
+### Patch Changes
+
+- provider: don't append access key to RPC url if user has already provided it
+- Updated dependencies
+  - @0xsequence/account@1.9.3
+  - @0xsequence/core@1.9.3
+  - @0xsequence/signhub@1.9.3
+  - @0xsequence/utils@1.9.3
+
 ## 1.9.2
 
 ### Patch Changes

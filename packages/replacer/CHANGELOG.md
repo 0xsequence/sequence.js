@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 1.9.3
+
+### Patch Changes
+
+- provider: don't append access key to RPC url if user has already provided it
+- Updated dependencies
+  - @0xsequence/abi@1.9.3
+  - @0xsequence/core@1.9.3
+
 ## 1.9.2
 
 ### Patch Changes

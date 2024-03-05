@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.9.3
+
+### Patch Changes
+
+- provider: don't append access key to RPC url if user has already provided it
+
 ## 1.9.2
 
 ### Patch Changes
