@@ -59,12 +59,14 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
     this.#sender = router
   }
 
-  request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
-    return this.#sender.request(request)
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+    const response = await this.#sender.request(request)
+
+    return response.result
   }
 
   send(method: string, params?: any[] | Record<string, any>, chainId?: number): Promise<any> {
-    return this.#sender.request({ method, params: params as any, chainId })
+    return this.request({ method, params: params as any, chainId })
   }
 
   async getNetwork(): Promise<ethers.Network> {
@@ -85,7 +87,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
     }
   }
 
-  private fetch = async (request: { method: string, params?: any[], chainId?: number }): Promise<any> => {
+  private fetch = async (request: { method: string; params?: any[]; chainId?: number }): Promise<any> => {
     if (this.url === undefined) {
       throw new Error('missing provider URL')
     }
@@ -123,7 +125,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
 
           // TODO: Process result
 
-          return result
+          return getResult(result)
         } catch (err) {
           throw new Error('invalid JSON response')
         }
@@ -134,4 +136,15 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
       throw err
     }
   }
+}
+
+function getResult(payload: { error?: { code?: number; data?: any; message?: string }; result?: any }): any {
+  if (payload.error) {
+    // @TODO: not any
+    const error: any = new Error(payload.error.message)
+    error.code = payload.error.code
+    error.data = payload.error.data
+    throw error
+  }
+  return payload.result
 }
