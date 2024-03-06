@@ -84,15 +84,6 @@ jobs:
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter deployer test
 
-  tests-estimator:
-    name: Run estimator tests
-    runs-on: ubuntu-latest
-    needs: [install]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-dependencies
-      - run: pnpm --filter estimator test
-
   tests-guard:
     name: Run guard tests
     runs-on: ubuntu-latest

@@ -26,9 +26,6 @@ importers:
       '@0xsequence/deployer':
         specifier: workspace:*
         version: link:packages/deployer
-      '@0xsequence/estimator':
-        specifier: workspace:*
-        version: link:packages/estimator
       '@0xsequence/guard':
         specifier: workspace:*
         version: link:packages/guard
@@ -392,31 +389,6 @@ importers:
       typechain:
         specifier: ^8.1.1
         version: 8.3.2(typescript@5.3.3)
-
-  packages/estimator:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-      '@0xsequence/wallet-contracts':
-        specifier: ^1.10.0
-        version: 1.10.0
-    devDependencies:
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/tests':
-        specifier: workspace:*
-        version: link:../tests
-      ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
 
   packages/guard:
     dependencies:
