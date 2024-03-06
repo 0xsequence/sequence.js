@@ -137,10 +137,10 @@ export const tests = async () => {
     const chainIdClient = client.getChainId()
     assert.equal(chainIdClient, 31337, 'chain id match')
 
-    const netVersion = await client.send({ method: 'net_version' })
+    const netVersion = await client.request({ method: 'net_version' })
     assert.equal(netVersion, '31337', 'net_version check')
 
-    const chainId = await client.send({ method: 'eth_chainId' })
+    const chainId = await client.request({ method: 'eth_chainId' })
     assert.equal(chainId, '0x7a69', 'eth_chainId check')
   })
 

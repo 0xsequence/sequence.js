@@ -30,7 +30,8 @@ export const tests = async () => {
   const provider = new ethers.BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const address = await signer.getAddress()
-  const chainId = await signer.getChainId()
+  const { chainId } = await provider.getNetwork()
+  // const chainId = await signer.getChainId()
 
   await test('getAddress', async () => {
     assert.true(ethers.isAddress(address), 'wallet address')
@@ -58,8 +59,8 @@ export const tests = async () => {
     const chainId = await provider.send('eth_chainId', [])
     assert.equal(chainId, '0x7a69', 'eth_chainId check')
 
-    const chainId2 = await signer.getChainId()
-    assert.equal(chainId2, 31337, 'chainId check')
+    // const chainId2 = await signer.getChainId()
+    // assert.equal(chainId2, 31337, 'chainId check')
   })
 
   // NOTE: when a dapp wants to verify SmartWallet signed messages, they will need to verify against EIP-1271

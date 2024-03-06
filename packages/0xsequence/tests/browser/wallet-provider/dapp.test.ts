@@ -263,7 +263,7 @@ export const tests = async () => {
     const ethAmount = parseEther('10.1234')
     const txResp = await sendETH(testAccount, wallet.getAddress(), ethAmount)
     const txReceipt = await provider.getTransactionReceipt(txResp.hash)
-    assert.true(txReceipt.status === 1, 'eth sent from signer1')
+    assert.true(txReceipt!.status === 1, 'eth sent from signer1')
 
     const walletBalanceAfter = await signer.getBalance()
     assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
@@ -320,7 +320,7 @@ export const tests = async () => {
         const txResp = await signer.sendTransaction(tx)
         const txReceipt = await txResp.wait()
 
-        assert.true(txReceipt.status === 1, 'txn sent successfully')
+        assert.true(txReceipt!.status === 1, 'txn sent successfully')
         assert.true(
           (await hardhatProvider.getCode(wallet.getAddress())) !== '0x',
           'wallet must be in deployed state after the txn'
@@ -328,9 +328,9 @@ export const tests = async () => {
 
         // transaction is sent to the deployed wallet, if the wallet is deployed.. otherwise its sent to guestModule
         if (beforeWalletDeployed) {
-          assert.equal(txReceipt.to, wallet.getAddress(), 'recipient is correct')
+          assert.equal(txReceipt!.to, wallet.getAddress(), 'recipient is correct')
         } else {
-          assert.equal(txReceipt.to, walletContext[2].guestModule, 'recipient is correct')
+          assert.equal(txReceipt!.to, walletContext[2].guestModule, 'recipient is correct')
         }
 
         // Ensure fromAddress sent their eth
@@ -472,24 +472,26 @@ export const tests = async () => {
     // initial balances
     {
       const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
-      const walletBalanceBefore = await testAccount.getBalance()
+      // const walletBalanceBefore = await testAccount.getBalance()
+      const walletBalanceBefore = await provider2.getBalance(await testAccount.getAddress())
 
       const mainTestAccount = getEOAWallet(testAccounts[0].privateKey, wallet.getProvider())
-      const mainWalletBalanceBefore = await mainTestAccount.getBalance()
+      //const mainWalletBalanceBefore = await mainTestAccount.getBalance()
+      const mainWalletBalanceBefore = await provider.getBalance(await mainTestAccount.getAddress())
 
       assert.true(walletBalanceBefore !== mainWalletBalanceBefore, 'balances across networks do not match')
 
       // test different code paths lead to same results
-      assert.equal(
-        (await provider2.getBalance(await testAccount.getAddress())).toString(),
-        (await testAccount.getBalance()).toString(),
-        'balance match 1'
-      )
-      assert.equal(
-        (await provider.getBalance(await mainTestAccount.getAddress())).toString(),
-        (await mainTestAccount.getBalance()).toString(),
-        'balance match 2'
-      )
+      // assert.equal(
+      //   (await provider2.getBalance(await testAccount.getAddress())).toString(),
+      //   (await testAccount.getBalance()).toString(),
+      //   'balance match 1'
+      // )
+      // assert.equal(
+      //   (await provider.getBalance(await mainTestAccount.getAddress())).toString(),
+      //   (await mainTestAccount.getBalance()).toString(),
+      //   'balance match 2'
+      // )
     }
 
     // first, lets move some ETH info the wallet from teh testnet seed account
@@ -503,7 +505,7 @@ export const tests = async () => {
       // const txReceipt = await provider2.getTransactionReceipt(txResp.hash)
 
       const txReceipt = await (await sendETH(testAccount, wallet.getAddress(), ethAmount)).wait()
-      assert.true(txReceipt.status === 1, 'eth sent')
+      assert.true(txReceipt!.status === 1, 'eth sent')
 
       const walletBalanceAfter = await signer2.getBalance()
       assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
@@ -528,7 +530,7 @@ export const tests = async () => {
       }
       const txReceipt = await (await signer2.sendTransaction(tx)).wait()
 
-      assert.true(txReceipt.status === 1, 'txn sent successfully')
+      assert.true(txReceipt!.status === 1, 'txn sent successfully')
       assert.true((await hardhatProvider.getCode(walletAddress)) !== '0x', 'wallet must be in deployed state after the txn')
 
       // Ensure fromAddress sent their eth
