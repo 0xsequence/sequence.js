@@ -174,15 +174,6 @@ jobs:
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter signhub test
 
-  tests-simulator:
-    name: Run simulator tests
-    runs-on: ubuntu-latest
-    needs: [install]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-dependencies
-      - run: pnpm --filter simulator test
-
   tests-utils:
     name: Run utils tests
     runs-on: ubuntu-latest

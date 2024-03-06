@@ -41,7 +41,6 @@
     "@0xsequence/network": "workspace:*",
     "@0xsequence/provider": "workspace:*",
     "@0xsequence/relayer": "workspace:*",
-    "@0xsequence/simulator": "workspace:*",
     "@0xsequence/utils": "workspace:*",
     "@0xsequence/wallet": "workspace:*",
     "@babel/core": "^7.21.4",

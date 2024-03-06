@@ -44,9 +44,6 @@ importers:
       '@0xsequence/relayer':
         specifier: workspace:*
         version: link:packages/relayer
-      '@0xsequence/simulator':
-        specifier: workspace:*
-        version: link:packages/simulator
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:packages/utils
@@ -589,25 +586,6 @@ importers:
         specifier: ^15.1.0
         version: 15.1.0
 
-  packages/simulator:
-    dependencies:
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/wallet-contracts':
-        specifier: ^1.10.0
-        version: 1.10.0
-    devDependencies:
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/tests':
-        specifier: workspace:*
-        version: link:../tests
-      ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
-
   packages/tests:
     dependencies:
       '@0xsequence/core':
@@ -728,6 +706,7 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: true
 
   /@0xsequence/wallet-contracts@2.0.0(@ethersproject/abi@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/providers@5.7.2)(typechain@5.2.0)(typescript@5.3.3):
     resolution: {integrity: sha512-PbKedYnBxgS7Qb5ca/xHUt++TmKK3yKIpVR1fX7HtAJiYOMSoZX4pVIFylUr6N7uBNpsPurFWCx7jTK+hBZnNA==}
