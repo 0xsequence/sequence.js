@@ -32,7 +32,7 @@ export const createJsonRpcMiddlewareStack = (
   if (middlewares.length === 0) return handler
 
   const toMiddleware = (v: any): JsonRpcMiddleware => {
-    if (v.requestMiddleware) {
+    if (v.requestHandler) {
       return (v as JsonRpcMiddlewareHandler).requestHandler
     } else {
       return v
