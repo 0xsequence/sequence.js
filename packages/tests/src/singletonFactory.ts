@@ -62,7 +62,11 @@ export async function mustExistEIP2470(signer: ethers.Signer): Promise<ethers.Co
   return new ethers.Contract(address, abi, signer)
 }
 
-export async function deployContract(signer: ethers.Signer, artifact: Artifact, ...args: any[]): Promise<ethers.Contract> {
+export async function deployContract(
+  signer: ethers.Signer,
+  artifact: Artifact,
+  ...args: any[]
+): Promise<[ethers.Contract, Promise<boolean>]> {
   const provider = signer.provider
   if (!provider) throw new Error('signer has no provider')
 
@@ -87,15 +91,16 @@ export async function deployContract(signer: ethers.Signer, artifact: Artifact, 
   )
 
   if (await isContract(provider, address)) {
-    return new ethers.Contract(address, artifact.abi, signer)
+    return [new ethers.Contract(address, artifact.abi, signer), Promise.resolve(true)]
   }
 
   const maxGasLimit = await provider.getBlock('latest').then(b => (b?.gasLimit ? b.gasLimit / 2n : 0n))
-  await singletonFactory.deploy(data, ethers.ZeroHash, { gasLimit: maxGasLimit }).then((tx: any) => tx.wait())
+  const tx = await singletonFactory.deploy(data, ethers.ZeroHash, { gasLimit: maxGasLimit })
 
-  if (!(await isContract(provider, address))) {
-    throw new Error('contract deployment failed')
-  }
+  // if (!(await isContract(provider, address))) {
+  //   throw new Error('contract deployment failed')
+  // }
+  const waitPromise = tx.wait().then(() => isContract(provider, address))
 
-  return new ethers.Contract(address, artifact.abi, signer)
+  return [new ethers.Contract(address, artifact.abi, signer), waitPromise]
 }

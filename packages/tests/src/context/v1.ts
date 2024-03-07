@@ -14,6 +14,8 @@ const predefinedAddresses = {
 }
 
 export async function deployV1Context(signer: ethers.Signer): Promise<WalletContext> {
+  const { chainId } = await signer.provider!.getNetwork()
+
   // See if signer's provider has the contracts already deployed
   const provider = signer.provider
   if (!provider) {
@@ -23,8 +25,6 @@ export async function deployV1Context(signer: ethers.Signer): Promise<WalletCont
   if (
     await Promise.all(Object.values(predefinedAddresses).map(address => isContract(provider, address))).then(r => r.every(x => x))
   ) {
-    console.log('Using predefined addresses for V1 contracts')
-
     return {
       version: 1,
 
@@ -38,7 +38,7 @@ export async function deployV1Context(signer: ethers.Signer): Promise<WalletCont
     }
   }
 
-  console.log('Predefined addresses for V1 contracts not found, deploying new ones')
+  console.log(`[${chainId}] [v1]: Deploying context...`)
 
   const responses: ethers.TransactionResponse[] = []
 

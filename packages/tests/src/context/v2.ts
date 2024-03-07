@@ -2,19 +2,38 @@ import { ethers } from 'ethers'
 import { v2 } from '../builds'
 import { deployContract } from '../singletonFactory'
 import { WalletContext } from '@0xsequence/core/src/v2/context'
+import { isContract } from '../utils'
 
 export async function deployV2Context(signer: ethers.Signer): Promise<WalletContext> {
+  const { chainId } = await signer.provider!.getNetwork()
+  console.log(`[${chainId}] [v2]: Deploying context...`)
+
   // See if signer's provider has the contracts already deployed
-  const factory = await deployContract(signer, v2.factory)
-  const mainModuleUpgradable = await deployContract(signer, v2.mainModuleUpgradable)
-  const mainModule = await deployContract(
+
+  const deploymentResults: boolean[][] = []
+
+  const [factory, waitForFactoryDeployment] = await deployContract(signer, v2.factory)
+  const [mainModuleUpgradable, waitForMainModuleUpgradable] = await deployContract(signer, v2.mainModuleUpgradable)
+
+  deploymentResults.push(await Promise.all([waitForFactoryDeployment, waitForMainModuleUpgradable]))
+
+  const [mainModule, waitForMainModule] = await deployContract(
     signer,
     v2.mainModule,
     await factory.getAddress(),
     await mainModuleUpgradable.getAddress()
   )
-  const guestModule = await deployContract(signer, v2.guestModule)
-  const universalSigValidator = await deployContract(signer, v2.universalSigValidator)
+
+  deploymentResults.push(await Promise.all([waitForMainModule]))
+
+  const [guestModule, waitForGuestModule] = await deployContract(signer, v2.guestModule)
+  const [universalSigValidator, waitForUniversalSigValidator] = await deployContract(signer, v2.universalSigValidator)
+
+  deploymentResults.push(await Promise.all([waitForGuestModule, waitForUniversalSigValidator]))
+
+  if (deploymentResults.flat().some(r => !r)) {
+    throw new Error('Failed to deploy V2 context!')
+  }
 
   return {
     version: 2,
