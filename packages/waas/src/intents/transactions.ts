@@ -8,60 +8,61 @@ import {
   TransactionRaw
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
+import { BigIntish } from '@0xsequence/utils'
 
 interface BaseArgs {
-  lifespan: number,
-  wallet: string,
-  identifier: string,
-  chainId: number,
+  lifespan: number
+  wallet: string
+  identifier: string
+  chainId: number
 }
 
 export type SendTransactionsArgs = {
-  transactions: Transaction[],
+  transactions: Transaction[]
 }
 
 export type SendERC20Args = {
-  chainId: number,
-  token: string,
-  to: string,
-  value: ethers.BigNumberish,
+  chainId: number
+  token: string
+  to: string
+  value: BigIntish
 }
 
 export type SendERC721Args = {
-  chainId: number,
-  token: string,
-  to: string,
-  id: string,
-  safe?: boolean,
-  data?: string,
+  chainId: number
+  token: string
+  to: string
+  id: string
+  safe?: boolean
+  data?: string
 }
 
 export type SendERC1155Args = {
-  chainId: number,
-  token: string,
-  to: string,
+  chainId: number
+  token: string
+  to: string
   values: {
-    id: string,
-    amount: ethers.BigNumberish
-  }[],
-  data?: string,
+    id: string
+    amount: BigIntish
+  }[]
+  data?: string
 }
 
 export type SendDelayedEncodeArgs = {
-  chainId: number,
-  to: string,
-  value: ethers.BigNumberish,
-  abi: string,
-  func: string,
-  args: string[] | { [key: string]: string },
+  chainId: number
+  to: string
+  value: BigIntish
+  abi: string
+  func: string
+  args: string[] | { [key: string]: string }
 }
 
 export function sendTransactions({
- lifespan,
- wallet,
- identifier,
- chainId,
- transactions
+  lifespan,
+  wallet,
+  identifier,
+  chainId,
+  transactions
 }: SendTransactionsArgs & BaseArgs): Intent<IntentDataSendTransaction> {
   return makeIntent('sendTransaction', lifespan, {
     identifier,
@@ -86,33 +87,24 @@ export function sendTransactions({
   })
 }
 
-export function sendERC20({
-  token, to, value,
-  ...args
-}: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
+export function sendERC20({ token, to, value, ...args }: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
   return sendTransactions({
     transactions: [erc20({ tokenAddress: token, to, value: value.toString() })],
     ...args
   })
 }
 
-export function sendERC721({
- token, to, id, safe, data,
- ...args
-}: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
+export function sendERC721({ token, to, id, safe, data, ...args }: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
   return sendTransactions({
     transactions: [erc721({ tokenAddress: token, to, id, data, safe })],
     ...args
   })
 }
 
-export function sendERC1155({
-                              token, to, values, data,
-                              ...args
-                            }: SendERC1155Args & BaseArgs): Intent<IntentDataSendTransaction> {
+export function sendERC1155({ token, to, values, data, ...args }: SendERC1155Args & BaseArgs): Intent<IntentDataSendTransaction> {
   const vals = values.map(v => ({
     id: v.id,
-    amount: ethers.BigNumber.from(v.amount).toString()
+    amount: BigInt(v.amount).toString()
   }))
 
   return sendTransactions({
@@ -133,7 +125,7 @@ export function sendDelayedEncode({
     transactions: [
       delayedEncode({
         to,
-        value: ethers.BigNumber.from(value).toString(),
+        value: BigInt(value).toString(),
         data: { abi, func, args }
       })
     ],
@@ -142,7 +134,7 @@ export function sendDelayedEncode({
 }
 
 export type Transaction =
-  ethers.providers.TransactionRequest
+  | ethers.providers.TransactionRequest
   | TransactionRaw
   | TransactionERC20
   | TransactionERC721
@@ -166,7 +158,7 @@ export function erc1155({ vals, ...data }: Omit<TransactionERC1155, 'type'>): Tr
     type: 'erc1155send',
     vals: vals.map(v => ({
       id: v.id,
-      amount: ethers.BigNumber.from(v.amount).toString()
+      amount: BigInt(v.amount).toString()
     })),
     ...data
   }

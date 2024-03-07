@@ -732,8 +732,11 @@ importers:
   packages/waas:
     dependencies:
       '@0xsequence/network':
-        specifier: ^1.9.5
+        specifier: workspace:*
         version: link:../network
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@aws-sdk/client-cognito-identity-provider':
         specifier: ^3.445.0
         version: 3.521.0
