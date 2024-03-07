@@ -12,6 +12,7 @@ import {
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
 import { FeeOption, FeeTokenType } from './responses'
+import { BigIntish, toHexString } from '@0xsequence/utils'
 
 interface BaseArgs {
   lifespan: number
@@ -33,7 +34,7 @@ export type SendERC20Args = TransactionFeeArgs & {
   chainId: number
   token: string
   to: string
-  value: ethers.BigNumberish
+  value: BigIntish
 }
 
 export type SendERC721Args = TransactionFeeArgs & {
@@ -51,7 +52,7 @@ export type SendERC1155Args = TransactionFeeArgs & {
   to: string
   values: {
     id: string
-    amount: ethers.BigNumberish
+    amount: BigIntish
   }[]
   data?: string
 }
@@ -59,7 +60,7 @@ export type SendERC1155Args = TransactionFeeArgs & {
 export type SendDelayedEncodeArgs = TransactionFeeArgs & {
   chainId: number
   to: string
-  value: ethers.BigNumberish
+  value: BigIntish
   abi: string
   func: string
   args: string[] | { [key: string]: string }
@@ -77,7 +78,7 @@ export function feeOptions({
     wallet,
     network: chainId.toString(),
     transactions: transactions.map(tx => {
-      if (!tx.to || tx.to === ethers.constants.AddressZero) {
+      if (!tx.to || tx.to === ethers.ZeroAddress) {
         throw new Error('Contract creation not supported')
       }
 
@@ -88,8 +89,8 @@ export function feeOptions({
       return {
         type: 'transaction',
         to: tx.to,
-        value: ethers.BigNumber.from(tx.value || 0).toHexString(),
-        data: ethers.utils.hexlify(tx.data || [])
+        value: toHexString(BigInt(tx.value || 0)),
+        data: ethers.hexlify(tx.data || '0x')
       }
     })
   })
@@ -109,7 +110,7 @@ export function sendTransactions({
     wallet,
     network: chainId.toString(),
     transactions: withTransactionFee(transactions, transactionsFeeOption).map(tx => {
-      if (!tx.to || tx.to === ethers.constants.AddressZero) {
+      if (!tx.to || tx.to === ethers.ZeroAddress) {
         throw new Error('Contract creation not supported')
       }
 
@@ -120,8 +121,8 @@ export function sendTransactions({
       return {
         type: 'transaction',
         to: tx.to,
-        value: ethers.BigNumber.from(tx.value || 0).toHexString(),
-        data: ethers.utils.hexlify(tx.data || [])
+        value: toHexString(BigInt(tx.value || 0)),
+        data: ethers.hexlify(tx.data || '0x')
       }
     }),
     transactionsFeeQuote
@@ -208,7 +209,7 @@ export function sendERC721({ token, to, id, safe, data, ...args }: SendERC721Arg
 export function sendERC1155({ token, to, values, data, ...args }: SendERC1155Args & BaseArgs): Intent<IntentDataSendTransaction> {
   const vals = values.map(v => ({
     id: v.id,
-    amount: ethers.BigNumber.from(v.amount).toString()
+    amount: BigInt(v.amount).toString()
   }))
 
   return sendTransactions({
@@ -229,7 +230,7 @@ export function sendDelayedEncode({
     transactions: [
       delayedEncode({
         to,
-        value: ethers.BigNumber.from(value).toString(),
+        value: BigInt(value).toString(),
         data: { abi, func, args }
       })
     ],
@@ -238,7 +239,7 @@ export function sendDelayedEncode({
 }
 
 export type Transaction =
-  | ethers.providers.TransactionRequest
+  | ethers.TransactionRequest
   | TransactionRaw
   | TransactionERC20
   | TransactionERC721
@@ -296,7 +297,7 @@ export function erc1155(data: Omit<TransactionERC1155, 'type'> | Omit<SendERC115
       type: 'erc1155send',
       vals: sendERC1155Args.values.map(v => ({
         id: v.id,
-        amount: ethers.BigNumber.from(v.amount).toString()
+        amount: v.amount.toString()
       })),
       tokenAddress: sendERC1155Args.token,
       to: sendERC1155Args.to,
@@ -307,7 +308,7 @@ export function erc1155(data: Omit<TransactionERC1155, 'type'> | Omit<SendERC115
       type: 'erc1155send',
       vals: transactionERC1155.vals.map(v => ({
         id: v.id,
-        amount: ethers.BigNumber.from(v.amount).toString()
+        amount: v.amount
       })),
       tokenAddress: transactionERC1155.tokenAddress,
       to: transactionERC1155.to,
@@ -328,7 +329,7 @@ export function delayedEncode(
     return {
       type: 'delayedEncode',
       to: sendDelayedEncodeArgs.to,
-      value: ethers.BigNumber.from(sendDelayedEncodeArgs.value).toString(),
+      value: toHexString(BigInt(sendDelayedEncodeArgs.value)),
       data: {
         abi: sendDelayedEncodeArgs.abi,
         func: sendDelayedEncodeArgs.func,
@@ -376,6 +377,6 @@ export function combineTransactionIntents(intents: Intent<IntentDataSendTransact
   })
 }
 
-function isEthersTx(tx: Transaction): tx is ethers.providers.TransactionRequest {
+function isEthersTx(tx: Transaction): tx is ethers.TransactionRequest {
   return !['transaction', 'erc20send', 'erc721send', 'erc1155send', 'delayedEncode'].includes(tx.type as any)
 }
