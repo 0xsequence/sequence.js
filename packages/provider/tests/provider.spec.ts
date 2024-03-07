@@ -12,8 +12,8 @@ import { expect } from 'chai'
 import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
 import { ExtendedTransactionRequest } from '../src/extended'
 
-const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595', undefined, { cacheTimeout: 0 })
-const hardhat2Provider = new ethers.JsonRpcProvider('http://127.0.0.1:8595', undefined, { cacheTimeout: 0 })
+const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595', undefined, { cacheTimeout: -1 })
+const hardhat2Provider = new ethers.JsonRpcProvider('http://127.0.0.1:8595', undefined, { cacheTimeout: -1 })
 
 const providerFor = (chainId: number) => {
   if (chainId === 31337) {
