@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.9.5
+
+### Patch Changes
+
+- RpcRelayer prioritize project access key
+- Updated dependencies
+  - @0xsequence/utils@1.9.5
+
 ## 1.9.4
 
 ### Patch Changes

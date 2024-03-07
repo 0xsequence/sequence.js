@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.5
+
+### Patch Changes
+
+- RpcRelayer prioritize project access key
+- Updated dependencies
+  - @0xsequence/abi@1.9.5
+  - @0xsequence/core@1.9.5
+  - @0xsequence/wallet@1.9.5
+
 ## 1.9.4
 
 ### Patch Changes
