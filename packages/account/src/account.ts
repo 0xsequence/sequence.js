@@ -208,7 +208,12 @@ export class Account {
     const found = this.network(chainId)
     if (!found.relayer) throw new Error(`Relayer not found for chainId ${chainId}`)
     if (isRelayer(found.relayer)) return found.relayer
-    return new RpcRelayer({ ...found.relayer, projectAccessKey: this.projectAccessKey, jwtAuth: this.jwt })
+    return new RpcRelayer({
+      ...found.relayer,
+      // If there's an access key, we don't pass the JWT, because browser-side usage of this code mandates an access key
+      // and passing a JWT causes a CORS error.
+      ...(this.projectAccessKey ? { projectAccessKey: this.projectAccessKey } : { jwtAuth: this.jwt })
+    })
   }
 
   setOrchestrator(orchestrator: SignatureOrchestrator) {
