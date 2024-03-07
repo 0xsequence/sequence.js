@@ -31,7 +31,11 @@ export abstract class ProviderRelayer implements Relayer {
 
   constructor(options: ProviderRelayerOptions) {
     const opts = { ...ProviderRelayerDefaults, ...options }
+
     this.provider = opts.provider
+    this.waitPollRate = opts.waitPollRate
+    this.deltaBlocksLog = opts.deltaBlocksLog
+    this.fromBlockLog = opts.fromBlockLog
   }
 
   abstract getFeeOptions(
@@ -116,7 +120,7 @@ export abstract class ProviderRelayer implements Relayer {
 
   async wait(
     metaTxnId: string | commons.transaction.SignedTransactionBundle,
-    timeout?: number,
+    timeoutDuration?: number,
     delay: number = this.waitPollRate,
     maxFails: number = 5
   ): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
@@ -226,14 +230,14 @@ export abstract class ProviderRelayer implements Relayer {
       throw new Error(`Timeout waiting for transaction receipt ${metaTxnId}`)
     }
 
-    if (timeout !== undefined) {
+    if (timeoutDuration !== undefined) {
       return Promise.race([
         waitReceipt(),
         new Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }>((_, reject) =>
           setTimeout(() => {
             timedOut = true
             reject(`Timeout waiting for transaction receipt ${metaTxnId}`)
-          }, timeout)
+          }, timeoutDuration)
         )
       ])
     } else {
