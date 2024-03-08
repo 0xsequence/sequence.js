@@ -37,7 +37,7 @@ export const getEOAWallet = (privateKey: string, provider?: string | ethers.Prov
   const wallet = new EOAWallet(privateKey)
 
   if (typeof provider === 'string') {
-    return wallet.connect(new ethers.JsonRpcProvider(provider))
+    return wallet.connect(new ethers.JsonRpcProvider(provider, undefined, { cacheTimeout: -1 }))
   } else {
     return wallet.connect(provider)
   }

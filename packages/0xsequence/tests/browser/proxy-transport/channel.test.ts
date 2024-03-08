@@ -64,7 +64,7 @@ export const tests = async () => {
 
   // relayer account is same as owner here
   const relayer = new LocalRelayer(owner)
-  const rpcProvider = new ethers.JsonRpcProvider('http://localhost:8545')
+  const rpcProvider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
   const contexts = await utils.context.deploySequenceContexts(await rpcProvider.getSigner())
 
   const networks = [

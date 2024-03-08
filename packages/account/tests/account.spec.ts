@@ -90,7 +90,7 @@ describe('Account', () => {
 
   before(async () => {
     provider1 = new ethers.BrowserProvider(hardhat.network.provider as any)
-    provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048')
+    provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048', undefined, { cacheTimeout: -1 })
 
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1)

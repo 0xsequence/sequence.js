@@ -21,12 +21,12 @@ export const tests = async () => {
   // Deploy Sequence WalletContext (deterministic).
   //
   const deployedWalletContext = await (async () => {
-    const provider = new ethers.JsonRpcProvider('http://localhost:8545')
+    const provider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
     const signer = await provider.getSigner()
     return context.deploySequenceContexts(signer)
   })()
 
-  const hardhatProvider = new ethers.JsonRpcProvider('http://localhost:8545')
+  const hardhatProvider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
 
   const client = new SequenceClient(transportsConfig, new MemoryItemStore(), { defaultChainId: 31337 })
   const wallet = new SequenceProvider(client, chainId => {
@@ -35,7 +35,7 @@ export const tests = async () => {
     }
 
     if (chainId === 31338) {
-      return new ethers.JsonRpcProvider('http://localhost:9545')
+      return new ethers.JsonRpcProvider('http://localhost:9545', undefined, { cacheTimeout: -1 })
     }
 
     throw new Error(`No provider for chainId ${chainId}`)
