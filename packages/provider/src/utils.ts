@@ -14,13 +14,12 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
   return ethers.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: BytesLike): BytesLike => {
+export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
   if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes
   } else {
-    const res = ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes])
-    return res
+    return ethers.getBytes(ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes]))
   }
 }
 
