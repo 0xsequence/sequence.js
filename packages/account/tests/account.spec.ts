@@ -935,6 +935,7 @@ describe('Account', () => {
 
       const tx1 = await account.sendTransaction([defaultTx], networks[0].chainId)
       expect(tx1).to.not.be.undefined
+      await tx1!.wait()
 
       const status1b = await account.status(networks[0].chainId)
       expect(status1b.fullyMigrated).to.be.true
