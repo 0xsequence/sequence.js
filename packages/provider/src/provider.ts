@@ -331,7 +331,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return this.perform(request.method, request.params)
   }
 
-  async detectNetwork(): Promise<ethers.Network> {
+  async _detectNetwork(): Promise<ethers.Network> {
     const chainId = this.client.getChainId()
     const found = findNetworkConfig(this.networks, chainId)
 
