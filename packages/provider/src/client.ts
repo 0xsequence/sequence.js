@@ -380,7 +380,7 @@ export class SequenceClient {
 
   // Higher level API
 
-  request(request: { method: string, params?: any[], chainId?: number }): Promise<any> {
+  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     // Internally when sending requests we use `legacy_sign`
     // to avoid the default EIP6492 behavior overriding an explicit
     // "legacy sign" request, so we map the method here.
@@ -474,7 +474,11 @@ export class SequenceClient {
     this.analytics?.track({ event: 'SIGN_MESSAGE_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
     // Address is ignored by the wallet webapp
-    return this.request({ method, params: [message, this.getAddress()], chainId: options?.chainId })
+    return this.request({
+      method,
+      params: [ethers.hexlify(ethers.isBytesLike(message) ? message : ethers.toUtf8Bytes(message)), this.getAddress()],
+      chainId: options?.chainId
+    })
   }
 
   async signTypedData(typedData: TypedData, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
@@ -492,7 +496,8 @@ export class SequenceClient {
     this.analytics?.track({ event: 'SIGN_TYPED_DATA_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
     return this.request({
-      method, params: [this.getAddress(), encoded],
+      method,
+      params: [this.getAddress(), encoded],
       chainId: options?.chainId || (typedData.domain.chainId && Number(BigInt(typedData.domain.chainId))) || this.getChainId()
     })
   }
@@ -513,7 +518,8 @@ export class SequenceClient {
   async getOnchainWalletConfig(options?: OptionalChainId): Promise<commons.config.Config> {
     // NOTICE: sequence_getWalletConfig sends the chainId as a param
     const res = await this.request({
-      method: 'sequence_getWalletConfig', params: [options?.chainId || this.getChainId()],
+      method: 'sequence_getWalletConfig',
+      params: [options?.chainId || this.getChainId()],
       chainId: options?.chainId
     })
     return Array.isArray(res) ? res[0] : res
