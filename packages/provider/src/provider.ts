@@ -344,6 +344,10 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return network
   }
 
+  async detectNetwork(): Promise<ethers.Network> {
+    return this._detectNetwork()
+  }
+
   // Override most of the methods, so we add support for an optional chainId
   // argument, which is used to select the provider to use.
   //
