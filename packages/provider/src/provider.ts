@@ -276,6 +276,19 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     return provider
   }
 
+  async _perform(req: ethers.PerformActionRequest): Promise<any> {
+    const { method, ...args } = req
+
+    const provider = await this._getSubprovider()
+    const prepared = provider.getRpcRequest(req) ?? { method, args: Object.values(args) }
+
+    if (!prepared) {
+      throw new Error(`Unsupported method ${req.method}`)
+    }
+
+    return provider.send(prepared.method, prepared.args)
+  }
+
   async perform(method: string, params: any): Promise<any> {
     // First we check if the method should be handled by the client
     if (method === 'eth_chainId') {
@@ -311,16 +324,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
       return this.client.request({ method, params, chainId: this.getChainId() })
     }
 
-    // Forward call to the corresponding provider
-    // we use the provided chainId, or the default one provided by the client
-    const provider = await this._getSubprovider()
-    const prepared = provider.getRpcRequest({ method, ...params }) ?? { method, args: params }
-
-    // if (!prepared) {
-    //   throw new Error(`Unsupported method ${method}`)
-    // }
-
-    return provider.send(prepared.method, prepared.args)
+    return this._perform({ method, ...params })
   }
 
   send(method: string, params: any): Promise<any> {
