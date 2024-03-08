@@ -67,7 +67,6 @@ export class Wallet<
   public address: string
   public chainId: BigIntish
 
-  public provider: ethers.Provider | null
   public relayer?: Relayer
 
   public coders: {
@@ -434,9 +433,22 @@ export class Wallet<
   }
 
   connect(provider: ethers.Provider, relayer?: Relayer): Wallet<Y, T, Z> {
-    this.provider = provider
-    this.relayer = relayer
-    return this
+    return new Wallet({
+      // Sequence version configurator
+      coders: this.coders,
+
+      context: this.context,
+      config: this.config,
+
+      chainId: this.chainId,
+      address: this.address,
+
+      orchestrator: this.orchestrator,
+      reader: this._reader,
+
+      provider,
+      relayer: relayer ?? this.relayer
+    })
   }
 
   signTransaction(transaction: ethers.TransactionRequest): Promise<string> {
