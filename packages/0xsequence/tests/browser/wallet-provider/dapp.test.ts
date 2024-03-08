@@ -128,7 +128,7 @@ export const tests = async () => {
       assert.equal(provider.getChainId(), 31337, 'provider chainId is 31337')
 
       const network = await provider.getNetwork()
-      assert.equal(network.chainId, 31337, 'chain id match')
+      assert.equal(network.chainId, 31337n, 'chain id match')
 
       const netVersion = await provider.send('net_version', [])
       assert.equal(netVersion, '31337', 'net_version check')
@@ -146,7 +146,7 @@ export const tests = async () => {
       assert.equal(provider2.getChainId(), 31338, '2nd chain, chainId is 31338 - 2')
 
       const network = await provider2.getNetwork()
-      assert.equal(network.chainId, 31338, '2nd chain, chain id match - 3')
+      assert.equal(network.chainId, 31338n, '2nd chain, chain id match - 3')
 
       const netVersion = await provider2.send('net_version', [])
       assert.equal(netVersion, '31338', '2nd chain, net_version check - 4')
