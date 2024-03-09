@@ -1293,10 +1293,12 @@ describe('Account', () => {
 
         it('Should validate a message signed by deployed migrated wallet (deployed with v1)', async () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
-          await signer1.sendTransaction({
-            to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx)
-          })
+          await signer1
+            .sendTransaction({
+              to: deployTx.entrypoint,
+              data: commons.transaction.encodeBundleExecData(deployTx)
+            })
+            .then(t => t.wait())
 
           expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
@@ -1310,10 +1312,12 @@ describe('Account', () => {
 
         it('Should fail to sign a message signed by deployed migrated wallet (deployed with v1) if throw', async () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
-          await signer1.sendTransaction({
-            to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx)
-          })
+          await signer1
+            .sendTransaction({
+              to: deployTx.entrypoint,
+              data: commons.transaction.encodeBundleExecData(deployTx)
+            })
+            .then(tx => tx.wait())
 
           expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
@@ -1324,10 +1328,12 @@ describe('Account', () => {
 
         it('Should return an invalid signature by deployed migrated wallet (deployed with v1) if ignore', async () => {
           const deployTx = Wallet.buildDeployTransaction(contexts[1], imageHash)
-          await signer1.sendTransaction({
-            to: deployTx.entrypoint,
-            data: commons.transaction.encodeBundleExecData(deployTx)
-          })
+          await signer1
+            .sendTransaction({
+              to: deployTx.entrypoint,
+              data: commons.transaction.encodeBundleExecData(deployTx)
+            })
+            .then(tx => tx.wait())
 
           expect(await networks[0].provider!.getCode(account.address).then(c => ethers.getBytes(c).length)).to.not.equal(0)
 
