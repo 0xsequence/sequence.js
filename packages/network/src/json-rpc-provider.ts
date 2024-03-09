@@ -32,9 +32,10 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
 
   constructor(
     public url: string | ethers.FetchRequest | undefined,
-    options?: JsonRpcProviderOptions
+    options?: JsonRpcProviderOptions,
+    jsonRpcApiProviderOptions?: ethers.JsonRpcApiProviderOptions
   ) {
-    super(url, options?.chainId)
+    super(url, options?.chainId, jsonRpcApiProviderOptions)
 
     const chainId = options?.chainId
     const middlewares = options?.middlewares
