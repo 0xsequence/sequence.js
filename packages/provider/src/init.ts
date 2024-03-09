@@ -121,13 +121,13 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
         throw new Error(`no rpcUrl found for chainId: ${chainId}`)
       }
 
-      rpcProviders[chainId] = new JsonRpcProvider(rpcUrl, {
-        middlewares: [
-          loggingProviderMiddleware,
-          exceptionProviderMiddleware,
-          new CachedProvider()
-        ]
-      })
+      rpcProviders[chainId] = new JsonRpcProvider(
+        rpcUrl,
+        {
+          middlewares: [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()]
+        },
+        { cacheTimeout: -1 }
+      )
     }
 
     return rpcProviders[chainId]
