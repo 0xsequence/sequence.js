@@ -185,13 +185,17 @@ export async function validateEIP6492Offchain(
   hash: ethers.BytesLike,
   signature: ethers.BytesLike
 ): Promise<boolean> {
-  return (
-    '0x01' ===
-    (await provider.call({
-      data: ethers.concat([
-        EIP_6492_OFFCHAIN_DEPLOY_CODE,
-        new ethers.AbiCoder().encode(['address', 'bytes32', 'bytes'], [signer, hash, signature])
-      ])
-    }))
-  )
+  try {
+    return (
+      '0x01' ===
+      (await provider.call({
+        data: ethers.concat([
+          EIP_6492_OFFCHAIN_DEPLOY_CODE,
+          new ethers.AbiCoder().encode(['address', 'bytes32', 'bytes'], [signer, hash, signature])
+        ])
+      }))
+    )
+  } catch (err) {
+    return false
+  }
 }
