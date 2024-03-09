@@ -473,6 +473,10 @@ export class SequenceClient {
 
     this.analytics?.track({ event: 'SIGN_MESSAGE_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
+    // If the message is a string, even if it looks like a BytesLike string we need to represent it as utf8 bytes.
+    // ie. '0x1234' is a string, '0x1234' is a bytesLike string which is 2 bytes but we must sign the full '0x1234' as 6 utf8 bytes
+    message = ethers.hexlify(typeof message === 'string' ? ethers.toUtf8Bytes(message) : message)
+
     // Address is ignored by the wallet webapp
     return this.request({
       method,

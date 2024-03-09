@@ -719,16 +719,22 @@ describe('SequenceClient', () => {
           calledSendAsync++
           const req = requests.shift()
 
+          if (!req) {
+            throw new Error('Could not get test request for comparison')
+          }
+
           if (!request.chainId) {
             request.chainId = client.getChainId()
           }
 
+          const message = ethers.hexlify(typeof req.message === 'string' ? ethers.toUtf8Bytes(req.message) : req.message)
+
           expect(request).to.deep.equal({
-            method: req?.eip6492 ? 'sequence_sign' : 'personal_sign',
-            params: [req?.message, session.accountAddress],
-            chainId: req?.chainId
+            method: req.eip6492 ? 'sequence_sign' : 'personal_sign',
+            params: [message, session.accountAddress],
+            chainId: req.chainId
           })
-          expect(request.chainId).to.equal(req?.chainId)
+          expect(request.chainId).to.equal(req.chainId)
           return Promise.resolve(req?.result)
         },
         openWallet: () => {
