@@ -63,11 +63,12 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
   constructor(
     public readonly client: SequenceClient,
     private readonly providerFor: (networkId: number) => ethers.JsonRpcProvider,
-    public readonly networks: NetworkConfig[] = allNetworks
+    public readonly networks: NetworkConfig[] = allNetworks,
+    options?: ethers.AbstractProviderOptions
   ) {
     // We support a lot of networks
     // but we start with the default one
-    super(client.getChainId())
+    super(client.getChainId(), options)
 
     // Emit events as defined by EIP-1193
     client.onConnect(details => {
@@ -503,9 +504,10 @@ export class SingleNetworkSequenceProvider extends SequenceProvider {
   constructor(
     client: SequenceClient,
     providerFor: (networkId: number) => ethers.JsonRpcProvider,
-    public readonly chainId: ChainIdLike
+    public readonly chainId: ChainIdLike,
+    options?: ethers.AbstractProviderOptions
   ) {
-    super(client, providerFor)
+    super(client, providerFor, undefined, options)
   }
 
   private _useChainId(chainId?: ChainIdLike): number {
