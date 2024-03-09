@@ -476,7 +476,7 @@ export class SequenceClient {
     // Address is ignored by the wallet webapp
     return this.request({
       method,
-      params: [ethers.hexlify(ethers.isBytesLike(message) ? message : ethers.toUtf8Bytes(message)), this.getAddress()],
+      params: [message, this.getAddress()],
       chainId: options?.chainId
     })
   }
