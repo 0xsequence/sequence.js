@@ -123,10 +123,7 @@ export class SequenceSigner implements ISequenceSigner {
     return this.provider.getProvider(chainId)
   }
 
-  async sendTransaction(
-    transaction: ethers.TransactionRequest[] | ethers.TransactionRequest,
-    options?: OptionalChainIdLike
-  ) {
+  async sendTransaction(transaction: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainIdLike) {
     const chainId = this.useChainId(options?.chainId)
     const resolved = await resolveArrayProperties(transaction)
     const txHash = await this.client.sendTransaction(resolved, { chainId })
@@ -136,7 +133,7 @@ export class SequenceSigner implements ISequenceSigner {
       return (await poll(
         async () => {
           const tx = await provider.getTransaction(txHash)
-          return tx
+          return tx || undefined
         },
         { onceBlock: provider }
       )) as ethers.TransactionResponse
