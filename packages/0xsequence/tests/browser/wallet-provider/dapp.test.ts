@@ -170,7 +170,7 @@ export const tests = async () => {
     const chainId = wallet.getChainId()
 
     const message = 'hihi'
-    const message2 = ethers.toUtf8Bytes('hihi')
+    const message2 = ethers.toUtf8Bytes(message)
 
     // Sign the message
     const sigs = await Promise.all(
@@ -189,6 +189,9 @@ export const tests = async () => {
         return sig
       })
     )
+
+    assert.equal(sigs[0], sigs[1], 'signatures should match even if message type is different')
+
     const sig = sigs[0]
 
     // Verify the signature
