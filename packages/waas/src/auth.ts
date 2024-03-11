@@ -399,6 +399,9 @@ export class SequenceWaaS {
 
       const receiptArgs: WithSimpleNetwork<GetTransactionReceiptArgs> & CommonAuthArgs = {
         metaTxHash: result.data.metaTxHash,
+        network: args.network,
+        identifier: args.identifier,
+        validation: args.validation,
       }
       const intent = await this.waas.getTransactionReceipt(await this.useIdentifier(receiptArgs))
       result = await this.trySendIntent(receiptArgs, intent, isMaySentTransactionResponse)
