@@ -24,13 +24,16 @@
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/sessions": "workspace:*",
     "@0xsequence/utils": "workspace:*",
-    "@0xsequence/wallet": "workspace:*",
+    "@0xsequence/wallet": "workspace:*"
+  },
+  "peerDependencies": {
     "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/tests": "workspace:*",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "ethers": "corbanbrook/ethers.js",
     "nyc": "^15.1.0"
   },
   "files": [

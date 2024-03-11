@@ -19,7 +19,7 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=6"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "ethers": "corbanbrook/ethers.js"

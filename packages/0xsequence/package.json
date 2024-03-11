@@ -46,7 +46,7 @@
     "@0xsequence/wallet": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=6"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",

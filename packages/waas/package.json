@@ -26,7 +26,7 @@
     "dist"
   ],
   "peerDependencies": {
-    "ethers": ">=6"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@types/jwt-decode": "^3.1.0",
