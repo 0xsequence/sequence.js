@@ -4,7 +4,7 @@ import { CommonAuthArgs, ExtendedSequenceConfig, SequenceWaaS, SequenceConfig, n
 export class SequenceSigner extends ethers.AbstractSigner {
   constructor(
     private readonly sequence: SequenceWaaS,
-    readonly provider?: ethers.Provider
+    readonly provider: ethers.Provider | null = null
   ) {
     super()
   }
@@ -13,7 +13,7 @@ export class SequenceSigner extends ethers.AbstractSigner {
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     preset?: ExtendedSequenceConfig,
     store?: store.Store,
-    provider?: ethers.Provider
+    provider: ethers.Provider | null = null
   ): SequenceSigner {
     return new SequenceSigner(new SequenceWaaS(config, preset, store), provider)
   }
@@ -34,7 +34,7 @@ export class SequenceSigner extends ethers.AbstractSigner {
 
   async getSimpleNetwork(): Promise<networks.SimpleNetwork | undefined> {
     if (this.provider) {
-      return this.provider.getNetwork().then(n => n.chainId)
+      return this.provider.getNetwork().then(n => Number(n.chainId))
     }
     return undefined
   }
@@ -82,24 +82,20 @@ export class SequenceSigner extends ethers.AbstractSigner {
       // Success
       const { txHash } = response.data
       // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
-      return this.provider!!.getTransaction(txHash)
+      return this.provider!!.getTransaction(txHash) as Promise<ethers.TransactionResponse>
     }
 
     // Impossible
     throw new Error('Unknown return value')
   }
 
-  connect(provider: ethers.Provider, sequence?: SequenceWaaS): SequenceSigner {
+  connect(provider: ethers.Provider, sequence?: SequenceWaaS) {
     return new SequenceSigner(sequence ?? this.sequence, provider)
   }
 
   //
   // Provider required
   //
-  async getBalance(blockTag?: ethers.BlockTag): Promise<bigint> {
-    await this._ensureNetworkValid(true)
-    return super.getBalance(blockTag)
-  }
 
   async getTransactionCount(_blockTag?: ethers.BlockTag): Promise<number> {
     throw new Error('SequenceSigner does not support getTransactionCount')
@@ -116,22 +112,29 @@ export class SequenceSigner extends ethers.AbstractSigner {
     return super.call({ ...transaction, blockTag })
   }
 
-  async getChainId(): Promise<number> {
-    await this._ensureNetworkValid(true) // Prevent mismatched configurations
-    return super.getChainId()
-  }
+  // XXX: These methods are not supported by AbstractProvider
 
-  async getGasPrice(): Promise<bigint> {
-    await this._ensureNetworkValid(true)
-    return super.getGasPrice()
-  }
+  // async getBalance(blockTag?: ethers.BlockTag): Promise<bigint> {
+  //   await this._ensureNetworkValid(true)
+  //   return super.getBalance(blockTag)
+  // }
 
-  async getFeeData(): Promise<ethers.FeeData> {
-    await this._ensureNetworkValid(true)
-    return super.getFeeData()
-  }
+  // async getChainId(): Promise<number> {
+  //   await this._ensureNetworkValid(true) // Prevent mismatched configurations
+  //   return super.getChainId()
+  // }
 
-  async resolveName(name: string): Promise<string> {
+  // async getGasPrice(): Promise<bigint> {
+  //   await this._ensureNetworkValid(true)
+  //   return super.getGasPrice()
+  // }
+
+  // async getFeeData(): Promise<ethers.FeeData> {
+  //   await this._ensureNetworkValid(true)
+  //   return super.getFeeData()
+  // }
+
+  async resolveName(name: string): Promise<string | null> {
     await this._ensureNetworkValid(true)
     return super.resolveName(name)
   }
