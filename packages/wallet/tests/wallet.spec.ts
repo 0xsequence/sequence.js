@@ -28,7 +28,7 @@ describe('Wallet (primitive)', () => {
   before(async () => {
     // const rpc = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
     // provider = new ethers.BrowserProvider(new JsonRpcHandler(rpc))
-    provider = new ethers.BrowserProvider(new JsonRpcHandler(hardhat.network.provider))
+    provider = new ethers.BrowserProvider(new JsonRpcHandler(hardhat.network.provider), undefined, { cacheTimeout: -1 })
     signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])

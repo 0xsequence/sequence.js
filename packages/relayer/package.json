@@ -28,7 +28,7 @@
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^1.10.0",
-    "ethers": "^6.11.1"
+    "ethers": "corbanbrook/ethers.js"
   },
   "files": [
     "src",

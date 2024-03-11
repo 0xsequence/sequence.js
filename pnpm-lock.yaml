@@ -120,8 +120,8 @@ importers:
         specifier: ^5.0.1
         version: 5.1.3(eslint-config-prettier@9.1.0)(eslint@8.57.0)(prettier@3.2.5)
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       express:
         specifier: ^4.18.2
         version: 4.18.2(supports-color@6.1.0)
@@ -223,8 +223,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.3(@babel/core@7.23.9)(webpack@5.90.3)
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       ganache:
         specifier: ^7.5.0
         version: 7.9.2
@@ -273,8 +273,8 @@ importers:
         specifier: workspace:*
         version: link:../wallet
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
     devDependencies:
       '@0xsequence/signhub':
         specifier: workspace:*
@@ -343,8 +343,8 @@ importers:
         specifier: ^7.5.0
         version: 7.6.0
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       hardhat:
         specifier: ^2.20.1
         version: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
@@ -381,8 +381,8 @@ importers:
         specifier: ^16.0.3
         version: 16.4.5
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       typechain:
         specifier: ^8.1.1
         version: 8.3.2(typescript@5.3.3)
@@ -402,8 +402,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
 
   packages/indexer: {}
 
@@ -421,8 +421,8 @@ importers:
         specifier: workspace:*
         version: link:../wallet
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.2
@@ -447,8 +447,8 @@ importers:
         version: link:../utils
     devDependencies:
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
 
   packages/provider:
     dependencies:
@@ -493,8 +493,8 @@ importers:
         specifier: ^0.10.0
         version: 0.10.7
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       hardhat:
         specifier: ^2.20.1
         version: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
@@ -521,8 +521,8 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
 
   packages/replacer:
     dependencies:
@@ -548,8 +548,8 @@ importers:
         specifier: workspace:*
         version: link:../replacer
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       idb:
         specifier: ^7.1.1
         version: 7.1.1
@@ -576,8 +576,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.2
@@ -599,8 +599,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.2(nyc@15.1.0)
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       web3:
         specifier: ^1.8.1
         version: 1.10.4
@@ -612,8 +612,8 @@ importers:
         version: 3.7.7
     devDependencies:
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
 
   packages/waas:
     dependencies:
@@ -627,8 +627,8 @@ importers:
         specifier: ^3.445.0
         version: 3.521.0
       ethers:
-        specifier: '>=5.5'
-        version: 5.7.2
+        specifier: '>=6'
+        version: 6.11.1
       idb:
         specifier: ^7.1.1
         version: 7.1.1
@@ -689,8 +689,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.2(nyc@15.1.0)
       ethers:
-        specifier: ^6.11.1
-        version: 6.11.1
+        specifier: corbanbrook/ethers.js
+        version: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       web3:
         specifier: ^1.8.1
         version: 1.10.4
@@ -3711,7 +3711,7 @@ packages:
       chai: 4.4.1
       chai-as-promised: 7.1.1(chai@4.4.1)
       deep-eql: 4.1.3
-      ethers: 6.11.1
+      ethers: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       hardhat: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
       ordinal: 1.0.3
     dev: true
@@ -3723,7 +3723,7 @@ packages:
       hardhat: ^2.0.0
     dependencies:
       debug: 4.3.4(supports-color@6.1.0)
-      ethers: 6.11.1
+      ethers: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       hardhat: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
       lodash.isequal: 4.5.0
     transitivePeerDependencies:
@@ -3770,7 +3770,7 @@ packages:
       '@types/mocha': 10.0.6
       '@types/node': 20.11.20
       chai: 4.4.1
-      ethers: 6.11.1
+      ethers: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       hardhat: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
       hardhat-gas-reporter: 1.0.10(hardhat@2.20.1)
       solidity-coverage: 0.8.10(hardhat@2.20.1)
@@ -4657,7 +4657,7 @@ packages:
       typechain: ^8.3.2
       typescript: '>=4.7.0'
     dependencies:
-      ethers: 6.11.1
+      ethers: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       lodash: 4.17.21
       ts-essentials: 7.0.3(typescript@5.3.3)
       typechain: 8.3.2(typescript@5.3.3)
@@ -4673,7 +4673,7 @@ packages:
       typechain: ^8.3.2
     dependencies:
       '@typechain/ethers-v6': 0.5.1(ethers@6.11.1)(typechain@8.3.2)(typescript@5.3.3)
-      ethers: 6.11.1
+      ethers: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       fs-extra: 9.1.0
       hardhat: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
       typechain: 8.3.2(typescript@5.3.3)
@@ -8274,6 +8274,7 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: false
 
   /ethjs-unit@0.1.6:
     resolution: {integrity: sha512-/Sn9Y0oKl0uqQuvgFk/zQgR7aw1g36qX/jzSQ5lSwlO0GigPymk4eGQfeNTD03w1dPOqfz8V77Cy43jH56pagw==}
@@ -15680,5 +15681,22 @@ packages:
     peerDependencies:
       ethers: '>=5.5'
     dependencies:
-      ethers: 6.11.1
+      ethers: github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66
       js-base64: 3.7.7
+
+  github.com/corbanbrook/ethers.js/ec36bfb799141eec54c36321114e45f2a64ace66:
+    resolution: {tarball: https://codeload.github.com/corbanbrook/ethers.js/tar.gz/ec36bfb799141eec54c36321114e45f2a64ace66}
+    name: ethers
+    version: 6.11.1
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.1
+      '@noble/curves': 1.2.0
+      '@noble/hashes': 1.3.2
+      '@types/node': 18.15.13
+      aes-js: 4.0.0-beta.5
+      tslib: 2.4.0
+      ws: 8.5.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate

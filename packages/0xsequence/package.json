@@ -53,7 +53,7 @@
     "@0xsequence/wallet-contracts": "^2.0.0",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
-    "ethers": "^6.11.1",
+    "ethers": "corbanbrook/ethers.js",
     "ganache": "^7.5.0",
     "hardhat": "^2.20.1",
     "html-webpack-plugin": "^5.3.1",

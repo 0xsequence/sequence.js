@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ethers": "^6.11.1",
+    "ethers": "corbanbrook/ethers.js",
     "web3": "^1.8.1"
   },
   "files": [

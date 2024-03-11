@@ -22,7 +22,7 @@
     "ethers": ">=6"
   },
   "devDependencies": {
-    "ethers": "^6.11.1"
+    "ethers": "corbanbrook/ethers.js"
   },
   "files": [
     "src",

@@ -17,7 +17,7 @@
     "@0xsequence/core": "workspace:*",
     "@0xsequence/migration": "workspace:*",
     "@0xsequence/replacer": "workspace:*",
-    "ethers": "^6.11.1",
+    "ethers": "corbanbrook/ethers.js",
     "idb": "^7.1.1"
   },
   "devDependencies": {

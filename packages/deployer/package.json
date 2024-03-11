@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "dotenv": "^16.0.3",
-    "ethers": "^6.11.1",
+    "ethers": "corbanbrook/ethers.js",
     "typechain": "^8.1.1"
   },
   "files": [

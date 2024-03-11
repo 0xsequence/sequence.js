@@ -148,7 +148,7 @@ describe('Local config tracker', () => {
   let provider: ethers.BrowserProvider
 
   before(async () => {
-    provider = new ethers.BrowserProvider(hardhat.network.provider as any)
+    provider = new ethers.BrowserProvider(hardhat.network.provider, undefined, { cacheTimeout: -1 })
   })
   ;[
     {

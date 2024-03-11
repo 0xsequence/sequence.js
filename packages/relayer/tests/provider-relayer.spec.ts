@@ -24,7 +24,7 @@ describe('Wallet integration', function () {
   let signers: ethers.Signer[]
 
   before(async () => {
-    provider = new ethers.BrowserProvider(hardhat.network.provider as any)
+    provider = new ethers.BrowserProvider(hardhat.network.provider, undefined, { cacheTimeout: -1 })
     signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[1])
