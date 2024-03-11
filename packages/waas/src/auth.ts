@@ -1,6 +1,6 @@
-import {Observer, SequenceWaaSBase} from './base'
-import { IntentResponseSignedMessage } from "./clients/intent.gen";
-import { newSessionFromSessionId } from "./session";
+import { Observer, SequenceWaaSBase } from './base'
+import { IntentResponseSignedMessage } from './clients/intent.gen'
+import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
   SendDelayedEncodeArgs,
@@ -18,18 +18,15 @@ import {
   isMaySentTransactionResponse,
   isSignedMessageResponse,
   isValidationRequiredResponse,
-  isFinishValidateSessionResponse, isCloseSessionResponse
+  isFinishValidateSessionResponse,
+  isCloseSessionResponse
 } from './intents/responses'
-import {
-  WaasAuthenticator,
-  Session,
-  Chain
-} from './clients/authenticator.gen'
+import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
-import {ethers} from "ethers";
+import { ethers } from 'ethers'
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -191,7 +188,7 @@ export class SequenceWaaS {
       throw new Error('session not open')
     }
 
-    const res = await this.client.sendIntent({intent: intent}, this.headers())
+    const res = await this.client.sendIntent({ intent: intent }, this.headers())
     return res.response
   }
 
@@ -199,7 +196,7 @@ export class SequenceWaaS {
     return this.waas.isSignedIn()
   }
 
-  async signIn(creds: Identity, name: string): Promise<{ sessionId: string, wallet: string }> {
+  async signIn(creds: Identity, name: string): Promise<{ sessionId: string; wallet: string }> {
     // TODO: Be smarter about this, for cognito (or some other cases) we may
     // want to send the email instead of the idToken
     const signInIntent = await this.waas.signIn({
@@ -215,7 +212,7 @@ export class SequenceWaaS {
 
     const args = {
       intent: signInIntent,
-      friendlyName: name,
+      friendlyName: name
     }
 
     await this.deviceName.set(name)
@@ -251,7 +248,7 @@ export class SequenceWaaS {
 
   async getSessionHash() {
     const sessionId = (await this.waas.getSessionId()).toLowerCase()
-    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionId))
+    return ethers.keccak256(ethers.toUtf8Bytes(sessionId))
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
@@ -425,7 +422,7 @@ export class SequenceWaaS {
       networks.push({
         id: chain.id,
         name: chain.name,
-        isEnabled: chain.isEnabled,
+        isEnabled: chain.isEnabled
       })
     }
     return networks
