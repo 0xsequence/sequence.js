@@ -140,6 +140,18 @@ export function isSentTransactionResponse(receipt: any): receipt is SentTransact
   )
 }
 
+export function isTimedOutTransactionResponse(receipt: any): receipt is SentTransactionResponse {
+  return (
+      typeof receipt === 'object' &&
+      typeof receipt.code === 'string' &&
+      receipt.code === 'transactionReceipt' &&
+      typeof receipt.data === 'object' &&
+      typeof receipt.data.metaTxHash === 'string' &&
+      !receipt.data.txHash &&
+      typeof receipt.data.request === 'object'
+  )
+}
+
 export function isFailedTransactionResponse(receipt: any): receipt is TransactionFailedResponse {
   return (
     typeof receipt === 'object' &&
@@ -153,7 +165,7 @@ export function isFailedTransactionResponse(receipt: any): receipt is Transactio
 }
 
 export function isMaySentTransactionResponse(receipt: any): receipt is MaySentTransactionResponse {
-  return isSentTransactionResponse(receipt) || isFailedTransactionResponse(receipt)
+  return isSentTransactionResponse(receipt) || isFailedTransactionResponse(receipt) || isTimedOutTransactionResponse(receipt)
 }
 
 export function isSignedMessageResponse(receipt: any): receipt is SignedMessageResponse {

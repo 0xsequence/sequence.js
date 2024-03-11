@@ -20,7 +20,7 @@ import {
   SendERC20Args,
   SendERC721Args,
   SendERC1155Args,
-  SendDelayedEncodeArgs,
+  SendDelayedEncodeArgs, GetTransactionReceiptArgs, getTransactionReceipt,
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import {newSession, newSessionFromSessionId} from "./session";
@@ -28,7 +28,7 @@ import { OpenSessionResponse } from './intents/responses'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 import {
   IntentDataFinishValidateSession,
-  IntentDataGetSession,
+  IntentDataGetSession, IntentDataGetTransactionReceipt,
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
@@ -320,6 +320,11 @@ export class SequenceWaaSBase {
    */
   async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendTransactions(await this.commonArgs(args))
+    return this.signIntent(intent)
+  }
+
+  async getTransactionReceipt(args: WithSimpleNetwork<GetTransactionReceiptArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataGetTransactionReceipt>> {
+    const intent = getTransactionReceipt(await this.commonArgs(args))
     return this.signIntent(intent)
   }
 
