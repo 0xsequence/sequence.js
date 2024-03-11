@@ -51,7 +51,7 @@ export const tests = async () => {
 
   await test('get chain id', async () => {
     const network = await provider.getNetwork()
-    assert.equal(network.chainId, 31337, 'chain id match')
+    assert.equal(network.chainId, 31337n, 'chain id match')
 
     const netVersion = await provider.send('net_version', [])
     assert.equal(netVersion, '31337', 'net_version check')
