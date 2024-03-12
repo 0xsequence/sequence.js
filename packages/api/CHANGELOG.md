@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.9.6
+
+### Patch Changes
+
+- waas package update
+
 ## 1.9.5
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.9.6
+
+### Patch Changes
+
+- waas package update
+- Updated dependencies
+  - @0xsequence/core@1.9.6
+  - @0xsequence/indexer@1.9.6
+  - @0xsequence/relayer@1.9.6
+  - @0xsequence/utils@1.9.6
+
 ## 1.9.5
 
 ### Patch Changes
