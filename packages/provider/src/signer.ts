@@ -1,4 +1,4 @@
-import { ethers, Signer } from 'ethers'
+import { ethers } from 'ethers'
 
 import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
 import { SequenceClient } from './client'
@@ -8,7 +8,7 @@ import { poll, resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
 import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 
-export interface ISequenceSigner extends Omit<Signer, 'connect'> {
+export interface ISequenceSigner extends Omit<ethers.Signer, 'connect'> {
   getProvider(): SequenceProvider
   getProvider(chainId: ChainIdLike): SingleNetworkSequenceProvider
   getProvider(chainId?: ChainIdLike): SequenceProvider | SingleNetworkSequenceProvider

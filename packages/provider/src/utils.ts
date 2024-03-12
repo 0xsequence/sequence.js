@@ -1,4 +1,4 @@
-import { ethers, BytesLike } from 'ethers'
+import { ethers } from 'ethers'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
 import { commons } from '@0xsequence/core'
@@ -6,7 +6,7 @@ import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequen
 
 const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
-export const messageToBytes = (message: BytesLike): Uint8Array => {
+export const messageToBytes = (message: ethers.BytesLike): Uint8Array => {
   if (ethers.isBytesLike(message)) {
     return ethers.getBytes(message)
   }
@@ -14,7 +14,7 @@ export const messageToBytes = (message: BytesLike): Uint8Array => {
   return ethers.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
+export const prefixEIP191Message = (message: ethers.BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
   if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes

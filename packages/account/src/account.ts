@@ -8,7 +8,7 @@ import { tracker } from '@0xsequence/sessions'
 import { SignatureOrchestrator } from '@0xsequence/signhub'
 import { BigIntish, encodeTypedDataDigest, getFetchRequest } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { AccountSigner, AccountSignerOptions } from './signer'
 
 export type AccountStatus = {
@@ -963,8 +963,8 @@ export class Account {
   }
 
   async signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
+    domain: ethers.TypedDataDomain,
+    types: Record<string, Array<ethers.TypedDataField>>,
     message: Record<string, any>,
     chainId: BigIntish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'

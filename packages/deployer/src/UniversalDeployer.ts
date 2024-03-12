@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { ethers, ContractFactory } from 'ethers'
+import { ethers } from 'ethers'
 import { promisify, isNode } from '@0xsequence/utils'
 import { UniversalDeployer2__factory } from './typings/contracts'
 import {
@@ -32,7 +32,7 @@ export class UniversalDeployer {
     }
   }
 
-  deploy = async <T extends ContractFactory>(
+  deploy = async <T extends ethers.ContractFactory>(
     contractAlias: string,
     contractFactory: new (signer: ethers.Signer) => T,
     txParams?: ethers.TransactionRequest,
@@ -198,7 +198,7 @@ export class UniversalDeployer {
     })
   }
 
-  addressOf = async <T extends ContractFactory>(
+  addressOf = async <T extends ethers.ContractFactory>(
     contractFactory: new (signer: ethers.Signer) => T,
     contractInstance: number | bigint,
     ...args: Parameters<T['deploy']>

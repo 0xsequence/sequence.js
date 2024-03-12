@@ -2,7 +2,7 @@ import { commons, v2 } from '@0xsequence/core'
 import { SequenceClient, SequenceProvider, DefaultProviderConfig, MemoryItemStore } from '@0xsequence/provider'
 import { context } from '@0xsequence/tests'
 import { configureLogger, parseEther } from '@0xsequence/utils'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
 import { testAccounts, getEOAWallet, sendETH } from '../testutils'
 
@@ -203,14 +203,14 @@ export const tests = async () => {
     const address = wallet.getAddress()
     const chainId = wallet.getChainId()
 
-    const domain: TypedDataDomain = {
+    const domain: ethers.TypedDataDomain = {
       name: 'Ether Mail',
       version: '1',
       chainId: chainId,
       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
     }
 
-    const types: { [key: string]: TypedDataField[] } = {
+    const types: { [key: string]: ethers.TypedDataField[] } = {
       Person: [
         { name: 'name', type: 'string' },
         { name: 'wallet', type: 'address' }

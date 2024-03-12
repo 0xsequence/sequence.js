@@ -1,4 +1,4 @@
-import { BytesLike, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { BigIntish } from '@0xsequence/utils'
 import { subdigestOf } from './signature'
 import { walletContracts } from '@0xsequence/abi'
@@ -88,7 +88,7 @@ export function intendedTransactionID(bundle: IntendedTransactionBundle) {
   )
 }
 
-export function unpackMetaTransactionsData(data: BytesLike): [bigint, TransactionEncoded[]] {
+export function unpackMetaTransactionsData(data: ethers.BytesLike): [bigint, TransactionEncoded[]] {
   const res = ethers.AbiCoder.defaultAbiCoder().decode(['uint256', MetaTransactionsType], data)
   if (res.length !== 2 || !res[0] || !res[1]) throw new Error('Invalid meta transaction data')
   return [res[0], res[1]]

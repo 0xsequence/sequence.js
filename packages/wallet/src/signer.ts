@@ -1,10 +1,10 @@
-import { BytesLike, AbstractSigner, TypedDataDomain, TypedDataField, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { NetworkConfig, ChainIdLike } from '@0xsequence/network'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
 import { commons } from '@0xsequence/core'
 
 // TODO: Move to account ?
-export abstract class Signer extends AbstractSigner {
+export abstract class Signer extends ethers.AbstractSigner {
   static isSequenceSigner(cand: any): cand is Signer {
     return isSequenceSigner(cand)
   }
@@ -23,12 +23,17 @@ export abstract class Signer extends AbstractSigner {
   abstract getSigners(): Promise<string[]>
 
   // signMessage .....
-  abstract signMessage(message: BytesLike, chainId?: ChainIdLike, allSigners?: boolean, isDigest?: boolean): Promise<string>
+  abstract signMessage(
+    message: ethers.BytesLike,
+    chainId?: ChainIdLike,
+    allSigners?: boolean,
+    isDigest?: boolean
+  ): Promise<string>
 
   // signTypedData ..
   abstract signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
+    domain: ethers.TypedDataDomain,
+    types: Record<string, Array<ethers.TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
     allSigners?: boolean

@@ -1,6 +1,6 @@
 import { DefaultProviderConfig, MemoryItemStore, SequenceClient, SequenceProvider } from '@0xsequence/provider'
 import { configureLogger } from '@0xsequence/utils'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
@@ -88,14 +88,14 @@ export const tests = async () => {
     const address = provider.getAddress()
     const chainId = provider.getChainId()
 
-    const domain: TypedDataDomain = {
+    const domain: ethers.TypedDataDomain = {
       name: 'Ether Mail',
       version: '1',
       chainId: chainId,
       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
     }
 
-    const types: { [key: string]: TypedDataField[] } = {
+    const types: { [key: string]: ethers.TypedDataField[] } = {
       Person: [
         { name: 'name', type: 'string' },
         { name: 'wallet', type: 'address' }

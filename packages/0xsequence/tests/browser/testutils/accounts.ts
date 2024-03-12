@@ -1,4 +1,4 @@
-import { ethers, Wallet as EOAWallet } from 'ethers'
+import { ethers } from 'ethers'
 
 // testAccounts with 10000 ETH each
 export const testAccounts = [
@@ -28,13 +28,13 @@ export const testAccounts = [
   }
 ]
 
-export const getEOAWallet = (privateKey: string, provider?: string | ethers.Provider): EOAWallet => {
+export const getEOAWallet = (privateKey: string, provider?: string | ethers.Provider): ethers.Wallet => {
   // defaults
   if (!provider) {
     provider = 'http://localhost:8545'
   }
 
-  const wallet = new EOAWallet(privateKey)
+  const wallet = new ethers.Wallet(privateKey)
 
   if (typeof provider === 'string') {
     return wallet.connect(new ethers.JsonRpcProvider(provider, undefined, { cacheTimeout: -1 }))
