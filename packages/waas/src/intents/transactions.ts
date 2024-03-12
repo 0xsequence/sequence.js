@@ -1,5 +1,6 @@
 import { Intent, makeIntent } from './base'
 import {
+  IntentDataGetTransactionReceipt,
   IntentDataSendTransaction,
   TransactionDelayedEncode,
   TransactionERC1155,
@@ -83,6 +84,18 @@ export function sendTransactions({
         data: ethers.utils.hexlify(tx.data || [])
       }
     })
+  })
+}
+
+export type GetTransactionReceiptArgs = {
+  metaTxHash: string,
+}
+
+export function getTransactionReceipt({ lifespan, chainId, wallet, metaTxHash }: GetTransactionReceiptArgs & BaseArgs): Intent<IntentDataGetTransactionReceipt> {
+  return makeIntent('getTransactionReceipt', lifespan, {
+    wallet,
+    network: chainId.toString(),
+    metaTxHash,
   })
 }
 

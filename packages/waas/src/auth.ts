@@ -9,7 +9,7 @@ import {
   SendERC721Args,
   SignMessageArgs,
   SendTransactionsArgs,
-  SignedIntent
+  SignedIntent, GetTransactionReceiptArgs
 } from './intents'
 import {
   MaySentTransactionResponse,
@@ -18,7 +18,7 @@ import {
   isMaySentTransactionResponse,
   isSignedMessageResponse,
   isValidationRequiredResponse,
-  isFinishValidateSessionResponse, isCloseSessionResponse
+  isFinishValidateSessionResponse, isCloseSessionResponse, isTimedOutTransactionResponse
 } from './intents/responses'
 import {
   WaasAuthenticator,
@@ -392,7 +392,22 @@ export class SequenceWaaS {
 
   async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
+    let result = await this.trySendIntent(args, intent, isMaySentTransactionResponse)
+
+    while (isTimedOutTransactionResponse(result)) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      const receiptArgs: WithSimpleNetwork<GetTransactionReceiptArgs> & CommonAuthArgs = {
+        metaTxHash: result.data.metaTxHash,
+        network: args.network,
+        identifier: args.identifier,
+        validation: args.validation,
+      }
+      const intent = await this.waas.getTransactionReceipt(await this.useIdentifier(receiptArgs))
+      result = await this.trySendIntent(receiptArgs, intent, isMaySentTransactionResponse)
+    }
+
+    return result
   }
 
   async sendERC20(args: WithSimpleNetwork<SendERC20Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
