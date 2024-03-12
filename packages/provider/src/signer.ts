@@ -4,7 +4,7 @@ import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
 import { SequenceClient } from './client'
 import { commons } from '@0xsequence/core'
 import { ChainIdLike, NetworkConfig } from '@0xsequence/network'
-import { poll, resolveArrayProperties } from './utils'
+import { resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
 import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 
@@ -130,13 +130,21 @@ export class SequenceSigner implements ISequenceSigner {
     const provider = this.getProvider(chainId)
 
     try {
-      return (await poll(
-        async () => {
+      const result = await new Promise<ethers.TransactionResponse>(resolve => {
+        const check = async () => {
           const tx = await provider.getTransaction(txHash)
-          return tx || undefined
-        },
-        { onceBlock: provider }
-      )) as ethers.TransactionResponse
+
+          if (tx !== null) {
+            return resolve(tx)
+          }
+
+          await provider.once('block', check)
+        }
+
+        check()
+      })
+
+      return result
     } catch (err) {
       err.transactionHash = txHash
       throw err
