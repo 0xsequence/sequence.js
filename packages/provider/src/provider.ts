@@ -64,7 +64,7 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     public readonly client: SequenceClient,
     private readonly providerFor: (networkId: number) => ethers.JsonRpcProvider,
     public readonly networks: NetworkConfig[] = allNetworks,
-    options?: ethers.AbstractProviderOptions
+    public options?: ethers.AbstractProviderOptions
   ) {
     // We support a lot of networks
     // but we start with the default one
@@ -253,7 +253,12 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
     const useChainId = this.toChainId(chainId)
 
     if (!this.singleNetworkProviders[useChainId]) {
-      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(this.client, this.providerFor, useChainId)
+      this.singleNetworkProviders[useChainId] = new SingleNetworkSequenceProvider(
+        this.client,
+        this.providerFor,
+        useChainId,
+        this.options
+      )
     }
 
     return this.singleNetworkProviders[useChainId]

@@ -131,7 +131,11 @@ export class SequenceSigner implements ISequenceSigner {
 
     try {
       const result = await new Promise<ethers.TransactionResponse>(resolve => {
+        let attempts = 0
+
         const check = async () => {
+          attempts++
+
           const tx = await provider.getTransaction(txHash)
 
           if (tx !== null) {
