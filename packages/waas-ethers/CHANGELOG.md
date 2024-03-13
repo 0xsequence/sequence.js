@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 1.9.7
+
+### Patch Changes
+
+- update rpc client bindings for api, metadata and relayer
+- Updated dependencies
+  - @0xsequence/waas@1.9.7
+
 ## 1.9.6
 
 ### Patch Changes

@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.9.7
+
+### Patch Changes
+
+- update rpc client bindings for api, metadata and relayer
+- Updated dependencies
+  - @0xsequence/abi@1.9.7
+  - @0xsequence/account@1.9.7
+  - @0xsequence/api@1.9.7
+  - @0xsequence/auth@1.9.7
+  - @0xsequence/core@1.9.7
+  - @0xsequence/guard@1.9.7
+  - @0xsequence/indexer@1.9.7
+  - @0xsequence/metadata@1.9.7
+  - @0xsequence/migration@1.9.7
+  - @0xsequence/multicall@1.9.7
+  - @0xsequence/network@1.9.7
+  - @0xsequence/provider@1.9.7
+  - @0xsequence/relayer@1.9.7
+  - @0xsequence/sessions@1.9.7
+  - @0xsequence/signhub@1.9.7
+  - @0xsequence/utils@1.9.7
+  - @0xsequence/wallet@1.9.7
+
 ## 1.9.6
 
 ### Patch Changes
