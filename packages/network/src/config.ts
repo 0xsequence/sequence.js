@@ -152,6 +152,14 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('avalanche-testnet')
   },
   {
+    ...networks[ChainId.ASTAR_ZKEVM],
+    ...genUrls('astar-zkevm')
+  },
+  {
+    ...networks[ChainId.ASTAR_ZKATANA],
+    ...genUrls('astar-zkatana')
+  },
+  {
     ...networks[ChainId.HARDHAT],
     rpcUrl: 'http://localhost:8545',
     relayer: {
