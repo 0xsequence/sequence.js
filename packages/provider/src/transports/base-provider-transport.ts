@@ -115,7 +115,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       chainId: request.chainId
     })
 
-    return response.data.result
+    return response.data
   }
 
   // handleMessage will handle message received from the remote wallet
