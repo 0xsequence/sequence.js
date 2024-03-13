@@ -1,5 +1,5 @@
 import {Observer, SequenceWaaSBase} from './base'
-import { IntentResponseSignedMessage } from "./clients/intent.gen";
+import {IntentDataSendTransaction, IntentResponseSignedMessage} from "./clients/intent.gen";
 import { newSessionFromSessionId } from "./session";
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -390,8 +390,7 @@ export class SequenceWaaS {
     return this.trySendIntent(args, intent, isSignedMessageResponse)
   }
 
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
-    const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
+  private async trySendTransactionIntent(intent: SignedIntent<IntentDataSendTransaction>, args: CommonAuthArgs): Promise<MaySentTransactionResponse> {
     let result = await this.trySendIntent(args, intent, isMaySentTransactionResponse)
 
     while (isTimedOutTransactionResponse(result)) {
@@ -399,35 +398,40 @@ export class SequenceWaaS {
 
       const receiptArgs: WithSimpleNetwork<GetTransactionReceiptArgs> & CommonAuthArgs = {
         metaTxHash: result.data.metaTxHash,
-        network: args.network,
-        identifier: args.identifier,
+        network: intent.data.network,
+        identifier: intent.data.identifier,
         validation: args.validation,
       }
-      const intent = await this.waas.getTransactionReceipt(await this.useIdentifier(receiptArgs))
-      result = await this.trySendIntent(receiptArgs, intent, isMaySentTransactionResponse)
+      const receiptIntent = await this.waas.getTransactionReceipt(await this.useIdentifier(receiptArgs))
+      result = await this.trySendIntent(receiptArgs, receiptIntent, isMaySentTransactionResponse)
     }
 
     return result
   }
 
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
+    return this.trySendTransactionIntent(intent, args)
+  }
+
   async sendERC20(args: WithSimpleNetwork<SendERC20Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendERC20(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
+    return this.trySendTransactionIntent(intent, args)
   }
 
   async sendERC721(args: WithSimpleNetwork<SendERC721Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendERC721(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
+    return this.trySendTransactionIntent(intent, args)
   }
 
   async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendERC1155(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
+    return this.trySendTransactionIntent(intent, args)
   }
 
   async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
-    return this.trySendIntent(args, intent, isMaySentTransactionResponse)
+    return this.trySendTransactionIntent(intent, args)
   }
 
   async networkList(): Promise<NetworkList> {
