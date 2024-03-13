@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 1.9.8
+
+### Patch Changes
+
+- waas client update
+- Updated dependencies
+  - @0xsequence/abi@1.9.8
+  - @0xsequence/core@1.9.8
+  - @0xsequence/migration@1.9.8
+  - @0xsequence/network@1.9.8
+  - @0xsequence/relayer@1.9.8
+  - @0xsequence/sessions@1.9.8
+  - @0xsequence/utils@1.9.8
+  - @0xsequence/wallet@1.9.8
+
 ## 1.9.7
 
 ### Patch Changes

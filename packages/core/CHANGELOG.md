@@ -1,5 +1,13 @@
 # @0xsequence/core
 
+## 1.9.8
+
+### Patch Changes
+
+- waas client update
+- Updated dependencies
+  - @0xsequence/abi@1.9.8
+
 ## 1.9.7
 
 ### Patch Changes
