@@ -632,6 +632,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
       }
     } catch (err) {
       logger.error(err)
+      throw err
     }
   }
 
