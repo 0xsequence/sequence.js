@@ -49,6 +49,10 @@ export enum ChainId {
   // Xai
   XAI_SEPOLIA = 37714555429,
 
+  // Astar
+  ASTAR_ZKEVM = 3776,
+  ASTAR_ZKATANA = 1261120,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -416,7 +420,28 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://testnet-explorer-v2.xai-chain.net/'
     }
   },
-
+  [ChainId.ASTAR_ZKEVM]: {
+    chainId: ChainId.ASTAR_ZKEVM,
+    type: NetworkType.MAINNET,
+    name: 'astar-zkevm',
+    title: 'Astar zkEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKEVM}.webp`,
+    blockExplorer: {
+      name: 'Astar zkEVM Explorer',
+      rootUrl: 'https://astar-zkevm.explorer.startale.com/'
+    }
+  },
+  [ChainId.ASTAR_ZKATANA]: {
+    chainId: ChainId.ASTAR_ZKATANA,
+    type: NetworkType.TESTNET,
+    name: 'astar-zkatana',
+    title: 'Astar zkATANA Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKATANA}.webp`,
+    blockExplorer: {
+      name: 'Astar zkATANA Explorer',
+      rootUrl: 'https://zkatana.explorer.startale.com/'
+    }
+  },
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
     name: 'hardhat',
