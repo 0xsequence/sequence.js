@@ -1331,7 +1331,7 @@ describe('SequenceClient', () => {
               requests++
               return Promise.resolve('0x112233')
             } else {
-              expect.fail('Should not have called sendAsync')
+              expect.fail('Should not have called request')
             }
           },
           openWallet: () => {
@@ -1403,7 +1403,7 @@ describe('SequenceClient', () => {
               requests++
               return Promise.resolve('0x112233')
             } else {
-              expect.fail('Should not have called sendAsync')
+              expect.fail('Should not have called request')
             }
           },
           openWallet: () => {
@@ -1476,7 +1476,7 @@ describe('SequenceClient', () => {
               requests++
               return Promise.resolve('0x112233')
             } else {
-              expect.fail('Should not have called sendAsync')
+              expect.fail('Should not have called request')
             }
           },
           openWallet: () => {
@@ -1548,7 +1548,7 @@ describe('SequenceClient', () => {
               requests++
               return Promise.resolve('0x112233')
             } else {
-              expect.fail('Should not have called sendAsync')
+              expect.fail('Should not have called request')
             }
           },
           openWallet: () => {
@@ -1621,7 +1621,7 @@ describe('SequenceClient', () => {
               requests++
               return Promise.resolve('0x112233')
             } else {
-              expect.fail('Should not have called sendAsync')
+              expect.fail('Should not have called request')
             }
           },
           openWallet: () => {

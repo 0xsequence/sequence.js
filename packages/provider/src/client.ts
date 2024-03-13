@@ -387,26 +387,6 @@ export class SequenceClient {
     request.method = this.mapSignMethod(request.method)
 
     return this.transport.request(request)
-
-    // return new Promise((resolve, reject) => {
-    //   this.transport.sendAsync(
-    //     request,
-    //     (error, response) => {
-    //       if (error) {
-    //         reject(error)
-    //       } else if (response === undefined) {
-    //         reject(new Error(`Got undefined response for request: ${request}`))
-    //       } else if (typeof response === 'object' && response.error) {
-    //         reject(response.error)
-    //       } else if (typeof response === 'object' && response.result) {
-    //         resolve(response.result)
-    //       } else {
-    //         reject(new Error(`Got invalid response for request: ${request}`))
-    //       }
-    //     },
-    //     chainId || this.getChainId()
-    //   )
-    // })
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {

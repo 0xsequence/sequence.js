@@ -89,26 +89,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     )
   }
 
-  request(request: { method: string; params?: any[]; chainId?: number }): Promise<JsonRpcResponse> {
-    return new Promise<JsonRpcResponse>((resolve, reject) => {
-      this.sendAsync(
-        request,
-        (error?: JsonRpcErrorPayload, response?: JsonRpcResponse) => {
-          if (error) {
-            reject(error)
-          } else {
-            resolve(response!.result)
-          }
-        },
-        request.chainId
-      )
-    })
-  }
-
-  // TODOXXX: refactor and remove this method.. just use request promise..
-  sendAsync = async (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
-    // here, we receive the message from the dapp provider call
-
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     if (this.state === OpenState.CLOSED) {
       // flag the wallet to auto-close once user submits input. ie.
       // prompting to sign a message or transaction
@@ -121,24 +102,20 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     // NOTE: if we're not signed in, then the provider will fail, users must first connect+sign in.
     //
     // TODO: how does this behave with a session has expired?
-    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method }, chainId)
+    this.openWallet(undefined, { type: 'jsonRpcRequest', method: request.method }, request.chainId)
 
-    // send message request, await, and then execute callback after receiving the response
-    try {
-      if (!this.isOpened()) {
-        await this.waitUntilOpened() // will throw on timeout
-      }
-
-      const response = await this.sendMessageRequest({
-        idx: nextMessageIdx(),
-        type: EventType.MESSAGE,
-        data: request,
-        chainId: chainId
-      })
-      callback(undefined, response.data)
-    } catch (err) {
-      callback(err)
+    if (!this.isOpened()) {
+      await this.waitUntilOpened() // will throw on timeout
     }
+
+    const response = await this.sendMessageRequest({
+      idx: nextMessageIdx(),
+      type: EventType.MESSAGE,
+      data: request,
+      chainId: request.chainId
+    })
+
+    return response.data.result
   }
 
   // handleMessage will handle message received from the remote wallet
