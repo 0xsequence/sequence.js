@@ -53,7 +53,13 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
   }
 
   requestHandler = (next: EIP1193ProviderFunc) => {
-    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
+    return async (request: {
+      jsonrpc: '2.0'
+      id?: number
+      method: string
+      params?: any[]
+      chainId?: number
+    }): Promise<JsonRpcResponse> => {
       // Respond early with cached result
       if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
         const key = this.cacheKey(request.method, request.params! as any[], request.chainId || this.defaultChainId)
@@ -67,26 +73,23 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
       }
 
       // Continue down the handler chain
-      const response = await next(request)
+      const result = await next(request)
 
       // Store result in cache and continue
-      if (
-        this.cachableJsonRpcMethods.includes(request.method) ||
-        this.cachableJsonRpcMethodsByBlock.includes(request.method)
-      ) {
-        if (response && response.result && this.shouldCacheResponse(request, response)) {
+      if (this.cachableJsonRpcMethods.includes(request.method) || this.cachableJsonRpcMethodsByBlock.includes(request.method)) {
+        if (result && this.shouldCacheResponse(request, result)) {
           // cache the value
           const key = this.cacheKey(request.method, request.params! as any[], request.chainId || this.defaultChainId)
 
           if (this.cachableJsonRpcMethods.includes(request.method)) {
-            this.setCacheValue(key, response.result)
+            this.setCacheValue(key, result)
           } else {
-            this.setCacheByBlockValue(key, response.result)
+            this.setCacheByBlockValue(key, result)
           }
         }
       }
 
-      return response
+      return result
     }
   }
 
@@ -142,14 +145,14 @@ export class CachedProvider implements JsonRpcMiddlewareHandler {
     }
   }
 
-  shouldCacheResponse = (request: JsonRpcRequest, response?: JsonRpcResponse): boolean => {
+  shouldCacheResponse = (request: JsonRpcRequest, result?: any): boolean => {
     // skip if we do not have response result
-    if (!response || !response.result) {
+    if (!result) {
       return false
     }
 
     // skip caching eth_getCode where resposne value is '0x' or empty
-    if (request.method === 'eth_getCode' && response.result.length <= 2) {
+    if (request.method === 'eth_getCode' && result.length <= 2) {
       return false
     }
 

@@ -61,9 +61,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
   }
 
   async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
-    const response = await this.#sender.request(request)
-
-    return response.result
+    return await this.#sender.request(request)
   }
 
   send(method: string, params?: any[] | Record<string, any>, chainId?: number): Promise<any> {
