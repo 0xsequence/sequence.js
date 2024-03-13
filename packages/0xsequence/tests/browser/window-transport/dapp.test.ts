@@ -38,7 +38,7 @@ export const tests = async () => {
   })
 
   await test('sending a json-rpc request', async () => {
-    const result = walletProvider.request({ method: 'eth_accounts', params: [] })
+    const result = await walletProvider.request({ method: 'eth_accounts', params: [] })
     assert.true(result[0] === address, 'response address check')
 
     const resp = await provider.send('eth_accounts', [])
