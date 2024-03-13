@@ -631,8 +631,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
         }
       }
     } catch (err) {
-      logger.error(err)
-      throw err
+      throw { message: err?.message, code: 4001 } as ProviderRpcError
     }
   }
 
