@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.9
+
+### Patch Changes
+
+- metadata, add SequenceCollections rpc client
+
 ## 1.9.8
 
 ### Patch Changes

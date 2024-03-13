@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.9.9
+
+### Patch Changes
+
+- metadata, add SequenceCollections rpc client
+- Updated dependencies
+  - @0xsequence/utils@1.9.9
+
 ## 1.9.8
 
 ### Patch Changes

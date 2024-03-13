@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.9
+
+### Patch Changes
+
+- metadata, add SequenceCollections rpc client
+- Updated dependencies
+  - @0xsequence/abi@1.9.9
+  - @0xsequence/core@1.9.9
+  - @0xsequence/wallet@1.9.9
+
 ## 1.9.8
 
 ### Patch Changes
