@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.9.10
+
+### Patch Changes
+
+- update metadata rpc bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.10
+  - @0xsequence/indexer@1.9.10
+  - @0xsequence/relayer@1.9.10
+  - @0xsequence/utils@1.9.10
+
 ## 1.9.9
 
 ### Patch Changes

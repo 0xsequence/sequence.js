@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.10
+
+### Patch Changes
+
+- update metadata rpc bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.10
+  - @0xsequence/core@1.9.10
+  - @0xsequence/wallet@1.9.10
+
 ## 1.9.9
 
 ### Patch Changes

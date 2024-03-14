@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.9.10
+
+### Patch Changes
+
+- update metadata rpc bindings
+
 ## 1.9.9
 
 ### Patch Changes

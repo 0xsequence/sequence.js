@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 1.9.10
+
+### Patch Changes
+
+- update metadata rpc bindings
+- Updated dependencies
+  - @0xsequence/waas@1.9.10
+
 ## 1.9.9
 
 ### Patch Changes
