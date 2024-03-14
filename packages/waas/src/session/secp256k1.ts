@@ -1,16 +1,16 @@
-import { ethers } from "ethers";
-import { openDB } from "idb";
-import { Session } from "./index";
+import { ethers } from 'ethers'
+import { openDB } from 'idb'
+import { Session } from './index'
 
 const idbName = 'seq-waas-session-p256k1'
 const idbStoreName = 'seq-waas-session'
 
 export async function newSECP256K1SessionFromSessionId(sessionId: string): Promise<Session> {
-  const db = await openDB(idbName);
+  const db = await openDB(idbName)
 
-  const tx = db.transaction(idbStoreName, 'readonly');
+  const tx = db.transaction(idbStoreName, 'readonly')
   const privateKey = await db.get(idbStoreName, sessionId)
-  await tx.done;
+  await tx.done
 
   const wallet = new ethers.Wallet(privateKey)
 
@@ -32,15 +32,15 @@ export async function newSECP256K1SessionFromPrivateKey(privateKey: string): Pro
 
   const db = await openDB(idbName, 1, {
     upgrade(db) {
-      db.createObjectStore(idbStoreName);
-    },
-  });
+      db.createObjectStore(idbStoreName)
+    }
+  })
 
   const sessionId = await wallet.getAddress()
 
-  const tx = db.transaction(idbStoreName, 'readwrite');
+  const tx = db.transaction(idbStoreName, 'readwrite')
   await db.put(idbStoreName, privateKey, sessionId)
-  await tx.done;
+  await tx.done
 
   db.close()
 
@@ -51,4 +51,3 @@ export async function newSECP256K1Session(): Promise<Session> {
   const wallet = ethers.Wallet.createRandom()
   return newSECP256K1SessionFromPrivateKey(wallet.privateKey)
 }
-

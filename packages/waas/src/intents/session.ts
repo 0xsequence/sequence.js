@@ -1,4 +1,4 @@
-import { Intent, makeIntent } from "./base"
+import { Intent, makeIntent } from './base'
 import {
   IntentDataCloseSession,
   IntentDataFinishValidateSession,
@@ -6,67 +6,50 @@ import {
   IntentDataListSessions,
   IntentDataOpenSession,
   IntentDataValidateSession
-} from "../clients/intent.gen"
+} from '../clients/intent.gen'
 
 interface BaseArgs {
-  lifespan: number,
+  lifespan: number
 }
 
 export type OpenSessionArgs = BaseArgs & {
-  sessionId: string,
-  idToken: string,
+  sessionId: string
+  idToken: string
 }
 
-export async function openSession(
-  { lifespan, sessionId, idToken }: OpenSessionArgs
-): Promise<Intent<IntentDataOpenSession>> {
+export async function openSession({ lifespan, sessionId, idToken }: OpenSessionArgs): Promise<Intent<IntentDataOpenSession>> {
   return makeIntent('openSession', lifespan, {
-      sessionId,
-      idToken,
+    sessionId,
+    idToken
   })
 }
 
 export type ValidateSessionArgs = BaseArgs & IntentDataValidateSession
 
-export async function validateSession({
-  lifespan,
-  ...data
-}: ValidateSessionArgs): Promise<Intent<IntentDataValidateSession>> {
+export async function validateSession({ lifespan, ...data }: ValidateSessionArgs): Promise<Intent<IntentDataValidateSession>> {
   return makeIntent('validateSession', lifespan, data)
 }
 
 export type FinishValidateSessionArgs = BaseArgs & IntentDataFinishValidateSession
 
-export function finishValidateSession({
-  lifespan,
-  ...data
-}: FinishValidateSessionArgs): Intent<IntentDataFinishValidateSession> {
+export function finishValidateSession({ lifespan, ...data }: FinishValidateSessionArgs): Intent<IntentDataFinishValidateSession> {
   return makeIntent('finishValidateSession', lifespan, data)
 }
 
 export type CloseSessionArgs = BaseArgs & IntentDataCloseSession
 
-export function closeSession({
-  lifespan,
-  ...data
-}: CloseSessionArgs): Intent<IntentDataCloseSession> {
+export function closeSession({ lifespan, ...data }: CloseSessionArgs): Intent<IntentDataCloseSession> {
   return makeIntent('closeSession', lifespan, data)
 }
 
 export type ListSessionsArgs = BaseArgs & IntentDataListSessions
 
-export function listSessions({
-  lifespan,
-  ...data
-}: ListSessionsArgs): Intent<IntentDataListSessions> {
+export function listSessions({ lifespan, ...data }: ListSessionsArgs): Intent<IntentDataListSessions> {
   return makeIntent('listSessions', lifespan, data)
 }
 
 export type GetSessionArgs = BaseArgs & IntentDataGetSession
 
-export function getSession({
-  lifespan,
-  ...data
-}: GetSessionArgs): Intent<IntentDataGetSession> {
+export function getSession({ lifespan, ...data }: GetSessionArgs): Intent<IntentDataGetSession> {
   return makeIntent('getSession', lifespan, data)
 }

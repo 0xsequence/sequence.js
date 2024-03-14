@@ -2,12 +2,13 @@ import {
   IntentDataSendTransaction,
   IntentResponseGetSession,
   IntentResponseSessionClosed,
-  IntentResponseSignedMessage, IntentResponseTransactionFailed,
+  IntentResponseSignedMessage,
+  IntentResponseTransactionFailed,
   IntentResponseTransactionReceipt,
   IntentResponseValidateSession,
   IntentResponseValidationFinished,
   IntentResponseValidationRequired
-} from "../clients/intent.gen"
+} from '../clients/intent.gen'
 
 export type PayloadResponse<T> = {
   code: string
@@ -22,47 +23,47 @@ export type ValidationRequiredResponse = {
 }
 
 type MetaTxnReceiptLog = {
-  address: string;
-  topics: string[];
-  data: string;
+  address: string
+  topics: string[]
+  data: string
 }
 
 type MetaTxnReceipt = {
-  id: string;
-  status: string;
-  revertReason?: string | null;
-  index: number;
-  logs: MetaTxnReceiptLog[];
-  receipts: MetaTxnReceipt[];
-  txnReceipt: string;
+  id: string
+  status: string
+  revertReason?: string | null
+  index: number
+  logs: MetaTxnReceiptLog[]
+  receipts: MetaTxnReceipt[]
+  txnReceipt: string
 }
 
 type SimulateResult = {
-  executed: boolean;
-  succeeded: boolean;
-  result: string | null;
-  reason: string | null;
-  gasUsed: number;
-  gasLimit: number;
+  executed: boolean
+  succeeded: boolean
+  result: string | null
+  reason: string | null
+  gasUsed: number
+  gasLimit: number
 }
 
 export type SentTransactionResponse = {
   code: 'transactionReceipt'
   data: {
-    txHash: string,
-    metaTxHash: string,
-    request: IntentDataSendTransaction,
-    receipt: MetaTxnReceipt,
-    nativeReceipt?: any | null,
+    txHash: string
+    metaTxHash: string
+    request: IntentDataSendTransaction
+    receipt: MetaTxnReceipt
+    nativeReceipt?: any | null
     simulations?: SimulateResult[]
   }
 }
 
 export type TransactionFailedResponse = {
-  code: 'transactionFailed',
+  code: 'transactionFailed'
   data: {
-    error: string,
-    request: IntentDataSendTransaction,
+    error: string
+    request: IntentDataSendTransaction
     simulations: SimulateResult[]
   }
 }
@@ -97,15 +98,15 @@ export type SignedMessageResponse = {
 }
 
 export type ValidateSessionResponse = {
-  code: 'startedSessionValidation',
+  code: 'startedSessionValidation'
   data: {}
 }
 
 export type FinishValidateSessionResponse = {
-    code: 'finishedSessionValidation',
-    data: {
-      isValid: boolean
-    }
+  code: 'finishedSessionValidation'
+  data: {
+    isValid: boolean
+  }
 }
 
 export type GetSessionResponse = {
@@ -142,13 +143,13 @@ export function isSentTransactionResponse(receipt: any): receipt is SentTransact
 
 export function isTimedOutTransactionResponse(receipt: any): receipt is SentTransactionResponse {
   return (
-      typeof receipt === 'object' &&
-      typeof receipt.code === 'string' &&
-      receipt.code === 'transactionReceipt' &&
-      typeof receipt.data === 'object' &&
-      typeof receipt.data.metaTxHash === 'string' &&
-      !receipt.data.txHash &&
-      typeof receipt.data.request === 'object'
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'transactionReceipt' &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.metaTxHash === 'string' &&
+    !receipt.data.txHash &&
+    typeof receipt.data.request === 'object'
   )
 }
 
@@ -208,11 +209,7 @@ export function isFinishValidateSessionResponse(receipt: any): receipt is Finish
 }
 
 export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'sessionClosed'
-  )
+  return typeof receipt === 'object' && typeof receipt.code === 'string' && receipt.code === 'sessionClosed'
 }
 
 export function isGetSessionResponse(receipt: any): receipt is GetSessionResponse {

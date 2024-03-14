@@ -20,20 +20,23 @@ import {
   SendERC20Args,
   SendERC721Args,
   SendERC1155Args,
-  SendDelayedEncodeArgs, GetTransactionReceiptArgs, getTransactionReceipt,
+  SendDelayedEncodeArgs,
+  GetTransactionReceiptArgs,
+  getTransactionReceipt
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
-import {newSession, newSessionFromSessionId} from "./session";
+import { newSession, newSessionFromSessionId } from './session'
 import { OpenSessionResponse } from './intents/responses'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 import {
   IntentDataFinishValidateSession,
-  IntentDataGetSession, IntentDataGetTransactionReceipt,
+  IntentDataGetSession,
+  IntentDataGetTransactionReceipt,
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
   IntentDataValidateSession
-} from "./clients/intent.gen";
+} from './clients/intent.gen'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -143,7 +146,7 @@ export class SequenceWaaSBase {
     return signer.sign(message)
   }
 
-  private gettingSessionIdPromise: Promise<string> | undefined;
+  private gettingSessionIdPromise: Promise<string> | undefined
 
   /**
    * This method will return session id.
@@ -207,7 +210,7 @@ export class SequenceWaaSBase {
   }
 
   async signOut({ lifespan, sessionId }: { sessionId?: string } & ExtraArgs = {}) {
-    sessionId = sessionId || await this.sessionId.get()
+    sessionId = sessionId || (await this.sessionId.get())
     if (!sessionId) {
       throw new Error('session not open')
     }
@@ -232,7 +235,7 @@ export class SequenceWaaSBase {
   async listSessions() {
     const intent = listSessions({
       lifespan: DEFAULT_LIFESPAN,
-      wallet: await this.getWalletAddress(),
+      wallet: await this.getWalletAddress()
     })
 
     return this.signIntent(intent)
@@ -301,7 +304,7 @@ export class SequenceWaaSBase {
       chainId: toNetworkID(args.network || this.config.network),
       ...args,
       lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
-      wallet: await this.getWalletAddress(),
+      wallet: await this.getWalletAddress()
     })
 
     return this.signIntent(packet)
@@ -318,17 +321,23 @@ export class SequenceWaaSBase {
    * @param chainId The network on which the transactions will be sent
    * @returns a payload that must be sent to the waas API to complete the transaction
    */
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async sendTransaction(
+    args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendTransactions(await this.commonArgs(args))
     return this.signIntent(intent)
   }
 
-  async getTransactionReceipt(args: WithSimpleNetwork<GetTransactionReceiptArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataGetTransactionReceipt>> {
+  async getTransactionReceipt(
+    args: WithSimpleNetwork<GetTransactionReceiptArgs> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataGetTransactionReceipt>> {
     const intent = getTransactionReceipt(await this.commonArgs(args))
     return this.signIntent(intent)
   }
 
-  async sendERC20(args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async sendERC20(
+    args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataSendTransaction>> {
     if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC20')
     }
@@ -337,7 +346,9 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async sendERC721(args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async sendERC721(
+    args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataSendTransaction>> {
     if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC721')
     }
@@ -346,7 +357,9 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async sendERC1155(
+    args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataSendTransaction>> {
     if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC1155')
     }
@@ -355,7 +368,9 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataSendTransaction>> {
+  async callContract(
+    args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendDelayedEncode(await this.commonArgs(args))
     return this.signIntent(intent)
   }
@@ -403,7 +418,7 @@ export class SequenceWaaSBase {
       wallet,
       lifespan: DEFAULT_LIFESPAN,
       salt,
-      challenge,
+      challenge
     })
     return this.signIntent(intent)
   }
