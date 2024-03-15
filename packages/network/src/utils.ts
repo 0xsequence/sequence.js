@@ -1,4 +1,3 @@
-import { ethers } from 'ethers'
 import { BigIntish } from '@0xsequence/utils'
 import { ChainIdLike } from '.'
 import { NetworkConfig } from './config'

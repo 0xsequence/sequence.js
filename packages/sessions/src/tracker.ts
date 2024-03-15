@@ -1,6 +1,5 @@
 import { commons } from '@0xsequence/core'
 import { BigIntish } from '@0xsequence/utils'
-import { ethers } from 'ethers'
 
 export type PresignedConfig = {
   wallet: string
