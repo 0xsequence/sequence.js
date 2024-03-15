@@ -1,4 +1,4 @@
-import { JsonRpcRequest, JsonRpcResponse, NetworkConfig } from '@0xsequence/network'
+import { NetworkConfig } from '@0xsequence/network'
 import {
   ConnectDetails,
   ConnectOptions,

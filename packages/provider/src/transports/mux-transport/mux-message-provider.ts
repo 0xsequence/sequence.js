@@ -9,7 +9,6 @@ import {
   ConnectDetails
 } from '../../types'
 
-import { JsonRpcResponse } from '@0xsequence/network'
 import { ProxyMessageChannelPort, ProxyMessageProvider } from '../proxy-transport'
 import { Runtime } from 'webextension-polyfill'
 import { UnrealMessageProvider } from '../unreal-transport'
@@ -198,7 +197,7 @@ export class MuxMessageProvider implements ProviderTransport {
     return true
   }
 
-  request(request: { method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> {
+  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     if (!this.provider) {
       throw new Error('impossible state, wallet must be opened first')
     }

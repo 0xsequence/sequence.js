@@ -6,10 +6,6 @@ import {
   ChainIdLike,
   findNetworkConfig,
   findSupportedNetwork,
-  JsonRpcErrorPayload,
-  JsonRpcRequest,
-  JsonRpcResponse,
-  JsonRpcResponseCallback,
   NetworkConfig,
   EIP1193Provider
 } from '@0xsequence/network'
@@ -30,7 +26,6 @@ import {
   ProviderEventTypes,
   ProviderMessageRequest,
   ProviderMessageRequestHandler,
-  ProviderMessageResponse,
   ProviderRpcError,
   TypedEventEmitter,
   WalletSession
@@ -214,19 +209,19 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
   // (aka, the signer in this instance) and then responds with a wrapped response of
   // ProviderMessageResponse to be sent over the transport
-  async sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
+  async sendMessageRequest(message: ProviderMessageRequest): Promise<any> {
     try {
-      const result = await this.request({ ...message.data, chainId: message.chainId })
+      const result = await this.request({
+        method: message.data.method,
+        params: message.data.params,
+        chainId: message.chainId
+      })
 
       return {
         ...message,
         data: result
       }
     } catch (err) {
-      // TODO: if response includes data.error, why do we need a separate error argument here?
-
-      // NOTE: we always resolve here, are the sendAsync call will wrap any exceptions
-      // in the error field of the response to ensure we send back to the user
       return {
         ...message,
         data: err

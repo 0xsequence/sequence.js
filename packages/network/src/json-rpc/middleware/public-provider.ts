@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { EIP1193ProviderFunc, JsonRpcResponse, JsonRpcMiddlewareHandler } from '../types'
+import { EIP1193ProviderFunc, JsonRpcMiddlewareHandler } from '../types'
 import { SignerJsonRpcMethods } from './signing-provider'
 import { logger } from '@0xsequence/utils'
 
@@ -16,12 +16,11 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
   }
 
   requestHandler = (next: EIP1193ProviderFunc) => {
-    return (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
+    return (request: { jsonrpc: '2.0'; method: string; params?: any[]; chainId?: number }): Promise<any> => {
       // When provider is configured, send non-private methods to our local public provider
       if (this.provider && !this.privateJsonRpcMethods.includes(request.method)) {
         return this.provider.send(request.method, request.params || [])
       }
-
 
       // Continue to next handler
       logger.debug('[public-provider] sending request to signer window', request.method)

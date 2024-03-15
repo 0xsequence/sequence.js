@@ -1,15 +1,15 @@
-import { EIP1193ProviderFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcMiddleware } from '../types'
+import { EIP1193ProviderFunc, JsonRpcMiddleware } from '../types'
 
-export const exceptionProviderMiddleware: JsonRpcMiddleware = (next: EIP1193ProviderFunc<JsonRpcResponse>) => {
-  return async (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
-    const response = await next(request)
-    if (response.error) {
-      if (typeof response.error === 'string') {
-        throw new Error(response.error)
+export const exceptionProviderMiddleware: JsonRpcMiddleware = (next: EIP1193ProviderFunc) => {
+  return async (request: { method: string; params?: any[]; chainId?: number }): Promise<any> => {
+    try {
+      return await next(request)
+    } catch (error) {
+      if (typeof error === 'string') {
+        throw new Error(error)
       } else {
-        throw new Error(response.error.message)
+        throw new Error(error.message)
       }
     }
-    return response
   }
 }

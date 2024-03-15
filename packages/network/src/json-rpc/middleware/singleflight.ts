@@ -1,4 +1,4 @@
-import { EIP1193ProviderFunc, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
+import { EIP1193ProviderFunc, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 
 export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
   private singleflightJsonRpcMethods = [
@@ -32,7 +32,7 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
   }
 
   requestHandler = (next: EIP1193ProviderFunc) => {
-    return async (request: { jsonrpc: '2.0', id?: number, method: string, params?: any[], chainId?: number }): Promise<JsonRpcResponse> => {
+    return async (request: { jsonrpc: '2.0'; id?: number; method: string; params?: any[]; chainId?: number }): Promise<any> => {
       // continue to next handler if method isn't part of methods list
       if (!this.singleflightJsonRpcMethods.includes(request.method)) {
         return next(request)
@@ -45,14 +45,17 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
         this.inflight[key] = []
       } else {
         // already in-flight, add the callback to the list and return
-        return new Promise<JsonRpcResponse>((resolve, reject) => {
-          this.inflight[key].push({ id: request.id!, callback: (error: any, response: JsonRpcResponse) => {
-            if (error) {
-              reject(error)
-            } else {
-              resolve(response)
+        return new Promise<any>((resolve, reject) => {
+          this.inflight[key].push({
+            id: request.id!,
+            callback: (error: any, response: any) => {
+              if (error) {
+                reject(error)
+              } else {
+                resolve(response)
+              }
             }
-          }})
+          })
         })
       }
 

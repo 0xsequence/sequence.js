@@ -14,13 +14,7 @@ import {
 
 import { WalletRequestHandler } from './wallet-request-handler'
 
-import {
-  NetworkConfig,
-  JsonRpcRequest,
-  JsonRpcResponseCallback,
-  findSupportedNetwork,
-  JsonRpcResponse
-} from '@0xsequence/network'
+import { NetworkConfig, findSupportedNetwork } from '@0xsequence/network'
 import { logger, sanitizeAlphanumeric, sanitizeHost, sanitizeNumberString } from '@0xsequence/utils'
 import { AuthorizationOptions } from '@0xsequence/auth'
 
@@ -102,7 +96,7 @@ export abstract class BaseWalletTransport implements WalletTransport {
     throw new Error('abstract method')
   }
 
-  request(request: { method: string; params?: any[]; chainId?: number }): Promise<JsonRpcResponse> {
+  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     throw new Error('abstract method')
   }
 
