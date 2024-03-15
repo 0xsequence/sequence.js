@@ -1,5 +1,13 @@
 # @0xsequence/waas
 
+## 1.9.11
+
+### Patch Changes
+
+- metdata, update rpc bindings
+- Updated dependencies
+  - @0xsequence/network@1.9.11
+
 ## 1.9.10
 
 ### Patch Changes

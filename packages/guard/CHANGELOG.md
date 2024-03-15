@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.9.11
+
+### Patch Changes
+
+- metdata, update rpc bindings
+- Updated dependencies
+  - @0xsequence/account@1.9.11
+  - @0xsequence/core@1.9.11
+  - @0xsequence/signhub@1.9.11
+  - @0xsequence/utils@1.9.11
+
 ## 1.9.10
 
 ### Patch Changes

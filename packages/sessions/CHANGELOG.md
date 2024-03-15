@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.9.11
+
+### Patch Changes
+
+- metdata, update rpc bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.11
+  - @0xsequence/migration@1.9.11
+  - @0xsequence/replacer@1.9.11
+
 ## 1.9.10
 
 ### Patch Changes

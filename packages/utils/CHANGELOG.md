@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.9.11
+
+### Patch Changes
+
+- metdata, update rpc bindings
+
 ## 1.9.10
 
 ### Patch Changes
