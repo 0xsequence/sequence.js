@@ -7,11 +7,19 @@ import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import { FeeTokenType } from '../rpc-relayer/relayer.gen'
 
 import * as proto from './proto.gen'
+import { tracker } from '../../../sessions/src'
 
 const NUMBER_OF_PREVIOUS_BLOCKS_TO_CHECK_FOR_RECEIPT = 32
 
-const ENDORSER = '0x167ED55a57805AA50868d119Ca5E73D0b8200eEF'
-const ROUTER = '0x88EA167529B7455A22e811309d9e2ED687fd1c63'
+export type BundlerConfig = {
+  url: string
+  provider: ethers.providers.JsonRpcProvider
+  tracker: tracker.ConfigTracker
+
+  factory: string,
+  endorserAddress: string
+  routerAddress: string
+}
 
 // https://eips.ethereum.org/EIPS/eip-150
 const MAX_AVERAGE_CALL_DEPTH = 16
@@ -22,13 +30,22 @@ export class Bundler implements Relayer {
   private readonly reader: commons.reader.Reader
   private readonly chainId: Promise<number>
 
-  constructor(
-    url: string,
-    private readonly provider: ethers.providers.JsonRpcProvider
-  ) {
-    this.bundler = new proto.Bundler(url, fetch)
-    this.reader = new commons.reader.OnChainReader(provider)
-    this.chainId = provider.getNetwork().then(({ chainId }) => chainId)
+  private readonly provider: ethers.providers.JsonRpcProvider
+  private readonly tracker: tracker.ConfigTracker
+
+  public readonly factory: string
+  public readonly endorser: string
+  public readonly router: string
+
+  constructor(config: BundlerConfig) {
+    this.bundler = new proto.Bundler(config.url, fetch)
+    this.provider = config.provider
+    this.reader = new commons.reader.OnChainReader(config.provider)
+    this.chainId = config.provider.getNetwork().then(({ chainId }) => chainId)
+    this.endorser = config.endorserAddress
+    this.factory = config.factory
+    this.router = config.routerAddress
+    this.tracker = config.tracker
   }
 
   simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
@@ -90,7 +107,7 @@ export class Bundler implements Relayer {
 
       return {
         token,
-        to: ROUTER,
+        to: this.router,
         value: fee.mul(scalingFactor).div(normalizationFactor).toString(),
         gasLimit: 250000
       }
@@ -112,54 +129,31 @@ export class Bundler implements Relayer {
     quote?: FeeQuote,
     waitForReceipt: boolean = true
   ): Promise<commons.transaction.TransactionResponse> {
-    const chainId = await this.chainId
-
-    if (!ethers.BigNumber.from(signedTxs.chainId).eq(chainId)) {
-      throw new Error(`bundler for chain ${chainId} cannot send transactions intended for chain ${signedTxs.chainId}`)
-    }
-
-    if (signedTxs.transactions.length < 1) {
-      throw new Error('must send at least one transaction')
-    }
-
-    const fee = signedTxs.transactions[0]
-
-    if (ethers.utils.getAddress(fee.to) !== ROUTER) {
-      throw new Error(`fee must be paid to ${ROUTER}`)
-    } else if (!fee.delegateCall) {
-      throw new Error('fee transaction must delegate call')
-    } else if (!fee.revertOnError) {
-      throw new Error('fee transaction must revert on error')
-    } else if (fee.data === undefined) {
-      throw new Error('fee transaction must encode amount')
-    }
-
-    const value = ethers.utils.defaultAbiCoder.decode(['uint256'], fee.data)[0]
-
-    const callData = commons.transaction.encodeBundleExecData(signedTxs)
-
     const endorserCallData = ethers.utils.defaultAbiCoder.encode(
       ['address', 'bytes32'],
-      await Promise.all([this.reader.implementation(signedTxs.intent.wallet), this.reader.imageHash(signedTxs.intent.wallet)])
+      await this.getImplementationAndImageHash(signedTxs.intent.wallet)
     )
 
-    const gasLimit = await this.provider.estimateGas({ to: signedTxs.entrypoint, data: callData })
-    const maxFeePerGas = Math.floor(ethers.BigNumber.from(value).toNumber() / gasLimit.toNumber())
+    const callData = commons.transaction.encodeBundleExecData(signedTxs)
+    const { payment, gas } = this.getPaymentAndGas(signedTxs.transactions)
+
+    const maxFeePerGas = Math.floor(ethers.BigNumber.from(payment).toNumber() / gas.toNumber())
     const priorityFeePerGas = 1
 
     await this.bundler.sendOperation({
       operation: {
         entrypoint: signedTxs.entrypoint,
-        callData,
-        gasLimit: gasLimit.toString(),
+        data: callData,
+        gasLimit: gas.toString(),
         feeToken: ethers.constants.AddressZero,
-        endorser: ENDORSER,
+        endorser: this.endorser,
         endorserCallData,
-        endorserGasLimit: '1',
+        endorserGasLimit: '50000000',
+        fixedGas: '0',
         maxFeePerGas: maxFeePerGas.toString(),
-        priorityFeePerGas: priorityFeePerGas.toString(),
-        baseFeeScalingFactor: '1',
-        baseFeeNormalizationFactor: '1',
+        maxPriorityFeePerGas: priorityFeePerGas.toString(),
+        feeScalingFactor: '1',
+        feeNormalizationFactor: '1',
         hasUntrustedContext: false,
         chainId: signedTxs.chainId.toString()
       }
@@ -170,6 +164,47 @@ export class Bundler implements Relayer {
     } else {
       throw new Error('TODO: relay')
     }
+  }
+
+  getPaymentAndGas(txs: commons.transaction.Transaction[], extraGas: ethers.BigNumber = ethers.constants.Zero): { payment: ethers.BigNumber; gas: ethers.BigNumber } {
+    if (txs.length === 2 && txs[0].to === this.factory) {
+      // Decode nested, deployment should have a fixed cost of ~100k gas
+      // (but make it a parameter as it might change in each network)
+      const deploymentGas = 100000
+
+      const decoded = commons.transaction.decodeBundleExecData(txs[1].data || [])
+      return this.getPaymentAndGas(decoded.transactions, ethers.BigNumber.from(deploymentGas).add(extraGas))
+    }
+
+    // We assume the first transaction is the payment to the router
+    // there is no need to verify it here, as the endorser will verify it
+    const totalGas = txs.reduce((total, tx) => total.add(ethers.BigNumber.from(tx.gasLimit)), extraGas)
+    const decoded = ethers.utils.defaultAbiCoder.decode(['uint256'], txs[0].data || [])
+    return { payment: decoded[0], gas: totalGas.add(100000) }
+  }
+
+  async getImplementationAndImageHash(wallet: string): Promise<[string, string]> {
+    const readerResults = await Promise.all([
+      this.reader.implementation(wallet),
+      this.reader.imageHash(wallet)
+    ])
+
+    let implementation = readerResults[0]
+    let imageHash = readerResults[1]
+
+    if (implementation && imageHash) {
+      return [implementation, imageHash]
+    }
+
+    const counterFactualInfo = await this.tracker.imageHashOfCounterfactualWallet({ wallet })
+    if (!counterFactualInfo) {
+      throw new Error(`wallet ${wallet} is not deployed and has no counter-factual info`)
+    }
+
+    return [
+      implementation || counterFactualInfo.context.mainModule,
+      imageHash || counterFactualInfo.imageHash
+    ]
   }
 
   wait(

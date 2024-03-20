@@ -274,6 +274,16 @@ export function encodeBundleExecData(bundle: TransactionBundle): string {
   )
 }
 
+export function decodeBundleExecData(data: BytesLike): { transactions: Transaction[], nonce: ethers.BigNumber, signature: string } {
+  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const decoded = walletInterface.decodeFunctionData('execute', data)
+  return {
+    transactions: fromTxAbiEncode(decoded[0]),
+    nonce: decoded[1],
+    signature: decoded[2]
+  }
+}
+
 // TODO: Use Sequence ABI package
 export const selfExecuteSelector = '0x61c2926c'
 export const selfExecuteAbi = `tuple(
