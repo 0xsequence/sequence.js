@@ -4,8 +4,9 @@ import {
   IntentDataFinishValidateSession,
   IntentDataGetSession,
   IntentDataListSessions,
-  IntentDataOpenSession, IntentDataSessionAuthProof,
-  IntentDataValidateSession
+  IntentDataOpenSession,
+  IntentDataValidateSession,
+  IntentDataSessionAuthProof
 } from '../clients/intent.gen'
 
 interface BaseArgs {
