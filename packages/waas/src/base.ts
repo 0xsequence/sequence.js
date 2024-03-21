@@ -22,7 +22,7 @@ import {
   SendERC1155Args,
   SendDelayedEncodeArgs,
   GetTransactionReceiptArgs,
-  getTransactionReceipt
+  getTransactionReceipt, sessionAuthProof, SessionAuthProof
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'
@@ -46,6 +46,10 @@ const SEQUENCE_WAAS_STATUS_KEY = '@0xsequence.waas.status'
 
 // 5 minutes of default lifespan
 const DEFAULT_LIFESPAN = 5 * 60
+
+export type SessionAuthProofArgs = {
+  nonce?: string
+}
 
 export type ExtraArgs = {
   lifespan?: number
@@ -282,6 +286,16 @@ export class SequenceWaaSBase {
   async isSignedIn() {
     const status = await this.status.get()
     return status === 'signed-in'
+  }
+
+  async sessionAuthProof(args: WithSimpleNetwork<SessionAuthProofArgs> & ExtraArgs) {
+    const packet = sessionAuthProof({
+      lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
+      network: toNetworkID(args.network || this.config.network).toString(),
+      wallet: await this.getWalletAddress(),
+      nonce: args.nonce
+    })
+    return this.signIntent(packet)
   }
 
   //

@@ -4,7 +4,7 @@ import {
   IntentDataFinishValidateSession,
   IntentDataGetSession,
   IntentDataListSessions,
-  IntentDataOpenSession,
+  IntentDataOpenSession, IntentDataSessionAuthProof,
   IntentDataValidateSession
 } from '../clients/intent.gen'
 
@@ -52,4 +52,11 @@ export type GetSessionArgs = BaseArgs & IntentDataGetSession
 
 export function getSession({ lifespan, ...data }: GetSessionArgs): Intent<IntentDataGetSession> {
   return makeIntent('getSession', lifespan, data)
+}
+
+
+export type SessionAuthProof = BaseArgs & IntentDataSessionAuthProof
+
+export function sessionAuthProof({ lifespan, ...data }: SessionAuthProof): Intent<IntentDataSessionAuthProof> {
+  return makeIntent('sessionAuthProof', lifespan, data)
 }

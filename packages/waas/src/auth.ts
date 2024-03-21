@@ -10,7 +10,7 @@ import {
   SignMessageArgs,
   SendTransactionsArgs,
   SignedIntent,
-  GetTransactionReceiptArgs
+  GetTransactionReceiptArgs, SessionAuthProof
 } from './intents'
 import {
   MaySentTransactionResponse,
@@ -238,6 +238,11 @@ export class SequenceWaaS {
       await this.waas.completeSignOut()
       throw e
     }
+  }
+
+  async sessionAuthProof({nonce, network}: { nonce?: string; network?: string }) {
+    const intent = await this.waas.sessionAuthProof({nonce, network})
+    return this.sendIntent(intent)
   }
 
   private async refreshSession() {
