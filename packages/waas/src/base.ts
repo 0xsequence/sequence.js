@@ -7,6 +7,7 @@ import {
   listSessions,
   validateSession,
   finishValidateSession,
+  sessionAuthProof,
   signIntent,
   signMessage,
   sendDelayedEncode,
@@ -22,7 +23,7 @@ import {
   SendERC1155Args,
   SendDelayedEncodeArgs,
   GetTransactionReceiptArgs,
-  getTransactionReceipt, sessionAuthProof, SessionAuthProof
+  getTransactionReceipt
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'

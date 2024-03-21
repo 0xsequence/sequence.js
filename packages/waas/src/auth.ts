@@ -10,7 +10,7 @@ import {
   SignMessageArgs,
   SendTransactionsArgs,
   SignedIntent,
-  GetTransactionReceiptArgs, SessionAuthProof
+  GetTransactionReceiptArgs
 } from './intents'
 import {
   MaySentTransactionResponse,
