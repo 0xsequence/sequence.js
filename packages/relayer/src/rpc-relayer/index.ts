@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { getEthersConnectionInfo, logger } from '@0xsequence/utils'
+import { BigIntish, getEthersConnectionInfo, logger, toHexString } from '@0xsequence/utils'
 
 export { proto }
 
@@ -182,11 +182,11 @@ export class RpcRelayer implements Relayer {
     return options
   }
 
-  async getNonce(address: string, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
+  async getNonce(address: string, space?: BigIntish): Promise<BigIntish> {
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${address} space: ${space}`)
-    const encodedNonce = space !== undefined ? ethers.BigNumber.from(space).toHexString() : undefined
+    const encodedNonce = space !== undefined ? toHexString(BigInt(space)) : undefined
     const resp = await this.service.getMetaTxnNonce({ walletContractAddress: address, space: encodedNonce })
-    const nonce = ethers.BigNumber.from(resp.nonce)
+    const nonce = BigInt(resp.nonce)
     const [decodedSpace, decodedNonce] = commons.transaction.decodeNonce(nonce)
     logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${address} ${decodedNonce} space: ${decodedSpace}`)
     return nonce
@@ -288,7 +288,7 @@ export class RpcRelayer implements Relayer {
 
     return {
       blockHash: txReceipt.blockHash,
-      blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
+      blockNumber: Number(BigInt(txReceipt.blockNumber)),
       confirmations: 1,
       from: typeof metaTxnId === 'string' ? undefined : metaTxnId.intent.wallet,
       hash: txReceipt.transactionHash,

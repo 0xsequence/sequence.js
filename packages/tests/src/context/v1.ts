@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { isContract } from '../utils'
+import { parseEther } from '@0xsequence/utils'
 
 // These are the Sequence v1 contracts
 // we use them if they are available
@@ -49,7 +50,7 @@ export async function deployV1Context(signer: ethers.Signer): Promise<{
   // Try deploying the v1 contracts using the v1 singleton factory
   await signer.sendTransaction({
     to: '0x9c5a87452d4FAC0cbd53BDCA580b20A45526B3AB',
-    value: ethers.utils.parseEther('0.02170000000014'),
+    value: parseEther('0.02170000000014'),
     gasLimit: 8000000
   })
 

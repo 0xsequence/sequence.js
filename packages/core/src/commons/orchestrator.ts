@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { commons } from '..'
 import { Config } from './config'
+import { BigIntish } from '@0xsequence/utils'
 
 /**
  * Request metadata, used by the wallet to pass additional information through the orchestrator.
@@ -8,7 +9,7 @@ import { Config } from './config'
 export type WalletSignRequestMetadata = {
   address: string
   digest: ethers.utils.BytesLike
-  chainId: ethers.BigNumberish
+  chainId: BigIntish
 
   config: Config
 

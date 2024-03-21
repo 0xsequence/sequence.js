@@ -18,7 +18,7 @@ import { commons } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
 import { Analytics, setupAnalytics } from './analytics'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 
 import packageJson from '../package.json'
 
@@ -350,7 +350,7 @@ export class SequenceClient {
     // Normalize chainId into a decimal string
     // TODO: Remove this once wallet-webapp returns chainId as a string
     if (connectDetails.chainId) {
-      connectDetails.chainId = ethers.BigNumber.from(connectDetails.chainId).toString()
+      connectDetails.chainId = BigInt(connectDetails.chainId).toString()
     }
 
     if (connectDetails.connected) {
@@ -493,9 +493,7 @@ export class SequenceClient {
 
     return this.send(
       { method, params: [this.getAddress(), encoded] },
-      options?.chainId ||
-        (typedData.domain.chainId && ethers.BigNumber.from(typedData.domain.chainId).toNumber()) ||
-        this.getChainId()
+      options?.chainId || (typedData.domain.chainId && BigNumber.from(typedData.domain.chainId).toNumber()) || this.getChainId()
     )
   }
 
