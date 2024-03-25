@@ -26,6 +26,7 @@ import {
   ProviderEventTypes,
   ProviderMessageRequest,
   ProviderMessageRequestHandler,
+  ProviderMessageResponse,
   ProviderRpcError,
   TypedEventEmitter,
   WalletSession
@@ -209,7 +210,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
   // sendMessageRequest will unwrap the ProviderMessageRequest and send it to the JsonRpcHandler
   // (aka, the signer in this instance) and then responds with a wrapped response of
   // ProviderMessageResponse to be sent over the transport
-  async sendMessageRequest(message: ProviderMessageRequest): Promise<any> {
+  async sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
     try {
       const result = await this.request({
         method: message.data.method,
