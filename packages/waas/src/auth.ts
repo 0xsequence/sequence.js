@@ -23,7 +23,7 @@ import {
   isValidationRequiredResponse,
   isFinishValidateSessionResponse,
   isCloseSessionResponse,
-  isTimedOutTransactionResponse
+  isTimedOutTransactionResponse,
   isFeeOptionsResponse,
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
