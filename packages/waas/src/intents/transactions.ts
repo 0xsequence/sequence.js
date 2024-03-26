@@ -129,8 +129,6 @@ export function sendTransactions({
 
 function withFee(transactions: Transaction[], feeOption?: FeeOption): Transaction[] {
   if (feeOption) {
-    console.log('feeOption', feeOption)
-    console.log('feeOption.token.type', feeOption.token.type)
     switch (feeOption.token.type) {
       case FeeTokenType.unknown:
         transactions.push(
