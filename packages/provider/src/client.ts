@@ -380,13 +380,19 @@ export class SequenceClient {
 
   // Higher level API
 
-  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     // Internally when sending requests we use `legacy_sign`
     // to avoid the default EIP6492 behavior overriding an explicit
     // "legacy sign" request, so we map the method here.
     request.method = this.mapSignMethod(request.method)
 
-    return this.transport.request(request)
+    const response = await this.transport.request(request)
+
+    if (response.data.error) {
+      throw new Error(response.data.error.message)
+    }
+
+    return response.data.result
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {

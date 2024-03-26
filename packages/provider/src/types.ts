@@ -10,7 +10,10 @@ import {
 } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
-export interface ProviderTransport extends EIP1193Provider, ProviderMessageTransport, ProviderMessageRequestHandler {
+export interface ProviderTransport
+  extends EIP1193Provider<ProviderMessageResponse>,
+    ProviderMessageTransport,
+    ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
