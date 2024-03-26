@@ -350,9 +350,9 @@ export class SequenceWaaS {
     return false
   }
 
-  async sessionAuthProof({nonce, network, validation}: { nonce?: string; network?: string; validation?: ValidationArgs} ) {
-    const intent = await this.waas.sessionAuthProof({nonce, network})
-    return await this.trySendIntent({validation}, intent, isSessionAuthProofResponse)
+  async sessionAuthProof({ nonce, network, validation }: { nonce?: string; network?: string; validation?: ValidationArgs }) {
+    const intent = await this.waas.sessionAuthProof({ nonce, network })
+    return await this.trySendIntent({ validation }, intent, isSessionAuthProofResponse)
   }
 
   async useIdentifier<T extends CommonAuthArgs>(args: T): Promise<T & { identifier: string }> {

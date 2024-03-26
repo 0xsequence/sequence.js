@@ -55,7 +55,6 @@ export function getSession({ lifespan, ...data }: GetSessionArgs): Intent<Intent
   return makeIntent('getSession', lifespan, data)
 }
 
-
 export type SessionAuthProof = BaseArgs & IntentDataSessionAuthProof
 
 export function sessionAuthProof({ lifespan, ...data }: SessionAuthProof): Intent<IntentDataSessionAuthProof> {
