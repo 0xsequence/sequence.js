@@ -40,7 +40,7 @@ export interface WalletSignInOptions {
   defaultNetworkId?: number
 }
 
-export class WalletRequestHandler implements EIP1193Provider, ProviderMessageRequestHandler {
+export class WalletRequestHandler implements EIP1193Provider<ProviderMessageResponse>, ProviderMessageRequestHandler {
   // signer interface of the wallet. A null value means there is no signer (ie. user not signed in). An undefined
   // value means the signer state is unknown, usually meaning the wallet app is booting up and initializing. Of course
   // a Signer value is the actually interface to a signed-in account
@@ -220,12 +220,19 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
 
       return {
         ...message,
-        data: result
+        data: {
+          id: message.data.id!,
+          result
+        }
       }
     } catch (err) {
       return {
         ...message,
-        data: err
+        data: {
+          id: message.data.id!,
+          result: null,
+          error: err
+        }
       }
     }
   }
