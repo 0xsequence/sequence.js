@@ -14,6 +14,7 @@ import { Runtime } from 'webextension-polyfill'
 import { UnrealMessageProvider } from '../unreal-transport'
 import { ExtensionMessageProvider } from '../extension-transport'
 import { WindowMessageProvider } from '../window-transport'
+import { JsonRpcResponse } from '@0xsequence/network'
 
 export type MuxTransportTemplate = {
   walletAppURL?: string
@@ -197,7 +198,7 @@ export class MuxMessageProvider implements ProviderTransport {
     return true
   }
 
-  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+  request(request: { method: string; params?: any[]; chainId?: number }): Promise<JsonRpcResponse> {
     if (!this.provider) {
       throw new Error('impossible state, wallet must be opened first')
     }

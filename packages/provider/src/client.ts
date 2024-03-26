@@ -388,11 +388,11 @@ export class SequenceClient {
 
     const response = await this.transport.request(request)
 
-    if (response.data.error) {
-      throw new Error(response.data.error.message)
+    if (response.error) {
+      throw new Error(response.error.message)
     }
 
-    return response.data.result
+    return response.result
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {

@@ -17,7 +17,7 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { NetworkConfig } from '@0xsequence/network'
+import { JsonRpcResponse, NetworkConfig } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 import { commons } from '@0xsequence/core'
@@ -89,7 +89,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     )
   }
 
-  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<JsonRpcResponse> {
     if (this.state === OpenState.CLOSED) {
       // flag the wallet to auto-close once user submits input. ie.
       // prompting to sign a message or transaction

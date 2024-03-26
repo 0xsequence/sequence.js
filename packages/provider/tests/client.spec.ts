@@ -513,7 +513,7 @@ describe('SequenceClient', () => {
 
           expect(request).to.deep.equal(command?.req)
 
-          return Promise.resolve(command?.res)
+          return Promise.resolve({ result: command?.res })
         }
       },
       useBestStore(),
@@ -525,6 +525,7 @@ describe('SequenceClient', () => {
     expect(calledSendAsync).to.equal(0)
 
     const result1 = await client.request({ method: 'eth_chainId', params: [] })
+
     expect(result1).to.deep.equal('0x1')
     expect(calledSendAsync).to.equal(1)
 
@@ -600,12 +601,14 @@ describe('SequenceClient', () => {
         request(request: JsonRpcRequest): Promise<any> {
           calledSendAsync++
           expect(request).to.deep.equal({ method: 'sequence_getNetworks' })
-          return Promise.resolve([
-            {
-              chainId: 5,
-              name: 'test'
-            }
-          ])
+          return Promise.resolve({
+            result: [
+              {
+                chainId: 5,
+                name: 'test'
+              }
+            ]
+          })
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -735,7 +738,7 @@ describe('SequenceClient', () => {
             chainId: req.chainId
           })
           expect(request.chainId).to.equal(req.chainId)
-          return Promise.resolve(req?.result)
+          return Promise.resolve({ result: req?.result })
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -928,7 +931,7 @@ describe('SequenceClient', () => {
           })
 
           expect(request.chainId).to.equal(req?.chainId)
-          return Promise.resolve(req?.result)
+          return Promise.resolve({ result: req?.result })
         },
         openWallet: () => {
           return Promise.resolve(true)
@@ -1045,7 +1048,7 @@ describe('SequenceClient', () => {
             chainId: req?.chainId
           })
           expect(request.chainId).to.equal(req?.chainId)
-          return Promise.resolve(req?.result)
+          return Promise.resolve({ result: req?.result })
         }
       },
       useBestStore(),
@@ -1128,7 +1131,7 @@ describe('SequenceClient', () => {
           expect(request).to.deep.equal({
             method: 'sequence_getWalletContext'
           })
-          return Promise.resolve(sampleContext)
+          return Promise.resolve({ result: sampleContext })
         }
       },
       useBestStore(),
@@ -1204,7 +1207,7 @@ describe('SequenceClient', () => {
             chainId: req?.chainId
           })
           expect(request.chainId).to.be.equal(req?.chainId)
-          return Promise.resolve(req?.result)
+          return Promise.resolve({ result: req?.result })
         }
       },
       useBestStore(),
@@ -1325,11 +1328,11 @@ describe('SequenceClient', () => {
             if (requests === 0) {
               expect(request.method).to.equal('personal_sign')
               requests++
-              return Promise.resolve('0x445566')
+              return Promise.resolve({ result: '0x445566' })
             } else if (requests === 1) {
               expect(request.method).to.equal('eth_signTypedData_v4')
               requests++
-              return Promise.resolve('0x112233')
+              return Promise.resolve({ result: '0x112233' })
             } else {
               expect.fail('Should not have called request')
             }
@@ -1397,11 +1400,11 @@ describe('SequenceClient', () => {
             if (requests === 0) {
               expect(request.method).to.equal('sequence_sign')
               requests++
-              return Promise.resolve('0x445566')
+              return Promise.resolve({ result: '0x445566' })
             } else if (requests === 1) {
               expect(request.method).to.equal('sequence_signTypedData_v4')
               requests++
-              return Promise.resolve('0x112233')
+              return Promise.resolve({ result: '0x112233' })
             } else {
               expect.fail('Should not have called request')
             }
@@ -1470,11 +1473,11 @@ describe('SequenceClient', () => {
             if (requests === 0) {
               expect(request.method).to.equal('personal_sign')
               requests++
-              return Promise.resolve('0x445566')
+              return Promise.resolve({ result: '0x445566' })
             } else if (requests === 1) {
               expect(request.method).to.equal('eth_signTypedData_v4')
               requests++
-              return Promise.resolve('0x112233')
+              return Promise.resolve({ result: '0x112233' })
             } else {
               expect.fail('Should not have called request')
             }
@@ -1542,11 +1545,11 @@ describe('SequenceClient', () => {
             if (requests === 0) {
               expect(request.method).to.equal('sequence_sign')
               requests++
-              return Promise.resolve('0x445566')
+              return Promise.resolve({ result: '0x445566' })
             } else if (requests === 1) {
               expect(request.method).to.equal('sequence_signTypedData_v4')
               requests++
-              return Promise.resolve('0x112233')
+              return Promise.resolve({ result: '0x112233' })
             } else {
               expect.fail('Should not have called request')
             }
@@ -1615,11 +1618,11 @@ describe('SequenceClient', () => {
             if (requests === 0) {
               expect(request.method).to.equal('sequence_sign')
               requests++
-              return Promise.resolve('0x445566')
+              return Promise.resolve({ result: '0x445566' })
             } else if (requests === 1) {
               expect(request.method).to.equal('sequence_signTypedData_v4')
               requests++
-              return Promise.resolve('0x112233')
+              return Promise.resolve({ result: '0x112233' })
             } else {
               expect.fail('Should not have called request')
             }
