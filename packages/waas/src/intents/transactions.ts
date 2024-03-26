@@ -107,7 +107,7 @@ export function sendTransactions({
     identifier,
     wallet,
     network: chainId.toString(),
-    transactions: withFee(transactions, transactionsFeeOption).map(tx => {
+    transactions: withTransactionFee(transactions, transactionsFeeOption).map(tx => {
       if (!tx.to || tx.to === ethers.constants.AddressZero) {
         throw new Error('Contract creation not supported')
       }
@@ -127,7 +127,7 @@ export function sendTransactions({
   })
 }
 
-function withFee(transactions: Transaction[], feeOption?: FeeOption): Transaction[] {
+function withTransactionFee(transactions: Transaction[], feeOption?: FeeOption): Transaction[] {
   if (feeOption) {
     switch (feeOption.token.type) {
       case FeeTokenType.unknown:
