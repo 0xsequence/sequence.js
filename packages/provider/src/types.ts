@@ -11,7 +11,7 @@ import {
 import { TypedData } from '@0xsequence/utils'
 
 export interface ProviderTransport
-  extends EIP1193Provider<ProviderMessageResponse>,
+  extends EIP1193Provider<JsonRpcResponse>,
     ProviderMessageTransport,
     ProviderMessageRequestHandler {
   register(): void

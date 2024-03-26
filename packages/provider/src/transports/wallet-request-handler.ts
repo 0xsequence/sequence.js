@@ -7,7 +7,8 @@ import {
   findNetworkConfig,
   findSupportedNetwork,
   NetworkConfig,
-  EIP1193Provider
+  EIP1193Provider,
+  JsonRpcResponse
 } from '@0xsequence/network'
 import { logger, toHexString, TypedData } from '@0xsequence/utils'
 import { ethers } from 'ethers'
@@ -40,7 +41,7 @@ export interface WalletSignInOptions {
   defaultNetworkId?: number
 }
 
-export class WalletRequestHandler implements EIP1193Provider<ProviderMessageResponse>, ProviderMessageRequestHandler {
+export class WalletRequestHandler implements EIP1193Provider, ProviderMessageRequestHandler {
   // signer interface of the wallet. A null value means there is no signer (ie. user not signed in). An undefined
   // value means the signer state is unknown, usually meaning the wallet app is booting up and initializing. Of course
   // a Signer value is the actually interface to a signed-in account
