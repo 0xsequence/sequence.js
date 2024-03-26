@@ -10,6 +10,7 @@ import {
   TransactionRaw
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
+import { FeeOption, FeeTokenType } from './responses'
 
 interface BaseArgs {
   lifespan: number
@@ -18,19 +19,23 @@ interface BaseArgs {
   chainId: number
 }
 
-export type SendTransactionsArgs = {
-  transactions: Transaction[],
+export type TransactionFeeArgs = {
   transactionsFeeQuote?: string
+  transactionsFeeOption?: FeeOption
 }
 
-export type SendERC20Args = {
+export type SendTransactionsArgs = TransactionFeeArgs & {
+  transactions: Transaction[],
+}
+
+export type SendERC20Args = TransactionFeeArgs & {
   chainId: number
   token: string
   to: string
   value: ethers.BigNumberish
 }
 
-export type SendERC721Args = {
+export type SendERC721Args = TransactionFeeArgs & {
   chainId: number
   token: string
   to: string
@@ -39,7 +44,7 @@ export type SendERC721Args = {
   data?: string
 }
 
-export type SendERC1155Args = {
+export type SendERC1155Args = TransactionFeeArgs & {
   chainId: number
   token: string
   to: string
@@ -50,7 +55,7 @@ export type SendERC1155Args = {
   data?: string
 }
 
-export type SendDelayedEncodeArgs = {
+export type SendDelayedEncodeArgs = TransactionFeeArgs & {
   chainId: number
   to: string
   value: ethers.BigNumberish
@@ -95,13 +100,14 @@ export function sendTransactions({
   identifier,
   chainId,
   transactions,
- transactionsFeeQuote
+  transactionsFeeQuote,
+  transactionsFeeOption
 }: SendTransactionsArgs & BaseArgs): Intent<IntentDataSendTransaction> {
   return makeIntent('sendTransaction', lifespan, {
     identifier,
     wallet,
     network: chainId.toString(),
-    transactions: transactions.map(tx => {
+    transactions: withFee(transactions, transactionsFeeOption).map(tx => {
       if (!tx.to || tx.to === ethers.constants.AddressZero) {
         throw new Error('Contract creation not supported')
       }
@@ -119,6 +125,51 @@ export function sendTransactions({
     }),
     transactionsFeeQuote
   })
+}
+
+function withFee(transactions: Transaction[], feeOption?: FeeOption): Transaction[] {
+  if (feeOption) {
+    console.log('feeOption', feeOption)
+    console.log('feeOption.token.type', feeOption.token.type)
+    switch (feeOption.token.type) {
+      case FeeTokenType.unknown:
+        transactions.push(
+          {
+            to: feeOption.to,
+            value: feeOption.value
+          }
+        )
+        break
+      case FeeTokenType.erc20Token:
+        if (!feeOption.token.contractAddress) {
+          throw new Error('contract address is required')
+        }
+
+        transactions.push(erc20({
+          tokenAddress: feeOption.token.contractAddress,
+          to: feeOption.to,
+          value: feeOption.value
+        }))
+        break
+      case FeeTokenType.erc1155Token:
+        if (!feeOption.token.contractAddress) {
+          throw new Error('contract address is required')
+        }
+
+        if (!feeOption.token.tokenID) {
+          throw new Error('token ID is required')
+        }
+
+        transactions.push(erc1155({
+          tokenAddress: feeOption.token.contractAddress,
+          to: feeOption.to,
+          vals: [{id: feeOption.token.tokenID, amount: feeOption.value}]
+        }))
+        break
+      }
+    }
+
+  return transactions
 }
 
 export type GetTransactionReceiptArgs = {

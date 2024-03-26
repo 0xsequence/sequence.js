@@ -15,7 +15,6 @@ import {
 import {
   MaySentTransactionResponse,
   SignedMessageResponse,
-  FeeOption,
   FeeOptionsResponse,
   isGetSessionResponse,
   isMaySentTransactionResponse,
@@ -80,10 +79,6 @@ export type ValidationArgs = {
 export type CommonAuthArgs = {
   validation?: ValidationArgs
   identifier?: string
-}
-
-export type FeeArgs = {
-  transactionsFeeOption?: FeeOption
 }
 
 export type Network = Chain
@@ -418,18 +413,7 @@ export class SequenceWaaS {
     return result
   }
 
-  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & FeeArgs & CommonAuthArgs): Promise<MaySentTransactionResponse> {
-    if (args.transactionsFeeQuote && args.transactionsFeeOption) {
-      switch (args.transactionsFeeOption.token.type) {
-        case 'unknown':
-          args.transactions.push(
-            {
-              to: args.transactionsFeeOption.to,
-              value: args.transactionsFeeOption.value
-            }
-          )
-      }
-    }
+  async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
