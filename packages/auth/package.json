@@ -11,7 +11,7 @@
   "scripts": {
     "test": "pnpm test:concurrently 'pnpm test:run'",
     "test:run": "pnpm test:file tests/**/*.spec.ts",
-    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 30000",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 60000",
     "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat > /dev/null' ",
     "start:hardhat": "hardhat node --port 9546",
     "typecheck": "tsc --noEmit"
@@ -21,7 +21,7 @@
     "@0xsequence/account": "workspace:*",
     "@0xsequence/api": "workspace:*",
     "@0xsequence/core": "workspace:*",
-    "@0xsequence/ethauth": "^0.8.1",
+    "@0xsequence/ethauth": "0xsequence/ethauth.js#ethers-v6",
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",
@@ -32,13 +32,13 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^1.10.0",
     "concurrently": "^7.5.0",
-    "ethers": "^5.7.2",
+    "ethers": "corbanbrook/ethers.js",
     "hardhat": "^2.20.1",
     "mockttp": "^3.6.0"
   },

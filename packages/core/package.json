@@ -14,7 +14,7 @@
     "test:coverage": "nyc yarn test"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": "corbanbrook/ethers.js"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
@@ -25,6 +25,7 @@
     "dist"
   ],
   "dependencies": {
+    "@0xsequence/utils": "workspace:*",
     "@0xsequence/abi": "workspace:*"
   }
 }

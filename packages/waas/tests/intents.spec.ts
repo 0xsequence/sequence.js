@@ -23,7 +23,7 @@ describe('Payloads', () => {
         transactions: [
           {
             type: 'erc20send',
-            token: ethers.constants.AddressZero,
+            token: ethers.ZeroAddress,
             to: '0x0dc9603d4da53841C1C83f3B550C6143e60e0425',
             value: '0'
           }

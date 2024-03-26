@@ -35,10 +35,10 @@ export async function signIntent<T>(session: Session, intent: Intent<T>): Promis
   }
 }
 
-export function hashIntent<T>(intent: Intent<T>): ethers.Bytes {
+export function hashIntent<T>(intent: Intent<T>): Uint8Array {
   // Discard all fields other than the explicitly listed
   const { version, issuedAt, expiresAt, name, data } = intent
   const hashableIntent = { version, issuedAt, expiresAt, name, data }
-  const encoded = ethers.utils.toUtf8Bytes(canonicalize(hashableIntent))
-  return ethers.utils.arrayify(ethers.utils.keccak256(encoded))
+  const encoded = ethers.toUtf8Bytes(canonicalize(hashableIntent))
+  return ethers.getBytes(ethers.keccak256(encoded))
 }

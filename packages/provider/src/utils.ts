@@ -1,25 +1,25 @@
-import { ethers, BytesLike } from 'ethers'
+import { ethers } from 'ethers'
 import { messageIsExemptFromEIP191Prefix } from './eip191exceptions'
 import { AccountStatus } from '@0xsequence/account'
 import { commons } from '@0xsequence/core'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 
-const eip191prefix = ethers.utils.toUtf8Bytes('\x19Ethereum Signed Message:\n')
+const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
 
-export const messageToBytes = (message: BytesLike): Uint8Array => {
-  if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
-    return ethers.utils.arrayify(message)
+export const messageToBytes = (message: ethers.BytesLike): Uint8Array => {
+  if (ethers.isBytesLike(message)) {
+    return ethers.getBytes(message)
   }
 
-  return ethers.utils.toUtf8Bytes(message)
+  return ethers.toUtf8Bytes(message)
 }
 
-export const prefixEIP191Message = (message: BytesLike): Uint8Array => {
+export const prefixEIP191Message = (message: ethers.BytesLike): Uint8Array => {
   const messageBytes = messageToBytes(message)
   if (messageIsExemptFromEIP191Prefix(messageBytes)) {
     return messageBytes
   } else {
-    return ethers.utils.concat([eip191prefix, ethers.utils.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+    return ethers.getBytes(ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes]))
   }
 }
 
@@ -47,9 +47,9 @@ export const trimEIP191Prefix = (prefixedMessage: Uint8Array): Uint8Array => {
   let prefixAsNumber: number
 
   try {
-    prefixAsNumber = Number(ethers.utils.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
+    prefixAsNumber = Number(ethers.toUtf8String(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   } catch {
-    prefixAsNumber = Number(ethers.utils.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
+    prefixAsNumber = Number(ethers.hexlify(ethereumSignedMessagePartSlicedArray.slice(0, maxPrefixCharLength)))
   }
 
   if (prefixAsNumber > ethereumSignedMessagePartSlicedArray.length || !Number.isInteger(prefixAsNumber)) {
@@ -67,7 +67,7 @@ export const isValidSignature = async (
   address: string,
   digest: Uint8Array,
   sig: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> => {
   const reader = new commons.reader.OnChainReader(provider)
   return reader.isValidSignature(address, digest, sig)
@@ -78,7 +78,7 @@ export const isValidMessageSignature = async (
   address: string,
   message: string | Uint8Array,
   signature: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> => {
   const prefixed = prefixEIP191Message(message)
   const digest = encodeMessageDigest(prefixed)
@@ -90,7 +90,7 @@ export const isValidTypedDataSignature = (
   address: string,
   typedData: TypedData,
   signature: string,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<boolean> => {
   return isValidSignature(address, encodeTypedDataDigest(typedData), signature, provider)
 }
@@ -200,13 +200,11 @@ export function useBestStore(): ItemStore {
   return new MemoryItemStore()
 }
 
-export async function resolveArrayProperties<T>(
-  object: Readonly<ethers.utils.Deferrable<T>> | Readonly<ethers.utils.Deferrable<T>>[]
-): Promise<T> {
+export async function resolveArrayProperties<T>(object: Readonly<T> | Readonly<T>[]): Promise<T> {
   if (Array.isArray(object)) {
     // T must include array type
-    return Promise.all(object.map(o => ethers.utils.resolveProperties(o))) as any
+    return Promise.all(object.map(o => ethers.resolveProperties(o))) as any
   }
 
-  return ethers.utils.resolveProperties(object)
+  return ethers.resolveProperties(object)
 }

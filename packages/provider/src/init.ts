@@ -1,13 +1,12 @@
 import {
   CachedProvider,
   ChainIdLike,
-  JsonRpcRouter,
-  JsonRpcSender,
   NetworkConfig,
   allNetworks,
   exceptionProviderMiddleware,
   findNetworkConfig,
-  loggingProviderMiddleware
+  loggingProviderMiddleware,
+  JsonRpcProvider
 } from '@0xsequence/network'
 import { MuxTransportTemplate } from './transports'
 import { ItemStore, useBestStore } from './utils'
@@ -85,7 +84,7 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
     }
   }
 
-  const rpcProviders: Record<number, ethers.providers.JsonRpcProvider> = {}
+  const rpcProviders: Record<number, ethers.JsonRpcProvider> = {}
 
   // Find any new networks that aren't already defined in sequence.js
   // and add them to the list of networks, (they must have a rpcUrl and chainId)
@@ -120,13 +119,13 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
         throw new Error(`no rpcUrl found for chainId: ${chainId}`)
       }
 
-      const baseProvider = new ethers.providers.JsonRpcProvider(rpcUrl)
-      const router = new JsonRpcRouter(
-        [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()],
-        new JsonRpcSender(baseProvider)
+      rpcProviders[chainId] = new JsonRpcProvider(
+        rpcUrl,
+        {
+          middlewares: [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()]
+        },
+        { cacheTimeout: -1 }
       )
-
-      rpcProviders[chainId] = new ethers.providers.Web3Provider(router, chainId)
     }
 
     return rpcProviders[chainId]

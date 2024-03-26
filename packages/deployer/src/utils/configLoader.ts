@@ -11,7 +11,7 @@ export const getEnvConfig = (env: string) => {
 
   if (envLoad.error) {
     console.warn('No config found, using default')
-    return { ETH_MNEMONIC: ethers.Wallet.createRandom().mnemonic.phrase }
+    return { ETH_MNEMONIC: ethers.Wallet.createRandom().mnemonic!.phrase }
   }
 
   return envLoad.parsed || {}
