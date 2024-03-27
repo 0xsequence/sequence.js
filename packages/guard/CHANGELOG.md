@@ -1,5 +1,20 @@
 # @0xsequence/guard
 
+## 1.9.12
+
+### Patch Changes
+
+- indexer: update rpc bindings
+- provider: signMessage: Serialize the BytesLike or string message into hexstring before sending
+- waas: SessionAuthProof
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/account@1.9.12
+  - @0xsequence/core@1.9.12
+  - @0xsequence/signhub@1.9.12
+  - @0xsequence/utils@1.9.12
+
 ## 1.9.11
 
 ### Patch Changes

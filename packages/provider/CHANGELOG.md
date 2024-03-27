@@ -1,5 +1,25 @@
 # @0xsequence/provider
 
+## 1.9.12
+
+### Patch Changes
+
+- indexer: update rpc bindings
+- provider: signMessage: Serialize the BytesLike or string message into hexstring before sending
+- waas: SessionAuthProof
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.9.12
+  - @0xsequence/account@1.9.12
+  - @0xsequence/auth@1.9.12
+  - @0xsequence/core@1.9.12
+  - @0xsequence/migration@1.9.12
+  - @0xsequence/network@1.9.12
+  - @0xsequence/relayer@1.9.12
+  - @0xsequence/utils@1.9.12
+  - @0xsequence/wallet@1.9.12
+
 ## 1.9.11
 
 ### Patch Changes
