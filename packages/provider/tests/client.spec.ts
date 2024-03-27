@@ -1,5 +1,13 @@
 import { expect } from 'chai'
-import { OpenWalletIntent, ProviderEventTypes, ProviderTransport, SequenceClient, TypedEventEmitter, useBestStore } from '../src'
+import {
+  OpenWalletIntent,
+  ProviderEventTypes,
+  ProviderTransport,
+  SequenceClient,
+  TypedEventEmitter,
+  messageToBytes,
+  useBestStore
+} from '../src'
 import { JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, allNetworks } from '@0xsequence/network'
 import EventEmitter from 'events'
 import { commons, v1, v2 } from '@0xsequence/core'
@@ -713,12 +721,22 @@ describe('SequenceClient', () => {
         sendAsync: (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
           calledSendAsync++
           const req = requests.shift()
-          expect(request).to.deep.equal({
-            method: req?.eip6492 ? 'sequence_sign' : 'personal_sign',
-            params: [req?.message, session.accountAddress]
-          })
-          expect(chainId).to.equal(req?.chainId)
-          callback(undefined, { result: req?.result } as any)
+
+          if (!req) {
+            throw new Error('No more requests to handle')
+          }
+
+          const message = ethers.utils.hexlify(messageToBytes(req.message))
+
+          expect(request).to.deep.equal(
+            {
+              method: req.eip6492 ? 'sequence_sign' : 'personal_sign',
+              params: [message, session.accountAddress]
+            },
+            'sendAsync request mismatch'
+          )
+          expect(chainId).to.equal(req.chainId)
+          callback(undefined, { result: req.result } as any)
         },
         openWallet: () => {
           return Promise.resolve(true)
