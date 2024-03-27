@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.9.13
+
+### Patch Changes
+
+- waas: fix @0xsequence/network dependency
+- Updated dependencies
+  - @0xsequence/account@1.9.13
+  - @0xsequence/core@1.9.13
+  - @0xsequence/signhub@1.9.13
+  - @0xsequence/utils@1.9.13
+
 ## 1.9.12
 
 ### Patch Changes

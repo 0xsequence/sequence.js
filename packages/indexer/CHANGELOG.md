@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.9.13
+
+### Patch Changes
+
+- waas: fix @0xsequence/network dependency
+
 ## 1.9.12
 
 ### Patch Changes

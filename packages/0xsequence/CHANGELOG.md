@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.9.13
+
+### Patch Changes
+
+- waas: fix @0xsequence/network dependency
+- Updated dependencies
+  - @0xsequence/abi@1.9.13
+  - @0xsequence/account@1.9.13
+  - @0xsequence/api@1.9.13
+  - @0xsequence/auth@1.9.13
+  - @0xsequence/core@1.9.13
+  - @0xsequence/guard@1.9.13
+  - @0xsequence/indexer@1.9.13
+  - @0xsequence/metadata@1.9.13
+  - @0xsequence/migration@1.9.13
+  - @0xsequence/multicall@1.9.13
+  - @0xsequence/network@1.9.13
+  - @0xsequence/provider@1.9.13
+  - @0xsequence/relayer@1.9.13
+  - @0xsequence/sessions@1.9.13
+  - @0xsequence/signhub@1.9.13
+  - @0xsequence/utils@1.9.13
+  - @0xsequence/wallet@1.9.13
+
 ## 1.9.12
 
 ### Patch Changes

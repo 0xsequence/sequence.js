@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.9.13
+
+### Patch Changes
+
+- waas: fix @0xsequence/network dependency
+- Updated dependencies
+  - @0xsequence/abi@1.9.13
+  - @0xsequence/network@1.9.13
+  - @0xsequence/utils@1.9.13
+
 ## 1.9.12
 
 ### Patch Changes
