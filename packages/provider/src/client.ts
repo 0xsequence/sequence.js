@@ -12,7 +12,8 @@ import {
   WalletEventTypes,
   WalletSession,
   isMuxTransportTemplate,
-  isProviderTransport
+  isProviderTransport,
+  messageToBytes
 } from '.'
 import { commons } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
@@ -472,6 +473,9 @@ export class SequenceClient {
     const method = this.signMethod(options)
 
     this.analytics?.track({ event: 'SIGN_MESSAGE_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
+
+    // Serialize a BytesLike or string message into a hex string before sending
+    message = ethers.utils.hexlify(messageToBytes(message))
 
     // Address is ignored by the wallet webapp
     return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
