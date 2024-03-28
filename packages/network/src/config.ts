@@ -117,7 +117,8 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.POLYGON_MUMBAI],
-    ...genUrls('mumbai')
+    ...genUrls('mumbai'),
+    disabled: true
   },
   {
     ...networks[ChainId.BSC_TESTNET],

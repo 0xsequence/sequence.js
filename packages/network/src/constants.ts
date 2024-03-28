@@ -9,7 +9,7 @@ export enum ChainId {
 
   // Polygon
   POLYGON = 137,
-  POLYGON_MUMBAI = 80001,
+  POLYGON_MUMBAI = 80001, // network is deprecated
   POLYGON_ZKEVM = 1101,
 
   // BSC
@@ -183,7 +183,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Polygonscan (Mumbai)',
       rootUrl: 'https://mumbai.polygonscan.com/'
-    }
+    },
+    deprecated: true
   },
   [ChainId.POLYGON_ZKEVM]: {
     chainId: ChainId.POLYGON_ZKEVM,
