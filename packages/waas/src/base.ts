@@ -340,7 +340,7 @@ export class SequenceWaaSBase {
   async sendERC20(
     args: WithSimpleNetwork<SendERC20Args> & ExtraTransactionArgs
   ): Promise<SignedIntent<IntentDataSendTransaction>> {
-    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC20')
     }
 
@@ -351,7 +351,7 @@ export class SequenceWaaSBase {
   async sendERC721(
     args: WithSimpleNetwork<SendERC721Args> & ExtraTransactionArgs
   ): Promise<SignedIntent<IntentDataSendTransaction>> {
-    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC721')
     }
 
@@ -362,7 +362,7 @@ export class SequenceWaaSBase {
   async sendERC1155(
     args: WithSimpleNetwork<SendERC1155Args> & ExtraTransactionArgs
   ): Promise<SignedIntent<IntentDataSendTransaction>> {
-    if (args.tokenAddress.toLowerCase() === args.to.toLowerCase()) {
+    if (args.token.toLowerCase() === args.to.toLowerCase()) {
       throw new Error('Cannot burn tokens using sendERC1155')
     }
 

@@ -30,14 +30,14 @@ export type SendTransactionsArgs = TransactionFeeArgs & {
 
 export type SendERC20Args = TransactionFeeArgs & {
   chainId: number
-  tokenAddress: string
+  token: string
   to: string
   value: ethers.BigNumberish
 }
 
 export type SendERC721Args = TransactionFeeArgs & {
   chainId: number
-  tokenAddress: string
+  token: string
   to: string
   id: string
   safe?: boolean
@@ -46,7 +46,7 @@ export type SendERC721Args = TransactionFeeArgs & {
 
 export type SendERC1155Args = TransactionFeeArgs & {
   chainId: number
-  tokenAddress: string
+  token: string
   to: string
   values: {
     id: string
@@ -187,28 +187,53 @@ export function getTransactionReceipt({
   })
 }
 
-export function sendERC20({ tokenAddress, to, value, ...args }: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
+export function sendERC20ArgsToTransaction({ token, to, value, ...args }: Omit<SendERC20Args, 'chainId'>): Transaction {
+  return erc20({ tokenAddress: token, to, value: value.toString() })
+}
+
+export function sendERC721ArgsToTransaction({ token, to, id, safe, data, ...args }: Omit<SendERC721Args, 'chainId'>): Transaction {
+  return erc721({ tokenAddress: token, to, id, data, safe })
+}
+
+export function sendERC1155ArgsToTransaction({ token, to, values, data, ...args }: Omit<SendERC1155Args, 'chainId'>): Transaction {
+  const vals = values.map(v => ({
+    id: v.id,
+    amount: ethers.BigNumber.from(v.amount).toString()
+  }))
+
+  return erc1155({ tokenAddress: token, to, vals, data })
+}
+
+export function sendDelayedEncodeArgsToTransaction({ to, value, abi, func, args, ...otherArgs }: Omit<SendDelayedEncodeArgs, 'chainId'>): Transaction {
+  return delayedEncode({
+    to,
+    value: ethers.BigNumber.from(value).toString(),
+    data: { abi, func, args }
+  })
+}
+
+export function sendERC20({ token, to, value, ...args }: SendERC20Args & BaseArgs): Intent<IntentDataSendTransaction> {
   return sendTransactions({
-    transactions: [erc20({ tokenAddress, to, value: value.toString() })],
+    transactions: [erc20({ tokenAddress: token, to, value: value.toString() })],
     ...args
   })
 }
 
-export function sendERC721({ tokenAddress, to, id, safe, data, ...args }: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
+export function sendERC721({ token, to, id, safe, data, ...args }: SendERC721Args & BaseArgs): Intent<IntentDataSendTransaction> {
   return sendTransactions({
-    transactions: [erc721({ tokenAddress, to, id, data, safe })],
+    transactions: [erc721({ tokenAddress: token, to, id, data, safe })],
     ...args
   })
 }
 
-export function sendERC1155({ tokenAddress, to, values, data, ...args }: SendERC1155Args & BaseArgs): Intent<IntentDataSendTransaction> {
+export function sendERC1155({ token, to, values, data, ...args }: SendERC1155Args & BaseArgs): Intent<IntentDataSendTransaction> {
   const vals = values.map(v => ({
     id: v.id,
     amount: ethers.BigNumber.from(v.amount).toString()
   }))
 
   return sendTransactions({
-    transactions: [erc1155({ tokenAddress, to, vals, data })],
+    transactions: [erc1155({ tokenAddress: token, to, vals, data })],
     ...args
   })
 }
