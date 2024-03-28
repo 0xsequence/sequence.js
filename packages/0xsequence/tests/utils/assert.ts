@@ -17,6 +17,8 @@ const testResults: Entry[] = []
 window.__testResults = testResults
 
 export const test = async (title: string, run: () => void) => {
+  console.log('\n\nTEST:', title, '------------------------------------------\n')
+
   const entry: Entry = {
     title: title,
     pass: null,
