@@ -6,18 +6,17 @@
 // webrpc-gen -schema=intent.ridl -target=typescript -client -out=./intent.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.1.0"
+export const WebRPCSchemaVersion = 'v0.1.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "4e0514d799b9cb7630838b4ff70717bbfb3ceebb"
+export const WebRPCSchemaHash = '4e0514d799b9cb7630838b4ff70717bbfb3ceebb'
 
 //
 // Types
 //
-
 
 export enum FeeTokenType {
   unknown = 'unknown',
@@ -157,11 +156,9 @@ export interface IntentResponseSessionOpened {
   wallet: string
 }
 
-export interface IntentResponseSessionClosed {
-}
+export interface IntentResponseSessionClosed {}
 
-export interface IntentResponseValidateSession {
-}
+export interface IntentResponseValidateSession {}
 
 export interface IntentResponseValidationRequired {
   sessionId: string
@@ -236,9 +233,7 @@ export interface IntentResponseTransactionFailed {
   simulations: any
 }
 
-  
-
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -252,18 +247,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -445,9 +440,7 @@ export class WebrpcStreamFinishedError extends WebrpcError {
   }
 }
 
-
 // Schema errors
-
 
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
@@ -460,7 +453,7 @@ export enum errors {
   WebrpcInternalError = 'WebrpcInternalError',
   WebrpcClientDisconnected = 'WebrpcClientDisconnected',
   WebrpcStreamLost = 'WebrpcStreamLost',
-  WebrpcStreamFinished = 'WebrpcStreamFinished',
+  WebrpcStreamFinished = 'WebrpcStreamFinished'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -474,8 +467,7 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [-7]: WebrpcInternalErrorError,
   [-8]: WebrpcClientDisconnectedError,
   [-9]: WebrpcStreamLostError,
-  [-10]: WebrpcStreamFinishedError,
+  [-10]: WebrpcStreamFinishedError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-

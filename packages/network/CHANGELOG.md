@@ -1,5 +1,31 @@
 # @0xsequence/network
 
+## 1.9.13
+
+### Patch Changes
+
+- waas: fix @0xsequence/network dependency
+- Updated dependencies
+  - @0xsequence/core@1.9.13
+  - @0xsequence/indexer@1.9.13
+  - @0xsequence/relayer@1.9.13
+  - @0xsequence/utils@1.9.13
+
+## 1.9.12
+
+### Patch Changes
+
+- indexer: update rpc bindings
+- provider: signMessage: Serialize the BytesLike or string message into hexstring before sending
+- waas: SessionAuthProof
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.9.12
+  - @0xsequence/indexer@1.9.12
+  - @0xsequence/relayer@1.9.12
+  - @0xsequence/utils@1.9.12
+
 ## 1.9.11
 
 ### Patch Changes

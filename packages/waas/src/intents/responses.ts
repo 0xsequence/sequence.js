@@ -129,6 +129,17 @@ export type SignedMessageResponse = {
   }
 }
 
+export type SessionAuthProofResponse = {
+  code: 'sessionAuthProof'
+  data: {
+    sessionId: string
+    network: string
+    wallet: string
+    message: string
+    signature: string
+  }
+}
+
 export type ValidateSessionResponse = {
   code: 'startedSessionValidation'
   data: {}
@@ -207,6 +218,20 @@ export function isSignedMessageResponse(receipt: any): receipt is SignedMessageR
     typeof receipt.code === 'string' &&
     receipt.code === 'signedMessage' &&
     typeof receipt.data === 'object' &&
+    typeof receipt.data.message === 'string' &&
+    typeof receipt.data.signature === 'string'
+  )
+}
+
+export function isSessionAuthProofResponse(receipt: any): receipt is SessionAuthProofResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'sessionAuthProof' &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.sessionId === 'string' &&
+    typeof receipt.data.network === 'string' &&
+    typeof receipt.data.wallet === 'string' &&
     typeof receipt.data.message === 'string' &&
     typeof receipt.data.signature === 'string'
   )
