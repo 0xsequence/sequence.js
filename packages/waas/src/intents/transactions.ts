@@ -128,10 +128,11 @@ export function sendTransactions({
 }
 
 function withTransactionFee(transactions: Transaction[], feeOption?: FeeOption): Transaction[] {
+  const extendedTransactions = [...transactions]
   if (feeOption) {
     switch (feeOption.token.type) {
       case FeeTokenType.unknown:
-        transactions.push(
+        extendedTransactions.push(
           {
             to: feeOption.to,
             value: feeOption.value
@@ -143,7 +144,7 @@ function withTransactionFee(transactions: Transaction[], feeOption?: FeeOption):
           throw new Error('contract address is required')
         }
 
-        transactions.push(erc20({
+        extendedTransactions.push(erc20({
           tokenAddress: feeOption.token.contractAddress,
           to: feeOption.to,
           value: feeOption.value
@@ -158,7 +159,7 @@ function withTransactionFee(transactions: Transaction[], feeOption?: FeeOption):
           throw new Error('token ID is required')
         }
 
-        transactions.push(erc1155({
+        extendedTransactions.push(erc1155({
           tokenAddress: feeOption.token.contractAddress,
           to: feeOption.to,
           vals: [{id: feeOption.token.tokenID, amount: feeOption.value}]
@@ -167,7 +168,7 @@ function withTransactionFee(transactions: Transaction[], feeOption?: FeeOption):
       }
     }
 
-  return transactions
+  return extendedTransactions
 }
 
 export type GetTransactionReceiptArgs = {
