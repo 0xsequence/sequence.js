@@ -15,6 +15,7 @@ import {
 import {
   MaySentTransactionResponse,
   SignedMessageResponse,
+  FeeOptionsResponse,
   isGetSessionResponse,
   isMaySentTransactionResponse,
   isSignedMessageResponse,
@@ -22,6 +23,7 @@ import {
   isFinishValidateSessionResponse,
   isCloseSessionResponse,
   isTimedOutTransactionResponse,
+  isFeeOptionsResponse,
   isSessionAuthProofResponse
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
@@ -440,6 +442,11 @@ export class SequenceWaaS {
   async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
+  }
+
+  async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<FeeOptionsResponse> {
+    const intent = await this.waas.feeOptions(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isFeeOptionsResponse)
   }
 
   async networkList(): Promise<NetworkList> {

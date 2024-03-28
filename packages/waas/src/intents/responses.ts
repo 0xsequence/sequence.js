@@ -70,6 +70,38 @@ export type TransactionFailedResponse = {
 
 export type MaySentTransactionResponse = SentTransactionResponse | TransactionFailedResponse
 
+export enum FeeTokenType {
+  unknown = 'unknown',
+  erc20Token = 'erc20Token',
+  erc1155Token = 'erc1155Token'
+}
+
+export interface FeeOption {
+  token: FeeToken
+  to: string
+  value: string
+  gasLimit: number
+}
+
+export interface FeeToken {
+  chainId: number
+  name: string
+  symbol: string
+  type: FeeTokenType
+  decimals?: number
+  logoURL: string
+  contractAddress?: string
+  tokenID?: string
+}
+
+export type FeeOptionsResponse = {
+  code: 'feeOptions'
+  data: {
+    feeOptions: FeeOption[]
+    feeQuote?: string
+  }
+}
+
 export type OpenSessionResponse = {
   code: 'sessionOpened'
   data: {
@@ -202,6 +234,16 @@ export function isSessionAuthProofResponse(receipt: any): receipt is SessionAuth
     typeof receipt.data.wallet === 'string' &&
     typeof receipt.data.message === 'string' &&
     typeof receipt.data.signature === 'string'
+  )
+}
+
+export function isFeeOptionsResponse(receipt: any): receipt is FeeOptionsResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'feeOptions' &&
+    typeof receipt.data === 'object' &&
+    Array.isArray(receipt.data.feeOptions)
   )
 }
 
