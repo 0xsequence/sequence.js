@@ -6,10 +6,10 @@ export * as networks from './networks'
 
 export type { Transaction } from './intents/transactions'
 export {
-  sendERC20ArgsToTransaction,
-  sendERC721ArgsToTransaction,
-  sendERC1155ArgsToTransaction,
-  sendDelayedEncodeArgsToTransaction,
+  erc20,
+  erc721,
+  erc1155,
+  delayedEncode
 } from './intents/transactions'
 
 export * from './intents/responses'
