@@ -89,7 +89,7 @@ export abstract class BaseProviderTransport implements ProviderTransport {
     )
   }
 
-  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<JsonRpcResponse> {
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     if (this.state === OpenState.CLOSED) {
       // flag the wallet to auto-close once user submits input. ie.
       // prompting to sign a message or transaction
