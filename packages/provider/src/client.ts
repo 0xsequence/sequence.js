@@ -386,13 +386,7 @@ export class SequenceClient {
     // "legacy sign" request, so we map the method here.
     request.method = this.mapSignMethod(request.method)
 
-    const response = await this.transport.request(request)
-
-    if (response.error) {
-      throw new Error(response.error.message)
-    }
-
-    return response.result
+    return this.transport.request(request)
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {

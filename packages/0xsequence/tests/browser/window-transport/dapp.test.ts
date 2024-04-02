@@ -29,6 +29,7 @@ export const tests = async () => {
   // ..
   const provider = new ethers.BrowserProvider(walletProvider, undefined, { cacheTimeout: -1 })
   const signer = await provider.getSigner()
+
   const address = await signer.getAddress()
   const { chainId } = await provider.getNetwork()
   // const chainId = await signer.getChainId()

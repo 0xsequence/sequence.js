@@ -10,10 +10,7 @@ import {
 } from '@0xsequence/network'
 import { TypedData } from '@0xsequence/utils'
 
-export interface ProviderTransport
-  extends EIP1193Provider<JsonRpcResponse>,
-    ProviderMessageTransport,
-    ProviderMessageRequestHandler {
+export interface ProviderTransport extends EIP1193Provider, ProviderMessageTransport, ProviderMessageRequestHandler {
   register(): void
   unregister(): void
 
@@ -68,7 +65,8 @@ export interface ProviderMessage<T> {
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
 
-export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse>
+// Older versions of sequence.js will require a JsonRpcResponse result type, but newer versions use raw EIP1193 results
+export type ProviderMessageResponse = ProviderMessage<JsonRpcResponse | any>
 
 // ProviderMessageCallback is used to respond to ProviderMessage requests. The error
 // argument is for exceptions during the execution, and response is the response payload

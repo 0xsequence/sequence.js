@@ -212,6 +212,16 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
   // (aka, the signer in this instance) and then responds with a wrapped response of
   // ProviderMessageResponse to be sent over the transport
   async sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
+    // Older versions of the client require the response to be jsonrpc wrapped
+    const majorVersion = Number(this.connectOptions?.clientVersion?.split('.')[0] || '2')
+    const isJsonRpcResponse = majorVersion <= 1
+    const jsonRpcResponse: JsonRpcResponse = {
+      id: message.data.id!,
+      jsonrpc: '2.0',
+      result: null,
+      error: undefined
+    }
+
     try {
       const result = await this.request({
         method: message.data.method,
@@ -221,19 +231,12 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
 
       return {
         ...message,
-        data: {
-          id: message.data.id!,
-          result
-        }
+        data: isJsonRpcResponse ? { ...jsonRpcResponse, result } : result
       }
-    } catch (err) {
+    } catch (error) {
       return {
         ...message,
-        data: {
-          id: message.data.id!,
-          result: null,
-          error: err
-        }
+        data: isJsonRpcResponse ? { ...jsonRpcResponse, error } : error
       }
     }
   }
