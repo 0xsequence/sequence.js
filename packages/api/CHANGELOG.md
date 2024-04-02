@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.0.0-alpha.0
+
+### Major Changes
+
+- Ethers v6 migration
+
 ## 1.9.11
 
 ### Patch Changes

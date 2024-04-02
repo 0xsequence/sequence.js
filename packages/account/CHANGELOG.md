@@ -1,5 +1,23 @@
 # @0xsequence/account
 
+## 2.0.0-alpha.0
+
+### Major Changes
+
+- Ethers v6 migration
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/migration@2.0.0-alpha.0
+  - @0xsequence/sessions@2.0.0-alpha.0
+  - @0xsequence/network@2.0.0-alpha.0
+  - @0xsequence/relayer@2.0.0-alpha.0
+  - @0xsequence/wallet@2.0.0-alpha.0
+  - @0xsequence/utils@2.0.0-alpha.0
+  - @0xsequence/core@2.0.0-alpha.0
+  - @0xsequence/abi@2.0.0-alpha.0
+
 ## 1.9.11
 
 ### Patch Changes

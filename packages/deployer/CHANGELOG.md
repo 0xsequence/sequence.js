@@ -1,5 +1,16 @@
 # @0xsequence/deployer
 
+## 2.0.0-alpha.0
+
+### Major Changes
+
+- Ethers v6 migration
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/utils@2.0.0-alpha.0
+
 ## 1.9.11
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @0xsequence/network
 
+## 2.0.0-alpha.0
+
+### Major Changes
+
+- Ethers v6 migration
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/relayer@2.0.0-alpha.0
+  - @0xsequence/utils@2.0.0-alpha.0
+  - @0xsequence/core@2.0.0-alpha.0
+  - @0xsequence/indexer@2.0.0-alpha.0
+
 ## 1.9.11
 
 ### Patch Changes
