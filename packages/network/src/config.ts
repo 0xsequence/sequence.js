@@ -149,6 +149,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('homeverse-testnet')
   },
   {
+    ...networks[ChainId.XAI],
+    ...genUrls('xai')
+  },
+  {
     ...networks[ChainId.XAI_SEPOLIA],
     ...genUrls('xai-sepolia')
   },
