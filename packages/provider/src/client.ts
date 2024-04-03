@@ -14,13 +14,11 @@ import {
   isMuxTransportTemplate,
   isProviderTransport
 } from '.'
-import { commons } from '@0xsequence/core'
+import { commons, VERSION } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
 import { Analytics, setupAnalytics } from './analytics'
 import { ethers } from 'ethers'
-
-import packageJson from '../package.json'
 
 /**
  *  This session class is meant to persist the state of the wallet connection
@@ -336,7 +334,7 @@ export class SequenceClient {
 
     await this.openWallet(undefined, {
       type: 'connect',
-      options: { ...options, networkId: this.getChainId(), clientVersion: packageJson.version }
+      options: { ...options, networkId: this.getChainId(), clientVersion: VERSION }
     })
 
     const connectDetails = await this.transport.waitUntilConnected().catch((error): ConnectDetails => {
