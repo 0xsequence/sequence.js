@@ -61,6 +61,7 @@ export interface ProviderMessage<T> {
   data: T // the ethereum json-rpc payload
   chainId?: number // chain id which the message is intended
   origin?: string // origin of the message
+  clientVersion: string // client version of the message
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>

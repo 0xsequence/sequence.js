@@ -3,6 +3,7 @@ import { BaseProviderTransport } from '../base-provider-transport'
 import { ProviderMessage, OpenState, OpenWalletIntent, EventType, InitState } from '../../types'
 
 import { ProxyMessageChannelPort, ProxyEventTypes } from './proxy-message-channel'
+import { VERSION } from '@0xsequence/core'
 
 export class ProxyMessageProvider extends BaseProviderTransport {
   private port: ProxyMessageChannelPort
@@ -62,7 +63,8 @@ export class ProxyMessageProvider extends BaseProviderTransport {
           intent,
           networkId,
           sessionId
-        }
+        },
+        clientVersion: VERSION
       })
     }
   }
@@ -71,7 +73,8 @@ export class ProxyMessageProvider extends BaseProviderTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.CLOSE,
-      data: null
+      data: null,
+      clientVersion: VERSION
     })
     this.close()
   }

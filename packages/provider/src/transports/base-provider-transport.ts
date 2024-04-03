@@ -17,10 +17,10 @@ import {
   TypedEventEmitter
 } from '../types'
 
-import { JsonRpcResponse, NetworkConfig } from '@0xsequence/network'
+import { NetworkConfig } from '@0xsequence/network'
 import { logger } from '@0xsequence/utils'
 import { ethers } from 'ethers'
-import { commons } from '@0xsequence/core'
+import { VERSION, commons } from '@0xsequence/core'
 
 export const PROVIDER_OPEN_TIMEOUT = 30000 // in ms
 
@@ -112,7 +112,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       idx: nextMessageIdx(),
       type: EventType.MESSAGE,
       data: request,
-      chainId: request.chainId
+      chainId: request.chainId,
+      clientVersion: VERSION
     })
 
     return response.data
@@ -136,7 +137,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
         data: {
           sessionId: this._sessionId,
           nonce: nonce
-        }
+        },
+        clientVersion: VERSION
       })
     }
 

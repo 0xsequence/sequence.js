@@ -213,8 +213,8 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
   // ProviderMessageResponse to be sent over the transport
   async sendMessageRequest(message: ProviderMessageRequest): Promise<ProviderMessageResponse> {
     // Older versions of the client require the response to be jsonrpc wrapped
-    const majorVersion = Number(this.connectOptions?.clientVersion?.split('.')[0] || '2')
-    const isJsonRpcResponse = majorVersion <= 1
+    const majorVersion = Number(message.clientVersion?.split('.')[0] || '0')
+    const isJsonRpcResponse = majorVersion < 2
     const jsonRpcResponse: JsonRpcResponse = {
       id: message.data.id!,
       jsonrpc: '2.0',
@@ -668,7 +668,6 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
 
   setConnectOptions(options: ConnectOptions | undefined) {
     this._connectOptions = options
-
     this.onConnectOptionsChange?.(options)
   }
 
