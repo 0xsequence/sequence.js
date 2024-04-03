@@ -20,7 +20,7 @@ import { AuthorizationOptions } from '@0xsequence/auth'
 
 import { PROVIDER_OPEN_TIMEOUT } from './base-provider-transport'
 import { isBrowserExtension, useBestStore } from '../utils'
-import { commons } from '@0xsequence/core'
+import { VERSION, commons } from '@0xsequence/core'
 
 const TRANSPORT_SESSION_LS_KEY = '@sequence.transportSession'
 
@@ -181,7 +181,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
         sessionId,
         session,
         error
-      }
+      },
+      clientVersion: VERSION
     })
   }
 
@@ -189,7 +190,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.CLOSE,
-      data: error ? { error } : null
+      data: error ? { error } : null,
+      clientVersion: VERSION
     })
   }
 
@@ -197,7 +199,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.CONNECT,
-      data: connectDetails
+      data: connectDetails,
+      clientVersion: VERSION
     })
   }
 
@@ -206,7 +209,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
       idx: -1,
       type: EventType.DISCONNECT,
       data: error ? { error } : null,
-      origin
+      origin,
+      clientVersion: VERSION
     })
   }
 
@@ -215,7 +219,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
       idx: -1,
       type: EventType.ACCOUNTS_CHANGED,
       data: accounts,
-      origin
+      origin,
+      clientVersion: VERSION
     })
   }
 
@@ -224,7 +229,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
       idx: -1,
       type: EventType.CHAIN_CHANGED,
       data: chainIdHex,
-      origin
+      origin,
+      clientVersion: VERSION
     })
   }
 
@@ -232,7 +238,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.NETWORKS,
-      data: networks
+      data: networks,
+      clientVersion: VERSION
     })
   }
 
@@ -240,7 +247,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
     this.sendMessage({
       idx: -1,
       type: EventType.WALLET_CONTEXT,
-      data: walletContext
+      data: walletContext,
+      clientVersion: VERSION
     })
   }
 
@@ -309,7 +317,8 @@ export abstract class BaseWalletTransport implements WalletTransport {
       this.sendMessage({
         idx: -1,
         type: EventType.INIT,
-        data: { nonce: this._initNonce }
+        data: { nonce: this._initNonce },
+        clientVersion: VERSION
       })
       this._init = InitState.SENT_NONCE
 
