@@ -11,6 +11,7 @@ export enum ChainId {
   POLYGON = 137,
   POLYGON_MUMBAI = 80001, // network is deprecated
   POLYGON_ZKEVM = 1101,
+  POLYGON_AMOY = 80002,
 
   // BSC
   BSC = 56,
@@ -47,11 +48,12 @@ export enum ChainId {
   HOMEVERSE = 19011,
 
   // Xai
+  XAI = 660279,
   XAI_SEPOLIA = 37714555429,
 
   // Astar
   ASTAR_ZKEVM = 3776,
-  ASTAR_ZKATANA = 1261120,
+  ASTAR_ZKYOTO = 6038361,
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -185,6 +187,18 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://mumbai.polygonscan.com/'
     },
     deprecated: true
+  },
+  [ChainId.POLYGON_AMOY]: {
+    chainId: ChainId.POLYGON_AMOY,
+    type: NetworkType.TESTNET,
+    name: 'amoy',
+    title: 'Polygon Amoy',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_AMOY}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'OKLink (Amoy)',
+      rootUrl: 'https://www.oklink.com/amoy'
+    }
   },
   [ChainId.POLYGON_ZKEVM]: {
     chainId: ChainId.POLYGON_ZKEVM,
@@ -409,6 +423,17 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
     }
   },
+  [ChainId.XAI]: {
+    chainId: ChainId.XAI,
+    type: NetworkType.MAINNET,
+    name: 'xai',
+    title: 'Xai',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI}.webp`,
+    blockExplorer: {
+      name: 'Xai Explorer',
+      rootUrl: 'https://explorer.xai-chain.net/'
+    }
+  },
   [ChainId.XAI_SEPOLIA]: {
     chainId: ChainId.XAI_SEPOLIA,
     type: NetworkType.TESTNET,
@@ -432,15 +457,15 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://astar-zkevm.explorer.startale.com/'
     }
   },
-  [ChainId.ASTAR_ZKATANA]: {
-    chainId: ChainId.ASTAR_ZKATANA,
+  [ChainId.ASTAR_ZKYOTO]: {
+    chainId: ChainId.ASTAR_ZKYOTO,
     type: NetworkType.TESTNET,
-    name: 'astar-zkatana',
-    title: 'Astar zkATANA Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKATANA}.webp`,
+    name: 'astar-zkyoto',
+    title: 'Astar zKyoto Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKYOTO}.webp`,
     blockExplorer: {
-      name: 'Astar zkATANA Explorer',
-      rootUrl: 'https://zkatana.explorer.startale.com/'
+      name: 'Astar zKyoto Explorer',
+      rootUrl: 'https://astar-zkyoto.blockscout.com/'
     }
   },
   [ChainId.HARDHAT]: {
