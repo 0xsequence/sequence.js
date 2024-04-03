@@ -10,11 +10,10 @@ import {
 } from '../src'
 import { JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, allNetworks } from '@0xsequence/network'
 import EventEmitter from 'events'
-import { commons, v1, v2 } from '@0xsequence/core'
+import { commons, v1, v2, VERSION } from '@0xsequence/core'
 import { ethers } from 'ethers'
 import { TypedData, parseEther } from '@0xsequence/utils'
 import { ExtendedTransactionRequest } from '../src/extended'
-import packageJson from '../package.json'
 
 const basicMockTransport = {
   on: () => {},
@@ -389,7 +388,7 @@ describe('SequenceClient', () => {
               app: 'This is a test',
               authorizeVersion: 2,
               networkId: 2,
-              clientVersion: packageJson.version,
+              clientVersion: VERSION,
               projectAccessKey: undefined
             }
           })
