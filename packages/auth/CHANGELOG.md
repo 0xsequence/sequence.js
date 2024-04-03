@@ -1,5 +1,28 @@
 # @0xsequence/auth
 
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.9.14
+  - @0xsequence/account@1.9.14
+  - @0xsequence/api@1.9.14
+  - @0xsequence/core@1.9.14
+  - @0xsequence/indexer@1.9.14
+  - @0xsequence/metadata@1.9.14
+  - @0xsequence/migration@1.9.14
+  - @0xsequence/network@1.9.14
+  - @0xsequence/sessions@1.9.14
+  - @0xsequence/signhub@1.9.14
+  - @0xsequence/utils@1.9.14
+  - @0xsequence/wallet@1.9.14
+
 ## 1.9.13
 
 ### Patch Changes

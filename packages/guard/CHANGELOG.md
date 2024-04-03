@@ -1,5 +1,20 @@
 # @0xsequence/guard
 
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/account@1.9.14
+  - @0xsequence/core@1.9.14
+  - @0xsequence/signhub@1.9.14
+  - @0xsequence/utils@1.9.14
+
 ## 1.9.13
 
 ### Patch Changes

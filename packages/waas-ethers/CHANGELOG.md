@@ -1,5 +1,17 @@
 # @0xsequence/waas-ethers
 
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@1.9.14
+
 ## 1.9.13
 
 ### Patch Changes

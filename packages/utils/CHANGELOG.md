@@ -1,5 +1,13 @@
 # @0xsequence/utils
 
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+
 ## 1.9.13
 
 ### Patch Changes
