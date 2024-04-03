@@ -121,6 +121,10 @@ export const allNetworks = validateAndSortNetworks([
     disabled: true
   },
   {
+    ...networks[ChainId.POLYGON_AMOY],
+    ...genUrls('amoy')
+  },
+  {
     ...networks[ChainId.BSC_TESTNET],
     ...genUrls('bsc-testnet')
   },
@@ -157,8 +161,8 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('astar-zkevm')
   },
   {
-    ...networks[ChainId.ASTAR_ZKATANA],
-    ...genUrls('astar-zkatana')
+    ...networks[ChainId.ASTAR_ZKYOTO],
+    ...genUrls('astar-zkyoto')
   },
   {
     ...networks[ChainId.HARDHAT],
