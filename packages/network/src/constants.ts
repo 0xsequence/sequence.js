@@ -196,7 +196,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_AMOY}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Polygonscan (Amoy)',
+      name: 'OKLink (Amoy)',
       rootUrl: 'https://www.oklink.com/amoy'
     }
   },
@@ -461,10 +461,10 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.ASTAR_ZKYOTO,
     type: NetworkType.TESTNET,
     name: 'astar-zkyoto',
-    title: 'Astar zkyoto Testnet',
+    title: 'Astar zKyoto Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKYOTO}.webp`,
     blockExplorer: {
-      name: 'Astar zkyoto Explorer',
+      name: 'Astar zKyoto Explorer',
       rootUrl: 'https://astar-zkyoto.blockscout.com/'
     }
   },
