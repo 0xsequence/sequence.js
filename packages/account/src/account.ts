@@ -552,7 +552,7 @@ export class Account {
       chainId: 0,
       address: this.address
     })
-    const hexSubdigest = ethers.toBeHex(subdigest)
+    const hexSubdigest = ethers.hexlify(subdigest)
     const config = this.coders.config.fromSimple({
       // Threshold *only* needs to be > 0, this is not a magic number
       // we only use 2 ** 15 because it may lead to lower gas costs in some chains

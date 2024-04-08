@@ -94,7 +94,7 @@ export async function runByEIP5719(
   const altUri = await tryAwait(eip5719Contract(address, provider).getAlternativeSignature(digest) as Promise<string>)
   if (!altUri || altUri === '') throw new Error('EIP5719 - Invalid signature and no alternative signature')
 
-  const altSignature = ethers.toBeHex(await (solver || new URISolverIPFS()).resolve(altUri))
+  const altSignature = ethers.hexlify(await (solver || new URISolverIPFS()).resolve(altUri))
   if (!altSignature || altSignature === '') throw new Error('EIP5719 - Empty alternative signature')
   if (altSignature === ethers.hexlify(signature)) {
     throw new Error('EIP5719 - Alternative signature is invalid or the same')

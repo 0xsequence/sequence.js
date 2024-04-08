@@ -95,7 +95,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
     const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
     const data1 = ethers.hexlify(tx.transactions[0].data || new Uint8Array())
-    const expectData1 = ethers.toBeHex(
+    const expectData1 = ethers.hexlify(
       contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
     )
 
