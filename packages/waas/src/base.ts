@@ -10,6 +10,7 @@ import {
   sessionAuthProof,
   signIntent,
   signMessage,
+  feeOptions,
   sendDelayedEncode,
   sendERC1155,
   sendERC20,
@@ -30,6 +31,7 @@ import { newSession, newSessionFromSessionId } from './session'
 import { OpenSessionResponse } from './intents/responses'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 import {
+  IntentDataFeeOptions,
   IntentDataFinishValidateSession,
   IntentDataGetSession,
   IntentDataGetTransactionReceipt,
@@ -387,6 +389,11 @@ export class SequenceWaaSBase {
     args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs
   ): Promise<SignedIntent<IntentDataSendTransaction>> {
     const intent = sendDelayedEncode(await this.commonArgs(args))
+    return this.signIntent(intent)
+  }
+
+  async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataFeeOptions>> {
+    const intent = feeOptions(await this.commonArgs(args))
     return this.signIntent(intent)
   }
 
