@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+- Updated dependencies
+  - @0xsequence/core@1.9.15
+  - @0xsequence/indexer@1.9.15
+  - @0xsequence/relayer@1.9.15
+  - @0xsequence/utils@1.9.15
+
 ## 1.9.14
 
 ### Patch Changes

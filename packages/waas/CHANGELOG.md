@@ -1,5 +1,13 @@
 # @0xsequence/waas
 
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+- Updated dependencies
+  - @0xsequence/network@1.9.15
+
 ## 1.9.14
 
 ### Patch Changes

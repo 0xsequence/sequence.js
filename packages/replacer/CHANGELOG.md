@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+- Updated dependencies
+  - @0xsequence/abi@1.9.15
+  - @0xsequence/core@1.9.15
+
 ## 1.9.14
 
 ### Patch Changes

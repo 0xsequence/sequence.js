@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+
 ## 1.9.14
 
 ### Patch Changes
