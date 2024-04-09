@@ -169,6 +169,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('astar-zkyoto')
   },
   {
+    ...networks[ChainId.XR_SEPOLIA],
+    ...genUrls('xr-sepolia')
+  },
+  {
     ...networks[ChainId.HARDHAT],
     rpcUrl: 'http://localhost:8545',
     relayer: {
