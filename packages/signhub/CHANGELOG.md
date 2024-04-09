@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.9.17
+
+### Patch Changes
+
+- network: add xr-sepolia
+- Updated dependencies
+  - @0xsequence/core@1.9.17
+
 ## 1.9.16
 
 ### Patch Changes
