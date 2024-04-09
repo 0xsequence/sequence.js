@@ -55,6 +55,9 @@ export enum ChainId {
   ASTAR_ZKEVM = 3776,
   ASTAR_ZKYOTO = 6038361,
 
+  // XR
+  XR_SEPOLIA = 2730,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -463,9 +466,22 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'astar-zkyoto',
     title: 'Astar zKyoto Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKYOTO}.webp`,
+    testnet: true,
     blockExplorer: {
       name: 'Astar zKyoto Explorer',
       rootUrl: 'https://astar-zkyoto.blockscout.com/'
+    }
+  },
+  [ChainId.XR_SEPOLIA]: {
+    chainId: ChainId.XR_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'xr-sepolia',
+    title: 'XR Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR_SEPOLIA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'XR Sepolia Explorer',
+      rootUrl: 'https://xr-sepolia-testnet.explorer.caldera.xyz/'
     }
   },
   [ChainId.HARDHAT]: {
