@@ -1,5 +1,13 @@
 # @0xsequence/tests
 
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+- Updated dependencies
+  - @0xsequence/core@1.9.16
+
 ## 1.9.15
 
 ### Patch Changes

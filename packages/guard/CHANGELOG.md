@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+- Updated dependencies
+  - @0xsequence/account@1.9.16
+  - @0xsequence/core@1.9.16
+  - @0xsequence/signhub@1.9.16
+  - @0xsequence/utils@1.9.16
+
 ## 1.9.15
 
 ### Patch Changes

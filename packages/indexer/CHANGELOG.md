@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+
 ## 1.9.15
 
 ### Patch Changes

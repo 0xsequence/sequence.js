@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+- Updated dependencies
+  - @0xsequence/abi@1.9.16
+  - @0xsequence/core@1.9.16
+  - @0xsequence/migration@1.9.16
+  - @0xsequence/network@1.9.16
+  - @0xsequence/relayer@1.9.16
+  - @0xsequence/sessions@1.9.16
+  - @0xsequence/utils@1.9.16
+  - @0xsequence/wallet@1.9.16
+
 ## 1.9.15
 
 ### Patch Changes
