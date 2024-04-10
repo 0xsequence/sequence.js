@@ -22,7 +22,9 @@
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
     "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc pnpm test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "dep-graph": "node ./scripts/graph-sequence-internal-dependencies.js ./packages > internal-dependency-graph.dot",
+    "dep-graph-full": "node ./scripts/graph-sequence-internal-dependencies.js ./packages -e > dependency-graph.dot"
   },
   "husky": {
     "hooks": {

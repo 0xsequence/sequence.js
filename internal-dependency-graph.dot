@@ -1,0 +1,92 @@
+// Couldn't read or parse package.json in estimator: ENOENT: no such file or directory, open 'packages/estimator/package.json'
+// Couldn't read or parse package.json in multicall: ENOENT: no such file or directory, open 'packages/multicall/package.json'
+// Couldn't read or parse package.json in simulator: ENOENT: no such file or directory, open 'packages/simulator/package.json'
+digraph G {
+  rankdir="TD";
+
+  abi [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  account [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  api [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  auth [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  core [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  guard [fillcolor="#e597ff", style="filled" shape=circle, penwidth=2]
+  indexer [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  metadata [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  migration [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  network [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  provider [fillcolor="#e597ff", style="filled" shape=circle, penwidth=2]
+  relayer [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  sessions [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  signhub [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  utils [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  wallet [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  deployer [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
+  replacer [fillcolor="#e5ccff", style="filled" shape=hexagon, penwidth=1]
+  tests [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
+  waas [fillcolor="#e5ccff", style="filled" shape=hexagon, penwidth=1]
+  "waas-ethers" [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
+
+  abi -> account
+  core -> account
+  migration -> account
+  network -> account
+  relayer -> account
+  sessions -> account
+  utils -> account
+  wallet -> account
+  abi -> auth
+  account -> auth
+  api -> auth
+  core -> auth
+  indexer -> auth
+  metadata -> auth
+  migration -> auth
+  network -> auth
+  sessions -> auth
+  signhub -> auth
+  wallet -> auth
+  utils -> auth
+  utils -> core
+  abi -> core
+  account -> guard
+  core -> guard
+  signhub -> guard
+  utils -> guard
+  abi -> migration
+  core -> migration
+  wallet -> migration
+  core -> network
+  indexer -> network
+  relayer -> network
+  utils -> network
+  abi -> provider
+  account -> provider
+  auth -> provider
+  core -> provider
+  migration -> provider
+  network -> provider
+  relayer -> provider
+  utils -> provider
+  wallet -> provider
+  abi -> relayer
+  core -> relayer
+  utils -> relayer
+  core -> sessions
+  migration -> sessions
+  replacer -> sessions
+  core -> signhub
+  abi -> wallet
+  core -> wallet
+  network -> wallet
+  signhub -> wallet
+  relayer -> wallet
+  utils -> wallet
+  utils -> deployer
+  abi -> replacer
+  core -> replacer
+  core -> tests
+  utils -> tests
+  network -> waas
+  utils -> waas
+  waas -> "waas-ethers"
+}
