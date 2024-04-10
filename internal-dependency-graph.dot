@@ -1,0 +1,89 @@
+digraph G {
+  rankdir="TD";
+
+  abi  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  account  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  api  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  auth  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  core  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  guard  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  indexer  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  metadata  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  migration  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  multicall  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  network  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  provider  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  relayer  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  sessions  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  signhub  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  utils  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+  wallet  [fillcolor="#e597ff", style="rounded,filled" shape=diamond]
+
+  account -> abi
+  account -> core
+  account -> migration
+  account -> network
+  account -> relayer
+  account -> sessions
+  account -> utils
+  account -> wallet
+  auth -> abi
+  auth -> account
+  auth -> api
+  auth -> core
+  auth -> indexer
+  auth -> metadata
+  auth -> migration
+  auth -> network
+  auth -> sessions
+  auth -> signhub
+  auth -> wallet
+  auth -> utils
+  core -> abi
+  deployer -> utils
+  estimator -> abi
+  estimator -> core
+  estimator -> utils
+  guard -> account
+  guard -> core
+  guard -> signhub
+  guard -> utils
+  migration -> abi
+  migration -> core
+  migration -> wallet
+  multicall -> abi
+  multicall -> network
+  multicall -> utils
+  network -> core
+  network -> indexer
+  network -> relayer
+  network -> utils
+  provider -> abi
+  provider -> account
+  provider -> auth
+  provider -> core
+  provider -> migration
+  provider -> network
+  provider -> relayer
+  provider -> utils
+  provider -> wallet
+  relayer -> abi
+  relayer -> core
+  relayer -> utils
+  replacer -> abi
+  replacer -> core
+  sessions -> core
+  sessions -> migration
+  sessions -> replacer
+  signhub -> core
+  simulator -> core
+  tests -> core
+  waas -> network
+  "waas-ethers" -> waas
+  wallet -> abi
+  wallet -> core
+  wallet -> network
+  wallet -> signhub
+  wallet -> relayer
+  wallet -> utils
+}
