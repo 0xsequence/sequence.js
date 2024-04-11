@@ -18,12 +18,24 @@ digraph G {
   signhub [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
   utils [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
   wallet [fillcolor="#e597ff", style="filled" shape=hexagon, penwidth=2]
+  "ethers@^5.5.2" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "ethauth@^0.8.1" [shape=hexagon, penwidth=1, fontsize=8.0]
   deployer [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
   estimator [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
+  "wallet-contracts@^1.10.0" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "ethers@^5.7.2" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "@databeat/tracker@^0.9.1" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "eventemitter2@^6.4.5" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "webextension-polyfill@^0.10.0" [shape=hexagon, penwidth=1, fontsize=8.0]
   replacer [fillcolor="#e5ccff", style="filled" shape=hexagon, penwidth=1]
+  "idb@^7.1.1" [shape=hexagon, penwidth=1, fontsize=8.0]
   simulator [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
   tests [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
+  "js-base64@^3.7.2" [shape=hexagon, penwidth=1, fontsize=8.0]
   waas [fillcolor="#e5ccff", style="filled" shape=hexagon, penwidth=1]
+  "@aws-sdk/client-cognito-identity-provider@^3.445.0" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "json-canonicalize@^1.0.6" [shape=hexagon, penwidth=1, fontsize=8.0]
+  "jwt-decode@^4.0.0" [shape=hexagon, penwidth=1, fontsize=8.0]
   "waas-ethers" [fillcolor="#e5ccff", style="filled" shape=circle, penwidth=1]
 
   abi -> account
@@ -34,10 +46,12 @@ digraph G {
   sessions -> account
   utils -> account
   wallet -> account
+  "ethers@^5.5.2" -> account
   abi -> auth
   account -> auth
   api -> auth
   core -> auth
+  "ethauth@^0.8.1" -> auth
   indexer -> auth
   metadata -> auth
   migration -> auth
@@ -51,9 +65,11 @@ digraph G {
   core -> guard
   signhub -> guard
   utils -> guard
+  "ethers@^5.7.2" -> guard
   abi -> migration
   core -> migration
   wallet -> migration
+  "ethers@^5.5.2" -> migration
   abi -> multicall
   network -> multicall
   utils -> multicall
@@ -70,13 +86,20 @@ digraph G {
   relayer -> provider
   utils -> provider
   wallet -> provider
+  "@databeat/tracker@^0.9.1" -> provider
+  "eventemitter2@^6.4.5" -> provider
+  "webextension-polyfill@^0.10.0" -> provider
   abi -> relayer
   core -> relayer
   utils -> relayer
   core -> sessions
   migration -> sessions
   replacer -> sessions
+  "ethers@^5.5.2" -> sessions
+  "idb@^7.1.1" -> sessions
   core -> signhub
+  "ethers@^5.5.2" -> signhub
+  "js-base64@^3.7.2" -> utils
   abi -> wallet
   core -> wallet
   network -> wallet
@@ -87,10 +110,16 @@ digraph G {
   abi -> estimator
   core -> estimator
   utils -> estimator
+  "wallet-contracts@^1.10.0" -> estimator
   abi -> replacer
   core -> replacer
   core -> simulator
+  "wallet-contracts@^1.10.0" -> simulator
   core -> tests
   network -> waas
+  "@aws-sdk/client-cognito-identity-provider@^3.445.0" -> waas
+  "idb@^7.1.1" -> waas
+  "json-canonicalize@^1.0.6" -> waas
+  "jwt-decode@^4.0.0" -> waas
   waas -> "waas-ethers"
 }
