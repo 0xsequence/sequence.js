@@ -24,7 +24,8 @@ import {
   SendERC1155Args,
   SendDelayedEncodeArgs,
   GetTransactionReceiptArgs,
-  getTransactionReceipt
+  getTransactionReceipt,
+  changeIntentTime,
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'
@@ -452,5 +453,10 @@ export class SequenceWaaSBase {
 
   private signalObservers<T>(observers: Observer<T>[], value: T | null) {
     observers.forEach(observer => observer(value))
+  }
+
+  async updateIntentTime<T>(intent: SignedIntent<T>, time: Date): Promise<SignedIntent<T>> {
+    const newIntent = changeIntentTime(intent, time)
+    return this.signIntent(newIntent)
   }
 }

@@ -9,6 +9,7 @@ import {
   IntentResponseValidationFinished,
   IntentResponseValidationRequired
 } from '../clients/intent.gen'
+import {WebrpcEndpointError, WebrpcError} from "../clients/authenticator.gen"
 
 export type PayloadResponse<T> = {
   code: string
@@ -287,5 +288,15 @@ export function isGetSessionResponse(receipt: any): receipt is GetSessionRespons
     typeof receipt.data === 'object' &&
     typeof receipt.data.session === 'string' &&
     typeof receipt.data.wallet === 'string'
+  )
+}
+
+export function isIntentTimeError(error: any): error is WebrpcEndpointError {
+  return !!(
+    error instanceof WebrpcError &&
+    (
+      error.cause?.endsWith('intent is invalid: intent expired') ||
+      error.cause?.endsWith('intent is invalid: intent issued in the future')
+    )
   )
 }

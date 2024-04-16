@@ -1,5 +1,5 @@
 import { Observer, SequenceWaaSBase } from './base'
-import { IntentDataSendTransaction } from './clients/intent.gen'
+import {IntentDataOpenSession, IntentDataSendTransaction} from './clients/intent.gen'
 import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -24,7 +24,8 @@ import {
   isCloseSessionResponse,
   isTimedOutTransactionResponse,
   isFeeOptionsResponse,
-  isSessionAuthProofResponse
+  isSessionAuthProofResponse,
+  isIntentTimeError,
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
@@ -126,6 +127,9 @@ export class SequenceWaaS {
 
   private emailClient: EmailAuth | undefined
 
+  // The last Date header value returned by the server, used for users with desynchronised clocks
+  private lastDate: Date | undefined
+
   constructor(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     preset: ExtendedSequenceConfig = LOCAL,
@@ -133,7 +137,7 @@ export class SequenceWaaS {
   ) {
     this.config = defaultArgsOrFail(config, preset)
     this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store)
-    this.client = new WaasAuthenticator(this.config.rpcServer, window.fetch)
+    this.client = new WaasAuthenticator(this.config.rpcServer, this.fetch.bind(this))
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
   }
 
@@ -193,8 +197,17 @@ export class SequenceWaaS {
       throw new Error('session not open')
     }
 
-    const res = await this.client.sendIntent({ intent: intent }, this.headers())
-    return res.response
+    try {
+      const res = await this.client.sendIntent({ intent: intent }, this.headers())
+      return res.response
+    } catch (e) {
+      if (isIntentTimeError(e) && this.lastDate) {
+        const newIntent = await this.waas.updateIntentTime(intent, this.lastDate)
+        const res = await this.client.sendIntent({ intent: newIntent }, this.headers())
+        return res.response
+      }
+      throw e
+    }
   }
 
   async isSignedIn() {
@@ -215,15 +228,10 @@ export class SequenceWaaS {
       throw new Error('Invalid idToken')
     }
 
-    const args = {
-      intent: signInIntent,
-      friendlyName: name
-    }
-
     await this.deviceName.set(name)
 
     try {
-      const res = await this.client.registerSession(args, this.headers())
+      const res = await this.registerSession(signInIntent, name)
 
       await this.waas.completeSignIn({
         code: 'sessionOpened',
@@ -239,6 +247,19 @@ export class SequenceWaaS {
       }
     } catch (e) {
       await this.waas.completeSignOut()
+      throw e
+    }
+  }
+
+  async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
+    try {
+      const res = await this.client.registerSession({ intent, friendlyName: name }, this.headers())
+      return res
+    } catch (e) {
+      if (isIntentTimeError(e) && this.lastDate) {
+        const newIntent = await this.waas.updateIntentTime(intent, this.lastDate)
+        return await this.client.registerSession({ intent: newIntent, friendlyName: name }, this.headers())
+      }
       throw e
     }
   }
@@ -467,5 +488,15 @@ export class SequenceWaaS {
 
   onSessionStateChanged(callback: Observer<string>) {
     return this.waas.onSessionStateChanged(callback)
+  }
+
+  // Special version of fetch that keeps track of the last seen Date header
+  async fetch(input: RequestInfo, init?: RequestInit) {
+    const res = await window.fetch(input, init)
+    const headerValue = res.headers.get('date')
+    if (headerValue) {
+      this.lastDate = new Date(headerValue)
+    }
+    return res
   }
 }
