@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.19
+
+### Patch Changes
+
+- waas update
+
 ## 1.9.18
 
 ### Patch Changes
