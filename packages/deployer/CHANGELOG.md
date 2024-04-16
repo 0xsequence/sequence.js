@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+- Updated dependencies
+  - @0xsequence/utils@1.9.18
+
 ## 1.9.17
 
 ### Patch Changes

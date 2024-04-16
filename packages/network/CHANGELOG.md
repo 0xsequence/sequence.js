@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+- Updated dependencies
+  - @0xsequence/core@1.9.18
+  - @0xsequence/indexer@1.9.18
+  - @0xsequence/relayer@1.9.18
+  - @0xsequence/utils@1.9.18
+
 ## 1.9.17
 
 ### Patch Changes

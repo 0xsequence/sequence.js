@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+
 ## 1.9.17
 
 ### Patch Changes

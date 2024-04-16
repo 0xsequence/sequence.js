@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+- Updated dependencies
+  - @0xsequence/abi@1.9.18
+  - @0xsequence/core@1.9.18
+
 ## 1.9.17
 
 ### Patch Changes
