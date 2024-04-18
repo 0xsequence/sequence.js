@@ -25,20 +25,17 @@ export function isSimpleNetwork(network: any): network is SimpleNetwork {
 }
 
 export function toNetworkID(network: SimpleNetwork): keyof IdToNameType {
-  if (typeof network === 'number') {
-    if (network in idToName) {
-      return network
-    } else {
-      throw new Error(`Unknown network id ${network}`)
-    }
+  const networkNumber = typeof network === 'number' ? network : parseInt(network)
+  if (networkNumber in idToName) {
+    return networkNumber
   }
 
-  const networkLower = network.toLowerCase()
+  const networkLower = network.toString().toLowerCase()
   if (networkLower in nameToId) {
     return nameToId[networkLower as keyof NameToIdType]
-  } else {
-    throw new Error(`Unknown network name ${network}`)
   }
+
+  throw new Error(`Unknown network: ${network}`)
 }
 
 export function nameOfNetwork(network: SimpleNetwork): keyof NameToIdType {
