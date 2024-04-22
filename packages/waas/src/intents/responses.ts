@@ -9,6 +9,7 @@ import {
   IntentResponseValidationFinished,
   IntentResponseValidationRequired
 } from '../clients/intent.gen'
+import {WebrpcEndpointError, WebrpcError} from "../clients/authenticator.gen"
 
 export type PayloadResponse<T> = {
   code: string
@@ -69,6 +70,38 @@ export type TransactionFailedResponse = {
 }
 
 export type MaySentTransactionResponse = SentTransactionResponse | TransactionFailedResponse
+
+export enum FeeTokenType {
+  unknown = 'unknown',
+  erc20Token = 'erc20Token',
+  erc1155Token = 'erc1155Token'
+}
+
+export interface FeeOption {
+  token: FeeToken
+  to: string
+  value: string
+  gasLimit: number
+}
+
+export interface FeeToken {
+  chainId: number
+  name: string
+  symbol: string
+  type: FeeTokenType
+  decimals?: number
+  logoURL: string
+  contractAddress?: string
+  tokenID?: string
+}
+
+export type FeeOptionsResponse = {
+  code: 'feeOptions'
+  data: {
+    feeOptions: FeeOption[]
+    feeQuote?: string
+  }
+}
 
 export type OpenSessionResponse = {
   code: 'sessionOpened'
@@ -205,6 +238,16 @@ export function isSessionAuthProofResponse(receipt: any): receipt is SessionAuth
   )
 }
 
+export function isFeeOptionsResponse(receipt: any): receipt is FeeOptionsResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'feeOptions' &&
+    typeof receipt.data === 'object' &&
+    Array.isArray(receipt.data.feeOptions)
+  )
+}
+
 export function isValidationRequiredResponse(receipt: any): receipt is ValidationRequiredResponse {
   return (
     typeof receipt === 'object' &&
@@ -245,5 +288,15 @@ export function isGetSessionResponse(receipt: any): receipt is GetSessionRespons
     typeof receipt.data === 'object' &&
     typeof receipt.data.session === 'string' &&
     typeof receipt.data.wallet === 'string'
+  )
+}
+
+export function isIntentTimeError(error: any): error is WebrpcEndpointError {
+  return !!(
+    error instanceof WebrpcError &&
+    (
+      error.cause?.endsWith('intent is invalid: intent expired') ||
+      error.cause?.endsWith('intent is invalid: intent issued in the future')
+    )
   )
 }

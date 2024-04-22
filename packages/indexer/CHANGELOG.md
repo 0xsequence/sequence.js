@@ -1,5 +1,43 @@
 # @0xsequence/indexer
 
+## 1.9.19
+
+### Patch Changes
+
+- waas update
+
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+
+## 1.9.17
+
+### Patch Changes
+
+- network: add xr-sepolia
+
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+
 ## 1.9.13
 
 ### Patch Changes

@@ -1,5 +1,69 @@
 # @0xsequence/sessions
 
+## 1.9.19
+
+### Patch Changes
+
+- waas update
+- Updated dependencies
+  - @0xsequence/core@1.9.19
+  - @0xsequence/migration@1.9.19
+  - @0xsequence/replacer@1.9.19
+
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+- Updated dependencies
+  - @0xsequence/core@1.9.18
+  - @0xsequence/migration@1.9.18
+  - @0xsequence/replacer@1.9.18
+
+## 1.9.17
+
+### Patch Changes
+
+- network: add xr-sepolia
+- Updated dependencies
+  - @0xsequence/core@1.9.17
+  - @0xsequence/migration@1.9.17
+  - @0xsequence/replacer@1.9.17
+
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+- Updated dependencies
+  - @0xsequence/core@1.9.16
+  - @0xsequence/migration@1.9.16
+  - @0xsequence/replacer@1.9.16
+
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+- Updated dependencies
+  - @0xsequence/core@1.9.15
+  - @0xsequence/migration@1.9.15
+  - @0xsequence/replacer@1.9.15
+
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.9.14
+  - @0xsequence/migration@1.9.14
+  - @0xsequence/replacer@1.9.14
+
 ## 1.9.13
 
 ### Patch Changes

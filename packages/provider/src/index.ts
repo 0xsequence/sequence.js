@@ -1,3 +1,4 @@
+export * from './transactions'
 export * from './transports'
 export * from './types'
 export * from './provider'

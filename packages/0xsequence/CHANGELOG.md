@@ -1,5 +1,153 @@
 # 0xsequence
 
+## 1.9.19
+
+### Patch Changes
+
+- waas update
+- Updated dependencies
+  - @0xsequence/abi@1.9.19
+  - @0xsequence/account@1.9.19
+  - @0xsequence/api@1.9.19
+  - @0xsequence/auth@1.9.19
+  - @0xsequence/core@1.9.19
+  - @0xsequence/guard@1.9.19
+  - @0xsequence/indexer@1.9.19
+  - @0xsequence/metadata@1.9.19
+  - @0xsequence/migration@1.9.19
+  - @0xsequence/multicall@1.9.19
+  - @0xsequence/network@1.9.19
+  - @0xsequence/provider@1.9.19
+  - @0xsequence/relayer@1.9.19
+  - @0xsequence/sessions@1.9.19
+  - @0xsequence/signhub@1.9.19
+  - @0xsequence/utils@1.9.19
+  - @0xsequence/wallet@1.9.19
+
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+- Updated dependencies
+  - @0xsequence/abi@1.9.18
+  - @0xsequence/account@1.9.18
+  - @0xsequence/api@1.9.18
+  - @0xsequence/auth@1.9.18
+  - @0xsequence/core@1.9.18
+  - @0xsequence/guard@1.9.18
+  - @0xsequence/indexer@1.9.18
+  - @0xsequence/metadata@1.9.18
+  - @0xsequence/migration@1.9.18
+  - @0xsequence/multicall@1.9.18
+  - @0xsequence/network@1.9.18
+  - @0xsequence/provider@1.9.18
+  - @0xsequence/relayer@1.9.18
+  - @0xsequence/sessions@1.9.18
+  - @0xsequence/signhub@1.9.18
+  - @0xsequence/utils@1.9.18
+  - @0xsequence/wallet@1.9.18
+
+## 1.9.17
+
+### Patch Changes
+
+- network: add xr-sepolia
+- Updated dependencies
+  - @0xsequence/network@1.9.17
+  - @0xsequence/abi@1.9.17
+  - @0xsequence/account@1.9.17
+  - @0xsequence/api@1.9.17
+  - @0xsequence/auth@1.9.17
+  - @0xsequence/core@1.9.17
+  - @0xsequence/guard@1.9.17
+  - @0xsequence/indexer@1.9.17
+  - @0xsequence/metadata@1.9.17
+  - @0xsequence/migration@1.9.17
+  - @0xsequence/multicall@1.9.17
+  - @0xsequence/provider@1.9.17
+  - @0xsequence/relayer@1.9.17
+  - @0xsequence/sessions@1.9.17
+  - @0xsequence/signhub@1.9.17
+  - @0xsequence/utils@1.9.17
+  - @0xsequence/wallet@1.9.17
+
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+- Updated dependencies
+  - @0xsequence/abi@1.9.16
+  - @0xsequence/account@1.9.16
+  - @0xsequence/api@1.9.16
+  - @0xsequence/auth@1.9.16
+  - @0xsequence/core@1.9.16
+  - @0xsequence/guard@1.9.16
+  - @0xsequence/indexer@1.9.16
+  - @0xsequence/metadata@1.9.16
+  - @0xsequence/migration@1.9.16
+  - @0xsequence/multicall@1.9.16
+  - @0xsequence/network@1.9.16
+  - @0xsequence/provider@1.9.16
+  - @0xsequence/relayer@1.9.16
+  - @0xsequence/sessions@1.9.16
+  - @0xsequence/signhub@1.9.16
+  - @0xsequence/utils@1.9.16
+  - @0xsequence/wallet@1.9.16
+
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+- Updated dependencies
+  - @0xsequence/abi@1.9.15
+  - @0xsequence/account@1.9.15
+  - @0xsequence/api@1.9.15
+  - @0xsequence/auth@1.9.15
+  - @0xsequence/core@1.9.15
+  - @0xsequence/guard@1.9.15
+  - @0xsequence/indexer@1.9.15
+  - @0xsequence/metadata@1.9.15
+  - @0xsequence/migration@1.9.15
+  - @0xsequence/multicall@1.9.15
+  - @0xsequence/network@1.9.15
+  - @0xsequence/provider@1.9.15
+  - @0xsequence/relayer@1.9.15
+  - @0xsequence/sessions@1.9.15
+  - @0xsequence/signhub@1.9.15
+  - @0xsequence/utils@1.9.15
+  - @0xsequence/wallet@1.9.15
+
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.9.14
+  - @0xsequence/account@1.9.14
+  - @0xsequence/api@1.9.14
+  - @0xsequence/auth@1.9.14
+  - @0xsequence/core@1.9.14
+  - @0xsequence/guard@1.9.14
+  - @0xsequence/indexer@1.9.14
+  - @0xsequence/metadata@1.9.14
+  - @0xsequence/migration@1.9.14
+  - @0xsequence/multicall@1.9.14
+  - @0xsequence/network@1.9.14
+  - @0xsequence/provider@1.9.14
+  - @0xsequence/relayer@1.9.14
+  - @0xsequence/sessions@1.9.14
+  - @0xsequence/signhub@1.9.14
+  - @0xsequence/utils@1.9.14
+  - @0xsequence/wallet@1.9.14
+
 ## 1.9.13
 
 ### Patch Changes

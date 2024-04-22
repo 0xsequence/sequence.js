@@ -10,6 +10,7 @@ import {
   sessionAuthProof,
   signIntent,
   signMessage,
+  feeOptions,
   sendDelayedEncode,
   sendERC1155,
   sendERC20,
@@ -23,13 +24,15 @@ import {
   SendERC1155Args,
   SendDelayedEncodeArgs,
   GetTransactionReceiptArgs,
-  getTransactionReceipt
+  getTransactionReceipt,
+  changeIntentTime,
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'
 import { OpenSessionResponse } from './intents/responses'
 import { SimpleNetwork, WithSimpleNetwork, toNetworkID } from './networks'
 import {
+  IntentDataFeeOptions,
   IntentDataFinishValidateSession,
   IntentDataGetSession,
   IntentDataGetTransactionReceipt,
@@ -390,6 +393,11 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
+  async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataFeeOptions>> {
+    const intent = feeOptions(await this.commonArgs(args))
+    return this.signIntent(intent)
+  }
+
   async validateSession({ deviceMetadata }: { deviceMetadata: string }): Promise<SignedIntent<IntentDataValidateSession>> {
     const sessionId = await this.sessionId.get()
     if (!sessionId) {
@@ -445,5 +453,10 @@ export class SequenceWaaSBase {
 
   private signalObservers<T>(observers: Observer<T>[], value: T | null) {
     observers.forEach(observer => observer(value))
+  }
+
+  async updateIntentTime<T>(intent: SignedIntent<T>, time: Date): Promise<SignedIntent<T>> {
+    const newIntent = changeIntentTime(intent, time)
+    return this.signIntent(newIntent)
   }
 }

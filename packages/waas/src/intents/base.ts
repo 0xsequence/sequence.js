@@ -42,3 +42,11 @@ export function hashIntent<T>(intent: Intent<T>): ethers.Bytes {
   const encoded = ethers.utils.toUtf8Bytes(canonicalize(hashableIntent))
   return ethers.utils.arrayify(ethers.utils.keccak256(encoded))
 }
+
+export function changeIntentTime<T>(intent: SignedIntent<T>, now: Date): Intent<T> {
+  const { signatures, ...unsignedIntent } = intent
+  const lifespan = intent.expiresAt - intent.issuedAt
+  unsignedIntent.issuedAt = Math.floor(now.getTime() / 1000)
+  unsignedIntent.expiresAt = unsignedIntent.issuedAt + lifespan
+  return unsignedIntent
+}

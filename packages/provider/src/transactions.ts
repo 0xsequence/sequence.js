@@ -2,6 +2,19 @@ import { walletContracts } from '@0xsequence/abi'
 import { commons } from '@0xsequence/core'
 import { ethers } from 'ethers'
 
+const PROHIBITED_FUNCTIONS = new Map(
+  [
+    'addHook(bytes4,address)',
+    'clearExtraImageHashes(bytes32[])',
+    'removeHook(bytes4)',
+    'setExtraImageHash(bytes32,uint256)',
+    'updateIPFSRoot(bytes32)',
+    'updateImageHash(bytes32)',
+    'updateImageHashAndIPFS(bytes32,bytes32)',
+    'updateImplementation(address)'
+  ].map(signature => [ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(0, 10), signature])
+)
+
 export function validateTransactionRequest(wallet: string, transaction: commons.transaction.Transactionish) {
   const transactions = commons.transaction.fromTransactionish(wallet, transaction)
   const unwound = commons.transaction.unwind(wallet, transactions)
@@ -20,6 +33,16 @@ function validateTransaction(wallet: string, transaction: commons.transaction.Tr
 
   if (transaction.delegateCall) {
     throw new Error('delegate calls are forbidden')
+  }
+
+  if (transaction.data) {
+    const data = ethers.utils.hexlify(transaction.data)
+    const selector = data.slice(0, 10)
+    const signature = PROHIBITED_FUNCTIONS.get(selector)
+    if (signature) {
+      const name = signature.slice(0, signature.indexOf('('))
+      throw new Error(`${name} calls are forbidden`)
+    }
   }
 }
 
