@@ -1,5 +1,5 @@
 import { Observer, SequenceWaaSBase } from './base'
-import {IntentDataOpenSession, IntentDataSendTransaction} from './clients/intent.gen'
+import { IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
 import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -25,7 +25,7 @@ import {
   isTimedOutTransactionResponse,
   isFeeOptionsResponse,
   isSessionAuthProofResponse,
-  isIntentTimeError,
+  isIntentTimeError
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'

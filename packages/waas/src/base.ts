@@ -25,7 +25,7 @@ import {
   SendDelayedEncodeArgs,
   GetTransactionReceiptArgs,
   getTransactionReceipt,
-  changeIntentTime,
+  changeIntentTime
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'
@@ -393,7 +393,9 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs): Promise<SignedIntent<IntentDataFeeOptions>> {
+  async feeOptions(
+    args: WithSimpleNetwork<SendTransactionsArgs> & ExtraTransactionArgs
+  ): Promise<SignedIntent<IntentDataFeeOptions>> {
     const intent = feeOptions(await this.commonArgs(args))
     return this.signIntent(intent)
   }
