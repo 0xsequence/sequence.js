@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+- Updated dependencies
+  - @0xsequence/abi@1.9.20
+  - @0xsequence/account@1.9.20
+  - @0xsequence/api@1.9.20
+  - @0xsequence/auth@1.9.20
+  - @0xsequence/core@1.9.20
+  - @0xsequence/guard@1.9.20
+  - @0xsequence/indexer@1.9.20
+  - @0xsequence/metadata@1.9.20
+  - @0xsequence/migration@1.9.20
+  - @0xsequence/multicall@1.9.20
+  - @0xsequence/network@1.9.20
+  - @0xsequence/provider@1.9.20
+  - @0xsequence/relayer@1.9.20
+  - @0xsequence/sessions@1.9.20
+  - @0xsequence/signhub@1.9.20
+  - @0xsequence/utils@1.9.20
+  - @0xsequence/wallet@1.9.20
+
 ## 1.9.19
 
 ### Patch Changes

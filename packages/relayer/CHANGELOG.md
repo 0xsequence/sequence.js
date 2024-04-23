@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+- Updated dependencies
+  - @0xsequence/abi@1.9.20
+  - @0xsequence/core@1.9.20
+  - @0xsequence/utils@1.9.20
+
 ## 1.9.19
 
 ### Patch Changes

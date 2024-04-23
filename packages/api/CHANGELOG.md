@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+
 ## 1.9.19
 
 ### Patch Changes
