@@ -1,6 +1,6 @@
 {
   "name": "0xsequence",
-  "version": "1.9.20",
+  "version": "1.9.21",
   "description": "Sequence: a modular web3 stack and smart wallet for Ethereum chains",
   "repository": "https://github.com/0xsequence/sequence.js",
   "source": "src/index.ts",

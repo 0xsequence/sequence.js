@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.21
+  - @0xsequence/core@1.9.21
+  - @0xsequence/network@1.9.21
+  - @0xsequence/relayer@1.9.21
+  - @0xsequence/signhub@1.9.21
+  - @0xsequence/utils@1.9.21
+
 ## 1.9.20
 
 ### Patch Changes

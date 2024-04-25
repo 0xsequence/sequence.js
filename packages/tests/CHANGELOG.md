@@ -1,5 +1,13 @@
 # @0xsequence/tests
 
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.21
+
 ## 1.9.20
 
 ### Patch Changes

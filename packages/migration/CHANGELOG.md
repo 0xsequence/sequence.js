@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.21
+  - @0xsequence/core@1.9.21
+  - @0xsequence/wallet@1.9.21
+
 ## 1.9.20
 
 ### Patch Changes
