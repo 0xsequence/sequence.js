@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.9.23
+
+### Patch Changes
+
+- update api client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.23
+  - @0xsequence/network@1.9.23
+  - @0xsequence/utils@1.9.23
+
 ## 1.9.22
 
 ### Patch Changes

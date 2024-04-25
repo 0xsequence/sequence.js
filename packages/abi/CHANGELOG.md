@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.9.23
+
+### Patch Changes
+
+- update api client bindings
+
 ## 1.9.22
 
 ### Patch Changes
