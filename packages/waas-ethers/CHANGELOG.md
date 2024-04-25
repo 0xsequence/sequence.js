@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+- Updated dependencies
+  - @0xsequence/waas@1.9.22
+
 ## 1.9.21
 
 ### Patch Changes

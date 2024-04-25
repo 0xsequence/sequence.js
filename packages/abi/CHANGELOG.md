@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+
 ## 1.9.21
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.22
+
 ## 1.9.21
 
 ### Patch Changes
