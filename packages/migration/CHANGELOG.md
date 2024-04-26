@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+- Updated dependencies
+  - @0xsequence/abi@1.9.24
+  - @0xsequence/core@1.9.24
+  - @0xsequence/wallet@1.9.24
+
 ## 1.9.23
 
 ### Patch Changes

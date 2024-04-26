@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+- Updated dependencies
+  - @0xsequence/core@1.9.24
+
 ## 1.9.23
 
 ### Patch Changes

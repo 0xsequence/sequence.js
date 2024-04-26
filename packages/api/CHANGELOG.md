@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+
 ## 1.9.23
 
 ### Patch Changes
