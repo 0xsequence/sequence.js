@@ -8,7 +8,7 @@ export type Session = {
 }
 
 export async function newSessionFromSessionId(sessionId: string): Promise<Session> {
-  if (window.crypto !== undefined) {
+  if (window.crypto !== undefined && window.crypto.subtle !== undefined) {
     return newSECP256R1SessionFromSessionId(sessionId)
   } else {
     return newSECP256K1SessionFromSessionId(sessionId)
@@ -16,7 +16,7 @@ export async function newSessionFromSessionId(sessionId: string): Promise<Sessio
 }
 
 export async function newSession(): Promise<Session> {
-  if (window.crypto !== undefined) {
+  if (window.crypto !== undefined && window.crypto.subtle !== undefined) {
     return newSECP256R1Session()
   } else {
     return newSECP256K1Session()
