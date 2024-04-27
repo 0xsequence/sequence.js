@@ -7,14 +7,7 @@ import {
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
 import { Identity } from './auth'
-
-function getRandomString(len: number) {
-  const randomValues = new Uint8Array(len)
-  window.crypto.getRandomValues(randomValues)
-  return Array.from(randomValues)
-    .map(nr => nr.toString(16).padStart(2, '0'))
-    .join('')
-}
+import { isSubtleCryptoAvailable } from './session'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
@@ -111,5 +104,24 @@ export class EmailAuth {
     }
 
     return { idToken: res.AuthenticationResult.IdToken }
+  }
+}
+
+function getRandomString(len: number) {
+  return Array.from(getRandomValues(len))
+    .map(nr => nr.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function getRandomValues(len: number) {
+  const randomValues = new Uint8Array(len)
+  if (isSubtleCryptoAvailable()) {
+    return window.crypto.getRandomValues(randomValues)
+  } else {
+    for (let i = 0; i < len; i++) {
+      const randomInteger = Math.floor(Math.random() * 256)
+      randomValues[i] = randomInteger
+    }
+    return randomValues
   }
 }
