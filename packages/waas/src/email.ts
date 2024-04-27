@@ -118,6 +118,7 @@ function getRandomValues(len: number) {
   if (isSubtleCryptoAvailable()) {
     return window.crypto.getRandomValues(randomValues)
   } else {
+    console.warn('window.crypto.getRandomValues is not available. Falling back to less secure Math.random().')
     for (let i = 0; i < len; i++) {
       const randomInteger = Math.floor(Math.random() * 256)
       randomValues[i] = randomInteger
