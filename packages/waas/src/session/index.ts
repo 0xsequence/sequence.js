@@ -8,7 +8,7 @@ export type Session = {
 }
 
 export async function newSessionFromSessionId(sessionId: string): Promise<Session> {
-  if (window.crypto !== undefined && window.crypto.subtle !== undefined) {
+  if (isSubtleCryptoAvailable()) {
     return newSECP256R1SessionFromSessionId(sessionId)
   } else {
     return newSECP256K1SessionFromSessionId(sessionId)
@@ -16,11 +16,15 @@ export async function newSessionFromSessionId(sessionId: string): Promise<Sessio
 }
 
 export async function newSession(): Promise<Session> {
-  if (window.crypto !== undefined && window.crypto.subtle !== undefined) {
+  if (isSubtleCryptoAvailable()) {
     return newSECP256R1Session()
   } else {
     return newSECP256K1Session()
   }
+}
+
+export function isSubtleCryptoAvailable(): boolean {
+  return typeof window === 'object' && typeof window.crypto === 'object' && typeof window.crypto.subtle === 'object'
 }
 
 export * from './secp256r1'
