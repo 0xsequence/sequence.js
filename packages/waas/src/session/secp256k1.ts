@@ -21,8 +21,8 @@ export async function newSECP256K1SessionFromSessionId(sessionId: string, secure
     sign(message: string | Uint8Array): Promise<string> {
       return wallet.signMessage(message)
     },
-    clear(): void {
-      secureStoreBackend.delete(idbName, idbStoreName, sessionId)
+    clear: async () => {
+      await secureStoreBackend.delete(idbName, idbStoreName, sessionId)
     }
   } as Session
 }

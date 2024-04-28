@@ -2,8 +2,6 @@ import { ethers } from 'ethers'
 import { Session } from './index'
 import { KeyTypes } from './keyTypes'
 import { SubtleCryptoBackend } from '../subtle-crypto'
-
-import { openDB } from 'idb'
 import { SecureStoreBackend } from '../secure-store'
 
 const idbName = 'seq-waas-session-p256r1'
@@ -15,11 +13,11 @@ const idbStoreName = 'seq-waas-session'
 // than a simple string that SecureStoreBackend can handle
 
 export async function newSECP256R1SessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
-  const db = await openDB(idbName)
+  const keys = await secureStoreBackend.get(idbName, idbStoreName, sessionId)
 
-  const tx = db.transaction(idbStoreName, 'readonly')
-  const keys = await db.get(idbStoreName, sessionId)
-  await tx.done
+  if (!keys || !keys.privateKey) {
+    throw new Error('No private key found')
+  }
 
   const encoder = new TextEncoder()
   return {
@@ -50,7 +48,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string, crypto
       return ethers.utils.hexlify(new Uint8Array(signatureBuff))
     },
     clear: async () => {
-      await db.delete(idbStoreName, sessionId)
+      await secureStoreBackend.delete(idbName, idbStoreName, sessionId)
     }
   }
 }
@@ -58,17 +56,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string, crypto
 export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const sessionId = await pubKeyToSessionId(cryptoBackend, keyPair.publicKey)
 
-  const db = await openDB(idbName, 1, {
-    upgrade(db) {
-      db.createObjectStore(idbStoreName)
-    }
-  })
-
-  const tx = db.transaction(idbStoreName, 'readwrite')
-  await db.put(idbStoreName, keyPair, sessionId)
-  await tx.done
-
-  db.close()
+  await secureStoreBackend.set(idbName, idbStoreName, sessionId, keyPair)
 
   return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend, secureStoreBackend)
 }

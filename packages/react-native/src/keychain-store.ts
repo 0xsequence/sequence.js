@@ -7,7 +7,7 @@ export class KeychainSecureStoreBackend implements SecureStoreBackend {
         // no-op
     }
 
-    async get(dbName: string, dbStoreName: string, key: string): Promise<string | null> {
+    async get(dbName: string, dbStoreName: string, key: string): Promise<any | null> {
         const credentials = await getGenericPassword({ service: dbStoreName })
         if (credentials) {
             return credentials.password
@@ -16,7 +16,10 @@ export class KeychainSecureStoreBackend implements SecureStoreBackend {
         }
     }
 
-    async set(dbName: string, dbStoreName: string, key: string, value: string): Promise<boolean> {
+    async set(dbName: string, dbStoreName: string, key: string, value: any): Promise<boolean> {
+        if (typeof value !== 'string') {
+            throw new Error('Value must be a string')
+        }
         await setGenericPassword(key, value, { service: dbStoreName })
         return true
     }

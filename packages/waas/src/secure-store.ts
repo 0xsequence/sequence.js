@@ -1,8 +1,8 @@
 import { openDB, IDBPDatabase } from 'idb'
 
 export interface SecureStoreBackend {
-    get(dbName: string, dbStoreName: string, key: string): Promise<string | null>
-    set(dbName: string, dbStoreName: string, key: string, value: string): Promise<boolean>
+    get(dbName: string, dbStoreName: string, key: string): Promise<any | null>
+    set(dbName: string, dbStoreName: string, key: string, value: any): Promise<boolean>
     delete(dbName: string, dbStoreName: string, key: string): Promise<boolean>
 }
 
@@ -51,7 +51,7 @@ export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
         return value
     }
 
-    async set(dbName: string, dbStoreName: string, key: string, value: string): Promise<boolean> {
+    async set(dbName: string, dbStoreName: string, key: string, value: any): Promise<boolean> {
         const db = await this.openDB(dbName, dbStoreName, 1)
         const tx = db.transaction(dbStoreName, 'readwrite')
         await db.put(dbStoreName, value, key)
