@@ -18,8 +18,7 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.445.0",
     "idb": "^7.1.1",
     "json-canonicalize": "^1.0.6",
-    "jwt-decode": "^4.0.0",
-    "react-native-keychain": "^8.2.0"
+    "jwt-decode": "^4.0.0"
   },
   "files": [
     "src",

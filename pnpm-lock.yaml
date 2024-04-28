@@ -591,6 +591,15 @@ importers:
         specifier: ^2.20.1
         version: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
 
+  packages/react-native:
+    dependencies:
+      '@0xsequence/waas':
+        specifier: workspace:*
+        version: link:../waas
+      react-native-keychain:
+        specifier: ^8.2.0
+        version: 8.2.0
+
   packages/relayer:
     dependencies:
       '@0xsequence/abi':
@@ -743,9 +752,6 @@ importers:
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
-      react-native-keychain:
-        specifier: ^8.2.0
-        version: 8.2.0
     devDependencies:
       '@types/jwt-decode':
         specifier: ^3.1.0

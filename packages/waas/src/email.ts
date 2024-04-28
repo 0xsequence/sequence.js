@@ -6,16 +6,15 @@ import {
   SignUpCommand,
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
+
 import { Identity } from './auth'
-import { SubtleCryptoBackend } from './subtle-crypto'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
 
   constructor(
     public readonly region: string,
-    public readonly clientId: string,
-    public readonly cryptoBackend: SubtleCryptoBackend | null
+    public readonly clientId: string
   ) {}
 
   private cognito() {
@@ -33,7 +32,7 @@ export class EmailAuth {
       new SignUpCommand({
         ClientId: this.clientId,
         Username: email,
-        Password: 'aB1%' + getRandomString(14, this.cryptoBackend),
+        Password: 'aB1%' + getRandomString(14),
         UserAttributes: [{ Name: 'email', Value: email }]
       })
     )
@@ -108,7 +107,7 @@ export class EmailAuth {
   }
 }
 
-function getRandomString(len: number, cryptoBackend: SubtleCryptoBackend | null) {
+function getRandomString(len: number) {
   return Array.from(getRandomValues(len))
     .map(nr => nr.toString(16).padStart(2, '0'))
     .join('')

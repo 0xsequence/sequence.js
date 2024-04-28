@@ -1,5 +1,4 @@
 import { openDB } from 'idb'
-import * as Keychain from 'react-native-keychain'
 
 export interface SecureStoreBackend {
     get(dbName: string, dbStoreName: string, key: string): Promise<string | null>
@@ -10,8 +9,6 @@ export interface SecureStoreBackend {
 export const getDefaultSecureStoreBackend = (): SecureStoreBackend | null => {
     if (isIndexedDbAvailable()) {
         return new IndexedDbSecureStoreBackend()
-    } else if (isKeychainAvailable()) {
-        return new KeychainSecureStoreBackend()
     } else {
         return null
     }
@@ -19,10 +16,6 @@ export const getDefaultSecureStoreBackend = (): SecureStoreBackend | null => {
 
 export function isIndexedDbAvailable(): boolean {
     return typeof window === 'object' && typeof window.indexedDB === 'object'
-}
-
-export function isKeychainAvailable(): boolean {
-    return typeof Keychain === 'object'
 }
 
 export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
@@ -62,31 +55,5 @@ export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
         await tx.done
         db.close()
         return true
-    }
-}
-
-export class KeychainSecureStoreBackend implements SecureStoreBackend {
-    constructor() {
-        if (!isKeychainAvailable()) {
-            throw new Error('Keychain is not available')
-        }
-    }
-
-    async get(dbName: string, dbStoreName: string, key: string): Promise<string | null> {
-        const credentials = await Keychain.getGenericPassword({ service: dbStoreName })
-        if (credentials) {
-            return credentials.password
-        } else {
-            return null
-        }
-    }
-
-    async set(dbName: string, dbStoreName: string, key: string, value: string): Promise<boolean> {
-        await Keychain.setGenericPassword(key, value, { service: dbStoreName })
-        return true
-    }
-
-    async delete(dbName: string, dbStoreName: string, key: string): Promise<boolean> {
-        return Keychain.resetGenericPassword({ service: dbStoreName })
     }
 }
