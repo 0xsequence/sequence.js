@@ -1,17 +1,12 @@
 import { ethers } from 'ethers'
-import { getDefaultSecureStoreBackend } from '../secure-store'
+import { SecureStoreBackend } from '../secure-store'
 import { Session } from './index'
 
 const idbName = 'seq-waas-session-p256k1'
 const idbStoreName = 'seq-waas-session'
 
-export async function newSECP256K1SessionFromSessionId(sessionId: string): Promise<Session> {
-  const secureStore = getDefaultSecureStoreBackend()
-  if (!secureStore) {
-    throw new Error('No secure store available')
-  }
-
-  const privateKey = await secureStore.get(idbName, idbStoreName, sessionId)
+export async function newSECP256K1SessionFromSessionId(sessionId: string, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+  const privateKey = await secureStoreBackend.get(idbName, idbStoreName, sessionId)
 
   if (!privateKey) {
     throw new Error('No private key found')
@@ -27,27 +22,21 @@ export async function newSECP256K1SessionFromSessionId(sessionId: string): Promi
       return wallet.signMessage(message)
     },
     clear(): void {
-      secureStore.delete(idbName, idbStoreName, sessionId)
+      secureStoreBackend.delete(idbName, idbStoreName, sessionId)
     }
   } as Session
 }
 
-export async function newSECP256K1SessionFromPrivateKey(privateKey: string): Promise<Session> {
+export async function newSECP256K1SessionFromPrivateKey(privateKey: string, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const wallet = new ethers.Wallet(privateKey)
-
-  const secureStore = getDefaultSecureStoreBackend()
-  if (!secureStore) {
-    throw new Error('No secure store available')
-  }
-
   const sessionId = await wallet.getAddress()
 
-  await secureStore.set(idbName, idbStoreName, sessionId, privateKey)
+  await secureStoreBackend.set(idbName, idbStoreName, sessionId, privateKey)
 
-  return newSECP256K1SessionFromSessionId(sessionId)
+  return newSECP256K1SessionFromSessionId(sessionId, secureStoreBackend)
 }
 
-export async function newSECP256K1Session(): Promise<Session> {
+export async function newSECP256K1Session(secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const wallet = ethers.Wallet.createRandom()
-  return newSECP256K1SessionFromPrivateKey(wallet.privateKey)
+  return newSECP256K1SessionFromPrivateKey(wallet.privateKey, secureStoreBackend)
 }

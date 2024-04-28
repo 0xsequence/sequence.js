@@ -1,6 +1,7 @@
 import { newSECP256K1SessionFromSessionId, newSECP256K1Session } from './secp256k1'
 import { newSECP256R1SessionFromSessionId, newSECP256R1Session } from './secp256r1'
 import { SubtleCryptoBackend } from '../subtle-crypto'
+import { SecureStoreBackend } from '../secure-store'
 
 export type Session = {
   sessionId(): Promise<string>
@@ -8,19 +9,19 @@ export type Session = {
   clear(): void
 }
 
-export async function newSessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend | null): Promise<Session> {
+export async function newSessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend | null, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   if (cryptoBackend) {
-    return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend)
+    return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend, secureStoreBackend)
   } else {
-    return newSECP256K1SessionFromSessionId(sessionId)
+    return newSECP256K1SessionFromSessionId(sessionId, secureStoreBackend)
   }
 }
 
-export async function newSession(cryptoBackend: SubtleCryptoBackend | null): Promise<Session> {
+export async function newSession(cryptoBackend: SubtleCryptoBackend | null, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   if (cryptoBackend) {
-    return newSECP256R1Session(cryptoBackend)
+    return newSECP256R1Session(cryptoBackend, secureStoreBackend)
   } else {
-    return newSECP256K1Session()
+    return newSECP256K1Session(secureStoreBackend)
   }
 }
 

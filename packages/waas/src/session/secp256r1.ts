@@ -4,6 +4,7 @@ import { KeyTypes } from './keyTypes'
 import { SubtleCryptoBackend } from '../subtle-crypto'
 
 import { openDB } from 'idb'
+import { SecureStoreBackend } from '../secure-store'
 
 const idbName = 'seq-waas-session-p256r1'
 const idbStoreName = 'seq-waas-session'
@@ -12,7 +13,7 @@ const idbStoreName = 'seq-waas-session'
 // an adapter for idb here for storage, and anywhere else 'idb' is used
 // in the entire project.
 
-export async function newSECP256R1SessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend): Promise<Session> {
+export async function newSECP256R1SessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const db = await openDB(idbName)
 
   const tx = db.transaction(idbStoreName, 'readonly')
@@ -53,7 +54,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string, crypto
   }
 }
 
-export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cryptoBackend: SubtleCryptoBackend): Promise<Session> {
+export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const sessionId = await pubKeyToSessionId(cryptoBackend, keyPair.publicKey)
 
   const db = await openDB(idbName, 1, {
@@ -68,10 +69,10 @@ export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cry
 
   db.close()
 
-  return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend)
+  return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend, secureStoreBackend)
 }
 
-export async function newSECP256R1Session(cryptoBackend: SubtleCryptoBackend): Promise<Session> {
+export async function newSECP256R1Session(cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const generatedKeys = await cryptoBackend.generateKey(
     {
       name: 'ECDSA',
@@ -80,7 +81,7 @@ export async function newSECP256R1Session(cryptoBackend: SubtleCryptoBackend): P
     false,
     ['sign', 'verify']
   )
-  return newSECP256R1SessionFromKeyPair(generatedKeys, cryptoBackend)
+  return newSECP256R1SessionFromKeyPair(generatedKeys, cryptoBackend, secureStoreBackend)
 }
 
 async function pubKeyToSessionId(cryptoBackend: SubtleCryptoBackend, pubKey: CryptoKey): Promise<string> {

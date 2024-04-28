@@ -42,6 +42,7 @@ import {
   IntentDataValidateSession
 } from './clients/intent.gen'
 import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
+import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -82,7 +83,8 @@ export class SequenceWaaSBase {
   constructor(
     public readonly config = { network: 1 } as SequenceBaseConfig,
     private readonly store: Store = new LocalStore(),
-    private readonly cryptoBackend: SubtleCryptoBackend | null = getDefaultSubtleCryptoBackend()
+    private readonly cryptoBackend: SubtleCryptoBackend | null = getDefaultSubtleCryptoBackend(),
+    private readonly secureStoreBackend: SecureStoreBackend
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.sessionId = new StoreObj(this.store, SEQUENCE_WAAS_SESSION_ID_KEY, undefined)
@@ -142,7 +144,7 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const session = await newSessionFromSessionId(sessionId, this.cryptoBackend)
+    const session = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
     return signIntent(session, intent)
   }
 
@@ -152,7 +154,7 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const signer = await newSessionFromSessionId(sessionId, this.cryptoBackend)
+    const signer = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
     return signer.sign(message)
   }
 
@@ -171,7 +173,7 @@ export class SequenceWaaSBase {
     const promiseGenerator = async () => {
       let sessionId = await this.sessionId.get()
       if (!sessionId) {
-        const session = await newSession(this.cryptoBackend)
+        const session = await newSession(this.cryptoBackend, this.secureStoreBackend)
         sessionId = await session.sessionId()
         await this.sessionId.set(sessionId)
         this.signalObservers(this.sessionObservers, sessionId)
