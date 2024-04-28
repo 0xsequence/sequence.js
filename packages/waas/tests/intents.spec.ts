@@ -4,6 +4,7 @@ import { ethers } from 'ethers'
 import { Intent, signIntent } from '../src/intents'
 import { IntentDataSendTransaction, IntentDataSignMessage } from '../src/clients/intent.gen'
 import { newSECP256K1SessionFromPrivateKey } from '../src/session'
+import { getDefaultSecureStoreBackend } from '../src/secure-store'
 
 import 'fake-indexeddb/auto'
 
@@ -31,7 +32,11 @@ describe('Payloads', () => {
       }
     }
 
-    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const secureStoreBackend = getDefaultSecureStoreBackend()
+    if (!secureStoreBackend) {
+      throw new Error('Secure store backend not available')
+    }
+    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51', secureStoreBackend)
     const signedIntent = await signIntent(session, intent)
 
     expect(signedIntent.signatures.length).to.equal(1)
@@ -54,7 +59,11 @@ describe('Payloads', () => {
       }
     }
 
-    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const secureStoreBackend = getDefaultSecureStoreBackend()
+    if (!secureStoreBackend) {
+      throw new Error('Secure store backend not available')
+    }
+    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51', secureStoreBackend)
     const signedIntent = await signIntent(session, intent)
 
     expect(signedIntent.signatures.length).to.equal(1)
@@ -134,7 +143,11 @@ describe('Payloads', () => {
       }
     }
 
-    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const secureStoreBackend = getDefaultSecureStoreBackend()
+    if (!secureStoreBackend) {
+      throw new Error('Secure store backend not available')
+    }
+    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51', secureStoreBackend)
     const signedIntent = await signIntent(session, intent)
 
     expect(signedIntent.signatures.length).to.equal(1)

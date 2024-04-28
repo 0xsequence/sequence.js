@@ -15,7 +15,7 @@ export const getDefaultSecureStoreBackend = (): SecureStoreBackend | null => {
 }
 
 export function isIndexedDbAvailable(): boolean {
-    return typeof window === 'object' && typeof window.indexedDB === 'object'
+    return typeof indexedDB === 'object'
 }
 
 export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
@@ -42,7 +42,7 @@ export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
         })
 
         const tx = db.transaction(dbStoreName, 'readwrite')
-        await db.put(dbName, value, key)
+        await db.put(dbStoreName, value, key)
         await tx.done
         db.close()
         return true
