@@ -7,14 +7,15 @@ import {
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
 import { Identity } from './auth'
-import { isSubtleCryptoAvailable } from './session'
+import { SubtleCryptoBackend } from './subtle-crypto'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
 
   constructor(
     public readonly region: string,
-    public readonly clientId: string
+    public readonly clientId: string,
+    public readonly cryptoBackend: SubtleCryptoBackend | null
   ) {}
 
   private cognito() {
@@ -32,7 +33,7 @@ export class EmailAuth {
       new SignUpCommand({
         ClientId: this.clientId,
         Username: email,
-        Password: 'aB1%' + getRandomString(14),
+        Password: 'aB1%' + getRandomString(14, this.cryptoBackend),
         UserAttributes: [{ Name: 'email', Value: email }]
       })
     )
@@ -107,7 +108,7 @@ export class EmailAuth {
   }
 }
 
-function getRandomString(len: number) {
+function getRandomString(len: number, cryptoBackend: SubtleCryptoBackend | null) {
   return Array.from(getRandomValues(len))
     .map(nr => nr.toString(16).padStart(2, '0'))
     .join('')
@@ -119,6 +120,7 @@ function getRandomValues(len: number) {
     return window.crypto.getRandomValues(randomValues)
   } else {
     console.warn('window.crypto.getRandomValues is not available. Falling back to less secure Math.random().')
+    const randomValues = new Uint8Array(len)
     for (let i = 0; i < len; i++) {
       const randomInteger = Math.floor(Math.random() * 256)
       randomValues[i] = randomInteger

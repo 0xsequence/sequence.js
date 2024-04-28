@@ -1,13 +1,18 @@
 import { ethers } from 'ethers'
 import { Session } from './index'
 import { KeyTypes } from './keyTypes'
+import { SubtleCryptoBackend } from '../subtle-crypto'
 
 import { openDB } from 'idb'
 
 const idbName = 'seq-waas-session-p256r1'
 const idbStoreName = 'seq-waas-session'
 
-export async function newSECP256R1SessionFromSessionId(sessionId: string): Promise<Session> {
+// TODO: in order to support react-native we will have to create
+// an adapter for idb here for storage, and anywhere else 'idb' is used
+// in the entire project.
+
+export async function newSECP256R1SessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend): Promise<Session> {
   const db = await openDB(idbName)
 
   const tx = db.transaction(idbStoreName, 'readonly')
@@ -17,7 +22,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string): Promi
   const encoder = new TextEncoder()
   return {
     sessionId: async () => {
-      const pubKeyRaw = await window.crypto.subtle.exportKey('raw', keys.publicKey)
+      const pubKeyRaw = await cryptoBackend.exportKey('raw', keys.publicKey)
       const pubKeyTypedRaw = new Uint8Array(pubKeyRaw.byteLength + 1)
 
       // set the first byte to the key type
@@ -35,7 +40,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string): Promi
           message = encoder.encode(message)
         }
       }
-      const signatureBuff = await window.crypto.subtle.sign(
+      const signatureBuff = await cryptoBackend.sign(
         { name: 'ECDSA', hash: { name: 'SHA-256' } },
         keys.privateKey,
         message
@@ -48,8 +53,8 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string): Promi
   }
 }
 
-export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair): Promise<Session> {
-  const sessionId = await pubKeyToSessionId(keyPair.publicKey)
+export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cryptoBackend: SubtleCryptoBackend): Promise<Session> {
+  const sessionId = await pubKeyToSessionId(cryptoBackend, keyPair.publicKey)
 
   const db = await openDB(idbName, 1, {
     upgrade(db) {
@@ -63,11 +68,11 @@ export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair): Pr
 
   db.close()
 
-  return newSECP256R1SessionFromSessionId(sessionId)
+  return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend)
 }
 
-export async function newSECP256R1Session(): Promise<Session> {
-  const generatedKeys = await window.crypto.subtle.generateKey(
+export async function newSECP256R1Session(cryptoBackend: SubtleCryptoBackend): Promise<Session> {
+  const generatedKeys = await cryptoBackend.generateKey(
     {
       name: 'ECDSA',
       namedCurve: 'P-256'
@@ -75,11 +80,11 @@ export async function newSECP256R1Session(): Promise<Session> {
     false,
     ['sign', 'verify']
   )
-  return newSECP256R1SessionFromKeyPair(generatedKeys)
+  return newSECP256R1SessionFromKeyPair(generatedKeys, cryptoBackend)
 }
 
-async function pubKeyToSessionId(pubKey: CryptoKey): Promise<string> {
-  const pubKeyRaw = await window.crypto.subtle.exportKey('raw', pubKey)
+async function pubKeyToSessionId(cryptoBackend: SubtleCryptoBackend, pubKey: CryptoKey): Promise<string> {
+  const pubKeyRaw = await cryptoBackend.exportKey('raw', pubKey)
   const pubKeyTypedRaw = new Uint8Array(pubKeyRaw.byteLength + 1)
 
   // set the first byte to the key type

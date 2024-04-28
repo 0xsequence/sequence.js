@@ -33,6 +33,7 @@ import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
+import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -133,10 +134,11 @@ export class SequenceWaaS {
   constructor(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     preset: ExtendedSequenceConfig = LOCAL,
-    private readonly store: Store = new LocalStore()
+    private readonly store: Store = new LocalStore(),
+    private readonly cryptoBackend: SubtleCryptoBackend | null = getDefaultSubtleCryptoBackend()
   ) {
     this.config = defaultArgsOrFail(config, preset)
-    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store)
+    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store, this.cryptoBackend)
     this.client = new WaasAuthenticator(this.config.rpcServer, this.fetch.bind(this))
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
   }
@@ -154,7 +156,7 @@ export class SequenceWaaS {
       throw new Error('Missing emailClientId')
     }
 
-    this.emailClient = new EmailAuth(this.config.emailRegion, this.config.emailClientId)
+    this.emailClient = new EmailAuth(this.config.emailRegion, this.config.emailClientId, this.cryptoBackend)
     return this.emailClient
   }
 
@@ -301,7 +303,7 @@ export class SequenceWaaS {
     }
 
     if (closeSessionId === thisSessionId) {
-      const session = await newSessionFromSessionId(thisSessionId)
+      const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend)
       session.clear()
       await this.waas.completeSignOut()
       await this.deviceName.set(undefined)
