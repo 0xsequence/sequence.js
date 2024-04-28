@@ -1,16 +1,21 @@
 import { ethers } from 'ethers'
-import { openDB } from 'idb'
+import { getDefaultSecureStoreBackend } from '../secure-store'
 import { Session } from './index'
 
 const idbName = 'seq-waas-session-p256k1'
 const idbStoreName = 'seq-waas-session'
 
 export async function newSECP256K1SessionFromSessionId(sessionId: string): Promise<Session> {
-  const db = await openDB(idbName)
+  const secureStore = getDefaultSecureStoreBackend()
+  if (!secureStore) {
+    throw new Error('No secure store available')
+  }
 
-  const tx = db.transaction(idbStoreName, 'readonly')
-  const privateKey = await db.get(idbStoreName, sessionId)
-  await tx.done
+  const privateKey = await secureStore.get(idbName, idbStoreName, sessionId)
+
+  if (!privateKey) {
+    throw new Error('No private key found')
+  }
 
   const wallet = new ethers.Wallet(privateKey)
 
@@ -22,7 +27,7 @@ export async function newSECP256K1SessionFromSessionId(sessionId: string): Promi
       return wallet.signMessage(message)
     },
     clear(): void {
-      db.delete(idbStoreName, sessionId)
+      secureStore.delete(idbName, idbStoreName, sessionId)
     }
   } as Session
 }
@@ -30,19 +35,14 @@ export async function newSECP256K1SessionFromSessionId(sessionId: string): Promi
 export async function newSECP256K1SessionFromPrivateKey(privateKey: string): Promise<Session> {
   const wallet = new ethers.Wallet(privateKey)
 
-  const db = await openDB(idbName, 1, {
-    upgrade(db) {
-      db.createObjectStore(idbStoreName)
-    }
-  })
+  const secureStore = getDefaultSecureStoreBackend()
+  if (!secureStore) {
+    throw new Error('No secure store available')
+  }
 
   const sessionId = await wallet.getAddress()
 
-  const tx = db.transaction(idbStoreName, 'readwrite')
-  await db.put(idbStoreName, privateKey, sessionId)
-  await tx.done
-
-  db.close()
+  await secureStore.set(idbName, idbStoreName, sessionId, privateKey)
 
   return newSECP256K1SessionFromSessionId(sessionId)
 }

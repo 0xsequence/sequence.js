@@ -743,6 +743,9 @@ importers:
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
+      react-native-keychain:
+        specifier: ^8.2.0
+        version: 8.2.0
     devDependencies:
       '@types/jwt-decode':
         specifier: ^3.1.0
@@ -12601,6 +12604,10 @@ packages:
       iconv-lite: 0.4.24
       unpipe: 1.0.0
     dev: true
+
+  /react-native-keychain@8.2.0:
+    resolution: {integrity: sha512-SkRtd9McIl1Ss2XSWNLorG+KMEbgeVqX+gV+t3u1EAAqT8q2/OpRmRbxpneT2vnb/dMhiU7g6K/pf3nxLUXRvA==}
+    dev: false
 
   /read-pkg-up@7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
