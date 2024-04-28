@@ -64,8 +64,6 @@ export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
         const tx = db.transaction(dbStoreName, 'readwrite')
         await db.delete(dbStoreName, key)
         await tx.done
-        
-        this.db = null
         return true
     }
 }
