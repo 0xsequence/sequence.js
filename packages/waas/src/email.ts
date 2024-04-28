@@ -115,7 +115,7 @@ function getRandomString(len: number) {
 
 function getRandomValues(len: number) {
   const randomValues = new Uint8Array(len)
-  if (isSubtleCryptoAvailable()) {
+  if (typeof window === 'object' && typeof window.crypto === 'object') {
     return window.crypto.getRandomValues(randomValues)
   } else {
     console.warn('window.crypto.getRandomValues is not available. Falling back to less secure Math.random().')
