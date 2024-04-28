@@ -1,4 +1,4 @@
-import { openDB } from 'idb'
+import { openDB, IDBPDatabase } from 'idb'
 
 export interface SecureStoreBackend {
     get(dbName: string, dbStoreName: string, key: string): Promise<string | null>
@@ -19,41 +19,53 @@ export function isIndexedDbAvailable(): boolean {
 }
 
 export class IndexedDbSecureStoreBackend implements SecureStoreBackend {
+    private db: IDBPDatabase | null
+
     constructor() {
         if (!isIndexedDbAvailable()) {
             throw new Error('IndexedDB is not available')
         }
+
+        this.db = null
     }
 
-    async get(dbName: string, dbStoreName: string, key: string): Promise<string | null> {
-        const db = await openDB(dbName)
-        const tx = db.transaction(dbStoreName, 'readonly')
-        const value = await db.get(dbStoreName, key)
-        await tx.done
-        db.close()
-        return value
-    }
+    private async openDB(dbName: string, dbStoreName: string, version: number): Promise<IDBPDatabase> {
+        if (this.db) {
+            return this.db
+        }
 
-    async set(dbName: string, dbStoreName: string, key: string, value: string): Promise<boolean> {
-        const db = await openDB(dbName, 1, {
+        this.db = await openDB(dbName, 1, {
             upgrade(db) {
                 db.createObjectStore(dbStoreName)
             }
         })
 
+        return this.db
+    }
+
+    async get(dbName: string, dbStoreName: string, key: string): Promise<string | null> {
+        const db = await this.openDB(dbName, dbStoreName, 1)
+        const tx = db.transaction(dbStoreName, 'readonly')
+        const value = await db.get(dbStoreName, key)
+        await tx.done
+        return value
+    }
+
+    async set(dbName: string, dbStoreName: string, key: string, value: string): Promise<boolean> {
+        const db = await this.openDB(dbName, dbStoreName, 1)
         const tx = db.transaction(dbStoreName, 'readwrite')
         await db.put(dbStoreName, value, key)
         await tx.done
-        db.close()
         return true
     }
 
     async delete(dbName: string, dbStoreName: string, key: string): Promise<boolean> {
-        const db = await openDB(dbName)
+        const db = await this.openDB(dbName, dbStoreName, 1)
         const tx = db.transaction(dbStoreName, 'readwrite')
         await db.delete(dbStoreName, key)
         await tx.done
-        db.close()
+        
+        this.db = null
         return true
     }
 }
