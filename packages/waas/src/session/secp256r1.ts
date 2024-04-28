@@ -9,9 +9,10 @@ import { SecureStoreBackend } from '../secure-store'
 const idbName = 'seq-waas-session-p256r1'
 const idbStoreName = 'seq-waas-session'
 
-// TODO: in order to support react-native we will have to create
-// an adapter for idb here for storage, and anywhere else 'idb' is used
-// in the entire project.
+// TODO: We need to update this to use the secure store backend
+// Currently it ignores the override and leverages idb
+// This is because the CryptoKeyPair is a bit more complicated 
+// than a simple string that SecureStoreBackend can handle
 
 export async function newSECP256R1SessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
   const db = await openDB(idbName)
