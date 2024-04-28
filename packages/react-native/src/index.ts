@@ -1,1 +1,1 @@
-export type { KeychainSecureStoreBackend } from './keychain-store'
+export * from './keychain-store'
