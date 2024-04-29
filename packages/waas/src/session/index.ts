@@ -9,7 +9,10 @@ export type Session = {
   clear(): void
 }
 
-export async function newSessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend | null, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend | null, secureStoreBackend: SecureStoreBackend | null): Promise<Session> {
+  if (!secureStoreBackend) {
+    throw new Error('No secure store available')
+  }
   if (cryptoBackend) {
     return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend, secureStoreBackend)
   } else {
@@ -17,7 +20,10 @@ export async function newSessionFromSessionId(sessionId: string, cryptoBackend: 
   }
 }
 
-export async function newSession(cryptoBackend: SubtleCryptoBackend | null, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSession(cryptoBackend: SubtleCryptoBackend | null, secureStoreBackend: SecureStoreBackend | null): Promise<Session> {
+  if (!secureStoreBackend) {
+    throw new Error('No secure store available')
+  }
   if (cryptoBackend) {
     return newSECP256R1Session(cryptoBackend, secureStoreBackend)
   } else {

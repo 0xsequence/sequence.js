@@ -84,7 +84,7 @@ export class SequenceWaaSBase {
     public readonly config = { network: 1 } as SequenceBaseConfig,
     private readonly store: Store = new LocalStore(),
     private readonly cryptoBackend: SubtleCryptoBackend | null = getDefaultSubtleCryptoBackend(),
-    private readonly secureStoreBackend: SecureStoreBackend
+    private readonly secureStoreBackend: SecureStoreBackend | null = getDefaultSecureStoreBackend()
   ) {
     this.status = new StoreObj(this.store, SEQUENCE_WAAS_STATUS_KEY, 'signed-out')
     this.sessionId = new StoreObj(this.store, SEQUENCE_WAAS_SESSION_ID_KEY, undefined)

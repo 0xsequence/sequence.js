@@ -139,10 +139,6 @@ export class SequenceWaaS {
     private readonly cryptoBackend: SubtleCryptoBackend | null = getDefaultSubtleCryptoBackend(),
     private readonly secureStoreBackend: SecureStoreBackend | null = getDefaultSecureStoreBackend()
   ) {
-    if (!this.secureStoreBackend) {
-      throw new Error('No secure store available')
-    }
-  
     this.config = defaultArgsOrFail(config, preset)
     this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store, this.cryptoBackend, this.secureStoreBackend)
     this.client = new WaasAuthenticator(this.config.rpcServer, this.fetch.bind(this))
