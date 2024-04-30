@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+- Updated dependencies
+  - @0xsequence/utils@1.9.25
+
 ## 1.9.24
 
 ### Patch Changes

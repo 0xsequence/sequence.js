@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+- Updated dependencies
+  - @0xsequence/core@1.9.25
+  - @0xsequence/migration@1.9.25
+  - @0xsequence/replacer@1.9.25
+
 ## 1.9.24
 
 ### Patch Changes

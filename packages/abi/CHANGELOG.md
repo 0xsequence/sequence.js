@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+
 ## 1.9.24
 
 ### Patch Changes
