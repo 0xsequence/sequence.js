@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/react-native",
-  "version": "1.9.24",
+  "version": "1.9.26",
   "description": "react-native compat-lib sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/react-native",
   "source": "src/index.ts",
@@ -16,10 +16,8 @@
     "@0xsequence/waas": "workspace:*",
     "react-native-keychain": "^8.2.0"
   },
-  "peerDependencies": {
-  },
-  "devDependencies": {
-  },
+  "peerDependencies": {},
+  "devDependencies": {},
   "files": [
     "src",
     "dist"

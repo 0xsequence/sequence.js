@@ -1,5 +1,17 @@
 # @0xsequence/sessions
 
+## 1.9.26
+
+### Patch Changes
+
+- - add backend interfaces for pluggable interfaces
+  - introduce @0xsequence/react-native
+  - update pnpm to lockfile v9
+- Updated dependencies
+  - @0xsequence/core@1.9.26
+  - @0xsequence/migration@1.9.26
+  - @0xsequence/replacer@1.9.26
+
 ## 1.9.25
 
 ### Patch Changes

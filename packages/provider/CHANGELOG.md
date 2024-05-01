@@ -1,5 +1,23 @@
 # @0xsequence/provider
 
+## 1.9.26
+
+### Patch Changes
+
+- - add backend interfaces for pluggable interfaces
+  - introduce @0xsequence/react-native
+  - update pnpm to lockfile v9
+- Updated dependencies
+  - @0xsequence/abi@1.9.26
+  - @0xsequence/account@1.9.26
+  - @0xsequence/auth@1.9.26
+  - @0xsequence/core@1.9.26
+  - @0xsequence/migration@1.9.26
+  - @0xsequence/network@1.9.26
+  - @0xsequence/relayer@1.9.26
+  - @0xsequence/utils@1.9.26
+  - @0xsequence/wallet@1.9.26
+
 ## 1.9.25
 
 ### Patch Changes
