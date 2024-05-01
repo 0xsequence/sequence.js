@@ -33,6 +33,8 @@ import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { LOCAL } from './defaults'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
+import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
+import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -133,10 +135,12 @@ export class SequenceWaaS {
   constructor(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     preset: ExtendedSequenceConfig = LOCAL,
-    private readonly store: Store = new LocalStore()
+    private readonly store: Store = new LocalStore(),
+    private readonly cryptoBackend: SubtleCryptoBackend | null = getDefaultSubtleCryptoBackend(),
+    private readonly secureStoreBackend: SecureStoreBackend | null = getDefaultSecureStoreBackend()
   ) {
     this.config = defaultArgsOrFail(config, preset)
-    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store)
+    this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store, this.cryptoBackend, this.secureStoreBackend)
     this.client = new WaasAuthenticator(this.config.rpcServer, this.fetch.bind(this))
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
   }
@@ -301,7 +305,11 @@ export class SequenceWaaS {
     }
 
     if (closeSessionId === thisSessionId) {
-      const session = await newSessionFromSessionId(thisSessionId)
+      if (!this.secureStoreBackend) {
+        throw new Error('No secure store available')
+      }
+    
+      const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend, this.secureStoreBackend)
       session.clear()
       await this.waas.completeSignOut()
       await this.deviceName.set(undefined)

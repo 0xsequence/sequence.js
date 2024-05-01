@@ -6,8 +6,8 @@ import {
   SignUpCommand,
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
+
 import { Identity } from './auth'
-import { isSubtleCryptoAvailable } from './session'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
@@ -119,6 +119,7 @@ function getRandomValues(len: number) {
     return window.crypto.getRandomValues(randomValues)
   } else {
     console.warn('window.crypto.getRandomValues is not available. Falling back to less secure Math.random().')
+    const randomValues = new Uint8Array(len)
     for (let i = 0; i < len; i++) {
       const randomInteger = Math.floor(Math.random() * 256)
       randomValues[i] = randomInteger

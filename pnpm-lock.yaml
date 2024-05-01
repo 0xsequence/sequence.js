@@ -591,6 +591,15 @@ importers:
         specifier: ^2.20.1
         version: 2.20.1(ts-node@10.9.2)(typescript@5.3.3)
 
+  packages/react-native:
+    dependencies:
+      '@0xsequence/waas':
+        specifier: workspace:*
+        version: link:../waas
+      react-native-keychain:
+        specifier: ^8.2.0
+        version: 8.2.0
+
   packages/relayer:
     dependencies:
       '@0xsequence/abi':
@@ -12601,6 +12610,10 @@ packages:
       iconv-lite: 0.4.24
       unpipe: 1.0.0
     dev: true
+
+  /react-native-keychain@8.2.0:
+    resolution: {integrity: sha512-SkRtd9McIl1Ss2XSWNLorG+KMEbgeVqX+gV+t3u1EAAqT8q2/OpRmRbxpneT2vnb/dMhiU7g6K/pf3nxLUXRvA==}
+    dev: false
 
   /read-pkg-up@7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
