@@ -9,10 +9,14 @@ const idbStoreName = 'seq-waas-session'
 
 // TODO: We need to update this to use the secure store backend
 // Currently it ignores the override and leverages idb
-// This is because the CryptoKeyPair is a bit more complicated 
+// This is because the CryptoKeyPair is a bit more complicated
 // than a simple string that SecureStoreBackend can handle
 
-export async function newSECP256R1SessionFromSessionId(sessionId: string, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSECP256R1SessionFromSessionId(
+  sessionId: string,
+  cryptoBackend: SubtleCryptoBackend,
+  secureStoreBackend: SecureStoreBackend
+): Promise<Session> {
   const keys = await secureStoreBackend.get(idbName, idbStoreName, sessionId)
 
   if (!keys || !keys.privateKey) {
@@ -40,11 +44,7 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string, crypto
           message = encoder.encode(message)
         }
       }
-      const signatureBuff = await cryptoBackend.sign(
-        { name: 'ECDSA', hash: { name: 'SHA-256' } },
-        keys.privateKey,
-        message
-      )
+      const signatureBuff = await cryptoBackend.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } }, keys.privateKey, message)
       return ethers.utils.hexlify(new Uint8Array(signatureBuff))
     },
     clear: async () => {
@@ -53,7 +53,11 @@ export async function newSECP256R1SessionFromSessionId(sessionId: string, crypto
   }
 }
 
-export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSECP256R1SessionFromKeyPair(
+  keyPair: CryptoKeyPair,
+  cryptoBackend: SubtleCryptoBackend,
+  secureStoreBackend: SecureStoreBackend
+): Promise<Session> {
   const sessionId = await pubKeyToSessionId(cryptoBackend, keyPair.publicKey)
 
   await secureStoreBackend.set(idbName, idbStoreName, sessionId, keyPair)
@@ -61,7 +65,10 @@ export async function newSECP256R1SessionFromKeyPair(keyPair: CryptoKeyPair, cry
   return newSECP256R1SessionFromSessionId(sessionId, cryptoBackend, secureStoreBackend)
 }
 
-export async function newSECP256R1Session(cryptoBackend: SubtleCryptoBackend, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSECP256R1Session(
+  cryptoBackend: SubtleCryptoBackend,
+  secureStoreBackend: SecureStoreBackend
+): Promise<Session> {
   const generatedKeys = await cryptoBackend.generateKey(
     {
       name: 'ECDSA',

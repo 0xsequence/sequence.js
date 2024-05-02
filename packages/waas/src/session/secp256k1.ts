@@ -5,7 +5,10 @@ import { Session } from './index'
 const idbName = 'seq-waas-session-p256k1'
 const idbStoreName = 'seq-waas-session'
 
-export async function newSECP256K1SessionFromSessionId(sessionId: string, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSECP256K1SessionFromSessionId(
+  sessionId: string,
+  secureStoreBackend: SecureStoreBackend
+): Promise<Session> {
   const privateKey = await secureStoreBackend.get(idbName, idbStoreName, sessionId)
 
   if (!privateKey) {
@@ -27,7 +30,10 @@ export async function newSECP256K1SessionFromSessionId(sessionId: string, secure
   } as Session
 }
 
-export async function newSECP256K1SessionFromPrivateKey(privateKey: string, secureStoreBackend: SecureStoreBackend): Promise<Session> {
+export async function newSECP256K1SessionFromPrivateKey(
+  privateKey: string,
+  secureStoreBackend: SecureStoreBackend
+): Promise<Session> {
   const wallet = new ethers.Wallet(privateKey)
   const sessionId = await wallet.getAddress()
 

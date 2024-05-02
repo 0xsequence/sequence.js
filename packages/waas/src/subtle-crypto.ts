@@ -5,7 +5,11 @@ export interface SubtleCryptoBackend {
   // `exportKey(..)` method, because the Browser is smart enough to keep the key
   // opaque and only allow it to be exported in a wrapped format without revealing
   // the private key contents.
-  generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair>
+  generateKey(
+    algorithm: RsaHashedKeyGenParams | EcKeyGenParams,
+    extractable: boolean,
+    keyUsages: KeyUsage[]
+  ): Promise<CryptoKeyPair>
 
   // exportKey is used to export a key pair. The `format` argument is used to
   // specify the format of the exported key. The `key` argument is the key pair
@@ -28,7 +32,12 @@ export interface SubtleCryptoBackend {
   // specify the verification algorithm to use. The `key` argument is the public
   // key to use for verification. The `signature` argument is the signature to
   // verify. The `data` argument is the message to verify.
-  verify(algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams, key: CryptoKey, signature: Uint8Array, data: Uint8Array): Promise<boolean>
+  verify(
+    algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams,
+    key: CryptoKey,
+    signature: Uint8Array,
+    data: Uint8Array
+  ): Promise<boolean>
 
   // getRandomValues is used to generate random bytes. The `len` argument is the
   // number of random bytes to generate.
@@ -54,7 +63,11 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     }
   }
 
-  async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  async generateKey(
+    algorithm: RsaHashedKeyGenParams | EcKeyGenParams,
+    extractable: boolean,
+    keyUsages: KeyUsage[]
+  ): Promise<CryptoKeyPair> {
     return window.crypto.subtle.generateKey(algorithm, extractable, keyUsages)
   }
 
@@ -73,7 +86,12 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     return new Uint8Array(signature)
   }
 
-  async verify(algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams, key: CryptoKey, signature: Uint8Array, data: Uint8Array): Promise<boolean> {
+  async verify(
+    algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams,
+    key: CryptoKey,
+    signature: Uint8Array,
+    data: Uint8Array
+  ): Promise<boolean> {
     return window.crypto.subtle.verify(algorithm, key, signature, data)
   }
 

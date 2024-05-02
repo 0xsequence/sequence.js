@@ -308,7 +308,7 @@ export class SequenceWaaS {
       if (!this.secureStoreBackend) {
         throw new Error('No secure store available')
       }
-    
+
       const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend, this.secureStoreBackend)
       session.clear()
       await this.waas.completeSignOut()
