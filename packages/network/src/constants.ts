@@ -252,7 +252,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.OPTIMISM_KOVAN,
     type: NetworkType.TESTNET,
     name: 'optimism-kovan',
-    title: 'Optimistic Kovan',
+    title: 'Optimism Kovan',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_KOVAN}.webp`,
     testnet: true,
     blockExplorer: {
@@ -265,7 +265,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.OPTIMISM_GOERLI,
     type: NetworkType.TESTNET,
     name: 'optimism-goerli',
-    title: 'Optimistic Goerli',
+    title: 'Optimism Goerli',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_GOERLI}.webp`,
     testnet: true,
     blockExplorer: {
@@ -278,7 +278,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.OPTIMISM_SEPOLIA,
     type: NetworkType.TESTNET,
     name: 'optimism-sepolia',
-    title: 'Optimistic Sepolia',
+    title: 'Optimism Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
