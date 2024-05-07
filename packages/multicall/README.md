@@ -165,5 +165,5 @@ The utility contract is `0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E`, it has bee
 | BSC                      | 0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E | Yes      |
 ------------------------------------------------------------------------------------
 
-It can be deployed on any network that supports the `CREATE2` opcode. See https://blockscan.com/address/0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E for live list.
+It can be deployed on any network that supports the `CREATE2` opcode. See https://contractscan.xyz/contract/0xd130B43062D875a4B7aF3f8fc036Bc6e9D3E1B3E for live list.
 
