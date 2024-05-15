@@ -58,6 +58,10 @@ export enum ChainId {
   // XR
   XR_SEPOLIA = 2730,
 
+  // IMX
+  IMX = 13371,
+  IMX_TESTNET = 13473,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -482,6 +486,29 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'XR Sepolia Explorer',
       rootUrl: 'https://xr-sepolia-testnet.explorer.caldera.xyz/'
+    }
+  },
+  [ChainId.IMX]: {
+    chainId: ChainId.IMX,
+    type: NetworkType.MAINNET,
+    name: 'imx',
+    title: 'Immutable zkEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMX}.webp`,
+    blockExplorer: {
+      name: 'Immutable Explorer',
+      rootUrl: 'https://explorer.immutable.com/'
+    }
+  },
+  [ChainId.IMX_TESTNET]: {
+    chainId: ChainId.IMX_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'imx-testnet',
+    title: 'Immutable zkEVM Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMX_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Immutable Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.immutable.com/'
     }
   },
   [ChainId.HARDHAT]: {
