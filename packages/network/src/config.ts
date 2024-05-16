@@ -172,6 +172,14 @@ export const allNetworks = validateAndSortNetworks([
     ...networks[ChainId.XR_SEPOLIA],
     ...genUrls('xr-sepolia')
   },
+  // {
+  //   ...networks[ChainId.IMX],
+  //   ...genUrls('imx')
+  // },
+  // {
+  //   ...networks[ChainId.IMX_TESTNET],
+  //   ...genUrls('imx-testnet')
+  // },
   {
     ...networks[ChainId.HARDHAT],
     rpcUrl: 'http://localhost:8545',
