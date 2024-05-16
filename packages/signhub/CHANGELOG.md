@@ -1,5 +1,17 @@
 # @0xsequence/signhub
 
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.9.27
+
 ## 1.9.26
 
 ### Patch Changes

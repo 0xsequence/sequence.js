@@ -1,5 +1,25 @@
 # @0xsequence/provider
 
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.9.27
+  - @0xsequence/account@1.9.27
+  - @0xsequence/auth@1.9.27
+  - @0xsequence/core@1.9.27
+  - @0xsequence/migration@1.9.27
+  - @0xsequence/network@1.9.27
+  - @0xsequence/relayer@1.9.27
+  - @0xsequence/utils@1.9.27
+  - @0xsequence/wallet@1.9.27
+
 ## 1.9.26
 
 ### Patch Changes

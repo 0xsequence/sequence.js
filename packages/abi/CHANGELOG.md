@@ -1,5 +1,13 @@
 # @0xsequence/abi
 
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+
 ## 1.9.26
 
 ### Patch Changes
