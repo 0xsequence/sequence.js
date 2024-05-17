@@ -1,5 +1,203 @@
 # 0xsequence
 
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.9.27
+  - @0xsequence/account@1.9.27
+  - @0xsequence/api@1.9.27
+  - @0xsequence/auth@1.9.27
+  - @0xsequence/core@1.9.27
+  - @0xsequence/guard@1.9.27
+  - @0xsequence/indexer@1.9.27
+  - @0xsequence/metadata@1.9.27
+  - @0xsequence/migration@1.9.27
+  - @0xsequence/multicall@1.9.27
+  - @0xsequence/network@1.9.27
+  - @0xsequence/provider@1.9.27
+  - @0xsequence/relayer@1.9.27
+  - @0xsequence/sessions@1.9.27
+  - @0xsequence/signhub@1.9.27
+  - @0xsequence/utils@1.9.27
+  - @0xsequence/wallet@1.9.27
+
+## 1.9.26
+
+### Patch Changes
+
+- - add backend interfaces for pluggable interfaces
+  - introduce @0xsequence/react-native
+  - update pnpm to lockfile v9
+- Updated dependencies
+  - @0xsequence/abi@1.9.26
+  - @0xsequence/account@1.9.26
+  - @0xsequence/api@1.9.26
+  - @0xsequence/auth@1.9.26
+  - @0xsequence/core@1.9.26
+  - @0xsequence/guard@1.9.26
+  - @0xsequence/indexer@1.9.26
+  - @0xsequence/metadata@1.9.26
+  - @0xsequence/migration@1.9.26
+  - @0xsequence/multicall@1.9.26
+  - @0xsequence/network@1.9.26
+  - @0xsequence/provider@1.9.26
+  - @0xsequence/relayer@1.9.26
+  - @0xsequence/sessions@1.9.26
+  - @0xsequence/signhub@1.9.26
+  - @0xsequence/utils@1.9.26
+  - @0xsequence/wallet@1.9.26
+
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+- Updated dependencies
+  - @0xsequence/abi@1.9.25
+  - @0xsequence/account@1.9.25
+  - @0xsequence/api@1.9.25
+  - @0xsequence/auth@1.9.25
+  - @0xsequence/core@1.9.25
+  - @0xsequence/guard@1.9.25
+  - @0xsequence/indexer@1.9.25
+  - @0xsequence/metadata@1.9.25
+  - @0xsequence/migration@1.9.25
+  - @0xsequence/multicall@1.9.25
+  - @0xsequence/network@1.9.25
+  - @0xsequence/provider@1.9.25
+  - @0xsequence/relayer@1.9.25
+  - @0xsequence/sessions@1.9.25
+  - @0xsequence/signhub@1.9.25
+  - @0xsequence/utils@1.9.25
+  - @0xsequence/wallet@1.9.25
+
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+- Updated dependencies
+  - @0xsequence/abi@1.9.24
+  - @0xsequence/account@1.9.24
+  - @0xsequence/api@1.9.24
+  - @0xsequence/auth@1.9.24
+  - @0xsequence/core@1.9.24
+  - @0xsequence/guard@1.9.24
+  - @0xsequence/indexer@1.9.24
+  - @0xsequence/metadata@1.9.24
+  - @0xsequence/migration@1.9.24
+  - @0xsequence/multicall@1.9.24
+  - @0xsequence/network@1.9.24
+  - @0xsequence/provider@1.9.24
+  - @0xsequence/relayer@1.9.24
+  - @0xsequence/sessions@1.9.24
+  - @0xsequence/signhub@1.9.24
+  - @0xsequence/utils@1.9.24
+  - @0xsequence/wallet@1.9.24
+
+## 1.9.23
+
+### Patch Changes
+
+- update api client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.23
+  - @0xsequence/account@1.9.23
+  - @0xsequence/api@1.9.23
+  - @0xsequence/auth@1.9.23
+  - @0xsequence/core@1.9.23
+  - @0xsequence/guard@1.9.23
+  - @0xsequence/indexer@1.9.23
+  - @0xsequence/metadata@1.9.23
+  - @0xsequence/migration@1.9.23
+  - @0xsequence/multicall@1.9.23
+  - @0xsequence/network@1.9.23
+  - @0xsequence/provider@1.9.23
+  - @0xsequence/relayer@1.9.23
+  - @0xsequence/sessions@1.9.23
+  - @0xsequence/signhub@1.9.23
+  - @0xsequence/utils@1.9.23
+  - @0xsequence/wallet@1.9.23
+
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.22
+  - @0xsequence/account@1.9.22
+  - @0xsequence/api@1.9.22
+  - @0xsequence/auth@1.9.22
+  - @0xsequence/core@1.9.22
+  - @0xsequence/guard@1.9.22
+  - @0xsequence/indexer@1.9.22
+  - @0xsequence/metadata@1.9.22
+  - @0xsequence/migration@1.9.22
+  - @0xsequence/multicall@1.9.22
+  - @0xsequence/network@1.9.22
+  - @0xsequence/provider@1.9.22
+  - @0xsequence/relayer@1.9.22
+  - @0xsequence/sessions@1.9.22
+  - @0xsequence/signhub@1.9.22
+  - @0xsequence/utils@1.9.22
+  - @0xsequence/wallet@1.9.22
+
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.21
+  - @0xsequence/account@1.9.21
+  - @0xsequence/api@1.9.21
+  - @0xsequence/auth@1.9.21
+  - @0xsequence/core@1.9.21
+  - @0xsequence/guard@1.9.21
+  - @0xsequence/indexer@1.9.21
+  - @0xsequence/metadata@1.9.21
+  - @0xsequence/migration@1.9.21
+  - @0xsequence/multicall@1.9.21
+  - @0xsequence/network@1.9.21
+  - @0xsequence/provider@1.9.21
+  - @0xsequence/relayer@1.9.21
+  - @0xsequence/sessions@1.9.21
+  - @0xsequence/signhub@1.9.21
+  - @0xsequence/utils@1.9.21
+  - @0xsequence/wallet@1.9.21
+
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+- Updated dependencies
+  - @0xsequence/abi@1.9.20
+  - @0xsequence/account@1.9.20
+  - @0xsequence/api@1.9.20
+  - @0xsequence/auth@1.9.20
+  - @0xsequence/core@1.9.20
+  - @0xsequence/guard@1.9.20
+  - @0xsequence/indexer@1.9.20
+  - @0xsequence/metadata@1.9.20
+  - @0xsequence/migration@1.9.20
+  - @0xsequence/multicall@1.9.20
+  - @0xsequence/network@1.9.20
+  - @0xsequence/provider@1.9.20
+  - @0xsequence/relayer@1.9.20
+  - @0xsequence/sessions@1.9.20
+  - @0xsequence/signhub@1.9.20
+  - @0xsequence/utils@1.9.20
+  - @0xsequence/wallet@1.9.20
+
 ## 1.9.19
 
 ### Patch Changes

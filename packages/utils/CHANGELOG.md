@@ -1,5 +1,57 @@
 # @0xsequence/utils
 
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+
+## 1.9.26
+
+### Patch Changes
+
+- - add backend interfaces for pluggable interfaces
+  - introduce @0xsequence/react-native
+  - update pnpm to lockfile v9
+
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+
+## 1.9.23
+
+### Patch Changes
+
+- update api client bindings
+
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+
 ## 1.9.19
 
 ### Patch Changes

@@ -1,5 +1,91 @@
 # @0xsequence/sessions
 
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.9.27
+  - @0xsequence/migration@1.9.27
+  - @0xsequence/replacer@1.9.27
+
+## 1.9.26
+
+### Patch Changes
+
+- - add backend interfaces for pluggable interfaces
+  - introduce @0xsequence/react-native
+  - update pnpm to lockfile v9
+- Updated dependencies
+  - @0xsequence/core@1.9.26
+  - @0xsequence/migration@1.9.26
+  - @0xsequence/replacer@1.9.26
+
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+- Updated dependencies
+  - @0xsequence/core@1.9.25
+  - @0xsequence/migration@1.9.25
+  - @0xsequence/replacer@1.9.25
+
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+- Updated dependencies
+  - @0xsequence/core@1.9.24
+  - @0xsequence/migration@1.9.24
+  - @0xsequence/replacer@1.9.24
+
+## 1.9.23
+
+### Patch Changes
+
+- update api client bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.23
+  - @0xsequence/migration@1.9.23
+  - @0xsequence/replacer@1.9.23
+
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.22
+  - @0xsequence/migration@1.9.22
+  - @0xsequence/replacer@1.9.22
+
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.21
+  - @0xsequence/migration@1.9.21
+  - @0xsequence/replacer@1.9.21
+
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+- Updated dependencies
+  - @0xsequence/core@1.9.20
+  - @0xsequence/migration@1.9.20
+  - @0xsequence/replacer@1.9.20
+
 ## 1.9.19
 
 ### Patch Changes

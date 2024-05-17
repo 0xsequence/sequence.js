@@ -6,15 +6,8 @@ import {
   SignUpCommand,
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
-import { Identity } from './auth'
 
-function getRandomString(len: number) {
-  const randomValues = new Uint8Array(len)
-  window.crypto.getRandomValues(randomValues)
-  return Array.from(randomValues)
-    .map(nr => nr.toString(16).padStart(2, '0'))
-    .join('')
-}
+import { Identity } from './auth'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
@@ -111,5 +104,26 @@ export class EmailAuth {
     }
 
     return { idToken: res.AuthenticationResult.IdToken }
+  }
+}
+
+function getRandomString(len: number) {
+  return Array.from(getRandomValues(len))
+    .map(nr => nr.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function getRandomValues(len: number) {
+  const randomValues = new Uint8Array(len)
+  if (typeof window === 'object' && typeof window.crypto === 'object') {
+    return window.crypto.getRandomValues(randomValues)
+  } else {
+    console.warn('window.crypto.getRandomValues is not available. Falling back to less secure Math.random().')
+    const randomValues = new Uint8Array(len)
+    for (let i = 0; i < len; i++) {
+      const randomInteger = Math.floor(Math.random() * 256)
+      randomValues[i] = randomInteger
+    }
+    return randomValues
   }
 }
