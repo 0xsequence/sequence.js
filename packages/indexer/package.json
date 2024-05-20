@@ -11,7 +11,7 @@
   "scripts": {
     "test": "pnpm test:run",
     "test:run": "pnpm test:file tests/**.ts",
-    "test:file": "NODE_OPTIONS='--import tsx' DEBUG=server mocha -R spec --timeout 30000",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha -R spec --timeout 30000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {},
