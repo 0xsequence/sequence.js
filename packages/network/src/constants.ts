@@ -58,6 +58,9 @@ export enum ChainId {
   // XR
   XR_SEPOLIA = 2730,
 
+  // TELOS
+  TELOS = 40,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -484,6 +487,19 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://xr-sepolia-testnet.explorer.caldera.xyz/'
     }
   },
+  [ChainId.TELOS]: {
+    chainId: ChainId.TELOS,
+    type: NetworkType.MAINNET,
+    name: 'telos',
+    title: 'Telos',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Telos Explorer',
+      rootUrl: 'https://explorer.telos.net/network/'
+    }
+  },
+
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
     name: 'hardhat',
