@@ -173,6 +173,10 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('xr-sepolia')
   },
   {
+    ...networks[ChainId.TELOS],
+    ...genUrls('telos')
+  },
+  {
     ...networks[ChainId.HARDHAT],
     rpcUrl: 'http://localhost:8545',
     relayer: {
