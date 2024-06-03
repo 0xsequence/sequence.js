@@ -493,7 +493,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'telos',
     title: 'Telos',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
-    testnet: true,
     blockExplorer: {
       name: 'Telos Explorer',
       rootUrl: 'https://explorer.telos.net/network/'
