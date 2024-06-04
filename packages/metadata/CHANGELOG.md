@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.28
+
+### Patch Changes
+
+- add utils/merkletree
+
 ## 1.9.27
 
 ### Patch Changes

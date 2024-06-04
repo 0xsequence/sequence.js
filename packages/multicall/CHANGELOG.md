@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.9.28
+
+### Patch Changes
+
+- add utils/merkletree
+- Updated dependencies
+  - @0xsequence/abi@1.9.28
+  - @0xsequence/network@1.9.28
+  - @0xsequence/utils@1.9.28
+
 ## 1.9.27
 
 ### Patch Changes
