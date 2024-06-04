@@ -27,7 +27,7 @@ describe('merkle', function () {
     const merkleGenerator = new MerkleTreeGenerator(elements, getSaleItemsLeaf)
     const invalidElement: SaleItemsElement = {
       address: Wallet.createRandom().address,
-      tokenId: constants.Zero,
+      tokenId: constants.Zero
     }
     expect(() => merkleGenerator.generateProof(invalidElement)).to.throw('Element not found')
   })

@@ -18,7 +18,7 @@ export class MerkleTreeGenerator<T> {
     const hashed = this.elements.map(e => this.toLeaf(e))
     return new MerkleTree(hashed, {
       sortPairs: true,
-      sortLeaves: true,
+      sortLeaves: true
     })
   }
 
@@ -36,7 +36,7 @@ export class MerkleTreeGenerator<T> {
   verifyProof(element: T, proof: Proof): boolean {
     if (!this.elements.includes(element)) throw new Error('Element not found')
     if (!this.tree) this.tree = this.generateTree()
-      return this.tree.verify(proof, this.toLeaf(element), this.generateRoot())
+    return this.tree.verify(proof, this.toLeaf(element), this.generateRoot())
   }
 }
 
@@ -45,9 +45,5 @@ export type SaleItemsElement = {
   tokenId: BigNumberish
 }
 
-export const getSaleItemsLeaf: ToLeaf<SaleItemsElement> = (element) =>
-  utils.solidityKeccak256(
-    ['address', 'uint256'],
-    [element.address.toLowerCase(), element.tokenId],
-  )
-
+export const getSaleItemsLeaf: ToLeaf<SaleItemsElement> = element =>
+  utils.solidityKeccak256(['address', 'uint256'], [element.address.toLowerCase(), element.tokenId])
