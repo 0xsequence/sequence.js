@@ -3,7 +3,7 @@ import { MerkleTreeGenerator, SaleItemsElement, getSaleItemsLeaf } from '@0xsequ
 import { BigNumber, Wallet, constants, utils } from 'ethers'
 
 describe('merkle', function () {
-  const addrs = [Wallet.createRandom().address, Wallet.createRandom().address, Wallet.createRandom().address]
+  const addrs = Array.from({ length: 10 }, () => Wallet.createRandom().address)
   const elements: SaleItemsElement[] = addrs.map(addr => ({ address: addr, tokenId: BigNumber.from(1) }))
 
   it('generates tree, root and proof for custom elements', () => {

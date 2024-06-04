@@ -1,16 +1,34 @@
-import { Buffer } from 'buffer'
+import { ethers } from 'ethers'
 
 export class Base {
-  protected bufferIndexOf(array: Buffer[], element: Buffer, isSorted: boolean = false): number {
+  static bufferIndexOf(array: Uint8Array[], element: Uint8Array, isSorted: boolean = false): number {
     if (isSorted) {
-      return this.binarySearch(array, element, Buffer.compare)
+      return Base.binarySearch(array, element, Base.compare)
     }
 
-    const eqChecker = (buffer1: Buffer, buffer2: Buffer) => buffer1.equals(buffer2)
-    return this.linearSearch(array, element, eqChecker)
+    const eqChecker = (buffer1: Uint8Array, buffer2: Uint8Array): boolean => {
+      if (buffer1 === buffer2) {
+        return true
+      }
+      if (buffer1.length !== buffer2.length) {
+        return false
+      }
+      for (let i = 0; i < buffer1.length; i++) {
+        if (buffer1[i] !== buffer2[i]) {
+          return false
+        }
+      }
+      return true
+    }
+
+    return Base.linearSearch(array, element, eqChecker)
   }
 
-  static binarySearch(array: Buffer[], element: Buffer, compareFunction: (a: unknown, b: unknown) => number): number {
+  static binarySearch(
+    array: Uint8Array[],
+    element: Uint8Array,
+    compareFunction: (a: Uint8Array, b: Uint8Array) => number
+  ): number {
     let start = 0
     let end = array.length - 1
 
@@ -40,11 +58,22 @@ export class Base {
     return -1
   }
 
-  binarySearch(array: Buffer[], element: Buffer, compareFunction: (a: unknown, b: unknown) => number): number {
-    return Base.binarySearch(array, element, compareFunction)
+  static compare(a: Uint8Array, b: Uint8Array): number {
+    // Determine the minimum length to compare
+    const len = Math.min(a.length, b.length)
+
+    // Compare byte by byte
+    for (let i = 0; i < len; i++) {
+      if (a[i] !== b[i]) {
+        return a[i] - b[i]
+      }
+    }
+
+    // If all compared bytes are equal, compare lengths
+    return a.length - b.length
   }
 
-  static linearSearch(array: Buffer[], element: Buffer, eqChecker: (a: unknown, b: unknown) => boolean): number {
+  static linearSearch(array: Uint8Array[], element: Uint8Array, eqChecker: (a: Uint8Array, b: Uint8Array) => boolean): number {
     for (let i = 0; i < array.length; i++) {
       if (eqChecker(array[i], element)) {
         return i
@@ -54,107 +83,27 @@ export class Base {
     return -1
   }
 
-  linearSearch(array: Buffer[], element: Buffer, eqChecker: (a: unknown, b: unknown) => boolean): number {
-    return Base.linearSearch(array, element, eqChecker)
-  }
-
-  static bufferify(value: any): Buffer {
-    if (!Buffer.isBuffer(value)) {
-      if (Base.isHexString(value)) {
-        return Buffer.from(value.replace(/^0x/, ''), 'hex')
-      } else if (typeof value === 'string') {
-        return Buffer.from(value)
-      } else if (typeof value === 'bigint') {
-        return Buffer.from(value.toString(16), 'hex')
-      } else if (typeof value === 'number') {
-        let s = value.toString()
-        if (s.length % 2) {
-          s = `0${s}`
-        }
-        return Buffer.from(s, 'hex')
-      } else if (ArrayBuffer.isView(value)) {
-        return Buffer.from(value.buffer, value.byteOffset, value.byteLength)
-      }
-    }
-
-    return value
-  }
-
-  bigNumberify(value: any): BigInt {
-    return Base.bigNumberify(value)
-  }
-
-  static bigNumberify(value: any): BigInt {
-    if (typeof value === 'bigint') {
-      return value
-    }
-
+  static bufferify(value: Uint8Array | string): Uint8Array {
     if (typeof value === 'string') {
-      if (value.startsWith('0x') && Base.isHexString(value)) {
-        return BigInt('0x' + value.replace('0x', '').toString())
-      }
-      return BigInt(value)
+      return ethers.utils.arrayify(value)
     }
-
-    if (Buffer.isBuffer(value)) {
-      return BigInt('0x' + value.toString('hex'))
-    }
-
-    if (typeof value === 'number') {
-      return BigInt(value)
-    }
-
-    throw new Error('cannot bigNumberify')
+    return value
   }
 
   static isHexString(v: string): boolean {
     return typeof v === 'string' && /^(0x)?[0-9A-Fa-f]*$/.test(v)
   }
 
-  static print(tree: any): void {
-    console.log(tree.toString())
+  static bufferToHex(value: Uint8Array, withPrefix: boolean = true): string {
+    const prefixed = ethers.utils.hexlify(value, {
+      allowMissingPrefix: true
+    })
+    return withPrefix ? prefixed : prefixed.substring(2)
   }
 
-  bufferToHex(value: Buffer, withPrefix: boolean = true): string {
-    return Base.bufferToHex(value, withPrefix)
-  }
-
-  static bufferToHex(value: Buffer, withPrefix: boolean = true): string {
-    return `${withPrefix ? '0x' : ''}${(value || Buffer.alloc(0)).toString('hex')}`
-  }
-
-  bufferify(value: any): Buffer {
-    return Base.bufferify(value)
-  }
-
-  bufferifyFn(f: any): any {
-    return (value: any): Buffer => {
-      const v = f(value)
-      if (Buffer.isBuffer(v)) {
-        return v
-      }
-
-      if (this.isHexString(v)) {
-        return Buffer.from(v.replace('0x', ''), 'hex')
-      }
-
-      if (typeof v === 'string') {
-        return Buffer.from(v)
-      }
-
-      if (typeof v === 'bigint') {
-        return Buffer.from(value.toString(16), 'hex')
-      }
-
-      if (ArrayBuffer.isView(v)) {
-        return Buffer.from(v.buffer, v.byteOffset, v.byteLength)
-      }
-
-      return Buffer.from(value.toString('hex'), 'hex')
+  static bufferifyFn(f: any): any {
+    return (value: any): Uint8Array => {
+      return Base.bufferify(f(value))
     }
-  }
-
-  protected isHexString(value: string): boolean {
-    return Base.isHexString(value)
   }
 }

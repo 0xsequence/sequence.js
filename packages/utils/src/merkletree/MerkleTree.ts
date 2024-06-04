@@ -1,18 +1,17 @@
-import { Buffer } from 'buffer'
 import { ethers } from 'ethers'
 import { Base } from './Base'
 
-type TValue = Buffer | BigInt | string | number
-type TLeaf = Buffer
+type TValue = string
+type TLeaf = Uint8Array
 type TLayer = TLeaf[]
-type THashFn = (value: TValue) => TLeaf
+type THashFn = (value: TValue | TLeaf) => TLeaf
 
 export interface Options {
   sortLeaves?: boolean
   sortPairs?: boolean
 }
 
-export type Proof = { position: 'left' | 'right'; data: Buffer }[]
+export type Proof = { position: 'left' | 'right'; data: Uint8Array }[]
 
 export class MerkleTree extends Base {
   private hashFn: THashFn
@@ -27,7 +26,7 @@ export class MerkleTree extends Base {
     this.sortLeaves = !!options.sortLeaves
     this.sortPairs = !!options.sortPairs
 
-    this.hashFn = this.bufferifyFn(ethers.utils.keccak256)
+    this.hashFn = Base.bufferifyFn(ethers.utils.keccak256)
     this.processLeaves(leaves)
   }
 
@@ -39,15 +38,15 @@ export class MerkleTree extends Base {
   }
 
   private processLeaves(leaves: TLeaf[]) {
-    this.leaves = leaves.map(this.bufferify)
+    this.leaves = leaves.map(Base.bufferify)
     if (this.sortLeaves) {
-      this.leaves = this.leaves.sort(Buffer.compare)
+      this.leaves = this.leaves.sort(Base.compare)
     }
 
     this.createHashes(this.leaves)
   }
 
-  private createHashes(nodes: Buffer[]) {
+  private createHashes(nodes: Uint8Array[]) {
     this.layers = [nodes]
     while (nodes.length > 1) {
       const layerIndex = this.layers.length
@@ -73,10 +72,10 @@ export class MerkleTree extends Base {
         const combined = [left, right]
 
         if (this.sortPairs) {
-          combined.sort(Buffer.compare)
+          combined.sort(Base.compare)
         }
 
-        const hash = this.hashFn(Buffer.concat(combined))
+        const hash = this.hashFn(ethers.utils.concat(combined))
         this.layers[layerIndex].push(hash)
       }
 
@@ -84,30 +83,30 @@ export class MerkleTree extends Base {
     }
   }
 
-  getRoot(): Buffer {
+  getRoot(): Uint8Array {
     if (this.layers.length === 0) {
-      return Buffer.from([])
+      return Uint8Array.from([])
     }
 
-    return this.layers[this.layers.length - 1][0] || Buffer.from([])
+    return this.layers[this.layers.length - 1][0] || Uint8Array.from([])
   }
 
   getHexRoot(): string {
-    return this.bufferToHex(this.getRoot())
+    return Base.bufferToHex(this.getRoot())
   }
 
-  getProof(leaf: Buffer | string, index?: number): Proof {
+  getProof(leaf: Uint8Array | string, index?: number): Proof {
     if (typeof leaf === 'undefined') {
       throw new Error('leaf is required')
     }
-    leaf = this.bufferify(leaf)
+    leaf = Base.bufferify(leaf)
     const proof: Proof = []
 
     if (!Number.isInteger(index)) {
       index = -1
 
       for (let i = 0; i < this.leaves.length; i++) {
-        if (Buffer.compare(leaf, this.leaves[i]) === 0) {
+        if (Base.compare(leaf, this.leaves[i]) === 0) {
           index = i
         }
       }
@@ -139,13 +138,13 @@ export class MerkleTree extends Base {
     return proof
   }
 
-  getHexProof(leaf: Buffer | string, index?: number): string[] {
-    return this.getProof(leaf, index).map(item => this.bufferToHex(item.data))
+  getHexProof(leaf: Uint8Array | string, index?: number): string[] {
+    return this.getProof(leaf, index).map(item => Base.bufferToHex(item.data))
   }
 
-  verify(proof: any[], targetNode: Buffer | string, root: Buffer | string): boolean {
-    let hash = this.bufferify(targetNode)
-    root = this.bufferify(root)
+  verify(proof: Proof | string[], targetNode: Uint8Array | string, root: Uint8Array | string): boolean {
+    let hash = Base.bufferify(targetNode)
+    root = Base.bufferify(root)
 
     if (!Array.isArray(proof) || !targetNode || !root) {
       return false
@@ -153,42 +152,35 @@ export class MerkleTree extends Base {
 
     for (let i = 0; i < proof.length; i++) {
       const node = proof[i]
-      let data: Buffer
+      let data: Uint8Array
       let isLeftNode: boolean
 
-      // case for when proof is hex values only
       if (typeof node === 'string') {
-        data = this.bufferify(node)
-        isLeftNode = true
-      } else if (Array.isArray(node)) {
-        isLeftNode = node[0] === 0
-        data = this.bufferify(node[1])
-      } else if (Buffer.isBuffer(node)) {
-        data = node
+        data = Base.bufferify(node)
         isLeftNode = true
       } else if (node instanceof Object) {
-        data = this.bufferify(node.data)
+        data = node.data
         isLeftNode = node.position === 'left'
       } else {
         throw new Error('Expected node to be of type string or object')
       }
 
-      const buffers: Buffer[] = []
+      const buffers: Uint8Array[] = []
 
       if (this.sortPairs) {
-        if (Buffer.compare(hash, data) === -1) {
+        if (Base.compare(hash, data) < 0) {
           buffers.push(hash, data)
         } else {
           buffers.push(data, hash)
         }
-        hash = this.hashFn(Buffer.concat(buffers))
+        hash = this.hashFn(ethers.utils.concat(buffers))
       } else {
         buffers.push(hash)
         buffers[isLeftNode ? 'unshift' : 'push'](data)
-        hash = this.hashFn(Buffer.concat(buffers))
+        hash = this.hashFn(ethers.utils.concat(buffers))
       }
     }
 
-    return Buffer.compare(hash, root) === 0
+    return Base.compare(hash, root) === 0
   }
 }
