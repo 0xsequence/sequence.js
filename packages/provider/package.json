@@ -34,11 +34,11 @@
     "webextension-polyfill": "^0.10.0"
   },
   "peerDependencies": {
-    "ethers": "corbanbrook/ethers.js"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
-    "ethers": "corbanbrook/ethers.js",
+    "ethers": "^6.13.0",
     "hardhat": "^2.20.1"
   },
   "files": [

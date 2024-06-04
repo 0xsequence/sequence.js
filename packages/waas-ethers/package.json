@@ -17,7 +17,7 @@
     "@0xsequence/waas": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": "corbanbrook/ethers.js"
+    "ethers": ">=6"
   },
   "files": [
     "src",

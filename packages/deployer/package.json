@@ -20,11 +20,11 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": "corbanbrook/ethers.js"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "dotenv": "^16.0.3",
-    "ethers": "corbanbrook/ethers.js",
+    "ethers": "^6.13.0",
     "typechain": "^8.1.1"
   },
   "files": [
