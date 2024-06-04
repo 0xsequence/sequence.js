@@ -203,7 +203,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'OKLink (Amoy)',
-      rootUrl: 'https://www.oklink.com/amoy'
+      rootUrl: 'https://www.oklink.com/amoy/'
     }
   },
   [ChainId.POLYGON_ZKEVM]: {
