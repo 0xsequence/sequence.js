@@ -25,14 +25,14 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": "corbanbrook/ethers.js"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/ethauth": "0xsequence/ethauth.js#ethers-v6",
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^2.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ethers": "corbanbrook/ethers.js",
+    "ethers": "^6.13.0",
     "web3": "^1.8.1"
   },
   "files": [
