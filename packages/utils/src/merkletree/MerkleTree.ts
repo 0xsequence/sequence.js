@@ -26,7 +26,7 @@ export class MerkleTree extends Base {
     this.sortLeaves = !!options.sortLeaves
     this.sortPairs = !!options.sortPairs
 
-    this.hashFn = Base.bufferifyFn(ethers.utils.keccak256)
+    this.hashFn = Base.bufferifyFn(ethers.keccak256)
     this.processLeaves(leaves)
   }
 
@@ -75,7 +75,7 @@ export class MerkleTree extends Base {
           combined.sort(Base.compare)
         }
 
-        const hash = this.hashFn(ethers.utils.concat(combined))
+        const hash = this.hashFn(ethers.concat(combined))
         this.layers[layerIndex].push(hash)
       }
 
@@ -173,11 +173,11 @@ export class MerkleTree extends Base {
         } else {
           buffers.push(data, hash)
         }
-        hash = this.hashFn(ethers.utils.concat(buffers))
+        hash = this.hashFn(ethers.concat(buffers))
       } else {
         buffers.push(hash)
         buffers[isLeftNode ? 'unshift' : 'push'](data)
-        hash = this.hashFn(ethers.utils.concat(buffers))
+        hash = this.hashFn(ethers.concat(buffers))
       }
     }
 

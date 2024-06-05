@@ -12,7 +12,7 @@ const PROHIBITED_FUNCTIONS = new Map(
     'updateImageHash(bytes32)',
     'updateImageHashAndIPFS(bytes32,bytes32)',
     'updateImplementation(address)'
-  ].map(signature => [ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(0, 10), signature])
+  ].map(signature => [ethers.keccak256(ethers.toUtf8Bytes(signature)).slice(0, 10), signature])
 )
 
 export function validateTransactionRequest(wallet: string, transaction: commons.transaction.Transactionish) {
@@ -36,7 +36,7 @@ function validateTransaction(wallet: string, transaction: commons.transaction.Tr
   }
 
   if (transaction.data) {
-    const data = ethers.utils.hexlify(transaction.data)
+    const data = ethers.hexlify(transaction.data)
     const selector = data.slice(0, 10)
     const signature = PROHIBITED_FUNCTIONS.get(selector)
     if (signature) {
