@@ -1,9 +1,4 @@
-import {
-  EIP1193Provider,
-  EIP1193ProviderFunc,
-  JsonRpcMiddleware,
-  JsonRpcMiddlewareHandler,
-} from './types'
+import { EIP1193Provider, EIP1193ProviderFunc, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from './types'
 
 export class JsonRpcRouter implements EIP1193Provider {
   private sender: EIP1193Provider
@@ -20,7 +15,7 @@ export class JsonRpcRouter implements EIP1193Provider {
     this.handler = createJsonRpcMiddlewareStack(middlewares, this.sender)
   }
 
-  request(request: { id?: number, method: string, params?: any[], chainId?: number }): Promise<any> {
+  request(request: { id?: number; method: string; params?: any[]; chainId?: number }): Promise<any> {
     return this.handler.request(request)
   }
 }

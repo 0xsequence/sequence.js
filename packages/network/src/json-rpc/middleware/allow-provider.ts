@@ -1,9 +1,4 @@
-import {
-  JsonRpcRequest,
-  EIP1193ProviderFunc,
-  JsonRpcMiddleware,
-  JsonRpcMiddlewareHandler
-} from '../types'
+import { JsonRpcRequest, EIP1193ProviderFunc, JsonRpcMiddleware, JsonRpcMiddlewareHandler } from '../types'
 
 export class AllowProvider implements JsonRpcMiddlewareHandler {
   requestHandler: JsonRpcMiddleware
@@ -28,14 +23,14 @@ export class AllowProvider implements JsonRpcMiddlewareHandler {
 
 export const allowProviderMiddleware =
   (isAllowed: (request: JsonRpcRequest) => boolean): JsonRpcMiddleware =>
-    (next: EIP1193ProviderFunc) => {
-      return (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<any> => {
-        // ensure precondition is met or do not allow the request to continue
-        if (!isAllowed(request)) {
-          throw new Error('allowProvider middleware precondition is unmet.')
-        }
-
-        // request is allowed. keep going..
-        return next(request)
+  (next: EIP1193ProviderFunc) => {
+    return (request: { jsonrpc: '2.0'; method: string; params?: any[]; chainId?: number }): Promise<any> => {
+      // ensure precondition is met or do not allow the request to continue
+      if (!isAllowed(request)) {
+        throw new Error('allowProvider middleware precondition is unmet.')
       }
+
+      // request is allowed. keep going..
+      return next(request)
     }
+  }

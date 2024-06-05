@@ -37,7 +37,7 @@ export class SigningProvider implements JsonRpcMiddlewareHandler {
   }
 
   requestHandler = (next: EIP1193ProviderFunc) => {
-    return (request: { jsonrpc: '2.0', method: string, params?: any[], chainId?: number }): Promise<any> => {
+    return (request: { jsonrpc: '2.0'; method: string; params?: any[]; chainId?: number }): Promise<any> => {
       // Forward signing requests to the signing provider
       if (SignerJsonRpcMethods.includes(request.method)) {
         return this.provider.request(request)

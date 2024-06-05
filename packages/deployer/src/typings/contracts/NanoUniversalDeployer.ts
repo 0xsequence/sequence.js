@@ -9,97 +9,65 @@ import type {
   AddressLike,
   ContractRunner,
   ContractMethod,
-  Listener,
-} from "ethers";
-import type {
-  TypedContractEvent,
-  TypedDeferredTopicFilter,
-  TypedEventLog,
-  TypedLogDescription,
-  TypedListener,
-} from "./common";
+  Listener
+} from 'ethers'
+import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener } from './common'
 
 export interface NanoUniversalDeployerInterface extends Interface {
-  getEvent(nameOrSignatureOrTopic: "Deploy"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'Deploy'): EventFragment
 }
 
 export namespace DeployEvent {
-  export type InputTuple = [_addr: AddressLike];
-  export type OutputTuple = [_addr: string];
+  export type InputTuple = [_addr: AddressLike]
+  export type OutputTuple = [_addr: string]
   export interface OutputObject {
-    _addr: string;
+    _addr: string
   }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+  export type Filter = TypedDeferredTopicFilter<Event>
+  export type Log = TypedEventLog<Event>
+  export type LogDescription = TypedLogDescription<Event>
 }
 
 export interface NanoUniversalDeployer extends BaseContract {
-  connect(runner?: ContractRunner | null): NanoUniversalDeployer;
-  waitForDeployment(): Promise<this>;
+  connect(runner?: ContractRunner | null): NanoUniversalDeployer
+  waitForDeployment(): Promise<this>
 
-  interface: NanoUniversalDeployerInterface;
+  interface: NanoUniversalDeployerInterface
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>
   queryFilter<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>
 
-  on<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  ): Promise<this>
 
-  once<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  ): Promise<this>
 
-  listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
-  ): Promise<Array<TypedListener<TCEvent>>>;
-  listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  listeners<TCEvent extends TypedContractEvent>(event: TCEvent): Promise<Array<TypedListener<TCEvent>>>
+  listeners(eventName?: string): Promise<Array<Listener>>
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T
 
-  getEvent(
-    key: "Deploy"
-  ): TypedContractEvent<
-    DeployEvent.InputTuple,
-    DeployEvent.OutputTuple,
-    DeployEvent.OutputObject
-  >;
+  getEvent(key: 'Deploy'): TypedContractEvent<DeployEvent.InputTuple, DeployEvent.OutputTuple, DeployEvent.OutputObject>
 
   filters: {
-    "Deploy(address)": TypedContractEvent<
-      DeployEvent.InputTuple,
-      DeployEvent.OutputTuple,
-      DeployEvent.OutputObject
-    >;
-    Deploy: TypedContractEvent<
-      DeployEvent.InputTuple,
-      DeployEvent.OutputTuple,
-      DeployEvent.OutputObject
-    >;
-  };
+    'Deploy(address)': TypedContractEvent<DeployEvent.InputTuple, DeployEvent.OutputTuple, DeployEvent.OutputObject>
+    Deploy: TypedContractEvent<DeployEvent.InputTuple, DeployEvent.OutputTuple, DeployEvent.OutputObject>
+  }
 }
