@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/utils@1.9.29
+
 ## 1.9.28
 
 ### Patch Changes

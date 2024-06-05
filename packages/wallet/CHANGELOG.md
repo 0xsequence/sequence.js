@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/abi@1.9.29
+  - @0xsequence/core@1.9.29
+  - @0xsequence/network@1.9.29
+  - @0xsequence/relayer@1.9.29
+  - @0xsequence/signhub@1.9.29
+  - @0xsequence/utils@1.9.29
+
 ## 1.9.28
 
 ### Patch Changes

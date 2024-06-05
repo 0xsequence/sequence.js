@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+
 ## 1.9.28
 
 ### Patch Changes

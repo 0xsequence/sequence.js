@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/core@1.9.29
+  - @0xsequence/migration@1.9.29
+  - @0xsequence/replacer@1.9.29
+
 ## 1.9.28
 
 ### Patch Changes

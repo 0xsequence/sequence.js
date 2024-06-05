@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/account@1.9.29
+  - @0xsequence/core@1.9.29
+  - @0xsequence/signhub@1.9.29
+  - @0xsequence/utils@1.9.29
+
 ## 1.9.28
 
 ### Patch Changes

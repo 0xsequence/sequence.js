@@ -1,5 +1,13 @@
 # @0xsequence/core
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/abi@1.9.29
+
 ## 1.9.28
 
 ### Patch Changes

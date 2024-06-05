@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/abi@1.9.29
+  - @0xsequence/account@1.9.29
+  - @0xsequence/auth@1.9.29
+  - @0xsequence/core@1.9.29
+  - @0xsequence/migration@1.9.29
+  - @0xsequence/network@1.9.29
+  - @0xsequence/relayer@1.9.29
+  - @0xsequence/utils@1.9.29
+  - @0xsequence/wallet@1.9.29
+
 ## 1.9.28
 
 ### Patch Changes
