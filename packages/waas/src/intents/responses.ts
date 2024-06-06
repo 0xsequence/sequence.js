@@ -1,5 +1,6 @@
 import {
   IntentDataSendTransaction,
+  IntentResponseAuthInitiated,
   IntentResponseCode,
   IntentResponseGetSession,
   IntentResponseValidationFinished,
@@ -147,6 +148,15 @@ export type ValidateSessionResponse = Response<IntentResponseCode.validationStar
 export type FinishValidateSessionResponse = Response<IntentResponseCode.validationFinished, IntentResponseValidationFinished>
 export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse, IntentResponseGetSession>
 
+export function isInitiateAuthResponse(receipt: any): receipt is InitiateAuthResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.authInitiated &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.sessionId === 'string' &&
+    typeof receipt.data.identityType === 'string' &&
+    typeof receipt.data.expiresIn === 'number'
+  )
 }
 
 export function isOpenSessionResponse(receipt: any): receipt is OpenSessionResponse {

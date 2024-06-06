@@ -6,8 +6,8 @@ import {
   IntentDataListSessions,
   IntentDataOpenSession,
   IntentDataValidateSession,
-  IntentDataSessionAuthProof
   IntentDataSessionAuthProof,
+  IntentDataInitiateAuth,
   IntentName,
 } from '../clients/intent.gen'
 
@@ -19,6 +19,8 @@ export type OpenSessionArgs = BaseArgs & {
   sessionId: string
   idToken: string
 }
+
+export type OpenSessionArgs = BaseArgs & IntentDataOpenSession
 
 export async function openSession({ lifespan, ...data }: OpenSessionArgs): Promise<Intent<IntentDataOpenSession>> {
   return makeIntent(IntentName.openSession, lifespan, data)
