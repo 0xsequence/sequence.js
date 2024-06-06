@@ -15,9 +15,10 @@ interface BaseArgs {
   lifespan: number
 }
 
-export type OpenSessionArgs = BaseArgs & {
-  sessionId: string
-  idToken: string
+export type InitiateAuthArgs = BaseArgs & IntentDataInitiateAuth
+
+export async function initiateAuth({ lifespan, ...data }: InitiateAuthArgs): Promise<Intent<IntentDataInitiateAuth>> {
+  return makeIntent(IntentName.initiateAuth, lifespan, data)
 }
 
 export type OpenSessionArgs = BaseArgs & IntentDataOpenSession

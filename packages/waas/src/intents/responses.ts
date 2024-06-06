@@ -248,8 +248,7 @@ export function isFeeOptionsResponse(receipt: any): receipt is FeeOptionsRespons
 export function isValidationRequiredResponse(receipt: any): receipt is ValidationRequiredResponse {
   return (
     typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'validationRequired' &&
+    receipt.code === IntentResponseCode.validationRequired &&
     typeof receipt.data === 'object' &&
     typeof receipt.data.sessionId === 'string'
   )
