@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 1.9.30
+
+### Patch Changes
+
+- update
+- Updated dependencies
+  - @0xsequence/abi@1.9.30
+  - @0xsequence/core@1.9.30
+
 ## 1.9.29
 
 ### Patch Changes

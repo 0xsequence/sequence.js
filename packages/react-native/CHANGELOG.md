@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 1.9.30
+
+### Patch Changes
+
+- update
+- Updated dependencies
+  - @0xsequence/waas@1.9.30
+
 ## 1.9.29
 
 ### Patch Changes

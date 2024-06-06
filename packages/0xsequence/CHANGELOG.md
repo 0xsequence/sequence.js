@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.9.30
+
+### Patch Changes
+
+- update
+- Updated dependencies
+  - @0xsequence/abi@1.9.30
+  - @0xsequence/account@1.9.30
+  - @0xsequence/api@1.9.30
+  - @0xsequence/auth@1.9.30
+  - @0xsequence/core@1.9.30
+  - @0xsequence/guard@1.9.30
+  - @0xsequence/indexer@1.9.30
+  - @0xsequence/metadata@1.9.30
+  - @0xsequence/migration@1.9.30
+  - @0xsequence/multicall@1.9.30
+  - @0xsequence/network@1.9.30
+  - @0xsequence/provider@1.9.30
+  - @0xsequence/relayer@1.9.30
+  - @0xsequence/sessions@1.9.30
+  - @0xsequence/signhub@1.9.30
+  - @0xsequence/utils@1.9.30
+  - @0xsequence/wallet@1.9.30
+
 ## 1.9.29
 
 ### Patch Changes

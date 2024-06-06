@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.9.30
+
+### Patch Changes
+
+- update
+
 ## 1.9.29
 
 ### Patch Changes
