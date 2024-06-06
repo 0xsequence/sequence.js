@@ -57,6 +57,12 @@ export type Identity = {
   idToken: string
 }
 
+export type SignInResponse = {
+  sessionId: string,
+  wallet: string,
+  email?: string,
+}
+
 function encodeHex(data: string | Uint8Array) {
   return (
     '0x' +
@@ -215,7 +221,7 @@ export class SequenceWaaS {
     return this.waas.isSignedIn()
   }
 
-  async signIn(creds: Identity, name: string): Promise<{ sessionId: string; wallet: string }> {
+  async signIn(creds: Identity, name: string): Promise<SignInResponse> {
     // TODO: Be smarter about this, for cognito (or some other cases) we may
     // want to send the email instead of the idToken
     const signInIntent = await this.waas.signIn({
@@ -244,7 +250,8 @@ export class SequenceWaaS {
 
       return {
         sessionId: res.session.id,
-        wallet: res.response.data.wallet
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email,
       }
     } catch (e) {
       await this.waas.completeSignOut()
