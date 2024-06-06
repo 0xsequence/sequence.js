@@ -99,8 +99,7 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.GNOSIS],
-    ...genUrls('gnosis'),
-    disabled: true
+    ...genUrls('gnosis')
   },
   {
     ...networks[ChainId.RINKEBY],
