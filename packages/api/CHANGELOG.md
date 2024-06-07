@@ -1,5 +1,23 @@
 # @0xsequence/api
 
+## 1.9.30
+
+### Patch Changes
+
+- update
+
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+
+## 1.9.28
+
+### Patch Changes
+
+- add utils/merkletree
+
 ## 1.9.27
 
 ### Patch Changes

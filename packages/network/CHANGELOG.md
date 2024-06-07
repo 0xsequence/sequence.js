@@ -1,5 +1,38 @@
 # @0xsequence/network
 
+## 1.9.30
+
+### Patch Changes
+
+- update
+- Updated dependencies
+  - @0xsequence/core@1.9.30
+  - @0xsequence/indexer@1.9.30
+  - @0xsequence/relayer@1.9.30
+  - @0xsequence/utils@1.9.30
+
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/core@1.9.29
+  - @0xsequence/indexer@1.9.29
+  - @0xsequence/relayer@1.9.29
+  - @0xsequence/utils@1.9.29
+
+## 1.9.28
+
+### Patch Changes
+
+- add utils/merkletree
+- Updated dependencies
+  - @0xsequence/core@1.9.28
+  - @0xsequence/indexer@1.9.28
+  - @0xsequence/relayer@1.9.28
+  - @0xsequence/utils@1.9.28
+
 ## 1.9.27
 
 ### Patch Changes

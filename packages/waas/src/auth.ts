@@ -59,6 +59,12 @@ export type EmailIdentity = { email: string }
 
 export type Identity = IdTokenIdentity | EmailIdentity
 
+export type SignInResponse = {
+  sessionId: string,
+  wallet: string,
+  email?: string,
+}
+
 function encodeHex(data: string | Uint8Array) {
   return (
     '0x' +
@@ -217,7 +223,7 @@ export class SequenceWaaS {
     return this.waas.isSignedIn()
   }
 
-  async signIn(creds: IdTokenIdentity | string, sessionName: string): Promise<{ sessionId: string; wallet: string }> {
+  async signIn(creds: IdTokenIdentity | string, sessionName: string): Promise<SignInResponse> {
     const idToken = (typeof creds === 'string' ? creds : creds.idToken)
 
     const intent = await this.waas.signInWithIdToken(idToken)
@@ -234,7 +240,8 @@ export class SequenceWaaS {
 
       return {
         sessionId: res.session.id,
-        wallet: res.response.data.wallet
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email,
       }
     } catch (e) {
       await this.waas.completeSignOut()
@@ -253,7 +260,7 @@ export class SequenceWaaS {
     return res.data.challenge
   }
 
-  async completeEmailAuth(args: { email: string, challenge: string, answer: string, sessionName: string }): Promise<{ sessionId: string; wallet: string }> {
+  async completeEmailAuth(args: { email: string, challenge: string, answer: string, sessionName: string }): Promise<SignInResponse> {
     const intent = await this.waas.completeEmailAuth(args.email, args.challenge, args.answer)
     try {
       const res = await this.registerSession(intent, args.sessionName)
@@ -268,7 +275,8 @@ export class SequenceWaaS {
 
       return {
         sessionId: res.session.id,
-        wallet: res.response.data.wallet
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email,
       }
     } catch (e) {
       await this.waas.completeSignOut()
@@ -276,7 +284,7 @@ export class SequenceWaaS {
     }
   }
 
-  async completeIdTokenAuth(args: { idToken: string, sessionName: string }): Promise<{ sessionId: string; wallet: string }> {
+  async completeIdTokenAuth(args: { idToken: string, sessionName: string }): Promise<SignInResponse> {
     const intent = await this.waas.completeIdTokenAuth(args.idToken)
     try {
       const res = await this.registerSession(intent, args.sessionName)
@@ -291,7 +299,8 @@ export class SequenceWaaS {
 
       return {
         sessionId: res.session.id,
-        wallet: res.response.data.wallet
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email,
       }
     } catch (e) {
       await this.waas.completeSignOut()
