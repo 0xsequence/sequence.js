@@ -27,7 +27,7 @@
   "devDependencies": {
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^1.10.0",
+    "@0xsequence/wallet-contracts": "^2.0.0",
     "ethers": "^6.13.0"
   },
   "files": [
