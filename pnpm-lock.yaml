@@ -306,8 +306,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@0xsequence/ethauth':
-        specifier: 0xsequence/ethauth.js#ethers-v6
-        version: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
+        specifier: 0xsequence/ethauth.js#27fe9c05622e9d405d69f5a0633d80af143360cc
+        version: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/27fe9c05622e9d405d69f5a0633d80af143360cc(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
       '@0xsequence/indexer':
         specifier: workspace:*
         version: link:../indexer
@@ -686,8 +686,8 @@ importers:
         version: link:../utils
     devDependencies:
       '@0xsequence/ethauth':
-        specifier: 0xsequence/ethauth.js#ethers-v6
-        version: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
+        specifier: 0xsequence/ethauth.js#27fe9c05622e9d405d69f5a0633d80af143360cc
+        version: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/27fe9c05622e9d405d69f5a0633d80af143360cc(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
       '@0xsequence/tests':
         specifier: workspace:*
         version: link:../tests
@@ -706,11 +706,11 @@ importers:
 
 packages:
 
-  '@0xsequence/ethauth@https://codeload.github.com/0xsequence/ethauth.js/tar.gz/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc':
-    resolution: {tarball: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc}
+  '@0xsequence/ethauth@https://codeload.github.com/0xsequence/ethauth.js/tar.gz/27fe9c05622e9d405d69f5a0633d80af143360cc':
+    resolution: {tarball: https://codeload.github.com/0xsequence/ethauth.js/tar.gz/27fe9c05622e9d405d69f5a0633d80af143360cc}
     version: 0.8.1
     peerDependencies:
-      ethers: '>=5.5'
+      ethers: '>=6'
 
   '@0xsequence/wallet-contracts@1.10.0':
     resolution: {integrity: sha512-NfPBJkp6/ApjVuTqQMgJvpN5lWyNc9bHm9ZITEi3X3nREf5126RLEXCyThChapkmcglHnQn+ndA8j6bfcpFEAg==}
@@ -8096,7 +8096,7 @@ packages:
 
 snapshots:
 
-  '@0xsequence/ethauth@https://codeload.github.com/0xsequence/ethauth.js/tar.gz/24f056e275ac14bf5ad32fb2fe6cdcf3ca8b72bc(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))':
+  '@0xsequence/ethauth@https://codeload.github.com/0xsequence/ethauth.js/tar.gz/27fe9c05622e9d405d69f5a0633d80af143360cc(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))':
     dependencies:
       ethers: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       js-base64: 3.7.7
