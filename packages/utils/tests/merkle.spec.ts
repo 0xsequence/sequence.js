@@ -1,13 +1,13 @@
 import { expect } from 'chai'
 import { MerkleTreeGenerator, SaleItemsElement, getSaleItemsLeaf } from '@0xsequence/utils'
-import { BigNumber, Wallet, constants, utils } from 'ethers'
+import { ethers } from 'ethers'
 
 describe('merkle', function () {
-  const addrs = Array.from({ length: 10 }, () => Wallet.createRandom().address)
-  const elements: SaleItemsElement[] = addrs.map(addr => ({ address: addr, tokenId: BigNumber.from(1) }))
+  const addrs = Array.from({ length: 10 }, () => ethers.Wallet.createRandom().address)
+  const elements: SaleItemsElement[] = addrs.map(addr => ({ address: addr, tokenId: 1 }))
 
   it('generates tree, root and proof for custom elements', () => {
-    const getLeaf = (element: string) => utils.solidityKeccak256(['address'], [element.toLowerCase()])
+    const getLeaf = (element: string) => ethers.solidityPackedKeccak256(['address'], [element.toLowerCase()])
     const merkleGenerator = new MerkleTreeGenerator(addrs, getLeaf)
     expect(merkleGenerator.generateRoot()).to.be.a('string')
     const proof = merkleGenerator.generateProof(addrs[0])
@@ -26,8 +26,8 @@ describe('merkle', function () {
   it('errors when invalid element', () => {
     const merkleGenerator = new MerkleTreeGenerator(elements, getSaleItemsLeaf)
     const invalidElement: SaleItemsElement = {
-      address: Wallet.createRandom().address,
-      tokenId: constants.Zero
+      address: ethers.Wallet.createRandom().address,
+      tokenId: 0
     }
     expect(() => merkleGenerator.generateProof(invalidElement)).to.throw('Element not found')
   })

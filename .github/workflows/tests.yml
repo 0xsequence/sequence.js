@@ -7,7 +7,7 @@ jobs:
     name: Install dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
 
   build:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm typecheck
       - run: pnpm lint
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter 0xsequence test
 
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter abi test
 
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter account test
 
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter api test
 
@@ -62,33 +62,34 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter auth test
+
+  tests-core:
+    name: Run core tests
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-dependencies
+      - run: pnpm --filter core test
+
   tests-deployer:
     name: Run deployer tests
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter deployer test
-
-  tests-estimator:
-    name: Run estimator tests
-    runs-on: ubuntu-latest
-    needs: [install]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-dependencies
-      - run: pnpm --filter estimator test
 
   tests-guard:
     name: Run guard tests
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter guard test
 
@@ -97,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter indexer test
 
@@ -106,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter metadata test
 
@@ -115,25 +116,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter migration test
-
-  tests-multicall:
-    name: Run multicall tests
-    runs-on: ubuntu-latest
-    needs: [install]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-dependencies
-      - run: pnpm --filter multicall test
 
   tests-network:
     name: Run network tests
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter network test
 
@@ -142,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter provider test
 
@@ -151,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter relayer test
 
@@ -160,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter replacer test
 
@@ -169,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter sessions test
 
@@ -178,25 +170,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter signhub test
-
-  tests-simulator:
-    name: Run simulator tests
-    runs-on: ubuntu-latest
-    needs: [install]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-dependencies
-      - run: pnpm --filter simulator test
 
   tests-utils:
     name: Run utils tests
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter utils test
 
@@ -205,7 +188,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter waas test
 
@@ -214,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter wallet test
 
@@ -223,11 +206,11 @@ jobs:
   #   runs-on: ubuntu-latest
   #   needs: [install]
   #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
   #       with:
   #         node-version: 20
-  #     - uses: actions/cache@v3
+  #     - uses: actions/cache@v4
   #       id: pnpm-cache
   #       with:
   #         path: |

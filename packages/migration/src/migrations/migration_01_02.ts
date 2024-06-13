@@ -28,7 +28,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
     }
 
     const context = contexts[2]
-    const contract = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
     // WARNING: v1 wallets CAN NOT use v2 configurations so we ALWAYS need to update
     // both the implementation and the configuration at the same time
@@ -45,7 +45,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
           gasLimit: 0,
           revertOnError: true,
           delegateCall: false,
-          data: contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
+          data: contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
         },
         ...updateBundle.transactions
       ]
@@ -72,7 +72,7 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
       throw new Error('Invalid transaction bundle size')
     }
 
-    if (!tx.nonce || !commons.transaction.encodeNonce(MIGRATION_NONCE_SPACE, 0).eq(tx.nonce)) {
+    if (!tx.nonce || commons.transaction.encodeNonce(MIGRATION_NONCE_SPACE, 0) !== BigInt(tx.nonce)) {
       throw new Error('Invalid transaction bundle nonce')
     }
 
@@ -83,20 +83,20 @@ export class Migration_v1v2 implements Migration<v1.config.WalletConfig, v2.conf
       tx.transactions[1].delegateCall ||
       !tx.transactions[0].revertOnError ||
       !tx.transactions[1].revertOnError ||
-      (tx.transactions[0].value && !ethers.constants.Zero.eq(tx.transactions[0].value)) ||
-      (tx.transactions[1].value && !ethers.constants.Zero.eq(tx.transactions[1].value)) ||
-      (tx.transactions[0].gasLimit && !ethers.constants.Zero.eq(tx.transactions[0].gasLimit)) ||
-      (tx.transactions[1].gasLimit && !ethers.constants.Zero.eq(tx.transactions[1].gasLimit))
+      (tx.transactions[0].value && BigInt(tx.transactions[0].value) !== 0n) ||
+      (tx.transactions[1].value && BigInt(tx.transactions[1].value) !== 0n) ||
+      (tx.transactions[0].gasLimit && BigInt(tx.transactions[0].gasLimit) !== 0n) ||
+      (tx.transactions[1].gasLimit && BigInt(tx.transactions[1].gasLimit) !== 0n)
     ) {
       throw new Error('Invalid transaction bundle format')
     }
 
     const context = contexts[2]
-    const contract = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const contract = new ethers.Interface(walletContracts.mainModule.abi)
 
-    const data1 = ethers.utils.hexlify(tx.transactions[0].data || [])
-    const expectData1 = ethers.utils.hexlify(
-      contract.encodeFunctionData(contract.getFunction('updateImplementation'), [context.mainModuleUpgradable])
+    const data1 = ethers.hexlify(tx.transactions[0].data || new Uint8Array())
+    const expectData1 = ethers.hexlify(
+      contract.encodeFunctionData(contract.getFunction('updateImplementation')!, [context.mainModuleUpgradable])
     )
 
     if (data1 !== expectData1) {

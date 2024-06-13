@@ -16,6 +16,6 @@ export function signMessage({ wallet, chainId, message, lifespan }: SignMessageA
   return makeIntent('signMessage', lifespan, {
     wallet,
     network: chainId.toString(),
-    message: message.startsWith('0x') ? message : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(message))
+    message: message.startsWith('0x') ? message : ethers.hexlify(ethers.toUtf8Bytes(message))
   })
 }

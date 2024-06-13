@@ -12,7 +12,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     // TODO: The provider is only used to determine that EIP1271 signatures have *some* validity
     // but when reconstructing a presigned transaction we should do the replacement once per chain.
     // For now, it's recommended to use Mainnet as the provider.
-    public provider: ethers.providers.Provider,
+    public provider: ethers.Provider,
     private store: TrackerStore = new MemoryTrackerStore(),
     public useEIP5719: boolean = false
   ) {
@@ -30,8 +30,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
     if (isPlainNested(node)) {
       return {
-        weight: ethers.BigNumber.from(node.weight),
-        threshold: ethers.BigNumber.from(node.threshold),
+        weight: BigInt(node.weight),
+        threshold: BigInt(node.threshold),
         tree: await this.loadTopology(node.tree)
       }
     }
@@ -62,8 +62,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     if (v2.config.isNestedLeaf(node)) {
       const saveTree = this.saveTopology(node.tree)
       const saveThis = this.store.saveV2Node(hash, {
-        weight: ethers.BigNumber.from(node.weight).toString(),
-        threshold: ethers.BigNumber.from(node.threshold).toString(),
+        weight: BigInt(node.weight).toString(),
+        threshold: BigInt(node.threshold).toString(),
         tree: v2.config.hashNode(node.tree)
       } as PlainNested)
 
@@ -115,8 +115,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       // const storeTree = this.saveTopology(config.tree)
       // const storeConfig = this.store.saveConfig(imageHash, {
       //   version: 2,
-      //   threshold: ethers.BigNumber.from(config.threshold).toString(),
-      //   checkpoint: ethers.BigNumber.from(config.checkpoint).toString(),
+      //   threshold: BigInt(config.threshold).toString(),
+      //   checkpoint: BigInt(config.checkpoint).toString(),
       //   tree: v2.config.hashNode(config.tree)
       // })
 
@@ -148,8 +148,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     if (isPlainV2Config(config)) {
       const fullConfig = {
         version: 2,
-        threshold: ethers.BigNumber.from(config.threshold),
-        checkpoint: ethers.BigNumber.from(config.checkpoint),
+        threshold: BigInt(config.threshold),
+        checkpoint: BigInt(config.checkpoint),
         tree: await this.loadTopology(config.tree)
       } as v2.config.WalletConfig
       this.configOfImageHashCache[args.imageHash] = fullConfig
@@ -224,7 +224,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const decoded = v2.signature.SignatureCoder.decode(args.signature)
     const nextImageHash = universal.genericCoderFor(args.nextConfig.version).config.imageHashOf(args.nextConfig)
     const message = v2.chained.messageSetImageHash(nextImageHash)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
     const payload = {
       message,
       address: args.wallet,
@@ -283,7 +283,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     let bestCandidate:
       | {
           nextImageHash: string
-          checkpoint: ethers.BigNumber
+          checkpoint: bigint
           signature: string
         }
       | undefined
@@ -292,14 +292,14 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       nextImageHashes.map(async ({ nextImageHash, payload }) => {
         const nextConfig = await this.configOfImageHash({ imageHash: nextImageHash })
         if (!nextConfig || !v2.config.isWalletConfig(nextConfig)) return undefined
-        const nextCheckpoint = ethers.BigNumber.from(nextConfig.checkpoint)
+        const nextCheckpoint = BigInt(nextConfig.checkpoint)
         return { nextConfig, nextCheckpoint, nextImageHash, payload }
       })
     )
 
     const sortedNextConfigsAndCheckpoints = nextConfigsAndCheckpoints
       .filter(c => c !== undefined)
-      .filter(c => c!.nextCheckpoint.gt(fromConfig.checkpoint))
+      .filter(c => c!.nextCheckpoint > BigInt(fromConfig.checkpoint))
       .sort((a, b) =>
         // If we are looking for the longest path, sort by ascending checkpoint
         // because we want to find the smalles jump, and we should start with the
@@ -309,7 +309,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         // We don't have a guarantee that all "next configs" will be valid
         // so worst case scenario we will need to try all of them.
         // But we can try to optimize for the most common case.
-        a!.nextCheckpoint.gt(b!.nextCheckpoint) ? (longestPath ? 1 : -1) : longestPath ? -1 : 1
+        a!.nextCheckpoint > b!.nextCheckpoint ? (longestPath ? 1 : -1) : longestPath ? -1 : 1
       )
 
     for (const entry of sortedNextConfigsAndCheckpoints) {
@@ -319,10 +319,10 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         const bestCheckpoint = bestCandidate.checkpoint
         if (longestPath) {
           // Only consider candidates earlier than our current best
-          if (nextCheckpoint.gte(bestCheckpoint)) continue
+          if (nextCheckpoint >= bestCheckpoint) continue
         } else {
           // Only consider candidates later than our current best
-          if (nextCheckpoint.lte(bestCheckpoint)) continue
+          if (nextCheckpoint <= bestCheckpoint) continue
         }
       }
 
@@ -336,7 +336,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
                 return [signer, undefined]
               }
 
-              const replacedSignature = ethers.utils.hexlify(
+              const replacedSignature = ethers.hexlify(
                 this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, payload.subdigest, signature) : signature
               )
 
@@ -353,12 +353,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
       // Encode the full signature (to see if it has enough weight)
       const encoded = v2.signature.SignatureCoder.encodeSigners(fromConfig, signatures, [], 0)
-      if (encoded.weight.lt(fromConfig.threshold)) continue
+      if (encoded.weight < BigInt(fromConfig.threshold)) continue
 
       // Save the new best candidate
       bestCandidate = {
         nextImageHash,
-        checkpoint: ethers.BigNumber.from(nextConfig.checkpoint),
+        checkpoint: BigInt(nextConfig.checkpoint),
         signature: encoded.encoded
       }
     }
@@ -420,7 +420,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       wallet: string
       proof: {
         digest: string
-        chainId: ethers.BigNumber
+        chainId: bigint
         signature: string
       }
     }[]
@@ -435,7 +435,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
       wallet: string
       proof: {
         digest: string
-        chainId: ethers.BigNumber
+        chainId: bigint
         signature: string
       }
     }[] = []
@@ -452,8 +452,8 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         wallet,
         proof: {
           digest: payload.digest,
-          chainId: ethers.BigNumber.from(payload.chainId),
-          signature: ethers.utils.hexlify(signature)
+          chainId: BigInt(payload.chainId),
+          signature: ethers.hexlify(signature)
         }
       })
     }
@@ -478,7 +478,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
     // Split signature and save each part
     const message = commons.transaction.packMetaTransactionsData(signed.tx.nonce, signed.tx.transactions)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
     const payload = { chainId: signed.tx.chainId, message, address, digest }
     const subdigest = commons.signature.subdigestOf(payload)
 
@@ -532,7 +532,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
         const { subdigest, toImageHash } = tx
         const payload = await this.payloadOfSubdigest({ subdigest })
         if (!payload || !payload.message) return undefined
-        if (!ethers.BigNumber.from(chainId).eq(payload.chainId)) return undefined
+        if (BigInt(chainId) !== BigInt(payload.chainId)) return undefined
 
         const signers = coder.config.signersOf(currentConfig as any).map(s => s.address)
 
@@ -546,7 +546,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
                   return [signer, undefined]
                 }
 
-                const replacedSignature = ethers.utils.hexlify(
+                const replacedSignature = ethers.hexlify(
                   this.useEIP5719 ? await this.cachedEIP5719.runByEIP5719(signer, subdigest, signature) : signature
                 )
 
@@ -560,7 +560,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
         // Encode signature parts into a single signature
         const encoded = coder.signature.encodeSigners(currentConfig as any, signatures, [], chainId)
-        if (!encoded || encoded.weight < currentConfig.threshold) return undefined
+        if (!encoded || encoded.weight < BigInt(currentConfig.threshold)) return undefined
 
         // Unpack payload (it should have transactions)
         const [nonce, transactions] = commons.transaction.unpackMetaTransactionsData(payload.message)
@@ -588,7 +588,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return candidates[0]
   }
 
-  updateProvider(provider: ethers.providers.Provider) {
+  updateProvider(provider: ethers.Provider) {
     this.provider = provider
   }
 }
