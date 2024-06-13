@@ -1,3 +1,1 @@
-import packageJson from '../package.json'
-
-export const VERSION = packageJson.version
+export const VERSION = '2.0.0-alpha.1'
