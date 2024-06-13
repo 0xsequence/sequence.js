@@ -8,7 +8,7 @@ import {
   IntentDataValidateSession,
   IntentDataSessionAuthProof,
   IntentDataInitiateAuth,
-  IntentName,
+  IntentName
 } from '../clients/intent.gen'
 
 interface BaseArgs {

@@ -6,18 +6,17 @@
 // webrpc-gen -schema=authenticator.ridl -target=typescript -client -out=./clients/authenticator.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.1.0"
+export const WebRPCSchemaVersion = 'v0.1.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "120337aea813ffd9628b5dd2f63ba999f2aadf3d"
+export const WebRPCSchemaHash = '120337aea813ffd9628b5dd2f63ba999f2aadf3d'
 
 //
 // Types
 //
-
 
 export enum IntentName {
   initiateAuth = 'initiateAuth',
@@ -195,20 +194,19 @@ export interface RegisterSessionArgs {
 
 export interface RegisterSessionReturn {
   session: Session
-  response: IntentResponse  
+  response: IntentResponse
 }
 export interface SendIntentArgs {
   intent: Intent
 }
 
 export interface SendIntentReturn {
-  response: IntentResponse  
+  response: IntentResponse
 }
-export interface ChainListArgs {
-}
+export interface ChainListArgs {}
 
 export interface ChainListReturn {
-  chains: Array<Chain>  
+  chains: Array<Chain>
 }
 
 export interface WaasAuthenticatorAdmin {
@@ -220,30 +218,27 @@ export interface WaasAuthenticatorAdmin {
   updateTenant(args: UpdateTenantArgs, headers?: object, signal?: AbortSignal): Promise<UpdateTenantReturn>
 }
 
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface ClockArgs {
-}
+export interface ClockArgs {}
 
 export interface ClockReturn {
-  serverTime: string  
+  serverTime: string
 }
 export interface GetTenantArgs {
   projectId: number
 }
 
 export interface GetTenantReturn {
-  tenant: Tenant  
+  tenant: Tenant
 }
 export interface CreateTenantArgs {
   projectId: number
@@ -255,7 +250,7 @@ export interface CreateTenantArgs {
 
 export interface CreateTenantReturn {
   tenant: Tenant
-  upgradeCode: string  
+  upgradeCode: string
 }
 export interface UpdateTenantArgs {
   projectId: number
@@ -265,11 +260,9 @@ export interface UpdateTenantArgs {
 }
 
 export interface UpdateTenantReturn {
-  tenant: Tenant  
+  tenant: Tenant
 }
 
-
-  
 //
 // Client
 //
@@ -286,51 +279,52 @@ export class WaasAuthenticator implements WaasAuthenticator {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   registerSession = (args: RegisterSessionArgs, headers?: object, signal?: AbortSignal): Promise<RegisterSessionReturn> => {
-    return this.fetch(
-      this.url('RegisterSession'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          session: <Session>(_data.session),
-          response: <IntentResponse>(_data.response),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RegisterSession'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            session: <Session>_data.session,
+            response: <IntentResponse>_data.response
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sendIntent = (args: SendIntentArgs, headers?: object, signal?: AbortSignal): Promise<SendIntentReturn> => {
-    return this.fetch(
-      this.url('SendIntent'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          response: <IntentResponse>(_data.response),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SendIntent'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            response: <IntentResponse>_data.response
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   chainList = (headers?: object, signal?: AbortSignal): Promise<ChainListReturn> => {
-    return this.fetch(
-      this.url('ChainList'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          chains: <Array<Chain>>(_data.chains),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ChainList'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            chains: <Array<Chain>>_data.chains
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 export class WaasAuthenticatorAdmin implements WaasAuthenticatorAdmin {
   protected hostname: string
@@ -345,98 +339,100 @@ export class WaasAuthenticatorAdmin implements WaasAuthenticatorAdmin {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <Version>(_data.version),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <Version>_data.version
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <RuntimeStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <RuntimeStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   clock = (headers?: object, signal?: AbortSignal): Promise<ClockReturn> => {
-    return this.fetch(
-      this.url('Clock'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          serverTime: <string>(_data.serverTime),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Clock'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            serverTime: <string>_data.serverTime
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTenant = (args: GetTenantArgs, headers?: object, signal?: AbortSignal): Promise<GetTenantReturn> => {
-    return this.fetch(
-      this.url('GetTenant'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tenant: <Tenant>(_data.tenant),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTenant'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tenant: <Tenant>_data.tenant
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   createTenant = (args: CreateTenantArgs, headers?: object, signal?: AbortSignal): Promise<CreateTenantReturn> => {
-    return this.fetch(
-      this.url('CreateTenant'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tenant: <Tenant>(_data.tenant),
-          upgradeCode: <string>(_data.upgradeCode),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('CreateTenant'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tenant: <Tenant>_data.tenant,
+            upgradeCode: <string>_data.upgradeCode
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updateTenant = (args: UpdateTenantArgs, headers?: object, signal?: AbortSignal): Promise<UpdateTenantReturn> => {
-    return this.fetch(
-      this.url('UpdateTenant'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tenant: <Tenant>(_data.tenant),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdateTenant'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tenant: <Tenant>_data.tenant
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -450,18 +446,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -643,7 +639,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
   }
 }
 
-
 // Schema errors
 
 export class UnauthorizedError extends WebrpcError {
@@ -685,7 +680,6 @@ export class EmailAlreadyInUseError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -700,7 +694,7 @@ export enum errors {
   WebrpcStreamFinished = 'WebrpcStreamFinished',
   Unauthorized = 'Unauthorized',
   TenantNotFound = 'TenantNotFound',
-  EmailAlreadyInUse = 'EmailAlreadyInUse',
+  EmailAlreadyInUse = 'EmailAlreadyInUse'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -717,8 +711,7 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [-10]: WebrpcStreamFinishedError,
   [1000]: UnauthorizedError,
   [1001]: TenantNotFoundError,
-  [2000]: EmailAlreadyInUseError,
+  [2000]: EmailAlreadyInUseError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-

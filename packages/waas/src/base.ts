@@ -28,10 +28,10 @@ import {
   SignMessageArgs,
   validateSession
 } from './intents'
-import {LocalStore, Store, StoreObj} from './store'
-import {newSession, newSessionFromSessionId} from './session'
-import {OpenSessionResponse} from './intents/responses'
-import {SimpleNetwork, toNetworkID, WithSimpleNetwork} from './networks'
+import { LocalStore, Store, StoreObj } from './store'
+import { newSession, newSessionFromSessionId } from './session'
+import { OpenSessionResponse } from './intents/responses'
+import { SimpleNetwork, toNetworkID, WithSimpleNetwork } from './networks'
 import {
   IdentityType,
   IntentDataFeeOptions,
@@ -44,10 +44,10 @@ import {
   IntentDataSignMessage,
   IntentDataValidateSession
 } from './clients/intent.gen'
-import {getDefaultSubtleCryptoBackend, SubtleCryptoBackend} from './subtle-crypto'
-import {getDefaultSecureStoreBackend, SecureStoreBackend} from './secure-store'
-import {keccak256, toUtf8Bytes} from "ethers/lib/utils";
-import {jwtDecode} from "jwt-decode";
+import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
+import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
+import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
+import { jwtDecode } from 'jwt-decode'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -216,7 +216,7 @@ export class SequenceWaaSBase {
       sessionId,
       identityType: IdentityType.None,
       idToken,
-      lifespan: DEFAULT_LIFESPAN,
+      lifespan: DEFAULT_LIFESPAN
     })
 
     await this.status.set('pending')
@@ -230,7 +230,7 @@ export class SequenceWaaSBase {
       sessionId,
       identityType: IdentityType.Email,
       verifier: `${email};${sessionId}`,
-      lifespan: DEFAULT_LIFESPAN,
+      lifespan: DEFAULT_LIFESPAN
     })
 
     await this.status.set('pending')
@@ -246,7 +246,7 @@ export class SequenceWaaSBase {
       sessionId,
       identityType: IdentityType.OIDC,
       verifier: `${idTokenHash};${decoded.exp}`,
-      lifespan: DEFAULT_LIFESPAN,
+      lifespan: DEFAULT_LIFESPAN
     })
 
     await this.status.set('pending')
@@ -262,7 +262,7 @@ export class SequenceWaaSBase {
       identityType: IdentityType.Email,
       verifier: `${email};${sessionId}`,
       answer: hashedAnswer,
-      lifespan: DEFAULT_LIFESPAN,
+      lifespan: DEFAULT_LIFESPAN
     })
     return this.signIntent(intent)
   }
@@ -274,7 +274,7 @@ export class SequenceWaaSBase {
       identityType: IdentityType.OIDC,
       verifier: keccak256(toUtf8Bytes(idToken)),
       answer: idToken,
-      lifespan: DEFAULT_LIFESPAN,
+      lifespan: DEFAULT_LIFESPAN
     })
     return this.signIntent(intent)
   }

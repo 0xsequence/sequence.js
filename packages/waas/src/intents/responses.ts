@@ -139,8 +139,8 @@ export type SessionAuthProofResponse = {
 }
 
 export interface Response<Code, Data> {
-  code: Code,
-  data: Data,
+  code: Code
+  data: Data
 }
 
 export type InitiateAuthResponse = Response<IntentResponseCode.authInitiated, IntentResponseAuthInitiated>
@@ -255,19 +255,11 @@ export function isValidationRequiredResponse(receipt: any): receipt is Validatio
 }
 
 export function isValidateSessionResponse(receipt: any): receipt is ValidateSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    receipt.code === IntentResponseCode.validationStarted &&
-    typeof receipt.data === 'object'
-  )
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationStarted && typeof receipt.data === 'object'
 }
 
 export function isFinishValidateSessionResponse(receipt: any): receipt is FinishValidateSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    receipt.code === IntentResponseCode.validationFinished &&
-    typeof receipt.data === 'object'
-  )
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationFinished && typeof receipt.data === 'object'
 }
 
 export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {
