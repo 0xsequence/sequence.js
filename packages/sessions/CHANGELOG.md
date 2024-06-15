@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.9.31
+
+### Patch Changes
+
+- metadata: token directory changes
+- Updated dependencies
+  - @0xsequence/core@1.9.31
+  - @0xsequence/migration@1.9.31
+  - @0xsequence/replacer@1.9.31
+
 ## 1.9.30
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.9.31
+
+### Patch Changes
+
+- metadata: token directory changes
+
 ## 1.9.30
 
 ### Patch Changes

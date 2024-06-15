@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 1.9.31
+
+### Patch Changes
+
+- metadata: token directory changes
+- Updated dependencies
+  - @0xsequence/waas@1.9.31
+
 ## 1.9.30
 
 ### Patch Changes
