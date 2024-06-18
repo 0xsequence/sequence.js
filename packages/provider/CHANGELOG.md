@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 1.9.31
+
+### Patch Changes
+
+- metadata: token directory changes
+- Updated dependencies
+  - @0xsequence/abi@1.9.31
+  - @0xsequence/account@1.9.31
+  - @0xsequence/auth@1.9.31
+  - @0xsequence/core@1.9.31
+  - @0xsequence/migration@1.9.31
+  - @0xsequence/network@1.9.31
+  - @0xsequence/relayer@1.9.31
+  - @0xsequence/utils@1.9.31
+  - @0xsequence/wallet@1.9.31
+
 ## 1.9.30
 
 ### Patch Changes
