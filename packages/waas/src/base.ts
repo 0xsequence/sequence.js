@@ -254,6 +254,20 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
+  async initiateAuth(identityType: IdentityType, verifier: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const intent = await initiateAuth({
+      sessionId,
+      identityType,
+      verifier,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    await this.status.set('pending')
+
+    return this.signIntent(intent)
+  }
+
   async completeEmailAuth(email: string, challenge: string, answer: string): Promise<SignedIntent<IntentDataOpenSession>> {
     const sessionId = await this.getSessionId()
     const hashedAnswer = keccak256(toUtf8Bytes(challenge + answer))
@@ -274,6 +288,18 @@ export class SequenceWaaSBase {
       identityType: IdentityType.OIDC,
       verifier: keccak256(toUtf8Bytes(idToken)),
       answer: idToken,
+      lifespan: DEFAULT_LIFESPAN
+    })
+    return this.signIntent(intent)
+  }
+
+  async completeAuth(identityType: IdentityType, verifier: string, answer: string): Promise<SignedIntent<IntentDataOpenSession>> {
+    const sessionId = await this.getSessionId()
+    const intent = await openSession({
+      sessionId,
+      identityType,
+      verifier,
+      answer,
       lifespan: DEFAULT_LIFESPAN
     })
     return this.signIntent(intent)

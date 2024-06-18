@@ -1,40 +1,40 @@
 import { Observer, SequenceWaaSBase } from './base'
-import { IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
+import { IdentityType, IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
 import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
+  GetTransactionReceiptArgs,
   SendDelayedEncodeArgs,
   SendERC1155Args,
   SendERC20Args,
   SendERC721Args,
-  SignMessageArgs,
   SendTransactionsArgs,
   SignedIntent,
-  GetTransactionReceiptArgs
+  SignMessageArgs
 } from './intents'
 import {
-  MaySentTransactionResponse,
-  SignedMessageResponse,
   FeeOptionsResponse,
-  isGetSessionResponse,
-  isMaySentTransactionResponse,
-  isSignedMessageResponse,
-  isValidationRequiredResponse,
-  isFinishValidateSessionResponse,
   isCloseSessionResponse,
-  isTimedOutTransactionResponse,
   isFeeOptionsResponse,
-  isSessionAuthProofResponse,
+  isFinishValidateSessionResponse,
+  isGetSessionResponse,
+  isInitiateAuthResponse,
   isIntentTimeError,
-  isInitiateAuthResponse
+  isMaySentTransactionResponse,
+  isSessionAuthProofResponse,
+  isSignedMessageResponse,
+  isTimedOutTransactionResponse,
+  isValidationRequiredResponse,
+  MaySentTransactionResponse,
+  SignedMessageResponse
 } from './intents/responses'
-import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
-import { jwtDecode } from 'jwt-decode'
+import { Chain, Session, WaasAuthenticator } from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
-import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
-import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
+import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
+import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
+import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 
 export type Sessions = (Session & { isThis: boolean })[]
 
@@ -229,6 +229,39 @@ export class SequenceWaaS {
     const intent = await this.waas.signInWithIdToken(idToken)
     try {
       const res = await this.registerSession(intent, sessionName)
+
+      await this.waas.completeSignIn({
+        code: 'sessionOpened',
+        data: {
+          sessionId: res.session.id,
+          wallet: res.response.data.wallet
+        }
+      })
+
+      return {
+        sessionId: res.session.id,
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email
+      }
+    } catch (e) {
+      await this.waas.completeSignOut()
+      throw e
+    }
+  }
+
+  async signInWithPlayFab(titleID: string, sessionTicket: string, sessionName: string): Promise<SignInResponse> {
+    const ticketHash = keccak256(toUtf8Bytes(sessionTicket))
+    const verifier = `${titleID}|${ticketHash}`
+    const initiateAuth = await this.waas.initiateAuth(IdentityType.PlayFab, verifier)
+    const res = await this.sendIntent(initiateAuth)
+
+    if (!isInitiateAuthResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+
+    const openSession = await this.waas.completeAuth(IdentityType.PlayFab, verifier, sessionTicket)
+    try {
+      const res = await this.registerSession(openSession, sessionName)
 
       await this.waas.completeSignIn({
         code: 'sessionOpened',
