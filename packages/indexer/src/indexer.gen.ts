@@ -6,18 +6,17 @@
 // webrpc-gen -schema=indexer.ridl -target=typescript -client -out=./clients/indexer.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "604761d36d9ef082fa97d028f8315ccdedf19838"
+export const WebRPCSchemaHash = '604761d36d9ef082fa97d028f8315ccdedf19838'
 
 //
 // Types
 //
-
 
 export interface ContractInfo {
   chainId: number
@@ -52,8 +51,8 @@ export interface TokenMetadata {
   image?: string
   video?: string
   audio?: string
-  properties?: {[key: string]: any}
-  attributes: Array<{[key: string]: any}>
+  properties?: { [key: string]: any }
+  attributes: Array<{ [key: string]: any }>
   image_data?: string
   external_url?: string
   background_color?: string
@@ -180,7 +179,7 @@ export interface DiskUsage {
   used: number
   size: number
   percent: number
-  dirs: {[key: string]: string}
+  dirs: { [key: string]: string }
 }
 
 export interface Bond {
@@ -323,7 +322,7 @@ export interface TxnTransfer {
   amounts: Array<string>
   logIndex: number
   contractInfo?: ContractInfo
-  tokenMetadata?: {[key: string]: TokenMetadata}
+  tokenMetadata?: { [key: string]: TokenMetadata }
 }
 
 export interface TransactionHistoryFilter {
@@ -424,55 +423,90 @@ export interface Indexer {
   getTokenSupplies(args: GetTokenSuppliesArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenSuppliesReturn>
   getTokenSuppliesMap(args: GetTokenSuppliesMapArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenSuppliesMapReturn>
   getBalanceUpdates(args: GetBalanceUpdatesArgs, headers?: object, signal?: AbortSignal): Promise<GetBalanceUpdatesReturn>
-  getTransactionHistory(args: GetTransactionHistoryArgs, headers?: object, signal?: AbortSignal): Promise<GetTransactionHistoryReturn>
+  getTransactionHistory(
+    args: GetTransactionHistoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTransactionHistoryReturn>
   syncBalance(args: SyncBalanceArgs, headers?: object, signal?: AbortSignal): Promise<SyncBalanceReturn>
-  fetchTransactionReceipt(args: FetchTransactionReceiptArgs, headers?: object, signal?: AbortSignal): Promise<FetchTransactionReceiptReturn>
+  fetchTransactionReceipt(
+    args: FetchTransactionReceiptArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<FetchTransactionReceiptReturn>
   getOrderbookOrders(args: GetOrderbookOrdersArgs, headers?: object, signal?: AbortSignal): Promise<GetOrderbookOrdersReturn>
   getTopOrders(args: GetTopOrdersArgs, headers?: object, signal?: AbortSignal): Promise<GetTopOrdersReturn>
-  fetchTransactionReceiptWithFilter(args: FetchTransactionReceiptWithFilterArgs, headers?: object, signal?: AbortSignal): Promise<FetchTransactionReceiptWithFilterReturn>
-  getAllWebhookListeners(args: GetAllWebhookListenersArgs, headers?: object, signal?: AbortSignal): Promise<GetAllWebhookListenersReturn>
+  fetchTransactionReceiptWithFilter(
+    args: FetchTransactionReceiptWithFilterArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<FetchTransactionReceiptWithFilterReturn>
+  getAllWebhookListeners(
+    args: GetAllWebhookListenersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetAllWebhookListenersReturn>
   getWebhookListener(args: GetWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<GetWebhookListenerReturn>
   addWebhookListener(args: AddWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<AddWebhookListenerReturn>
-  updateWebhookListener(args: UpdateWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<UpdateWebhookListenerReturn>
-  removeWebhookListener(args: RemoveWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<RemoveWebhookListenerReturn>
-  toggleWebhookListener(args: ToggleWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<ToggleWebhookListenerReturn>
-  pauseAllWebhookListeners(args: PauseAllWebhookListenersArgs, headers?: object, signal?: AbortSignal): Promise<PauseAllWebhookListenersReturn>
-  resumeAllWebhookListeners(args: ResumeAllWebhookListenersArgs, headers?: object, signal?: AbortSignal): Promise<ResumeAllWebhookListenersReturn>
+  updateWebhookListener(
+    args: UpdateWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateWebhookListenerReturn>
+  removeWebhookListener(
+    args: RemoveWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveWebhookListenerReturn>
+  toggleWebhookListener(
+    args: ToggleWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ToggleWebhookListenerReturn>
+  pauseAllWebhookListeners(
+    args: PauseAllWebhookListenersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<PauseAllWebhookListenersReturn>
+  resumeAllWebhookListeners(
+    args: ResumeAllWebhookListenersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ResumeAllWebhookListenersReturn>
   subscribeReceipts(args: SubscribeReceiptsArgs, options: WebrpcStreamOptions<SubscribeReceiptsReturn>): Promise<void>
   subscribeEvents(args: SubscribeEventsArgs, options: WebrpcStreamOptions<SubscribeEventsReturn>): Promise<void>
-  subscribeBalanceUpdates(args: SubscribeBalanceUpdatesArgs, options: WebrpcStreamOptions<SubscribeBalanceUpdatesReturn>): Promise<void>
+  subscribeBalanceUpdates(
+    args: SubscribeBalanceUpdatesArgs,
+    options: WebrpcStreamOptions<SubscribeBalanceUpdatesReturn>
+  ): Promise<void>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface GetChainIDArgs {
-}
+export interface GetChainIDArgs {}
 
 export interface GetChainIDReturn {
-  chainID: number  
+  chainID: number
 }
 export interface GetEtherBalanceArgs {
   accountAddress?: string
 }
 
 export interface GetEtherBalanceReturn {
-  balance: EtherBalance  
+  balance: EtherBalance
 }
 export interface GetTokenBalancesArgs {
   accountAddress?: string
@@ -486,7 +520,7 @@ export interface GetTokenBalancesArgs {
 
 export interface GetTokenBalancesReturn {
   page: Page
-  balances: Array<TokenBalance>  
+  balances: Array<TokenBalance>
 }
 export interface GetTokenSuppliesArgs {
   contractAddress: string
@@ -498,16 +532,16 @@ export interface GetTokenSuppliesArgs {
 export interface GetTokenSuppliesReturn {
   page: Page
   contractType: ContractType
-  tokenIDs: Array<TokenSupply>  
+  tokenIDs: Array<TokenSupply>
 }
 export interface GetTokenSuppliesMapArgs {
-  tokenMap: {[key: string]: Array<string>}
+  tokenMap: { [key: string]: Array<string> }
   includeMetadata?: boolean
   metadataOptions?: MetadataOptions
 }
 
 export interface GetTokenSuppliesMapReturn {
-  supplies: {[key: string]: Array<TokenSupply>}  
+  supplies: { [key: string]: Array<TokenSupply> }
 }
 export interface GetBalanceUpdatesArgs {
   contractAddress: string
@@ -518,7 +552,7 @@ export interface GetBalanceUpdatesArgs {
 
 export interface GetBalanceUpdatesReturn {
   page: Page
-  balances: Array<TokenBalance>  
+  balances: Array<TokenBalance>
 }
 export interface GetTransactionHistoryArgs {
   filter: TransactionHistoryFilter
@@ -529,7 +563,7 @@ export interface GetTransactionHistoryArgs {
 
 export interface GetTransactionHistoryReturn {
   page: Page
-  transactions: Array<Transaction>  
+  transactions: Array<Transaction>
 }
 export interface SyncBalanceArgs {
   accountAddress: string
@@ -537,15 +571,14 @@ export interface SyncBalanceArgs {
   tokenID?: string
 }
 
-export interface SyncBalanceReturn {  
-}
+export interface SyncBalanceReturn {}
 export interface FetchTransactionReceiptArgs {
   txnHash: string
   maxBlockWait?: number
 }
 
 export interface FetchTransactionReceiptReturn {
-  receipt: TransactionReceipt  
+  receipt: TransactionReceipt
 }
 export interface GetOrderbookOrdersArgs {
   page?: Page
@@ -559,7 +592,7 @@ export interface GetOrderbookOrdersArgs {
 
 export interface GetOrderbookOrdersReturn {
   page?: Page
-  orders: Array<OrderbookOrder>  
+  orders: Array<OrderbookOrder>
 }
 export interface GetTopOrdersArgs {
   orderbookContractAddress: string
@@ -572,7 +605,7 @@ export interface GetTopOrdersArgs {
 }
 
 export interface GetTopOrdersReturn {
-  orders: Array<OrderbookOrder>  
+  orders: Array<OrderbookOrder>
 }
 export interface FetchTransactionReceiptWithFilterArgs {
   filter: TransactionFilter
@@ -580,14 +613,14 @@ export interface FetchTransactionReceiptWithFilterArgs {
 }
 
 export interface FetchTransactionReceiptWithFilterReturn {
-  receipt: TransactionReceipt  
+  receipt: TransactionReceipt
 }
 export interface GetAllWebhookListenersArgs {
   projectId?: number
 }
 
 export interface GetAllWebhookListenersReturn {
-  listeners: Array<WebhookListener>  
+  listeners: Array<WebhookListener>
 }
 export interface GetWebhookListenerArgs {
   id: number
@@ -595,7 +628,7 @@ export interface GetWebhookListenerArgs {
 }
 
 export interface GetWebhookListenerReturn {
-  listener: WebhookListener  
+  listener: WebhookListener
 }
 export interface AddWebhookListenerArgs {
   url: string
@@ -605,7 +638,7 @@ export interface AddWebhookListenerArgs {
 
 export interface AddWebhookListenerReturn {
   status: boolean
-  listener: WebhookListener  
+  listener: WebhookListener
 }
 export interface UpdateWebhookListenerArgs {
   listener: WebhookListener
@@ -613,7 +646,7 @@ export interface UpdateWebhookListenerArgs {
 }
 
 export interface UpdateWebhookListenerReturn {
-  status: boolean  
+  status: boolean
 }
 export interface RemoveWebhookListenerArgs {
   id: number
@@ -621,7 +654,7 @@ export interface RemoveWebhookListenerArgs {
 }
 
 export interface RemoveWebhookListenerReturn {
-  status: boolean  
+  status: boolean
 }
 export interface ToggleWebhookListenerArgs {
   id: number
@@ -629,46 +662,44 @@ export interface ToggleWebhookListenerArgs {
 }
 
 export interface ToggleWebhookListenerReturn {
-  webhookListener: WebhookListener  
+  webhookListener: WebhookListener
 }
 export interface PauseAllWebhookListenersArgs {
   projectId?: number
 }
 
 export interface PauseAllWebhookListenersReturn {
-  status: boolean  
+  status: boolean
 }
 export interface ResumeAllWebhookListenersArgs {
   projectId?: number
 }
 
 export interface ResumeAllWebhookListenersReturn {
-  status: boolean  
+  status: boolean
 }
 export interface SubscribeReceiptsArgs {
   filter: TransactionFilter
 }
 
 export interface SubscribeReceiptsReturn {
-  receipt: TransactionReceipt  
+  receipt: TransactionReceipt
 }
 export interface SubscribeEventsArgs {
   filter: EventFilter
 }
 
 export interface SubscribeEventsReturn {
-  log: EventLog  
+  log: EventLog
 }
 export interface SubscribeBalanceUpdatesArgs {
   contractAddress: string
 }
 
 export interface SubscribeBalanceUpdatesReturn {
-  balance: TokenBalance  
+  balance: TokenBalance
 }
 
-
-  
 //
 // Client
 //
@@ -685,505 +716,575 @@ export class Indexer implements Indexer {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <Version>(_data.version),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <Version>_data.version
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <RuntimeStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <RuntimeStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getChainID = (headers?: object, signal?: AbortSignal): Promise<GetChainIDReturn> => {
-    return this.fetch(
-      this.url('GetChainID'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          chainID: <number>(_data.chainID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetChainID'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            chainID: <number>_data.chainID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getEtherBalance = (args: GetEtherBalanceArgs, headers?: object, signal?: AbortSignal): Promise<GetEtherBalanceReturn> => {
-    return this.fetch(
-      this.url('GetEtherBalance'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          balance: <EtherBalance>(_data.balance),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetEtherBalance'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            balance: <EtherBalance>_data.balance
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTokenBalances = (args: GetTokenBalancesArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesReturn> => {
-    return this.fetch(
-      this.url('GetTokenBalances'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<TokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTokenBalances'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<TokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTokenSupplies = (args: GetTokenSuppliesArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenSuppliesReturn> => {
-    return this.fetch(
-      this.url('GetTokenSupplies'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          contractType: <ContractType>(_data.contractType),
-          tokenIDs: <Array<TokenSupply>>(_data.tokenIDs),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTokenSupplies'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            contractType: <ContractType>_data.contractType,
+            tokenIDs: <Array<TokenSupply>>_data.tokenIDs
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenSuppliesMap = (args: GetTokenSuppliesMapArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenSuppliesMapReturn> => {
-    return this.fetch(
-      this.url('GetTokenSuppliesMap'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          supplies: <{[key: string]: Array<TokenSupply>}>(_data.supplies),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenSuppliesMap = (
+    args: GetTokenSuppliesMapArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenSuppliesMapReturn> => {
+    return this.fetch(this.url('GetTokenSuppliesMap'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            supplies: <{ [key: string]: Array<TokenSupply> }>_data.supplies
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getBalanceUpdates = (args: GetBalanceUpdatesArgs, headers?: object, signal?: AbortSignal): Promise<GetBalanceUpdatesReturn> => {
-    return this.fetch(
-      this.url('GetBalanceUpdates'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<TokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetBalanceUpdates'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<TokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTransactionHistory = (args: GetTransactionHistoryArgs, headers?: object, signal?: AbortSignal): Promise<GetTransactionHistoryReturn> => {
-    return this.fetch(
-      this.url('GetTransactionHistory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          transactions: <Array<Transaction>>(_data.transactions),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTransactionHistory = (
+    args: GetTransactionHistoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTransactionHistoryReturn> => {
+    return this.fetch(this.url('GetTransactionHistory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            transactions: <Array<Transaction>>_data.transactions
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   syncBalance = (args: SyncBalanceArgs, headers?: object, signal?: AbortSignal): Promise<SyncBalanceReturn> => {
-    return this.fetch(
-      this.url('SyncBalance'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SyncBalance'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  fetchTransactionReceipt = (args: FetchTransactionReceiptArgs, headers?: object, signal?: AbortSignal): Promise<FetchTransactionReceiptReturn> => {
-    return this.fetch(
-      this.url('FetchTransactionReceipt'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          receipt: <TransactionReceipt>(_data.receipt),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  fetchTransactionReceipt = (
+    args: FetchTransactionReceiptArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<FetchTransactionReceiptReturn> => {
+    return this.fetch(this.url('FetchTransactionReceipt'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            receipt: <TransactionReceipt>_data.receipt
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getOrderbookOrders = (args: GetOrderbookOrdersArgs, headers?: object, signal?: AbortSignal): Promise<GetOrderbookOrdersReturn> => {
-    return this.fetch(
-      this.url('GetOrderbookOrders'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          orders: <Array<OrderbookOrder>>(_data.orders),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getOrderbookOrders = (
+    args: GetOrderbookOrdersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetOrderbookOrdersReturn> => {
+    return this.fetch(this.url('GetOrderbookOrders'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            orders: <Array<OrderbookOrder>>_data.orders
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTopOrders = (args: GetTopOrdersArgs, headers?: object, signal?: AbortSignal): Promise<GetTopOrdersReturn> => {
-    return this.fetch(
-      this.url('GetTopOrders'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          orders: <Array<OrderbookOrder>>(_data.orders),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTopOrders'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            orders: <Array<OrderbookOrder>>_data.orders
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  fetchTransactionReceiptWithFilter = (args: FetchTransactionReceiptWithFilterArgs, headers?: object, signal?: AbortSignal): Promise<FetchTransactionReceiptWithFilterReturn> => {
-    return this.fetch(
-      this.url('FetchTransactionReceiptWithFilter'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          receipt: <TransactionReceipt>(_data.receipt),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  fetchTransactionReceiptWithFilter = (
+    args: FetchTransactionReceiptWithFilterArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<FetchTransactionReceiptWithFilterReturn> => {
+    return this.fetch(this.url('FetchTransactionReceiptWithFilter'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            receipt: <TransactionReceipt>_data.receipt
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getAllWebhookListeners = (args: GetAllWebhookListenersArgs, headers?: object, signal?: AbortSignal): Promise<GetAllWebhookListenersReturn> => {
-    return this.fetch(
-      this.url('GetAllWebhookListeners'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          listeners: <Array<WebhookListener>>(_data.listeners),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getAllWebhookListeners = (
+    args: GetAllWebhookListenersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetAllWebhookListenersReturn> => {
+    return this.fetch(this.url('GetAllWebhookListeners'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            listeners: <Array<WebhookListener>>_data.listeners
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getWebhookListener = (args: GetWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<GetWebhookListenerReturn> => {
-    return this.fetch(
-      this.url('GetWebhookListener'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          listener: <WebhookListener>(_data.listener),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getWebhookListener = (
+    args: GetWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetWebhookListenerReturn> => {
+    return this.fetch(this.url('GetWebhookListener'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            listener: <WebhookListener>_data.listener
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  addWebhookListener = (args: AddWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<AddWebhookListenerReturn> => {
-    return this.fetch(
-      this.url('AddWebhookListener'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          listener: <WebhookListener>(_data.listener),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  addWebhookListener = (
+    args: AddWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddWebhookListenerReturn> => {
+    return this.fetch(this.url('AddWebhookListener'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            listener: <WebhookListener>_data.listener
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  updateWebhookListener = (args: UpdateWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<UpdateWebhookListenerReturn> => {
-    return this.fetch(
-      this.url('UpdateWebhookListener'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  updateWebhookListener = (
+    args: UpdateWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateWebhookListenerReturn> => {
+    return this.fetch(this.url('UpdateWebhookListener'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  removeWebhookListener = (args: RemoveWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<RemoveWebhookListenerReturn> => {
-    return this.fetch(
-      this.url('RemoveWebhookListener'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  removeWebhookListener = (
+    args: RemoveWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveWebhookListenerReturn> => {
+    return this.fetch(this.url('RemoveWebhookListener'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  toggleWebhookListener = (args: ToggleWebhookListenerArgs, headers?: object, signal?: AbortSignal): Promise<ToggleWebhookListenerReturn> => {
-    return this.fetch(
-      this.url('ToggleWebhookListener'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          webhookListener: <WebhookListener>(_data.webhookListener),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  toggleWebhookListener = (
+    args: ToggleWebhookListenerArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ToggleWebhookListenerReturn> => {
+    return this.fetch(this.url('ToggleWebhookListener'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            webhookListener: <WebhookListener>_data.webhookListener
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  pauseAllWebhookListeners = (args: PauseAllWebhookListenersArgs, headers?: object, signal?: AbortSignal): Promise<PauseAllWebhookListenersReturn> => {
-    return this.fetch(
-      this.url('PauseAllWebhookListeners'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  pauseAllWebhookListeners = (
+    args: PauseAllWebhookListenersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<PauseAllWebhookListenersReturn> => {
+    return this.fetch(this.url('PauseAllWebhookListeners'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  resumeAllWebhookListeners = (args: ResumeAllWebhookListenersArgs, headers?: object, signal?: AbortSignal): Promise<ResumeAllWebhookListenersReturn> => {
-    return this.fetch(
-      this.url('ResumeAllWebhookListeners'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  resumeAllWebhookListeners = (
+    args: ResumeAllWebhookListenersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ResumeAllWebhookListenersReturn> => {
+    return this.fetch(this.url('ResumeAllWebhookListeners'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   subscribeReceipts = (args: SubscribeReceiptsArgs, options: WebrpcStreamOptions<SubscribeReceiptsReturn>): Promise<void> => {
-    const _fetch = () => this.fetch(this.url('SubscribeReceipts'),createHTTPRequest(args, options.headers, options.signal)
-      ).then(async (res) => {
-        await sseResponse(res, options, _fetch);
-    }, (error) => {
-      options.onError(error, _fetch);
-    });
-    return _fetch();
+    const _fetch = () =>
+      this.fetch(this.url('SubscribeReceipts'), createHTTPRequest(args, options.headers, options.signal)).then(
+        async res => {
+          await sseResponse(res, options, _fetch)
+        },
+        error => {
+          options.onError(error, _fetch)
+        }
+      )
+    return _fetch()
   }
   subscribeEvents = (args: SubscribeEventsArgs, options: WebrpcStreamOptions<SubscribeEventsReturn>): Promise<void> => {
-    const _fetch = () => this.fetch(this.url('SubscribeEvents'),createHTTPRequest(args, options.headers, options.signal)
-      ).then(async (res) => {
-        await sseResponse(res, options, _fetch);
-    }, (error) => {
-      options.onError(error, _fetch);
-    });
-    return _fetch();
+    const _fetch = () =>
+      this.fetch(this.url('SubscribeEvents'), createHTTPRequest(args, options.headers, options.signal)).then(
+        async res => {
+          await sseResponse(res, options, _fetch)
+        },
+        error => {
+          options.onError(error, _fetch)
+        }
+      )
+    return _fetch()
   }
-  subscribeBalanceUpdates = (args: SubscribeBalanceUpdatesArgs, options: WebrpcStreamOptions<SubscribeBalanceUpdatesReturn>): Promise<void> => {
-    const _fetch = () => this.fetch(this.url('SubscribeBalanceUpdates'),createHTTPRequest(args, options.headers, options.signal)
-      ).then(async (res) => {
-        await sseResponse(res, options, _fetch);
-    }, (error) => {
-      options.onError(error, _fetch);
-    });
-    return _fetch();
+  subscribeBalanceUpdates = (
+    args: SubscribeBalanceUpdatesArgs,
+    options: WebrpcStreamOptions<SubscribeBalanceUpdatesReturn>
+  ): Promise<void> => {
+    const _fetch = () =>
+      this.fetch(this.url('SubscribeBalanceUpdates'), createHTTPRequest(args, options.headers, options.signal)).then(
+        async res => {
+          await sseResponse(res, options, _fetch)
+        },
+        error => {
+          options.onError(error, _fetch)
+        }
+      )
+    return _fetch()
   }
 }
-  
-const sseResponse = async (
-    res: Response,
-    options: WebrpcStreamOptions<any>,
-    retryFetch: () => Promise<void>
-) => {
-    const {onMessage, onOpen, onClose, onError} = options;
 
-    if (!res.ok) {
-        try {
-            await buildResponse(res);
-        } catch (error) {
-            // @ts-ignore
-            onError(error, retryFetch);
-        }
-        return;
+const sseResponse = async (res: Response, options: WebrpcStreamOptions<any>, retryFetch: () => Promise<void>) => {
+  const { onMessage, onOpen, onClose, onError } = options
+
+  if (!res.ok) {
+    try {
+      await buildResponse(res)
+    } catch (error) {
+      // @ts-ignore
+      onError(error, retryFetch)
     }
+    return
+  }
 
-    if (!res.body) {
-        onError(
-            WebrpcBadResponseError.new({
-                status: res.status,
-                cause: "Invalid response, missing body",
+  if (!res.body) {
+    onError(
+      WebrpcBadResponseError.new({
+        status: res.status,
+        cause: 'Invalid response, missing body'
+      }),
+      retryFetch
+    )
+    return
+  }
+
+  onOpen && onOpen()
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let lastReadTime = Date.now()
+  const timeout = (10 + 1) * 1000
+  let intervalId: any
+
+  try {
+    intervalId = setInterval(() => {
+      if (Date.now() - lastReadTime > timeout) {
+        throw WebrpcStreamLostError.new({ cause: 'Stream timed out' })
+      }
+    }, timeout)
+
+    while (true) {
+      let value
+      let done
+      try {
+        ;({ value, done } = await reader.read())
+        lastReadTime = Date.now()
+        buffer += decoder.decode(value, { stream: true })
+      } catch (error) {
+        let message = ''
+        if (error instanceof Error) {
+          message = error.message
+        }
+
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          onError(
+            WebrpcRequestFailedError.new({
+              message: 'AbortError',
+              cause: `AbortError: ${message}`
+            }),
+            () => {
+              throw new Error('Abort signal cannot be used to reconnect')
+            }
+          )
+        } else {
+          onError(
+            WebrpcStreamLostError.new({
+              cause: `reader.read(): ${message}`
             }),
             retryFetch
-        );
-        return;
-    }
-
-    onOpen && onOpen();
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let lastReadTime = Date.now();
-    const timeout = (10 + 1) * 1000;
-    let intervalId: any;
-
-    try {
-        intervalId = setInterval(() => {
-            if (Date.now() - lastReadTime > timeout) {
-                throw WebrpcStreamLostError.new({cause: "Stream timed out"});
-            }
-        }, timeout);
-
-        while (true) {
-            let value;
-            let done;
-            try {
-                ({value, done} = await reader.read());
-                lastReadTime = Date.now();
-                buffer += decoder.decode(value, {stream: true});
-            } catch (error) {
-                let message = "";
-                if (error instanceof Error) {
-                    message = error.message;
-                }
-
-                if (error instanceof DOMException && error.name === "AbortError") {
-                    onError(
-                        WebrpcRequestFailedError.new({
-                            message: "AbortError",
-                            cause: `AbortError: ${message}`,
-                        }),
-                        () => {
-                            throw new Error("Abort signal cannot be used to reconnect");
-                        }
-                    );
-                } else {
-                    onError(
-                        WebrpcStreamLostError.new({
-                            cause: `reader.read(): ${message}`,
-                        }),
-                        retryFetch
-                    );
-                }
-                return;
-            }
-
-            let lines = buffer.split("\n");
-            for (let i = 0; i < lines.length - 1; i++) {
-                if (lines[i].length == 0) {
-                    continue;
-                }
-                let data: any;
-                try {
-                    data = JSON.parse(lines[i]);
-                    if (data.hasOwnProperty("webrpcError")) {
-                        const error = data.webrpcError;
-                        const code: number =
-                            typeof error.code === "number" ? error.code : 0;
-                        onError(
-                            (webrpcErrorByCode[code] || WebrpcError).new(error),
-                            retryFetch
-                        );
-                        return;
-                    }
-                } catch (error) {
-                    if (
-                        error instanceof Error &&
-                        error.message === "Abort signal cannot be used to reconnect"
-                    ) {
-                        throw error;
-                    }
-                    onError(
-                        WebrpcBadResponseError.new({
-                            status: res.status,
-                            // @ts-ignore
-                            cause: `JSON.parse(): ${error.message}`,
-                        }),
-                        retryFetch
-                    );
-                }
-                onMessage(data);
-            }
-
-            if (!done) {
-                buffer = lines[lines.length - 1];
-                continue;
-            }
-
-            onClose && onClose();
-            return;
+          )
         }
-    } catch (error) {
-        // @ts-ignore
-        if (error instanceof WebrpcStreamLostError) {
-            onError(error, retryFetch);
-        } else {
-            throw error;
+        return
+      }
+
+      let lines = buffer.split('\n')
+      for (let i = 0; i < lines.length - 1; i++) {
+        if (lines[i].length == 0) {
+          continue
         }
-    } finally {
-        clearInterval(intervalId);
+        let data: any
+        try {
+          data = JSON.parse(lines[i])
+          if (data.hasOwnProperty('webrpcError')) {
+            const error = data.webrpcError
+            const code: number = typeof error.code === 'number' ? error.code : 0
+            onError((webrpcErrorByCode[code] || WebrpcError).new(error), retryFetch)
+            return
+          }
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Abort signal cannot be used to reconnect') {
+            throw error
+          }
+          onError(
+            WebrpcBadResponseError.new({
+              status: res.status,
+              // @ts-ignore
+              cause: `JSON.parse(): ${error.message}`
+            }),
+            retryFetch
+          )
+        }
+        onMessage(data)
+      }
+
+      if (!done) {
+        buffer = lines[lines.length - 1]
+        continue
+      }
+
+      onClose && onClose()
+      return
     }
-};
+  } catch (error) {
+    // @ts-ignore
+    if (error instanceof WebrpcStreamLostError) {
+      onError(error, retryFetch)
+    } else {
+      throw error
+    }
+  } finally {
+    clearInterval(intervalId)
+  }
+}
 
-
-
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -1197,18 +1298,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -1389,7 +1490,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
   }
 }
-
 
 // Schema errors
 
@@ -1575,7 +1675,6 @@ export class MetadataCallFailedError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -1601,7 +1700,7 @@ export enum errors {
   ResourceExhausted = 'ResourceExhausted',
   NotFound = 'NotFound',
   ProjectNotFound = 'ProjectNotFound',
-  MetadataCallFailed = 'MetadataCallFailed',
+  MetadataCallFailed = 'MetadataCallFailed'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -1629,19 +1728,18 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [2004]: ResourceExhaustedError,
   [3000]: NotFoundError,
   [3002]: ProjectNotFoundError,
-  [3003]: MetadataCallFailedError,
+  [3003]: MetadataCallFailedError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
 export interface WebrpcStreamOptions<T> extends WebrpcOptions {
-  onMessage: (message: T) => void;
-  onError: (error: WebrpcError, reconnect: () => void) => void;
-  onOpen?: () => void;
-  onClose?: () => void;
+  onMessage: (message: T) => void
+  onError: (error: WebrpcError, reconnect: () => void) => void
+  onOpen?: () => void
+  onClose?: () => void
 }
 export interface WebrpcOptions {
-  headers?: HeadersInit;
-  signal?: AbortSignal;
+  headers?: HeadersInit
+  signal?: AbortSignal
 }
-
