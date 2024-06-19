@@ -1,5 +1,10 @@
 import { Observer, SequenceWaaSBase } from './base'
-import { IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
+import {
+  Account,
+  IdentityType,
+  IntentDataOpenSession,
+  IntentDataSendTransaction
+} from './clients/intent.gen'
 import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -29,14 +34,16 @@ import {
   isInitiateAuthResponse
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
-import { jwtDecode } from 'jwt-decode'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
 import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
 import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
+import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge } from './challenge'
 
 export type Sessions = (Session & { isThis: boolean })[]
+export type { Account }
+export { IdentityType }
 
 export type SequenceConfig = {
   projectAccessKey: string
@@ -249,50 +256,66 @@ export class SequenceWaaS {
     }
   }
 
-  async initiateEmailAuth(email: string) {
+  async initAuth(identity?: Identity): Promise<Challenge> {
+    if (!identity) {
+      return this.initiateGuestAuth()
+    }
+
+    if ('idToken' in identity) {
+      return this.initiateIdTokenAuth(identity.idToken)
+    } else if ('email' in identity) {
+      return this.initiateEmailAuth(identity.email)
+    }
+
+    throw new Error('invalid identity')
+  }
+
+  private async initiateGuestAuth() {
+    const sessionId = await this.waas.getSessionId()
+    const intent = await this.waas.initiateGuestAuth()
+    const res = await this.sendIntent(intent)
+
+    if (!isInitiateAuthResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+    return new GuestChallenge(sessionId, res.data.challenge!)
+  }
+
+  private async initiateIdTokenAuth(idToken: string) {
+    const intent = await this.waas.initiateIdTokenAuth(idToken)
+    const res = await this.sendIntent(intent)
+
+    if (!isInitiateAuthResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+    return new IdTokenChallenge(idToken)
+  }
+
+  private async initiateEmailAuth(email: string) {
+    const sessionId = await this.waas.getSessionId()
     const intent = await this.waas.initiateEmailAuth(email)
     const res = await this.sendIntent(intent)
 
     if (!isInitiateAuthResponse(res)) {
       throw new Error(`Invalid response: ${JSON.stringify(res)}`)
     }
-
-    return res.data.challenge
+    return new EmailChallenge(email, sessionId, res.data.challenge!)
   }
 
-  async completeEmailAuth(args: {
-    email: string
-    challenge: string
-    answer: string
-    sessionName: string
-  }): Promise<SignInResponse> {
-    const intent = await this.waas.completeEmailAuth(args.email, args.challenge, args.answer)
-    try {
-      const res = await this.registerSession(intent, args.sessionName)
-
-      await this.waas.completeSignIn({
-        code: 'sessionOpened',
-        data: {
-          sessionId: res.session.id,
-          wallet: res.response.data.wallet
-        }
-      })
-
-      return {
-        sessionId: res.session.id,
-        wallet: res.response.data.wallet,
-        email: res.session.identity.email
-      }
-    } catch (e) {
-      await this.waas.completeSignOut()
-      throw e
+  async completeAuth(
+    challenge: Challenge,
+    opts?: { sessionName?: string; forceCreateAccount?: boolean }
+  ): Promise<SignInResponse> {
+    if (!opts) {
+      opts = {}
     }
-  }
+    if (!opts.sessionName) {
+      opts.sessionName = 'session name'
+    }
 
-  async completeIdTokenAuth(args: { idToken: string; sessionName: string }): Promise<SignInResponse> {
-    const intent = await this.waas.completeIdTokenAuth(args.idToken)
+    const intent = await this.waas.completeAuth(challenge.getIntentParams())
     try {
-      const res = await this.registerSession(intent, args.sessionName)
+      const res = await this.registerSession(intent, opts.sessionName)
 
       await this.waas.completeSignIn({
         code: 'sessionOpened',

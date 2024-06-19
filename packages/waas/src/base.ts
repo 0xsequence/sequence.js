@@ -48,6 +48,7 @@ import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-cry
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 import { jwtDecode } from 'jwt-decode'
+import { ChallengeIntentParams } from './challenge'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -224,6 +225,18 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
+  async initiateGuestAuth(): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const intent = await initiateAuth({
+      sessionId,
+      identityType: IdentityType.Guest,
+      verifier: sessionId,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    return this.signIntent(intent)
+  }
+
   async initiateEmailAuth(email: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
     const intent = await initiateAuth({
@@ -232,8 +245,6 @@ export class SequenceWaaSBase {
       verifier: `${email};${sessionId}`,
       lifespan: DEFAULT_LIFESPAN
     })
-
-    await this.status.set('pending')
 
     return this.signIntent(intent)
   }
@@ -249,33 +260,19 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN
     })
 
+    return this.signIntent(intent)
+  }
+
+  async completeAuth(params: ChallengeIntentParams) {
+    const sessionId = await this.getSessionId()
+    const intent = await openSession({
+      sessionId,
+      lifespan: DEFAULT_LIFESPAN,
+      ...params
+    })
+
     await this.status.set('pending')
 
-    return this.signIntent(intent)
-  }
-
-  async completeEmailAuth(email: string, challenge: string, answer: string): Promise<SignedIntent<IntentDataOpenSession>> {
-    const sessionId = await this.getSessionId()
-    const hashedAnswer = keccak256(toUtf8Bytes(challenge + answer))
-    const intent = await openSession({
-      sessionId,
-      identityType: IdentityType.Email,
-      verifier: `${email};${sessionId}`,
-      answer: hashedAnswer,
-      lifespan: DEFAULT_LIFESPAN
-    })
-    return this.signIntent(intent)
-  }
-
-  async completeIdTokenAuth(idToken: string): Promise<SignedIntent<IntentDataOpenSession>> {
-    const sessionId = await this.getSessionId()
-    const intent = await openSession({
-      sessionId,
-      identityType: IdentityType.OIDC,
-      verifier: keccak256(toUtf8Bytes(idToken)),
-      answer: idToken,
-      lifespan: DEFAULT_LIFESPAN
-    })
     return this.signIntent(intent)
   }
 
