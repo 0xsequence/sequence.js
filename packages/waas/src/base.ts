@@ -31,14 +31,17 @@ import {
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'
 import { OpenSessionResponse } from './intents/responses'
+import { federateAccount, listAccounts, removeAccount } from './intents/accounts'
 import { SimpleNetwork, toNetworkID, WithSimpleNetwork } from './networks'
 import {
   IdentityType,
+  IntentDataFederateAccount,
   IntentDataFeeOptions,
   IntentDataFinishValidateSession,
   IntentDataGetSession,
   IntentDataGetTransactionReceipt,
   IntentDataInitiateAuth,
+  IntentDataListAccounts,
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
@@ -48,6 +51,7 @@ import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-cry
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 import { jwtDecode } from 'jwt-decode'
+import { ChallengeIntentParams } from './challenge'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -77,7 +81,7 @@ export type SequenceBaseConfig = {
 export type Observer<T> = (value: T | null) => any
 
 export class SequenceWaaSBase {
-  readonly VERSION = '0.0.0-dev1'
+  readonly VERSION = '1.0.0'
 
   private readonly status: StoreObj<Status>
   private readonly sessionId: StoreObj<string | undefined>
@@ -224,6 +228,18 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
+  async initiateGuestAuth(): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const intent = await initiateAuth({
+      sessionId,
+      identityType: IdentityType.Guest,
+      verifier: sessionId,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    return this.signIntent(intent)
+  }
+
   async initiateEmailAuth(email: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
     const intent = await initiateAuth({
@@ -232,8 +248,6 @@ export class SequenceWaaSBase {
       verifier: `${email};${sessionId}`,
       lifespan: DEFAULT_LIFESPAN
     })
-
-    await this.status.set('pending')
 
     return this.signIntent(intent)
   }
@@ -249,33 +263,32 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN
     })
 
+    return this.signIntent(intent)
+  }
+
+  async initiatePlayFabAuth(titleId: string, sessionTicket: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const ticketHash = keccak256(toUtf8Bytes(sessionTicket))
+    const intent = await initiateAuth({
+      sessionId,
+      identityType: IdentityType.PlayFab,
+      verifier: `${titleId}|${ticketHash}`,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    return this.signIntent(intent)
+  }
+
+  async completeAuth(params: ChallengeIntentParams) {
+    const sessionId = await this.getSessionId()
+    const intent = await openSession({
+      sessionId,
+      lifespan: DEFAULT_LIFESPAN,
+      ...params
+    })
+
     await this.status.set('pending')
 
-    return this.signIntent(intent)
-  }
-
-  async completeEmailAuth(email: string, challenge: string, answer: string): Promise<SignedIntent<IntentDataOpenSession>> {
-    const sessionId = await this.getSessionId()
-    const hashedAnswer = keccak256(toUtf8Bytes(challenge + answer))
-    const intent = await openSession({
-      sessionId,
-      identityType: IdentityType.Email,
-      verifier: `${email};${sessionId}`,
-      answer: hashedAnswer,
-      lifespan: DEFAULT_LIFESPAN
-    })
-    return this.signIntent(intent)
-  }
-
-  async completeIdTokenAuth(idToken: string): Promise<SignedIntent<IntentDataOpenSession>> {
-    const sessionId = await this.getSessionId()
-    const intent = await openSession({
-      sessionId,
-      identityType: IdentityType.OIDC,
-      verifier: keccak256(toUtf8Bytes(idToken)),
-      answer: idToken,
-      lifespan: DEFAULT_LIFESPAN
-    })
     return this.signIntent(intent)
   }
 
@@ -513,6 +526,38 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN,
       salt,
       challenge
+    })
+    return this.signIntent(intent)
+  }
+
+  async listAccounts(): Promise<SignedIntent<IntentDataListAccounts>> {
+    const intent = listAccounts({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN
+    })
+    return this.signIntent(intent)
+  }
+
+  async federateAccount(params: ChallengeIntentParams): Promise<SignedIntent<IntentDataFederateAccount>> {
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
+    const intent = federateAccount({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+      sessionId,
+      ...params
+    })
+    return this.signIntent(intent)
+  }
+
+  async removeAccount({ accountId }: { accountId: string }) {
+    const intent = removeAccount({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+      accountId
     })
     return this.signIntent(intent)
   }

@@ -1,5 +1,6 @@
 export * from './base'
 export * from './auth'
+export * from './challenge'
 
 export * as store from './store'
 export * as networks from './networks'
