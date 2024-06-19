@@ -81,7 +81,7 @@ export type SequenceBaseConfig = {
 export type Observer<T> = (value: T | null) => any
 
 export class SequenceWaaSBase {
-  readonly VERSION = '0.0.0-dev1'
+  readonly VERSION = '1.0.0'
 
   private readonly status: StoreObj<Status>
   private readonly sessionId: StoreObj<string | undefined>
@@ -260,6 +260,19 @@ export class SequenceWaaSBase {
       sessionId,
       identityType: IdentityType.OIDC,
       verifier: `${idTokenHash};${decoded.exp}`,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    return this.signIntent(intent)
+  }
+
+  async initiatePlayFabAuth(titleId: string, sessionTicket: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const ticketHash = keccak256(toUtf8Bytes(sessionTicket))
+    const intent = await initiateAuth({
+      sessionId,
+      identityType: IdentityType.PlayFab,
+      verifier: `${titleId}|${ticketHash}`,
       lifespan: DEFAULT_LIFESPAN
     })
 

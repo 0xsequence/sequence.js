@@ -84,3 +84,25 @@ export class IdTokenChallenge extends Challenge {
     return this
   }
 }
+
+export class PlayFabChallenge extends Challenge {
+  constructor(
+    readonly titleId: string,
+    readonly sessionTicket: string
+  ) {
+    super()
+  }
+
+  getIntentParams(): ChallengeIntentParams {
+    const ticketHash = keccak256(toUtf8Bytes(this.sessionTicket))
+    return {
+      identityType: IdentityType.PlayFab,
+      verifier: `${this.titleId}|${ticketHash}`,
+      answer: this.sessionTicket
+    }
+  }
+
+  withAnswer() {
+    return this
+  }
+}

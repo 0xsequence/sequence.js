@@ -1,10 +1,5 @@
 import { Observer, SequenceWaaSBase } from './base'
-import {
-  Account,
-  IdentityType,
-  IntentDataOpenSession,
-  IntentDataSendTransaction
-} from './clients/intent.gen'
+import { Account, IdentityType, IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
 import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -39,7 +34,7 @@ import { EmailAuth } from './email'
 import { ethers } from 'ethers'
 import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
 import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
-import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge } from './challenge'
+import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge } from './challenge'
 
 export type Sessions = (Session & { isThis: boolean })[]
 export type { Account }
@@ -63,8 +58,12 @@ export type WaaSConfigKey = {
 
 export type IdTokenIdentity = { idToken: string }
 export type EmailIdentity = { email: string }
+export type PlayFabIdentity = {
+  playFabTitleId: string
+  playFabSessionTicket: string
+}
 
-export type Identity = IdTokenIdentity | EmailIdentity
+export type Identity = IdTokenIdentity | EmailIdentity | PlayFabIdentity
 
 export type SignInResponse = {
   sessionId: string
@@ -265,6 +264,8 @@ export class SequenceWaaS {
       return this.initiateIdTokenAuth(identity.idToken)
     } else if ('email' in identity) {
       return this.initiateEmailAuth(identity.email)
+    } else if ('playFabTitleId' in identity) {
+      return this.initiatePlayFabAuth(identity.playFabTitleId, identity.playFabSessionTicket)
     }
 
     throw new Error('invalid identity')
@@ -300,6 +301,16 @@ export class SequenceWaaS {
       throw new Error(`Invalid response: ${JSON.stringify(res)}`)
     }
     return new EmailChallenge(email, sessionId, res.data.challenge!)
+  }
+
+  private async initiatePlayFabAuth(titleId: string, sessionTicket: string) {
+    const intent = await this.waas.initiatePlayFabAuth(titleId, sessionTicket)
+    const res = await this.sendIntent(intent)
+
+    if (!isInitiateAuthResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+    return new PlayFabChallenge(titleId, sessionTicket)
   }
 
   async completeAuth(

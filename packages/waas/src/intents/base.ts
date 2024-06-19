@@ -7,7 +7,7 @@ import { Session } from '../session'
 export type Intent<T> = Omit<RawIntent, 'data' | 'signatures'> & { data: T }
 export type SignedIntent<T> = Omit<RawIntent, 'data'> & { data: T }
 
-const VERSION = '0.0.0'
+const VERSION = '1.0.0'
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
   const issuedAt = Math.floor(Date.now() / 1000)
