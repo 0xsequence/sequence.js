@@ -467,6 +467,23 @@ export class SequenceWaaS {
     return await this.trySendIntent({ validation }, intent, isSessionAuthProofResponse)
   }
 
+  async listAccounts(): Promise<Account[]> {
+    const intent = await this.waas.listAccounts()
+    const res = await this.sendIntent(intent)
+    return res.data as Account[]
+  }
+
+  async federateAccount(challenge: Challenge) {
+    const intent = await this.waas.federateAccount(challenge.getIntentParams())
+    const res = await this.sendIntent(intent)
+    return res.data as Account
+  }
+
+  async removeAccount(accountId: string) {
+    const intent = await this.waas.removeAccount({ accountId })
+    await this.sendIntent(intent)
+  }
+
   async useIdentifier<T extends CommonAuthArgs>(args: T): Promise<T & { identifier: string }> {
     if (args.identifier) {
       return args as T & { identifier: string }

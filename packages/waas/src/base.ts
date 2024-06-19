@@ -31,14 +31,17 @@ import {
 import { LocalStore, Store, StoreObj } from './store'
 import { newSession, newSessionFromSessionId } from './session'
 import { OpenSessionResponse } from './intents/responses'
+import { federateAccount, listAccounts, removeAccount } from './intents/accounts'
 import { SimpleNetwork, toNetworkID, WithSimpleNetwork } from './networks'
 import {
   IdentityType,
+  IntentDataFederateAccount,
   IntentDataFeeOptions,
   IntentDataFinishValidateSession,
   IntentDataGetSession,
   IntentDataGetTransactionReceipt,
   IntentDataInitiateAuth,
+  IntentDataListAccounts,
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
@@ -510,6 +513,38 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN,
       salt,
       challenge
+    })
+    return this.signIntent(intent)
+  }
+
+  async listAccounts(): Promise<SignedIntent<IntentDataListAccounts>> {
+    const intent = listAccounts({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN
+    })
+    return this.signIntent(intent)
+  }
+
+  async federateAccount(params: ChallengeIntentParams): Promise<SignedIntent<IntentDataFederateAccount>> {
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
+    const intent = federateAccount({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+      sessionId,
+      ...params
+    })
+    return this.signIntent(intent)
+  }
+
+  async removeAccount({ accountId }: { accountId: string }) {
+    const intent = removeAccount({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+      accountId
     })
     return this.signIntent(intent)
   }
