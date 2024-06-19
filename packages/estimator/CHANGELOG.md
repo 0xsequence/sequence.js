@@ -1,5 +1,15 @@
 # @0xsequence/estimator
 
+## 1.9.32
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.32
+  - @0xsequence/core@1.9.32
+  - @0xsequence/utils@1.9.32
+
 ## 1.9.31
 
 ### Patch Changes

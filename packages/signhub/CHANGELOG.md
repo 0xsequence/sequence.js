@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.9.32
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.32
+
 ## 1.9.31
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.9.32
+
+### Patch Changes
+
+- indexer: update bindings
+
 ## 1.9.31
 
 ### Patch Changes
