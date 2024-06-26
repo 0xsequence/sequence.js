@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 1.9.33
+
+### Patch Changes
+
+- waas: umd build
+- Updated dependencies
+  - @0xsequence/abi@1.9.33
+  - @0xsequence/core@1.9.33
+  - @0xsequence/migration@1.9.33
+  - @0xsequence/network@1.9.33
+  - @0xsequence/relayer@1.9.33
+  - @0xsequence/sessions@1.9.33
+  - @0xsequence/utils@1.9.33
+  - @0xsequence/wallet@1.9.33
+
 ## 1.9.32
 
 ### Patch Changes
