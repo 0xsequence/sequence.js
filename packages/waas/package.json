@@ -6,6 +6,7 @@
   "source": "src/index.ts",
   "main": "dist/0xsequence-waas.cjs.js",
   "module": "dist/0xsequence-waas.esm.js",
+  "umd:main": "dist/0xsequence-waas.umd.min.js",
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
@@ -30,5 +31,8 @@
   "devDependencies": {
     "@types/jwt-decode": "^3.1.0",
     "fake-indexeddb": "^4.0.1"
+  },
+  "preconstruct": {
+    "umdName": "sequence-waas"
   }
 }
