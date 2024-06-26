@@ -18,7 +18,7 @@ export type ConfigDataDump = {
   presignedTransactions: PresignedConfigLink[]
 }
 
-export abstract class ConfigTracker {
+export interface ConfigTracker {
   loadPresignedConfiguration: (args: {
     wallet: string
     fromImageHash: string
