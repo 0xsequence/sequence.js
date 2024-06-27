@@ -28,6 +28,7 @@ export class EmailAuth {
   }
 
   private signUp(email: string) {
+    email = email.toLowerCase().trim()
     return this.cognito().send(
       new SignUpCommand({
         ClientId: this.clientId,
@@ -39,6 +40,7 @@ export class EmailAuth {
   }
 
   private signIn(email: string) {
+    email = email.toLowerCase().trim()
     return this.cognito().send(
       new InitiateAuthCommand({
         AuthFlow: 'CUSTOM_AUTH',
@@ -52,6 +54,7 @@ export class EmailAuth {
 
   public async initiateAuth({ email }: { email: string }): Promise<{ email: string; instance: string }> {
     let res: InitiateAuthCommandOutput
+    email = email.toLowerCase().trim()
 
     try {
       // Try sign in directly first
@@ -89,6 +92,8 @@ export class EmailAuth {
     answer: string
     sessionHash: string
   }): Promise<Identity> {
+    email = email.toLowerCase().trim()
+
     const res = await this.cognito().send(
       new RespondToAuthChallengeCommand({
         ClientId: this.clientId,
