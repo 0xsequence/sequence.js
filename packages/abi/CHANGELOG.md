@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.9.34
+
+### Patch Changes
+
+- waas: always use lowercase email
+
 ## 1.9.33
 
 ### Patch Changes
