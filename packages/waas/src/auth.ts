@@ -25,7 +25,8 @@ import {
   isTimedOutTransactionResponse,
   isFeeOptionsResponse,
   isSessionAuthProofResponse,
-  isIntentTimeError
+  isIntentTimeError,
+  isInitiateAuthResponse
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
 import { jwtDecode } from 'jwt-decode'
@@ -53,14 +54,15 @@ export type WaaSConfigKey = {
   emailClientId?: string
 }
 
-export type Identity = {
-  idToken: string
-}
+export type IdTokenIdentity = { idToken: string }
+export type EmailIdentity = { email: string }
+
+export type Identity = IdTokenIdentity | EmailIdentity
 
 export type SignInResponse = {
-  sessionId: string,
-  wallet: string,
-  email?: string,
+  sessionId: string
+  wallet: string
+  email?: string
 }
 
 function encodeHex(data: string | Uint8Array) {
@@ -221,24 +223,12 @@ export class SequenceWaaS {
     return this.waas.isSignedIn()
   }
 
-  async signIn(creds: Identity, name: string): Promise<SignInResponse> {
-    // TODO: Be smarter about this, for cognito (or some other cases) we may
-    // want to send the email instead of the idToken
-    const signInIntent = await this.waas.signIn({
-      idToken: creds.idToken
-    })
+  async signIn(creds: IdTokenIdentity | string, sessionName: string): Promise<SignInResponse> {
+    const idToken = typeof creds === 'string' ? creds : creds.idToken
 
-    // Login on WaaS
-    const decoded = jwtDecode(creds.idToken)
-
-    if (!decoded.iss) {
-      throw new Error('Invalid idToken')
-    }
-
-    await this.deviceName.set(name)
-
+    const intent = await this.waas.signInWithIdToken(idToken)
     try {
-      const res = await this.registerSession(signInIntent, name)
+      const res = await this.registerSession(intent, sessionName)
 
       await this.waas.completeSignIn({
         code: 'sessionOpened',
@@ -251,7 +241,71 @@ export class SequenceWaaS {
       return {
         sessionId: res.session.id,
         wallet: res.response.data.wallet,
-        email: res.session.identity.email,
+        email: res.session.identity.email
+      }
+    } catch (e) {
+      await this.waas.completeSignOut()
+      throw e
+    }
+  }
+
+  async initiateEmailAuth(email: string) {
+    const intent = await this.waas.initiateEmailAuth(email)
+    const res = await this.sendIntent(intent)
+
+    if (!isInitiateAuthResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+
+    return res.data.challenge
+  }
+
+  async completeEmailAuth(args: {
+    email: string
+    challenge: string
+    answer: string
+    sessionName: string
+  }): Promise<SignInResponse> {
+    const intent = await this.waas.completeEmailAuth(args.email, args.challenge, args.answer)
+    try {
+      const res = await this.registerSession(intent, args.sessionName)
+
+      await this.waas.completeSignIn({
+        code: 'sessionOpened',
+        data: {
+          sessionId: res.session.id,
+          wallet: res.response.data.wallet
+        }
+      })
+
+      return {
+        sessionId: res.session.id,
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email
+      }
+    } catch (e) {
+      await this.waas.completeSignOut()
+      throw e
+    }
+  }
+
+  async completeIdTokenAuth(args: { idToken: string; sessionName: string }): Promise<SignInResponse> {
+    const intent = await this.waas.completeIdTokenAuth(args.idToken)
+    try {
+      const res = await this.registerSession(intent, args.sessionName)
+
+      await this.waas.completeSignIn({
+        code: 'sessionOpened',
+        data: {
+          sessionId: res.session.id,
+          wallet: res.response.data.wallet
+        }
+      })
+
+      return {
+        sessionId: res.session.id,
+        wallet: res.response.data.wallet,
+        email: res.session.identity.email
       }
     } catch (e) {
       await this.waas.completeSignOut()

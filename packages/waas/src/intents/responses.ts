@@ -1,13 +1,10 @@
 import {
   IntentDataSendTransaction,
+  IntentResponseAuthInitiated,
+  IntentResponseCode,
   IntentResponseGetSession,
-  IntentResponseSessionClosed,
-  IntentResponseSignedMessage,
-  IntentResponseTransactionFailed,
-  IntentResponseTransactionReceipt,
-  IntentResponseValidateSession,
   IntentResponseValidationFinished,
-  IntentResponseValidationRequired
+  IntentResponseValidationStarted
 } from '../clients/intent.gen'
 import { WebrpcEndpointError, WebrpcError } from '../clients/authenticator.gen'
 
@@ -141,25 +138,25 @@ export type SessionAuthProofResponse = {
   }
 }
 
-export type ValidateSessionResponse = {
-  code: 'startedSessionValidation'
-  data: {}
+export interface Response<Code, Data> {
+  code: Code
+  data: Data
 }
 
-export type FinishValidateSessionResponse = {
-  code: 'finishedSessionValidation'
-  data: {
-    isValid: boolean
-  }
-}
+export type InitiateAuthResponse = Response<IntentResponseCode.authInitiated, IntentResponseAuthInitiated>
+export type ValidateSessionResponse = Response<IntentResponseCode.validationStarted, IntentResponseValidationStarted>
+export type FinishValidateSessionResponse = Response<IntentResponseCode.validationFinished, IntentResponseValidationFinished>
+export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse, IntentResponseGetSession>
 
-export type GetSessionResponse = {
-  code: 'getSessionResponse'
-  data: {
-    session: string
-    wallet: string
-    validated: boolean
-  }
+export function isInitiateAuthResponse(receipt: any): receipt is InitiateAuthResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.authInitiated &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.sessionId === 'string' &&
+    typeof receipt.data.identityType === 'string' &&
+    typeof receipt.data.expiresIn === 'number'
+  )
 }
 
 export function isOpenSessionResponse(receipt: any): receipt is OpenSessionResponse {
@@ -251,29 +248,18 @@ export function isFeeOptionsResponse(receipt: any): receipt is FeeOptionsRespons
 export function isValidationRequiredResponse(receipt: any): receipt is ValidationRequiredResponse {
   return (
     typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'validationRequired' &&
+    receipt.code === IntentResponseCode.validationRequired &&
     typeof receipt.data === 'object' &&
     typeof receipt.data.sessionId === 'string'
   )
 }
 
 export function isValidateSessionResponse(receipt: any): receipt is ValidateSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'startedSessionValidation' &&
-    typeof receipt.data === 'object'
-  )
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationStarted && typeof receipt.data === 'object'
 }
 
 export function isFinishValidateSessionResponse(receipt: any): receipt is FinishValidateSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'finishedSessionValidation' &&
-    typeof receipt.data === 'object'
-  )
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationFinished && typeof receipt.data === 'object'
 }
 
 export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {
