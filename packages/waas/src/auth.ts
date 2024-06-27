@@ -58,9 +58,9 @@ export type Identity = {
 }
 
 export type SignInResponse = {
-  sessionId: string,
-  wallet: string,
-  email?: string,
+  sessionId: string
+  wallet: string
+  email?: string
 }
 
 function encodeHex(data: string | Uint8Array) {
@@ -251,7 +251,7 @@ export class SequenceWaaS {
       return {
         sessionId: res.session.id,
         wallet: res.response.data.wallet,
-        email: res.session.identity.email,
+        email: res.session.identity.email
       }
     } catch (e) {
       await this.waas.completeSignOut()
