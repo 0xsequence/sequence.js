@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.9.35
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.35
+  - @0xsequence/network@1.9.35
+  - @0xsequence/utils@1.9.35
+
 ## 1.9.34
 
 ### Patch Changes

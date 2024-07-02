@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 1.9.35
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/core@1.9.35
+
 ## 1.9.34
 
 ### Patch Changes

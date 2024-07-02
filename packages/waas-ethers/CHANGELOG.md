@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 1.9.35
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/waas@1.9.35
+
 ## 1.9.34
 
 ### Patch Changes

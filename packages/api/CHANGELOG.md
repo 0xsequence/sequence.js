@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 1.9.35
+
+### Patch Changes
+
+- guard: update bindings
+
 ## 1.9.34
 
 ### Patch Changes
