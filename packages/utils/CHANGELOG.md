@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.9.36
+
+### Patch Changes
+
+- guard: export client
+
 ## 1.9.35
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.9.36
+
+### Patch Changes
+
+- guard: export client
+- Updated dependencies
+  - @0xsequence/abi@1.9.36
+  - @0xsequence/account@1.9.36
+  - @0xsequence/api@1.9.36
+  - @0xsequence/core@1.9.36
+  - @0xsequence/indexer@1.9.36
+  - @0xsequence/metadata@1.9.36
+  - @0xsequence/migration@1.9.36
+  - @0xsequence/network@1.9.36
+  - @0xsequence/sessions@1.9.36
+  - @0xsequence/signhub@1.9.36
+  - @0xsequence/utils@1.9.36
+  - @0xsequence/wallet@1.9.36
+
 ## 1.9.35
 
 ### Patch Changes

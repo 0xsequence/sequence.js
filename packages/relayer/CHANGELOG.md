@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 1.9.36
+
+### Patch Changes
+
+- guard: export client
+- Updated dependencies
+  - @0xsequence/abi@1.9.36
+  - @0xsequence/core@1.9.36
+  - @0xsequence/utils@1.9.36
+
 ## 1.9.35
 
 ### Patch Changes
