@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^3.0.0",
+    "@0xsequence/wallet-contracts": "^3.0.1",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
     "ethers": "^6.13.0",
