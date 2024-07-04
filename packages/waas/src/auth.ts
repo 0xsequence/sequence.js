@@ -28,7 +28,7 @@ import {
   isIntentTimeError,
   isInitiateAuthResponse
 } from './intents/responses'
-import { WaasAuthenticator, Session, Chain } from './clients/authenticator.gen'
+import {WaasAuthenticator, Session, Chain, EmailAlreadyInUseError} from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
@@ -56,6 +56,7 @@ export type WaaSConfigKey = {
   emailClientId?: string
 }
 
+export type GuestIdentity = { guest: true }
 export type IdTokenIdentity = { idToken: string }
 export type EmailIdentity = { email: string }
 export type PlayFabIdentity = {
@@ -133,6 +134,8 @@ export class SequenceWaaS {
   private client: WaasAuthenticator
 
   private validationRequiredCallback: (() => void)[] = []
+  private emailConflictCallback: ((forceCreate: () => Promise<void>) => Promise<void>)[] = []
+  private emailAuthCodeRequiredCallback: ((respondWithCode: (code: string) => Promise<void>) => Promise<void>)[] = []
   private validationRequiredSalt: string
 
   public readonly config: Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
@@ -177,6 +180,20 @@ export class SequenceWaaS {
     this.validationRequiredCallback.push(callback)
     return () => {
       this.validationRequiredCallback = this.validationRequiredCallback.filter(c => c !== callback)
+    }
+  }
+
+  onEmailConflict(callback: (forceCreate: () => Promise<void>) => Promise<void>) {
+    this.emailConflictCallback.push(callback)
+    return () => {
+      this.emailConflictCallback = this.emailConflictCallback.filter(c => c !== callback)
+    }
+  }
+
+  onEmailAuthCodeRequired(callback: (respondWithCode: (code: string) => Promise<void>) => Promise<void>) {
+    this.emailAuthCodeRequiredCallback.push(callback)
+    return () => {
+      this.emailAuthCodeRequiredCallback = this.emailAuthCodeRequiredCallback.filter(c => c !== callback)
     }
   }
 
@@ -229,49 +246,63 @@ export class SequenceWaaS {
     return this.waas.isSignedIn()
   }
 
-  async signIn(creds: IdTokenIdentity | string, sessionName: string): Promise<SignInResponse> {
-    const idToken = typeof creds === 'string' ? creds : creds.idToken
-
-    const intent = await this.waas.signInWithIdToken(idToken)
-    try {
-      const res = await this.registerSession(intent, sessionName)
-
-      await this.waas.completeSignIn({
-        code: 'sessionOpened',
-        data: {
-          sessionId: res.session.id,
-          wallet: res.response.data.wallet
-        }
-      })
-
-      return {
-        sessionId: res.session.id,
-        wallet: res.response.data.wallet,
-        email: res.session.identity.email
-      }
-    } catch (e) {
-      await this.waas.completeSignOut()
-      throw e
+  signIn(creds: Identity, sessionName: string): Promise<SignInResponse> {
+    const isEmailAuth = 'email' in creds
+    if (isEmailAuth && this.emailAuthCodeRequiredCallback.length == 0) {
+      return Promise.reject('Missing emailAuthCodeRequired callback')
     }
+
+    return new Promise<SignInResponse>(async (resolve, reject) => {
+      const challenge = await this.initAuth(creds)
+
+      const respondToChallenge = async (answer: string) => {
+        try {
+          const res = await this.completeAuth(challenge.withAnswer(answer), {sessionName})
+          resolve(res)
+        } catch (e) {
+          if (e instanceof EmailAlreadyInUseError) {
+            const forceCreate = async () => {
+              try {
+                const res = await this.completeAuth(challenge.withAnswer(answer), {sessionName, forceCreateAccount: true})
+                resolve(res)
+              } catch (e) {
+                reject(e)
+              }
+            }
+            for (const callback of this.emailConflictCallback) {
+              callback(forceCreate)
+            }
+          } else {
+            reject(e)
+          }
+        }
+      }
+
+      if (isEmailAuth) {
+        for (const callback of this.emailAuthCodeRequiredCallback) {
+          callback(respondToChallenge)
+        }
+      } else {
+        respondToChallenge('')
+      }
+    })
   }
 
-  async initAuth(identity?: Identity): Promise<Challenge> {
-    if (!identity) {
-      return this.initiateGuestAuth()
-    }
-
-    if ('idToken' in identity) {
-      return this.initiateIdTokenAuth(identity.idToken)
+  async initAuth(identity: Identity): Promise<Challenge> {
+    if ('guest' in identity && identity.guest) {
+      return this.initGuestAuth()
+    } else if ('idToken' in identity) {
+      return this.initIdTokenAuth(identity.idToken)
     } else if ('email' in identity) {
-      return this.initiateEmailAuth(identity.email)
+      return this.initEmailAuth(identity.email)
     } else if ('playFabTitleId' in identity) {
-      return this.initiatePlayFabAuth(identity.playFabTitleId, identity.playFabSessionTicket)
+      return this.initPlayFabAuth(identity.playFabTitleId, identity.playFabSessionTicket)
     }
 
     throw new Error('invalid identity')
   }
 
-  private async initiateGuestAuth() {
+  private async initGuestAuth() {
     const sessionId = await this.waas.getSessionId()
     const intent = await this.waas.initiateGuestAuth()
     const res = await this.sendIntent(intent)
@@ -282,7 +313,7 @@ export class SequenceWaaS {
     return new GuestChallenge(sessionId, res.data.challenge!)
   }
 
-  private async initiateIdTokenAuth(idToken: string) {
+  private async initIdTokenAuth(idToken: string) {
     const intent = await this.waas.initiateIdTokenAuth(idToken)
     const res = await this.sendIntent(intent)
 
@@ -292,7 +323,7 @@ export class SequenceWaaS {
     return new IdTokenChallenge(idToken)
   }
 
-  private async initiateEmailAuth(email: string) {
+  private async initEmailAuth(email: string) {
     const sessionId = await this.waas.getSessionId()
     const intent = await this.waas.initiateEmailAuth(email)
     const res = await this.sendIntent(intent)
@@ -303,7 +334,7 @@ export class SequenceWaaS {
     return new EmailChallenge(email, sessionId, res.data.challenge!)
   }
 
-  private async initiatePlayFabAuth(titleId: string, sessionTicket: string) {
+  private async initPlayFabAuth(titleId: string, sessionTicket: string) {
     const intent = await this.waas.initiatePlayFabAuth(titleId, sessionTicket)
     const res = await this.sendIntent(intent)
 
