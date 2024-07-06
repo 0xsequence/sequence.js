@@ -6,7 +6,7 @@ import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback } from '@0xsequ
 
 export const ProxyMethods = [
   'getNetwork',
-  'getBlockNumber',
+  'getCode',
   'getGasPrice',
   'getTransactionCount',
   'getStorageAt',
@@ -63,10 +63,6 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
           this.callback(req, callback, await this.provider.call(req.params![0], req.params![1]))
           break
 
-        case JsonRpcMethod.ethGetCode:
-          this.callback(req, callback, await this.provider.getCode(req.params![0], req.params![1]))
-          break
-
         case JsonRpcMethod.ethGetBalance:
           this.callback(req, callback, await this.provider.getBalance(req.params![0], req.params![1]))
           break
@@ -92,11 +88,9 @@ export class MulticallProvider extends ethers.providers.BaseProvider {
     return this.rpcCall(JsonRpcMethod.ethCall, transaction, blockTag)
   }
 
-  async getCode(
-    addressOrName: string | Promise<string>,
-    blockTag?: string | number | Promise<ethers.providers.BlockTag>
-  ): Promise<string> {
-    return this.rpcCall(JsonRpcMethod.ethGetCode, addressOrName, blockTag)
+  async getBlockNumber(): Promise<number> {
+    const value = await this.rpcCall(JsonRpcMethod.ethBlockNumber);
+    return Number(value);
   }
 
   async getBalance(
