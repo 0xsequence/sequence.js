@@ -735,7 +735,7 @@ describe('SequenceClient', () => {
             request.chainId = client.getChainId()
           }
 
-          const message = ethers.hexlify(typeof req.message === 'string' ? ethers.toUtf8Bytes(req.message) : req.message)
+          const message = ethers.hexlify(messageToBytes(req.message))
 
           expect(request).to.deep.equal({
             method: req.eip6492 ? 'sequence_sign' : 'personal_sign',
