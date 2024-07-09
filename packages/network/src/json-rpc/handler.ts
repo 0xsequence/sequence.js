@@ -22,7 +22,7 @@ export class JsonRpcHandler implements EIP1193Provider, JsonRpcSender {
     this.defaultChainId = defaultChainId
   }
 
-  request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+  request = (request: { method: string; params?: any[]; chainId?: number }): Promise<any> => {
     if (!request.chainId) {
       request.chainId = this.defaultChainId
     }
