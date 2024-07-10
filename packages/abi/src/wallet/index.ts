@@ -6,6 +6,7 @@ import * as mainModule from './mainModule'
 import * as mainModuleUpgradable from './mainModuleUpgradable'
 import * as sequenceUtils from './sequenceUtils'
 import * as requireFreshSigner from './libs/requireFreshSigners'
+import * as eternalFactory from './eternalFactory'
 
 export const walletContracts = {
   erc6492,
@@ -15,5 +16,6 @@ export const walletContracts = {
   mainModule,
   mainModuleUpgradable,
   sequenceUtils,
-  requireFreshSigner
+  requireFreshSigner,
+  eternalFactory
 }

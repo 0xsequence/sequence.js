@@ -1,0 +1,31 @@
+{
+  "name": "@0xsequence/passkeys",
+  "version": "2.1.3",
+  "description": "Implements a special 1/1 Sequence wallet backed by a passkey",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/passkeys",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-passkeys.cjs.js",
+  "module": "dist/0xsequence-passkeys.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "workspace:*",
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/signhub": "workspace:*",
+    "@0xsequence/utils": "workspace:*",
+    "ethers": "^5.5.2"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "nyc": "^15.1.0"
+  },
+  "files": [
+    "src",
+    "dist"
+  ]
+}
