@@ -10,7 +10,7 @@ import {
   initiateAuth,
   Intent,
   listSessions,
-  openSession,
+  openSession, OpenSessionArgs,
   sendDelayedEncode,
   SendDelayedEncodeArgs,
   sendERC1155,
@@ -279,9 +279,10 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async completeAuth(params: ChallengeIntentParams) {
+  async completeAuth(params: ChallengeIntentParams, optParams: Partial<OpenSessionArgs>) {
     const sessionId = await this.getSessionId()
     const intent = await openSession({
+      ...optParams,
       sessionId,
       lifespan: DEFAULT_LIFESPAN,
       ...params

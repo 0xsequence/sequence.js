@@ -355,7 +355,7 @@ export class SequenceWaaS {
       opts.sessionName = 'session name'
     }
 
-    const intent = await this.waas.completeAuth(challenge.getIntentParams())
+    const intent = await this.waas.completeAuth(challenge.getIntentParams(), { forceCreateAccount: opts.forceCreateAccount })
     try {
       const res = await this.registerSession(intent, opts.sessionName)
 
