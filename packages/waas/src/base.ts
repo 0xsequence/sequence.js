@@ -10,7 +10,8 @@ import {
   initiateAuth,
   Intent,
   listSessions,
-  openSession, OpenSessionArgs,
+  openSession,
+  OpenSessionArgs,
   sendDelayedEncode,
   SendDelayedEncodeArgs,
   sendERC1155,
@@ -50,7 +51,6 @@ import {
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
-import { jwtDecode } from 'jwt-decode'
 import { ChallengeIntentParams } from './challenge'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
@@ -252,14 +252,26 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async initiateIdTokenAuth(idToken: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
-    const decoded = jwtDecode(idToken)
+  async initiateIdTokenAuth(idToken: string, exp?: number): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
     const idTokenHash = keccak256(toUtf8Bytes(idToken))
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.OIDC,
-      verifier: `${idTokenHash};${decoded.exp}`,
+      verifier: `${idTokenHash};${exp}`,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    return this.signIntent(intent)
+  }
+
+  async initiateStytchAuth(idToken: string, exp?: number): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const idTokenHash = keccak256(toUtf8Bytes(idToken))
+    const intent = await initiateAuth({
+      sessionId,
+      identityType: IdentityType.Stytch,
+      verifier: `${idTokenHash};${exp}`,
       lifespan: DEFAULT_LIFESPAN
     })
 

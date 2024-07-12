@@ -85,6 +85,19 @@ export class IdTokenChallenge extends Challenge {
   }
 }
 
+export class StytchChallenge extends IdTokenChallenge {
+  constructor(readonly idToken: string) {
+    super(idToken)
+  }
+
+  getIntentParams(): ChallengeIntentParams {
+    return {
+      ...super.getIntentParams(),
+      identityType: IdentityType.Stytch
+    }
+  }
+}
+
 export class PlayFabChallenge extends Challenge {
   constructor(
     readonly titleId: string,

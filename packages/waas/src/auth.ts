@@ -28,13 +28,14 @@ import {
   isIntentTimeError,
   isInitiateAuthResponse
 } from './intents/responses'
-import {WaasAuthenticator, Session, Chain, EmailAlreadyInUseError} from './clients/authenticator.gen'
+import { WaasAuthenticator, Session, Chain, EmailAlreadyInUseError } from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
 import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
 import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
-import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge } from './challenge'
+import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge, StytchChallenge } from './challenge'
+import { jwtDecode } from 'jwt-decode'
 
 export type Sessions = (Session & { isThis: boolean })[]
 export type { Account }
@@ -64,7 +65,7 @@ export type PlayFabIdentity = {
   playFabSessionTicket: string
 }
 
-export type Identity = IdTokenIdentity | EmailIdentity | PlayFabIdentity
+export type Identity = IdTokenIdentity | EmailIdentity | PlayFabIdentity | GuestIdentity
 
 export type SignInResponse = {
   sessionId: string
@@ -257,13 +258,13 @@ export class SequenceWaaS {
 
       const respondToChallenge = async (answer: string) => {
         try {
-          const res = await this.completeAuth(challenge.withAnswer(answer), {sessionName})
+          const res = await this.completeAuth(challenge.withAnswer(answer), { sessionName })
           resolve(res)
         } catch (e) {
           if (e instanceof EmailAlreadyInUseError) {
             const forceCreate = async () => {
               try {
-                const res = await this.completeAuth(challenge.withAnswer(answer), {sessionName, forceCreateAccount: true})
+                const res = await this.completeAuth(challenge.withAnswer(answer), { sessionName, forceCreateAccount: true })
                 resolve(res)
               } catch (e) {
                 reject(e)
@@ -314,13 +315,17 @@ export class SequenceWaaS {
   }
 
   private async initIdTokenAuth(idToken: string) {
-    const intent = await this.waas.initiateIdTokenAuth(idToken)
+    const decoded = jwtDecode(idToken)
+    const isStytch = decoded.iss?.startsWith('stytch.com/') || false
+    const intent = isStytch
+      ? await this.waas.initiateStytchAuth(idToken, decoded.exp)
+      : await this.waas.initiateIdTokenAuth(idToken, decoded.exp)
     const res = await this.sendIntent(intent)
 
     if (!isInitiateAuthResponse(res)) {
       throw new Error(`Invalid response: ${JSON.stringify(res)}`)
     }
-    return new IdTokenChallenge(idToken)
+    return isStytch ? new StytchChallenge(idToken) : new IdTokenChallenge(idToken)
   }
 
   private async initEmailAuth(email: string) {
