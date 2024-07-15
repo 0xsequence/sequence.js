@@ -1,5 +1,7 @@
 import {
   IntentDataSendTransaction,
+  IntentResponseAccountFederated,
+  IntentResponseAccountList,
   IntentResponseAuthInitiated,
   IntentResponseCode,
   IntentResponseGetSession,
@@ -147,6 +149,8 @@ export type InitiateAuthResponse = Response<IntentResponseCode.authInitiated, In
 export type ValidateSessionResponse = Response<IntentResponseCode.validationStarted, IntentResponseValidationStarted>
 export type FinishValidateSessionResponse = Response<IntentResponseCode.validationFinished, IntentResponseValidationFinished>
 export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse, IntentResponseGetSession>
+export type LinkAccountResponse = Response<IntentResponseCode.accountFederated, IntentResponseAccountFederated>
+export type ListAccountsResponse = Response<IntentResponseCode.accountList, IntentResponseAccountList>
 
 export function isInitiateAuthResponse(receipt: any): receipt is InitiateAuthResponse {
   return (
@@ -277,6 +281,22 @@ export function isGetSessionResponse(receipt: any): receipt is GetSessionRespons
   )
 }
 
+export function isLinkAccountResponse(receipt: any): receipt is LinkAccountResponse {
+  return (
+    typeof receipt === 'object' &&
+      receipt.code === IntentResponseCode.accountFederated &&
+      typeof receipt.data === 'object' &&
+      typeof receipt.data.account === 'object'
+  )
+}
+
+export function isListAccountsResponse(receipt: any): receipt is ListAccountsResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.accountList &&
+    typeof receipt.data === 'object'
+  )
+}
 export function isIntentTimeError(error: any): error is WebrpcEndpointError {
   return !!(
     error instanceof WebrpcError &&

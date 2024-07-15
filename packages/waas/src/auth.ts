@@ -26,7 +26,7 @@ import {
   isFeeOptionsResponse,
   isSessionAuthProofResponse,
   isIntentTimeError,
-  isInitiateAuthResponse
+  isInitiateAuthResponse, isListAccountsResponse, isLinkAccountResponse
 } from './intents/responses'
 import { WaasAuthenticator, Session, Chain, EmailAlreadyInUseError } from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
@@ -514,16 +514,26 @@ export class SequenceWaaS {
     return await this.trySendIntent({ validation }, intent, isSessionAuthProofResponse)
   }
 
-  async listAccounts(): Promise<Account[]> {
+  async listAccounts() {
     const intent = await this.waas.listAccounts()
     const res = await this.sendIntent(intent)
-    return res.data as Account[]
+
+    if (!isListAccountsResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+
+    return res.data
   }
 
-  async federateAccount(challenge: Challenge) {
-    const intent = await this.waas.federateAccount(challenge.getIntentParams())
+  async linkAccount(challenge: Challenge) {
+    const intent = await this.waas.linkAccount(challenge.getIntentParams())
     const res = await this.sendIntent(intent)
-    return res.data as Account
+
+    if (!isLinkAccountResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+
+    return res.data
   }
 
   async removeAccount(accountId: string) {

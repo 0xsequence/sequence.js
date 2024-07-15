@@ -551,7 +551,7 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async federateAccount(params: ChallengeIntentParams): Promise<SignedIntent<IntentDataFederateAccount>> {
+  async linkAccount(params: ChallengeIntentParams): Promise<SignedIntent<IntentDataFederateAccount>> {
     const sessionId = await this.sessionId.get()
     if (!sessionId) {
       throw new Error('session not open')
