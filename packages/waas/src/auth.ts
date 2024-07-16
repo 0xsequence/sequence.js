@@ -378,7 +378,9 @@ export class SequenceWaaS {
         email: res.session.identity.email
       }
     } catch (e) {
-      await this.waas.completeSignOut()
+      if (!(e instanceof EmailAlreadyInUseError)) {
+        await this.waas.completeSignOut()
+      }
       throw e
     }
   }
