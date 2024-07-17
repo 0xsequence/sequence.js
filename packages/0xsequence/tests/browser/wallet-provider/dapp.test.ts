@@ -97,7 +97,7 @@ export const tests = async () => {
     assert.equal(networks.length, 2, '2 networks')
     assert.true(networks[0].isDefaultChain!, '1st network is DefaultChain')
     assert.true(!networks[1].isDefaultChain, '1st network is not DefaultChain')
-    assert.true(networks[1].chainId === 31338, 'authChainId is correct')
+    assert.equal(networks[1].chainId, 31338, 'authChainId is correct')
 
     const authProvider = wallet.getProvider(31338)!
     assert.equal(authProvider.getChainId(), 31338, 'authProvider chainId is 31338')

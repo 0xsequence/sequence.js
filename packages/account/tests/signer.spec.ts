@@ -1,6 +1,6 @@
 import { commons, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, LocalRelayer, LocalRelayerOptions, Relayer, proto } from '@0xsequence/relayer'
 import { tracker, trackers } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
@@ -44,7 +44,7 @@ describe('Account signer', () => {
 
     networks = [
       {
-        chainId: 31337,
+        chainId: 31337 as ChainId,
         name: 'hardhat',
         provider: provider1,
         rpcUrl: '',
@@ -56,7 +56,7 @@ describe('Account signer', () => {
         }
       },
       {
-        chainId: 31338,
+        chainId: 31338 as ChainId,
         name: 'hardhat2',
         provider: provider2,
         rpcUrl: 'http://127.0.0.1:7048',
@@ -85,9 +85,9 @@ describe('Account signer', () => {
   })
 
   describe('with new account', () => {
-    var account: Account
-    var config: any
-    var accountSigner: ethers.Wallet
+    let account: Account
+    let config: any
+    let accountSigner: ethers.Wallet
 
     beforeEach(async () => {
       accountSigner = randomWallet('Should create a new account')
@@ -220,8 +220,8 @@ describe('Account signer', () => {
         })
 
         describe('select fee', () => {
-          var account: never
-          var getAccount: (feeOptions: FeeOption[], feeQuote: FeeQuote) => Promise<Account>
+          let account: never
+          let getAccount: (feeOptions: FeeOption[], feeQuote: FeeQuote) => Promise<Account>
 
           beforeEach(async () => {
             class LocalRelayerWithFee extends LocalRelayer {

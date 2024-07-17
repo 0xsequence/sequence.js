@@ -60,10 +60,6 @@ export enum ChainId {
 
   // TELOS
   TELOS = 40
-
-  // HARDHAT TESTNETS
-  // HARDHAT = 31337,
-  // HARDHAT_2 = 31338
 }
 
 export enum NetworkType {

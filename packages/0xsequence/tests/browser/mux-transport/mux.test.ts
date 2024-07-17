@@ -8,7 +8,7 @@ import {
 } from '@0xsequence/provider'
 import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger } from '@0xsequence/utils'
 import { testAccounts, getEOAWallet } from '../testutils'
@@ -57,18 +57,28 @@ export const tests = async () => {
   const networks: NetworkConfig[] = [
     {
       name: 'hardhat',
-      chainId: 31337,
+      chainId: 31337 as ChainId,
       rpcUrl: provider1.connection.url,
       provider: provider1,
       relayer: relayer1,
-      isDefaultChain: true
+      isDefaultChain: true,
+      nativeToken: {
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18
+      }
     },
     {
       name: 'hardhat2',
-      chainId: 31338,
+      chainId: 31338 as ChainId,
       rpcUrl: provider2.connection.url,
       provider: provider2,
-      relayer: relayer2
+      relayer: relayer2,
+      nativeToken: {
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18
+      }
     }
   ]
 
