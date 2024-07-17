@@ -8,7 +8,7 @@ import {
   SingleNetworkSequenceProvider
 } from '../src'
 import { expect } from 'chai'
-import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
+import { ChainId, JsonRpcRequest, JsonRpcResponse, NetworkConfig, allNetworks } from '@0xsequence/network'
 import { ExtendedTransactionRequest } from '../src/extended'
 
 const hardhat1Provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:9595')
@@ -501,11 +501,16 @@ describe('SequenceProvider', () => {
 
     it('should work when passing a full network config', () => {
       expect(provider.toChainId(allNetworks.find(n => n.chainId === 1))).to.equal(1)
-      expect(provider.toChainId(allNetworks.find(n => n.chainId === 31337))).to.equal(31337)
+      expect(provider.toChainId(allNetworks.find(n => n.chainId === (31337 as ChainId)))).to.equal(31337)
     })
 
     it('should fail if the passed network config doesnt exist on the provider', () => {
-      const fakeNetwork = { chainId: 99999, name: 'fake', rpcUrl: 'http://127.0.0.1:99999' }
+      const fakeNetwork = {
+        chainId: 99999 as ChainId,
+        name: 'fake',
+        rpcUrl: 'http://127.0.0.1:99999',
+        nativeToken: { symbol: 'ETH', name: 'Ether', decimals: 18 }
+      }
       expect(() => provider.toChainId(fakeNetwork)).to.throw(`Unsupported network ${fakeNetwork}`)
     })
 

@@ -1,7 +1,7 @@
 import { walletContracts } from '@0xsequence/abi'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, Relayer } from '@0xsequence/relayer'
 import { tracker, trackers } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
@@ -100,7 +100,7 @@ describe('Account', () => {
 
     networks = [
       {
-        chainId: 31337,
+        chainId: 31337 as ChainId,
         name: 'hardhat',
         provider: provider1,
         rpcUrl: '',
@@ -112,7 +112,7 @@ describe('Account', () => {
         }
       },
       {
-        chainId: 31338,
+        chainId: 31338 as ChainId,
         name: 'hardhat2',
         provider: provider2,
         rpcUrl: 'http://127.0.0.1:7048',

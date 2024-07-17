@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { WalletRequestHandler, WindowMessageHandler } from '@0xsequence/provider'
 import { Account } from '@0xsequence/account'
-import { NetworkConfig } from '@0xsequence/network'
+import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer } from '@0xsequence/relayer'
 import { configureLogger } from '@0xsequence/utils'
 
@@ -41,7 +41,7 @@ const main = async () => {
   const networks: NetworkConfig[] = [
     {
       name: 'hardhat',
-      chainId: 31337,
+      chainId: 31337 as ChainId,
       rpcUrl: provider.connection.url,
       provider: provider,
       relayer: relayer,
@@ -54,7 +54,7 @@ const main = async () => {
     },
     {
       name: 'hardhat2',
-      chainId: 31338,
+      chainId: 31338 as ChainId,
       rpcUrl: provider2.connection.url,
       provider: provider2,
       relayer: relayer2,

@@ -17,6 +17,7 @@ import * as utils from '@0xsequence/tests'
 import { Orchestrator } from '@0xsequence/signhub'
 import { trackers } from '@0xsequence/sessions'
 import { commons } from '@0xsequence/core'
+import { ChainId } from '@0xsequence/network'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
 
@@ -70,11 +71,16 @@ export const tests = async () => {
   const networks = [
     {
       name: 'hardhat',
-      chainId: 31337,
+      chainId: 31337 as ChainId,
       rpcUrl: rpcProvider.connection.url,
       provider: rpcProvider,
       relayer: relayer,
-      isDefaultChain: true
+      isDefaultChain: true,
+      nativeToken: {
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18
+      }
     }
   ]
 
