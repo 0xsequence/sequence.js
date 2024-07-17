@@ -59,11 +59,11 @@ export enum ChainId {
   XR_SEPOLIA = 2730,
 
   // TELOS
-  TELOS = 40,
+  TELOS = 40
 
   // HARDHAT TESTNETS
-  HARDHAT = 31337,
-  HARDHAT_2 = 31338
+  // HARDHAT = 31337,
+  // HARDHAT_2 = 31338
 }
 
 export enum NetworkType {
@@ -672,26 +672,26 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'TLOS',
       decimals: 18
     }
-  },
-
-  [ChainId.HARDHAT]: {
-    chainId: ChainId.HARDHAT,
-    name: 'hardhat',
-    title: 'Hardhat (local testnet)',
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.HARDHAT_2]: {
-    chainId: ChainId.HARDHAT_2,
-    name: 'hardhat2',
-    title: 'Hardhat (local testnet)',
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
   }
+
+  // [ChainId.HARDHAT]: {
+  //   chainId: ChainId.HARDHAT,
+  //   name: 'hardhat',
+  //   title: 'Hardhat (local testnet)',
+  //   nativeToken: {
+  //     symbol: 'ETH',
+  //     name: 'Ether',
+  //     decimals: 18
+  //   }
+  // },
+  // [ChainId.HARDHAT_2]: {
+  //   chainId: ChainId.HARDHAT_2,
+  //   name: 'hardhat2',
+  //   title: 'Hardhat (local testnet)',
+  //   nativeToken: {
+  //     symbol: 'ETH',
+  //     name: 'Ether',
+  //     decimals: 18
+  //   }
+  // }
 }

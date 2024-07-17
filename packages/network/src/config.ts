@@ -175,25 +175,25 @@ export const allNetworks = validateAndSortNetworks([
   {
     ...networks[ChainId.TELOS],
     ...genUrls('telos')
-  },
-  {
-    ...networks[ChainId.HARDHAT],
-    rpcUrl: 'http://localhost:8545',
-    relayer: {
-      url: 'http://localhost:3000',
-      provider: {
-        url: 'http://localhost:8545'
-      }
-    }
-  },
-  {
-    ...networks[ChainId.HARDHAT_2],
-    rpcUrl: 'http://localhost:9545',
-    relayer: {
-      url: 'http://localhost:3000',
-      provider: {
-        url: 'http://localhost:9545'
-      }
-    }
   }
+  // {
+  //   ...networks[ChainId.HARDHAT],
+  //   rpcUrl: 'http://localhost:8545',
+  //   relayer: {
+  //     url: 'http://localhost:3000',
+  //     provider: {
+  //       url: 'http://localhost:8545'
+  //     }
+  //   }
+  // },
+  // {
+  //   ...networks[ChainId.HARDHAT_2],
+  //   rpcUrl: 'http://localhost:9545',
+  //   relayer: {
+  //     url: 'http://localhost:3000',
+  //     provider: {
+  //       url: 'http://localhost:9545'
+  //     }
+  //   }
+  // }
 ])
