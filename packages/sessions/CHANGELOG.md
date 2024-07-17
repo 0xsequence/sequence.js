@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 1.9.37
+
+### Patch Changes
+
+- network: adds nativeToken data to NetworkMetadata constants
+- Updated dependencies
+  - @0xsequence/core@1.9.37
+  - @0xsequence/migration@1.9.37
+  - @0xsequence/replacer@1.9.37
+
 ## 1.9.36
 
 ### Patch Changes

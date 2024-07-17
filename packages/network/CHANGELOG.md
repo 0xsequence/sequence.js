@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.9.37
+
+### Patch Changes
+
+- network: adds nativeToken data to NetworkMetadata constants
+- Updated dependencies
+  - @0xsequence/core@1.9.37
+  - @0xsequence/indexer@1.9.37
+  - @0xsequence/relayer@1.9.37
+  - @0xsequence/utils@1.9.37
+
 ## 1.9.36
 
 ### Patch Changes
