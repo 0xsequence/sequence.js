@@ -1,41 +1,50 @@
-import { Observer, SequenceWaaSBase } from './base'
-import { Account, IdentityType, IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
-import { newSessionFromSessionId } from './session'
-import { LocalStore, Store, StoreObj } from './store'
+import {Observer, SequenceWaaSBase} from './base'
+import {Account, IdentityType, IntentDataOpenSession, IntentDataSendTransaction} from './clients/intent.gen'
+import {newSessionFromSessionId} from './session'
+import {LocalStore, Store, StoreObj} from './store'
 import {
+  GetTransactionReceiptArgs,
   SendDelayedEncodeArgs,
   SendERC1155Args,
   SendERC20Args,
   SendERC721Args,
-  SignMessageArgs,
   SendTransactionsArgs,
   SignedIntent,
-  GetTransactionReceiptArgs
+  SignMessageArgs
 } from './intents'
 import {
-  MaySentTransactionResponse,
-  SignedMessageResponse,
   FeeOptionsResponse,
-  isGetSessionResponse,
-  isMaySentTransactionResponse,
-  isSignedMessageResponse,
-  isValidationRequiredResponse,
-  isFinishValidateSessionResponse,
   isCloseSessionResponse,
-  isTimedOutTransactionResponse,
   isFeeOptionsResponse,
-  isSessionAuthProofResponse,
+  isFinishValidateSessionResponse,
+  isGetSessionResponse,
+  isInitiateAuthResponse,
   isIntentTimeError,
-  isInitiateAuthResponse, isListAccountsResponse, isLinkAccountResponse
+  isLinkAccountResponse,
+  isListAccountsResponse,
+  isMaySentTransactionResponse,
+  isSessionAuthProofResponse,
+  isSignedMessageResponse,
+  isTimedOutTransactionResponse,
+  isValidationRequiredResponse,
+  MaySentTransactionResponse,
+  SignedMessageResponse
 } from './intents/responses'
-import { WaasAuthenticator, Session, Chain, EmailAlreadyInUseError } from './clients/authenticator.gen'
-import { SimpleNetwork, WithSimpleNetwork } from './networks'
-import { EmailAuth } from './email'
-import { ethers } from 'ethers'
-import { SubtleCryptoBackend, getDefaultSubtleCryptoBackend } from './subtle-crypto'
-import { SecureStoreBackend, getDefaultSecureStoreBackend } from './secure-store'
-import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge, StytchChallenge } from './challenge'
-import { jwtDecode } from 'jwt-decode'
+import {Chain, EmailAlreadyInUseError, Session, WaasAuthenticator} from './clients/authenticator.gen'
+import {SimpleNetwork, WithSimpleNetwork} from './networks'
+import {EmailAuth} from './email'
+import {ethers} from 'ethers'
+import {getDefaultSubtleCryptoBackend, SubtleCryptoBackend} from './subtle-crypto'
+import {getDefaultSecureStoreBackend, SecureStoreBackend} from './secure-store'
+import {
+  Challenge,
+  EmailChallenge,
+  GuestChallenge,
+  IdTokenChallenge,
+  PlayFabChallenge,
+  StytchChallenge
+} from './challenge'
+import {jwtDecode} from 'jwt-decode'
 
 export type Sessions = (Session & { isThis: boolean })[]
 export type { Account }
@@ -104,6 +113,12 @@ export type Network = Chain
 
 export type NetworkList = Network[]
 
+export type EmailConflictInfo = {
+  type: IdentityType
+  email: string
+  issuer: string
+}
+
 export function parseSequenceWaaSConfigKey<T>(key: string): Partial<T> {
   return JSON.parse(atob(key))
 }
@@ -135,7 +150,7 @@ export class SequenceWaaS {
   private client: WaasAuthenticator
 
   private validationRequiredCallback: (() => void)[] = []
-  private emailConflictCallback: ((forceCreate: () => Promise<void>) => Promise<void>)[] = []
+  private emailConflictCallback: ((info: EmailConflictInfo, forceCreate: () => Promise<void>) => Promise<void>)[] = []
   private emailAuthCodeRequiredCallback: ((respondWithCode: (code: string) => Promise<void>) => Promise<void>)[] = []
   private validationRequiredSalt: string
 
@@ -184,7 +199,7 @@ export class SequenceWaaS {
     }
   }
 
-  onEmailConflict(callback: (forceCreate: () => Promise<void>) => Promise<void>) {
+  onEmailConflict(callback: (info: EmailConflictInfo, forceCreate: () => Promise<void>) => Promise<void>) {
     this.emailConflictCallback.push(callback)
     return () => {
       this.emailConflictCallback = this.emailConflictCallback.filter(c => c !== callback)
@@ -270,8 +285,21 @@ export class SequenceWaaS {
                 reject(e)
               }
             }
+            const info: EmailConflictInfo = {
+              type: IdentityType.None,
+              email: '',
+              issuer: '',
+            }
+            if (e.cause) {
+              const parts = e.cause.split('|')
+              if (parts.length >= 3) {
+                info.type = parts[0] as IdentityType
+                info.email = parts[1]
+                info.issuer = parts[2]
+              }
+            }
             for (const callback of this.emailConflictCallback) {
-              callback(forceCreate)
+              callback(info, forceCreate)
             }
           } else {
             reject(e)
