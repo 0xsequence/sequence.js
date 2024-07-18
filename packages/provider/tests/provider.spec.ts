@@ -9,7 +9,7 @@ import {
   WalletEventTypes
 } from '../src'
 import { expect } from 'chai'
-import { JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
+import { ChainId, JsonRpcRequest, JsonRpcResponse, allNetworks } from '@0xsequence/network'
 import { ExtendedTransactionRequest } from '../src/extended'
 
 const hardhat1Provider = new ethers.JsonRpcProvider('http://127.0.0.1:9595', undefined, { cacheTimeout: -1 })
@@ -508,7 +508,12 @@ describe('SequenceProvider', () => {
     })
 
     it('should fail if the passed network config doesnt exist on the provider', () => {
-      const fakeNetwork = { chainId: 99999, name: 'fake', rpcUrl: 'http://127.0.0.1:99999' }
+      const fakeNetwork = {
+        chainId: 99999,
+        name: 'fake',
+        rpcUrl: 'http://127.0.0.1:99999',
+        nativeToken: { symbol: 'ETH', name: 'Ether', decimals: 18 }
+      }
       expect(() => provider.toChainId(fakeNetwork)).to.throw(`Unsupported network ${fakeNetwork}`)
     })
 

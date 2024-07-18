@@ -97,7 +97,7 @@ export const tests = async () => {
     assert.equal(networks.length, 2, '2 networks')
     assert.true(networks[0].isDefaultChain!, '1st network is DefaultChain')
     assert.true(!networks[1].isDefaultChain, '1st network is not DefaultChain')
-    assert.true(networks[1].chainId === 31338, 'authChainId is correct')
+    assert.equal(networks[1].chainId, 31338, 'authChainId is correct')
 
     const authProvider = wallet.getProvider(31338)!
     assert.equal(authProvider.getChainId(), 31338, 'authProvider chainId is 31338')
@@ -115,11 +115,11 @@ export const tests = async () => {
 
     const config = allWalletConfigs as v2.config.WalletConfig
     assert.equal(config.version, 2, 'wallet config version is correct')
-    assert.true(BigInt(config.threshold) === 2n, 'config, 2 threshold')
-    assert.true(BigInt(config.checkpoint) === 0n, 'config, 0 checkpoint')
+    assert.equal(BigInt(config.threshold), 2n, 'config, 2 threshold')
+    assert.equal(BigInt(config.checkpoint), 0n, 'config, 0 checkpoint')
     assert.true(v2.config.isSignerLeaf(config.tree), 'config, isSignerLeaf')
     assert.true(ethers.isAddress((config.tree as v2.config.SignerLeaf).address), 'config, signer address')
-    assert.true(BigInt((config.tree as v2.config.SignerLeaf).weight) === 2n, 'config, signer weight')
+    assert.equal(BigInt((config.tree as v2.config.SignerLeaf).weight), 2n, 'config, signer weight')
   })
 
   await test('multiple networks', async () => {
@@ -161,8 +161,8 @@ export const tests = async () => {
 
   await test('listAccounts', async () => {
     const signers = provider.listAccounts()
-    assert.true(signers.length === 1, 'signers, single owner')
-    assert.true(signers[0] === wallet.getAddress(), 'signers, check address')
+    assert.equal(signers.length, 1, 'signers, single owner')
+    assert.equal(signers[0], wallet.getAddress(), 'signers, check address')
   })
 
   await test('signMessage on defaultChain', async () => {
@@ -266,10 +266,10 @@ export const tests = async () => {
     const ethAmount = parseEther('10.1234')
     const txResp = await sendETH(testAccount, wallet.getAddress(), ethAmount)
     const txReceipt = await provider.getTransactionReceipt(txResp.hash)
-    assert.true(txReceipt!.status === 1, 'eth sent from signer1')
+    assert.equal(txReceipt!.status, 1, 'eth sent from signer1')
 
     const walletBalanceAfter = await signer.getBalance()
-    assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
+    assert.equal(walletBalanceAfter - walletBalanceBefore, ethAmount, `wallet received ${ethAmount} eth`)
   })
 
   const testSendETH = async (
@@ -323,7 +323,7 @@ export const tests = async () => {
         const txResp = await signer.sendTransaction(tx)
         const txReceipt = await txResp.wait()
 
-        assert.true(txReceipt!.status === 1, 'txn sent successfully')
+        assert.equal(txReceipt!.status, 1, 'txn sent successfully')
         assert.true(
           (await hardhatProvider.getCode(wallet.getAddress())) !== '0x',
           'wallet must be in deployed state after the txn'
@@ -340,12 +340,12 @@ export const tests = async () => {
         const walletBalanceAfter = await signer.getBalance()
         const sent = (walletBalanceAfter - walletBalanceBefore) * -1n
 
-        assert.true(sent === ethAmount, `wallet sent ${sent} eth while expected ${ethAmount}`)
+        assert.equal(sent, ethAmount, `wallet sent ${sent} eth while expected ${ethAmount}`)
 
         // Ensure toAddress received their eth
         const toBalanceAfter = await provider.getBalance(toAddress)
         const received = toBalanceAfter - toBalanceBefore
-        assert.true(received === ethAmount, `toAddress received ${received} eth while expected ${ethAmount}`)
+        assert.equal(received, ethAmount, `toAddress received ${received} eth while expected ${ethAmount}`)
 
         // Extra checks
         if (opts.gasLimit) {
@@ -508,10 +508,10 @@ export const tests = async () => {
       // const txReceipt = await provider2.getTransactionReceipt(txResp.hash)
 
       const txReceipt = await (await sendETH(testAccount, wallet.getAddress(), ethAmount)).wait()
-      assert.true(txReceipt!.status === 1, 'eth sent')
+      assert.equal(txReceipt!.status, 1, 'eth sent')
 
       const walletBalanceAfter = await signer2.getBalance()
-      assert.true(walletBalanceAfter - walletBalanceBefore === ethAmount, `wallet received ${ethAmount} eth`)
+      assert.equal(walletBalanceAfter - walletBalanceBefore, ethAmount, `wallet received ${ethAmount} eth`)
     }
 
     // using sequence wallet on the authChain, send eth back to anotehr seed account via
@@ -533,18 +533,18 @@ export const tests = async () => {
       }
       const txReceipt = await (await signer2.sendTransaction(tx)).wait()
 
-      assert.true(txReceipt!.status === 1, 'txn sent successfully')
+      assert.equal(txReceipt!.status, 1, 'txn sent successfully')
       assert.true((await hardhatProvider.getCode(walletAddress)) !== '0x', 'wallet must be in deployed state after the txn')
 
       // Ensure fromAddress sent their eth
       const walletBalanceAfter = await signer2.getBalance()
       const sent = (walletBalanceAfter - walletBalanceBefore) * -1n
 
-      assert.true(sent === ethAmount, `wallet sent ${ethAmount} eth`)
+      assert.equal(sent, ethAmount, `wallet sent ${ethAmount} eth`)
 
       // Ensure toAddress received their eth
       const toBalanceAfter = await provider2.getBalance(toAddress)
-      assert.true(toBalanceAfter - toBalanceBefore === ethAmount, `toAddress received ${ethAmount} eth`)
+      assert.equal(toBalanceAfter - toBalanceBefore, ethAmount, `toAddress received ${ethAmount} eth`)
     }
   })
 }

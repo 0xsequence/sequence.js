@@ -74,7 +74,12 @@ export const tests = async () => {
       rpcUrl: rpcProvider._getConnection().url,
       provider: rpcProvider,
       relayer: relayer,
-      isDefaultChain: true
+      isDefaultChain: true,
+      nativeToken: {
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18
+      }
     }
   ]
 
@@ -127,7 +132,7 @@ export const tests = async () => {
 
   await test('sending a json-rpc request', async () => {
     const result = await walletProvider.request({ method: 'eth_accounts', params: [] })
-    assert.true(result[0] === address, 'response address check')
+    assert.equal(result[0], address, 'response address check')
   })
 
   await test('get chain id', async () => {
