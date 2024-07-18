@@ -260,7 +260,7 @@ export class Session {
         // Only update the onchain config if the imageHash has changed
         if (account.coders.config.imageHashOf(prevConfig) !== account.coders.config.imageHashOf(nextConfig)) {
           const newConfig = account.coders.config.editConfig(nextConfig, {
-            checkpoint: account.coders.config.checkpointOf(prevConfig).add(1)
+            checkpoint: account.coders.config.checkpointOf(prevConfig) + 1n
           })
 
           await account.updateConfig(newConfig)

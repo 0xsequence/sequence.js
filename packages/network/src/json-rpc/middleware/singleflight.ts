@@ -1,4 +1,4 @@
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponse, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
+import { EIP1193ProviderFunc, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
 
 export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
   private singleflightJsonRpcMethods = [
@@ -31,52 +31,47 @@ export class SingleflightMiddleware implements JsonRpcMiddlewareHandler {
     this.inflight = {}
   }
 
-  sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback, chainId?: number) => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
+    return async (request: { jsonrpc: '2.0'; id?: number; method: string; params?: any[]; chainId?: number }): Promise<any> => {
       // continue to next handler if method isn't part of methods list
       if (!this.singleflightJsonRpcMethods.includes(request.method)) {
-        next(request, callback, chainId)
-        return
+        return next(request)
       }
 
-      const key = this.requestKey(request.method, request.params || [], chainId)
+      const key = this.requestKey(request.method, request.params || [], request.chainId)
 
       if (!this.inflight[key]) {
         // first request -- init the empty list
         this.inflight[key] = []
       } else {
         // already in-flight, add the callback to the list and return
-        this.inflight[key].push({ id: request.id!, callback })
-        return
+        return new Promise<any>((resolve, reject) => {
+          this.inflight[key].push({
+            id: request.id!,
+            callback: (error: any, response: any) => {
+              if (error) {
+                reject(error)
+              } else {
+                resolve(response)
+              }
+            }
+          })
+        })
       }
 
       // Continue down the handler chain
-      next(
-        request,
-        (error: any, response?: JsonRpcResponse, chainId?: number) => {
-          // callback the original request
-          callback(error, response)
-
-          // callback all other requests of the same kind in queue, with the
-          // same response result as from the first response.
-          for (let i = 0; i < this.inflight[key].length; i++) {
-            const sub = this.inflight[key][i]
-            if (error) {
-              sub.callback(error, response)
-            } else if (response) {
-              sub.callback(undefined, {
-                jsonrpc: '2.0',
-                id: sub.id,
-                result: response!.result
-              })
-            }
-          }
-
-          // clear request key
-          delete this.inflight[key]
-        },
-        chainId
-      )
+      try {
+        // Exec the handler, and on success resolve all other promises
+        const response = await next(request)
+        this.inflight[key].forEach(({ callback }) => callback(undefined, response))
+        return response
+      } catch (error) {
+        // If the request fails, reject all queued promises.
+        this.inflight[key].forEach(({ callback }) => callback(error, undefined))
+        throw error
+      } finally {
+        delete this.inflight[key]
+      }
     }
   }
 

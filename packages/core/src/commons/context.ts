@@ -15,15 +15,15 @@ export type WalletContext = {
 }
 
 export function addressOf(context: WalletContext, imageHash: ethers.BytesLike) {
-  const codeHash = ethers.utils.keccak256(
-    ethers.utils.solidityPack(['bytes', 'bytes32'], [context.walletCreationCode, ethers.utils.hexZeroPad(context.mainModule, 32)])
+  const codeHash = ethers.keccak256(
+    ethers.solidityPacked(['bytes', 'bytes32'], [context.walletCreationCode, ethers.zeroPadValue(context.mainModule, 32)])
   )
 
-  const hash = ethers.utils.keccak256(
-    ethers.utils.solidityPack(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', context.factory, imageHash, codeHash])
+  const hash = ethers.keccak256(
+    ethers.solidityPacked(['bytes1', 'address', 'bytes32', 'bytes32'], ['0xff', context.factory, imageHash, codeHash])
   )
 
-  return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+  return ethers.getAddress(ethers.dataSlice(hash, 12))
 }
 
 export async function isValidCounterfactual(
@@ -31,7 +31,7 @@ export async function isValidCounterfactual(
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,
   chainId: ethers.BigNumberish,
-  provider: ethers.providers.Provider,
+  provider: ethers.Provider,
   contexts: { [key: number]: WalletContext }
 ) {
   // We don't know the version of the signature
@@ -39,13 +39,13 @@ export async function isValidCounterfactual(
   const res = await Promise.all(
     allVersions.map(async version => {
       try {
-        const decoded = version.signature.SignatureCoder.decode(ethers.utils.hexlify(signature))
+        const decoded = version.signature.SignatureCoder.decode(ethers.hexlify(signature))
 
         const recovered1 = await version.signature.SignatureCoder.recover(
           decoded as any,
           {
             address: wallet,
-            digest: ethers.utils.hexlify(digest),
+            digest: ethers.hexlify(digest),
             chainId
           },
           provider
@@ -64,7 +64,7 @@ export async function isValidCounterfactual(
           decoded as any,
           {
             address: wallet,
-            digest: ethers.utils.hexlify(digest),
+            digest: ethers.hexlify(digest),
             chainId
           },
           provider

@@ -21,7 +21,7 @@ export interface ConfigCoder<T extends Config = Config> {
 
   isWalletConfig: (config: Config) => config is T
 
-  checkpointOf: (config: T) => ethers.BigNumber
+  checkpointOf: (config: T) => bigint
 
   fromSimple: (config: SimpleConfig) => T
 

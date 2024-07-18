@@ -1,12 +1,11 @@
 {
   "name": "@0xsequence/waas",
-  "version": "1.9.37",
+  "version": "2.0.0-alpha.1",
   "description": "waas session client",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
   "source": "src/index.ts",
   "main": "dist/0xsequence-waas.cjs.js",
   "module": "dist/0xsequence-waas.esm.js",
-  "umd:main": "dist/0xsequence-waas.umd.min.js",
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
@@ -16,6 +15,7 @@
   },
   "dependencies": {
     "@0xsequence/network": "workspace:*",
+    "@0xsequence/utils": "workspace:*",
     "@aws-sdk/client-cognito-identity-provider": "^3.445.0",
     "idb": "^7.1.1",
     "json-canonicalize": "^1.0.6",
@@ -26,13 +26,10 @@
     "dist"
   ],
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@types/jwt-decode": "^3.1.0",
     "fake-indexeddb": "^4.0.1"
-  },
-  "preconstruct": {
-    "umdName": "sequence-waas"
   }
 }

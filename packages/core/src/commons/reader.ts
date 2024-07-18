@@ -1,6 +1,5 @@
 import { walletContracts } from '@0xsequence/abi'
 import { ethers } from 'ethers'
-import { commons } from '..'
 import { validateEIP6492Offchain } from './validateEIP6492'
 
 /**
@@ -22,7 +21,7 @@ export class OnChainReader implements Reader {
   // Simple cache to avoid re-fetching the same data
   private isDeployedCache: Set<string> = new Set()
 
-  constructor(public readonly provider: ethers.providers.Provider) {}
+  constructor(public readonly provider: ethers.Provider) {}
 
   private module(address: string) {
     return new ethers.Contract(
@@ -38,7 +37,7 @@ export class OnChainReader implements Reader {
       return true
     }
 
-    const code = await this.provider.getCode(wallet).then(c => ethers.utils.arrayify(c))
+    const code = await this.provider.getCode(wallet).then(c => ethers.getBytes(c))
     const isDeployed = code.length !== 0
     if (isDeployed) {
       this.isDeployedCache.add(wallet)
@@ -48,15 +47,15 @@ export class OnChainReader implements Reader {
   }
 
   async implementation(wallet: string): Promise<string | undefined> {
-    const position = ethers.utils.defaultAbiCoder.encode(['address'], [wallet])
-    const val = await this.provider.getStorageAt(wallet, position).then(c => ethers.utils.arrayify(c))
+    const position = ethers.AbiCoder.defaultAbiCoder().encode(['address'], [wallet])
+    const val = await this.provider.getStorage(wallet, position).then(c => ethers.getBytes(c))
 
     if (val.length === 20) {
-      return ethers.utils.getAddress(ethers.utils.hexlify(val))
+      return ethers.getAddress(ethers.hexlify(val))
     }
 
     if (val.length === 32) {
-      return ethers.utils.defaultAbiCoder.decode(['address'], val)[0]
+      return ethers.AbiCoder.defaultAbiCoder().decode(['address'], val)[0]
     }
 
     return undefined

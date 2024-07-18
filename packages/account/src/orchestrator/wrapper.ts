@@ -15,10 +15,10 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.address
   }
 
-  getChainIdFromMetadata(metadata: object): ethers.BigNumber {
+  getChainIdFromMetadata(metadata: object): bigint {
     try {
       const { chainId } = metadata as MetadataWithChainId
-      return ethers.BigNumber.from(chainId)
+      return BigInt(chainId)
     } catch (err) {
       // Invalid metadata object
       throw new Error('AccountOrchestratorWrapper only supports metadata with chain id')
@@ -46,7 +46,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
     return this.account.decorateTransactions(bundle, status)
   }
 
-  sign(message: ethers.utils.BytesLike, metadata: object): Promise<ethers.utils.BytesLike> {
+  sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
       throw new Error('AccountOrchestratorWrapper only supports wallet metadata requests')
     }
@@ -63,7 +63,7 @@ export class AccountOrchestratorWrapper implements signers.SapientSigner {
 
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
-  suffix(): ethers.utils.BytesLike {
-    return [3]
+  suffix(): ethers.BytesLike {
+    return new Uint8Array([3])
   }
 }
