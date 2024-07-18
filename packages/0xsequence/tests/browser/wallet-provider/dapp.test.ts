@@ -385,10 +385,7 @@ export const tests = async () => {
     const toBalanceAfter = await provider.getBalance(testAccount.address)
     const sent = toBalanceAfter - toBalanceBefore
     const expected = ethAmount1 + ethAmount2
-    assert.true(
-      sent === ethAmount1 + ethAmount2,
-      `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`
-    )
+    assert.equal(sent, expected, `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`)
   })
 
   await test('sendTransaction batch format 2', async () => {
@@ -415,10 +412,7 @@ export const tests = async () => {
     const toBalanceAfter = await provider.getBalance(testAccount.address)
     const sent = toBalanceAfter - toBalanceBefore
     const expected = ethAmount1 + ethAmount2
-    assert.true(
-      sent === ethAmount1 + ethAmount2,
-      `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`
-    )
+    assert.equal(sent, expected, `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`)
   })
 
   await test('sendTransaction batch format 3', async () => {
@@ -445,10 +439,7 @@ export const tests = async () => {
     const toBalanceAfter = await provider.getBalance(testAccount.address)
     const sent = toBalanceAfter - toBalanceBefore
     const expected = ethAmount1 + ethAmount2
-    assert.true(
-      sent === ethAmount1 + ethAmount2,
-      `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`
-    )
+    assert.equal(sent, expected, `wallet sent ${sent} eth while expected ${expected} (${ethAmount1} + ${ethAmount2})`)
   })
 
   await test('sendETH from the sequence smart wallet (authChain)', async () => {
@@ -475,26 +466,12 @@ export const tests = async () => {
     // initial balances
     {
       const testAccount = getEOAWallet(testAccounts[0].privateKey, provider2)
-      // const walletBalanceBefore = await testAccount.getBalance()
       const walletBalanceBefore = await provider2.getBalance(await testAccount.getAddress())
 
       const mainTestAccount = getEOAWallet(testAccounts[0].privateKey, wallet.getProvider())
-      //const mainWalletBalanceBefore = await mainTestAccount.getBalance()
       const mainWalletBalanceBefore = await provider.getBalance(await mainTestAccount.getAddress())
 
       assert.true(walletBalanceBefore !== mainWalletBalanceBefore, 'balances across networks do not match')
-
-      // test different code paths lead to same results
-      // assert.equal(
-      //   (await provider2.getBalance(await testAccount.getAddress())).toString(),
-      //   (await testAccount.getBalance()).toString(),
-      //   'balance match 1'
-      // )
-      // assert.equal(
-      //   (await provider.getBalance(await mainTestAccount.getAddress())).toString(),
-      //   (await mainTestAccount.getBalance()).toString(),
-      //   'balance match 2'
-      // )
     }
 
     // first, lets move some ETH info the wallet from teh testnet seed account

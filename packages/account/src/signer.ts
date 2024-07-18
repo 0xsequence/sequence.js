@@ -163,7 +163,7 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
     return this.provider.getBalance(this.account.address, blockTag)
   }
 
-  call(transaction: ethers.TransactionRequest, blockTag?: ethers.BlockTag | undefined): Promise<string> {
+  call(transaction: ethers.TransactionRequest, blockTag?: ethers.BlockTag): Promise<string> {
     return this.provider.call({ ...transaction, blockTag })
   }
 

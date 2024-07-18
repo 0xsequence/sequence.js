@@ -38,14 +38,14 @@ describe('Account signer', () => {
 
   before(async () => {
     provider1 = new ethers.BrowserProvider(hardhat.network.provider as any, undefined, { cacheTimeout: -1 })
-    provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048')
+    provider2 = new ethers.JsonRpcProvider('http://127.0.0.1:7048', undefined, { cacheTimeout: -1 })
 
     signer1 = await provider1.getSigner()
     signer2 = await provider2.getSigner()
 
     // TODO: Implement migrations on local config tracker
     tracker = new trackers.local.LocalConfigTracker(provider1) as any
-    ;('')
+
     networks = [
       {
         chainId: 31337,
