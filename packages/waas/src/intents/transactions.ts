@@ -9,10 +9,11 @@ import {
   TransactionERC721,
   TransactionRaw,
   TransactionERC1155Value,
-  IntentName
+  IntentName,
+  FeeOption,
+  FeeTokenType
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
-import { FeeOption, FeeTokenType } from './responses'
 
 interface BaseArgs {
   lifespan: number
