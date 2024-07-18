@@ -533,15 +533,15 @@ describe('SequenceClient', () => {
 
     const result1 = await client.request({ method: 'eth_chainId', params: [] })
 
-    expect(result1).to.deep.equal('0x1')
+    expect(result1).to.equal('0x1')
     expect(calledSendAsync).to.equal(1)
 
     const result2 = await client.request({ method: 'eth_accounts', params: [], chainId: 2 })
-    expect(result2).to.deep.equal('0x12345')
+    expect(result2).to.equal('0x12345')
     expect(calledSendAsync).to.equal(2)
 
     const result3 = await client.request({ method: 'eth_sendTransaction', params: [{ to: '0x1234' }], chainId: 5 })
-    expect(result3).to.deep.equal('0x000')
+    expect(result3).to.equal('0x000')
     expect(calledSendAsync).to.equal(3)
 
     // Changing the default chainId
@@ -549,7 +549,7 @@ describe('SequenceClient', () => {
     client.setDefaultChainId(9)
 
     const result4 = await client.request({ method: 'non-standard', params: [{ a: 23123, b: true }] })
-    expect(result4).to.deep.equal('0x99')
+    expect(result4).to.equal('0x99')
     expect(calledSendAsync).to.equal(4)
   })
 

@@ -430,20 +430,20 @@ describe('SequenceSigner', () => {
       })
 
       it('forward getFeeData - default', async () => {
-        expect((await signer.getFeeData()).gasPrice).to.deep.equal(1n)
+        expect((await signer.getFeeData()).gasPrice).to.equal(1n)
 
         signer.provider.setDefaultChainId(31338)
-        expect((await signer.getFeeData()).gasPrice).to.deep.equal(2n)
+        expect((await signer.getFeeData()).gasPrice).to.equal(2n)
       })
 
       it('forward getFeeData - specific chain', async () => {
-        expect((await signer.getFeeData({ chainId: 31337 })).gasPrice).to.deep.equal(1n)
-        expect((await signer.getFeeData({ chainId: 31338 })).gasPrice).to.deep.equal(2n)
+        expect((await signer.getFeeData({ chainId: 31337 })).gasPrice).to.equal(1n)
+        expect((await signer.getFeeData({ chainId: 31338 })).gasPrice).to.equal(2n)
       })
 
       it('forward getFeeData - static network provider', async () => {
-        expect((await signer.getSigner('hardhat').getFeeData()).gasPrice).to.deep.equal(1n)
-        expect((await signer.getSigner(31338).getFeeData()).gasPrice).to.deep.equal(2n)
+        expect((await signer.getSigner('hardhat').getFeeData()).gasPrice).to.equal(1n)
+        expect((await signer.getSigner(31338).getFeeData()).gasPrice).to.equal(2n)
       })
 
       it('fail to forward getFeeData - static network provider for different chain', async () => {
