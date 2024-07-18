@@ -1,4 +1,5 @@
 import {
+  FeeOption,
   IntentDataSendTransaction,
   IntentResponseAccountFederated,
   IntentResponseAccountList,
@@ -69,30 +70,6 @@ export type TransactionFailedResponse = {
 }
 
 export type MaySentTransactionResponse = SentTransactionResponse | TransactionFailedResponse
-
-export enum FeeTokenType {
-  unknown = 'unknown',
-  erc20Token = 'erc20Token',
-  erc1155Token = 'erc1155Token'
-}
-
-export interface FeeOption {
-  token: FeeToken
-  to: string
-  value: string
-  gasLimit: number
-}
-
-export interface FeeToken {
-  chainId: number
-  name: string
-  symbol: string
-  type: FeeTokenType
-  decimals?: number
-  logoURL: string
-  contractAddress?: string
-  tokenID?: string
-}
 
 export type FeeOptionsResponse = {
   code: 'feeOptions'
