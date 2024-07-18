@@ -13,7 +13,7 @@ export const networkProviderMiddleware =
         }
 
         case 'eth_chainId': {
-          return ethers.toBeHex(networkChainId)
+          return ethers.toQuantity(networkChainId)
         }
       }
 

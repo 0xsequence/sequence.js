@@ -160,8 +160,8 @@ describe('Wallet (primitive)', () => {
 
           let { space, nonce } = getNonce(response)
 
-          expect(space === 6492n).to.be.true
-          expect(nonce === 0n).to.be.true
+          expect(space).to.equal(6492n)
+          expect(nonce).to.equal(0n)
 
           await response.wait()
 
@@ -176,8 +176,8 @@ describe('Wallet (primitive)', () => {
 
           await response.wait()
 
-          expect(space === 6492n).to.be.true
-          expect(nonce === 1n).to.be.true
+          expect(space).to.equal(6492n)
+          expect(nonce).to.equal(1n)
         })
 
         it('Should select random nonces by default', async () => {
@@ -185,8 +185,8 @@ describe('Wallet (primitive)', () => {
 
           const { space: firstSpace, nonce: firstNonce } = getNonce(response)
 
-          expect(firstSpace === 0n).to.be.false
-          expect(firstNonce === 0n).to.be.true
+          expect(firstSpace).to.not.equal(0n)
+          expect(firstNonce).to.equal(0n)
 
           // not necessary, parallel execution is ok:
           // await response.wait()
@@ -195,10 +195,10 @@ describe('Wallet (primitive)', () => {
 
           const { space: secondSpace, nonce: secondNonce } = getNonce(response)
 
-          expect(secondSpace === 0n).to.be.false
-          expect(secondNonce === 0n).to.be.true
+          expect(secondSpace).to.not.equal(0n)
+          expect(secondNonce).to.equal(0n)
 
-          expect(secondSpace === firstSpace).to.be.false
+          expect(secondSpace).to.not.equal(firstSpace)
         })
 
         it('Should respect the serial option', async () => {
@@ -206,8 +206,8 @@ describe('Wallet (primitive)', () => {
 
           let { space, nonce } = getNonce(response)
 
-          expect(space === 0n).to.be.true
-          expect(nonce === 0n).to.be.true
+          expect(space).to.equal(0n)
+          expect(nonce).to.equal(0n)
 
           await response.wait()
 
@@ -219,8 +219,8 @@ describe('Wallet (primitive)', () => {
 
           await response.wait()
 
-          expect(space === 0n).to.be.true
-          expect(nonce === 1n).to.be.true
+          expect(space).to.equal(0n)
+          expect(nonce).to.equal(1n)
         })
       })
 

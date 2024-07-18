@@ -266,7 +266,7 @@ export const tests = async () => {
     const ethAmount = parseEther('10.1234')
     const txResp = await sendETH(testAccount, wallet.getAddress(), ethAmount)
     const txReceipt = await provider.getTransactionReceipt(txResp.hash)
-    assert.equal(txReceipt!.status, 1, 'eth sent from signer1')
+    assert.equal(txReceipt?.status, 1, 'eth sent from signer1')
 
     const walletBalanceAfter = await signer.getBalance()
     assert.equal(walletBalanceAfter - walletBalanceBefore, ethAmount, `wallet received ${ethAmount} eth`)
@@ -323,7 +323,7 @@ export const tests = async () => {
         const txResp = await signer.sendTransaction(tx)
         const txReceipt = await txResp.wait()
 
-        assert.equal(txReceipt!.status, 1, 'txn sent successfully')
+        assert.equal(txReceipt?.status, 1, 'txn sent successfully')
         assert.true(
           (await hardhatProvider.getCode(wallet.getAddress())) !== '0x',
           'wallet must be in deployed state after the txn'
@@ -331,9 +331,9 @@ export const tests = async () => {
 
         // transaction is sent to the deployed wallet, if the wallet is deployed.. otherwise its sent to guestModule
         if (beforeWalletDeployed) {
-          assert.equal(txReceipt!.to, wallet.getAddress(), 'recipient is correct')
+          assert.equal(txReceipt?.to, wallet.getAddress(), 'recipient is correct')
         } else {
-          assert.equal(txReceipt!.to, walletContext[2].guestModule, 'recipient is correct')
+          assert.equal(txReceipt?.to, walletContext[2].guestModule, 'recipient is correct')
         }
 
         // Ensure fromAddress sent their eth
@@ -485,7 +485,7 @@ export const tests = async () => {
       // const txReceipt = await provider2.getTransactionReceipt(txResp.hash)
 
       const txReceipt = await (await sendETH(testAccount, wallet.getAddress(), ethAmount)).wait()
-      assert.equal(txReceipt!.status, 1, 'eth sent')
+      assert.equal(txReceipt?.status, 1, 'eth sent')
 
       const walletBalanceAfter = await signer2.getBalance()
       assert.equal(walletBalanceAfter - walletBalanceBefore, ethAmount, `wallet received ${ethAmount} eth`)
@@ -510,7 +510,7 @@ export const tests = async () => {
       }
       const txReceipt = await (await signer2.sendTransaction(tx)).wait()
 
-      assert.equal(txReceipt!.status, 1, 'txn sent successfully')
+      assert.equal(txReceipt?.status, 1, 'txn sent successfully')
       assert.true((await hardhatProvider.getCode(walletAddress)) !== '0x', 'wallet must be in deployed state after the txn')
 
       // Ensure fromAddress sent their eth

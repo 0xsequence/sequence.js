@@ -31,7 +31,7 @@ export class EagerProvider implements JsonRpcMiddlewareHandler {
 
         case 'eth_chainId':
           if (this.options.chainId) {
-            return ethers.toBeHex(this.options.chainId)
+            return ethers.toQuantity(this.options.chainId)
           }
           break
 

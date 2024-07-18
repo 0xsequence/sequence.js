@@ -138,7 +138,7 @@ export function toSequenceTransaction(
 ): { nonce?: ethers.BigNumberish; transaction: Transaction } {
   if (tx.to && tx.to !== ethers.ZeroAddress) {
     return {
-      nonce: tx.nonce ? BigInt(tx.nonce) : undefined,
+      nonce: typeof tx.nonce === 'number' ? BigInt(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
@@ -155,7 +155,7 @@ export function toSequenceTransaction(
     const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract')!, [tx.data])
 
     return {
-      nonce: tx.nonce ? BigInt(tx.nonce) : undefined,
+      nonce: typeof tx.nonce === 'number' ? BigInt(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,

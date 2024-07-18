@@ -1406,7 +1406,7 @@ describe('Wallet integration', function () {
         networks[0].chainId
       )
 
-      expect(receipt!.hash).to.not.be.undefined
+      expect(receipt?.hash).to.not.be.undefined
     })
   })
 })
