@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@0xsequence/core": "workspace:*",
     "@0xsequence/network": "workspace:*",
     "@aws-sdk/client-cognito-identity-provider": "^3.445.0",
     "idb": "^7.1.1",
