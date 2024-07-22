@@ -1,7 +1,7 @@
-import {Observer, SequenceWaaSBase} from './base'
-import {Account, IdentityType, IntentDataOpenSession, IntentDataSendTransaction} from './clients/intent.gen'
-import {newSessionFromSessionId} from './session'
-import {LocalStore, Store, StoreObj} from './store'
+import { Observer, SequenceWaaSBase } from './base'
+import { Account, IdentityType, IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
+import { newSessionFromSessionId } from './session'
+import { LocalStore, Store, StoreObj } from './store'
 import {
   GetTransactionReceiptArgs,
   SendDelayedEncodeArgs,
@@ -30,21 +30,14 @@ import {
   MaySentTransactionResponse,
   SignedMessageResponse
 } from './intents/responses'
-import {Chain, EmailAlreadyInUseError, Session, WaasAuthenticator} from './clients/authenticator.gen'
-import {SimpleNetwork, WithSimpleNetwork} from './networks'
-import {EmailAuth} from './email'
-import {ethers} from 'ethers'
-import {getDefaultSubtleCryptoBackend, SubtleCryptoBackend} from './subtle-crypto'
-import {getDefaultSecureStoreBackend, SecureStoreBackend} from './secure-store'
-import {
-  Challenge,
-  EmailChallenge,
-  GuestChallenge,
-  IdTokenChallenge,
-  PlayFabChallenge,
-  StytchChallenge
-} from './challenge'
-import {jwtDecode} from 'jwt-decode'
+import { Chain, EmailAlreadyInUseError, Session, WaasAuthenticator } from './clients/authenticator.gen'
+import { SimpleNetwork, WithSimpleNetwork } from './networks'
+import { EmailAuth } from './email'
+import { ethers } from 'ethers'
+import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
+import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
+import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge, StytchChallenge } from './challenge'
+import { jwtDecode } from 'jwt-decode'
 
 export type Sessions = (Session & { isThis: boolean })[]
 export type { Account }
@@ -288,7 +281,7 @@ export class SequenceWaaS {
             const info: EmailConflictInfo = {
               type: IdentityType.None,
               email: '',
-              issuer: '',
+              issuer: ''
             }
             if (e.cause) {
               const parts = e.cause.split('|')
