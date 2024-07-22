@@ -50,7 +50,7 @@ import {
 } from './clients/intent.gen'
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
-import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
+import { ethers } from 'ethers'
 import { ChallengeIntentParams } from './challenge'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
@@ -252,7 +252,7 @@ export class SequenceWaaSBase {
 
   async initiateIdTokenAuth(idToken: string, exp?: number): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
-    const idTokenHash = keccak256(toUtf8Bytes(idToken))
+    const idTokenHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(idToken))
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.OIDC,
@@ -265,7 +265,7 @@ export class SequenceWaaSBase {
 
   async initiateStytchAuth(idToken: string, exp?: number): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
-    const idTokenHash = keccak256(toUtf8Bytes(idToken))
+    const idTokenHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(idToken))
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.Stytch,
@@ -278,7 +278,7 @@ export class SequenceWaaSBase {
 
   async initiatePlayFabAuth(titleId: string, sessionTicket: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
-    const ticketHash = keccak256(toUtf8Bytes(sessionTicket))
+    const ticketHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionTicket))
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.PlayFab,
