@@ -1,3 +1,4 @@
+import { VERSION as PACKAGE_VERSION } from '@0xsequence/core'
 import { Intent as RawIntent, IntentName } from '../clients/intent.gen'
 import { useLifespan } from './utils'
 import { ethers } from 'ethers'
@@ -7,7 +8,7 @@ import { Session } from '../session'
 export type Intent<T> = Omit<RawIntent, 'data' | 'signatures'> & { data: T }
 export type SignedIntent<T> = Omit<RawIntent, 'data'> & { data: T }
 
-const VERSION = '1.0.0'
+const VERSION = `1 (Web ${PACKAGE_VERSION})`
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
   const issuedAt = Math.floor(Date.now() / 1000)

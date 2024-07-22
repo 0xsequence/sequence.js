@@ -81,8 +81,6 @@ export type SequenceBaseConfig = {
 export type Observer<T> = (value: T | null) => any
 
 export class SequenceWaaSBase {
-  readonly VERSION = '1.0.0'
-
   private readonly status: StoreObj<Status>
   private readonly sessionId: StoreObj<string | undefined>
   private readonly wallet: StoreObj<string | undefined>
