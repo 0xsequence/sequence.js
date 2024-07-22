@@ -8,7 +8,8 @@ import { Session } from '../session'
 export type Intent<T> = Omit<RawIntent, 'data' | 'signatures'> & { data: T }
 export type SignedIntent<T> = Omit<RawIntent, 'data'> & { data: T }
 
-const VERSION = `1 (Web ${PACKAGE_VERSION})`
+const INTENTS_VERSION = 1
+const VERSION = `${INTENTS_VERSION} (Web ${PACKAGE_VERSION})`
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
   const issuedAt = Math.floor(Date.now() / 1000)
