@@ -1,5 +1,16 @@
 # @0xsequence/waas-ethers
 
+## 1.10.0
+
+### Minor Changes
+
+- waas release v1.3.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/waas@1.10.0
+
 ## 1.9.37
 
 ### Patch Changes
