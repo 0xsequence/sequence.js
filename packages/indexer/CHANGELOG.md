@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 1.10.2
+
+### Patch Changes
+
+- - waas: add getIdToken method
+  - indexer: update api client
+
 ## 1.10.1
 
 ### Patch Changes

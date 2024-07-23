@@ -1,5 +1,17 @@
 # @0xsequence/network
 
+## 1.10.2
+
+### Patch Changes
+
+- - waas: add getIdToken method
+  - indexer: update api client
+- Updated dependencies
+  - @0xsequence/core@1.10.2
+  - @0xsequence/indexer@1.10.2
+  - @0xsequence/relayer@1.10.2
+  - @0xsequence/utils@1.10.2
+
 ## 1.10.1
 
 ### Patch Changes

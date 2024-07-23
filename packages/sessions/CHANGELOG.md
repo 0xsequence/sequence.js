@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 1.10.2
+
+### Patch Changes
+
+- - waas: add getIdToken method
+  - indexer: update api client
+- Updated dependencies
+  - @0xsequence/core@1.10.2
+  - @0xsequence/migration@1.10.2
+  - @0xsequence/replacer@1.10.2
+
 ## 1.10.1
 
 ### Patch Changes
