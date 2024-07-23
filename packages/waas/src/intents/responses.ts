@@ -6,6 +6,7 @@ import {
   IntentResponseAuthInitiated,
   IntentResponseCode,
   IntentResponseGetSession,
+  IntentResponseIdToken,
   IntentResponseValidationFinished,
   IntentResponseValidationStarted
 } from '../clients/intent.gen'
@@ -128,6 +129,7 @@ export type FinishValidateSessionResponse = Response<IntentResponseCode.validati
 export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse, IntentResponseGetSession>
 export type LinkAccountResponse = Response<IntentResponseCode.accountFederated, IntentResponseAccountFederated>
 export type ListAccountsResponse = Response<IntentResponseCode.accountList, IntentResponseAccountList>
+export type IdTokenResponse = Response<IntentResponseCode.idToken, IntentResponseIdToken>
 
 export function isInitiateAuthResponse(receipt: any): receipt is InitiateAuthResponse {
   return (
@@ -275,5 +277,14 @@ export function isIntentTimeError(error: any): error is WebrpcEndpointError {
     error instanceof WebrpcError &&
     (error.cause?.endsWith('intent is invalid: intent expired') ||
       error.cause?.endsWith('intent is invalid: intent issued in the future'))
+  )
+}
+
+export function isGetIdTokenResponse(receipt: any): receipt is IdTokenResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.idToken &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.idToken === 'string'
   )
 }
