@@ -7,7 +7,7 @@ import {
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
 
-import { Identity } from './auth'
+import { IdTokenIdentity } from './auth'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
@@ -91,7 +91,7 @@ export class EmailAuth {
     email: string
     answer: string
     sessionHash: string
-  }): Promise<Identity> {
+  }): Promise<IdTokenIdentity> {
     email = email.toLowerCase().trim()
 
     const res = await this.cognito().send(
