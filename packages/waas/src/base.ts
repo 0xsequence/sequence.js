@@ -4,6 +4,7 @@ import {
   combineTransactionIntents,
   feeOptions,
   finishValidateSession,
+  getIdToken,
   getSession,
   getTransactionReceipt,
   GetTransactionReceiptArgs,
@@ -569,6 +570,21 @@ export class SequenceWaaSBase {
       wallet: await this.getWalletAddress(),
       lifespan: DEFAULT_LIFESPAN,
       accountId
+    })
+    return this.signIntent(intent)
+  }
+
+  async getIdToken({ nonce }: { nonce?: string }) {
+    const sessionId = await this.sessionId.get()
+    if (!sessionId) {
+      throw new Error('session not open')
+    }
+
+    const intent = getIdToken({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+      sessionId,
+      nonce
     })
     return this.signIntent(intent)
   }

@@ -1,5 +1,11 @@
 import { Observer, SequenceWaaSBase } from './base'
-import { Account, IdentityType, IntentDataOpenSession, IntentDataSendTransaction } from './clients/intent.gen'
+import {
+  Account,
+  IdentityType,
+  IntentDataOpenSession,
+  IntentDataSendTransaction,
+  IntentResponseIdToken
+} from './clients/intent.gen'
 import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
@@ -17,6 +23,7 @@ import {
   isCloseSessionResponse,
   isFeeOptionsResponse,
   isFinishValidateSessionResponse,
+  isGetIdTokenResponse,
   isGetSessionResponse,
   isInitiateAuthResponse,
   isIntentTimeError,
@@ -562,6 +569,17 @@ export class SequenceWaaS {
   async removeAccount(accountId: string) {
     const intent = await this.waas.removeAccount({ accountId })
     await this.sendIntent(intent)
+  }
+
+  async getIdToken(args?: { nonce?: string }): Promise<IntentResponseIdToken> {
+    const intent = await this.waas.getIdToken({ nonce: args?.nonce })
+    const res = await this.sendIntent(intent)
+
+    if (!isGetIdTokenResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+
+    return res.data
   }
 
   async useIdentifier<T extends CommonAuthArgs>(args: T): Promise<T & { identifier: string }> {

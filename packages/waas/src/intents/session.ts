@@ -8,6 +8,7 @@ import {
   IntentDataValidateSession,
   IntentDataSessionAuthProof,
   IntentDataInitiateAuth,
+  IntentDataGetIdToken,
   IntentName
 } from '../clients/intent.gen'
 
@@ -61,4 +62,10 @@ export type SessionAuthProof = BaseArgs & IntentDataSessionAuthProof
 
 export function sessionAuthProof({ lifespan, ...data }: SessionAuthProof): Intent<IntentDataSessionAuthProof> {
   return makeIntent(IntentName.sessionAuthProof, lifespan, data)
+}
+
+export type GetIdTokenArgs = BaseArgs & IntentDataGetIdToken
+
+export function getIdToken({ lifespan, ...data }: GetIdTokenArgs): Intent<IntentDataGetIdToken> {
+  return makeIntent(IntentName.getIdToken, lifespan, data)
 }
