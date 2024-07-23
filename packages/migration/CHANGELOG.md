@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.10.3
+
+### Patch Changes
+
+- typing fix
+- Updated dependencies
+  - @0xsequence/abi@1.10.3
+  - @0xsequence/core@1.10.3
+  - @0xsequence/wallet@1.10.3
+
 ## 1.10.2
 
 ### Patch Changes

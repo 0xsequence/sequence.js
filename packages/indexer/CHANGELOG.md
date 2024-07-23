@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.10.3
+
+### Patch Changes
+
+- typing fix
+
 ## 1.10.2
 
 ### Patch Changes

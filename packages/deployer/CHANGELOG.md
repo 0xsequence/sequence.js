@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.10.3
+
+### Patch Changes
+
+- typing fix
+- Updated dependencies
+  - @0xsequence/utils@1.10.3
+
 ## 1.10.2
 
 ### Patch Changes
