@@ -673,6 +673,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'b3-sepolia',
     title: 'B3 Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
+    testnet: true,
     blockExplorer: {
       name: 'B3 Sepolia Explorer',
       rootUrl: 'https://sepolia.explorer.b3.fun/'
@@ -689,6 +690,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'ape-chain-testnet',
     title: 'APE Chain Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APE_CHAIN_TESTNET}.webp`,
+    testnet: true,
     blockExplorer: {
       name: 'APE Chain Explorer',
       rootUrl: 'https://curtis.explorer.caldera.xyz/'
@@ -721,6 +723,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'blast-sepolia',
     title: 'Blast Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST_SEPOLIA}.webp`,
+    testnet: true,
     blockExplorer: {
       name: 'Blast Sepolia Explorer',
       rootUrl: 'https://sepolia.blastexplorer.io/'
