@@ -65,7 +65,7 @@ export enum ChainId {
   B3_SEPOLIA = 1993,
 
   // APE Chain
-  APE_CHAIN_TESTNET = 33111,
+  APECHAIN_TESTNET = 33111,
 
   // Blast
   BLAST = 81457,
@@ -684,12 +684,12 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.APE_CHAIN_TESTNET]: {
-    chainId: ChainId.APE_CHAIN_TESTNET,
+  [ChainId.APECHAIN_TESTNET]: {
+    chainId: ChainId.APECHAIN_TESTNET,
     type: NetworkType.TESTNET,
-    name: 'ape-chain-testnet',
+    name: 'apechain-testnet',
     title: 'APE Chain Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APE_CHAIN_TESTNET}.webp`,
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'APE Chain Explorer',
