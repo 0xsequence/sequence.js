@@ -61,6 +61,16 @@ export enum ChainId {
   // TELOS
   TELOS = 40,
 
+  // B3 Sepolia
+  B3_SEPOLIA = 1993,
+
+  // APE Chain
+  APE_CHAIN_TESTNET = 33111,
+
+  // Blast
+  BLAST = 81457,
+  BLAST_SEPOLIA = 168587773,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -654,6 +664,70 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'tXR',
       name: 'Sepolia XR',
+      decimals: 18
+    }
+  },
+  [ChainId.B3_SEPOLIA]: {
+    chainId: ChainId.B3_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'b3-sepolia',
+    title: 'B3 Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
+    blockExplorer: {
+      name: 'B3 Sepolia Explorer',
+      rootUrl: 'https://sepolia.explorer.b3.fun/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.APE_CHAIN_TESTNET]: {
+    chainId: ChainId.APE_CHAIN_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'ape-chain-testnet',
+    title: 'APE Chain Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      rootUrl: 'https://curtis.explorer.caldera.xyz/'
+    },
+    nativeToken: {
+      symbol: 'APE',
+      name: 'ApeCoin',
+      decimals: 18
+    }
+  },
+  [ChainId.BLAST]: {
+    chainId: ChainId.BLAST,
+    type: NetworkType.MAINNET,
+    name: 'blast',
+    title: 'Blast',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST}.webp`,
+    blockExplorer: {
+      name: 'Blast Explorer',
+      rootUrl: 'https://blastscan.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.BLAST_SEPOLIA]: {
+    chainId: ChainId.BLAST_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'blast-sepolia',
+    title: 'Blast Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST_SEPOLIA}.webp`,
+    blockExplorer: {
+      name: 'Blast Sepolia Explorer',
+      rootUrl: 'https://sepolia.blastexplorer.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
       decimals: 18
     }
   },

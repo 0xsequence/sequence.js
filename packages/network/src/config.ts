@@ -173,6 +173,22 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('xr-sepolia')
   },
   {
+    ...networks[ChainId.B3_SEPOLIA],
+    ...genUrls('b3-sepolia')
+  },
+  {
+    ...networks[ChainId.APE_CHAIN_TESTNET],
+    ...genUrls('ape-chain-testnet')
+  },
+  {
+    ...networks[ChainId.BLAST],
+    ...genUrls('blast')
+  },
+  {
+    ...networks[ChainId.BLAST_SEPOLIA],
+    ...genUrls('blast-sepolia')
+  },
+  {
     ...networks[ChainId.TELOS],
     ...genUrls('telos')
   },
