@@ -177,7 +177,7 @@ export const allNetworks = validateAndSortNetworks([
     ...genUrls('b3-sepolia')
   },
   {
-    ...networks[ChainId.APE_CHAIN_TESTNET],
+    ...networks[ChainId.APECHAIN_TESTNET],
     ...genUrls('ape-chain-testnet')
   },
   {
