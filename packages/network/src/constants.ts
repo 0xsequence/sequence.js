@@ -687,7 +687,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
   [ChainId.APE_CHAIN_TESTNET]: {
     chainId: ChainId.APE_CHAIN_TESTNET,
     type: NetworkType.TESTNET,
-    name: 'ape-chain-testnet',
+    name: 'apechain-testnet',
     title: 'APE Chain Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APE_CHAIN_TESTNET}.webp`,
     testnet: true,
