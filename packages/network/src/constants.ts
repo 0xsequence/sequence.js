@@ -688,7 +688,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'ape-chain-testnet',
     title: 'APE Chain Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APE_CHAIN_TESTNET}.webp`,
     blockExplorer: {
       name: 'APE Chain Explorer',
       rootUrl: 'https://curtis.explorer.caldera.xyz/'
