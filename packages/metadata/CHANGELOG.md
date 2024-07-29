@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.10.4
+
+### Patch Changes
+
+- network: add b3-sepolia, ape-chain-testnet, blast, blast-sepolia
+
 ## 1.10.3
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.10.4
+
+### Patch Changes
+
+- network: add b3-sepolia, ape-chain-testnet, blast, blast-sepolia
+- Updated dependencies
+  - @0xsequence/abi@1.10.4
+  - @0xsequence/account@1.10.4
+  - @0xsequence/api@1.10.4
+  - @0xsequence/core@1.10.4
+  - @0xsequence/indexer@1.10.4
+  - @0xsequence/metadata@1.10.4
+  - @0xsequence/migration@1.10.4
+  - @0xsequence/network@1.10.4
+  - @0xsequence/sessions@1.10.4
+  - @0xsequence/signhub@1.10.4
+  - @0xsequence/utils@1.10.4
+  - @0xsequence/wallet@1.10.4
+
 ## 1.10.3
 
 ### Patch Changes

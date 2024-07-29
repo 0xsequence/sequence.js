@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.10.4
+
+### Patch Changes
+
+- network: add b3-sepolia, ape-chain-testnet, blast, blast-sepolia
+- Updated dependencies
+  - @0xsequence/core@1.10.4
+  - @0xsequence/indexer@1.10.4
+  - @0xsequence/relayer@1.10.4
+  - @0xsequence/utils@1.10.4
+
 ## 1.10.3
 
 ### Patch Changes
