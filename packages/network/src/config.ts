@@ -178,7 +178,7 @@ export const allNetworks = validateAndSortNetworks([
   },
   {
     ...networks[ChainId.APECHAIN_TESTNET],
-    ...genUrls('ape-chain-testnet')
+    ...genUrls('apechain-testnet')
   },
   {
     ...networks[ChainId.BLAST],
