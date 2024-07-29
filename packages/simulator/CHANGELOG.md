@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.10.5
+
+### Patch Changes
+
+- network: ape-chain-testnet -> apechain-testnet
+- Updated dependencies
+  - @0xsequence/core@1.10.5
+
 ## 1.10.4
 
 ### Patch Changes

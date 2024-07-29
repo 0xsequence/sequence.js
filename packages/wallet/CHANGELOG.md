@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.10.5
+
+### Patch Changes
+
+- network: ape-chain-testnet -> apechain-testnet
+- Updated dependencies
+  - @0xsequence/abi@1.10.5
+  - @0xsequence/core@1.10.5
+  - @0xsequence/network@1.10.5
+  - @0xsequence/relayer@1.10.5
+  - @0xsequence/signhub@1.10.5
+  - @0xsequence/utils@1.10.5
+
 ## 1.10.4
 
 ### Patch Changes

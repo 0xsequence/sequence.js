@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.10.5
+
+### Patch Changes
+
+- network: ape-chain-testnet -> apechain-testnet
+
 ## 1.10.4
 
 ### Patch Changes

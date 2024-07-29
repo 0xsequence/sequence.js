@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 1.10.5
+
+### Patch Changes
+
+- network: ape-chain-testnet -> apechain-testnet
+- Updated dependencies
+  - @0xsequence/waas@1.10.5
+
 ## 1.10.4
 
 ### Patch Changes
