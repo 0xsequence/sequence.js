@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 1.10.6
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.10.6
+  - @0xsequence/account@1.10.6
+  - @0xsequence/api@1.10.6
+  - @0xsequence/core@1.10.6
+  - @0xsequence/indexer@1.10.6
+  - @0xsequence/metadata@1.10.6
+  - @0xsequence/migration@1.10.6
+  - @0xsequence/network@1.10.6
+  - @0xsequence/sessions@1.10.6
+  - @0xsequence/signhub@1.10.6
+  - @0xsequence/utils@1.10.6
+  - @0xsequence/wallet@1.10.6
+
 ## 1.10.5
 
 ### Patch Changes

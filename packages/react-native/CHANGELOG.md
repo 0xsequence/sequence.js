@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 1.10.6
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/waas@1.10.6
+
 ## 1.10.5
 
 ### Patch Changes

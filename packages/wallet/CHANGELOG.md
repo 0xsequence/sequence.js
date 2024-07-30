@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 1.10.6
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.10.6
+  - @0xsequence/core@1.10.6
+  - @0xsequence/network@1.10.6
+  - @0xsequence/relayer@1.10.6
+  - @0xsequence/signhub@1.10.6
+  - @0xsequence/utils@1.10.6
+
 ## 1.10.5
 
 ### Patch Changes
