@@ -37,8 +37,7 @@ import {
   MaySentTransactionResponse,
   SignedMessageResponse
 } from './intents/responses'
-import { AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
-import { WaasAuthenticator } from './clients/client'
+import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
