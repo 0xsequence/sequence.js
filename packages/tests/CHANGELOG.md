@@ -1,5 +1,13 @@
 # @0xsequence/tests
 
+## 1.10.7
+
+### Patch Changes
+
+- minor fixes to waas client
+- Updated dependencies
+  - @0xsequence/core@1.10.7
+
 ## 1.10.6
 
 ### Patch Changes

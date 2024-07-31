@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 1.10.7
+
+### Patch Changes
+
+- minor fixes to waas client
+
 ## 1.10.6
 
 ### Patch Changes

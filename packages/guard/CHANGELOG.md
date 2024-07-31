@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.10.7
+
+### Patch Changes
+
+- minor fixes to waas client
+- Updated dependencies
+  - @0xsequence/account@1.10.7
+  - @0xsequence/core@1.10.7
+  - @0xsequence/signhub@1.10.7
+  - @0xsequence/utils@1.10.7
+
 ## 1.10.6
 
 ### Patch Changes
