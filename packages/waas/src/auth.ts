@@ -292,9 +292,11 @@ export class SequenceWaaS {
             }
             if (e.cause) {
               const parts = e.cause.split('|')
-              if (parts.length >= 3) {
+              if (parts.length >= 2) {
                 info.type = parts[0] as IdentityType
                 info.email = parts[1]
+              }
+              if (parts.length >= 3) {
                 info.issuer = parts[2]
               }
             }
