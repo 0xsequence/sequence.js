@@ -506,6 +506,7 @@ export interface SearchTokensReturn {
 export interface SearchContractsArgs {
   q: string
   chainID?: string
+  chainIDs?: Array<string>
   types?: Array<ContractType>
   page?: Page
 }
