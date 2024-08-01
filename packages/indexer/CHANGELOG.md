@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.10.8
+
+### Patch Changes
+
+- update metadata bindings
+
 ## 1.10.7
 
 ### Patch Changes
