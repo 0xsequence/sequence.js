@@ -7,7 +7,7 @@ import {
   UserLambdaValidationException
 } from '@aws-sdk/client-cognito-identity-provider'
 
-import { Identity } from './auth'
+import { IdTokenIdentity } from './auth'
 
 export class EmailAuth {
   private cognitoMemo: CognitoIdentityProviderClient
@@ -28,6 +28,7 @@ export class EmailAuth {
   }
 
   private signUp(email: string) {
+    email = email.toLowerCase().trim()
     return this.cognito().send(
       new SignUpCommand({
         ClientId: this.clientId,
@@ -39,6 +40,7 @@ export class EmailAuth {
   }
 
   private signIn(email: string) {
+    email = email.toLowerCase().trim()
     return this.cognito().send(
       new InitiateAuthCommand({
         AuthFlow: 'CUSTOM_AUTH',
@@ -52,6 +54,7 @@ export class EmailAuth {
 
   public async initiateAuth({ email }: { email: string }): Promise<{ email: string; instance: string }> {
     let res: InitiateAuthCommandOutput
+    email = email.toLowerCase().trim()
 
     try {
       // Try sign in directly first
@@ -88,7 +91,9 @@ export class EmailAuth {
     email: string
     answer: string
     sessionHash: string
-  }): Promise<Identity> {
+  }): Promise<IdTokenIdentity> {
+    email = email.toLowerCase().trim()
+
     const res = await this.cognito().send(
       new RespondToAuthChallengeCommand({
         ClientId: this.clientId,

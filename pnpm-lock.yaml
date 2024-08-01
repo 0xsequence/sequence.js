@@ -734,6 +734,9 @@ importers:
 
   packages/waas:
     dependencies:
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
       '@0xsequence/network':
         specifier: workspace:*
         version: link:../network

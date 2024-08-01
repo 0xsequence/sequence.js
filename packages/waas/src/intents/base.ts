@@ -1,4 +1,5 @@
-import { Intent as RawIntent } from '../clients/intent.gen'
+import { VERSION as PACKAGE_VERSION } from '@0xsequence/core'
+import { Intent as RawIntent, IntentName } from '../clients/intent.gen'
 import { useLifespan } from './utils'
 import { ethers } from 'ethers'
 import { canonicalize } from 'json-canonicalize'
@@ -7,9 +8,10 @@ import { Session } from '../session'
 export type Intent<T> = Omit<RawIntent, 'data' | 'signatures'> & { data: T }
 export type SignedIntent<T> = Omit<RawIntent, 'data'> & { data: T }
 
-const VERSION = '0.0.0'
+const INTENTS_VERSION = 1
+const VERSION = `${INTENTS_VERSION} (Web ${PACKAGE_VERSION})`
 
-export function makeIntent<T>(name: string, lifespan: number, data: T): Intent<T> {
+export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
   const issuedAt = Math.floor(Date.now() / 1000)
   const expiresAt = issuedAt + lifespan
   return {
