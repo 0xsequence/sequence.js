@@ -1,5 +1,465 @@
 # 0xsequence
 
+## 1.10.8
+
+### Patch Changes
+
+- update metadata bindings
+- Updated dependencies
+  - @0xsequence/abi@1.10.8
+  - @0xsequence/account@1.10.8
+  - @0xsequence/api@1.10.8
+  - @0xsequence/auth@1.10.8
+  - @0xsequence/core@1.10.8
+  - @0xsequence/guard@1.10.8
+  - @0xsequence/indexer@1.10.8
+  - @0xsequence/metadata@1.10.8
+  - @0xsequence/migration@1.10.8
+  - @0xsequence/multicall@1.10.8
+  - @0xsequence/network@1.10.8
+  - @0xsequence/provider@1.10.8
+  - @0xsequence/relayer@1.10.8
+  - @0xsequence/sessions@1.10.8
+  - @0xsequence/signhub@1.10.8
+  - @0xsequence/utils@1.10.8
+  - @0xsequence/wallet@1.10.8
+
+## 1.10.7
+
+### Patch Changes
+
+- minor fixes to waas client
+- Updated dependencies
+  - @0xsequence/abi@1.10.7
+  - @0xsequence/account@1.10.7
+  - @0xsequence/api@1.10.7
+  - @0xsequence/auth@1.10.7
+  - @0xsequence/core@1.10.7
+  - @0xsequence/guard@1.10.7
+  - @0xsequence/indexer@1.10.7
+  - @0xsequence/metadata@1.10.7
+  - @0xsequence/migration@1.10.7
+  - @0xsequence/multicall@1.10.7
+  - @0xsequence/network@1.10.7
+  - @0xsequence/provider@1.10.7
+  - @0xsequence/relayer@1.10.7
+  - @0xsequence/sessions@1.10.7
+  - @0xsequence/signhub@1.10.7
+  - @0xsequence/utils@1.10.7
+  - @0xsequence/wallet@1.10.7
+
+## 1.10.6
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.10.6
+  - @0xsequence/account@1.10.6
+  - @0xsequence/api@1.10.6
+  - @0xsequence/auth@1.10.6
+  - @0xsequence/core@1.10.6
+  - @0xsequence/guard@1.10.6
+  - @0xsequence/indexer@1.10.6
+  - @0xsequence/metadata@1.10.6
+  - @0xsequence/migration@1.10.6
+  - @0xsequence/multicall@1.10.6
+  - @0xsequence/network@1.10.6
+  - @0xsequence/provider@1.10.6
+  - @0xsequence/relayer@1.10.6
+  - @0xsequence/sessions@1.10.6
+  - @0xsequence/signhub@1.10.6
+  - @0xsequence/utils@1.10.6
+  - @0xsequence/wallet@1.10.6
+
+## 1.10.5
+
+### Patch Changes
+
+- network: ape-chain-testnet -> apechain-testnet
+- Updated dependencies
+  - @0xsequence/abi@1.10.5
+  - @0xsequence/account@1.10.5
+  - @0xsequence/api@1.10.5
+  - @0xsequence/auth@1.10.5
+  - @0xsequence/core@1.10.5
+  - @0xsequence/guard@1.10.5
+  - @0xsequence/indexer@1.10.5
+  - @0xsequence/metadata@1.10.5
+  - @0xsequence/migration@1.10.5
+  - @0xsequence/multicall@1.10.5
+  - @0xsequence/network@1.10.5
+  - @0xsequence/provider@1.10.5
+  - @0xsequence/relayer@1.10.5
+  - @0xsequence/sessions@1.10.5
+  - @0xsequence/signhub@1.10.5
+  - @0xsequence/utils@1.10.5
+  - @0xsequence/wallet@1.10.5
+
+## 1.10.4
+
+### Patch Changes
+
+- network: add b3-sepolia, ape-chain-testnet, blast, blast-sepolia
+- Updated dependencies
+  - @0xsequence/abi@1.10.4
+  - @0xsequence/account@1.10.4
+  - @0xsequence/api@1.10.4
+  - @0xsequence/auth@1.10.4
+  - @0xsequence/core@1.10.4
+  - @0xsequence/guard@1.10.4
+  - @0xsequence/indexer@1.10.4
+  - @0xsequence/metadata@1.10.4
+  - @0xsequence/migration@1.10.4
+  - @0xsequence/multicall@1.10.4
+  - @0xsequence/network@1.10.4
+  - @0xsequence/provider@1.10.4
+  - @0xsequence/relayer@1.10.4
+  - @0xsequence/sessions@1.10.4
+  - @0xsequence/signhub@1.10.4
+  - @0xsequence/utils@1.10.4
+  - @0xsequence/wallet@1.10.4
+
+## 1.10.3
+
+### Patch Changes
+
+- typing fix
+- Updated dependencies
+  - @0xsequence/abi@1.10.3
+  - @0xsequence/account@1.10.3
+  - @0xsequence/api@1.10.3
+  - @0xsequence/auth@1.10.3
+  - @0xsequence/core@1.10.3
+  - @0xsequence/guard@1.10.3
+  - @0xsequence/indexer@1.10.3
+  - @0xsequence/metadata@1.10.3
+  - @0xsequence/migration@1.10.3
+  - @0xsequence/multicall@1.10.3
+  - @0xsequence/network@1.10.3
+  - @0xsequence/provider@1.10.3
+  - @0xsequence/relayer@1.10.3
+  - @0xsequence/sessions@1.10.3
+  - @0xsequence/signhub@1.10.3
+  - @0xsequence/utils@1.10.3
+  - @0xsequence/wallet@1.10.3
+
+## 1.10.2
+
+### Patch Changes
+
+- - waas: add getIdToken method
+  - indexer: update api client
+- Updated dependencies
+  - @0xsequence/abi@1.10.2
+  - @0xsequence/account@1.10.2
+  - @0xsequence/api@1.10.2
+  - @0xsequence/auth@1.10.2
+  - @0xsequence/core@1.10.2
+  - @0xsequence/guard@1.10.2
+  - @0xsequence/indexer@1.10.2
+  - @0xsequence/metadata@1.10.2
+  - @0xsequence/migration@1.10.2
+  - @0xsequence/multicall@1.10.2
+  - @0xsequence/network@1.10.2
+  - @0xsequence/provider@1.10.2
+  - @0xsequence/relayer@1.10.2
+  - @0xsequence/sessions@1.10.2
+  - @0xsequence/signhub@1.10.2
+  - @0xsequence/utils@1.10.2
+  - @0xsequence/wallet@1.10.2
+
+## 1.10.1
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.10.1
+  - @0xsequence/account@1.10.1
+  - @0xsequence/api@1.10.1
+  - @0xsequence/auth@1.10.1
+  - @0xsequence/core@1.10.1
+  - @0xsequence/guard@1.10.1
+  - @0xsequence/indexer@1.10.1
+  - @0xsequence/metadata@1.10.1
+  - @0xsequence/migration@1.10.1
+  - @0xsequence/multicall@1.10.1
+  - @0xsequence/network@1.10.1
+  - @0xsequence/provider@1.10.1
+  - @0xsequence/relayer@1.10.1
+  - @0xsequence/sessions@1.10.1
+  - @0xsequence/signhub@1.10.1
+  - @0xsequence/utils@1.10.1
+  - @0xsequence/wallet@1.10.1
+
+## 1.10.0
+
+### Minor Changes
+
+- waas release v1.3.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@1.10.0
+  - @0xsequence/account@1.10.0
+  - @0xsequence/api@1.10.0
+  - @0xsequence/auth@1.10.0
+  - @0xsequence/core@1.10.0
+  - @0xsequence/guard@1.10.0
+  - @0xsequence/indexer@1.10.0
+  - @0xsequence/metadata@1.10.0
+  - @0xsequence/migration@1.10.0
+  - @0xsequence/multicall@1.10.0
+  - @0xsequence/network@1.10.0
+  - @0xsequence/provider@1.10.0
+  - @0xsequence/relayer@1.10.0
+  - @0xsequence/sessions@1.10.0
+  - @0xsequence/signhub@1.10.0
+  - @0xsequence/utils@1.10.0
+  - @0xsequence/wallet@1.10.0
+
+## 1.9.37
+
+### Patch Changes
+
+- network: adds nativeToken data to NetworkMetadata constants
+- Updated dependencies
+  - @0xsequence/abi@1.9.37
+  - @0xsequence/account@1.9.37
+  - @0xsequence/api@1.9.37
+  - @0xsequence/auth@1.9.37
+  - @0xsequence/core@1.9.37
+  - @0xsequence/guard@1.9.37
+  - @0xsequence/indexer@1.9.37
+  - @0xsequence/metadata@1.9.37
+  - @0xsequence/migration@1.9.37
+  - @0xsequence/multicall@1.9.37
+  - @0xsequence/network@1.9.37
+  - @0xsequence/provider@1.9.37
+  - @0xsequence/relayer@1.9.37
+  - @0xsequence/sessions@1.9.37
+  - @0xsequence/signhub@1.9.37
+  - @0xsequence/utils@1.9.37
+  - @0xsequence/wallet@1.9.37
+
+## 1.9.36
+
+### Patch Changes
+
+- guard: export client
+- Updated dependencies
+  - @0xsequence/abi@1.9.36
+  - @0xsequence/account@1.9.36
+  - @0xsequence/api@1.9.36
+  - @0xsequence/auth@1.9.36
+  - @0xsequence/core@1.9.36
+  - @0xsequence/guard@1.9.36
+  - @0xsequence/indexer@1.9.36
+  - @0xsequence/metadata@1.9.36
+  - @0xsequence/migration@1.9.36
+  - @0xsequence/multicall@1.9.36
+  - @0xsequence/network@1.9.36
+  - @0xsequence/provider@1.9.36
+  - @0xsequence/relayer@1.9.36
+  - @0xsequence/sessions@1.9.36
+  - @0xsequence/signhub@1.9.36
+  - @0xsequence/utils@1.9.36
+  - @0xsequence/wallet@1.9.36
+
+## 1.9.35
+
+### Patch Changes
+
+- guard: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.35
+  - @0xsequence/account@1.9.35
+  - @0xsequence/api@1.9.35
+  - @0xsequence/auth@1.9.35
+  - @0xsequence/core@1.9.35
+  - @0xsequence/guard@1.9.35
+  - @0xsequence/indexer@1.9.35
+  - @0xsequence/metadata@1.9.35
+  - @0xsequence/migration@1.9.35
+  - @0xsequence/multicall@1.9.35
+  - @0xsequence/network@1.9.35
+  - @0xsequence/provider@1.9.35
+  - @0xsequence/relayer@1.9.35
+  - @0xsequence/sessions@1.9.35
+  - @0xsequence/signhub@1.9.35
+  - @0xsequence/utils@1.9.35
+  - @0xsequence/wallet@1.9.35
+
+## 1.9.34
+
+### Patch Changes
+
+- waas: always use lowercase email
+- Updated dependencies
+  - @0xsequence/abi@1.9.34
+  - @0xsequence/account@1.9.34
+  - @0xsequence/api@1.9.34
+  - @0xsequence/auth@1.9.34
+  - @0xsequence/core@1.9.34
+  - @0xsequence/guard@1.9.34
+  - @0xsequence/indexer@1.9.34
+  - @0xsequence/metadata@1.9.34
+  - @0xsequence/migration@1.9.34
+  - @0xsequence/multicall@1.9.34
+  - @0xsequence/network@1.9.34
+  - @0xsequence/provider@1.9.34
+  - @0xsequence/relayer@1.9.34
+  - @0xsequence/sessions@1.9.34
+  - @0xsequence/signhub@1.9.34
+  - @0xsequence/utils@1.9.34
+  - @0xsequence/wallet@1.9.34
+
+## 1.9.33
+
+### Patch Changes
+
+- waas: umd build
+- Updated dependencies
+  - @0xsequence/abi@1.9.33
+  - @0xsequence/account@1.9.33
+  - @0xsequence/api@1.9.33
+  - @0xsequence/auth@1.9.33
+  - @0xsequence/core@1.9.33
+  - @0xsequence/guard@1.9.33
+  - @0xsequence/indexer@1.9.33
+  - @0xsequence/metadata@1.9.33
+  - @0xsequence/migration@1.9.33
+  - @0xsequence/multicall@1.9.33
+  - @0xsequence/network@1.9.33
+  - @0xsequence/provider@1.9.33
+  - @0xsequence/relayer@1.9.33
+  - @0xsequence/sessions@1.9.33
+  - @0xsequence/signhub@1.9.33
+  - @0xsequence/utils@1.9.33
+  - @0xsequence/wallet@1.9.33
+
+## 1.9.32
+
+### Patch Changes
+
+- indexer: update bindings
+- Updated dependencies
+  - @0xsequence/abi@1.9.32
+  - @0xsequence/account@1.9.32
+  - @0xsequence/api@1.9.32
+  - @0xsequence/auth@1.9.32
+  - @0xsequence/core@1.9.32
+  - @0xsequence/guard@1.9.32
+  - @0xsequence/indexer@1.9.32
+  - @0xsequence/metadata@1.9.32
+  - @0xsequence/migration@1.9.32
+  - @0xsequence/multicall@1.9.32
+  - @0xsequence/network@1.9.32
+  - @0xsequence/provider@1.9.32
+  - @0xsequence/relayer@1.9.32
+  - @0xsequence/sessions@1.9.32
+  - @0xsequence/signhub@1.9.32
+  - @0xsequence/utils@1.9.32
+  - @0xsequence/wallet@1.9.32
+
+## 1.9.31
+
+### Patch Changes
+
+- metadata: token directory changes
+- Updated dependencies
+  - @0xsequence/abi@1.9.31
+  - @0xsequence/account@1.9.31
+  - @0xsequence/api@1.9.31
+  - @0xsequence/auth@1.9.31
+  - @0xsequence/core@1.9.31
+  - @0xsequence/guard@1.9.31
+  - @0xsequence/indexer@1.9.31
+  - @0xsequence/metadata@1.9.31
+  - @0xsequence/migration@1.9.31
+  - @0xsequence/multicall@1.9.31
+  - @0xsequence/network@1.9.31
+  - @0xsequence/provider@1.9.31
+  - @0xsequence/relayer@1.9.31
+  - @0xsequence/sessions@1.9.31
+  - @0xsequence/signhub@1.9.31
+  - @0xsequence/utils@1.9.31
+  - @0xsequence/wallet@1.9.31
+
+## 1.9.30
+
+### Patch Changes
+
+- update
+- Updated dependencies
+  - @0xsequence/abi@1.9.30
+  - @0xsequence/account@1.9.30
+  - @0xsequence/api@1.9.30
+  - @0xsequence/auth@1.9.30
+  - @0xsequence/core@1.9.30
+  - @0xsequence/guard@1.9.30
+  - @0xsequence/indexer@1.9.30
+  - @0xsequence/metadata@1.9.30
+  - @0xsequence/migration@1.9.30
+  - @0xsequence/multicall@1.9.30
+  - @0xsequence/network@1.9.30
+  - @0xsequence/provider@1.9.30
+  - @0xsequence/relayer@1.9.30
+  - @0xsequence/sessions@1.9.30
+  - @0xsequence/signhub@1.9.30
+  - @0xsequence/utils@1.9.30
+  - @0xsequence/wallet@1.9.30
+
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+- Updated dependencies
+  - @0xsequence/abi@1.9.29
+  - @0xsequence/account@1.9.29
+  - @0xsequence/api@1.9.29
+  - @0xsequence/auth@1.9.29
+  - @0xsequence/core@1.9.29
+  - @0xsequence/guard@1.9.29
+  - @0xsequence/indexer@1.9.29
+  - @0xsequence/metadata@1.9.29
+  - @0xsequence/migration@1.9.29
+  - @0xsequence/multicall@1.9.29
+  - @0xsequence/network@1.9.29
+  - @0xsequence/provider@1.9.29
+  - @0xsequence/relayer@1.9.29
+  - @0xsequence/sessions@1.9.29
+  - @0xsequence/signhub@1.9.29
+  - @0xsequence/utils@1.9.29
+  - @0xsequence/wallet@1.9.29
+
+## 1.9.28
+
+### Patch Changes
+
+- add utils/merkletree
+- Updated dependencies
+  - @0xsequence/abi@1.9.28
+  - @0xsequence/account@1.9.28
+  - @0xsequence/api@1.9.28
+  - @0xsequence/auth@1.9.28
+  - @0xsequence/core@1.9.28
+  - @0xsequence/guard@1.9.28
+  - @0xsequence/indexer@1.9.28
+  - @0xsequence/metadata@1.9.28
+  - @0xsequence/migration@1.9.28
+  - @0xsequence/multicall@1.9.28
+  - @0xsequence/network@1.9.28
+  - @0xsequence/provider@1.9.28
+  - @0xsequence/relayer@1.9.28
+  - @0xsequence/sessions@1.9.28
+  - @0xsequence/signhub@1.9.28
+  - @0xsequence/utils@1.9.28
+  - @0xsequence/wallet@1.9.28
+
 ## 1.9.27
 
 ### Patch Changes

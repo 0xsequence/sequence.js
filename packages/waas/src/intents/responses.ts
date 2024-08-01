@@ -1,13 +1,14 @@
 import {
+  FeeOption,
   IntentDataSendTransaction,
+  IntentResponseAccountFederated,
+  IntentResponseAccountList,
+  IntentResponseAuthInitiated,
+  IntentResponseCode,
   IntentResponseGetSession,
-  IntentResponseSessionClosed,
-  IntentResponseSignedMessage,
-  IntentResponseTransactionFailed,
-  IntentResponseTransactionReceipt,
-  IntentResponseValidateSession,
+  IntentResponseIdToken,
   IntentResponseValidationFinished,
-  IntentResponseValidationRequired
+  IntentResponseValidationStarted
 } from '../clients/intent.gen'
 import { WebrpcEndpointError, WebrpcError } from '../clients/authenticator.gen'
 
@@ -71,30 +72,6 @@ export type TransactionFailedResponse = {
 
 export type MaySentTransactionResponse = SentTransactionResponse | TransactionFailedResponse
 
-export enum FeeTokenType {
-  unknown = 'unknown',
-  erc20Token = 'erc20Token',
-  erc1155Token = 'erc1155Token'
-}
-
-export interface FeeOption {
-  token: FeeToken
-  to: string
-  value: string
-  gasLimit: number
-}
-
-export interface FeeToken {
-  chainId: number
-  name: string
-  symbol: string
-  type: FeeTokenType
-  decimals?: number
-  logoURL: string
-  contractAddress?: string
-  tokenID?: string
-}
-
 export type FeeOptionsResponse = {
   code: 'feeOptions'
   data: {
@@ -141,25 +118,28 @@ export type SessionAuthProofResponse = {
   }
 }
 
-export type ValidateSessionResponse = {
-  code: 'startedSessionValidation'
-  data: {}
+export interface Response<Code, Data> {
+  code: Code
+  data: Data
 }
 
-export type FinishValidateSessionResponse = {
-  code: 'finishedSessionValidation'
-  data: {
-    isValid: boolean
-  }
-}
+export type InitiateAuthResponse = Response<IntentResponseCode.authInitiated, IntentResponseAuthInitiated>
+export type ValidateSessionResponse = Response<IntentResponseCode.validationStarted, IntentResponseValidationStarted>
+export type FinishValidateSessionResponse = Response<IntentResponseCode.validationFinished, IntentResponseValidationFinished>
+export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse, IntentResponseGetSession>
+export type LinkAccountResponse = Response<IntentResponseCode.accountFederated, IntentResponseAccountFederated>
+export type ListAccountsResponse = Response<IntentResponseCode.accountList, IntentResponseAccountList>
+export type IdTokenResponse = Response<IntentResponseCode.idToken, IntentResponseIdToken>
 
-export type GetSessionResponse = {
-  code: 'getSessionResponse'
-  data: {
-    session: string
-    wallet: string
-    validated: boolean
-  }
+export function isInitiateAuthResponse(receipt: any): receipt is InitiateAuthResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.authInitiated &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.sessionId === 'string' &&
+    typeof receipt.data.identityType === 'string' &&
+    typeof receipt.data.expiresIn === 'number'
+  )
 }
 
 export function isOpenSessionResponse(receipt: any): receipt is OpenSessionResponse {
@@ -251,29 +231,18 @@ export function isFeeOptionsResponse(receipt: any): receipt is FeeOptionsRespons
 export function isValidationRequiredResponse(receipt: any): receipt is ValidationRequiredResponse {
   return (
     typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'validationRequired' &&
+    receipt.code === IntentResponseCode.validationRequired &&
     typeof receipt.data === 'object' &&
     typeof receipt.data.sessionId === 'string'
   )
 }
 
 export function isValidateSessionResponse(receipt: any): receipt is ValidateSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'startedSessionValidation' &&
-    typeof receipt.data === 'object'
-  )
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationStarted && typeof receipt.data === 'object'
 }
 
 export function isFinishValidateSessionResponse(receipt: any): receipt is FinishValidateSessionResponse {
-  return (
-    typeof receipt === 'object' &&
-    typeof receipt.code === 'string' &&
-    receipt.code === 'finishedSessionValidation' &&
-    typeof receipt.data === 'object'
-  )
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationFinished && typeof receipt.data === 'object'
 }
 
 export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {
@@ -291,10 +260,31 @@ export function isGetSessionResponse(receipt: any): receipt is GetSessionRespons
   )
 }
 
+export function isLinkAccountResponse(receipt: any): receipt is LinkAccountResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.accountFederated &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.account === 'object'
+  )
+}
+
+export function isListAccountsResponse(receipt: any): receipt is ListAccountsResponse {
+  return typeof receipt === 'object' && receipt.code === IntentResponseCode.accountList && typeof receipt.data === 'object'
+}
 export function isIntentTimeError(error: any): error is WebrpcEndpointError {
   return !!(
     error instanceof WebrpcError &&
     (error.cause?.endsWith('intent is invalid: intent expired') ||
       error.cause?.endsWith('intent is invalid: intent issued in the future'))
+  )
+}
+
+export function isGetIdTokenResponse(receipt: any): receipt is IdTokenResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.idToken &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.idToken === 'string'
   )
 }

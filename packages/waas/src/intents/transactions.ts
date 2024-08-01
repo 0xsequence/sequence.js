@@ -8,10 +8,12 @@ import {
   TransactionERC20,
   TransactionERC721,
   TransactionRaw,
-  TransactionERC1155Value
+  TransactionERC1155Value,
+  IntentName,
+  FeeOption,
+  FeeTokenType
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
-import { FeeOption, FeeTokenType } from './responses'
 
 interface BaseArgs {
   lifespan: number
@@ -72,7 +74,7 @@ export function feeOptions({
   chainId,
   transactions
 }: SendTransactionsArgs & BaseArgs): Intent<IntentDataFeeOptions> {
-  return makeIntent('feeOptions', lifespan, {
+  return makeIntent(IntentName.feeOptions, lifespan, {
     identifier,
     wallet,
     network: chainId.toString(),
@@ -104,7 +106,7 @@ export function sendTransactions({
   transactionsFeeQuote,
   transactionsFeeOption
 }: SendTransactionsArgs & BaseArgs): Intent<IntentDataSendTransaction> {
-  return makeIntent('sendTransaction', lifespan, {
+  return makeIntent(IntentName.sendTransaction, lifespan, {
     identifier,
     wallet,
     network: chainId.toString(),
@@ -184,7 +186,7 @@ export function getTransactionReceipt({
   wallet,
   metaTxHash
 }: GetTransactionReceiptArgs & BaseArgs): Intent<IntentDataGetTransactionReceipt> {
-  return makeIntent('getTransactionReceipt', lifespan, {
+  return makeIntent(IntentName.getTransactionReceipt, lifespan, {
     wallet,
     network: chainId.toString(),
     metaTxHash
@@ -367,7 +369,7 @@ export function combineTransactionIntents(intents: Intent<IntentDataSendTransact
     throw new Error('All packets must have the same wallet')
   }
 
-  return makeIntent('sendTransaction', lifespan, {
+  return makeIntent(IntentName.sendTransaction, lifespan, {
     network,
     wallet,
     identifier,
