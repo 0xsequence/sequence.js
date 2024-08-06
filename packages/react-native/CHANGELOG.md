@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 1.10.9
+
+### Patch Changes
+
+- waas minor update
+- Updated dependencies
+  - @0xsequence/waas@1.10.9
+
 ## 1.10.8
 
 ### Patch Changes
