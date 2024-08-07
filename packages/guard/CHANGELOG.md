@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+- Updated dependencies
+  - @0xsequence/account@1.10.10
+  - @0xsequence/core@1.10.10
+  - @0xsequence/signhub@1.10.10
+  - @0xsequence/utils@1.10.10
+
 ## 1.10.9
 
 ### Patch Changes

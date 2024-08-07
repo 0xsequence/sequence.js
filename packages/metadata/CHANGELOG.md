@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+
 ## 1.10.9
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+- Updated dependencies
+  - @0xsequence/abi@1.10.10
+  - @0xsequence/network@1.10.10
+  - @0xsequence/utils@1.10.10
+
 ## 1.10.9
 
 ### Patch Changes
