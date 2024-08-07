@@ -707,7 +707,7 @@ export class SequenceWaaS {
 
   // Special version of fetch that keeps track of the last seen Date header
   async fetch(input: RequestInfo, init?: RequestInit) {
-    const res = await window.fetch(input, init)
+    const res = await globalThis.fetch(input, init)
     const headerValue = res.headers.get('date')
     if (headerValue) {
       this.lastDate = new Date(headerValue)

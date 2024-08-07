@@ -5,7 +5,7 @@ import { encodeTypedDataDigest, TypedData } from '@0xsequence/utils'
 import { BytesLike, ethers, TypedDataDomain } from 'ethers'
 import { AuthMethodsReturn, Guard, RecoveryCode as GuardRecoveryCode } from './guard.gen'
 
-const fetch = typeof global === 'object' ? global.fetch : window.fetch
+const fetch = globalThis.fetch
 
 export class GuardSigner implements signers.SapientSigner {
   private guard: Guard
