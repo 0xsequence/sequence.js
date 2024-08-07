@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 1.10.11
+
+### Patch Changes
+
+- waas: updated intent.gen without webrpc types, errors exported from authenticator.gen
+
 ## 1.10.10
 
 ### Patch Changes
