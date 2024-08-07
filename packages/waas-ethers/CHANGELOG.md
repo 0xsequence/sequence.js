@@ -1,5 +1,21 @@
 # @0xsequence/waas-ethers
 
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+- Updated dependencies
+  - @0xsequence/waas@1.10.10
+
+## 1.10.9
+
+### Patch Changes
+
+- waas minor update
+- Updated dependencies
+  - @0xsequence/waas@1.10.9
+
 ## 1.10.8
 
 ### Patch Changes

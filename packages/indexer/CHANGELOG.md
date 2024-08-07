@@ -1,5 +1,17 @@
 # @0xsequence/indexer
 
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+
+## 1.10.9
+
+### Patch Changes
+
+- waas minor update
+
 ## 1.10.8
 
 ### Patch Changes

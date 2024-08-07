@@ -269,7 +269,12 @@ export class SequenceWaaS {
     }
 
     return new Promise<SignInResponse>(async (resolve, reject) => {
-      const challenge = await this.initAuth(creds)
+      let challenge: Challenge
+      try {
+        challenge = await this.initAuth(creds)
+      } catch (e) {
+        return reject(e)
+      }
 
       const respondToChallenge = async (answer: string) => {
         try {

@@ -1,5 +1,43 @@
 # @0xsequence/auth
 
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+- Updated dependencies
+  - @0xsequence/abi@1.10.10
+  - @0xsequence/account@1.10.10
+  - @0xsequence/api@1.10.10
+  - @0xsequence/core@1.10.10
+  - @0xsequence/indexer@1.10.10
+  - @0xsequence/metadata@1.10.10
+  - @0xsequence/migration@1.10.10
+  - @0xsequence/network@1.10.10
+  - @0xsequence/sessions@1.10.10
+  - @0xsequence/signhub@1.10.10
+  - @0xsequence/utils@1.10.10
+  - @0xsequence/wallet@1.10.10
+
+## 1.10.9
+
+### Patch Changes
+
+- waas minor update
+- Updated dependencies
+  - @0xsequence/abi@1.10.9
+  - @0xsequence/account@1.10.9
+  - @0xsequence/api@1.10.9
+  - @0xsequence/core@1.10.9
+  - @0xsequence/indexer@1.10.9
+  - @0xsequence/metadata@1.10.9
+  - @0xsequence/migration@1.10.9
+  - @0xsequence/network@1.10.9
+  - @0xsequence/sessions@1.10.9
+  - @0xsequence/signhub@1.10.9
+  - @0xsequence/utils@1.10.9
+  - @0xsequence/wallet@1.10.9
+
 ## 1.10.8
 
 ### Patch Changes
