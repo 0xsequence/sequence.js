@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/multicall",
-  "version": "1.10.6",
+  "version": "1.10.9",
   "description": "multicall sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/multicall",
   "source": "src/index.ts",

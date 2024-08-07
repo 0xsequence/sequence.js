@@ -37,7 +37,7 @@ import {
   MaySentTransactionResponse,
   SignedMessageResponse
 } from './intents/responses'
-import { Chain, EmailAlreadyInUseError, Session, WaasAuthenticator } from './clients/authenticator.gen'
+import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
@@ -269,14 +269,23 @@ export class SequenceWaaS {
     }
 
     return new Promise<SignInResponse>(async (resolve, reject) => {
-      const challenge = await this.initAuth(creds)
+      let challenge: Challenge
+      try {
+        challenge = await this.initAuth(creds)
+      } catch (e) {
+        return reject(e)
+      }
 
       const respondToChallenge = async (answer: string) => {
         try {
           const res = await this.completeAuth(challenge.withAnswer(answer), { sessionName })
           resolve(res)
         } catch (e) {
-          if (e instanceof EmailAlreadyInUseError) {
+          if (e instanceof AnswerIncorrectError) {
+            // This will NOT resolve NOR reject the top-level promise returned from signIn, it'll keep being pending
+            // It allows the caller to retry calling the respondToChallenge callback
+            throw e
+          } else if (e instanceof EmailAlreadyInUseError) {
             const forceCreate = async () => {
               try {
                 const res = await this.completeAuth(challenge.withAnswer(answer), { sessionName, forceCreateAccount: true })
@@ -292,9 +301,11 @@ export class SequenceWaaS {
             }
             if (e.cause) {
               const parts = e.cause.split('|')
-              if (parts.length >= 3) {
+              if (parts.length >= 2) {
                 info.type = parts[0] as IdentityType
                 info.email = parts[1]
+              }
+              if (parts.length >= 3) {
                 info.issuer = parts[2]
               }
             }
@@ -406,7 +417,7 @@ export class SequenceWaaS {
         email: res.session.identity.email
       }
     } catch (e) {
-      if (!(e instanceof EmailAlreadyInUseError)) {
+      if (!(e instanceof EmailAlreadyInUseError) && !(e instanceof AnswerIncorrectError)) {
         await this.waas.completeSignOut()
       }
       throw e

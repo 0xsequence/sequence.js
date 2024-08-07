@@ -1,5 +1,32 @@
 # @0xsequence/waas
 
+## 1.10.9
+
+### Patch Changes
+
+- waas minor update
+- Updated dependencies
+  - @0xsequence/core@1.10.9
+  - @0xsequence/network@1.10.9
+
+## 1.10.8
+
+### Patch Changes
+
+- update metadata bindings
+- Updated dependencies
+  - @0xsequence/core@1.10.8
+  - @0xsequence/network@1.10.8
+
+## 1.10.7
+
+### Patch Changes
+
+- minor fixes to waas client
+- Updated dependencies
+  - @0xsequence/core@1.10.7
+  - @0xsequence/network@1.10.7
+
 ## 1.10.6
 
 ### Patch Changes
