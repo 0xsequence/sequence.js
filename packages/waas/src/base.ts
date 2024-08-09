@@ -253,7 +253,7 @@ export class SequenceWaaSBase {
 
   async initiateIdTokenAuth(idToken: string, exp?: number): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
-    const idTokenHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(idToken))
+    const idTokenHash = ethers.id(idToken)
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.OIDC,
@@ -266,7 +266,7 @@ export class SequenceWaaSBase {
 
   async initiateStytchAuth(idToken: string, exp?: number): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
-    const idTokenHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(idToken))
+    const idTokenHash = ethers.id(idToken)
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.Stytch,
@@ -279,7 +279,7 @@ export class SequenceWaaSBase {
 
   async initiatePlayFabAuth(titleId: string, sessionTicket: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
     const sessionId = await this.getSessionId()
-    const ticketHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(sessionTicket))
+    const ticketHash = ethers.id(sessionTicket)
     const intent = await initiateAuth({
       sessionId,
       identityType: IdentityType.PlayFab,

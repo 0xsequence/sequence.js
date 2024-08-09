@@ -14,7 +14,6 @@ import {
   FeeTokenType
 } from '../clients/intent.gen'
 import { ethers } from 'ethers'
-import { FeeOption, FeeTokenType } from './responses'
 import { toHexString } from '@0xsequence/utils'
 
 interface BaseArgs {
