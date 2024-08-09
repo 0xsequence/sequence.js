@@ -1,9 +1,9 @@
 import { BigNumber, ethers } from 'ethers'
-import { walletContracts } from '@0xsequence/abi'
 import { JsonRpcMethod } from './constants'
 import { BlockTag, eqBlockTag, parseBlockTag, partition, safeSolve } from './utils'
 import { promisify, getRandomInt } from '@0xsequence/utils'
 import { JsonRpcVersion, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcHandlerFunc } from '@0xsequence/network'
+import { multicall3Abi } from './multicall3Abi'
 
 export type MulticallOptions = {
   // number of calls to enqueue before calling.
@@ -31,17 +31,22 @@ type QueueEntry = {
 const DefaultMulticallOptions = {
   batchSize: 50,
   timeWindow: 50,
-  // SequenceUtils: v2
-  contract: '0xdbbFa3cB3B087B64F4ef5E3D20Dda2488AA244e6',
+  // https://www.multicall3.com/
+  contract: '0xcA11bde05977b3631167028862bE2a173976CA11',
   verbose: false
 }
 
 export class Multicall {
   public static DefaultOptions = { ...DefaultMulticallOptions }
 
-  readonly batchableJsonRpcMethods = [JsonRpcMethod.ethCall, JsonRpcMethod.ethGetCode, JsonRpcMethod.ethGetBalance]
+  readonly batchableJsonRpcMethods = [
+    JsonRpcMethod.ethCall,
+    JsonRpcMethod.ethGetChainId,
+    JsonRpcMethod.ethGetBalance,
+    JsonRpcMethod.ethBlockNumber
+  ]
 
-  readonly multicallInterface = new ethers.utils.Interface(walletContracts.sequenceUtils.abi)
+  readonly multicallInterface = new ethers.utils.Interface(multicall3Abi)
 
   public options: MulticallOptions
 
@@ -129,7 +134,6 @@ export class Multicall {
               return false
             }
           case JsonRpcMethod.ethGetBalance:
-          case JsonRpcMethod.ethGetCode:
             // Mixed blockTags
             const itemBlockTag = parseBlockTag(item.request.params![1])
             if (blockTag === undefined) blockTag = itemBlockTag
@@ -157,34 +161,31 @@ export class Multicall {
     let callParams = items.map(v => {
       try {
         switch (v.request.method) {
+          case JsonRpcMethod.ethGetChainId:
+            return {
+              allowFailure: true,
+              target: this.options.contract,
+              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('getChainId'), [])
+            }
+          case JsonRpcMethod.ethBlockNumber:
+            return {
+              allowFailure: true,
+              target: this.options.contract,
+              callData: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('getBlockNumber'), [])
+            }
           case JsonRpcMethod.ethCall:
             return {
-              delegateCall: false,
-              revertOnError: false,
+              allowFailure: true,
               target: v.request.params![0].to,
-              data: v.request.params![0].data,
-              gasLimit: v.request.params![0].gas ? v.request.params![0].gas : 0,
+              callData: v.request.params![0].data,
               value: 0
-            }
-          case JsonRpcMethod.ethGetCode:
-            return {
-              delegateCall: false,
-              revertOnError: false,
-              target: this.options.contract,
-              gasLimit: 0,
-              value: 0,
-              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callCode'), [
-                v.request.params![0]
-              ])
             }
           case JsonRpcMethod.ethGetBalance:
             return {
-              delegateCall: false,
-              revertOnError: false,
+              allowFailure: true,
               target: this.options.contract,
-              gasLimit: 0,
               value: 0,
-              data: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('callBalanceOf'), [
+              callData: this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('getEthBalance'), [
                 v.request.params![0]
               ])
             }
@@ -212,8 +213,11 @@ export class Multicall {
     // Encode multicall
     let encodedCall: string
     try {
-      if (this.options.verbose) console.log('Encoding multicall')
-      encodedCall = this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('multiCall'), [callParams])
+      if (this.options.verbose) {
+        console.log('Encoding multicall')
+        console.log('callParams', callParams)
+      }
+      encodedCall = this.multicallInterface.encodeFunctionData(this.multicallInterface.getFunction('aggregate3'), [callParams])
     } catch (err) {
       if (this.options.verbose) console.warn('Error encoding multicall, forwarding one by one', err)
       this.forward(items)
@@ -261,7 +265,8 @@ export class Multicall {
     let decoded: ethers.utils.Result
     try {
       // @ts-ignore
-      decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('multiCall'), res.result)
+      decoded = this.multicallInterface.decodeFunctionResult(this.multicallInterface.getFunction('aggregate3'), res.result)
+      if (this.options.verbose) console.log('decoded', decoded)
     } catch (err) {
       if (this.options.verbose) console.warn('Error decoding multicall result, forwarding one by one', err)
       this.forward(items)
@@ -277,25 +282,20 @@ export class Multicall {
         this.forward(item)
       } else {
         switch (item.request.method) {
+          case JsonRpcMethod.ethBlockNumber:
+          case JsonRpcMethod.ethGetChainId:
           case JsonRpcMethod.ethCall:
             item.callback(undefined, {
               jsonrpc: item.request.jsonrpc!,
               id: item.request.id!,
-              result: decoded[1][index]
-            })
-            break
-          case JsonRpcMethod.ethGetCode:
-            item.callback(undefined, {
-              jsonrpc: item.request.jsonrpc!,
-              id: item.request.id!,
-              result: ethers.utils.defaultAbiCoder.decode(['bytes'], decoded[1][index])[0]
+              result: decoded.returnData[index].returnData
             })
             break
           case JsonRpcMethod.ethGetBalance:
             item.callback(undefined, {
               jsonrpc: item.request.jsonrpc!,
               id: item.request.id!,
-              result: ethers.utils.defaultAbiCoder.decode(['uint256'], decoded[1][index])[0]
+              result: ethers.utils.defaultAbiCoder.decode(['uint256'], decoded.returnData[index].returnData)[0]
             })
             break
         }
