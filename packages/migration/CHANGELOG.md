@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.10.11
+
+### Patch Changes
+
+- waas: updated intent.gen without webrpc types, errors exported from authenticator.gen
+- Updated dependencies
+  - @0xsequence/abi@1.10.11
+  - @0xsequence/core@1.10.11
+  - @0xsequence/wallet@1.10.11
+
 ## 1.10.10
 
 ### Patch Changes

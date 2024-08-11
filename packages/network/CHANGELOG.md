@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.10.11
+
+### Patch Changes
+
+- waas: updated intent.gen without webrpc types, errors exported from authenticator.gen
+- Updated dependencies
+  - @0xsequence/core@1.10.11
+  - @0xsequence/indexer@1.10.11
+  - @0xsequence/relayer@1.10.11
+  - @0xsequence/utils@1.10.11
+
 ## 1.10.10
 
 ### Patch Changes

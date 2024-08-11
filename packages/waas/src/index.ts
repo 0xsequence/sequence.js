@@ -12,3 +12,26 @@ export type { SecureStoreBackend } from './secure-store'
 
 export * from './intents/responses'
 export * from './clients/intent.gen'
+export {
+  AccountAlreadyLinkedError,
+  AnswerIncorrectError,
+  ChallengeExpiredError,
+  EmailAlreadyInUseError,
+  ProofVerificationFailedError,
+  TenantNotFoundError,
+  TooManyAttemptsError,
+  UnauthorizedError,
+  WebrpcBadMethodError,
+  WebrpcBadRequestError,
+  WebrpcBadResponseError,
+  WebrpcBadRouteError,
+  WebrpcClientDisconnectedError,
+  WebrpcEndpointError,
+  WebrpcError,
+  WebrpcInternalErrorError,
+  WebrpcRequestFailedError,
+  WebrpcServerPanicError,
+  WebrpcStreamFinishedError,
+  WebrpcStreamLostError,
+  errors
+} from './clients/authenticator.gen'

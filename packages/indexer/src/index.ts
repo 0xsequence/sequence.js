@@ -2,7 +2,7 @@ export * from './indexer.gen'
 
 import { Indexer as IndexerRpc } from './indexer.gen'
 
-const fetch = typeof global === 'object' ? global.fetch : window.fetch
+const fetch = globalThis.fetch
 
 export class SequenceIndexer extends IndexerRpc {
   constructor(
