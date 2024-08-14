@@ -1,5 +1,15 @@
 # @0xsequence/core
 
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.10.12
+
 ## 1.10.11
 
 ### Patch Changes

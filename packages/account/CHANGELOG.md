@@ -1,5 +1,22 @@
 # @0xsequence/account
 
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@1.10.12
+  - @0xsequence/core@1.10.12
+  - @0xsequence/migration@1.10.12
+  - @0xsequence/network@1.10.12
+  - @0xsequence/relayer@1.10.12
+  - @0xsequence/sessions@1.10.12
+  - @0xsequence/utils@1.10.12
+  - @0xsequence/wallet@1.10.12
+
 ## 1.10.11
 
 ### Patch Changes
