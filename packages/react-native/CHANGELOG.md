@@ -1,5 +1,15 @@
 # @0xsequence/react-native
 
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@1.10.12
+
 ## 1.10.11
 
 ### Patch Changes

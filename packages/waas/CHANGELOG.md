@@ -1,5 +1,16 @@
 # @0xsequence/waas
 
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.10.12
+  - @0xsequence/network@1.10.12
+
 ## 1.10.11
 
 ### Patch Changes

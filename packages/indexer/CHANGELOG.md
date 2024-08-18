@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+
 ## 1.10.11
 
 ### Patch Changes
