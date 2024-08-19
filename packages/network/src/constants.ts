@@ -71,6 +71,9 @@ export enum ChainId {
   BLAST = 81457,
   BLAST_SEPOLIA = 168587773,
 
+  // Borne
+  BORNE_TESTNET = 94984,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -750,7 +753,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-
+  [ChainId.BORNE_TESTNET]: {
+    chainId: ChainId.BORNE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'borne-testnet',
+    title: 'Borne Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BORNE_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Borne Testnet Explorer',
+      rootUrl: 'https://subnets-test.avax.network/bornegfdn'
+    },
+    nativeToken: {
+      symbol: 'BORNE',
+      name: 'BORNE',
+      decimals: 18
+    }
+  },
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
     name: 'hardhat',
