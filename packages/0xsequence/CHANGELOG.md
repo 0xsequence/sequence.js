@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+- Updated dependencies
+  - @0xsequence/abi@1.10.13
+  - @0xsequence/account@1.10.13
+  - @0xsequence/api@1.10.13
+  - @0xsequence/auth@1.10.13
+  - @0xsequence/core@1.10.13
+  - @0xsequence/guard@1.10.13
+  - @0xsequence/indexer@1.10.13
+  - @0xsequence/metadata@1.10.13
+  - @0xsequence/migration@1.10.13
+  - @0xsequence/multicall@1.10.13
+  - @0xsequence/network@1.10.13
+  - @0xsequence/provider@1.10.13
+  - @0xsequence/relayer@1.10.13
+  - @0xsequence/sessions@1.10.13
+  - @0xsequence/signhub@1.10.13
+  - @0xsequence/utils@1.10.13
+  - @0xsequence/wallet@1.10.13
+
 ## 1.10.12
 
 ### Patch Changes

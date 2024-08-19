@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+- Updated dependencies
+  - @0xsequence/abi@1.10.13
+  - @0xsequence/core@1.10.13
+  - @0xsequence/wallet@1.10.13
+
 ## 1.10.12
 
 ### Patch Changes

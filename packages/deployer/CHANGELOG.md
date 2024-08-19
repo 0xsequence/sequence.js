@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+- Updated dependencies
+  - @0xsequence/utils@1.10.13
+
 ## 1.10.12
 
 ### Patch Changes
