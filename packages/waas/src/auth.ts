@@ -181,11 +181,13 @@ export class SequenceWaaS {
       throw new Error('Signature verification failed')
     }
 
-    const headers: { [key: string]: any } = {}
+    if (this.cryptoBackend && init?.headers) {
+      const headers: { [key: string]: any } = {}
 
-    headers['Accept-Signature'] = 'sig=();alg="rsa-v1_5-sha256"'
+      headers['Accept-Signature'] = 'sig=();alg="rsa-v1_5-sha256"'
 
-    init!.headers = { ...init!.headers, ...headers }
+      init!.headers = { ...init!.headers, ...headers }
+    }
 
     const response = fetch(input, init)
 
@@ -225,13 +227,9 @@ export class SequenceWaaS {
 
           const message = `"content-digest": ${contentDigest}\n"@signature-params": ${signatureInput.substring(4)}`
 
-          const key = await this.cryptoBackend!.importKey(
-            'jwk',
-            jwks.keys[0],
-            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-            false,
-            ['verify']
-          )
+          const algo = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
+
+          const key = await this.cryptoBackend!.importKey('jwk', jwks.keys[0], algo, false, ['verify'])
 
           const sig = signature.match(':(.*):')?.[1]
 
@@ -240,12 +238,7 @@ export class SequenceWaaS {
           }
           const signatureBuffer = Uint8Array.from(atob(sig), c => c.charCodeAt(0))
 
-          const verifyResult = await this.cryptoBackend!.verify(
-            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-            key,
-            signatureBuffer,
-            new TextEncoder().encode(message)
-          )
+          const verifyResult = await this.cryptoBackend!.verify(algo, key, signatureBuffer, new TextEncoder().encode(message))
 
           if (!verifyResult) {
             throw new Error('Signature verification failed, consequent requests will fail')
