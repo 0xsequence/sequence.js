@@ -82,24 +82,6 @@ export type SignInResponse = {
   email?: string
 }
 
-function encodeHex(data: string | Uint8Array) {
-  return (
-    '0x' +
-    Array.from(typeof data === 'string' ? new TextEncoder().encode(data) : data, byte => byte.toString(16).padStart(2, '0')).join(
-      ''
-    )
-  )
-}
-
-function decodeHex(hex: string) {
-  return new Uint8Array(
-    hex
-      .substring(2)
-      .match(/.{1,2}/g)!
-      .map(byte => parseInt(byte, 16))
-  )
-}
-
 export type ValidationArgs = {
   onValidationRequired?: () => boolean
 }
@@ -207,75 +189,73 @@ export class SequenceWaaS {
 
     const response = fetch(input, init)
 
-    response.then(async r => {
-      try {
-        if (!this.cryptoBackend) {
-          throw new Error('Crypto backend not set')
+    if (this.cryptoBackend) {
+      response.then(async r => {
+        try {
+          const clone = r.clone()
+          const responseBodyText = await clone.text()
+
+          const contentDigest = r.headers.get('Content-Digest')
+          const signatureInput = r.headers.get('Signature-Input')
+          const signature = r.headers.get('Signature')
+
+          if (!contentDigest) {
+            throw new Error('Content-Digest header not set')
+          }
+          if (!signatureInput) {
+            throw new Error('Signature-Input header not set')
+          }
+          if (!signature) {
+            throw new Error('Signature header not set')
+          }
+
+          const contentDigestSha = contentDigest.match(':(.*):')?.[1]
+
+          if (!contentDigestSha) {
+            throw new Error('Content digest not found')
+          }
+
+          const responseBodyTextUint8Array = new TextEncoder().encode(responseBodyText)
+          const responseBodyTextDigest = await this.cryptoBackend!.digest('SHA-256', responseBodyTextUint8Array)
+          const base64EncodedDigest = btoa(String.fromCharCode(...responseBodyTextDigest))
+
+          if (contentDigestSha !== base64EncodedDigest) {
+            throw new Error('Digest mismatch')
+          }
+
+          const message = `"content-digest": ${contentDigest}\n"@signature-params": ${signatureInput.substring(4)}`
+
+          const key = await this.cryptoBackend!.importKey(
+            'jwk',
+            jwks.keys[0],
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+            false,
+            ['verify']
+          )
+
+          const sig = signature.match(':(.*):')?.[1]
+
+          if (!sig) {
+            throw new Error('Signature not found')
+          }
+          const signatureBuffer = Uint8Array.from(atob(sig), c => c.charCodeAt(0))
+
+          const verifyResult = await this.cryptoBackend!.verify(
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+            key,
+            signatureBuffer,
+            new TextEncoder().encode(message)
+          )
+
+          if (!verifyResult) {
+            throw new Error('Signature verification failed, consequent requests will fail')
+          }
+        } catch (e) {
+          this.signatureVerificationFailed = true
+          throw e
         }
-
-        const clone = r.clone()
-        const responseBodyText = await clone.text()
-
-        const contentDigest = r.headers.get('Content-Digest')
-        const signatureInput = r.headers.get('Signature-Input')
-        const signature = r.headers.get('Signature')
-
-        if (!contentDigest) {
-          throw new Error('Content-Digest header not set')
-        }
-        if (!signatureInput) {
-          throw new Error('Signature-Input header not set')
-        }
-        if (!signature) {
-          throw new Error('Signature header not set')
-        }
-
-        const contentDigestSha = contentDigest.match(':(.*):')?.[1]
-
-        if (!contentDigestSha) {
-          throw new Error('Content digest not found')
-        }
-
-        const responseBodyTextUint8Array = new TextEncoder().encode(responseBodyText)
-        const responseBodyTextDigest = await this.cryptoBackend.digest('SHA-256', responseBodyTextUint8Array)
-        const base64EncodedDigest = btoa(String.fromCharCode(...responseBodyTextDigest))
-
-        if (contentDigestSha !== base64EncodedDigest) {
-          throw new Error('Digest mismatch')
-        }
-
-        const message = `"content-digest": ${contentDigest}\n"@signature-params": ${signatureInput.substring(4)}`
-
-        const key = await this.cryptoBackend.importKey(
-          'jwk',
-          jwks.keys[0],
-          { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-          false,
-          ['verify']
-        )
-
-        const sig = signature.match(':(.*):')?.[1]
-
-        if (!sig) {
-          throw new Error('Signature not found')
-        }
-        const signatureBuffer = Uint8Array.from(atob(sig), c => c.charCodeAt(0))
-
-        const verifyResult = await this.cryptoBackend.verify(
-          { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-          key,
-          signatureBuffer,
-          new TextEncoder().encode(message)
-        )
-
-        if (!verifyResult) {
-          throw new Error('Signature verification failed, consequent requests will fail')
-        }
-      } catch (e) {
-        this.signatureVerificationFailed = true
-        throw e
-      }
-    })
+      })
+    }
 
     return response
   }
