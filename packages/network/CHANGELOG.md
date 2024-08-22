@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+- Updated dependencies
+  - @0xsequence/core@1.10.14
+  - @0xsequence/indexer@1.10.14
+  - @0xsequence/relayer@1.10.14
+  - @0xsequence/utils@1.10.14
+
 ## 1.10.13
 
 ### Patch Changes

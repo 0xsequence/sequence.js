@@ -1,5 +1,13 @@
 # @0xsequence/simulator
 
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+- Updated dependencies
+  - @0xsequence/core@1.10.14
+
 ## 1.10.13
 
 ### Patch Changes

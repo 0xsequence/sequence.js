@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+- Updated dependencies
+  - @0xsequence/waas@1.10.14
+
 ## 1.10.13
 
 ### Patch Changes
