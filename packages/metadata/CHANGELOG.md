@@ -1,5 +1,17 @@
 # @0xsequence/metadata
 
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+
 ## 1.10.12
 
 ### Patch Changes

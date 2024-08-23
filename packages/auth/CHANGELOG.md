@@ -1,5 +1,43 @@
 # @0xsequence/auth
 
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+- Updated dependencies
+  - @0xsequence/abi@1.10.14
+  - @0xsequence/account@1.10.14
+  - @0xsequence/api@1.10.14
+  - @0xsequence/core@1.10.14
+  - @0xsequence/indexer@1.10.14
+  - @0xsequence/metadata@1.10.14
+  - @0xsequence/migration@1.10.14
+  - @0xsequence/network@1.10.14
+  - @0xsequence/sessions@1.10.14
+  - @0xsequence/signhub@1.10.14
+  - @0xsequence/utils@1.10.14
+  - @0xsequence/wallet@1.10.14
+
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+- Updated dependencies
+  - @0xsequence/abi@1.10.13
+  - @0xsequence/account@1.10.13
+  - @0xsequence/api@1.10.13
+  - @0xsequence/core@1.10.13
+  - @0xsequence/indexer@1.10.13
+  - @0xsequence/metadata@1.10.13
+  - @0xsequence/migration@1.10.13
+  - @0xsequence/network@1.10.13
+  - @0xsequence/sessions@1.10.13
+  - @0xsequence/signhub@1.10.13
+  - @0xsequence/utils@1.10.13
+  - @0xsequence/wallet@1.10.13
+
 ## 1.10.12
 
 ### Patch Changes

@@ -123,6 +123,6 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.BLAST),
   createNetworkConfig(ChainId.BLAST_SEPOLIA),
   createNetworkConfig(ChainId.TELOS),
-
+  createNetworkConfig(ChainId.BORNE_TESTNET),
   ...hardhatNetworks
 ])
