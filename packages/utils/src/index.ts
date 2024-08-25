@@ -1,3 +1,4 @@
+export * from './access-key'
 export * from './base64'
 export * from './big-number'
 export * from './digest'
