@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+
 ## 1.10.14
 
 ### Patch Changes

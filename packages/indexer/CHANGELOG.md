@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+
 ## 1.10.14
 
 ### Patch Changes

@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+- Updated dependencies
+  - @0xsequence/abi@1.10.15
+  - @0xsequence/account@1.10.15
+  - @0xsequence/api@1.10.15
+  - @0xsequence/auth@1.10.15
+  - @0xsequence/core@1.10.15
+  - @0xsequence/guard@1.10.15
+  - @0xsequence/indexer@1.10.15
+  - @0xsequence/metadata@1.10.15
+  - @0xsequence/migration@1.10.15
+  - @0xsequence/multicall@1.10.15
+  - @0xsequence/network@1.10.15
+  - @0xsequence/provider@1.10.15
+  - @0xsequence/relayer@1.10.15
+  - @0xsequence/sessions@1.10.15
+  - @0xsequence/signhub@1.10.15
+  - @0xsequence/utils@1.10.15
+  - @0xsequence/wallet@1.10.15
+
 ## 1.10.14
 
 ### Patch Changes

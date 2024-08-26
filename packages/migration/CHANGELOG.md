@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+- Updated dependencies
+  - @0xsequence/abi@1.10.15
+  - @0xsequence/core@1.10.15
+  - @0xsequence/wallet@1.10.15
+
 ## 1.10.14
 
 ### Patch Changes

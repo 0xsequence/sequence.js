@@ -1,5 +1,15 @@
 # @0xsequence/multicall
 
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+- Updated dependencies
+  - @0xsequence/abi@1.10.15
+  - @0xsequence/network@1.10.15
+  - @0xsequence/utils@1.10.15
+
 ## 1.10.14
 
 ### Patch Changes

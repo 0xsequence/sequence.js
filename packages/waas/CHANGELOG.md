@@ -1,5 +1,14 @@
 # @0xsequence/waas
 
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+- Updated dependencies
+  - @0xsequence/core@1.10.15
+  - @0xsequence/network@1.10.15
+
 ## 1.10.14
 
 ### Patch Changes
