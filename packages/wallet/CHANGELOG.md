@@ -1,5 +1,21 @@
 # @0xsequence/wallet
 
+## 2.0.0
+
+### Major Changes
+
+- ethers v6
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@2.0.0
+  - @0xsequence/core@2.0.0
+  - @0xsequence/network@2.0.0
+  - @0xsequence/relayer@2.0.0
+  - @0xsequence/signhub@2.0.0
+  - @0xsequence/utils@2.0.0
+
 ## 1.10.15
 
 ### Patch Changes

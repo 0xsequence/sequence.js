@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.0.0
+
+### Major Changes
+
+- ethers v6
+
 ## 1.10.15
 
 ### Patch Changes
