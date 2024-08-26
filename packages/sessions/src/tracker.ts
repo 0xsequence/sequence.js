@@ -48,7 +48,7 @@ export abstract class ConfigTracker {
       wallet: string
       proof: {
         digest: string
-        chainId: ethers.BigNumber
+        chainId: bigint
         signature: string
       }
     }[]

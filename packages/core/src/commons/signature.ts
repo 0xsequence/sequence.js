@@ -34,7 +34,7 @@ export interface SignatureCoder<
 
   trim: (data: string) => Promise<string>
 
-  recover: (data: Z, payload: SignedPayload, provider: ethers.providers.Provider) => Promise<T>
+  recover: (data: Z, payload: SignedPayload, provider: ethers.Provider) => Promise<T>
 
   supportsNoChainId: boolean
 
@@ -45,7 +45,7 @@ export interface SignatureCoder<
     chainId: ethers.BigNumberish
   ) => {
     encoded: string
-    weight: ethers.BigNumber
+    weight: bigint
   }
 
   hasEnoughSigningPower: (config: Y, signatures: Map<string, SignaturePart>) => boolean
@@ -60,7 +60,7 @@ export interface SignatureCoder<
 }
 
 export function subdigestOf(payload: SignedPayload) {
-  return ethers.utils.solidityKeccak256(
+  return ethers.solidityPackedKeccak256(
     ['bytes', 'uint256', 'address', 'bytes32'],
     ['0x1901', payload.chainId, payload.address, payload.digest]
   )

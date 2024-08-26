@@ -11,7 +11,7 @@ const dclText = `Decentraland Login
 Ephemeral address: 0xe1bCF3CAc83534a055f7254C1FD88B21159fCc67
 Expiration: 2022-10-27T16:03:29.191Z`
 
-export const dclLogin = ethers.utils.toUtf8Bytes(dclText)
+export const dclLogin = ethers.toUtf8Bytes(dclText)
 
 // Ethereum personal sign 0x v3 order
 export const zeroExV3Order = new Uint8Array([

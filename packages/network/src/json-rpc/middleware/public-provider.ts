@@ -1,12 +1,12 @@
-import { providers } from 'ethers'
-import { JsonRpcHandlerFunc, JsonRpcRequest, JsonRpcResponseCallback, JsonRpcMiddlewareHandler } from '../types'
+import { ethers } from 'ethers'
+import { EIP1193ProviderFunc, JsonRpcMiddlewareHandler, JsonRpcRequest } from '../types'
 import { SignerJsonRpcMethods } from './signing-provider'
 import { logger } from '@0xsequence/utils'
 
 export class PublicProvider implements JsonRpcMiddlewareHandler {
   private privateJsonRpcMethods = ['net_version', 'eth_chainId', 'eth_accounts', ...SignerJsonRpcMethods]
 
-  private provider?: providers.JsonRpcProvider
+  private provider?: ethers.JsonRpcProvider
   private rpcUrl?: string
 
   constructor(rpcUrl?: string) {
@@ -15,26 +15,16 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
     }
   }
 
-  sendAsyncMiddleware = (next: JsonRpcHandlerFunc) => {
-    return (request: JsonRpcRequest, callback: JsonRpcResponseCallback) => {
+  requestHandler = (next: EIP1193ProviderFunc) => {
+    return (request: JsonRpcRequest): Promise<any> => {
       // When provider is configured, send non-private methods to our local public provider
       if (this.provider && !this.privateJsonRpcMethods.includes(request.method)) {
-        this.provider
-          .send(request.method, request.params!)
-          .then(r => {
-            callback(undefined, {
-              jsonrpc: '2.0',
-              id: request.id!,
-              result: r
-            })
-          })
-          .catch(e => callback(e))
-        return
+        return this.provider.send(request.method, request.params || [])
       }
 
       // Continue to next handler
       logger.debug('[public-provider] sending request to signer window', request.method)
-      next(request, callback)
+      return next(request)
     }
   }
 
@@ -50,7 +40,7 @@ export class PublicProvider implements JsonRpcMiddlewareHandler {
       this.rpcUrl = rpcUrl
       // TODO: maybe use @0xsequence/network JsonRpcProvider here instead,
       // which supports better caching.
-      this.provider = new providers.JsonRpcProvider(rpcUrl)
+      this.provider = new ethers.JsonRpcProvider(rpcUrl)
     }
   }
 }

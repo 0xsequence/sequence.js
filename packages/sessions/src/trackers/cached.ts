@@ -1,7 +1,7 @@
 import { commons, universal } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ethers } from 'ethers'
 
 export class CachedTracker implements migrator.PresignedMigrationTracker, ConfigTracker {
   constructor(
@@ -58,7 +58,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
         checkpoints.reduce((acc, val) => {
           if (!val) return acc
           if (!acc) return val
-          if (val.checkpoint.gt(acc.checkpoint)) return val
+          if (val.checkpoint > acc.checkpoint) return val
           return acc
         })?.result ?? []
     }
@@ -125,7 +125,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
   async walletsOfSigner(args: {
     signer: string
     noCache?: boolean
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     if (args.noCache) {
       return this.tracker.walletsOfSigner(args)
     }
@@ -133,7 +133,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     // In this case we need to both aggregate the results from the cache and the tracker
     // and then dedupe the results
     const results = await Promise.all([this.tracker.walletsOfSigner(args), this.cache.walletsOfSigner(args)])
-    const wallets = new Map<string, { wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }>()
+    const wallets = new Map<string, { wallet: string; proof: { digest: string; chainId: bigint; signature: string } }>()
 
     for (const result of results) {
       for (const wallet of result) {

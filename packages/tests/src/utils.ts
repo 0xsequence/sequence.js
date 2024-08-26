@@ -1,37 +1,35 @@
 import { ethers } from 'ethers'
 import { Artifact } from './builds'
+import { MAX_UINT_256 } from '@0xsequence/utils'
 
-export function deployContract(signer: ethers.Signer, artifact: Artifact, ...args: any[]): Promise<ethers.Contract> {
+export function deployContract(signer: ethers.Signer, artifact: Artifact, ...args: any[]) {
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, signer)
   return factory.deploy(...args)
 }
 
-export function randomBigNumber(
-  min: ethers.BigNumberish = 0,
-  max: ethers.BigNumberish = ethers.constants.MaxUint256
-): ethers.BigNumber {
-  const randomHex = ethers.utils.hexlify(ethers.utils.randomBytes(32))
-  const randomBn = ethers.BigNumber.from(randomHex)
-  const minBn = ethers.BigNumber.from(min)
-  const maxBn = ethers.BigNumber.from(max)
-  const range = maxBn.sub(minBn)
+export function randomBigInt(min: ethers.BigNumberish = 0, max: ethers.BigNumberish = MAX_UINT_256): bigint {
+  const randomHex = ethers.hexlify(ethers.randomBytes(32))
+  const randomNumber = BigInt(randomHex)
+  const minNumber = BigInt(min)
+  const maxNumber = BigInt(max)
+  const range = maxNumber - minNumber
 
-  if (range.isNegative() || range.isZero()) {
+  if (range <= 0n) {
     throw new Error('max must be greater than min')
   }
 
-  return randomBn.mod(range).add(minBn)
+  return (randomNumber % range) + minNumber
 }
 
-export function maxForBits(bits: number): ethers.BigNumber {
-  return ethers.BigNumber.from(2).pow(bits).sub(1)
+export function maxForBits(bits: number): bigint {
+  return 2n ** BigInt(bits) - 1n
 }
 
 export function randomBool(): boolean {
   return Math.random() >= 0.5
 }
 
-export async function isContract(provider: ethers.providers.Provider, address: string): Promise<boolean> {
+export async function isContract(provider: ethers.Provider, address: string): Promise<boolean> {
   const c = await provider.getCode(address)
-  return ethers.utils.arrayify(c).length > 0
+  return ethers.getBytes(c).length > 0
 }

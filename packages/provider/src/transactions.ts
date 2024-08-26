@@ -12,7 +12,7 @@ const PROHIBITED_FUNCTIONS = new Map(
     'updateImageHash(bytes32)',
     'updateImageHashAndIPFS(bytes32,bytes32)',
     'updateImplementation(address)'
-  ].map(signature => [ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(0, 10), signature])
+  ].map(signature => [ethers.id(signature).slice(0, 10), signature])
 )
 
 export function validateTransactionRequest(wallet: string, transaction: commons.transaction.Transactionish) {
@@ -24,7 +24,7 @@ export function validateTransactionRequest(wallet: string, transaction: commons.
 function validateTransaction(wallet: string, transaction: commons.transaction.Transaction) {
   if (transaction.to.toLowerCase() === wallet.toLowerCase()) {
     if (transaction.data) {
-      const data = ethers.utils.arrayify(transaction.data)
+      const data = ethers.getBytes(transaction.data)
       if (data.length >= 4 && !isCreateContractCall(data)) {
         throw new Error('self calls are forbidden')
       }
@@ -36,7 +36,7 @@ function validateTransaction(wallet: string, transaction: commons.transaction.Tr
   }
 
   if (transaction.data) {
-    const data = ethers.utils.hexlify(transaction.data)
+    const data = ethers.hexlify(transaction.data)
     const selector = data.slice(0, 10)
     const signature = PROHIBITED_FUNCTIONS.get(selector)
     if (signature) {
@@ -47,7 +47,7 @@ function validateTransaction(wallet: string, transaction: commons.transaction.Tr
 }
 
 function isCreateContractCall(data: ethers.BytesLike): boolean {
-  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
   try {
     walletInterface.decodeFunctionData('createContract', data)
     return true

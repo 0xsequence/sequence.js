@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { getEthersConnectionInfo, logger } from '@0xsequence/utils'
+import { getFetchRequest, logger, toHexString } from '@0xsequence/utils'
 
 export { proto }
 
@@ -16,7 +16,7 @@ const FINAL_STATUSES = [
 const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions {
-  provider: ethers.providers.Provider | { url: string }
+  provider: ethers.AbstractProvider | { url: string }
   url: string
   projectAccessKey?: string
   jwtAuth?: string
@@ -27,7 +27,7 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
     obj.url !== undefined &&
     typeof obj.url === 'string' &&
     obj.provider !== undefined &&
-    ethers.providers.Provider.isProvider(obj.provider)
+    obj.provider instanceof ethers.AbstractProvider
   )
 }
 
@@ -36,17 +36,17 @@ const fetch = globalThis.fetch
 // TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer
-  public readonly provider: ethers.providers.Provider
+  public readonly provider: ethers.Provider
 
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
 
-    if (ethers.providers.Provider.isProvider(options.provider)) {
+    if (options.provider instanceof ethers.AbstractProvider) {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
-      const providerConnectionInfo = getEthersConnectionInfo(options.provider.url, projectAccessKey, jwtAuth)
-      this.provider = new ethers.providers.StaticJsonRpcProvider(providerConnectionInfo)
+      const fetchRequest = getFetchRequest(options.provider.url, projectAccessKey, jwtAuth)
+      this.provider = new ethers.JsonRpcProvider(fetchRequest, undefined, { staticNetwork: true })
     }
   }
 
@@ -114,7 +114,7 @@ export class RpcRelayer implements Relayer {
   }
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
-    const coder = ethers.utils.defaultAbiCoder
+    const coder = ethers.AbiCoder.defaultAbiCoder()
     const encoded = coder.encode(
       [commons.transaction.MetaTransactionsType],
       [commons.transaction.sequenceTxAbiEncode(transactions)]
@@ -162,7 +162,7 @@ export class RpcRelayer implements Relayer {
 
   async getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }
@@ -170,7 +170,7 @@ export class RpcRelayer implements Relayer {
     const { options: feeOptions, quote } = await this.service.feeOptions({
       wallet: entrypoint,
       to: entrypoint,
-      data: ethers.utils.hexlify(data),
+      data: ethers.hexlify(data),
       simulate: options?.simulate
     })
 
@@ -184,9 +184,9 @@ export class RpcRelayer implements Relayer {
 
   async getNonce(address: string, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${address} space: ${space}`)
-    const encodedNonce = space !== undefined ? ethers.BigNumber.from(space).toHexString() : undefined
+    const encodedNonce = space !== undefined ? toHexString(BigInt(space)) : undefined
     const resp = await this.service.getMetaTxnNonce({ walletContractAddress: address, space: encodedNonce })
-    const nonce = ethers.BigNumber.from(resp.nonce)
+    const nonce = BigInt(resp.nonce)
     const [decodedSpace, decodedNonce] = commons.transaction.decodeNonce(nonce)
     logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${address} ${decodedNonce} space: ${decodedSpace}`)
     return nonce
@@ -234,10 +234,10 @@ export class RpcRelayer implements Relayer {
         hash: signedTxs.intent.id,
         confirmations: 0,
         from: signedTxs.intent.wallet,
-        wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+        wait: (_confirmations?: number): Promise<ethers.TransactionReceipt | null> => Promise.reject(new Error('impossible'))
       }
 
-      const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
+      const wait = async (confirmations?: number): Promise<ethers.TransactionReceipt | null> => {
         if (!this.provider) {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }
@@ -256,6 +256,9 @@ export class RpcRelayer implements Relayer {
 
       response.wait = wait
 
+      // NOTE: we just ignore these errors which come from the private fields
+      // of ethers-v6 .. but, we should probably rework this instead..
+      // @ts-ignore
       return response as commons.transaction.TransactionResponse
     }
   }
@@ -286,9 +289,12 @@ export class RpcRelayer implements Relayer {
 
     const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
+    // NOTE: we just ignore these errors which come from the private fields
+    // of ethers-v6 .. but, we should probably rework this instead..
+    // @ts-ignore
     return {
       blockHash: txReceipt.blockHash,
-      blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
+      blockNumber: Number(txReceipt.blockNumber),
       confirmations: 1,
       from: typeof metaTxnId === 'string' ? undefined : metaTxnId.intent.wallet,
       hash: txReceipt.transactionHash,

@@ -2,7 +2,7 @@ import { Account } from '@0xsequence/account'
 import { commons, universal } from '@0xsequence/core'
 import { signers, Status } from '@0xsequence/signhub'
 import { encodeTypedDataDigest, TypedData } from '@0xsequence/utils'
-import { BytesLike, ethers, TypedDataDomain } from 'ethers'
+import { ethers } from 'ethers'
 import { AuthMethodsReturn, Guard, RecoveryCode as GuardRecoveryCode } from './guard.gen'
 
 const fetch = globalThis.fetch
@@ -37,7 +37,7 @@ export class GuardSigner implements signers.SapientSigner {
     return bundle
   }
 
-  async sign(message: BytesLike, metadata: object): Promise<BytesLike> {
+  async sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
     if (!commons.isWalletSignRequestMetadata(metadata)) {
       throw new Error('expected sequence signature request metadata')
     }
@@ -53,9 +53,9 @@ export class GuardSigner implements signers.SapientSigner {
       await this.guard.signWith({
         signer: this.address,
         request: {
-          msg: ethers.utils.hexlify(message),
+          msg: ethers.hexlify(message),
           auxData: this.packMsgAndSig(metadata.address, metadata.digest, encoded, metadata.chainId),
-          chainId: ethers.BigNumber.from(metadata.chainId).toNumber()
+          chainId: Number(metadata.chainId)
         },
         token: guardTotpCode ? { id: AuthMethod.TOTP, token: guardTotpCode } : undefined
       })
@@ -170,12 +170,12 @@ export class GuardSigner implements signers.SapientSigner {
     return codes
   }
 
-  private packMsgAndSig(address: string, msg: BytesLike, sig: BytesLike, chainId: ethers.BigNumberish): string {
-    return ethers.utils.defaultAbiCoder.encode(['address', 'uint256', 'bytes', 'bytes'], [address, chainId, msg, sig])
+  private packMsgAndSig(address: string, msg: ethers.BytesLike, sig: ethers.BytesLike, chainId: ethers.BigNumberish): string {
+    return ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes', 'bytes'], [address, chainId, msg, sig])
   }
 
-  suffix(): BytesLike {
-    return this.appendSuffix ? [3] : []
+  suffix(): ethers.BytesLike {
+    return new Uint8Array(this.appendSuffix ? [3] : [])
   }
 }
 
@@ -229,7 +229,7 @@ export async function signOwnershipProof(proof: Exclude<OwnershipProof, { jwt: s
       walletAddress: proof.walletAddress,
       timestamp,
       signerAddress,
-      signature: ethers.utils.hexlify(await signer.sign(digest, {}))
+      signature: ethers.hexlify(await signer.sign(digest, {}))
     }
   }
 }
@@ -265,7 +265,7 @@ export function getOwnershipProofTypedData(wallet: string, timestamp: Date): Typ
       ]
     },
     message: {
-      wallet: ethers.utils.getAddress(wallet),
+      wallet: ethers.getAddress(wallet),
       timestamp: toUTCString(timestamp)
     }
   }
@@ -283,7 +283,7 @@ export function getAuthUpdateProofTypedData(timestamp: Date): TypedData {
   }
 }
 
-const domain: TypedDataDomain = {
+const domain: ethers.TypedDataDomain = {
   name: 'Sequence Guard',
   version: '1',
   chainId: 1

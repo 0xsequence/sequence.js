@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/provider",
-  "version": "1.10.15",
+  "version": "2.0.0-alpha.1",
   "description": "provider sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/provider",
   "source": "src/index.ts",
@@ -34,11 +34,11 @@
     "webextension-polyfill": "^0.10.0"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.13.0",
     "hardhat": "^2.20.1"
   },
   "files": [

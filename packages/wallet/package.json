@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/wallet",
-  "version": "1.10.15",
+  "version": "2.0.0-alpha.1",
   "description": "wallet sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/wallet",
   "source": "src/index.ts",
@@ -25,14 +25,14 @@
     "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": ">=6"
   },
   "devDependencies": {
-    "@0xsequence/ethauth": "^0.8.1",
+    "@0xsequence/ethauth": "^1.0.0",
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^2.0.0",
+    "@0xsequence/wallet-contracts": "^3.0.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ethers": "^5.7.2",
+    "ethers": "^6.13.0",
     "web3": "^1.8.1"
   },
   "files": [

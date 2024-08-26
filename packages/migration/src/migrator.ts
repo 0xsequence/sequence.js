@@ -1,8 +1,8 @@
 import { commons } from '@0xsequence/core'
 import { Wallet } from '@0xsequence/wallet'
-import { ethers } from 'ethers'
 
 import { Migration } from './migrations'
+import { ethers } from 'ethers'
 
 export type UnsignedMigration = {
   tx: commons.transaction.TransactionBundle

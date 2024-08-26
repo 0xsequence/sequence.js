@@ -22,7 +22,7 @@ export class GuestChallenge extends Challenge {
   }
 
   getIntentParams(): ChallengeIntentParams {
-    const answer = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.challenge + this.sessionId))
+    const answer = ethers.id(this.challenge + this.sessionId)
     return {
       identityType: IdentityType.Guest,
       verifier: this.sessionId,
@@ -55,7 +55,7 @@ export class EmailChallenge extends Challenge {
   }
 
   setAnswer(answer: string): void {
-    this.hashedAnswer = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.challenge + answer))
+    this.hashedAnswer = ethers.id(this.challenge + answer)
   }
 
   withAnswer(answer: string) {
@@ -72,7 +72,7 @@ export class IdTokenChallenge extends Challenge {
 
   getIntentParams(): ChallengeIntentParams {
     const decoded = jwtDecode(this.idToken)
-    const idTokenHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.idToken))
+    const idTokenHash = ethers.id(this.idToken)
     return {
       identityType: IdentityType.OIDC,
       verifier: `${idTokenHash};${decoded.exp}`,
@@ -107,7 +107,7 @@ export class PlayFabChallenge extends Challenge {
   }
 
   getIntentParams(): ChallengeIntentParams {
-    const ticketHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.sessionTicket))
+    const ticketHash = ethers.id(this.sessionTicket)
     return {
       identityType: IdentityType.PlayFab,
       verifier: `${this.titleId}|${ticketHash}`,

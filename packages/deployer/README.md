@@ -1,5 +1,4 @@
-@0xsequence/deployer
-====================
+# @0xsequence/deployer
 
 Deploy contracts using a universal deployer via CREATE2, allowing contracts to have the same address on any EVM chain.
 
@@ -10,9 +9,9 @@ For more info, see [0xsequence project page](https://github.com/0xsequence/seque
 # How to use
 
 1. `yarn add @0xsequence/deployer`
-1. Import UniversalDeployer into script
-2. Create UniversalDeployer instance
-3. Deploy contracts 
+2. Import UniversalDeployer into script
+3. Create UniversalDeployer instance
+4. Deploy contracts
 
 An `instance` number can be passed if multiple instance of the same contract need to be deployed on the same chain. The default instance number is 0, if none is passed.
 
@@ -45,8 +44,8 @@ You can also pass transaction parameters explicitly :
 ...
 
 const main = async () => {
-  await universalDeployer.deploy('WalletFactory', FactoryFactory, {gasLimit: 1000000} )
-  await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, {gasPrice: new BigNumber(10).pow(9)})
+  await universalDeployer.deploy('WalletFactory', FactoryFactory, { gasLimit: 1000000 })
+  await universalDeployer.deploy('MainModuleUpgradable', MainModuleUpgradableFactory, { gasPrice: 10n ** 9n })
 }
 
 ```

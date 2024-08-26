@@ -1,6 +1,6 @@
 export * from './access-key'
 export * from './base64'
-export * from './big-number'
+export * from './bigint'
 export * from './digest'
 export * from './is-node-or-browser'
 export * from './jwt-decode'
