@@ -83,11 +83,21 @@
   },
   "resolutions": {},
   "workspaces": [
-    "packages/*"
+    "packages/0xsequence",
+    "packages/tests",
+    "packages/common/*",
+    "packages/apis/*",
+    "packages/wallet/*",
+    "packages/dapp/*"  
   ],
   "preconstruct": {
     "packages": [
-      "packages/*"
+      "packages/0xsequence",
+      "packages/tests",
+      "packages/common/*",
+      "packages/apis/*",
+      "packages/wallet/*",
+      "packages/dapp/*"
     ],
     "globals": {
       "ethers": "ethers"

@@ -1,2 +1,7 @@
 packages:
-  - 'packages/*'
+  - 'packages/0xsequence'
+  - 'packages/tests'
+  - 'packages/wallet/*'
+  - 'packages/dapp/*'
+  - 'packages/common/*'
+  - 'packages/apis/*'

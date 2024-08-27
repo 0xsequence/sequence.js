@@ -12,8 +12,8 @@
     "test": "pnpm test:file tests/**/*.spec.ts",
     "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 30000",
     "typecheck": "tsc --noEmit",
-    "build": "rm -rf src/typings && TS_NODE_PROJECT=../../tsconfig.test.json hardhat clean && pnpm compile-contracts && pnpm gen:typings",
-    "compile-contracts": "TS_NODE_PROJECT=../../tsconfig.test.json hardhat --max-memory 4096 compile",
+    "build": "rm -rf src/typings && TS_NODE_PROJECT=../../../tsconfig.test.json hardhat clean && pnpm compile-contracts && pnpm gen:typings",
+    "compile-contracts": "TS_NODE_PROJECT=../../../tsconfig.test.json hardhat --max-memory 4096 compile",
     "gen:typings": "rm -rf ./src/typings/contracts/* && typechain --target ethers-v6 --out-dir src/typings/contracts './artifacts/contracts/!(build-info)/**/*[^dbg].json'"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { ChainId, NetworkConfig, NetworkMetadata } from '../../network/src'
+import { ChainId, NetworkConfig, NetworkMetadata } from '../../common/network/src'
 
 export enum HardhatChainId {
   HARDHAT = 31337,
