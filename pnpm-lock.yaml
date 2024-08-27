@@ -17,40 +17,40 @@ importers:
     devDependencies:
       '@0xsequence/abi':
         specifier: workspace:*
-        version: link:packages/abi
+        version: link:packages/wallet/abi
       '@0xsequence/api':
         specifier: workspace:*
-        version: link:packages/api
+        version: link:packages/apis/api
       '@0xsequence/auth':
         specifier: workspace:*
-        version: link:packages/auth
+        version: link:packages/wallet/auth
       '@0xsequence/deployer':
         specifier: workspace:*
-        version: link:packages/deployer
+        version: link:packages/common/deployer
       '@0xsequence/guard':
         specifier: workspace:*
-        version: link:packages/guard
+        version: link:packages/wallet/guard
       '@0xsequence/indexer':
         specifier: workspace:*
-        version: link:packages/indexer
+        version: link:packages/apis/indexer
       '@0xsequence/metadata':
         specifier: workspace:*
-        version: link:packages/metadata
+        version: link:packages/apis/metadata
       '@0xsequence/network':
         specifier: workspace:*
-        version: link:packages/network
+        version: link:packages/common/network
       '@0xsequence/provider':
         specifier: workspace:*
-        version: link:packages/provider
+        version: link:packages/dapp/provider
       '@0xsequence/relayer':
         specifier: workspace:*
-        version: link:packages/relayer
+        version: link:packages/wallet/relayer
       '@0xsequence/utils':
         specifier: workspace:*
-        version: link:packages/utils
+        version: link:packages/common/utils
       '@0xsequence/wallet':
         specifier: workspace:*
-        version: link:packages/wallet
+        version: link:packages/wallet/wallet
       '@babel/core':
         specifier: ^7.21.4
         version: 7.23.9
@@ -164,52 +164,52 @@ importers:
     dependencies:
       '@0xsequence/abi':
         specifier: workspace:*
-        version: link:../abi
+        version: link:../wallet/abi
       '@0xsequence/account':
         specifier: workspace:*
-        version: link:../account
+        version: link:../wallet/account
       '@0xsequence/api':
         specifier: workspace:*
-        version: link:../api
+        version: link:../apis/api
       '@0xsequence/auth':
         specifier: workspace:*
-        version: link:../auth
+        version: link:../wallet/auth
       '@0xsequence/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../wallet/core
       '@0xsequence/guard':
         specifier: workspace:*
-        version: link:../guard
+        version: link:../wallet/guard
       '@0xsequence/indexer':
         specifier: workspace:*
-        version: link:../indexer
+        version: link:../apis/indexer
       '@0xsequence/metadata':
         specifier: workspace:*
-        version: link:../metadata
+        version: link:../apis/metadata
       '@0xsequence/migration':
         specifier: workspace:*
-        version: link:../migration
+        version: link:../wallet/migration
       '@0xsequence/network':
         specifier: workspace:*
-        version: link:../network
+        version: link:../common/network
       '@0xsequence/provider':
         specifier: workspace:*
-        version: link:../provider
+        version: link:../dapp/provider
       '@0xsequence/relayer':
         specifier: workspace:*
-        version: link:../relayer
+        version: link:../wallet/relayer
       '@0xsequence/sessions':
         specifier: workspace:*
-        version: link:../sessions
+        version: link:../wallet/sessions
       '@0xsequence/signhub':
         specifier: workspace:*
-        version: link:../signhub
+        version: link:../wallet/signhub
       '@0xsequence/utils':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../common/utils
       '@0xsequence/wallet':
         specifier: workspace:*
-        version: link:../wallet
+        version: link:../wallet/wallet
     devDependencies:
       '@0xsequence/tests':
         specifier: workspace:*
@@ -245,134 +245,13 @@ importers:
         specifier: ^3.11.2
         version: 3.11.3(bufferutil@4.0.8)(utf-8-validate@6.0.3)(webpack-cli@4.10.0)(webpack@5.90.3)
 
-  packages/abi: {}
+  packages/apis/api: {}
 
-  packages/account:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/migration':
-        specifier: workspace:*
-        version: link:../migration
-      '@0xsequence/network':
-        specifier: workspace:*
-        version: link:../network
-      '@0xsequence/relayer':
-        specifier: workspace:*
-        version: link:../relayer
-      '@0xsequence/sessions':
-        specifier: workspace:*
-        version: link:../sessions
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-      '@0xsequence/wallet':
-        specifier: workspace:*
-        version: link:../wallet
-    devDependencies:
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/tests':
-        specifier: workspace:*
-        version: link:../tests
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.2
-        version: 1.0.2(nyc@15.1.0)
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
+  packages/apis/indexer: {}
 
-  packages/api: {}
+  packages/apis/metadata: {}
 
-  packages/auth:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/account':
-        specifier: workspace:*
-        version: link:../account
-      '@0xsequence/api':
-        specifier: workspace:*
-        version: link:../api
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/ethauth':
-        specifier: ^1.0.0
-        version: 1.0.0(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
-      '@0xsequence/indexer':
-        specifier: workspace:*
-        version: link:../indexer
-      '@0xsequence/metadata':
-        specifier: workspace:*
-        version: link:../metadata
-      '@0xsequence/migration':
-        specifier: workspace:*
-        version: link:../migration
-      '@0xsequence/network':
-        specifier: workspace:*
-        version: link:../network
-      '@0xsequence/sessions':
-        specifier: workspace:*
-        version: link:../sessions
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-      '@0xsequence/wallet':
-        specifier: workspace:*
-        version: link:../wallet
-    devDependencies:
-      '@0xsequence/tests':
-        specifier: workspace:*
-        version: link:../tests
-      '@0xsequence/wallet-contracts':
-        specifier: ^3.0.1
-        version: 3.0.1(bufferutil@4.0.8)(typechain@8.3.2(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
-      concurrently:
-        specifier: ^7.5.0
-        version: 7.6.0
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      hardhat:
-        specifier: ^2.20.1
-        version: 2.20.1(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.11.20)(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
-      mockttp:
-        specifier: ^3.6.0
-        version: 3.10.1(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-
-  packages/core:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-      ethers:
-        specifier: '>=6'
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-    devDependencies:
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.2
-        version: 1.0.2(nyc@15.1.0)
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-
-  packages/deployer:
+  packages/common/deployer:
     dependencies:
       '@0xsequence/utils':
         specifier: workspace:*
@@ -388,61 +267,17 @@ importers:
         specifier: ^8.1.1
         version: 8.3.2(typescript@5.3.3)
 
-  packages/guard:
-    dependencies:
-      '@0xsequence/account':
-        specifier: workspace:*
-        version: link:../account
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-
-  packages/indexer: {}
-
-  packages/metadata: {}
-
-  packages/migration:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/wallet':
-        specifier: workspace:*
-        version: link:../wallet
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-    devDependencies:
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.2
-        version: 1.0.2(nyc@15.1.0)
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-
-  packages/network:
+  packages/common/network:
     dependencies:
       '@0xsequence/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../wallet/core
       '@0xsequence/indexer':
         specifier: workspace:*
-        version: link:../indexer
+        version: link:../../apis/indexer
       '@0xsequence/relayer':
         specifier: workspace:*
-        version: link:../relayer
+        version: link:../../wallet/relayer
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:../utils
@@ -451,35 +286,57 @@ importers:
         specifier: ^6.13.0
         version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
 
-  packages/provider:
+  packages/common/replacer:
     dependencies:
       '@0xsequence/abi':
         specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/account':
-        specifier: workspace:*
-        version: link:../account
-      '@0xsequence/auth':
-        specifier: workspace:*
-        version: link:../auth
+        version: link:../../wallet/abi
       '@0xsequence/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../wallet/core
+      ethers:
+        specifier: '>=6'
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+
+  packages/common/utils:
+    dependencies:
+      js-base64:
+        specifier: ^3.7.2
+        version: 3.7.7
+    devDependencies:
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+
+  packages/dapp/provider:
+    dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../../wallet/abi
+      '@0xsequence/account':
+        specifier: workspace:*
+        version: link:../../wallet/account
+      '@0xsequence/auth':
+        specifier: workspace:*
+        version: link:../../wallet/auth
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../../wallet/core
       '@0xsequence/migration':
         specifier: workspace:*
-        version: link:../migration
+        version: link:../../wallet/migration
       '@0xsequence/network':
         specifier: workspace:*
-        version: link:../network
+        version: link:../../common/network
       '@0xsequence/relayer':
         specifier: workspace:*
-        version: link:../relayer
+        version: link:../../wallet/relayer
       '@0xsequence/utils':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../../common/utils
       '@0xsequence/wallet':
         specifier: workspace:*
-        version: link:../wallet
+        version: link:../../wallet/wallet
       '@databeat/tracker':
         specifier: ^0.9.1
         version: 0.9.1
@@ -500,142 +357,17 @@ importers:
         specifier: ^2.20.1
         version: 2.20.1(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.11.20)(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
 
-  packages/react-native:
-    dependencies:
-      '@0xsequence/waas':
-        specifier: workspace:*
-        version: link:../waas
-      react-native-keychain:
-        specifier: ^8.2.0
-        version: 8.2.0
-
-  packages/relayer:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-    devDependencies:
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/tests':
-        specifier: workspace:*
-        version: link:../tests
-      '@0xsequence/wallet-contracts':
-        specifier: ^3.0.1
-        version: 3.0.1(bufferutil@4.0.8)(typechain@8.3.2(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-
-  packages/replacer:
-    dependencies:
-      '@0xsequence/abi':
-        specifier: workspace:*
-        version: link:../abi
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      ethers:
-        specifier: '>=6'
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-
-  packages/sessions:
+  packages/dapp/waas:
     dependencies:
       '@0xsequence/core':
         specifier: workspace:*
-        version: link:../core
-      '@0xsequence/migration':
-        specifier: workspace:*
-        version: link:../migration
-      '@0xsequence/replacer':
-        specifier: workspace:*
-        version: link:../replacer
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      idb:
-        specifier: ^7.1.1
-        version: 7.1.1
-    devDependencies:
-      '@0xsequence/signhub':
-        specifier: workspace:*
-        version: link:../signhub
-      '@0xsequence/tests':
-        specifier: workspace:*
-        version: link:../tests
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.2
-        version: 1.0.2(nyc@15.1.0)
-      fake-indexeddb:
-        specifier: ^4.0.1
-        version: 4.0.2
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-
-  packages/signhub:
-    dependencies:
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-    devDependencies:
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.2
-        version: 1.0.2(nyc@15.1.0)
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-
-  packages/tests:
-    dependencies:
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
-      '@0xsequence/utils':
-        specifier: workspace:*
-        version: link:../utils
-    devDependencies:
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.1
-        version: 1.0.2(nyc@15.1.0)
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      web3:
-        specifier: ^1.8.1
-        version: 1.10.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-
-  packages/utils:
-    dependencies:
-      js-base64:
-        specifier: ^3.7.2
-        version: 3.7.7
-    devDependencies:
-      ethers:
-        specifier: ^6.13.0
-        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-
-  packages/waas:
-    dependencies:
-      '@0xsequence/core':
-        specifier: workspace:*
-        version: link:../core
+        version: link:../../wallet/core
       '@0xsequence/network':
         specifier: workspace:*
-        version: link:../network
+        version: link:../../common/network
       '@0xsequence/utils':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../../common/utils
       '@aws-sdk/client-cognito-identity-provider':
         specifier: ^3.445.0
         version: 3.521.0
@@ -659,7 +391,7 @@ importers:
         specifier: ^4.0.1
         version: 4.0.2
 
-  packages/waas-ethers:
+  packages/dapp/waas-ethers:
     dependencies:
       '@0xsequence/waas':
         specifier: workspace:*
@@ -668,7 +400,275 @@ importers:
         specifier: '>=6'
         version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
 
-  packages/wallet:
+  packages/tests:
+    dependencies:
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../wallet/core
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../common/utils
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      web3:
+        specifier: ^1.8.1
+        version: 1.10.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+
+  packages/wallet/abi: {}
+
+  packages/wallet/account:
+    dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../abi
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      '@0xsequence/migration':
+        specifier: workspace:*
+        version: link:../migration
+      '@0xsequence/network':
+        specifier: workspace:*
+        version: link:../../common/network
+      '@0xsequence/relayer':
+        specifier: workspace:*
+        version: link:../relayer
+      '@0xsequence/sessions':
+        specifier: workspace:*
+        version: link:../sessions
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../../common/utils
+      '@0xsequence/wallet':
+        specifier: workspace:*
+        version: link:../wallet
+    devDependencies:
+      '@0xsequence/signhub':
+        specifier: workspace:*
+        version: link:../signhub
+      '@0xsequence/tests':
+        specifier: workspace:*
+        version: link:../../tests
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.2
+        version: 1.0.2(nyc@15.1.0)
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      nyc:
+        specifier: ^15.1.0
+        version: 15.1.0
+
+  packages/wallet/auth:
+    dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../abi
+      '@0xsequence/account':
+        specifier: workspace:*
+        version: link:../account
+      '@0xsequence/api':
+        specifier: workspace:*
+        version: link:../../apis/api
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      '@0xsequence/ethauth':
+        specifier: ^1.0.0
+        version: 1.0.0(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
+      '@0xsequence/indexer':
+        specifier: workspace:*
+        version: link:../../apis/indexer
+      '@0xsequence/metadata':
+        specifier: workspace:*
+        version: link:../../apis/metadata
+      '@0xsequence/migration':
+        specifier: workspace:*
+        version: link:../migration
+      '@0xsequence/network':
+        specifier: workspace:*
+        version: link:../../common/network
+      '@0xsequence/sessions':
+        specifier: workspace:*
+        version: link:../sessions
+      '@0xsequence/signhub':
+        specifier: workspace:*
+        version: link:../signhub
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../../common/utils
+      '@0xsequence/wallet':
+        specifier: workspace:*
+        version: link:../wallet
+    devDependencies:
+      '@0xsequence/tests':
+        specifier: workspace:*
+        version: link:../../tests
+      '@0xsequence/wallet-contracts':
+        specifier: ^3.0.1
+        version: 3.0.1(bufferutil@4.0.8)(typechain@8.3.2(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
+      concurrently:
+        specifier: ^7.5.0
+        version: 7.6.0
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      hardhat:
+        specifier: ^2.20.1
+        version: 2.20.1(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.11.20)(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
+      mockttp:
+        specifier: ^3.6.0
+        version: 3.10.1(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+
+  packages/wallet/core:
+    dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../abi
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../../common/utils
+      ethers:
+        specifier: '>=6'
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.2
+        version: 1.0.2(nyc@15.1.0)
+      nyc:
+        specifier: ^15.1.0
+        version: 15.1.0
+
+  packages/wallet/guard:
+    dependencies:
+      '@0xsequence/account':
+        specifier: workspace:*
+        version: link:../account
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      '@0xsequence/signhub':
+        specifier: workspace:*
+        version: link:../signhub
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../../common/utils
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+
+  packages/wallet/migration:
+    dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../abi
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      '@0xsequence/wallet':
+        specifier: workspace:*
+        version: link:../wallet
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.2
+        version: 1.0.2(nyc@15.1.0)
+      nyc:
+        specifier: ^15.1.0
+        version: 15.1.0
+
+  packages/wallet/react-native:
+    dependencies:
+      '@0xsequence/waas':
+        specifier: workspace:*
+        version: link:../../dapp/waas
+      react-native-keychain:
+        specifier: ^8.2.0
+        version: 8.2.0
+
+  packages/wallet/relayer:
+    dependencies:
+      '@0xsequence/abi':
+        specifier: workspace:*
+        version: link:../abi
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      '@0xsequence/utils':
+        specifier: workspace:*
+        version: link:../../common/utils
+    devDependencies:
+      '@0xsequence/signhub':
+        specifier: workspace:*
+        version: link:../signhub
+      '@0xsequence/tests':
+        specifier: workspace:*
+        version: link:../../tests
+      '@0xsequence/wallet-contracts':
+        specifier: ^3.0.1
+        version: 3.0.1(bufferutil@4.0.8)(typechain@8.3.2(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+
+  packages/wallet/sessions:
+    dependencies:
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      '@0xsequence/migration':
+        specifier: workspace:*
+        version: link:../migration
+      '@0xsequence/replacer':
+        specifier: workspace:*
+        version: link:../../common/replacer
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      idb:
+        specifier: ^7.1.1
+        version: 7.1.1
+    devDependencies:
+      '@0xsequence/signhub':
+        specifier: workspace:*
+        version: link:../signhub
+      '@0xsequence/tests':
+        specifier: workspace:*
+        version: link:../../tests
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.2
+        version: 1.0.2(nyc@15.1.0)
+      fake-indexeddb:
+        specifier: ^4.0.1
+        version: 4.0.2
+      nyc:
+        specifier: ^15.1.0
+        version: 15.1.0
+
+  packages/wallet/signhub:
+    dependencies:
+      '@0xsequence/core':
+        specifier: workspace:*
+        version: link:../core
+      ethers:
+        specifier: ^6.13.0
+        version: 6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.2
+        version: 1.0.2(nyc@15.1.0)
+      nyc:
+        specifier: ^15.1.0
+        version: 15.1.0
+
+  packages/wallet/wallet:
     dependencies:
       '@0xsequence/abi':
         specifier: workspace:*
@@ -678,7 +678,7 @@ importers:
         version: link:../core
       '@0xsequence/network':
         specifier: workspace:*
-        version: link:../network
+        version: link:../../common/network
       '@0xsequence/relayer':
         specifier: workspace:*
         version: link:../relayer
@@ -687,14 +687,14 @@ importers:
         version: link:../signhub
       '@0xsequence/utils':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../../common/utils
     devDependencies:
       '@0xsequence/ethauth':
         specifier: ^1.0.0
         version: 1.0.0(ethers@6.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))
       '@0xsequence/tests':
         specifier: workspace:*
-        version: link:../tests
+        version: link:../../tests
       '@0xsequence/wallet-contracts':
         specifier: ^3.0.1
         version: 3.0.1(bufferutil@4.0.8)(typechain@8.3.2(typescript@5.3.3))(typescript@5.3.3)(utf-8-validate@6.0.3)
@@ -4674,9 +4674,11 @@ packages:
 
   glob@7.1.7:
     resolution: {integrity: sha512-OvD9ENzPLbegENnYP5UUfJIirTg4+XwMWGaQfQTY0JenxNvvIKP3U3/tAQSPIu/lHxXYSZmpXlUHeqAIdKzBLQ==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@7.2.0:
     resolution: {integrity: sha512-lmLf6gtyrPq8tTjSmrO94wBeQbFR3HbLHbuyD69wuyQkImp2hWqMGB47OX65FBkPffO641IP9jWa1z4ivqG26Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
@@ -7026,9 +7028,6 @@ packages:
 
   spawn-command@0.0.2:
     resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
-
-  spawn-command@0.0.2-1:
-    resolution: {integrity: sha512-n98l9E2RMSJ9ON1AKisHzz7V42VDiBQGY6PB1BwRglz99wpVsSuGzQ+jOi6lFXBGVTCrRpltvjm+/XA+tpeJrg==}
 
   spawn-wrap@2.0.0:
     resolution: {integrity: sha512-EeajNjfN9zMnULLwhZZQU3GWBoFNkbngTUPfaawT4RkMiviTxcX0qfhVbGey39mfctfDHkWtuecgQ8NJcyQWHg==}
@@ -12114,7 +12113,7 @@ snapshots:
       lodash: 4.17.21
       rxjs: 7.8.1
       shell-quote: 1.8.1
-      spawn-command: 0.0.2-1
+      spawn-command: 0.0.2
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -16208,8 +16207,6 @@ snapshots:
   sourcemap-codec@1.4.8: {}
 
   spawn-command@0.0.2: {}
-
-  spawn-command@0.0.2-1: {}
 
   spawn-wrap@2.0.0:
     dependencies:
