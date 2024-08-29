@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 
 import { formatUnits, parseUnits, toHexString, MAX_UINT_256 } from '../src/bigint'
+import { bigintReplacer, bigintReviver } from '../dist/0xsequence-utils.cjs'
 
 describe('bigint', () => {
   it('should convert bigint to hex string', () => {
@@ -41,5 +42,13 @@ describe('bigint', () => {
     expect(formatUnits(1234n, 0)).to.equal('1234')
     expect(formatUnits(1234n, 4)).to.equal('0.1234')
     expect(formatUnits(1234n, 5)).to.equal('0.01234')
+  })
+
+  it('should serialize and deserialize bigints', () => {
+    const s = JSON.stringify({ value: 1234n }, bigintReplacer)
+    const d = JSON.parse(s, bigintReviver)
+
+    expect(s).to.equal('{"value":{"$bigint":"1234"}}')
+    expect(d).to.deep.equal({ value: 1234n })
   })
 })
