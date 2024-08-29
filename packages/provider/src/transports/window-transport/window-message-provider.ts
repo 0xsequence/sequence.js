@@ -1,6 +1,6 @@
 import { OpenWalletIntent, ProviderMessage, InitState, WindowSessionParams } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
-import { logger, base64EncodeObject } from '@0xsequence/utils'
+import { logger, base64EncodeObject, bigintReplacer, bigintReviver } from '@0xsequence/utils'
 import { isBrowserExtension, isUnityPlugin } from '../../utils'
 
 // ..
@@ -172,7 +172,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
 
     let message: ProviderMessage<any>
     try {
-      message = JSON.parse(event.data)
+      message = JSON.parse(event.data, bigintReviver)
     } catch (err) {
       // event is not a ProviderMessage JSON object, skip
       return
@@ -191,7 +191,7 @@ export class WindowMessageProvider extends BaseProviderTransport {
       logger.warn('WindowMessageProvider: sendMessage failed as walletWindow is unavailable')
       return
     }
-    const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
+    const postedMessage = typeof message !== 'string' ? JSON.stringify(message, bigintReplacer) : message
     this.walletWindow.postMessage(postedMessage, this.walletURL.origin)
   }
 }

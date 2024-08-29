@@ -10,7 +10,7 @@ import {
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, base64DecodeObject } from '@0xsequence/utils'
+import { logger, base64DecodeObject, bigintReviver, bigintReplacer } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export class WindowMessageHandler extends BaseWalletTransport {
@@ -93,14 +93,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // Wallet always expects json-rpc request messages from a dapp
     let request: ProviderMessageRequest
     try {
-      request = JSON.parse(event.data, (key, value) => {
-        // BigNumber compatibility with older versions of sequence.js
-        if (isBigNumberSerialized(value)) {
-          return BigInt(value.hex)
-        }
-
-        return value
-      })
+      request = JSON.parse(event.data, bigintReviver)
     } catch (err) {
       // event is not a ProviderMessage JSON object, skip
       return
@@ -125,7 +118,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
   // postMessage sends message to the dapp window
   sendMessage(message: ProviderMessage<any>) {
     // prepare payload
-    const payload = JSON.stringify(message)
+    const payload = JSON.stringify(message, bigintReplacer)
 
     // post-message to app.
     // only for init requests, we send to '*' origin
@@ -168,8 +161,4 @@ export class WindowMessageHandler extends BaseWalletTransport {
       intent: base64DecodeObject<OpenWalletIntent>(params.get('intent'))
     }
   }
-}
-
-const isBigNumberSerialized = (value: any): boolean => {
-  return typeof value === 'object' && value.type === 'BigNumber' && ethers.isHexString(value.hex)
 }
