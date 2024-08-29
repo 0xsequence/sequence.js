@@ -50,5 +50,8 @@ describe('bigint', () => {
 
     expect(s).to.equal('{"value":{"$bigint":"1234"}}')
     expect(d).to.deep.equal({ value: 1234n })
+
+    // BigNumber compatibility with ethers v5
+    expect(JSON.parse('{"value":{"type":"BigNumber","hex":"0x04d2"}}', bigintReviver)).to.deep.equal({ value: 1234n })
   })
 })

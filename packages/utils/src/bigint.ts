@@ -98,5 +98,10 @@ export const bigintReviver = (key: string, value: any): any => {
     return BigInt(value.$bigint)
   }
 
+  // BigNumber compatibility with older versions of sequence.js with ethers v5
+  if (value !== null && typeof value === 'object' && value.type === 'BigNumber' && ethers.isHexString(value.hex)) {
+    return BigInt(value.hex)
+  }
+
   return value
 }
