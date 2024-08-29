@@ -10,7 +10,7 @@ import {
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, base64DecodeObject } from '@0xsequence/utils'
+import { logger, base64DecodeObject, bigintReplacer } from '@0xsequence/utils'
 import { overrideLogs } from './overridelogs'
 
 // all lowercase is an annoying limitation of Unreal CEF BindUObject
@@ -104,7 +104,7 @@ export class UnrealMessageHandler extends BaseWalletTransport {
       return
     }
     // prepare payload
-    const payload = JSON.stringify(message)
+    const payload = JSON.stringify(message, bigintReplacer)
 
     // post-message to app.
     window.ue?.sequencewallettransport?.sendmessagetosequencejs(payload)

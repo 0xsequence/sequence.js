@@ -1,6 +1,6 @@
 import { OpenWalletIntent, ProviderMessage, InitState, WindowSessionParams } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
-import { base64EncodeObject } from '@0xsequence/utils'
+import { base64EncodeObject, bigintReplacer } from '@0xsequence/utils'
 import { overrideLogs } from './overridelogs'
 
 let registeredUnrealMessageProvider: UnrealMessageProvider | undefined
@@ -114,7 +114,7 @@ export class UnrealMessageProvider extends BaseProviderTransport {
 
   // all lowercase is an annoying limitation of Unreal CEF BindUObject
   sendMessage(message: ProviderMessage<unknown>) {
-    const postedMessage = typeof message !== 'string' ? JSON.stringify(message) : message
+    const postedMessage = typeof message !== 'string' ? JSON.stringify(message, bigintReplacer) : message
     console.log('Sending message to wallet:', postedMessage)
     window.ue?.sequencewallettransport?.sendmessagetowallet(postedMessage)
   }
