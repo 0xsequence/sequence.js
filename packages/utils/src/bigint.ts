@@ -1,17 +1,5 @@
 import { ethers } from 'ethers'
 
-// Monkey patch toJSON on BigInt to return a string
-
-declare global {
-  interface BigInt {
-    toJSON(): string
-  }
-}
-
-BigInt.prototype.toJSON = function () {
-  return this.toString()
-}
-
 export const MAX_UINT_256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 // ethers implement this method but doesn't exports it
@@ -94,3 +82,21 @@ export const formatUnits = (value: bigint, decimals: number = 18): string => {
 }
 
 export const formatEther = (value: bigint): string => formatUnits(value, 18)
+
+// JSON.stringify doesn't handle BigInts, so we need to replace them with objects
+export const bigintReplacer = (key: string, value: any): any => {
+  if (typeof value === 'bigint') {
+    return { $bigint: value.toString() }
+  }
+
+  return value
+}
+
+// JSON.parse will need to convert our serialized bigints back into BigInt
+export const bigintReviver = (key: string, value: any): any => {
+  if (value !== null && typeof value === 'object' && '$bigint' in value && typeof value.$bigint === 'string') {
+    return BigInt(value.$bigint)
+  }
+
+  return value
+}
