@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/tests",
-  "version": "1.10.11",
+  "version": "2.0.0",
   "description": "test tools for sequence.js",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/tests",
   "source": "src/index.ts",
@@ -12,14 +12,15 @@
     "test": "echo 'no tests for test tools'"
   },
   "dependencies": {
-    "@0xsequence/core": "workspace:*"
+    "@0xsequence/core": "workspace:*",
+    "@0xsequence/utils": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "ethers": "^5.7.2",
+    "ethers": "^6.13.0",
     "web3": "^1.8.1"
   },
   "files": [

@@ -1,7 +1,7 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ethers } from 'ethers'
 
 export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   constructor(private readonly tracker: ConfigTracker & migrator.PresignedMigrationTracker) {}
@@ -56,7 +56,7 @@ export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
   async walletsOfSigner(args: {
     signer: string
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     console.debug('? walletsOfSigner')
     debug(args, '? ')
     return debug(await this.tracker.walletsOfSigner(args), '! ')

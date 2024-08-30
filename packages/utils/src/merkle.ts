@@ -1,4 +1,4 @@
-import { BigNumberish, utils } from 'ethers'
+import { ethers } from 'ethers'
 import { MerkleTree } from './merkletree'
 
 export type ToLeaf<T> = (element: T) => string
@@ -42,8 +42,8 @@ export class MerkleTreeGenerator<T> {
 
 export type SaleItemsElement = {
   address: string
-  tokenId: BigNumberish
+  tokenId: ethers.BigNumberish
 }
 
 export const getSaleItemsLeaf: ToLeaf<SaleItemsElement> = element =>
-  utils.solidityKeccak256(['address', 'uint256'], [element.address.toLowerCase(), element.tokenId])
+  ethers.solidityPackedKeccak256(['address', 'uint256'], [element.address.toLowerCase(), element.tokenId])

@@ -8,6 +8,8 @@ import { ethers } from 'ethers'
 import { SequenceOrchestratorWrapper, Wallet } from '../src/index'
 import { Orchestrator, SignatureOrchestrator, signers as hubsigners } from '@0xsequence/signhub'
 import { LocalRelayer } from '@0xsequence/relayer'
+import { parseEther } from '@0xsequence/utils'
+import { JsonRpcHandler } from '@0xsequence/network'
 
 const { expect } = chai
 
@@ -17,30 +19,33 @@ type Coders = {
 }
 
 describe('Wallet (primitive)', () => {
-  let provider: ethers.providers.JsonRpcProvider
+  let provider: ethers.BrowserProvider
   let signers: ethers.Signer[]
 
   let contexts: Awaited<ReturnType<typeof context.deploySequenceContexts>>
   let relayer: LocalRelayer
 
   before(async () => {
-    provider = new ethers.providers.Web3Provider(hardhat.network.provider as any)
-    signers = new Array(8).fill(0).map((_, i) => provider.getSigner(i))
+    // const rpc = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
+    // provider = new ethers.BrowserProvider(new JsonRpcHandler(rpc))
+    provider = new ethers.BrowserProvider(new JsonRpcHandler(hardhat.network.provider), undefined, { cacheTimeout: -1 })
+    signers = await Promise.all(new Array(8).fill(0).map((_, i) => provider.getSigner(i)))
     contexts = await context.deploySequenceContexts(signers[0])
     relayer = new LocalRelayer(signers[0])
   })
-  ;(
-    [
-      {
-        version: 1,
-        coders: { signature: v1.signature.SignatureCoder, config: v1.config.ConfigCoder }
-      },
-      {
-        version: 2,
-        coders: { signature: v2.signature.SignatureCoder, config: v2.config.ConfigCoder }
-      }
-    ] as { version: number; coders: Coders }[]
-  ).map(({ version, coders }) => {
+
+  const config: { version: keyof typeof contexts; coders: Coders }[] = [
+    {
+      version: 1,
+      coders: { signature: v1.signature.SignatureCoder, config: v1.config.ConfigCoder }
+    },
+    {
+      version: 2,
+      coders: { signature: v2.signature.SignatureCoder, config: v2.config.ConfigCoder }
+    }
+  ]
+
+  config.map(({ version, coders }) => {
     describe(`Using v${version} version`, () => {
       it('Should deploy a new wallet', async () => {
         const signer = ethers.Wallet.createRandom()
@@ -51,12 +56,14 @@ describe('Wallet (primitive)', () => {
           signers: [{ address: signer.address, weight: 1 }]
         })
 
+        const network = await provider.getNetwork()
+
         const wallet = Wallet.newWallet({
           coders: coders,
           context: contexts[version],
           config,
           orchestrator: new Orchestrator([new hubsigners.SignerWrapper(signer)]),
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -67,6 +74,7 @@ describe('Wallet (primitive)', () => {
       })
 
       it('Should deploy children', async () => {
+        const network = await provider.getNetwork()
         const nestedSigner = ethers.Wallet.createRandom()
         const nestedConfig = coders.config.fromSimple({
           threshold: 1,
@@ -79,7 +87,7 @@ describe('Wallet (primitive)', () => {
           context: contexts[version],
           config: nestedConfig,
           orchestrator: nestedOrchestrator,
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -94,7 +102,7 @@ describe('Wallet (primitive)', () => {
           context: contexts[version],
           config,
           orchestrator,
-          chainId: provider.network.chainId,
+          chainId: network.chainId,
           provider,
           relayer
         })
@@ -107,13 +115,13 @@ describe('Wallet (primitive)', () => {
       })
 
       describe('Nonce selection', async () => {
-        let signer: ethers.Wallet
+        let signer: ethers.HDNodeWallet
         let wallet: Wallet
 
-        let getNonce: (response: ethers.providers.TransactionResponse) => { space: ethers.BigNumber; nonce: ethers.BigNumber }
+        let getNonce: (response: ethers.TransactionResponse) => { space: bigint; nonce: bigint }
 
         before(async () => {
-          const mainModule = new ethers.utils.Interface(walletContracts.mainModule.abi)
+          const mainModule = new ethers.Interface(walletContracts.mainModule.abi)
 
           getNonce = ({ data }) => {
             const [_, encoded] = mainModule.decodeFunctionData('execute', data)
@@ -123,6 +131,8 @@ describe('Wallet (primitive)', () => {
 
           signer = ethers.Wallet.createRandom()
 
+          const network = await provider.getNetwork()
+
           wallet = Wallet.newWallet({
             coders,
             context: contexts[version],
@@ -131,15 +141,15 @@ describe('Wallet (primitive)', () => {
               checkpoint: 0,
               signers: [{ weight: 1, address: signer.address }]
             }),
-            chainId: provider.network.chainId,
+            chainId: network.chainId,
             orchestrator: new Orchestrator([signer]),
             provider,
             relayer
           })
 
-          await wallet.deploy({ includeChildren: true, ignoreDeployed: true })
+          await wallet.deploy({ includeChildren: true, ignoreDeployed: true }).then(tx => tx!.wait())
 
-          await (await signers[0].sendTransaction({ to: wallet.address, value: ethers.utils.parseEther('1') })).wait()
+          await signers[0].sendTransaction({ to: wallet.address, value: parseEther('1') }).then(tx => tx.wait())
         })
 
         it('Should use explicitly set nonces', async () => {
@@ -150,8 +160,8 @@ describe('Wallet (primitive)', () => {
 
           let { space, nonce } = getNonce(response)
 
-          expect(space.eq(6492)).to.be.true
-          expect(nonce.eq(0)).to.be.true
+          expect(space).to.equal(6492n)
+          expect(nonce).to.equal(0n)
 
           await response.wait()
 
@@ -164,8 +174,10 @@ describe('Wallet (primitive)', () => {
           space = encoded.space
           nonce = encoded.nonce
 
-          expect(space.eq(6492)).to.be.true
-          expect(nonce.eq(1)).to.be.true
+          await response.wait()
+
+          expect(space).to.equal(6492n)
+          expect(nonce).to.equal(1n)
         })
 
         it('Should select random nonces by default', async () => {
@@ -173,8 +185,8 @@ describe('Wallet (primitive)', () => {
 
           const { space: firstSpace, nonce: firstNonce } = getNonce(response)
 
-          expect(firstSpace.eq(0)).to.be.false
-          expect(firstNonce.eq(0)).to.be.true
+          expect(firstSpace).to.not.equal(0n)
+          expect(firstNonce).to.equal(0n)
 
           // not necessary, parallel execution is ok:
           // await response.wait()
@@ -183,10 +195,10 @@ describe('Wallet (primitive)', () => {
 
           const { space: secondSpace, nonce: secondNonce } = getNonce(response)
 
-          expect(secondSpace.eq(0)).to.be.false
-          expect(secondNonce.eq(0)).to.be.true
+          expect(secondSpace).to.not.equal(0n)
+          expect(secondNonce).to.equal(0n)
 
-          expect(secondSpace.eq(firstSpace)).to.be.false
+          expect(secondSpace).to.not.equal(firstSpace)
         })
 
         it('Should respect the serial option', async () => {
@@ -194,8 +206,8 @@ describe('Wallet (primitive)', () => {
 
           let { space, nonce } = getNonce(response)
 
-          expect(space.eq(0)).to.be.true
-          expect(nonce.eq(0)).to.be.true
+          expect(space).to.equal(0n)
+          expect(nonce).to.equal(0n)
 
           await response.wait()
 
@@ -205,8 +217,10 @@ describe('Wallet (primitive)', () => {
           space = encoded.space
           nonce = encoded.nonce
 
-          expect(space.eq(0)).to.be.true
-          expect(nonce.eq(1)).to.be.true
+          await response.wait()
+
+          expect(space).to.equal(0n)
+          expect(nonce).to.equal(1n)
         })
       })
 
@@ -302,6 +316,8 @@ describe('Wallet (primitive)', () => {
         {
           name: '1/1 signer (nested)',
           signers: async () => {
+            const network = await provider.getNetwork()
+
             const nestedSigner = ethers.Wallet.createRandom()
 
             const nestedConfig = coders.config.fromSimple({
@@ -316,7 +332,7 @@ describe('Wallet (primitive)', () => {
               context: contexts[version],
               config: nestedConfig,
               orchestrator: nestedOrchestrator,
-              chainId: provider.network.chainId,
+              chainId: network.chainId,
               provider,
               relayer
             })
@@ -338,6 +354,7 @@ describe('Wallet (primitive)', () => {
         {
           name: '1/1 signer (undeployed nested)',
           signers: async () => {
+            const network = await provider.getNetwork()
             const nestedSigner = ethers.Wallet.createRandom()
 
             const nestedConfig = coders.config.fromSimple({
@@ -352,7 +369,7 @@ describe('Wallet (primitive)', () => {
               context: contexts[version],
               config: nestedConfig,
               orchestrator: nestedOrchestrator,
-              chainId: provider.network.chainId,
+              chainId: network.chainId,
               provider,
               relayer
             })
@@ -384,12 +401,13 @@ describe('Wallet (primitive)', () => {
           // Skip this as we cannot validate a message with an undeployed nested wallet
           if (name !== '1/1 signer (undeployed nested)') {
             it('Should sign and validate a message', async () => {
+              const network = await provider.getNetwork()
               const wallet = Wallet.newWallet({
                 coders: coders,
                 context: contexts[version],
                 config,
                 orchestrator,
-                chainId: provider.network.chainId,
+                chainId: network.chainId,
                 provider,
                 relayer
               })
@@ -397,12 +415,10 @@ describe('Wallet (primitive)', () => {
               await wallet.deploy()
               expect(await wallet.reader().isDeployed(wallet.address)).to.be.true
 
-              const message = ethers.utils.toUtf8Bytes(
-                `This is a random message: ${ethers.utils.hexlify(ethers.utils.randomBytes(96))}`
-              )
+              const message = ethers.toUtf8Bytes(`This is a random message: ${ethers.hexlify(ethers.randomBytes(96))}`)
 
               const signature = await wallet.signMessage(message)
-              const digest = ethers.utils.keccak256(message)
+              const digest = ethers.keccak256(message)
 
               expect(await wallet.reader().isValidSignature(wallet.address, digest, signature)).to.be.true
             })
@@ -430,12 +446,14 @@ describe('Wallet (primitive)', () => {
               let wallet: Wallet
 
               beforeEach(async () => {
+                const network = await provider.getNetwork()
+
                 wallet = Wallet.newWallet({
                   coders: coders,
                   context: contexts[version],
                   config,
                   orchestrator,
-                  chainId: provider.network.chainId,
+                  chainId: network.chainId,
                   provider,
                   relayer
                 })
@@ -444,15 +462,17 @@ describe('Wallet (primitive)', () => {
               })
 
               it('Should send an empty list of transactions', async () => {
-                await wallet.sendTransaction([])
+                await wallet.sendTransaction([]).then(tx => tx.wait())
               })
 
               it('Should send a transaction with an empty call', async () => {
-                await wallet.sendTransaction([
-                  {
-                    to: ethers.Wallet.createRandom().address
-                  }
-                ])
+                await wallet
+                  .sendTransaction([
+                    {
+                      to: ethers.Wallet.createRandom().address
+                    }
+                  ])
+                  .then(tx => tx.wait())
               })
 
               it('Should build and execute a wallet update transaction', async () => {
@@ -491,98 +511,103 @@ describe('Wallet (primitive)', () => {
 
                 const prevImplentation = await wallet.reader().implementation(wallet.address)
 
-                await wallet.sendTransaction(updateTx.transactions)
+                await wallet.sendTransaction(updateTx.transactions).then(tx => tx.wait())
 
                 expect(await wallet.reader().imageHash(wallet.address)).to.equal(coders.config.imageHashOf(newConfig))
                 expect(await wallet.reader().implementation(wallet.address)).to.not.equal(prevImplentation)
               })
 
               describe('parallel transactions', async () => {
-                let testAccount: ethers.providers.JsonRpcSigner
+                let testAccount: ethers.JsonRpcSigner
                 let testAccountAddress: string
-                let toBalanceBefore: ethers.BigNumber
+                let toBalanceBefore: bigint
 
                 beforeEach(async () => {
-                  testAccount = provider.getSigner(5)
+                  testAccount = await provider.getSigner(5)
                   testAccountAddress = await testAccount.getAddress()
 
-                  const ethAmount = ethers.utils.parseEther('100')
-                  const txResp = await testAccount.sendTransaction({
-                    to: await wallet.getAddress(),
-                    value: ethAmount
-                  })
-                  await provider.getTransactionReceipt(txResp.hash)
+                  const ethAmount = parseEther('100')
+                  const txResp = await testAccount
+                    .sendTransaction({
+                      to: await wallet.getAddress(),
+                      value: ethAmount
+                    })
+                    .then(tx => tx.wait())
                   toBalanceBefore = await provider.getBalance(testAccountAddress)
                 })
 
                 it('Should send an async transaction', async () => {
-                  const ethAmount = ethers.utils.parseEther('1.0')
+                  const ethAmount = parseEther('1.0')
 
-                  const tx: ethers.providers.TransactionRequest = {
+                  const tx: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount
                   }
 
-                  await wallet.sendTransaction(tx)
+                  await wallet.sendTransaction(tx).then(tx => tx.wait())
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
-                  const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq(ethAmount.toString())
+                  const sent = toBalanceAfter - toBalanceBefore
+                  expect(sent).to.be.equal(ethAmount)
                 })
 
                 it('Should send two async transactions at once', async () => {
-                  const ethAmount1 = ethers.utils.parseEther('1.0')
-                  const ethAmount2 = ethers.utils.parseEther('2.0')
-                  const ethAmount3 = ethers.utils.parseEther('5.0')
+                  const ethAmount1 = parseEther('1.0')
+                  const ethAmount2 = parseEther('2.0')
+                  const ethAmount3 = parseEther('5.0')
 
-                  const tx1: ethers.providers.TransactionRequest = {
+                  const tx1: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount1
                   }
 
-                  const tx2: ethers.providers.TransactionRequest = {
+                  const tx2: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount2
                   }
 
-                  const tx3: ethers.providers.TransactionRequest = {
+                  const tx3: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount3
                   }
 
                   // Send txns in parallel, but independently
-                  await Promise.all([wallet.sendTransaction(tx1), wallet.sendTransaction(tx2), wallet.sendTransaction(tx3)])
+                  await Promise.all([
+                    wallet.sendTransaction(tx1).then(tx => tx.wait()),
+                    wallet.sendTransaction(tx2).then(tx => tx.wait()),
+                    wallet.sendTransaction(tx3).then(tx => tx.wait())
+                  ])
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
-                  const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
+                  const sent = toBalanceAfter - toBalanceBefore
+                  expect(sent).to.be.equal(ethAmount1 + ethAmount2 + ethAmount3)
                 })
 
                 it('Should send multiple async transactions in one batch, async', async () => {
-                  const ethAmount1 = ethers.utils.parseEther('1.0')
-                  const ethAmount2 = ethers.utils.parseEther('2.0')
-                  const ethAmount3 = ethers.utils.parseEther('5.0')
+                  const ethAmount1 = parseEther('1.0')
+                  const ethAmount2 = parseEther('2.0')
+                  const ethAmount3 = parseEther('5.0')
 
-                  const tx1: ethers.providers.TransactionRequest = {
+                  const tx1: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount1
                   }
 
-                  const tx2: ethers.providers.TransactionRequest = {
+                  const tx2: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount2
                   }
 
-                  const tx3: ethers.providers.TransactionRequest = {
+                  const tx3: ethers.TransactionRequest = {
                     to: testAccountAddress,
                     value: ethAmount3
                   }
 
                   // Send txns in parallel, but independently
-                  await wallet.sendTransaction([tx1, tx2, tx3])
+                  await wallet.sendTransaction([tx1, tx2, tx3]).then(tx => tx.wait())
 
                   const toBalanceAfter = await provider.getBalance(testAccountAddress)
-                  const sent = toBalanceAfter.sub(toBalanceBefore)
-                  expect(sent.toString()).to.be.eq(ethAmount1.add(ethAmount2).add(ethAmount3).toString())
+                  const sent = toBalanceAfter - toBalanceBefore
+                  expect(sent).to.be.equal(ethAmount1 + ethAmount2 + ethAmount3)
                 })
               })
             })

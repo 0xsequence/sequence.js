@@ -1,5 +1,36 @@
 # @0xsequence/api
 
+## 2.0.0
+
+### Major Changes
+
+- ethers v6
+
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+
 ## 1.10.11
 
 ### Patch Changes

@@ -43,7 +43,7 @@ export function isUnrecoveredSignature(signature: Signature | UnrecoveredSignatu
 }
 
 export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignature {
-  const bytes = ethers.utils.arrayify(signature)
+  const bytes = ethers.getBytes(signature)
 
   const threshold = (bytes[0] << 8) | bytes[1]
   const signers: UnrecoveredMember[] = []
@@ -57,7 +57,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
         signers.push({
           unrecovered: true,
           weight,
-          signature: ethers.utils.hexlify(bytes.slice(i, i + 66)),
+          signature: ethers.hexlify(bytes.slice(i, i + 66)),
           isDynamic: false
         })
         i += 66
@@ -66,13 +66,13 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
       case SignaturePartType.Address:
         signers.push({
           weight,
-          address: ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(i, i + 20)))
+          address: ethers.getAddress(ethers.hexlify(bytes.slice(i, i + 20)))
         })
         i += 20
         break
 
       case SignaturePartType.DynamicSignature:
-        const address = ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(i, i + 20)))
+        const address = ethers.getAddress(ethers.hexlify(bytes.slice(i, i + 20)))
         i += 20
 
         const size = (bytes[i] << 8) | bytes[i + 1]
@@ -81,7 +81,7 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
         signers.push({
           unrecovered: true,
           weight,
-          signature: ethers.utils.hexlify(bytes.slice(i, i + size)),
+          signature: ethers.hexlify(bytes.slice(i, i + size)),
           address,
           isDynamic: true
         })
@@ -97,33 +97,35 @@ export function decodeSignature(signature: ethers.BytesLike): UnrecoveredSignatu
 }
 
 export function encodeSignature(signature: Signature | UnrecoveredSignature | ethers.BytesLike): string {
-  if (ethers.utils.isBytesLike(signature)) return ethers.utils.hexlify(signature)
+  if (ethers.isBytesLike(signature)) {
+    return ethers.hexlify(signature)
+  }
 
   const { signers, threshold } = isUnrecoveredSignature(signature) ? signature : signature.config
 
   const encodedSigners = signers.map(s => {
     if (isAddressMember(s)) {
-      return ethers.utils.solidityPack(['uint8', 'uint8', 'address'], [SignaturePartType.Address, s.weight, s.address])
+      return ethers.solidityPacked(['uint8', 'uint8', 'address'], [SignaturePartType.Address, s.weight, s.address])
     }
 
     if (s.isDynamic) {
-      const bytes = ethers.utils.arrayify(s.signature)
-      return ethers.utils.solidityPack(
+      const bytes = ethers.getBytes(s.signature)
+      return ethers.solidityPacked(
         ['uint8', 'uint8', 'address', 'uint16', 'bytes'],
         [SignaturePartType.DynamicSignature, s.weight, s.address, bytes.length, bytes]
       )
     }
 
-    return ethers.utils.solidityPack(['uint8', 'uint8', 'bytes'], [SignaturePartType.EOASignature, s.weight, s.signature])
+    return ethers.solidityPacked(['uint8', 'uint8', 'bytes'], [SignaturePartType.EOASignature, s.weight, s.signature])
   })
 
-  return ethers.utils.solidityPack(['uint16', ...new Array(encodedSigners.length).fill('bytes')], [threshold, ...encodedSigners])
+  return ethers.solidityPacked(['uint16', ...new Array(encodedSigners.length).fill('bytes')], [threshold, ...encodedSigners])
 }
 
 export async function recoverSignature(
   data: UnrecoveredSignature,
   payload: base.SignedPayload,
-  provider: ethers.providers.Provider
+  provider: ethers.Provider
 ): Promise<Signature> {
   const subdigest = base.subdigestOf(payload)
   const signers = await Promise.all(
@@ -163,21 +165,21 @@ export function encodeSigners(
   signatures: Map<string, base.SignaturePart>,
   subdigests: string[],
   _: ethers.BigNumberish
-): { encoded: string; weight: ethers.BigNumber } {
+): { encoded: string; weight: bigint } {
   if (subdigests.length !== 0) {
     throw new Error('Explicit subdigests not supported on v1')
   }
 
-  let weight = ethers.BigNumber.from(0)
+  let weight = 0n
   const parts = config.signers.map(s => {
     if (!signatures.has(s.address)) {
       return s
     }
 
     const signature = signatures.get(s.address)!
-    const bytes = ethers.utils.arrayify(signature.signature)
+    const bytes = ethers.getBytes(signature.signature)
 
-    weight = weight.add(s.weight)
+    weight += BigInt(s.weight)
 
     if (signature.isDynamic || bytes.length !== 66) {
       return {
@@ -214,7 +216,7 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
 
   supportsNoChainId: true,
 
-  recover: (data: UnrecoveredSignature, payload: base.SignedPayload, provider: ethers.providers.Provider): Promise<Signature> => {
+  recover: (data: UnrecoveredSignature, payload: base.SignedPayload, provider: ethers.Provider): Promise<Signature> => {
     return recoverSignature(data, payload, provider)
   },
 
@@ -225,14 +227,14 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
     chainId: ethers.BigNumberish
   ): {
     encoded: string
-    weight: ethers.BigNumber
+    weight: bigint
   } => {
     return encodeSigners(config, signatures, subdigests, chainId)
   },
 
   hasEnoughSigningPower: (config: WalletConfig, signatures: Map<string, base.SignaturePart>): boolean => {
     const { weight } = SignatureCoder.encodeSigners(config, signatures, [], 0)
-    return weight.gte(config.threshold)
+    return weight >= BigInt(config.threshold)
   },
 
   chainSignatures: (

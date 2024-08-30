@@ -40,7 +40,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     const config = args.nextConfig
     const imageHash = universal.genericCoderFor(config.version).config.imageHashOf(config)
     const message = v2.signature.setImageHashStruct(imageHash)
-    const digest = ethers.utils.keccak256(message)
+    const digest = ethers.keccak256(message)
 
     await this.sessions.saveSignature({
       wallet: args.wallet,
@@ -115,18 +115,18 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
 
   async walletsOfSigner(args: {
     signer: string
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     const { wallets } = await this.sessions.wallets(args)
     return Object.entries(wallets).map(([wallet, { digest, chainID, type, signature }]) => {
       switch (type) {
         case SignatureType.EIP712:
-          signature += ethers.utils.hexlify(commons.signer.SigType.EIP712).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.EIP712).slice(2)
           break
         case SignatureType.EthSign:
-          signature += ethers.utils.hexlify(commons.signer.SigType.ETH_SIGN).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.ETH_SIGN).slice(2)
           break
         case SignatureType.EIP1271:
-          signature += ethers.utils.hexlify(commons.signer.SigType.WALLET_BYTES32).slice(2)
+          signature += ethers.toBeHex(commons.signer.SigType.WALLET_BYTES32).slice(2)
           break
       }
 
@@ -135,7 +135,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
         proof: {
           digest,
           signature,
-          chainId: ethers.BigNumber.from(chainID)
+          chainId: BigInt(chainID)
         }
       }
     })
@@ -339,7 +339,7 @@ function encodeTransaction(transaction: commons.transaction.Transaction): Transa
   return {
     to: transaction.to,
     value: transaction.value !== undefined ? numberString(transaction.value) : undefined,
-    data: transaction.data !== undefined ? ethers.utils.hexlify(transaction.data) : undefined,
+    data: transaction.data !== undefined ? ethers.hexlify(transaction.data) : undefined,
     gasLimit: transaction.gasLimit !== undefined ? numberString(transaction.gasLimit) : undefined,
     delegateCall: transaction.delegateCall,
     revertOnError: transaction.revertOnError
@@ -347,11 +347,11 @@ function encodeTransaction(transaction: commons.transaction.Transaction): Transa
 }
 
 function numberNumber(n: ethers.BigNumberish): number {
-  return ethers.BigNumber.from(n).toNumber()
+  return Number(n)
 }
 
 function numberString(n: ethers.BigNumberish): string {
-  return ethers.BigNumber.from(n).toString()
+  return BigInt(n).toString()
 }
 
 function is404NotFound(error: any): boolean {

@@ -1,4 +1,4 @@
-import { JsonRpcRequest, JsonRpcResponse, NetworkConfig } from '@0xsequence/network'
+import { NetworkConfig } from '@0xsequence/network'
 import {
   ConnectDetails,
   ConnectOptions,
@@ -15,13 +15,11 @@ import {
   isProviderTransport,
   messageToBytes
 } from '.'
-import { commons } from '@0xsequence/core'
+import { commons, VERSION } from '@0xsequence/core'
 import { TypedData } from '@0xsequence/utils'
 import { toExtended } from './extended'
 import { Analytics, setupAnalytics } from './analytics'
 import { ethers } from 'ethers'
-
-import packageJson from '../package.json'
 
 /**
  *  This session class is meant to persist the state of the wallet connection
@@ -166,7 +164,7 @@ export class SequenceClient {
     })
 
     this.transport.on('connect', (response: ConnectDetails) => {
-      const chainIdHex = ethers.utils.hexValue(this.getChainId())
+      const chainIdHex = ethers.toQuantity(this.getChainId())
       this.callbacks.connect?.forEach(cb =>
         cb({
           ...response,
@@ -204,7 +202,7 @@ export class SequenceClient {
     // We don't listen for the transport chainChanged event
     // instead we handle it locally, so we listen for changes in the store
     this.defaultChainId.onDefaultChainIdChanged((chainId: number) => {
-      const chainIdHex = ethers.utils.hexValue(chainId)
+      const chainIdHex = ethers.toQuantity(chainId)
       this.callbacks.chainChanged?.forEach(cb => cb(chainIdHex))
     })
 
@@ -337,7 +335,7 @@ export class SequenceClient {
 
     await this.openWallet(undefined, {
       type: 'connect',
-      options: { ...options, networkId: this.getChainId(), clientVersion: packageJson.version }
+      options: { ...options, networkId: this.getChainId(), clientVersion: VERSION }
     })
 
     const connectDetails = await this.transport.waitUntilConnected().catch((error): ConnectDetails => {
@@ -351,7 +349,7 @@ export class SequenceClient {
     // Normalize chainId into a decimal string
     // TODO: Remove this once wallet-webapp returns chainId as a string
     if (connectDetails.chainId) {
-      connectDetails.chainId = ethers.BigNumber.from(connectDetails.chainId).toString()
+      connectDetails.chainId = BigInt(connectDetails.chainId).toString()
     }
 
     if (connectDetails.connected) {
@@ -381,40 +379,20 @@ export class SequenceClient {
 
   // Higher level API
 
-  // Working with sendAsync is less idiomatic
-  // but transport uses it instead of send, so we wrap it
-  send(request: JsonRpcRequest, chainId?: number): Promise<any> {
+  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
     // Internally when sending requests we use `legacy_sign`
     // to avoid the default EIP6492 behavior overriding an explicit
     // "legacy sign" request, so we map the method here.
     request.method = this.mapSignMethod(request.method)
 
-    return new Promise((resolve, reject) => {
-      this.transport.sendAsync(
-        request,
-        (error, response) => {
-          if (error) {
-            reject(error)
-          } else if (response === undefined) {
-            reject(new Error(`Got undefined response for request: ${request}`))
-          } else if (typeof response === 'object' && response.error) {
-            reject(response.error)
-          } else if (typeof response === 'object' && response.result) {
-            resolve(response.result)
-          } else {
-            reject(new Error(`Got invalid response for request: ${request}`))
-          }
-        },
-        chainId || this.getChainId()
-      )
-    })
+    return this.transport.request(request)
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {
     const connectedSession = this.session.connectedSession()
 
     if (pull) {
-      connectedSession.networks = await this.send({ method: 'sequence_getNetworks' })
+      connectedSession.networks = await this.request({ method: 'sequence_getNetworks' })
       this.session.setSession(connectedSession)
     }
 
@@ -474,11 +452,14 @@ export class SequenceClient {
 
     this.analytics?.track({ event: 'SIGN_MESSAGE_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
-    // Serialize a BytesLike or string message into a hex string before sending
-    message = ethers.utils.hexlify(messageToBytes(message))
+    message = ethers.hexlify(messageToBytes(message))
 
     // Address is ignored by the wallet webapp
-    return this.send({ method, params: [message, this.getAddress()] }, options?.chainId)
+    return this.request({
+      method,
+      params: [message, this.getAddress()],
+      chainId: options?.chainId
+    })
   }
 
   async signTypedData(typedData: TypedData, options?: OptionalEIP6492 & OptionalChainId): Promise<string> {
@@ -486,7 +467,7 @@ export class SequenceClient {
 
     // TODO: Stop using ethers for this, this is the only place where we use it
     // and it makes the client depend on ethers.
-    const encoded = ethers.utils._TypedDataEncoder.getPayload(typedData.domain, typedData.types, typedData.message)
+    const encoded = ethers.TypedDataEncoder.getPayload(typedData.domain, typedData.types, typedData.message)
 
     // The sign typed data will use one of the following chainIds, in order:
     // - The one provided in the options
@@ -495,36 +476,33 @@ export class SequenceClient {
 
     this.analytics?.track({ event: 'SIGN_TYPED_DATA_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
-    return this.send(
-      { method, params: [this.getAddress(), encoded] },
-      options?.chainId ||
-        (typedData.domain.chainId && ethers.BigNumber.from(typedData.domain.chainId).toNumber()) ||
-        this.getChainId()
-    )
+    return this.request({
+      method,
+      params: [this.getAddress(), encoded],
+      chainId: options?.chainId || (typedData.domain.chainId && Number(typedData.domain.chainId)) || this.getChainId()
+    })
   }
 
-  async sendTransaction(
-    tx: ethers.providers.TransactionRequest[] | ethers.providers.TransactionRequest,
-    options?: OptionalChainId
-  ): Promise<string> {
+  async sendTransaction(tx: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainId): Promise<string> {
     const sequenceTxs = Array.isArray(tx) ? tx : [tx]
     const extendedTxs = toExtended(sequenceTxs)
 
     this.analytics?.track({ event: 'SEND_TRANSACTION_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
 
-    return this.send({ method: 'eth_sendTransaction', params: [extendedTxs] }, options?.chainId)
+    return this.request({ method: 'eth_sendTransaction', params: [extendedTxs], chainId: options?.chainId })
   }
 
   async getWalletContext(): Promise<commons.context.VersionedContext> {
-    return this.send({ method: 'sequence_getWalletContext' })
+    return this.request({ method: 'sequence_getWalletContext' })
   }
 
   async getOnchainWalletConfig(options?: OptionalChainId): Promise<commons.config.Config> {
     // NOTICE: sequence_getWalletConfig sends the chainId as a param
-    const res = await this.send(
-      { method: 'sequence_getWalletConfig', params: [options?.chainId || this.getChainId()] },
-      options?.chainId
-    )
+    const res = await this.request({
+      method: 'sequence_getWalletConfig',
+      params: [options?.chainId || this.getChainId()],
+      chainId: options?.chainId
+    })
     return Array.isArray(res) ? res[0] : res
   }
 

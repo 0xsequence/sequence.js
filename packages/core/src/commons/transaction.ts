@@ -1,12 +1,13 @@
-import { BigNumberish, BytesLike, ethers } from 'ethers'
+import { ethers } from 'ethers'
+
 import { subdigestOf } from './signature'
 import { walletContracts } from '@0xsequence/abi'
 
 export interface Transaction {
   to: string
-  value?: BigNumberish
-  data?: BytesLike
-  gasLimit?: BigNumberish
+  value?: ethers.BigNumberish
+  data?: string
+  gasLimit?: ethers.BigNumberish
   delegateCall?: boolean
   revertOnError?: boolean
 }
@@ -23,30 +24,26 @@ export interface SimulatedTransaction extends Transaction {
 export interface TransactionEncoded {
   delegateCall: boolean
   revertOnError: boolean
-  gasLimit: BigNumberish
+  gasLimit: ethers.BigNumberish
   target: string
-  value: BigNumberish
-  data: BytesLike
+  value: ethers.BigNumberish
+  data: string
 }
 
-export type Transactionish =
-  | ethers.providers.TransactionRequest
-  | ethers.providers.TransactionRequest[]
-  | Transaction
-  | Transaction[]
+export type Transactionish = ethers.TransactionRequest | ethers.TransactionRequest[] | Transaction | Transaction[]
 
-export interface TransactionResponse<R = any> extends ethers.providers.TransactionResponse {
+export interface TransactionResponse<R = any> extends ethers.TransactionResponse {
   receipt?: R
 }
 
 export type TransactionBundle = {
   entrypoint: string
   transactions: Transaction[]
-  nonce?: BigNumberish
+  nonce?: ethers.BigNumberish
 }
 
 export type IntendedTransactionBundle = TransactionBundle & {
-  chainId: BigNumberish
+  chainId: ethers.BigNumberish
   intent: {
     id: string
     wallet: string
@@ -55,7 +52,7 @@ export type IntendedTransactionBundle = TransactionBundle & {
 
 export type SignedTransactionBundle = IntendedTransactionBundle & {
   signature: string
-  nonce: BigNumberish
+  nonce: ethers.BigNumberish
 }
 
 export type RelayReadyTransactionBundle = SignedTransactionBundle | IntendedTransactionBundle
@@ -72,7 +69,7 @@ export const MetaTransactionsType = `tuple(
 export function intendTransactionBundle(
   bundle: TransactionBundle,
   wallet: string,
-  chainId: BigNumberish,
+  chainId: ethers.BigNumberish,
   id: string
 ): IntendedTransactionBundle {
   return {
@@ -83,83 +80,89 @@ export function intendTransactionBundle(
 }
 
 export function intendedTransactionID(bundle: IntendedTransactionBundle) {
-  return ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
+  return ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
       ['address', 'uint256', 'bytes32'],
       [bundle.intent.wallet, bundle.chainId, bundle.intent.id]
     )
   )
 }
 
-export function unpackMetaTransactionsData(data: BytesLike): [ethers.BigNumber, TransactionEncoded[]] {
-  const res = ethers.utils.defaultAbiCoder.decode(['uint256', MetaTransactionsType], data)
+export function unpackMetaTransactionsData(data: ethers.BytesLike): [bigint, TransactionEncoded[]] {
+  const res = ethers.AbiCoder.defaultAbiCoder().decode(['uint256', MetaTransactionsType], data)
   if (res.length !== 2 || !res[0] || !res[1]) throw new Error('Invalid meta transaction data')
   return [res[0], res[1]]
 }
 
 export function packMetaTransactionsData(nonce: ethers.BigNumberish, txs: Transaction[]): string {
-  return ethers.utils.defaultAbiCoder.encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
+  return ethers.AbiCoder.defaultAbiCoder().encode(['uint256', MetaTransactionsType], [nonce, sequenceTxAbiEncode(txs)])
 }
 
-export function digestOfTransactions(nonce: BigNumberish, txs: Transaction[]) {
-  return ethers.utils.keccak256(packMetaTransactionsData(nonce, txs))
+export function digestOfTransactions(nonce: ethers.BigNumberish, txs: Transaction[]) {
+  return ethers.keccak256(packMetaTransactionsData(nonce, txs))
 }
 
 export function subdigestOfTransactions(
   address: string,
-  chainId: BigNumberish,
+  chainId: ethers.BigNumberish,
   nonce: ethers.BigNumberish,
   txs: Transaction[]
 ): string {
   return subdigestOf({ address, chainId, digest: digestOfTransactions(nonce, txs) })
 }
 
-export function subdigestOfGuestModuleTransactions(guestModule: string, chainId: BigNumberish, txs: Transaction[]): string {
+export function subdigestOfGuestModuleTransactions(
+  guestModule: string,
+  chainId: ethers.BigNumberish,
+  txs: Transaction[]
+): string {
   return subdigestOf({
     address: guestModule,
     chainId,
-    digest: ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(['string', MetaTransactionsType], ['guest:', sequenceTxAbiEncode(txs)])
+    digest: ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(['string', MetaTransactionsType], ['guest:', sequenceTxAbiEncode(txs)])
     )
   })
 }
 
 export function toSequenceTransactions(
   wallet: string,
-  txs: (Transaction | ethers.providers.TransactionRequest)[]
+  txs: ethers.TransactionRequest[]
 ): { nonce?: ethers.BigNumberish; transaction: Transaction }[] {
   return txs.map(tx => toSequenceTransaction(wallet, tx))
 }
 
 export function toSequenceTransaction(
   wallet: string,
-  tx: ethers.providers.TransactionRequest
+  tx: ethers.TransactionRequest
 ): { nonce?: ethers.BigNumberish; transaction: Transaction } {
-  if (tx.to && tx.to !== ethers.constants.AddressZero) {
+  if (tx.to && tx.to !== ethers.ZeroAddress) {
     return {
-      nonce: tx.nonce,
+      nonce: !isNullish(tx.nonce) ? BigInt(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
-        gasLimit: tx.gasLimit || 0,
-        to: tx.to,
-        value: tx.value || 0,
+        gasLimit: !isNullish(tx.gasLimit) ? BigInt(tx.gasLimit) : undefined,
+        // XXX: `tx.to` could also be ethers Addressable type which returns a getAddress promise
+        // Keeping this as is for now so we don't have to change everything to async
+        to: tx.to as string,
+        value: BigInt(tx.value || 0),
         data: tx.data || '0x'
       }
     }
   } else {
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
-    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract'), [tx.data])
+    const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
+    const data = walletInterface.encodeFunctionData(walletInterface.getFunction('createContract')!, [tx.data])
 
     return {
-      nonce: tx.nonce,
+      nonce: typeof tx.nonce === 'number' ? BigInt(tx.nonce) : undefined,
       transaction: {
         delegateCall: false,
         revertOnError: false,
-        gasLimit: tx.gasLimit,
+        gasLimit: !isNullish(tx.gasLimit) ? BigInt(tx.gasLimit) : undefined,
         to: wallet,
-        value: tx.value || 0,
-        data: data
+        value: BigInt(tx.value || 0),
+        data
       }
     }
   }
@@ -175,49 +178,49 @@ export function hasSequenceTransactions(txs: any[]): txs is Transaction[] {
 
 // TODO: We may be able to remove this if we make Transaction === TransactionEncoded
 export function sequenceTxAbiEncode(txs: Transaction[]): TransactionEncoded[] {
-  return txs.map(t => ({
-    delegateCall: t.delegateCall === true,
-    revertOnError: t.revertOnError === true,
-    gasLimit: t.gasLimit !== undefined ? t.gasLimit : ethers.constants.Zero,
-    target: t.to ?? ethers.constants.AddressZero,
-    value: t.value !== undefined ? t.value : ethers.constants.Zero,
-    data: t.data !== undefined ? t.data : []
+  return txs.map(tx => ({
+    delegateCall: tx.delegateCall === true,
+    revertOnError: tx.revertOnError === true,
+    gasLimit: !isNullish(tx.gasLimit) ? BigInt(tx.gasLimit) : 0n,
+    target: tx.to ?? ethers.ZeroAddress,
+    value: !isNullish(tx.value) ? tx.value : 0n,
+    data: tx.data || '0x'
   }))
 }
 
 export function fromTxAbiEncode(txs: TransactionEncoded[]): Transaction[] {
-  return txs.map(t => ({
-    delegateCall: t.delegateCall,
-    revertOnError: t.revertOnError,
-    gasLimit: t.gasLimit,
-    to: t.target,
-    value: t.value,
-    data: t.data
+  return txs.map(tx => ({
+    delegateCall: tx.delegateCall,
+    revertOnError: tx.revertOnError,
+    gasLimit: tx.gasLimit,
+    to: tx.target,
+    value: tx.value,
+    data: tx.data
   }))
 }
 
-// export function appendNonce(txs: Transaction[], nonce: BigNumberish): Transaction[] {
+// export function appendNonce(txs: Transaction[], nonce: ethers.BigNumberish): Transaction[] {
 //   return txs.map((t: Transaction) => ({ ...t, nonce }))
 // }
 
-export function encodeNonce(space: BigNumberish, nonce: BigNumberish): ethers.BigNumber {
-  const bspace = ethers.BigNumber.from(space)
-  const bnonce = ethers.BigNumber.from(nonce)
+export function encodeNonce(space: ethers.BigNumberish, nonce: ethers.BigNumberish): bigint {
+  const bspace = BigInt(space)
+  const bnonce = BigInt(nonce)
 
-  const shl = ethers.constants.Two.pow(ethers.BigNumber.from(96))
+  const shl = 2n ** 96n
 
-  if (!bnonce.div(shl).eq(ethers.constants.Zero)) {
+  if (bnonce / shl !== 0n) {
     throw new Error('Space already encoded')
   }
 
-  return bnonce.add(bspace.mul(shl))
+  return bnonce + bspace * shl
 }
 
-export function decodeNonce(nonce: BigNumberish): [ethers.BigNumber, ethers.BigNumber] {
-  const bnonce = ethers.BigNumber.from(nonce)
-  const shr = ethers.constants.Two.pow(ethers.BigNumber.from(96))
+export function decodeNonce(nonce: ethers.BigNumberish): [bigint, bigint] {
+  const bnonce = BigInt(nonce)
+  const shr = 2n ** 96n
 
-  return [bnonce.div(shr), bnonce.mod(shr)]
+  return [bnonce / shr, bnonce % shr]
 }
 
 export function fromTransactionish(wallet: string, transaction: Transactionish): Transaction[] {
@@ -255,9 +258,9 @@ export function isSignedTransactionBundle(cand: any): cand is SignedTransactionB
 }
 
 export function encodeBundleExecData(bundle: TransactionBundle): string {
-  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
   return walletInterface.encodeFunctionData(
-    walletInterface.getFunction('execute'),
+    walletInterface.getFunction('execute')!,
     isSignedTransactionBundle(bundle)
       ? [
           // Signed transaction bundle has all 3 parameters
@@ -269,7 +272,7 @@ export function encodeBundleExecData(bundle: TransactionBundle): string {
           // Unsigned bundle may be a GuestModule call, so signature and nonce are missing
           sequenceTxAbiEncode(bundle.transactions),
           0,
-          []
+          new Uint8Array([])
         ]
   )
 }
@@ -289,15 +292,15 @@ export const selfExecuteAbi = `tuple(
 export const unwind = (wallet: string, transactions: Transaction[]): Transaction[] => {
   const unwound: Transaction[] = []
 
-  const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+  const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
 
   for (const tx of transactions) {
-    const txData = ethers.utils.arrayify(tx.data || '0x')
+    const txData = ethers.getBytes(tx.data || '0x')
 
-    if (tx.to === wallet && ethers.utils.hexlify(txData.slice(0, 4)) === selfExecuteSelector) {
+    if (tx.to === wallet && ethers.hexlify(txData.slice(0, 4)) === selfExecuteSelector) {
       // Decode as selfExecute call
       const data = txData.slice(4)
-      const decoded = ethers.utils.defaultAbiCoder.decode([selfExecuteAbi], data)[0]
+      const decoded = ethers.AbiCoder.defaultAbiCoder().decode([selfExecuteAbi], data)[0]
       unwound.push(
         ...unwind(
           tx.to,
@@ -306,10 +309,10 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
       )
     } else {
       try {
-        const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0]
+        const innerTransactions = walletInterface.decodeFunctionData('execute', txData)[0] as ethers.Result
         const unwoundTransactions = unwind(
           wallet,
-          innerTransactions.map((tx: TransactionEncoded) => ({ ...tx, to: tx.target }))
+          innerTransactions.map((tx: ethers.Result) => ({ ...tx.toObject(), to: tx.target }))
         )
         unwound.push(...unwoundTransactions)
       } catch {
@@ -320,3 +323,5 @@ export const unwind = (wallet: string, transactions: Transaction[]): Transaction
 
   return unwound
 }
+
+const isNullish = <T>(value: T | null | undefined): value is null | undefined => value === null || value === void 0

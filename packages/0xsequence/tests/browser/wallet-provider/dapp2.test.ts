@@ -1,6 +1,6 @@
 import { DefaultProviderConfig, MemoryItemStore, SequenceClient, SequenceProvider } from '@0xsequence/provider'
 import { configureLogger } from '@0xsequence/utils'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { test, assert } from '../../utils/assert'
 
 configureLogger({ logLevel: 'DEBUG', silence: false })
@@ -14,7 +14,7 @@ export const tests = async () => {
     walletAppURL: 'http://localhost:9999/mock-wallet/mock-wallet.test.html'
   }
 
-  const hardhatProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+  const hardhatProvider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
 
   const client = new SequenceClient(transportsConfig, new MemoryItemStore(), { defaultChainId: 31338 })
   const provider = new SequenceProvider(client, chainId => {
@@ -23,7 +23,7 @@ export const tests = async () => {
     }
 
     if (chainId === 31338) {
-      return new ethers.providers.JsonRpcProvider('http://localhost:9545')
+      return new ethers.JsonRpcProvider('http://localhost:9545', undefined, { cacheTimeout: -1 })
     }
 
     throw new Error(`No provider for chainId ${chainId}`)
@@ -57,7 +57,7 @@ export const tests = async () => {
     assert.equal(provider.getChainId(), 31338, 'provider chainId is 31338')
 
     const network = await provider.getNetwork()
-    assert.equal(network.chainId, 31338, 'chain id match')
+    assert.equal(network.chainId, 31338n, 'chain id match')
   })
 
   await test('getNetworks()', async () => {
@@ -88,14 +88,14 @@ export const tests = async () => {
     const address = provider.getAddress()
     const chainId = provider.getChainId()
 
-    const domain: TypedDataDomain = {
+    const domain: ethers.TypedDataDomain = {
       name: 'Ether Mail',
       version: '1',
       chainId: chainId,
       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
     }
 
-    const types: { [key: string]: TypedDataField[] } = {
+    const types: { [key: string]: ethers.TypedDataField[] } = {
       Person: [
         { name: 'name', type: 'string' },
         { name: 'wallet', type: 'address' }

@@ -1,4 +1,4 @@
-import { OpenWalletIntent, ProviderMessage, InitState, EventType, WindowSessionParams } from '../../types'
+import { OpenWalletIntent, ProviderMessage, InitState, WindowSessionParams } from '../../types'
 import { BaseProviderTransport } from '../base-provider-transport'
 import { logger, base64EncodeObject } from '@0xsequence/utils'
 import { isBrowserExtension, isUnityPlugin } from '../../utils'

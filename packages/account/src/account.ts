@@ -1,14 +1,13 @@
 import { walletContracts } from '@0xsequence/abi'
 import { commons, universal } from '@0xsequence/core'
-import { WalletSignRequestMetadata } from '@0xsequence/core/src/commons'
 import { migrator, defaults, version } from '@0xsequence/migration'
 import { ChainId, NetworkConfig } from '@0xsequence/network'
 import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
 import { tracker } from '@0xsequence/sessions'
 import { SignatureOrchestrator } from '@0xsequence/signhub'
-import { encodeTypedDataDigest, getEthersConnectionInfo } from '@0xsequence/utils'
+import { encodeTypedDataDigest, getFetchRequest } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
-import { ethers, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { AccountSigner, AccountSignerOptions } from './signer'
 
 export type AccountStatus = {
@@ -82,11 +81,11 @@ class Chain0Reader implements commons.reader.Reader {
     return undefined
   }
 
-  async nonce(_wallet: string, _space: ethers.BigNumberish): Promise<ethers.BigNumberish> {
-    return ethers.constants.Zero
+  async nonce(_wallet: string, _space: ethers.BigNumberish): Promise<bigint> {
+    return 0n
   }
 
-  async isValidSignature(_wallet: string, _digest: ethers.utils.BytesLike, _signature: ethers.utils.BytesLike): Promise<boolean> {
+  async isValidSignature(_wallet: string, _digest: ethers.BytesLike, _signature: ethers.BytesLike): Promise<boolean> {
     throw new Error('Method not supported.')
   }
 }
@@ -108,7 +107,7 @@ export class Account {
   private projectAccessKey?: string
 
   constructor(options: AccountOptions) {
-    this.address = ethers.utils.getAddress(options.address)
+    this.address = ethers.getAddress(options.address)
 
     this.contexts = options.contexts
     this.tracker = options.tracker
@@ -178,26 +177,32 @@ export class Account {
   }
 
   network(chainId: ethers.BigNumberish): NetworkConfig {
-    const tcid = ethers.BigNumber.from(chainId)
-    const found = this.networks.find(n => tcid.eq(n.chainId))
+    const tcid = BigInt(chainId)
+    const found = this.networks.find(n => tcid === BigInt(n.chainId))
     if (!found) throw new Error(`Network not found for chainId ${chainId}`)
     return found
   }
 
-  providerFor(chainId: ethers.BigNumberish): ethers.providers.Provider {
+  providerFor(chainId: ethers.BigNumberish): ethers.Provider {
     const found = this.network(chainId)
-    if (!found.provider && !found.rpcUrl) throw new Error(`Provider not found for chainId ${chainId}`)
+    if (!found.provider && !found.rpcUrl) {
+      throw new Error(`Provider not found for chainId ${chainId}`)
+    }
+
+    const network = new ethers.Network(found.name, found.chainId)
+
     return (
       found.provider ||
-      new ethers.providers.StaticJsonRpcProvider(getEthersConnectionInfo(found.rpcUrl, this.projectAccessKey, this.jwt), {
-        name: '',
-        chainId: ethers.BigNumber.from(chainId).toNumber()
+      new ethers.JsonRpcProvider(getFetchRequest(found.rpcUrl, this.projectAccessKey, this.jwt), network, {
+        staticNetwork: network
       })
     )
   }
 
   reader(chainId: ethers.BigNumberish): commons.reader.Reader {
-    if (ethers.constants.Zero.eq(chainId)) return new Chain0Reader()
+    if (BigInt(chainId) === 0n) {
+      return new Chain0Reader()
+    }
 
     // TODO: Networks should be able to provide a reader directly
     // and we should default to the on-chain reader
@@ -241,7 +246,7 @@ export class Account {
     config: commons.config.Config,
     coders: typeof this.coders
   ): Wallet {
-    const isNetworkZero = ethers.constants.Zero.eq(chainId)
+    const isNetworkZero = BigInt(chainId) === 0n
     return new Wallet({
       config,
       context,
@@ -486,7 +491,7 @@ export class Account {
   }
 
   async publishWitness(): Promise<void> {
-    const digest = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`This is a Sequence account woo! ${Date.now()}`))
+    const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
     const signature = await this.signDigest(digest, 0, false)
     const decoded = this.coders.signature.decode(signature)
     const signatures = this.coders.signature.signaturesOfDecoded(decoded)
@@ -506,7 +511,7 @@ export class Account {
     // So we ignore the state on "chain zero" and instead use one of the states of the networks
     // wallet-webapp should ensure the wallet is as migrated as possible, trying to mimic
     // the behaviour of being migrated on all chains
-    const chainRef = ethers.constants.Zero.eq(chainId) ? this.networks[0].chainId : chainId
+    const chainRef = BigInt(chainId) === 0n ? this.networks[0].chainId : chainId
     const status = await this.status(chainRef)
     this.mustBeFullyMigrated(status)
 
@@ -541,8 +546,12 @@ export class Account {
   }
 
   buildOnChainSignature(digest: ethers.BytesLike): { bundle: commons.transaction.TransactionBundle; signature: string } {
-    const subdigest = commons.signature.subdigestOf({ digest: ethers.utils.hexlify(digest), chainId: 0, address: this.address })
-    const hexSubdigest = ethers.utils.hexlify(subdigest)
+    const subdigest = commons.signature.subdigestOf({
+      digest: ethers.hexlify(digest),
+      chainId: 0,
+      address: this.address
+    })
+    const hexSubdigest = ethers.hexlify(subdigest)
     const config = this.coders.config.fromSimple({
       // Threshold *only* needs to be > 0, this is not a magic number
       // we only use 2 ** 15 because it may lead to lower gas costs in some chains
@@ -552,7 +561,7 @@ export class Account {
       subdigests: [hexSubdigest]
     })
 
-    const walletInterface = new ethers.utils.Interface(walletContracts.mainModule.abi)
+    const walletInterface = new ethers.Interface(walletContracts.mainModule.abi)
     const bundle: commons.transaction.TransactionBundle = {
       entrypoint: this.address,
       transactions: [
@@ -590,12 +599,12 @@ export class Account {
       throw new Error('Cannot build EIP-6492 signature without bootstrap transactions')
     }
 
-    const encoded = ethers.utils.defaultAbiCoder.encode(
+    const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
       ['address', 'bytes', 'bytes'],
       [bootstrapBundle.entrypoint, commons.transaction.encodeBundleExecData(bootstrapBundle), signature]
     )
 
-    return ethers.utils.solidityPack(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
+    return ethers.solidityPacked(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
   }
 
   async editConfig(changes: {
@@ -606,7 +615,7 @@ export class Account {
     const currentConfig = await this.status(0).then(s => s.config)
     const newConfig = this.coders.config.editConfig(currentConfig, {
       ...changes,
-      checkpoint: this.coders.config.checkpointOf(currentConfig).add(1)
+      checkpoint: this.coders.config.checkpointOf(currentConfig) + 1n
     })
 
     return this.updateConfig(newConfig)
@@ -671,7 +680,6 @@ export class Account {
 
       transactions.push(...deployTransaction.transactions)
     }
-    const len = transactions.length
 
     // Get pending migrations
     transactions.push(
@@ -718,7 +726,7 @@ export class Account {
     chainId: ethers.BigNumberish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
-    return this.signDigest(ethers.utils.keccak256(message), chainId, true, cantValidateBehavior)
+    return this.signDigest(ethers.keccak256(message), chainId, true, cantValidateBehavior)
   }
 
   async signTransactions(
@@ -735,7 +743,7 @@ export class Account {
 
     const wallet = this.walletForStatus(chainId, status)
 
-    const metadata: WalletSignRequestMetadata = {
+    const metadata: commons.WalletSignRequestMetadata = {
       address: this.address,
       digest: '', // Set in wallet.signTransactions
       chainId,
@@ -840,7 +848,7 @@ export class Account {
     quote?: FeeQuote,
     pstatus?: AccountStatus,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.TransactionResponse> {
     if (!Array.isArray(signedBundle)) {
       return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback)
     }
@@ -887,7 +895,7 @@ export class Account {
     const stubSignature = wallet.coders.config.buildStubSignature(wallet.config, stubSignatureOverrides)
 
     // Now we can decorate the transactions as always, but we need to manually build the signed bundle
-    const intentId = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+    const intentId = ethers.hexlify(ethers.randomBytes(32))
     const signedBundle: commons.transaction.SignedTransactionBundle = {
       chainId,
       intent: {
@@ -938,7 +946,7 @@ export class Account {
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
     }
-  ): Promise<ethers.providers.TransactionResponse | undefined> {
+  ): Promise<ethers.TransactionResponse | undefined> {
     const status = await this.status(chainId)
 
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
@@ -957,8 +965,8 @@ export class Account {
   }
 
   async signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
+    domain: ethers.TypedDataDomain,
+    types: Record<string, Array<ethers.TypedDataField>>,
     message: Record<string, any>,
     chainId: ethers.BigNumberish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'

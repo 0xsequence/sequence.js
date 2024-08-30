@@ -1,10 +1,10 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { CommonAuthArgs, ExtendedSequenceConfig, SequenceWaaS, SequenceConfig, networks, store } from '@0xsequence/waas'
 
-export class SequenceSigner extends ethers.Signer {
+export class SequenceSigner extends ethers.AbstractSigner {
   constructor(
     private readonly sequence: SequenceWaaS,
-    readonly provider?: ethers.providers.BaseProvider
+    readonly provider: ethers.Provider | null = null
   ) {
     super()
   }
@@ -12,7 +12,7 @@ export class SequenceSigner extends ethers.Signer {
   public static fromConfig(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     store?: store.Store,
-    provider?: ethers.providers.BaseProvider
+    provider: ethers.Provider | null = null
   ): SequenceSigner {
     return new SequenceSigner(new SequenceWaaS(config, store), provider)
   }
@@ -33,12 +33,12 @@ export class SequenceSigner extends ethers.Signer {
 
   async getSimpleNetwork(): Promise<networks.SimpleNetwork | undefined> {
     if (this.provider) {
-      return this.provider.getNetwork().then(n => n.chainId)
+      return this.provider.getNetwork().then(n => Number(n.chainId))
     }
     return undefined
   }
 
-  async signMessage(message: ethers.utils.Bytes | string, authArgs?: CommonAuthArgs): Promise<string> {
+  async signMessage(message: ethers.BytesLike, authArgs?: CommonAuthArgs): Promise<string> {
     await this._ensureNetworkValid(false)
 
     const args = {
@@ -49,19 +49,24 @@ export class SequenceSigner extends ethers.Signer {
     return this.sequence.signMessage(args).then(response => response.data.signature)
   }
 
-  async signTransaction(_transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
+  signTypedData(
+    domain: ethers.TypedDataDomain,
+    types: Record<string, ethers.TypedDataField[]>,
+    value: Record<string, any>
+  ): Promise<string> {
+    throw new Error('SequenceSigner does not support signTypedData')
+  }
+
+  async signTransaction(_transaction: ethers.TransactionRequest): Promise<string> {
     // Not supported. Use sendTransaction or signMessage instead.
     throw new Error('SequenceSigner does not support signTransaction')
   }
 
-  async sendTransaction(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    authArgs?: CommonAuthArgs
-  ): Promise<ethers.providers.TransactionResponse> {
+  async sendTransaction(transaction: ethers.TransactionRequest, authArgs?: CommonAuthArgs): Promise<ethers.TransactionResponse> {
     await this._ensureNetworkValid(true)
 
     const args = {
-      transactions: [await ethers.utils.resolveProperties(transaction)],
+      transactions: [await ethers.resolveProperties(transaction)],
       network: await this.getSimpleNetwork(),
       ...authArgs
     }
@@ -76,59 +81,59 @@ export class SequenceSigner extends ethers.Signer {
       // Success
       const { txHash } = response.data
       // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
-      return this.provider!!.getTransaction(txHash)
+      return this.provider!.getTransaction(txHash) as Promise<ethers.TransactionResponse>
     }
 
     // Impossible
     throw new Error('Unknown return value')
   }
 
-  connect(provider: ethers.providers.BaseProvider, sequence?: SequenceWaaS): SequenceSigner {
+  connect(provider: ethers.Provider, sequence?: SequenceWaaS) {
     return new SequenceSigner(sequence ?? this.sequence, provider)
   }
 
   //
   // Provider required
   //
-  async getBalance(blockTag?: ethers.providers.BlockTag): Promise<BigNumber> {
-    await this._ensureNetworkValid(true)
-    return super.getBalance(blockTag)
-  }
 
-  async getTransactionCount(_blockTag?: ethers.providers.BlockTag): Promise<number> {
+  async getTransactionCount(_blockTag?: ethers.BlockTag): Promise<number> {
     throw new Error('SequenceSigner does not support getTransactionCount')
   }
 
-  async estimateGas(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<BigNumber> {
+  async estimateGas(transaction: ethers.TransactionRequest): Promise<bigint> {
     await this._ensureNetworkValid(true)
     //FIXME This won't be accurate
     return super.estimateGas(transaction)
   }
 
-  async call(
-    transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
-    blockTag?: ethers.providers.BlockTag
-  ): Promise<string> {
+  async call(transaction: ethers.TransactionRequest, blockTag?: ethers.BlockTag): Promise<string> {
     await this._ensureNetworkValid(true)
-    return super.call(transaction, blockTag)
+    return super.call({ ...transaction, blockTag })
   }
 
-  async getChainId(): Promise<number> {
-    await this._ensureNetworkValid(true) // Prevent mismatched configurations
-    return super.getChainId()
-  }
+  // XXX: These methods are not supported by AbstractProvider
 
-  async getGasPrice(): Promise<BigNumber> {
-    await this._ensureNetworkValid(true)
-    return super.getGasPrice()
-  }
+  // async getBalance(blockTag?: ethers.BlockTag): Promise<bigint> {
+  //   await this._ensureNetworkValid(true)
+  //   return super.getBalance(blockTag)
+  // }
 
-  async getFeeData(): Promise<ethers.providers.FeeData> {
-    await this._ensureNetworkValid(true)
-    return super.getFeeData()
-  }
+  // async getChainId(): Promise<number> {
+  //   await this._ensureNetworkValid(true) // Prevent mismatched configurations
+  //   return super.getChainId()
+  // }
 
-  async resolveName(name: string): Promise<string> {
+  // async getGasPrice(): Promise<bigint> {
+  //   await this._ensureNetworkValid(true)
+  //   return super.getGasPrice()
+  // }
+
+  // async getFeeData(): Promise<ethers.FeeData> {
+  //   await this._ensureNetworkValid(true)
+  //   return super.getFeeData()
+  // }
+
+  async resolveName(name: string): Promise<string | null> {
     await this._ensureNetworkValid(true)
     return super.resolveName(name)
   }

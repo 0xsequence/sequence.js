@@ -13,7 +13,7 @@ export class PromiseCache {
     task: (...args: S) => Promise<T>,
     ...args: S
   ): Promise<T> {
-    key = `${key}:${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(JSON.stringify(args, deterministically)))}`
+    key = `${key}:${ethers.id(JSON.stringify(args, deterministically))}`
 
     let entry = this.cache.get(key)
 
@@ -52,6 +52,8 @@ type Entry = {
 function deterministically(_key: string, value: any): any {
   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
     return Object.fromEntries(Object.entries(value).sort())
+  } else if (typeof value === 'bigint') {
+    return value.toString()
   }
 
   return value

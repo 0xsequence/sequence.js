@@ -1,5 +1,65 @@
 # @0xsequence/network
 
+## 2.0.0
+
+### Major Changes
+
+- ethers v6
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@2.0.0
+  - @0xsequence/indexer@2.0.0
+  - @0xsequence/relayer@2.0.0
+  - @0xsequence/utils@2.0.0
+
+## 1.10.15
+
+### Patch Changes
+
+- utils: extractProjectIdFromAccessKey
+- Updated dependencies
+  - @0xsequence/core@1.10.15
+  - @0xsequence/indexer@1.10.15
+  - @0xsequence/relayer@1.10.15
+  - @0xsequence/utils@1.10.15
+
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+- Updated dependencies
+  - @0xsequence/core@1.10.14
+  - @0xsequence/indexer@1.10.14
+  - @0xsequence/relayer@1.10.14
+  - @0xsequence/utils@1.10.14
+
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+- Updated dependencies
+  - @0xsequence/core@1.10.13
+  - @0xsequence/indexer@1.10.13
+  - @0xsequence/relayer@1.10.13
+  - @0xsequence/utils@1.10.13
+
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@1.10.12
+  - @0xsequence/indexer@1.10.12
+  - @0xsequence/relayer@1.10.12
+  - @0xsequence/utils@1.10.12
+
 ## 1.10.11
 
 ### Patch Changes
