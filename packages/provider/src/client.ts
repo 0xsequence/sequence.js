@@ -385,7 +385,10 @@ export class SequenceClient {
     // "legacy sign" request, so we map the method here.
     request.method = this.mapSignMethod(request.method)
 
-    return this.transport.request(request)
+    const result = await this.transport.request(request)
+
+    // We may need to unwrap the response if it's a JSON-RPC response. ie. older universal wallet versions
+    return unwrapJsonRpcResponse(result)
   }
 
   async getNetworks(pull?: boolean): Promise<NetworkConfig[]> {
@@ -510,4 +513,13 @@ export class SequenceClient {
   // JSON RPC Provider (eth_getBlockByNumber, eth_call, etc)
   // wallet-webapp does implement them, but this client is meant to be
   // exclusively used for Sequence specific methods
+}
+
+// Unwrap a JsonRpcResponse result
+const unwrapJsonRpcResponse = (response: any): any => {
+  if (response && typeof response === 'object' && 'jsonrpc' in response && 'result' in response) {
+    return response.result
+  }
+
+  return response
 }

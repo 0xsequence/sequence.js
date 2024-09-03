@@ -571,6 +571,24 @@ describe('SequenceClient', () => {
     await expect(result).to.be.rejectedWith('Failed to send')
   })
 
+  it('should handle json rpc wrapped results', async () => {
+    const client = new SequenceClient(
+      {
+        ...basicMockTransport,
+        request(request: JsonRpcRequest): Promise<any> {
+          return Promise.resolve({ jsonrpc: '2.0', result: '0x1234', id: request.id })
+        }
+      },
+      useBestStore(),
+      {
+        defaultChainId: 2
+      }
+    )
+
+    const result = await client.request({ method: 'eth_chainId', params: [] })
+    expect(result).to.equal('0x1234')
+  })
+
   // XXX: Request is not rejected if response is empty
   // it('should fail if response is empty', async () => {
   //   const client = new SequenceClient(
