@@ -54,6 +54,7 @@ export type SequenceConfig = {
   projectAccessKey: string
   waasConfigKey: string
   network?: SimpleNetwork
+  disableHttpSignatureCheck?: boolean
 }
 
 export type ExtendedSequenceConfig = {
@@ -194,7 +195,7 @@ export class SequenceWaaS {
       throw new Error('Signature verification failed')
     }
 
-    if (this.cryptoBackend && init?.headers) {
+    if (this.cryptoBackend && this.config.disableHttpSignatureCheck !== true && init?.headers) {
       const headers: { [key: string]: any } = {}
 
       headers['Accept-Signature'] = 'sig=();alg="rsa-v1_5-sha256"'
@@ -204,7 +205,7 @@ export class SequenceWaaS {
 
     const response = fetch(input, init)
 
-    if (this.cryptoBackend) {
+    if (this.cryptoBackend && this.config.disableHttpSignatureCheck !== true) {
       response.then(async r => {
         try {
           const clone = r.clone()
@@ -238,6 +239,7 @@ export class SequenceWaaS {
             throw new Error('Digest mismatch')
           }
 
+          // we're removing the first 4 characters from signatureInput to trim the sig= prefix
           const message = `"content-digest": ${contentDigest}\n"@signature-params": ${signatureInput.substring(4)}`
 
           const algo = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
