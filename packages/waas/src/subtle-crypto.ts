@@ -71,7 +71,7 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     }
   }
 
-  async generateKey(
+  generateKey(
     algorithm: RsaHashedKeyGenParams | EcKeyGenParams,
     extractable: boolean,
     keyUsages: KeyUsage[]
@@ -79,7 +79,7 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     return window.crypto.subtle.generateKey(algorithm, extractable, keyUsages)
   }
 
-  async importKey(
+  importKey(
     format: 'jwk',
     keyData: JsonWebKey,
     algorithm: AlgorithmIdentifier | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | AesKeyAlgorithm,
@@ -104,7 +104,7 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     return new Uint8Array(signature)
   }
 
-  async verify(
+  verify(
     algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams,
     key: CryptoKey,
     signature: Uint8Array,
