@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { getFetchRequest, logger, toHexString } from '@0xsequence/utils'
+import { bigintReplacer, getFetchRequest, logger, toHexString } from '@0xsequence/utils'
 
 export { proto }
 
@@ -152,7 +152,7 @@ export class RpcRelayer implements Relayer {
         })
       })
 
-      logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options)}`)
+      logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options, bigintReplacer)}`)
       return { options, quote: { _tag: 'FeeQuote', _quote: quote } }
     } else {
       logger.info(`[rpc-relayer/getFeeOptions] relayer fees are not required`)
@@ -198,7 +198,7 @@ export class RpcRelayer implements Relayer {
     waitForReceipt: boolean = true
   ): Promise<commons.transaction.TransactionResponse<RelayerTxReceipt>> {
     logger.info(
-      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
+      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs, bigintReplacer)} with quote ${JSON.stringify(quote, bigintReplacer)}`
     )
 
     let typecheckedQuote: string | undefined
@@ -225,7 +225,7 @@ export class RpcRelayer implements Relayer {
       quote: typecheckedQuote
     })
 
-    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
+    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn, bigintReplacer)}`)
 
     if (waitForReceipt) {
       return this.wait(signedTxs.intent.id)

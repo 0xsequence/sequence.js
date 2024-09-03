@@ -1,11 +1,12 @@
 import { Base64 } from 'js-base64'
+import { bigintReplacer, bigintReviver } from './bigint'
 
 export const base64Encode = (val: string): string => {
   return Base64.encode(val, true)
 }
 
 export const base64EncodeObject = (obj: any): string => {
-  return Base64.encode(JSON.stringify(obj), true)
+  return Base64.encode(JSON.stringify(obj, bigintReplacer), true)
 }
 
 export const base64Decode = (encodedString: string): string | undefined => {
@@ -19,5 +20,5 @@ export const base64DecodeObject = <T = any>(encodedObject: string | null): T | u
   if (encodedObject === null || encodedObject === undefined) {
     return undefined
   }
-  return JSON.parse(Base64.decode(encodedObject)) as T
+  return JSON.parse(Base64.decode(encodedObject), bigintReviver) as T
 }
