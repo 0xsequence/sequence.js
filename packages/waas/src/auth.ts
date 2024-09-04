@@ -54,6 +54,7 @@ export type SequenceConfig = {
   projectAccessKey: string
   waasConfigKey: string
   network?: SimpleNetwork
+  disableHttpSignatureCheck?: boolean
 }
 
 export type ExtendedSequenceConfig = {
@@ -80,24 +81,6 @@ export type SignInResponse = {
   sessionId: string
   wallet: string
   email?: string
-}
-
-function encodeHex(data: string | Uint8Array) {
-  return (
-    '0x' +
-    Array.from(typeof data === 'string' ? new TextEncoder().encode(data) : data, byte => byte.toString(16).padStart(2, '0')).join(
-      ''
-    )
-  )
-}
-
-function decodeHex(hex: string) {
-  return new Uint8Array(
-    hex
-      .substring(2)
-      .match(/.{1,2}/g)!
-      .map(byte => parseInt(byte, 16))
-  )
 }
 
 export type ValidationArgs = {
@@ -145,6 +128,34 @@ export function defaultArgsOrFail(
   return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 }
 
+const fetch = globalThis.fetch
+
+const jwksDev = {
+  keys: [
+    {
+      alg: 'RS256',
+      e: 'AQAB',
+      kid: '9LkLZyHdNq1N2aeHMlC5jw',
+      kty: 'RSA',
+      n: 'qllUB_ERsOjbKx4SirGow4XDov05lQyhiF7Duo4sPkH9CwMN11OqhLuIqeIXPq0rPNIXGP99A7riXTcpRNk-5ZNL29zs-Xjj3idp7nZQZLIU1CBQErTcbxbwUYp8Q46k7lJXVlMmwoLQvQAgH8BZLuSe-Xk1tye0mDC-bHvmrMfqm2zmuWeDnZercU3Jg2iYwyPrjKWx7YSBSMTXTKPGndws4m3s3XIEpI2alLcLLWsPQk2UjIlux6I7vLwvjM_BgjFhYHqgg1tgZUPn_Xxt4wvhobF8UIacRVmGcuyYBnhRxKnBQhEClGSBVtnFYYBSvRjTgliOwf3DhFoXdnmyPQ',
+      use: 'sig'
+    }
+  ]
+}
+
+const jwksProd = {
+  keys: [
+    {
+      alg: 'RS256',
+      e: 'AQAB',
+      kid: 'nWh-_3nQ1lnhhI1ZSQTQmw',
+      kty: 'RSA',
+      n: 'pECaEq2k0k22J9e7hFLAFmKbzPLlWToUJJmFeWAdEiU4zpW17EUEOyfjRzjgBewc7KFJQEblC3eTD7Vc5bh9-rafPEj8LaKyZzzS5Y9ZATXhlMo5Pnlar3BrTm48XcnT6HnLsvDeJHUVbrYd1JyE1kqeTjUKWvgKX4mgIJiuYhpdzbOC22cPaWb1dYCVhArDVAPHGqaEwRjX7JneETdY5hLJ6JhsAws706W7fwfNKddPQo2mY95S9q8HFxMr5EaXEMmhwxk8nT5k-Ouar2dobMXRMmQiEZSt9fJaGKlK7KWJSnbPOVa2cZud1evs1Rz2SdCSA2bhuZ6NnZCxkqnagw',
+      use: 'sig'
+    }
+  ]
+}
+
 export class SequenceWaaS {
   private waas: SequenceWaaSBase
   private client: WaasAuthenticator
@@ -163,6 +174,9 @@ export class SequenceWaaS {
   // The last Date header value returned by the server, used for users with desynchronised clocks
   private lastDate: Date | undefined
 
+  // Flag for disabling consequent requests if signature verification fails
+  private signatureVerificationFailed: boolean = false
+
   constructor(
     config: SequenceConfig & Partial<ExtendedSequenceConfig>,
     private readonly store: Store = new LocalStore(),
@@ -171,8 +185,89 @@ export class SequenceWaaS {
   ) {
     this.config = defaultArgsOrFail(config)
     this.waas = new SequenceWaaSBase({ network: 1, ...config }, this.store, this.cryptoBackend, this.secureStoreBackend)
-    this.client = new WaasAuthenticator(this.config.rpcServer, this.fetch.bind(this))
+    this.client = new WaasAuthenticator(this.config.rpcServer, this._fetch)
+
     this.deviceName = new StoreObj(this.store, '@0xsequence.waas.auth.deviceName', undefined)
+  }
+
+  _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+    if (this.signatureVerificationFailed) {
+      throw new Error('Signature verification failed')
+    }
+
+    if (this.cryptoBackend && this.config.disableHttpSignatureCheck !== true && init?.headers) {
+      const headers: { [key: string]: any } = {}
+
+      headers['Accept-Signature'] = 'sig=();alg="rsa-v1_5-sha256"'
+
+      init!.headers = { ...init!.headers, ...headers }
+    }
+
+    const response = fetch(input, init)
+
+    if (this.cryptoBackend && this.config.disableHttpSignatureCheck !== true) {
+      response.then(async r => {
+        try {
+          const clone = r.clone()
+          const responseBodyText = await clone.text()
+
+          const contentDigest = r.headers.get('Content-Digest')
+          const signatureInput = r.headers.get('Signature-Input')
+          const signature = r.headers.get('Signature')
+
+          if (!contentDigest) {
+            throw new Error('Content-Digest header not set')
+          }
+          if (!signatureInput) {
+            throw new Error('Signature-Input header not set')
+          }
+          if (!signature) {
+            throw new Error('Signature header not set')
+          }
+
+          const contentDigestSha = contentDigest.match(':(.*):')?.[1]
+
+          if (!contentDigestSha) {
+            throw new Error('Content digest not found')
+          }
+
+          const responseBodyTextUint8Array = new TextEncoder().encode(responseBodyText)
+          const responseBodyTextDigest = await this.cryptoBackend!.digest('SHA-256', responseBodyTextUint8Array)
+          const base64EncodedDigest = btoa(String.fromCharCode(...responseBodyTextDigest))
+
+          if (contentDigestSha !== base64EncodedDigest) {
+            throw new Error('Digest mismatch')
+          }
+
+          // we're removing the first 4 characters from signatureInput to trim the sig= prefix
+          const message = `"content-digest": ${contentDigest}\n"@signature-params": ${signatureInput.substring(4)}`
+
+          const algo = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
+
+          const jwks = r.url.includes('dev-waas') ? jwksDev : jwksProd
+
+          const key = await this.cryptoBackend!.importKey('jwk', jwks.keys[0], algo, false, ['verify'])
+
+          const sig = signature.match(':(.*):')?.[1]
+
+          if (!sig) {
+            throw new Error('Signature not found')
+          }
+          const signatureBuffer = Uint8Array.from(atob(sig), c => c.charCodeAt(0))
+
+          const verifyResult = await this.cryptoBackend!.verify(algo, key, signatureBuffer, new TextEncoder().encode(message))
+
+          if (!verifyResult) {
+            throw new Error('Signature verification failed, consequent requests will fail')
+          }
+        } catch (e) {
+          this.signatureVerificationFailed = true
+          throw e
+        }
+      })
+    }
+
+    return response
   }
 
   public get email() {

@@ -11,6 +11,14 @@ export interface SubtleCryptoBackend {
     keyUsages: KeyUsage[]
   ): Promise<CryptoKeyPair>
 
+  importKey(
+    format: 'jwk',
+    keyData: JsonWebKey,
+    algorithm: AlgorithmIdentifier | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | AesKeyAlgorithm,
+    extractable: boolean,
+    keyUsages: ReadonlyArray<KeyUsage>
+  ): Promise<CryptoKey>
+
   // exportKey is used to export a key pair. The `format` argument is used to
   // specify the format of the exported key. The `key` argument is the key pair
   // to export. In general we'll use `format: 'raw'` and `key: <public-key>`.
@@ -63,12 +71,22 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     }
   }
 
-  async generateKey(
+  generateKey(
     algorithm: RsaHashedKeyGenParams | EcKeyGenParams,
     extractable: boolean,
     keyUsages: KeyUsage[]
   ): Promise<CryptoKeyPair> {
     return window.crypto.subtle.generateKey(algorithm, extractable, keyUsages)
+  }
+
+  importKey(
+    format: 'jwk',
+    keyData: JsonWebKey,
+    algorithm: AlgorithmIdentifier | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | AesKeyAlgorithm,
+    extractable: boolean,
+    keyUsages: ReadonlyArray<KeyUsage>
+  ): Promise<CryptoKey> {
+    return window.crypto.subtle.importKey(format, keyData, algorithm, extractable, keyUsages)
   }
 
   async exportKey(format: Exclude<KeyFormat, 'jwk'>, key: CryptoKey): Promise<Uint8Array> {
@@ -86,7 +104,7 @@ export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
     return new Uint8Array(signature)
   }
 
-  async verify(
+  verify(
     algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams,
     key: CryptoKey,
     signature: Uint8Array,
