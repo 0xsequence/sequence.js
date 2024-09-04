@@ -1,5 +1,17 @@
 # @0xsequence/react-native
 
+## 2.0.1
+
+### Patch Changes
+
+- waas: http signature check for authenticator requests
+- provider: unwrap legacy json rpc responses
+- use json replacer and reviver for bigints
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@2.0.1
+
 ## 2.0.0
 
 ### Major Changes

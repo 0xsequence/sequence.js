@@ -1,5 +1,20 @@
 # @0xsequence/guard
 
+## 2.0.1
+
+### Patch Changes
+
+- waas: http signature check for authenticator requests
+- provider: unwrap legacy json rpc responses
+- use json replacer and reviver for bigints
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/account@2.0.1
+  - @0xsequence/core@2.0.1
+  - @0xsequence/signhub@2.0.1
+  - @0xsequence/utils@2.0.1
+
 ## 2.0.0
 
 ### Major Changes

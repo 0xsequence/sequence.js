@@ -1,5 +1,25 @@
 # @0xsequence/provider
 
+## 2.0.1
+
+### Patch Changes
+
+- waas: http signature check for authenticator requests
+- provider: unwrap legacy json rpc responses
+- use json replacer and reviver for bigints
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.0.1
+  - @0xsequence/account@2.0.1
+  - @0xsequence/auth@2.0.1
+  - @0xsequence/core@2.0.1
+  - @0xsequence/migration@2.0.1
+  - @0xsequence/network@2.0.1
+  - @0xsequence/relayer@2.0.1
+  - @0xsequence/utils@2.0.1
+  - @0xsequence/wallet@2.0.1
+
 ## 2.0.0
 
 ### Major Changes
