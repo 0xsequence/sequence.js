@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.0.2
+
+### Patch Changes
+
+- sessions: property convert serialized bignumber hex value to bigint
+- Updated dependencies
+  - @0xsequence/waas@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes
