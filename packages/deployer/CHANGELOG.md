@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.0.3
+
+### Patch Changes
+
+- waas: check session status in SequenceWaaS.isSignedIn()
+- Updated dependencies
+  - @0xsequence/utils@2.0.3
+
 ## 2.0.2
 
 ### Patch Changes

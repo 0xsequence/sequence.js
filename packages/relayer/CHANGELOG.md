@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 2.0.3
+
+### Patch Changes
+
+- waas: check session status in SequenceWaaS.isSignedIn()
+- Updated dependencies
+  - @0xsequence/abi@2.0.3
+  - @0xsequence/core@2.0.3
+  - @0xsequence/utils@2.0.3
+
 ## 2.0.2
 
 ### Patch Changes
