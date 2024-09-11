@@ -74,6 +74,9 @@ export enum ChainId {
   // Borne
   BORNE_TESTNET = 94984,
 
+  // Skale Testnet
+  SKALE_NEBULA_TESTNET = 37084624,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -767,6 +770,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'BORNE',
       name: 'BORNE',
+      decimals: 18
+    }
+  },
+  [ChainId.SKALE_NEBULA_TESTNET]: {
+    chainId: ChainId.SKALE_NEBULA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-nebula-testnet',
+    title: 'Skale Nebula Gaming Hub Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Skale Nebula Gaming Hub Testnet Explorer',
+      rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
       decimals: 18
     }
   },
