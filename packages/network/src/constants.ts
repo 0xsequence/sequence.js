@@ -786,7 +786,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     },
     nativeToken: {
       symbol: 'sFUEL',
-      name: 'SKALE Chain FUEL',
+      name: 'SKALE Fuel',
       decimals: 18
     }
   },
