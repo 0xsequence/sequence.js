@@ -37,7 +37,14 @@ import {
   MaySentTransactionResponse,
   SignedMessageResponse
 } from './intents/responses'
-import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
+import {
+  WaasAuthenticator,
+  AnswerIncorrectError,
+  Chain,
+  EmailAlreadyInUseError,
+  Session,
+  WebrpcEndpointError
+} from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
@@ -353,7 +360,29 @@ export class SequenceWaaS {
     }
   }
 
+  private async updateSessionStatus() {
+    // if we are not signed in, then we don't need to check and update session status
+    if ((await this.waas.isSignedIn()) === false) {
+      return
+    }
+    // if we can fetch sessions from API, then we are signed in
+    // if not and error is the related session error, then we drop the session
+    try {
+      const sessions = await this.listSessions()
+      if (sessions.length > 0) {
+        return
+      }
+    } catch (error) {
+      if (error instanceof WebrpcEndpointError && error.cause === 'session invalid or not found') {
+        await this.dropSession({ sessionId: await this.waas.getSessionId(), strict: false })
+      } else {
+        throw error
+      }
+    }
+  }
+
   async isSignedIn() {
+    await this.updateSessionStatus()
     return this.waas.isSignedIn()
   }
 
