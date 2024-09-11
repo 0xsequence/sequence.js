@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.0.4
+
+### Patch Changes
+
+- network: add skale-nebula-testnet
+- Updated dependencies
+  - @0xsequence/utils@2.0.4
+
 ## 2.0.3
 
 ### Patch Changes
