@@ -368,10 +368,7 @@ export class SequenceWaaS {
     // if we can fetch sessions from API, then we are signed in
     // if not and error is the related session error, then we drop the session
     try {
-      const sessions = await this.listSessions()
-      if (sessions.length > 0) {
-        return
-      }
+      await this.listSessions()
     } catch (error) {
       if (error instanceof WebrpcEndpointError && error.cause === 'session invalid or not found') {
         await this.dropSession({ sessionId: await this.waas.getSessionId(), strict: false })
