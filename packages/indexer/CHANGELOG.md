@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.0.5
+
+### Patch Changes
+
+- provider: update databeat to 0.9.2
+
 ## 2.0.4
 
 ### Patch Changes

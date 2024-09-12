@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.0.5
+
+### Patch Changes
+
+- provider: update databeat to 0.9.2
+- Updated dependencies
+  - @0xsequence/core@2.0.5
+  - @0xsequence/indexer@2.0.5
+  - @0xsequence/relayer@2.0.5
+  - @0xsequence/utils@2.0.5
+
 ## 2.0.4
 
 ### Patch Changes
