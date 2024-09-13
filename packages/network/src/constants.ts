@@ -232,8 +232,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://polygonscan.com/'
     },
     nativeToken: {
-      symbol: 'MATIC',
-      name: 'Polygon',
+      symbol: 'POL',
+      name: 'POL',
       decimals: 18
     }
   },
@@ -267,8 +267,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://www.oklink.com/amoy/'
     },
     nativeToken: {
-      symbol: 'aMATIC',
-      name: 'Amoy Polygon',
+      symbol: 'aPOL',
+      name: 'Amoy POL',
       decimals: 18
     }
   },
