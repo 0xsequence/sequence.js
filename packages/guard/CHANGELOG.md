@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.0.6
+
+### Patch Changes
+
+- network: matic -> pol
+- Updated dependencies
+  - @0xsequence/account@2.0.6
+  - @0xsequence/core@2.0.6
+  - @0xsequence/signhub@2.0.6
+  - @0xsequence/utils@2.0.6
+
 ## 2.0.5
 
 ### Patch Changes

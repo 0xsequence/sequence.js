@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.0.6
+
+### Patch Changes
+
+- network: matic -> pol
+- Updated dependencies
+  - @0xsequence/abi@2.0.6
+  - @0xsequence/core@2.0.6
+  - @0xsequence/migration@2.0.6
+  - @0xsequence/network@2.0.6
+  - @0xsequence/relayer@2.0.6
+  - @0xsequence/sessions@2.0.6
+  - @0xsequence/utils@2.0.6
+  - @0xsequence/wallet@2.0.6
+
 ## 2.0.5
 
 ### Patch Changes

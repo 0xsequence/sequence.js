@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.0.6
+
+### Patch Changes
+
+- network: matic -> pol
+
 ## 2.0.5
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.0.6
+
+### Patch Changes
+
+- network: matic -> pol
+- Updated dependencies
+  - @0xsequence/waas@2.0.6
+
 ## 2.0.5
 
 ### Patch Changes
