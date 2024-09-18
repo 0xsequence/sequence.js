@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.0.7
+
+### Patch Changes
+
+- wallet request handler fix
+
 ## 2.0.6
 
 ### Patch Changes

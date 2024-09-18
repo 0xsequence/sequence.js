@@ -1,5 +1,14 @@
 # @0xsequence/core
 
+## 2.0.7
+
+### Patch Changes
+
+- wallet request handler fix
+- Updated dependencies
+  - @0xsequence/abi@2.0.7
+  - @0xsequence/utils@2.0.7
+
 ## 2.0.6
 
 ### Patch Changes

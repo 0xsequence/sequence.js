@@ -84,7 +84,7 @@ and enjoyable.
 7. Once merged and you're ready to make a release, continue to the next step. If you're not
    ready to make a release, then go back to step 2.
 8. Run `pnpm build && pnpm test` to double check all tests pass
-9. Run `pnpm version-packages` to bump versions of the packages
+9. Run `pnpm changeset:version` to bump versions of the packages
 10. Run `pnpm install` so we update our pnpm-lock.yaml file with our newly created version
 11. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
 12. Run `pnpm release`. If the 2FA code timesout while publishing, run the command again
