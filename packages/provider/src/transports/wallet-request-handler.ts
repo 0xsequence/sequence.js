@@ -236,7 +236,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
     } catch (error) {
       return {
         ...message,
-        data: isJsonRpcResponse ? { ...jsonRpcResponse, error } : error
+        data: isJsonRpcResponse ? { ...jsonRpcResponse, error } : { error }
       }
     }
   }
@@ -639,7 +639,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
       }
     } catch (err) {
       logger.error(err)
-      throw { message: err?.message, code: 4001 } as ProviderRpcError
+      throw { message: typeof err == 'string' ? err : err?.message || 'unkown error', code: 4001 } as ProviderRpcError
     }
   }
 
