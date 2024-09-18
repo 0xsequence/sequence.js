@@ -87,7 +87,7 @@ and enjoyable.
 9. Run `pnpm changeset:version` to bump versions of the packages
 10. Run `pnpm install` so we update our pnpm-lock.yaml file with our newly created version
 11. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
-12. Run `pnpm release`. If the 2FA code timesout while publishing, run the command again
+12. Run `pnpm changeset:publish`. If the 2FA code timesout while publishing, run the command again
     with a new code, only the packages that were not published will be published.
 13. Finally, push your git tags, via: `git push --tags --no-verify`
 
