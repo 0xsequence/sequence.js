@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.0.8
+
+### Patch Changes
+
+- metadata: update bindings
+
 ## 2.0.7
 
 ### Patch Changes

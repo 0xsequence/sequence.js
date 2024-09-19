@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.0.8
+
+### Patch Changes
+
+- metadata: update bindings
+- Updated dependencies
+  - @0xsequence/waas@2.0.8
+
 ## 2.0.7
 
 ### Patch Changes
