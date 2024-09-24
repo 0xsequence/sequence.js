@@ -777,11 +777,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.SKALE_NEBULA_TESTNET,
     type: NetworkType.TESTNET,
     name: 'skale-nebula-testnet',
-    title: 'Skale Nebula Gaming Hub Testnet',
+    title: 'SKALE Nebula Gaming Hub Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Skale Nebula Gaming Hub Testnet Explorer',
+      name: 'SKALE Nebula Gaming Hub Testnet Explorer',
       rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
     },
     nativeToken: {
