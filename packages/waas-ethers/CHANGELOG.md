@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.0.9
+
+### Patch Changes
+
+- network: fix SKALE network name
+- Updated dependencies
+  - @0xsequence/waas@2.0.9
+
 ## 2.0.8
 
 ### Patch Changes

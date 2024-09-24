@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 2.0.9
+
+### Patch Changes
+
+- network: fix SKALE network name
+- Updated dependencies
+  - @0xsequence/abi@2.0.9
+  - @0xsequence/core@2.0.9
+
 ## 2.0.8
 
 ### Patch Changes

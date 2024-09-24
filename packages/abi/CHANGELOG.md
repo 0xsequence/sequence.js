@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.0.9
+
+### Patch Changes
+
+- network: fix SKALE network name
+
 ## 2.0.8
 
 ### Patch Changes

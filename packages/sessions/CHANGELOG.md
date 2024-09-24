@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.0.9
+
+### Patch Changes
+
+- network: fix SKALE network name
+- Updated dependencies
+  - @0xsequence/core@2.0.9
+  - @0xsequence/migration@2.0.9
+  - @0xsequence/replacer@2.0.9
+  - @0xsequence/utils@2.0.9
+
 ## 2.0.8
 
 ### Patch Changes

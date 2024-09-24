@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.0.9
+
+### Patch Changes
+
+- network: fix SKALE network name
+- Updated dependencies
+  - @0xsequence/utils@2.0.9
+
 ## 2.0.8
 
 ### Patch Changes
