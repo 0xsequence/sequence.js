@@ -1,5 +1,14 @@
 # @0xsequence/tests
 
+## 2.0.10
+
+### Patch Changes
+
+- network: soneium minato testnet
+- Updated dependencies
+  - @0xsequence/core@2.0.10
+  - @0xsequence/utils@2.0.10
+
 ## 2.0.9
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.0.10
+
+### Patch Changes
+
+- network: soneium minato testnet
+
 ## 2.0.9
 
 ### Patch Changes

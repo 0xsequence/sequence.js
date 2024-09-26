@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.0.10
+
+### Patch Changes
+
+- network: soneium minato testnet
+- Updated dependencies
+  - @0xsequence/abi@2.0.10
+  - @0xsequence/core@2.0.10
+  - @0xsequence/migration@2.0.10
+  - @0xsequence/network@2.0.10
+  - @0xsequence/relayer@2.0.10
+  - @0xsequence/sessions@2.0.10
+  - @0xsequence/utils@2.0.10
+  - @0xsequence/wallet@2.0.10
+
 ## 2.0.9
 
 ### Patch Changes

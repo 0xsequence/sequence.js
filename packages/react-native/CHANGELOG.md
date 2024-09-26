@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.0.10
+
+### Patch Changes
+
+- network: soneium minato testnet
+- Updated dependencies
+  - @0xsequence/waas@2.0.10
+
 ## 2.0.9
 
 ### Patch Changes
