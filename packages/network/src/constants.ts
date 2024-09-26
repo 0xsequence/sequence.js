@@ -77,6 +77,9 @@ export enum ChainId {
   // Skale Testnet
   SKALE_NEBULA_TESTNET = 37084624,
 
+  // Soneium Minato
+  SONEIUM_MINATO = 1946,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -787,6 +790,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SONEIUM_MINATO]: {
+    chainId: ChainId.SONEIUM_MINATO,
+    type: NetworkType.TESTNET,
+    name: 'soneium-minato',
+    title: 'Soneium Minato (Testnet)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM_MINATO}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Soneium Minato Explorer',
+      rootUrl: 'https://explorer-testnet.soneium.org/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
       decimals: 18
     }
   },
