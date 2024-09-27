@@ -127,11 +127,10 @@ describe('Payloads', () => {
             data: '0x223344'
           },
           {
-            type: 'delayedEncode',
+            type: 'contractCall',
             to: '0x140d72763D1ce39Ad4E2e73EC6e8FC53E5b73B64',
-            value: '0',
             data: {
-              abi: '[{"inputs":[{"internalType":"uint256","name":"_orderId","type":"uint256"},{"internalType":"uint256","name":"_maxCost","type":"uint256"},{"internalType":"address[]","name":"_fees","type":"address[]"},{"internalType":"bytes","name":"_data","type":"bytes"}],"name":"fillOrKillOrder","outputs":[],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_val","type":"uint256"},{"internalType":"string","name":"_data","type":"string"}],"name":"notExpired","outputs":[],"stateMutability":"view","type":"function"},{"inputs":[],"name":"otherMethods","outputs":[],"stateMutability":"nonpayable","type":"function"}]',
+              abi: 'fillOrKillOrder(uint256 orderId, uint256 maxCost, address[] fees, bytes data)',
               func: 'fillOrKillOrder',
               args: [
                 '48774435471364917511246724398022004900255301025912680232738918790354204737320',
@@ -162,7 +161,7 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0xaf0df9a20b7636f7002f082fcfb31dd8959467506ce02351c4d1a53435c7456d5f5cf50564616b26d4d84e91f04a50cd064d693a90777530f16b6e9fb38639181b'
+      '0x0870d1da992c6bada598e85ead90fabecdcba371b5b9518129ae7ca193d33ef439bdd1e9a76c030b5ad7b4100bef72e94c74f7ee1f6e3e605e06069b9352388f1b'
     )
   })
 })
