@@ -137,7 +137,6 @@ describe('Payloads', () => {
                 '["0x8541D65829f98f7D71A4655cCD7B2bB8494673bF"]',
                 {
                   abi: 'notExpired(uint256,string)',
-                  func: 'notExpired',
                   args: ['1600000000', 'Nov 1st, 2020']
                 }
               ]
@@ -160,7 +159,7 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x21558fc9b8297979dbab89b3106622b95287b406c8dad6c6d26ac920c96de18741579416a559bac69e7ff92d2624af7e0b24071023a1ce5de8b42c5486fabffa1c'
+      '0x45fd4d795dacbd517c22f307100e92224e08ec348eb5fbc77c256b3344ff157512d895b9d56b8f246e528084fef4f33acf6a053eda14add9e8e4011aefd962e81b'
     )
   })
 })
