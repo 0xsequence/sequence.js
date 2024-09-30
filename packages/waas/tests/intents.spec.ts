@@ -131,7 +131,6 @@ describe('Payloads', () => {
             to: '0x140d72763D1ce39Ad4E2e73EC6e8FC53E5b73B64',
             data: {
               abi: 'fillOrKillOrder(uint256 orderId, uint256 maxCost, address[] fees, bytes data)',
-              func: 'fillOrKillOrder',
               args: [
                 '48774435471364917511246724398022004900255301025912680232738918790354204737320',
                 '1000000000000000000',
@@ -161,7 +160,7 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x0870d1da992c6bada598e85ead90fabecdcba371b5b9518129ae7ca193d33ef439bdd1e9a76c030b5ad7b4100bef72e94c74f7ee1f6e3e605e06069b9352388f1b'
+      '0x21558fc9b8297979dbab89b3106622b95287b406c8dad6c6d26ac920c96de18741579416a559bac69e7ff92d2624af7e0b24071023a1ce5de8b42c5486fabffa1c'
     )
   })
 })
