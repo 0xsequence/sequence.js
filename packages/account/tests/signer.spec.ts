@@ -48,14 +48,24 @@ describe('Account signer', () => {
         name: 'hardhat',
         provider: provider1,
         rpcUrl: '',
-        relayer: new LocalRelayer(provider1.getSigner())
+        relayer: new LocalRelayer(provider1.getSigner()),
+        nativeToken: {
+          symbol: 'ETH',
+          name: 'Ether',
+          decimals: 18
+        }
       },
       {
         chainId: 31338,
         name: 'hardhat2',
         provider: provider2,
         rpcUrl: 'http://127.0.0.1:7048',
-        relayer: new LocalRelayer(provider2.getSigner())
+        relayer: new LocalRelayer(provider2.getSigner()),
+        nativeToken: {
+          symbol: 'ETH',
+          name: 'Ether',
+          decimals: 18
+        }
       }
     ]
 

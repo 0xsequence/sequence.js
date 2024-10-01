@@ -1,0 +1,118 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [
+    {
+      "name": "Install Dependencies",
+      "command": "pnpm install"
+    }
+  ],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "build": {
+      "name": "build",
+      "command": "pnpm build",
+      "runAtStart": false
+    },
+    "watch": {
+      "name": "watch",
+      "command": "pnpm watch",
+      "runAtStart": false
+    },
+    "clean": {
+      "name": "clean",
+      "command": "pnpm clean",
+      "runAtStart": false
+    },
+    "changeset": {
+      "name": "changeset",
+      "command": "pnpm changeset",
+      "runAtStart": false
+    },
+    "version-packages": {
+      "name": "version-packages",
+      "command": "pnpm version-packages",
+      "runAtStart": false
+    },
+    "release": {
+      "name": "release",
+      "command": "pnpm release",
+      "runAtStart": false
+    },
+    "snapshot": {
+      "name": "snapshot",
+      "command": "pnpm snapshot",
+      "runAtStart": false
+    },
+    "update-version": {
+      "name": "update-version",
+      "command": "pnpm update-version",
+      "runAtStart": false
+    },
+    "test": {
+      "name": "test",
+      "command": "pnpm test",
+      "runAtStart": false
+    },
+    "test:parallel": {
+      "name": "test:parallel",
+      "command": "pnpm test:parallel",
+      "runAtStart": false
+    },
+    "lint": {
+      "name": "lint",
+      "command": "pnpm lint",
+      "runAtStart": false
+    },
+    "lint:fix": {
+      "name": "lint:fix",
+      "command": "pnpm lint:fix",
+      "runAtStart": false
+    },
+    "lint:tests": {
+      "name": "lint:tests",
+      "command": "pnpm lint:tests",
+      "runAtStart": false
+    },
+    "lint:tests:fix": {
+      "name": "lint:tests:fix",
+      "command": "pnpm lint:tests:fix",
+      "runAtStart": false
+    },
+    "format": {
+      "name": "format",
+      "command": "pnpm format",
+      "runAtStart": false
+    },
+    "audit:fix": {
+      "name": "audit:fix",
+      "command": "pnpm audit:fix",
+      "runAtStart": false
+    },
+    "typecheck": {
+      "name": "typecheck",
+      "command": "pnpm typecheck",
+      "runAtStart": false
+    },
+    "dev": {
+      "name": "dev",
+      "command": "pnpm dev",
+      "runAtStart": true
+    },
+    "postinstall": {
+      "name": "postinstall",
+      "command": "pnpm postinstall",
+      "runAtStart": false
+    },
+    "coverage": {
+      "name": "coverage",
+      "command": "pnpm coverage",
+      "runAtStart": false
+    },
+    "prepare": {
+      "name": "prepare",
+      "command": "pnpm prepare",
+      "runAtStart": false
+    }
+  }
+}

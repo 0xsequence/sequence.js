@@ -31,7 +31,7 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
   )
 }
 
-const fetch = typeof global === 'object' ? global.fetch : window.fetch
+const fetch = globalThis.fetch
 
 // TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {

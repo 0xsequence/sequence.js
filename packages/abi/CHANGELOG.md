@@ -1,5 +1,247 @@
 # @0xsequence/abi
 
+## 1.10.14
+
+### Patch Changes
+
+- network: add borne-testnet to allNetworks
+
+## 1.10.13
+
+### Patch Changes
+
+- network: add borne testnet
+
+## 1.10.12
+
+### Patch Changes
+
+- api: update bindings
+- global/window -> globalThis
+
+## 1.10.11
+
+### Patch Changes
+
+- waas: updated intent.gen without webrpc types, errors exported from authenticator.gen
+
+## 1.10.10
+
+### Patch Changes
+
+- metadata: update bindings with new contract collections api
+
+## 1.10.9
+
+### Patch Changes
+
+- waas minor update
+
+## 1.10.8
+
+### Patch Changes
+
+- update metadata bindings
+
+## 1.10.7
+
+### Patch Changes
+
+- minor fixes to waas client
+
+## 1.10.6
+
+### Patch Changes
+
+- metadata: update bindings
+
+## 1.10.5
+
+### Patch Changes
+
+- network: ape-chain-testnet -> apechain-testnet
+
+## 1.10.4
+
+### Patch Changes
+
+- network: add b3-sepolia, ape-chain-testnet, blast, blast-sepolia
+
+## 1.10.3
+
+### Patch Changes
+
+- typing fix
+
+## 1.10.2
+
+### Patch Changes
+
+- - waas: add getIdToken method
+  - indexer: update api client
+
+## 1.10.1
+
+### Patch Changes
+
+- metadata: update bindings
+
+## 1.10.0
+
+### Minor Changes
+
+- waas release v1.3.0
+
+## 1.9.37
+
+### Patch Changes
+
+- network: adds nativeToken data to NetworkMetadata constants
+
+## 1.9.36
+
+### Patch Changes
+
+- guard: export client
+
+## 1.9.35
+
+### Patch Changes
+
+- guard: update bindings
+
+## 1.9.34
+
+### Patch Changes
+
+- waas: always use lowercase email
+
+## 1.9.33
+
+### Patch Changes
+
+- waas: umd build
+
+## 1.9.32
+
+### Patch Changes
+
+- indexer: update bindings
+
+## 1.9.31
+
+### Patch Changes
+
+- metadata: token directory changes
+
+## 1.9.30
+
+### Patch Changes
+
+- update
+
+## 1.9.29
+
+### Patch Changes
+
+- disable gnosis chain
+
+## 1.9.28
+
+### Patch Changes
+
+- add utils/merkletree
+
+## 1.9.27
+
+### Patch Changes
+
+- network: optimistic -> optimism
+- waas: remove defaults
+- api, sessions: update bindings
+
+## 1.9.26
+
+### Patch Changes
+
+- - add backend interfaces for pluggable interfaces
+  - introduce @0xsequence/react-native
+  - update pnpm to lockfile v9
+
+## 1.9.25
+
+### Patch Changes
+
+- update webrpc clients with new error types
+
+## 1.9.24
+
+### Patch Changes
+
+- waas: add memoryStore backend to localStore
+
+## 1.9.23
+
+### Patch Changes
+
+- update api client bindings
+
+## 1.9.22
+
+### Patch Changes
+
+- update metadata client bindings
+
+## 1.9.21
+
+### Patch Changes
+
+- api client bindings
+
+## 1.9.20
+
+### Patch Changes
+
+- api client bindings update
+
+## 1.9.19
+
+### Patch Changes
+
+- waas update
+
+## 1.9.18
+
+### Patch Changes
+
+- provider: prohibit dangerous functions
+
+## 1.9.17
+
+### Patch Changes
+
+- network: add xr-sepolia
+
+## 1.9.16
+
+### Patch Changes
+
+- waas: sequence.feeOptions
+
+## 1.9.15
+
+### Patch Changes
+
+- metadata: collection external_link field name fix
+
+## 1.9.14
+
+### Patch Changes
+
+- network: astar-zkatana -> astar-zkyoto
+- network: deprecate polygon mumbai network
+- network: add xai and polygon amoy
+
 ## 1.9.13
 
 ### Patch Changes

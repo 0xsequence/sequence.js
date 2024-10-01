@@ -1,0 +1,25 @@
+{
+  "name": "@0xsequence/react-native",
+  "version": "1.10.14",
+  "description": "react-native compat-lib sub-package for Sequence",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/react-native",
+  "source": "src/index.ts",
+  "main": "dist/0xsequence-react-native.cjs.js",
+  "module": "dist/0xsequence-react-native.esm.js",
+  "author": "Horizon Blockchain Games",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0xsequence/waas": "workspace:*",
+    "react-native-keychain": "^8.2.0"
+  },
+  "peerDependencies": {},
+  "devDependencies": {},
+  "files": [
+    "src",
+    "dist"
+  ]
+}
