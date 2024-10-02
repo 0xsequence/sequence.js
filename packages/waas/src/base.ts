@@ -13,8 +13,8 @@ import {
   listSessions,
   openSession,
   OpenSessionArgs,
-  sendDelayedEncode,
-  SendDelayedEncodeArgs,
+  sendContractCall,
+  SendContractCallArgs,
   sendERC1155,
   SendERC1155Args,
   sendERC20,
@@ -481,9 +481,9 @@ export class SequenceWaaSBase {
   }
 
   async callContract(
-    args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs
+    args: WithSimpleNetwork<SendContractCallArgs> & ExtraTransactionArgs
   ): Promise<SignedIntent<IntentDataSendTransaction>> {
-    const intent = sendDelayedEncode(await this.commonArgs(args))
+    const intent = sendContractCall(await this.commonArgs(args))
     return this.signIntent(intent)
   }
 
