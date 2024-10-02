@@ -1,5 +1,12 @@
 # @0xsequence/abi
 
+## 2.0.11
+
+### Patch Changes
+
+- waas: intents test fix
+- api: update bindings
+
 ## 2.0.10
 
 ### Patch Changes

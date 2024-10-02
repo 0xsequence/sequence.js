@@ -1,5 +1,18 @@
 # @0xsequence/sessions
 
+## 2.0.11
+
+### Patch Changes
+
+- waas: intents test fix
+- api: update bindings
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@2.0.11
+  - @0xsequence/migration@2.0.11
+  - @0xsequence/replacer@2.0.11
+  - @0xsequence/utils@2.0.11
+
 ## 2.0.10
 
 ### Patch Changes

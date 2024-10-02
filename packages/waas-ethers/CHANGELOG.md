@@ -1,5 +1,15 @@
 # @0xsequence/waas-ethers
 
+## 2.0.11
+
+### Patch Changes
+
+- waas: intents test fix
+- api: update bindings
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@2.0.11
+
 ## 2.0.10
 
 ### Patch Changes

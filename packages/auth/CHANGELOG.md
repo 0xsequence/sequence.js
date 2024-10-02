@@ -1,5 +1,26 @@
 # @0xsequence/auth
 
+## 2.0.11
+
+### Patch Changes
+
+- waas: intents test fix
+- api: update bindings
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.0.11
+  - @0xsequence/account@2.0.11
+  - @0xsequence/api@2.0.11
+  - @0xsequence/core@2.0.11
+  - @0xsequence/indexer@2.0.11
+  - @0xsequence/metadata@2.0.11
+  - @0xsequence/migration@2.0.11
+  - @0xsequence/network@2.0.11
+  - @0xsequence/sessions@2.0.11
+  - @0xsequence/signhub@2.0.11
+  - @0xsequence/utils@2.0.11
+  - @0xsequence/wallet@2.0.11
+
 ## 2.0.10
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @0xsequence/guard
 
+## 2.0.11
+
+### Patch Changes
+
+- waas: intents test fix
+- api: update bindings
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/account@2.0.11
+  - @0xsequence/core@2.0.11
+  - @0xsequence/signhub@2.0.11
+  - @0xsequence/utils@2.0.11
+
 ## 2.0.10
 
 ### Patch Changes
