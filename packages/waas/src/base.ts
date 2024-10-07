@@ -1,4 +1,5 @@
 import {
+  adoptChildWallet,
   changeIntentTime,
   closeSession,
   combineTransactionIntents,
@@ -585,6 +586,19 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN,
       sessionId,
       nonce
+    })
+    return this.signIntent(intent)
+  }
+
+  async adoptChildWallet({ adopter }: { adopter: string }) {
+    const intent = adoptChildWallet({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
+      adopter,
+      adopterProof: {
+        message: '',
+        signature: '',
+      },
     })
     return this.signIntent(intent)
   }
