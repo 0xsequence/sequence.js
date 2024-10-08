@@ -822,7 +822,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'TOY Testnet Explorer',
-      rootUrl: 'https://explorer-testnet.soneium.org/'
+      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/'
     },
     nativeToken: {
       symbol: 'TOY',
