@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.0.13
+
+### Patch Changes
+
+- network: toy-testnet
+
 ## 2.0.12
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 2.0.13
+
+### Patch Changes
+
+- network: toy-testnet
+- Updated dependencies
+  - @0xsequence/abi@2.0.13
+  - @0xsequence/core@2.0.13
+  - @0xsequence/utils@2.0.13
+
 ## 2.0.12
 
 ### Patch Changes
