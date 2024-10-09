@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.0.12
+
+### Patch Changes
+
+- api: update bindings
+- Updated dependencies
+  - @0xsequence/core@2.0.12
+
 ## 2.0.11
 
 ### Patch Changes

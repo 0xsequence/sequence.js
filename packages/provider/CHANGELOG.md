@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 2.0.12
+
+### Patch Changes
+
+- api: update bindings
+- Updated dependencies
+  - @0xsequence/abi@2.0.12
+  - @0xsequence/account@2.0.12
+  - @0xsequence/auth@2.0.12
+  - @0xsequence/core@2.0.12
+  - @0xsequence/migration@2.0.12
+  - @0xsequence/network@2.0.12
+  - @0xsequence/relayer@2.0.12
+  - @0xsequence/utils@2.0.12
+  - @0xsequence/wallet@2.0.12
+
 ## 2.0.11
 
 ### Patch Changes
