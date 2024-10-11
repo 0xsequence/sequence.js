@@ -590,14 +590,15 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
-  async adoptChildWallet({ adopter }: { adopter: string }) {
+  async adoptChildWallet({ network, adopter, message, signature }: { network: string, adopter: string, message: string, signature: string }) {
     const intent = adoptChildWallet({
       wallet: await this.getWalletAddress(),
       lifespan: DEFAULT_LIFESPAN,
+      network,
       adopter,
       adopterProof: {
-        message: '',
-        signature: '',
+        message,
+        signature,
       },
     })
     return this.signIntent(intent)

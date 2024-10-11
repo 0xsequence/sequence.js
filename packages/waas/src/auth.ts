@@ -806,8 +806,8 @@ export class SequenceWaaS {
     return this.trySendIntent(args, intent, isFeeOptionsResponse)
   }
 
-  async adoptChildWallet({ adopter }: { adopter: string }) {
-    const intent = await this.waas.adoptChildWallet({ adopter })
+  async adoptChildWallet({ network, adopter, message, signature }: { network: string, adopter: string, message: string, signature: string }) {
+    const intent = await this.waas.adoptChildWallet({ network, adopter, message, signature })
     return this.sendIntent(intent)
   }
 
