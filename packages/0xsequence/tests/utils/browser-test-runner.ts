@@ -59,7 +59,7 @@ export const runBrowserTests = async (title: string, path: string) => {
 export const browserContext = async (t, run) => {
   const browser = await puppeteer.launch({
     executablePath: getChromePath(),
-    args: ['--headless']
+    args: ['--headless', '--no-sandbox', '--disable-setuid-sandbox']
   })
   const page = await browser.newPage()
   try {
