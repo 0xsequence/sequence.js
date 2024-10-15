@@ -1,5 +1,27 @@
 # @0xsequence/guard
 
+## 2.0.13
+
+### Patch Changes
+
+- network: toy-testnet
+- Updated dependencies
+  - @0xsequence/account@2.0.13
+  - @0xsequence/core@2.0.13
+  - @0xsequence/signhub@2.0.13
+  - @0xsequence/utils@2.0.13
+
+## 2.0.12
+
+### Patch Changes
+
+- api: update bindings
+- Updated dependencies
+  - @0xsequence/account@2.0.12
+  - @0xsequence/core@2.0.12
+  - @0xsequence/signhub@2.0.12
+  - @0xsequence/utils@2.0.12
+
 ## 2.0.11
 
 ### Patch Changes

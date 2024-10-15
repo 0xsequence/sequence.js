@@ -80,6 +80,9 @@ export enum ChainId {
   // Soneium Minato
   SONEIUM_MINATO = 1946,
 
+  // TOY Testnet
+  TOY_TESTNET = 21000000,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -807,6 +810,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.TOY_TESTNET]: {
+    chainId: ChainId.TOY_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'toy-testnet',
+    title: 'TOY (Testnet)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TOY_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'TOY Testnet Explorer',
+      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/'
+    },
+    nativeToken: {
+      symbol: 'TOY',
+      name: 'TOY',
       decimals: 18
     }
   },
