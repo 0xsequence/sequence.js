@@ -1,5 +1,15 @@
 # @0xsequence/waas-ethers
 
+## 2.0.14
+
+### Patch Changes
+
+- sessions: arweave config reader
+- network: add b3 and apechain mainnet configs
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@2.0.14
+
 ## 2.0.13
 
 ### Patch Changes

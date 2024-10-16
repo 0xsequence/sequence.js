@@ -1,5 +1,12 @@
 # @0xsequence/metadata
 
+## 2.0.14
+
+### Patch Changes
+
+- sessions: arweave config reader
+- network: add b3 and apechain mainnet configs
+
 ## 2.0.13
 
 ### Patch Changes

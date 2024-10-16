@@ -1,5 +1,20 @@
 # @0xsequence/wallet
 
+## 2.0.14
+
+### Patch Changes
+
+- sessions: arweave config reader
+- network: add b3 and apechain mainnet configs
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.0.14
+  - @0xsequence/core@2.0.14
+  - @0xsequence/network@2.0.14
+  - @0xsequence/relayer@2.0.14
+  - @0xsequence/signhub@2.0.14
+  - @0xsequence/utils@2.0.14
+
 ## 2.0.13
 
 ### Patch Changes
