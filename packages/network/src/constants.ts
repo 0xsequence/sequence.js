@@ -62,9 +62,11 @@ export enum ChainId {
   TELOS = 40,
 
   // B3 Sepolia
+  B3 = 8333,
   B3_SEPOLIA = 1993,
 
   // APE Chain
+  APECHAIN = 33139,
   APECHAIN_TESTNET = 33111,
 
   // Blast
@@ -679,6 +681,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
+  [ChainId.B3]: {
+    chainId: ChainId.B3,
+    type: NetworkType.MAINNET,
+    name: 'b3',
+    title: 'B3',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'B3 Explorer',
+      rootUrl: 'https://explorer.b3.fun/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
   [ChainId.B3_SEPOLIA]: {
     chainId: ChainId.B3_SEPOLIA,
     type: NetworkType.TESTNET,
@@ -693,6 +712,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.APECHAIN]: {
+    chainId: ChainId.APECHAIN,
+    type: NetworkType.MAINNET,
+    name: 'apechain',
+    title: 'APE Chain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      rootUrl: 'https://apechain.calderaexplorer.xyz/'
+    },
+    nativeToken: {
+      symbol: 'APE',
+      name: 'ApeCoin',
       decimals: 18
     }
   },
