@@ -724,7 +724,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: false,
     blockExplorer: {
       name: 'APE Chain Explorer',
-      rootUrl: 'https://ape.explorer.caldera.xyz/'
+      rootUrl: 'https://apechain-hub-96531824.caldera.dev/'
     },
     nativeToken: {
       symbol: 'APE',
