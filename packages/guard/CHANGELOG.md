@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.0.15
+
+### Patch Changes
+
+- indexer: update bindings with token balance additions
+- Updated dependencies
+  - @0xsequence/account@2.0.15
+  - @0xsequence/core@2.0.15
+  - @0xsequence/signhub@2.0.15
+  - @0xsequence/utils@2.0.15
+
 ## 2.0.14
 
 ### Patch Changes

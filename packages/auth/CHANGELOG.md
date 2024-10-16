@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.0.15
+
+### Patch Changes
+
+- indexer: update bindings with token balance additions
+- Updated dependencies
+  - @0xsequence/abi@2.0.15
+  - @0xsequence/account@2.0.15
+  - @0xsequence/api@2.0.15
+  - @0xsequence/core@2.0.15
+  - @0xsequence/indexer@2.0.15
+  - @0xsequence/metadata@2.0.15
+  - @0xsequence/migration@2.0.15
+  - @0xsequence/network@2.0.15
+  - @0xsequence/sessions@2.0.15
+  - @0xsequence/signhub@2.0.15
+  - @0xsequence/utils@2.0.15
+  - @0xsequence/wallet@2.0.15
+
 ## 2.0.14
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.0.15
+
+### Patch Changes
+
+- indexer: update bindings with token balance additions
+
 ## 2.0.14
 
 ### Patch Changes
