@@ -75,6 +75,9 @@ and enjoyable.
 
 ### How to do a release
 
+Authorization on https://www.npmjs.com/ to push to the 0xsequence organization's packages is required.
+
+0. (first time) `pnpm login`
 1. check that master is passing tests on github
 2. (warning: destructive) start from a clean repo:
    `git checkout master && git reset --hard && git clean -dfx && pnpm i`
@@ -93,8 +96,11 @@ and enjoyable.
 
 ## How to do a snapshot release
 
+Authorization on https://www.npmjs.com/ to push to the 0xsequence organization's packages is required.
+
 Snapshot releases are versioned as 0.0.0-YYYYmmddHHMMSS and are intended for testing builds only.
 
+0. (first time) `pnpm login`
 1. (warning: destructive) start from a clean repo:
    `git checkout <branch or commit to snapshot> && git reset --hard && git clean -dfx && pnpm i`
 2. `pnpm changeset:snapshot`
