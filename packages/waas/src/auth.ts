@@ -384,10 +384,9 @@ export class SequenceWaaS {
   }
 
   async signIn(creds: Identity, sessionName: string): Promise<SignInResponse> {
-    // We clear and drop session regardless of whether it's signed in or not
-    const currentSessionId = await this.waas.getSessionId()
-    if (currentSessionId) {
-      await this.dropSession({ sessionId: currentSessionId, strict: false })
+    const isSignedIn = await this.isSignedIn()
+    if (isSignedIn) {
+      throw new Error('You are already signed in. Use dropSession to sign out from current session first.')
     }
 
     const isEmailAuth = 'email' in creds
@@ -524,7 +523,7 @@ export class SequenceWaaS {
     // case we should throw an error.
     const isSignedIn = await this.isSignedIn()
     if (isSignedIn) {
-      throw new Error('You are already signed in')
+      throw new Error('You are already signed in. Use dropSession to sign out from current session first.')
     }
     if (!opts) {
       opts = {}
