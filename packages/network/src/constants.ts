@@ -51,10 +51,6 @@ export enum ChainId {
   XAI = 660279,
   XAI_SEPOLIA = 37714555429,
 
-  // Astar
-  ASTAR_ZKEVM = 3776, // network is deprecated
-  ASTAR_ZKYOTO = 6038361, // network is deprecated
-
   // XR
   XR_SEPOLIA = 2730,
 
