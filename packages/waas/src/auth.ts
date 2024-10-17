@@ -383,7 +383,13 @@ export class SequenceWaaS {
     return this.waas.isSignedIn()
   }
 
-  signIn(creds: Identity, sessionName: string): Promise<SignInResponse> {
+  async signIn(creds: Identity, sessionName: string): Promise<SignInResponse> {
+    // We clear and drop session regardless of whether it's signed in or not
+    const currentSessionId = await this.waas.getSessionId()
+    if (currentSessionId) {
+      await this.dropSession({ sessionId: currentSessionId, strict: false })
+    }
+
     const isEmailAuth = 'email' in creds
     if (isEmailAuth && this.emailAuthCodeRequiredCallback.length == 0) {
       return Promise.reject('Missing emailAuthCodeRequired callback')
@@ -513,6 +519,13 @@ export class SequenceWaaS {
     challenge: Challenge,
     opts?: { sessionName?: string; forceCreateAccount?: boolean }
   ): Promise<SignInResponse> {
+    // initAuth can start while user is already signed in and continue with linkAccount method,
+    // but it can't be used to completeAuth while user is already signed in. In this
+    // case we should throw an error.
+    const isSignedIn = await this.isSignedIn()
+    if (isSignedIn) {
+      throw new Error('You are already signed in. Use dropSession to sign out from current session first.')
+    }
     if (!opts) {
       opts = {}
     }
@@ -545,7 +558,7 @@ export class SequenceWaaS {
     }
   }
 
-  async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
+  private async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
     try {
       const res = await this.client.registerSession({ intent, friendlyName: name }, this.headers())
       return res
