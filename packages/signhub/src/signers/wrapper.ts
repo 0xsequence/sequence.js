@@ -29,13 +29,13 @@ export class SignerWrapper implements SapientSigner {
     return bundle
   }
 
-  sign(message: ethers.utils.BytesLike, metadata: object): Promise<ethers.utils.BytesLike> {
+  sign(message: ethers.BytesLike): Promise<ethers.BytesLike> {
     return this.signer.signMessage(message)
   }
 
   notifyStatusChange(_i: string, _s: Status, _m: object): void {}
 
   suffix(): ethers.BytesLike {
-    return [2]
+    return new Uint8Array([2])
   }
 }

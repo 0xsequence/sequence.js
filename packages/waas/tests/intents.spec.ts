@@ -2,8 +2,9 @@ import * as chai from 'chai'
 import { ethers } from 'ethers'
 
 import { Intent, signIntent } from '../src/intents'
-import { IntentDataSendTransaction, IntentDataSignMessage } from '../src/clients/intent.gen'
+import { IntentName, IntentDataSendTransaction, IntentDataSignMessage } from '../src/clients/intent.gen'
 import { newSECP256K1SessionFromPrivateKey } from '../src/session'
+import { getDefaultSecureStoreBackend } from '../src/secure-store'
 
 import 'fake-indexeddb/auto'
 
@@ -13,7 +14,7 @@ describe('Payloads', () => {
   it('Should sign a payload', async () => {
     const intent: Intent<IntentDataSendTransaction> = {
       version: '1',
-      name: 'sendTransactions',
+      name: IntentName.sendTransaction,
       issuedAt: 1600000000,
       expiresAt: 1600000000 + 86400,
       data: {
@@ -23,7 +24,7 @@ describe('Payloads', () => {
         transactions: [
           {
             type: 'erc20send',
-            token: ethers.constants.AddressZero,
+            token: ethers.ZeroAddress,
             to: '0x0dc9603d4da53841C1C83f3B550C6143e60e0425',
             value: '0'
           }
@@ -31,20 +32,27 @@ describe('Payloads', () => {
       }
     }
 
-    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const secureStoreBackend = getDefaultSecureStoreBackend()
+    if (!secureStoreBackend) {
+      throw new Error('Secure store backend not available')
+    }
+    const session = await newSECP256K1SessionFromPrivateKey(
+      '0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51',
+      secureStoreBackend
+    )
     const signedIntent = await signIntent(session, intent)
 
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x14682ca0eb116109cdf1d0bad6a84e29787787b4a1779d2b43c28d8705ade929267474e8a7725d5e7540ded2010897d3ecaad32b27c75fbfb4f63ff1cf1a948a1c'
+      '0x0707e5b0a66bc2aa536cd6dfd0ad3f7859ac3a864f9be1d351b450e704b4cf3548b19ffd72f956e1448b0298b862c95489daeb00c0f0686a8c76f22908bf29801b'
     )
   })
 
   it('Should sign a message payload', async () => {
     const intent: Intent<IntentDataSignMessage> = {
       version: '1',
-      name: 'sendTransactions',
+      name: IntentName.sendTransaction,
       issuedAt: 1600000000,
       expiresAt: 1600000000 + 86400,
       data: {
@@ -54,20 +62,27 @@ describe('Payloads', () => {
       }
     }
 
-    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const secureStoreBackend = getDefaultSecureStoreBackend()
+    if (!secureStoreBackend) {
+      throw new Error('Secure store backend not available')
+    }
+    const session = await newSECP256K1SessionFromPrivateKey(
+      '0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51',
+      secureStoreBackend
+    )
     const signedIntent = await signIntent(session, intent)
 
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x768b25315317e551ed7b540e73fdf69d8816dcc763a50c648cf2966849f089a2495103f06c876c502bfb33cb348c4b77ffe39bbd6483b932b806a5817374f9ea1c'
+      '0xf21bd58b31a490895c64eec3848465dc89426a208b2a480013e0f779003474d41be802c900c03841a467e6598785e8e7c29b506ff78ec7d08cdccba2be7ecc8c1c'
     )
   })
 
   it('Should sign transaction payload', async () => {
     const intent: Intent<IntentDataSendTransaction> = {
       version: '1',
-      name: 'sendTransactions',
+      name: IntentName.sendTransaction,
       issuedAt: 1600000000,
       expiresAt: 1600000000 + 86400,
       data: {
@@ -134,13 +149,20 @@ describe('Payloads', () => {
       }
     }
 
-    const session = await newSECP256K1SessionFromPrivateKey('0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51')
+    const secureStoreBackend = getDefaultSecureStoreBackend()
+    if (!secureStoreBackend) {
+      throw new Error('Secure store backend not available')
+    }
+    const session = await newSECP256K1SessionFromPrivateKey(
+      '0xecd39e2cdadc2427255042ca7e0f86368bd7aa6e3c99470444b7d073840c1b51',
+      secureStoreBackend
+    )
     const signedIntent = await signIntent(session, intent)
 
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x98dd84b3d4fe077b2f55e2839609b226d8119b9b0ee10756122615a5d68746bf60596069a305a7533123f212b576d16f3f14ad06faed9fc005c32a28bf8bafb21b'
+      '0xaf0df9a20b7636f7002f082fcfb31dd8959467506ce02351c4d1a53435c7456d5f5cf50564616b26d4d84e91f04a50cd064d693a90777530f16b6e9fb38639181b'
     )
   })
 })

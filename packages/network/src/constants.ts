@@ -58,6 +58,33 @@ export enum ChainId {
   // XR
   XR_SEPOLIA = 2730,
 
+  // TELOS
+  TELOS = 40,
+
+  // B3 Sepolia
+  B3 = 8333,
+  B3_SEPOLIA = 1993,
+
+  // APE Chain
+  APECHAIN = 33139,
+  APECHAIN_TESTNET = 33111,
+
+  // Blast
+  BLAST = 81457,
+  BLAST_SEPOLIA = 168587773,
+
+  // Borne
+  BORNE_TESTNET = 94984,
+
+  // Skale Testnet
+  SKALE_NEBULA_TESTNET = 37084624,
+
+  // Soneium Minato
+  SONEIUM_MINATO = 1946,
+
+  // TOY Testnet
+  TOY_TESTNET = 21000000,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -85,6 +112,11 @@ export interface NetworkMetadata {
   ensAddress?: string
   testnet?: boolean // Deprecated field, use type instead
   deprecated?: boolean // The actual network is deprecated
+  nativeToken: {
+    symbol: string
+    name: string
+    decimals: number
+  }
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -98,6 +130,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Etherscan',
       rootUrl: 'https://etherscan.io/'
     },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    },
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
   },
   [ChainId.ROPSTEN]: {
@@ -110,6 +147,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Etherscan (Ropsten)',
       rootUrl: 'https://ropsten.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'roETH',
+      name: 'Ropsten Ether',
+      decimals: 18
     },
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     deprecated: true
@@ -125,6 +167,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Etherscan (Rinkeby)',
       rootUrl: 'https://rinkeby.etherscan.io/'
     },
+    nativeToken: {
+      symbol: 'rETH',
+      name: 'Rinkeby Ether',
+      decimals: 18
+    },
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     deprecated: true
   },
@@ -138,6 +185,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Etherscan (Goerli)',
       rootUrl: 'https://goerli.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'gETH',
+      name: 'Goerli Ether',
+      decimals: 18
     },
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
     deprecated: true
@@ -153,6 +205,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Etherscan (Kovan)',
       rootUrl: 'https://kovan.etherscan.io/'
     },
+    nativeToken: {
+      symbol: 'kETH',
+      name: 'Kovan Ether',
+      decimals: 18
+    },
     deprecated: true
   },
   [ChainId.SEPOLIA]: {
@@ -165,6 +222,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Etherscan (Sepolia)',
       rootUrl: 'https://sepolia.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18
     }
   },
   [ChainId.POLYGON]: {
@@ -176,6 +238,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Polygonscan',
       rootUrl: 'https://polygonscan.com/'
+    },
+    nativeToken: {
+      symbol: 'POL',
+      name: 'POL',
+      decimals: 18
     }
   },
   [ChainId.POLYGON_MUMBAI]: {
@@ -189,6 +256,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Polygonscan (Mumbai)',
       rootUrl: 'https://mumbai.polygonscan.com/'
     },
+    nativeToken: {
+      symbol: 'mMATIC',
+      name: 'Mumbai Polygon',
+      decimals: 18
+    },
     deprecated: true
   },
   [ChainId.POLYGON_AMOY]: {
@@ -200,7 +272,12 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'OKLink (Amoy)',
-      rootUrl: 'https://www.oklink.com/amoy'
+      rootUrl: 'https://www.oklink.com/amoy/'
+    },
+    nativeToken: {
+      symbol: 'aPOL',
+      name: 'Amoy POL',
+      decimals: 18
     }
   },
   [ChainId.POLYGON_ZKEVM]: {
@@ -212,6 +289,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Polygonscan (zkEVM)',
       rootUrl: 'https://zkevm.polygonscan.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.BSC]: {
@@ -223,6 +305,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'BSCScan',
       rootUrl: 'https://bscscan.com/'
+    },
+    nativeToken: {
+      symbol: 'BNB',
+      name: 'BNB',
+      decimals: 18
     }
   },
   [ChainId.BSC_TESTNET]: {
@@ -235,6 +322,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'BSCScan (Testnet)',
       rootUrl: 'https://testnet.bscscan.com/'
+    },
+    nativeToken: {
+      symbol: 'tBNB',
+      name: 'Testnet BNB',
+      decimals: 18
     }
   },
   [ChainId.OPTIMISM]: {
@@ -246,18 +338,28 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Etherscan (Optimism)',
       rootUrl: 'https://optimistic.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.OPTIMISM_KOVAN]: {
     chainId: ChainId.OPTIMISM_KOVAN,
     type: NetworkType.TESTNET,
     name: 'optimism-kovan',
-    title: 'Optimistic Kovan',
+    title: 'Optimism Kovan',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_KOVAN}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Kovan)',
       rootUrl: 'https://kovan-optimistic.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'kETH',
+      name: 'Kovan Ether',
+      decimals: 18
     },
     deprecated: true
   },
@@ -265,12 +367,17 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.OPTIMISM_GOERLI,
     type: NetworkType.TESTNET,
     name: 'optimism-goerli',
-    title: 'Optimistic Goerli',
+    title: 'Optimism Goerli',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_GOERLI}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Goerli)',
       rootUrl: 'https://goerli-optimistic.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'gETH',
+      name: 'Goerli Ether',
+      decimals: 18
     },
     deprecated: true
   },
@@ -278,12 +385,17 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.OPTIMISM_SEPOLIA,
     type: NetworkType.TESTNET,
     name: 'optimism-sepolia',
-    title: 'Optimistic Sepolia',
+    title: 'Optimism Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_SEPOLIA}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Etherscan (Optimism Sepolia)',
       rootUrl: 'https://sepolia-optimistic.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18
     }
   },
   [ChainId.ARBITRUM]: {
@@ -295,6 +407,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Arbiscan',
       rootUrl: 'https://arbiscan.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.ARBITRUM_GOERLI]: {
@@ -308,6 +425,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Arbiscan (Goerli Testnet)',
       rootUrl: 'https://testnet.arbiscan.io/'
     },
+    nativeToken: {
+      symbol: 'gETH',
+      name: 'Goerli Ether',
+      decimals: 18
+    },
     deprecated: true
   },
   [ChainId.ARBITRUM_SEPOLIA]: {
@@ -320,6 +442,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Arbiscan (Sepolia Testnet)',
       rootUrl: 'https://sepolia.arbiscan.io/'
+    },
+    nativeToken: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18
     }
   },
   [ChainId.ARBITRUM_NOVA]: {
@@ -331,6 +458,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Arbiscan Nova',
       rootUrl: 'https://nova.arbiscan.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.AVALANCHE]: {
@@ -342,6 +474,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Snowtrace',
       rootUrl: 'https://subnets.avax.network/c-chain/'
+    },
+    nativeToken: {
+      symbol: 'AVAX',
+      name: 'AVAX',
+      decimals: 18
     }
   },
   [ChainId.AVALANCHE_TESTNET]: {
@@ -354,6 +491,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Snowtrace (Testnet)',
       rootUrl: 'https://subnets-test.avax.network/c-chain/'
+    },
+    nativeToken: {
+      symbol: 'tAVAX',
+      name: 'Testnet AVAX',
+      decimals: 18
     }
   },
   [ChainId.GNOSIS]: {
@@ -365,6 +507,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Gnosis Chain Explorer',
       rootUrl: 'https://blockscout.com/xdai/mainnet/'
+    },
+    nativeToken: {
+      symbol: 'XDAI',
+      name: 'XDAI',
+      decimals: 18
     }
   },
   [ChainId.BASE]: {
@@ -376,6 +523,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Base Explorer',
       rootUrl: 'https://basescan.org/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.BASE_GOERLI]: {
@@ -389,6 +541,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Base Goerli Explorer',
       rootUrl: 'https://goerli.basescan.org/'
     },
+    nativeToken: {
+      symbol: 'gETH',
+      name: 'Goerli Ether',
+      decimals: 18
+    },
     deprecated: true
   },
   [ChainId.BASE_SEPOLIA]: {
@@ -401,6 +558,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Base Sepolia Explorer',
       rootUrl: 'https://base-sepolia.blockscout.com/'
+    },
+    nativeToken: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18
     }
   },
   [ChainId.HOMEVERSE]: {
@@ -412,6 +574,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Oasys Homeverse Explorer',
       rootUrl: 'https://explorer.oasys.homeverse.games/'
+    },
+    nativeToken: {
+      symbol: 'OAS',
+      name: 'OAS',
+      decimals: 18
     }
   },
   [ChainId.HOMEVERSE_TESTNET]: {
@@ -424,6 +591,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Oasys Homeverse Explorer (Testnet)',
       rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
+    },
+    nativeToken: {
+      symbol: 'tOAS',
+      name: 'Testnet OAS',
+      decimals: 18
     }
   },
   [ChainId.XAI]: {
@@ -435,6 +607,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Xai Explorer',
       rootUrl: 'https://explorer.xai-chain.net/'
+    },
+    nativeToken: {
+      symbol: 'XAI',
+      name: 'XAI',
+      decimals: 18
     }
   },
   [ChainId.XAI_SEPOLIA]: {
@@ -447,6 +624,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Xai Sepolia Explorer',
       rootUrl: 'https://testnet-explorer-v2.xai-chain.net/'
+    },
+    nativeToken: {
+      symbol: 'sXAI',
+      name: 'Sepolia XAI',
+      decimals: 18
     }
   },
   [ChainId.ASTAR_ZKEVM]: {
@@ -458,6 +640,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Astar zkEVM Explorer',
       rootUrl: 'https://astar-zkevm.explorer.startale.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.ASTAR_ZKYOTO]: {
@@ -470,6 +657,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Astar zKyoto Explorer',
       rootUrl: 'https://astar-zkyoto.blockscout.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
     }
   },
   [ChainId.XR_SEPOLIA]: {
@@ -482,16 +674,216 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'XR Sepolia Explorer',
       rootUrl: 'https://xr-sepolia-testnet.explorer.caldera.xyz/'
+    },
+    nativeToken: {
+      symbol: 'tXR',
+      name: 'Sepolia XR',
+      decimals: 18
+    }
+  },
+  [ChainId.B3]: {
+    chainId: ChainId.B3,
+    type: NetworkType.MAINNET,
+    name: 'b3',
+    title: 'B3',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'B3 Explorer',
+      rootUrl: 'https://explorer.b3.fun/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.B3_SEPOLIA]: {
+    chainId: ChainId.B3_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'b3-sepolia',
+    title: 'B3 Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'B3 Sepolia Explorer',
+      rootUrl: 'https://sepolia.explorer.b3.fun/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.APECHAIN]: {
+    chainId: ChainId.APECHAIN,
+    type: NetworkType.MAINNET,
+    name: 'apechain',
+    title: 'APE Chain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      rootUrl: 'https://apechain.calderaexplorer.xyz/'
+    },
+    nativeToken: {
+      symbol: 'APE',
+      name: 'ApeCoin',
+      decimals: 18
+    }
+  },
+  [ChainId.APECHAIN_TESTNET]: {
+    chainId: ChainId.APECHAIN_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'apechain-testnet',
+    title: 'APE Chain Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      rootUrl: 'https://curtis.explorer.caldera.xyz/'
+    },
+    nativeToken: {
+      symbol: 'APE',
+      name: 'ApeCoin',
+      decimals: 18
+    }
+  },
+  [ChainId.BLAST]: {
+    chainId: ChainId.BLAST,
+    type: NetworkType.MAINNET,
+    name: 'blast',
+    title: 'Blast',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST}.webp`,
+    blockExplorer: {
+      name: 'Blast Explorer',
+      rootUrl: 'https://blastscan.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.BLAST_SEPOLIA]: {
+    chainId: ChainId.BLAST_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'blast-sepolia',
+    title: 'Blast Sepolia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST_SEPOLIA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Blast Sepolia Explorer',
+      rootUrl: 'https://sepolia.blastexplorer.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.TELOS]: {
+    chainId: ChainId.TELOS,
+    type: NetworkType.MAINNET,
+    name: 'telos',
+    title: 'Telos',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
+    blockExplorer: {
+      name: 'Telos Explorer',
+      rootUrl: 'https://explorer.telos.net/network/'
+    },
+    nativeToken: {
+      symbol: 'TLOS',
+      name: 'TLOS',
+      decimals: 18
+    }
+  },
+  [ChainId.BORNE_TESTNET]: {
+    chainId: ChainId.BORNE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'borne-testnet',
+    title: 'Borne Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BORNE_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Borne Testnet Explorer',
+      rootUrl: 'https://subnets-test.avax.network/bornegfdn'
+    },
+    nativeToken: {
+      symbol: 'BORNE',
+      name: 'BORNE',
+      decimals: 18
+    }
+  },
+  [ChainId.SKALE_NEBULA_TESTNET]: {
+    chainId: ChainId.SKALE_NEBULA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-nebula-testnet',
+    title: 'SKALE Nebula Gaming Hub Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Testnet Explorer',
+      rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SONEIUM_MINATO]: {
+    chainId: ChainId.SONEIUM_MINATO,
+    type: NetworkType.TESTNET,
+    name: 'soneium-minato',
+    title: 'Soneium Minato (Testnet)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM_MINATO}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Soneium Minato Explorer',
+      rootUrl: 'https://explorer-testnet.soneium.org/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.TOY_TESTNET]: {
+    chainId: ChainId.TOY_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'toy-testnet',
+    title: 'TOY (Testnet)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TOY_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'TOY Testnet Explorer',
+      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/'
+    },
+    nativeToken: {
+      symbol: 'TOY',
+      name: 'TOY',
+      decimals: 18
     }
   },
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
     name: 'hardhat',
-    title: 'Hardhat (local testnet)'
+    title: 'Hardhat (local testnet)',
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
   },
   [ChainId.HARDHAT_2]: {
     chainId: ChainId.HARDHAT_2,
     name: 'hardhat2',
-    title: 'Hardhat (local testnet)'
+    title: 'Hardhat (local testnet)',
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
   }
 }

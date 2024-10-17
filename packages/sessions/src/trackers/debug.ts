@@ -1,7 +1,8 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ethers } from 'ethers'
+import { bigintReplacer } from '@0xsequence/utils'
 
 export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   constructor(private readonly tracker: ConfigTracker & migrator.PresignedMigrationTracker) {}
@@ -56,7 +57,7 @@ export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigr
 
   async walletsOfSigner(args: {
     signer: string
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: ethers.BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     console.debug('? walletsOfSigner')
     debug(args, '? ')
     return debug(await this.tracker.walletsOfSigner(args), '! ')
@@ -86,7 +87,7 @@ function debug<T>(value: T, prefix: string = ''): T {
       console.debug(prefix + 'undefined')
       break
     default:
-      JSON.stringify(value, undefined, 2)
+      JSON.stringify(value, bigintReplacer, 2)
         .split('\n')
         .map(line => prefix + line)
         .forEach(line => console.debug(line))

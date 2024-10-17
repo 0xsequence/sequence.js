@@ -21,14 +21,14 @@ const main = async () => {
   //
   // Providers
   //
-  const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-  const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
+  const provider = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
+  const provider2 = new ethers.JsonRpcProvider('http://localhost:9545', undefined, { cacheTimeout: -1 })
 
   //
   // Deploy Sequence WalletContext (deterministic)
   //
-  const deployedWalletContext = await utils.context.deploySequenceContexts(provider.getSigner())
-  await utils.context.deploySequenceContexts(provider2.getSigner())
+  const deployedWalletContext = await utils.context.deploySequenceContexts(await provider.getSigner())
+  await utils.context.deploySequenceContexts(await provider2.getSigner())
 
   // Generate a new wallet every time, otherwise tests will fail
   // due to EIP-6492 being used only sometimes (some tests deploy the wallet)
@@ -42,17 +42,27 @@ const main = async () => {
     {
       name: 'hardhat',
       chainId: 31337,
-      rpcUrl: provider.connection.url,
+      rpcUrl: provider._getConnection().url,
       provider: provider,
       relayer: relayer,
-      isDefaultChain: true
+      isDefaultChain: true,
+      nativeToken: {
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18
+      }
     },
     {
       name: 'hardhat2',
       chainId: 31338,
-      rpcUrl: provider2.connection.url,
+      rpcUrl: provider2._getConnection().url,
       provider: provider2,
-      relayer: relayer2
+      relayer: relayer2,
+      nativeToken: {
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18
+      }
     }
   ]
 

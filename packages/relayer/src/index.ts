@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { proto } from './rpc-relayer'
 
 import { commons } from '@0xsequence/core'
@@ -19,7 +19,7 @@ export interface Relayer {
   // It doesn't make any assumptions about the transaction format.
   getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }
@@ -32,7 +32,7 @@ export interface Relayer {
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
+  getNonce(address: string, space?: ethers.BigNumberish, blockTag?: ethers.BlockTag): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.

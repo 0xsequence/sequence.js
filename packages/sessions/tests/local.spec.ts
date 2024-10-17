@@ -106,21 +106,21 @@ const ConfigCases = [
 
       return {
         version: 2,
-        threshold: ethers.BigNumber.from(2),
-        checkpoint: ethers.BigNumber.from(392919),
+        threshold: 2n,
+        checkpoint: 392919n,
         tree: {
           left: {
-            subdigest: ethers.utils.hexlify(ethers.utils.randomBytes(32))
+            subdigest: ethers.hexlify(ethers.randomBytes(32))
           },
           right: {
             left: {
-              weight: ethers.BigNumber.from(1),
-              threshold: ethers.BigNumber.from(99),
+              weight: 1n,
+              threshold: 99n,
               tree: nested1.tree
             },
             right: {
-              weight: ethers.BigNumber.from(99),
-              threshold: ethers.BigNumber.from(1),
+              weight: 99n,
+              threshold: 1n,
               tree: nested2.tree
             }
           }
@@ -138,17 +138,17 @@ const randomContext = () => {
     mainModuleUpgradable: ethers.Wallet.createRandom().address,
     guestModule: ethers.Wallet.createRandom().address,
 
-    walletCreationCode: ethers.utils.hexlify(ethers.utils.randomBytes(32))
+    walletCreationCode: ethers.hexlify(ethers.randomBytes(32))
   }
 }
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 describe('Local config tracker', () => {
-  let provider: ethers.providers.Web3Provider
+  let provider: ethers.BrowserProvider
 
   before(async () => {
-    provider = new ethers.providers.Web3Provider(hardhat.network.provider as any)
+    provider = new ethers.BrowserProvider(hardhat.network.provider, undefined, { cacheTimeout: -1 })
   })
   ;[
     {
@@ -255,8 +255,8 @@ describe('Local config tracker', () => {
 
           const emptyConfig = {
             version: 2,
-            threshold: ethers.BigNumber.from(2),
-            checkpoint: ethers.BigNumber.from(0),
+            threshold: 2n,
+            checkpoint: 0n,
             tree: {
               left: { nodeHash: v2.config.hashNode(config1.tree) },
               right: { nodeHash: v2.config.hashNode(config2.tree) }
@@ -282,8 +282,8 @@ describe('Local config tracker', () => {
           expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
             normalize({
               version: 2,
-              threshold: ethers.BigNumber.from(2),
-              checkpoint: ethers.BigNumber.from(0),
+              threshold: 2n,
+              checkpoint: 0n,
               tree: {
                 left: config1.tree,
                 right: { nodeHash: v2.config.hashNode(config2.tree) }
@@ -303,8 +303,8 @@ describe('Local config tracker', () => {
           expect(normalize(await tracker.configOfImageHash({ imageHash }))).to.deep.equal(
             normalize({
               version: 2,
-              threshold: ethers.BigNumber.from(2),
-              checkpoint: ethers.BigNumber.from(0),
+              threshold: 2n,
+              checkpoint: 0n,
               tree: {
                 left: config1.tree,
                 right: config2.tree
@@ -314,7 +314,7 @@ describe('Local config tracker', () => {
         })
 
         it('Should return undefined for unknown imageHash', async () => {
-          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const imageHash = ethers.hexlify(ethers.randomBytes(32))
           expect(await tracker.configOfImageHash({ imageHash })).to.be.undefined
         })
 
@@ -382,11 +382,11 @@ describe('Local config tracker', () => {
         let context: commons.context.WalletContext
 
         before(async () => {
-          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+          context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
         })
 
         it('Should return return empty chained configuration if config is not known', async () => {
-          const imageHash = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const imageHash = ethers.hexlify(ethers.randomBytes(32))
           const res = await tracker.loadPresignedConfiguration({
             wallet: ethers.Wallet.createRandom().address,
             fromImageHash: imageHash
@@ -675,7 +675,7 @@ describe('Local config tracker', () => {
         let context: commons.context.WalletContext
 
         before(async () => {
-          context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+          context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
         })
 
         it('Should retrieve no witness for never used signer', async () => {
@@ -698,7 +698,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest = ethers.hexlify(ethers.randomBytes(32))
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
@@ -712,12 +712,12 @@ describe('Local config tracker', () => {
           const witness = await tracker.walletsOfSigner({ signer: signer.address })
           expect(witness.length).to.equal(1)
           expect(witness[0].wallet).to.equal(address)
-          expect(witness[0].proof.chainId.toNumber()).to.equal(1)
+          expect(witness[0].proof.chainId).to.equal(1n)
           expect(witness[0].proof.digest).to.equal(digest)
           expect(witness[0].proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
           // Adding a second witness should not change anything
-          const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest2 = ethers.hexlify(ethers.randomBytes(32))
           const signature2 = await wallet.signDigest(digest2)
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
           await tracker.saveWitnesses({
@@ -731,7 +731,7 @@ describe('Local config tracker', () => {
           expect(witness2.length).to.equal(1)
 
           // Adding a witness for a different chain should not change anything
-          const digest3 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest3 = ethers.hexlify(ethers.randomBytes(32))
           const wallet2 = new Wallet({
             config,
             chainId: 2,
@@ -767,7 +767,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest = ethers.hexlify(ethers.randomBytes(32))
           const signature = await wallet.signDigest(digest)
 
           const decoded = v2.signature.SignatureCoder.decode(signature)
@@ -790,7 +790,7 @@ describe('Local config tracker', () => {
             orchestrator: new Orchestrator([signer])
           })
 
-          const digest2 = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+          const digest2 = ethers.hexlify(ethers.randomBytes(32))
           const signature2 = await wallet2.signDigest(digest2)
 
           const decoded2 = v2.signature.SignatureCoder.decode(signature2)
@@ -809,11 +809,11 @@ describe('Local config tracker', () => {
           expect(wallet1Result).to.not.be.undefined
           expect(wallet2Result).to.not.be.undefined
 
-          expect(wallet1Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet1Result?.proof.chainId).to.equal(1n)
           expect(wallet1Result?.proof.digest).to.equal(digest)
           expect(wallet1Result?.proof.signature).to.equal((decoded.decoded.tree as v2.signature.SignatureLeaf).signature)
 
-          expect(wallet2Result?.proof.chainId.toNumber()).to.equal(1)
+          expect(wallet2Result?.proof.chainId).to.equal(1n)
           expect(wallet2Result?.proof.digest).to.equal(digest2)
           expect(wallet2Result?.proof.signature).to.equal((decoded2.decoded.tree as v2.signature.SignatureLeaf).signature)
         })
@@ -838,11 +838,11 @@ describe('Local config tracker', () => {
       it('Storing a config should store it in both', async () => {
         const config = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(0),
+          threshold: 1n,
+          checkpoint: 0n,
           tree: {
             address: ethers.Wallet.createRandom().address,
-            weight: ethers.BigNumber.from(1)
+            weight: 1n
           }
         }
 
@@ -860,11 +860,11 @@ describe('Local config tracker', () => {
       it('Retrieving a config from tracker1, should mirror to tracker2', async () => {
         const config = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(0),
+          threshold: 1n,
+          checkpoint: 0n,
           tree: {
             address: ethers.Wallet.createRandom().address,
-            weight: ethers.BigNumber.from(1)
+            weight: 1n
           }
         }
 
@@ -885,18 +885,18 @@ describe('Local config tracker', () => {
       it.skip('Should combine 2 different sources', async () => {
         const node1 = {
           address: ethers.Wallet.createRandom().address,
-          weight: ethers.BigNumber.from(1)
+          weight: 1n
         }
 
         const node2 = {
           address: ethers.Wallet.createRandom().address,
-          weight: ethers.BigNumber.from(1)
+          weight: 1n
         }
 
         const config1 = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(1234),
+          threshold: 1n,
+          checkpoint: 1234n,
           tree: {
             left: {
               nodeHash: v2.config.hashNode(node1)
@@ -907,8 +907,8 @@ describe('Local config tracker', () => {
 
         const config2 = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(1234),
+          threshold: 1n,
+          checkpoint: 1234n,
           tree: {
             left: node1,
             right: {
@@ -919,8 +919,8 @@ describe('Local config tracker', () => {
 
         const configAll = {
           version: 2,
-          threshold: ethers.BigNumber.from(1),
-          checkpoint: ethers.BigNumber.from(1234),
+          threshold: 1n,
+          checkpoint: 1234n,
           tree: {
             left: node1,
             right: node2
@@ -984,7 +984,7 @@ describe('Local config tracker', () => {
       let context: commons.context.WalletContext
 
       before(async () => {
-        context = await utils.context.deploySequenceContexts(provider.getSigner(0)).then(c => c[2])
+        context = await utils.context.deploySequenceContexts(await provider.getSigner(0)).then(c => c[2])
       })
 
       it('Should store chained config in both', async () => {
@@ -1183,12 +1183,9 @@ describe('Local config tracker', () => {
 function normalize(value: any): any {
   switch (typeof value) {
     case 'object':
-      if (ethers.BigNumber.isBigNumber(value)) {
-        return value.toString()
-      }
       return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, normalize(value)]))
     case 'number':
-      return `${value}`
+      return BigInt(value)
     default:
       return value
   }

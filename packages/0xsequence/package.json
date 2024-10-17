@@ -1,6 +1,6 @@
 {
   "name": "0xsequence",
-  "version": "1.9.19",
+  "version": "2.0.15",
   "description": "Sequence: a modular web3 stack and smart wallet for Ethereum chains",
   "repository": "https://github.com/0xsequence/sequence.js",
   "source": "src/index.ts",
@@ -37,7 +37,6 @@
     "@0xsequence/indexer": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/migration": "workspace:*",
-    "@0xsequence/multicall": "workspace:*",
     "@0xsequence/network": "workspace:*",
     "@0xsequence/provider": "workspace:*",
     "@0xsequence/relayer": "workspace:*",
@@ -47,14 +46,14 @@
     "@0xsequence/wallet": "workspace:*"
   },
   "peerDependencies": {
-    "ethers": ">=5.5 < 6"
+    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
-    "@0xsequence/wallet-contracts": "^2.0.0",
+    "@0xsequence/wallet-contracts": "^3.0.1",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.13.0",
     "ganache": "^7.5.0",
     "hardhat": "^2.20.1",
     "html-webpack-plugin": "^5.3.1",

@@ -1,9 +1,30 @@
-const testResults = []
+interface Entry {
+  title: string
+  pass: boolean | null
+  startTime: number
+  error: string | null
+  stack: string | null
+}
 
-;(window as any).__testResults = testResults
+declare global {
+  interface Window {
+    __testResults: Entry[]
+  }
+}
+
+const testResults: Entry[] = []
+
+window.__testResults = testResults
 
 export const test = async (title: string, run: () => void) => {
-  const entry = {
+  console.log(`\n
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║ ${title}${' '.repeat(77 - title.length)}║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝\n`)
+
+  const entry: Entry = {
     title: title,
     pass: null,
     startTime: performance.now(),

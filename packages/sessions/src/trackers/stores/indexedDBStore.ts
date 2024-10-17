@@ -59,7 +59,7 @@ export function recreateBigNumbers<T extends object | undefined>(object: T): T |
 
     if (val._isBigNumber === true && val._hex !== undefined && typeof val._hex === 'string' && val._hex.length !== '') {
       // Entry is a big number
-      result[key] = ethers.BigNumber.from(val)
+      result[key] = BigInt(val._hex)
     } else if (Array.isArray(val)) {
       // Entry is an array, recurse
       result[key] = val.map(v => recreateBigNumbers(v))

@@ -1,4 +1,4 @@
-import { BigNumberish, ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
@@ -7,7 +7,7 @@ import { ChainId, NetworkMetadata, networks } from './constants'
 
 export type NetworkConfig = NetworkMetadata & {
   rpcUrl: string
-  provider?: providers.Provider
+  provider?: ethers.Provider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
@@ -30,148 +30,44 @@ export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): Netwo
   return findNetworkConfig(allNetworks, chainIdOrName)
 }
 
-export type ChainIdLike = NetworkConfig | BigNumberish
+export type ChainIdLike = NetworkConfig | ethers.BigNumberish
 
-export function toChainIdNumber(chainIdLike: ChainIdLike): ethers.BigNumber {
-  if (ethers.BigNumber.isBigNumber(chainIdLike)) {
+export function toChainIdNumber(chainIdLike: ChainIdLike): bigint {
+  if (typeof chainIdLike === 'bigint') {
     return chainIdLike
   }
 
   if (isBigNumberish(chainIdLike)) {
-    return ethers.BigNumber.from(chainIdLike)
+    return BigInt(chainIdLike)
   }
 
-  return ethers.BigNumber.from(chainIdLike.chainId)
+  return BigInt(chainIdLike.chainId)
 }
 
-const genUrls = (network: string) => {
-  const rpcUrl = nodesURL(network)
+const createNetworkConfig = (chainId: ChainId, options?: { disabled?: boolean }): NetworkConfig => {
+  const network = networks[chainId]
+
+  if (!network) {
+    throw new Error(`Network with chainId ${chainId} not found`)
+  }
+
+  const rpcUrl = nodesURL(network.name)
+
   return {
+    ...network,
     rpcUrl,
+    indexerUrl: indexerURL(network.name),
     relayer: {
-      url: relayerURL(network),
+      url: relayerURL(network.name),
       provider: {
         url: rpcUrl
       }
     },
-    indexerUrl: indexerURL(network)
+    ...options
   }
 }
 
-export const allNetworks = validateAndSortNetworks([
-  {
-    ...networks[ChainId.POLYGON],
-    ...genUrls('polygon'),
-    isDefaultChain: true,
-    isAuthChain: true
-  } as LegacyNetworkConfig,
-  {
-    ...networks[ChainId.MAINNET],
-    ...genUrls('mainnet')
-  },
-  {
-    ...networks[ChainId.BSC],
-    ...genUrls('bsc')
-  },
-  {
-    ...networks[ChainId.AVALANCHE],
-    ...genUrls('avalanche')
-  },
-  {
-    ...networks[ChainId.ARBITRUM],
-    ...genUrls('arbitrum')
-  },
-  {
-    ...networks[ChainId.ARBITRUM_NOVA],
-    ...genUrls('arbitrum-nova')
-  },
-  {
-    ...networks[ChainId.OPTIMISM],
-    ...genUrls('optimism')
-  },
-  {
-    ...networks[ChainId.OPTIMISM_SEPOLIA],
-    ...genUrls('optimism-sepolia')
-  },
-  {
-    ...networks[ChainId.POLYGON_ZKEVM],
-    ...genUrls('polygon-zkevm')
-  },
-  {
-    ...networks[ChainId.GNOSIS],
-    ...genUrls('gnosis')
-  },
-  {
-    ...networks[ChainId.RINKEBY],
-    ...genUrls('rinkeby'),
-    disabled: true
-  },
-  {
-    ...networks[ChainId.GOERLI],
-    ...genUrls('goerli'),
-    disabled: true
-  },
-  {
-    ...networks[ChainId.SEPOLIA],
-    ...genUrls('sepolia')
-  },
-  {
-    ...networks[ChainId.POLYGON_MUMBAI],
-    ...genUrls('mumbai'),
-    disabled: true
-  },
-  {
-    ...networks[ChainId.POLYGON_AMOY],
-    ...genUrls('amoy')
-  },
-  {
-    ...networks[ChainId.BSC_TESTNET],
-    ...genUrls('bsc-testnet')
-  },
-  {
-    ...networks[ChainId.ARBITRUM_SEPOLIA],
-    ...genUrls('arbitrum-sepolia')
-  },
-  {
-    ...networks[ChainId.BASE],
-    ...genUrls('base')
-  },
-  {
-    ...networks[ChainId.BASE_SEPOLIA],
-    ...genUrls('base-sepolia')
-  },
-  {
-    ...networks[ChainId.HOMEVERSE],
-    ...genUrls('homeverse')
-  },
-  {
-    ...networks[ChainId.HOMEVERSE_TESTNET],
-    ...genUrls('homeverse-testnet')
-  },
-  {
-    ...networks[ChainId.XAI],
-    ...genUrls('xai')
-  },
-  {
-    ...networks[ChainId.XAI_SEPOLIA],
-    ...genUrls('xai-sepolia')
-  },
-  {
-    ...networks[ChainId.AVALANCHE_TESTNET],
-    ...genUrls('avalanche-testnet')
-  },
-  {
-    ...networks[ChainId.ASTAR_ZKEVM],
-    ...genUrls('astar-zkevm')
-  },
-  {
-    ...networks[ChainId.ASTAR_ZKYOTO],
-    ...genUrls('astar-zkyoto')
-  },
-  {
-    ...networks[ChainId.XR_SEPOLIA],
-    ...genUrls('xr-sepolia')
-  },
+export const hardhatNetworks = [
   {
     ...networks[ChainId.HARDHAT],
     rpcUrl: 'http://localhost:8545',
@@ -192,4 +88,46 @@ export const allNetworks = validateAndSortNetworks([
       }
     }
   }
+]
+
+export const allNetworks = validateAndSortNetworks([
+  { ...createNetworkConfig(ChainId.POLYGON), isDefaultChain: true, isAuthChain: true } as LegacyNetworkConfig,
+  createNetworkConfig(ChainId.MAINNET),
+  createNetworkConfig(ChainId.BSC),
+  createNetworkConfig(ChainId.AVALANCHE),
+  createNetworkConfig(ChainId.ARBITRUM),
+  createNetworkConfig(ChainId.ARBITRUM_NOVA),
+  createNetworkConfig(ChainId.OPTIMISM),
+  createNetworkConfig(ChainId.OPTIMISM_SEPOLIA),
+  createNetworkConfig(ChainId.POLYGON_ZKEVM),
+  createNetworkConfig(ChainId.GNOSIS),
+  createNetworkConfig(ChainId.RINKEBY, { disabled: true }),
+  createNetworkConfig(ChainId.GOERLI, { disabled: true }),
+  createNetworkConfig(ChainId.SEPOLIA),
+  createNetworkConfig(ChainId.POLYGON_MUMBAI, { disabled: true }),
+  createNetworkConfig(ChainId.POLYGON_AMOY),
+  createNetworkConfig(ChainId.BSC_TESTNET),
+  createNetworkConfig(ChainId.ARBITRUM_SEPOLIA),
+  createNetworkConfig(ChainId.BASE),
+  createNetworkConfig(ChainId.BASE_SEPOLIA),
+  createNetworkConfig(ChainId.HOMEVERSE),
+  createNetworkConfig(ChainId.HOMEVERSE_TESTNET),
+  createNetworkConfig(ChainId.XAI),
+  createNetworkConfig(ChainId.XAI_SEPOLIA),
+  createNetworkConfig(ChainId.AVALANCHE_TESTNET),
+  createNetworkConfig(ChainId.ASTAR_ZKEVM),
+  createNetworkConfig(ChainId.ASTAR_ZKYOTO),
+  createNetworkConfig(ChainId.XR_SEPOLIA),
+  createNetworkConfig(ChainId.B3),
+  createNetworkConfig(ChainId.B3_SEPOLIA),
+  createNetworkConfig(ChainId.APECHAIN),
+  createNetworkConfig(ChainId.APECHAIN_TESTNET),
+  createNetworkConfig(ChainId.BLAST),
+  createNetworkConfig(ChainId.BLAST_SEPOLIA),
+  createNetworkConfig(ChainId.TELOS),
+  createNetworkConfig(ChainId.BORNE_TESTNET),
+  createNetworkConfig(ChainId.SKALE_NEBULA_TESTNET),
+  createNetworkConfig(ChainId.SONEIUM_MINATO),
+  createNetworkConfig(ChainId.TOY_TESTNET),
+  ...hardhatNetworks
 ])

@@ -1,6 +1,7 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+
+import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { PromiseCache } from './promise-cache'
 import { LocalConfigTracker } from './local'
@@ -33,7 +34,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigNumberish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     return this.cache.do(
       'getMigration',
@@ -62,7 +63,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     return this.cache.do('savePresignedConfiguration', undefined, args => this.tracker.savePresignedConfiguration(args), args)
   }
 
-  saveWitnesses(args: { wallet: string; digest: string; chainId: BigNumberish; signatures: string[] }): Promise<void> {
+  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }): Promise<void> {
     return this.cache.do('saveWitnesses', undefined, args => this.tracker.saveWitnesses(args), args)
   }
 
@@ -87,11 +88,11 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
 
   walletsOfSigner(args: {
     signer: string
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     return this.cache.do('walletsOfSigner', this.window, args => this.tracker.walletsOfSigner(args), args)
   }
 
-  updateProvider(provider: ethers.providers.Provider) {
+  updateProvider(provider: ethers.Provider) {
     if (this.tracker instanceof LocalConfigTracker) {
       this.tracker.updateProvider(provider)
     }

@@ -13,7 +13,7 @@ export class PromiseCache {
     task: (...args: S) => Promise<T>,
     ...args: S
   ): Promise<T> {
-    key = `${key}:${ethers.utils.keccak256(ethers.utils.toUtf8Bytes(JSON.stringify(args, deterministically)))}`
+    key = `${key}:${ethers.id(JSON.stringify(args, deterministically))}`
 
     let entry = this.cache.get(key)
 

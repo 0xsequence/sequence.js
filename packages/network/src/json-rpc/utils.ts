@@ -1,7 +1,8 @@
-import { providers } from 'ethers'
-import { JsonRpcHandler } from './types'
+import { ethers } from 'ethers'
+import { JsonRpcSender } from './types'
 
-export function isJsonRpcProvider(cand: any): cand is providers.JsonRpcProvider {
+// TODOXXX: review..
+export function isJsonRpcProvider(cand: any): cand is ethers.JsonRpcProvider {
   return (
     cand !== undefined &&
     cand.send !== undefined &&
@@ -12,6 +13,6 @@ export function isJsonRpcProvider(cand: any): cand is providers.JsonRpcProvider 
   )
 }
 
-export function isJsonRpcHandler(cand: any): cand is JsonRpcHandler {
-  return cand !== undefined && cand.sendAsync !== undefined
+export function isJsonRpcSender(cand: any): cand is JsonRpcSender {
+  return cand !== undefined && cand.send !== undefined
 }

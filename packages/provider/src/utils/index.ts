@@ -1,4 +1,4 @@
-import { BytesLike, TypedDataDomain, TypedDataField } from 'ethers'
+import { ethers } from 'ethers'
 import { ChainIdLike } from '@0xsequence/network'
 import { encodeMessageDigest, TypedData, encodeTypedDataDigest } from '@0xsequence/utils'
 import { isValidSignature, prefixEIP191Message } from '../utils'
@@ -17,14 +17,14 @@ export class WalletUtils {
   }
 
   // Sign message on a specified chain, or DefaultChain by default
-  signMessage(message: BytesLike, chainId?: ChainIdLike, eip6492?: boolean): Promise<string> {
+  signMessage(message: ethers.BytesLike, chainId?: ChainIdLike, eip6492?: boolean): Promise<string> {
     return this.signer.signMessage(message, { chainId, eip6492 })
   }
 
   // Sign EIP-712 TypedData on a specified chain, or DefaultChain by default
   signTypedData(
-    domain: TypedDataDomain,
-    types: Record<string, Array<TypedDataField>>,
+    domain: ethers.TypedDataDomain,
+    types: Record<string, Array<ethers.TypedDataField>>,
     message: Record<string, any>,
     chainId?: ChainIdLike,
     eip6492?: boolean

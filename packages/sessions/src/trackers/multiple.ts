@@ -1,8 +1,9 @@
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 import { migrator } from '@0xsequence/migration'
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+
 import { commons, universal } from '@0xsequence/core'
 import { LocalConfigTracker } from './local'
+import { ethers } from 'ethers'
 
 export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val: T) => boolean): Promise<T> {
   return new Promise(resolve => {
@@ -113,7 +114,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
 
   async walletsOfSigner(args: {
     signer: string
-  }): Promise<{ wallet: string; proof: { digest: string; chainId: BigNumber; signature: string } }[]> {
+  }): Promise<{ wallet: string; proof: { digest: string; chainId: bigint; signature: string } }[]> {
     // We can't race here, because there is no "correct" response
     // we just return the union of all results, skipping duplicates
     const results = await allSafe(
@@ -121,7 +122,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
       []
     ).then(r => r.flat())
 
-    const wallets: { [wallet: string]: { digest: string; chainId: BigNumber; signature: string } } = {}
+    const wallets: { [wallet: string]: { digest: string; chainId: bigint; signature: string } } = {}
     for (const r of results) {
       wallets[r.wallet] = r.proof
     }
@@ -131,7 +132,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
 
     const result = Object.keys(wallets).map(w => ({ wallet: w, proof: wallets[w] }))
 
-    const witnesses = new Map<string, { wallet: string; digest: string; chainId: BigNumber; signatures: string[] }>()
+    const witnesses = new Map<string, { wallet: string; digest: string; chainId: bigint; signatures: string[] }>()
     result.forEach(({ wallet, proof: { digest, chainId, signature } }) => {
       const key = `${wallet}-${digest}-${chainId}`
       let signatures = witnesses.get(key)
@@ -146,7 +147,12 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     return result
   }
 
-  async saveWitnesses(args: { wallet: string; digest: string; chainId: BigNumberish; signatures: string[] }): Promise<void> {
+  async saveWitnesses(args: {
+    wallet: string
+    digest: string
+    chainId: ethers.BigNumberish
+    signatures: string[]
+  }): Promise<void> {
     await Promise.all(this.trackers.map(t => t.saveWitnesses(args)))
   }
 
@@ -178,7 +184,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     const best = checkpoints.reduce((acc, val) => {
       if (!val) return acc
       if (!acc) return val
-      if (val.checkpoint.gt(acc.checkpoint)) return val
+      if (val.checkpoint > acc.checkpoint) return val
       return acc
     })
 
@@ -213,7 +219,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     address: string,
     fromImageHash: string,
     fromVersion: number,
-    chainId: BigNumberish
+    chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     // TODO: Backfeed migration results to other trackers
     const results = await Promise.all(this.trackers.map(t => t.getMigration(address, fromImageHash, fromVersion, chainId)))

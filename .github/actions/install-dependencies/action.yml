@@ -4,10 +4,15 @@ runs:
   using: 'composite'
 
   steps:
-    - name: Setup PNPM
-      uses: pnpm/action-setup@v2
+    - name: Setup Node
+      uses: actions/setup-node@v4
       with:
-        version: 8
+        node-version: 20
+
+    - name: Setup PNPM
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
         run_install: false
 
     - name: Get pnpm store directory
@@ -17,7 +22,7 @@ runs:
         echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
     - name: Setup pnpm cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ${{ steps.pnpm-cache.outputs.STORE_PATH }}
@@ -27,11 +32,6 @@ runs:
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
-
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
 
     - name: Install dependencies
       shell: bash

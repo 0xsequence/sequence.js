@@ -1,10 +1,14 @@
-const { off } = require("process")
+const { off } = require('process')
 
 module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2018,
     sourceType: 'module'
+  },
+
+  settings: {
+    'import/ignore': ['react-native'],
   },
 
   extends: [
@@ -32,7 +36,6 @@ module.exports = {
     'import/no-named-as-default-member': 'off',
     'import/export': 'off'
 
-
     // 'import/order': [
     //   'warn',
     //   {
@@ -43,6 +46,5 @@ module.exports = {
     //     }
     //   },
     // ]
-
   }
 }

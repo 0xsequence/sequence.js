@@ -1,13 +1,13 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
 import { logger, Optionals } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
-const DEFAULT_GAS_LIMIT = ethers.BigNumber.from(800000)
+const DEFAULT_GAS_LIMIT = 800000n
 
 export interface ProviderRelayerOptions {
-  provider: providers.Provider
+  provider: ethers.Provider
   waitPollRate?: number
   deltaBlocksLog?: number
   fromBlockLog?: number
@@ -20,11 +20,11 @@ export const ProviderRelayerDefaults: Required<Optionals<ProviderRelayerOptions>
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return obj.provider !== undefined && providers.Provider.isProvider(obj.provider)
+  return typeof obj === 'object' && obj.provider instanceof ethers.AbstractProvider
 }
 
 export abstract class ProviderRelayer implements Relayer {
-  public provider: providers.Provider
+  public provider: ethers.Provider
   public waitPollRate: number
   public deltaBlocksLog: number
   public fromBlockLog: number
@@ -45,7 +45,7 @@ export abstract class ProviderRelayer implements Relayer {
 
   abstract getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }
@@ -64,7 +64,7 @@ export abstract class ProviderRelayer implements Relayer {
       await Promise.all(
         transactions.map(async tx => {
           // Respect gasLimit request of the transaction (as long as its not 0)
-          if (tx.gasLimit && !ethers.BigNumber.from(tx.gasLimit || 0).eq(ethers.constants.Zero)) {
+          if (tx.gasLimit && BigInt(tx.gasLimit || 0) !== 0n) {
             return tx.gasLimit
           }
 
@@ -74,7 +74,7 @@ export abstract class ProviderRelayer implements Relayer {
           }
 
           // Fee can't be estimated for self-called if wallet hasn't been deployed
-          if (tx.to === wallet && (await this.provider.getCode(wallet).then(code => ethers.utils.arrayify(code).length === 0))) {
+          if (tx.to === wallet && (await this.provider.getCode(wallet).then(code => ethers.getBytes(code).length === 0))) {
             return DEFAULT_GAS_LIMIT
           }
 
@@ -95,12 +95,12 @@ export abstract class ProviderRelayer implements Relayer {
     ).map(gasLimit => ({
       executed: true,
       succeeded: true,
-      gasUsed: ethers.BigNumber.from(gasLimit).toNumber(),
-      gasLimit: ethers.BigNumber.from(gasLimit).toNumber()
+      gasUsed: Number(gasLimit),
+      gasLimit: Number(gasLimit)
     }))
   }
 
-  async getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish> {
+  async getNonce(address: string, space?: ethers.BigNumberish, blockTag?: ethers.BlockTag): Promise<ethers.BigNumberish> {
     if (!this.provider) {
       throw new Error('provider is not set')
     }
@@ -123,7 +123,7 @@ export abstract class ProviderRelayer implements Relayer {
     timeoutDuration?: number,
     delay: number = this.waitPollRate,
     maxFails: number = 5
-  ): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> {
+  ): Promise<ethers.TransactionResponse & { receipt: ethers.TransactionReceipt }> {
     if (typeof metaTxnId !== 'string') {
       metaTxnId = commons.transaction.intendedTransactionID(metaTxnId)
     }
@@ -155,7 +155,7 @@ export abstract class ProviderRelayer implements Relayer {
       throw new Error(`timed out after ${fails} failed attempts${errorMessage ? `: ${errorMessage}` : ''}`)
     }
 
-    const waitReceipt = async (): Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }> => {
+    const waitReceipt = async (): Promise<ethers.TransactionResponse & { receipt: ethers.TransactionReceipt }> => {
       // Transactions can only get executed on nonce change
       // get all nonce changes and look for metaTxnIds in between logs
       let lastBlock: number = this.fromBlockLog
@@ -199,7 +199,7 @@ export abstract class ProviderRelayer implements Relayer {
 
         // Find a transaction with a TxExecuted log
         const found = txs.find(tx =>
-          tx.logs.find(
+          tx?.logs.find(
             l =>
               (l.topics.length === 0 && l.data.replace('0x', '') === normalMetaTxnId) ||
               (l.topics.length === 1 &&
@@ -212,13 +212,17 @@ export abstract class ProviderRelayer implements Relayer {
 
         // If found return that
         if (found) {
-          return {
-            receipt: found,
-            ...(await retry(
-              () => this.provider.getTransaction(found.transactionHash),
-              `unable to get transaction ${found.transactionHash}`
-            ))
+          const response = await retry(() => this.provider.getTransaction(found.hash), `unable to get transaction ${found.hash}`)
+          if (!response) {
+            throw new Error(`Transaction response not found for  ${metaTxnId}`)
           }
+
+          // NOTE: we have to do this, because ethers-v6 uses private fields
+          // and we can't just extend the class and override the method, so
+          // we just modify the response object directly by adding the receipt to it.
+          const out: any = response
+          out.receipt = found
+          return out
         }
 
         // Otherwise wait and try again
@@ -233,7 +237,7 @@ export abstract class ProviderRelayer implements Relayer {
     if (timeoutDuration !== undefined) {
       return Promise.race([
         waitReceipt(),
-        new Promise<providers.TransactionResponse & { receipt: providers.TransactionReceipt }>((_, reject) =>
+        new Promise<ethers.TransactionResponse & { receipt: ethers.TransactionReceipt }>((_, reject) =>
           setTimeout(() => {
             timedOut = true
             reject(`Timeout waiting for transaction receipt ${metaTxnId}`)
