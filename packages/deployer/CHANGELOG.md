@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.0.17
+
+### Patch Changes
+
+- update waas auth to clear session before signIn
+- Updated dependencies
+  - @0xsequence/utils@2.0.17
+
 ## 2.0.16
 
 ### Patch Changes

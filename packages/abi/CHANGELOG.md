@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.0.17
+
+### Patch Changes
+
+- update waas auth to clear session before signIn
+
 ## 2.0.16
 
 ### Patch Changes
