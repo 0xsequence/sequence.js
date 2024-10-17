@@ -519,8 +519,8 @@ export class SequenceWaaS {
     challenge: Challenge,
     opts?: { sessionName?: string; forceCreateAccount?: boolean }
   ): Promise<SignInResponse> {
-    // initAuth can start while user is already signed in to link accounts,
-    // but it can't be used to sign in while user is already signed in. In this
+    // initAuth can start while user is already signed in and continue with linkAccount method,
+    // but it can't be used to completeAuth while user is already signed in. In this
     // case we should throw an error.
     const isSignedIn = await this.isSignedIn()
     if (isSignedIn) {
