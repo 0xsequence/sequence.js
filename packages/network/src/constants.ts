@@ -51,10 +51,6 @@ export enum ChainId {
   XAI = 660279,
   XAI_SEPOLIA = 37714555429,
 
-  // Astar
-  ASTAR_ZKEVM = 3776,
-  ASTAR_ZKYOTO = 6038361,
-
   // XR
   XR_SEPOLIA = 2730,
 
@@ -628,39 +624,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'sXAI',
       name: 'Sepolia XAI',
-      decimals: 18
-    }
-  },
-  [ChainId.ASTAR_ZKEVM]: {
-    chainId: ChainId.ASTAR_ZKEVM,
-    type: NetworkType.MAINNET,
-    name: 'astar-zkevm',
-    title: 'Astar zkEVM',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKEVM}.webp`,
-    blockExplorer: {
-      name: 'Astar zkEVM Explorer',
-      rootUrl: 'https://astar-zkevm.explorer.startale.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.ASTAR_ZKYOTO]: {
-    chainId: ChainId.ASTAR_ZKYOTO,
-    type: NetworkType.TESTNET,
-    name: 'astar-zkyoto',
-    title: 'Astar zKyoto Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKYOTO}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Astar zKyoto Explorer',
-      rootUrl: 'https://astar-zkyoto.blockscout.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
       decimals: 18
     }
   },
