@@ -1,5 +1,14 @@
 # @0xsequence/core
 
+## 2.0.16
+
+### Patch Changes
+
+- Removed Astar chains
+- Updated dependencies
+  - @0xsequence/abi@2.0.16
+  - @0xsequence/utils@2.0.16
+
 ## 2.0.15
 
 ### Patch Changes

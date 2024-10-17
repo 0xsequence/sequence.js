@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.0.16
+
+### Patch Changes
+
+- Removed Astar chains
+- Updated dependencies
+  - @0xsequence/account@2.0.16
+  - @0xsequence/core@2.0.16
+  - @0xsequence/signhub@2.0.16
+  - @0xsequence/utils@2.0.16
+
 ## 2.0.15
 
 ### Patch Changes
