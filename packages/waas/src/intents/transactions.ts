@@ -3,6 +3,7 @@ import {
   IntentDataGetTransactionReceipt,
   IntentDataSendTransaction,
   IntentDataFeeOptions,
+  TransactionContractCall,
   TransactionDelayedEncode,
   TransactionERC1155,
   TransactionERC20,
@@ -59,6 +60,16 @@ export type SendERC1155Args = TransactionFeeArgs & {
   data?: string
 }
 
+export type SendContractCallArgs = TransactionFeeArgs & {
+  chainId: number
+  to: string
+  value?: ethers.BigNumberish
+  abi: string
+  func?: string
+  args: any[]
+}
+
+// Deprecated: please use SendContractCallArgs instead
 export type SendDelayedEncodeArgs = TransactionFeeArgs & {
   chainId: number
   to: string
@@ -220,6 +231,28 @@ export function sendERC1155({ token, to, values, data, ...args }: SendERC1155Arg
   })
 }
 
+export function sendContractCall({
+  to,
+  value,
+  abi,
+  func,
+  args,
+  ...otherArgs
+}: SendContractCallArgs & BaseArgs): Intent<IntentDataSendTransaction> {
+  return sendTransactions({
+    transactions: [
+      contractCall({
+        to,
+        value: BigInt(value || 0).toString(),
+        data: { abi, func, args }
+      })
+    ],
+    ...otherArgs
+  })
+}
+
+
+// Deprecated please use sendContractCall instead
 export function sendDelayedEncode({
   to,
   value,
@@ -246,7 +279,8 @@ export type Transaction =
   | TransactionERC20
   | TransactionERC721
   | TransactionERC1155
-  | TransactionDelayedEncode
+  | TransactionContractCall
+  | TransactionDelayedEncode // deprecated TransactionDelayedEncode
 
 export function transaction(data: Omit<TransactionRaw, 'type'>): Transaction {
   return { type: 'transaction', ...data }
@@ -321,6 +355,37 @@ export function erc1155(data: Omit<TransactionERC1155, 'type'> | Omit<SendERC115
   }
 }
 
+export function contractCall(
+  data: Omit<TransactionDelayedEncode, 'type'> | Omit<SendContractCallArgs, 'chainId'>
+): Transaction {
+  const sendContractCallArgs = data as Omit<SendContractCallArgs, 'chainId'>
+  const transactionContractCall = data as Omit<TransactionContractCall, 'type'>
+
+  if (sendContractCallArgs.abi !== undefined) {
+    return {
+      type: 'contractCall',
+      to: sendContractCallArgs.to,
+      value: toHexString(BigInt(sendContractCallArgs.value || 0)),
+      data: {
+        abi: sendContractCallArgs.abi,
+        func: sendContractCallArgs.func,
+        args: sendContractCallArgs.args
+      }
+    }
+  } else if (transactionContractCall.data !== undefined) {
+    return {
+      type: 'contractCall',
+      to: transactionContractCall.to,
+      value: transactionContractCall.value,
+      data: transactionContractCall.data
+    }
+  } else {
+    throw new Error('Invalid contract transaction')
+  }
+}
+
+
+// Deprecated
 export function delayedEncode(
   data: Omit<TransactionDelayedEncode, 'type'> | Omit<SendDelayedEncodeArgs, 'chainId'>
 ): Transaction {
@@ -380,5 +445,5 @@ export function combineTransactionIntents(intents: Intent<IntentDataSendTransact
 }
 
 function isEthersTx(tx: Transaction): tx is ethers.TransactionRequest {
-  return !['transaction', 'erc20send', 'erc721send', 'erc1155send', 'delayedEncode'].includes(tx.type as any)
+  return !['transaction', 'erc20send', 'erc721send', 'erc1155send', 'delayedEncode', 'contractCall'].includes(tx.type as any)
 }
