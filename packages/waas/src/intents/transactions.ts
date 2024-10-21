@@ -69,11 +69,13 @@ export type SendContractCallArgs = TransactionFeeArgs & {
   args: ContractCallArguments[]
 }
 
-export type ContractCallArguments = string | {
-  abi: string
-  func?: string
-  args: ContractCallArguments[]
-}
+export type ContractCallArguments =
+  | string
+  | {
+      abi: string
+      func?: string
+      args: ContractCallArguments[]
+    }
 
 // Deprecated: please use SendContractCallArgs instead
 export type SendDelayedEncodeArgs = TransactionFeeArgs & {
@@ -257,7 +259,6 @@ export function sendContractCall({
   })
 }
 
-
 // Deprecated please use sendContractCall instead
 export function sendDelayedEncode({
   to,
@@ -361,9 +362,7 @@ export function erc1155(data: Omit<TransactionERC1155, 'type'> | Omit<SendERC115
   }
 }
 
-export function contractCall(
-  data: Omit<TransactionContractCall, 'type'> | Omit<SendContractCallArgs, 'chainId'>
-): Transaction {
+export function contractCall(data: Omit<TransactionContractCall, 'type'> | Omit<SendContractCallArgs, 'chainId'>): Transaction {
   const sendContractCallArgs = data as Omit<SendContractCallArgs, 'chainId'>
   const transactionContractCall = data as Omit<TransactionContractCall, 'type'>
 
@@ -389,7 +388,6 @@ export function contractCall(
     throw new Error('Invalid contract transaction')
   }
 }
-
 
 // Deprecated
 export function delayedEncode(
