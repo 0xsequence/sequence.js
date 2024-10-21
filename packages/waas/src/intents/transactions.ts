@@ -66,7 +66,13 @@ export type SendContractCallArgs = TransactionFeeArgs & {
   value?: ethers.BigNumberish
   abi: string
   func?: string
-  args: any[]
+  args: ContractCallArguments[]
+}
+
+export type ContractCallArguments = string | {
+  abi: string
+  func?: string
+  args: ContractCallArguments[]
 }
 
 // Deprecated: please use SendContractCallArgs instead
@@ -356,7 +362,7 @@ export function erc1155(data: Omit<TransactionERC1155, 'type'> | Omit<SendERC115
 }
 
 export function contractCall(
-  data: Omit<TransactionDelayedEncode, 'type'> | Omit<SendContractCallArgs, 'chainId'>
+  data: Omit<TransactionContractCall, 'type'> | Omit<SendContractCallArgs, 'chainId'>
 ): Transaction {
   const sendContractCallArgs = data as Omit<SendContractCallArgs, 'chainId'>
   const transactionContractCall = data as Omit<TransactionContractCall, 'type'>
