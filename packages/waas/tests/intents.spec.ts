@@ -134,7 +134,7 @@ describe('Payloads', () => {
               args: [
                 '48774435471364917511246724398022004900255301025912680232738918790354204737320',
                 '1000000000000000000',
-                '["0x8541D65829f98f7D71A4655cCD7B2bB8494673bF"]',
+                ['0x8541D65829f98f7D71A4655cCD7B2bB8494673bF'],
                 {
                   abi: 'notExpired(uint256,string)',
                   args: ['1600000000', 'Nov 1st, 2020']
@@ -159,7 +159,7 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x45fd4d795dacbd517c22f307100e92224e08ec348eb5fbc77c256b3344ff157512d895b9d56b8f246e528084fef4f33acf6a053eda14add9e8e4011aefd962e81b'
+      '0x692c5c4c969f54dc96b216e41a80b5366829754e652a5a6b499aa7b4fb3c086664cbf282568c863030c4183ae0c05a2861bfb5de1e76fea94f71796ff6cd1c9f1c'
     )
   })
 })
