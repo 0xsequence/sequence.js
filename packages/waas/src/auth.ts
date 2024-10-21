@@ -10,7 +10,7 @@ import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
   GetTransactionReceiptArgs,
-  SendDelayedEncodeArgs,
+  SendContractCallArgs,
   SendERC1155Args,
   SendERC20Args,
   SendERC721Args,
@@ -809,7 +809,7 @@ export class SequenceWaaS {
     return this.trySendTransactionIntent(intent, args)
   }
 
-  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+  async callContract(args: WithSimpleNetwork<SendContractCallArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
