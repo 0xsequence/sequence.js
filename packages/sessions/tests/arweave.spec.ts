@@ -15,9 +15,8 @@ class MockProvider extends ethers.AbstractProvider {
 }
 
 describe('Arweave config reader', () => {
-  const namespace = 'xOovxYFkIwBpEwSi'
-  const owners = ['lJYCA4xBPJeZSgr9AF_4pHp4HVGvTOa4NYKJRoMBP5c']
-  const arweave = new trackers.arweave.ArweaveReader(namespace, owners)
+  const options = { namespace: 'xOovxYFkIwBpEwSi', owners: ['lJYCA4xBPJeZSgr9AF_4pHp4HVGvTOa4NYKJRoMBP5c'] }
+  const arweave = new trackers.arweave.ArweaveReader(options)
   const sessions = new trackers.remote.RemoteConfigTracker('http://localhost:5555')
   const provider = new MockProvider()
 

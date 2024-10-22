@@ -4,25 +4,32 @@ import { CachedEIP5719 } from '@0xsequence/replacer'
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
 
-const RATE_LIMIT_RETRY_DELAY = 5 * 60 * 1000
-
 // depending on @0xsequence/abi breaks 0xsequence's proxy-transport-channel integration test
 const MAIN_MODULE_ABI = [
   'function execute((bool delegateCall, bool revertOnError, uint256 gasLimit, address target, uint256 value, bytes data)[] calldata transactions, uint256 nonce, bytes calldata signature)'
 ]
 
+export interface Options {
+  readonly namespace?: string
+  readonly owners?: string[]
+  readonly eip5719Provider?: ethers.Provider
+  readonly rateLimitRetryDelayMs?: number
+}
+
+export const defaults = {
+  namespace: 'Sequence-Sessions',
+  owners: ['AZ6R2mG8zxW9q7--iZXGrBknjegHoPzmG5IG-nxvMaM'],
+  eip5719Provider: undefined,
+  rateLimitRetryDelayMs: 5 * 60 * 1000
+}
+
 export class ArweaveReader implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly configs: Map<string, Promise<commons.config.Config | undefined>> = new Map()
-
   private readonly eip5719?: CachedEIP5719
 
-  constructor(
-    readonly namespace = 'Sequence-Sessions',
-    readonly owners?: string[],
-    eip5719Provider?: ethers.Provider
-  ) {
-    if (eip5719Provider) {
-      this.eip5719 = new CachedEIP5719(eip5719Provider)
+  constructor(readonly options: Options = defaults) {
+    if (options.eip5719Provider) {
+      this.eip5719 = new CachedEIP5719(options.eip5719Provider)
     }
   }
 
@@ -42,62 +49,62 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     }
     const fromCheckpoint = BigInt(fromConfig.checkpoint)
 
-    const items = Object.entries(
-      await findItems({ Type: 'config update', Wallet: wallet }, { namespace: this.namespace, owners: this.owners })
-    ).flatMap(([id, tags]) => {
-      try {
-        const { Signer: signer, Subdigest: subdigest, Digest: digest, 'To-Config': toImageHash } = tags
-
-        let signatureType: 'eip-712' | 'eth_sign' | 'erc-1271'
-        switch (tags['Signature-Type']) {
-          case 'eip-712':
-          case 'eth_sign':
-          case 'erc-1271':
-            signatureType = tags['Signature-Type']
-            break
-          default:
-            throw new Error(`unknown signature type ${tags['Signature-Type']}`)
-        }
-
-        let toCheckpoint: bigint
+    const items = Object.entries(await findItems({ Type: 'config update', Wallet: wallet }, this.options)).flatMap(
+      ([id, tags]) => {
         try {
-          toCheckpoint = BigInt(tags['To-Checkpoint'])
-        } catch {
-          throw new Error(`to checkpoint is not a number: ${tags['To-Checkpoint']}`)
-        }
-        if (toCheckpoint <= fromCheckpoint) {
+          const { Signer: signer, Subdigest: subdigest, Digest: digest, 'To-Config': toImageHash } = tags
+
+          let signatureType: 'eip-712' | 'eth_sign' | 'erc-1271'
+          switch (tags['Signature-Type']) {
+            case 'eip-712':
+            case 'eth_sign':
+            case 'erc-1271':
+              signatureType = tags['Signature-Type']
+              break
+            default:
+              throw new Error(`unknown signature type ${tags['Signature-Type']}`)
+          }
+
+          let toCheckpoint: bigint
+          try {
+            toCheckpoint = BigInt(tags['To-Checkpoint'])
+          } catch {
+            throw new Error(`to checkpoint is not a number: ${tags['To-Checkpoint']}`)
+          }
+          if (toCheckpoint <= fromCheckpoint) {
+            return []
+          }
+
+          if (!ethers.isAddress(signer)) {
+            throw new Error(`signer is not an address: ${signer}`)
+          }
+
+          if (!ethers.isHexString(subdigest, 32)) {
+            throw new Error(`subdigest is not a hash: ${subdigest}`)
+          }
+
+          if (!ethers.isHexString(digest, 32)) {
+            throw new Error(`digest is not a hash: ${digest}`)
+          }
+
+          let chainId: bigint
+          try {
+            chainId = BigInt(tags['Chain-ID'])
+          } catch {
+            throw new Error(`chain id is not a number: ${tags['Chain-ID']}`)
+          }
+
+          if (!ethers.isHexString(toImageHash, 32)) {
+            throw new Error(`to config is not a hash: ${toImageHash}`)
+          }
+
+          return [{ id, signatureType, signer, subdigest, digest, chainId, toImageHash, toCheckpoint }]
+        } catch (error) {
+          console.warn(`invalid wallet ${wallet} config update ${id}:`, error)
           return []
         }
-
-        if (!ethers.isAddress(signer)) {
-          throw new Error(`signer is not an address: ${signer}`)
-        }
-
-        if (!ethers.isHexString(subdigest, 32)) {
-          throw new Error(`subdigest is not a hash: ${subdigest}`)
-        }
-
-        if (!ethers.isHexString(digest, 32)) {
-          throw new Error(`digest is not a hash: ${digest}`)
-        }
-
-        let chainId: bigint
-        try {
-          chainId = BigInt(tags['Chain-ID'])
-        } catch {
-          throw new Error(`chain id is not a number: ${tags['Chain-ID']}`)
-        }
-
-        if (!ethers.isHexString(toImageHash, 32)) {
-          throw new Error(`to config is not a hash: ${toImageHash}`)
-        }
-
-        return [{ id, signatureType, signer, subdigest, digest, chainId, toImageHash, toCheckpoint }]
-      } catch (error) {
-        console.warn(`invalid wallet ${wallet} config update ${id}:`, error)
-        return []
       }
-    })
+    )
 
     const signatures: Map<string, Map<string, (typeof items)[number]>> = new Map()
     let candidates: typeof items = []
@@ -166,7 +173,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
               nextCandidateSigners.map(async signer => {
                 const { id, subdigest, signatureType } = nextCandidateItems.get(signer)!
                 try {
-                  let signature = await (await fetchItem(id)).text()
+                  let signature = await (await fetchItem(id, this.options.rateLimitRetryDelayMs)).text()
                   switch (signatureType) {
                     case 'eip-712':
                       signature += '01'
@@ -240,9 +247,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     }
 
     const config = (async (imageHash: string): Promise<commons.config.Config | undefined> => {
-      const items = Object.entries(
-        await findItems({ Type: 'config', Config: imageHash }, { namespace: this.namespace, owners: this.owners })
-      ).flatMap(([id, tags]) => {
+      const items = Object.entries(await findItems({ Type: 'config', Config: imageHash }, this.options)).flatMap(([id, tags]) => {
         try {
           const version = Number(tags.Version)
           if (!version) {
@@ -269,7 +274,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
 
       for (const { id, version } of items) {
         try {
-          const config = { ...(await (await fetchItem(id)).json()), version }
+          const config = { ...(await (await fetchItem(id, this.options.rateLimitRetryDelayMs)).json()), version }
           if (config.tree) {
             config.tree = toTopology(config.tree)
           }
@@ -307,9 +312,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
   }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
     const wallet = ethers.getAddress(args.wallet)
 
-    const items = Object.entries(
-      await findItems({ Type: 'wallet', Wallet: wallet }, { namespace: this.namespace, owners: this.owners })
-    ).flatMap(([id, tags]) => {
+    const items = Object.entries(await findItems({ Type: 'wallet', Wallet: wallet }, this.options)).flatMap(([id, tags]) => {
       try {
         const { 'Deploy-Config': imageHash } = tags
 
@@ -367,7 +370,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     for (const [id, tags] of Object.entries(
       await findItems(
         { Type: ['signature', 'config update'], Signer: signer, Witness: args.allSignatures ? undefined : 'true' },
-        { namespace: this.namespace, owners: this.owners }
+        this.options
       )
     )) {
       const { Wallet: wallet, Subdigest: subdigest, Digest: digest, 'Chain-ID': chainId } = tags
@@ -396,7 +399,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
           throw new Error('incorrect subdigest')
         }
 
-        const signature = fetchItem(id).then(async response => {
+        const signature = fetchItem(id, this.options.rateLimitRetryDelayMs).then(async response => {
           const signature = (await response.text()) + signatureType
           if (this.eip5719) {
             try {
@@ -439,7 +442,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
           'From-Version': `${fromVersion}`,
           'From-Config': fromImageHash
         },
-        { namespace: this.namespace, owners: this.owners }
+        this.options
       )
     ).flatMap(([id, tags]) => {
       try {
@@ -483,7 +486,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     const { id, toVersion, toImageHash, executor } = items[0]
 
     const [data, toConfig] = await Promise.all([
-      fetchItem(id).then(response => response.text()),
+      fetchItem(id, this.options.rateLimitRetryDelayMs).then(response => response.text()),
       this.configOfImageHash({ imageHash: toImageHash })
     ])
 
@@ -511,10 +514,11 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
 
 async function findItems(
   filter: { [name: string]: undefined | string | string[] },
-  options?: { namespace?: string; owners?: string[]; pageSize?: number; maxResults?: number }
+  options?: Options & { pageSize?: number; maxResults?: number }
 ): Promise<{ [id: string]: { [tag: string]: string } }> {
   const namespace = options?.namespace
   const owners = options?.owners
+  const rateLimitRetryDelayMs = options?.rateLimitRetryDelayMs ?? defaults.rateLimitRetryDelayMs
   const pageSize = options?.pageSize ?? 100
   const maxResults = options?.maxResults
 
@@ -561,9 +565,9 @@ async function findItems(
         break
       }
       console.warn(
-        `rate limited by arweave.net, trying again in ${RATE_LIMIT_RETRY_DELAY / 1000} seconds at ${new Date(Date.now() + RATE_LIMIT_RETRY_DELAY).toLocaleTimeString()}`
+        `rate limited by arweave.net, trying again in ${rateLimitRetryDelayMs / 1000} seconds at ${new Date(Date.now() + rateLimitRetryDelayMs).toLocaleTimeString()}`
       )
-      await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_RETRY_DELAY))
+      await new Promise(resolve => setTimeout(resolve, rateLimitRetryDelayMs))
     }
 
     const {
@@ -588,16 +592,16 @@ async function findItems(
   )
 }
 
-async function fetchItem(id: string): Promise<Response> {
+async function fetchItem(id: string, rateLimitRetryDelayMs = defaults.rateLimitRetryDelayMs): Promise<Response> {
   while (true) {
     const response = await fetch(`https://arweave.net/${id}`, { redirect: 'follow' })
     if (response.status !== 429) {
       return response
     }
     console.warn(
-      `rate limited by arweave.net, trying again in ${RATE_LIMIT_RETRY_DELAY / 1000} seconds at ${new Date(Date.now() + RATE_LIMIT_RETRY_DELAY).toLocaleTimeString()}`
+      `rate limited by arweave.net, trying again in ${rateLimitRetryDelayMs / 1000} seconds at ${new Date(Date.now() + rateLimitRetryDelayMs).toLocaleTimeString()}`
     )
-    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_RETRY_DELAY))
+    await new Promise(resolve => setTimeout(resolve, rateLimitRetryDelayMs))
   }
 }
 
