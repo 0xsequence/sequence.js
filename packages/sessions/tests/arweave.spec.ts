@@ -14,7 +14,7 @@ class MockProvider extends ethers.AbstractProvider {
   }
 }
 
-describe.only('Arweave config reader', () => {
+describe('Arweave config reader', () => {
   const namespace = 'xOovxYFkIwBpEwSi'
   const owners = ['lJYCA4xBPJeZSgr9AF_4pHp4HVGvTOa4NYKJRoMBP5c']
   const arweave = new trackers.arweave.ArweaveReader(namespace, owners)
