@@ -1,5 +1,18 @@
 # @0xsequence/network
 
+## 2.0.18
+
+### Patch Changes
+
+- waas: new contractCall transaction type
+- sessions: add arweave owner
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/core@2.0.18
+  - @0xsequence/indexer@2.0.18
+  - @0xsequence/relayer@2.0.18
+  - @0xsequence/utils@2.0.18
+
 ## 2.0.17
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @0xsequence/metadata
 
+## 2.0.18
+
+### Patch Changes
+
+- waas: new contractCall transaction type
+- sessions: add arweave owner
+
 ## 2.0.17
 
 ### Patch Changes
