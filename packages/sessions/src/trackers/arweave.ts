@@ -516,7 +516,7 @@ async function findItems(
   filter: { [name: string]: undefined | string | string[] },
   options?: Options & { pageSize?: number; maxResults?: number }
 ): Promise<{ [id: string]: { [tag: string]: string } }> {
-  const namespace = options?.namespace
+  const namespace = options?.namespace ?? defaults.namespace
   const owners = options?.owners
   const rateLimitRetryDelayMs = options?.rateLimitRetryDelayMs ?? defaults.rateLimitRetryDelayMs
   const pageSize = options?.pageSize ?? 100
