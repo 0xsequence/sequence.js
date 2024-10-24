@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.0.21
+
+### Patch Changes
+
+- account: add publishWitnessFor
+- Updated dependencies
+  - @0xsequence/core@2.0.21
+  - @0xsequence/network@2.0.21
+  - @0xsequence/utils@2.0.21
+
 ## 2.0.20
 
 ### Patch Changes

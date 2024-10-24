@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.0.21
+
+### Patch Changes
+
+- account: add publishWitnessFor
+
 ## 2.0.20
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 2.0.21
+
+### Patch Changes
+
+- account: add publishWitnessFor
+- Updated dependencies
+  - @0xsequence/abi@2.0.21
+  - @0xsequence/core@2.0.21
+
 ## 2.0.20
 
 ### Patch Changes

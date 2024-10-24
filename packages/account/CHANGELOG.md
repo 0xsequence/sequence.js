@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.0.21
+
+### Patch Changes
+
+- account: add publishWitnessFor
+- Updated dependencies
+  - @0xsequence/abi@2.0.21
+  - @0xsequence/core@2.0.21
+  - @0xsequence/migration@2.0.21
+  - @0xsequence/network@2.0.21
+  - @0xsequence/relayer@2.0.21
+  - @0xsequence/sessions@2.0.21
+  - @0xsequence/utils@2.0.21
+  - @0xsequence/wallet@2.0.21
+
 ## 2.0.20
 
 ### Patch Changes
