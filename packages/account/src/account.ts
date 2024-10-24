@@ -490,6 +490,32 @@ export class Account {
     return coder.trim(chainedSignature)
   }
 
+  async publishWitnessFor(signers: string[], chainId: ethers.BigNumberish = 0): Promise<void> {
+    const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
+
+    const status = await this.status(chainId)
+    const allOfAll = this.coders.config.fromSimple({
+      threshold: signers.length,
+      checkpoint: 0,
+      signers: signers.map(s => ({
+        address: s,
+        weight: 1
+      })),
+    })
+
+    const wallet = this.walletFor(chainId, status.original.context, allOfAll, this.coders)
+    const signature = await wallet.signDigest(digest)
+
+    const decoded = this.coders.signature.decode(signature)
+    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
+
+    if (signatures.length === 0) {
+      throw new Error("No signatures found")
+    }
+
+    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures })
+  }
+
   async publishWitness(): Promise<void> {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
     const signature = await this.signDigest(digest, 0, false)
