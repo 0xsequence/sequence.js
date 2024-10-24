@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.0.19
+
+### Patch Changes
+
+- Add Immutable zkEVM support
+- Updated dependencies
+  - @0xsequence/core@2.0.19
+  - @0xsequence/indexer@2.0.19
+  - @0xsequence/relayer@2.0.19
+  - @0xsequence/utils@2.0.19
+
 ## 2.0.18
 
 ### Patch Changes

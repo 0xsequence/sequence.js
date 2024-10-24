@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.0.19
+
+### Patch Changes
+
+- Add Immutable zkEVM support
+- Updated dependencies
+  - @0xsequence/waas@2.0.19
+
 ## 2.0.18
 
 ### Patch Changes

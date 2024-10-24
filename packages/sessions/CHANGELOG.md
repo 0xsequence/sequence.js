@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.0.19
+
+### Patch Changes
+
+- Add Immutable zkEVM support
+- Updated dependencies
+  - @0xsequence/core@2.0.19
+  - @0xsequence/migration@2.0.19
+  - @0xsequence/replacer@2.0.19
+  - @0xsequence/utils@2.0.19
+
 ## 2.0.18
 
 ### Patch Changes

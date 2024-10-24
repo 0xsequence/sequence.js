@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.0.19
+
+### Patch Changes
+
+- Add Immutable zkEVM support
+
 ## 2.0.18
 
 ### Patch Changes
