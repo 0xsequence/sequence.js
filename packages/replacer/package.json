@@ -11,12 +11,12 @@
   "scripts": {
     "test": "echo 'TODO: replacer tests'"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {},
   "files": [

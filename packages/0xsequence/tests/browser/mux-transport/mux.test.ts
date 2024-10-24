@@ -55,6 +55,7 @@ export const tests = async () => {
 
   // Network available list
   const networks: NetworkConfig[] = [
+    // @ts-ignore
     {
       name: 'hardhat',
       chainId: 31337,
@@ -63,6 +64,7 @@ export const tests = async () => {
       relayer: relayer1,
       isDefaultChain: true
     },
+    // @ts-ignore
     {
       name: 'hardhat2',
       chainId: 31338,

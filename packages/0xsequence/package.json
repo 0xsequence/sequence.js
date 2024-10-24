@@ -27,6 +27,9 @@
     "stop:ganache": "ps aux | grep ganache | grep -v grep | awk '{print $2}' | xargs kill -9",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/account": "workspace:*",
@@ -45,17 +48,14 @@
     "@0xsequence/utils": "workspace:*",
     "@0xsequence/wallet": "workspace:*"
   },
-  "peerDependencies": {
-    "ethers": ">=6"
-  },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^3.0.1",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^9.1.0",
-    "ethers": "^6.13.0",
+    "ethers": "6.13.4",
     "ganache": "^7.5.0",
-    "hardhat": "^2.20.1",
+    "hardhat": "^2.22.14",
     "html-webpack-plugin": "^5.3.1",
     "webpack": "^5.65.0",
     "webpack-cli": "^4.6.0",

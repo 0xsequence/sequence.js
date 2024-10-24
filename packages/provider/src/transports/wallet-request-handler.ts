@@ -262,7 +262,13 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
       if (!provider) {
         throw new Error(`WalletRequestHandler: wallet provider is not configured for chainId ${request.chainId}`)
       }
-      const jsonRpcProvider = provider instanceof ethers.JsonRpcProvider ? provider : undefined
+
+      // NOTE: we cannot use `instanceof ethers.JsonRpcProvider` because despite that we know
+      // its the proper type, its not resolving properly at runtime during the pupeteer e2e tests.
+      // Switching to the type guard function below is safer and more reliable.
+      //
+      // const jsonRpcProvider = provider instanceof ethers.JsonRpcProvider ? provider : undefined
+      const jsonRpcProvider = isJsonRpcProvider(provider) ? provider : undefined
 
       switch (request.method) {
         case 'net_version': {
@@ -899,3 +905,9 @@ const permittedJsonRpcMethods = [
   'sequence_getNetworks',
   'sequence_setDefaultNetwork'
 ]
+
+function isJsonRpcProvider(provider: any): provider is ethers.JsonRpcProvider {
+  return (
+    provider && typeof provider === 'object' && typeof provider.send === 'function' && typeof provider.getNetwork === 'function'
+  )
+}

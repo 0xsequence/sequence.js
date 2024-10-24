@@ -9,7 +9,7 @@ export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
 }
 
 export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
-  return typeof obj === 'object' && obj.signer instanceof ethers.AbstractSigner
+  return typeof obj === 'object' && isAbstractSigner(obj.signer)
 }
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
@@ -17,12 +17,8 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   private txnOptions: ethers.TransactionRequest
 
   constructor(options: LocalRelayerOptions | ethers.AbstractSigner) {
-    super(
-      options instanceof ethers.AbstractSigner
-        ? { provider: options.provider! }
-        : { ...options, provider: options.signer.provider! }
-    )
-    this.signer = options instanceof ethers.AbstractSigner ? options : options.signer
+    super(isAbstractSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
+    this.signer = isAbstractSigner(options) ? options : options.signer
     if (!this.signer.provider) throw new Error('Signer must have a provider')
   }
 
@@ -80,4 +76,14 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
       return responsePromise
     }
   }
+}
+
+function isAbstractSigner(signer: any): signer is ethers.AbstractSigner {
+  return (
+    signer &&
+    typeof signer === 'object' &&
+    typeof signer.provider === 'object' &&
+    typeof signer.getAddress === 'function' &&
+    typeof signer.connect === 'function'
+  )
 }

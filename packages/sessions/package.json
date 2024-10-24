@@ -13,18 +13,21 @@
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 60000",
     "test:coverage": "nyc pnpm test"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/core": "workspace:*",
     "@0xsequence/migration": "workspace:*",
     "@0xsequence/replacer": "workspace:*",
     "@0xsequence/utils": "workspace:*",
-    "ethers": "^6.13.0",
     "idb": "^7.1.1"
   },
   "devDependencies": {
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/tests": "workspace:*",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "ethers": "6.13.4",
     "fake-indexeddb": "^4.0.1",
     "nyc": "^15.1.0"
   },

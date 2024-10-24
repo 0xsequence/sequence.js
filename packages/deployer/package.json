@@ -16,15 +16,15 @@
     "compile-contracts": "TS_NODE_PROJECT=../../tsconfig.test.json hardhat --max-memory 4096 compile",
     "gen:typings": "rm -rf ./src/typings/contracts/* && typechain --target ethers-v6 --out-dir src/typings/contracts './artifacts/contracts/!(build-info)/**/*[^dbg].json'"
   },
-  "dependencies": {
-    "@0xsequence/utils": "workspace:*"
-  },
   "peerDependencies": {
     "ethers": ">=6"
   },
+  "dependencies": {
+    "@0xsequence/utils": "workspace:*"
+  },
   "devDependencies": {
     "dotenv": "^16.0.3",
-    "ethers": "^6.13.0",
+    "ethers": "6.13.4",
     "typechain": "^8.1.1"
   },
   "files": [

@@ -23,12 +23,7 @@ export interface RpcRelayerOptions {
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
-  return (
-    obj.url !== undefined &&
-    typeof obj.url === 'string' &&
-    obj.provider !== undefined &&
-    obj.provider instanceof ethers.AbstractProvider
-  )
+  return obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && isAbstractProvider(obj.provider)
 }
 
 const fetch = globalThis.fetch
@@ -41,7 +36,7 @@ export class RpcRelayer implements Relayer {
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
 
-    if (options.provider instanceof ethers.AbstractProvider) {
+    if (isAbstractProvider(options.provider)) {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
@@ -331,4 +326,13 @@ export type RelayerTxReceipt = {
   status: string
   transactionHash: string
   transactionIndex: string
+}
+
+function isAbstractProvider(provider: any): provider is ethers.AbstractProvider {
+  return (
+    provider &&
+    typeof provider === 'object' &&
+    typeof provider.getNetwork === 'function' &&
+    typeof provider.getBlockNumber === 'function'
+  )
 }

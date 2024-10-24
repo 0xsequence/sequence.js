@@ -67,7 +67,11 @@ export class UniversalDeployer {
 
         // Verify that the deployment was successful since tx won't revert
         const postDeployCode = await this.provider.getCode(contractAddress)
-        postDeployCode === '0x' ? prompt.fail(contractAddress) : prompt.succeed()
+        if (postDeployCode === '0x') {
+          prompt.fail(contractAddress)
+        } else {
+          prompt.succeed()
+        }
       } else {
         prompt.warn(`ALREADY DEPLOYED: ${contractAlias}`)
       }
@@ -120,6 +124,8 @@ export class UniversalDeployer {
     if (universalDeployerCode === '0x') {
       await this.deployUniversalDeployer(txParams)
     } else {
+      // NOTE: already deployed
+      // eslint-disable-next-line
       ;('ALREADY DEPLOYED')
     }
 
