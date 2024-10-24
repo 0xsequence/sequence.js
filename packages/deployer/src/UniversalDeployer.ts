@@ -68,7 +68,7 @@ export class UniversalDeployer {
         // Verify that the deployment was successful since tx won't revert
         const postDeployCode = await this.provider.getCode(contractAddress)
         if (postDeployCode === '0x') {
-          prompt.fail(contractAddress) 
+          prompt.fail(contractAddress)
         } else {
           prompt.succeed()
         }

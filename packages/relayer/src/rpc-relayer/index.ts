@@ -23,12 +23,7 @@ export interface RpcRelayerOptions {
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
-  return (
-    obj.url !== undefined &&
-    typeof obj.url === 'string' &&
-    obj.provider !== undefined &&
-    isAbstractProvider(obj.provider)
-  )
+  return obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && isAbstractProvider(obj.provider)
 }
 
 const fetch = globalThis.fetch

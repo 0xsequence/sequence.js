@@ -17,11 +17,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   private txnOptions: ethers.TransactionRequest
 
   constructor(options: LocalRelayerOptions | ethers.AbstractSigner) {
-    super(
-      isAbstractSigner(options)
-        ? { provider: options.provider! }
-        : { ...options, provider: options.signer.provider! }
-    )
+    super(isAbstractSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
     this.signer = isAbstractSigner(options) ? options : options.signer
     if (!this.signer.provider) throw new Error('Signer must have a provider')
   }

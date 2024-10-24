@@ -908,9 +908,6 @@ const permittedJsonRpcMethods = [
 
 function isJsonRpcProvider(provider: any): provider is ethers.JsonRpcProvider {
   return (
-    provider &&
-    typeof provider === 'object' &&
-    typeof provider.send === 'function' &&
-    typeof provider.getNetwork === 'function'
+    provider && typeof provider === 'object' && typeof provider.send === 'function' && typeof provider.getNetwork === 'function'
   )
 }
