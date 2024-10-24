@@ -89,6 +89,7 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
   // Find any new networks that aren't already defined in sequence.js
   // and add them to the list of networks, (they must have a rpcUrl and chainId)
   const newNetworks = (config.networks?.filter(n => {
+    // eslint-disable-next-line
     n.rpcUrl !== undefined && n.chainId !== undefined && !allNetworks.find(an => an.chainId === n.chainId)
   }) ?? []) as NetworkConfig[]
 
