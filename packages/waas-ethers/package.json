@@ -19,6 +19,9 @@
   "dependencies": {
     "@0xsequence/waas": "workspace:*"
   },
+  "devDependencies": {
+    "ethers": "6.13.4"
+  },
   "files": [
     "src",
     "dist"

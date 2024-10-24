@@ -16,6 +16,9 @@
     "start:hardhat2": "hardhat node --hostname 0.0.0.0 --port 7047 --config ./hardhat2.config.js",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*",
@@ -23,9 +26,6 @@
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/relayer": "workspace:*",
     "@0xsequence/utils": "workspace:*"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/ethauth": "^1.0.0",

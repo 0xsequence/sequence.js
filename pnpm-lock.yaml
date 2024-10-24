@@ -561,9 +561,6 @@ importers:
       '@0xsequence/utils':
         specifier: workspace:*
         version: link:../utils
-      ethers:
-        specifier: 6.13.4
-        version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       idb:
         specifier: ^7.1.1
         version: 7.1.1
@@ -577,6 +574,9 @@ importers:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.2
         version: 1.0.2(nyc@15.1.0)
+      ethers:
+        specifier: 6.13.4
+        version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       fake-indexeddb:
         specifier: ^4.0.1
         version: 4.0.2
@@ -643,9 +643,6 @@ importers:
       '@aws-sdk/client-cognito-identity-provider':
         specifier: ^3.445.0
         version: 3.678.0
-      ethers:
-        specifier: '>=6'
-        version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       idb:
         specifier: ^7.1.1
         version: 7.1.1
@@ -659,6 +656,9 @@ importers:
       '@types/jwt-decode':
         specifier: ^3.1.0
         version: 3.1.0
+      ethers:
+        specifier: 6.13.4
+        version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       fake-indexeddb:
         specifier: ^4.0.1
         version: 4.0.2
@@ -668,8 +668,9 @@ importers:
       '@0xsequence/waas':
         specifier: workspace:*
         version: link:../waas
+    devDependencies:
       ethers:
-        specifier: '>=6'
+        specifier: 6.13.4
         version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
 
   packages/wallet:

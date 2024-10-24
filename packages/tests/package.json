@@ -11,12 +11,12 @@
   "scripts": {
     "test": "echo 'no tests for test tools'"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/core": "workspace:*",
     "@0xsequence/utils": "workspace:*"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

@@ -19,6 +19,9 @@
     "start:hardhat1:verbose": "hardhat node --config hardhat1.config.js --hostname 0.0.0.0 --port 9595",
     "start:hardhat2:verbose": "hardhat node --config hardhat2.config.js --hostname 0.0.0.0 --port 8595"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/account": "workspace:*",
@@ -32,9 +35,6 @@
     "@databeat/tracker": "^0.9.3",
     "eventemitter2": "^6.4.5",
     "webextension-polyfill": "^0.10.0"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {
     "@types/webextension-polyfill": "^0.10.0",

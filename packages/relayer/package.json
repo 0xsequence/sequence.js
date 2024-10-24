@@ -16,13 +16,13 @@
     "start:hardhat": "pnpm hardhat node --port 9547",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*",
     "@0xsequence/utils": "workspace:*"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/signhub": "workspace:*",

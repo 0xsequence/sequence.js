@@ -27,6 +27,9 @@
     "stop:ganache": "ps aux | grep ganache | grep -v grep | awk '{print $2}' | xargs kill -9",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/account": "workspace:*",
@@ -44,9 +47,6 @@
     "@0xsequence/signhub": "workspace:*",
     "@0xsequence/utils": "workspace:*",
     "@0xsequence/wallet": "workspace:*"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
