@@ -81,6 +81,10 @@ export enum ChainId {
   // TOY Testnet
   TOY_TESTNET = 21000000,
 
+  // Immutable zkEVM
+  IMMUTABLE_ZKEVM = 13371,
+  IMMUTABLE_ZKEVM_TESTNET = 13473,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -826,6 +830,40 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'TOY',
       name: 'TOY',
+      decimals: 18
+    }
+  },
+  [ChainId.IMMUTABLE_ZKEVM]: {
+    chainId: ChainId.IMMUTABLE_ZKEVM,
+    type: NetworkType.MAINNET,
+    name: 'immutable-zkevm',
+    title: 'Immutable zkEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Immutable zkEVM Explorer',
+      rootUrl: 'https://explorer.immutable.com/'
+    },
+    nativeToken: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18
+    }
+  },
+  [ChainId.IMMUTABLE_ZKEVM_TESTNET]: {
+    chainId: ChainId.IMMUTABLE_ZKEVM_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'immutable-zkevm-testnet',
+    title: 'Immutable zkEVM Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Immutable zkEVM Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.immutable.com/'
+    },
+    nativeToken: {
+      symbol: 'IMX',
+      name: 'IMX',
       decimals: 18
     }
   },
