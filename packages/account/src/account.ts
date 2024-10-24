@@ -490,7 +490,7 @@ export class Account {
     return coder.trim(chainedSignature)
   }
 
-  async publishWitnessFor(signers: string[], chainId: ethers.BigNumberish = 42161): Promise<void> {
+  async publishWitnessFor(signers: string[], chainId: ethers.BigNumberish = 0): Promise<void> {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
 
     const status = await this.status(chainId)
