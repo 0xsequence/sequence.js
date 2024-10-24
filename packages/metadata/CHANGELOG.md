@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.0.20
+
+### Patch Changes
+
+- upgrade deps, and improve waas session status handling
+
 ## 2.0.19
 
 ### Patch Changes

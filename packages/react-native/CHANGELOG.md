@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.0.20
+
+### Patch Changes
+
+- upgrade deps, and improve waas session status handling
+- Updated dependencies
+  - @0xsequence/waas@2.0.20
+
 ## 2.0.19
 
 ### Patch Changes
