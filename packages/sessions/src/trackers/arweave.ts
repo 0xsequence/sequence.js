@@ -12,6 +12,7 @@ const MAIN_MODULE_ABI = [
 export interface Options {
   readonly namespace?: string
   readonly owners?: string[]
+  readonly graphqlUrl?: string
   readonly eip5719Provider?: ethers.Provider
   readonly rateLimitRetryDelayMs?: number
 }
@@ -19,6 +20,7 @@ export interface Options {
 export const defaults = {
   namespace: 'Sequence-Sessions',
   owners: ['AZ6R2mG8zxW9q7--iZXGrBknjegHoPzmG5IG-nxvMaM'],
+  graphqlUrl: 'https://arweave.net/graphql',
   eip5719Provider: undefined,
   rateLimitRetryDelayMs: 5 * 60 * 1000
 }
@@ -518,6 +520,7 @@ async function findItems(
 ): Promise<{ [id: string]: { [tag: string]: string } }> {
   const namespace = options?.namespace ?? defaults.namespace
   const owners = options?.owners
+  const graphqlUrl = options?.graphqlUrl ?? defaults.graphqlUrl
   const rateLimitRetryDelayMs = options?.rateLimitRetryDelayMs ?? defaults.rateLimitRetryDelayMs
   const pageSize = options?.pageSize ?? 100
   const maxResults = options?.maxResults
@@ -555,7 +558,7 @@ async function findItems(
 
     let response: Response
     while (true) {
-      response = await fetch('https://arweave.net/graphql', {
+      response = await fetch(graphqlUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query }),
