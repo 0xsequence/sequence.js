@@ -20,7 +20,7 @@ export const ProviderRelayerDefaults: Required<Optionals<ProviderRelayerOptions>
 }
 
 export function isProviderRelayerOptions(obj: any): obj is ProviderRelayerOptions {
-  return typeof obj === 'object' && obj.provider instanceof ethers.AbstractProvider
+  return typeof obj === 'object' && isAbstractProvider(obj.provider)
 }
 
 export abstract class ProviderRelayer implements Relayer {
@@ -248,4 +248,13 @@ export abstract class ProviderRelayer implements Relayer {
       return waitReceipt()
     }
   }
+}
+
+function isAbstractProvider(provider: any): provider is ethers.AbstractProvider {
+  return (
+    provider &&
+    typeof provider === 'object' &&
+    typeof provider.getNetwork === 'function' &&
+    typeof provider.getBlockNumber === 'function'
+  )
 }
