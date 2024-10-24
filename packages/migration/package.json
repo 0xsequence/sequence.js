@@ -11,14 +11,17 @@
   "scripts": {
     "test": "echo 'TODO: Migration tests'"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*",
-    "@0xsequence/wallet": "workspace:*",
-    "ethers": "^6.13.0"
+    "@0xsequence/wallet": "workspace:*"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "ethers": "6.13.4",
     "nyc": "^15.1.0"
   },
   "files": [

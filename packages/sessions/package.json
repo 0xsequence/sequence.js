@@ -18,7 +18,7 @@
     "@0xsequence/migration": "workspace:*",
     "@0xsequence/replacer": "workspace:*",
     "@0xsequence/utils": "workspace:*",
-    "ethers": "^6.13.0",
+    "ethers": "6.13.4",
     "idb": "^7.1.1"
   },
   "devDependencies": {
