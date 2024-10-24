@@ -1248,6 +1248,7 @@ describe('Account', () => {
         beforeEach(async () => {
           // Old account may be an address that's not even deployed
           const signer1 = randomWallet(
+            // @ts-ignore
             'Signing messages - After migrating' + account?.address ?? '' // Append prev address to entropy to avoid collisions
           )
 
