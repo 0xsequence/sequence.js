@@ -1,8 +1,7 @@
-
 import { Status, signers } from '@0xsequence/signhub'
 import { commons } from '@0xsequence/core'
 import { subDigestOf } from '@0xsequence/utils'
-import { ethers } from 'ethers'
+import { AbiCoder, ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
 
 export type PasskeySignerOptions = {
@@ -18,20 +17,23 @@ export type PasskeySignerOptions = {
   requireUserValidation: boolean
   requireBackupSanityCheck: boolean
 
-  doSign: (digest: ethers.BytesLike, subdigest: string) => Promise<{
-    r: Uint8Array,
-    s: Uint8Array,
+  doSign: (
+    digest: ethers.BytesLike,
+    subdigest: string
+  ) => Promise<{
+    r: Uint8Array
+    s: Uint8Array
 
-    authenticatorData: Uint8Array,
-    clientDataJSON: string,
+    authenticatorData: Uint8Array
+    clientDataJSON: string
   }>
 }
 
 export type PasskeySignerContext = {
-  factory: string,
+  factory: string
 
-  mainModulePasskeys: string,
-  guestModule: string,
+  mainModulePasskeys: string
+  guestModule: string
 }
 
 function bytesToBase64URL(bytes: Uint8Array): string {
@@ -45,45 +47,46 @@ export class SequencePasskeySigner implements signers.SapientSigner {
   public readonly y: string
   public readonly requireUserValidation: boolean
   public readonly requireBackupSanityCheck: boolean
-  public readonly chainId: ethers.BigNumber
+  public readonly chainId: ethers.BigNumberish
 
   public readonly context: PasskeySignerContext
 
-  private readonly doSign: (digest: ethers.BytesLike, subdigest: string) => Promise<{
-    r: Uint8Array,
-    s: Uint8Array,
-    authenticatorData: Uint8Array,
-    clientDataJSON: string,
+  private readonly doSign: (
+    digest: ethers.BytesLike,
+    subdigest: string
+  ) => Promise<{
+    r: Uint8Array
+    s: Uint8Array
+    authenticatorData: Uint8Array
+    clientDataJSON: string
   }>
 
-  constructor (options: PasskeySignerOptions) {
+  constructor(options: PasskeySignerOptions) {
     this.id = options.id
     this.x = options.x
     this.y = options.y
     this.requireUserValidation = options.requireUserValidation
     this.requireBackupSanityCheck = options.requireBackupSanityCheck
-    this.chainId = ethers.BigNumber.from(options.chainId)
+    this.chainId = options.chainId
     this.context = options.context
     this.doSign = options.doSign
   }
 
   initCodeHash(): string {
-    return ethers.utils.keccak256(
-      ethers.utils.arrayify(
+    return ethers.keccak256(
+      ethers.getBytes(
         `0x602c3d8160093d39f33d3d3d3d363d3d37363d73${this.context.mainModulePasskeys.replace('0x', '').toLowerCase()}5af43d3d93803e602a57fd5bf3`
       )
     )
   }
 
   imageHash(): string {
-    return ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        ["bytes32", "uint256", "uint256", "bool", "bool"],
+    return ethers.keccak256(
+      AbiCoder.defaultAbiCoder().encode(
+        ['bytes32', 'uint256', 'uint256', 'bool', 'bool'],
         [
-          ethers.utils.keccak256(
-            ethers.utils.toUtf8Bytes(
-              "WebAuthn(uint256 x, uint256 y, bool requireUserValidation, bool requireBackupSanityCheck)"
-            )
+          ethers.keccak256(
+            ethers.toUtf8Bytes('WebAuthn(uint256 x, uint256 y, bool requireUserValidation, bool requireBackupSanityCheck)')
           ),
           this.x,
           this.y,
@@ -95,29 +98,34 @@ export class SequencePasskeySigner implements signers.SapientSigner {
   }
 
   async getAddress(): Promise<string> {
-    const hash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
+    const hash = ethers.keccak256(
+      ethers.solidityPacked(
         ['bytes1', 'address', 'bytes32', 'bytes32'],
         ['0xff', this.context.factory, this.imageHash(), this.initCodeHash()]
       )
     )
 
-    return ethers.utils.getAddress(ethers.utils.hexDataSlice(hash, 12))
+    return ethers.getAddress(ethers.dataSlice(hash, 12))
   }
 
-  notifyStatusChange(_id: string, _status: Status, _metadata: object): void {
-  }
+  notifyStatusChange(_id: string, _status: Status, _metadata: object): void {}
 
   async buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
-    const factoryInterface = new ethers.utils.Interface(walletContracts.eternalFactory.abi)
+    const factoryInterface = new ethers.Interface(walletContracts.eternalFactory.abi)
     const imageHash = this.imageHash()
+
+    const deployEternalFunc = factoryInterface.getFunction('deployEternal')
+
+    if (!deployEternalFunc) {
+      throw new Error('Could not find function deployEternal in factory interface')
+    }
 
     return {
       entrypoint: this.context.guestModule,
       transactions: [
         {
           to: this.context.factory,
-          data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deployEternal'), [this.context.mainModulePasskeys, imageHash]),
+          data: factoryInterface.encodeFunctionData(deployEternalFunc, [this.context.mainModulePasskeys, imageHash]),
           gasLimit: 100000,
           delegateCall: false,
           revertOnError: true,
@@ -145,7 +153,7 @@ export class SequencePasskeySigner implements signers.SapientSigner {
 
     // Find the index for challengeLocation and responseTypeLocation
     // challengeLocation is the subdigest encoded in Base64URL
-    const challenge = '"challenge":"' + bytesToBase64URL(ethers.utils.arrayify(subdigest)) + '"'
+    const challenge = '"challenge":"' + bytesToBase64URL(ethers.getBytes(subdigest)) + '"'
 
     // Find the index for challengeLocation
     const challengeLocation = signature.clientDataJSON.indexOf(challenge)
@@ -160,19 +168,19 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     }
 
     // (Sanity check) both values should fit in 4 bytes
-    if (challengeLocation > 0xFFFF || responseTypeLocation > 0xFFFF) {
+    if (challengeLocation > 0xffff || responseTypeLocation > 0xffff) {
       throw new Error('challengeLocation or responseTypeLocation is too large')
     }
 
-    // Pack the flags
-    const flags = (
+    // Pack the flags as hex string for encoding
+    const flags = `0x${
       (this.requireUserValidation ? 0x40 : 0) |
-      (this.chainId.eq(0) ? 0x20 : 0) |
+      (BigInt(this.chainId) === 0n ? 0x20 : 0) |
       (this.requireBackupSanityCheck ? 0x10 : 0)
-    )
+    }`
 
     // Build signature
-    const signatureBytes = ethers.utils.solidityPack(
+    const signatureBytes = ethers.solidityPacked(
       ['bytes1', 'uint16', 'bytes', 'uint16', 'string', 'uint16', 'uint16', 'uint256', 'uint256', 'uint256', 'uint256'],
       [
         flags,
@@ -184,8 +192,8 @@ export class SequencePasskeySigner implements signers.SapientSigner {
         responseTypeLocation,
         signature.r,
         signature.s,
-        ethers.BigNumber.from(this.x),
-        ethers.BigNumber.from(this.y)
+        BigInt(this.x),
+        BigInt(this.y)
       ]
     )
 
@@ -193,6 +201,6 @@ export class SequencePasskeySigner implements signers.SapientSigner {
   }
 
   suffix(): ethers.BytesLike {
-    return [3]
+    return new Uint8Array([3])
   }
 }
