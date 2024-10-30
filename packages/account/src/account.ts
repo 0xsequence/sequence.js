@@ -61,6 +61,11 @@ export type AccountOptions = {
   projectAccessKey?: string
 }
 
+export type AccountCoders = {
+  signature: commons.signature.SignatureCoder
+  config: commons.config.ConfigCoder
+}
+
 export interface PreparedTransactions {
   transactions: commons.transaction.SimulatedTransaction[]
   flatDecorated: commons.transaction.Transaction[]
@@ -164,10 +169,7 @@ export class Account {
     return this.migrator.lastMigration().version
   }
 
-  get coders(): {
-    signature: commons.signature.SignatureCoder
-    config: commons.config.ConfigCoder
-  } {
+  get coders(): AccountCoders {
     const lastMigration = this.migrator.lastMigration()
 
     return {
@@ -244,7 +246,7 @@ export class Account {
     chainId: ethers.BigNumberish,
     context: commons.context.WalletContext,
     config: commons.config.Config,
-    coders: typeof this.coders
+    coders: AccountCoders,
   ): Wallet {
     const isNetworkZero = BigInt(chainId) === 0n
     return new Wallet({
