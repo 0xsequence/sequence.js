@@ -190,8 +190,8 @@ export class SequencePasskeySigner implements signers.SapientSigner {
         signature.clientDataJSON,
         challengeLocation,
         responseTypeLocation,
-        signature.r,
-        signature.s,
+        ethers.toBigInt(signature.r),
+        ethers.toBigInt(signature.s),
         BigInt(this.x),
         BigInt(this.y)
       ]
