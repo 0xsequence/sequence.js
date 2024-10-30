@@ -26,9 +26,9 @@ export interface JsonRpcProviderOptions {
 
 // JsonRpcProvider with a middleware stack. By default it will use a simple caching middleware.
 export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Provider, JsonRpcSender {
-  #chainId?: number
-  #nextId: number = 1
-  #sender: EIP1193Provider
+  private chainId?: number
+  private nextId: number = 1
+  private sender: EIP1193Provider
 
   constructor(
     public url: string | ethers.FetchRequest | undefined,
@@ -41,7 +41,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
     const middlewares = options?.middlewares
     const blockCache = options?.blockCache
 
-    this.#chainId = chainId
+    this.chainId = chainId
 
     // NOTE: it will either use the middleware stack passed to the constructor
     // or it will use the default caching middleware provider. It does not concat them,
@@ -57,11 +57,11 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
       new JsonRpcHandler(this.fetch, chainId)
     )
 
-    this.#sender = router
+    this.sender = router
   }
 
   async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
-    return this.#sender.request(request)
+    return this.sender.request(request)
   }
 
   async send(method: string, params?: any[] | Record<string, any>, chainId?: number): Promise<any> {
@@ -69,7 +69,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
   }
 
   async getNetwork(): Promise<ethers.Network> {
-    const chainId = this.#chainId
+    const chainId = this.chainId
     if (chainId) {
       const network = networks[chainId as ChainId]
       const name = network?.name || ''
@@ -81,7 +81,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
       })
     } else {
       const chainIdHex = await this.send('eth_chainId', [])
-      this.#chainId = Number(chainIdHex)
+      this.chainId = Number(chainIdHex)
       return this.getNetwork()
     }
   }
@@ -96,7 +96,7 @@ export class JsonRpcProvider extends ethers.JsonRpcProvider implements EIP1193Pr
     const jsonRpcRequest: JsonRpcRequest = {
       method,
       params,
-      id: this.#nextId++,
+      id: this.nextId++,
       jsonrpc: '2.0'
     }
 
