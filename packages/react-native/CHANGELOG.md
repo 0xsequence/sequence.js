@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.0.22
+
+### Patch Changes
+
+- Add SKALE Nebula Mainnet support
+- Updated dependencies
+  - @0xsequence/waas@2.0.22
+
 ## 2.0.21
 
 ### Patch Changes

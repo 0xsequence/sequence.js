@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.0.22
+
+### Patch Changes
+
+- Add SKALE Nebula Mainnet support
+- Updated dependencies
+  - @0xsequence/core@2.0.22
+  - @0xsequence/migration@2.0.22
+  - @0xsequence/replacer@2.0.22
+  - @0xsequence/utils@2.0.22
+
 ## 2.0.21
 
 ### Patch Changes
