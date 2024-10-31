@@ -72,7 +72,8 @@ export enum ChainId {
   // Borne
   BORNE_TESTNET = 94984,
 
-  // Skale Testnet
+  // SKALE Nebula
+  SKALE_NEBULA = 1482601649,
   SKALE_NEBULA_TESTNET = 37084624,
 
   // Soneium Minato
@@ -779,6 +780,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'BORNE',
       name: 'BORNE',
+      decimals: 18
+    }
+  },
+  [ChainId.SKALE_NEBULA]: {
+    chainId: ChainId.SKALE_NEBULA,
+    type: NetworkType.MAINNET,
+    name: 'skale-nebula',
+    title: 'SKALE Nebula Gaming Hub',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Explorer',
+      rootUrl: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
       decimals: 18
     }
   },
