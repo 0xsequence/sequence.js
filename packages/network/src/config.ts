@@ -124,10 +124,13 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.BLAST_SEPOLIA),
   createNetworkConfig(ChainId.TELOS),
   createNetworkConfig(ChainId.BORNE_TESTNET),
+  createNetworkConfig(ChainId.SKALE_NEBULA),
   createNetworkConfig(ChainId.SKALE_NEBULA_TESTNET),
   createNetworkConfig(ChainId.SONEIUM_MINATO),
   createNetworkConfig(ChainId.TOY_TESTNET),
   createNetworkConfig(ChainId.IMMUTABLE_ZKEVM),
   createNetworkConfig(ChainId.IMMUTABLE_ZKEVM_TESTNET),
+  createNetworkConfig(ChainId.ROOT_NETWORK),
+  createNetworkConfig(ChainId.ROOT_NETWORK_PORCINI),
   ...hardhatNetworks
 ])
