@@ -799,7 +799,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'SKALE Fuel',
       decimals: 18
     }
-  },,
+  },
   [ChainId.SKALE_NEBULA_TESTNET]: {
     chainId: ChainId.SKALE_NEBULA_TESTNET,
     type: NetworkType.TESTNET,
