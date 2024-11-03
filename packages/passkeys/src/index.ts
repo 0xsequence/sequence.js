@@ -13,6 +13,8 @@ export type PasskeySignerOptions = {
   y: string
 
   chainId: ethers.BigNumberish
+  provider?: ethers.Provider
+  reader?: commons.reader.Reader
 
   requireUserValidation: boolean
   requireBackupSanityCheck: boolean
@@ -31,9 +33,12 @@ export type PasskeySignerOptions = {
 
 export type PasskeySignerContext = {
   factory: string
-
   mainModulePasskeys: string
   guestModule: string
+}
+
+export type PasskeySignMetadata = {
+  cantValidateBehavior: 'ignore' | 'eip6492' | 'throw',
 }
 
 function bytesToBase64URL(bytes: Uint8Array): string {
@@ -48,6 +53,9 @@ export class SequencePasskeySigner implements signers.SapientSigner {
   public readonly requireUserValidation: boolean
   public readonly requireBackupSanityCheck: boolean
   public readonly chainId: ethers.BigNumberish
+
+  public readonly provider?: ethers.Provider
+  private _reader?: commons.reader.Reader
 
   public readonly context: PasskeySignerContext
 
@@ -69,7 +77,16 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     this.requireBackupSanityCheck = options.requireBackupSanityCheck
     this.chainId = options.chainId
     this.context = options.context
+    this.provider = options.provider
     this.doSign = options.doSign
+
+    this._reader = options.reader
+  }
+
+  reader(): commons.reader.Reader {
+    if (this._reader) return this._reader
+    if (!this.provider) throw new Error('call requires a provider')
+    return new commons.reader.OnChainReader(this.provider)
   }
 
   initCodeHash(): string {
@@ -110,7 +127,15 @@ export class SequencePasskeySigner implements signers.SapientSigner {
 
   notifyStatusChange(_id: string, _status: Status, _metadata: object): void {}
 
-  async buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
+  async isDeployed(): Promise<boolean> {
+    return this.reader().isDeployed(await this.getAddress())
+  }
+
+  async buildDeployTransaction(metadata?: commons.WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | undefined> {
+    if (metadata?.ignoreDeployed && (await this.isDeployed())) {
+      return
+    }
+
     const factoryInterface = new ethers.Interface(walletContracts.eternalFactory.abi)
     const imageHash = this.imageHash()
 
@@ -139,14 +164,20 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     return Promise.resolve([])
   }
 
-  decorateTransactions(
+  async decorateTransactions(
     bundle: commons.transaction.IntendedTransactionBundle,
-    _metadata: object
+    metadata?: commons.WalletDeployMetadata
   ): Promise<commons.transaction.IntendedTransactionBundle> {
+    // Add deploy transaction
+    const deployTx = await this.buildDeployTransaction(metadata)
+    if (deployTx) {
+      bundle.transactions.unshift(...deployTx.transactions)
+    }
+
     return Promise.resolve(bundle)
   }
 
-  async sign(digest: ethers.BytesLike, _metadata: object): Promise<ethers.BytesLike> {
+  async sign(digest: ethers.BytesLike, metadata: PasskeySignMetadata): Promise<ethers.BytesLike> {
     const subdigest = subDigestOf(await this.getAddress(), this.chainId, digest)
 
     const signature = await this.doSign(digest, subdigest)
@@ -197,7 +228,37 @@ export class SequencePasskeySigner implements signers.SapientSigner {
       ]
     )
 
+    if (!!metadata && metadata.cantValidateBehavior !== "ignore") {
+      let isDeployed = false
+      try {
+        isDeployed = await this.isDeployed()
+      } catch (e) {
+        // Ignore. Handled below
+      }
+      if (!isDeployed && metadata.cantValidateBehavior === "eip6492") {
+        return this.buildEIP6492Signature(signatureBytes)
+      } else if (!isDeployed && metadata.cantValidateBehavior === "throw") {
+        throw new Error('Cannot sign with a non-deployed passkey signer')
+      }
+    }
+
     return signatureBytes
+  }
+
+  private async buildEIP6492Signature(signature: string): Promise<string> {
+    const deployTransactions = await this.buildDeployTransaction()
+    if (!deployTransactions || deployTransactions?.transactions.length === 0) {
+      throw new Error('Cannot build EIP-6492 signature without deploy transaction')
+    }
+
+    const deployTransaction = deployTransactions.transactions[0]
+
+    const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'bytes', 'bytes'],
+      [deployTransaction.to, deployTransaction.data, signature]
+    )
+
+    return ethers.solidityPacked(['bytes', 'bytes32'], [encoded, commons.EIP6492.EIP_6492_SUFFIX])
   }
 
   suffix(): ethers.BytesLike {

@@ -520,7 +520,8 @@ export class Account {
 
   async publishWitness(): Promise<void> {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
-    const signature = await this.signDigest(digest, 0, false)
+    // Apply ERC-6492 to undeployed children
+    const signature = await this.signDigest(digest, 0, false, 'ignore', {cantValidateBehavior: "eip6492"})
     const decoded = this.coders.signature.decode(signature)
     const recovered = await this.coders.signature.recover(decoded, { digest, chainId: 0, address: this.address })
     const signatures = this.coders.signature.signaturesOf(recovered.config)
